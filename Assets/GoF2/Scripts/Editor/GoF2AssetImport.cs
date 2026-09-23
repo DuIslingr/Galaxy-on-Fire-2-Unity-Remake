@@ -268,7 +268,7 @@ namespace GoF2Remake.EditorTools
         [MenuItem("GoF2/Create Flight Test Scene", priority = 2)]
         public static void CreateTestScene()
         {
-            var shipPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(R("Prefabs/Assembled/main/ships/ship_000_midorian.prefab"))
+            var shipPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(R("Resources/Assembled/main/ships/ship_000_midorian.prefab"))
                              ?? AssetDatabase.LoadAssetAtPath<GameObject>(R("Prefabs/main/ships/ship_000_midorian.prefab"))
                              ?? AssetDatabase.LoadAssetAtPath<GameObject>(R("Models/main/ships/ship_000_midorian.fbx"));
             var root = new GameObject("Ship (Betty)");

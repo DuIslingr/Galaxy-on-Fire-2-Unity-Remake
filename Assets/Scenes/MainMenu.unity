@@ -1456,7 +1456,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.UI.GoF2MainMenu
   showSplash: 1
-  gameScene: FlightTest
+  gameScene: Space
   versionText: "Galaxy on Fire 2 Remake  \xB7  pre-alpha"
   editorSplashLogos:
   - {fileID: 2800000, guid: 1ba66f91f9abdef4cbba601a3946b9bb, type: 3}

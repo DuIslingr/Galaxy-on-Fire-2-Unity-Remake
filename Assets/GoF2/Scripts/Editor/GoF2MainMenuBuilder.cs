@@ -375,7 +375,7 @@ namespace GoF2Remake.EditorTools
             bg.setups = Stations.Select(s => new GoF2MenuBackground.Setup
             {
                 label = s.station,
-                station = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Prefabs/Assembled/main/stations/{s.station}.prefab"),
+                station = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Resources/Assembled/main/stations/{s.station}.prefab"),
                 skybox = s.skybox,
                 yaw = s.yaw
             }).Where(s => s.station != null).ToArray();
@@ -423,7 +423,8 @@ namespace GoF2Remake.EditorTools
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddToBuildSettings(ScenePath, 0);
-            AddToBuildSettings("Assets/Scenes/FlightTest.unity", 1);
+            AddToBuildSettings(GoF2SpaceSceneBuilder.ScenePath, 1);
+            AddToBuildSettings("Assets/Scenes/FlightTest.unity", 2);
             Debug.Log($"GoF2: main menu scene created at {ScenePath}. Press Play.");
         }
 
@@ -443,7 +444,7 @@ namespace GoF2Remake.EditorTools
             };
             foreach (var l in lanes)
             {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Prefabs/Assembled/main/ships/{l.ship}.prefab");
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Resources/Assembled/main/ships/{l.ship}.prefab");
                 if (prefab == null) continue;
                 var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
                 go.transform.SetPositionAndRotation(l.start, Quaternion.Euler(0f, l.yaw, 0f));
@@ -460,7 +461,7 @@ namespace GoF2Remake.EditorTools
         static Transform BuildAsteroids()
         {
             var parent = new GameObject("Asteroids").transform;
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Prefabs/Assembled/main/asteroids/asteroid_01.prefab");
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Resources/Assembled/main/asteroids/asteroid_01.prefab");
             if (prefab == null) return parent;
             var rnd = new System.Random(7);
             float R(float a, float b) => a + (float)rnd.NextDouble() * (b - a);

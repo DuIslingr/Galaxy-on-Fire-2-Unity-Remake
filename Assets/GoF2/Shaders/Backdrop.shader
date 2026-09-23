@@ -1,0 +1,64 @@
+// GoF2/Backdrop: sun and planet quads (StarSystem::render). The original draws them in the background pass with the
+// depth test off, after the sky and before the scene. Here they are regular quads around the camera whose depth is
+// pushed onto the far plane: they draw over the skybox (their queue comes after it), stay behind every opaque object,
+// and the scene's transparent effects (queue 3000) draw over them. Painter's order via the render queue.
+// _Mirror flips u (StarSystem's rotate(0, pi, 0), so a planet's lit rim faces the sun); _Tint is added to the
+// texture colour (blend mode 21, fogged planets). Hand-written for the far-plane depth trick.
+Shader "GoF2/Backdrop"
+{
+    Properties
+    {
+        [NoScaleOffset] _MainTex ("Texture", 2D) = "white" {}
+        [HDR] _Color ("Color", Color) = (1, 1, 1, 1)
+        _Tint ("Added tint", Color) = (0, 0, 0, 0)
+        _Mirror ("Mirror U", Float) = 0
+        [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src Blend", Float) = 5
+        [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst Blend", Float) = 10
+    }
+    SubShader
+    {
+        Tags { "Queue" = "Transparent-100" "RenderType" = "Transparent" "IgnoreProjector" = "True" }
+        Blend [_SrcBlend] [_DstBlend]
+        ZWrite Off
+        ZTest LEqual
+        Cull Off
+
+        Pass
+        {
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+            CBUFFER_START(UnityPerMaterial)
+                half4 _Color;
+                half4 _Tint;
+                float _Mirror;
+            CBUFFER_END
+
+            struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
+
+            Varyings vert(Attributes i)
+            {
+                Varyings o;
+                o.positionCS = TransformObjectToHClip(i.positionOS.xyz);
+                #if UNITY_REVERSED_Z
+                    o.positionCS.z = o.positionCS.w * 1e-6;
+                #else
+                    o.positionCS.z = o.positionCS.w * (1 - 1e-6);
+                #endif
+                o.uv = float2(_Mirror > 0.5 ? 1 - i.uv.x : i.uv.x, i.uv.y);
+                return o;
+            }
+
+            half4 frag(Varyings i) : SV_Target
+            {
+                half4 t = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv);
+                return half4((t.rgb + _Tint.rgb) * _Color.rgb, t.a * _Color.a);
+            }
+            ENDHLSL
+        }
+    }
+}

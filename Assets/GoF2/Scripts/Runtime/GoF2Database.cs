@@ -72,12 +72,20 @@ namespace GoF2Remake.Data
         public int textureIndex;
     }
 
+    /// <summary>One assembled prefab (assemblies.json): Resources/Assembled/{pack}/{category}/{name}.prefab.</summary>
+    [System.Serializable] public class AssemblyData
+    {
+        public string name, pack, category, origin;
+        public int root;
+    }
+
     public class GoF2Database
     {
         public List<ShipData> Ships = new List<ShipData>();
         public List<ItemData> Items = new List<ItemData>();
         public List<SystemData> Systems = new List<SystemData>();
         public List<StationData> Stations = new List<StationData>();
+        public List<AssemblyData> Assemblies = new List<AssemblyData>();
 
         public static GoF2Database Load(string resourceFolder = "GoF2Data")
         {
@@ -87,6 +95,7 @@ namespace GoF2Remake.Data
                 Items = Read<List<ItemData>>(resourceFolder, "items"),
                 Systems = Read<List<SystemData>>(resourceFolder, "systems"),
                 Stations = Read<List<StationData>>(resourceFolder, "stations"),
+                Assemblies = ReadAssemblies(resourceFolder),
             };
         }
 
@@ -102,6 +111,16 @@ namespace GoF2Remake.Data
             }
             return JsonUtility.FromJson<Wrapper<T>>("{\"list\":" + ta.text + "}").list;
         }
+
+        [System.Serializable] class AssemblyFile { public List<AssemblyData> entries; }
+
+        static List<AssemblyData> ReadAssemblies(string folder)
+        {
+            var ta = Resources.Load<TextAsset>(folder + "/assemblies");
+            return ta != null ? JsonUtility.FromJson<AssemblyFile>(ta.text).entries : new List<AssemblyData>();
+        }
+
+        public AssemblyData AssemblyByName(string name) => Assemblies.FirstOrDefault(a => a.name == name);
 
         public ShipData ShipByName(string name) => Ships.FirstOrDefault(s => s.name == name);
         public ItemData ItemByName(string name) => Items.FirstOrDefault(i => i.name == name);

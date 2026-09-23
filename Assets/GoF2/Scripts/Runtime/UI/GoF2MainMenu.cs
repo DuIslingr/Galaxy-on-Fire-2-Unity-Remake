@@ -31,7 +31,7 @@ namespace GoF2Remake.UI
         [Header("Flow")]
         public bool showSplash = true;
         [Tooltip("Scene loaded by Start new game (until the campaign exists).")]
-        public string gameScene = "FlightTest";
+        public string gameScene = "Space";
         public string versionText = "Galaxy on Fire 2 Remake  ·  pre-alpha";
 
         [Header("Editor splash (players use Unity's splash screen with the same logos)")]
@@ -459,6 +459,7 @@ namespace GoF2Remake.UI
 
         void StartGame(float difficulty)
         {
+            GoF2Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
             GoF2Session.Campaign = pendingCampaign;
             GoF2Session.Difficulty = difficulty;
             StartCoroutine(Leave());

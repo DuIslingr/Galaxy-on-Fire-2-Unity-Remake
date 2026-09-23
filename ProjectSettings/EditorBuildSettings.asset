@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/MainMenu.unity
     guid: 7ca710fde970b954cb1f8723fbdfd9d7
   - enabled: 1
+    path: Assets/Scenes/Space.unity
+    guid: 3ec5ddce25d70e5459e3d917d8462f75
+  - enabled: 1
     path: Assets/Scenes/FlightTest.unity
     guid: 3d096d82169e9f94b84bb974cc0dc665
   - enabled: 1

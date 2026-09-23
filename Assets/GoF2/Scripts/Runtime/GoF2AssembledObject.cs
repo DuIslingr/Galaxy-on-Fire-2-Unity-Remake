@@ -1,5 +1,5 @@
 // GoF2AssembledObject.cs
-// Root component of an assembled prefab (Prefabs/Assembled/...): one game object (ship, station, jumpgate,
+// Root component of an assembled prefab (Resources/Assembled/...): one game object (ship, station, jumpgate,
 // asteroid, hangar...) put together from its separate game meshes the way the original code does it
 // (AEGeometry root mesh + addChild meshes + setLodMeshes). Built by "GoF2 > Build Assembled Prefabs"
 // from Resources/GoF2Data/assemblies.json.
@@ -10,6 +10,18 @@ namespace GoF2Remake.Visuals
 {
     public class GoF2AssembledObject : MonoBehaviour
     {
+        /// <summary>Folder under Resources that holds the assembled prefabs ({pack}/{category}/{name}).</summary>
+        public const string ResourcesFolder = "Assembled";
+
+        /// <summary>Loads an assembled prefab by its assemblies.json entry (only what a level needs gets loaded).</summary>
+        public static GameObject LoadPrefab(GoF2Remake.Data.AssemblyData entry)
+        {
+            if (entry == null) return null;
+            var prefab = Resources.Load<GameObject>($"{ResourcesFolder}/{entry.pack}/{entry.category}/{entry.name}");
+            if (prefab == null) Debug.LogWarning($"GoF2AssembledObject: no prefab for '{entry.name}' ({entry.pack}/{entry.category})");
+            return prefab;
+        }
+
         [Tooltip("Resource id of the root (LOD 0) mesh.")]
         public int rootMeshId;
 
