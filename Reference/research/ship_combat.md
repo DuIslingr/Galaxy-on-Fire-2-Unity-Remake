@@ -257,6 +257,17 @@ Called each frame (when collision is on and the player is active) with the landm
 
 No speed-dependent damage, no ship-ship damage, no station damage.
 
+Implementation details recovered for the remake (disassembly): `projectCollisionOnSurface` returns the new position (the
+player is `setPosition`ed to it); the camera `hit()` runs on every contact even when nothing moved (the jumpgate's cube
++-radius is the contact test, its sphere the push, so its corners only shake). Box push = the nearest of the 6 faces;
+sphere push = onto the surface; `BoundingVolume::staticProjectCollisionOnSurface` makes two passes. Station volumes
+(`PlayerStation::PlayerStation` 0x147526): record `1 a b c d e f` = box, centre (-a, c, b), half (|d|, |f|, |e|) (x0.9 in
+the alien orbit); `0 a b c d` = sphere, centre (-a, c, b), r = |d| x 0.5 (0.4 alien); the volumes keep that position
+(no `setPosition` for the normal station). Static objects (`Level::getBoundingVolume` 0xd3b78): centre offset (a, c, -b),
+half x1.2, r x0.6. Wrecks (`Globals::getWreckCollision` 0xf9210): centre (-a, c, b), half x1.1, r x0.6, id 0 x2. NPC
+avoidance uses `getProjectionVector` (vtable +0x50) = normalize(pos - volume position), landmarks then enemies, first hit
+of each list only. `PlayerEgo+0x328 / +0x32c` after a contact = a 1000 ms +-0.006-unit jitter of the ship model.
+
 ---
 
 ## 3. NPC stats

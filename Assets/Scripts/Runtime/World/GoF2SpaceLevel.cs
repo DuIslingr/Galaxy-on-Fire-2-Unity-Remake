@@ -20,6 +20,9 @@
 //   Level::createMission etc.: the NPC traffic (GoF2Traffic) and ship combat: the player's pools and death
 //                  (GoF2PlayerHealth), ship / salvage locks (GoF2CombatRadar); invulnerable during the launch / arrival
 //                  camera and the jump scenes.
+//   PlayerEgo::calcCollision: the ship slides along the station, the visible jumpgate and freighters (GoF2Obstacle,
+//                  GoF2PlayerCollision), touching an asteroid destroys it; off during the launch / arrival camera and the
+//                  jump scenes. MGame::dockEvent: the autopilot to the station also docks on touching the station.
 // Not yet: missions, lens flare, wormhole.
 
 using GoF2Remake.Data;
@@ -59,6 +62,7 @@ namespace GoF2Remake.World
         public GoF2PlayerHealth Health { get; private set; }
         public GoF2Traffic Traffic { get; private set; }
         public GoF2CombatRadar Radar { get; private set; }
+        public GoF2PlayerCollision Collision { get; private set; }
         public GameObject Station { get; private set; }
         public GameObject Jumpgate { get; private set; }
         /// <summary>Hud::drawOrbitInformation: during the arrival camera after a gate / Khador jump.</summary>
@@ -99,6 +103,7 @@ namespace GoF2Remake.World
             SetupCamera();
             Station = GoF2OrbitBuilder.SpawnStation(db, Layout);
             Jumpgate = GoF2OrbitBuilder.SpawnJumpgate(db, Layout);
+            AddObstacles();
             GoF2OrbitBuilder.SpawnAsteroids(db, Layout);
             orbitInfo = GoF2Session.ArrivedBySystemJump;
             GoF2Session.ArrivedBySystemJump = false;
@@ -115,7 +120,9 @@ namespace GoF2Remake.World
 
             // Ship combat: the player's Player object, the orbit's NPC traffic, the ship / salvage locks.
             Health = Player.gameObject.AddComponent<GoF2PlayerHealth>();
-            Health.Setup(db, Player, chase, Weapons, Mining);
+            Health.Setup(db, Player, chase, Weapons);
+            Collision = Player.gameObject.AddComponent<GoF2PlayerCollision>();
+            Collision.Setup(Health, chase, Mining);
             Traffic = new GameObject("Traffic").AddComponent<GoF2Traffic>();
             Traffic.Setup(db, Layout, Health.Target, Station);
             Radar = Player.gameObject.AddComponent<GoF2CombatRadar>();
@@ -126,7 +133,31 @@ namespace GoF2Remake.World
         {
             if (Health == null) return;
             Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic);
+            Collision.off = Health.invulnerable;   // PlayerEgo+0x144: off in the same sequences
+            Collision.ignoreGate = Navigation.GoingToGate;
             Navigation.HostilesPresent = Traffic != null && Traffic.HostileCount > 0;
+        }
+
+        /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see GoF2Obstacle).</summary>
+        void AddObstacles()
+        {
+            if (Station != null)
+            {
+                var o = Station.AddComponent<GoF2Obstacle>();
+                o.landmark = o.isStation = true;
+                o.volumes = GoF2CollisionVolume.ForStation(Layout.stationIndex, Layout.systemIndex < 0);
+                // PlayerStation+0x150: the transform's bounding radius + 5000 units.
+                var b = new Bounds(Station.transform.position, Vector3.zero);
+                foreach (var r in Station.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+                o.cubeHalf = Mathf.Max(b.extents.x, b.extents.y, b.extents.z) + 5000f * M;
+            }
+            if (Jumpgate != null)
+            {
+                var o = Jumpgate.AddComponent<GoF2Obstacle>();
+                o.landmark = o.cubeIsContact = true;
+                o.cubeHalf = Layout.JumpgateRadius * M;
+                o.volumes.Add(GoF2CollisionVolume.Sphere(Vector3.zero, Layout.JumpgateRadius * M));
+            }
         }
 
         void SetupCamera()
@@ -223,8 +254,13 @@ namespace GoF2Remake.World
         {
             if (Player == null || (Health != null && Health.Dead)) return;
             if (!InDockRange) leftDockRange = true;
-            // MGame::dockEvent: the autopilot to the station docks within 16000 units (collision is off during the launch).
-            if (Navigation != null && Navigation.GoingToStation && InDockRange && launchCameraMs <= 0f && Layout.hasStation) { Dock(); return; }
+            // MGame::dockEvent: the autopilot to the station docks within 16000 units or on touching the station (collision
+            // is off during the launch).
+            if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation)
+            {
+                Dock();
+                return;
+            }
             if (launchCameraMs <= 0f) return;
             launchCameraMs -= Time.deltaTime * 1000f;
             var cam = mainCamera.transform;

@@ -8,8 +8,7 @@
 //                                   hit feedback when shield + armor + hull dropped: camera shake 1000 ms (+-6 units),
 //                                   sound 25 / 23 / 24 by the layer hit, the shield icon turns red for 500 ms (while
 //                                   shield >= 2), a directional arc (left / right / top / bottom) for 300 ms
-//   PlayerEgo::calcCollision 0xab550  touching an asteroid destroys it and costs 20 damage (stations, gates and ships:
-//                                   no damage; not simulated yet)
+//   PlayerEgo::calcCollision 0xab550  collisions: GoF2PlayerCollision (asteroids cost 20, stations / ships none)
 //   MGame::gameOverCheck / PlayerEgo::explode  hull < 1: the camera freezes, the ship tumbles, explodes at 3 s, "Game Over"
 //                                   and sound 37 at 8 s; then GoF2FlightHud offers "Tap to load last savegame." (196)
 // Hull / shield / armor are kept in GoF2Session between levels (-1 = full; docking repairs, see GoF2StationLevel).
@@ -43,7 +42,6 @@ namespace GoF2Remake.Flight
         GoF2ShipController ship;
         GoF2ChaseCamera chase;
         GoF2WeaponSystem weapons;
-        GoF2Mining mining;
         GoF2CombatAssets assets;
         AudioSource sfx;
         int shieldRechargeMs;
@@ -52,12 +50,11 @@ namespace GoF2Remake.Flight
         float lastCombined, deathMs;
         Vector3 deathSpin;
 
-        public void Setup(GoF2Database db, GoF2ShipController controller, GoF2ChaseCamera chaseCamera, GoF2WeaponSystem weaponSystem, GoF2Mining miningSystem)
+        public void Setup(GoF2Database db, GoF2ShipController controller, GoF2ChaseCamera chaseCamera, GoF2WeaponSystem weaponSystem)
         {
             ship = controller;
             chase = chaseCamera;
             weapons = weaponSystem;
-            mining = miningSystem;
             assets = GoF2CombatAssets.Load();
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
@@ -113,7 +110,6 @@ namespace GoF2Remake.Flight
             Hp.RegenerateShield(dtMs, shieldRechargeMs);
             if (hasRepair) Hp.Repair(dtMs, repairHullMs, repairArmorMs);
             Target.hp = Hp.hull;
-            if (!invulnerable) CheckAsteroids();
 
             float combined = Hp.Combined;
             if (combined < lastCombined) OnHit();
@@ -143,23 +139,6 @@ namespace GoF2Remake.Flight
             if (from.z <= 0f || from.x / from.z < -halfW) { if (from.x < 0f) ArcMs[0] = 300f; }
             if (from.z <= 0f || from.x / from.z > halfW) { if (from.x > 0f) ArcMs[1] = 300f; }
             if (from.z > 0f) ArcMs[3] = 300f; else ArcMs[2] = 300f;
-        }
-
-        /// <summary>PlayerEgo::calcCollision, asteroid part: the asteroid is destroyed, the player takes 20.</summary>
-        void CheckAsteroids()
-        {
-            if (mining != null && mining.State != GoF2Mining.Phase.Idle) return;
-            var pos = transform.position;
-            var all = GoF2Target.All;
-            for (int i = all.Count - 1; i >= 0; i--)
-            {
-                var t = all[i];
-                if (t == null || !t.isAsteroid || !t.Alive) continue;
-                if (!t.Contains(pos)) continue;
-                t.Damage(9999f);
-                Target.Damage(20f);
-                if (chase != null && chase.enabled) chase.Shake(1000f, 6f);
-            }
         }
 
         // ---- death (PlayerEgo::explode 0xada6c, MGame::gameOverCheck 0x1b0d04) ---------------------------------

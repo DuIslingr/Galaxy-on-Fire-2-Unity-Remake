@@ -35,8 +35,6 @@ namespace GoF2Remake.World
         public int Security { get; private set; }
         public int StationIndex { get; private set; }
         public Vector3 StationPosition { get; private set; }
-        /// <summary>The station's outer volume (metres) the fighters are pushed out of; 0 = no station.</summary>
-        public float StationRadius { get; private set; }
         /// <summary>Radar+0x1b8: hostile living ships (0 without a scanner).</summary>
         public int HostileCount { get; private set; }
         public event Action<string> Message;
@@ -62,13 +60,7 @@ namespace GoF2Remake.World
             Security = sys?.securityLevel ?? 0;
             blackMarket = layout.systemIndex == 25;
             hasScanner = GoF2Shop.FirstMounted(db, 17) != null;
-            if (station != null)
-            {
-                StationPosition = station.transform.position;
-                var b = new Bounds(StationPosition, Vector3.zero);
-                foreach (var r in station.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
-                StationRadius = Mathf.Max(b.extents.x, b.extents.y, b.extents.z);
-            }
+            if (station != null) StationPosition = station.transform.position;
 
             var fxRoot = new GameObject("NPC weapon fx").transform;
             fxRoot.SetParent(transform, false);

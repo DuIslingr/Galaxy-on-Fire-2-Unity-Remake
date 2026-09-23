@@ -78,6 +78,7 @@ namespace GoF2Remake.Flight
         public Target AutopilotTarget { get; private set; }
         public bool Autopilot => AutopilotTarget != null;
         public bool GoingToStation => AutopilotTarget?.kind == Kind.Station;
+        public bool GoingToGate => AutopilotTarget?.kind == Kind.Jumpgate;
         public bool Jumping { get; private set; }
         public bool FastForward { get; private set; }
         /// <summary>Lock ring frame 0..23 (no 500 ms delay for landmarks and planets), -1 = none.</summary>

@@ -13,11 +13,14 @@
 //               close up; visual bank up to 33 deg from the averaged turn, auto-level after 750 ms
 //   firing      target inside the +-0.0076 cone (ship-space unit vector x / y) and +-35000 per axis; one NPC gun
 //   boost       5 % per 5 s, or after losing 40 % of the hull, for 5..8 s (x1.05 / x0.95 per 30 fps frame)
-//   avoidance   pushed out of the station's volume (fighters fly through asteroids and each other)
+//   avoidance   inside the first landmark's volumes (station, gate), then the first ship's (freighters): heading +=
+//               (away - fwd) * speed * 0.03 plus an extra step (fighters fly through asteroids and each other)
 //   death       sound 20, 1.5..3 s tumbling along the death direction, then Explosion type 0, the hull 300 ms more,
 //               a crate with the cargo; gone once the explosion ended and the crate is gone (60 s)
 // Freighters (PlayerFixedObject): unarmed, fly game +Z at 1 u/ms, never turn, x5 hull; death: their wreck animation
-// (cargo_*_explosion_anim, ~10 s, still moving), then a x6 explosion; the crate appears at once.
+// (cargo_*_explosion_anim, ~10 s, still moving), then a x6 explosion; the crate appears at once; the wreck then stays
+// where it is (state 4) with its wreck volumes. Their boxes (GoF2Obstacle, Level::createShip) are what bullets hit, the
+// player slides along and fighters steer out of.
 // Friendly fire (Player::damage): hits by the player on system-race / attack-race ships add up: > 33 % of the hull ->
 // radio "Hold your fire!", >= 50 % -> this ship turns hostile, >= 66 % -> the whole race turns hostile (10 / 25 / 40 % on
 // Extreme). NPC bullets never hit their own race; a non-hostile NPC's stray hit on the player does 20 %.
@@ -80,6 +83,7 @@ namespace GoF2Remake.World
         GoF2Explosion explosion;
         GameObject wreck;
         GoF2Crate crate;
+        GoF2Obstacle obstacle;
 
         static Vector3 ToUnity(Vector3 game) => new Vector3(game.x, game.y, -game.z) * M;
         static Vector3 ToGame(Vector3 unity) => new Vector3(unity.x, unity.y, -unity.z) / M;
@@ -109,7 +113,13 @@ namespace GoF2Remake.World
             Target.hitpoints = new GoF2Hitpoints(GoF2NpcTables.Hull(kind, spec.ship));
             Target.hitpoints.SetEmp(GoF2NpcTables.Emp(kind), GoF2NpcTables.EmpRecoveryMs(kind));
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
-            if (spec.freighter && modelGo != null) Target.boxes = new[] { LocalBounds(modelGo) };
+            if (spec.freighter)
+            {
+                obstacle = gameObject.AddComponent<GoF2Obstacle>();
+                obstacle.projectFromVolume = false;
+                obstacle.volumes = GoF2CollisionVolume.ForFreighter(spec.ship, spec.race);
+                Target.boxes = LocalBoxes(obstacle.volumes);
+            }
             Target.Damaged += OnDamaged;
             Target.Died += OnDied;
             lastHull = Hp.hull;
@@ -150,23 +160,18 @@ namespace GoF2Remake.World
             s.dopplerLevel = 0f;
         }
 
-        static Bounds LocalBounds(GameObject go)
+        /// <summary>The world-axis boxes as local hit boxes (GoF2Target.Contains) for the ship's fixed rotation.</summary>
+        static Bounds[] LocalBoxes(List<GoF2CollisionVolume> volumes)
         {
-            var root = go.transform.parent;
-            Bounds b = default;
-            bool any = false;
-            foreach (var mf in go.GetComponentsInChildren<MeshFilter>())
+            var inv = Quaternion.Inverse(GameForward);
+            var list = new List<Bounds>();
+            foreach (var v in volumes)
             {
-                if (mf.sharedMesh == null) continue;
-                var mb = mf.sharedMesh.bounds;
-                for (int i = 0; i < 8; i++)
-                {
-                    var c = mb.center + Vector3.Scale(mb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
-                    var p = root.InverseTransformPoint(mf.transform.TransformPoint(c));
-                    if (!any) { b = new Bounds(p, Vector3.zero); any = true; } else b.Encapsulate(p);
-                }
+                if (v.sphere) continue;
+                var size = inv * (v.half * 2f);
+                list.Add(new Bounds(inv * v.centre, new Vector3(Mathf.Abs(size.x), Mathf.Abs(size.y), Mathf.Abs(size.z))));
             }
-            return b;
+            return list.ToArray();
         }
 
         /// <summary>KIPlayer::revive: full hull, new cargo, base speed, back on its route, at 'position' (Unity).</summary>
@@ -176,6 +181,7 @@ namespace GoF2Remake.World
             transform.SetPositionAndRotation(position, GameForward);
             if (modelGo != null) { modelGo.SetActive(true); model.localRotation = Quaternion.identity; }
             if (wreck != null) Destroy(wreck);
+            if (obstacle != null) obstacle.volumes = GoF2CollisionVolume.ForFreighter(Spec.ship, Spec.race);
             Target.Revive();
             lastHull = Hp.hull;
             damageSinceBoost = 0;
@@ -230,7 +236,8 @@ namespace GoF2Remake.World
             else jumpMs = 0f;
             UpdateBoost(dtMs);
             Steer(dtMs);
-            AvoidStation(dtMs);
+            Avoid(true, dtMs);
+            Avoid(false, dtMs);
         }
 
         /// <summary>§4.2: hostile / friend flags for the markers and the AI.</summary>
@@ -418,18 +425,25 @@ namespace GoF2Remake.World
             }
         }
 
-        /// <summary>§5.7: out of the station's outer volume (direction += (out - fwd) * speed * 0.03, extra step).</summary>
-        void AvoidStation(float dtMs)
+        /// <summary>§5.7 (PlayerFighter::update, +0x13a): the first landmark / ship whose volumes contain the fighter turns it
+        /// away (direction += (away - fwd) * speed * 0.03, up = world up) and moves it one extra step.</summary>
+        void Avoid(bool landmarks, float dtMs)
         {
-            float r = traffic.StationRadius;
-            if (r <= 0f) return;
-            var pos = transform.position - traffic.StationPosition;
-            if (pos.sqrMagnitude >= r * r || pos.sqrMagnitude < 1e-6f) return;
-            var p = pos.normalized;
-            var fwd = transform.forward;
-            var dir = (fwd + (p - fwd) * speed * 0.03f).normalized;
-            transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
-            transform.position += transform.forward * speed * dtMs * M;
+            var all = GoF2Obstacle.All;
+            var pos = transform.position;
+            for (int i = 0; i < all.Count; i++)
+            {
+                var o = all[i];
+                if (o == null || o.landmark != landmarks || !o.Active) continue;
+                if (!o.Touches(pos, out int index)) continue;
+                var p = o.ProjectionVector(pos, index);
+                if (p == Vector3.zero) continue;
+                var fwd = transform.forward;
+                var dir = (fwd + (p - fwd) * speed * 0.03f).normalized;
+                transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+                transform.position += transform.forward * speed * dtMs * M;
+                return;
+            }
         }
 
         /// <summary>State 6: x1.1 per (30 fps) frame, gone above 100 u/ms.</summary>
@@ -480,7 +494,9 @@ namespace GoF2Remake.World
                 if (wreckPrefab != null && model != null)
                 {
                     wreck = Instantiate(wreckPrefab, transform, false);
-                    wreck.transform.localRotation = model.localRotation;
+                    // The wreck meshes face the other way (the original turns them (0, pi, 0), which its wreck collision
+                    // data has baked in, like the stations').
+                    wreck.transform.localRotation = model.localRotation * Quaternion.Euler(0f, 180f, 0f);
                     float len = GoF2PartAnimation.PlayOnce(wreck);
                     if (len > 0f) dyingMs = len;
                     modelGo.SetActive(false);
@@ -508,6 +524,7 @@ namespace GoF2Remake.World
             explosion = GoF2Explosion.Spawn(transform.position, IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : 1f);
             Current = State.Dead;
             deadMs = 0f;
+            if (obstacle != null) obstacle.volumes = GoF2CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
             if (!IsFreighter) DropCrate();
         }
 
@@ -525,6 +542,7 @@ namespace GoF2Remake.World
         void UpdateDead(float dtMs)
         {
             deadMs += dtMs;
+            if (IsFreighter && wreck != null) return;   // state 4: the wreck stays for the rest of the level
             if (deadMs > 300f)
             {
                 if (modelGo != null && modelGo.activeSelf) modelGo.SetActive(false);
