@@ -19,18 +19,26 @@ namespace GoF2Remake.Visuals
         public float pause = 6f;
         [Tooltip("Seconds of delay before the first pass.")]
         public float startDelay;
+        [Tooltip("Fraction of the first pass already flown at start (0 = flies in from the start point).")]
+        [Range(0f, 1f)] public float startProgress;
         public float bankDegrees = 8f;
         public float bankPeriod = 14f;
+
+        /// <summary>Optional: picks a new lane (start, heading, length) before every pass, e.g. relative to a moving camera.</summary>
+        public System.Func<(Vector3 start, Quaternion rotation, float length)> nextLane;
 
         Vector3 startPos;
         Quaternion startRot;
         float travelled, wait;
         Renderer[] renderers;
 
-        void Awake()
+        void Start()   // not Awake: spawners set the fields right after AddComponent
         {
             startPos = transform.position;
             startRot = transform.rotation;
+            NewLane();
+            travelled = startProgress * length;   // first pass only: start part-way, already in view
+            transform.SetPositionAndRotation(startPos + startRot * Vector3.forward * travelled, startRot);
             renderers = GetComponentsInChildren<Renderer>(true);
             wait = startDelay;
             SetVisible(wait <= 0f);
@@ -41,7 +49,7 @@ namespace GoF2Remake.Visuals
             if (wait > 0f)
             {
                 wait -= Time.deltaTime;
-                if (wait <= 0f) { travelled = 0f; SetVisible(true); }
+                if (wait <= 0f) { travelled = 0f; NewLane(); SetVisible(true); }
                 return;
             }
             travelled += speed * Time.deltaTime;
@@ -53,6 +61,16 @@ namespace GoF2Remake.Visuals
                 SetVisible(false);
                 transform.SetPositionAndRotation(startPos, startRot);
             }
+        }
+
+        void NewLane()
+        {
+            if (nextLane == null) return;
+            var lane = nextLane();
+            startPos = lane.start;
+            startRot = lane.rotation;
+            length = lane.length;
+            transform.SetPositionAndRotation(startPos, startRot);
         }
 
         void SetVisible(bool on)

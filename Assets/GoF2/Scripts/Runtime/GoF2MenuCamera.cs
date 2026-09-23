@@ -38,12 +38,25 @@ namespace GoF2Remake.Visuals
             cam = GetComponent<Camera>();
         }
 
+        /// <summary>Restarts the orbit at startAngle and moves the camera there now (spawners read its position).</summary>
+        public void ResetOrbit()
+        {
+            angle = startAngle;
+            if (cam == null) cam = GetComponent<Camera>();
+            Place();
+        }
+
         void LateUpdate()
+        {
+            angle += orbitSpeed * Time.deltaTime;
+            Place();
+        }
+
+        void Place()
         {
             float aspect = cam != null ? cam.aspect : GoF2Aspect.Reference;
             if (cam != null) cam.fieldOfView = GoF2Aspect.VerticalFov(verticalFov16x9, aspect);
             if (target == null) return;
-            angle += orbitSpeed * Time.deltaTime;
             float t = Time.time;
             float y = height + Mathf.Sin(t * 2f * Mathf.PI / Mathf.Max(1f, bobPeriod)) * bobAmplitude;
             var offset = Quaternion.Euler(0f, angle, 0f) * new Vector3(0f, 0f, -distance);

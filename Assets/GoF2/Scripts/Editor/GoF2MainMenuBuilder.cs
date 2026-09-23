@@ -4,8 +4,9 @@
 //     images 7002 / 7001 / 7000) and the Select Campaign cards (gof2_campaign_select_ipad_large.png,
 //     images 9500-9505), plus two generated shading gradients.
 //   - Inter font assets (SIL Open Font License), PanelSettings with the GoF2 theme, a menu post-processing
-//     profile, and the scene: random station backdrop in its system's skybox (ModMainMenu::OnInitialize),
-//     slow cinematic camera, background traffic, asteroids, UI Toolkit menu, music.
+//     profile, and the scene: a random station orbit as backdrop (ModMainMenu::OnInitialize), built at runtime
+//     by GoF2MenuBackground with the flight level's GoF2OrbitBuilder (sky, sun/planets, lights, asteroids),
+//     slow cinematic camera, background traffic, UI Toolkit menu, music.
 
 using System.IO;
 using System.Linq;
@@ -30,17 +31,17 @@ namespace GoF2Remake.EditorTools
         const string ImageDir = MenuDir + "/Images";
         const string ScenePath = "Assets/Scenes/MainMenu.unity";
 
-        // Background set: (assembled station prefab, skybox = systems.json textureIndex of its system, yaw).
-        static readonly (string station, int skybox, float yaw)[] Stations =
+        // Background set: station indices whose orbits frame well behind the menu (the original picks any of 0..99).
+        static readonly (int station, string label, float cameraStartAngle)[] Stations =   // angle -1 = automatic
         {
-            ("station_000_nivelian", 4, 0f),    // Neh'bru, Suteo
-            ("station_007_terran", 2, 0f),      // Pan system
-            ("station_021_midorian", 8, 0f),    // Eanya
-            ("station_049_nivelian", 7, 0f),    // Weymire
-            ("station_056_terran", 3, 0f),      // Union
-            ("station_070_terran", 5, 0f),      // Magnetar
-            ("station_077_midorian", 9, 0f),    // Mido
-            ("station_vossk", 9, 0f),           // Vossk space
+            (0, "Nehebru, Suteo (jumpgate orbit)", -1f),
+            (7, "Binon, Pan", -1f),
+            (21, "Euclades, Eanya", -1f),
+            (49, "Siameh, Weymire", -1f),
+            (56, "Suttnar, Union", -1f),
+            (70, "Dis, Magnetar", -1f),
+            (77, "Heinsten, Mido", -1f),
+            (25, "S'inokk, S'kolptorr (Vossk)", -1f),
         };
 
         // Short, neutral Terran radio lines (1.6-2.8 s) for the voice volume preview.
@@ -67,8 +68,8 @@ namespace GoF2Remake.EditorTools
             BuildFonts();
             var panelSettings = BuildPanelSettings();
             var profile = BuildVolumeProfile();
-            for (int i = 0; i < GoF2SkyboxBaker.SkyboxCount; i++)
-                if (AssetDatabase.LoadAssetAtPath<Material>(GoF2SkyboxBaker.MaterialPath(i)) == null) GoF2SkyboxBaker.Bake(i);
+            GoF2SpaceSceneBuilder.BuildBackdropMaterials();   // the backdrop orbit uses the flight level's sky + materials
+            if (!System.IO.File.Exists($"{GoF2SkyboxBaker.SpaceSkyDir}/nebula_018.png")) GoF2SkyboxBaker.BakeSpaceSkies();
             AssetDatabase.ImportAsset(MenuDir, ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
             BuildScene(panelSettings, profile);
         }
@@ -331,23 +332,19 @@ namespace GoF2Remake.EditorTools
         static void BuildScene(PanelSettings panelSettings, VolumeProfile profile)
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            var skyboxes = Enumerable.Range(0, GoF2SkyboxBaker.SkyboxCount)
-                .Select(i => AssetDatabase.LoadAssetAtPath<Material>(GoF2SkyboxBaker.MaterialPath(i))).ToArray();
-
-            // Lighting: the skybox is the ambient + reflection source.
-            RenderSettings.skybox = skyboxes[Stations[0].skybox];
+            // Sky, ambient and fog are set at runtime from the chosen orbit (GoF2OrbitBuilder.SetupSky); this is
+            // only what the scene shows in edit mode.
+            RenderSettings.skybox = AssetDatabase.LoadAssetAtPath<Material>($"{GoF2SkyboxBaker.SpaceSkyDir}/SpaceSky.mat");
             RenderSettings.ambientMode = AmbientMode.Skybox;
-            RenderSettings.ambientIntensity = 1f;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
-            RenderSettings.fog = false;
 
-            var sunGo = new GameObject("Sun");
-            var sun = sunGo.AddComponent<Light>();
+            // LIGHT0 (toward the sun) and LIGHT1 (planet light), aimed and coloured per orbit at runtime.
+            var sun = new GameObject("Sun (LIGHT0)").AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.5f;
-            sun.color = new Color(1f, 0.95f, 0.88f);
             sun.shadows = LightShadows.None;
-            sunGo.transform.rotation = Quaternion.Euler(28f, -35f, 0f);
+            var planetLight = new GameObject("Planet light (LIGHT1)").AddComponent<Light>();
+            planetLight.type = LightType.Directional;
+            planetLight.shadows = LightShadows.None;
 
             // Camera (CutScene: FOV ~53 deg, far 200000 game units = 10 km; stations need more here).
             var camGo = new GameObject("Menu Camera") { tag = "MainCamera" };
@@ -371,17 +368,15 @@ namespace GoF2Remake.EditorTools
             var bgGo = new GameObject("Background");
             var bg = bgGo.AddComponent<GoF2MenuBackground>();
             bg.menuCamera = menuCam;
-            bg.skyboxes = skyboxes;
+            bg.sunLight = sun;
+            bg.planetLight = planetLight;
             bg.setups = Stations.Select(s => new GoF2MenuBackground.Setup
             {
-                label = s.station,
-                station = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Resources/Assembled/main/stations/{s.station}.prefab"),
-                skybox = s.skybox,
-                yaw = s.yaw
-            }).Where(s => s.station != null).ToArray();
+                label = s.label,
+                station = s.station,
+                cameraStartAngle = s.cameraStartAngle,
+            }).ToArray();
 
-            BuildTraffic();
-            bg.asteroidField = BuildAsteroids();
 
             var volGo = new GameObject("Post Processing");
             var volume = volGo.AddComponent<Volume>();
@@ -426,56 +421,6 @@ namespace GoF2Remake.EditorTools
             AddToBuildSettings(GoF2SpaceSceneBuilder.ScenePath, 1);
             AddToBuildSettings("Assets/Scenes/FlightTest.unity", 2);
             Debug.Log($"GoF2: main menu scene created at {ScenePath}. Press Play.");
-        }
-
-        /// <summary>NPC traffic crossing the view (the original spawns ambient traffic via Level::createScene mode 2).</summary>
-        static void BuildTraffic()
-        {
-            var parent = new GameObject("Traffic").transform;
-            // (ship, start, heading yaw, speed m/s, length m, pause s, delay s)
-            var lanes = new (string ship, Vector3 start, float yaw, float speed, float length, float pause, float delay)[]
-            {
-                ("ship_001_terran", new Vector3(-4200f, 350f, -900f), 80f, 95f, 8500f, 8f, 2f),
-                ("ship_005_terran", new Vector3(-4150f, 330f, -960f), 80f, 95f, 8500f, 8f, 2.4f),
-                ("ship_022_terran", new Vector3(3800f, -250f, 1800f), 250f, 110f, 8000f, 14f, 12f),
-                ("cargo_002_nivelian", new Vector3(-5000f, -600f, 3500f), 95f, 45f, 10000f, 20f, 0f),
-                ("ship_016_nivelian", new Vector3(2500f, 900f, -4000f), 330f, 120f, 9000f, 18f, 25f),
-                ("battleship_terran", new Vector3(-9000f, 1800f, 9000f), 100f, 25f, 18000f, 40f, 5f),
-            };
-            foreach (var l in lanes)
-            {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Resources/Assembled/main/ships/{l.ship}.prefab");
-                if (prefab == null) continue;
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
-                go.transform.SetPositionAndRotation(l.start, Quaternion.Euler(0f, l.yaw, 0f));
-                go.GetComponent<GoF2AssembledObject>()?.SetPlayerVariant(false);   // NPC engines
-                var fly = go.AddComponent<GoF2Flyby>();
-                fly.speed = l.speed;
-                fly.length = l.length;
-                fly.pause = l.pause;
-                fly.startDelay = l.delay;
-            }
-        }
-
-        /// <summary>Asteroids (Level::createAsteroids); GoF2MenuBackground spreads them around the chosen station.</summary>
-        static Transform BuildAsteroids()
-        {
-            var parent = new GameObject("Asteroids").transform;
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{GoF2ImportSettings.Root}/Resources/Assembled/main/asteroids/asteroid_01.prefab");
-            if (prefab == null) return parent;
-            var rnd = new System.Random(7);
-            float R(float a, float b) => a + (float)rnd.NextDouble() * (b - a);
-            for (int i = 0; i < 18; i++)
-            {
-                var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
-                float ang = R(0f, 360f) * Mathf.Deg2Rad, dist = R(3500f, 9000f);
-                go.transform.position = new Vector3(Mathf.Cos(ang) * dist, R(-1500f, 1500f), Mathf.Sin(ang) * dist);
-                go.transform.rotation = Quaternion.Euler(R(0, 360), R(0, 360), R(0, 360));
-                go.transform.localScale = Vector3.one * R(3f, 12f);
-                var spin = go.AddComponent<GoF2Spin>();
-                spin.degreesPerSecond = new Vector3(R(-3, 3), R(-4, 4), R(-3, 3));
-            }
-            return parent;
         }
 
         static AudioClip Clip(string rel) => AssetDatabase.LoadAssetAtPath<AudioClip>($"{GoF2ImportSettings.Root}/Audio/{rel}");
