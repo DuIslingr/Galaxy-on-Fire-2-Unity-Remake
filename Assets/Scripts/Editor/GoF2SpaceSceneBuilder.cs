@@ -4,7 +4,7 @@
 // current station orbit at runtime from the data, like the original's Level::init. This also makes what it loads by name:
 //   Resources/GoF2Backdrop/<texture>.mat  sun (additive), planet and ring (alpha) materials, space dust + fog sprites
 //   Resources/GoF2Sky/                    stars + nebula cubemaps (GoF2 > Bake Space Skies), if missing
-// Build settings: MainMenu 0, Space 1, FlightTest 2. The main menu's "Start new game" loads Space.
+// Build settings: MainMenu 0, Space 1, Station 2. The main menu's "Start new game" loads Space.
 
 using System.IO;
 using System.Linq;

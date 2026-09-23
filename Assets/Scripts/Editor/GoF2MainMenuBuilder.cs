@@ -419,7 +419,7 @@ namespace GoF2Remake.EditorTools
             EditorSceneManager.SaveScene(scene, ScenePath);
             AddToBuildSettings(ScenePath, 0);
             AddToBuildSettings(GoF2SpaceSceneBuilder.ScenePath, 1);
-            AddToBuildSettings("Assets/Scenes/FlightTest.unity", 2);
+            AddToBuildSettings(GoF2StationSceneBuilder.ScenePath, 2);
             Debug.Log($"GoF2: main menu scene created at {ScenePath}. Press Play.");
         }
 
