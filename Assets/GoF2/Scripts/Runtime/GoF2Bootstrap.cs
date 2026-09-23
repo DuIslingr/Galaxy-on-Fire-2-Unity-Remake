@@ -14,15 +14,24 @@ namespace GoF2Remake
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Init()
         {
-#if UNITY_EDITOR
-            // QualitySettings changes made in Play mode would otherwise stick to the project settings.
             int editorVSync = QualitySettings.vSyncCount;
-            Application.quitting += () => QualitySettings.vSyncCount = editorVSync;
-#endif
             if (Application.isMobilePlatform) Screen.sleepTimeout = SleepTimeout.NeverSleep;   // no screen dimming while playing
             ApplyFrameRate();
             GoF2Settings.Changed -= ApplyFrameRate;
             GoF2Settings.Changed += ApplyFrameRate;
+#if UNITY_EDITOR
+            // Leaving Play mode (Application.quitting in the Editor): restore the Editor's vSyncCount, or the
+            // Play-mode value would stick to QualitySettings.asset, and unhook, because with domain reload off
+            // the subscription would survive into edit mode.
+            System.Action restore = null;
+            restore = () =>
+            {
+                GoF2Settings.Changed -= ApplyFrameRate;
+                QualitySettings.vSyncCount = editorVSync;
+                Application.quitting -= restore;
+            };
+            Application.quitting += restore;
+#endif
         }
 
         public static int DisplayRefreshRate
@@ -36,6 +45,7 @@ namespace GoF2Remake
 
         public static void ApplyFrameRate()
         {
+            if (!Application.isPlaying) return;
             bool mobile = Application.isMobilePlatform;
             switch (GoF2Settings.FrameRate)
             {
