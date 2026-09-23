@@ -248,17 +248,23 @@ namespace GoF2Remake.UI
             root.EnableInClassList("layout-ultrawide", aspect > 2.3f);
             root.EnableInClassList("layout-phone", phone);
 
-            // Safe area insets (pixels -> panel units), applied once the panel has its new size.
+            ApplySafeArea(w, h, offscreen);
+        }
+
+        /// <summary>Safe area insets (pixels -> panel units) once the panel is laid out (its size is NaN before).</summary>
+        void ApplySafeArea(float w, float h, bool offscreen)
+        {
             root.schedule.Execute(() =>
             {
-                if (safeArea == null || root.layout.width <= 0f) return;
+                if (safeArea == null) return;
+                if (!(root.layout.width > 0f)) { ApplySafeArea(w, h, offscreen); return; }   // also catches NaN
                 float k = root.layout.width / w;
                 var sa = offscreen ? new Rect(0f, 0f, w, h) : Screen.safeArea;
                 safeArea.style.paddingLeft = sa.xMin * k;
                 safeArea.style.paddingRight = (w - sa.xMax) * k;
                 safeArea.style.paddingTop = (h - sa.yMax) * k;
                 safeArea.style.paddingBottom = sa.yMin * k;
-            });
+            }).ExecuteLater(1);
         }
 
         void OnDisable()
