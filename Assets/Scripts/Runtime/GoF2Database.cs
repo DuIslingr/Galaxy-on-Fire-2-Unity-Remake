@@ -2,7 +2,7 @@
 // Loads the JSON exported from the original game data (see README) and turns ship + equipment
 // into FlightStats for GoF2ShipController.
 //
-// The JSON lives in Assets/GoF2/Resources/GoF2Data/ and is parsed with Unity's built-in JsonUtility
+// The JSON lives in Assets/Resources/GoF2Data/ and is parsed with Unity's built-in JsonUtility
 // (no extra packages needed).   var db = GoF2Database.Load();  var betty = db.ShipByName("Betty");
 
 using System.Collections.Generic;

@@ -9,7 +9,7 @@
 #   python Reference/tools/asset_conversion/assemblies/patch_resources.py      (from the project root)
 import json, os
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', '..'))
-RES = os.path.join(ROOT, 'Assets/GoF2/Resources/GoF2Data/resources.json')
+RES = os.path.join(ROOT, 'Assets/Resources/GoF2Data/resources.json')
 EMU = os.path.join(ROOT, 'Reference/decompiled/native/BuildResourceList_EMULATED_OUTPUT.json')
 IDS = os.path.join(os.path.dirname(__file__), 'rules', 'aem_ids_from_disasm.json')
 
@@ -35,7 +35,7 @@ for mid, src in sorted(path_by_id.items()):
     else:
         continue
     model = model_path(src)
-    if not os.path.exists(os.path.join(ROOT, 'Assets/GoF2', model)): continue
+    if not os.path.exists(os.path.join(ROOT, 'Assets', model)): continue
     res['meshes'].append(dict(id=mid, model=model, source=src, materialId=mat if mat in mats else -1))
     added.append((mid, model, mat))
 

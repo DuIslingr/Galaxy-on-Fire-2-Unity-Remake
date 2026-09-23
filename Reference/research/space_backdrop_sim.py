@@ -3,7 +3,7 @@
 # Game units / radians. See space_backdrop.md. Usage: python Reference/research/space_backdrop_sim.py
 import json, math, sys
 import os
-R=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','Assets','GoF2','Resources','GoF2Data')+os.sep
+R=os.path.join(os.path.dirname(os.path.abspath(__file__)),'..','..','Assets','Resources','GoF2Data')+os.sep
 systems=json.load(open(R+'systems.json',encoding='utf-8'))
 stations=json.load(open(R+'stations.json',encoding='utf-8'))
 ST={s['index']:s for s in stations}

@@ -19,7 +19,7 @@ namespace GoF2Remake.EditorTools
 {
     public static class GoF2ImportSettings
     {
-        public const string Root = "Assets/GoF2";
+        public const string Root = "Assets";
         /// <summary>Meters per GoF unit. Must match GoF2ShipController.metersPerUnit (default 0.05).</summary>
         public const float ModelScale = 0.05f;
     }

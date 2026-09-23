@@ -4,7 +4,7 @@
 // (texture = SolarSystem textureIndex) added on top. This renders both into the six faces of a cubemap so
 // the sky is a regular Unity skybox, which also drives URP ambient light and reflections.
 //
-// Menu "GoF2/Bake Skyboxes": Assets/GoF2/Skyboxes/skybox_0XX.png (6-face horizontal strip, imported as a
+// Menu "GoF2/Bake Skyboxes": Assets/Skyboxes/skybox_0XX.png (6-face horizontal strip, imported as a
 // Cubemap) + skybox_0XX.mat (Skybox/Cubemap). Used by the main menu.
 //
 // Menu "GoF2/Bake Space Skies": the flight levels combine the layers at runtime instead, because a sky is really

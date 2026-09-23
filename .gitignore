@@ -37,7 +37,7 @@ crashlytics-build.properties
 .DS_Store
 Thumbs.db
 
-# GoF2: one-time import parts (the extracted assets live in Assets/GoF2)
+# GoF2: one-time import parts (the extracted assets live in Assets)
 /GoF2_ImportParts/
 
 # Claude Code local settings (keep .claude/skills and CLAUDE.md in git)

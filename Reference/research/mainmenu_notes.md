@@ -1,6 +1,6 @@
 # GoF2 main menu: research notes (decompiled libgof2hdaa.so, Android 2.0.16 "FHD" mod)
 
-Addresses are Ghidra addresses (image base 0x10000). Text IDs resolve through `Assets/GoF2/Localization/text_en.json` (a plain array, index = ID; `GameText::getText` has no remap table in use; only IDs 5000/5001 are special: hardcoded "Privacy Policy"/"Terms of Service").
+Addresses are Ghidra addresses (image base 0x10000). Text IDs resolve through `Assets/Localization/text_en.json` (a plain array, index = ID; `GameText::getText` has no remap table in use; only IDs 5000/5001 are special: hardcoded "Privacy Policy"/"Terms of Service").
 Image IDs are `images2D` in `resources.json`. **Sub-rect rule (verified visually):** an image's region = `regions[rank]` in `Textures/_texture_manifest.json`, where rank = position of the ID in the *sorted* list of all images2D IDs sharing the same `textureId`. (Not id - base: gof2_interface IDs have gaps.) Helper: `scratchpad/img.py <id>`.
 FMOD event IDs: see section 4 and `scratchpad/fmod_event_ids.txt` (new, full list of 162 SFX/music IDs).
 

@@ -21,7 +21,7 @@ namespace GoF2Remake.EditorTools
     {
         public string key, parent;    // hierarchy inside the assembly; parent "" = the prefab root
         public int mesh;              // resource id; 0 = empty transform (e.g. turret pivot)
-        public string model;          // FBX path relative to Assets/GoF2
+        public string model;          // FBX path relative to Assets
         public int material;          // override material id (0 = the per-mesh prefab's material)
         public string role, variant, condition;
         public float[] position;      // game units, engine space, relative to parent

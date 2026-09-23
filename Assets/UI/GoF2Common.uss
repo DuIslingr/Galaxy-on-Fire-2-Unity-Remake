@@ -16,13 +16,13 @@
     --gof-line: rgba(62, 200, 255, 0.25);
     --gof-shadow: rgba(0, 0, 0, 0.6);
 
-    -unity-font-definition: url("project://database/Assets/GoF2/UI/Fonts/Inter-Regular-SDF.asset");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Inter-Regular-SDF.asset");
     color: var(--gof-text);
     font-size: 20px;
 }
 
 .gof-semibold {
-    -unity-font-definition: url("project://database/Assets/GoF2/UI/Fonts/Inter-SemiBold-SDF.asset");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Inter-SemiBold-SDF.asset");
 }
 
 /* ---- Slider -------------------------------------------------------------------------- */

@@ -1,6 +1,6 @@
 // GoF2PackInstaller.cs  (Editor only)
 // Joins the split asset pack in <project>/GoF2_ImportParts/ (GoF2_AssetPack.zip.001, .002, ...)
-// and extracts it into Assets/GoF2. Offered automatically once all parts are present, or run it via
+// and extracts it into Assets. Offered automatically once all parts are present, or run it via
 // menu "GoF2/Install Asset Pack".
 
 using System;
@@ -17,7 +17,7 @@ namespace GoF2Remake.EditorTools
     {
         const string PartsDir = "GoF2_ImportParts";
         const string ManifestName = "GoF2_AssetPack_manifest.txt";   // lines: "<file> <bytes>"
-        const string DoneMarker = "Assets/GoF2/.pack_installed";
+        const string DoneMarker = "Assets/.pack_installed";
 
         static GoF2PackInstaller()
         {
@@ -26,7 +26,7 @@ namespace GoF2Remake.EditorTools
                 if (File.Exists(DoneMarker) || !File.Exists(Path.Combine(PartsDir, ManifestName))) return;
                 if (!PartsComplete(out _)) return;
                 if (EditorUtility.DisplayDialog("GoF2 asset pack",
-                        "All parts of the GoF2 asset pack are present. Install them into Assets/GoF2 now?\n\n(About 1.9 GB; the first import takes a while.)",
+                        "All parts of the GoF2 asset pack are present. Install them into Assets now?\n\n(About 1.9 GB; the first import takes a while.)",
                         "Install", "Later"))
                     Install();
             };

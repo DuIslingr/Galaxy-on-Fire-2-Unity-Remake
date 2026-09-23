@@ -4,7 +4,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import aem
 
 D = os.path.abspath(os.path.join(os.path.dirname(__file__), '../obbdata/47947_GOF2CONTENT_ETC/assets/data'))
-OUT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../unitypkg/Assets/GoF2/Models'))
+OUT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../unitypkg/Assets/Models'))
 
 def reset():
     bpy.ops.wm.read_factory_settings(use_empty=True)

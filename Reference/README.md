@@ -13,13 +13,13 @@ Source material for the remake. Nothing in here is used by Unity; it's for readi
 | `decompiled/native/_ALL_FUNCTIONS.c` | All 4,028 functions in one file. Grep it, or use `tools/show.py`. |
 | `decompiled/native/_FUNCTIONS.tsv` | Function name, address and size. |
 | `decompiled/native/game/BuildResourceList_DISASSEMBLY.txt` | The one function too large to decompile (resource table). |
-| `decompiled/native/BuildResourceList_EMULATED_OUTPUT.json` | Its result, obtained by emulation. The cleaned version is `Assets/GoF2/Resources/GoF2Data/resources.json`. |
+| `decompiled/native/BuildResourceList_EMULATED_OUTPUT.json` | Its result, obtained by emulation. The cleaned version is `Assets/Resources/GoF2Data/resources.json`. |
 | `decompiled/java/` | The Android Java wrapper (activity, input, JNI bridge). |
 | `binaries/libgof2hdaa.so` | The original 32-bit ARM game library (for Ghidra or constant lookups). |
 | `binaries/GOF2_2.0.16_Android_Price.apk` | The modded APK the code came from. The 1.5 GB OBB is not included; it's on the GitHub release page. |
 | `tools/show.py` | `python Reference/tools/show.py "^PlayerFighter::update$"` prints matching decompiled functions. |
 | `tools/rf.py` | `python Reference/tools/rf.py 000a8178` reads a `DAT_` constant as float/hex (needs `pip install pyelftools`). |
-| `tools/asset_conversion/` | The scripts that produced `Assets/GoF2`: `aem.py` (meshes), `aei.py` (textures), `parse_bins.py` (data), `emu_resources.py` (resource table), `aem2fbx.py` (Blender FBX export), `run_audio.sh` (FMOD banks). |
+| `tools/asset_conversion/` | The scripts that produced `Assets`: `aem.py` (meshes), `aei.py` (textures), `parse_bins.py` (data), `emu_resources.py` (resource table), `aem2fbx.py` (Blender FBX export), `run_audio.sh` (FMOD banks). |
 | `tools/*.java` | Ghidra headless scripts used for the decompile. |
 
 ## Reading the pseudocode

@@ -104,7 +104,7 @@ for fn in ('docks_hd','docks'):
 for f in sorted(glob.glob(D+'assets/*/bin/*docking_points*.bin')):
     r,o=docks(f); done(os.path.basename(f)[:-4],r,o)
 
-os.makedirs('../unitypkg/Assets/GoF2/Data',exist_ok=True)
-for k,v in res.items(): json.dump(v,open(f'../unitypkg/Assets/GoF2/Data/{k}.json','w'),ensure_ascii=False,indent=1)
-json.dump(report,open('../unitypkg/Assets/GoF2/Data/_bin_decode_report.json','w'),indent=1)
+os.makedirs('../unitypkg/Assets/Data',exist_ok=True)
+for k,v in res.items(): json.dump(v,open(f'../unitypkg/Assets/Data/{k}.json','w'),ensure_ascii=False,indent=1)
+json.dump(report,open('../unitypkg/Assets/Data/_bin_decode_report.json','w'),indent=1)
 for k,v in report.items(): print(k,v)

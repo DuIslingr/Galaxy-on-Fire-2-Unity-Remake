@@ -1,7 +1,7 @@
 #!/bin/bash
 S=/tmp/claude-0/-home-claude/a1a35670-f1fc-5e95-96f0-922d382f67cc/scratchpad
 D=$S/obbdata/47947_GOF2CONTENT_ETC/assets/data/audio
-OUT=$S/unitypkg/Assets/GoF2/Audio
+OUT=$S/unitypkg/Assets/Audio
 TMP=$S/audiotmp
 for f in $D/*.fsb; do
   bank=$(basename $f .fsb | sed 's/^FMOD_GOF2_\?//'); [ -z "$bank" ] && bank=MAIN

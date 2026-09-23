@@ -1,7 +1,7 @@
 import aei,glob,os,json,sys
 from multiprocessing import Pool
 D='../obbdata/47947_GOF2CONTENT_ETC/assets/data'
-OUT='../unitypkg/Assets/GoF2/Textures'
+OUT='../unitypkg/Assets/Textures'
 def job(f):
     rel=os.path.relpath(f,D)
     rel=rel.replace('assets/','',1) if rel.startswith('assets/') else rel

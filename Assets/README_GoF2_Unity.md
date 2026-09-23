@@ -7,7 +7,7 @@ Everything from the Galaxy on Fire 2 Full HD mod (game version 2.0.16, release `
 ## Import it
 
 1. Create a Unity project (Unity 2021 LTS or newer; Built-in or URP both work).
-2. Unzip every `GoF2_Unity_*.zip` into the project's `Assets/` folder. They all merge into `Assets/GoF2/`.
+2. Unzip every `GoF2_Unity_*.zip` into the project's `Assets/` folder. They all merge into `Assets/`.
 3. Let Unity import everything. The first import takes a while (about 1,100 models and 1,300 textures). The included `GoF2AssetPostprocessor` automatically applies these import settings:
    - scale = 0.05 m per game unit
    - normal maps flagged as normal maps

@@ -1,6 +1,6 @@
 import json,os,collections
 R=json.load(open('resources_raw.json'))
-U='../unitypkg/Assets/GoF2'
+U='../unitypkg/Assets'
 def rel(p):
     p=p[len('data/'):] if p.startswith('data/') else p
     return p.replace('assets/','',1) if p.startswith('assets/') else p

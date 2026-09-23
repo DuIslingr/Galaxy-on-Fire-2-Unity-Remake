@@ -1,4 +1,4 @@
-# Builds Assets/GoF2/Resources/GoF2Data/assemblies.json, the input of "GoF2 > Build Assembled Prefabs".
+# Builds Assets/Resources/GoF2Data/assemblies.json, the input of "GoF2 > Build Assembled Prefabs".
 #
 # rules/assemblies_*.json hold the composition rules recovered from the decompiled code (one research
 # pass per area; the matching *_notes.md explain functions, addresses and uncertainties):
@@ -21,9 +21,9 @@ from collections import Counter
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 RULES = os.path.join(HERE, 'rules')
-OUT = os.path.join(ROOT, 'Assets/GoF2/Resources/GoF2Data/assemblies.json')
+OUT = os.path.join(ROOT, 'Assets/Resources/GoF2Data/assemblies.json')
 
-res = json.load(open(os.path.join(ROOT, 'Assets/GoF2/Resources/GoF2Data/resources.json')))
+res = json.load(open(os.path.join(ROOT, 'Assets/Resources/GoF2Data/resources.json')))
 MESH = {}
 for m in res['meshes']:
     MESH.setdefault(m['id'], m)
@@ -35,7 +35,7 @@ def model_of(mid):
     return m['model'] if m else None
 
 def fbx_exists(model):
-    return model and os.path.exists(os.path.join(ROOT, 'Assets/GoF2', model))
+    return model and os.path.exists(os.path.join(ROOT, 'Assets', model))
 
 def pack_of(model):
     parts = (model or '').split('/')

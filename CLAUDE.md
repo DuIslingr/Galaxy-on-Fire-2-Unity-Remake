@@ -2,7 +2,7 @@
 
 A private, personal remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in Unity. The goal is a faithful port of the original gameplay (flight, combat, trading, stations, missions), built on the original assets and on logic ported from the decompiled game code.
 
-**Legal: keep everything private.** The assets under `Assets/GoF2/` and everything in `Reference/` are Deep Silver's copyrighted material. Never publish them, push them to a public repo, or upload them anywhere public.
+**Legal: keep everything private.** The game assets under `Assets/` (models, textures, audio, data, text and everything generated from them) and everything in `Reference/` are Deep Silver's copyrighted material. Never publish them, push them to a public repo, or upload them anywhere public.
 
 ## Environment
 
@@ -14,7 +14,7 @@ A private, personal remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs 
 ## Layout
 
 ```
-Assets/GoF2/
+Assets/
   Scripts/Runtime/   flight model, ship controller, chase camera, data loader, keyframe player
   Scripts/Runtime/World/  station orbits: GoF2OrbitLayout (seeded layout), GoF2OrbitBuilder (layout -> scene, shared by
                      the flight level and the menu background), GoF2SpaceLevel, GoF2Backdrop, GoF2SpaceDust
@@ -34,6 +34,8 @@ Assets/GoF2/
                      In Resources so levels load only what they use (GoF2AssembledObject.LoadPrefab)
   Resources/GoF2Sky/ flight-level sky: stars_00X + nebula_0XX cubemaps, SpaceSky.mat template
   Resources/GoF2Backdrop/ sun / planet / ring / dust materials, one per texture (loaded by name)
+  Scenes/            MainMenu, Space (flight level), FlightTest (old test scene)
+  Settings/          URP assets, GoF2_VolumeProfile (bloom)
 Reference/           decompiled original code, binaries and conversion tools (see Reference/README.md)
 ```
 
@@ -68,7 +70,7 @@ Menu items (from `Scripts/Editor`):
 - Data files with positions (`weapons_hd.json`, `docks_hd.json`) contain `position_file` (as stored) and `position_engine` (game space). Apply the rule above to `position_engine`.
 - The original stores animation position keys Z-up. The engine uses `(c0, c2, -c1)`. Keyframe rotations are in radians. The rotation axis mapping in `GoF2PartAnimation` is unconfirmed and editable in the inspector.
 
-## Data (`Assets/GoF2/Resources/GoF2Data`, loaded with `GoF2Database.Load()`, JsonUtility)
+## Data (`Assets/Resources/GoF2Data`, loaded with `GoF2Database.Load()`, JsonUtility)
 
 - `ships`, `items`, `systems`, `stations`: the economy and universe.
   - `items[].statList` has named stats (damage, range, boostSpeed, agility…).

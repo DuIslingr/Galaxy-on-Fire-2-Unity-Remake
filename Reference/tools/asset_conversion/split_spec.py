@@ -1,7 +1,7 @@
 import glob,os
 from PIL import Image
 from multiprocessing import Pool
-T='../unitypkg/Assets/GoF2/Textures'
+T='../unitypkg/Assets/Textures'
 def job(f):
     im=Image.open(f)
     if im.mode!='RGBA': return None
