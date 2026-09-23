@@ -286,7 +286,9 @@ namespace GoF2Remake.EditorTools
             }
             var camGo = Camera.main != null ? Camera.main.gameObject : new GameObject("Main Camera", typeof(Camera));
             camGo.tag = "MainCamera";
-            var chase = camGo.GetComponent<GoF2Remake.Flight.GoF2ChaseCamera>() ?? camGo.AddComponent<GoF2Remake.Flight.GoF2ChaseCamera>();
+            // No '??' here: a missing component is a Unity "fake null" that '??' treats as non-null.
+            var chase = camGo.GetComponent<GoF2Remake.Flight.GoF2ChaseCamera>();
+            if (chase == null) chase = camGo.AddComponent<GoF2Remake.Flight.GoF2ChaseCamera>();
             chase.target = ctrl;
             chase.offset = new Vector3(0f, size * 0.3f, -size * 1.4f);
             chase.lookOffset = new Vector3(0f, size * 0.1f, size * 0.8f);
