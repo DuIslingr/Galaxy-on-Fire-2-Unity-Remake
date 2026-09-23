@@ -3,7 +3,8 @@
 // Like the flight level the scene is almost empty (camera, one light, post-processing, GoF2StationLevel, the station
 // menu UI); GoF2StationLevel builds the current station's hangar and bar at runtime. This wires up what the level
 // can't load by name: the bar visitor / glow / shadow single-mesh prefabs, the glow material per bar race, music,
-// ambience, button and hangar sounds, language tables. Builds the shop icons (GoF2 > Build Item Icons) if missing.
+// ambience, button and hangar sounds, language tables. Builds the shop icons (GoF2 > Build Item Icons) and the star map
+// assets (GoF2 > Build Star Map Assets) if missing.
 // Build settings: after Space. Docking in Space loads it, its launch button loads Space.
 
 using System.IO;
@@ -36,6 +37,7 @@ namespace GoF2Remake.EditorTools
         {
             if (!File.Exists($"{GoF2SkyboxBaker.SpaceSkyDir}/nebula_018.png")) GoF2SkyboxBaker.BakeSpaceSkies();
             if (!File.Exists($"{GoF2ItemIconBuilder.OutDir}/item_232.png")) GoF2ItemIconBuilder.Build();
+            if (!GoF2StarMapBuilder.Exists) GoF2StarMapBuilder.Build();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };

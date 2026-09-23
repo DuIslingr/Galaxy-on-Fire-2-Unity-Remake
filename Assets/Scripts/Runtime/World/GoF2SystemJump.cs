@@ -1,0 +1,301 @@
+// GoF2SystemJump.cs
+// Travel to another system (Reference/research/starmap_travel.md 6, 8, 9), on the player ship next to GoF2Navigation:
+//   MGame::dockEvent 0x1afebc        the autopilot to the jumpgate enters its sphere (7500, Vossk 11250): dockToStream (input
+//                                    locked, HUD hidden, game paused); with a programmed station "Destination: X / Travel to
+//                                    this station?" (574 + 421, Yes preselected), No or no destination: the star map in gate
+//                                    mode. Picking a station starts the jump; backing out puts the ship at gate + (0, 0, 8000)
+//                                    with the gate's direction and gives the controls back.
+//   MGame::startJumpScene 0x1abf10 / updateJumpScene 0x1afad4   gate: the ship at gate - (0, 0, 10000) facing game +Z at
+//                                    2 u/ms, a fixed look-at camera at gate + (-2000, 300, -6000) drifting (5, 2, -3) u/ms in
+//                                    ship space; when the camera passes gate z - 10000 (~1.33 s) the gate swaps its idle
+//                                    _anim_add for the one-shot _jump_anim_add (5000 ms, PlayerJumpgate::activate) and sound
+//                                    31 plays; 1000 ms into it the ship vanishes (speed 90); at its end the level reloads in
+//                                    the target station's orbit (departStation, setInitStreamOut, jumpgateUsed).
+//   MGame::UseKhadorDrive 0x1a9480   the star map in jump mode (from the autopilot menu entry here)
+//   MGame::OnUpdate 0x1ac778 / startChargingJumpDrive 0x1a9710 / PlayerEgo::startJumpDrive   doInstantJump and level time
+//                                    > 5000 ms: the energy cells are removed ("-N t Energy Cells", 579 if short), sound 33, a
+//                                    5000 ms charge while flying normally; then the khador_jump fx (15026, scale 2) 3000
+//                                    units ahead, camera at fx + R(-2000, 300, -2000) drifting (5, 2, -5), sound 32, the ship
+//                                    vanishes at 1700 ms, the level reloads at the fx end (~4000 ms).
+// The programmed station is cleared on arrival: no autopilot leg follows a system jump.
+// Not yet: volatile goods (612), mission blocks (525), the Void.
+
+using System;
+using GoF2Remake.Data;
+using GoF2Remake.Flight;
+using GoF2Remake.UI;
+using GoF2Remake.Visuals;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace GoF2Remake.World
+{
+    public class GoF2SystemJump : MonoBehaviour
+    {
+        const float M = 0.05f;
+        const float BaseSpeed = 2f, HiddenSpeed = 90f;   // u/ms
+
+        public string spaceScene = "Space";
+
+        enum State { None, AtGate, Charging, GateScene, KhadorScene }
+
+        GoF2Database db;
+        GoF2Navigation nav;
+        GoF2ShipController ship;
+        GoF2WeaponSystem weapons;
+        GoF2ChaseCamera chase;
+        GameObject gate;
+        GoF2StarMapAssets assets;
+        AudioSource sfx;
+        State state;
+        float chargeMs, animMs, animLength, speed;
+        bool activated, hidden;
+        int targetStation;
+        GameObject fx;
+
+        /// <summary>The HUD is hidden: docked to the gate or a jump scene running.</summary>
+        public bool Cinematic => state == State.AtGate || state == State.GateScene || state == State.KhadorScene;
+        public bool Charging => state == State.Charging;
+        /// <summary>PlayerEgo::getDriveChargeRate: 0..1 while charging.</summary>
+        public float ChargeRate => Mathf.Clamp01(chargeMs / GoF2GalaxyMap.ChargeMs);
+        public event Action<string> Message;
+
+        public void Setup(GoF2Database database, GoF2Navigation navigation, GoF2ShipController controller, GoF2WeaponSystem weaponSystem,
+                          GoF2ChaseCamera chaseCamera, GameObject jumpgate)
+        {
+            db = database;
+            nav = navigation;
+            ship = controller;
+            weapons = weaponSystem;
+            chase = chaseCamera;
+            gate = jumpgate;
+            assets = GoF2StarMapAssets.Load();
+            sfx = gameObject.AddComponent<AudioSource>();
+            sfx.playOnAwake = false;
+            nav.KhadorRequested += OpenKhadorMap;
+        }
+
+        void OnDestroy()
+        {
+            if (nav != null) nav.KhadorRequested -= OpenKhadorMap;
+        }
+
+        void Update()
+        {
+            if (ship == null) return;
+            float dtMs = Time.deltaTime * 1000f;
+            switch (state)
+            {
+                case State.None:
+                    if (nav.ReachedGate) DockToStream();
+                    else if (GoF2Session.InstantJump && Time.timeSinceLevelLoad * 1000f > 5000f && !nav.Jumping && !nav.Paused && !GoF2StarMap.IsOpen)
+                        StartCharging();
+                    break;
+                case State.AtGate:
+                    // dockToStream: input locked, the ship keeps moving at its speed (the game is paused while asking).
+                    ship.transform.position += ship.transform.forward * speed * dtMs * M;
+                    break;
+                case State.Charging:
+                    chargeMs += dtMs;
+                    if (chargeMs >= GoF2GalaxyMap.ChargeMs) StartKhadorScene();
+                    break;
+                case State.GateScene:
+                case State.KhadorScene:
+                    UpdateScene(dtMs);
+                    break;
+            }
+        }
+
+        void LateUpdate()
+        {
+            if (state != State.GateScene && state != State.KhadorScene) return;
+            var cam = Camera.main;
+            if (cam != null) cam.transform.rotation = Quaternion.LookRotation(ship.transform.position - cam.transform.position, Vector3.up);
+        }
+
+        // ---- the jumpgate ----------------------------------------------------------------------------------
+
+        void DockToStream()
+        {
+            state = State.AtGate;
+            speed = ship.SpeedMetersPerSecond / M / 1000f;
+            nav.SetAutopilot(null);
+            ship.externalControl = true;
+            ship.ExternalSpeedMetersPerSecond = ship.SpeedMetersPerSecond;
+            if (weapons != null) weapons.Blocked = true;
+            nav.Paused = true;
+            int prog = GoF2Session.ProgrammedStation;
+            var map = GoF2StarMap.Open(db, GoF2StarMapMode.Gate, false, OnGateMapClosed, prog >= 0 && prog != GoF2Session.StationIndex ? prog : -1);
+            if (map == null) OnGateMapClosed(new GoF2StarMapResult { station = -1 });
+        }
+
+        void OnGateMapClosed(GoF2StarMapResult result)
+        {
+            nav.Paused = false;
+            if (result.station >= 0)
+            {
+                GoF2Session.ProgrammedStation = result.station;
+                StartGateScene(result.station);
+                return;
+            }
+            // dockToStream(false): controls back, the ship past the gate with the gate's direction.
+            state = State.None;
+            ship.externalControl = false;
+            if (weapons != null) weapons.Blocked = false;
+            if (gate != null)
+                ship.transform.SetPositionAndRotation(gate.transform.position + GoF2OrbitLayout.DirToUnity(new Vector3(0f, 0f, 8000f)) * M,
+                                                      Quaternion.LookRotation(GoF2OrbitLayout.DirToUnity(Vector3.forward), Vector3.up));
+        }
+
+        void StartGateScene(int station)
+        {
+            BeginScene(station);
+            state = State.GateScene;
+            var g = gate != null ? gate.transform.position : ship.transform.position;
+            ship.transform.SetPositionAndRotation(g + GoF2OrbitLayout.DirToUnity(new Vector3(0f, 0f, -10000f)) * M,
+                                                  Quaternion.LookRotation(GoF2OrbitLayout.DirToUnity(Vector3.forward), Vector3.up));
+            var cam = Camera.main;
+            if (cam != null) cam.transform.position = g + GoF2OrbitLayout.DirToUnity(new Vector3(-2000f, 300f, -6000f)) * M;
+        }
+
+        /// <summary>PlayerJumpgate::activate: the idle glow is replaced by the one-shot jump animation.</summary>
+        void ActivateGate()
+        {
+            activated = true;
+            animMs = 0f;
+            animLength = 5000f;
+            if (gate != null)
+            {
+                GameObject jump = null;
+                foreach (var t in gate.GetComponentsInChildren<Transform>(true))
+                {
+                    if (t.name.EndsWith("_jump_anim_add")) jump = t.gameObject;
+                    else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(false);
+                }
+                if (jump != null)
+                {
+                    jump.SetActive(true);
+                    float len = GoF2PartAnimation.PlayOnce(jump);
+                    if (len > 0f) animLength = len;
+                }
+            }
+            if (assets != null && assets.jumpgate != null && assets.jumpgate.Length > 0)
+                Play(assets.jumpgate[UnityEngine.Random.Range(0, assets.jumpgate.Length)]);
+        }
+
+        // ---- the Khador Drive ------------------------------------------------------------------------------
+
+        /// <summary>MGame::UseKhadorDrive: the star map in jump mode (refused while charging or jumping).</summary>
+        void OpenKhadorMap()
+        {
+            if (state != State.None || nav.Jumping) return;
+            nav.Paused = true;
+            if (weapons != null) weapons.Blocked = true;
+            var map = GoF2StarMap.Open(db, GoF2StarMapMode.Khador, true, r =>
+            {
+                nav.Paused = false;
+                if (weapons != null) weapons.Blocked = false;
+                if (r.station < 0) return;
+                GoF2Session.ProgrammedStation = r.station;
+                if (r.instantJump) { GoF2Session.InstantJump = true; GoF2Session.EnergyCellsForNextJump = r.cells; }
+                else nav.ContinueToProgrammedStation();
+            });
+            if (map == null) { nav.Paused = false; if (weapons != null) weapons.Blocked = false; }
+        }
+
+        void StartCharging()
+        {
+            GoF2Session.InstantJump = false;
+            int cells = GoF2Session.EnergyCellsForNextJump;
+            if (GoF2GalaxyMap.CellsInCargo() < cells) { Message?.Invoke(GoF2Localization.Get(579)); return; }
+            GoF2GalaxyMap.RemoveCells(cells);
+            if (cells > 0) Message?.Invoke($"-{cells}t {GoF2Localization.Get(1396)}");
+            Play(assets != null ? assets.jumpgateCharge : null);
+            chargeMs = 0f;
+            state = State.Charging;
+        }
+
+        void StartKhadorScene()
+        {
+            int station = GoF2Session.ProgrammedStation;
+            if (station < 0) { state = State.None; return; }
+            BeginScene(station);
+            state = State.KhadorScene;
+            var fxPos = ship.transform.position + ship.transform.forward * 3000f * M;
+            if (assets != null && assets.khadorJump != null)
+            {
+                fx = Instantiate(assets.khadorJump, fxPos, ship.transform.rotation);
+                fx.transform.localScale *= 2f;
+                float len = GoF2PartAnimation.PlayOnce(fx);
+                animLength = len > 0f ? len : 4000f;
+            }
+            else animLength = 4000f;
+            activated = true;
+            animMs = 0f;
+            var cam = Camera.main;
+            if (cam != null) cam.transform.position = fxPos + ship.transform.rotation * (new Vector3(2000f, 300f, -2000f) * M);   // game (-2000, 300, -2000)
+            Play(assets != null ? assets.khadorDrive : null);
+        }
+
+        // ---- the jump scene --------------------------------------------------------------------------------
+
+        void BeginScene(int station)
+        {
+            targetStation = station;
+            activated = hidden = false;
+            speed = BaseSpeed;
+            nav.SetAutopilot(null);
+            ship.externalControl = true;
+            if (weapons != null) weapons.Blocked = true;
+            if (chase != null) chase.enabled = false;
+            var cam = Camera.main;
+            if (cam != null) cam.fieldOfView = GoF2Aspect.VerticalFov(1.22f * Mathf.Rad2Deg, cam.aspect);
+        }
+
+        void UpdateScene(float dtMs)
+        {
+            bool gateScene = state == State.GateScene;
+            var cam = Camera.main;
+            if (!hidden && cam != null)   // ship-space game (5, 2, -3 / -5) u/ms -> Unity local (-5, 2, -3 / -5)
+                cam.transform.position += ship.transform.rotation * (new Vector3(-5f, 2f, gateScene ? -3f : -5f) * dtMs * M);
+            float step = speed * dtMs * M;
+            ship.transform.position += ship.transform.forward * step;
+            ship.ExternalSpeedMetersPerSecond = speed * M * 1000f;
+
+            if (gateScene && !activated && gate != null && cam != null
+                && -cam.transform.position.z / M < -gate.transform.position.z / M - 10000f)   // camera z (game) < gate z - 10000
+                ActivateGate();
+            if (!activated) return;
+            animMs += dtMs;
+            if (!hidden && animMs > (gateScene ? 1000f : 1700f))
+            {
+                hidden = true;
+                speed = HiddenSpeed;
+                if (ship.visualModel != null) ship.visualModel.gameObject.SetActive(false);
+            }
+            if (animMs >= animLength) Arrive(gateScene);
+        }
+
+        /// <summary>Status::departStation(programmedStation), Level::setInitStreamOut, reload in the target orbit.</summary>
+        void Arrive(bool viaGate)
+        {
+            weapons?.StoreAmmo();
+            GoF2Session.PreviousStationIndex = GoF2Session.StationIndex;
+            GoF2Session.StationIndex = targetStation;
+            GoF2Session.ArrivedByTravel = true;
+            GoF2Session.ArrivedBySystemJump = true;
+            GoF2Session.LaunchedFromStation = false;
+            if (viaGate) GoF2Session.JumpgatesUsed++;
+            GoF2Session.ProgrammedStation = -1;
+            GoF2Session.InstantJump = false;
+            state = State.None;
+            enabled = false;
+            if (Application.CanStreamedLevelBeLoaded(spaceScene)) SceneManager.LoadScene(spaceScene);
+        }
+
+        void Play(AudioClip clip)
+        {
+            if (clip != null) sfx.PlayOneShot(clip, GoF2Settings.SfxVolume);
+        }
+    }
+}

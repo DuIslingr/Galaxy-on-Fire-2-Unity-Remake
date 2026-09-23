@@ -554,3 +554,83 @@
 .layout-phone .speed-panel {
     width: 220px;
 }
+
+/* ---- star map open (GoF2StarMap draws the whole screen) ------------------------------------ */
+
+.hud-map .hud {
+    display: none;
+}
+
+/* ---- Khador Drive charge (PlayerEgo::getDriveChargeRate) ----------------------------------- */
+
+.jump-charge {
+    display: none;
+    position: absolute;
+    top: 76px;
+    left: 50%;
+    width: 408px;
+    margin-left: -204px;
+    align-items: center;
+}
+
+.jump-charge--shown {
+    display: flex;
+}
+
+.jump-charge-label {
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--gof-text);
+    margin-bottom: 4px;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.jump-charge-bar {
+    width: 100%;
+    height: 8px;
+    background-color: rgba(4, 10, 18, 0.7);
+    border-width: 1px;
+    border-color: var(--gof-cyan-soft);
+}
+
+.jump-charge-fill {
+    height: 100%;
+    width: 0;
+    background-color: var(--gof-cyan);
+}
+
+/* ---- orbit information on arrival (Hud::drawOrbitInformation: logo at (3, 3), lines at y 10 / 40 / 70) ---- */
+
+.orbit-info {
+    display: none;
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.orbit-info--shown {
+    display: flex;
+}
+
+.hud-orbit-info .speed-panel {
+    display: none;
+}
+
+.orbit-logo {
+    margin-right: 12px;
+}
+
+.orbit-text {
+    padding-top: 10px;
+}
+
+.orbit-line {
+    height: 30px;
+    font-size: 22px;
+    color: #FFFFFF;
+    padding: 0;
+    margin: 0;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}

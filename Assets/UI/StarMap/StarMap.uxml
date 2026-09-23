@@ -1,0 +1,40 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="../GoF2InputGlyphs.uss" />
+    <ui:Style src="StarMap.uss" />
+    <ui:VisualElement name="mapRoot" class="map-root" picking-mode="Ignore">
+        <ui:VisualElement name="mapView" class="map-view" picking-mode="Ignore">
+            <ui:VisualElement name="mapTouch" class="map-fill" />
+            <ui:VisualElement name="mapLabels" class="map-fill" picking-mode="Ignore" />
+            <ui:VisualElement name="mapSafe" class="map-safe" picking-mode="Ignore">
+                <ui:VisualElement class="map-header" picking-mode="Ignore">
+                    <ui:Label name="mapTitle" class="map-title gof-semibold" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="systemHeader" class="system-header" picking-mode="Ignore">
+                    <ui:VisualElement name="systemLogo" class="system-logo" picking-mode="Ignore" />
+                    <ui:VisualElement class="system-header-text" picking-mode="Ignore">
+                        <ui:Label name="systemName" class="system-name gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="systemRace" class="system-line" picking-mode="Ignore" />
+                        <ui:Label name="systemSecurity" class="system-line" picking-mode="Ignore" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:Label name="energyLine" class="energy-line gof-semibold" picking-mode="Ignore" />
+                <ui:VisualElement name="keyBox" class="key-box" picking-mode="Ignore" />
+                <ui:VisualElement class="map-footer" picking-mode="Ignore">
+                    <ui:Button name="backButton" class="map-button gof-semibold" />
+                    <ui:VisualElement name="hints" class="map-hints" picking-mode="Ignore" />
+                    <ui:Button name="keyButton" class="map-button gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="dialog" class="map-dialog-backdrop">
+            <ui:VisualElement class="map-dialog">
+                <ui:Label name="dialogText" class="map-dialog-text" />
+                <ui:VisualElement class="map-dialog-buttons">
+                    <ui:Button name="dialogYes" class="map-button map-dialog-button gof-semibold" />
+                    <ui:Button name="dialogNo" class="map-button map-dialog-button gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

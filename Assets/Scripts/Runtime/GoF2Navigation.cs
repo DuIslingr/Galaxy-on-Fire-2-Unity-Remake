@@ -19,9 +19,15 @@
 //   Hud::initHudMenu(3) 0x18e080  the autopilot menu (autopilot button while the autopilot is off; the game pauses):
 //                                 549 "Asteroid field" (not in the alien orbit; flies to the field centre and, like the
 //                                 original, keeps going until switched off), "<name> Station" (not in empty orbits),
-//                                 547 "Jumpgate" (gate orbit only); each "Target: X" + sound 28 (MGame::OnTouchEnd)
-// Not yet: menu entries for route waypoints, a programmed destination and docking targets, the jumpgate's star map and
-// inter-system travel (reaching the gate turns the autopilot off with "Not available."), mission restrictions.
+//                                 547 "Jumpgate" (gate orbit only); each "Target: X" + sound 28 (MGame::OnTouchEnd);
+//                                 "574 Destination: X" with a programmed station (setAutoPilotToProgrammedStation)
+//   LevelScript::setAutoPilotToProgrammedStation 0x160b50  the star map's destination: the current station clears it; in
+//                                 this system its planet (the lock then jumps by itself); else in the gate orbit the
+//                                 jumpgate, otherwise the planet of the system's gate station. Run at the end of the
+//                                 launch / arrival camera ("Autopilot On" + 28) and from the menu.
+// Reaching the jumpgate (Level::collideStream) is handled by GoF2SystemJump (ReachedGate).
+// Remake-only: the autopilot menu also lists "Khador Drive" (1359) when the ship has one; the original has it in the HUD's
+// main menu. Not yet: menu entries for route waypoints and docking targets, mission restrictions.
 
 using System;
 using System.Collections.Generic;
@@ -34,7 +40,7 @@ namespace GoF2Remake.Flight
 {
     public class GoF2Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive }
 
         public class Target
         {
@@ -59,6 +65,12 @@ namespace GoF2Remake.Flight
         public Target AsteroidField { get; private set; }
         /// <summary>The autopilot menu is open: the game is paused.</summary>
         public bool MenuOpen { get; private set; }
+        /// <summary>Paused by the star map / the jumpgate prompt (GoF2SystemJump).</summary>
+        public bool Paused { get => paused; set { paused = value; ApplyTimeScale(); } }
+        /// <summary>The autopilot to the jumpgate is inside its sphere (Level::collideStream, radius 7500 / Vossk 11250).</summary>
+        public bool ReachedGate => AutopilotTarget?.kind == Kind.Jumpgate && (AutopilotTarget.Position - ship.transform.position).magnitude < gateRadiusUnits * M;
+        /// <summary>The "Khador Drive" menu entry was picked (GoF2SystemJump opens the star map).</summary>
+        public event Action KhadorRequested;
         public Target Candidate { get; private set; }
         public Target Locked { get; private set; }
         public float LockTimer { get; private set; }
@@ -84,6 +96,10 @@ namespace GoF2Remake.Flight
             : GoF2Localization.Extra("hudAutopilot", "AUTOPILOT");
 
         GoF2ShipController ship;
+        GoF2Database db;
+        GoF2OrbitLayout layout;
+        int systemGateStation = -1;
+        bool paused;
         GoF2Mining mining;
         GoF2ChaseCamera chase;
         GoF2WeaponSystem weapons;
@@ -93,17 +109,20 @@ namespace GoF2Remake.Flight
         float jumpMs, gateRadiusUnits = GoF2OrbitLayout.GateRadius;
         Target jumpTarget;
 
-        public void Setup(GoF2Database db, GoF2OrbitLayout layout, GoF2Backdrop backdrop, GoF2ShipController controller,
+        public void Setup(GoF2Database database, GoF2OrbitLayout layout, GoF2Backdrop backdrop, GoF2ShipController controller,
                           GoF2Mining miningSystem, GoF2ChaseCamera chaseCamera, GoF2WeaponSystem weaponSystem)
         {
             ship = controller;
+            db = database;
+            this.layout = layout;
+            systemGateStation = db.Systems.Find(s => s.index == layout.systemIndex)?.jumpgateStation ?? -1;
             mining = miningSystem;
             chase = chaseCamera;
             weapons = weaponSystem;
             sounds = GoF2CombatAudio.Load();
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
-            var scanner = GoF2Shop.FirstMounted(db, 17);
+            var scanner = GoF2Shop.FirstMounted(database, 17);
             LockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;
             gateRadiusUnits = layout.JumpgateRadius;
 
@@ -127,26 +146,33 @@ namespace GoF2Remake.Flight
         void OnDisable()
         {
             MenuOpen = false;
+            paused = false;
             SetFastForward(false);
             ApplyTimeScale();
         }
 
         // ---- autopilot menu (Hud::initHudMenu(3)) ------------------------------------------------------------
 
-        /// <summary>The menu's entries in the original's order: asteroid field, station, jumpgate.</summary>
+        /// <summary>The menu's entries: the programmed destination, then the original's order asteroid field, station,
+        /// jumpgate; then (remake) the Khador Drive.</summary>
         public List<Target> MenuEntries()
         {
             var list = new List<Target>();
+            int prog = GoF2Session.ProgrammedStation;
+            if (prog >= 0 && prog != layout.stationIndex)
+                list.Add(new Target { kind = Kind.Destination, station = prog,
+                                      name = $"{GoF2Localization.Get(574)}: {db.Stations.Find(s => s.index == prog)?.name}" });
             if (AsteroidField != null) list.Add(AsteroidField);
             var station = Targets.Find(t => t.kind == Kind.Station);
             if (station != null) list.Add(station);
             var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
             if (gate != null) list.Add(gate);
+            if (GoF2GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = GoF2Localization.Get(1359) });
             return list;
         }
 
         /// <summary>MGame::OnTouchEnd, autopilot button: only while nothing else flies the ship; pauses the game.</summary>
-        public bool CanOpenMenu => !Autopilot && !Jumping && (mining == null || mining.State == GoF2Mining.Phase.Idle);
+        public bool CanOpenMenu => !Autopilot && !Jumping && !paused && (mining == null || mining.State == GoF2Mining.Phase.Idle);
 
         public void OpenMenu()
         {
@@ -169,6 +195,8 @@ namespace GoF2Remake.Flight
         {
             CloseMenu();
             if (target == null) return;
+            if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
+            if (target.kind == Kind.KhadorDrive) { KhadorRequested?.Invoke(); return; }
             Say($"{GoF2Localization.Get(546)}: {target.name}");
             Play(sounds?.autopilotOn);
             SetAutopilot(target);
@@ -198,16 +226,8 @@ namespace GoF2Remake.Flight
             if (ship == null) return;
             float dtMs = Time.deltaTime * 1000f;
             if (Jumping) { UpdateJump(dtMs); return; }
-            if (Autopilot)
-            {
-                AboutToReach = (AutopilotTarget.Position - ship.transform.position).magnitude / M < AboutToReachUnits;
-                if (AutopilotTarget.kind == Kind.Jumpgate && (AutopilotTarget.Position - ship.transform.position).magnitude < gateRadiusUnits * M)
-                {
-                    // Level::collideStream -> dockToStream: the star map / inter-system travel doesn't exist yet.
-                    Say(GoF2Localization.Get(528));
-                    SetAutopilot(null);
-                }
-            }
+            if (paused) return;
+            if (Autopilot) AboutToReach = (AutopilotTarget.Position - ship.transform.position).magnitude / M < AboutToReachUnits;
             if (MenuOpen) return;   // paused
             UpdateLock(dtMs);
             SetFastForward(fastForwardHeld && CanFastForward);
@@ -246,7 +266,7 @@ namespace GoF2Remake.Flight
                     if (best == null)
                         foreach (var t in Targets)
                         {
-                            if (t.kind != Kind.Planet || t == AutopilotTarget) continue;
+                            if (t.kind != Kind.Planet) continue;
                             var p = cam.WorldToScreenPoint(t.Position);
                             if (p.z <= 0f || p.x < 0f || p.y < 0f || p.x > w || p.y > h) continue;
                             if (Mathf.Abs(p.x - c.x) < planetBox && Mathf.Abs(p.y - c.y) < planetBox) { best = t; break; }
@@ -259,6 +279,28 @@ namespace GoF2Remake.Flight
             Locked = LockTimer > LockTimeMs ? Candidate : null;   // strict >, no -200 ms here
             if (Locked != null && !wasLocked) Play(sounds?.targetLock);
             wasLocked = Locked != null;
+            // The autopilot flying to a programmed station's planet jumps as soon as that planet is locked.
+            if (Locked != null && Locked == AutopilotTarget && Locked.kind == Kind.Planet) StartJump(Locked);
+        }
+
+        /// <summary>LevelScript::setAutoPilotToProgrammedStation: autopilot toward the programmed station (see the header);
+        /// false when there is nothing to fly to.</summary>
+        public bool ContinueToProgrammedStation()
+        {
+            int prog = GoF2Session.ProgrammedStation;
+            if (prog < 0 || Jumping) return false;
+            if (prog == layout.stationIndex) { GoF2Session.ProgrammedStation = -1; return false; }
+            int system = db.Stations.Find(s => s.index == prog)?.system ?? -1;
+            Target target;
+            if (system == layout.systemIndex) target = Targets.Find(t => t.kind == Kind.Planet && t.station == prog);
+            else if (layout.hasJumpgate) target = Targets.Find(t => t.kind == Kind.Jumpgate);
+            else target = Targets.Find(t => t.kind == Kind.Planet && t.station == systemGateStation);
+            if (target == null) return false;
+            if (mining != null && mining.State != GoF2Mining.Phase.Idle) mining.Interact();
+            Say(GoF2Localization.Get(571) + " " + GoF2Localization.Get(38));   // Autopilot On
+            Play(sounds?.autopilotOn);
+            SetAutopilot(target);
+            return true;
         }
 
         /// <summary>The action prompt / Enter / controller X.</summary>
@@ -336,7 +378,7 @@ namespace GoF2Remake.Flight
 
         void ApplyTimeScale()
         {
-            float scale = MenuOpen ? 0f : FastForward ? FastForwardScale : 1f;
+            float scale = MenuOpen || paused ? 0f : FastForward ? FastForwardScale : 1f;
             if (Time.timeScale != scale) Time.timeScale = scale;
         }
 

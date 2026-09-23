@@ -1,7 +1,7 @@
 // GoF2HudImageBuilder.cs  (Editor only)
 // Menu "GoF2/Build HUD Images": cuts the flight HUD's mining and navigation images from the original interface atlases
 // into Resources/GoF2Hud (loaded by name by GoF2MiningView / GoF2NavigationView). Rects: Reference/research/mining.md 3.1
-// and 4.7, autopilot_travel.md 1 and 4 (Android HD = gof2_interface_iphone4.png, plus the images the iPad-large build
+// and 4.7, autopilot_travel.md 1 and 4, starmap_travel.md 11.3 (Android HD = gof2_interface_iphone4.png, plus the images the iPad-large build
 // re-binds to gof2_interface2_ipad_large.png; top-left origin, verified by cropping). Sprite strips become numbered frames.
 
 using System.IO;
@@ -56,6 +56,19 @@ namespace GoF2Remake.EditorTools
             (Main, "race_3", 2002, 222, 36, 36, 0, false),
             (Main, "race_8", 250, 1010, 36, 36, 0, false),
             (Main, "race_9", 83, 1900, 36, 36, 0, false),
+            // Star map (starmap_travel.md 11.3): rings 0x48a / 0x48c, "you are here" pulse 0x4fd, legend icons visited 0x4a2,
+            // story 0x454, freelance 0x455, products 0x452; big race logos 0x4a6 0x4a3 0x4a5 0x4a4 (system header, orbit info).
+            (Main, "map_ring", 269, 47, 99, 99, 0, false),
+            (Main, "map_ring_selected", 317, 739, 143, 143, 0, false),
+            (Main, "map_pulse", 1, 1607, 99, 99, 0, false),
+            (Main, "map_visited", 326, 148, 21, 18, 0, false),
+            (Main, "map_story", 475, 147, 26, 23, 0, false),
+            (Main, "map_freelance", 547, 124, 26, 23, 0, false),
+            (Main, "map_products", 370, 47, 20, 18, 0, false),
+            (Main, "logo_0", 337, 1464, 93, 103, 0, false),
+            (Main, "logo_1", 1875, 1137, 98, 89, 0, false),
+            (Main, "logo_2", 1659, 35, 90, 90, 0, false),
+            (Main, "logo_3", 825, 1425, 88, 97, 0, false),
         };
 
         [MenuItem("GoF2/Build HUD Images", priority = 15)]

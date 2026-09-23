@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c6c1d7aafbbc7064488842c36a592ab3, type: 3}
+  m_Name: StarMapAssets
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.UI.GoF2StarMapAssets
+  layout: {fileID: 9197481963319205126, guid: 0119629422a3fa940a0ae387bdb37ba3, type: 3}
+  panelSettings: {fileID: 11400000, guid: 1a1b6eb15c2c58f4081e510c8743bac5, type: 2}
+  sunMaterials:
+  - {fileID: 2100000, guid: ede66bf5ebb2b4b48a5c3e65b6e428b4, type: 2}
+  - {fileID: 2100000, guid: 5b920c0017d6a794a997ba222c293897, type: 2}
+  - {fileID: 2100000, guid: 99efc394ba7b9484f95beeb47a2c98ba, type: 2}
+  - {fileID: 2100000, guid: 1c5b9d4fe6b4baf40984be2c248fd602, type: 2}
+  - {fileID: 2100000, guid: 0554771e282cfbc4c8755eee646cb1ed, type: 2}
+  - {fileID: 2100000, guid: c0c143faf2296a146bd79893e095b6c2, type: 2}
+  - {fileID: 2100000, guid: 9524ca92bc7bbbb46b683c262ade069e, type: 2}
+  - {fileID: 2100000, guid: 829125de9cb759442a1e54e2bee32b17, type: 2}
+  - {fileID: 2100000, guid: d80f754642dd589469589edfa0ef7234, type: 2}
+  - {fileID: 2100000, guid: 7a50b230046727e4e807715f33bc10d6, type: 2}
+  - {fileID: 2100000, guid: 4e271c87a60b07b4db109ab557417e9e, type: 2}
+  - {fileID: 2100000, guid: 5b920c0017d6a794a997ba222c293897, type: 2}
+  - {fileID: 2100000, guid: d80f754642dd589469589edfa0ef7234, type: 2}
+  - {fileID: 2100000, guid: 0554771e282cfbc4c8755eee646cb1ed, type: 2}
+  - {fileID: 2100000, guid: ede66bf5ebb2b4b48a5c3e65b6e428b4, type: 2}
+  - {fileID: 2100000, guid: c0c143faf2296a146bd79893e095b6c2, type: 2}
+  - {fileID: 2100000, guid: 829125de9cb759442a1e54e2bee32b17, type: 2}
+  - {fileID: 2100000, guid: 99efc394ba7b9484f95beeb47a2c98ba, type: 2}
+  - {fileID: 2100000, guid: 9524ca92bc7bbbb46b683c262ade069e, type: 2}
+  khadorJump: {fileID: 3364371114927596048, guid: 475e1b15a02331140b37009773054367, type: 3}
+  selectSystem: {fileID: 8300000, guid: f9d94c2706cbaf04383e493c4cb37c97, type: 3}
+  planetPush: {fileID: 8300000, guid: 1b7bdced14a332b499ab7b3bbe70e221, type: 3}
+  planetRelease: {fileID: 8300000, guid: 224892593bcf91141897ba284ca40e7b, type: 3}
+  zoomIn: {fileID: 8300000, guid: bf5077902a33ecf4e976765579808d58, type: 3}
+  zoomOut: {fileID: 8300000, guid: 3f64d35e8d1a5f742a219eb075b6d9b9, type: 3}
+  buttonPush: {fileID: 8300000, guid: 6dc23eae22c6f1d4ca44dd52683a968c, type: 3}
+  buttonRelease: {fileID: 8300000, guid: f750573b55cc8f94e89d05317bb88edb, type: 3}
+  infoSound: {fileID: 8300000, guid: b2ce5b1021312cd4ca8d44159becb0bf, type: 3}
+  jumpgate:
+  - {fileID: 8300000, guid: 4055bb8cfc825f64ca603f0e5ed4ce64, type: 3}
+  - {fileID: 8300000, guid: fec41b7ed63594c4fbd4814d4ee4cc28, type: 3}
+  - {fileID: 8300000, guid: 7726a2d3af6ad654486f941828d77d23, type: 3}
+  jumpgateCharge: {fileID: 8300000, guid: daa733b154bf55c4d8c8e8987b738bc2, type: 3}
+  khadorDrive: {fileID: 8300000, guid: 89f7c33619082a946add944cb5380af7, type: 3}

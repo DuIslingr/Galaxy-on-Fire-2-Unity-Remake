@@ -208,14 +208,20 @@ namespace GoF2Remake.Data
                 else amount = Mathf.Max(1, r / 5);   // weapons, turrets, equipment: 1..3
                 list.Add(new GoF2Stack(idx, amount));
             }
-            // Remake-only: there is no travel between systems yet, so the starting station always sells the cheapest
-            // drill (IMT Extract 1.3, normally a 70 % chance there) to keep mining reachable.
-            if (station == 78 && !list.Any(s => db.Item(s.item)?.categoryId == 19))
-            {
-                int at = list.FindIndex(s => s.item > 86);
-                list.Insert(at < 0 ? list.Count : at, new GoF2Stack(86, 1));   // keep the stock in index order
-            }
+            // Remake-only, while there is no campaign: the starting station always sells the cheapest drill (IMT Extract 1.3,
+            // normally a 70 % chance there) to keep mining reachable, and energy cells, which the free-play Khador jump out of
+            // gateless Mido needs (GoF2GalaxyMap.HasJumpDrive).
+            if (station == 78 && !list.Any(s => db.Item(s.item)?.categoryId == 19)) InsertSorted(list, new GoF2Stack(86, 1));
+            if (station == 78 && !list.Any(s => s.item == GoF2GalaxyMap.EnergyCellItem))
+                InsertSorted(list, new GoF2Stack(GoF2GalaxyMap.EnergyCellItem, Random.Range(0, 15) + 5));
             return list;
+        }
+
+        /// <summary>Keeps the stock in item index order.</summary>
+        static void InsertSorted(List<GoF2Stack> list, GoF2Stack row)
+        {
+            int at = list.FindIndex(s => s.item > row.item);
+            list.Insert(at < 0 ? list.Count : at, row);
         }
 
         /// <summary>Generator::getShipBuyList 0xa0eb8 (shop.md 4.4, without the DLC-won and supernova extras).</summary>

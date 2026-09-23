@@ -265,3 +265,11 @@
 .layout-phone .side-panel {
     width: 380px;
 }
+
+/* The star map (GoF2StarMap) is open: it draws the whole screen. */
+.station-map-open .station-safe,
+.station-map-open .side-shade,
+.station-map-open .bottom-shade,
+.station-map-open .drag-zone {
+    display: none;
+}

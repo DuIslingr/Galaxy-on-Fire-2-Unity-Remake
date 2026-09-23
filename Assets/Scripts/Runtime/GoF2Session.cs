@@ -65,6 +65,29 @@ namespace GoF2Remake.Data
         /// (LevelScript: a fixed camera 9000 units ahead watches the ship fly past for 7 s).</summary>
         public static bool LaunchedFromStation;
 
+        /// <summary>Arrived through a jumpgate or the Khador Drive: the arrival camera shows the orbit information
+        /// (Hud::drawOrbitInformation, not after a planet jump).</summary>
+        public static bool ArrivedBySystemJump;
+
+        /// <summary>Status+0x38: which systems the star map shows (null = not set up yet, filled from systems.json
+        /// initiallyVisible by GoF2GalaxyMap.Visibility).</summary>
+        public static bool[] SystemVisible;
+
+        /// <summary>Galaxy::getVisited: stations the player has docked at (the star map's "Already visited" tick).</summary>
+        public static HashSet<int> VisitedStations = new HashSet<int> { 78 };
+
+        /// <summary>Level::programmedStation: the destination picked on the star map, -1 = none. The autopilot routes to it
+        /// after the launch / arrival camera (LevelScript::setAutoPilotToProgrammedStation).</summary>
+        public static int ProgrammedStation = -1;
+
+        /// <summary>Level doInstantJump / energyCellsForNextJump: the Khador Drive charges for the programmed station
+        /// (another system) 5 s into the level, using that many energy cells.</summary>
+        public static bool InstantJump;
+        public static int EnergyCellsForNextJump;
+
+        /// <summary>Status+0x1dc (Status::jumpgateUsed).</summary>
+        public static int JumpgatesUsed;
+
         /// <summary>Status::resetGame: 2x Nirai Charged Pulse, 6 Edo missiles, Fluxed Matter Shield, T'yol,
         /// Telta Ecoscan, Synchrotron Boost.</summary>
         static List<GoF2Stack> StartEquipment() => new List<GoF2Stack>
@@ -89,6 +112,13 @@ namespace GoF2Remake.Data
             HighestKnownPrice = new Dictionary<int, (int, int)>();
             ArrivedByTravel = false;
             LaunchedFromStation = false;
+            ArrivedBySystemJump = false;
+            SystemVisible = null;
+            VisitedStations = new HashSet<int> { 78 };
+            ProgrammedStation = -1;
+            InstantJump = false;
+            EnergyCellsForNextJump = 0;
+            JumpgatesUsed = 0;
         }
     }
 }

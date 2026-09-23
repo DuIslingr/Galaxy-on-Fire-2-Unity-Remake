@@ -13,7 +13,11 @@
 //   Level::init arrival by travel (planet jump, GoF2Navigation): 4x the previous station's planet billboard (about 80000
 //                  units out) or the hidden jumpgate in the gate orbit, facing the station, with the travel launch camera.
 //   GoF2Navigation: station / jumpgate / planet locks, autopilot (docks at the station), planet jump, fast-forward.
-// Not yet: traffic (Level::createMission), missions, inter-system travel, lens flare, wormhole.
+//   GoF2SystemJump: the jumpgate (star map, jump scene) and the Khador Drive. Arrival from another system: the hidden gate
+//                  in the gate orbit, else (0, 0, 100000); the arrival camera then shows the orbit information.
+//   LevelScript::process 0x160d50: at the end of the launch / arrival camera the autopilot continues to a programmed
+//                  station (GoF2Navigation.ContinueToProgrammedStation), unless the Khador Drive is about to charge.
+// Not yet: traffic (Level::createMission), missions, lens flare, wormhole.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -48,6 +52,10 @@ namespace GoF2Remake.World
         public GoF2WeaponSystem Weapons { get; private set; }
         public GoF2Mining Mining { get; private set; }
         public GoF2Navigation Navigation { get; private set; }
+        public GoF2SystemJump SystemJump { get; private set; }
+        public GameObject Jumpgate { get; private set; }
+        /// <summary>Hud::drawOrbitInformation: during the arrival camera after a gate / Khador jump.</summary>
+        public bool OrbitInfoVisible => orbitInfo && launchCameraMs > 0f;
         /// <summary>This orbit's station (name, tech level) and its system's jumpgate station (-1 = none).</summary>
         public StationData StationInfo { get; private set; }
         public int SystemJumpgateStation { get; private set; } = -1;
@@ -63,9 +71,10 @@ namespace GoF2Remake.World
         bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
 
         GoF2Database db;
+        public GoF2Database Database => db;
         GoF2ChaseCamera chase;
         float launchCameraMs;
-        bool leftDockRange;
+        bool leftDockRange, orbitInfo;
 
         void Awake()
         {
@@ -82,8 +91,10 @@ namespace GoF2Remake.World
             GoF2OrbitBuilder.SetupLights(Layout, sunLight, planetLight, sunIntensityAt2, planetLightIntensity);
             SetupCamera();
             GoF2OrbitBuilder.SpawnStation(db, Layout);
-            GoF2OrbitBuilder.SpawnJumpgate(db, Layout);
+            Jumpgate = GoF2OrbitBuilder.SpawnJumpgate(db, Layout);
             GoF2OrbitBuilder.SpawnAsteroids(db, Layout);
+            orbitInfo = GoF2Session.ArrivedBySystemJump;
+            GoF2Session.ArrivedBySystemJump = false;
             SpawnPlayer();
             GoF2OrbitBuilder.SpawnDust(Layout);
             var backdrop = GoF2OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
@@ -92,6 +103,8 @@ namespace GoF2Remake.World
             Navigation = Player.gameObject.AddComponent<GoF2Navigation>();
             Navigation.Setup(db, Layout, backdrop, Player, Mining, chase, Weapons);
             Mining.navigation = Navigation;
+            SystemJump = Player.gameObject.AddComponent<GoF2SystemJump>();
+            SystemJump.Setup(db, Navigation, Player, Weapons, chase, Jumpgate);
         }
 
         void SetupCamera()
@@ -194,7 +207,11 @@ namespace GoF2Remake.World
             launchCameraMs -= Time.deltaTime * 1000f;
             var cam = mainCamera.transform;
             cam.rotation = Quaternion.LookRotation(Player.transform.position - cam.position, Player.transform.up);
-            if (launchCameraMs <= 0f) chase.enabled = true;   // eases from here to the chase position
+            if (launchCameraMs <= 0f)
+            {
+                chase.enabled = true;   // eases from here to the chase position
+                if (GoF2Session.ProgrammedStation >= 0 && !GoF2Session.InstantJump) Navigation?.ContinueToProgrammedStation();
+            }
         }
 
         /// <summary>MGame::dockEvent: straight to the station module (SetCurrentApplicationModule(5)).</summary>

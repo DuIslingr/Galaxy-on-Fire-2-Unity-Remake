@@ -1,17 +1,19 @@
 // GoF2StationMenu.cs
 // The docked-station screen (ModStation::OnRender2D 0xef208) over GoF2StationLevel's hangar / Space Lounge:
 //   header "<station> Station" (136), left panel with "<system> System" (137), "Tech level: N" (133), the race (406+),
-//   the screen buttons Hangar (167: opens the shop window, GoF2HangarWindow, over the 3D hangar) and Space Lounge (398),
+//   the screen buttons Hangar (167: opens the shop window, GoF2HangarWindow, over the 3D hangar), Space Lounge (398) and
+//   Map (177: the star map, GoF2StarMap; refused with an overloaded hold, 204; picking a station leaves at once with it as
+//   the programmed destination, StarMap::depart),
 //   and the launch button bottom-right with the confirmation "Depart the station?" (397, ChoiceWindow, default = Yes);
 //   launching with more cargo than the hold takes is refused (204, ModStation::leaveStation 0xec1ec).
 // Dragging over the hangar turns the player's ship (1 rad per 120 px of a 480 px high screen, with a fling);
 // a tap in the lounge skips its camera intro. Adapts to GoF2InputMode like the flight HUD:
 //   Touch:      buttons, drag to turn the ship, Menu button.
-//   Keyboard:   keycap hints; A/D or arrows turn the ship, 1 hangar, 2 lounge, L launch, Esc back.
-//   Controller: Xbox hints; right stick turns the ship, LB hangar / RB lounge, X launch, B back, Menu to the main menu.
+//   Keyboard:   keycap hints; A/D or arrows turn the ship, 1 hangar, 2 lounge, M map, L launch, Esc back.
+//   Controller: Xbox hints; right stick turns the ship, LB hangar / RB lounge, Y map, X launch, B back, Menu to the main menu.
 //   In the hangar window: up / down select, left / right sell / buy, Enter / A confirm, Q / E or LB / RB switch tabs.
 // Esc / B: dialog -> no, hangar window / lounge -> main view, main view -> main menu (the original opens its system menu).
-// Not yet (the original's other buttons): Map, Missions, Status.
+// Not yet (the original's other buttons): Missions, Status.
 
 using GoF2Remake.Data;
 using GoF2Remake.World;
@@ -48,7 +50,7 @@ namespace GoF2Remake.UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualElement root, safeArea, dragZone, hints, dialog;
-        Button hangarButton, loungeButton, launchButton, dialogYes, dialogNo;
+        Button hangarButton, loungeButton, mapButton, launchButton, dialogYes, dialogNo;
         Label viewTitle, toast;
         GoF2HangarWindow hangarWindow;
         System.Action dialogAction;
@@ -101,6 +103,7 @@ namespace GoF2Remake.UI
             toast = root.Q<Label>("toast");
             hangarButton = Bind("hangarButton", OpenHangar);
             loungeButton = Bind("loungeButton", OpenLounge);
+            mapButton = Bind("mapButton", OpenMap);
             launchButton = Bind("launchButton", AskLaunch);
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", CloseDialog);
@@ -119,6 +122,7 @@ namespace GoF2Remake.UI
             raceLabel.style.display = raceLabel.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             hangarButton.text = T(167).ToUpperInvariant();
             loungeButton.text = T(398).ToUpperInvariant();
+            mapButton.text = T(177).ToUpperInvariant();
             launchButton.text = GoF2Localization.Extra("stationLaunch", "LAUNCH");
             dialogNo.text = T(135).ToUpperInvariant();
             root.Q<Button>("menuButton").text = GoF2Localization.Extra("hudMenu", "MENU");
@@ -188,6 +192,30 @@ namespace GoF2Remake.UI
         {
             CloseHangar();
             level?.SetView(GoF2StationView.Lounge);
+        }
+
+        /// <summary>ModStation::OnKeyPress case 2: the star map (station mode; jump mode with a Khador Drive). Refused while
+        /// the hold is overloaded (204). A picked station departs at once (StarMap::depart): the launch sequence, then the
+        /// autopilot to it or, for another system with a drive, the Khador charge.</summary>
+        void OpenMap()
+        {
+            if (level == null || GoF2StarMap.IsOpen) return;
+            if (new GoF2Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(GoF2Localization.Get(204), null, true); return; }
+            CloseHangar();
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            root.AddToClassList("station-map-open");
+            var map = GoF2StarMap.Open(level.Database, GoF2StarMapMode.Station, GoF2GalaxyMap.HasJumpDrive(level.Database), OnMapClosed);
+            if (map == null) root.RemoveFromClassList("station-map-open");
+        }
+
+        void OnMapClosed(GoF2StarMapResult result)
+        {
+            root.RemoveFromClassList("station-map-open");
+            if (result.station < 0) { ApplyInputMode(); return; }
+            GoF2Session.ProgrammedStation = result.station == GoF2Session.StationIndex ? -1 : result.station;
+            GoF2Session.InstantJump = result.instantJump;
+            GoF2Session.EnergyCellsForNextJump = result.instantJump ? result.cells : 0;
+            level.Launch();
         }
 
         /// <summary>ModStation::leaveStation: refused while the cargo hold is overloaded (204), else "Depart the station?".</summary>
@@ -336,7 +364,7 @@ namespace GoF2Remake.UI
                 root.focusController?.IgnoreEvent(e);
                 return;
             }
-            var items = DialogOpen ? new VisualElement[] { dialogYes, dialogNo } : new VisualElement[] { hangarButton, loungeButton, launchButton };
+            var items = DialogOpen ? new VisualElement[] { dialogYes, dialogNo } : new VisualElement[] { hangarButton, loungeButton, mapButton, launchButton };
             if (DialogOpen ? horizontal : vertical)
             {
                 var focused = root.focusController?.focusedElement as VisualElement;
@@ -382,6 +410,7 @@ namespace GoF2Remake.UI
                 if (hangar) Hint(rotate, GoF2InputGlyph.Key("A"), GoF2InputGlyph.Key("D"));
                 Hint(GoF2Localization.Get(167).ToUpperInvariant(), GoF2InputGlyph.Key("1"));
                 Hint(GoF2Localization.Get(398).ToUpperInvariant(), GoF2InputGlyph.Key("2"));
+                Hint(GoF2Localization.Get(177).ToUpperInvariant(), GoF2InputGlyph.Key("M"));
                 Hint(launch, GoF2InputGlyph.Key("L"));
                 Hint(back, GoF2InputGlyph.Key("ESC"));
             }
@@ -390,6 +419,7 @@ namespace GoF2Remake.UI
                 if (hangar) Hint(rotate, GoF2InputGlyph.Pad(GoF2PadButton.RightStick));
                 Hint($"{GoF2Localization.Get(167)} / {GoF2Localization.Get(398)}".ToUpperInvariant(),
                      GoF2InputGlyph.Pad(GoF2PadButton.LeftBumper), GoF2InputGlyph.Pad(GoF2PadButton.RightBumper));
+                Hint(GoF2Localization.Get(177).ToUpperInvariant(), GoF2InputGlyph.Pad(GoF2PadButton.Y));
                 Hint(launch, GoF2InputGlyph.Pad(GoF2PadButton.X));
                 Hint(T("hudBack", "BACK"), GoF2InputGlyph.Pad(GoF2PadButton.B));
                 Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Pad(GoF2PadButton.Menu));
@@ -414,6 +444,7 @@ namespace GoF2Remake.UI
         {
             if (root == null || level == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
+            if (GoF2StarMap.IsOpen) return;   // the map has its own input
 
             var kb = Keyboard.current;
             var pad = Gamepad.current;
@@ -457,6 +488,12 @@ namespace GoF2Remake.UI
                 OpenHangar();
             if ((kb != null && kb.digit2Key.wasPressedThisFrame) || (pad != null && pad.rightShoulder.wasPressedThisFrame))
                 OpenLounge();
+            if ((kb != null && (kb.mKey.wasPressedThisFrame || kb.digit3Key.wasPressedThisFrame)) || (pad != null && pad.buttonNorth.wasPressedThisFrame))
+            {
+                Play(buttonRelease);
+                OpenMap();
+                return;
+            }
             if ((kb != null && kb.lKey.wasPressedThisFrame) || (pad != null && pad.buttonWest.wasPressedThisFrame))
             {
                 Play(buttonRelease);

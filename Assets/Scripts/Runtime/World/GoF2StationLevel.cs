@@ -141,6 +141,7 @@ namespace GoF2Remake.World
             Layout = GoF2OrbitLayout.Build(db, station);
             HangarIndex = GoF2StationTables.HangarIndex(station, Layout.raceId);
             Stock = GoF2Shop.EnterStation(db, station);
+            GoF2Session.VisitedStations.Add(station);   // Galaxy::setVisited: the star map's "Already visited"
             BarRace = GoF2StationTables.BarRace(Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
 

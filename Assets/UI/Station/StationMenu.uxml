@@ -22,6 +22,7 @@
                 <ui:VisualElement class="station-buttons" picking-mode="Ignore">
                     <ui:Button name="hangarButton" class="station-button gof-semibold" />
                     <ui:Button name="loungeButton" class="station-button gof-semibold" />
+                    <ui:Button name="mapButton" class="station-button gof-semibold" />
                 </ui:VisualElement>
             </ui:VisualElement>
 

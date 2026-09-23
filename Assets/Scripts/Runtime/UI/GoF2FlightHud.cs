@@ -14,6 +14,9 @@
 // station (GoF2SpaceLevel.CanDock). GoF2MiningView draws the lock ring, the ore plate, HUD messages and the minigame.
 // The autopilot button (touch), Tab or the controller's View button opens the autopilot menu (game paused): pick an entry
 // by tap / click, W/S + Enter or D-pad + A; Esc / B / the same button closes it.
+// The star map (GoF2StarMap) covers everything while open; jump scenes and docking to the gate hide the HUD
+// (GoF2SystemJump.Cinematic); the Khador Drive's charge shows as a bar; after a gate / Khador jump the arrival camera shows
+// the orbit information (Hud::drawOrbitInformation: race logo, station, "<System> System", security level).
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -43,6 +46,9 @@ namespace GoF2Remake.UI
         GoF2Mining.Phase lastPhase;
         GoF2Navigation nav;
         GoF2NavigationView navView;
+        GoF2SystemJump jump;
+        VisualElement jumpCharge, jumpChargeFill, orbitInfo;
+        bool orbitInfoFilled;
         bool lastAutopilot;
         VisualElement autopilotMenu, autopilotMenuItems;
         readonly System.Collections.Generic.List<(Button button, GoF2Navigation.Target target)> menuButtons = new System.Collections.Generic.List<(Button, GoF2Navigation.Target)>();
@@ -74,6 +80,7 @@ namespace GoF2Remake.UI
         {
             if (mining != null) mining.Message -= OnMiningMessage;
             if (nav != null) nav.Message -= OnMiningMessage;
+            if (jump != null) jump.Message -= OnMiningMessage;
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             GoF2InputMode.Changed -= ApplyInputMode;
         }
@@ -101,6 +108,11 @@ namespace GoF2Remake.UI
             dockPrompt = root.Q("dockPrompt");
             dockGlyph = root.Q("dockGlyph");
             dockLabel = root.Q<Label>("dockLabel");
+            jumpCharge = root.Q("jumpCharge");
+            jumpChargeFill = root.Q("jumpChargeFill");
+            orbitInfo = root.Q("orbitInfo");
+            root.Q<Label>("jumpChargeLabel").text = GoF2Localization.Get(1359).ToUpperInvariant();   // Khador Drive
+            orbitInfoFilled = false;
 
             stick = new GoF2TouchStick(root.Q("stickZone"), root.Q("stickBase"), root.Q("stickKnob"), root.Q("stickGhost"), stickRadius);
             HookThrottle();
@@ -312,6 +324,10 @@ namespace GoF2Remake.UI
             if (root == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
 
+            bool mapOpen = GoF2StarMap.IsOpen;
+            root.EnableInClassList("hud-map", mapOpen);
+            if (mapOpen) return;   // the map has its own input
+
             if (nav != null && nav.MenuOpen)
             {
                 UpdateAutopilotMenu();
@@ -338,6 +354,8 @@ namespace GoF2Remake.UI
                 if (mining != null) mining.Message += OnMiningMessage;
                 nav = level.Navigation;
                 if (nav != null) nav.Message += OnMiningMessage;
+                jump = level.SystemJump;
+                if (jump != null) jump.Message += OnMiningMessage;
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 chase = Camera.main != null ? Camera.main.GetComponent<GoF2ChaseCamera>() : null;
                 ApplyInputMode();
@@ -359,7 +377,10 @@ namespace GoF2Remake.UI
             var phase = mining != null ? mining.State : GoF2Mining.Phase.Idle;
             bool autopilot = nav != null && nav.Autopilot;
             if (phase != lastPhase || autopilot != lastAutopilot) { lastPhase = phase; lastAutopilot = autopilot; BuildHints(GoF2InputMode.Current); }
-            root.EnableInClassList("hud-cinematic", nav != null && nav.Jumping);   // manual planet jump: no HUD
+            root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic));   // jumps: no HUD
+            jumpCharge.EnableInClassList("jump-charge--shown", jump != null && jump.Charging);
+            if (jump != null && jump.Charging) jumpChargeFill.style.width = Length.Percent(jump.ChargeRate * 100f);
+            UpdateOrbitInfo();
             // Fast-forward: the touch button, or hold R / controller Y (MGame key 0x100, hold-to-use).
             bool ffHeld = navView.FastForwardPressed
                           || (Keyboard.current != null && Keyboard.current.rKey.isPressed)
@@ -498,6 +519,29 @@ namespace GoF2Remake.UI
         }
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);
+
+        /// <summary>Hud::drawOrbitInformation during the arrival camera after a gate / Khador jump.</summary>
+        void UpdateOrbitInfo()
+        {
+            bool show = level != null && level.OrbitInfoVisible;
+            orbitInfo.EnableInClassList("orbit-info--shown", show);
+            root.EnableInClassList("hud-orbit-info", show);   // it takes the speed panel's corner
+            if (!show || orbitInfoFilled) return;
+            orbitInfoFilled = true;
+            var st = level.StationInfo;
+            int system = level.Layout.systemIndex, race = level.Layout.raceId;
+            bool owned = GoF2GalaxyMap.HasOwner(system) && race >= 0 && race <= 3;
+            var logo = orbitInfo.Q("orbitLogo");
+            var tex = owned ? Resources.Load<Texture2D>($"GoF2Hud/logo_{race}") : null;
+            logo.style.display = tex != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (tex != null) { logo.style.backgroundImage = new StyleBackground(tex); logo.style.width = tex.width; logo.style.height = tex.height; }
+            orbitInfo.Q<Label>("orbitStation").text = st == null ? "" : st.index == 101 ? st.name : $"{st.name} {GoF2Localization.Get(136)}";
+            orbitInfo.Q<Label>("orbitSystem").text = st == null ? "" : $"{st.systemName} {GoF2Localization.Get(137)}";
+            int sec = Mathf.Clamp(level.Database.Systems.Find(s => s.index == system)?.securityLevel ?? 0, 0, 3);
+            var secLabel = orbitInfo.Q<Label>("orbitSecurity");
+            secLabel.text = GoF2Localization.Get(402 + sec);
+            secLabel.style.color = (Color)GoF2GalaxyMap.SecurityColours[sec];
+        }
 
         /// <summary>The action prompt: mining (mine / abort / stop) when it has something to do, else dock.</summary>
         void Interact()
