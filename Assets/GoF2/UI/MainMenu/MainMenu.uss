@@ -41,6 +41,9 @@
     opacity: 1;
 }
 
+/* Hover styles only apply while the root has can-hover (mouse in use). With touch GoF2MainMenu removes it,
+   so a finger sliding over the UI doesn't light up everything it passes. */
+
 /* ---- logo: top-left in the menu; GoF2MainMenu moves it to the centre for the title screen with
    translate + scale (transform-only, so the transition to the menu costs no layout per frame) ---- */
 
@@ -138,7 +141,7 @@
     transition-timing-function: ease-out-cubic;
 }
 
-.menu-button:hover,
+.can-hover .menu-button:hover,
 .menu-button:focus {
     color: #FFFFFF;
     border-left-color: var(--gof-amber);
@@ -146,7 +149,8 @@
     translate: 14px 0;
 }
 
-.menu-button:active {
+/* the menu root prefix keeps the pressed state above the (can-hover) hover state */
+.menu-root .menu-button:active {
     background-color: var(--gof-amber-soft);
 }
 
@@ -257,8 +261,9 @@
     transition-timing-function: ease-out-cubic;
 }
 
-.campaign-card:hover,
-.campaign-card:focus {
+.can-hover .campaign-card:hover,
+.campaign-card:focus,
+.campaign-card:active {
     scale: 1.05 1.05;
     border-color: var(--gof-amber);
 }
@@ -277,8 +282,9 @@
     opacity: 0;
 }
 
-.campaign-card:hover > .card-art-hover,
-.campaign-card:focus > .card-art-hover {
+.can-hover .campaign-card:hover > .card-art-hover,
+.campaign-card:focus > .card-art-hover,
+.campaign-card:active > .card-art-hover {
     opacity: 1;
 }
 
@@ -303,8 +309,9 @@
     transition-duration: 0.18s;
 }
 
-.choice-button:hover,
-.choice-button:focus {
+.can-hover .choice-button:hover,
+.choice-button:focus,
+.choice-button:active {
     background-color: var(--gof-cyan-faint);
     border-left-color: var(--gof-amber);
     translate: 8px 0;
@@ -356,7 +363,7 @@
     transition-duration: 0.15s;
 }
 
-.slot-row:hover,
+.can-hover .slot-row:hover,
 .slot-row:focus {
     background-color: var(--gof-cyan-faint);
     border-left-color: var(--gof-amber);
@@ -402,7 +409,7 @@
 }
 
 .slot-row--empty:focus .slot-name,
-.slot-row--empty:hover .slot-name {
+.can-hover .slot-row--empty:hover .slot-name {
     color: var(--gof-text);
 }
 
@@ -427,7 +434,7 @@
     transition-duration: 0.15s;
 }
 
-.tab-button:hover,
+.can-hover .tab-button:hover,
 .tab-button:focus {
     color: #FFFFFF;
     background-color: var(--gof-cyan-faint);
@@ -462,7 +469,7 @@
 }
 
 .option-row:focus,
-.option-row:hover {
+.can-hover .option-row:hover {
     background-color: var(--gof-cyan-faint);
     border-left-color: var(--gof-amber);
 }
@@ -500,7 +507,7 @@
     transition-duration: 0.15s;
 }
 
-.fps-choice:hover {
+.can-hover .fps-choice:hover {
     color: #FFFFFF;
     background-color: var(--gof-cyan-faint);
 }

@@ -20,6 +20,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
+using PointerType = UnityEngine.UIElements.PointerType;
 
 namespace GoF2Remake.UI
 {
@@ -71,6 +72,7 @@ namespace GoF2Remake.UI
         PanelSettings runtimePanel;
         PanelRenderer panelRenderer;
         bool started;
+        bool touchMode;   // last input was a finger: no hover styles, no focus highlight (see SetTouchMode)
         VisualElement safeArea;
         Vector2Int lastScreen;
         Rect lastSafeArea;
@@ -81,6 +83,7 @@ namespace GoF2Remake.UI
         {
             // Per-instance panel settings: scaling is adapted to the screen shape (see UpdateLayout).
             panelRenderer = GetComponent<PanelRenderer>();
+            if (!started) touchMode = Application.isMobilePlatform;
             GoF2Settings.Changed += ApplySettings;
             // PanelRenderer hands out the UI root when it (re)loads the UXML, including live reloads.
             // Register first: assigning the panel settings below reloads the UI.
@@ -96,6 +99,7 @@ namespace GoF2Remake.UI
         {
             root = rootElement;
             root.style.flexGrow = 1;   // the default theme would stretch the document root; ours is custom
+            root.EnableInClassList("can-hover", !touchMode);
             safeArea = root.Q("safeArea");
             LoadLanguage(GoF2Settings.Language);
 
@@ -156,6 +160,8 @@ namespace GoF2Remake.UI
 
             root.RegisterCallback<NavigationCancelEvent>(_ => Back(), TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationMoveEvent>(OnNavigate, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) SetTouchMode(false); }, TrickleDown.TrickleDown);
             root.RegisterCallback<FocusInEvent>(e => { if (e.target is VisualElement v) EnsureVisible(v); });
 
             if (postVolume != null && postVolume.profile != null)
@@ -267,8 +273,33 @@ namespace GoF2Remake.UI
 
         void HookFocusSound(VisualElement e)
         {
-            e.RegisterCallback<PointerEnterEvent>(_ => { if (e.enabledInHierarchy && e.focusable) e.Focus(); });
+            // Mouse only: a finger sliding over the UI must not drag the selection along with it.
+            e.RegisterCallback<PointerEnterEvent>(ev => { if (ev.pointerType == PointerType.mouse && e.enabledInHierarchy && e.focusable) e.Focus(); });
             e.RegisterCallback<FocusInEvent>(_ => { if (screen == MenuState.Menu) Play(buttonPush, 0.45f); });
+        }
+
+        // Touch has no hover, and a highlight that follows the finger (or stays on whatever was last pressed)
+        // looks broken. In touch mode the selection highlight is off: hover styles need the root's can-hover
+        // class, presses don't move focus and menus don't pre-select their first item. A mouse or
+        // keyboard/controller navigation switches back.
+        void SetTouchMode(bool on)
+        {
+            if (root == null || on == touchMode && root.ClassListContains("can-hover") != on) return;
+            touchMode = on;
+            root.EnableInClassList("can-hover", !on);
+            if (on && root.focusController?.focusedElement is VisualElement focused) focused.Blur();
+        }
+
+        void OnPointerDown(PointerDownEvent e)
+        {
+            if (e.pointerType == PointerType.mouse) { SetTouchMode(false); return; }
+            SetTouchMode(true);
+            root.focusController?.IgnoreEvent(e);   // don't focus what the finger presses
+        }
+
+        void Select(VisualElement e)
+        {
+            if (!touchMode) e?.Focus();
         }
 
         // ---- flow ------------------------------------------------------------------------------
@@ -402,7 +433,7 @@ namespace GoF2Remake.UI
             var target = closing == panels["campaignPanel"] ? newGameButton
                 : closing == panels["loadPanel"] ? loadButton
                 : closing == panels["optionsPanel"] ? optionsButton : aboutButton;
-            target?.Focus();
+            Select(target);
         }
 
         void PickCampaign(GoF2Campaign c)
@@ -452,14 +483,14 @@ namespace GoF2Remake.UI
             root.Q<Label>("dialogText").text = text;
             dialog.AddToClassList("dialog-backdrop--shown");
             Play(infoSound);
-            root.Q<Button>("dialogNo").Focus();
+            Select(root.Q<Button>("dialogNo"));
         }
 
         void CloseDialog()
         {
             dialog.RemoveFromClassList("dialog-backdrop--shown");
             dialogYes = null;
-            if (openPanel != null) FocusFirst(openPanel); else exitButton?.Focus();
+            if (openPanel != null) FocusFirst(openPanel); else Select(exitButton);
         }
 
         // ---- save slots (RecordHandler: 12 slots, slot 0 = Auto-save; no save system yet) --------
@@ -659,6 +690,7 @@ namespace GoF2Remake.UI
         void OnNavigate(NavigationMoveEvent e)
         {
             if (screen != MenuState.Menu) return;
+            SetTouchMode(false);
             var focused = root.focusController?.focusedElement as VisualElement;
             bool vertical = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Down;
             bool horizontal = e.direction == NavigationMoveEvent.Direction.Left || e.direction == NavigationMoveEvent.Direction.Right;
@@ -707,7 +739,7 @@ namespace GoF2Remake.UI
         void FocusFirst(VisualElement scope)
         {
             var items = Focusables(scope);
-            if (items.Count > 0) items[0].Focus();
+            if (items.Count > 0) Select(items[0]);
         }
 
         static void SetFocusable(VisualElement scope, bool on)

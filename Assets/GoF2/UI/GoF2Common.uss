@@ -1,5 +1,7 @@
 /* GoF2 remake: shared design tokens and base control styles (imported by GoF2Theme.tss).
-   Palette from the original UI: steel-blue buttons, orange when pressed, cyan glow of the logo. */
+   Palette from the original UI: steel-blue buttons, orange when pressed, cyan glow of the logo.
+   :hover rules are scoped to .can-hover, which screen controllers set on their root only while a mouse is in use
+   (touch has no real hover: a sliding finger would highlight everything it passes). */
 
 :root {
     --gof-cyan: #3EC8FF;
@@ -71,7 +73,7 @@
 }
 
 .unity-base-slider:focus .unity-base-slider__dragger,
-.unity-base-slider:hover .unity-base-slider__dragger {
+.can-hover .unity-base-slider:hover .unity-base-slider__dragger {
     background-color: var(--gof-amber);
     scale: 1.25 1.25;
 }
@@ -110,7 +112,7 @@
 }
 
 .unity-toggle:focus .unity-toggle__checkmark,
-.unity-toggle:hover .unity-toggle__checkmark {
+.can-hover .unity-toggle:hover .unity-toggle__checkmark {
     border-color: var(--gof-amber);
 }
 
