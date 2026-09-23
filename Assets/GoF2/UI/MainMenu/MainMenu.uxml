@@ -97,7 +97,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:VisualElement name="logo" class="logo logo--title" picking-mode="Ignore" />
+        <ui:VisualElement name="logo" class="logo logo--instant" picking-mode="Ignore" />
         <ui:Label name="pressAnyKey" class="press-any-key gof-semibold" picking-mode="Ignore" />
 
         <ui:VisualElement name="footer" class="footer" picking-mode="Ignore">

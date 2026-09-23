@@ -114,15 +114,19 @@
     border-color: var(--gof-amber);
 }
 
-/* ---- ScrollView ---------------------------------------------------------------------- */
-
-.unity-scroll-view__vertical-scroller,
-.unity-scroll-view__horizontal-scroller {
-    display: none;
-}
+/* ---- ScrollView ----------------------------------------------------------------------
+   Unity's default theme normally provides this structure; our theme is standalone:
+   ScrollView > content-and-vertical-scroll-container (row) > content-viewport > content-container.
+   The content container is absolutely placed so it keeps its natural height (vertical lists only). */
 
 .unity-scroll-view {
     overflow: hidden;
+    flex-shrink: 1;
+}
+
+.unity-scroll-view__content-and-vertical-scroll-container {
+    flex-direction: row;
+    flex-grow: 1;
     flex-shrink: 1;
 }
 
@@ -130,4 +134,16 @@
     flex-grow: 1;
     flex-shrink: 1;
     overflow: hidden;
+}
+
+.unity-scroll-view__content-container--vertical {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+}
+
+.unity-scroll-view__vertical-scroller,
+.unity-scroll-view__horizontal-scroller {
+    display: none;
 }

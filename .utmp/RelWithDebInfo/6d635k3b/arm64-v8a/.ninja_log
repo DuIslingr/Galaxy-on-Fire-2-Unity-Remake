@@ -1,0 +1,10 @@
+# ninja log v5
+20	970	8118787933374079	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	3e3b97b460a58bef
+26	979	8118787933384134	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	6bff5145852c9715
+1	1002	8118787933704080	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	62286322a38df91f
+42	1018	8118787933870223	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	cbacc89eb02f5e75
+14	1056	8118787934247693	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	4de8f68068c6c2
+48	1212	8118787935807272	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	c7eae5c3ee2bb1ce
+36	1254	8118787936221777	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	53de127ee90271aa
+9	1339	8118787937032759	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	2e9921e426253f12
+1339	1470	8118787938357511	C:/Projects/Unity/Galaxy on Fire 2/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/6d635k3b/obj/arm64-v8a/libgame.so	a9b55e42115e5d5c

@@ -13,17 +13,17 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
+  companyName: JoppieToppie
   productName: Galaxy on Fire 2
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
-  m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
+  m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_ShowUnitySplashScreen: 1
   m_ShowUnitySplashLogo: 1
   m_SplashScreenOverlayOpacity: 1
   m_SplashScreenAnimation: 1
   m_SplashScreenLogoStyle: 1
-  m_SplashScreenDrawMode: 0
+  m_SplashScreenDrawMode: 1
   m_SplashScreenBackgroundAnimationZoom: 1
   m_SplashScreenLogoAnimationZoom: 1
   m_SplashScreenBackgroundLandscapeAspect: 1
@@ -40,7 +40,11 @@ PlayerSettings:
     y: 0
     width: 1
     height: 1
-  m_SplashScreenLogos: []
+  m_SplashScreenLogos:
+  - logo: {fileID: 21300000, guid: 1ba66f91f9abdef4cbba601a3946b9bb, type: 3}
+    duration: 2
+  - logo: {fileID: 10404, guid: 0000000000000000f000000000000000, type: 0}
+    duration: 2
   m_VirtualRealitySplashScreen: {fileID: 0}
   defaultScreenWidth: 1024
   defaultScreenHeight: 768
@@ -180,7 +184,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.4
   androidMinAspectRatio: 1
   applicationIdentifier:
-    Android: com.UnityTechnologies.com.unity.template.urpblank
+    Android: com.joppietoppie.gof2remake
     Standalone: com.Unity-Technologies.com.unity.template.urp-blank
     iPhone: com.Unity-Technologies.com.unity.template.urp-blank
   buildNumber:
@@ -316,7 +320,14 @@ PlayerSettings:
   androidAdaptiveIconVectorDrawableMonochrome: {fileID: 0}
   androidAdaptiveBannerVectorDrawableBackground: {fileID: 0}
   androidAdaptiveBannerVectorDrawableForeground: {fileID: 0}
-  m_BuildTargetIcons: []
+  m_BuildTargetIcons:
+  - m_BuildTarget: 
+    m_Icons:
+    - serializedVersion: 2
+      m_Icon: {fileID: 2800000, guid: 20bf31222b7291544b4d0952f0e8b81f, type: 3}
+      m_Width: 128
+      m_Height: 128
+      m_Kind: 0
   m_BuildTargetPlatformIcons:
   - m_BuildTarget: iPhone
     m_Icons:
@@ -417,95 +428,88 @@ PlayerSettings:
       m_SubKind: App Store
   - m_BuildTarget: Android
     m_Icons:
-    - m_Textures: []
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      - {fileID: 2800000, guid: a90a56a38fd2aab4583957e907a89ed2, type: 3}
       m_Width: 432
       m_Height: 432
       m_Kind: 2
       m_SubKind: 
-    - m_Textures: []
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      - {fileID: 2800000, guid: a90a56a38fd2aab4583957e907a89ed2, type: 3}
       m_Width: 324
       m_Height: 324
       m_Kind: 2
       m_SubKind: 
-    - m_Textures: []
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      - {fileID: 2800000, guid: a90a56a38fd2aab4583957e907a89ed2, type: 3}
       m_Width: 216
       m_Height: 216
       m_Kind: 2
       m_SubKind: 
-    - m_Textures: []
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      - {fileID: 2800000, guid: a90a56a38fd2aab4583957e907a89ed2, type: 3}
       m_Width: 162
       m_Height: 162
       m_Kind: 2
       m_SubKind: 
-    - m_Textures: []
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      - {fileID: 2800000, guid: a90a56a38fd2aab4583957e907a89ed2, type: 3}
       m_Width: 108
       m_Height: 108
       m_Kind: 2
       m_SubKind: 
-    - m_Textures: []
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      - {fileID: 2800000, guid: a90a56a38fd2aab4583957e907a89ed2, type: 3}
       m_Width: 81
       m_Height: 81
       m_Kind: 2
       m_SubKind: 
-    - m_Textures: []
-      m_Width: 192
-      m_Height: 192
-      m_Kind: 1
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      m_Width: 640
+      m_Height: 360
+      m_Kind: 3
       m_SubKind: 
-    - m_Textures: []
-      m_Width: 144
-      m_Height: 144
-      m_Kind: 1
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      m_Width: 480
+      m_Height: 270
+      m_Kind: 3
       m_SubKind: 
-    - m_Textures: []
-      m_Width: 96
-      m_Height: 96
-      m_Kind: 1
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      m_Width: 320
+      m_Height: 180
+      m_Kind: 3
       m_SubKind: 
-    - m_Textures: []
-      m_Width: 72
-      m_Height: 72
-      m_Kind: 1
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      m_Width: 240
+      m_Height: 135
+      m_Kind: 3
       m_SubKind: 
-    - m_Textures: []
-      m_Width: 48
-      m_Height: 48
-      m_Kind: 1
-      m_SubKind: 
-    - m_Textures: []
-      m_Width: 36
-      m_Height: 36
-      m_Kind: 1
-      m_SubKind: 
-    - m_Textures: []
-      m_Width: 192
-      m_Height: 192
-      m_Kind: 0
-      m_SubKind: 
-    - m_Textures: []
-      m_Width: 144
-      m_Height: 144
-      m_Kind: 0
-      m_SubKind: 
-    - m_Textures: []
-      m_Width: 96
-      m_Height: 96
-      m_Kind: 0
-      m_SubKind: 
-    - m_Textures: []
-      m_Width: 72
-      m_Height: 72
-      m_Kind: 0
-      m_SubKind: 
-    - m_Textures: []
-      m_Width: 48
-      m_Height: 48
-      m_Kind: 0
-      m_SubKind: 
-    - m_Textures: []
-      m_Width: 36
-      m_Height: 36
-      m_Kind: 0
+    - m_Textures:
+      - {fileID: 2800000, guid: a80b0533eae82614eb7a6cfbb10564ac, type: 3}
+      - {fileID: 2800000, guid: 52f55ea31cce5c642bcf6845b9f2568a, type: 3}
+      m_Width: 160
+      m_Height: 90
+      m_Kind: 3
       m_SubKind: 
   - m_BuildTarget: tvOS
     m_Icons:
@@ -854,6 +858,7 @@ PlayerSettings:
   webWasm2023: 1
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
+    Android: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
     Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
   additionalCompilerArguments: {}
   platformArchitecture: {}
@@ -933,7 +938,13 @@ PlayerSettings:
   XboxOneXTitleMemory: 8
   XboxOneOverrideIdentityName: 
   XboxOneOverrideIdentityPublisher: 
-  cloudServicesEnabled: {}
+  cloudServicesEnabled:
+    Build: 0
+    Game Performance: 0
+    Legacy Analytics: 0
+    Purchasing: 0
+    UDP: 0
+    Unity Ads: 0
   luminIcon:
     m_Name: 
     m_ModelFolderPath: 
@@ -956,11 +967,11 @@ PlayerSettings:
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
   enableDirectStorage: 0
-  cloudProjectId: 
+  cloudProjectId: b4ef389f-7030-4e75-9f7c-9a354a7fb236
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: 
-  organizationId: 
+  projectName: Galaxy on Fire 2
+  organizationId: joppietoppie-extra
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

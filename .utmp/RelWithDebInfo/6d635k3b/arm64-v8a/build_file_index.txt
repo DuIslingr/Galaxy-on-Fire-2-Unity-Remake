@@ -1,0 +1,2 @@
+C:\Projects\Unity\Galaxy on Fire 2\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\Projects\Unity\Galaxy on Fire 2\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt

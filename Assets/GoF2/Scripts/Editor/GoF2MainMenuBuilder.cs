@@ -54,6 +54,8 @@ namespace GoF2Remake.EditorTools
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             BuildImages();
+            ConfigureSplashScreen();
+            BuildAppIcons();
             BuildFonts();
             var panelSettings = BuildPanelSettings();
             var profile = BuildVolumeProfile();
@@ -71,8 +73,7 @@ namespace GoF2Remake.EditorTools
             var logos = Load($"{GoF2ImportSettings.Root}/Textures/textures/gof2_logos_1440.png");
             // Rects from _texture_manifest.json (x, y, w, h, top-left origin).
             Save(Crop(logos, 269, 71, 670, 207), "logo_gof2");
-            Save(Crop(logos, 1, 71, 266, 303), "logo_fishlabs");
-            Save(Crop(logos, 269, 280, 359, 197), "logo_abyss");
+            Save(Crop(logos, 1, 71, 266, 303), "logo_fishlabs");   // ABYSS ENGINE (7000) is replaced by the Unity logo
 
             // 2048 cards sheet: 3 x 2 grid of cards (blue = normal, orange = selected).
             var cards = Load($"{GoF2ImportSettings.Root}/Textures/textures/gof2_campaign_select_ipad_large.png");
@@ -95,6 +96,11 @@ namespace GoF2Remake.EditorTools
                 ti.npotScale = TextureImporterNPOTScale.None;
                 ti.wrapMode = TextureWrapMode.Clamp;
                 ti.textureCompression = TextureImporterCompression.Uncompressed;
+                if (Path.GetFileName(f).StartsWith("logo_"))
+                {
+                    ti.textureType = TextureImporterType.Sprite;   // also used by the Unity splash screen
+                    ti.spriteImportMode = SpriteImportMode.Single;
+                }
                 ti.SaveAndReimport();
             }
         }
@@ -134,6 +140,113 @@ namespace GoF2Remake.EditorTools
         }
 
         static void Save(Texture2D t, string name) => File.WriteAllBytes($"{ImageDir}/{name}.png", t.EncodeToPNG());
+
+        /// <summary>
+        /// Startup logos (MTitle): FISHLABS, then "Made with Unity" where the original showed ABYSS ENGINE.
+        /// Unity's splash screen plays them in builds; the menu scene only shows them in the editor.
+        /// </summary>
+        public static void ConfigureSplashScreen()
+        {
+            var fishlabs = AssetDatabase.LoadAssetAtPath<Sprite>($"{ImageDir}/logo_fishlabs.png");
+            PlayerSettings.SplashScreen.show = true;
+            PlayerSettings.SplashScreen.showUnityLogo = true;
+            PlayerSettings.SplashScreen.drawMode = PlayerSettings.SplashScreen.DrawMode.AllSequential;
+            PlayerSettings.SplashScreen.unityLogoStyle = PlayerSettings.SplashScreen.UnityLogoStyle.LightOnDark;
+            PlayerSettings.SplashScreen.animationMode = PlayerSettings.SplashScreen.AnimationMode.Dolly;
+            PlayerSettings.SplashScreen.backgroundColor = Color.black;
+            PlayerSettings.SplashScreen.logos = fishlabs != null
+                ? new[] { PlayerSettings.SplashScreenLogo.Create(2f, fishlabs), PlayerSettings.SplashScreenLogo.CreateWithUnityLogo(2f) }
+                : new[] { PlayerSettings.SplashScreenLogo.CreateWithUnityLogo(2f) };
+            EditorUtility.SetDirty(Unsupported.GetSerializedAssetInterfaceSingleton("PlayerSettings"));
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>
+        /// App icon: the GoF2 logo on a dark nebula (skybox_003). Android gets an adaptive icon (logo inside the
+        /// 66% safe zone on a separate background layer) plus legacy/round icons; other platforms the flat one.
+        /// </summary>
+        public static void BuildAppIcons()
+        {
+            string dir = UiDir + "/AppIcon";
+            Directory.CreateDirectory(dir);
+            const int S = 1024;
+            var logo = Load($"{ImageDir}/logo_gof2.png");
+            var sky = Load($"{GoF2ImportSettings.Root}/Textures/main/skyboxes/skybox_003.png");
+
+            var bg = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            for (int y = 0; y < S; y++)
+            for (int x = 0; x < S; x++)
+            {
+                // 900 px square around the bright part of the nebula (texture rows are bottom-up).
+                float u = (560f + x / (float)S * 900f) / sky.width, v = (160f + y / (float)S * 900f) / sky.height;
+                var c = sky.GetPixelBilinear(u, v) * 0.6f;
+                float vignette = 1f - 0.45f * ((x - S * 0.5f) * (x - S * 0.5f) + (y - S * 0.5f) * (y - S * 0.5f)) / (S * S * 0.5f);
+                bg.SetPixel(x, y, new Color(c.r * vignette, c.g * vignette, c.b * vignette + 0.02f, 1f));
+            }
+            bg.Apply();
+            var fg = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            fg.SetPixels(new Color[S * S]);
+            Stamp(fg, logo, 0.62f);                      // adaptive foreground: inside the 66% safe zone
+            var mono = new Texture2D(S, S, TextureFormat.RGBA32, false);   // Android 13 themed icon: white silhouette
+            var fgPx = fg.GetPixels();
+            for (int i = 0; i < fgPx.Length; i++) fgPx[i] = new Color(1f, 1f, 1f, Mathf.Clamp01(fgPx[i].a * 1.4f - 0.25f));
+            mono.SetPixels(fgPx);
+            mono.Apply();
+            var flat = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            flat.SetPixels(bg.GetPixels());
+            Stamp(flat, logo, 0.84f);                    // legacy / round / other platforms
+            File.WriteAllBytes($"{dir}/icon_background.png", bg.EncodeToPNG());
+            File.WriteAllBytes($"{dir}/icon_foreground.png", fg.EncodeToPNG());
+            File.WriteAllBytes($"{dir}/icon.png", flat.EncodeToPNG());
+            File.WriteAllBytes($"{dir}/icon_monochrome.png", mono.EncodeToPNG());
+            AssetDatabase.Refresh();
+            foreach (var n in new[] { "icon_background", "icon_foreground", "icon_monochrome", "icon" })
+            {
+                var ti = (TextureImporter)AssetImporter.GetAtPath($"{dir}/{n}.png");
+                ti.alphaIsTransparency = true;
+                ti.mipmapEnabled = false;
+                ti.textureCompression = TextureImporterCompression.Uncompressed;
+                ti.SaveAndReimport();
+            }
+            var tFlat = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/icon.png");
+            var tBg = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/icon_background.png");
+            var tFg = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/icon_foreground.png");
+            var tMono = AssetDatabase.LoadAssetAtPath<Texture2D>($"{dir}/icon_monochrome.png");
+
+            PlayerSettings.SetIcons(UnityEditor.Build.NamedBuildTarget.Unknown, new[] { tFlat }, IconKind.Any);
+            var android = UnityEditor.Build.NamedBuildTarget.Android;
+            foreach (var kind in PlayerSettings.GetSupportedIconKinds(android))
+            {
+                var icons = PlayerSettings.GetPlatformIcons(android, kind);
+                foreach (var icon in icons)
+                {
+                    // Adaptive icons: background, foreground (+ monochrome on newer Unity/Android); else flat.
+                    if (icon.minLayerCount >= 3) icon.SetTextures(tBg, tFg, tMono);
+                    else if (icon.minLayerCount == 2) icon.SetTextures(tBg, tFg);
+                    else icon.SetTexture(tFlat);
+                }
+                PlayerSettings.SetPlatformIcons(android, kind, icons);
+            }
+            EditorUtility.SetDirty(Unsupported.GetSerializedAssetInterfaceSingleton("PlayerSettings"));
+            AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Alpha-blends 'logo' centred onto 'dst', scaled to widthFraction of its width.</summary>
+        static void Stamp(Texture2D dst, Texture2D logo, float widthFraction)
+        {
+            int w = Mathf.RoundToInt(dst.width * widthFraction), h = Mathf.RoundToInt(w * logo.height / (float)logo.width);
+            int x0 = (dst.width - w) / 2, y0 = (dst.height - h) / 2;
+            for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+            {
+                var c = logo.GetPixelBilinear((x + 0.5f) / w, (y + 0.5f) / h);
+                var d = dst.GetPixel(x0 + x, y0 + y);
+                float a = c.a + d.a * (1f - c.a);
+                var rgb = a > 0f ? (new Color(c.r, c.g, c.b) * c.a + new Color(d.r, d.g, d.b) * d.a * (1f - c.a)) / a : Color.clear;
+                dst.SetPixel(x0 + x, y0 + y, new Color(rgb.r, rgb.g, rgb.b, a));
+            }
+            dst.Apply();
+        }
 
         // ---- fonts, panel, profile -----------------------------------------------------------------
 
@@ -269,12 +382,10 @@ namespace GoF2Remake.EditorTools
 
             // UI.
             var uiGo = new GameObject("Main Menu UI");
-            var doc = uiGo.AddComponent<UIDocument>();
-            // Serialized assignment: the panelSettings setter doesn't persist on a freshly added component.
-            var so = new SerializedObject(doc);
-            so.FindProperty("m_PanelSettings").objectReferenceValue = panelSettings;
-            so.FindProperty("sourceAsset").objectReferenceValue = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"{MenuDir}/MainMenu.uxml");
-            so.ApplyModifiedPropertiesWithoutUndo();
+            var panel = uiGo.AddComponent<PanelRenderer>();   // Unity 6.7's successor to UIDocument
+            panel.panelSettings = panelSettings;
+            panel.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"{MenuDir}/MainMenu.uxml");
+            EditorUtility.SetDirty(panel);
             var music = uiGo.AddComponent<AudioSource>();
             music.playOnAwake = false;
             music.loop = true;
@@ -287,8 +398,7 @@ namespace GoF2Remake.EditorTools
             menu.buttonPush = Clip("SFX_GENERAL/Button_Push_v06.ogg");
             menu.buttonRelease = Clip("SFX_GENERAL/Button_Release_V06.ogg");
             menu.infoSound = Clip("SFX_GENERAL/Message_Info_Screen_v04.ogg");
-            menu.fishlabsLogo = AssetDatabase.LoadAssetAtPath<Texture2D>($"{ImageDir}/logo_fishlabs.png");
-            menu.abyssLogo = AssetDatabase.LoadAssetAtPath<Texture2D>($"{ImageDir}/logo_abyss.png");
+            menu.editorSplashLogos = new[] { AssetDatabase.LoadAssetAtPath<Texture2D>($"{ImageDir}/logo_fishlabs.png") };
             menu.languageCodes = Languages.Select(l => l.code).ToArray();
             menu.languageNames = Languages.Select(l => l.name).ToArray();
             menu.languageTables = Languages.Select(l => AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>($"{GoF2ImportSettings.Root}/Localization/text_{l.code}.json")).ToArray();

@@ -1,6 +1,7 @@
 // GoF2MainMenu.cs
 // Main menu controller (UI Toolkit). Follows the original flow (MTitle -> ModMainMenu -> MenuTouchWindow(0)):
-//   1. Splash: FISHLABS then ABYSS ENGINE logo, 1 s fade in / 2 s hold / 1 s fade out each, skippable.
+//   1. Splash: FISHLABS then (instead of ABYSS ENGINE) "Made with Unity". In players this is Unity's own
+//      splash screen (Player Settings); in the editor the menu shows the FISHLABS logo itself.
 //   2. Title: the GoF2 logo fades in over the live 3D scene (3.9 s), "press any key" pulses under it.
 //   3. Menu: Resume (only with a save), Start new game -> Select Campaign -> difficulty (Normal / Extreme),
 //      Load game (save slots, slot 0 = Auto-save), Options (Sound & Graphics, Controls, Language), About, Exit.
@@ -22,7 +23,8 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
-    [RequireComponent(typeof(UIDocument))]
+    [RequireComponent(typeof(PanelRenderer))]
+    [DefaultExecutionOrder(-1000)]   // register for the UI load before PanelRenderer loads the UXML
     public class GoF2MainMenu : MonoBehaviour
     {
         [Header("Flow")]
@@ -31,9 +33,9 @@ namespace GoF2Remake.UI
         public string gameScene = "FlightTest";
         public string versionText = "Galaxy on Fire 2 Remake  ·  pre-alpha";
 
-        [Header("Splash logos (MTitle images 7001, 7000)")]
-        public Texture2D fishlabsLogo;
-        public Texture2D abyssLogo;
+        [Header("Editor splash (players use Unity's splash screen with the same logos)")]
+        [Tooltip("MTitle image 7001 (FISHLABS). Each logo: 1 s fade in, 2 s hold, 1 s fade out.")]
+        public Texture2D[] editorSplashLogos;
 
         [Header("Audio")]
         public AudioSource musicSource;
@@ -67,6 +69,8 @@ namespace GoF2Remake.UI
         ColorAdjustments colorAdjustments;
         IDisposable anyKey;
         PanelSettings runtimePanel;
+        PanelRenderer panelRenderer;
+        bool started;
         VisualElement safeArea;
         Vector2Int lastScreen;
         Rect lastSafeArea;
@@ -76,18 +80,28 @@ namespace GoF2Remake.UI
         void OnEnable()
         {
             // Per-instance panel settings: scaling is adapted to the screen shape (see UpdateLayout).
-            var doc = GetComponent<UIDocument>();
-            if (runtimePanel == null && doc.panelSettings != null)
+            panelRenderer = GetComponent<PanelRenderer>();
+            GoF2Settings.Changed += ApplySettings;
+            // PanelRenderer hands out the UI root when it (re)loads the UXML, including live reloads.
+            // Register first: assigning the panel settings below reloads the UI.
+            panelRenderer.RegisterUIReloadCallback(OnUIReload);
+            if (runtimePanel == null && panelRenderer.panelSettings != null)
             {
-                runtimePanel = Instantiate(doc.panelSettings);
-                doc.panelSettings = runtimePanel;
+                runtimePanel = Instantiate(panelRenderer.panelSettings);
+                panelRenderer.panelSettings = runtimePanel;
             }
-            root = doc.rootVisualElement;
+        }
+
+        void OnUIReload(PanelRenderer renderer, VisualElement rootElement)
+        {
+            root = rootElement;
             root.style.flexGrow = 1;   // the default theme would stretch the document root; ours is custom
             safeArea = root.Q("safeArea");
             LoadLanguage(GoF2Settings.Language);
 
             logo = root.Q("logo");
+            logo.usageHints = UsageHints.DynamicTransform;
+            logo.RegisterCallback<GeometryChangedEvent>(_ => PlaceTitleLogo());
             splash = root.Q("splash");
             splashLogo = root.Q("splashLogo");
             fade = root.Q("fade");
@@ -107,7 +121,18 @@ namespace GoF2Remake.UI
             resumeButton.AddToClassList("menu-button--gone");        // original: only shown when a save exists
 
             foreach (var n in new[] { "campaignPanel", "difficultyPanel", "loadPanel", "optionsPanel", "aboutPanel" })
+            {
                 panels[n] = root.Q(n);
+                panels[n].usageHints = UsageHints.DynamicTransform;
+            }
+            foreach (var n in new[] { "aboutScroll", "slotList" })
+            {
+                var sv = root.Q<ScrollView>(n);
+                sv.mode = ScrollViewMode.Vertical;
+                sv.verticalScrollerVisibility = ScrollerVisibility.Hidden;     // drag / wheel / focus scrolling instead
+                sv.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+                new GoF2DragScroll(sv);
+            }
             foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack" })
             {
                 var b = root.Q<Button>(n);
@@ -139,17 +164,38 @@ namespace GoF2Remake.UI
                 postVolume.profile.TryGet(out colorAdjustments);
             }
             ApplySettings();
-            GoF2Settings.Changed += ApplySettings;
 
             RefreshTexts();
-            foreach (var b in mainButtons.Query<Button>().ToList()) b.AddToClassList("menu-button--hidden");
             lastScreen = Vector2Int.zero;
             UpdateLayout();
-            StartCoroutine(Run());
+            if (!started)
+            {
+                started = true;
+                foreach (var b in mainButtons.Query<Button>().ToList()) b.AddToClassList("menu-button--hidden");
+                StartCoroutine(Run());
+            }
+            else RestoreState();
+        }
+
+        /// <summary>After a live UI reload the tree is new: put it back in the current flow state.</summary>
+        void RestoreState()
+        {
+            if (screen == MenuState.Splash) return;
+            splash.AddToClassList("splash--gone");
+            splash.AddToClassList("splash--removed");
+            logo.RemoveFromClassList("logo--instant");
+            if (screen == MenuState.Title) { logo.AddToClassList("logo--title-visible"); return; }
+            logo.AddToClassList("logo--menu");
+            pressAnyKey.AddToClassList("press-any-key--hidden");
+            root.AddToClassList("menu-root--menu");
+            FocusFirst(mainButtons);
         }
 
         [Tooltip("Force the phone layout (for testing in the editor).")]
         public bool simulatePhone;
+
+        /// <summary>The loaded UI root (PanelRenderer has no rootVisualElement; set by the reload callback).</summary>
+        public VisualElement Root => root;
 
         /// <summary>Size the panel renders at: the screen, or its target texture when rendering off-screen.</summary>
         Vector2Int ScreenSize()
@@ -160,6 +206,7 @@ namespace GoF2Remake.UI
 
         void Update()
         {
+            if (root == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
         }
 
@@ -204,6 +251,7 @@ namespace GoF2Remake.UI
 
         void OnDisable()
         {
+            panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             GoF2Settings.Changed -= ApplySettings;
             anyKey?.Dispose();
         }
@@ -237,9 +285,10 @@ namespace GoF2Remake.UI
             StartCoroutine(FadeMusic(GoF2Settings.MusicVolume, 3f));
 
             WatchAnyKey();
-            if (showSplash)
+            bool splashLogos = showSplash && Application.isEditor && editorSplashLogos != null;
+            if (splashLogos)
             {
-                foreach (var tex in new[] { fishlabsLogo, abyssLogo })
+                foreach (var tex in editorSplashLogos)
                 {
                     if (tex == null) continue;
                     skipRequested = false;
@@ -254,7 +303,7 @@ namespace GoF2Remake.UI
             screen = MenuState.Title;
             yield return new WaitForSeconds(0.2f);
             logo.AddToClassList("logo--title-visible");
-            yield return new WaitForSeconds(showSplash ? 1.5f : 0.3f);
+            yield return new WaitForSeconds(splashLogos ? 1.5f : 0.3f);
             splash.AddToClassList("splash--removed");
             pulse = pressAnyKey.schedule.Execute(() => pressAnyKey.ToggleInClassList("press-any-key--on")).Every(1050);
             skipRequested = false;
@@ -273,13 +322,39 @@ namespace GoF2Remake.UI
             anyKey = InputSystem.onAnyButtonPress.Call(_ => { if (screen == MenuState.Splash || screen == MenuState.Title) skipRequested = true; });
         }
 
+        /// <summary>
+        /// The logo lives at its menu spot (top-left); on the title screen it is moved to the centre and enlarged
+        /// with translate + scale only, so the move to the menu is a cheap GPU transform animation.
+        /// </summary>
+        void PlaceTitleLogo()
+        {
+            if (screen == MenuState.Menu || screen == MenuState.Leaving || logo.parent == null) return;
+            var p = logo.parent.layout;
+            var el = logo.layout;
+            if (el.width <= 0f || el.height <= 0f || p.width <= 0f) return;
+            const float aspect = 670f / 207f;                           // logo_gof2.png
+            float imgW = Mathf.Min(el.width, el.height * aspect);     // scale-to-fit, left aligned
+            var imgCenter = new Vector2(el.x + imgW * 0.5f, el.y + el.height * 0.5f);
+            float targetW = Mathf.Min(p.width * 0.56f, p.height * 0.34f * aspect);
+            float k = targetW / imgW;
+            var target = new Vector2(p.width * 0.5f, p.height * 0.41f);
+            logo.style.transformOrigin = new TransformOrigin(Length.Pixels(imgW * 0.5f), Length.Percent(50f));
+            logo.style.translate = new Translate(target.x - imgCenter.x, target.y - imgCenter.y);
+            logo.style.scale = new Scale(new Vector2(k, k));
+            // First placement happens without animation; transitions are enabled afterwards.
+            if (logo.ClassListContains("logo--instant"))
+                logo.schedule.Execute(() => logo.RemoveFromClassList("logo--instant")).ExecuteLater(50);
+        }
+
         void EnterMenu()
         {
             screen = MenuState.Menu;
             anyKey?.Dispose();
             pulse?.Pause();
             pressAnyKey.AddToClassList("press-any-key--hidden");
-            logo.RemoveFromClassList("logo--title");
+            // Back to the logo's own (menu) placement: a transform-only transition, no relayout per frame.
+            logo.style.translate = StyleKeyword.Null;
+            logo.style.scale = StyleKeyword.Null;
             logo.RemoveFromClassList("logo--title-visible");
             logo.AddToClassList("logo--menu");
             root.AddToClassList("menu-root--menu");
@@ -397,11 +472,28 @@ namespace GoF2Remake.UI
             {
                 var row = new Button { focusable = true };
                 row.AddToClassList("slot-row");
+                row.AddToClassList("slot-row--empty");   // no save system yet
+
+                var index = new Label(i.ToString("00"));
+                index.AddToClassList("slot-index");
+                index.AddToClassList("gof-semibold");
+                var info = new VisualElement();
+                info.AddToClassList("slot-info");
                 var name = new Label(i == 0 ? GoF2Localization.Get(486) : $"{GoF2Localization.Extra("slot", "Slot")} {i}");
                 name.AddToClassList("slot-name");
+                info.Add(name);
+                if (i == 0)
+                {
+                    var sub = new Label(GoF2Localization.Extra("autosaveHint", "Saved automatically when you dock"));
+                    sub.AddToClassList("slot-sub");
+                    info.Add(sub);
+                }
                 var state = new Label(GoF2Localization.Get(174));   // -BLANK-
                 state.AddToClassList("slot-state");
-                row.Add(name);
+
+                foreach (var e in new VisualElement[] { index, info, state }) e.pickingMode = PickingMode.Ignore;
+                row.Add(index);
+                row.Add(info);
                 row.Add(state);
                 row.clicked += () => Play(buttonPush);
                 HookFocusSound(row);
