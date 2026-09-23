@@ -6,7 +6,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
-    public enum GoF2PadButton { A, B, X, Y, LeftStick, RightStick, DPad, LeftTrigger, RightTrigger, LeftBumper, RightBumper, Menu }
+    public enum GoF2PadButton { A, B, X, Y, LeftStick, RightStick, DPad, LeftTrigger, RightTrigger, LeftBumper, RightBumper, Menu, View }
 
     public static class GoF2InputGlyph
     {
@@ -30,6 +30,7 @@ namespace GoF2Remake.UI
             GoF2PadButton.RightTrigger => Text("RT", "pad-trigger"),
             GoF2PadButton.LeftBumper => Text("LB", "pad-bumper"),
             GoF2PadButton.RightBumper => Text("RB", "pad-bumper"),
+            GoF2PadButton.View => Text("VIEW", "pad-menu"),
             _ => Text("MENU", "pad-menu"),
         };
 

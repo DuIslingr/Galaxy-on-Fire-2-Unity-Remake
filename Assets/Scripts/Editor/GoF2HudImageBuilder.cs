@@ -49,6 +49,7 @@ namespace GoF2Remake.EditorTools
             (Ipad, "fastforward", 1120, 1295, 109, 109, 0, false),
             (Ipad, "fastforward_on", 1208, 782, 109, 109, 0, false),
             (Ipad, "button_pill", 1740, 112, 126, 293, 0, false),
+            (Main, "autopilot_title", 1, 1982, 83, 51, 0, false),   // 0x4f4 autopilot menu title icon
             (Main, "race_0", 226, 90, 36, 36, 0, false),
             (Main, "race_1", 273, 1889, 36, 36, 0, false),
             (Main, "race_2", 272, 1650, 36, 36, 0, false),

@@ -6,8 +6,8 @@
 //   planets: the gate icon next to the jumpgate station's planet, the name only while the planet is in the lock box
 //   lock ring and top plate for station / jumpgate / planet locks (race icon of the system for landmarks), shared with
 //     GoF2MiningView's elements
-//   autopilot (0x4b0 / lit 0x4b1) and fast-forward (0x541 / held 0x540) buttons on their pill (0x53f), touch only, shown
-//     while the autopilot or an asteroid approach runs; fast-forward only while it is allowed
+//   autopilot (0x4b0 / lit 0x4b1 while the autopilot or an asteroid approach runs; opens the autopilot menu otherwise)
+//     and fast-forward (0x541 / held 0x540, only while allowed) on their pill (0x53f), touch only, hidden in the minigame
 // Positions are HD pixels = panel units.
 
 using System.Collections.Generic;
@@ -125,11 +125,11 @@ namespace GoF2Remake.UI
         }
 
         /// <param name="race">The system's race (plate icon for landmarks).</param>
-        public void Update(GoF2Navigation nav, Camera cam, bool touch, bool miningApproach, int race, int jumpgateStation, int techLevel)
+        public void Update(GoF2Navigation nav, Camera cam, bool touch, GoF2Mining.Phase miningPhase, int race, int jumpgateStation, int techLevel)
         {
             bool show = nav != null && cam != null && layer.panel != null && !nav.Jumping;
             layer.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
-            UpdateButtons(nav, touch, miningApproach);
+            UpdateButtons(nav, touch, miningPhase);
             if (!show) return;
             if (built != nav) Build(nav, race, jumpgateStation, techLevel);
 
@@ -219,15 +219,17 @@ namespace GoF2Remake.UI
             return t;
         }
 
-        void UpdateButtons(GoF2Navigation nav, bool touch, bool miningApproach)
+        void UpdateButtons(GoF2Navigation nav, bool touch, GoF2Mining.Phase miningPhase)
         {
-            bool active = nav != null && (nav.Autopilot || miningApproach) && !nav.Jumping;
-            navButtons.style.display = touch && active ? DisplayStyle.Flex : DisplayStyle.None;
+            bool approach = miningPhase == GoF2Mining.Phase.Approaching;
+            bool active = nav != null && (nav.Autopilot || approach) && !nav.Jumping;
+            bool visible = touch && nav != null && !nav.Jumping && (miningPhase == GoF2Mining.Phase.Idle || approach);
+            navButtons.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             bool canFf = active && nav.CanFastForward;
             fastForward.style.visibility = canFf ? Visibility.Visible : Visibility.Hidden;
             if (!canFf) fastForwardPressed = false;
             Image(fastForward, fastForwardPressed && nav.FastForward ? fastForwardOn : fastForwardOff);
-            Image(autopilotButton, active ? autopilotOn : autopilotOff);
+            Image(autopilotButton, active || nav != null && nav.MenuOpen ? autopilotOn : autopilotOff);
         }
 
         static void Place(VisualElement e, float x, float y)

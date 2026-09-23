@@ -54,6 +54,14 @@
                 <ui:VisualElement name="autopilotButton" class="nav-button nav-button--autopilot" />
             </ui:VisualElement>
 
+            <ui:VisualElement name="autopilotMenu" class="autopilot-menu">
+                <ui:VisualElement class="autopilot-menu-head" picking-mode="Ignore">
+                    <ui:VisualElement name="autopilotMenuIcon" class="autopilot-menu-icon" picking-mode="Ignore" />
+                    <ui:Label name="autopilotMenuTitle" class="autopilot-menu-title gof-semibold" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement name="autopilotMenuItems" class="autopilot-menu-items" />
+            </ui:VisualElement>
+
             <ui:VisualElement name="lockPlate" class="lock-plate" picking-mode="Ignore">
                 <ui:VisualElement name="lockClass" class="lock-class" picking-mode="Ignore" />
                 <ui:Label name="lockOre" class="lock-ore gof-semibold" picking-mode="Ignore" />

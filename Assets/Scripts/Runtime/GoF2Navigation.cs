@@ -16,7 +16,11 @@
 //   MGame+0x160 fast-forward      held button: the whole game runs 5x (Time.timeScale) while the autopilot or an asteroid
 //                                 approach runs and the target is >= 20000 units away; releasing, arriving or the
 //                                 autopilot ending stops it (no hostile ships exist yet)
-// Not yet: the autopilot menu (asteroid field / station / jumpgate / waypoint / destination), the jumpgate's star map and
+//   Hud::initHudMenu(3) 0x18e080  the autopilot menu (autopilot button while the autopilot is off; the game pauses):
+//                                 549 "Asteroid field" (not in the alien orbit; flies to the field centre and, like the
+//                                 original, keeps going until switched off), "<name> Station" (not in empty orbits),
+//                                 547 "Jumpgate" (gate orbit only); each "Target: X" + sound 28 (MGame::OnTouchEnd)
+// Not yet: menu entries for route waypoints, a programmed destination and docking targets, the jumpgate's star map and
 // inter-system travel (reaching the gate turns the autopilot off with "Not available."), mission restrictions.
 
 using System;
@@ -30,7 +34,7 @@ namespace GoF2Remake.Flight
 {
     public class GoF2Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField }
 
         public class Target
         {
@@ -51,6 +55,10 @@ namespace GoF2Remake.Flight
         public string spaceScene = "Space";
 
         public readonly List<Target> Targets = new List<Target>();
+        /// <summary>Level::getAsteroidWaypoint: the field centre (menu only, never locked), null in the alien orbit.</summary>
+        public Target AsteroidField { get; private set; }
+        /// <summary>The autopilot menu is open: the game is paused.</summary>
+        public bool MenuOpen { get; private set; }
         public Target Candidate { get; private set; }
         public Target Locked { get; private set; }
         public float LockTimer { get; private set; }
@@ -106,6 +114,8 @@ namespace GoF2Remake.Flight
                                          name = st.index == 101 ? st.name : $"{st.name} {GoF2Localization.Get(136)}" });
             if (layout.hasJumpgate)
                 Targets.Add(new Target { kind = Kind.Jumpgate, fixedPosition = GoF2OrbitLayout.ToUnity(layout.jumpgate), name = GoF2Localization.Get(547) });
+            if (layout.systemIndex >= 0)
+                AsteroidField = new Target { kind = Kind.AsteroidField, fixedPosition = GoF2OrbitLayout.ToUnity(layout.asteroidCentre), name = GoF2Localization.Get(549) };
             // StarSystem::getPlanetTargets: the other stations' planets (the orbit planet is the current station's own).
             if (backdrop != null)
                 foreach (var (station, t, orbit) in backdrop.PlanetTargets)
@@ -114,7 +124,55 @@ namespace GoF2Remake.Flight
                                                  name = db.Stations.Find(s => s.index == station)?.name ?? "" });
         }
 
-        void OnDisable() => SetFastForward(false);
+        void OnDisable()
+        {
+            MenuOpen = false;
+            SetFastForward(false);
+            ApplyTimeScale();
+        }
+
+        // ---- autopilot menu (Hud::initHudMenu(3)) ------------------------------------------------------------
+
+        /// <summary>The menu's entries in the original's order: asteroid field, station, jumpgate.</summary>
+        public List<Target> MenuEntries()
+        {
+            var list = new List<Target>();
+            if (AsteroidField != null) list.Add(AsteroidField);
+            var station = Targets.Find(t => t.kind == Kind.Station);
+            if (station != null) list.Add(station);
+            var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
+            if (gate != null) list.Add(gate);
+            return list;
+        }
+
+        /// <summary>MGame::OnTouchEnd, autopilot button: only while nothing else flies the ship; pauses the game.</summary>
+        public bool CanOpenMenu => !Autopilot && !Jumping && (mining == null || mining.State == GoF2Mining.Phase.Idle);
+
+        public void OpenMenu()
+        {
+            if (!CanOpenMenu) return;
+            MenuOpen = true;
+            if (weapons != null) weapons.Blocked = true;
+            ApplyTimeScale();
+        }
+
+        public void CloseMenu()
+        {
+            if (!MenuOpen) return;
+            MenuOpen = false;
+            if (weapons != null) weapons.Blocked = false;
+            ApplyTimeScale();
+        }
+
+        /// <summary>A menu entry: "Target: X" + sound 28, autopilot on, the menu closes and the game resumes.</summary>
+        public void ChooseMenuEntry(Target target)
+        {
+            CloseMenu();
+            if (target == null) return;
+            Say($"{GoF2Localization.Get(546)}: {target.name}");
+            Play(sounds?.autopilotOn);
+            SetAutopilot(target);
+        }
 
         /// <summary>Touch button / key held for fast-forward (checked every frame).</summary>
         public void SetFastForwardHeld(bool held) => fastForwardHeld = held;
@@ -150,6 +208,7 @@ namespace GoF2Remake.Flight
                     SetAutopilot(null);
                 }
             }
+            if (MenuOpen) return;   // paused
             UpdateLock(dtMs);
             SetFastForward(fastForwardHeld && CanFastForward);
         }
@@ -271,9 +330,14 @@ namespace GoF2Remake.Flight
 
         void SetFastForward(bool on)
         {
-            if (on == FastForward && Time.timeScale == (on ? FastForwardScale : 1f)) return;
             FastForward = on;
-            Time.timeScale = on ? FastForwardScale : 1f;
+            ApplyTimeScale();
+        }
+
+        void ApplyTimeScale()
+        {
+            float scale = MenuOpen ? 0f : FastForward ? FastForwardScale : 1f;
+            if (Time.timeScale != scale) Time.timeScale = scale;
         }
 
         void Say(string text) => Message?.Invoke(text);

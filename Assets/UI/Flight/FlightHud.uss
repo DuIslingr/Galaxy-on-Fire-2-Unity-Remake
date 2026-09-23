@@ -363,6 +363,68 @@
     top: 180px;
 }
 
+/* Autopilot menu (Hud::initHudMenu(3)): next to the autopilot button; the game is paused while it is open. */
+.autopilot-menu {
+    display: none;
+    position: absolute;
+    left: 176px;
+    top: 300px;
+    min-width: 440px;
+    padding: 14px 16px 16px 16px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-left-width: 3px;
+    border-left-color: var(--gof-amber);
+}
+
+.autopilot-menu--shown {
+    display: flex;
+}
+
+.autopilot-menu-head {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.autopilot-menu-icon {
+    width: 83px;
+    height: 51px;
+    margin-right: 12px;
+}
+
+.autopilot-menu-title {
+    font-size: 24px;
+    letter-spacing: 4px;
+    color: #FFFFFF;
+}
+
+.autopilot-menu-item {
+    margin: 2px 0;
+    padding: 14px 18px;
+    font-size: 24px;
+    letter-spacing: 3px;
+    -unity-text-align: middle-left;
+    color: var(--gof-text);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+}
+
+.autopilot-menu-item:hover,
+.autopilot-menu-item--selected {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+}
+
+.autopilot-menu-item:active {
+    color: var(--gof-amber);
+}
+
 .hud-cinematic .hud-safe {
     display: none;
 }

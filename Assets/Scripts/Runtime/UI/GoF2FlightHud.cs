@@ -12,6 +12,8 @@
 // One action prompt (tap it, Enter, or the controller's X): "Mine" with a locked asteroid, "Abort" during the
 // autopilot approach, "Stop mining" in the minigame (GoF2Mining, the original's fire button), else "Dock" near the
 // station (GoF2SpaceLevel.CanDock). GoF2MiningView draws the lock ring, the ore plate, HUD messages and the minigame.
+// The autopilot button (touch), Tab or the controller's View button opens the autopilot menu (game paused): pick an entry
+// by tap / click, W/S + Enter or D-pad + A; Esc / B / the same button closes it.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -42,6 +44,9 @@ namespace GoF2Remake.UI
         GoF2Navigation nav;
         GoF2NavigationView navView;
         bool lastAutopilot;
+        VisualElement autopilotMenu, autopilotMenuItems;
+        readonly System.Collections.Generic.List<(Button button, GoF2Navigation.Target target)> menuButtons = new System.Collections.Generic.List<(Button, GoF2Navigation.Target)>();
+        int menuIndex, lastMenuMove, menuOpenedFrame;
         Label speedValue, missileAmmo;
         GoF2WeaponSystem weapons;
         float hitFlashMs;
@@ -107,6 +112,11 @@ namespace GoF2Remake.UI
             miningView = new GoF2MiningView(root);
             navView = new GoF2NavigationView(root);
             navView.AutopilotButton += OnAutopilotButton;
+            autopilotMenu = root.Q("autopilotMenu");
+            autopilotMenuItems = root.Q("autopilotMenuItems");
+            root.Q<Label>("autopilotMenuTitle").text = GoF2Localization.Get(571).ToUpperInvariant();   // Autopilot
+            var menuIcon = Resources.Load<Texture2D>("GoF2Hud/autopilot_title");
+            if (menuIcon != null) root.Q("autopilotMenuIcon").style.backgroundImage = new StyleBackground(menuIcon);
             root.Q<Button>("menuButton").clicked += BackToMenu;
 
             root.Q<Label>("stickCaption").text = GoF2Localization.Extra("hudSteer", "STEER");
@@ -202,6 +212,22 @@ namespace GoF2Remake.UI
         {
             hints.Clear();
             string T(string key, string english) => GoF2Localization.Extra(key, english);
+            if (nav != null && nav.MenuOpen)
+            {
+                if (kind == GoF2InputKind.KeyboardMouse)
+                {
+                    Hint(T("hudSelect", "SELECT"), GoF2InputGlyph.Key("W"), GoF2InputGlyph.Key("S"));
+                    Hint(T("hudConfirm", "CONFIRM"), GoF2InputGlyph.Key("ENTER", true));
+                    Hint(T("hudBack", "BACK"), GoF2InputGlyph.Key("ESC"));
+                }
+                else if (kind == GoF2InputKind.Gamepad)
+                {
+                    Hint(T("hudSelect", "SELECT"), GoF2InputGlyph.Pad(GoF2PadButton.DPad));
+                    Hint(T("hudConfirm", "CONFIRM"), GoF2InputGlyph.Pad(GoF2PadButton.A));
+                    Hint(T("hudBack", "BACK"), GoF2InputGlyph.Pad(GoF2PadButton.B));
+                }
+                return;
+            }
             if (lastAutopilot)
             {
                 // Autopilot: throttle, boost and guns still work; fast-forward is held.
@@ -251,6 +277,7 @@ namespace GoF2Remake.UI
                 Hint(T("hudMissile", "MISSILE"), GoF2InputGlyph.Key("F"));
                 Hint(T("hudBoost", "BOOST"), GoF2InputGlyph.Key("SPACE", true));
                 Hint(T("hudLevel", "LEVEL"), GoF2InputGlyph.Key("R"));
+                Hint(GoF2Localization.Get(571).ToUpperInvariant(), GoF2InputGlyph.Key("TAB"));
                 Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Key("ESC"));
             }
             else if (kind == GoF2InputKind.Gamepad)
@@ -261,6 +288,7 @@ namespace GoF2Remake.UI
                 Hint(T("hudMissile", "MISSILE"), GoF2InputGlyph.Pad(GoF2PadButton.LeftTrigger));
                 Hint(T("hudBoost", "BOOST"), GoF2InputGlyph.Pad(GoF2PadButton.A));
                 Hint(T("hudLevel", "LEVEL"), GoF2InputGlyph.Pad(GoF2PadButton.Y));
+                Hint(GoF2Localization.Get(571).ToUpperInvariant(), GoF2InputGlyph.Pad(GoF2PadButton.View));
                 Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Pad(GoF2PadButton.Menu));
             }
         }
@@ -284,12 +312,21 @@ namespace GoF2Remake.UI
             if (root == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
 
+            if (nav != null && nav.MenuOpen)
+            {
+                UpdateAutopilotMenu();
+                return;
+            }
+
             if ((Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame))
             {
                 BackToMenu();
                 return;
             }
+            if (nav != null && ((Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+                                || (Gamepad.current != null && Gamepad.current.selectButton.wasPressedThisFrame)))
+                OnAutopilotButton();
 
             if (ship == null)
             {
@@ -360,15 +397,104 @@ namespace GoF2Remake.UI
             var lockRing = root.Q("lockRing");
             lockRing.style.left = crosshair.style.left;
             lockRing.style.top = crosshair.style.top;
-            navView.Update(nav, Camera.main, GoF2InputMode.Current == GoF2InputKind.Touch, phase == GoF2Mining.Phase.Approaching,
+            navView.Update(nav, Camera.main, GoF2InputMode.Current == GoF2InputKind.Touch, phase,
                            level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
         }
 
-        /// <summary>The autopilot button (HUD key 0x40): turns the autopilot off / cancels an asteroid approach.</summary>
+        /// <summary>The autopilot button (HUD key 0x40, MGame::OnTouchEnd): turns the autopilot off, cancels an asteroid
+        /// approach, or opens / closes the autopilot menu.</summary>
         void OnAutopilotButton()
         {
-            if (nav != null && nav.Autopilot) nav.Interact();
+            if (nav == null) return;
+            if (nav.MenuOpen) CloseAutopilotMenu();
+            else if (nav.Autopilot) nav.Interact();
             else if (mining != null && mining.State == GoF2Mining.Phase.Approaching) mining.Interact();
+            else if (nav.CanOpenMenu) OpenAutopilotMenu();
+        }
+
+        // ---- autopilot menu (Hud::initHudMenu(3)) --------------------------------------------------------------
+
+        void OpenAutopilotMenu()
+        {
+            nav.OpenMenu();
+            if (!nav.MenuOpen) return;
+            stick?.Release();
+            weapons?.SetPrimaryHeld(false);
+            autopilotMenuItems.Clear();
+            menuButtons.Clear();
+            foreach (var t in nav.MenuEntries())
+            {
+                var target = t;
+                var b = new Button { text = t.name.ToUpperInvariant() };
+                b.AddToClassList("autopilot-menu-item");
+                b.AddToClassList("gof-semibold");
+                b.focusable = false;
+                b.clicked += () => { nav.ChooseMenuEntry(target); HideAutopilotMenu(); };
+                autopilotMenuItems.Add(b);
+                menuButtons.Add((b, target));
+            }
+            menuIndex = 0;
+            lastMenuMove = 0;
+            menuOpenedFrame = Time.frameCount;
+            autopilotMenu.AddToClassList("autopilot-menu--shown");
+            HighlightMenu();
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        void CloseAutopilotMenu()
+        {
+            nav?.CloseMenu();
+            HideAutopilotMenu();
+        }
+
+        void HideAutopilotMenu()
+        {
+            autopilotMenu.RemoveFromClassList("autopilot-menu--shown");
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        void HighlightMenu()
+        {
+            bool keys = GoF2InputMode.Current != GoF2InputKind.Touch;
+            for (int i = 0; i < menuButtons.Count; i++) menuButtons[i].button.EnableInClassList("autopilot-menu-item--selected", keys && i == menuIndex);
+        }
+
+        /// <summary>While the menu is open (game paused): keys / D-pad pick, Esc / B / Tab / View close.</summary>
+        void UpdateAutopilotMenu()
+        {
+            var kb = Keyboard.current;
+            var pad = Gamepad.current;
+            // The press that opened the menu can still read as "pressed this frame" on the next frame (editor input
+            // updates): ignore the toggle keys for two frames.
+            if (Time.frameCount - menuOpenedFrame < 2) return;
+            if ((kb != null && (kb.escapeKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame))
+                || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.selectButton.wasPressedThisFrame || pad.startButton.wasPressedThisFrame)))
+            {
+                CloseAutopilotMenu();
+                return;
+            }
+            int move = 0;
+            if (kb != null && (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame)) move = -1;
+            if (kb != null && (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame)) move = 1;
+            if (pad != null)
+            {
+                var v = pad.dpad.ReadValue() + pad.leftStick.ReadValue();
+                int dir = v.y > 0.5f ? -1 : v.y < -0.5f ? 1 : 0;
+                if (dir != 0 && dir != lastMenuMove) move = dir;
+                lastMenuMove = dir;
+            }
+            if (move != 0 && menuButtons.Count > 0)
+            {
+                menuIndex = (menuIndex + move + menuButtons.Count) % menuButtons.Count;
+                HighlightMenu();
+            }
+            bool confirm = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame))
+                           || (pad != null && (pad.buttonSouth.wasPressedThisFrame || pad.buttonWest.wasPressedThisFrame));
+            if (confirm && menuIndex < menuButtons.Count)
+            {
+                nav.ChooseMenuEntry(menuButtons[menuIndex].target);
+                HideAutopilotMenu();
+            }
         }
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);
