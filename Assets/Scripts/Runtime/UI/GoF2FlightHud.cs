@@ -1,10 +1,12 @@
 // GoF2FlightHud.cs
 // In-flight HUD (UI Toolkit) that adapts to the input in use (GoF2InputMode):
 //   Touch:      floating stick on the left half (steer), throttle slider on the right edge (the original's touch
-//               throttle is a vertical drag too, MGame::OnTouchMove), Boost and Level buttons, a Menu button.
-//   Keyboard:   keycap hints (WASD, Q/E, Space, R, Esc).
-//   Controller: Xbox button hints (LS, LT/RT, A, Y, Menu).
-// Always: speed, throttle and boost readout. The chase camera uses the original's fixed touch-mode damping for
+//               throttle is a vertical drag too, MGame::OnTouchMove), Fire (hold), Missile (fires on release, like
+//               MGame::OnTouchEnd), Boost and Level buttons, a Menu button.
+//   Keyboard:   keycap hints (WASD, Q/E, Ctrl, F, Space, R, Esc).
+//   Controller: Xbox button hints (LS, LB/RB, RT, LT, A, Y, Menu).
+// Always: speed, throttle and boost readout, and the crosshair: the screen projection of ship + forward * 22000
+// units (where the bullets are after 22000 units), orange for 200 ms after a hit (weapons.md section 9). The chase camera uses the original's fixed touch-mode damping for
 // touch and the handling-dependent damping otherwise (TargetFollowCamera::resetShipHandling / setShipHandling).
 // Esc, the Android back button or the controller's Menu button returns to the main menu (no pause menu yet).
 
@@ -28,7 +30,11 @@ namespace GoF2Remake.UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualElement root, safeArea, hints, throttleTrack, throttleFill, throttleHandle, throttleBarFill, boostBarFill, boostButton, boostCharge, levelButton;
-        Label speedValue;
+        VisualElement fireButton, missileButton, crosshair;
+        Label speedValue, missileAmmo;
+        GoF2WeaponSystem weapons;
+        float hitFlashMs;
+        const float CrosshairDistanceMeters = 22000f * 0.05f;   // 0x46abe000
         GoF2TouchStick stick;
         GoF2ShipController ship;
         GoF2ChaseCamera chase;
@@ -70,16 +76,24 @@ namespace GoF2Remake.UI
             boostCharge = root.Q("boostCharge");
             levelButton = root.Q("levelButton");
             speedValue = root.Q<Label>("speedValue");
+            fireButton = root.Q("fireButton");
+            missileButton = root.Q("missileButton");
+            missileAmmo = root.Q<Label>("missileAmmo");
+            crosshair = root.Q("crosshair");
 
             stick = new GoF2TouchStick(root.Q("stickZone"), root.Q("stickBase"), root.Q("stickKnob"), root.Q("stickGhost"), stickRadius);
             HookThrottle();
             HookPress(boostButton, () => ship?.Boost());
             HookPress(levelButton, () => ship?.AlignToHorizon());
+            HookPress(fireButton, () => weapons?.SetPrimaryHeld(true), () => weapons?.SetPrimaryHeld(false));
+            HookPress(missileButton, null, () => weapons?.FireSecondary());
             root.Q<Button>("menuButton").clicked += BackToMenu;
 
             root.Q<Label>("stickCaption").text = GoF2Localization.Extra("hudSteer", "STEER");
             root.Q<Label>("boostCaption").text = GoF2Localization.Extra("hudBoost", "BOOST");
             root.Q<Label>("levelCaption").text = GoF2Localization.Extra("hudLevel", "LEVEL");
+            root.Q<Label>("fireCaption").text = GoF2Localization.Extra("hudFire", "FIRE");
+            root.Q<Label>("missileCaption").text = GoF2Localization.Extra("hudMissile", "MISSILE");
             root.Q<Label>("speedUnit").text = "M/S";
             root.Q<Button>("menuButton").text = GoF2Localization.Extra("hudMenu", "MENU");
 
@@ -121,8 +135,8 @@ namespace GoF2Remake.UI
             if (h > 0f) ship?.SetThrottle(1f - Mathf.Clamp01(localY / h));
         }
 
-        /// <summary>Fires on press (not release) and shows a pressed state while the finger stays down.</summary>
-        static void HookPress(VisualElement button, System.Action action)
+        /// <summary>'down' runs on press, 'up' on release; shows a pressed state while the finger stays down.</summary>
+        static void HookPress(VisualElement button, System.Action down, System.Action up = null)
         {
             int pointer = -1;
             button.RegisterCallback<PointerDownEvent>(e =>
@@ -131,7 +145,7 @@ namespace GoF2Remake.UI
                 pointer = e.pointerId;
                 button.CapturePointer(pointer);
                 button.AddToClassList("touch-button--pressed");
-                action();
+                down?.Invoke();
                 e.StopPropagation();
             });
             void Up(int id)
@@ -140,6 +154,7 @@ namespace GoF2Remake.UI
                 if (button.HasPointerCapture(pointer)) button.ReleasePointer(pointer);
                 pointer = -1;
                 button.RemoveFromClassList("touch-button--pressed");
+                up?.Invoke();
             }
             button.RegisterCallback<PointerUpEvent>(e => Up(e.pointerId));
             button.RegisterCallback<PointerCancelEvent>(e => Up(e.pointerId));
@@ -154,7 +169,7 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-touch", kind == GoF2InputKind.Touch);
             root.EnableInClassList("input-keyboard", kind == GoF2InputKind.KeyboardMouse);
             root.EnableInClassList("input-gamepad", kind == GoF2InputKind.Gamepad);
-            if (kind != GoF2InputKind.Touch) stick?.Release();
+            if (kind != GoF2InputKind.Touch) { stick?.Release(); weapons?.SetPrimaryHeld(false); }
             if (chase != null) chase.handlingDependent = kind != GoF2InputKind.Touch;
             BuildHints(kind);
         }
@@ -167,6 +182,8 @@ namespace GoF2Remake.UI
             {
                 Hint(T("hudSteer", "STEER"), GoF2InputGlyph.Key("W"), GoF2InputGlyph.Key("A"), GoF2InputGlyph.Key("S"), GoF2InputGlyph.Key("D"));
                 Hint(T("hudThrottle", "THROTTLE"), GoF2InputGlyph.Key("Q"), GoF2InputGlyph.Key("E"));
+                Hint(T("hudFire", "FIRE"), GoF2InputGlyph.Key("CTRL"));
+                Hint(T("hudMissile", "MISSILE"), GoF2InputGlyph.Key("F"));
                 Hint(T("hudBoost", "BOOST"), GoF2InputGlyph.Key("SPACE", true));
                 Hint(T("hudLevel", "LEVEL"), GoF2InputGlyph.Key("R"));
                 Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Key("ESC"));
@@ -174,7 +191,9 @@ namespace GoF2Remake.UI
             else if (kind == GoF2InputKind.Gamepad)
             {
                 Hint(T("hudSteer", "STEER"), GoF2InputGlyph.Pad(GoF2PadButton.LeftStick));
-                Hint(T("hudThrottle", "THROTTLE"), GoF2InputGlyph.Pad(GoF2PadButton.LeftTrigger), GoF2InputGlyph.Pad(GoF2PadButton.RightTrigger));
+                Hint(T("hudThrottle", "THROTTLE"), GoF2InputGlyph.Pad(GoF2PadButton.LeftBumper), GoF2InputGlyph.Pad(GoF2PadButton.RightBumper));
+                Hint(T("hudFire", "FIRE"), GoF2InputGlyph.Pad(GoF2PadButton.RightTrigger));
+                Hint(T("hudMissile", "MISSILE"), GoF2InputGlyph.Pad(GoF2PadButton.LeftTrigger));
                 Hint(T("hudBoost", "BOOST"), GoF2InputGlyph.Pad(GoF2PadButton.A));
                 Hint(T("hudLevel", "LEVEL"), GoF2InputGlyph.Pad(GoF2PadButton.Y));
                 Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Pad(GoF2PadButton.Menu));
@@ -212,6 +231,8 @@ namespace GoF2Remake.UI
                 var level = FindAnyObjectByType<GoF2SpaceLevel>();
                 ship = level != null ? level.Player : null;
                 if (ship == null) return;
+                weapons = level.Weapons;
+                if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 chase = Camera.main != null ? Camera.main.GetComponent<GoF2ChaseCamera>() : null;
                 ApplyInputMode();
             }
@@ -231,6 +252,14 @@ namespace GoF2Remake.UI
             boostBarFill.style.width = Length.Percent(boost * 100f);
             boostCharge.style.height = Length.Percent(boost * 100f);
             boostButton.EnableInClassList("touch-button--disabled", !model.BoostReady && !model.IsBoosting);
+
+            // Weapons: missile button with its ammo (hidden without a secondary), crosshair and hit flash.
+            int ammo = weapons != null ? weapons.SecondaryAmmo : -1;
+            missileButton.EnableInClassList("touch-button--hidden", ammo < 0);
+            missileButton.EnableInClassList("touch-button--disabled", ammo == 0);
+            missileAmmo.text = ammo >= 0 ? ammo.ToString() : "";
+            fireButton.EnableInClassList("touch-button--hidden", weapons == null || !weapons.HasPrimary);
+            UpdateCrosshair();
         }
 
         /// <summary>The panel's pixel size: the screen, or the target texture when rendering offscreen (tests).</summary>
@@ -238,6 +267,22 @@ namespace GoF2Remake.UI
         {
             var rt = runtimePanel != null ? runtimePanel.targetTexture : null;
             return rt != null ? new Vector2Int(rt.width, rt.height) : new Vector2Int(Screen.width, Screen.height);
+        }
+
+        void UpdateCrosshair()
+        {
+            var cam = Camera.main;
+            if (cam == null || crosshair.panel == null) return;
+            var aim = ship.transform.position + ship.transform.forward * CrosshairDistanceMeters;
+            bool visible = Vector3.Dot(aim - cam.transform.position, cam.transform.forward) > 0f;
+            crosshair.EnableInClassList("crosshair--hidden", !visible);
+            if (!visible) return;
+            var p = RuntimePanelUtils.CameraTransformWorldToPanel(crosshair.panel, aim, cam);
+            var parent = crosshair.parent.worldBound;
+            crosshair.style.left = p.x - parent.x;
+            crosshair.style.top = p.y - parent.y;
+            if (hitFlashMs > 0f) hitFlashMs -= Time.deltaTime * 1000f;
+            crosshair.EnableInClassList("crosshair--hit", hitFlashMs > 0f);
         }
 
         void UpdateLayout()

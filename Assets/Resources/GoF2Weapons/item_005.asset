@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 77d20991657c9be4ab3a93aa6506ddd5, type: 3}
+  m_Name: item_005
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Flight.GoF2WeaponFx
+  item: 5
+  projectile: {fileID: 7262739374987625046, guid: 1775ac06cff9d17448ae606760bc2909, type: 3}
+  muzzleFlash: {fileID: 4067285960116774184, guid: 6d96eb6e63827144ea1fcfa277357ea9, type: 3}
+  impact: {fileID: 7619493735224855951, guid: 995a679e4fd51e741a18300d55904699, type: 3}
+  shot: {fileID: 8300000, guid: e98d381432b629a47962735288a345cc, type: 3}
+  shotLoops: 0

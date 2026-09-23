@@ -2,6 +2,7 @@
     <ui:Style src="FlightHud.uss" />
     <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
         <ui:VisualElement name="safeArea" class="hud-safe" picking-mode="Ignore">
+            <ui:VisualElement name="crosshair" class="crosshair" picking-mode="Ignore" />
 
             <ui:VisualElement name="touchLayer" class="touch-layer" picking-mode="Ignore">
                 <ui:VisualElement name="stickZone" class="stick-zone">
@@ -13,6 +14,15 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <ui:VisualElement name="touchRight" class="touch-right" picking-mode="Ignore">
+                    <ui:VisualElement class="touch-buttons" picking-mode="Ignore">
+                        <ui:VisualElement name="missileButton" class="touch-button touch-button--small">
+                            <ui:Label name="missileCaption" class="touch-button-label touch-button-label--small gof-semibold" picking-mode="Ignore" />
+                            <ui:Label name="missileAmmo" class="touch-button-count gof-semibold" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="fireButton" class="touch-button touch-button--fire">
+                            <ui:Label name="fireCaption" class="touch-button-label gof-semibold" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                     <ui:VisualElement class="touch-buttons" picking-mode="Ignore">
                         <ui:VisualElement name="levelButton" class="touch-button touch-button--small">
                             <ui:Label name="levelCaption" class="touch-button-label gof-semibold" picking-mode="Ignore" />

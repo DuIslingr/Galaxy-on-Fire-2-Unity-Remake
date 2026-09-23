@@ -67,7 +67,7 @@ Menu items (from `Scripts/Editor`):
 - **Game to Unity: `(x, y, z) -> (x, y, -z) * 0.05`** (0.05 m per game unit). Models face **+Z**.
   - The FBX files themselves face -Z. `GoF2ModelOrientationPostprocessor` rotates them 180° about Y at import.
 - `GoF2ImportSettings.ModelScale` (0.05) must match `GoF2ShipController.metersPerUnit`.
-- Data files with positions (`weapons_hd.json`, `docks_hd.json`) contain `position_file` (as stored) and `position_engine` (game space). Apply the rule above to `position_engine`.
+- Data files with positions (`weapons_hd.json`, `docks_hd.json`) contain `position_file` (as stored) and `position_engine` (game space). Apply the rule above to world positions from `position_engine`; **ship-relative offsets** (weapon mounts) map to Unity ship space as `(-x, y, z) * 0.05` (the models are mirrored and turned 180 deg on import).
 - The original stores animation position keys Z-up. The engine uses `(c0, c2, -c1)`. Keyframe rotations are in radians. The rotation axis mapping in `GoF2PartAnimation` is unconfirmed and editable in the inspector.
 
 ## Data (`Assets/Resources/GoF2Data`, loaded with `GoF2Database.Load()`, JsonUtility)
@@ -76,7 +76,7 @@ Menu items (from `Scripts/Editor`):
   - `items[].statList` has named stats (damage, range, boostSpeed, agility…).
   - `items[].rawAttributes` has the original attribute IDs.
 - `agents` (bar characters), `wanted` (bounty targets), `names`, `ticker`.
-- `weapons_hd` (gun mounts per ship), `docks_hd` (docking points), `shipparts` / `stationparts`, collision tables, DLC variants `sn_*` / `v_*`.
+- `weapons_hd` (gun mounts per ship: slotType 0 primary, 1 secondary, 2 turret, 3 = engine exhaust points, not turrets), `docks_hd` (docking points), `shipparts` / `stationparts`, collision tables, DLC variants `sn_*` / `v_*`.
 - `resources.json`: the original resource table. `meshes[]` (id, model path, materialId), `materials[]` (shading type, textures), `textures[]`. IDs match the decompiled code; most main-game ship meshes are 17000 + ship index (a few special ships differ, so look them up by model path).
 - Text IDs (`Localization/text_en.json`):
   - ship name = 913 + index, ship description = 977 + index
@@ -111,6 +111,15 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Lights:** LIGHT0 toward the sun (`clamp(15 * sunColour, 0, 2)`), LIGHT1 from the orbit planet (Unity +Z), linear fog in 6 systems. Camera: vertical FOV 1.22 rad, near 1 m, far 15 km, chase offsets (0, 600, -1338) / (0, 600, -650) game units.
 - **Main menu background** (`GoF2MenuBackground`): the original's menu backdrop is a normal orbit level (Level type 2), so it builds a curated station's orbit with `GoF2OrbitBuilder` too (camera start angle automatic: lit side, planet behind). Menu-only: full-detail station, asteroids kept out of the camera orbit, and traffic of the system's race (fighter pairs, freighter 30% Nivelian, battleship in Terran space) on lanes picked relative to the orbiting camera each pass; some ships start in view (`GoF2Flyby.startProgress`), others fly in.
 - Not yet: traffic in flight (`Level::createMission`), docking, travel/jumps, missions, HUD, touch flight controls, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
+
+## Weapons
+
+Research: `Reference/research/weapons.md` (functions, per-item table, fx, sounds, lock-on, HUD rects). `weapon_fx.json` is generated from it by `Reference/tools/weapons/build_weapon_fx.py`; **GoF2 > Build Weapon Fx** turns it into `Resources/GoF2Weapons/item_XXX` (`GoF2WeaponFx`: projectile / muzzle / impact prefabs + shot sound) and cuts the crosshair.
+
+- `GoF2Gun` (plain C#): one per equipped weapon on its mount; bullet pool; attr 11 reload, attr 9 damage, **attr 13 speed in units/ms, attr 12 "range" = lifetime in ms**; straight along the nose (no convergence/aim assist); axis-aligned cube hit test; rockets/missiles coast 2 s past their lifetime; missiles home on `LockTarget` (none yet: no ships to lock).
+- `GoF2WeaponSystem` (player): primaries fire independently while held, secondary one per release (ammo = item amount, `GoF2Session.EquipmentAmounts`). Keys: Ctrl / LMB fire, F / RMB missile; controller RT fire, LT missile (throttle moved to LB/RB).
+- `GoF2Target`: hittable objects (asteroids now: radius meshRadius*scale*0.7, HP scale*100+30, rockets kill asteroids instantly, explosion prefab + sound 21). Stations are never hit.
+- Not yet: beams (items 9-11, 228 fire as projectiles), scatter burst, bombs/mines, lock-on radar, NPC ships.
 
 ## UI and platforms
 
@@ -157,7 +166,7 @@ Useful field offsets in the decompiled code:
 
 ## Roadmap (suggested order)
 
-1. Combat: `Gun`, `AbstractGun` subclasses (`BeamGun`, `RocketGun`, …), `Level::createPlayer`, `Player::damage*`. Mount points come from `weapons_hd.json`.
+1. Combat: player guns and missiles done (see "Weapons"). Still: beams, bombs/mines, lock-on (`Radar`), `Player::damage*` for ships.
 2. Enemy AI: `KIPlayer`, `PlayerFighter::update` (the largest AI function), `Route`, `Waypoint`.
 3. A star system scene: done as a first pass (see "Space scene"). Still: docking (`docks_hd.json`), travel between orbits, the extra sky layers.
 4. Stations and economy: `Generator` (shop stock, agents, missions), `Item::adjustPrice`, `Status` (save game).

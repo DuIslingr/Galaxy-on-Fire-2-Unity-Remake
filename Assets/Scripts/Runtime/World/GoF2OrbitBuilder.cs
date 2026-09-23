@@ -133,6 +133,8 @@ namespace GoF2Remake.World
         public static Transform SpawnAsteroids(GoF2Database db, GoF2OrbitLayout layout, Transform parent = null, Func<Vector3, bool> reject = null)
         {
             var prefab = GoF2AssembledObject.LoadPrefab(db.AssemblyByName(layout.AsteroidAssembly));
+            var explosion = GoF2AssembledObject.LoadPrefab(db.AssemblyByName(layout.AsteroidAssembly + "_explosion_anim"));
+            var destroyedSound = GoF2Remake.Flight.GoF2CombatAudio.Load()?.asteroidDestroyed;
             var root = new GameObject("Asteroids").transform;
             root.SetParent(parent, false);
             if (prefab == null) return root;
@@ -159,6 +161,14 @@ namespace GoF2Remake.World
                 var go = Object.Instantiate(prefab, GoF2OrbitLayout.ToUnity(pos), GoF2OrbitLayout.RotationToUnity(euler), root);
                 go.name = $"Asteroid {i}";
                 go.transform.localScale = prefab.transform.localScale * scale;
+                // PlayerAsteroid: hit radius = meshRadius * scale * 0.7, HP = scale * 100 + 30.
+                var target = go.AddComponent<GoF2Remake.Flight.GoF2Target>();
+                target.isAsteroid = true;
+                target.radius = layout.AsteroidMeshRadius * scale * 0.7f * M;
+                target.maxHp = target.hp = scale * 100f + 30f;
+                target.explosionPrefab = explosion;
+                target.explosionScale = scale;
+                target.destroyedSound = destroyedSound;
                 float spin = 1f - Mathf.Clamp(scale, 0.9f, 1f);   // 0.1 rad/s for small, none for big
                 if (spin > 0f)
                 {

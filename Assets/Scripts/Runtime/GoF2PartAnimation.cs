@@ -81,6 +81,30 @@ namespace GoF2Remake.Visuals
             enabled = tracks.Count > 0 && lengthMs > 0f;
         }
 
+        /// <summary>Length of the animation in ms (0 if it has no keyframes).</summary>
+        public float LengthMs => lengthMs;
+
+        /// <summary>Starts the animation over (muzzle flashes and impacts restart with every shot).</summary>
+        public void Restart()
+        {
+            timeMs = 0f;
+            play = true;
+            if (enabled) Update();
+        }
+
+        /// <summary>Plays every part animation under 'root' once from the start; returns the longest length in ms.</summary>
+        public static float PlayOnce(GameObject root)
+        {
+            float longest = 0f;
+            foreach (var a in root.GetComponentsInChildren<GoF2PartAnimation>(true))
+            {
+                a.loop = false;
+                a.Restart();
+                longest = Mathf.Max(longest, a.LengthMs);
+            }
+            return longest;
+        }
+
         static float Eval(GoF2Key[] k, float t, float fallback)
         {
             if (k == null || k.Length == 0) return fallback;

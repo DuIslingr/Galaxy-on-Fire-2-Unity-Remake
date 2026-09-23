@@ -23,6 +23,8 @@ namespace GoF2Remake.Data
         /// <summary>Player ship index (ships.json) and installed item indices (items.json), Status::resetGame.</summary>
         public static int ShipIndex = 10;
         public static int[] Equipment = { 2, 2, 54, 59, 82, 73, 36 };
+        /// <summary>Amount per Equipment entry (secondary ammo: Edo x6).</summary>
+        public static int[] EquipmentAmounts = { 1, 1, 1, 1, 1, 1, 6 };
 
         /// <summary>Level::initStreamOutPosition: false = undocking from the station, true = arriving by travel.</summary>
         public static bool ArrivedByTravel;
@@ -32,6 +34,7 @@ namespace GoF2Remake.Data
             StationIndex = 78;
             ShipIndex = 10;
             Equipment = new[] { 2, 2, 54, 59, 82, 73, 36 };
+            EquipmentAmounts = new[] { 1, 1, 1, 1, 1, 1, 6 };
             ArrivedByTravel = false;
         }
     }

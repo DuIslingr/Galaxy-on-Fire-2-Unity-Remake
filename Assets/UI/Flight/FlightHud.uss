@@ -113,6 +113,26 @@
     margin-bottom: 28px;
 }
 
+.touch-button--fire {
+    width: 210px;
+    height: 210px;
+    border-radius: 105px;
+    border-color: rgba(255, 166, 48, 0.55);
+}
+
+.touch-button--hidden {
+    display: none;
+}
+
+.touch-button-label--small {
+    font-size: 17px;
+}
+
+.touch-button-count {
+    font-size: 26px;
+    color: #FFFFFF;
+}
+
 .touch-button--pressed {
     background-color: var(--gof-amber-soft);
     border-color: var(--gof-amber);
@@ -172,6 +192,27 @@
     margin-bottom: -5px;
     border-radius: 5px;
     background-color: var(--gof-cyan);
+}
+
+/* ---- crosshair (screen projection of ship + forward * 22000 units) ---------------------------- */
+
+.crosshair {
+    position: absolute;
+    width: 64px;
+    height: 64px;
+    margin-left: -32px;
+    margin-top: -32px;
+    background-image: url("project://database/Assets/UI/Flight/Images/crosshair.png");
+    -unity-background-scale-mode: scale-to-fit;
+    opacity: 0.9;
+}
+
+.crosshair--hit {
+    background-image: url("project://database/Assets/UI/Flight/Images/crosshair_hit.png");
+}
+
+.crosshair--hidden {
+    display: none;
 }
 
 /* ---- speed / throttle / boost readout ------------------------------------------------- */
@@ -332,6 +373,18 @@
     border-top-right-radius: 14px;
     background-color: rgba(216, 236, 247, 0.85);
     font-size: 14px;
+    color: #0B1016;
+    -unity-text-align: middle-center;
+}
+
+.pad-bumper {
+    min-width: 40px;
+    height: 26px;
+    padding: 0 6px;
+    margin: 0 2px;
+    border-radius: 13px;
+    background-color: rgba(216, 236, 247, 0.85);
+    font-size: 13px;
     color: #0B1016;
     -unity-text-align: middle-center;
 }

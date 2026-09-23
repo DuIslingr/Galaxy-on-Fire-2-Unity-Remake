@@ -1,0 +1,742 @@
+[
+ {
+  "item": 0,
+  "projectile": "projectile_000_anim_add",
+  "muzzle": "muzzle_flash_000_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 52,
+  "sound": "Laser_Nirai_Impulse_EX1",
+  "soundLoops": false
+ },
+ {
+  "item": 1,
+  "projectile": "projectile_001_anim_add",
+  "muzzle": "muzzle_flash_000_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 53,
+  "sound": "Laser_Nirai_Impulse_EX2",
+  "soundLoops": false
+ },
+ {
+  "item": 2,
+  "projectile": "projectile_002_anim_add",
+  "muzzle": "muzzle_flash_000_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 54,
+  "sound": "Laser_Nirai_Charged_Impulse",
+  "soundLoops": false
+ },
+ {
+  "item": 3,
+  "projectile": "projectile_003_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 56,
+  "sound": "Laser_Vskorr",
+  "soundLoops": false
+ },
+ {
+  "item": 4,
+  "projectile": "projectile_004_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 55,
+  "sound": "Laser_Shkoom",
+  "soundLoops": false
+ },
+ {
+  "item": 5,
+  "projectile": "projectile_005_anim_add",
+  "muzzle": "muzzle_flash_002_anim_add",
+  "impact": "impact_002_lookat_anim_add",
+  "beam": false,
+  "soundId": 57,
+  "sound": "Laser_Berger_Focus_I",
+  "soundLoops": false
+ },
+ {
+  "item": 6,
+  "projectile": "projectile_006_anim_add",
+  "muzzle": "muzzle_flash_002_anim_add",
+  "impact": "impact_002_lookat_anim_add",
+  "beam": false,
+  "soundId": 58,
+  "sound": "Laser_Berger_Focus_2",
+  "soundLoops": false
+ },
+ {
+  "item": 7,
+  "projectile": "projectile_007_anim_add",
+  "muzzle": "muzzle_flash_003_anim_add",
+  "impact": "impact_003_lookat_anim_add",
+  "beam": false,
+  "soundId": 59,
+  "sound": "Laser_Berger_Focus_Retribution",
+  "soundLoops": false
+ },
+ {
+  "item": 8,
+  "projectile": "projectile_008_anim_add",
+  "muzzle": "muzzle_flash_003_anim_add",
+  "impact": "impact_003_lookat_anim_add",
+  "beam": false,
+  "soundId": 60,
+  "sound": "Laser_Berger_Focus_Converge",
+  "soundLoops": false
+ },
+ {
+  "item": 9,
+  "projectile": "projectile_009_anim_add",
+  "muzzle": "muzzle_flash_000_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": true,
+  "soundId": 50,
+  "sound": "Beam_M6_Wolv",
+  "soundLoops": false
+ },
+ {
+  "item": 10,
+  "projectile": "projectile_010_anim_add",
+  "muzzle": "muzzle_flash_003_anim_add",
+  "impact": "impact_003_lookat_anim_add",
+  "beam": true,
+  "soundId": 49,
+  "sound": "Beam_M6_Coug",
+  "soundLoops": false
+ },
+ {
+  "item": 11,
+  "projectile": "projectile_011_anim_add",
+  "muzzle": "muzzle_flash_002_anim_add",
+  "impact": "impact_002_lookat_anim_add",
+  "beam": true,
+  "soundId": 50,
+  "sound": "Beam_M6_Wolv",
+  "soundLoops": false
+ },
+ {
+  "item": 12,
+  "projectile": "projectile_012_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 78,
+  "sound": "Blaster_Nsaan",
+  "soundLoops": false
+ },
+ {
+  "item": 13,
+  "projectile": "projectile_013_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 75,
+  "sound": "Blaster_Kbooskk",
+  "soundLoops": false
+ },
+ {
+  "item": 14,
+  "projectile": "projectile_014_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 79,
+  "sound": "Blaster_Shgaal",
+  "soundLoops": false
+ },
+ {
+  "item": 15,
+  "projectile": "projectile_015_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 77,
+  "sound": "Blaster_Hnookk",
+  "soundLoops": false
+ },
+ {
+  "item": 16,
+  "projectile": "projectile_016_anim_add",
+  "muzzle": "muzzle_flash_004_anim_add",
+  "impact": "impact_004_lookat_anim_add",
+  "beam": false,
+  "soundId": 72,
+  "sound": "Blaster_EMP_Luna",
+  "soundLoops": false
+ },
+ {
+  "item": 17,
+  "projectile": "projectile_017_anim_add",
+  "muzzle": "muzzle_flash_004_anim_add",
+  "impact": "impact_004_lookat_anim_add",
+  "beam": false,
+  "soundId": 73,
+  "sound": "Blaster_EMP_Sol",
+  "soundLoops": false
+ },
+ {
+  "item": 18,
+  "projectile": "projectile_018_anim_add",
+  "muzzle": "muzzle_flash_004_anim_add",
+  "impact": "impact_004_lookat_anim_add",
+  "beam": false,
+  "soundId": 74,
+  "sound": "Blaster_EMP_Dia",
+  "soundLoops": false
+ },
+ {
+  "item": 19,
+  "projectile": "projectile_019_anim_add",
+  "muzzle": "muzzle_flash_005_anim_add",
+  "impact": "impact_005_lookat_anim_add",
+  "beam": false,
+  "soundId": 76,
+  "sound": "Blaster_Gram",
+  "soundLoops": false
+ },
+ {
+  "item": 20,
+  "projectile": "projectile_020_anim_add",
+  "muzzle": "muzzle_flash_005_anim_add",
+  "impact": "impact_005_lookat_anim_add",
+  "beam": false,
+  "soundId": 80,
+  "sound": "Blaster_Ridil",
+  "soundLoops": false
+ },
+ {
+  "item": 21,
+  "projectile": "projectile_021_anim_add",
+  "muzzle": "muzzle_flash_005_anim_add",
+  "impact": "impact_005_lookat_anim_add",
+  "beam": false,
+  "soundId": 81,
+  "sound": "Blaster_Tyrfing",
+  "soundLoops": false
+ },
+ {
+  "item": 22,
+  "projectile": "projectile_022_anim_add",
+  "muzzle": "muzzle_flash_006_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 66,
+  "sound": "Canon_Microgun_MK1",
+  "soundLoops": true
+ },
+ {
+  "item": 23,
+  "projectile": "projectile_023_anim_add",
+  "muzzle": "muzzle_flash_006_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 67,
+  "sound": "Canon_Microgun_MK2",
+  "soundLoops": true
+ },
+ {
+  "item": 24,
+  "projectile": "projectile_024_anim_add",
+  "muzzle": "muzzle_flash_007_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 63,
+  "sound": "Canon_Microgun_64MJ_02",
+  "soundLoops": true
+ },
+ {
+  "item": 25,
+  "projectile": "projectile_025_anim_add",
+  "muzzle": "muzzle_flash_007_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 64,
+  "sound": "Canon_Microgun_128MJ_02b",
+  "soundLoops": true
+ },
+ {
+  "item": 26,
+  "projectile": "projectile_026_anim_add",
+  "muzzle": "muzzle_flash_008_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 68,
+  "sound": "Canon_Scram",
+  "soundLoops": true
+ },
+ {
+  "item": 27,
+  "projectile": "projectile_027_anim_add",
+  "muzzle": "muzzle_flash_008_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 65,
+  "sound": "Canon_MassDriver",
+  "soundLoops": true
+ },
+ {
+  "item": 28,
+  "projectile": "projectile_028_anim_add",
+  "muzzle": "muzzle_flash_006_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 69,
+  "sound": "Thermalfusion_Thermic_o5",
+  "soundLoops": true
+ },
+ {
+  "item": 29,
+  "projectile": "projectile_029_anim_add",
+  "muzzle": "muzzle_flash_005_anim_add",
+  "impact": "impact_005_lookat_anim_add",
+  "beam": false,
+  "soundId": 70,
+  "sound": "Thermalfusion_Thermic_ReHeat",
+  "soundLoops": true
+ },
+ {
+  "item": 30,
+  "projectile": "projectile_030_anim_add",
+  "muzzle": "muzzle_flash_002_anim_add",
+  "impact": "impact_002_lookat_anim_add",
+  "beam": false,
+  "soundId": 71,
+  "sound": "Thermalfusion_Thermic_MaxHeat",
+  "soundLoops": true
+ },
+ {
+  "item": 31,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 82,
+  "sound": "Launch_Missile_Gliissk",
+  "soundLoops": false
+ },
+ {
+  "item": 32,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 83,
+  "sound": "Launch_Missle_JetRocket",
+  "soundLoops": false
+ },
+ {
+  "item": 33,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 84,
+  "sound": "Launch_Missile_Amour",
+  "soundLoops": false
+ },
+ {
+  "item": 34,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 85,
+  "sound": "Launch_Missile_EMP_MK1",
+  "soundLoops": false
+ },
+ {
+  "item": 35,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 86,
+  "sound": "Launch_Missile_EMP_MK2",
+  "soundLoops": false
+ },
+ {
+  "item": 36,
+  "projectile": "rocket_emp",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 87,
+  "sound": "Launch_Missile_Edo",
+  "soundLoops": false
+ },
+ {
+  "item": 37,
+  "projectile": "rocket_emp",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 88,
+  "sound": "Launch_Missile_IntelliJet",
+  "soundLoops": false
+ },
+ {
+  "item": 38,
+  "projectile": "rocket_emp",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 89,
+  "sound": "Launch_Missile_Skoonn",
+  "soundLoops": false
+ },
+ {
+  "item": 39,
+  "projectile": "rocket_emp",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 90,
+  "sound": "Launch_Missile_Mamba",
+  "soundLoops": false
+ },
+ {
+  "item": 40,
+  "projectile": "rocket_emp",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 91,
+  "sound": "Launch_Missile_Dephase",
+  "soundLoops": false
+ },
+ {
+  "item": 41,
+  "projectile": "bomb_emp_a",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 6,
+  "sound": "Launch_Missile_EMP_GL1",
+  "soundLoops": false
+ },
+ {
+  "item": 42,
+  "projectile": "bomb_emp_a",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 7,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 43,
+  "projectile": "bomb_emp_a",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 8,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 44,
+  "projectile": "bomb_explosive_a",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 9,
+  "sound": "Rocket_Launch_AMR_Tormentor",
+  "soundLoops": false
+ },
+ {
+  "item": 45,
+  "projectile": "bomb_explosive_a",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 10,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 46,
+  "projectile": "bomb_explosive_b",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 11,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 47,
+  "projectile": "projectile_016_anim_add",
+  "muzzle": "muzzle_flash_003_anim_add",
+  "impact": "impact_003_lookat_anim_add",
+  "beam": false,
+  "soundId": 92,
+  "sound": "Turret_Hammerhead_MK1",
+  "soundLoops": true
+ },
+ {
+  "item": 48,
+  "projectile": "projectile_021_anim_add",
+  "muzzle": "muzzle_flash_005_anim_add",
+  "impact": "impact_005_lookat_anim_add",
+  "beam": false,
+  "soundId": 93,
+  "sound": "Turret_Hammerhead_MK2",
+  "soundLoops": true
+ },
+ {
+  "item": 49,
+  "projectile": "projectile_013_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 94,
+  "sound": "Turret_Hammerhead_Lksaar",
+  "soundLoops": true
+ },
+ {
+  "item": 60,
+  "projectile": "v_mine_001",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 1098,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 61,
+  "projectile": "v_mine_003",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 1100,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 62,
+  "projectile": "v_mine_002",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 1099,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 176,
+  "projectile": "v_projectile_176_anim_add",
+  "muzzle": "muzzle_flash_006_anim_add",
+  "impact": "",
+  "beam": false,
+  "soundId": 1111,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 177,
+  "projectile": "v_projectile_177_anim_add",
+  "muzzle": "muzzle_flash_003_anim_add",
+  "impact": "",
+  "beam": false,
+  "soundId": 1113,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 178,
+  "projectile": "v_projectile_178_anim_add",
+  "muzzle": "muzzle_flash_002_anim_add",
+  "impact": "",
+  "beam": false,
+  "soundId": 1112,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 179,
+  "projectile": "v_guided_missile_anim",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 1117,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 180,
+  "projectile": "v_projectile_180_anim_add",
+  "muzzle": "v_muzzle_flash_009_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 1095,
+  "sound": "",
+  "soundLoops": true
+ },
+ {
+  "item": 181,
+  "projectile": "v_projectile_181_anim_add",
+  "muzzle": "v_muzzle_flash_010_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 1096,
+  "sound": "",
+  "soundLoops": true
+ },
+ {
+  "item": 182,
+  "projectile": "projectile_023_anim_add",
+  "muzzle": "muzzle_flash_006_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 1097,
+  "sound": "",
+  "soundLoops": true
+ },
+ {
+  "item": 183,
+  "projectile": "v_projectile_183_anim_add",
+  "muzzle": "muzzle_flash_003_anim_add",
+  "impact": "impact_003_lookat_anim_add",
+  "beam": false,
+  "soundId": 1101,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 193,
+  "projectile": "v_projectile_193_anim_add",
+  "muzzle": "muzzle_flash_000_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 1118,
+  "sound": "",
+  "soundLoops": true
+ },
+ {
+  "item": 197,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 2254,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 214,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 2265,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 215,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 2265,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 216,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 2265,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 221,
+  "projectile": "rocket_explosive",
+  "muzzle": "",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 2254,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 224,
+  "projectile": "projectile_020_anim_add",
+  "muzzle": "muzzle_flash_005_anim_add",
+  "impact": "impact_000_lookat_anim_add",
+  "beam": false,
+  "soundId": 2252,
+  "sound": "",
+  "soundLoops": true
+ },
+ {
+  "item": 226,
+  "projectile": "",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 2269,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 228,
+  "projectile": "sn_projectile_228_anim_add",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": true,
+  "soundId": 2275,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 229,
+  "projectile": "sn_projectile_229_anim_alpha",
+  "muzzle": "muzzle_flash_001_anim_add",
+  "impact": "impact_001_lookat_anim_add",
+  "beam": false,
+  "soundId": 2276,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 230,
+  "projectile": "projectile_027_anim_add",
+  "muzzle": "muzzle_flash_008_anim_add",
+  "impact": "impact_006_lookat_anim_add",
+  "beam": false,
+  "soundId": 2278,
+  "sound": "",
+  "soundLoops": true
+ },
+ {
+  "item": 231,
+  "projectile": "sn_projectile_231_anim_add",
+  "muzzle": "muzzle_flash_002_anim_add",
+  "impact": "impact_002_lookat_anim_add",
+  "beam": false,
+  "soundId": 2277,
+  "sound": "",
+  "soundLoops": false
+ },
+ {
+  "item": 232,
+  "projectile": "sn_fireworks_rocket",
+  "muzzle": "",
+  "impact": "",
+  "beam": false,
+  "soundId": 2280,
+  "sound": "",
+  "soundLoops": false
+ }
+]

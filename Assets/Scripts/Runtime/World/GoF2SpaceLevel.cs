@@ -35,6 +35,7 @@ namespace GoF2Remake.World
 
         public GoF2OrbitLayout Layout { get; private set; }
         public GoF2ShipController Player { get; private set; }
+        public GoF2WeaponSystem Weapons { get; private set; }
 
         GoF2Database db;
 
@@ -92,6 +93,10 @@ namespace GoF2Remake.World
                 ctrl.visualModel = model.transform;
             }
             Player = ctrl;
+
+            // Level::createPlayer: one gun per equipped weapon on the ship's mounts (weapons_hd.json).
+            Weapons = root.AddComponent<GoF2WeaponSystem>();
+            Weapons.Setup(db, GoF2Session.ShipIndex, GoF2Session.Equipment, GoF2Session.EquipmentAmounts);
 
             var chase = mainCamera.GetComponent<GoF2ChaseCamera>();
             if (chase == null) chase = mainCamera.gameObject.AddComponent<GoF2ChaseCamera>();

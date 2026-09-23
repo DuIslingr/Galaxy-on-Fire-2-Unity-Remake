@@ -72,6 +72,11 @@ namespace GoF2Remake.Data
         public int textureIndex;
     }
 
+    /// <summary>Weapon mounts of one ship (weapons_hd.json). slotType 0 = primary, 1 = secondary, 2 = turret,
+    /// 3 = engine exhaust points (not a turret, see weapons.md). position_engine is game space, ship-relative.</summary>
+    [System.Serializable] public class WeaponMount { public int slotType; public int[] position_engine; }
+    [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
+
     /// <summary>One assembled prefab (assemblies.json): Resources/Assembled/{pack}/{category}/{name}.prefab.</summary>
     [System.Serializable] public class AssemblyData
     {
@@ -86,6 +91,7 @@ namespace GoF2Remake.Data
         public List<SystemData> Systems = new List<SystemData>();
         public List<StationData> Stations = new List<StationData>();
         public List<AssemblyData> Assemblies = new List<AssemblyData>();
+        public List<WeaponMountSet> WeaponMounts = new List<WeaponMountSet>();
 
         public static GoF2Database Load(string resourceFolder = "GoF2Data")
         {
@@ -96,6 +102,7 @@ namespace GoF2Remake.Data
                 Systems = Read<List<SystemData>>(resourceFolder, "systems"),
                 Stations = Read<List<StationData>>(resourceFolder, "stations"),
                 Assemblies = ReadAssemblies(resourceFolder),
+                WeaponMounts = Read<List<WeaponMountSet>>(resourceFolder, "weapons_hd"),
             };
         }
 
@@ -121,6 +128,13 @@ namespace GoF2Remake.Data
         }
 
         public AssemblyData AssemblyByName(string name) => Assemblies.FirstOrDefault(a => a.name == name);
+
+        /// <summary>Mount positions of a slot type for a ship, in the order of Ship::getSlotPos.</summary>
+        public List<WeaponMount> MountsOf(int shipIndex, int slotType)
+        {
+            var set = WeaponMounts.FirstOrDefault(m => m.ship == shipIndex);
+            return set != null ? set.mounts.Where(m => m.slotType == slotType).ToList() : new List<WeaponMount>();
+        }
 
         public ShipData ShipByName(string name) => Ships.FirstOrDefault(s => s.name == name);
         public ItemData ItemByName(string name) => Items.FirstOrDefault(i => i.name == name);

@@ -5,7 +5,8 @@
 // Input: Input System package only (no legacy Input Manager). The four actions below are serialized
 // on the component, so bindings can be edited/rebound in the Inspector. Defaults:
 //   Steer         WASD / arrow keys / gamepad left stick
-//   Throttle      E = up, Q = down / gamepad right trigger = up, left trigger = down
+//   Throttle      E = up, Q = down / gamepad right bumper = up, left bumper = down (the triggers fire,
+//                 GoF2WeaponSystem)
 //   Boost         Space / gamepad south button (A / Cross)
 //   AlignHorizon  R / gamepad north button (Y / Triangle)
 // Touch or your own UI: call SetSteer()/SetThrottle()/Boost(); the stronger of the external steer and the
@@ -87,7 +88,7 @@ namespace GoF2Remake.Flight
                 throttleAction.AddCompositeBinding("1DAxis")
                     .With("Positive", "<Keyboard>/e").With("Negative", "<Keyboard>/q");
                 throttleAction.AddCompositeBinding("1DAxis")
-                    .With("Positive", "<Gamepad>/rightTrigger").With("Negative", "<Gamepad>/leftTrigger");
+                    .With("Positive", "<Gamepad>/rightShoulder").With("Negative", "<Gamepad>/leftShoulder");
             }
             if (boostAction.bindings.Count == 0)
             {

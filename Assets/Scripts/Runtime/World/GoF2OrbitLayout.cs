@@ -268,6 +268,9 @@ namespace GoF2Remake.World
 
         public string AsteroidAssembly => asteroidType switch { 1 => "asteroid_void", 2 => "v_asteroid_ice", 3 => "sn_asteroid_magma", _ => "asteroid_01" };
 
+        /// <summary>Asteroid mesh bounding radius in game units (sidecar bsphere): hit radius = this * scale * 0.7.</summary>
+        public float AsteroidMeshRadius => asteroidType switch { 1 => 6064f, 2 => 2835f, _ => 3547f };
+
         // ---- game -> Unity ---------------------------------------------------------------------------------------
 
         public const float MetersPerUnit = 0.05f;
