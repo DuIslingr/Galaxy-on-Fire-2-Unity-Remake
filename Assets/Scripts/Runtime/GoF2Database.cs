@@ -39,6 +39,19 @@ namespace GoF2Remake.Data
         public List<StatEntry> statList = new List<StatEntry>();   // e.g. damage, range, boostSpeed ...
         public List<BlueprintPart> blueprint = new List<BlueprintPart>();
 
+        /// <summary>Original attribute pairs (Item+0x30), from item_attributes.json; see Reference/research/shop.md 2.4.</summary>
+        [System.NonSerialized] public int[] attrKeys = new int[0], attrValues = new int[0];
+
+        public bool HasAttr(int id) => System.Array.IndexOf(attrKeys, id) >= 0;
+        public int Attr(int id, int fallback = 0)
+        {
+            int i = System.Array.IndexOf(attrKeys, id);
+            return i >= 0 ? attrValues[i] : fallback;
+        }
+
+        /// <summary>Attribute 1: 0 primary, 1 secondary, 2 turret, 3 equipment, 4 commodity.</summary>
+        public int TypeId => Attr(1, type switch { "primary" => 0, "secondary" => 1, "turret" => 2, "equipment" => 3, _ => 4 });
+
         public int Stat(string key, int fallback = 0)
         {
             if (statList != null) foreach (var s in statList) if (s.key == key) return s.value;
@@ -93,9 +106,11 @@ namespace GoF2Remake.Data
         public List<AssemblyData> Assemblies = new List<AssemblyData>();
         public List<WeaponMountSet> WeaponMounts = new List<WeaponMountSet>();
 
+        [System.Serializable] class ItemAttributes { public int index; public int[] keys, values; }
+
         public static GoF2Database Load(string resourceFolder = "GoF2Data")
         {
-            return new GoF2Database
+            var db = new GoF2Database
             {
                 Ships = Read<List<ShipData>>(resourceFolder, "ships"),
                 Items = Read<List<ItemData>>(resourceFolder, "items"),
@@ -104,7 +119,17 @@ namespace GoF2Remake.Data
                 Assemblies = ReadAssemblies(resourceFolder),
                 WeaponMounts = Read<List<WeaponMountSet>>(resourceFolder, "weapons_hd"),
             };
+            // item_attributes.json (Reference/tools/shop/build_item_attributes.py): items.json keeps them in a dictionary.
+            foreach (var a in Read<List<ItemAttributes>>(resourceFolder, "item_attributes"))
+            {
+                var item = db.Items.Find(i => i.index == a.index);
+                if (item != null && a.keys != null) { item.attrKeys = a.keys; item.attrValues = a.values; }
+            }
+            return db;
         }
+
+        public ItemData Item(int index) => index >= 0 && index < Items.Count && Items[index].index == index ? Items[index] : Items.Find(i => i.index == index);
+        public ShipData Ship(int index) => index >= 0 && index < Ships.Count && Ships[index].index == index ? Ships[index] : Ships.Find(s => s.index == index);
 
         [System.Serializable] class Wrapper<W> { public W list; }
 

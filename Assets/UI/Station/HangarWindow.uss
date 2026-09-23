@@ -1,0 +1,440 @@
+/* The station's Hangar window (GoF2HangarWindow): tabs Ship / Shop, the item list on the left, the selected row's
+   details, trade arrows and action on the right, cargo load and credits in the footer. Shown while the station root
+   has hangar-open; it then replaces the side panel and the launch button. */
+
+.hangar-window {
+    display: none;
+    position: absolute;
+    left: 48px;
+    right: 40px;
+    top: 110px;
+    bottom: 96px;
+    background-color: rgba(4, 10, 18, 0.92);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-amber);
+}
+
+.hangar-open .hangar-window {
+    display: flex;
+}
+
+.hangar-open .side-panel,
+.hangar-open .launch-button,
+.hangar-open .side-shade {
+    display: none;
+}
+
+.hangar-open .station-hints {
+    left: 48px;
+    right: 40px;
+    bottom: 34px;
+    max-width: none;
+    flex-wrap: nowrap;
+}
+
+/* ---- tabs ---------------------------------------------------------------------------- */
+
+.hangar-top {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 14px 0 14px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--gof-line);
+}
+
+.hangar-tab {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 3px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    margin: 0 6px 0 0;
+    padding: 12px 28px;
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--gof-text-dim);
+}
+
+.hangar-tab--active {
+    color: #FFFFFF;
+    border-bottom-color: var(--gof-amber);
+}
+
+.can-hover .hangar-tab:hover {
+    color: #FFFFFF;
+}
+
+.hangar-top-spacer {
+    flex-grow: 1;
+}
+
+.hangar-close {
+    display: none;
+    padding: 10px 20px;
+    margin-bottom: 6px;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--gof-text);
+    background-color: rgba(4, 10, 18, 0.55);
+    border-width: 2px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 4px;
+}
+
+.input-touch .hangar-close,
+.input-keyboard .hangar-close {
+    display: flex;
+}
+
+.can-hover .hangar-close:hover {
+    border-color: var(--gof-amber);
+    color: #FFFFFF;
+}
+
+/* ---- list ---------------------------------------------------------------------------- */
+
+.hangar-body {
+    flex-grow: 1;
+    flex-direction: row;
+}
+
+.hangar-list {
+    width: 56%;
+    border-right-width: 1px;
+    border-right-color: var(--gof-line);
+}
+
+.hangar-list > .unity-scroll-view__content-and-vertical-scroll-container > .unity-scroll-view__content-viewport > .unity-scroll-view__content-container {
+    padding-bottom: 12px;
+}
+
+.list-header {
+    font-size: 16px;
+    letter-spacing: 3px;
+    color: var(--gof-cyan);
+    padding: 16px 20px 6px 20px;
+}
+
+.list-row {
+    flex-direction: row;
+    align-items: center;
+    height: 84px;
+    margin: 2px 10px;
+    padding: 0 16px 0 10px;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.can-hover .list-row:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.list-row--selected,
+.can-hover .list-row--selected:hover {
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+}
+
+.row-icon {
+    width: 148px;
+    height: 72px;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.row-texts {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 16px;
+    overflow: hidden;
+}
+
+.row-name {
+    font-size: 20px;
+    color: var(--gof-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.row-name--empty {
+    color: var(--gof-text-disabled);
+}
+
+.row-sub {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.row-sub-text {
+    font-size: 15px;
+    color: var(--gof-text-dim);
+}
+
+.row-badge {
+    font-size: 12px;
+    letter-spacing: 2px;
+    padding: 1px 7px;
+    margin-right: 8px;
+    border-radius: 3px;
+    color: #0B1016;
+}
+
+.row-badge--new {
+    background-color: var(--gof-amber);
+}
+
+.row-badge--mounted {
+    background-color: var(--gof-cyan);
+}
+
+.row-price {
+    min-width: 150px;
+    font-size: 20px;
+    color: #FFFFFF;
+    -unity-text-align: middle-right;
+}
+
+.row-price--expensive {
+    color: #FF6B5E;
+}
+
+/* ---- details ------------------------------------------------------------------------- */
+
+.hangar-details {
+    width: 44%;
+    padding: 20px 24px 14px 24px;
+}
+
+.detail-head {
+    flex-direction: row;
+    align-items: center;
+}
+
+.detail-icon {
+    width: 216px;
+    height: 105px;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.detail-titles {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 18px;
+}
+
+.detail-name {
+    font-size: 26px;
+    color: #FFFFFF;
+    white-space: normal;
+}
+
+.detail-sub {
+    margin-top: 4px;
+    font-size: 17px;
+    color: var(--gof-text-dim);
+    white-space: normal;
+}
+
+.trade-box {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 18px;
+    padding: 12px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 4px;
+}
+
+.trade-box--hidden {
+    display: none;
+}
+
+.trade-side {
+    width: 96px;
+}
+
+.trade-side--right {
+    align-items: flex-end;
+}
+
+.trade-side-label {
+    font-size: 13px;
+    letter-spacing: 2px;
+    color: var(--gof-text-dim);
+}
+
+.trade-side-value {
+    font-size: 24px;
+    color: #FFFFFF;
+}
+
+.trade-arrow {
+    width: 116px;
+    height: 64px;
+    margin: 0 8px;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(4, 10, 18, 0.6);
+    border-width: 2px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 4px;
+    transition-duration: 0.1s;
+}
+
+.trade-arrow--buy {
+    border-color: var(--gof-amber);
+}
+
+.can-hover .trade-arrow:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.trade-arrow--pressed,
+.can-hover .trade-arrow--pressed:hover {
+    background-color: var(--gof-amber-soft);
+    scale: 0.95 0.95;
+}
+
+.trade-arrow--disabled {
+    opacity: 0.3;
+}
+
+.trade-arrow-label {
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: #FFFFFF;
+}
+
+.trade-price {
+    flex-grow: 1;
+    font-size: 24px;
+    color: #FFFFFF;
+    -unity-text-align: middle-center;
+}
+
+.trade-price--expensive {
+    color: #FF6B5E;
+}
+
+.detail-action {
+    margin: 14px 0 0 0;
+    padding: 14px;
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: #FFFFFF;
+    background-color: rgba(255, 166, 48, 0.16);
+    border-width: 2px;
+    border-color: var(--gof-amber);
+    border-radius: 4px;
+}
+
+.can-hover .detail-action:hover {
+    background-color: rgba(255, 166, 48, 0.38);
+}
+
+.detail-action:active {
+    background-color: var(--gof-amber);
+    color: #0B1016;
+}
+
+.detail-action--hidden {
+    display: none;
+}
+
+.detail-action--disabled {
+    opacity: 0.35;
+}
+
+.detail-scroll {
+    flex-grow: 1;
+    margin-top: 16px;
+}
+
+.stat-row {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.stat-label {
+    font-size: 17px;
+    color: var(--gof-text-dim);
+}
+
+.stat-value {
+    font-size: 17px;
+    color: var(--gof-text);
+}
+
+.detail-text {
+    margin-top: 14px;
+    font-size: 17px;
+    color: var(--gof-text);
+    white-space: normal;
+}
+
+/* ---- footer -------------------------------------------------------------------------- */
+
+.hangar-footer {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 22px;
+    border-top-width: 1px;
+    border-top-color: var(--gof-line);
+}
+
+.footer-cargo {
+    font-size: 20px;
+    letter-spacing: 1px;
+    color: var(--gof-text);
+}
+
+.footer-cargo--over {
+    color: #FF6B5E;
+}
+
+.footer-credits {
+    font-size: 22px;
+    color: var(--gof-amber);
+}
+
+/* ---- messages (sold, mounted, not enough credits ...) ------------------------------------ */
+
+.station-toast {
+    position: absolute;
+    top: 120px;
+    left: 50%;
+    translate: -50% 0;
+    max-width: 900px;
+    padding: 14px 26px;
+    font-size: 20px;
+    color: #FFFFFF;
+    white-space: normal;
+    background-color: var(--gof-panel);
+    border-left-width: 3px;
+    border-left-color: var(--gof-amber);
+    opacity: 0;
+    transition-duration: 0.25s;
+}
+
+.station-toast--shown {
+    opacity: 1;
+}
+
+/* Phones: smaller rows. */
+.layout-phone .row-icon {
+    width: 124px;
+    height: 60px;
+}
+
+.layout-phone .list-row {
+    height: 72px;
+}

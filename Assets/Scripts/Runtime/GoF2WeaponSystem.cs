@@ -51,6 +51,7 @@ namespace GoF2Remake.Flight
         /// <summary>Remaining missiles/rockets of the selected secondary weapon (-1 = none equipped).</summary>
         public int SecondaryAmmo { get; private set; } = -1;
         public string SecondaryName { get; private set; } = "";
+        GoF2Stack secondaryStack;
         /// <summary>Raised when a player bullet hits something (the crosshair turns orange for 200 ms).</summary>
         public event Action Hit;
         /// <summary>Locked target for homing missiles (Radar lock; none until there are ships to lock on).</summary>
@@ -91,15 +92,15 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>Level::createPlayer: one gun per equipped primary/secondary item on the ship's mounts.</summary>
-        public void Setup(GoF2Database db, int shipIndex, int[] equipment, int[] amounts)
+        public void Setup(GoF2Database db, int shipIndex, IList<GoF2Stack> equipment)
         {
             fxRoot = new GameObject("Player weapon fx").transform;
             var primaryMounts = db.MountsOf(shipIndex, 0);
             var secondaryMounts = db.MountsOf(shipIndex, 1);
             int p = 0, s = 0;
-            for (int e = 0; e < equipment.Length; e++)
+            for (int e = 0; e < equipment.Count; e++)
             {
-                var item = db.Items.Find(x => x.index == equipment[e]);
+                var item = db.Item(equipment[e].item);
                 if (item == null) continue;
                 bool secondary = item.type == "secondary";
                 if (item.type != "primary" && !secondary) continue;
@@ -111,10 +112,17 @@ namespace GoF2Remake.Flight
                 rigs.Add(rig);
                 if (secondary && SecondaryAmmo < 0)
                 {
-                    SecondaryAmmo = amounts != null && e < amounts.Length ? amounts[e] : 1;
+                    SecondaryAmmo = equipment[e].amount;
                     SecondaryName = item.name;
+                    secondaryStack = equipment[e];
                 }
             }
+        }
+
+        /// <summary>Writes the remaining missiles back to the mounted stack (docking saves the ship to Status).</summary>
+        public void StoreAmmo()
+        {
+            if (secondaryStack != null) secondaryStack.amount = UnityEngine.Mathf.Max(0, SecondaryAmmo);
         }
 
         /// <summary>Mount position (game space, ship-relative) -> Unity ship space: (-x, y, z) * 0.05 (the models are

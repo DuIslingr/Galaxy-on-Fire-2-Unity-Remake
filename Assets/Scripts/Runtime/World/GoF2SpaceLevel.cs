@@ -96,7 +96,7 @@ namespace GoF2Remake.World
                 GoF2OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * GoF2OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
             var ctrl = root.AddComponent<GoF2ShipController>();
             var equipment = new System.Collections.Generic.List<ItemData>();
-            foreach (int i in GoF2Session.Equipment) { var it = db.Items.Find(x => x.index == i); if (it != null) equipment.Add(it); }
+            foreach (var e in GoF2Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
             if (ship != null) ctrl.stats = GoF2Database.BuildFlightStats(ship, equipment);
             ctrl.sensitivity = GoF2Settings.Sensitivity;
             ctrl.invertPitch = GoF2Settings.InvertPitch;
@@ -115,7 +115,7 @@ namespace GoF2Remake.World
 
             // Level::createPlayer: one gun per equipped weapon on the ship's mounts (weapons_hd.json).
             Weapons = root.AddComponent<GoF2WeaponSystem>();
-            Weapons.Setup(db, GoF2Session.ShipIndex, GoF2Session.Equipment, GoF2Session.EquipmentAmounts);
+            Weapons.Setup(db, GoF2Session.ShipIndex, GoF2Session.Equipment);
 
             chase = mainCamera.GetComponent<GoF2ChaseCamera>();
             if (chase == null) chase = mainCamera.gameObject.AddComponent<GoF2ChaseCamera>();
@@ -161,6 +161,7 @@ namespace GoF2Remake.World
         public void Dock()
         {
             GoF2Session.LaunchedFromStation = false;
+            Weapons?.StoreAmmo();   // MGame::dockEvent saves the ship state to Status
             if (Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);
         }
     }

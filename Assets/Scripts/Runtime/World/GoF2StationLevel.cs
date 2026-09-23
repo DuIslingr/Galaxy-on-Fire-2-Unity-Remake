@@ -12,8 +12,9 @@
 //     the system's sun (StarSystem::initLight); Terran service bot loops, the Midorian prop replays now and then.
 // Both show the current system's sky behind the room (Level::createSpace builds the StarSystem for these levels).
 // Music per station/race, ambience per screen (Station_Atmo_Mainview / _Lounge).
-// Not yet: agents and chat, shop/equipment (the original's "Hangar" button opens a 2D shop), map, missions, status,
-// turret on the player ship (CutScene::checkForTurret), home-base stored ships.
+// Arrival also rolls or refreshes the station's shop stock (GoF2Shop.EnterStation); the shop itself is GoF2HangarWindow.
+// Not yet: agents and chat, map, missions, status, turret on the player ship (CutScene::checkForTurret),
+// home-base stored ships.
 
 using System;
 using System.Collections.Generic;
@@ -85,6 +86,9 @@ namespace GoF2Remake.World
         public int HangarIndex { get; private set; }
         public int BarRace { get; private set; }
         public int VisitorCount { get; private set; }
+        public GoF2Database Database => db;
+        /// <summary>This station's shop stock and ships for sale (kept while it is among the last 3 visited).</summary>
+        public GoF2StationStock Stock { get; private set; }
         public bool IntroPlaying => introT < 1.25f && View == GoF2StationView.Lounge;
 
         GoF2Database db;
@@ -136,6 +140,7 @@ namespace GoF2Remake.World
             Station = db.Stations.Find(s => s.index == station);
             Layout = GoF2OrbitLayout.Build(db, station);
             HangarIndex = GoF2StationTables.HangarIndex(station, Layout.raceId);
+            Stock = GoF2Shop.EnterStation(db, station);
             BarRace = GoF2StationTables.BarRace(Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
 
@@ -176,6 +181,17 @@ namespace GoF2Remake.World
             // Camera: ModStation::OnInitialize state 0x14 (phone table), rotation order 2 with roll -0.03.
             hangarCamBase = GoF2StationTables.HangarCameraPos[HangarIndex];
             for (int i = 0; i < 3; i++) { driftSign[i] = Random.Range(0, 20) < 10; NextDriftLeg(i, Base(i)); }
+        }
+
+        /// <summary>CutScene::replacePlayerShip 0xa53b4: after buying a ship, the new one on the turntable at its own height
+        /// (the camera keeps the pivot of the ship the hangar was entered with).</summary>
+        public void ReplacePlayerShip(int index)
+        {
+            if (playerShip != null) Destroy(playerShip.gameObject);
+            shipIndex = index;
+            var ship = SpawnShip(index, new Vector3(0f, GoF2StationTables.ShipY(index), 0f), 0f, hangarRoot, "Player ship");
+            playerShip = ship != null ? ship.transform : null;
+            ApplyShipYaw();
         }
 
         /// <summary>Level::createScene 0x17: count = nextInt(max + 1), 70 % a fighter of the hangar's race, 30 % a random race
@@ -380,6 +396,7 @@ namespace GoF2Remake.World
         /// <summary>ModStation::leaveStation 0xec1ec after the "Depart the station?" confirmation: straight into space.</summary>
         public void Launch()
         {
+            GoF2Session.LastDepartureTime = Time.realtimeSinceStartup;   // Status+0x70, for computerTradeGoods
             GoF2Session.ArrivedByTravel = false;
             GoF2Session.LaunchedFromStation = true;
             if (Application.CanStreamedLevelBeLoaded(spaceScene)) SceneManager.LoadScene(spaceScene);

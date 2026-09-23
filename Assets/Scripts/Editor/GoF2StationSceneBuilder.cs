@@ -3,7 +3,8 @@
 // Like the flight level the scene is almost empty (camera, one light, post-processing, GoF2StationLevel, the station
 // menu UI); GoF2StationLevel builds the current station's hangar and bar at runtime. This wires up what the level
 // can't load by name: the bar visitor / glow / shadow single-mesh prefabs, the glow material per bar race, music,
-// ambience and button sounds. Build settings: after Space. Docking in Space loads it, its launch button loads Space.
+// ambience, button and hangar sounds, language tables. Builds the shop icons (GoF2 > Build Item Icons) if missing.
+// Build settings: after Space. Docking in Space loads it, its launch button loads Space.
 
 using System.IO;
 using System.Linq;
@@ -34,6 +35,7 @@ namespace GoF2Remake.EditorTools
         static void BuildScene()
         {
             if (!File.Exists($"{GoF2SkyboxBaker.SpaceSkyDir}/nebula_018.png")) GoF2SkyboxBaker.BakeSpaceSkies();
+            if (!File.Exists($"{GoF2ItemIconBuilder.OutDir}/item_232.png")) GoF2ItemIconBuilder.Build();
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
@@ -93,6 +95,10 @@ namespace GoF2Remake.EditorTools
             menu.buttonPush = Clip("SFX_GENERAL/Button_Push_v06.ogg");
             menu.buttonRelease = Clip("SFX_GENERAL/Button_Release_V06.ogg");
             menu.infoSound = Clip("SFX_GENERAL/Message_Info_Screen_v04.ogg");
+            menu.shopBuy = Clip("SFX_STATION_HANGAR/Button_to_ship_v01.ogg");
+            menu.shopSell = Clip("SFX_STATION_HANGAR/Button_to_station_v01.ogg");
+            menu.shopMount = Clip("SFX_STATION_HANGAR/Button_Mount_v01.ogg");
+            menu.shopDemount = Clip("SFX_STATION_HANGAR/Button_Dismount_v02.ogg");
             var tables = Directory.GetFiles($"{Root}/Localization", "text_*.json").Select(p => p.Replace('\\', '/'))
                 .OrderBy(p => Path.GetFileNameWithoutExtension(p) == "text_en" ? 0 : 1).ToArray();   // English first (fallback)
             menu.languageCodes = tables.Select(p => Path.GetFileNameWithoutExtension(p).Substring(5)).ToArray();

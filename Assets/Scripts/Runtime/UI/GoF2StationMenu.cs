@@ -1,15 +1,17 @@
 // GoF2StationMenu.cs
 // The docked-station screen (ModStation::OnRender2D 0xef208) over GoF2StationLevel's hangar / Space Lounge:
 //   header "<station> Station" (136), left panel with "<system> System" (137), "Tech level: N" (133), the race (406+),
-//   the screen buttons Hangar (167, the main station view here) and Space Lounge (398), and the launch button
-//   bottom-right with the confirmation "Depart the station?" (397, ChoiceWindow, default = Yes).
+//   the screen buttons Hangar (167: opens the shop window, GoF2HangarWindow, over the 3D hangar) and Space Lounge (398),
+//   and the launch button bottom-right with the confirmation "Depart the station?" (397, ChoiceWindow, default = Yes);
+//   launching with more cargo than the hold takes is refused (204, ModStation::leaveStation 0xec1ec).
 // Dragging over the hangar turns the player's ship (1 rad per 120 px of a 480 px high screen, with a fling);
 // a tap in the lounge skips its camera intro. Adapts to GoF2InputMode like the flight HUD:
 //   Touch:      buttons, drag to turn the ship, Menu button.
-//   Keyboard:   keycap hints; A/D or arrows turn the ship, 1 / 2 switch screens, L launch, Esc back.
-//   Controller: Xbox hints; right stick turns the ship, LB / RB switch screens, X launch, B back, Menu to the main menu.
-// Esc / B: dialog -> no, lounge -> hangar, hangar -> main menu (the original opens its system menu there).
-// Not yet (the original's other buttons): the 2D shop behind "Hangar", Map, Missions, Status.
+//   Keyboard:   keycap hints; A/D or arrows turn the ship, 1 hangar, 2 lounge, L launch, Esc back.
+//   Controller: Xbox hints; right stick turns the ship, LB hangar / RB lounge, X launch, B back, Menu to the main menu.
+//   In the hangar window: up / down select, left / right sell / buy, Enter / A confirm, Q / E or LB / RB switch tabs.
+// Esc / B: dialog -> no, hangar window / lounge -> main view, main view -> main menu (the original opens its system menu).
+// Not yet (the original's other buttons): Map, Missions, Status.
 
 using GoF2Remake.Data;
 using GoF2Remake.World;
@@ -31,6 +33,11 @@ namespace GoF2Remake.UI
         public AudioClip buttonPush;
         public AudioClip buttonRelease;
         public AudioClip infoSound;
+        [Header("Hangar sounds (FMOD events 0x65 / 0x64 / 0x62 / 0x60)")]
+        public AudioClip shopBuy;
+        public AudioClip shopSell;
+        public AudioClip shopMount;
+        public AudioClip shopDemount;
         [Header("Text (used when the scene is started without the main menu)")]
         public string[] languageCodes;
         public TextAsset[] languageTables;
@@ -42,7 +49,10 @@ namespace GoF2Remake.UI
         PanelSettings runtimePanel;
         VisualElement root, safeArea, dragZone, hints, dialog;
         Button hangarButton, loungeButton, launchButton, dialogYes, dialogNo;
-        Label viewTitle;
+        Label viewTitle, toast;
+        GoF2HangarWindow hangarWindow;
+        System.Action dialogAction;
+        float toastMs;
         Vector2Int lastScreen;
         Rect lastSafeArea;
         bool touchMode;
@@ -88,11 +98,13 @@ namespace GoF2Remake.UI
             hints = root.Q("hints");
             dialog = root.Q("dialog");
             viewTitle = root.Q<Label>("viewTitle");
-            hangarButton = Bind("hangarButton", () => level?.SetView(GoF2StationView.Hangar));
-            loungeButton = Bind("loungeButton", () => level?.SetView(GoF2StationView.Lounge));
+            toast = root.Q<Label>("toast");
+            hangarButton = Bind("hangarButton", OpenHangar);
+            loungeButton = Bind("loungeButton", OpenLounge);
             launchButton = Bind("launchButton", AskLaunch);
-            dialogYes = Bind("dialogYes", () => { CloseDialog(); level?.Launch(); });
+            dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", CloseDialog);
+            hangarWindow = new GoF2HangarWindow(this, level, root);
             Bind("menuButton", BackToMenu);
 
             var st = level != null ? level.Station : null;
@@ -108,8 +120,6 @@ namespace GoF2Remake.UI
             hangarButton.text = T(167).ToUpperInvariant();
             loungeButton.text = T(398).ToUpperInvariant();
             launchButton.text = GoF2Localization.Extra("stationLaunch", "LAUNCH");
-            root.Q<Label>("dialogText").text = T(397);
-            dialogYes.text = T(134).ToUpperInvariant();
             dialogNo.text = T(135).ToUpperInvariant();
             root.Q<Button>("menuButton").text = GoF2Localization.Extra("hudMenu", "MENU");
 
@@ -117,6 +127,13 @@ namespace GoF2Remake.UI
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) SetTouchMode(false); }, TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationMoveEvent>(OnNavigate, TrickleDown.TrickleDown);
+            // The hangar window keeps its own selection; Enter / A are read in Update, so no button may also take them.
+            root.RegisterCallback<NavigationSubmitEvent>(e =>
+            {
+                if (!HangarOpen || DialogOpen) return;
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+            }, TrickleDown.TrickleDown);
 
             OnViewChanged();
             ApplyInputMode();
@@ -136,32 +153,89 @@ namespace GoF2Remake.UI
         void OnViewChanged()
         {
             if (root == null || level == null) return;
-            bool hangar = level.View == GoF2StationView.Hangar;
-            hangarButton.EnableInClassList("station-button--current", hangar);
-            loungeButton.EnableInClassList("station-button--current", !hangar);
-            viewTitle.text = GoF2Localization.Get(hangar ? 167 : 398).ToUpperInvariant();
+            bool lounge = level.View == GoF2StationView.Lounge;
+            hangarButton.EnableInClassList("station-button--current", HangarOpen);
+            loungeButton.EnableInClassList("station-button--current", lounge);
+            viewTitle.text = HangarOpen ? GoF2Localization.Get(167).ToUpperInvariant() : lounge ? GoF2Localization.Get(398).ToUpperInvariant() : "";
+            viewTitle.style.display = viewTitle.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             dragVelocity = 0f;
             BuildHints(GoF2InputMode.Current);
         }
 
+        bool HangarOpen => hangarWindow != null && hangarWindow.IsOpen;
+
+        /// <summary>Station button 0 (ModStation::OnKeyPress): the Hangar window over the main view.</summary>
+        void OpenHangar()
+        {
+            if (HangarOpen || level == null) return;
+            if (level.View != GoF2StationView.Hangar) level.SetView(GoF2StationView.Hangar);
+            hangarWindow.Open();
+            root.AddToClassList("hangar-open");
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            OnViewChanged();
+        }
+
+        public void CloseHangar()
+        {
+            if (!HangarOpen) return;
+            hangarWindow.Close();
+            root.RemoveFromClassList("hangar-open");
+            OnViewChanged();
+            Select(hangarButton);
+        }
+
+        void OpenLounge()
+        {
+            CloseHangar();
+            level?.SetView(GoF2StationView.Lounge);
+        }
+
+        /// <summary>ModStation::leaveStation: refused while the cargo hold is overloaded (204), else "Depart the station?".</summary>
         void AskLaunch()
         {
+            if (new GoF2Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(GoF2Localization.Get(204), null, true); return; }
+            ShowDialog(GoF2Localization.Get(397), level.Launch);
+        }
+
+        /// <summary>ChoiceWindow: yes / no, or a message with one button ('info').</summary>
+        public void ShowDialog(string text, System.Action onYes, bool info = false)
+        {
+            dialogAction = onYes;
+            root.Q<Label>("dialogText").text = text;
+            dialogYes.text = info ? GoF2Localization.Extra("ok", "OK") : GoF2Localization.Get(134).ToUpperInvariant();
+            dialogNo.style.display = info ? DisplayStyle.None : DisplayStyle.Flex;
             dialog.AddToClassList("station-dialog-backdrop--shown");
             Play(infoSound);
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             Select(dialogYes);
         }
 
         void CloseDialog()
         {
             dialog.RemoveFromClassList("station-dialog-backdrop--shown");
-            Select(launchButton);
+            dialogAction = null;
+            if (!HangarOpen) Select(launchButton);
+            else if (root.focusController?.focusedElement is VisualElement f) f.Blur();
         }
 
         bool DialogOpen => dialog != null && dialog.ClassListContains("station-dialog-backdrop--shown");
 
+        /// <summary>A short message at the top ("#N mounted.", "You need an additional #C." ...), 3 s.</summary>
+        public void ShowToast(string text)
+        {
+            toast.text = text;
+            toast.AddToClassList("station-toast--shown");
+            toastMs = 3000f;
+        }
+
+        public void PlayPush() => Play(buttonPush);
+        public void PlayRelease() => Play(buttonRelease);
+        public void PlayClip(AudioClip clip) => Play(clip);
+
         void Back()
         {
             if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
+            else if (HangarOpen) { Play(buttonRelease); CloseHangar(); }
             else if (level != null && level.View == GoF2StationView.Lounge) { Play(buttonRelease); level.SetView(GoF2StationView.Hangar); }
             else BackToMenu();
         }
@@ -223,7 +297,7 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-keyboard", kind == GoF2InputKind.KeyboardMouse);
             root.EnableInClassList("input-gamepad", kind == GoF2InputKind.Gamepad);
             SetTouchMode(kind == GoF2InputKind.Touch);
-            if (kind == GoF2InputKind.Gamepad && root.focusController?.focusedElement == null)
+            if (kind == GoF2InputKind.Gamepad && !HangarOpen && root.focusController?.focusedElement == null)
                 Select(DialogOpen ? dialogYes : level != null && level.View == GoF2StationView.Lounge ? loungeButton : hangarButton);
             BuildHints(kind);
         }
@@ -255,6 +329,13 @@ namespace GoF2Remake.UI
             SetTouchMode(false);
             bool vertical = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Down;
             bool horizontal = e.direction == NavigationMoveEvent.Direction.Left || e.direction == NavigationMoveEvent.Direction.Right;
+            if (HangarOpen && !DialogOpen)
+            {
+                // Read in Update (HoldDirections): navigation events only arrive while a UI element has focus.
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+                return;
+            }
             var items = DialogOpen ? new VisualElement[] { dialogYes, dialogNo } : new VisualElement[] { hangarButton, loungeButton, launchButton };
             if (DialogOpen ? horizontal : vertical)
             {
@@ -272,6 +353,27 @@ namespace GoF2Remake.UI
             if (hints == null) return;
             hints.Clear();
             string T(string key, string english) => GoF2Localization.Extra(key, english);
+            if (HangarOpen)
+            {
+                string select = T("hudSelect", "SELECT"), trade = $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";
+                string tabs = $"{GoF2Localization.Get(183)} / {GoF2Localization.Get(185)}".ToUpperInvariant(), confirm = T("hudConfirm", "CONFIRM");
+                if (kind == GoF2InputKind.KeyboardMouse)
+                {
+                    Hint(select, GoF2InputGlyph.Key("W"), GoF2InputGlyph.Key("S"));
+                    Hint(trade, GoF2InputGlyph.Key("A"), GoF2InputGlyph.Key("D"));
+                    Hint(confirm, GoF2InputGlyph.Key("ENTER", true));
+                    Hint(tabs, GoF2InputGlyph.Key("Q"), GoF2InputGlyph.Key("E"));
+                    Hint(T("hudBack", "BACK"), GoF2InputGlyph.Key("ESC"));
+                }
+                else if (kind == GoF2InputKind.Gamepad)
+                {
+                    Hint($"{select} / {trade}", GoF2InputGlyph.Pad(GoF2PadButton.DPad));
+                    Hint(confirm, GoF2InputGlyph.Pad(GoF2PadButton.A));
+                    Hint(tabs, GoF2InputGlyph.Pad(GoF2PadButton.LeftBumper), GoF2InputGlyph.Pad(GoF2PadButton.RightBumper));
+                    Hint(T("hudBack", "BACK"), GoF2InputGlyph.Pad(GoF2PadButton.B));
+                }
+                return;
+            }
             bool hangar = level == null || level.View == GoF2StationView.Hangar;
             string rotate = T("stationRotate", "TURN SHIP"), launch = T("stationLaunch", "LAUNCH");
             string back = hangar ? T("hudMenu", "MENU") : T("hudBack", "BACK");
@@ -317,12 +419,44 @@ namespace GoF2Remake.UI
             var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)) { Back(); return; }
             if (pad != null && pad.startButton.wasPressedThisFrame) { BackToMenu(); return; }
+            if (toastMs > 0f && (toastMs -= Time.unscaledDeltaTime * 1000f) <= 0f) toast.RemoveFromClassList("station-toast--shown");
             if (DialogOpen) return;
 
+            if (HangarOpen)
+            {
+                float dtMs = Time.unscaledDeltaTime * 1000f;
+                int v = 0, h = 0;
+                if (kb != null)
+                {
+                    if (kb.wKey.isPressed || kb.upArrowKey.isPressed) v -= 1;
+                    if (kb.sKey.isPressed || kb.downArrowKey.isPressed) v += 1;
+                    if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) h -= 1;
+                    if (kb.dKey.isPressed || kb.rightArrowKey.isPressed) h += 1;
+                }
+                if (pad != null)
+                {
+                    var stick = pad.leftStick.ReadValue() + pad.dpad.ReadValue();
+                    if (stick.y > 0.5f) v -= 1; else if (stick.y < -0.5f) v += 1;
+                    if (stick.x < -0.5f) h -= 1; else if (stick.x > 0.5f) h += 1;
+                }
+                hangarWindow.HoldDirections(System.Math.Sign(v), System.Math.Sign(h), dtMs);
+                hangarWindow.Update(dtMs);
+                if ((kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) || (pad != null && pad.buttonSouth.wasPressedThisFrame))
+                    hangarWindow.Action();
+                else if ((kb != null && (kb.qKey.wasPressedThisFrame || kb.eKey.wasPressedThisFrame))
+                         || (pad != null && (pad.leftShoulder.wasPressedThisFrame || pad.rightShoulder.wasPressedThisFrame)))
+                {
+                    Play(buttonPush);
+                    hangarWindow.NextTab();
+                }
+                else if (kb != null && kb.digit2Key.wasPressedThisFrame) OpenLounge();
+                return;
+            }
+
             if ((kb != null && kb.digit1Key.wasPressedThisFrame) || (pad != null && pad.leftShoulder.wasPressedThisFrame))
-                level.SetView(GoF2StationView.Hangar);
+                OpenHangar();
             if ((kb != null && kb.digit2Key.wasPressedThisFrame) || (pad != null && pad.rightShoulder.wasPressedThisFrame))
-                level.SetView(GoF2StationView.Lounge);
+                OpenLounge();
             if ((kb != null && kb.lKey.wasPressedThisFrame) || (pad != null && pad.buttonWest.wasPressedThisFrame))
             {
                 Play(buttonRelease);

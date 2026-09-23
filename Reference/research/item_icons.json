@@ -1,0 +1,10651 @@
+{
+ "note": "GoF2 shop icons. atlas/rect = the variant the Android HD build loads on a >=1700x1080 screen (Globals::iPadLarge): items from gof2_items_ipad_large / gof2_items_ipad_2_large (178x86 cells), the item frames and several UI images re-bound to gof2_interface2_ipad_large, other UI from gof2_interface_iphone4. rect = [x, y, w, h] in pixels, top-left origin. base = 1x variant (gof2_items / gof2_interface, 58x28 item cells), iphone4 = 2x phone variant (116x56 item cells). Item icons are drawn on top of the frame image of their type (frameImageId), same top-left. See Reference/research/shop.md section 1.",
+ "entries": [
+  {
+   "kind": "item",
+   "index": 0,
+   "name": "Nirai Impulse EX 1",
+   "type": "primary",
+   "imageId": 2200,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    1581,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     940,
+     436,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     145,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 1,
+   "name": "Nirai Impulse EX 2",
+   "type": "primary",
+   "imageId": 2201,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1143,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     286,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     521,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 2,
+   "name": "Nirai Charged Pulse",
+   "type": "primary",
+   "imageId": 2202,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     354,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 3,
+   "name": "V'skorr",
+   "type": "primary",
+   "imageId": 2203,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1141,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     352,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 4,
+   "name": "Sh'koom",
+   "type": "primary",
+   "imageId": 2204,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1289,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 5,
+   "name": "Berger Focus I",
+   "type": "primary",
+   "imageId": 2205,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    1229,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     268,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 6,
+   "name": "Berger Focus II A1",
+   "type": "primary",
+   "imageId": 2206,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1143,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 7,
+   "name": "Berger Retribution",
+   "type": "primary",
+   "imageId": 2207,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    1229,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     268,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 8,
+   "name": "Berger Converge IV",
+   "type": "primary",
+   "imageId": 2208,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     392,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 9,
+   "name": "M6 A1 \"Wolf\"",
+   "type": "primary",
+   "imageId": 2209,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1729,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     280,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 10,
+   "name": "M6 A2 \"Cougar\"",
+   "type": "primary",
+   "imageId": 2210,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     112,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 11,
+   "name": "M6 A3 \"Wolverine\"",
+   "type": "primary",
+   "imageId": 2211,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 12,
+   "name": "N'saan",
+   "type": "primary",
+   "imageId": 2212,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1233,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     224,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     781,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 13,
+   "name": "K'booskk",
+   "type": "primary",
+   "imageId": 2213,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1491,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     84,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 14,
+   "name": "Sh'gaal",
+   "type": "primary",
+   "imageId": 2214,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     218,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 15,
+   "name": "H'nookk",
+   "type": "primary",
+   "imageId": 2215,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    1405,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     324,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     405,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 16,
+   "name": "Luna EMP Mk I",
+   "type": "primary",
+   "imageId": 2216,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1319,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     579,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 17,
+   "name": "Sol EMP Mk II",
+   "type": "primary",
+   "imageId": 2217,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    777,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     146,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 18,
+   "name": "Dia EMP Mk III",
+   "type": "primary",
+   "imageId": 2218,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1231,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     314,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 19,
+   "name": "Gram Blaster",
+   "type": "primary",
+   "imageId": 2219,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1407,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 20,
+   "name": "Ridil Blaster",
+   "type": "primary",
+   "imageId": 2220,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     902,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 21,
+   "name": "Tyrfing Blaster",
+   "type": "primary",
+   "imageId": 2221,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    1405,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     352,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 22,
+   "name": "Micro Gun MK I",
+   "type": "primary",
+   "imageId": 2222,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1933,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     408,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 23,
+   "name": "Micro Gun MKII",
+   "type": "primary",
+   "imageId": 2223,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     258,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     405,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 24,
+   "name": "64MJ Railgun",
+   "type": "primary",
+   "imageId": 2224,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1851,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     140,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     579,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 25,
+   "name": "128MJ Railgun",
+   "type": "primary",
+   "imageId": 2225,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     414,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     203,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 26,
+   "name": "Scram Cannon",
+   "type": "primary",
+   "imageId": 2226,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     230,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     725,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 27,
+   "name": "Mass Driver MD 10",
+   "type": "primary",
+   "imageId": 2227,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    529,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 28,
+   "name": "Thermic o5",
+   "type": "primary",
+   "imageId": 2228,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     358,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 29,
+   "name": "ReHeat o10",
+   "type": "primary",
+   "imageId": 2229,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1113,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 30,
+   "name": "MaxHeat o20",
+   "type": "primary",
+   "imageId": 2230,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    957,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     174,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 31,
+   "name": "G'liissk",
+   "type": "secondary",
+   "imageId": 2231,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     414,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 32,
+   "name": "Jet Rocket",
+   "type": "secondary",
+   "imageId": 2232,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1465,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     899,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 33,
+   "name": "Amour Rocket",
+   "type": "secondary",
+   "imageId": 2233,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     420,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     549,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 34,
+   "name": "EMP Rocket Mk I",
+   "type": "secondary",
+   "imageId": 2234,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    1317,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     296,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 35,
+   "name": "EMP Rocket Mk II",
+   "type": "secondary",
+   "imageId": 2235,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1229,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     464,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     957,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 36,
+   "name": "Edo",
+   "type": "secondary",
+   "imageId": 2236,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1935,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     84,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     231,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 37,
+   "name": "Intelli Jet",
+   "type": "secondary",
+   "imageId": 2237,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    881,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     168,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 38,
+   "name": "S'koonn",
+   "type": "secondary",
+   "imageId": 2238,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1933,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     436,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 39,
+   "name": "Mamba EMP",
+   "type": "secondary",
+   "imageId": 2239,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1145,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     196,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 40,
+   "name": "Dephase EMP",
+   "type": "secondary",
+   "imageId": 2240,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1671,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     820,
+     218,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 41,
+   "name": "EMP GL I",
+   "type": "secondary",
+   "imageId": 2241,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1669,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     414,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     695,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 42,
+   "name": "EMP GL II",
+   "type": "secondary",
+   "imageId": 2242,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1759,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     218,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 43,
+   "name": "EMP GL DX",
+   "type": "secondary",
+   "imageId": 2243,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1317,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     268,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 44,
+   "name": "AMR Tormentor",
+   "type": "secondary",
+   "imageId": 2244,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1553,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     609,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 45,
+   "name": "AMR Oppressor",
+   "type": "secondary",
+   "imageId": 2245,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1493,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     296,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 46,
+   "name": "AMR Extinctor",
+   "type": "secondary",
+   "imageId": 2246,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1583,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     640,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 47,
+   "name": "Hammerhead D1",
+   "type": "turret",
+   "imageId": 2247,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1229,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     268,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 48,
+   "name": "Hammerhead D2A2",
+   "type": "turret",
+   "imageId": 2248,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1583,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     897,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 49,
+   "name": "L'ksaar",
+   "type": "turret",
+   "imageId": 2249,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 50,
+   "name": "Targe Shield",
+   "type": "equipment",
+   "imageId": 2250,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1143,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 51,
+   "name": "Riot Shield",
+   "type": "equipment",
+   "imageId": 2251,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1671,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 52,
+   "name": "H'Belam",
+   "type": "equipment",
+   "imageId": 2252,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 53,
+   "name": "Beamshield II",
+   "type": "equipment",
+   "imageId": 2253,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     84,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 54,
+   "name": "Fluxed Matter Shield",
+   "type": "equipment",
+   "imageId": 2254,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1583,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     476,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 55,
+   "name": "E2 Exoclad",
+   "type": "equipment",
+   "imageId": 2255,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1055,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     308,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 56,
+   "name": "E4 Ultra Lamina",
+   "type": "equipment",
+   "imageId": 2256,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    1493,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     352,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 57,
+   "name": "E6 D-X Plating",
+   "type": "equipment",
+   "imageId": 2257,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    849,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     432,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 58,
+   "name": "D'iol",
+   "type": "equipment",
+   "imageId": 2258,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     728,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 59,
+   "name": "T'yol",
+   "type": "equipment",
+   "imageId": 2259,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 60,
+   "name": "AMR Saber",
+   "type": "secondary",
+   "imageId": 2260,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1553,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     292,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 61,
+   "name": "Neétha EMP",
+   "type": "secondary",
+   "imageId": 2261,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     386,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     259,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 62,
+   "name": "Ksann'k",
+   "type": "secondary",
+   "imageId": 2262,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     168,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     405,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 63,
+   "name": "ZMI Optistore",
+   "type": "equipment",
+   "imageId": 2263,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1847,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     814,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 64,
+   "name": "Autopacker 2",
+   "type": "equipment",
+   "imageId": 2264,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    1581,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     408,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     261,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 65,
+   "name": "Ultracompact",
+   "type": "equipment",
+   "imageId": 2265,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    585,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     348,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 66,
+   "name": "Shrinker BT",
+   "type": "equipment",
+   "imageId": 2266,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1193,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     236,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 67,
+   "name": "Rhoda Blackhole",
+   "type": "equipment",
+   "imageId": 2267,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    417,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     90,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 68,
+   "name": "AB-1 \"Retractor\"",
+   "type": "equipment",
+   "imageId": 2268,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     258,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     783,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 69,
+   "name": "AB-2 \"Glue Gun\"",
+   "type": "equipment",
+   "imageId": 2269,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     955,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 70,
+   "name": "AB-3 \"Kingfisher\"",
+   "type": "equipment",
+   "imageId": 2270,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     202,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     521,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 71,
+   "name": "Linear Boost",
+   "type": "equipment",
+   "imageId": 2271,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     438,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     521,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 72,
+   "name": "Cyclotron Boost",
+   "type": "equipment",
+   "imageId": 2272,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1905,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     358,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     347,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 73,
+   "name": "Synchrotron Boost",
+   "type": "equipment",
+   "imageId": 2273,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1669,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     464,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     869,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 74,
+   "name": "Me'al",
+   "type": "equipment",
+   "imageId": 2274,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1641,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 75,
+   "name": "Ketar Repair Bot",
+   "type": "equipment",
+   "imageId": 2275,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     392,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     491,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 76,
+   "name": "Static Thrust",
+   "type": "equipment",
+   "imageId": 2276,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1845,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     380,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 77,
+   "name": "Pendular Thrust",
+   "type": "equipment",
+   "imageId": 2277,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1319,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     410,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     377,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 78,
+   "name": "D'ozzt Thrust",
+   "type": "equipment",
+   "imageId": 2278,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1733,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     320,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 79,
+   "name": "Mp'zzzm Thrust",
+   "type": "equipment",
+   "imageId": 2279,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    497,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     320,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     637,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 80,
+   "name": "Pulsed Plasma Thrust",
+   "type": "equipment",
+   "imageId": 2280,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     414,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 81,
+   "name": "Telta Quickscan",
+   "type": "equipment",
+   "imageId": 2281,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     839,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 82,
+   "name": "Telta Ecoscan",
+   "type": "equipment",
+   "imageId": 2282,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1231,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     364,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 83,
+   "name": "Hiroto Proscan",
+   "type": "equipment",
+   "imageId": 2283,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     280,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 84,
+   "name": "Hiroto Ultrascan",
+   "type": "equipment",
+   "imageId": 2284,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     218,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 85,
+   "name": "Khador Drive",
+   "type": "equipment",
+   "imageId": 2285,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1845,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     470,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 86,
+   "name": "IMT Extract 1.3",
+   "type": "equipment",
+   "imageId": 2286,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1057,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     196,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 87,
+   "name": "IMT Extract 2.7",
+   "type": "equipment",
+   "imageId": 2287,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     466,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     607,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 88,
+   "name": "K'yuul",
+   "type": "equipment",
+   "imageId": 2288,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1407,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     420,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     637,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 89,
+   "name": "IMT Extract 4.0X",
+   "type": "equipment",
+   "imageId": 2289,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1317,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     464,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 90,
+   "name": "Gunant's Drill",
+   "type": "equipment",
+   "imageId": 2290,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1321,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     224,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 91,
+   "name": "Small Cabin",
+   "type": "equipment",
+   "imageId": 2291,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1581,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     408,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 92,
+   "name": "Medium Cabin",
+   "type": "equipment",
+   "imageId": 2292,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1847,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     246,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     551,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 93,
+   "name": "Large Cabin",
+   "type": "equipment",
+   "imageId": 2293,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1311,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     56,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     637,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 94,
+   "name": "Sight Suppressor II",
+   "type": "equipment",
+   "imageId": 2294,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1495,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     582,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 95,
+   "name": "U'tool",
+   "type": "equipment",
+   "imageId": 2295,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     930,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     289,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 96,
+   "name": "Yin Co. Shadow Ninja",
+   "type": "equipment",
+   "imageId": 2296,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     470,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 97,
+   "name": "Drinking Water",
+   "type": "commodity",
+   "imageId": 2297,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     308,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 98,
+   "name": "Medical Supplies",
+   "type": "commodity",
+   "imageId": 2298,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 99,
+   "name": "Space Waste",
+   "type": "commodity",
+   "imageId": 2299,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1935,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     268,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 100,
+   "name": "Artefacts",
+   "type": "commodity",
+   "imageId": 2300,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1757,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     380,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 101,
+   "name": "Rare Animals",
+   "type": "commodity",
+   "imageId": 2301,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1759,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     878,
+     218,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 102,
+   "name": "Rare Plants",
+   "type": "commodity",
+   "imageId": 2302,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     470,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 103,
+   "name": "Drugs",
+   "type": "commodity",
+   "imageId": 2303,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1231,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 104,
+   "name": "Luxury",
+   "type": "commodity",
+   "imageId": 2304,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 105,
+   "name": "Premium Food",
+   "type": "commodity",
+   "imageId": 2305,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1851,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 106,
+   "name": "Basic Food",
+   "type": "commodity",
+   "imageId": 2306,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1671,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     698,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 107,
+   "name": "Organs",
+   "type": "commodity",
+   "imageId": 2307,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     308,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 108,
+   "name": "Vossk Organs",
+   "type": "commodity",
+   "imageId": 2308,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1231,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 109,
+   "name": "Buskat",
+   "type": "commodity",
+   "imageId": 2309,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     410,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 110,
+   "name": "Collectible Figure",
+   "type": "commodity",
+   "imageId": 2310,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1143,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     336,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 111,
+   "name": "Digital Watch",
+   "type": "commodity",
+   "imageId": 2311,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     386,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 112,
+   "name": "Towels",
+   "type": "commodity",
+   "imageId": 2312,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     382,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 113,
+   "name": "Implants",
+   "type": "commodity",
+   "imageId": 2313,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    705,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     463,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 114,
+   "name": "Explosives",
+   "type": "commodity",
+   "imageId": 2314,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1407,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     472,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 115,
+   "name": "Documents",
+   "type": "commodity",
+   "imageId": 2315,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     112,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     433,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 116,
+   "name": "Secure Container",
+   "type": "commodity",
+   "imageId": 2316,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1817,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 117,
+   "name": "Secure Cabin",
+   "type": "commodity",
+   "imageId": 2317,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 118,
+   "name": "Electronics",
+   "type": "commodity",
+   "imageId": 2318,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     196,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     751,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 119,
+   "name": "Chemicals",
+   "type": "commodity",
+   "imageId": 2319,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     438,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 120,
+   "name": "Plastics",
+   "type": "commodity",
+   "imageId": 2320,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1671,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     751,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 121,
+   "name": "Nanotech",
+   "type": "commodity",
+   "imageId": 2321,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    597,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     118,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 122,
+   "name": "Energy Cells",
+   "type": "commodity",
+   "imageId": 2322,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     336,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 123,
+   "name": "Biowaste",
+   "type": "commodity",
+   "imageId": 2323,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     280,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 124,
+   "name": "Radioactive Goods",
+   "type": "commodity",
+   "imageId": 2324,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1847,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     56,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 125,
+   "name": "Mechanical Supplies",
+   "type": "commodity",
+   "imageId": 2325,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     844,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 126,
+   "name": "Noble Gas",
+   "type": "commodity",
+   "imageId": 2326,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1581,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     324,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     319,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 127,
+   "name": "Microchips",
+   "type": "commodity",
+   "imageId": 2327,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1669,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     352,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 128,
+   "name": "Com. Devices",
+   "type": "commodity",
+   "imageId": 2328,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     466,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 129,
+   "name": "Optics",
+   "type": "commodity",
+   "imageId": 2329,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1141,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     324,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 130,
+   "name": "Hydraulics",
+   "type": "commodity",
+   "imageId": 2330,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     960,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 131,
+   "name": "Alien Remains",
+   "type": "commodity",
+   "imageId": 2331,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1581,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     386,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     811,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 132,
+   "name": "Suteo Liqueur",
+   "type": "commodity",
+   "imageId": 2332,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1671,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     476,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     841,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 133,
+   "name": "Pan Whiskey",
+   "type": "commodity",
+   "imageId": 2333,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     252,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 134,
+   "name": "Behén Wine",
+   "type": "commodity",
+   "imageId": 2334,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1583,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 135,
+   "name": "V'ikka Moonshine",
+   "type": "commodity",
+   "imageId": 2335,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     150,
+     246,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 136,
+   "name": "Eanya Tonic",
+   "type": "commodity",
+   "imageId": 2336,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1319,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 137,
+   "name": "S'kloptorr Rum",
+   "type": "commodity",
+   "imageId": 2337,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1055,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     258,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     925,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 138,
+   "name": "Wolf-Reiser Brandy",
+   "type": "commodity",
+   "imageId": 2338,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     670,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 139,
+   "name": "Aquila Cocktail",
+   "type": "commodity",
+   "imageId": 2339,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1933,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     324,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 140,
+   "name": "Buntta Apéritif",
+   "type": "commodity",
+   "imageId": 2340,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     364,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 141,
+   "name": "Weymire Punch",
+   "type": "commodity",
+   "imageId": 2341,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1495,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     448,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 142,
+   "name": "Y'mirr Schnaps",
+   "type": "commodity",
+   "imageId": 2342,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1495,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     723,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 143,
+   "name": "Union Draught",
+   "type": "commodity",
+   "imageId": 2343,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1759,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     756,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 144,
+   "name": "Oom'bak Gin",
+   "type": "commodity",
+   "imageId": 2344,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     420,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 145,
+   "name": "Vulpes Soup",
+   "type": "commodity",
+   "imageId": 2345,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     382,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     923,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 146,
+   "name": "Magnetar Juice",
+   "type": "commodity",
+   "imageId": 2346,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 147,
+   "name": "Mido Distillate",
+   "type": "commodity",
+   "imageId": 2347,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1201,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 148,
+   "name": "Prospero Flip",
+   "type": "commodity",
+   "imageId": 2348,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1131,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     28,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     665,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 149,
+   "name": "Nesla Brandy",
+   "type": "commodity",
+   "imageId": 2349,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    441,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 150,
+   "name": "Pescal Inartu Brew",
+   "type": "commodity",
+   "imageId": 2350,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1495,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 151,
+   "name": "Augmenta Fizz",
+   "type": "commodity",
+   "imageId": 2351,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1055,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 152,
+   "name": "K'ontrr Dishwater",
+   "type": "commodity",
+   "imageId": 2352,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1905,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     190,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 153,
+   "name": "Ni'mrrod Muck",
+   "type": "commodity",
+   "imageId": 2353,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    237,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     62,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 154,
+   "name": "Gold",
+   "type": "commodity",
+   "imageId": 2354,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 155,
+   "name": "Titanium",
+   "type": "commodity",
+   "imageId": 2355,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 156,
+   "name": "Iron",
+   "type": "commodity",
+   "imageId": 2356,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1757,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     380,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 157,
+   "name": "Orichalzine",
+   "type": "commodity",
+   "imageId": 2357,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1759,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     28,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 158,
+   "name": "Pyresium",
+   "type": "commodity",
+   "imageId": 2358,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1373,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     264,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 159,
+   "name": "Sodil",
+   "type": "commodity",
+   "imageId": 2359,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 160,
+   "name": "Doxtrite",
+   "type": "commodity",
+   "imageId": 2360,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     448,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 161,
+   "name": "Cesogen",
+   "type": "commodity",
+   "imageId": 2361,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    617,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 162,
+   "name": "Perrius",
+   "type": "commodity",
+   "imageId": 2362,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1497,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     252,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 163,
+   "name": "Hypanium",
+   "type": "commodity",
+   "imageId": 2363,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    1317,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     296,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     809,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 164,
+   "name": "Void Crystals",
+   "type": "commodity",
+   "imageId": 2364,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    1847,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     936,
+     218,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 165,
+   "name": "Golden Core",
+   "type": "commodity",
+   "imageId": 2365,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     302,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 166,
+   "name": "Titanium Core",
+   "type": "commodity",
+   "imageId": 2366,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     493,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 167,
+   "name": "Iron Core",
+   "type": "commodity",
+   "imageId": 2367,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    1141,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     408,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 168,
+   "name": "Orichalzin Core",
+   "type": "commodity",
+   "imageId": 2368,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1845,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     408,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 169,
+   "name": "Pyresium Core",
+   "type": "commodity",
+   "imageId": 2369,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 170,
+   "name": "Sodil Core",
+   "type": "commodity",
+   "imageId": 2370,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1935,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     274,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 171,
+   "name": "Doxtrit Core",
+   "type": "commodity",
+   "imageId": 2371,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1409,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     252,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 172,
+   "name": "Cesogen Core",
+   "type": "commodity",
+   "imageId": 2372,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 173,
+   "name": "Perrius Core",
+   "type": "commodity",
+   "imageId": 2373,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     330,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     667,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 174,
+   "name": "Hypanium Core",
+   "type": "commodity",
+   "imageId": 2374,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     140,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 175,
+   "name": "Void Essence",
+   "type": "commodity",
+   "imageId": 2375,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1405,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     324,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     463,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 176,
+   "name": "Nirai .50AS",
+   "type": "primary",
+   "imageId": 4000,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 177,
+   "name": "Berger FlaK 9-9",
+   "type": "primary",
+   "imageId": 4001,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     361,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 178,
+   "name": "Icarus Heavy AS",
+   "type": "primary",
+   "imageId": 4002,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     451,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     237,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 179,
+   "name": "Liberator",
+   "type": "secondary",
+   "imageId": 4003,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    441,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     241,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 180,
+   "name": "Berger AGT 20mm",
+   "type": "turret",
+   "imageId": 4004,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    529,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     181,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 181,
+   "name": "Skuld AT XR",
+   "type": "turret",
+   "imageId": 4005,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    529,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     591,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 182,
+   "name": "HH-AT \"Archimedes\"",
+   "type": "turret",
+   "imageId": 4006,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    793,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     237,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 183,
+   "name": "Disruptor Laser",
+   "type": "primary",
+   "imageId": 4007,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     361,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 184,
+   "name": "Rhoda Vortex",
+   "type": "equipment",
+   "imageId": 4008,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     121,
+     151,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     473,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 185,
+   "name": "Emergency System",
+   "type": "equipment",
+   "imageId": 4009,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    793,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     361,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     355,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 186,
+   "name": "Nirai Overdrive",
+   "type": "equipment",
+   "imageId": 4010,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     361,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     827,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 187,
+   "name": "Nirai Overcharge",
+   "type": "equipment",
+   "imageId": 4011,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    529,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     301,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     355,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 188,
+   "name": "Ketar Repair Bot II",
+   "type": "equipment",
+   "imageId": 4012,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     301,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 189,
+   "name": "Signature: Terran",
+   "type": "equipment",
+   "imageId": 4013,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    617,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     241,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 190,
+   "name": "Signature: Vossk",
+   "type": "equipment",
+   "imageId": 4014,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    705,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     301,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     591,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 191,
+   "name": "Signature: Nivelian",
+   "type": "equipment",
+   "imageId": 4015,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    881,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     331,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     473,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 192,
+   "name": "Signature: Midorian",
+   "type": "equipment",
+   "imageId": 4016,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     361,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     827,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 193,
+   "name": "SunFire o50",
+   "type": "primary",
+   "imageId": 4017,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    705,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     181,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 194,
+   "name": "AB-4 \"Octopus\"",
+   "type": "equipment",
+   "imageId": 4018,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    881,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     421,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     237,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 195,
+   "name": "Polytron Boost",
+   "type": "equipment",
+   "imageId": 4019,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    705,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     361,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 196,
+   "name": "Spectral Filter SA-1",
+   "type": "equipment",
+   "imageId": 4020,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     241,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 197,
+   "name": "Ion Lambda Mk1",
+   "type": "secondary",
+   "imageId": 4021,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    705,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     211,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 198,
+   "name": "PE Proton",
+   "type": "turret",
+   "imageId": 4022,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 199,
+   "name": "PE Ambipolar-5",
+   "type": "turret",
+   "imageId": 4023,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     391,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     709,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 200,
+   "name": "PE Fusion H2",
+   "type": "turret",
+   "imageId": 4024,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    617,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     421,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     355,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 201,
+   "name": "Green Plasma",
+   "type": "commodity",
+   "imageId": 4025,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    793,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     271,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     709,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 202,
+   "name": "Blue Plasma",
+   "type": "commodity",
+   "imageId": 4026,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    529,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     237,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 203,
+   "name": "Purple Plasma",
+   "type": "commodity",
+   "imageId": 4027,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     181,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 204,
+   "name": "Red Plasma",
+   "type": "commodity",
+   "imageId": 4028,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    441,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     301,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     709,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 205,
+   "name": "Gamma Shield I",
+   "type": "equipment",
+   "imageId": 4029,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     121,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     591,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 206,
+   "name": "Gamma Shield II",
+   "type": "equipment",
+   "imageId": 4030,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     361,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 207,
+   "name": "Nirai SPP-C1",
+   "type": "equipment",
+   "imageId": 4031,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    441,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     181,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     473,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 208,
+   "name": "Nirai SPP-M50",
+   "type": "equipment",
+   "imageId": 4032,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     241,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 209,
+   "name": "K'mirkk Toad Mutagen",
+   "type": "commodity",
+   "imageId": 4033,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    617,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     121,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     355,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 210,
+   "name": "Chromo Plasma",
+   "type": "commodity",
+   "imageId": 4034,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    441,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     181,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     929,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 211,
+   "name": "Berger SG-100",
+   "type": "secondary",
+   "imageId": 4035,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    617,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     301,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 212,
+   "name": "Berger SG-400",
+   "type": "secondary",
+   "imageId": 4036,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    529,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     211,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     473,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 213,
+   "name": "T'Suum",
+   "type": "secondary",
+   "imageId": 4037,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     421,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     591,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 214,
+   "name": "Shesha",
+   "type": "secondary",
+   "imageId": 4038,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    617,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     301,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 215,
+   "name": "Garuda-IV",
+   "type": "secondary",
+   "imageId": 4039,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     121,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 216,
+   "name": "Patala",
+   "type": "secondary",
+   "imageId": 4040,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     355,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 217,
+   "name": "Novanium",
+   "type": "commodity",
+   "imageId": 4041,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    529,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     391,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     709,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 218,
+   "name": "Novanium Core",
+   "type": "commodity",
+   "imageId": 4042,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    705,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     481,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1273
+  },
+  {
+   "kind": "item",
+   "index": 219,
+   "name": "Spectral Filter ST-X",
+   "type": "equipment",
+   "imageId": 4043,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    705,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     181,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     591,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 220,
+   "name": "Spectral Filter Omega",
+   "type": "equipment",
+   "imageId": 4044,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     121,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 221,
+   "name": "Ion Lambda Mk2",
+   "type": "secondary",
+   "imageId": 4045,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    793,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     331,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     709,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 222,
+   "name": "Crimson Drain",
+   "type": "equipment",
+   "imageId": 4046,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    617,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 223,
+   "name": "Pandora Leech",
+   "type": "equipment",
+   "imageId": 4047,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    881,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     181,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     827,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 224,
+   "name": "Matador TS",
+   "type": "turret",
+   "imageId": 4048,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     241,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1271
+  },
+  {
+   "kind": "item",
+   "index": 225,
+   "name": "Particle Shield",
+   "type": "equipment",
+   "imageId": 4049,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     451,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 226,
+   "name": "Shock Blast",
+   "type": "secondary",
+   "imageId": 4050,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     121,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "item",
+   "index": 227,
+   "name": "Phoenix SIS",
+   "type": "equipment",
+   "imageId": 4051,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     421,
+     121,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1272
+  },
+  {
+   "kind": "item",
+   "index": 228,
+   "name": "M6 A4 \"Raccoon\"",
+   "type": "primary",
+   "imageId": 4052,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    793,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     151,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     871,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 229,
+   "name": "Dark Matter Laser",
+   "type": "primary",
+   "imageId": 4053,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    881,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     181,
+     151,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 230,
+   "name": "Mass Driver MD 12",
+   "type": "primary",
+   "imageId": 4054,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    881,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     301,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 231,
+   "name": "Mimung Blaster",
+   "type": "primary",
+   "imageId": 4055,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    441,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     421,
+     31,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1274
+  },
+  {
+   "kind": "item",
+   "index": 232,
+   "name": "Fireworks",
+   "type": "secondary",
+   "imageId": 4056,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    793,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1275
+  },
+  {
+   "kind": "ship",
+   "index": 0,
+   "name": "Betty",
+   "imageId": 2417,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1407,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 1,
+   "name": "Teneta",
+   "imageId": 2418,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 2,
+   "name": "Hiro",
+   "imageId": 2419,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1405,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     964,
+     296,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     317,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 3,
+   "name": "Badger",
+   "imageId": 2420,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1757,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     442,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     753,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 4,
+   "name": "Dace",
+   "imageId": 2421,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     442,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     463,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 5,
+   "name": "Inflict",
+   "imageId": 2422,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1817,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     358,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     435,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 6,
+   "name": "Hector",
+   "imageId": 2423,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     410,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     347,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 7,
+   "name": "Anaan",
+   "imageId": 2424,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     867,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 8,
+   "name": "VoidX",
+   "imageId": 2425,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     336,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 9,
+   "name": "H'Soc",
+   "imageId": 2426,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 10,
+   "name": "Phantom",
+   "imageId": 2427,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1671,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     112,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 11,
+   "name": "Hernstein",
+   "imageId": 2428,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    1935,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     872,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 12,
+   "name": "Type 43",
+   "imageId": 2429,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     364,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 13,
+   "name": "-",
+   "imageId": 2430,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    57,
+    441,
+    89,
+    43
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     473,
+     261,
+     89,
+     43
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 14,
+   "name": "-",
+   "imageId": 2431,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    237,
+    1673,
+    89,
+    43
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     386,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     473,
+     435,
+     89,
+     43
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 15,
+   "name": "-",
+   "imageId": 2432,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    237,
+    1993,
+    89,
+    43
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     28,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     473,
+     955,
+     89,
+     43
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 16,
+   "name": "Kinzer",
+   "imageId": 2433,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1493,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     906,
+     352,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     355,
+     87,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 17,
+   "name": "Ward",
+   "imageId": 2434,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     927,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 18,
+   "name": "Hatsuyuki",
+   "imageId": 2435,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 19,
+   "name": "Nuyang II",
+   "imageId": 2436,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     140,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 20,
+   "name": "Cicero",
+   "imageId": 2437,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     442,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1287,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 21,
+   "name": "Aegir",
+   "imageId": 2438,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     196,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 22,
+   "name": "Groza",
+   "imageId": 2439,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1229,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     436,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1877,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 23,
+   "name": "Azov",
+   "imageId": 2440,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 24,
+   "name": "Velasco",
+   "imageId": 2441,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    1317,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     296,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1759,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 25,
+   "name": "Tyrion",
+   "imageId": 2442,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     224,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 26,
+   "name": "Hera",
+   "imageId": 2443,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    791,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     616,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 27,
+   "name": "Taipan",
+   "imageId": 2444,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    673,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     376,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     523,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 28,
+   "name": "Veteran",
+   "imageId": 2445,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    615,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     786,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     703,
+     375,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 29,
+   "name": "Mantis",
+   "imageId": 2446,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    969,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     320,
+     168,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 30,
+   "name": "Berger CrossXT",
+   "imageId": 2447,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    901,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     202,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     579,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 31,
+   "name": "Salvéhn",
+   "imageId": 2448,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1405,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     732,
+     268,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     119,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 32,
+   "name": "Wasp",
+   "imageId": 2449,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    721,
+    1055,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 33,
+   "name": "Furious",
+   "imageId": 2450,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    1585,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     262,
+     280,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     639,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 34,
+   "name": "Razor 6",
+   "imageId": 2451,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    937,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     460,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     581,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 35,
+   "name": "Night Owl",
+   "imageId": 2452,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    181,
+    793,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     296,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1051,
+     697,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 36,
+   "name": "Cormorant",
+   "imageId": 2453,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1801,
+    1493,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     380,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     865,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 37,
+   "name": "Cronus",
+   "imageId": 2454,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1025,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     116,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     349,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 38,
+   "name": "Typhon",
+   "imageId": 2455,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    879,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     134,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     347,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 39,
+   "name": "S'Kanarr",
+   "imageId": 2456,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    967,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     280,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 40,
+   "name": "Nemesis",
+   "imageId": 2457,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    527,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     466,
+     230,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     755,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 41,
+   "name": "K'Suukk",
+   "imageId": 2458,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    361,
+    1319,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     392,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     237,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 42,
+   "name": "Vol Noor",
+   "imageId": 2459,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1081,
+    1141,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     296,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 43,
+   "name": "Wraith",
+   "imageId": 2460,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1377,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     106,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 44,
+   "name": "Specter",
+   "imageId": 2461,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    761,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     58,
+     404,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1641,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 45,
+   "name": "Bloodstar",
+   "imageId": 2462,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1621,
+    1141,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     674,
+     380,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1405,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 46,
+   "name": "Blue Fyre",
+   "imageId": 2463,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     933,
+     465,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 47,
+   "name": "Gator Custom",
+   "imageId": 2464,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1261,
+    1493,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     790,
+     324,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 48,
+   "name": "Amboss",
+   "imageId": 2465,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1491,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     448,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1523,
+     407,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 49,
+   "name": "Scimitar",
+   "imageId": 2466,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1729,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     174,
+     162,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     813,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 50,
+   "name": "-",
+   "imageId": 2467,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1311,
+    1055,
+    89,
+    43
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     848,
+     436,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     473,
+     783,
+     89,
+     43
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 51,
+   "name": "Rhino",
+   "imageId": 2468,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    541,
+    703,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     78,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1169,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 52,
+   "name": "Gryphon",
+   "imageId": 2469,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1441,
+    439,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     408,
+     56,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     585,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 53,
+   "name": "-",
+   "imageId": 2470,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1157,
+    353,
+    89,
+    43
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     524,
+     50,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     473,
+     319,
+     89,
+     43
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 54,
+   "name": "Na'srrk",
+   "imageId": 2471,
+   "atlas": "gof2_items_ipad_large.png",
+   "rect": [
+    1,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items.png",
+    "rect": [
+     0,
+     0,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4.png",
+    "rect": [
+     1,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 55,
+   "name": "Groza Mk II",
+   "imageId": 2472,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    721,
+    89,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     271,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     827,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 56,
+   "name": "Berger Cross Special",
+   "imageId": 2473,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    441,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     421,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     355,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 57,
+   "name": "Kinzer RS",
+   "imageId": 2474,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    361,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 58,
+   "name": "Phantom XT",
+   "imageId": 2475,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     481,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     473,
+     117,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 59,
+   "name": "Teneta R.E.D.",
+   "imageId": 2476,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    181,
+    353,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     421,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     119,
+     291,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 60,
+   "name": "Darkzov",
+   "imageId": 2477,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    177,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     61,
+     151,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     237,
+     175,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 61,
+   "name": "Ghost",
+   "imageId": 2478,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    901,
+    265,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     241,
+     61,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     237,
+     233,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 62,
+   "name": "Dark Angel",
+   "imageId": 2479,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    541,
+    881,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     241,
+     91,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     827,
+     59,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ship",
+   "index": 63,
+   "name": "N'Tirrk",
+   "imageId": 2480,
+   "atlas": "gof2_items_ipad_2_large.png",
+   "rect": [
+    1,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_items_2.png",
+    "rect": [
+     1,
+     1,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_items_iphone4_2.png",
+    "rect": [
+     1,
+     1,
+     116,
+     56
+    ]
+   },
+   "frameImageId": 1276
+  },
+  {
+   "kind": "ui",
+   "name": "frame_primary",
+   "imageId": 1274,
+   "use": "striped item background, red; under primary-weapon icons (ImageFactory frame 0)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    112,
+    1294,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     617,
+     526,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1832,
+     337,
+     116,
+     56
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "frame_secondary",
+   "imageId": 1275,
+   "use": "orange; secondary weapons (frame 1)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    112,
+    1382,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     928,
+     469,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     485,
+     1634,
+     116,
+     56
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "frame_turret",
+   "imageId": 1271,
+   "use": "yellow; turrets (frame 2)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    112,
+    1653,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     869,
+     437,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     119,
+     1549,
+     116,
+     56
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "frame_equipment",
+   "imageId": 1272,
+   "use": "green; equipment (frame 3)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    399,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     207,
+     850,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1,
+     1549,
+     116,
+     56
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "frame_commodity",
+   "imageId": 1273,
+   "use": "grey; commodities (frame 4)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1581,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     929,
+     437,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1496,
+     337,
+     116,
+     56
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "frame_ship",
+   "imageId": 1276,
+   "use": "blue; ships (frame 5, ImageFactory::drawShip)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1821,
+    1,
+    178,
+    86
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     965,
+     295,
+     58,
+     28
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1379,
+     855,
+     116,
+     56
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "marker_new",
+   "imageId": 1348,
+   "use": "orange plus: item never looked at (Status+0x54 flag unset), shop tab only (HangarWindow+0xec)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    232,
+    77,
+    25,
+    25
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     176,
+     6,
+     12,
+     12
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     245,
+     457,
+     25,
+     25
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "marker_mounted",
+   "imageId": 1326,
+   "use": "small dot: item mounted on the ship / ship has this equipment (HangarWindow+0xe8)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    259,
+    77,
+    19,
+    18
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     535,
+     740,
+     8,
+     8
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1970,
+     1330,
+     19,
+     18
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "button_info",
+   "imageId": 1136,
+   "use": "row button 0: opens the item details window (ListItemWindow), sound 0x61",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    237,
+    1549,
+    50,
+    51
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     596,
+     561,
+     25,
+     26
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     237,
+     1549,
+     50,
+     51
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "button_mount",
+   "imageId": 1330,
+   "use": "ship tab, cargo item: mount (sound 0x62)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    292,
+    17,
+    77,
+    39
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     982,
+     688,
+     40,
+     21
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1840,
+     1330,
+     77,
+     39
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "button_demount",
+   "imageId": 1331,
+   "use": "ship tab, mounted item: demount (sound 0x60)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1,
+    1284,
+    63,
+    39
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     945,
+     671,
+     32,
+     21
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1851,
+     1383,
+     63,
+     39
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "progress_frame",
+   "imageId": 1141,
+   "use": "blueprint completion bar frame",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    1700,
+    857,
+    188,
+    22
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     767,
+     392,
+     94,
+     11
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1700,
+     857,
+     188,
+     22
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "progress_fill",
+   "imageId": 1142,
+   "use": "blueprint completion bar fill (drawn as a region, width = rate * w)",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    392,
+    17,
+    184,
+    18
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     863,
+     392,
+     92,
+     9
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     392,
+     17,
+     184,
+     18
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "progress_cap",
+   "imageId": 1143,
+   "use": "blueprint completion bar end cap",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    1963,
+    158,
+    26,
+    18
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     938,
+     152,
+     13,
+     9
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1963,
+     158,
+     26,
+     18
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "btn_sell_left_normal",
+   "imageId": 1710,
+   "use": "TouchButton style 8 (row button 8, sell one = to station) left arrow piece, normal (iPad table 0x25c890)",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    295,
+    1470,
+    114,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_mid_normal",
+   "imageId": 1712,
+   "use": "style 7/8/9 middle piece, normal",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    811,
+    1166,
+    300,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_right_normal",
+   "imageId": 1714,
+   "use": "style 7/8 right piece, normal",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1640,
+    303,
+    74,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_sell_left_pressed",
+   "imageId": 1715,
+   "use": "style 8 left arrow piece, pressed",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1868,
+    112,
+    114,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_mid_pressed",
+   "imageId": 1717,
+   "use": "style 7/8/9 middle piece, pressed",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    112,
+    1782,
+    300,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_right_pressed",
+   "imageId": 1709,
+   "use": "style 7/8 right piece, pressed",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1529,
+    1317,
+    74,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_left_normal",
+   "imageId": 1713,
+   "use": "style 7/9 left piece, normal",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1,
+    1052,
+    74,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_buy_right_normal",
+   "imageId": 1711,
+   "use": "style 9 (row button 9, buy one = to ship) right arrow piece, normal",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1904,
+    600,
+    114,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_left_pressed",
+   "imageId": 1718,
+   "use": "style 7/9 left piece, pressed",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    1,
+    347,
+    74,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "btn_buy_right_pressed",
+   "imageId": 1716,
+   "use": "style 9 right arrow piece, pressed",
+   "atlas": "gof2_interface2_ipad_large.png",
+   "rect": [
+    888,
+    1274,
+    114,
+    106
+   ]
+  },
+  {
+   "kind": "ui",
+   "name": "tab_left",
+   "imageId": 1125,
+   "use": "TouchButton style 3 (Ship / Shop / Blueprints tabs) left, normal",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    203,
+    1477,
+    60,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     988,
+     524,
+     28,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     203,
+     1477,
+     60,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_mid",
+   "imageId": 1124,
+   "use": "style 3 middle, normal",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    1,
+    825,
+    200,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     767,
+     405,
+     100,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1,
+     825,
+     200,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_right",
+   "imageId": 1126,
+   "use": "style 3 right, normal",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    545,
+    820,
+    60,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     544,
+     869,
+     28,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     545,
+     820,
+     60,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_left_pressed",
+   "imageId": 1129,
+   "use": "style 3 left, pressed",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    561,
+    1203,
+    60,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     988,
+     469,
+     28,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     561,
+     1203,
+     60,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_mid_pressed",
+   "imageId": 1128,
+   "use": "style 3 middle, pressed",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    1817,
+    541,
+    200,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     869,
+     405,
+     100,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1817,
+     541,
+     200,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_right_pressed",
+   "imageId": 1130,
+   "use": "style 3 right, pressed",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    193,
+    1708,
+    60,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     462,
+     971,
+     28,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     193,
+     1708,
+     60,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_left_active",
+   "imageId": 1133,
+   "use": "style 3 left, always-pressed (current tab)",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    1887,
+    17,
+    60,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     498,
+     967,
+     28,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     1887,
+     17,
+     60,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_mid_active",
+   "imageId": 1132,
+   "use": "style 3 middle, current tab",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    337,
+    1402,
+    200,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     767,
+     437,
+     100,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     337,
+     1402,
+     200,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "tab_right_active",
+   "imageId": 1134,
+   "use": "style 3 right, current tab",
+   "atlas": "gof2_interface_iphone4.png",
+   "rect": [
+    211,
+    1846,
+    60,
+    60
+   ],
+   "base": {
+    "atlas": "gof2_interface.png",
+    "rect": [
+     989,
+     437,
+     28,
+     30
+    ]
+   },
+   "iphone4": {
+    "atlas": "gof2_interface_iphone4.png",
+    "rect": [
+     211,
+     1846,
+     60,
+     60
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "btn_credits_left",
+   "imageId": 9506,
+   "use": "TouchButton style 0xb (credits button, footer) left, normal",
+   "atlas": "gof2_shop_button_ipad_large.png",
+   "rect": [
+    63,
+    153,
+    60,
+    74
+   ],
+   "base": {
+    "atlas": "gof2_shop_button.png",
+    "rect": [
+     2,
+     3,
+     59,
+     37
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "btn_credits_mid",
+   "imageId": 9508,
+   "use": "style 0xb middle, normal",
+   "atlas": "gof2_shop_button_ipad_large.png",
+   "rect": [
+    63,
+    1,
+    152,
+    74
+   ],
+   "base": {
+    "atlas": "gof2_shop_button.png",
+    "rect": [
+     65,
+     3,
+     76,
+     37
+    ]
+   }
+  },
+  {
+   "kind": "ui",
+   "name": "btn_credits_right",
+   "imageId": 9510,
+   "use": "style 0xb right, normal",
+   "atlas": "gof2_shop_button_ipad_large.png",
+   "rect": [
+    1,
+    1,
+    60,
+    74
+   ],
+   "base": {
+    "atlas": "gof2_shop_button.png",
+    "rect": [
+     144,
+     4,
+     46,
+     37
+    ]
+   }
+  }
+ ]
+}

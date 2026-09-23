@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Style src="../GoF2InputGlyphs.uss" />
     <ui:Style src="StationMenu.uss" />
+    <ui:Style src="HangarWindow.uss" />
     <ui:VisualElement name="stationRoot" class="station-root" picking-mode="Ignore">
         <ui:VisualElement class="side-shade" picking-mode="Ignore" />
         <ui:VisualElement class="bottom-shade" picking-mode="Ignore" />
@@ -24,8 +25,57 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
-            <ui:VisualElement name="hints" class="station-hints" picking-mode="Ignore" />
             <ui:Button name="launchButton" class="launch-button gof-semibold" />
+
+            <ui:VisualElement name="hangarWindow" class="hangar-window">
+                <ui:VisualElement class="hangar-top">
+                    <ui:Button name="tabShip" class="hangar-tab gof-semibold" />
+                    <ui:Button name="tabShop" class="hangar-tab gof-semibold" />
+                    <ui:VisualElement class="hangar-top-spacer" picking-mode="Ignore" />
+                    <ui:Button name="hangarClose" class="hangar-close gof-semibold" />
+                </ui:VisualElement>
+                <ui:VisualElement class="hangar-body" picking-mode="Ignore">
+                    <ui:ScrollView name="hangarList" class="hangar-list" />
+                    <ui:VisualElement name="hangarDetails" class="hangar-details">
+                        <ui:VisualElement class="detail-head" picking-mode="Ignore">
+                            <ui:VisualElement name="detailIcon" class="detail-icon" picking-mode="Ignore" />
+                            <ui:VisualElement class="detail-titles" picking-mode="Ignore">
+                                <ui:Label name="detailName" class="detail-name gof-semibold" picking-mode="Ignore" />
+                                <ui:Label name="detailSub" class="detail-sub" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement name="tradeBox" class="trade-box">
+                            <ui:VisualElement class="trade-side" picking-mode="Ignore">
+                                <ui:Label name="tradeStockLabel" class="trade-side-label" picking-mode="Ignore" />
+                                <ui:Label name="tradeStock" class="trade-side-value gof-semibold" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:VisualElement name="sellButton" class="trade-arrow">
+                                <ui:Label name="sellLabel" class="trade-arrow-label gof-semibold" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:Label name="tradePrice" class="trade-price gof-semibold" picking-mode="Ignore" />
+                            <ui:VisualElement name="buyButton" class="trade-arrow trade-arrow--buy">
+                                <ui:Label name="buyLabel" class="trade-arrow-label gof-semibold" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="trade-side trade-side--right" picking-mode="Ignore">
+                                <ui:Label name="tradeCargoLabel" class="trade-side-label" picking-mode="Ignore" />
+                                <ui:Label name="tradeCargo" class="trade-side-value gof-semibold" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Button name="actionButton" class="detail-action gof-semibold" />
+                        <ui:ScrollView name="detailScroll" class="detail-scroll">
+                            <ui:VisualElement name="detailStats" class="detail-stats" picking-mode="Ignore" />
+                            <ui:Label name="detailText" class="detail-text" picking-mode="Ignore" />
+                        </ui:ScrollView>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="hangar-footer" picking-mode="Ignore">
+                    <ui:Label name="cargoLabel" class="footer-cargo gof-semibold" picking-mode="Ignore" />
+                    <ui:Label name="creditsLabel" class="footer-credits gof-semibold" picking-mode="Ignore" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="hints" class="station-hints" picking-mode="Ignore" />
+            <ui:Label name="toast" class="station-toast" picking-mode="Ignore" />
         </ui:VisualElement>
 
         <ui:VisualElement name="dialog" class="station-dialog-backdrop">
