@@ -64,6 +64,13 @@ namespace GoF2Remake.Flight
         /// <summary>Options-menu steering sensitivity. Must stay well below 3.3/1.45 (~2.27). Default is a guess.</summary>
         public float Sensitivity = 1.0f;
 
+        /// <summary>
+        /// True: turn rates follow partial stick input down as well as up (needed for analog sticks and touch).
+        /// False: the original's rule (rates only grow toward the target while a direction is held).
+        /// Identical for full-deflection (keyboard) input.
+        /// </summary>
+        public bool TrackAnalogInput = true;
+
         /// <summary>Reproduce the original's integer truncation of boost speed (see Configure).</summary>
         public bool TruncateBoostSpeed = true;
 
@@ -228,11 +235,17 @@ namespace GoF2Remake.Flight
             if (denom < 1f) denom = 1f; // guard against extreme sensitivity values
             float step = dtMs * he / denom;
 
-            // The original only accelerates toward the target in the input's direction and
-            // never slows an over-target rate while the stick is held. Kept for fidelity.
-            if (target > 0f && rate < target) return Mathf.Min(rate + step, target);
-            if (target < 0f && rate > target) return Mathf.Max(rate - step, target);
-            return rate;
+            // The original only accelerates toward the target in the input's direction and never slows an
+            // over-target rate while the direction is held. That was fine for its digital input (the target is
+            // always full deflection), but with an analog stick the rates stay saturated while the thumb moves
+            // around, so steering snaps between 4 directions. Analog: track the target both ways at the same ramp.
+            if (!TrackAnalogInput)
+            {
+                if (target > 0f && rate < target) return Mathf.Min(rate + step, target);
+                if (target < 0f && rate > target) return Mathf.Max(rate - step, target);
+                return rate;
+            }
+            return Mathf.MoveTowards(rate, target, step);
         }
 
         float AutoLevelRoll(float dtMs, Vector3 up, Vector3 right)
