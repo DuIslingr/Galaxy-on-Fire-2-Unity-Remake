@@ -1,0 +1,133 @@
+/* GoF2 remake: shared design tokens and base control styles (imported by GoF2Theme.tss).
+   Palette from the original UI: steel-blue buttons, orange when pressed, cyan glow of the logo. */
+
+:root {
+    --gof-cyan: #3EC8FF;
+    --gof-cyan-soft: rgba(62, 200, 255, 0.35);
+    --gof-cyan-faint: rgba(62, 200, 255, 0.12);
+    --gof-amber: #FFA630;
+    --gof-amber-soft: rgba(255, 166, 48, 0.30);
+    --gof-text: #D8ECF7;
+    --gof-text-dim: rgba(216, 236, 247, 0.55);
+    --gof-text-disabled: rgba(216, 236, 247, 0.28);
+    --gof-panel: rgba(4, 10, 18, 0.93);
+    --gof-line: rgba(62, 200, 255, 0.25);
+    --gof-shadow: rgba(0, 0, 0, 0.6);
+
+    -unity-font-definition: url("project://database/Assets/GoF2/UI/Fonts/Inter-Regular-SDF.asset");
+    color: var(--gof-text);
+    font-size: 20px;
+}
+
+.gof-semibold {
+    -unity-font-definition: url("project://database/Assets/GoF2/UI/Fonts/Inter-SemiBold-SDF.asset");
+}
+
+/* ---- Slider -------------------------------------------------------------------------- */
+
+.unity-base-slider {
+    flex-direction: row;
+    align-items: center;
+    min-height: 40px;
+}
+
+.unity-base-slider > .unity-label {
+    min-width: 220px;
+    color: var(--gof-text);
+}
+
+.unity-base-slider__input {
+    flex-grow: 1;
+    height: 28px;
+}
+
+.unity-base-slider__drag-container {
+    flex-grow: 1;
+    height: 28px;
+}
+
+.unity-base-slider__tracker {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 12px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.14);
+    border-radius: 2px;
+}
+
+.unity-base-slider__dragger-border {
+    display: none;
+}
+
+.unity-base-slider__dragger {
+    position: absolute;
+    top: 6px;
+    width: 16px;
+    height: 16px;
+    border-radius: 8px;
+    background-color: var(--gof-cyan);
+    transition-duration: 0.15s;
+}
+
+.unity-base-slider:focus .unity-base-slider__dragger,
+.unity-base-slider:hover .unity-base-slider__dragger {
+    background-color: var(--gof-amber);
+    scale: 1.25 1.25;
+}
+
+/* ---- Toggle -------------------------------------------------------------------------- */
+
+.unity-toggle {
+    flex-direction: row;
+    align-items: center;
+    min-height: 40px;
+}
+
+.unity-toggle > .unity-label {
+    min-width: 220px;
+    color: var(--gof-text);
+}
+
+.unity-toggle__input {
+    flex-direction: row;
+    align-items: center;
+}
+
+.unity-toggle__checkmark {
+    width: 22px;
+    height: 22px;
+    border-width: 2px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 3px;
+    background-color: rgba(0, 0, 0, 0.3);
+    transition-duration: 0.15s;
+}
+
+.unity-toggle:checked .unity-toggle__checkmark {
+    background-color: var(--gof-cyan);
+    border-color: var(--gof-cyan);
+}
+
+.unity-toggle:focus .unity-toggle__checkmark,
+.unity-toggle:hover .unity-toggle__checkmark {
+    border-color: var(--gof-amber);
+}
+
+/* ---- ScrollView ---------------------------------------------------------------------- */
+
+.unity-scroll-view__vertical-scroller,
+.unity-scroll-view__horizontal-scroller {
+    display: none;
+}
+
+.unity-scroll-view {
+    overflow: hidden;
+    flex-shrink: 1;
+}
+
+.unity-scroll-view__content-viewport {
+    flex-grow: 1;
+    flex-shrink: 1;
+    overflow: hidden;
+}

@@ -1,0 +1,616 @@
+/* Main menu. Landscape only. Layout in reference pixels: the panel is always 1080 units tall (900 on phones),
+   so its width varies with the aspect ratio. GoF2MainMenu adds layout-narrow (4:3, 16:10) and layout-phone to
+   the root; on ultrawide screens the UI stays inside a centred 21:9 safe area. */
+
+.menu-root {
+    flex-grow: 1;
+    align-items: center;
+}
+
+.safe-area {
+    flex-grow: 1;
+    width: 100%;
+    max-width: 2560px;
+}
+
+/* ---- background shading over the 3D scene ------------------------------------------ */
+
+.side-shade {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 62%;
+    background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/shade_left.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    opacity: 0;
+    transition-duration: 1.2s;
+}
+
+.bottom-shade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 22%;
+    background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/shade_bottom.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.menu-root--menu .side-shade {
+    opacity: 1;
+}
+
+/* ---- logo: centred on the title screen, top-left in the menu ------------------------ */
+
+.logo {
+    position: absolute;
+    background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/logo_gof2.png");
+    -unity-background-scale-mode: scale-to-fit;
+    transition-duration: 0.9s;
+    transition-timing-function: ease-in-out-cubic;
+}
+
+.logo--title {
+    left: 22%;
+    top: 24%;
+    width: 56%;
+    height: 34%;
+    opacity: 0;
+}
+
+.logo--title-visible {
+    opacity: 1;
+    transition-duration: 3.9s;
+}
+
+.logo--menu {
+    left: 3%;
+    top: 6%;
+    width: 26%;
+    height: 16%;
+    opacity: 1;
+    background-position-x: left;
+}
+
+.press-any-key {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 62%;
+    -unity-text-align: middle-center;
+    font-size: 24px;
+    letter-spacing: 6px;
+    color: var(--gof-text);
+    opacity: 0;
+    transition-duration: 1s;
+    transition-timing-function: ease-in-out-sine;
+}
+
+.press-any-key--on {
+    opacity: 1;
+}
+
+.press-any-key--hidden {
+    display: none;
+}
+
+/* ---- main column -------------------------------------------------------------------- */
+
+.menu-screen {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    flex-direction: row;
+    display: none;
+}
+
+.menu-root--menu .menu-screen {
+    display: flex;
+}
+
+.main-column {
+    width: 30%;
+    padding-left: 3%;
+    padding-top: 13%;
+    justify-content: center;
+}
+
+.main-buttons {
+    margin-top: 48px;
+}
+
+.menu-button {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    margin: 4px 0;
+    padding: 12px 20px;
+    -unity-text-align: middle-left;
+    font-size: 26px;
+    letter-spacing: 5px;
+    color: var(--gof-text-dim);
+    opacity: 1;
+    translate: 0 0;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.menu-button:hover,
+.menu-button:focus {
+    color: #FFFFFF;
+    border-left-color: var(--gof-amber);
+    background-color: var(--gof-cyan-faint);
+    translate: 14px 0;
+}
+
+.menu-button:active {
+    background-color: var(--gof-amber-soft);
+}
+
+.menu-button:disabled {
+    color: var(--gof-text-disabled);
+}
+
+.menu-button--hidden {
+    opacity: 0;
+    translate: -40px 0;
+}
+
+.menu-button--gone {
+    display: none;
+}
+
+.main-buttons--revealing > .delay-1 { transition-delay: 0.05s; }
+.main-buttons--revealing > .delay-2 { transition-delay: 0.1s; }
+.main-buttons--revealing > .delay-3 { transition-delay: 0.15s; }
+.main-buttons--revealing > .delay-4 { transition-delay: 0.2s; }
+.main-buttons--revealing > .delay-5 { transition-delay: 0.25s; }
+.main-buttons--revealing > .delay-6 { transition-delay: 0.3s; }
+
+.main-column--dimmed .menu-button {
+    opacity: 0.35;
+}
+
+/* ---- panels ------------------------------------------------------------------------- */
+
+.panel-host {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: 2%;
+    padding-right: 6%;
+    padding-top: 6%;
+}
+
+.panel {
+    display: none;
+    width: 100%;
+    max-width: 820px;
+    max-height: 80%;
+    padding: 36px 44px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-left-width: 3px;
+    border-left-color: var(--gof-cyan);
+    border-radius: 2px;
+    opacity: 0;
+    translate: 40px 0;
+    transition-duration: 0.28s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.panel--wide {
+    max-width: 1020px;
+}
+
+.panel--shown {
+    display: flex;
+}
+
+.panel--visible {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.panel-title {
+    font-size: 30px;
+    letter-spacing: 6px;
+    color: var(--gof-cyan);
+    -unity-text-align: middle-left;
+}
+
+.panel-accent {
+    height: 2px;
+    width: 120px;
+    margin: 14px 0 26px 0;
+    background-color: var(--gof-amber);
+}
+
+.back-button {
+    align-self: flex-start;
+    margin-top: 28px;
+    font-size: 20px;
+}
+
+/* ---- campaign cards ----------------------------------------------------------------- */
+
+.card-row {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.campaign-card {
+    width: 290px;
+    height: 448px;
+    margin: 0;
+    padding: 0;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 6px;
+    scale: 1 1;
+    transition-duration: 0.2s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.campaign-card:hover,
+.campaign-card:focus {
+    scale: 1.05 1.05;
+    border-color: var(--gof-amber);
+}
+
+.card-art {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-background-scale-mode: scale-to-fit;
+    transition-duration: 0.2s;
+}
+
+.card-art-hover {
+    opacity: 0;
+}
+
+.campaign-card:hover > .card-art-hover,
+.campaign-card:focus > .card-art-hover {
+    opacity: 1;
+}
+
+.card-gof2 { background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/card_gof2.png"); }
+.card-gof2-hover { background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/card_gof2_hover.png"); }
+.card-valkyrie { background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/card_valkyrie.png"); }
+.card-valkyrie-hover { background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/card_valkyrie_hover.png"); }
+.card-supernova { background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/card_supernova.png"); }
+.card-supernova-hover { background-image: url("project://database/Assets/GoF2/UI/MainMenu/Images/card_supernova_hover.png"); }
+
+/* ---- difficulty --------------------------------------------------------------------- */
+
+.choice-button {
+    margin: 8px 0;
+    padding: 18px 22px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-left-width: 3px;
+    border-radius: 2px;
+    align-items: stretch;
+    transition-duration: 0.18s;
+}
+
+.choice-button:hover,
+.choice-button:focus {
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+    translate: 8px 0;
+}
+
+.choice-title {
+    font-size: 24px;
+    letter-spacing: 4px;
+    color: #FFFFFF;
+    -unity-text-align: middle-left;
+}
+
+.choice-desc {
+    margin-top: 6px;
+    font-size: 17px;
+    color: var(--gof-text-dim);
+    white-space: normal;
+    -unity-text-align: upper-left;
+}
+
+.choice-button--danger .choice-title {
+    color: var(--gof-amber);
+}
+
+/* ---- save slots --------------------------------------------------------------------- */
+
+.slot-list {
+    height: 520px;
+}
+
+.slot-row {
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 3px 0;
+    padding: 12px 18px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.slot-row:hover,
+.slot-row:focus {
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+}
+
+.slot-name {
+    font-size: 19px;
+    color: var(--gof-text);
+}
+
+.slot-state {
+    font-size: 17px;
+    color: var(--gof-text-dim);
+}
+
+/* ---- options ------------------------------------------------------------------------ */
+
+.tab-row {
+    flex-direction: row;
+    margin-bottom: 18px;
+}
+
+.tab-button {
+    margin: 0 8px 0 0;
+    padding: 10px 18px;
+    font-size: 17px;
+    letter-spacing: 3px;
+    color: var(--gof-text-dim);
+    background-color: rgba(255, 255, 255, 0.03);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.tab-button:hover,
+.tab-button:focus {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+}
+
+.tab-button--active {
+    color: var(--gof-cyan);
+    border-bottom-color: var(--gof-cyan);
+}
+
+.tab-page {
+    display: none;
+}
+
+.tab-page--active {
+    display: flex;
+}
+
+.section-header {
+    margin: 14px 0 4px 0;
+    font-size: 15px;
+    letter-spacing: 4px;
+    color: var(--gof-amber);
+}
+
+.option-row {
+    margin: 2px 0;
+    padding: 2px 10px;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    transition-duration: 0.15s;
+}
+
+.option-row:focus,
+.option-row:hover {
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+}
+
+.language-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.language-button {
+    width: 46%;
+    margin: 4px 8px 4px 0;
+    font-size: 20px;
+    letter-spacing: 1px;
+}
+
+.language-button--active {
+    color: var(--gof-cyan);
+    border-left-color: var(--gof-cyan);
+}
+
+/* ---- about -------------------------------------------------------------------------- */
+
+.about-scroll {
+    height: 520px;
+}
+
+.about-text {
+    white-space: normal;
+    font-size: 17px;
+    color: var(--gof-text);
+    -unity-text-align: upper-left;
+}
+
+/* ---- footer ------------------------------------------------------------------------- */
+
+.footer {
+    position: absolute;
+    left: 3%;
+    right: 3%;
+    bottom: 3%;
+    flex-direction: row;
+    justify-content: space-between;
+    opacity: 0;
+    transition-duration: 0.8s;
+}
+
+.menu-root--menu .footer {
+    opacity: 1;
+}
+
+.footer-text {
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: var(--gof-text-dim);
+}
+
+/* ---- dialog ------------------------------------------------------------------------- */
+
+.dialog-backdrop {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    display: none;
+}
+
+.dialog-backdrop--shown {
+    display: flex;
+}
+
+.dialog {
+    width: 90%;
+    max-width: 760px;
+    padding: 36px 44px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-amber);
+}
+
+.dialog-text {
+    white-space: normal;
+    font-size: 19px;
+    color: var(--gof-text);
+    margin-bottom: 26px;
+    -unity-text-align: upper-left;
+}
+
+.dialog-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.dialog-button {
+    margin-left: 12px;
+    font-size: 20px;
+}
+
+/* ---- splash + fade ------------------------------------------------------------------ */
+
+.splash {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #000000;
+    justify-content: center;
+    align-items: center;
+    transition-duration: 1s;
+}
+
+.splash--gone {
+    opacity: 0;
+}
+
+.splash--removed {
+    display: none;
+}
+
+.splash-logo {
+    width: 34%;
+    height: 44%;
+    -unity-background-scale-mode: scale-to-fit;
+    opacity: 0;
+    scale: 0.96 0.96;
+    transition-duration: 1s;
+    transition-timing-function: ease-out-sine;
+}
+
+.splash-logo--visible {
+    opacity: 1;
+    scale: 1 1;
+}
+
+.fade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #000000;
+    opacity: 0;
+    transition-duration: 1.2s;
+}
+
+.fade--on {
+    opacity: 1;
+}
+
+/* ---- responsive layouts ------------------------------------------------------------- */
+
+.layout-narrow .main-column {
+    width: 36%;
+}
+
+.layout-narrow .panel-host {
+    padding-right: 3%;
+}
+
+.layout-narrow .campaign-card {
+    width: 230px;
+    height: 356px;
+}
+
+.layout-phone .footer-hint {
+    display: none;
+}
+
+.layout-phone .menu-button {
+    padding: 16px 22px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

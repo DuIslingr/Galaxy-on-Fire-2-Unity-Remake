@@ -297,6 +297,15 @@ namespace GoF2Remake.EditorTools
             chase.lookOffset = new Vector3(0f, size * 0.1f, size * 0.8f);
             camGo.GetComponent<Camera>().farClipPlane = 50000f;
             GoF2PostProcessing.AddToScene();
+            // Space sky as the Unity skybox: also the ambient light and reflection source for the ships.
+            var sky = AssetDatabase.LoadAssetAtPath<Material>(GoF2SkyboxBaker.MaterialPath(3));
+            if (sky != null)
+            {
+                RenderSettings.skybox = sky;
+                RenderSettings.ambientMode = AmbientMode.Skybox;
+                RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
+                camGo.GetComponent<Camera>().clearFlags = CameraClearFlags.Skybox;
+            }
             Selection.activeGameObject = root;
             Debug.Log("GoF2: test scene created. Press Play: WASD/arrows steer, Q/E throttle, Space boost, R level.");
         }

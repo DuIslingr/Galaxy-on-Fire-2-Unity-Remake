@@ -69,7 +69,7 @@ namespace GoF2Remake.Flight
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, 1f - Mathf.Exp(-rotK * dtMs));
 
             if (cam != null)
-                cam.fieldOfView = baseFov + boostFovAdd * model.BoostVisualPercent;
+                cam.fieldOfView = GoF2Remake.Visuals.GoF2Aspect.VerticalFov(baseFov + boostFovAdd * model.BoostVisualPercent, cam.aspect);
         }
 
         /// <summary>Snap behind the ship (use after spawning / undocking).</summary>

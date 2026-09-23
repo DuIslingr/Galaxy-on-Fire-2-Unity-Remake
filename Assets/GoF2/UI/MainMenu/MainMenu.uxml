@@ -1,0 +1,126 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="MainMenu.uss" />
+    <ui:VisualElement name="root" class="menu-root">
+        <ui:VisualElement name="sideShade" class="side-shade" picking-mode="Ignore" />
+        <ui:VisualElement name="bottomShade" class="bottom-shade" picking-mode="Ignore" />
+
+        <ui:VisualElement name="safeArea" class="safe-area" picking-mode="Ignore">
+        <ui:VisualElement name="menuScreen" class="menu-screen">
+            <ui:VisualElement name="mainColumn" class="main-column">
+                <ui:VisualElement name="mainButtons" class="main-buttons">
+                    <ui:Button name="resumeButton" class="menu-button gof-semibold delay-1" />
+                    <ui:Button name="newGameButton" class="menu-button gof-semibold delay-2" />
+                    <ui:Button name="loadButton" class="menu-button gof-semibold delay-3" />
+                    <ui:Button name="optionsButton" class="menu-button gof-semibold delay-4" />
+                    <ui:Button name="aboutButton" class="menu-button gof-semibold delay-5" />
+                    <ui:Button name="exitButton" class="menu-button gof-semibold delay-6" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="panelHost" class="panel-host" picking-mode="Ignore">
+                <ui:VisualElement name="campaignPanel" class="panel panel--wide">
+                    <ui:Label name="campaignTitle" class="panel-title gof-semibold" />
+                    <ui:VisualElement class="panel-accent" />
+                    <ui:VisualElement class="card-row">
+                        <ui:Button name="cardGof2" class="campaign-card">
+                            <ui:VisualElement class="card-art card-gof2" picking-mode="Ignore" />
+                            <ui:VisualElement class="card-art card-art-hover card-gof2-hover" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Button name="cardValkyrie" class="campaign-card">
+                            <ui:VisualElement class="card-art card-valkyrie" picking-mode="Ignore" />
+                            <ui:VisualElement class="card-art card-art-hover card-valkyrie-hover" picking-mode="Ignore" />
+                        </ui:Button>
+                        <ui:Button name="cardSupernova" class="campaign-card">
+                            <ui:VisualElement class="card-art card-supernova" picking-mode="Ignore" />
+                            <ui:VisualElement class="card-art card-art-hover card-supernova-hover" picking-mode="Ignore" />
+                        </ui:Button>
+                    </ui:VisualElement>
+                    <ui:Button name="campaignBack" class="menu-button back-button gof-semibold" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="difficultyPanel" class="panel">
+                    <ui:Label name="difficultyTitle" class="panel-title gof-semibold" />
+                    <ui:VisualElement class="panel-accent" />
+                    <ui:Button name="normalButton" class="choice-button">
+                        <ui:Label name="normalLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="normalDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="extremeButton" class="choice-button choice-button--danger">
+                        <ui:Label name="extremeLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="extremeDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="difficultyBack" class="menu-button back-button gof-semibold" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="loadPanel" class="panel">
+                    <ui:Label name="loadTitle" class="panel-title gof-semibold" />
+                    <ui:VisualElement class="panel-accent" />
+                    <ui:ScrollView name="slotList" class="slot-list" />
+                    <ui:Button name="loadBack" class="menu-button back-button gof-semibold" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="optionsPanel" class="panel">
+                    <ui:Label name="optionsTitle" class="panel-title gof-semibold" />
+                    <ui:VisualElement class="panel-accent" />
+                    <ui:VisualElement class="tab-row">
+                        <ui:Button name="tabSound" class="tab-button gof-semibold" />
+                        <ui:Button name="tabControls" class="tab-button gof-semibold" />
+                        <ui:Button name="tabLanguage" class="tab-button gof-semibold" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="soundPage" class="tab-page">
+                        <ui:Label name="volumeHeader" class="section-header gof-semibold" />
+                        <ui:Slider name="musicSlider" class="option-row" low-value="0" high-value="1" />
+                        <ui:Slider name="fxSlider" class="option-row" low-value="0" high-value="1" />
+                        <ui:Slider name="voiceSlider" class="option-row" low-value="0" high-value="1" />
+                        <ui:Label name="graphicsHeader" class="section-header gof-semibold" />
+                        <ui:SliderInt name="brightnessSlider" class="option-row" low-value="0" high-value="2" />
+                        <ui:Toggle name="bloomToggle" class="option-row" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="controlsPage" class="tab-page">
+                        <ui:Slider name="sensitivitySlider" class="option-row" low-value="0.2" high-value="2.2" />
+                        <ui:Toggle name="invertToggle" class="option-row" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="languagePage" class="tab-page">
+                        <ui:VisualElement name="languageList" class="language-list" />
+                    </ui:VisualElement>
+                    <ui:Button name="optionsBack" class="menu-button back-button gof-semibold" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="aboutPanel" class="panel">
+                    <ui:Label name="aboutTitle" class="panel-title gof-semibold" />
+                    <ui:VisualElement class="panel-accent" />
+                    <ui:ScrollView name="aboutScroll" class="about-scroll">
+                        <ui:Label name="aboutText" class="about-text" />
+                    </ui:ScrollView>
+                    <ui:Button name="aboutBack" class="menu-button back-button gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="logo" class="logo logo--title" picking-mode="Ignore" />
+        <ui:Label name="pressAnyKey" class="press-any-key gof-semibold" picking-mode="Ignore" />
+
+        <ui:VisualElement name="footer" class="footer" picking-mode="Ignore">
+            <ui:Label name="versionLabel" class="footer-text" />
+            <ui:Label name="hintLabel" class="footer-text footer-hint" />
+        </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="dialog" class="dialog-backdrop">
+            <ui:VisualElement class="dialog">
+                <ui:Label name="dialogTitle" class="panel-title gof-semibold" />
+                <ui:VisualElement class="panel-accent" />
+                <ui:Label name="dialogText" class="dialog-text" />
+                <ui:VisualElement class="dialog-buttons">
+                    <ui:Button name="dialogYes" class="menu-button dialog-button gof-semibold" />
+                    <ui:Button name="dialogNo" class="menu-button dialog-button gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <ui:VisualElement name="splash" class="splash">
+            <ui:VisualElement name="splashLogo" class="splash-logo" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="fade" class="fade" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,163 @@
+# FMOD event id (FModSound::play(id)) -> event name -> candidate .ogg (by name). Heuristic: sequential index over the FEV name table minus group/param names; verified by 12 anchors.
+0	0x0	Tractor_Beam	SFX_SPACE/Tractor_Beam_Close_Door_01c.ogg | SFX_SPACE/Tractor_Beam_v1.ogg
+1	0x1	Mining_Drill	SFX_SPACE/Mining_Drill_Add_1.ogg | SFX_SPACE/Mining_Drill_Add_2.ogg | SFX_SPACE/Mining_Drill_Broken.ogg
+2	0x2	Mining_Landing	SFX_SPACE/Mining_Landing_01.ogg
+3	0x3	Mining_Drill_Broken	SFX_SPACE/Mining_Drill_Broken.ogg
+4	0x4	Tractor_Beam_Close_Door	SFX_SPACE/Tractor_Beam_Close_Door_01c.ogg
+5	0x5	Jump_to_planets	SFX_SPACE/Jump_to_planets_01.ogg
+6	0x6	Launch_Missile_EMP_GL1	SFX_SPACE/Launch_Missile_EMP_GL1.ogg
+7	0x7	Launch_Missile_EMP_GL2	SFX_SPACE/Launch_Missile_EMP_GL2.ogg
+8	0x8	Launch_Missile_EMP_GLDX	SFX_SPACE/Launch_Missile_EMP_GLDX_02.ogg
+9	0x9	Rocket_Launch_AMR_Tormentor	SFX_SPACE/Rocket_Launch_AMR_Tormentor_01.ogg
+10	0xa	Rocket_Launch_AMR_Oppressor	SFX_SPACE/Rocket_Launch_AMR_Oppressor_01.ogg | SFX_SPACE/Rocket_Launch_AMR_Oppressor_02.ogg
+11	0xb	Rocket_Launch_AMR_Extinction	SFX_SPACE/Rocket_Launch_AMR_Extinction_01.ogg
+12	0xc	Explosion_Bomb_AMR_Exctinctor	SFX_SPACE/Explosion_Bomb_AMR_Exctinctor_02.ogg
+13	0xd	Explosion_Bomb_AMR_Oppressor	SFX_SPACE/Explosion_Bomb_AMR_Oppressor_02.ogg
+14	0xe	Explosion_Bomb_AMR_Tormentor	SFX_SPACE/Explosion_Bomb_AMR_Tormentor_01.ogg
+15	0xf	Explosion_EMP_GL1	SFX_SPACE/Explosion_EMP_GL1_01.ogg
+16	0x10	Explosion_EMP_GL2	SFX_SPACE/Explosion_EMP_GL2.ogg
+17	0x11	Explosion_EMP_GLDX	SFX_SPACE/Explosion_EMP_GLDX_01.ogg
+18	0x12	Destruction_Ship_Big	SFX_SPACE/Destruction_Ship_Big_4.ogg | SFX_SPACE/Destruction_Ship_Big_4b.ogg | SFX_SPACE/Destruction_Ship_Big_5.ogg
+19	0x13	Destruction_Ship_Mid	
+20	0x14	Destruction_Ship_Small	SFX_SPACE/Destruction_Ship_Small_1.ogg | SFX_SPACE/Destruction_Ship_Small_1b.ogg
+21	0x15	Destruction_Asteroid	SFX_SPACE/Destruction_Asteroid.ogg
+22	0x16	Garbage_Explosion	SFX_SPACE/Garbage_Explosion_01.ogg | SFX_SPACE/Garbage_Explosion_02.ogg
+23	0x17	Incoming_Fire_Armor	SFX_SPACE/Incoming_Fire_Armor_V02 b.ogg | SFX_SPACE/Incoming_Fire_Armor_v02a.ogg | SFX_SPACE/Incoming_Fire_Armor_V02c.ogg
+24	0x18	Incoming_Fire_Hull	SFX_SPACE/Incoming_Fire_Hull_v01.ogg | SFX_SPACE/Incoming_Fire_Hull_v02.ogg
+25	0x19	Incoming_Fire_Shield	SFX_SPACE/Incoming_Fire_Shield_v01.ogg | SFX_SPACE/Incoming_Fire_Shield_v02.ogg
+26	0x1a	Target_Lock	
+27	0x1b	Low_Life	SFX_SPACE/Low_Life_v03.ogg
+28	0x1c	Autopilot_Activate	SFX_SPACE/Autopilot_Activate_01.ogg
+29	0x1d	Autopilot_Deactivate	SFX_SPACE/Autopilot_Deactivate_01.ogg
+30	0x1e	Cloak_02	SFX_SPACE/Cloak_02.ogg
+31	0x1f	Jumpgate	SFX_SPACE/Jumpgate_1b.ogg | SFX_SPACE/Jumpgate_2b.ogg | SFX_SPACE/Jumpgate_3b.ogg
+32	0x20	KhadorDrive	
+33	0x21	Jumpgate_Charge	SFX_SPACE/Jumpgate_Charge_02.ogg
+34	0x22	Wormhole	SFX_SPACE/Wormhole_1b.ogg
+35	0x23	Selfdestruct_Warning	DLC2_SFX/Selfdestruct_Warning.ogg
+36	0x24	Mission_accomplished	SFX_SPACE/Mission_Accomplished_v05.ogg
+37	0x25	game_over	SFX_SPACE/game_over_v02.ogg
+38	0x26	Booster_Linear	SFX_SPACE/Booster_Linear_v01.ogg
+39	0x27	Booster_Cyclotron	SFX_SPACE/Booster_Cyclotron_v01.ogg
+40	0x28	Booster_Synchrotron	SFX_SPACE/Booster_Synchrotron_1.ogg
+41	0x29	Booster_Meal	SFX_SPACE/Booster_Meal_01.ogg
+42	0x2a	Spaceship_Engine_v1	SFX_SPACE/Spaceship_Engine_v1.ogg
+43	0x2b	Spaceship_Engine_v2	
+44	0x2c	Spaceship_Engine_v3	
+45	0x2d	Spaceship_Engine_v4	
+46	0x2e	Spaceship_Engine_Enemy	
+47	0x2f	Spaceship_Engine_Freighter	
+48	0x30	Spaceship_Engine_Wingmen	
+49	0x31	Beam_M6_Coug	SFX_SPACE/Beam_M6_Coug_v1.ogg | SFX_SPACE/Beam_M6_Coug_v2.ogg | SFX_SPACE/Beam_M6_Coug_v3.ogg
+50	0x32	Beam_M6_Wolv	SFX_SPACE/Beam_M6_Wolv_v1.ogg | SFX_SPACE/Beam_M6_Wolv_v2.ogg | SFX_SPACE/Beam_M6_Wolv_v3.ogg
+51	0x33	Beam_M6_Wulf	SFX_SPACE/Beam_M6_Wulf.ogg | SFX_SPACE/Beam_M6_Wulf_v2.ogg
+52	0x34	Laser_Nirai_Impulse_EX1	SFX_SPACE/Laser_Nirai_Impulse_EX1_V01.ogg
+53	0x35	Laser_Nirai_Impulse_EX2	SFX_SPACE/Laser_Nirai_Impulse_EX2_V01.ogg
+54	0x36	Laser_Nirai_Charged_Impulse	SFX_SPACE/Laser_Nirai_Charged_Impulse_v01.ogg
+55	0x37	Laser_Shkoom	SFX_SPACE/Laser_Shkoom_v02.ogg
+56	0x38	Laser_Vskorr	SFX_SPACE/Laser_Vskorr_v01.ogg
+57	0x39	Laser_Berger_Focus_I	SFX_SPACE/Laser_Berger_Focus_I_v01.ogg
+58	0x3a	Laser_Berger_Focus_2	SFX_SPACE/Laser_Berger_Focus_2.ogg
+59	0x3b	Laser_Berger_Focus_Retribution	SFX_SPACE/Laser_Berger_Focus_Retribution_v01.ogg
+60	0x3c	Laser_Berger_Focus_Converge	SFX_SPACE/Laser_Berger_Focus_Converge_v01.ogg
+61	0x3d	Laser_Enemy	SFX_SPACE/Laser_Enemy_V04b.ogg
+62	0x3e	Laser_Void	
+63	0x3f	Canon_64MJ_Multirail	
+64	0x40	Canon_128MJ_Multirail	
+65	0x41	Canon_MassDriver	DLC2_SFX/Canon_Massdriver_MD12.ogg | SFX_SPACE/Canon_Massdriver_02.ogg
+66	0x42	Canon_Microgun_MK1	SFX_SPACE/Canon_Microgun_MK1_02.ogg
+67	0x43	Canon_Microgun_MK2	SFX_SPACE/Canon_Microgun_MK2_02b.ogg
+68	0x44	Canon_Scram	SFX_SPACE/Canon_Scram_02.ogg
+69	0x45	Thermalfusion_Thermic_o5	SFX_SPACE/Thermalfusion_Thermic_O5_v2c.ogg
+70	0x46	Thermalfusion_Thermic_ReHeat	SFX_SPACE/Thermalfusion_Thermic_ReHeat_v2b.ogg
+71	0x47	Thermalfusion_Thermic_MaxHeat	SFX_SPACE/Thermalfusion_Thermic_MaxHeat_v3.ogg
+72	0x48	Blaster_EMP_Luna	SFX_SPACE/Blaster_EMP_Luna_V01.ogg
+73	0x49	Blaster_EMP_Sol	SFX_SPACE/Blaster_EMP_Sol_V01.ogg
+74	0x4a	Blaster_EMP_Dia	SFX_SPACE/Blaster_EMP_Dia_V01.ogg
+75	0x4b	Blaster_Kbooskk	SFX_SPACE/Blaster_Kbooskk_01.ogg
+76	0x4c	Blaster_Gram	SFX_SPACE/Blaster_Gram_01.ogg
+77	0x4d	Blaster_Hnookk	SFX_SPACE/Blaster_Hnookk_01.ogg
+78	0x4e	Blaster_Nsaan	SFX_SPACE/Blaster_Nsaan_01.ogg
+79	0x4f	Blaster_Shgaal	SFX_SPACE/Blaster_Shgaal_01.ogg
+80	0x50	Blaster_Ridil	SFX_SPACE/Blaster_Ridil_01.ogg
+81	0x51	Blaster_Tyrfing	SFX_SPACE/Blaster_Tyrfing.ogg
+82	0x52	Launch_Missile_Gliissk	SFX_SPACE/Launch_Missile_Gliissk_01.ogg
+83	0x53	Launch_Missle_JetRocket	SFX_SPACE/Launch_Missle_JetRocket_01.ogg
+84	0x54	Launch_Missile_Amour	SFX_SPACE/Launch_Missile_Amour_01.ogg
+85	0x55	Launch_Missile_EMP_MK1	SFX_SPACE/Launch_Missile_EMP_MK1_02.ogg
+86	0x56	Launch_Missile_EMP_MK2	SFX_SPACE/Launch_Missile_EMP_MK2_01.ogg
+87	0x57	Launch_Missile_Edo	SFX_SPACE/Launch_Missile_Edo_01.ogg | SFX_SPACE/Launch_Missile_Edo_02.ogg
+88	0x58	Launch_Missile_IntelliJet	SFX_SPACE/Launch_Missile_IntelliJet_01.ogg
+89	0x59	Launch_Missile_Skoonn	SFX_SPACE/Launch_Missile_Skoonn_01.ogg
+90	0x5a	Launch_Missile_Mamba	SFX_SPACE/Launch_Missile_Mamba.ogg
+91	0x5b	Launch_Missile_Dephase	SFX_SPACE/Launch_Missile_Dephase_01.ogg
+92	0x5c	Turret_Hammerhead_MK1	SFX_SPACE/Turret_Hammerhead_MK1.ogg
+93	0x5d	Turret_Hammerhead_MK2	SFX_SPACE/Turret_Hammerhead_MK2_b.ogg
+94	0x5e	Turret_Hammerhead_Lksaar	SFX_SPACE/Turret_Hammerhead_Lksaar_01.ogg
+95	0x5f	Station_Atmo_Hangar	SFX_STATION_HANGAR/Station_Atmo_Hangar3.ogg | SFX_STATION_HANGAR/Station_Atmo_Hangar_Add_1.ogg | SFX_STATION_HANGAR/Station_Atmo_Hangar_Add_2.ogg
+96	0x60	Button_Dismount	SFX_STATION_HANGAR/Button_Dismount_v02.ogg
+97	0x61	Button_Info	SFX_STATION_HANGAR/Button_Info_v01.ogg
+98	0x62	Button_Mount	SFX_STATION_HANGAR/Button_Mount_v01.ogg
+99	0x63	Button_Sell	SFX_SPACE/Button_Sell_v02.ogg
+100	0x64	Button_to_station	SFX_STATION_HANGAR/Button_to_station_v01.ogg
+101	0x65	Button_to_ship	SFX_STATION_HANGAR/Button_to_ship_v01.ogg
+102	0x66	Map_Whoosh	
+103	0x67	Select_System	SFX_STATION_MAINVIEW/Select_System_04.ogg
+104	0x68	Map_Select_Planet_Push	SFX_STATION_MAINVIEW/Map_Select_Planet_Push_01.ogg
+105	0x69	Map_Select_Planet_Release	SFX_STATION_MAINVIEW/Map_Select_Planet_Release_01.ogg
+106	0x6a	Map_Zoom_In	SFX_STATION_MAINVIEW/Map_Zoom_In.ogg
+107	0x6b	Map_Zoom_Out	SFX_STATION_MAINVIEW/Map_Zoom_Out.ogg
+108	0x6c	Station_Atmo_Lounge	
+109	0x6d	Lounge_Confirm_Male	
+110	0x6e	Lounge_Decline_Male	
+111	0x6f	Lounge_Difficulty_Male	
+112	0x70	Lounge_Talk_To_Male	
+113	0x71	Lounge_Where	SFX_STATION_LOUNGE/Lounge_Where_v01.ogg
+114	0x72	Lounge_Confirm_Female	
+115	0x73	Lounge_Decline_Female	
+116	0x74	Lounge_Difficulty_Female	
+117	0x75	Lounge_Talk_To_Female	
+118	0x76	Lounge_Confirm_Alien	SFX_SPACE/Lounge_Confirm_Alien_1.ogg
+119	0x77	Lounge_Decline_Alien	
+120	0x78	Lounge_Difficulty_Alien	
+121	0x79	Lounge_Talk_To_Alien_1	SFX_SPACE/Lounge_Talk_To_Alien_1.ogg
+122	0x7a	Station_Atmo_Mainview	SFX_STATION_MAINVIEW/Station_Atmo_Mainview_1.ogg | SFX_STATION_MAINVIEW/Station_Atmo_Mainview_Add_1.ogg
+123	0x7b	Button_Release	SFX_GENERAL/Button_Release_V06.ogg
+124	0x7c	Button_Push	SFX_GENERAL/Button_Push_v06.ogg
+125	0x7d	Message_Inc	SFX_GENERAL/Message_Inc_V01.ogg
+126	0x7e	Message_Info_Screen	SFX_GENERAL/Message_Info_Screen_v04.ogg
+127	0x7f	Station_Vossk	MUSIC/Station_Vossk.ogg
+128	0x80	Station_Terraner	MUSIC/Station_Terraner.ogg
+129	0x81	Station_Nivelianer_LO	MUSIC/Station_Nivelianer.ogg
+130	0x82	Station_Midorianer_LO	MUSIC/Station_Midorianer.ogg
+131	0x83	Station_Valkyrie	MUSIC/Station_Valkyrie.ogg
+132	0x84	HomeBase_Station	MUSIC/HomeBase_Station.ogg
+133	0x85	Deep_Science_Station	
+134	0x86	Space_Nocombat_Terraner	
+135	0x87	Space_Combat_Layout	
+136	0x88	Space_Combat_Void	
+137	0x89	Space_NoCombat_Midorianer	
+138	0x8a	Space_NoCombat_Nivelianer	
+139	0x8b	Space_NoCombat_Vossk	
+140	0x8c	Space_Combat_Low	
+141	0x8d	Space_Combat_Mid	
+142	0x8e	Space_Combat_Full	
+143	0x8f	IntroAtmo	MUSIC/IntroAtmo_02.ogg
+144	0x90	OutroSong	MUSIC/OutroSong_02b.ogg
+145	0x91	Space_NoCombat_Void	MUSIC/Space_NoCombat_Void.ogg
+146	0x92	HomeBase_NoCombat	MUSIC/HomeBase_NoCombat.ogg
+147	0x93	Valkyrie_NoCombat	
+148	0x94	SN_GammaRay	
+149	0x95	SN_Battle_StealthFighter_Low	
+150	0x96	SN_Battle_StealthFighter_High	
+151	0x97	SN_WantedBoardCriminals	
+152	0x98	Space_NoCombat_DeepScience	
+153	0x99	Mothership_Xplosion_Loop_01	
+154	0x9a	Mothership_Xplosion_CutSeq	CUTSCENES/Mothership_Xplosion_CutSeq.ogg
+155	0x9b	Errkt_CutSeq_01	MUSIC/Errkt_CutSeq_01.ogg
+156	0x9c	Spaceship_Engine_05_Broken	CUTSCENES/Spaceship_Engine_05_Broken_02_Add_12.ogg | CUTSCENES/Spaceship_Engine_05_Broken_02_Add_13.ogg | CUTSCENES/Spaceship_Engine_05_Broken_02_Add_14.ogg
+157	0x9d	Cutscenes_Explosion	SFX_SPACE/Cutscenes_Explosion_01.ogg
+158	0x9e	Rumble_CutScene_01	SFX_SPACE/Rumble_CutScene_01.ogg
+159	0x9f	SpaceTimeJump	CUTSCENES/SpaceTimeJump_01.ogg
+160	0xa0	Engine_09_Broken	SFX_SPACE/Engine_09_Broken.ogg
+161	0xa1	Alert	CUTSCENES/Alert_03.ogg
