@@ -65,9 +65,9 @@ namespace GoF2Remake.Flight
         public float Sensitivity = 1.0f;
 
         /// <summary>
-        /// True: turn rates follow partial stick input down as well as up (needed for analog sticks and touch).
-        /// False: the original's rule (rates only grow toward the target while a direction is held).
-        /// Identical for full-deflection (keyboard) input.
+        /// True: turn rates and the cosmetic model tilt follow partial stick input (needed for analog sticks and
+        /// touch). False: the original's rules (rates only grow toward the target while a direction is held; the tilt
+        /// uses the input's sign). Identical for full-deflection (keyboard) input.
         /// </summary>
         public bool TrackAnalogInput = true;
 
@@ -186,8 +186,10 @@ namespace GoF2Remake.Flight
             // ---- steering input: ramp turn rates toward the stick target ----------------------
             bool yawInput = Mathf.Abs(steer.x) > 1e-4f;
             bool pitchInput = Mathf.Abs(steer.y) > 1e-4f;
-            VisualYawBank = yawInput ? Mathf.Sign(steer.x) * he : 0f;
-            VisualPitchBank = pitchInput ? Mathf.Sign(steer.y) * he : 0f;
+            // Cosmetic model tilt. The original uses the input's sign (digital keys); for analog input scale it
+            // with the deflection, or a slight push past the centre flips the model to the full tilt.
+            VisualYawBank = !yawInput ? 0f : (TrackAnalogInput ? Mathf.Clamp(steer.x, -1f, 1f) : Mathf.Sign(steer.x)) * he;
+            VisualPitchBank = !pitchInput ? 0f : (TrackAnalogInput ? Mathf.Clamp(steer.y, -1f, 1f) : Mathf.Sign(steer.y)) * he;
 
             if (yawInput) YawRate = RampToward(YawRate, steer.x, he, dtMs, 1f);
             if (pitchInput)
