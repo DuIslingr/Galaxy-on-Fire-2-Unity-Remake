@@ -103,6 +103,7 @@ namespace GoF2Remake.EditorTools
                 .OrderBy(p => Path.GetFileNameWithoutExtension(p) == "text_en" ? 0 : 1).ToArray();   // English first (fallback)
             menu.languageCodes = tables.Select(p => Path.GetFileNameWithoutExtension(p).Substring(5)).ToArray();
             menu.languageTables = tables.Select(p => AssetDatabase.LoadAssetAtPath<TextAsset>(p)).ToArray();
+            WriteLanguageTables(menu.languageCodes, menu.languageTables);
             EditorUtility.SetDirty(menu);
 
             var es = new GameObject("EventSystem");
@@ -117,6 +118,18 @@ namespace GoF2Remake.EditorTools
             list.Insert(space >= 0 ? space + 1 : list.Count, new EditorBuildSettingsScene(ScenePath, true));
             EditorBuildSettings.scenes = list.ToArray();
             Debug.Log($"GoF2: station scene created at {ScenePath} (station = GoF2Session.StationIndex, or the level's override).");
+        }
+
+        /// <summary>Resources/GoF2LanguageTables: lets any scene load the text table on first use (GoF2Localization).</summary>
+        public static void WriteLanguageTables(string[] codes, TextAsset[] tables)
+        {
+            string path = $"{Root}/Resources/{GoF2Remake.Data.GoF2LanguageTables.ResourceName}.asset";
+            var asset = AssetDatabase.LoadAssetAtPath<GoF2Remake.Data.GoF2LanguageTables>(path);
+            if (asset == null) { asset = ScriptableObject.CreateInstance<GoF2Remake.Data.GoF2LanguageTables>(); AssetDatabase.CreateAsset(asset, path); }
+            asset.codes = codes;
+            asset.tables = tables;
+            EditorUtility.SetDirty(asset);
+            AssetDatabase.SaveAssets();
         }
 
         static AudioSource Source(GameObject go, bool loop)

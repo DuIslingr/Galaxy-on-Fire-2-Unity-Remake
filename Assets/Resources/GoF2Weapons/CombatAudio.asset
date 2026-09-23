@@ -19,3 +19,4 @@ MonoBehaviour:
   miningDrillBroken: {fileID: 8300000, guid: 75e4f8840c6d33749b003f40101bed36, type: 3}
   autopilotOn: {fileID: 8300000, guid: fedfb68e425a4e8409dd9dcd7ecf23fa, type: 3}
   autopilotOff: {fileID: 8300000, guid: b0c9f108608ca7c4ebbd15d7179a742b, type: 3}
+  jumpToPlanet: {fileID: 8300000, guid: 384d7aa1281a14345bdfdcc8bbfafb7e, type: 3}

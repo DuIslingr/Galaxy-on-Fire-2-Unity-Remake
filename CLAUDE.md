@@ -37,7 +37,8 @@ Assets/
   Resources/GoF2Sky/ flight-level sky: stars_00X + nebula_0XX cubemaps, SpaceSky.mat template
   Resources/GoF2Backdrop/ sun / planet / ring / dust materials, one per texture (loaded by name)
   Resources/GoF2Icons/ shop icons item_XXX / ship_XXX (frame + icon, 180x88), made by "Build Item Icons"
-  Resources/GoF2Hud/ flight HUD mining images (lock ring, ore plate, minigame), made by "Build HUD Images"
+  Resources/GoF2Hud/ flight HUD images (lock ring, plate, minigame, brackets, autopilot / fast-forward), made by "Build HUD Images"
+  Resources/GoF2LanguageTables.asset references every text table so any scene loads text on first use (GoF2Localization)
   Scenes/            MainMenu, Space (flight level), Station (docked: hangar + bar)
   Settings/          URP assets, GoF2_VolumeProfile (bloom)
 Reference/           decompiled original code, binaries and conversion tools (see Reference/README.md)
@@ -119,8 +120,18 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Lights:** LIGHT0 toward the sun (`clamp(15 * sunColour, 0, 2)`), LIGHT1 from the orbit planet (Unity +Z), linear fog in 6 systems. Camera: vertical FOV 1.22 rad, near 1 m, far 15 km, chase offsets (0, 600, -1338) / (0, 600, -650) game units.
 - **Main menu background** (`GoF2MenuBackground`): the original's menu backdrop is a normal orbit level (Level type 2), so it builds a curated station's orbit with `GoF2OrbitBuilder` too (camera start angle automatic: lit side, planet behind). Menu-only: full-detail station, asteroids kept out of the camera orbit, and traffic of the system's race (fighter pairs, freighter 30% Nivelian, battleship in Terran space) on lanes picked relative to the orbiting camera each pass; some ships start in view (`GoF2Flyby.startProgress`), others fly in.
 - **Docking / launch:** within 16000 units of the station (`PlayerEgo::collidesWithStation`), the HUD offers **Dock** (tap, Enter, or controller X). It only appears after the player has left that range once, because the undock spawn is inside it; the original requires the autopilot instead. Docking loads `Station` straight away with no animation, like `MGame::dockEvent`. Launching from the station sets `GoF2Session.LaunchedFromStation`: a fixed camera 9000 units ahead watches the ship fly past for 7 s (`LevelScript`), then the chase camera eases in.
-- The HUD has one action prompt (tap, Enter, controller X): Mine / Abort / Stop mining (see "Mining"), else Dock.
-- Not yet: traffic in flight (`Level::createMission`), autopilot to stations, travel/jumps, missions, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
+- The HUD has one action prompt (tap, Enter, controller X): Autopilot / Jump / Autopilot off (see "Navigation"), Mine / Abort / Stop mining (see "Mining"), else Dock.
+- Not yet: traffic in flight (`Level::createMission`), inter-system travel (jumpgate star map), missions, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
+
+## Navigation (locks, autopilot, planet jump, fast-forward)
+
+Research: `Reference/research/autopilot_travel.md` (+ `Reference/tools/autopilot/autopilot_tables.py`). `GoF2Navigation` (on the player ship) and `GoF2NavigationView` (flight HUD).
+
+- **Locks** (`Radar::draw`): the station and the visible jumpgate (on screen, within +-w/6 of the centre and +-w/16 of the crosshair) and the other stations' planets (+-w/32 of the crosshair; the current station's own planet never). Scanner lock time (attr 29, 8000 ms without), no -200 ms and no ring delay (unlike asteroids). Landmarks beat planets, planets beat asteroids (`GoF2Mining` asks `BlocksAsteroidLock`). HUD: bracket + name + "Tech level" + distance (`Radar::calcDistance`, the original's own "m/km") near the centre, jumpgate icon elsewhere (off screen on the radar ellipse), planet names only while in the lock box, top plate with the system's race icon.
+- **Autopilot** (station / jumpgate locked + action): "Target: X" + sound 28; `GoF2ShipController.autopilotTarget` steers by `moveToPosition` (world up), throttle reset to 100 % once, stick ignored, throttle / boost / guns still work. Within 16000 units of the station it docks by itself. Action again (or the touch autopilot button) = "Autopilot Off" + sound 29. Reaching the gate: "Not available." (no star map yet).
+- **Planet jump** (planet locked + action, no confirmation): sound 5, the camera freezes and looks at the ship, straight on at 8 u/ms for 3 s, HUD hidden, then `Space` reloads in that station's orbit (`GoF2Session.StationIndex`, `PreviousStationIndex`, `ArrivedByTravel`): arrival at 4x the previous station's planet billboard (~4 km), or the hidden gate in the gate orbit, facing the station, with the travel fly-in camera.
+- **Fast-forward** (hold the touch button, R, or controller Y) while the autopilot or an asteroid approach runs and the target is >= 20000 units (1 km) away: `Time.timeScale` = 5 for the whole game; stops on release, arrival or when the autopilot ends.
+- Not yet: the autopilot menu (asteroid field / station / jumpgate / waypoint), hostile ships blocking fast-forward, the orbit information on arrival, mission restrictions.
 
 ## Mining
 

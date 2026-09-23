@@ -10,7 +10,10 @@
 //                  16000 units once the player has flown out of that range after spawning (no autopilot yet).
 //   LevelScript 0x15e650 / process 0x160d50: after launching from the station a fixed camera 9000 units ahead of the
 //                  ship (+-500..2499 sideways and up) watches it fly past for 7 s, then the chase camera takes over.
-// Not yet: traffic (Level::createMission), missions, autopilot, travel, lens flare, wormhole.
+//   Level::init arrival by travel (planet jump, GoF2Navigation): 4x the previous station's planet billboard (about 80000
+//                  units out) or the hidden jumpgate in the gate orbit, facing the station, with the travel launch camera.
+//   GoF2Navigation: station / jumpgate / planet locks, autopilot (docks at the station), planet jump, fast-forward.
+// Not yet: traffic (Level::createMission), missions, inter-system travel, lens flare, wormhole.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -44,6 +47,10 @@ namespace GoF2Remake.World
         public GoF2ShipController Player { get; private set; }
         public GoF2WeaponSystem Weapons { get; private set; }
         public GoF2Mining Mining { get; private set; }
+        public GoF2Navigation Navigation { get; private set; }
+        /// <summary>This orbit's station (name, tech level) and its system's jumpgate station (-1 = none).</summary>
+        public StationData StationInfo { get; private set; }
+        public int SystemJumpgateStation { get; private set; } = -1;
 
         /// <summary>PlayerEgo::collidesWithStation / calcCollision 0xab550: |pos| &lt; 16000 units.</summary>
         public const float DockRange = 16000f;
@@ -66,6 +73,8 @@ namespace GoF2Remake.World
             int station = stationOverride >= 0 ? stationOverride : GoF2Session.StationIndex;
             Layout = GoF2OrbitLayout.Build(db, station);
             var st = db.Stations.Find(s => s.index == station);
+            StationInfo = st;
+            SystemJumpgateStation = db.Systems.Find(s => s.index == Layout.systemIndex)?.jumpgateStation ?? -1;
             Debug.Log($"GoF2SpaceLevel: station {station} {st?.name} (system {Layout.systemIndex} {st?.systemName}), " +
                       $"gate {Layout.hasJumpgate}, {Layout.asteroidCount} asteroids");
 
@@ -77,7 +86,12 @@ namespace GoF2Remake.World
             GoF2OrbitBuilder.SpawnAsteroids(db, Layout);
             SpawnPlayer();
             GoF2OrbitBuilder.SpawnDust(Layout);
-            GoF2OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
+            var backdrop = GoF2OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
+
+            // Locks on the station, the jumpgate and the other stations' planets; autopilot, planet jump, fast-forward.
+            Navigation = Player.gameObject.AddComponent<GoF2Navigation>();
+            Navigation.Setup(db, Layout, backdrop, Player, Mining, chase, Weapons);
+            Mining.navigation = Navigation;
         }
 
         void SetupCamera()
@@ -93,9 +107,15 @@ namespace GoF2Remake.World
         {
             var ship = db.Ships.Find(s => s.index == GoF2Session.ShipIndex);
             var root = new GameObject($"Player ({ship?.name})");
-            root.transform.SetPositionAndRotation(
-                GoF2OrbitLayout.ToUnity(GoF2OrbitLayout.UndockPosition),
-                GoF2OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * GoF2OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
+            if (GoF2Session.ArrivedByTravel)
+            {
+                var arrival = ArrivalPosition();
+                root.transform.SetPositionAndRotation(arrival, Quaternion.LookRotation(-arrival.normalized, Vector3.up));
+            }
+            else
+                root.transform.SetPositionAndRotation(
+                    GoF2OrbitLayout.ToUnity(GoF2OrbitLayout.UndockPosition),
+                    GoF2OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * GoF2OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
             var ctrl = root.AddComponent<GoF2ShipController>();
             var equipment = new System.Collections.Generic.List<ItemData>();
             foreach (var e in GoF2Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
@@ -134,7 +154,18 @@ namespace GoF2Remake.World
             Mining = root.AddComponent<GoF2Mining>();
             Mining.Setup(db, ctrl, Weapons, chase);
 
-            if (GoF2Session.LaunchedFromStation) StartLaunchCamera();
+            if (GoF2Session.LaunchedFromStation || GoF2Session.ArrivedByTravel) StartLaunchCamera();
+        }
+
+        /// <summary>Level::init with initStreamOutPosition (space_level_setup.md 4): into the gate orbit at the hidden gate
+        /// (landmark 2); else 4 x the planet billboard (-20000 * dir) of the station the player came from, or (0, 0, 100000)
+        /// when that station isn't in this system.</summary>
+        Vector3 ArrivalPosition()
+        {
+            if (Layout.hasJumpgate) return GoF2OrbitLayout.ToUnity(Layout.hiddenJumpgate);
+            var from = Layout.planets.Find(p => p.station == GoF2Session.PreviousStationIndex);
+            if (from == null) return GoF2OrbitLayout.ToUnity(new Vector3(0f, 0f, 100000f));
+            return GoF2OrbitLayout.ToUnity(-4f * GoF2OrbitLayout.BackdropDistance * GoF2OrbitLayout.Direction(from.pitch, from.yaw));
         }
 
         // LevelScript::LevelScript: TargetFollowCamera in look-at mode at playerPos + playerRotation * (+-(500..2499),
@@ -143,6 +174,7 @@ namespace GoF2Remake.World
         {
             GoF2Session.LaunchedFromStation = false;
             bool travel = GoF2Session.ArrivedByTravel;
+            GoF2Session.ArrivedByTravel = false;
             float Side() => (Random.value < 0.5f ? -1f : 1f) * (travel ? Random.Range(500, 1000) : Random.Range(500, 2500));
             var local = new Vector3(-Side(), Side(), travel ? 7000f : 9000f) * M;   // ship-local game -> Unity (-x, y, z)
             mainCamera.transform.position = Player.transform.TransformPoint(local);
@@ -156,6 +188,8 @@ namespace GoF2Remake.World
         {
             if (Player == null) return;
             if (!InDockRange) leftDockRange = true;
+            // MGame::dockEvent: the autopilot to the station docks within 16000 units (collision is off during the launch).
+            if (Navigation != null && Navigation.GoingToStation && InDockRange && launchCameraMs <= 0f && Layout.hasStation) { Dock(); return; }
             if (launchCameraMs <= 0f) return;
             launchCameraMs -= Time.deltaTime * 1000f;
             var cam = mainCamera.transform;

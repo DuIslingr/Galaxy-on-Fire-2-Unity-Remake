@@ -314,6 +314,59 @@
     opacity: 0;
 }
 
+/* ---- navigation markers (GoF2NavigationView): brackets, names, distances, gate icons -------- */
+
+.nav-markers {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.nav-abs {
+    position: absolute;
+}
+
+.nav-label {
+    position: absolute;
+    font-size: 20px;
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+.nav-label--dim {
+    color: rgba(216, 236, 247, 0.8);
+}
+
+/* Autopilot + fast-forward buttons on their pill (left side, touch only; Globals::setCoordsSteer, moved below the
+   speed readout). */
+.nav-buttons {
+    display: none;
+    position: absolute;
+    left: 32px;
+    top: 170px;
+    width: 126px;
+    height: 293px;
+}
+
+.nav-button {
+    position: absolute;
+    left: 8px;
+}
+
+.nav-button--ff {
+    top: 0;
+}
+
+.nav-button--autopilot {
+    top: 180px;
+}
+
+.hud-cinematic .hud-safe {
+    display: none;
+}
+
 /* ---- mining minigame (full screen, under the touch controls) ------------------------------ */
 
 .mining {

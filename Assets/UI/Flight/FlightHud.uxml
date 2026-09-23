@@ -4,6 +4,7 @@
     <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
         <ui:VisualElement name="mining" class="mining" picking-mode="Ignore" />
         <ui:VisualElement name="safeArea" class="hud-safe" picking-mode="Ignore">
+            <ui:VisualElement name="navMarkers" class="nav-markers" picking-mode="Ignore" />
             <ui:VisualElement name="crosshair" class="crosshair" picking-mode="Ignore" />
             <ui:VisualElement name="lockRing" class="lock-ring" picking-mode="Ignore" />
 
@@ -45,6 +46,12 @@
             <ui:VisualElement name="dockPrompt" class="dock-prompt dock-prompt--hidden">
                 <ui:VisualElement name="dockGlyph" class="dock-glyph" picking-mode="Ignore" />
                 <ui:Label name="dockLabel" class="dock-label gof-semibold" picking-mode="Ignore" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="navButtons" class="nav-buttons">
+                <ui:VisualElement name="navButtonPill" class="nav-abs" picking-mode="Ignore" />
+                <ui:VisualElement name="fastForwardButton" class="nav-button nav-button--ff" />
+                <ui:VisualElement name="autopilotButton" class="nav-button nav-button--autopilot" />
             </ui:VisualElement>
 
             <ui:VisualElement name="lockPlate" class="lock-plate" picking-mode="Ignore">

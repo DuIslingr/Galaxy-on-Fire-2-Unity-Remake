@@ -1,7 +1,8 @@
 // GoF2Localization.cs
 // The game's text table (GameText::getText): Localization/text_<lang>.json is a plain array, index = text ID
 // as used in the decompiled code (e.g. 28 "Start new game", 170 "Back"). Plain C#; menus pass in the
-// TextAssets they reference.
+// TextAssets they reference, and the first Get without a loaded table loads the settings language from
+// Resources/GoF2LanguageTables (scenes started directly in the editor).
 
 using System;
 using System.Collections.Generic;
@@ -29,11 +30,28 @@ namespace GoF2Remake.Data
             Changed?.Invoke();
         }
 
-        /// <summary>Text by original ID; falls back to "#id" when missing.</summary>
-        /// <summary>False until a table is loaded (the main menu loads one; scenes started directly load their own).</summary>
+        /// <summary>False until a table is loaded (the main menu loads one; otherwise the first Get does).</summary>
         public static bool IsLoaded => texts.Length > 0;
 
-        public static string Get(int id) => id >= 0 && id < texts.Length && texts[id] != null ? Clean(texts[id]) : "#" + id;
+        /// <summary>Text by original ID; falls back to "#id" when missing.</summary>
+        public static string Get(int id)
+        {
+            if (!IsLoaded) AutoLoad();
+            return id >= 0 && id < texts.Length && texts[id] != null ? Clean(texts[id]) : "#" + id;
+        }
+
+        static bool autoLoadTried;
+
+        static void AutoLoad()
+        {
+            if (autoLoadTried) return;
+            autoLoadTried = true;
+            var t = GoF2LanguageTables.Load();
+            if (t == null || t.tables == null || t.tables.Length == 0) return;
+            int i = t.codes != null ? Array.IndexOf(t.codes, GoF2Settings.Language) : -1;
+            if (i < 0 || i >= t.tables.Length || t.tables[i] == null) i = 0;
+            Load(t.codes != null && i < t.codes.Length ? t.codes[i] : "en", t.tables[i]);
+        }
 
         /// <summary>Remake-only strings (not in the original table), by key, with an English fallback.</summary>
         public static string Extra(string key, string english) => extra.TryGetValue(Language + "." + key, out var s) ? s : english;

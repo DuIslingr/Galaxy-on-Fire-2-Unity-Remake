@@ -62,6 +62,9 @@ namespace GoF2Remake.Flight
         Vector3 capturedUp;
         Vector2 touchInput;
 
+        /// <summary>Set by GoF2SpaceLevel: station / planet locks and the autopilot come first (Radar::draw order).</summary>
+        [NonSerialized] public GoF2Navigation navigation;
+
         public void Setup(GoF2Database database, GoF2ShipController controller, GoF2WeaponSystem weaponSystem, GoF2ChaseCamera chaseCamera)
         {
             db = database;
@@ -91,7 +94,10 @@ namespace GoF2Remake.Flight
             float dtMs = Time.deltaTime * 1000f;
             switch (State)
             {
-                case Phase.Idle: UpdateLock(dtMs); break;
+                case Phase.Idle:
+                    if (navigation != null && navigation.BlocksAsteroidLock) { Candidate = Locked = null; LockFrame = -1; lockTimer = 0f; wasLocked = false; }
+                    else UpdateLock(dtMs);
+                    break;
                 case Phase.Approaching:
                 case Phase.Landing:
                 case Phase.Docked:

@@ -57,6 +57,7 @@ namespace GoF2Remake.EditorTools
             audio.miningDrillBroken = FindClip(clips, "Mining_Drill_Broken");
             audio.autopilotOn = FindClip(clips, "Autopilot_Activate");
             audio.autopilotOff = FindClip(clips, "Autopilot_Deactivate");
+            audio.jumpToPlanet = FindClip(clips, "Jump_to_planets");
             EditorUtility.SetDirty(audio);
 
             BuildCrosshair();

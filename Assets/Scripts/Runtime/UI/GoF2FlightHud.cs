@@ -39,6 +39,9 @@ namespace GoF2Remake.UI
         GoF2Mining mining;
         GoF2MiningView miningView;
         GoF2Mining.Phase lastPhase;
+        GoF2Navigation nav;
+        GoF2NavigationView navView;
+        bool lastAutopilot;
         Label speedValue, missileAmmo;
         GoF2WeaponSystem weapons;
         float hitFlashMs;
@@ -65,6 +68,7 @@ namespace GoF2Remake.UI
         void OnDisable()
         {
             if (mining != null) mining.Message -= OnMiningMessage;
+            if (nav != null) nav.Message -= OnMiningMessage;
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             GoF2InputMode.Changed -= ApplyInputMode;
         }
@@ -101,6 +105,8 @@ namespace GoF2Remake.UI
             HookPress(missileButton, null, () => weapons?.FireSecondary());
             HookPress(dockPrompt, null, Interact);
             miningView = new GoF2MiningView(root);
+            navView = new GoF2NavigationView(root);
+            navView.AutopilotButton += OnAutopilotButton;
             root.Q<Button>("menuButton").clicked += BackToMenu;
 
             root.Q<Label>("stickCaption").text = GoF2Localization.Extra("hudSteer", "STEER");
@@ -196,6 +202,28 @@ namespace GoF2Remake.UI
         {
             hints.Clear();
             string T(string key, string english) => GoF2Localization.Extra(key, english);
+            if (lastAutopilot)
+            {
+                // Autopilot: throttle, boost and guns still work; fast-forward is held.
+                string ff = T("hudFastForward", "FAST FORWARD"), off = T("hudAutopilotOff", "AUTOPILOT OFF");
+                if (kind == GoF2InputKind.KeyboardMouse)
+                {
+                    Hint(T("hudThrottle", "THROTTLE"), GoF2InputGlyph.Key("Q"), GoF2InputGlyph.Key("E"));
+                    Hint(ff + " (" + T("hudHold", "HOLD") + ")", GoF2InputGlyph.Key("R"));
+                    Hint(off, GoF2InputGlyph.Key("ENTER", true));
+                    Hint(T("hudFire", "FIRE"), GoF2InputGlyph.Key("CTRL"));
+                    Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Key("ESC"));
+                }
+                else if (kind == GoF2InputKind.Gamepad)
+                {
+                    Hint(T("hudThrottle", "THROTTLE"), GoF2InputGlyph.Pad(GoF2PadButton.LeftBumper), GoF2InputGlyph.Pad(GoF2PadButton.RightBumper));
+                    Hint(ff + " (" + T("hudHold", "HOLD") + ")", GoF2InputGlyph.Pad(GoF2PadButton.Y));
+                    Hint(off, GoF2InputGlyph.Pad(GoF2PadButton.X));
+                    Hint(T("hudFire", "FIRE"), GoF2InputGlyph.Pad(GoF2PadButton.RightTrigger));
+                    Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Pad(GoF2PadButton.Menu));
+                }
+                return;
+            }
             if (lastPhase != GoF2Mining.Phase.Idle)
             {
                 // Autopilot to an asteroid / mining: only the drill and the action prompt matter.
@@ -204,11 +232,13 @@ namespace GoF2Remake.UI
                 if (kind == GoF2InputKind.KeyboardMouse)
                 {
                     if (drilling) Hint(T("hudDrill", "DRILL"), GoF2InputGlyph.Key("W"), GoF2InputGlyph.Key("A"), GoF2InputGlyph.Key("S"), GoF2InputGlyph.Key("D"));
+                    if (lastPhase == GoF2Mining.Phase.Approaching) Hint(T("hudFastForward", "FAST FORWARD") + " (" + T("hudHold", "HOLD") + ")", GoF2InputGlyph.Key("R"));
                     Hint(action, GoF2InputGlyph.Key("ENTER", true));
                 }
                 else if (kind == GoF2InputKind.Gamepad)
                 {
                     if (drilling) Hint(T("hudDrill", "DRILL"), GoF2InputGlyph.Pad(GoF2PadButton.LeftStick));
+                    if (lastPhase == GoF2Mining.Phase.Approaching) Hint(T("hudFastForward", "FAST FORWARD") + " (" + T("hudHold", "HOLD") + ")", GoF2InputGlyph.Pad(GoF2PadButton.Y));
                     Hint(action, GoF2InputGlyph.Pad(GoF2PadButton.X));
                 }
                 return;
@@ -269,13 +299,16 @@ namespace GoF2Remake.UI
                 weapons = level.Weapons;
                 mining = level.Mining;
                 if (mining != null) mining.Message += OnMiningMessage;
+                nav = level.Navigation;
+                if (nav != null) nav.Message += OnMiningMessage;
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 chase = Camera.main != null ? Camera.main.GetComponent<GoF2ChaseCamera>() : null;
                 ApplyInputMode();
             }
 
-            // The action prompt: mining first (lock / approach / minigame), else docking.
-            string prompt = mining != null ? mining.PromptText : null;
+            // The action prompt: navigation (autopilot / jump) first, then mining (lock / approach / minigame), else docking.
+            string prompt = nav != null ? nav.PromptText : null;
+            if (prompt == null && mining != null) prompt = mining.PromptText;
             if (prompt == null && level.CanDock) prompt = GoF2Localization.Extra("hudDock", "DOCK");
             dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null);
             if (prompt != null) dockLabel.text = prompt;
@@ -287,7 +320,14 @@ namespace GoF2Remake.UI
             }
 
             var phase = mining != null ? mining.State : GoF2Mining.Phase.Idle;
-            if (phase != lastPhase) { lastPhase = phase; BuildHints(GoF2InputMode.Current); }
+            bool autopilot = nav != null && nav.Autopilot;
+            if (phase != lastPhase || autopilot != lastAutopilot) { lastPhase = phase; lastAutopilot = autopilot; BuildHints(GoF2InputMode.Current); }
+            root.EnableInClassList("hud-cinematic", nav != null && nav.Jumping);   // manual planet jump: no HUD
+            // Fast-forward: the touch button, or hold R / controller Y (MGame key 0x100, hold-to-use).
+            bool ffHeld = navView.FastForwardPressed
+                          || (Keyboard.current != null && Keyboard.current.rKey.isPressed)
+                          || (Gamepad.current != null && Gamepad.current.buttonNorth.isPressed);
+            nav?.SetFastForwardHeld(ffHeld);
             root.EnableInClassList("hud-docking", phase != GoF2Mining.Phase.Idle);
             root.EnableInClassList("hud-mining", phase == GoF2Mining.Phase.Mining);
             var touchStick = GoF2InputMode.Current == GoF2InputKind.Touch && stick != null ? stick.Value : Vector2.zero;
@@ -317,6 +357,18 @@ namespace GoF2Remake.UI
             UpdateCrosshair();
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == GoF2Mining.Phase.Idle);
             miningView.UpdateGame(mining, Time.deltaTime * 1000f);
+            var lockRing = root.Q("lockRing");
+            lockRing.style.left = crosshair.style.left;
+            lockRing.style.top = crosshair.style.top;
+            navView.Update(nav, Camera.main, GoF2InputMode.Current == GoF2InputKind.Touch, phase == GoF2Mining.Phase.Approaching,
+                           level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
+        }
+
+        /// <summary>The autopilot button (HUD key 0x40): turns the autopilot off / cancels an asteroid approach.</summary>
+        void OnAutopilotButton()
+        {
+            if (nav != null && nav.Autopilot) nav.Interact();
+            else if (mining != null && mining.State == GoF2Mining.Phase.Approaching) mining.Interact();
         }
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);
@@ -324,7 +376,8 @@ namespace GoF2Remake.UI
         /// <summary>The action prompt: mining (mine / abort / stop) when it has something to do, else dock.</summary>
         void Interact()
         {
-            if (mining != null && mining.PromptText != null) mining.Interact();
+            if (nav != null && nav.PromptText != null) nav.Interact();
+            else if (mining != null && mining.PromptText != null) mining.Interact();
             else Dock();
         }
 

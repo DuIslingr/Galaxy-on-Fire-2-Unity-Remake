@@ -53,6 +53,10 @@ namespace GoF2Remake.Flight
         [System.NonSerialized] public bool externalControl;
         [System.NonSerialized] public float ExternalSpeedMetersPerSecond;
 
+        /// <summary>Autopilot (PlayerEgo::setAutoPilot): the world position to fly to, re-read every frame; null = off.
+        /// The stick is ignored; throttle, boost and the flight model's speed still apply (autopilot_travel.md 3.3).</summary>
+        [System.NonSerialized] public System.Func<Vector3> autopilotTarget;
+
         /// <summary>Speed this frame in m/s (after world scaling).</summary>
         public float SpeedMetersPerSecond { get; private set; }
 
@@ -127,14 +131,24 @@ namespace GoF2Remake.Flight
 
             Vector2 steer = useBuiltInInput ? ReadInput() : Vector2.zero;
             if (externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
+            if (autopilotTarget != null) steer = Vector2.zero;
 
             // Model convention: +x = yaw left, +y = pitch down. Map "stick right = turn right".
             var model = new Vector2(-steer.x, invertPitch ? steer.y : -steer.y);
 
             var r = Model.Step(model, dtMs, transform.up, transform.right);
 
+            if (autopilotTarget != null)
+            {
+                // PlayerEgo::moveToPosition 0xa8720: turn = min(handling + 2.7, 4), dir += (to - dir) * (int)(dt * turn) / 4096,
+                // world up (the ship levels out, no roll).
+                float turn = Mathf.Min(stats.handling / 100f + 0.2f * stats.handlingUpgrades + 2.7f, 4f);
+                var to = (autopilotTarget() - transform.position).normalized;
+                var dir = (transform.forward + (to - transform.forward) * ((int)(dtMs * turn) / 4096f)).normalized;
+                if (dir.sqrMagnitude > 0f) transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+            }
             // Original: yaw positive = left. Unity yaw positive = right, so negate.
-            transform.Rotate(r.pitchDeg, -r.yawDeg, r.rollDeg, Space.Self);
+            else transform.Rotate(r.pitchDeg, -r.yawDeg, r.rollDeg, Space.Self);
             transform.position += transform.forward * (r.forwardUnits * metersPerUnit)
                                 + transform.right * (r.sidePushUnits * metersPerUnit);
 

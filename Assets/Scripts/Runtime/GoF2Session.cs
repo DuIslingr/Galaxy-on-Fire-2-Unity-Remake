@@ -30,6 +30,9 @@ namespace GoF2Remake.Data
         /// <summary>Current station (Status::getStation): one flight level = one station orbit.</summary>
         public static int StationIndex = 78;
 
+        /// <summary>Status' station stack [1]: where the player came from (the planet-jump arrival point), -1 = none.</summary>
+        public static int PreviousStationIndex = -1;
+
         /// <summary>Player ship index (ships.json), Status+0x18c.</summary>
         public static int ShipIndex = 10;
 
@@ -73,6 +76,7 @@ namespace GoF2Remake.Data
         public static void ResetNewGame()
         {
             StationIndex = 78;
+            PreviousStationIndex = -1;
             ShipIndex = 10;
             Equipment = StartEquipment();
             Cargo = new List<GoF2Stack>();

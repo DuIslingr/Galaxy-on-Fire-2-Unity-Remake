@@ -16,6 +16,7 @@ namespace GoF2Remake.Flight
         public AudioClip miningDrillBroken;
         public AudioClip autopilotOn;
         public AudioClip autopilotOff;
+        public AudioClip jumpToPlanet;   // 5 Jump_to_planets (autopilot_travel.md 3.5)
 
         public static GoF2CombatAudio Load() => Resources.Load<GoF2CombatAudio>($"{GoF2WeaponFx.ResourcesFolder}/CombatAudio");
     }

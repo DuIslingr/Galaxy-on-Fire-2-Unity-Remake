@@ -38,6 +38,10 @@ namespace GoF2Remake.World
         GoF2OrbitLayout layout;
         Body sun, streak;
         readonly List<Body> planets = new List<Body>();
+
+        /// <summary>StarSystem::getPlanetTargets: one per planet billboard with its station (the orbit planet = the current
+        /// station's own, never lockable). The transforms follow the camera, 1000 m out.</summary>
+        public readonly List<(int station, Transform transform, bool orbitPlanet)> PlanetTargets = new List<(int, Transform, bool)>();
         readonly List<Body> rings = new List<Body>();
         float flareIntensity;
         static Mesh quad;
@@ -72,6 +76,7 @@ namespace GoF2Remake.World
                 body.orbitPlanet = p.isOrbitPlanet;
                 SetProps(body.t, mirror, tint);
                 planets.Add(body);
+                PlanetTargets.Add((p.station, body.t, p.isOrbitPlanet));
                 if (p.ring && ringMat != null)
                 {
                     var ring = Make(p.texture + "_ring", ringMat, 2902, dir, rot, p.scale * 4f);
