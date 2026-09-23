@@ -43,6 +43,14 @@ namespace GoF2Remake.EditorTools
             ("station_vossk", 9, 0f),           // Vossk space
         };
 
+        // Short, neutral Terran radio lines (1.6-2.8 s) for the voice volume preview.
+        public static readonly string[] VoicePreviewLines =
+        {
+            "TERRANFEMALE_MISSION_RADIO_BACK_FOR_REWARD", "TERRANMALE_MISSION_RADIO_WON_1",
+            "TERRANFEMALE_MISSION_RADIO_START_5", "TERRANMALE_MISSION_RADIO_BACK_FOR_REWARD",
+            "TERRANFEMALE_MISSION_RADIO_WON_1", "TERRANMALE_MISSION_RADIO_START_5",
+        };
+
         static readonly (string code, string name)[] Languages =
         {
             ("en", "English"), ("de", "Deutsch"), ("fr", "Français"), ("es", "Español"),
@@ -391,9 +399,14 @@ namespace GoF2Remake.EditorTools
             music.loop = true;
             var sfx = uiGo.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
+            var voice = uiGo.AddComponent<AudioSource>();
+            voice.playOnAwake = false;
             var menu = uiGo.AddComponent<GoF2MainMenu>();
             menu.musicSource = music;
             menu.sfxSource = sfx;
+            menu.voiceSource = voice;
+            menu.voicePreviewEnglish = VoicePreviewLines.Select(l => Clip($"GENERIC_eng/{l}.ogg")).ToArray();
+            menu.voicePreviewGerman = VoicePreviewLines.Select(l => Clip($"GENERIC_deu/de_{l}.ogg")).ToArray();
             menu.menuMusic = Clip("MUSIC/Space_NoCombat_Void.ogg");
             menu.buttonPush = Clip("SFX_GENERAL/Button_Push_v06.ogg");
             menu.buttonRelease = Clip("SFX_GENERAL/Button_Release_V06.ogg");

@@ -45,6 +45,11 @@ namespace GoF2Remake.UI
         public AudioClip buttonPush;     // event 124
         public AudioClip buttonRelease;  // event 123
         public AudioClip infoSound;      // event 126
+        // Voice volume preview (remake: the original only previewed FX). Same lines in both voice banks;
+        // German voices play when the language is German, like the original's voice bank switch.
+        public AudioSource voiceSource;
+        public AudioClip[] voicePreviewEnglish;
+        public AudioClip[] voicePreviewGerman;
 
         [Header("Localization (text_<code>.json)")]
         public string[] languageCodes = { "en" };
@@ -72,6 +77,7 @@ namespace GoF2Remake.UI
         PanelSettings runtimePanel;
         PanelRenderer panelRenderer;
         bool started;
+        int voicePreviewIndex;
         bool touchMode;   // last input was a finger: no hover styles, no focus highlight (see SetTouchMode)
         VisualElement safeArea;
         Vector2Int lastScreen;
@@ -546,6 +552,7 @@ namespace GoF2Remake.UI
             var voice = root.Q<Slider>("voiceSlider");
             voice.value = GoF2Settings.VoiceVolume;
             voice.RegisterValueChangedCallback(e => GoF2Settings.VoiceVolume = e.newValue);
+            voice.RegisterCallback<PointerCaptureOutEvent>(_ => PlayVoicePreview());
             var brightness = root.Q<SliderInt>("brightnessSlider");
             brightness.value = GoF2Settings.Brightness;
             brightness.RegisterValueChangedCallback(e => { GoF2Settings.Brightness = e.newValue; RefreshTexts(); });
@@ -608,6 +615,7 @@ namespace GoF2Remake.UI
         {
             if (musicSource != null && screen != MenuState.Leaving && !fadingMusic) musicSource.volume = GoF2Settings.MusicVolume;
             if (sfxSource != null) sfxSource.volume = GoF2Settings.SfxVolume;
+            if (voiceSource != null) voiceSource.volume = GoF2Settings.VoiceVolume;
             if (bloom != null) bloom.active = GoF2Settings.Bloom;
             if (colorAdjustments != null)
             {
@@ -769,6 +777,17 @@ namespace GoF2Remake.UI
             }
             musicSource.volume = target;
             fadingMusic = false;
+        }
+
+        void PlayVoicePreview()
+        {
+            var clips = GoF2Localization.Language == "de" && voicePreviewGerman != null && voicePreviewGerman.Length > 0
+                ? voicePreviewGerman : voicePreviewEnglish;
+            if (voiceSource == null || clips == null || clips.Length == 0) return;
+            voiceSource.Stop();   // one line at a time, a new release restarts it
+            voiceSource.clip = clips[voicePreviewIndex++ % clips.Length];
+            voiceSource.volume = GoF2Settings.VoiceVolume;
+            voiceSource.Play();
         }
 
         void Play(AudioClip clip, float volume = 1f)
