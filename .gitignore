@@ -1,5 +1,6 @@
 # Unity generated
 /[Ll]ibrary/
+/.utmp/
 /[Tt]emp/
 /[Oo]bj/
 /[Bb]uild/
@@ -41,3 +42,8 @@ Thumbs.db
 
 # Claude Code local settings (keep .claude/skills and CLAUDE.md in git)
 .claude/settings.local.json
+
+# Android build outputs
+*.apk
+*.aab
+*.symbols.zip
