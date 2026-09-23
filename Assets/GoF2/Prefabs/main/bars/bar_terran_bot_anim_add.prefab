@@ -1,0 +1,121 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &6149781482334270352
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -822762804419803988, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 84dc626ac2c5171429b75392415318d6, type: 2}
+    - target: {fileID: 919132149155446097, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      propertyPath: m_Name
+      value: bar_terran_bot_anim_add
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7963037676020759667}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8167400334665772407}
+  m_SourcePrefab: {fileID: 100100000, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+--- !u!1 &6456192078635470529 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: a0a6805a09adcca4fb19bb0909d9642c, type: 3}
+  m_PrefabInstance: {fileID: 6149781482334270352}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7963037676020759667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6456192078635470529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: 5b2412e4468c4934185ea63371362d7a, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &8167400334665772407
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6456192078635470529}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 14279
+  materialId: 20057
+  originalPath: data/assets/main/3d/meshes/bars/bar_terran_bot_anim_add.aem

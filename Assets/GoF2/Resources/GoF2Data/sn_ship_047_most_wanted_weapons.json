@@ -1,0 +1,212 @@
+[
+ {
+  "ship": 47,
+  "shipName": "Gator Custom",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -794,
+     200,
+     -96
+    ],
+    "position_engine": [
+     -794,
+     -96,
+     -200
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -76,
+     -1068,
+     -192
+    ],
+    "position_engine": [
+     -76,
+     -192,
+     1068
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     77,
+     -1068,
+     -192
+    ],
+    "position_engine": [
+     77,
+     -192,
+     1068
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     795,
+     202,
+     -96
+    ],
+    "position_engine": [
+     795,
+     -96,
+     -202
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -278,
+     -158,
+     -201
+    ],
+    "position_engine": [
+     -278,
+     -201,
+     158
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     284,
+     -158,
+     -201
+    ],
+    "position_engine": [
+     284,
+     -201,
+     158
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     629,
+     149
+    ],
+    "position_engine": [
+     0,
+     149,
+     -629
+    ],
+    "turretAngles": [
+     1.2999249696731567,
+     1.2999249696731567,
+     1.2999249696731567
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     614,
+     665,
+     4
+    ],
+    "position_engine": [
+     614,
+     4,
+     -665
+    ],
+    "turretAngles": [
+     0.8002966642379761,
+     1.0,
+     0.8002966642379761
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     527,
+     665,
+     25
+    ],
+    "position_engine": [
+     527,
+     25,
+     -665
+    ],
+    "turretAngles": [
+     0.8959770798683167,
+     0.8959770798683167,
+     0.8959770798683167
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     200,
+     608,
+     113
+    ],
+    "position_engine": [
+     200,
+     113,
+     -608
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -614,
+     665,
+     4
+    ],
+    "position_engine": [
+     -614,
+     4,
+     -665
+    ],
+    "turretAngles": [
+     0.8002966642379761,
+     1.0,
+     0.8002966642379761
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -535,
+     665,
+     27
+    ],
+    "position_engine": [
+     -535,
+     27,
+     -665
+    ],
+    "turretAngles": [
+     0.8959770798683167,
+     0.8959770798683167,
+     0.8959770798683167
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -202,
+     608,
+     111
+    ],
+    "position_engine": [
+     -202,
+     111,
+     -608
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ }
+]

@@ -1,0 +1,1 @@
+{"source": "assets/valkyrie/3d/meshes/galaxymap/v_map_planet_021.aem", "version": 16, "flags": 31, "truncated": false, "parts": [{"name": "v_map_planet_021_part0", "parent": "v_map_planet_021", "vertices": 1584, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0, 0.0, 55425.625], "channels": []}]}

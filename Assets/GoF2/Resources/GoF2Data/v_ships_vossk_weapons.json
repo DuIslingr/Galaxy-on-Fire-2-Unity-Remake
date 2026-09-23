@@ -1,0 +1,296 @@
+[
+ {
+  "ship": 39,
+  "shipName": "S'Kanarr",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     487,
+     -837,
+     -5
+    ],
+    "position_engine": [
+     487,
+     -5,
+     837
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     114,
+     -949,
+     -17
+    ],
+    "position_engine": [
+     114,
+     -17,
+     949
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -114,
+     -949,
+     -17
+    ],
+    "position_engine": [
+     -114,
+     -17,
+     949
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -484,
+     -837,
+     -5
+    ],
+    "position_engine": [
+     -484,
+     -5,
+     837
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     138,
+     -329,
+     121
+    ],
+    "position_engine": [
+     138,
+     121,
+     329
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -136,
+     -329,
+     121
+    ],
+    "position_engine": [
+     -136,
+     121,
+     329
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     27,
+     243
+    ],
+    "position_engine": [
+     0,
+     243,
+     -27
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -236,
+     422,
+     42
+    ],
+    "position_engine": [
+     -236,
+     42,
+     -422
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -231,
+     378,
+     -20
+    ],
+    "position_engine": [
+     -231,
+     -20,
+     -378
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     231,
+     378,
+     -20
+    ],
+    "position_engine": [
+     231,
+     -20,
+     -378
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     237,
+     422,
+     42
+    ],
+    "position_engine": [
+     237,
+     42,
+     -422
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 41,
+  "shipName": "K'Suukk",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -592,
+     -169
+    ],
+    "position_engine": [
+     0,
+     -169,
+     592
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -244,
+     -751,
+     -120
+    ],
+    "position_engine": [
+     -244,
+     -120,
+     751
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     244,
+     -751,
+     -120
+    ],
+    "position_engine": [
+     244,
+     -120,
+     751
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -151,
+     -408,
+     -106
+    ],
+    "position_engine": [
+     -151,
+     -106,
+     408
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     151,
+     -408,
+     -106
+    ],
+    "position_engine": [
+     151,
+     -106,
+     408
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -123,
+     634,
+     32
+    ],
+    "position_engine": [
+     -123,
+     32,
+     -634
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     123,
+     634,
+     32
+    ],
+    "position_engine": [
+     123,
+     32,
+     -634
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     296,
+     -59
+    ],
+    "position_engine": [
+     0,
+     -59,
+     -296
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ }
+]

@@ -1,0 +1,1 @@
+{"source": "assets/supernova/3d/meshes/galaxymap/sn_map_planet_024.aem", "version": 16, "flags": 31, "truncated": false, "parts": [{"name": "sn_map_planet_024_part0", "parent": "sn_map_planet_024", "vertices": 3240, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0009765625, 0.0, 55329.140625], "channels": []}]}

@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &1771357286124323808
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: m_Name
+      value: ship_019_midorian_engine_glow_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 3315034128604104132, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 6db2231b678bb3647bc4f87d62d4b6a4, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4646584713844959177}
+  m_SourcePrefab: {fileID: 100100000, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+--- !u!1 &1464876871906803377 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 5e6956db8e7baba4a9bc8a75e4dc2580, type: 3}
+  m_PrefabInstance: {fileID: 1771357286124323808}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4646584713844959177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1464876871906803377}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 17919
+  materialId: 34813
+  originalPath: data/assets/main/3d/meshes/ships/ship_019_midorian_engine_glow_add.aem

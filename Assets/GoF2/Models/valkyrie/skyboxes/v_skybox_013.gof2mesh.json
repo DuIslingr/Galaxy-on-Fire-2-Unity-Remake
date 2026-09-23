@@ -1,0 +1,1 @@
+{"source": "assets/valkyrie/3d/meshes/skyboxes/v_skybox_013.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "v_skybox_013_part0", "parent": "v_skybox_013", "vertices": 576, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 3.0517578125e-05, 779.0380249023438], "channels": []}]}

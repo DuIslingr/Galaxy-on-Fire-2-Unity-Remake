@@ -1,0 +1,166 @@
+[
+ {
+  "ship": 57,
+  "shipName": "Kinzer RS",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     57,
+     -299,
+     -50
+    ],
+    "position_engine": [
+     57,
+     -50,
+     299
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -57,
+     -299,
+     -50
+    ],
+    "position_engine": [
+     -57,
+     -50,
+     299
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     251,
+     -823,
+     -69
+    ],
+    "position_engine": [
+     251,
+     -69,
+     823
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -251,
+     -823,
+     -69
+    ],
+    "position_engine": [
+     -251,
+     -69,
+     823
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     156,
+     181,
+     -55
+    ],
+    "position_engine": [
+     156,
+     -55,
+     -181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -156,
+     181,
+     -55
+    ],
+    "position_engine": [
+     -156,
+     -55,
+     -181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     502,
+     -13,
+     -133
+    ],
+    "position_engine": [
+     502,
+     -133,
+     13
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -502,
+     -13,
+     -133
+    ],
+    "position_engine": [
+     -502,
+     -133,
+     13
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -1,
+     646,
+     12
+    ],
+    "position_engine": [
+     -1,
+     12,
+     -646
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -122,
+     806,
+     10
+    ],
+    "position_engine": [
+     -122,
+     10,
+     -806
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     119,
+     806,
+     10
+    ],
+    "position_engine": [
+     119,
+     10,
+     -806
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ }
+]

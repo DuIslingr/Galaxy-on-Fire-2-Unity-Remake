@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/turrets/turret_002_gun.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "turret_002_gun_part0", "parent": "turret_002_gun", "vertices": 1410, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, -31.19916343688965, 10.839628219604492, 113.27619171142578], "channels": []}]}

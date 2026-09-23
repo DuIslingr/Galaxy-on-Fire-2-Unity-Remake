@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/skyboxes/skybox_005.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "skybox_005_part0", "parent": "skybox_005", "vertices": 576, "pivot": [0.0, 0.0, 3.0517578125e-05], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 6.103515625e-05, 779.0380249023438], "channels": []}]}

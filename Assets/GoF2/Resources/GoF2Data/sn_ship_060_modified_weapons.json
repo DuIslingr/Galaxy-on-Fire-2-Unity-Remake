@@ -1,0 +1,158 @@
+[
+ {
+  "ship": 60,
+  "shipName": "Darkzov",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     214,
+     -59,
+     -16
+    ],
+    "position_engine": [
+     214,
+     -16,
+     59
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -214,
+     -59,
+     -16
+    ],
+    "position_engine": [
+     -214,
+     -16,
+     59
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     324,
+     -187,
+     -73
+    ],
+    "position_engine": [
+     324,
+     -73,
+     187
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -324,
+     -187,
+     -73
+    ],
+    "position_engine": [
+     -324,
+     -73,
+     187
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     2,
+     -21,
+     -147
+    ],
+    "position_engine": [
+     2,
+     -147,
+     21
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     288,
+     99
+    ],
+    "position_engine": [
+     0,
+     99,
+     -288
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     42,
+     491,
+     -64
+    ],
+    "position_engine": [
+     42,
+     -64,
+     -491
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -42,
+     491,
+     -64
+    ],
+    "position_engine": [
+     -42,
+     -64,
+     -491
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -106,
+     511,
+     42
+    ],
+    "position_engine": [
+     -106,
+     42,
+     -511
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     102,
+     511,
+     42
+    ],
+    "position_engine": [
+     102,
+     42,
+     -511
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ }
+]

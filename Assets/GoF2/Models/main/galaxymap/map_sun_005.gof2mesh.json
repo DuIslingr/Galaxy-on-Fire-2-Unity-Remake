@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/galaxymap/map_sun_005.aem", "version": 8, "flags": 31, "truncated": false, "parts": [{"name": "map_sun_005_part0", "parent": "map_sun_005", "vertices": 6, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0, 0.0, 212132.03125], "channels": []}]}

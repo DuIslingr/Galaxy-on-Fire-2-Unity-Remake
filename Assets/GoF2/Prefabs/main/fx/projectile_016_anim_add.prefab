@@ -1,0 +1,129 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3186450920188568355
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -9073474931179311932, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 48e453da44ede0640bf03407cd44a759, type: 2}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -4849335300808936447, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 48e453da44ede0640bf03407cd44a759, type: 2}
+    - target: {fileID: 919132149155446097, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: m_Name
+      value: projectile_016_anim_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 4709404654931379764, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 48e453da44ede0640bf03407cd44a759, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3171915402058227422}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5712630122867627962}
+  m_SourcePrefab: {fileID: 100100000, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+--- !u!1 &2376183077438447218 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 69fc55a59e8cff74eae89ab6495aa99c, type: 3}
+  m_PrefabInstance: {fileID: 3186450920188568355}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &3171915402058227422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2376183077438447218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: 3ed7eee4a4fb7f24891cfe4afe034917, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &5712630122867627962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2376183077438447218}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 6792
+  materialId: 24201
+  originalPath: data/assets/main/3d/meshes/fx/projectile_016_anim_add.aem

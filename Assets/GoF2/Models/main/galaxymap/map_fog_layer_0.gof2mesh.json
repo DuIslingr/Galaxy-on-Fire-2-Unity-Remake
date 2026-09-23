@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/galaxymap/map_fog_layer_0.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "map_fog_layer_0_part0", "parent": "map_fog_layer_0", "vertices": 4, "pivot": [0.0, 4000.0, 7000.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 4000.0, 7000.0, 31819.8046875], "channels": []}]}

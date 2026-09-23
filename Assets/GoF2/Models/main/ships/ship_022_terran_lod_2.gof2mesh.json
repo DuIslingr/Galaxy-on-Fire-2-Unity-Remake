@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/ships/ship_022_terran_lod_2.aem", "version": 8, "flags": 31, "truncated": false, "parts": [{"name": "ship_022_terran_lod_2_part0", "parent": "ship_022_terran_lod_2", "vertices": 12306, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0, 0.0, 836.7608032226562], "channels": []}]}

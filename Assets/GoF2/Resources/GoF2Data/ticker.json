@@ -1,0 +1,710 @@
+[
+ {
+  "index": 0,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 1,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 2,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 3,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 4,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 5,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 6,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 7,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 8,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 9,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 10,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 11,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 12,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 13,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 14,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 15,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 16,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 17,
+  "flag": true,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 18,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 19,
+  "flag": false,
+  "conditions": [
+   false,
+   true,
+   false,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 20,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   false,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 21,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   true,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 22,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   false,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 23,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   true,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 24,
+  "flag": false,
+  "conditions": [
+   false,
+   true,
+   false,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 25,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   false,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 26,
+  "flag": false,
+  "conditions": [
+   false,
+   true,
+   false,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 27,
+  "flag": true,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 28,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 29,
+  "flag": true,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 30,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 31,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 32,
+  "flag": true,
+  "conditions": [
+   false,
+   true,
+   false,
+   false
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 33,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 34,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 30,
+  "param2": 45
+ },
+ {
+  "index": 35,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 36,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   false,
+   true
+  ],
+  "param1": 1,
+  "param2": 6
+ },
+ {
+  "index": 37,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   false,
+   true
+  ],
+  "param1": 7,
+  "param2": 12
+ },
+ {
+  "index": 38,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 13,
+  "param2": 18
+ },
+ {
+  "index": 39,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   false
+  ],
+  "param1": 19,
+  "param2": 21
+ },
+ {
+  "index": 40,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   false,
+   false
+  ],
+  "param1": 22,
+  "param2": 24
+ },
+ {
+  "index": 41,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 23,
+  "param2": 25
+ },
+ {
+  "index": 42,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 26,
+  "param2": 28
+ },
+ {
+  "index": 43,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 29,
+  "param2": 31
+ },
+ {
+  "index": 44,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 32,
+  "param2": 33
+ },
+ {
+  "index": 45,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 34,
+  "param2": 36
+ },
+ {
+  "index": 46,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 37,
+  "param2": 38
+ },
+ {
+  "index": 47,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   false
+  ],
+  "param1": 34,
+  "param2": 44
+ },
+ {
+  "index": 48,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   false,
+   false
+  ],
+  "param1": 45,
+  "param2": 45
+ },
+ {
+  "index": 49,
+  "flag": false,
+  "conditions": [
+   false,
+   true,
+   false,
+   false
+  ],
+  "param1": 45,
+  "param2": 45
+ },
+ {
+  "index": 50,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   true,
+   false
+  ],
+  "param1": 45,
+  "param2": 45
+ },
+ {
+  "index": 51,
+  "flag": false,
+  "conditions": [
+   false,
+   false,
+   false,
+   true
+  ],
+  "param1": 45,
+  "param2": 45
+ },
+ {
+  "index": 52,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 53,
+  "flag": false,
+  "conditions": [
+   true,
+   false,
+   true,
+   true
+  ],
+  "param1": 0,
+  "param2": 1000
+ },
+ {
+  "index": 54,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 90,
+  "param2": 95
+ },
+ {
+  "index": 55,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 96,
+  "param2": 105
+ },
+ {
+  "index": 56,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 106,
+  "param2": 116
+ },
+ {
+  "index": 57,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 117,
+  "param2": 130
+ },
+ {
+  "index": 58,
+  "flag": false,
+  "conditions": [
+   true,
+   true,
+   true,
+   true
+  ],
+  "param1": 160,
+  "param2": 163
+ }
+]

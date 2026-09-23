@@ -1,0 +1,233 @@
+[
+ {
+  "ship": 45,
+  "shipName": "Bloodstar",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -470,
+     -367,
+     -157
+    ],
+    "position_engine": [
+     -470,
+     -157,
+     367
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -720,
+     -154,
+     -157
+    ],
+    "position_engine": [
+     -720,
+     -157,
+     154
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     471,
+     -365,
+     -156
+    ],
+    "position_engine": [
+     471,
+     -156,
+     365
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     720,
+     -151,
+     -156
+    ],
+    "position_engine": [
+     720,
+     -156,
+     151
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     10,
+     -962,
+     -189
+    ],
+    "position_engine": [
+     10,
+     -189,
+     962
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -9,
+     -962,
+     -189
+    ],
+    "position_engine": [
+     -9,
+     -189,
+     962
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     10,
+     -962,
+     -169
+    ],
+    "position_engine": [
+     10,
+     -169,
+     962
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -9,
+     -962,
+     -169
+    ],
+    "position_engine": [
+     -9,
+     -169,
+     962
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     460,
+     172
+    ],
+    "position_engine": [
+     0,
+     172,
+     -460
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     668,
+     -105
+    ],
+    "position_engine": [
+     0,
+     -105,
+     -668
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     668,
+     -16
+    ],
+    "position_engine": [
+     0,
+     -16,
+     -668
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     101,
+     668,
+     -61
+    ],
+    "position_engine": [
+     101,
+     -61,
+     -668
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     290,
+     605,
+     -73
+    ],
+    "position_engine": [
+     290,
+     -73,
+     -605
+    ],
+    "turretAngles": [
+     0.40475994348526,
+     0.40475994348526,
+     0.40475994348526
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -100,
+     668,
+     -61
+    ],
+    "position_engine": [
+     -100,
+     -61,
+     -668
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -287,
+     603,
+     -73
+    ],
+    "position_engine": [
+     -287,
+     -73,
+     -603
+    ],
+    "turretAngles": [
+     0.40475994348526,
+     0.40475994348526,
+     0.40475994348526
+    ]
+   }
+  ]
+ }
+]

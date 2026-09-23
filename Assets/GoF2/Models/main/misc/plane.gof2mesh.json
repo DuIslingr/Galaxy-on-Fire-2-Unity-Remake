@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/plane.aem", "version": 1, "flags": 23, "truncated": false, "parts": [{"name": "plane_part0", "parent": "plane", "vertices": 4, "pivot": [0, 0, 0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0, 0, 0, 0], "channels": []}]}

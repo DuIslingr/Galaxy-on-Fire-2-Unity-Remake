@@ -1,0 +1,165 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3436774840196387980
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -9158444979695789839, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8557797357183187146, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: -6009846717714029341, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: -3884337559483966473, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: -3817614612094931010, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: -2042483526662705467, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: 919132149155446097, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: m_Name
+      value: station_pirates_explosion_anim
+      objectReference: {fileID: 0}
+    - target: {fileID: 2264909967796413545, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: 3532648479358267433, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: 5694252806561145032, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: 7551028407255725674, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: 7641836691230993729, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    - target: {fileID: 8811454577902533569, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 0f51f2fa47c0fc1428e5040fc263b8de, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8895445709891796917}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7664502802338868317}
+  m_SourcePrefab: {fileID: 100100000, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+--- !u!1 &2553691981631646173 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: c7f5196a41542684a92a132ea3736b49, type: 3}
+  m_PrefabInstance: {fileID: 3436774840196387980}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8895445709891796917
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2553691981631646173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: 62109f2dcef702749b66a367e1bee5ce, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &7664502802338868317
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2553691981631646173}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 14246
+  materialId: 20104
+  originalPath: data/assets/main/3d/meshes/stations/station_pirates_explosion_anim.aem

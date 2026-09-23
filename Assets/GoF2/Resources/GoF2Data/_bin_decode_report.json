@@ -1,0 +1,206 @@
+{
+ "agents": {
+  "bytes": 1587,
+  "leftover": 0
+ },
+ "wanted": {
+  "bytes": 1870,
+  "leftover": 0
+ },
+ "names_bobolan_0.bin": {
+  "bytes": 114,
+  "leftover": 0
+ },
+ "names_bobolan_1.bin": {
+  "bytes": 131,
+  "leftover": 0
+ },
+ "names_cyborg_0.bin": {
+  "bytes": 258,
+  "leftover": 0
+ },
+ "names_grey_0.bin": {
+  "bytes": 215,
+  "leftover": 0
+ },
+ "names_multipod_0.bin": {
+  "bytes": 92,
+  "leftover": 0
+ },
+ "names_multipod_1.bin": {
+  "bytes": 90,
+  "leftover": 0
+ },
+ "names_nivelian_0.bin": {
+  "bytes": 104,
+  "leftover": 0
+ },
+ "names_nivelian_1.bin": {
+  "bytes": 95,
+  "leftover": 0
+ },
+ "names_terran_0_m.bin": {
+  "bytes": 112,
+  "leftover": 0
+ },
+ "names_terran_0_w.bin": {
+  "bytes": 115,
+  "leftover": 0
+ },
+ "names_terran_1.bin": {
+  "bytes": 137,
+  "leftover": 0
+ },
+ "names_vossk_0.bin": {
+  "bytes": 127,
+  "leftover": 0
+ },
+ "names_vossk_1.bin": {
+  "bytes": 125,
+  "leftover": 0
+ },
+ "ticker": {
+  "bytes": 1652,
+  "leftover": 0
+ },
+ "shipparts": {
+  "bytes": 15518,
+  "leftover": 0
+ },
+ "stationparts": {
+  "bytes": 19148,
+  "leftover": 0
+ },
+ "collision": {
+  "bytes": 50640,
+  "leftover": 0
+ },
+ "wreck_collisions": {
+  "bytes": 2232,
+  "leftover": 0
+ },
+ "static_collisions": {
+  "bytes": 4088,
+  "leftover": 0
+ },
+ "collision_test": {
+  "bytes": 2312,
+  "leftover": 0
+ },
+ "v_collisions": {
+  "bytes": 3140,
+  "leftover": 0
+ },
+ "weapons_hd": {
+  "bytes": 7604,
+  "leftover": 0
+ },
+ "weapons_sd": {
+  "bytes": 7560,
+  "leftover": 0
+ },
+ "sn_ship_044_elite_nivelian_weapons": {
+  "bytes": 172,
+  "leftover": 0
+ },
+ "sn_ship_045_most_wanted_weapons": {
+  "bytes": 196,
+  "leftover": 0
+ },
+ "sn_ship_046_most_wanted_weapons": {
+  "bytes": 132,
+  "leftover": 0
+ },
+ "sn_ship_047_most_wanted_weapons": {
+  "bytes": 192,
+  "leftover": 0
+ },
+ "sn_ship_048_most_wanted_weapons": {
+  "bytes": 148,
+  "leftover": 0
+ },
+ "sn_ship_049_boss_nivelian_weapons": {
+  "bytes": 164,
+  "leftover": 0
+ },
+ "sn_ship_051_dropship_terran_weapons": {
+  "bytes": 208,
+  "leftover": 0
+ },
+ "sn_ship_052_retro_weapons": {
+  "bytes": 132,
+  "leftover": 0
+ },
+ "sn_ship_054_vossk_weapons": {
+  "bytes": 128,
+  "leftover": 0
+ },
+ "sn_ship_055_modified_weapons": {
+  "bytes": 152,
+  "leftover": 0
+ },
+ "sn_ship_056_modified_weapons": {
+  "bytes": 168,
+  "leftover": 0
+ },
+ "sn_ship_057_modified_weapons": {
+  "bytes": 128,
+  "leftover": 0
+ },
+ "sn_ship_058_modified_weapons": {
+  "bytes": 104,
+  "leftover": 0
+ },
+ "sn_ship_059_modified_weapons": {
+  "bytes": 120,
+  "leftover": 0
+ },
+ "sn_ship_060_modified_weapons": {
+  "bytes": 132,
+  "leftover": 0
+ },
+ "v_ships_deep_science_weapons": {
+  "bytes": 376,
+  "leftover": 0
+ },
+ "v_ships_vossk_weapons": {
+  "bytes": 244,
+  "leftover": 0
+ },
+ "docks_hd": {
+  "bytes": 3742,
+  "leftover": 0
+ },
+ "docks": {
+  "bytes": 3742,
+  "leftover": 0
+ },
+ "sn_docking_points_battlestation": {
+  "bytes": 80,
+  "leftover": 0
+ },
+ "sn_docking_points_cargo_wrecks": {
+  "bytes": 320,
+  "leftover": 0
+ },
+ "sn_docking_points_carrier_terran": {
+  "bytes": 1296,
+  "leftover": 0
+ },
+ "ships": {
+  "bytes": 2304,
+  "leftover": 0
+ },
+ "items": {
+  "bytes": 27628,
+  "leftover": 0
+ },
+ "systems": {
+  "bytes": 3612,
+  "leftover": 0
+ },
+ "stations": {
+  "bytes": 3408,
+  "leftover": 0
+ }
+}

@@ -1,0 +1,542 @@
+[
+ {
+  "index": 0,
+  "name": "Geryan Zhamoum",
+  "station": 3,
+  "system": 0,
+  "race": 2,
+  "raceName": "Nivelian",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 11,
+  "sellMod": -1,
+  "sellItemPrice": 49999,
+  "portraitParts": [
+   2,
+   2,
+   0,
+   3,
+   3
+  ]
+ },
+ {
+  "index": 1,
+  "name": "Tulant Kheont",
+  "station": 32,
+  "system": 2,
+  "race": 2,
+  "raceName": "Nivelian",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 15,
+  "sellMod": -1,
+  "sellItemPrice": 36998,
+  "portraitParts": [
+   2,
+   4,
+   4,
+   0,
+   0
+  ]
+ },
+ {
+  "index": 2,
+  "name": "Leskar",
+  "station": 20,
+  "system": 4,
+  "race": 3,
+  "raceName": "Midorian",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 25,
+  "sellMod": -1,
+  "sellItemPrice": 19999,
+  "portraitParts": [
+   2,
+   3,
+   1,
+   0,
+   0
+  ]
+ },
+ {
+  "index": 3,
+  "name": "Per Magnusson",
+  "station": 54,
+  "system": 10,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 27,
+  "sellMod": -1,
+  "sellItemPrice": 59999,
+  "portraitParts": [
+   0,
+   2,
+   2,
+   7,
+   5
+  ]
+ },
+ {
+  "index": 4,
+  "name": "Pete \"Big P\" Bizon",
+  "station": 43,
+  "system": 8,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 33,
+  "sellMod": -1,
+  "sellItemPrice": 1999,
+  "portraitParts": [
+   0,
+   7,
+   1,
+   8,
+   4
+  ]
+ },
+ {
+  "index": 5,
+  "name": "Obb Porff",
+  "station": 10,
+  "system": 6,
+  "race": 1,
+  "raceName": "Vossk",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 37,
+  "sellMod": -1,
+  "sellItemPrice": 2999,
+  "portraitParts": [
+   1,
+   2,
+   2,
+   0,
+   8
+  ]
+ },
+ {
+  "index": 6,
+  "name": "Mykkba Numkk",
+  "station": 5,
+  "system": 1,
+  "race": 4,
+  "raceName": "Multipod",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 46,
+  "sellMod": -1,
+  "sellItemPrice": 5999,
+  "portraitParts": [
+   4,
+   1,
+   1,
+   0,
+   2
+  ]
+ },
+ {
+  "index": 7,
+  "name": "Fabio Neroni",
+  "station": 14,
+  "system": 21,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 54,
+  "sellMod": -1,
+  "sellItemPrice": 59998,
+  "portraitParts": [
+   0,
+   7,
+   2,
+   8,
+   2
+  ]
+ },
+ {
+  "index": 8,
+  "name": "Tennox Ykkt",
+  "station": 51,
+  "system": 10,
+  "race": 1,
+  "raceName": "Vossk",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 59,
+  "sellMod": -1,
+  "sellItemPrice": 79999,
+  "portraitParts": [
+   1,
+   3,
+   1,
+   2,
+   0
+  ]
+ },
+ {
+  "index": 9,
+  "name": "Alan P. Tahoe",
+  "station": 90,
+  "system": 18,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 67,
+  "sellMod": -1,
+  "sellItemPrice": 39999,
+  "portraitParts": [
+   0,
+   4,
+   8,
+   2,
+   2
+  ]
+ },
+ {
+  "index": 10,
+  "name": "Dr. Muktin Kobus",
+  "station": 59,
+  "system": 20,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 96,
+  "sellMod": -1,
+  "sellItemPrice": 39999,
+  "portraitParts": [
+   0,
+   6,
+   10,
+   6,
+   3
+  ]
+ },
+ {
+  "index": 11,
+  "name": "Gunant Breh",
+  "station": 78,
+  "system": 15,
+  "race": 2,
+  "raceName": "Nivelian",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 90,
+  "sellMod": -1,
+  "sellItemPrice": 129999,
+  "portraitParts": [
+   2,
+   1,
+   4,
+   2,
+   1
+  ]
+ },
+ {
+  "index": 12,
+  "name": "Ylook Pykku",
+  "station": 18,
+  "system": 3,
+  "race": 1,
+  "raceName": "Vossk",
+  "male": true,
+  "sellItemSystem": 0,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 25000,
+  "portraitParts": [
+   1,
+   0,
+   4,
+   4,
+   4
+  ]
+ },
+ {
+  "index": 13,
+  "name": "Dyloon Jakoon",
+  "station": 26,
+  "system": 5,
+  "race": 6,
+  "raceName": "Bobolian",
+  "male": true,
+  "sellItemSystem": 1,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 10000,
+  "portraitParts": [
+   6,
+   1,
+   0,
+   3,
+   0
+  ]
+ },
+ {
+  "index": 14,
+  "name": "Cyphron",
+  "station": 65,
+  "system": 13,
+  "race": 5,
+  "raceName": "Cyborg",
+  "male": true,
+  "sellItemSystem": 10,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 500000,
+  "portraitParts": [
+   0,
+   6,
+   2,
+   7,
+   7
+  ]
+ },
+ {
+  "index": 15,
+  "name": "In'shkkt Typpt",
+  "station": 88,
+  "system": 17,
+  "race": 1,
+  "raceName": "Vossk",
+  "male": true,
+  "sellItemSystem": 21,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 30000,
+  "portraitParts": [
+   1,
+   3,
+   1,
+   0,
+   1
+  ]
+ },
+ {
+  "index": 16,
+  "name": "Samuel Ballam",
+  "station": 105,
+  "system": 25,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 178,
+  "sellMod": -1,
+  "sellItemPrice": 200000,
+  "portraitParts": [
+   0,
+   7,
+   7,
+   8,
+   8
+  ]
+ },
+ {
+  "index": 17,
+  "name": "John Bowens",
+  "station": 107,
+  "system": 25,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 182,
+  "sellMod": -1,
+  "sellItemPrice": 700000,
+  "portraitParts": [
+   0,
+   8,
+   5,
+   8,
+   4
+  ]
+ },
+ {
+  "index": 18,
+  "name": "Miguel Parham",
+  "station": 106,
+  "system": 25,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": 179,
+  "sellMod": -1,
+  "sellItemPrice": 1000000,
+  "portraitParts": [
+   0,
+   7,
+   9,
+   0,
+   5
+  ]
+ },
+ {
+  "index": 19,
+  "name": "Okk Lyrrt",
+  "station": 122,
+  "system": 29,
+  "race": 4,
+  "raceName": "Multipod",
+  "male": true,
+  "sellItemSystem": 32,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 5000000,
+  "portraitParts": [
+   4,
+   1,
+   0,
+   2,
+   1
+  ]
+ },
+ {
+  "index": 20,
+  "name": "Tebar Ceroon",
+  "station": 127,
+  "system": 30,
+  "race": 6,
+  "raceName": "Bobolian",
+  "male": true,
+  "sellItemSystem": 33,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 8000000,
+  "portraitParts": [
+   6,
+   0,
+   2,
+   2,
+   0
+  ]
+ },
+ {
+  "index": 21,
+  "name": "Jelka Lithgow",
+  "station": 108,
+  "system": 26,
+  "race": 0,
+  "raceName": "Terran",
+  "male": false,
+  "sellItemSystem": -1,
+  "sellBlueprint": -1,
+  "sellMod": 0,
+  "sellItemPrice": 0,
+  "portraitParts": [
+   10,
+   1,
+   3,
+   0,
+   3
+  ]
+ },
+ {
+  "index": 22,
+  "name": "Nemor Kalant",
+  "station": 108,
+  "system": 26,
+  "race": 3,
+  "raceName": "Midorian",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": -1,
+  "sellMod": 1,
+  "sellItemPrice": 0,
+  "portraitParts": [
+   2,
+   3,
+   2,
+   2,
+   3
+  ]
+ },
+ {
+  "index": 23,
+  "name": "Tedanor",
+  "station": 108,
+  "system": 26,
+  "race": 7,
+  "raceName": "Grey",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": -1,
+  "sellMod": 2,
+  "sellItemPrice": 0,
+  "portraitParts": [
+   7,
+   1,
+   1,
+   1,
+   1
+  ]
+ },
+ {
+  "index": 24,
+  "name": "Longwei Zhou",
+  "station": 108,
+  "system": 26,
+  "race": 0,
+  "raceName": "Terran",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": -1,
+  "sellMod": 3,
+  "sellItemPrice": 0,
+  "portraitParts": [
+   0,
+   8,
+   3,
+   8,
+   8
+  ]
+ },
+ {
+  "index": 25,
+  "name": "Jakk Zoboon",
+  "station": 108,
+  "system": 26,
+  "race": 6,
+  "raceName": "Bobolian",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 0,
+  "portraitParts": [
+   6,
+   1,
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "index": 26,
+  "name": "Umnar Zoboon",
+  "station": 108,
+  "system": 26,
+  "race": 6,
+  "raceName": "Bobolian",
+  "male": true,
+  "sellItemSystem": -1,
+  "sellBlueprint": -1,
+  "sellMod": -1,
+  "sellItemPrice": 0,
+  "portraitParts": [
+   6,
+   0,
+   1,
+   3,
+   0
+  ]
+ }
+]

@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/container_002_nivelian.aem", "version": 8, "flags": 31, "truncated": false, "parts": [{"name": "container_002_nivelian_part0", "parent": "container_002_nivelian", "vertices": 456, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0, 0.0, 294.01708984375], "channels": []}]}

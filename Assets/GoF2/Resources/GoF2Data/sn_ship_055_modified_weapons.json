@@ -1,0 +1,176 @@
+[
+ {
+  "ship": 55,
+  "shipName": "Groza Mk II",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -661,
+     -114
+    ],
+    "position_engine": [
+     0,
+     -114,
+     661
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     300,
+     -317,
+     -73
+    ],
+    "position_engine": [
+     300,
+     -73,
+     317
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -300,
+     -317,
+     -73
+    ],
+    "position_engine": [
+     -300,
+     -73,
+     317
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     212,
+     -124,
+     -42
+    ],
+    "position_engine": [
+     212,
+     -42,
+     124
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -212,
+     -124,
+     -42
+    ],
+    "position_engine": [
+     -212,
+     -42,
+     124
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -589,
+     -46
+    ],
+    "position_engine": [
+     0,
+     -46,
+     589
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     536,
+     4
+    ],
+    "position_engine": [
+     0,
+     4,
+     -536
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -111,
+     483,
+     3
+    ],
+    "position_engine": [
+     -111,
+     3,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -89,
+     483,
+     -62
+    ],
+    "position_engine": [
+     -89,
+     -62,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     89,
+     483,
+     -62
+    ],
+    "position_engine": [
+     89,
+     -62,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     111,
+     483,
+     3
+    ],
+    "position_engine": [
+     111,
+     3,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   }
+  ]
+ }
+]

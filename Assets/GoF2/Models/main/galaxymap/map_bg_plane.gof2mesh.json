@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/galaxymap/map_bg_plane.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "map_bg_plane_part0", "parent": "map_bg_plane", "vertices": 6, "pivot": [0.0, 14000.0, 7000.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 14000.0, 7000.0, 47729.70703125], "channels": []}]}

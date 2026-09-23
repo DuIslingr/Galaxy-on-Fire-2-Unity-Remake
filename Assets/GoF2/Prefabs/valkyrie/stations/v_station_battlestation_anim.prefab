@@ -1,0 +1,137 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5675239835134109631
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7524934306558044864, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 57795be85b8d76a4fa250a82b60bb48a, type: 2}
+    - target: {fileID: -4449213533438979816, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 57795be85b8d76a4fa250a82b60bb48a, type: 2}
+    - target: {fileID: -2866061276084583644, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 57795be85b8d76a4fa250a82b60bb48a, type: 2}
+    - target: {fileID: 919132149155446097, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: m_Name
+      value: v_station_battlestation_anim
+      objectReference: {fileID: 0}
+    - target: {fileID: 3018559095208324731, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 57795be85b8d76a4fa250a82b60bb48a, type: 2}
+    - target: {fileID: 3257616267946503828, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 57795be85b8d76a4fa250a82b60bb48a, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 23569924191494568}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7282218367070633228}
+  m_SourcePrefab: {fileID: 100100000, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+--- !u!1 &4756902222717885166 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 417e27a767fae024c9ec0ca14e2d2d50, type: 3}
+  m_PrefabInstance: {fileID: 5675239835134109631}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &23569924191494568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4756902222717885166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: e15f433006ad1f046882a07fcde92a3b, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &7282218367070633228
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4756902222717885166}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 16928
+  materialId: 20135
+  originalPath: data/assets/valkyrie/3d/meshes/stations/v_station_battlestation_anim.aem

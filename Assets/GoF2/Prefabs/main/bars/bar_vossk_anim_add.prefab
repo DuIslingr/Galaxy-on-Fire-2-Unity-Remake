@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &5819731956984170188
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8334861621397851952, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 526664e5d4f5919428f74e8d65518445, type: 2}
+    - target: {fileID: -2154226979846409789, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 526664e5d4f5919428f74e8d65518445, type: 2}
+    - target: {fileID: 126191788315983560, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 526664e5d4f5919428f74e8d65518445, type: 2}
+    - target: {fileID: 919132149155446097, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: m_Name
+      value: bar_vossk_anim_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 1451502566472617353, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 526664e5d4f5919428f74e8d65518445, type: 2}
+    - target: {fileID: 2371306927688355148, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 526664e5d4f5919428f74e8d65518445, type: 2}
+    - target: {fileID: 5948152355487397276, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 526664e5d4f5919428f74e8d65518445, type: 2}
+    - target: {fileID: 6964150419063297730, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 526664e5d4f5919428f74e8d65518445, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9167959444213151365}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 620468106305333267}
+  m_SourcePrefab: {fileID: 100100000, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+--- !u!1 &6630071267050060701 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9e606c24dcd4e9040a50c4fc5628547b, type: 3}
+  m_PrefabInstance: {fileID: 5819731956984170188}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &9167959444213151365
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6630071267050060701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: 90759ad1549877344bbc1b60554ba633, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &620468106305333267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6630071267050060701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 14029
+  materialId: 20060
+  originalPath: data/assets/main/3d/meshes/bars/bar_vossk_anim_add.aem

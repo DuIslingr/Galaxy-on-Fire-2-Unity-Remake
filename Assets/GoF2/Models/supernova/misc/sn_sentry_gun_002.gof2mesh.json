@@ -1,0 +1,1 @@
+{"source": "assets/supernova/3d/meshes/misc/sn_sentry_gun_002.aem", "version": 16, "flags": 23, "truncated": false, "parts": [{"name": "sn_sentry_gun_002_part0", "parent": "sn_sentry_gun_002", "vertices": 1488, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, -22.4613037109375, 0.0, 283.9495849609375], "channels": []}]}

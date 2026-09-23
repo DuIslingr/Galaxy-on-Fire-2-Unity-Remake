@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/galaxymap/map_orbit.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "map_orbit_part0", "parent": "map_orbit", "vertices": 12, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 0.0, 52497.5859375], "channels": []}]}

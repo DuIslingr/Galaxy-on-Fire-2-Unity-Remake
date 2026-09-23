@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/ships/ship_012_nivelian.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "ship_012_nivelian_part0", "parent": "ship_012_nivelian", "vertices": 11466, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, -0.3275146484375, 4.15087890625, 854.4561157226562], "channels": []}]}

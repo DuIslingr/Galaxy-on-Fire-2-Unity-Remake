@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/bomb_emp_a.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "bomb_emp_a_part0", "parent": "bomb_emp_a", "vertices": 8796, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, -4.5957794189453125, -9.307628631591797, 204.31748962402344], "channels": []}]}

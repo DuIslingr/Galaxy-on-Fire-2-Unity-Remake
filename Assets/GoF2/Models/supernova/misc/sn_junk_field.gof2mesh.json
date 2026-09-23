@@ -1,0 +1,1 @@
+{"source": "assets/supernova/3d/meshes/misc/sn_junk_field.aem", "version": 16, "flags": 31, "truncated": false, "parts": [{"name": "sn_junk_field_part0", "parent": "sn_junk_field", "vertices": 8094, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [1407.447021484375, -291.978759765625, 102.545166015625, 12436.173828125], "channels": []}]}

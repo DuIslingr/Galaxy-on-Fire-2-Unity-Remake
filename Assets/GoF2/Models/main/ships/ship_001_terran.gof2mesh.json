@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/ships/ship_001_terran.aem", "version": 8, "flags": 31, "truncated": false, "parts": [{"name": "ship_001_terran_part0", "parent": "ship_001_terran", "vertices": 12144, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.26641845703125, -2.3781280517578125, 909.568603515625], "channels": []}]}

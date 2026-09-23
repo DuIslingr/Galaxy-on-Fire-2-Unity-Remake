@@ -1,0 +1,185 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &825670473406439214
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8755592106106447350, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -3984026892142553397, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: -3908518291412491827, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: -1940639318907775607, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: -1935526149520228334, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: -713380472657855273, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 362980805688051669, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 863274084671875935, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 919132149155446097, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: m_Name
+      value: sn_asteroid_magma_explosion_anim
+      objectReference: {fileID: 0}
+    - target: {fileID: 2811816438762434390, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 2872452561305901219, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 3326228703296436428, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 3534035995425833301, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 4971741072381541118, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 5477808844330031873, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 6210424944083870655, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 6955548105736610353, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    - target: {fileID: 7289089503439627007, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 1afd425d1f0cfab449a25e8054e484bf, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8764017267541676817}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5617707968263963656}
+  m_SourcePrefab: {fileID: 100100000, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+--- !u!1 &555129376873013887 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: e03475e914592cd458ac9ccfdc51bef7, type: 3}
+  m_PrefabInstance: {fileID: 825670473406439214}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8764017267541676817
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 555129376873013887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: 29c57c14e41e59147abea6226a3d6d1f, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &5617707968263963656
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 555129376873013887}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 18840
+  materialId: 27312
+  originalPath: data/assets/supernova/3d/meshes/misc/sn_asteroid_magma_explosion_anim.aem

@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/container_003_terran.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "container_003_terran_part0", "parent": "container_003_terran", "vertices": 276, "pivot": [0.0, -6.575595762114972e-06, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 0.0, 340.7375183105469], "channels": []}]}

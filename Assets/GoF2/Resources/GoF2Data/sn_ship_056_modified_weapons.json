@@ -1,0 +1,202 @@
+[
+ {
+  "ship": 56,
+  "shipName": "Berger Cross Special",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     233,
+     -605,
+     46
+    ],
+    "position_engine": [
+     233,
+     46,
+     605
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -233,
+     -605,
+     46
+    ],
+    "position_engine": [
+     -233,
+     46,
+     605
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     235,
+     -679,
+     -66
+    ],
+    "position_engine": [
+     235,
+     -66,
+     679
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -235,
+     -679,
+     -66
+    ],
+    "position_engine": [
+     -235,
+     -66,
+     679
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     114,
+     -181,
+     -71
+    ],
+    "position_engine": [
+     114,
+     -71,
+     181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -114,
+     -181,
+     -71
+    ],
+    "position_engine": [
+     -114,
+     -71,
+     181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     434,
+     -219,
+     -165
+    ],
+    "position_engine": [
+     434,
+     -165,
+     219
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -434,
+     -219,
+     -165
+    ],
+    "position_engine": [
+     -434,
+     -165,
+     219
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     249,
+     66
+    ],
+    "position_engine": [
+     0,
+     66,
+     -249
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -231,
+     65,
+     -19
+    ],
+    "position_engine": [
+     -231,
+     -19,
+     -65
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -80,
+     373,
+     197
+    ],
+    "position_engine": [
+     -80,
+     197,
+     -373
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     80,
+     373,
+     197
+    ],
+    "position_engine": [
+     80,
+     197,
+     -373
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     233,
+     65,
+     -19
+    ],
+    "position_engine": [
+     233,
+     -19,
+     -65
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ }
+]

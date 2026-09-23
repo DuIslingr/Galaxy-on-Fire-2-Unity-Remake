@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/bars/bar_visitor_shadow.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "bar_visitor_shadow_part0", "parent": "bar_visitor_shadow", "vertices": 6, "pivot": [0.0, 0.0, 4.999999873689376e-05], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 0.0, 212.1320343017578], "channels": []}]}

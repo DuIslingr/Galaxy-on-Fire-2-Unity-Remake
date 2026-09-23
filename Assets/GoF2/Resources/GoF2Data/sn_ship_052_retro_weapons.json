@@ -1,0 +1,158 @@
+[
+ {
+  "ship": 52,
+  "shipName": "Gryphon",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     594,
+     81,
+     -27
+    ],
+    "position_engine": [
+     594,
+     -27,
+     -81
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -594,
+     81,
+     -27
+    ],
+    "position_engine": [
+     -594,
+     -27,
+     -81
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     894,
+     170,
+     -27
+    ],
+    "position_engine": [
+     894,
+     -27,
+     -170
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -894,
+     170,
+     -27
+    ],
+    "position_engine": [
+     -894,
+     -27,
+     -170
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     202,
+     -58,
+     1
+    ],
+    "position_engine": [
+     202,
+     1,
+     58
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -202,
+     -58,
+     1
+    ],
+    "position_engine": [
+     -202,
+     1,
+     58
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     295,
+     789,
+     -25
+    ],
+    "position_engine": [
+     295,
+     -25,
+     -789
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -295,
+     790,
+     -25
+    ],
+    "position_engine": [
+     -295,
+     -25,
+     -790
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -83,
+     846,
+     7
+    ],
+    "position_engine": [
+     -83,
+     7,
+     -846
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     83,
+     847,
+     7
+    ],
+    "position_engine": [
+     83,
+     7,
+     -847
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ }
+]

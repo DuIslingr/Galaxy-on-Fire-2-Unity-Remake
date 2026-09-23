@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/bars/bar_terran_alpha.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "bar_terran_alpha_part0", "parent": "bar_terran_alpha", "vertices": 702, "pivot": [0.0, 0.0, -6.14166259765625], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.000244140625, 977.91845703125, 4920.86328125], "channels": []}]}

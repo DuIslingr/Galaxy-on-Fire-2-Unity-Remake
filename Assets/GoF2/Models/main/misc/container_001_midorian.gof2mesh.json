@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/container_001_midorian.aem", "version": 8, "flags": 31, "truncated": false, "parts": [{"name": "container_001_midorian_part0", "parent": "container_001_midorian", "vertices": 348, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0, 1.52587890625e-05, 371.13134765625], "channels": []}]}

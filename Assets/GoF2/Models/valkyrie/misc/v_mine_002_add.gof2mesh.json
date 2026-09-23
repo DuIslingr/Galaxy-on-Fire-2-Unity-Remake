@@ -1,0 +1,1 @@
+{"source": "assets/valkyrie/3d/meshes/misc/v_mine_002_add.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "v_mine_002_add_part0", "parent": "v_mine_002_add", "vertices": 72, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 29.639724731445312, -1.5159149169921875, 177.60214233398438], "channels": []}]}

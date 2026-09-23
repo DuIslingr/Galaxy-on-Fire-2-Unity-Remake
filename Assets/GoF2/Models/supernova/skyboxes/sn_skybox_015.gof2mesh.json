@@ -1,0 +1,1 @@
+{"source": "assets/supernova/3d/meshes/skyboxes/sn_skybox_015.aem", "version": 16, "flags": 31, "truncated": false, "parts": [{"name": "sn_skybox_015_part0", "parent": "sn_skybox_015", "vertices": 576, "pivot": [0.0, 0.0, 3.0517578125e-05], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0, 6.103515625e-05, 779.0380249023438], "channels": []}]}

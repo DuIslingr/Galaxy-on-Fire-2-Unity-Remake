@@ -1,0 +1,1 @@
+{"source": "meshes/col_sphere.aem", "version": 1, "flags": 27, "truncated": false, "parts": [{"name": "col_sphere_part0", "parent": "col_sphere", "vertices": 287, "pivot": [0, 0, 0], "hasUV": true, "hasNormals": false, "hasColors": true, "bsphere": [0, 0, 0, 0], "channels": []}]}

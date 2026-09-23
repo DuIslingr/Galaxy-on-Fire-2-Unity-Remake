@@ -1,0 +1,166 @@
+[
+ {
+  "ship": 54,
+  "shipName": "Na'srrk",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     344,
+     -490,
+     -42
+    ],
+    "position_engine": [
+     344,
+     -42,
+     490
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -344,
+     -490,
+     -42
+    ],
+    "position_engine": [
+     -344,
+     -42,
+     490
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     378,
+     -450,
+     -47
+    ],
+    "position_engine": [
+     378,
+     -47,
+     450
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -378,
+     -450,
+     -47
+    ],
+    "position_engine": [
+     -378,
+     -47,
+     450
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     185,
+     -501,
+     -29
+    ],
+    "position_engine": [
+     185,
+     -29,
+     501
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -185,
+     -501,
+     -29
+    ],
+    "position_engine": [
+     -185,
+     -29,
+     501
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     240,
+     -426,
+     -34
+    ],
+    "position_engine": [
+     240,
+     -34,
+     426
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -240,
+     -426,
+     -34
+    ],
+    "position_engine": [
+     -240,
+     -34,
+     426
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     549,
+     67
+    ],
+    "position_engine": [
+     0,
+     67,
+     -549
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -21,
+     475,
+     15
+    ],
+    "position_engine": [
+     -21,
+     15,
+     -475
+    ],
+    "turretAngles": [
+     0.29999998211860657,
+     0.29999998211860657,
+     0.29999998211860657
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     20,
+     475,
+     15
+    ],
+    "position_engine": [
+     20,
+     15,
+     -475
+    ],
+    "turretAngles": [
+     0.29999998211860657,
+     0.29999998211860657,
+     0.29999998211860657
+    ]
+   }
+  ]
+ }
+]

@@ -1,0 +1,1 @@
+{"source": "assets/supernova/3d/meshes/ships/sn_ship_047_most_wanted_engine_add.aem", "version": 16, "flags": 23, "truncated": true, "parts": [{"name": "sn_ship_047_most_wanted_engine_add_part0", "parent": "sn_ship_047_most_wanted_engine_add", "vertices": 0, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0, 0, 0, 0], "channels": []}]}

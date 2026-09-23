@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/asteroid_01_lod_3.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "asteroid_01_lod_3_part0", "parent": "asteroid_01_lod_3", "vertices": 1614, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 0.0, 3546.667724609375], "channels": []}]}

@@ -1,0 +1,209 @@
+[
+ {
+  "ship": 51,
+  "shipName": "Rhino",
+  "mounts": [
+   {
+    "slotType": 1,
+    "position_file": [
+     665,
+     109,
+     -43
+    ],
+    "position_engine": [
+     665,
+     -43,
+     -109
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -665,
+     109,
+     -43
+    ],
+    "position_engine": [
+     -665,
+     -43,
+     -109
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     57,
+     522
+    ],
+    "position_engine": [
+     0,
+     522,
+     -57
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -157,
+     992,
+     130
+    ],
+    "position_engine": [
+     -157,
+     130,
+     -992
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     992,
+     130
+    ],
+    "position_engine": [
+     0,
+     130,
+     -992
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     157,
+     992,
+     130
+    ],
+    "position_engine": [
+     157,
+     130,
+     -992
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     579,
+     793,
+     -50
+    ],
+    "position_engine": [
+     579,
+     -50,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     579,
+     793,
+     55
+    ],
+    "position_engine": [
+     579,
+     55,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     454,
+     793,
+     16
+    ],
+    "position_engine": [
+     454,
+     16,
+     -793
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -455,
+     793,
+     16
+    ],
+    "position_engine": [
+     -455,
+     16,
+     -793
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -584,
+     793,
+     -50
+    ],
+    "position_engine": [
+     -584,
+     -50,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -584,
+     793,
+     55
+    ],
+    "position_engine": [
+     -584,
+     55,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   }
+  ]
+ }
+]

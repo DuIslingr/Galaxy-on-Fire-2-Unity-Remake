@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/turrets/turret_003.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "turret_003_part0", "parent": "turret_003", "vertices": 462, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [-5.340576171875e-05, 0.0, 25.58270263671875, 82.87418365478516], "channels": []}]}

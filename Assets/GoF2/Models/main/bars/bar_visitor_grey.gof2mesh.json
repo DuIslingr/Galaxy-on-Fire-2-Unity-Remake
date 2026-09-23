@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/bars/bar_visitor_grey.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "bar_visitor_grey_part0", "parent": "bar_visitor_grey", "vertices": 12, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, -0.4999937117099762, 235.6379852294922, 333.2428283691406], "channels": []}]}

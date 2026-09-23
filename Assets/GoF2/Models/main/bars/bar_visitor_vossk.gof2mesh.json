@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/bars/bar_visitor_vossk.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "bar_visitor_vossk_part0", "parent": "bar_visitor_vossk", "vertices": 12, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, -0.5000002384185791, 269.2852478027344, 380.8271789550781], "channels": []}]}

@@ -1,0 +1,155 @@
+AELowLevelFile <- 
+AENormalFile <- AELowLevelFile
+AEPakFile <- AELowLevelFile
+AbstractGun <- 
+AbyssEngine::AESound <- AbyssEngine::AESoundInterface
+AbyssEngine::AESoundInterface <- 
+AbyssEngine::BloomShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BlurShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpMapping <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpRimCubeShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpRimCubeShader_new <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpShaderCloak <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpShaderParticle <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpShaderRefract <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpShaderV2 <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpShaderV3 <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::BumpShaderV4 <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::ColorMixAdd <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::CubeMapping <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::CubeNormalMapping <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::DNSShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::DrawFBOShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::EnergyShield <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::GenericShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::GenericShader1 <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::GenericShader2 <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::GlowPPShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::GlowShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::GreenShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::IApplicationModule <- 
+AbyssEngine::MaskShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::NoTexShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::NoTexVtxColorShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::PostBWShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::PulseShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::SandboxShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::ShaderBaseStruct <- 
+AbyssEngine::SimpleRefractionShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::SimpleShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::SpecCubeAlphaMapping <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::SpecCubeMapping <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::TexOnlyShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::TextureAlphaTestShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::TextureConference <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::TextureLightShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::TextureShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::TextureVtxColorShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::VertexColorAlphaTextureShader <- AbyssEngine::ShaderBaseStruct
+AbyssEngine::VertexColorShader <- AbyssEngine::ShaderBaseStruct
+BeamGun <- AbstractGun
+BombGun <- RocketGun
+BoundingAAB <- BoundingVolume
+BoundingSphere <- BoundingVolume
+BoundingVolume <- 
+FileInterface <- 
+FileInterfaceAndroid <- FileInterface
+IParticleSystem <- 
+KIPlayer <- 
+MGame <- AbyssEngine::IApplicationModule
+MTitle <- AbyssEngine::IApplicationModule
+MineGun <- ObjectGun
+ModMainMenu <- AbyssEngine::IApplicationModule
+ModStation <- AbyssEngine::IApplicationModule
+ObjectGun <- AbstractGun
+ParticleSystemMesh <- IParticleSystem
+ParticleSystemSprite <- IParticleSystem
+PlayerAsteroid <- KIPlayer
+PlayerCreature <- KIPlayer
+PlayerFighter <- KIPlayer
+PlayerFixedObject <- KIPlayer
+PlayerGasCloud <- KIPlayer
+PlayerJumpgate <- PlayerStaticFar
+PlayerJunk <- KIPlayer
+PlayerStatic <- KIPlayer
+PlayerStaticFar <- PlayerStatic
+PlayerStation <- PlayerStaticFar
+PlayerTurret <- KIPlayer
+PlayerWormHole <- PlayerStaticFar
+RocketGun <- ObjectGun
+SentryGun <- ObjectGun
+SpriteGun <- AbstractGun
+Waypoint <- KIPlayer
+__float128 <- 
+__float128 const* <- 
+__float128* <- 
+__int128 <- 
+__int128 const* <- 
+__int128* <- 
+bool <- 
+bool const* <- 
+bool* <- 
+char <- 
+char const* <- 
+char* <- 
+char16_t <- 
+char16_t const* <- 
+char16_t* <- 
+char32_t <- 
+char32_t const* <- 
+char32_t* <- 
+decltype(nullptr) <- 
+decltype(nullptr) const* <- 
+decltype(nullptr)* <- 
+double <- 
+double const* <- 
+double* <- 
+float <- 
+float const* <- 
+float* <- 
+half <- 
+half const* <- 
+half* <- 
+int <- 
+int const* <- 
+int* <- 
+long <- 
+long const* <- 
+long double <- 
+long double const* <- 
+long double* <- 
+long long <- 
+long long const* <- 
+long long* <- 
+long* <- 
+short <- 
+short const* <- 
+short* <- 
+signed char <- 
+signed char const* <- 
+signed char* <- 
+unsigned __int128 <- 
+unsigned __int128 const* <- 
+unsigned __int128* <- 
+unsigned char <- 
+unsigned char const* <- 
+unsigned char* <- 
+unsigned int <- 
+unsigned int const* <- 
+unsigned int* <- 
+unsigned long <- 
+unsigned long const* <- 
+unsigned long long <- 
+unsigned long long const* <- 
+unsigned long long* <- 
+unsigned long* <- 
+unsigned short <- 
+unsigned short const* <- 
+unsigned short* <- 
+void <- 
+void const* <- 
+void* <- 
+wchar_t <- 
+wchar_t const* <- 
+wchar_t* <- 

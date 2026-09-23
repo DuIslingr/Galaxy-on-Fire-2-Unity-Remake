@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/bra.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "bra_part0", "parent": "bra", "vertices": 4008, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [3.310546875, 39.03418731689453, 61.53169631958008, 327.85711669921875], "channels": []}]}

@@ -1,0 +1,1198 @@
+[
+ {
+  "index": 0,
+  "name": "Suteo",
+  "securityLevel": 1,
+  "initiallyVisible": false,
+  "race": "Nivelian",
+  "raceId": 2,
+  "mapPosition": {
+   "x": 22,
+   "y": 55,
+   "z": 55
+  },
+  "jumpgateStation": 0,
+  "textureIndex": 4,
+  "unknownTriple": [
+   18,
+   21,
+   10
+  ],
+  "stations": [
+   0,
+   1,
+   2,
+   3,
+   4
+  ],
+  "jumpRoutesTo": [
+   2,
+   8
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 1,
+  "name": "Pan",
+  "securityLevel": 1,
+  "initiallyVisible": false,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 22,
+   "y": 81,
+   "z": 62
+  },
+  "jumpgateStation": 5,
+  "textureIndex": 2,
+  "unknownTriple": [
+   21,
+   18,
+   10
+  ],
+  "stations": [
+   5,
+   6,
+   7,
+   8,
+   9
+  ],
+  "jumpRoutesTo": [
+   8,
+   18
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 2,
+  "name": "Behén",
+  "securityLevel": 1,
+  "initiallyVisible": true,
+  "race": "Nivelian",
+  "raceId": 2,
+  "mapPosition": {
+   "x": 24,
+   "y": 40,
+   "z": 73
+  },
+  "jumpgateStation": 30,
+  "textureIndex": 9,
+  "unknownTriple": [
+   8,
+   11,
+   21
+  ],
+  "stations": [
+   30,
+   31,
+   32,
+   33
+  ],
+  "jumpRoutesTo": [
+   0,
+   8,
+   9,
+   17
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 3,
+  "name": "V'ikka",
+  "securityLevel": 2,
+  "initiallyVisible": true,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 52,
+   "y": 61,
+   "z": 45
+  },
+  "jumpgateStation": 15,
+  "textureIndex": 5,
+  "unknownTriple": [
+   19,
+   16,
+   22
+  ],
+  "stations": [
+   15,
+   16,
+   17,
+   18,
+   19
+  ],
+  "jumpRoutesTo": [
+   5,
+   8,
+   12,
+   14,
+   19
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 4,
+  "name": "Eanya",
+  "securityLevel": 0,
+  "initiallyVisible": true,
+  "race": "Midorian",
+  "raceId": 3,
+  "mapPosition": {
+   "x": 15,
+   "y": 15,
+   "z": 90
+  },
+  "jumpgateStation": 20,
+  "textureIndex": 8,
+  "unknownTriple": [
+   14,
+   0,
+   0
+  ],
+  "stations": [
+   20,
+   21,
+   22,
+   23,
+   24
+  ],
+  "jumpRoutesTo": [
+   17,
+   27
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 5,
+  "name": "S'kolptorr",
+  "securityLevel": 1,
+  "initiallyVisible": true,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 64,
+   "y": 67,
+   "z": 30
+  },
+  "jumpgateStation": 25,
+  "textureIndex": 9,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   25,
+   26,
+   27,
+   28,
+   29
+  ],
+  "jumpRoutesTo": [
+   3,
+   12,
+   20
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 6,
+  "name": "Wolf-Reiser",
+  "securityLevel": 3,
+  "initiallyVisible": false,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 75,
+   "y": 20,
+   "z": 35
+  },
+  "jumpgateStation": 10,
+  "textureIndex": 0,
+  "unknownTriple": [
+   4,
+   0,
+   40
+  ],
+  "stations": [
+   10
+  ],
+  "jumpRoutesTo": [
+   7
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 7,
+  "name": "Aquila",
+  "securityLevel": 1,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 66,
+   "y": 15,
+   "z": 47
+  },
+  "jumpgateStation": 35,
+  "textureIndex": 7,
+  "unknownTriple": [
+   3,
+   9,
+   14
+  ],
+  "stations": [
+   35,
+   36,
+   37,
+   38,
+   39
+  ],
+  "jumpRoutesTo": [
+   6,
+   11,
+   25
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 8,
+  "name": "Buntta",
+  "securityLevel": 2,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 37,
+   "y": 63,
+   "z": 62
+  },
+  "jumpgateStation": 40,
+  "textureIndex": 1,
+  "unknownTriple": [
+   36,
+   0,
+   36
+  ],
+  "stations": [
+   40,
+   41,
+   42,
+   43,
+   44
+  ],
+  "jumpRoutesTo": [
+   0,
+   1,
+   2,
+   3,
+   18,
+   19
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 9,
+  "name": "Weymire",
+  "securityLevel": 2,
+  "initiallyVisible": true,
+  "race": "Nivelian",
+  "raceId": 2,
+  "mapPosition": {
+   "x": 39,
+   "y": 29,
+   "z": 63
+  },
+  "jumpgateStation": 45,
+  "textureIndex": 7,
+  "unknownTriple": [
+   10,
+   10,
+   10
+  ],
+  "stations": [
+   45,
+   46,
+   47,
+   48,
+   49
+  ],
+  "jumpRoutesTo": [
+   2,
+   11,
+   17,
+   19,
+   26
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 10,
+  "name": "Y'mirr",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 81,
+   "y": 63,
+   "z": 60
+  },
+  "jumpgateStation": -1,
+  "textureIndex": 6,
+  "unknownTriple": [
+   0,
+   20,
+   21
+  ],
+  "stations": [
+   50,
+   51,
+   52,
+   53,
+   54
+  ],
+  "jumpRoutesTo": [],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 11,
+  "name": "Union",
+  "securityLevel": 2,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 55,
+   "y": 27,
+   "z": 59
+  },
+  "jumpgateStation": 55,
+  "textureIndex": 3,
+  "unknownTriple": [
+   20,
+   10,
+   11
+  ],
+  "stations": [
+   55,
+   56,
+   57
+  ],
+  "jumpRoutesTo": [
+   7,
+   9,
+   14,
+   16,
+   25
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 12,
+  "name": "Oom'bak",
+  "securityLevel": 2,
+  "initiallyVisible": true,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 67,
+   "y": 55,
+   "z": 41
+  },
+  "jumpgateStation": 60,
+  "textureIndex": 0,
+  "unknownTriple": [
+   10,
+   0,
+   31
+  ],
+  "stations": [
+   60,
+   61
+  ],
+  "jumpRoutesTo": [
+   3,
+   5,
+   13,
+   14
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 13,
+  "name": "Vulpes",
+  "securityLevel": 1,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 78,
+   "y": 47,
+   "z": 55
+  },
+  "jumpgateStation": 65,
+  "textureIndex": 4,
+  "unknownTriple": [
+   18,
+   21,
+   10
+  ],
+  "stations": [
+   65,
+   66,
+   67,
+   68,
+   69
+  ],
+  "jumpRoutesTo": [
+   12,
+   16
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 14,
+  "name": "Magnetar",
+  "securityLevel": 3,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 57,
+   "y": 42,
+   "z": 39
+  },
+  "jumpgateStation": 70,
+  "textureIndex": 5,
+  "unknownTriple": [
+   21,
+   18,
+   10
+  ],
+  "stations": [
+   70,
+   71,
+   72,
+   73,
+   74
+  ],
+  "jumpRoutesTo": [
+   3,
+   11,
+   12,
+   19
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 15,
+  "name": "Mido",
+  "securityLevel": 0,
+  "initiallyVisible": true,
+  "race": "Midorian",
+  "raceId": 3,
+  "mapPosition": {
+   "x": 29,
+   "y": 10,
+   "z": 90
+  },
+  "jumpgateStation": -1,
+  "textureIndex": 9,
+  "unknownTriple": [
+   8,
+   11,
+   21
+  ],
+  "stations": [
+   75,
+   76,
+   77,
+   78,
+   79
+  ],
+  "jumpRoutesTo": [],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 16,
+  "name": "Prospero",
+  "securityLevel": 1,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 77,
+   "y": 32,
+   "z": 74
+  },
+  "jumpgateStation": 80,
+  "textureIndex": 3,
+  "unknownTriple": [
+   22,
+   18,
+   0
+  ],
+  "stations": [
+   80,
+   81,
+   82,
+   83,
+   84
+  ],
+  "jumpRoutesTo": [
+   11,
+   13
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 17,
+  "name": "Nesla",
+  "securityLevel": 1,
+  "initiallyVisible": true,
+  "race": "Nivelian",
+  "raceId": 2,
+  "mapPosition": {
+   "x": 26,
+   "y": 21,
+   "z": 79
+  },
+  "jumpgateStation": 85,
+  "textureIndex": 8,
+  "unknownTriple": [
+   14,
+   0,
+   0
+  ],
+  "stations": [
+   85,
+   86,
+   87,
+   88,
+   89
+  ],
+  "jumpRoutesTo": [
+   2,
+   4,
+   9,
+   26,
+   29
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 18,
+  "name": "Pescal Inartu",
+  "securityLevel": 1,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 43,
+   "y": 85,
+   "z": 81
+  },
+  "jumpgateStation": 90,
+  "textureIndex": 1,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   90,
+   91,
+   92,
+   93,
+   94
+  ],
+  "jumpRoutesTo": [
+   1,
+   8
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 19,
+  "name": "Augmenta",
+  "securityLevel": 3,
+  "initiallyVisible": true,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 44,
+   "y": 46,
+   "z": 50
+  },
+  "jumpgateStation": 95,
+  "textureIndex": 6,
+  "unknownTriple": [
+   4,
+   0,
+   40
+  ],
+  "stations": [
+   95,
+   96,
+   97,
+   98,
+   99
+  ],
+  "jumpRoutesTo": [
+   3,
+   8,
+   9,
+   14
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 20,
+  "name": "K'ontrr",
+  "securityLevel": 0,
+  "initiallyVisible": true,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 77,
+   "y": 79,
+   "z": 20
+  },
+  "jumpgateStation": 62,
+  "textureIndex": 1,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   62,
+   59,
+   58,
+   63,
+   64
+  ],
+  "jumpRoutesTo": [
+   5,
+   21,
+   30,
+   31
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 21,
+  "name": "Ni'mrrod",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 89,
+   "y": 84,
+   "z": 10
+  },
+  "jumpgateStation": 12,
+  "textureIndex": 9,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   11,
+   12,
+   13,
+   14,
+   34
+  ],
+  "jumpRoutesTo": [
+   20,
+   30,
+   31
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 22,
+  "name": "Beidan",
+  "securityLevel": 3,
+  "initiallyVisible": false,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 92,
+   "y": 40,
+   "z": 32
+  },
+  "jumpgateStation": -1,
+  "textureIndex": 12,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   100
+  ],
+  "jumpRoutesTo": [],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 23,
+  "name": "Herjaza",
+  "securityLevel": 1,
+  "initiallyVisible": false,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 59,
+   "y": 82,
+   "z": 56
+  },
+  "jumpgateStation": -1,
+  "textureIndex": 11,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   101,
+   102
+  ],
+  "jumpRoutesTo": [],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 24,
+  "name": "Skavac",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 68,
+   "y": 93,
+   "z": 69
+  },
+  "jumpgateStation": -1,
+  "textureIndex": 13,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   103,
+   104
+  ],
+  "jumpRoutesTo": [],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 25,
+  "name": "Loma",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Midorian",
+  "raceId": 3,
+  "mapPosition": {
+   "x": 43,
+   "y": 7,
+   "z": 70
+  },
+  "jumpgateStation": 105,
+  "textureIndex": 14,
+  "unknownTriple": [
+   21,
+   18,
+   10
+  ],
+  "stations": [
+   105,
+   106,
+   107
+  ],
+  "jumpRoutesTo": [
+   11,
+   7,
+   26
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 26,
+  "name": "Shima",
+  "securityLevel": 0,
+  "initiallyVisible": true,
+  "race": "Midorian",
+  "raceId": 3,
+  "mapPosition": {
+   "x": 36,
+   "y": 16,
+   "z": 50
+  },
+  "jumpgateStation": 108,
+  "textureIndex": 1,
+  "unknownTriple": [
+   21,
+   18,
+   10
+  ],
+  "stations": [
+   108
+  ],
+  "jumpRoutesTo": [
+   17,
+   25,
+   9
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 27,
+  "name": "Ginoya ",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Midorian",
+  "raceId": 3,
+  "mapPosition": {
+   "x": 18,
+   "y": 8,
+   "z": 90
+  },
+  "jumpgateStation": 112,
+  "textureIndex": 15,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   109,
+   110,
+   111,
+   112,
+   113
+  ],
+  "jumpRoutesTo": [
+   28,
+   4
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 28,
+  "name": "Talidor",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Midorian",
+  "raceId": 3,
+  "mapPosition": {
+   "x": 24,
+   "y": 7,
+   "z": 77
+  },
+  "jumpgateStation": 116,
+  "textureIndex": 17,
+  "unknownTriple": [
+   9,
+   11,
+   21
+  ],
+  "stations": [
+   114,
+   115,
+   116,
+   117,
+   118
+  ],
+  "jumpRoutesTo": [
+   27
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 29,
+  "name": "Paréah",
+  "securityLevel": 2,
+  "initiallyVisible": false,
+  "race": "Nivelian",
+  "raceId": 2,
+  "mapPosition": {
+   "x": 18,
+   "y": 31,
+   "z": 58
+  },
+  "jumpgateStation": 120,
+  "textureIndex": 16,
+  "unknownTriple": [
+   10,
+   11,
+   21
+  ],
+  "stations": [
+   119,
+   120,
+   121,
+   122,
+   123
+  ],
+  "jumpRoutesTo": [
+   17
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 30,
+  "name": "Me'enkk",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 82,
+   "y": 96,
+   "z": 69
+  },
+  "jumpgateStation": 125,
+  "textureIndex": 9,
+  "unknownTriple": [
+   11,
+   11,
+   21
+  ],
+  "stations": [
+   124,
+   125,
+   126,
+   127
+  ],
+  "jumpRoutesTo": [
+   20,
+   21
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 31,
+  "name": "Wah'norr",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Vossk",
+  "raceId": 1,
+  "mapPosition": {
+   "x": 94,
+   "y": 59,
+   "z": 50
+  },
+  "jumpgateStation": 130,
+  "textureIndex": 18,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   128,
+   129,
+   130,
+   131
+  ],
+  "jumpRoutesTo": [
+   20,
+   21
+  ],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 32,
+  "name": "Skor Terpa",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 50,
+   "y": 2,
+   "z": 65
+  },
+  "jumpgateStation": -1,
+  "textureIndex": 13,
+  "unknownTriple": [
+   14,
+   10,
+   20
+  ],
+  "stations": [
+   132
+  ],
+  "jumpRoutesTo": [],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ },
+ {
+  "index": 33,
+  "name": "Alda",
+  "securityLevel": 0,
+  "initiallyVisible": false,
+  "race": "Terran",
+  "raceId": 0,
+  "mapPosition": {
+   "x": 53,
+   "y": 89,
+   "z": 70
+  },
+  "jumpgateStation": -1,
+  "textureIndex": 7,
+  "unknownTriple": [
+   10,
+   10,
+   10
+  ],
+  "stations": [
+   133,
+   134
+  ],
+  "jumpRoutesTo": [],
+  "forbiddenGoodsOrUnknown": [
+   0,
+   1,
+   2
+  ]
+ }
+]

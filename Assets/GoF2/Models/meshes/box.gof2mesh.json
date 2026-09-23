@@ -1,0 +1,1 @@
+{"source": "meshes/box.aem", "version": 1, "flags": 19, "truncated": false, "parts": [{"name": "box_part0", "parent": "box", "vertices": 116, "pivot": [0, 0, 0], "hasUV": true, "hasNormals": false, "hasColors": false, "bsphere": [0, 0, 0, 0], "channels": []}]}

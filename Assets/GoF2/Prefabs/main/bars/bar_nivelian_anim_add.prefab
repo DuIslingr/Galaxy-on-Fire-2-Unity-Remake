@@ -1,0 +1,157 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &4821183239877466662
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8465313526810696326, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: -8209760298729289457, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: -3873979464909455524, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: -1177875654387218509, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: -447460071743896548, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: 919132149155446097, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: m_Name
+      value: bar_nivelian_anim_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 3469755358021377369, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: 5519824093451131628, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: 6426802588060977162, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: 6921318131980171149, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    - target: {fileID: 8950954429845694994, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 74569ef8500b48843bd037e0296b61f8, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4446554262117224114}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 163657053306717373}
+  m_SourcePrefab: {fileID: 100100000, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+--- !u!1 &5632069423834310519 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: ceda6585074fb1f47a5fb20154842771, type: 3}
+  m_PrefabInstance: {fileID: 4821183239877466662}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &4446554262117224114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5632069423834310519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: 47d219b6ef4ca104db21d149e9b1f07c, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &163657053306717373
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5632069423834310519}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 14032
+  materialId: 20063
+  originalPath: data/assets/main/3d/meshes/bars/bar_nivelian_anim_add.aem

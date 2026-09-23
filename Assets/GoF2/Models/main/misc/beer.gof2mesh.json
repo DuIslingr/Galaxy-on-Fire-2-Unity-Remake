@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/misc/beer.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "beer_part0", "parent": "beer", "vertices": 2736, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [-1.9073486328125e-06, 1.9073486328125e-06, 13.787689208984375, 119.09476470947266], "channels": []}]}

@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/ships/ship_006_midorian.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "ship_006_midorian_part0", "parent": "ship_006_midorian", "vertices": 14634, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 85.76956176757812, -10.125465393066406, 703.4793090820312], "channels": []}]}

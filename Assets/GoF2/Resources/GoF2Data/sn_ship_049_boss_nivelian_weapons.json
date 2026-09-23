@@ -1,0 +1,181 @@
+[
+ {
+  "ship": 49,
+  "shipName": "Scimitar",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -506,
+     -1061,
+     -125
+    ],
+    "position_engine": [
+     -506,
+     -125,
+     1061
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     316,
+     106
+    ],
+    "position_engine": [
+     0,
+     106,
+     -316
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     513,
+     -1061,
+     -125
+    ],
+    "position_engine": [
+     513,
+     -125,
+     1061
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     229,
+     183,
+     73
+    ],
+    "position_engine": [
+     229,
+     73,
+     -183
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -228,
+     184,
+     73
+    ],
+    "position_engine": [
+     -228,
+     73,
+     -184
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     317,
+     1107,
+     6
+    ],
+    "position_engine": [
+     317,
+     6,
+     -1107
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     194,
+     1091,
+     79
+    ],
+    "position_engine": [
+     194,
+     79,
+     -1091
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     105,
+     1121,
+     109
+    ],
+    "position_engine": [
+     105,
+     109,
+     -1121
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -316,
+     1108,
+     4
+    ],
+    "position_engine": [
+     -316,
+     4,
+     -1108
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -194,
+     1092,
+     80
+    ],
+    "position_engine": [
+     -194,
+     80,
+     -1092
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -106,
+     1121,
+     109
+    ],
+    "position_engine": [
+     -106,
+     109,
+     -1121
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   }
+  ]
+ }
+]

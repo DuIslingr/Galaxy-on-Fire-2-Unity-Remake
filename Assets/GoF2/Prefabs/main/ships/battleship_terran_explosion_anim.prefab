@@ -1,0 +1,189 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &3193403398921183764
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8819748828987208760, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -7870469794412309105, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -7525136663291716522, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -6185256593878823365, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -4764383336398723121, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -3450305136361507692, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -2667481961210946501, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -2514411318600513593, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: -2124145575503331606, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 911049041289038317, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 919132149155446097, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: m_Name
+      value: battleship_terran_explosion_anim
+      objectReference: {fileID: 0}
+    - target: {fileID: 1244870642260898857, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 1986754255968611584, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 3501812080642088325, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 4548965734857747789, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 5671438138079416532, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 5709915094916508702, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 5943067559156459662, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    - target: {fileID: 8945178844912843929, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: e77fdda7c3682e347b5f347d263cf220, type: 2}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5506254570756709512}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7003557653246780962}
+  m_SourcePrefab: {fileID: 100100000, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+--- !u!1 &2346470690602213189 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 97ebade17dd95e3469c068c6418b2a22, type: 3}
+  m_PrefabInstance: {fileID: 3193403398921183764}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5506254570756709512
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2346470690602213189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a9c2b1e3800d6f4a86af2a9fe6560b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2PartAnimation
+  meta: {fileID: 4900000, guid: cc42e35fd2dad594c9be2aecca07812e, type: 3}
+  play: 1
+  loop: 1
+  speed: 1
+  metersPerUnit: 0.05
+  positionMap:
+  - source: 0
+    sign: 1
+  - source: 2
+    sign: 1
+  - source: 1
+    sign: 1
+  rotationMap:
+  - source: 0
+    sign: -1
+  - source: 2
+    sign: -1
+  - source: 1
+    sign: -1
+  rotationInRadians: 1
+--- !u!114 &7003557653246780962
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2346470690602213189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4feb1e89791b49549afbeacbd3881fd7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2ResourceInfo
+  meshId: 18304
+  materialId: 34716
+  originalPath: data/assets/main/3d/meshes/ships/battleship_terran_explosion_anim.aem

@@ -1,0 +1,1 @@
+{"source": "meshes/col_box.aem", "version": 2, "flags": 31, "truncated": false, "parts": [{"name": "col_box_part0", "parent": "col_box", "vertices": 24, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": true, "bsphere": [0.0, 0.0, 0.0, 0.8660253882408142], "channels": []}]}

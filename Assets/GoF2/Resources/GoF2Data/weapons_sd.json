@@ -1,0 +1,8849 @@
+[
+ {
+  "ship": 63,
+  "shipName": "N'Tirrk",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     488,
+     -519,
+     -56
+    ],
+    "position_engine": [
+     488,
+     -56,
+     519
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -488,
+     -519,
+     -56
+    ],
+    "position_engine": [
+     -488,
+     -56,
+     519
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -279,
+     -537,
+     -17
+    ],
+    "position_engine": [
+     -279,
+     -17,
+     537
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     279,
+     -537,
+     -17
+    ],
+    "position_engine": [
+     279,
+     -17,
+     537
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     275,
+     -537,
+     -17
+    ],
+    "position_engine": [
+     275,
+     -17,
+     537
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -275,
+     -537,
+     -17
+    ],
+    "position_engine": [
+     -275,
+     -17,
+     537
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     488,
+     183,
+     -9
+    ],
+    "position_engine": [
+     488,
+     -9,
+     -183
+    ],
+    "turretAngles": [
+     0.29999998211860657,
+     0.29999998211860657,
+     0.29999998211860657
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -488,
+     183,
+     -9
+    ],
+    "position_engine": [
+     -488,
+     -9,
+     -183
+    ],
+    "turretAngles": [
+     0.29999998211860657,
+     0.29999998211860657,
+     0.29999998211860657
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     545,
+     122
+    ],
+    "position_engine": [
+     0,
+     122,
+     -545
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 62,
+  "shipName": "Dark Angel",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -499,
+     -151,
+     -126
+    ],
+    "position_engine": [
+     -499,
+     -126,
+     151
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -645,
+     -525,
+     -194
+    ],
+    "position_engine": [
+     -645,
+     -194,
+     525
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     499,
+     -151,
+     -126
+    ],
+    "position_engine": [
+     499,
+     -126,
+     151
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     645,
+     -525,
+     -194
+    ],
+    "position_engine": [
+     645,
+     -194,
+     525
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -300,
+     -86,
+     -118
+    ],
+    "position_engine": [
+     -300,
+     -118,
+     86
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     300,
+     -86,
+     -118
+    ],
+    "position_engine": [
+     300,
+     -118,
+     86
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     184,
+     133
+    ],
+    "position_engine": [
+     0,
+     133,
+     -184
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     449,
+     -13
+    ],
+    "position_engine": [
+     0,
+     -13,
+     -449
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     128,
+     734,
+     128
+    ],
+    "position_engine": [
+     128,
+     128,
+     -734
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -130,
+     734,
+     128
+    ],
+    "position_engine": [
+     -130,
+     128,
+     -734
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 61,
+  "shipName": "Ghost",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     543,
+     -538,
+     -177
+    ],
+    "position_engine": [
+     543,
+     -177,
+     538
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -545,
+     -538,
+     -178
+    ],
+    "position_engine": [
+     -545,
+     -178,
+     538
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     275,
+     -872,
+     11
+    ],
+    "position_engine": [
+     275,
+     11,
+     872
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -274,
+     -872,
+     11
+    ],
+    "position_engine": [
+     -274,
+     11,
+     872
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -364,
+     638,
+     105
+    ],
+    "position_engine": [
+     -364,
+     105,
+     -638
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     365,
+     638,
+     106
+    ],
+    "position_engine": [
+     365,
+     106,
+     -638
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     290,
+     786,
+     0
+    ],
+    "position_engine": [
+     290,
+     0,
+     -786
+    ],
+    "turretAngles": [
+     1.100000023841858,
+     1.100000023841858,
+     1.100000023841858
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -299,
+     786,
+     1
+    ],
+    "position_engine": [
+     -299,
+     1,
+     -786
+    ],
+    "turretAngles": [
+     1.100000023841858,
+     1.100000023841858,
+     1.100000023841858
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     27,
+     717,
+     75
+    ],
+    "position_engine": [
+     27,
+     75,
+     -717
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -28,
+     718,
+     75
+    ],
+    "position_engine": [
+     -28,
+     75,
+     -718
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 37,
+  "shipName": "Cronus",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     523,
+     -105,
+     -354
+    ],
+    "position_engine": [
+     523,
+     -354,
+     105
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -523,
+     -105,
+     -354
+    ],
+    "position_engine": [
+     -523,
+     -354,
+     105
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     358,
+     81,
+     -74
+    ],
+    "position_engine": [
+     358,
+     -74,
+     -81
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -358,
+     81,
+     -74
+    ],
+    "position_engine": [
+     -358,
+     -74,
+     -81
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     525,
+     423,
+     -318
+    ],
+    "position_engine": [
+     525,
+     -318,
+     -423
+    ],
+    "turretAngles": [
+     0.75,
+     0.75,
+     0.75
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -525,
+     423,
+     -318
+    ],
+    "position_engine": [
+     -525,
+     -318,
+     -423
+    ],
+    "turretAngles": [
+     0.75,
+     0.75,
+     0.75
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     566,
+     18
+    ],
+    "position_engine": [
+     0,
+     18,
+     -566
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 38,
+  "shipName": "Typhon",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     285,
+     -270,
+     -158
+    ],
+    "position_engine": [
+     285,
+     -158,
+     270
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -285,
+     -270,
+     -158
+    ],
+    "position_engine": [
+     -285,
+     -158,
+     270
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     285,
+     -270,
+     -242
+    ],
+    "position_engine": [
+     285,
+     -242,
+     270
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -285,
+     -270,
+     -242
+    ],
+    "position_engine": [
+     -285,
+     -242,
+     270
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -28,
+     355,
+     36
+    ],
+    "position_engine": [
+     -28,
+     36,
+     -355
+    ],
+    "turretAngles": [
+     0.75,
+     0.75,
+     0.75
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     423,
+     121
+    ],
+    "position_engine": [
+     0,
+     121,
+     -423
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     28,
+     355,
+     36
+    ],
+    "position_engine": [
+     28,
+     36,
+     -355
+    ],
+    "turretAngles": [
+     0.75,
+     0.75,
+     0.75
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 40,
+  "shipName": "Nemesis",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     71,
+     -1142,
+     -115
+    ],
+    "position_engine": [
+     71,
+     -115,
+     1142
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -338,
+     271,
+     5
+    ],
+    "position_engine": [
+     -338,
+     5,
+     -271
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -71,
+     -1142,
+     -115
+    ],
+    "position_engine": [
+     -71,
+     -115,
+     1142
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     338,
+     271,
+     5
+    ],
+    "position_engine": [
+     338,
+     5,
+     -271
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     2,
+     136,
+     167
+    ],
+    "position_engine": [
+     2,
+     167,
+     -136
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     116,
+     708,
+     50
+    ],
+    "position_engine": [
+     116,
+     50,
+     -708
+    ],
+    "turretAngles": [
+     0.75,
+     0.75,
+     0.75
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     85,
+     227,
+     -129
+    ],
+    "position_engine": [
+     85,
+     -129,
+     -227
+    ],
+    "turretAngles": [
+     0.3499999940395355,
+     0.3499999940395355,
+     0.3499999940395355
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -116,
+     708,
+     50
+    ],
+    "position_engine": [
+     -116,
+     50,
+     -708
+    ],
+    "turretAngles": [
+     0.75,
+     0.75,
+     0.75
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -85,
+     227,
+     -129
+    ],
+    "position_engine": [
+     -85,
+     -129,
+     -227
+    ],
+    "turretAngles": [
+     0.3499999940395355,
+     0.3499999940395355,
+     0.3499999940395355
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 0,
+  "shipName": "Betty",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     214,
+     1,
+     -22
+    ],
+    "position_engine": [
+     214,
+     -22,
+     -1
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -214,
+     68,
+     -40
+    ],
+    "position_engine": [
+     -214,
+     -40,
+     -68
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -156,
+     256,
+     104
+    ],
+    "position_engine": [
+     -156,
+     104,
+     -256
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     156,
+     256,
+     104
+    ],
+    "position_engine": [
+     156,
+     104,
+     -256
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     53,
+     282,
+     82
+    ],
+    "position_engine": [
+     53,
+     82,
+     -282
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -53,
+     282,
+     82
+    ],
+    "position_engine": [
+     -53,
+     82,
+     -282
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 3,
+  "shipName": "Badger",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     186,
+     -371,
+     -276
+    ],
+    "position_engine": [
+     186,
+     -276,
+     371
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -186,
+     -371,
+     -276
+    ],
+    "position_engine": [
+     -186,
+     -276,
+     371
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     569,
+     -60,
+     -154
+    ],
+    "position_engine": [
+     569,
+     -154,
+     60
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -569,
+     -60,
+     -154
+    ],
+    "position_engine": [
+     -569,
+     -154,
+     60
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     88,
+     382,
+     41
+    ],
+    "position_engine": [
+     88,
+     41,
+     -382
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     385,
+     379,
+     -9
+    ],
+    "position_engine": [
+     385,
+     -9,
+     -379
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -88,
+     382,
+     41
+    ],
+    "position_engine": [
+     -88,
+     41,
+     -382
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -385,
+     379,
+     -9
+    ],
+    "position_engine": [
+     -385,
+     -9,
+     -379
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 6,
+  "shipName": "Hector",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     488,
+     -82,
+     -97
+    ],
+    "position_engine": [
+     488,
+     -97,
+     82
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -488,
+     -82,
+     -97
+    ],
+    "position_engine": [
+     -488,
+     -97,
+     82
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -128,
+     -93,
+     -44
+    ],
+    "position_engine": [
+     -128,
+     -44,
+     93
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     169,
+     11
+    ],
+    "position_engine": [
+     0,
+     11,
+     -169
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     252,
+     470,
+     8
+    ],
+    "position_engine": [
+     252,
+     8,
+     -470
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -252,
+     470,
+     8
+    ],
+    "position_engine": [
+     -252,
+     8,
+     -470
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 19,
+  "shipName": "Nuyang II",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     103,
+     -342,
+     -183
+    ],
+    "position_engine": [
+     103,
+     -183,
+     342
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -103,
+     -342,
+     -183
+    ],
+    "position_engine": [
+     -103,
+     -183,
+     342
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     63,
+     -387,
+     -400
+    ],
+    "position_engine": [
+     63,
+     -400,
+     387
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -63,
+     -387,
+     -400
+    ],
+    "position_engine": [
+     -63,
+     -400,
+     387
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     748,
+     -96,
+     -89
+    ],
+    "position_engine": [
+     748,
+     -89,
+     96
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -748,
+     -96,
+     -89
+    ],
+    "position_engine": [
+     -748,
+     -89,
+     96
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     446,
+     252,
+     20
+    ],
+    "position_engine": [
+     446,
+     20,
+     -252
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     113,
+     275,
+     -2
+    ],
+    "position_engine": [
+     113,
+     -2,
+     -275
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -446,
+     252,
+     20
+    ],
+    "position_engine": [
+     -446,
+     20,
+     -252
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -113,
+     275,
+     -2
+    ],
+    "position_engine": [
+     -113,
+     -2,
+     -275
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 20,
+  "shipName": "Cicero",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     324,
+     -303,
+     -124
+    ],
+    "position_engine": [
+     324,
+     -124,
+     303
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -324,
+     -303,
+     -124
+    ],
+    "position_engine": [
+     -324,
+     -124,
+     303
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -219,
+     -43,
+     -23
+    ],
+    "position_engine": [
+     -219,
+     -23,
+     43
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     148,
+     288,
+     180
+    ],
+    "position_engine": [
+     148,
+     180,
+     -288
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     160,
+     202
+    ],
+    "position_engine": [
+     0,
+     202,
+     -160
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -148,
+     288,
+     180
+    ],
+    "position_engine": [
+     -148,
+     180,
+     -288
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 30,
+  "shipName": "Berger CrossXT",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     267,
+     -581,
+     -47
+    ],
+    "position_engine": [
+     267,
+     -47,
+     581
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -267,
+     -581,
+     -47
+    ],
+    "position_engine": [
+     -267,
+     -47,
+     581
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     503,
+     -202,
+     -168
+    ],
+    "position_engine": [
+     503,
+     -168,
+     202
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -503,
+     -202,
+     -168
+    ],
+    "position_engine": [
+     -503,
+     -168,
+     202
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     80,
+     373,
+     197
+    ],
+    "position_engine": [
+     80,
+     197,
+     -373
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     267,
+     65,
+     -11
+    ],
+    "position_engine": [
+     267,
+     -11,
+     -65
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -80,
+     373,
+     197
+    ],
+    "position_engine": [
+     -80,
+     197,
+     -373
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -267,
+     65,
+     -11
+    ],
+    "position_engine": [
+     -267,
+     -11,
+     -65
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 4,
+  "shipName": "Dace",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     167,
+     -730,
+     -79
+    ],
+    "position_engine": [
+     167,
+     -79,
+     730
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -167,
+     -730,
+     -79
+    ],
+    "position_engine": [
+     -167,
+     -79,
+     730
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     332,
+     -275,
+     -125
+    ],
+    "position_engine": [
+     332,
+     -125,
+     275
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -332,
+     -275,
+     -125
+    ],
+    "position_engine": [
+     -332,
+     -125,
+     275
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     203,
+     -459,
+     -133
+    ],
+    "position_engine": [
+     203,
+     -133,
+     459
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     141,
+     779,
+     97
+    ],
+    "position_engine": [
+     141,
+     97,
+     -779
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -141,
+     779,
+     97
+    ],
+    "position_engine": [
+     -141,
+     97,
+     -779
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 12,
+  "shipName": "Type 43",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     347,
+     -729,
+     -8
+    ],
+    "position_engine": [
+     347,
+     -8,
+     729
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -347,
+     -729,
+     -8
+    ],
+    "position_engine": [
+     -347,
+     -8,
+     729
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     179,
+     207,
+     -38
+    ],
+    "position_engine": [
+     179,
+     -38,
+     -207
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -179,
+     207,
+     -38
+    ],
+    "position_engine": [
+     -179,
+     -38,
+     -207
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     389,
+     180
+    ],
+    "position_engine": [
+     0,
+     180,
+     -389
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     707,
+     103
+    ],
+    "position_engine": [
+     0,
+     103,
+     -707
+    ],
+    "turretAngles": [
+     0.8999999761581421,
+     0.8999999761581421,
+     0.8999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     321,
+     588,
+     -79
+    ],
+    "position_engine": [
+     321,
+     -79,
+     -588
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -320,
+     588,
+     -79
+    ],
+    "position_engine": [
+     -320,
+     -79,
+     -588
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 16,
+  "shipName": "Kinzer",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     251,
+     -823,
+     -69
+    ],
+    "position_engine": [
+     251,
+     -69,
+     823
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -251,
+     -823,
+     -69
+    ],
+    "position_engine": [
+     -251,
+     -69,
+     823
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     156,
+     181,
+     -55
+    ],
+    "position_engine": [
+     156,
+     -55,
+     -181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     502,
+     -13,
+     -133
+    ],
+    "position_engine": [
+     502,
+     -133,
+     13
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -502,
+     -13,
+     -133
+    ],
+    "position_engine": [
+     -502,
+     -133,
+     13
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -156,
+     181,
+     -55
+    ],
+    "position_engine": [
+     -156,
+     -55,
+     -181
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -1,
+     646,
+     12
+    ],
+    "position_engine": [
+     -1,
+     12,
+     -646
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -1,
+     806,
+     125
+    ],
+    "position_engine": [
+     -1,
+     125,
+     -806
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -122,
+     806,
+     10
+    ],
+    "position_engine": [
+     -122,
+     10,
+     -806
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     119,
+     806,
+     10
+    ],
+    "position_engine": [
+     119,
+     10,
+     -806
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 18,
+  "shipName": "Hatsuyuki",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     147,
+     -352,
+     94
+    ],
+    "position_engine": [
+     147,
+     94,
+     352
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -147,
+     -352,
+     94
+    ],
+    "position_engine": [
+     -147,
+     94,
+     352
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     36,
+     -154,
+     -117
+    ],
+    "position_engine": [
+     36,
+     -117,
+     154
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -36,
+     -154,
+     -117
+    ],
+    "position_engine": [
+     -36,
+     -117,
+     154
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     80,
+     0
+    ],
+    "position_engine": [
+     0,
+     0,
+     -80
+    ],
+    "turretAngles": [
+     0.3999999463558197,
+     0.3999999463558197,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     90,
+     50
+    ],
+    "position_engine": [
+     0,
+     50,
+     -90
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 21,
+  "shipName": "Aegir",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     607,
+     372,
+     -71
+    ],
+    "position_engine": [
+     607,
+     -71,
+     -372
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -607,
+     372,
+     -71
+    ],
+    "position_engine": [
+     -607,
+     -71,
+     -372
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     221,
+     -884,
+     -4
+    ],
+    "position_engine": [
+     221,
+     -4,
+     884
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -221,
+     -884,
+     -4
+    ],
+    "position_engine": [
+     -221,
+     -4,
+     884
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     516,
+     573,
+     -48
+    ],
+    "position_engine": [
+     516,
+     -48,
+     -573
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     297,
+     570,
+     101
+    ],
+    "position_engine": [
+     297,
+     101,
+     -570
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -297,
+     570,
+     101
+    ],
+    "position_engine": [
+     -297,
+     101,
+     -570
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -516,
+     573,
+     -48
+    ],
+    "position_engine": [
+     -516,
+     -48,
+     -573
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -2,
+     884,
+     105
+    ],
+    "position_engine": [
+     -2,
+     105,
+     -884
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -2,
+     884,
+     21
+    ],
+    "position_engine": [
+     -2,
+     21,
+     -884
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     280,
+     884,
+     -14
+    ],
+    "position_engine": [
+     280,
+     -14,
+     -884
+    ],
+    "turretAngles": [
+     1.100000023841858,
+     1.100000023841858,
+     1.100000023841858
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -289,
+     884,
+     -14
+    ],
+    "position_engine": [
+     -289,
+     -14,
+     -884
+    ],
+    "turretAngles": [
+     1.100000023841858,
+     1.100000023841858,
+     1.100000023841858
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 31,
+  "shipName": "Salvéhn",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     464,
+     -647,
+     -77
+    ],
+    "position_engine": [
+     464,
+     -77,
+     647
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -464,
+     -647,
+     -77
+    ],
+    "position_engine": [
+     -464,
+     -77,
+     647
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     167,
+     161
+    ],
+    "position_engine": [
+     0,
+     161,
+     -167
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     298,
+     198
+    ],
+    "position_engine": [
+     0,
+     198,
+     -298
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     70,
+     532,
+     -75
+    ],
+    "position_engine": [
+     70,
+     -75,
+     -532
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -65,
+     532,
+     -75
+    ],
+    "position_engine": [
+     -65,
+     -75,
+     -532
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     226,
+     463,
+     -77
+    ],
+    "position_engine": [
+     226,
+     -77,
+     -463
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -225,
+     463,
+     -77
+    ],
+    "position_engine": [
+     -225,
+     -77,
+     -463
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 35,
+  "shipName": "Night Owl",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -319,
+     -119
+    ],
+    "position_engine": [
+     0,
+     -119,
+     319
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     310,
+     10,
+     2
+    ],
+    "position_engine": [
+     310,
+     2,
+     -10
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -310,
+     10,
+     2
+    ],
+    "position_engine": [
+     -310,
+     2,
+     -10
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     266,
+     -31
+    ],
+    "position_engine": [
+     0,
+     -31,
+     -266
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     303,
+     34
+    ],
+    "position_engine": [
+     0,
+     34,
+     -303
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 2,
+  "shipName": "Hiro",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -466,
+     -74
+    ],
+    "position_engine": [
+     0,
+     -74,
+     466
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -189,
+     179,
+     -183
+    ],
+    "position_engine": [
+     -189,
+     -183,
+     -179
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     189,
+     179,
+     -183
+    ],
+    "position_engine": [
+     189,
+     -183,
+     -179
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     59,
+     512,
+     -61
+    ],
+    "position_engine": [
+     59,
+     -61,
+     -512
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -59,
+     512,
+     -61
+    ],
+    "position_engine": [
+     -59,
+     -61,
+     -512
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     512,
+     -1
+    ],
+    "position_engine": [
+     0,
+     -1,
+     -512
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 11,
+  "shipName": "Hernstein",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     243,
+     -504,
+     -44
+    ],
+    "position_engine": [
+     243,
+     -44,
+     504
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -243,
+     -504,
+     -44
+    ],
+    "position_engine": [
+     -243,
+     -44,
+     504
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     504,
+     -232,
+     -149
+    ],
+    "position_engine": [
+     504,
+     -149,
+     232
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -504,
+     -232,
+     -149
+    ],
+    "position_engine": [
+     -504,
+     -149,
+     232
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     622,
+     207
+    ],
+    "position_engine": [
+     0,
+     207,
+     -622
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -383,
+     773,
+     -93
+    ],
+    "position_engine": [
+     -383,
+     -93,
+     -773
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -383,
+     773,
+     11
+    ],
+    "position_engine": [
+     -383,
+     11,
+     -773
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     383,
+     773,
+     11
+    ],
+    "position_engine": [
+     383,
+     11,
+     -773
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     383,
+     773,
+     -93
+    ],
+    "position_engine": [
+     383,
+     -93,
+     -773
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 23,
+  "shipName": "Azov",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     230,
+     -95,
+     -22
+    ],
+    "position_engine": [
+     230,
+     -22,
+     95
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -230,
+     -95,
+     -22
+    ],
+    "position_engine": [
+     -230,
+     -22,
+     95
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     385,
+     154,
+     -137
+    ],
+    "position_engine": [
+     385,
+     -137,
+     -154
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -385,
+     154,
+     -137
+    ],
+    "position_engine": [
+     -385,
+     -137,
+     -154
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     288,
+     104
+    ],
+    "position_engine": [
+     0,
+     104,
+     -288
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     48,
+     491,
+     -55
+    ],
+    "position_engine": [
+     48,
+     -55,
+     -491
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -47,
+     491,
+     -55
+    ],
+    "position_engine": [
+     -47,
+     -55,
+     -491
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -106,
+     498,
+     46
+    ],
+    "position_engine": [
+     -106,
+     46,
+     -498
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     102,
+     498,
+     46
+    ],
+    "position_engine": [
+     102,
+     46,
+     -498
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 24,
+  "shipName": "Velasco",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     226,
+     -156,
+     -22
+    ],
+    "position_engine": [
+     226,
+     -22,
+     156
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -226,
+     -156,
+     -22
+    ],
+    "position_engine": [
+     -226,
+     -22,
+     156
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -683,
+     -114
+    ],
+    "position_engine": [
+     0,
+     -114,
+     683
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     417,
+     62,
+     -124
+    ],
+    "position_engine": [
+     417,
+     -124,
+     -62
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -417,
+     62,
+     -124
+    ],
+    "position_engine": [
+     -417,
+     -124,
+     -62
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     298,
+     152
+    ],
+    "position_engine": [
+     0,
+     152,
+     -298
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     320,
+     535,
+     14
+    ],
+    "position_engine": [
+     320,
+     14,
+     -535
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -319,
+     535,
+     14
+    ],
+    "position_engine": [
+     -319,
+     14,
+     -535
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     47,
+     658,
+     -7
+    ],
+    "position_engine": [
+     47,
+     -7,
+     -658
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -47,
+     658,
+     -7
+    ],
+    "position_engine": [
+     -47,
+     -7,
+     -658
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 25,
+  "shipName": "Tyrion",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -185,
+     -139,
+     -16
+    ],
+    "position_engine": [
+     -185,
+     -16,
+     139
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     503,
+     204,
+     -115
+    ],
+    "position_engine": [
+     503,
+     -115,
+     -204
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     358,
+     204,
+     -81
+    ],
+    "position_engine": [
+     358,
+     -81,
+     -204
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -503,
+     204,
+     -115
+    ],
+    "position_engine": [
+     -503,
+     -115,
+     -204
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -358,
+     204,
+     -81
+    ],
+    "position_engine": [
+     -358,
+     -81,
+     -204
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     1,
+     547,
+     12
+    ],
+    "position_engine": [
+     1,
+     12,
+     -547
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     1,
+     580,
+     130
+    ],
+    "position_engine": [
+     1,
+     130,
+     -580
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -168,
+     522,
+     79
+    ],
+    "position_engine": [
+     -168,
+     79,
+     -522
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     168,
+     522,
+     79
+    ],
+    "position_engine": [
+     168,
+     79,
+     -522
+    ],
+    "turretAngles": [
+     0.7999998927116394,
+     0.7999998927116394,
+     0.7999999523162842
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 29,
+  "shipName": "Mantis",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     780,
+     163,
+     -218
+    ],
+    "position_engine": [
+     780,
+     -218,
+     -163
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -780,
+     163,
+     -218
+    ],
+    "position_engine": [
+     -780,
+     -218,
+     -163
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     247,
+     -295,
+     -70
+    ],
+    "position_engine": [
+     247,
+     -70,
+     295
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -247,
+     -295,
+     -70
+    ],
+    "position_engine": [
+     -247,
+     -70,
+     295
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -517,
+     213,
+     -216
+    ],
+    "position_engine": [
+     -517,
+     -216,
+     -213
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     517,
+     213,
+     -216
+    ],
+    "position_engine": [
+     517,
+     -216,
+     -213
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -349,
+     212,
+     -178
+    ],
+    "position_engine": [
+     -349,
+     -178,
+     -212
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     349,
+     212,
+     -178
+    ],
+    "position_engine": [
+     349,
+     -178,
+     -212
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -198,
+     798,
+     76
+    ],
+    "position_engine": [
+     -198,
+     76,
+     -798
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -107,
+     796,
+     105
+    ],
+    "position_engine": [
+     -107,
+     105,
+     -796
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -107,
+     794,
+     38
+    ],
+    "position_engine": [
+     -107,
+     38,
+     -794
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     112,
+     796,
+     105
+    ],
+    "position_engine": [
+     112,
+     105,
+     -796
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     112,
+     794,
+     38
+    ],
+    "position_engine": [
+     112,
+     38,
+     -794
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     201,
+     798,
+     75
+    ],
+    "position_engine": [
+     201,
+     75,
+     -798
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 32,
+  "shipName": "Wasp",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     224,
+     -66,
+     -26
+    ],
+    "position_engine": [
+     224,
+     -26,
+     66
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -214,
+     44,
+     -22
+    ],
+    "position_engine": [
+     -214,
+     -22,
+     -44
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     527,
+     77
+    ],
+    "position_engine": [
+     0,
+     77,
+     -527
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -74,
+     527,
+     43
+    ],
+    "position_engine": [
+     -74,
+     43,
+     -527
+    ],
+    "turretAngles": [
+     0.3499999940395355,
+     0.3499999940395355,
+     0.3499999940395355
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     74,
+     527,
+     43
+    ],
+    "position_engine": [
+     74,
+     43,
+     -527
+    ],
+    "turretAngles": [
+     0.3499999940395355,
+     0.3499999940395355,
+     0.3499999940395355
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 42,
+  "shipName": "Vol Noor",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     120,
+     -897,
+     -43
+    ],
+    "position_engine": [
+     120,
+     -43,
+     897
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -120,
+     -897,
+     -43
+    ],
+    "position_engine": [
+     -120,
+     -43,
+     897
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     674,
+     -175,
+     -58
+    ],
+    "position_engine": [
+     674,
+     -58,
+     175
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -674,
+     -175,
+     -58
+    ],
+    "position_engine": [
+     -674,
+     -58,
+     175
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     270,
+     733,
+     -21
+    ],
+    "position_engine": [
+     270,
+     -21,
+     -733
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -270,
+     733,
+     -21
+    ],
+    "position_engine": [
+     -270,
+     -21,
+     -733
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 43,
+  "shipName": "Wraith",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     478,
+     -141,
+     -48
+    ],
+    "position_engine": [
+     478,
+     -48,
+     141
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     216,
+     -799,
+     -37
+    ],
+    "position_engine": [
+     216,
+     -37,
+     799
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -216,
+     -799,
+     -37
+    ],
+    "position_engine": [
+     -216,
+     -37,
+     799
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -478,
+     -141,
+     -48
+    ],
+    "position_engine": [
+     -478,
+     -48,
+     141
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     105,
+     115,
+     101
+    ],
+    "position_engine": [
+     105,
+     101,
+     -115
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -105,
+     115,
+     101
+    ],
+    "position_engine": [
+     -105,
+     101,
+     -115
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     116,
+     381,
+     113
+    ],
+    "position_engine": [
+     116,
+     113,
+     -381
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     478,
+     23
+    ],
+    "position_engine": [
+     0,
+     23,
+     -478
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -116,
+     381,
+     113
+    ],
+    "position_engine": [
+     -116,
+     113,
+     -381
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 1,
+  "shipName": "Teneta",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     573,
+     -102,
+     -88
+    ],
+    "position_engine": [
+     573,
+     -88,
+     102
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -573,
+     -102,
+     -88
+    ],
+    "position_engine": [
+     -573,
+     -88,
+     102
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -382,
+     -106,
+     -121
+    ],
+    "position_engine": [
+     -382,
+     -121,
+     106
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     124,
+     -584,
+     -83
+    ],
+    "position_engine": [
+     124,
+     -83,
+     584
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     382,
+     -106,
+     -121
+    ],
+    "position_engine": [
+     382,
+     -121,
+     106
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -124,
+     -584,
+     -83
+    ],
+    "position_engine": [
+     -124,
+     -83,
+     584
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     239,
+     155
+    ],
+    "position_engine": [
+     0,
+     155,
+     -239
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     231,
+     533,
+     -42
+    ],
+    "position_engine": [
+     231,
+     -42,
+     -533
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -231,
+     533,
+     -42
+    ],
+    "position_engine": [
+     -231,
+     -42,
+     -533
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     600,
+     -15
+    ],
+    "position_engine": [
+     0,
+     -15,
+     -600
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 5,
+  "shipName": "Inflict",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     150,
+     11,
+     -77
+    ],
+    "position_engine": [
+     150,
+     -77,
+     -11
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -149,
+     11,
+     -78
+    ],
+    "position_engine": [
+     -149,
+     -78,
+     -11
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -437,
+     -115
+    ],
+    "position_engine": [
+     0,
+     -115,
+     437
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     54,
+     464,
+     -45
+    ],
+    "position_engine": [
+     54,
+     -45,
+     -464
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -54,
+     464,
+     -45
+    ],
+    "position_engine": [
+     -54,
+     -45,
+     -464
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     464,
+     24
+    ],
+    "position_engine": [
+     0,
+     24,
+     -464
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 7,
+  "shipName": "Anaan",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     481,
+     -719,
+     -67
+    ],
+    "position_engine": [
+     481,
+     -67,
+     719
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -481,
+     -719,
+     -67
+    ],
+    "position_engine": [
+     -481,
+     -67,
+     719
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -707,
+     -153
+    ],
+    "position_engine": [
+     0,
+     -153,
+     707
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     -9,
+     172
+    ],
+    "position_engine": [
+     0,
+     172,
+     9
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -106,
+     630,
+     -2
+    ],
+    "position_engine": [
+     -106,
+     -2,
+     -630
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     106,
+     630,
+     -2
+    ],
+    "position_engine": [
+     106,
+     -2,
+     -630
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 17,
+  "shipName": "Ward",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     447,
+     -390,
+     -137
+    ],
+    "position_engine": [
+     447,
+     -137,
+     390
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -447,
+     -390,
+     -137
+    ],
+    "position_engine": [
+     -447,
+     -137,
+     390
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     295,
+     -512,
+     -124
+    ],
+    "position_engine": [
+     295,
+     -124,
+     512
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -295,
+     -512,
+     -124
+    ],
+    "position_engine": [
+     -295,
+     -124,
+     512
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     157,
+     -376,
+     -139
+    ],
+    "position_engine": [
+     157,
+     -139,
+     376
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -157,
+     -376,
+     -139
+    ],
+    "position_engine": [
+     -157,
+     -139,
+     376
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -115,
+     502,
+     32
+    ],
+    "position_engine": [
+     -115,
+     32,
+     -502
+    ],
+    "turretAngles": [
+     0.3999999463558197,
+     0.3999999463558197,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     502,
+     -68
+    ],
+    "position_engine": [
+     0,
+     -68,
+     -502
+    ],
+    "turretAngles": [
+     0.3999999463558197,
+     0.3999999463558197,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     502,
+     144
+    ],
+    "position_engine": [
+     0,
+     144,
+     -502
+    ],
+    "turretAngles": [
+     0.3999999463558197,
+     0.3999999463558197,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     499,
+     39
+    ],
+    "position_engine": [
+     0,
+     39,
+     -499
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     115,
+     502,
+     32
+    ],
+    "position_engine": [
+     115,
+     32,
+     -502
+    ],
+    "turretAngles": [
+     0.3999999463558197,
+     0.3999999463558197,
+     0.3999999761581421
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 22,
+  "shipName": "Groza",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     213,
+     -137,
+     -31
+    ],
+    "position_engine": [
+     213,
+     -31,
+     137
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -213,
+     -137,
+     -31
+    ],
+    "position_engine": [
+     -213,
+     -31,
+     137
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -705,
+     -103
+    ],
+    "position_engine": [
+     0,
+     -103,
+     705
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     337,
+     -178,
+     -76
+    ],
+    "position_engine": [
+     337,
+     -76,
+     178
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -337,
+     -178,
+     -76
+    ],
+    "position_engine": [
+     -337,
+     -76,
+     178
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -601,
+     -39
+    ],
+    "position_engine": [
+     0,
+     -39,
+     601
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -89,
+     474,
+     -50
+    ],
+    "position_engine": [
+     -89,
+     -50,
+     -474
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -111,
+     474,
+     15
+    ],
+    "position_engine": [
+     -111,
+     15,
+     -474
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     1,
+     496,
+     16
+    ],
+    "position_engine": [
+     1,
+     16,
+     -496
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     111,
+     474,
+     15
+    ],
+    "position_engine": [
+     111,
+     15,
+     -474
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     89,
+     474,
+     -50
+    ],
+    "position_engine": [
+     89,
+     -50,
+     -474
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 26,
+  "shipName": "Hera",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     183,
+     -669,
+     -13
+    ],
+    "position_engine": [
+     183,
+     -13,
+     669
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -181,
+     -669,
+     -13
+    ],
+    "position_engine": [
+     -181,
+     -13,
+     669
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     348,
+     209,
+     -18
+    ],
+    "position_engine": [
+     348,
+     -18,
+     -209
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -348,
+     209,
+     -18
+    ],
+    "position_engine": [
+     -348,
+     -18,
+     -209
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -118,
+     506,
+     -63
+    ],
+    "position_engine": [
+     -118,
+     -63,
+     -506
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -118,
+     506,
+     51
+    ],
+    "position_engine": [
+     -118,
+     51,
+     -506
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     618,
+     -59
+    ],
+    "position_engine": [
+     0,
+     -59,
+     -618
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     618,
+     46
+    ],
+    "position_engine": [
+     0,
+     46,
+     -618
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     118,
+     506,
+     30
+    ],
+    "position_engine": [
+     118,
+     30,
+     -506
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     118,
+     506,
+     -65
+    ],
+    "position_engine": [
+     118,
+     -65,
+     -506
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 27,
+  "shipName": "Taipan",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     157,
+     -690,
+     -24
+    ],
+    "position_engine": [
+     157,
+     -24,
+     690
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -157,
+     -690,
+     -24
+    ],
+    "position_engine": [
+     -157,
+     -24,
+     690
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     12,
+     -211
+    ],
+    "position_engine": [
+     0,
+     -211,
+     -12
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     256,
+     -19,
+     -30
+    ],
+    "position_engine": [
+     256,
+     -30,
+     19
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -256,
+     -19,
+     -30
+    ],
+    "position_engine": [
+     -256,
+     -30,
+     19
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -340,
+     526,
+     -13
+    ],
+    "position_engine": [
+     -340,
+     -13,
+     -526
+    ],
+    "turretAngles": [
+     0.8999999761581421,
+     0.8999999761581421,
+     0.8999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -123,
+     459,
+     40
+    ],
+    "position_engine": [
+     -123,
+     40,
+     -459
+    ],
+    "turretAngles": [
+     0.8999999761581421,
+     0.8999999761581421,
+     0.8999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     340,
+     526,
+     -13
+    ],
+    "position_engine": [
+     340,
+     -13,
+     -526
+    ],
+    "turretAngles": [
+     0.8999999761581421,
+     0.8999999761581421,
+     0.8999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     123,
+     459,
+     40
+    ],
+    "position_engine": [
+     123,
+     40,
+     -459
+    ],
+    "turretAngles": [
+     0.8999999761581421,
+     0.8999999761581421,
+     0.8999999761581421
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 28,
+  "shipName": "Veteran",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     140,
+     -940,
+     -26
+    ],
+    "position_engine": [
+     140,
+     -26,
+     940
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -140,
+     -940,
+     -26
+    ],
+    "position_engine": [
+     -140,
+     -26,
+     940
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -1109,
+     -31
+    ],
+    "position_engine": [
+     0,
+     -31,
+     1109
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     506,
+     244,
+     -158
+    ],
+    "position_engine": [
+     506,
+     -158,
+     -244
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     423,
+     56,
+     -121
+    ],
+    "position_engine": [
+     423,
+     -121,
+     -56
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -423,
+     56,
+     -121
+    ],
+    "position_engine": [
+     -423,
+     -121,
+     -56
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -506,
+     244,
+     -158
+    ],
+    "position_engine": [
+     -506,
+     -158,
+     -244
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     457,
+     168
+    ],
+    "position_engine": [
+     0,
+     168,
+     -457
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -183,
+     841,
+     -7
+    ],
+    "position_engine": [
+     -183,
+     -7,
+     -841
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     854,
+     68
+    ],
+    "position_engine": [
+     0,
+     68,
+     -854
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     863,
+     -45
+    ],
+    "position_engine": [
+     0,
+     -45,
+     -863
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     183,
+     841,
+     -7
+    ],
+    "position_engine": [
+     183,
+     -7,
+     -841
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 33,
+  "shipName": "Furious",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -694,
+     -40
+    ],
+    "position_engine": [
+     0,
+     -40,
+     694
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     487,
+     -192,
+     -111
+    ],
+    "position_engine": [
+     487,
+     -111,
+     192
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -487,
+     -192,
+     -111
+    ],
+    "position_engine": [
+     -487,
+     -111,
+     192
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     343,
+     158
+    ],
+    "position_engine": [
+     0,
+     158,
+     -343
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -56,
+     334,
+     -10
+    ],
+    "position_engine": [
+     -56,
+     -10,
+     -334
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     56,
+     334,
+     -10
+    ],
+    "position_engine": [
+     56,
+     -10,
+     -334
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     209,
+     524,
+     21
+    ],
+    "position_engine": [
+     209,
+     21,
+     -524
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -209,
+     524,
+     21
+    ],
+    "position_engine": [
+     -209,
+     21,
+     -524
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 34,
+  "shipName": "Razor 6",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     139,
+     -622,
+     -82
+    ],
+    "position_engine": [
+     139,
+     -82,
+     622
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -139,
+     -622,
+     -82
+    ],
+    "position_engine": [
+     -139,
+     -82,
+     622
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     322,
+     -178,
+     -2
+    ],
+    "position_engine": [
+     322,
+     -2,
+     178
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -322,
+     -178,
+     -2
+    ],
+    "position_engine": [
+     -322,
+     -2,
+     178
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -391,
+     -102
+    ],
+    "position_engine": [
+     0,
+     -102,
+     391
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     510,
+     -46
+    ],
+    "position_engine": [
+     0,
+     -46,
+     -510
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     510,
+     80
+    ],
+    "position_engine": [
+     0,
+     80,
+     -510
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     48,
+     489,
+     16
+    ],
+    "position_engine": [
+     48,
+     16,
+     -489
+    ],
+    "turretAngles": [
+     0.29999998211860657,
+     0.29999998211860657,
+     0.29999998211860657
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     200,
+     414,
+     0
+    ],
+    "position_engine": [
+     200,
+     0,
+     -414
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -48,
+     489,
+     16
+    ],
+    "position_engine": [
+     -48,
+     16,
+     -489
+    ],
+    "turretAngles": [
+     0.29999998211860657,
+     0.29999998211860657,
+     0.29999998211860657
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -200,
+     414,
+     0
+    ],
+    "position_engine": [
+     -200,
+     0,
+     -414
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 36,
+  "shipName": "Cormorant",
+  "mounts": [
+   {
+    "slotType": 1,
+    "position_file": [
+     435,
+     -377,
+     -179
+    ],
+    "position_engine": [
+     435,
+     -179,
+     377
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     641,
+     -460,
+     -247
+    ],
+    "position_engine": [
+     641,
+     -247,
+     460
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -641,
+     -460,
+     -242
+    ],
+    "position_engine": [
+     -641,
+     -242,
+     460
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -435,
+     -377,
+     -173
+    ],
+    "position_engine": [
+     -435,
+     -173,
+     377
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     352,
+     233
+    ],
+    "position_engine": [
+     0,
+     233,
+     -352
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     183,
+     1000,
+     82
+    ],
+    "position_engine": [
+     183,
+     82,
+     -1000
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     309,
+     93,
+     -53
+    ],
+    "position_engine": [
+     309,
+     -53,
+     -93
+    ],
+    "turretAngles": [
+     0.8999999761581421,
+     0.8999999761581421,
+     0.8999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -183,
+     1000,
+     82
+    ],
+    "position_engine": [
+     -183,
+     82,
+     -1000
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -309,
+     93,
+     -53
+    ],
+    "position_engine": [
+     -309,
+     -53,
+     -93
+    ],
+    "turretAngles": [
+     0.8999999761581421,
+     0.8999999761581421,
+     0.8999999761581421
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 10,
+  "shipName": "Phantom",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     142,
+     84,
+     -98
+    ],
+    "position_engine": [
+     142,
+     -98,
+     -84
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -142,
+     84,
+     -98
+    ],
+    "position_engine": [
+     -142,
+     -98,
+     -84
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -455,
+     -138
+    ],
+    "position_engine": [
+     0,
+     -138,
+     455
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     44,
+     455,
+     -54
+    ],
+    "position_engine": [
+     44,
+     -54,
+     -455
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -44,
+     455,
+     -54
+    ],
+    "position_engine": [
+     -44,
+     -54,
+     -455
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     455,
+     18
+    ],
+    "position_engine": [
+     0,
+     18,
+     -455
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 9,
+  "shipName": "H'Soc",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     253,
+     -604,
+     -45
+    ],
+    "position_engine": [
+     253,
+     -45,
+     604
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -253,
+     -604,
+     -45
+    ],
+    "position_engine": [
+     -253,
+     -45,
+     604
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     183,
+     -745,
+     -44
+    ],
+    "position_engine": [
+     183,
+     -44,
+     745
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -183,
+     -745,
+     -44
+    ],
+    "position_engine": [
+     -183,
+     -44,
+     745
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     426,
+     -15
+    ],
+    "position_engine": [
+     0,
+     -15,
+     -426
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 39,
+  "shipName": "S'Kanarr",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -487,
+     -837,
+     -5
+    ],
+    "position_engine": [
+     -487,
+     -5,
+     837
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -114,
+     -949,
+     -17
+    ],
+    "position_engine": [
+     -114,
+     -17,
+     949
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     487,
+     -837,
+     -5
+    ],
+    "position_engine": [
+     487,
+     -5,
+     837
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     114,
+     -949,
+     -17
+    ],
+    "position_engine": [
+     114,
+     -17,
+     949
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -138,
+     -329,
+     121
+    ],
+    "position_engine": [
+     -138,
+     121,
+     329
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     138,
+     -329,
+     121
+    ],
+    "position_engine": [
+     138,
+     121,
+     329
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     27,
+     243
+    ],
+    "position_engine": [
+     0,
+     243,
+     -27
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -236,
+     422,
+     42
+    ],
+    "position_engine": [
+     -236,
+     42,
+     -422
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -231,
+     378,
+     -20
+    ],
+    "position_engine": [
+     -231,
+     -20,
+     -378
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     231,
+     378,
+     -20
+    ],
+    "position_engine": [
+     231,
+     -20,
+     -378
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     237,
+     422,
+     42
+    ],
+    "position_engine": [
+     237,
+     42,
+     -422
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 41,
+  "shipName": "K'Suukk",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -244,
+     -751,
+     -120
+    ],
+    "position_engine": [
+     -244,
+     -120,
+     751
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -592,
+     -169
+    ],
+    "position_engine": [
+     0,
+     -169,
+     592
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     244,
+     -751,
+     -120
+    ],
+    "position_engine": [
+     244,
+     -120,
+     751
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -151,
+     -382,
+     -106
+    ],
+    "position_engine": [
+     -151,
+     -106,
+     382
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     151,
+     -382,
+     -106
+    ],
+    "position_engine": [
+     151,
+     -106,
+     382
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     123,
+     594,
+     32
+    ],
+    "position_engine": [
+     123,
+     32,
+     -594
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -123,
+     594,
+     32
+    ],
+    "position_engine": [
+     -123,
+     32,
+     -594
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     276,
+     -59
+    ],
+    "position_engine": [
+     0,
+     -59,
+     -276
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 45,
+  "shipName": "Bloodstar",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     720,
+     -151,
+     -156
+    ],
+    "position_engine": [
+     720,
+     -156,
+     151
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     471,
+     -365,
+     -156
+    ],
+    "position_engine": [
+     471,
+     -156,
+     365
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -720,
+     -154,
+     -157
+    ],
+    "position_engine": [
+     -720,
+     -157,
+     154
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -470,
+     -367,
+     -157
+    ],
+    "position_engine": [
+     -470,
+     -157,
+     367
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -9,
+     -962,
+     -169
+    ],
+    "position_engine": [
+     -9,
+     -169,
+     962
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     10,
+     -962,
+     -169
+    ],
+    "position_engine": [
+     10,
+     -169,
+     962
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -9,
+     -962,
+     -189
+    ],
+    "position_engine": [
+     -9,
+     -189,
+     962
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     10,
+     -962,
+     -189
+    ],
+    "position_engine": [
+     10,
+     -189,
+     962
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     460,
+     173
+    ],
+    "position_engine": [
+     0,
+     173,
+     -460
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     685,
+     -105
+    ],
+    "position_engine": [
+     0,
+     -105,
+     -685
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     685,
+     -16
+    ],
+    "position_engine": [
+     0,
+     -16,
+     -685
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     101,
+     685,
+     -61
+    ],
+    "position_engine": [
+     101,
+     -61,
+     -685
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     290,
+     609,
+     -73
+    ],
+    "position_engine": [
+     290,
+     -73,
+     -609
+    ],
+    "turretAngles": [
+     0.40475994348526,
+     0.40475994348526,
+     0.40475994348526
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -100,
+     685,
+     -61
+    ],
+    "position_engine": [
+     -100,
+     -61,
+     -685
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -287,
+     607,
+     -73
+    ],
+    "position_engine": [
+     -287,
+     -73,
+     -607
+    ],
+    "turretAngles": [
+     0.40475994348526,
+     0.40475994348526,
+     0.40475994348526
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 46,
+  "shipName": "Blue Fyre",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -25,
+     182
+    ],
+    "position_engine": [
+     0,
+     182,
+     25
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     767,
+     -25,
+     -314
+    ],
+    "position_engine": [
+     767,
+     -314,
+     25
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -767,
+     -25,
+     -314
+    ],
+    "position_engine": [
+     -767,
+     -314,
+     25
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     122,
+     252
+    ],
+    "position_engine": [
+     0,
+     252,
+     -122
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     767,
+     121,
+     -380
+    ],
+    "position_engine": [
+     767,
+     -380,
+     -121
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -766,
+     131,
+     -382
+    ],
+    "position_engine": [
+     -766,
+     -382,
+     -131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     475,
+     728,
+     -205
+    ],
+    "position_engine": [
+     475,
+     -205,
+     -728
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     475,
+     756,
+     -79
+    ],
+    "position_engine": [
+     475,
+     -79,
+     -756
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -478,
+     730,
+     -205
+    ],
+    "position_engine": [
+     -478,
+     -205,
+     -730
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -476,
+     746,
+     -79
+    ],
+    "position_engine": [
+     -476,
+     -79,
+     -746
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 47,
+  "shipName": "Gator Custom",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     79,
+     -1033,
+     -183
+    ],
+    "position_engine": [
+     79,
+     -183,
+     1033
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     795,
+     202,
+     -118
+    ],
+    "position_engine": [
+     795,
+     -118,
+     -202
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -794,
+     200,
+     -117
+    ],
+    "position_engine": [
+     -794,
+     -117,
+     -200
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -74,
+     -1033,
+     -183
+    ],
+    "position_engine": [
+     -74,
+     -183,
+     1033
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     284,
+     -158,
+     -201
+    ],
+    "position_engine": [
+     284,
+     -201,
+     158
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -278,
+     -158,
+     -201
+    ],
+    "position_engine": [
+     -278,
+     -201,
+     158
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     629,
+     149
+    ],
+    "position_engine": [
+     0,
+     149,
+     -629
+    ],
+    "turretAngles": [
+     1.1200000047683716,
+     1.1200000047683716,
+     1.1100000143051147
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     614,
+     665,
+     4
+    ],
+    "position_engine": [
+     614,
+     4,
+     -665
+    ],
+    "turretAngles": [
+     0.8002966642379761,
+     1.0,
+     0.8002966642379761
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     527,
+     665,
+     25
+    ],
+    "position_engine": [
+     527,
+     25,
+     -665
+    ],
+    "turretAngles": [
+     0.8959770798683167,
+     0.8959770798683167,
+     0.8959770798683167
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     200,
+     608,
+     113
+    ],
+    "position_engine": [
+     200,
+     113,
+     -608
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -614,
+     665,
+     4
+    ],
+    "position_engine": [
+     -614,
+     4,
+     -665
+    ],
+    "turretAngles": [
+     0.8002966642379761,
+     1.0,
+     0.8002966642379761
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -535,
+     665,
+     27
+    ],
+    "position_engine": [
+     -535,
+     27,
+     -665
+    ],
+    "turretAngles": [
+     0.8959770798683167,
+     0.8959770798683167,
+     0.8959770798683167
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -202,
+     608,
+     111
+    ],
+    "position_engine": [
+     -202,
+     111,
+     -608
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 48,
+  "shipName": "Amboss",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -130,
+     -439,
+     -356
+    ],
+    "position_engine": [
+     -130,
+     -356,
+     439
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     129,
+     -439,
+     -355
+    ],
+    "position_engine": [
+     129,
+     -355,
+     439
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     265,
+     -97,
+     -67
+    ],
+    "position_engine": [
+     265,
+     -67,
+     97
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -267,
+     -97,
+     -67
+    ],
+    "position_engine": [
+     -267,
+     -67,
+     97
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     184,
+     -10,
+     42
+    ],
+    "position_engine": [
+     184,
+     42,
+     10
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     87,
+     -10,
+     42
+    ],
+    "position_engine": [
+     87,
+     42,
+     10
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -88,
+     -10,
+     42
+    ],
+    "position_engine": [
+     -88,
+     42,
+     10
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -185,
+     -10,
+     42
+    ],
+    "position_engine": [
+     -185,
+     42,
+     10
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     -81,
+     -332
+    ],
+    "position_engine": [
+     0,
+     -332,
+     81
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     -82,
+     -268
+    ],
+    "position_engine": [
+     0,
+     -268,
+     82
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     435,
+     277
+    ],
+    "position_engine": [
+     0,
+     277,
+     -435
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     435,
+     195
+    ],
+    "position_engine": [
+     0,
+     195,
+     -435
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 44,
+  "shipName": "Specter",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -478,
+     132,
+     -84
+    ],
+    "position_engine": [
+     -478,
+     -84,
+     -132
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     478,
+     133,
+     -84
+    ],
+    "position_engine": [
+     478,
+     -84,
+     -133
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -484,
+     32,
+     -14
+    ],
+    "position_engine": [
+     -484,
+     -14,
+     -32
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     484,
+     32,
+     -14
+    ],
+    "position_engine": [
+     484,
+     -14,
+     -32
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -578,
+     541,
+     -65
+    ],
+    "position_engine": [
+     -578,
+     -65,
+     -541
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     580,
+     541,
+     -65
+    ],
+    "position_engine": [
+     580,
+     -65,
+     -541
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     237,
+     806,
+     -16
+    ],
+    "position_engine": [
+     237,
+     -16,
+     -806
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -242,
+     806,
+     -15
+    ],
+    "position_engine": [
+     -242,
+     -15,
+     -806
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -36,
+     806,
+     28
+    ],
+    "position_engine": [
+     -36,
+     28,
+     -806
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     35,
+     806,
+     28
+    ],
+    "position_engine": [
+     35,
+     28,
+     -806
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 49,
+  "shipName": "Scimitar",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -506,
+     -1061,
+     -125
+    ],
+    "position_engine": [
+     -506,
+     -125,
+     1061
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     513,
+     -1061,
+     -125
+    ],
+    "position_engine": [
+     513,
+     -125,
+     1061
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     316,
+     106
+    ],
+    "position_engine": [
+     0,
+     106,
+     -316
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     229,
+     183,
+     73
+    ],
+    "position_engine": [
+     229,
+     73,
+     -183
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -228,
+     184,
+     73
+    ],
+    "position_engine": [
+     -228,
+     73,
+     -184
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     317,
+     1107,
+     6
+    ],
+    "position_engine": [
+     317,
+     6,
+     -1107
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     194,
+     1091,
+     79
+    ],
+    "position_engine": [
+     194,
+     79,
+     -1091
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     105,
+     1121,
+     109
+    ],
+    "position_engine": [
+     105,
+     109,
+     -1121
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -316,
+     1108,
+     4
+    ],
+    "position_engine": [
+     -316,
+     4,
+     -1108
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -194,
+     1092,
+     80
+    ],
+    "position_engine": [
+     -194,
+     80,
+     -1092
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -106,
+     1121,
+     109
+    ],
+    "position_engine": [
+     -106,
+     109,
+     -1121
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 50,
+  "shipName": "-",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     1071,
+     -2315,
+     -154
+    ],
+    "position_engine": [
+     1071,
+     -154,
+     2315
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -1071,
+     -2315,
+     -154
+    ],
+    "position_engine": [
+     -1071,
+     -154,
+     2315
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     1187,
+     773
+    ],
+    "position_engine": [
+     0,
+     773,
+     -1187
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     1402,
+     903,
+     -409
+    ],
+    "position_engine": [
+     1402,
+     -409,
+     -903
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     -1399,
+     895,
+     -408
+    ],
+    "position_engine": [
+     -1399,
+     -408,
+     -895
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     457,
+     2199,
+     478
+    ],
+    "position_engine": [
+     457,
+     478,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     854,
+     2199,
+     44
+    ],
+    "position_engine": [
+     854,
+     44,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     657,
+     2199,
+     107
+    ],
+    "position_engine": [
+     657,
+     107,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     219,
+     2199,
+     570
+    ],
+    "position_engine": [
+     219,
+     570,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -663,
+     2199,
+     107
+    ],
+    "position_engine": [
+     -663,
+     107,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -859,
+     2199,
+     44
+    ],
+    "position_engine": [
+     -859,
+     44,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -457,
+     2199,
+     478
+    ],
+    "position_engine": [
+     -457,
+     478,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -207,
+     2199,
+     570
+    ],
+    "position_engine": [
+     -207,
+     570,
+     -2199
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 51,
+  "shipName": "Rhino",
+  "mounts": [
+   {
+    "slotType": 1,
+    "position_file": [
+     665,
+     109,
+     -43
+    ],
+    "position_engine": [
+     665,
+     -43,
+     -109
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -665,
+     109,
+     -43
+    ],
+    "position_engine": [
+     -665,
+     -43,
+     -109
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     82,
+     469
+    ],
+    "position_engine": [
+     0,
+     469,
+     -82
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -157,
+     992,
+     130
+    ],
+    "position_engine": [
+     -157,
+     130,
+     -992
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     992,
+     130
+    ],
+    "position_engine": [
+     0,
+     130,
+     -992
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     157,
+     992,
+     130
+    ],
+    "position_engine": [
+     157,
+     130,
+     -992
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     579,
+     793,
+     -50
+    ],
+    "position_engine": [
+     579,
+     -50,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     579,
+     793,
+     55
+    ],
+    "position_engine": [
+     579,
+     55,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     454,
+     793,
+     16
+    ],
+    "position_engine": [
+     454,
+     16,
+     -793
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -455,
+     793,
+     16
+    ],
+    "position_engine": [
+     -455,
+     16,
+     -793
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -584,
+     793,
+     -50
+    ],
+    "position_engine": [
+     -584,
+     -50,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -584,
+     793,
+     55
+    ],
+    "position_engine": [
+     -584,
+     55,
+     -793
+    ],
+    "turretAngles": [
+     0.5033092498779297,
+     0.5033092498779297,
+     0.5033092498779297
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 52,
+  "shipName": "Gryphon",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -893,
+     170,
+     -27
+    ],
+    "position_engine": [
+     -893,
+     -27,
+     -170
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     895,
+     170,
+     -27
+    ],
+    "position_engine": [
+     895,
+     -27,
+     -170
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -593,
+     81,
+     -27
+    ],
+    "position_engine": [
+     -593,
+     -27,
+     -81
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     594,
+     81,
+     -27
+    ],
+    "position_engine": [
+     594,
+     -27,
+     -81
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -200,
+     -57,
+     1
+    ],
+    "position_engine": [
+     -200,
+     1,
+     57
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     202,
+     -58,
+     1
+    ],
+    "position_engine": [
+     202,
+     1,
+     58
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     295,
+     789,
+     -25
+    ],
+    "position_engine": [
+     295,
+     -25,
+     -789
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -295,
+     790,
+     -25
+    ],
+    "position_engine": [
+     -295,
+     -25,
+     -790
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -83,
+     846,
+     7
+    ],
+    "position_engine": [
+     -83,
+     7,
+     -846
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     83,
+     847,
+     7
+    ],
+    "position_engine": [
+     83,
+     7,
+     -847
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 53,
+  "shipName": "-",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -558,
+     -316,
+     -83
+    ],
+    "position_engine": [
+     -558,
+     -83,
+     316
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     561,
+     -313,
+     -83
+    ],
+    "position_engine": [
+     561,
+     -83,
+     313
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -195,
+     -740,
+     -60
+    ],
+    "position_engine": [
+     -195,
+     -60,
+     740
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     198,
+     -740,
+     -60
+    ],
+    "position_engine": [
+     198,
+     -60,
+     740
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     394,
+     -195,
+     -106
+    ],
+    "position_engine": [
+     394,
+     -106,
+     195
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -392,
+     -198,
+     -108
+    ],
+    "position_engine": [
+     -392,
+     -108,
+     198
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -272,
+     -328,
+     -104
+    ],
+    "position_engine": [
+     -272,
+     -104,
+     328
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     271,
+     -324,
+     -106
+    ],
+    "position_engine": [
+     271,
+     -106,
+     324
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     483,
+     -108
+    ],
+    "position_engine": [
+     0,
+     -108,
+     -483
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -40,
+     527,
+     -51
+    ],
+    "position_engine": [
+     -40,
+     -51,
+     -527
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     40,
+     527,
+     -51
+    ],
+    "position_engine": [
+     40,
+     -51,
+     -527
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 54,
+  "shipName": "Na'srrk",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -382,
+     -452,
+     -43
+    ],
+    "position_engine": [
+     -382,
+     -43,
+     452
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     382,
+     -453,
+     -42
+    ],
+    "position_engine": [
+     382,
+     -42,
+     453
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -344,
+     -499,
+     -40
+    ],
+    "position_engine": [
+     -344,
+     -40,
+     499
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     346,
+     -498,
+     -39
+    ],
+    "position_engine": [
+     346,
+     -39,
+     498
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -186,
+     -503,
+     -28
+    ],
+    "position_engine": [
+     -186,
+     -28,
+     503
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     185,
+     -501,
+     -29
+    ],
+    "position_engine": [
+     185,
+     -29,
+     501
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -255,
+     -423,
+     -31
+    ],
+    "position_engine": [
+     -255,
+     -31,
+     423
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     255,
+     -420,
+     -33
+    ],
+    "position_engine": [
+     255,
+     -33,
+     420
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     549,
+     67
+    ],
+    "position_engine": [
+     0,
+     67,
+     -549
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -21,
+     475,
+     15
+    ],
+    "position_engine": [
+     -21,
+     15,
+     -475
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     20,
+     475,
+     15
+    ],
+    "position_engine": [
+     20,
+     15,
+     -475
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 55,
+  "shipName": "Groza Mk II",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -299,
+     -317,
+     -72
+    ],
+    "position_engine": [
+     -299,
+     -72,
+     317
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     300,
+     -317,
+     -73
+    ],
+    "position_engine": [
+     300,
+     -73,
+     317
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     0,
+     -661,
+     -114
+    ],
+    "position_engine": [
+     0,
+     -114,
+     661
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -212,
+     -124,
+     -43
+    ],
+    "position_engine": [
+     -212,
+     -43,
+     124
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     212,
+     -124,
+     -42
+    ],
+    "position_engine": [
+     212,
+     -42,
+     124
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -589,
+     -46
+    ],
+    "position_engine": [
+     0,
+     -46,
+     589
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     536,
+     4
+    ],
+    "position_engine": [
+     0,
+     4,
+     -536
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -111,
+     483,
+     3
+    ],
+    "position_engine": [
+     -111,
+     3,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -89,
+     483,
+     -62
+    ],
+    "position_engine": [
+     -89,
+     -62,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     89,
+     483,
+     -62
+    ],
+    "position_engine": [
+     89,
+     -62,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     111,
+     483,
+     3
+    ],
+    "position_engine": [
+     111,
+     3,
+     -483
+    ],
+    "turretAngles": [
+     0.3999999761581421,
+     0.3999999761581421,
+     0.3999999761581421
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 56,
+  "shipName": "Berger Cross Special",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     233,
+     -605,
+     46
+    ],
+    "position_engine": [
+     233,
+     46,
+     605
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -232,
+     -605,
+     46
+    ],
+    "position_engine": [
+     -232,
+     46,
+     605
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -232,
+     -674,
+     -65
+    ],
+    "position_engine": [
+     -232,
+     -65,
+     674
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     235,
+     -679,
+     -66
+    ],
+    "position_engine": [
+     235,
+     -66,
+     679
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     114,
+     -181,
+     -71
+    ],
+    "position_engine": [
+     114,
+     -71,
+     181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -115,
+     -181,
+     -71
+    ],
+    "position_engine": [
+     -115,
+     -71,
+     181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -425,
+     -219,
+     -165
+    ],
+    "position_engine": [
+     -425,
+     -165,
+     219
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     434,
+     -219,
+     -165
+    ],
+    "position_engine": [
+     434,
+     -165,
+     219
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     249,
+     66
+    ],
+    "position_engine": [
+     0,
+     66,
+     -249
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -231,
+     65,
+     -19
+    ],
+    "position_engine": [
+     -231,
+     -19,
+     -65
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -80,
+     373,
+     197
+    ],
+    "position_engine": [
+     -80,
+     197,
+     -373
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     80,
+     373,
+     197
+    ],
+    "position_engine": [
+     80,
+     197,
+     -373
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     233,
+     65,
+     -19
+    ],
+    "position_engine": [
+     233,
+     -19,
+     -65
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 57,
+  "shipName": "Kinzer RS",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     57,
+     -299,
+     -50
+    ],
+    "position_engine": [
+     57,
+     -50,
+     299
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -55,
+     -299,
+     -50
+    ],
+    "position_engine": [
+     -55,
+     -50,
+     299
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -251,
+     -823,
+     -69
+    ],
+    "position_engine": [
+     -251,
+     -69,
+     823
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     251,
+     -823,
+     -69
+    ],
+    "position_engine": [
+     251,
+     -69,
+     823
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -502,
+     -13,
+     -133
+    ],
+    "position_engine": [
+     -502,
+     -133,
+     13
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -156,
+     181,
+     -55
+    ],
+    "position_engine": [
+     -156,
+     -55,
+     -181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     156,
+     181,
+     -55
+    ],
+    "position_engine": [
+     156,
+     -55,
+     -181
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     502,
+     -13,
+     -133
+    ],
+    "position_engine": [
+     502,
+     -133,
+     13
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -1,
+     646,
+     12
+    ],
+    "position_engine": [
+     -1,
+     12,
+     -646
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -122,
+     806,
+     10
+    ],
+    "position_engine": [
+     -122,
+     10,
+     -806
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     119,
+     806,
+     10
+    ],
+    "position_engine": [
+     119,
+     10,
+     -806
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 58,
+  "shipName": "Phantom XT",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -20,
+     -497,
+     -95
+    ],
+    "position_engine": [
+     -20,
+     -95,
+     497
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     142,
+     84,
+     -98
+    ],
+    "position_engine": [
+     142,
+     -98,
+     -84
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     20,
+     -497,
+     -95
+    ],
+    "position_engine": [
+     20,
+     -95,
+     497
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -142,
+     84,
+     -98
+    ],
+    "position_engine": [
+     -142,
+     -98,
+     -84
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -456,
+     -138
+    ],
+    "position_engine": [
+     0,
+     -138,
+     456
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     44,
+     443,
+     -55
+    ],
+    "position_engine": [
+     44,
+     -55,
+     -443
+    ],
+    "turretAngles": [
+     0.4794055223464966,
+     0.4794055223464966,
+     0.4794055223464966
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -44,
+     443,
+     -55
+    ],
+    "position_engine": [
+     -44,
+     -55,
+     -443
+    ],
+    "turretAngles": [
+     0.4794055223464966,
+     0.4794055223464966,
+     0.4794055223464966
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     474,
+     16
+    ],
+    "position_engine": [
+     0,
+     16,
+     -474
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 59,
+  "shipName": "Teneta R.E.D.",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -124,
+     -584,
+     -83
+    ],
+    "position_engine": [
+     -124,
+     -83,
+     584
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -564,
+     -102,
+     -28
+    ],
+    "position_engine": [
+     -564,
+     -28,
+     102
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     566,
+     -102,
+     -28
+    ],
+    "position_engine": [
+     566,
+     -28,
+     102
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     123,
+     -584,
+     -83
+    ],
+    "position_engine": [
+     123,
+     -83,
+     584
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     490,
+     126,
+     -100
+    ],
+    "position_engine": [
+     490,
+     -100,
+     -126
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -489,
+     126,
+     -100
+    ],
+    "position_engine": [
+     -489,
+     -100,
+     -126
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     239,
+     147
+    ],
+    "position_engine": [
+     0,
+     147,
+     -239
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     231,
+     533,
+     -42
+    ],
+    "position_engine": [
+     231,
+     -42,
+     -533
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -231,
+     533,
+     -42
+    ],
+    "position_engine": [
+     -231,
+     -42,
+     -533
+    ],
+    "turretAngles": [
+     0.7999999523162842,
+     0.7999999523162842,
+     0.7999999523162842
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     611,
+     -15
+    ],
+    "position_engine": [
+     0,
+     -15,
+     -611
+    ],
+    "turretAngles": [
+     1.0,
+     1.0,
+     1.0
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 60,
+  "shipName": "Darkzov",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     -321,
+     -187,
+     -73
+    ],
+    "position_engine": [
+     -321,
+     -73,
+     187
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     324,
+     -187,
+     -73
+    ],
+    "position_engine": [
+     324,
+     -73,
+     187
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -214,
+     -59,
+     -16
+    ],
+    "position_engine": [
+     -214,
+     -16,
+     59
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     214,
+     -59,
+     -16
+    ],
+    "position_engine": [
+     214,
+     -16,
+     59
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     2,
+     -21,
+     -147
+    ],
+    "position_engine": [
+     2,
+     -147,
+     21
+    ]
+   },
+   {
+    "slotType": 2,
+    "position_file": [
+     0,
+     288,
+     99
+    ],
+    "position_engine": [
+     0,
+     99,
+     -288
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     42,
+     491,
+     -64
+    ],
+    "position_engine": [
+     42,
+     -64,
+     -491
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -42,
+     491,
+     -64
+    ],
+    "position_engine": [
+     -42,
+     -64,
+     -491
+    ],
+    "turretAngles": [
+     0.5,
+     0.5,
+     0.5
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -106,
+     511,
+     42
+    ],
+    "position_engine": [
+     -106,
+     42,
+     -511
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     102,
+     511,
+     42
+    ],
+    "position_engine": [
+     102,
+     42,
+     -511
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ },
+ {
+  "ship": 8,
+  "shipName": "VoidX",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     33,
+     -914,
+     -29
+    ],
+    "position_engine": [
+     33,
+     -29,
+     914
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -33,
+     -914,
+     -29
+    ],
+    "position_engine": [
+     -33,
+     -29,
+     914
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     72,
+     -1221,
+     -29
+    ],
+    "position_engine": [
+     72,
+     -29,
+     1221
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -72,
+     -1221,
+     -29
+    ],
+    "position_engine": [
+     -72,
+     -29,
+     1221
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     274,
+     -537,
+     -47
+    ],
+    "position_engine": [
+     274,
+     -47,
+     537
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     176,
+     -757,
+     -41
+    ],
+    "position_engine": [
+     176,
+     -41,
+     757
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -181,
+     -757,
+     -41
+    ],
+    "position_engine": [
+     -181,
+     -41,
+     757
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     -270,
+     -537,
+     -47
+    ],
+    "position_engine": [
+     -270,
+     -47,
+     537
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     453,
+     26
+    ],
+    "position_engine": [
+     0,
+     26,
+     -453
+    ],
+    "turretAngles": [
+     0.5999999642372131,
+     0.5999999642372131,
+     0.5999999642372131
+    ]
+   }
+  ]
+ }
+]

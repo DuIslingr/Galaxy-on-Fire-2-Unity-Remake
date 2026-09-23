@@ -1,0 +1,85 @@
+// GoF2ChaseCamera.cs
+// Damped third-person chase camera in the spirit of GoF2's TargetFollowCamera.
+//
+// Recovered facts:
+//  * Two damping coefficients (position, rotation). In touch mode they are fixed:
+//    0.005 and 0.006 (TargetFollowCamera::resetShipHandling).
+//  * In mouse/controller mode they depend on handling h (setShipHandling):
+//      a = (1 - 0.01h) * 0.015 + 0.003
+//      b = 0.01h * 0.011 + 0.001
+//    Which coefficient drives position vs rotation is my best reading, and the exact damping curve
+//    (the original fits a polynomial to a damping function) is approximated here with exponentials.
+//  * Boost widens the view (camera gets boost percentage and an 2..8 intensity).
+
+using UnityEngine;
+
+namespace GoF2Remake.Flight
+{
+    public class GoF2ChaseCamera : MonoBehaviour
+    {
+        public GoF2ShipController target;
+
+        [Header("Placement (meters, ship local space)")]
+        public Vector3 offset = new Vector3(0f, 2.5f, -9f);
+        public Vector3 lookOffset = new Vector3(0f, 1f, 6f);
+
+        [Header("Damping (per millisecond coefficients, like the original)")]
+        public bool handlingDependent = false; // false = touch-mode constants
+        public float positionCoefficient = 0.005f;
+        public float rotationCoefficient = 0.006f;
+
+        [Header("Turn offset: camera slides sideways while turning")]
+        public float turnSlideMeters = 1.5f;
+
+        [Header("Boost")]
+        public float baseFov = 60f;
+        public float boostFovAdd = 12f;
+
+        Camera cam;
+        Vector3 slide;
+
+        void Awake() => cam = GetComponent<Camera>();
+
+        void LateUpdate()
+        {
+            if (target == null) return;
+            var ship = target.transform;
+            var model = target.Model;
+            float dtMs = Time.deltaTime * 1000f;
+
+            float posK = positionCoefficient, rotK = rotationCoefficient;
+            if (handlingDependent)
+            {
+                float h = model.Handling;
+                posK = (1f - 0.01f * h) * 0.015f + 0.003f;
+                rotK = 0.01f * h * 0.011f + 0.001f;
+            }
+
+            // Slide opposite to the turn, proportional to turn rate (approximation of the target offset).
+            float maxRate = Mathf.Max(1f, 750f * model.Handling / 63f);
+            Vector3 targetSlide = new Vector3(-model.YawRate / maxRate * turnSlideMeters,
+                                              model.PitchRate / maxRate * turnSlideMeters * 0.5f, 0f);
+            slide = Vector3.Lerp(slide, targetSlide, 1f - Mathf.Exp(-posK * dtMs));
+
+            Vector3 desiredPos = ship.TransformPoint(offset + slide);
+            Quaternion desiredRot = Quaternion.LookRotation(
+                ship.TransformPoint(lookOffset) - desiredPos, ship.up);
+
+            transform.position = Vector3.Lerp(transform.position, desiredPos, 1f - Mathf.Exp(-posK * dtMs));
+            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, 1f - Mathf.Exp(-rotK * dtMs));
+
+            if (cam != null)
+                cam.fieldOfView = baseFov + boostFovAdd * model.BoostVisualPercent;
+        }
+
+        /// <summary>Snap behind the ship (use after spawning / undocking).</summary>
+        public void Snap()
+        {
+            if (target == null) return;
+            var ship = target.transform;
+            transform.position = ship.TransformPoint(offset);
+            transform.rotation = Quaternion.LookRotation(ship.TransformPoint(lookOffset) - transform.position, ship.up);
+            slide = Vector3.zero;
+        }
+    }
+}

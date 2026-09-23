@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/galaxymap/map_planet_008.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "map_planet_008_part0", "parent": "map_planet_008", "vertices": 1584, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 0.0, 55425.625], "channels": []}]}

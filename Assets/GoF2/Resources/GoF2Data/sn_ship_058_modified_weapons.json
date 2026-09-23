@@ -1,0 +1,127 @@
+[
+ {
+  "ship": 58,
+  "shipName": "Phantom XT",
+  "mounts": [
+   {
+    "slotType": 0,
+    "position_file": [
+     20,
+     -497,
+     -95
+    ],
+    "position_engine": [
+     20,
+     -95,
+     497
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -20,
+     -497,
+     -95
+    ],
+    "position_engine": [
+     -20,
+     -95,
+     497
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     142,
+     84,
+     -98
+    ],
+    "position_engine": [
+     142,
+     -98,
+     -84
+    ]
+   },
+   {
+    "slotType": 0,
+    "position_file": [
+     -142,
+     84,
+     -98
+    ],
+    "position_engine": [
+     -142,
+     -98,
+     -84
+    ]
+   },
+   {
+    "slotType": 1,
+    "position_file": [
+     0,
+     -456,
+     -138
+    ],
+    "position_engine": [
+     0,
+     -138,
+     456
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     44,
+     443,
+     -55
+    ],
+    "position_engine": [
+     44,
+     -55,
+     -443
+    ],
+    "turretAngles": [
+     0.4794055223464966,
+     0.4794055223464966,
+     0.4794055223464966
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     -44,
+     443,
+     -55
+    ],
+    "position_engine": [
+     -44,
+     -55,
+     -443
+    ],
+    "turretAngles": [
+     0.4794055223464966,
+     0.4794055223464966,
+     0.4794055223464966
+    ]
+   },
+   {
+    "slotType": 3,
+    "position_file": [
+     0,
+     474,
+     16
+    ],
+    "position_engine": [
+     0,
+     16,
+     -474
+    ],
+    "turretAngles": [
+     0.699999988079071,
+     0.699999988079071,
+     0.699999988079071
+    ]
+   }
+  ]
+ }
+]

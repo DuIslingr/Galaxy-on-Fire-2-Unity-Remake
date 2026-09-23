@@ -1,0 +1,1 @@
+{"source": "assets/supernova/3d/meshes/turrets/sn_turret_004.aem", "version": 16, "flags": 23, "truncated": false, "parts": [{"name": "sn_turret_004_part0", "parent": "sn_turret_004", "vertices": 1092, "pivot": [7.631923608641955e-07, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.0, 49.80559539794922, 103.30826568603516], "channels": []}]}

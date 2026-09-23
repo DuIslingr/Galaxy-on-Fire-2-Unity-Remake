@@ -1,0 +1,1 @@
+{"source": "assets/main/3d/meshes/stations/station_vossk.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "station_vossk_part0", "parent": "station_vossk", "vertices": 27516, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, -0.0009765625, 1490.69921875, 51490.91015625], "channels": []}]}

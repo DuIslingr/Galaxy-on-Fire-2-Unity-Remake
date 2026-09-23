@@ -1,0 +1,298 @@
+// GoF2AssetImport.cs  (Editor only)
+// 1) AssetPostprocessor: sets correct import settings for the converted GoF2 textures, models and audio.
+// 2) Menu "GoF2/Build Materials And Prefabs": uses Resources/GoF2Data/resources.json (recovered from the
+//    game's own resource table) to create one material per game material and one prefab per game mesh,
+//    with the exact texture/shader binding the original used.
+// 3) Menu "GoF2/Create Flight Test Scene": ship + chase camera, ready to press Play.
+//
+// Works with the Built-in pipeline and URP (detected automatically).
+
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+
+namespace GoF2Remake.EditorTools
+{
+    public static class GoF2ImportSettings
+    {
+        public const string Root = "Assets/GoF2";
+        /// <summary>Meters per GoF unit. Must match GoF2ShipController.metersPerUnit (default 0.05).</summary>
+        public const float ModelScale = 0.05f;
+    }
+
+    public class GoF2AssetPostprocessor : AssetPostprocessor
+    {
+        void OnPreprocessTexture()
+        {
+            if (!assetPath.StartsWith(GoF2ImportSettings.Root + "/Textures/")) return;
+            var ti = (TextureImporter)assetImporter;
+            string name = Path.GetFileNameWithoutExtension(assetPath).ToLowerInvariant();
+            ti.maxTextureSize = 2048;
+            ti.mipmapEnabled = true;
+
+            if (name.Contains("_normal_specular") || name.EndsWith("_normal"))
+            {
+                ti.textureType = TextureImporterType.NormalMap;   // alpha (specular) is ignored here
+            }
+            else if (name.Contains("_metallic_smoothness"))
+            {
+                ti.sRGBTexture = false;
+            }
+            else if (name.Contains("cubemap"))
+            {
+                // Original stores cubemaps as a vertical 1x6 strip; Unity's auto layout detects this.
+                ti.textureShape = TextureImporterShape.TextureCube;
+                ti.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
+            }
+            else if (assetPath.Contains("/Textures/textures/"))
+            {
+                // 2D UI/HUD art (fonts, icons, portraits). Imported as sprites.
+                ti.textureType = TextureImporterType.Sprite;
+                ti.spriteImportMode = SpriteImportMode.Single;
+                ti.mipmapEnabled = false;
+                ti.alphaIsTransparency = true;
+            }
+        }
+
+        void OnPreprocessModel()
+        {
+            if (!assetPath.StartsWith(GoF2ImportSettings.Root + "/Models/")) return;
+            var mi = (ModelImporter)assetImporter;
+            mi.globalScale = GoF2ImportSettings.ModelScale;
+            mi.useFileScale = true;
+            mi.materialImportMode = ModelImporterMaterialImportMode.None; // materials come from resources.json
+            mi.importAnimation = false;       // keyframes are in the .gof2mesh.json sidecar (see GoF2PartAnimation)
+            mi.importCameras = false;
+            mi.importLights = false;
+            mi.importNormals = ModelImporterNormals.Import;
+            mi.importTangents = ModelImporterTangents.CalculateMikk;
+            mi.isReadable = false;
+        }
+
+        void OnPreprocessAudio()
+        {
+            if (!assetPath.StartsWith(GoF2ImportSettings.Root + "/Audio/")) return;
+            var ai = (AudioImporter)assetImporter;
+            var s = ai.defaultSampleSettings;
+            string p = assetPath.ToUpperInvariant();
+            if (p.Contains("MUSIC") || p.Contains("CUTSCENES")) s.loadType = AudioClipLoadType.Streaming;
+            else if (p.Contains("VOICE") || p.Contains("LOUNGE") || p.Contains("GENERIC")) s.loadType = AudioClipLoadType.CompressedInMemory;
+            else s.loadType = AudioClipLoadType.DecompressOnLoad;
+            s.compressionFormat = AudioCompressionFormat.Vorbis;
+            ai.defaultSampleSettings = s;
+            ai.loadInBackground = s.loadType != AudioClipLoadType.DecompressOnLoad;
+        }
+    }
+
+    /// <summary>
+    /// Turns every converted model 180 degrees around Y at import time (vertices, normals, tangents and
+    /// part transforms), so ships face +Z (Unity forward) and game coordinates map to Unity as (x, y, -z).
+    /// Kept in its own class so bumping GetVersion() only reimports models, not the 1.5 GB of textures.
+    /// </summary>
+    public class GoF2ModelOrientationPostprocessor : AssetPostprocessor
+    {
+        public override uint GetVersion() => 1;
+
+        void OnPostprocessModel(GameObject root)
+        {
+            if (!assetPath.StartsWith(GoF2ImportSettings.Root + "/Models/")) return;
+            var r = Quaternion.Euler(0f, 180f, 0f);
+            var ri = Quaternion.Inverse(r);
+
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                var m = mf.sharedMesh;
+                if (m == null) continue;
+                var v = m.vertices; for (int i = 0; i < v.Length; i++) v[i] = new Vector3(-v[i].x, v[i].y, -v[i].z);
+                m.vertices = v;
+                var n = m.normals; for (int i = 0; i < n.Length; i++) n[i] = new Vector3(-n[i].x, n[i].y, -n[i].z);
+                if (n.Length > 0) m.normals = n;
+                var t = m.tangents; for (int i = 0; i < t.Length; i++) t[i] = new Vector4(-t[i].x, t[i].y, -t[i].z, t[i].w);
+                if (t.Length > 0) m.tangents = t;
+                m.RecalculateBounds();
+            }
+            foreach (var tr in root.GetComponentsInChildren<Transform>(true))
+            {
+                if (tr == root.transform) continue;
+                tr.localPosition = r * tr.localPosition;
+                tr.localRotation = r * tr.localRotation * ri;
+            }
+        }
+    }
+
+    // ---- resources.json model (JsonUtility-compatible) ----------------------------------------
+    [System.Serializable] public class ResMesh { public int id; public string model; public string source; public int materialId; }
+    [System.Serializable] public class ResMaterial { public int id; public int shaderId; public string shading; public string[] textures; }
+    [System.Serializable] public class ResTable { public ResMesh[] meshes; public ResMaterial[] materials; }
+
+    public static class GoF2PrefabBuilder
+    {
+        static string R(string rel) => GoF2ImportSettings.Root + "/" + rel;
+
+        static bool IsURP()
+        {
+            var rp = GraphicsSettings.currentRenderPipeline;
+            return rp != null && rp.GetType().Name.Contains("Universal");
+        }
+
+        [MenuItem("GoF2/Build Materials And Prefabs", priority = 1)]
+        public static void BuildAll()
+        {
+            var json = AssetDatabase.LoadAssetAtPath<TextAsset>(R("Resources/GoF2Data/resources.json"));
+            if (json == null) { Debug.LogError("GoF2: resources.json not found"); return; }
+            var table = JsonUtility.FromJson<ResTable>(json.text);
+            bool urp = IsURP();
+            Directory.CreateDirectory(R("Materials"));
+            Directory.CreateDirectory(R("Prefabs"));
+
+            var mats = new Dictionary<int, Material>();
+            try
+            {
+                AssetDatabase.StartAssetEditing();
+                int i = 0;
+                foreach (var m in table.materials)
+                {
+                    if (i++ % 20 == 0) EditorUtility.DisplayProgressBar("GoF2", "Materials", (float)i / table.materials.Length);
+                    var mat = CreateMaterial(m, urp);
+                    if (mat != null) mats[m.id] = mat;
+                }
+            }
+            finally { AssetDatabase.StopAssetEditing(); }
+            AssetDatabase.SaveAssets();
+
+            int made = 0, missing = 0, n = 0;
+            foreach (var mesh in table.meshes)
+            {
+                if (n++ % 10 == 0 && EditorUtility.DisplayCancelableProgressBar("GoF2", "Prefabs: " + mesh.model, (float)n / table.meshes.Length)) break;
+                var src = AssetDatabase.LoadAssetAtPath<GameObject>(R(mesh.model));
+                if (src == null) { missing++; continue; }
+                var inst = (GameObject)PrefabUtility.InstantiatePrefab(src);
+                mats.TryGetValue(mesh.materialId, out var mat);
+                if (mat != null)
+                    foreach (var r in inst.GetComponentsInChildren<Renderer>(true))
+                        r.sharedMaterials = Enumerable.Repeat(mat, Mathf.Max(1, r.sharedMaterials.Length)).ToArray();
+
+                var metaPath = Path.ChangeExtension(R(mesh.model), null) + ".gof2mesh.json";
+                var meta = AssetDatabase.LoadAssetAtPath<TextAsset>(metaPath);
+                if (meta != null && meta.text.Contains("\"target\""))
+                {
+                    var anim = inst.AddComponent<GoF2Remake.Visuals.GoF2PartAnimation>();
+                    anim.meta = meta;
+                    anim.metersPerUnit = GoF2ImportSettings.ModelScale;
+                    // Only "_anim" models (FX, turrets, rotating parts) animate by default; others keep their rest pose.
+                    anim.play = mesh.model.Contains("_anim");
+                }
+
+                var info = inst.AddComponent<GoF2Remake.Visuals.GoF2ResourceInfo>();
+                info.meshId = mesh.id; info.materialId = mesh.materialId; info.originalPath = mesh.source;
+
+                var outPath = R("Prefabs/" + Path.ChangeExtension(mesh.model.Substring("Models/".Length), ".prefab"));
+                Directory.CreateDirectory(Path.GetDirectoryName(outPath));
+                PrefabUtility.SaveAsPrefabAsset(inst, outPath);
+                Object.DestroyImmediate(inst);
+                made++;
+            }
+            EditorUtility.ClearProgressBar();
+            AssetDatabase.SaveAssets();
+            Debug.Log($"GoF2: {mats.Count} materials, {made} prefabs created ({missing} meshes referenced by the game were not shipped in the OBB). Pipeline: {(urp ? "URP" : "Built-in")}");
+        }
+
+        static Texture2D Tex(string rel) => string.IsNullOrEmpty(rel) ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(R(rel));
+
+        static Material CreateMaterial(ResMaterial m, bool urp)
+        {
+            var tex = m.textures ?? new string[0];
+            var main = Tex(tex.Length > 0 ? tex[0] : null);
+            string label = main != null ? main.name : "none";
+            string path = R($"Materials/mat_{m.id}_{label}.mat");
+            var existing = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (existing != null) return existing;
+
+            Shader sh;
+            switch (m.shading)
+            {
+                case "unlit": sh = Shader.Find("GoF2/Unlit"); break;
+                case "additive": case "additive_anim": sh = Shader.Find("GoF2/Additive"); break;
+                case "alpha": case "alpha_anim": sh = Shader.Find("GoF2/AlphaBlend"); break;
+                case "lit_alpha_test": sh = Shader.Find("GoF2/AlphaTest"); break;
+                default: sh = Shader.Find(urp ? "Universal Render Pipeline/Lit" : "Standard"); break;
+            }
+            if (sh == null) sh = Shader.Find("Standard");
+            var mat = new Material(sh) { name = Path.GetFileNameWithoutExtension(path) };
+
+            bool lit = sh.name == "Standard" || sh.name.StartsWith("Universal Render Pipeline/Lit");
+            if (lit)
+            {
+                if (urp) mat.SetTexture("_BaseMap", main); else mat.SetTexture("_MainTex", main);
+                string nrmRel = tex.FirstOrDefault(t => t != null && t.Contains("_normal"));
+                var nrm = Tex(nrmRel);
+                if (nrm != null) { mat.SetTexture("_BumpMap", nrm); mat.EnableKeyword("_NORMALMAP"); }
+                if (!string.IsNullOrEmpty(nrmRel) && nrmRel.Contains("_normal_specular"))
+                {
+                    var ms = Tex(nrmRel.Replace("_normal_specular", "_metallic_smoothness"));
+                    if (ms != null)
+                    {
+                        mat.SetTexture("_MetallicGlossMap", ms);
+                        if (urp) { mat.EnableKeyword("_METALLICSPECGLOSSMAP"); mat.SetFloat("_Smoothness", 0.8f); }
+                        else { mat.EnableKeyword("_METALLICGLOSSMAP"); mat.SetFloat("_GlossMapScale", 0.8f); }
+                    }
+                }
+                mat.SetFloat("_Metallic", 0f);
+            }
+            else mat.SetTexture("_MainTex", main);
+
+            AssetDatabase.CreateAsset(mat, path);
+            return mat;
+        }
+
+        [MenuItem("GoF2/Reapply Import Settings (reimport Models, Textures, Audio)", priority = 20)]
+        public static void ReapplyImportSettings()
+        {
+            foreach (var f in new[] { "Models", "Textures", "Audio" })
+                AssetDatabase.ImportAsset(R(f), ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
+            Debug.Log("GoF2: import settings reapplied.");
+        }
+
+        [MenuItem("GoF2/Reimport Models Only", priority = 21)]
+        public static void ReimportModels()
+        {
+            AssetDatabase.ImportAsset(R("Models"), ImportAssetOptions.ImportRecursive | ImportAssetOptions.ForceUpdate);
+            Debug.Log("GoF2: models reimported.");
+        }
+
+        [MenuItem("GoF2/Create Flight Test Scene", priority = 2)]
+        public static void CreateTestScene()
+        {
+            var shipPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(R("Prefabs/main/ships/ship_000_midorian.prefab"))
+                             ?? AssetDatabase.LoadAssetAtPath<GameObject>(R("Models/main/ships/ship_000_midorian.fbx"));
+            var root = new GameObject("Ship (Betty)");
+            var ctrl = root.AddComponent<GoF2Remake.Flight.GoF2ShipController>();
+            if (shipPrefab != null)
+            {
+                var vis = (GameObject)PrefabUtility.InstantiatePrefab(shipPrefab);
+                vis.transform.SetParent(root.transform, false);
+                ctrl.visualModel = vis.transform;
+            }
+            // size the chase camera to the ship
+            var rends = root.GetComponentsInChildren<Renderer>();
+            float size = 10f;
+            if (rends.Length > 0)
+            {
+                var b = rends[0].bounds; foreach (var r in rends) b.Encapsulate(r.bounds);
+                size = Mathf.Max(1f, b.size.magnitude);
+            }
+            var camGo = Camera.main != null ? Camera.main.gameObject : new GameObject("Main Camera", typeof(Camera));
+            camGo.tag = "MainCamera";
+            var chase = camGo.GetComponent<GoF2Remake.Flight.GoF2ChaseCamera>() ?? camGo.AddComponent<GoF2Remake.Flight.GoF2ChaseCamera>();
+            chase.target = ctrl;
+            chase.offset = new Vector3(0f, size * 0.3f, -size * 1.4f);
+            chase.lookOffset = new Vector3(0f, size * 0.1f, size * 0.8f);
+            camGo.GetComponent<Camera>().farClipPlane = 50000f;
+            Selection.activeGameObject = root;
+            Debug.Log("GoF2: test scene created. Press Play: WASD/arrows steer, Q/E throttle, Space boost, R level.");
+        }
+    }
+}

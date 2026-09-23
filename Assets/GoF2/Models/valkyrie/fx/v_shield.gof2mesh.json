@@ -1,0 +1,1 @@
+{"source": "assets/valkyrie/3d/meshes/fx/v_shield.aem", "version": 8, "flags": 23, "truncated": false, "parts": [{"name": "v_shield_part0", "parent": "v_shield", "vertices": 2880, "pivot": [0.0, 0.0, 0.0], "hasUV": true, "hasNormals": true, "hasColors": false, "bsphere": [0.0, 0.00018310546875, -1.52587890625e-05, 779.4228515625], "channels": []}]}
