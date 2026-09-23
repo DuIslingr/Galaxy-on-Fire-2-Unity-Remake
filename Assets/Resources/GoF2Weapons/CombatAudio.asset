@@ -14,3 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Flight.GoF2CombatAudio
   asteroidDestroyed: {fileID: 8300000, guid: 75abcec9e6974d1409b3a1331cfd8bfb, type: 3}
   targetLock: {fileID: 8300000, guid: b48c5e8a0fd8ffc4185f3566e1d65f9d, type: 3}
+  miningDrill: {fileID: 8300000, guid: 3ebdd78a0ca4a5a42a95df1ad9a6ab09, type: 3}
+  miningLanding: {fileID: 8300000, guid: 22f4ba10c63579f4c82835653e3a6e5f, type: 3}
+  miningDrillBroken: {fileID: 8300000, guid: 75e4f8840c6d33749b003f40101bed36, type: 3}
+  autopilotOn: {fileID: 8300000, guid: fedfb68e425a4e8409dd9dcd7ecf23fa, type: 3}
+  autopilotOff: {fileID: 8300000, guid: b0c9f108608ca7c4ebbd15d7179a742b, type: 3}

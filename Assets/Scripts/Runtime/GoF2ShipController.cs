@@ -48,6 +48,11 @@ namespace GoF2Remake.Flight
 
         public GoF2FlightModel Model { get; private set; } = new GoF2FlightModel();
 
+        /// <summary>An autopilot moves the ship (asteroid docking, PlayerEgo+0x145): no input, no flight model step and
+        /// no cosmetic banking; it reports its speed through ExternalSpeedMetersPerSecond.</summary>
+        [System.NonSerialized] public bool externalControl;
+        [System.NonSerialized] public float ExternalSpeedMetersPerSecond;
+
         /// <summary>Speed this frame in m/s (after world scaling).</summary>
         public float SpeedMetersPerSecond { get; private set; }
 
@@ -118,6 +123,7 @@ namespace GoF2Remake.Flight
         {
             Model.Sensitivity = sensitivity;
             float dtMs = Time.deltaTime * 1000f;
+            if (externalControl) { SpeedMetersPerSecond = ExternalSpeedMetersPerSecond; return; }
 
             Vector2 steer = useBuiltInInput ? ReadInput() : Vector2.zero;
             if (externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;

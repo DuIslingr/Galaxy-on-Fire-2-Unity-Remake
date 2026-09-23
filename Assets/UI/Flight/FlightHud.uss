@@ -250,6 +250,108 @@
     color: #FFFFFF;
 }
 
+/* ---- asteroid lock (GoF2MiningView) and HUD messages ------------------------------------ */
+
+.lock-ring {
+    display: none;
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    margin-left: -40px;
+    margin-top: -40px;
+}
+
+.lock-ring--shown {
+    display: flex;
+}
+
+.lock-plate {
+    display: none;
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    width: 408px;
+    height: 57px;
+    margin-left: -204px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.lock-plate--shown {
+    display: flex;
+}
+
+.lock-class {
+    margin-right: 10px;
+}
+
+.lock-ore {
+    font-size: 22px;
+    color: #FFFFFF;
+}
+
+.hud-messages {
+    position: absolute;
+    top: 196px;
+    left: 50%;
+    width: 900px;
+    margin-left: -450px;
+    align-items: center;
+}
+
+.hud-message {
+    margin-top: 4px;
+    padding: 6px 16px;
+    font-size: 20px;
+    color: #FFFFFF;
+    background-color: rgba(4, 10, 18, 0.6);
+    border-radius: 3px;
+    transition-duration: 0.4s;
+}
+
+.hud-message--fade {
+    opacity: 0;
+}
+
+/* ---- mining minigame (full screen, under the touch controls) ------------------------------ */
+
+.mining {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.mining--shown {
+    display: flex;
+}
+
+.mining-ore {
+    position: absolute;
+    width: 108px;
+    height: 45px;
+    font-size: 22px;
+    -unity-text-align: middle-center;
+}
+
+/* Autopilot to an asteroid and mining: no crosshair or weapon / flight buttons; the stick stays for the drill. */
+.hud-docking .crosshair,
+.hud-docking .touch-buttons,
+.hud-docking .throttle-track {
+    display: none;
+}
+
+.hud-docking .stick-zone {
+    visibility: hidden;
+}
+
+.hud-mining .stick-zone {
+    visibility: visible;
+}
+
 /* ---- speed / throttle / boost readout ------------------------------------------------- */
 
 .speed-panel {

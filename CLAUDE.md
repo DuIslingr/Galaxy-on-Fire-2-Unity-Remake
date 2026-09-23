@@ -37,6 +37,7 @@ Assets/
   Resources/GoF2Sky/ flight-level sky: stars_00X + nebula_0XX cubemaps, SpaceSky.mat template
   Resources/GoF2Backdrop/ sun / planet / ring / dust materials, one per texture (loaded by name)
   Resources/GoF2Icons/ shop icons item_XXX / ship_XXX (frame + icon, 180x88), made by "Build Item Icons"
+  Resources/GoF2Hud/ flight HUD mining images (lock ring, ore plate, minigame), made by "Build HUD Images"
   Scenes/            MainMenu, Space (flight level), Station (docked: hangar + bar)
   Settings/          URP assets, GoF2_VolumeProfile (bloom)
 Reference/           decompiled original code, binaries and conversion tools (see Reference/README.md)
@@ -51,6 +52,7 @@ Menu items (from `Scripts/Editor`):
 - **GoF2 > Create Space Scene**: `Assets/Scenes/Space.unity`, the flight level (see "Space scene"). Also (re)makes `Resources/GoF2Backdrop` and bakes the space skies if missing.
 - **GoF2 > Create Station Scene**: `Assets/Scenes/Station.unity`, the docked station (see "Station scene"). Wires the bar visitor prefabs, glow materials, music, ambience and language tables.
 - **GoF2 > Build Item Icons**: `Resources/GoF2Icons`, one icon per item and ship cut from the original atlases per `Reference/research/item_icons.json` (see "Shop").
+- **GoF2 > Build HUD Images**: `Resources/GoF2Hud`, the mining HUD images cut from `gof2_interface_iphone4.png` (rects in `Reference/research/mining.md`). Also run by Create Space Scene.
 - **GoF2 > Bake Skyboxes**: the old combined sky bakes (`Skyboxes/`, stars layer not matched to the system); only the Flight Test scene uses them.
 - **GoF2 > Bake Space Skies**: stars (3) and nebula (19, incl. Valkyrie/Supernova) layers as separate cubemaps for the flight levels.
 - **GoF2 > Add Post Processing To Scene**: global Volume with `Assets/Settings/GoF2_VolumeProfile.asset` (Bloom, threshold 1) + camera post-processing on.
@@ -117,7 +119,19 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Lights:** LIGHT0 toward the sun (`clamp(15 * sunColour, 0, 2)`), LIGHT1 from the orbit planet (Unity +Z), linear fog in 6 systems. Camera: vertical FOV 1.22 rad, near 1 m, far 15 km, chase offsets (0, 600, -1338) / (0, 600, -650) game units.
 - **Main menu background** (`GoF2MenuBackground`): the original's menu backdrop is a normal orbit level (Level type 2), so it builds a curated station's orbit with `GoF2OrbitBuilder` too (camera start angle automatic: lit side, planet behind). Menu-only: full-detail station, asteroids kept out of the camera orbit, and traffic of the system's race (fighter pairs, freighter 30% Nivelian, battleship in Terran space) on lanes picked relative to the orbiting camera each pass; some ships start in view (`GoF2Flyby.startProgress`), others fly in.
 - **Docking / launch:** within 16000 units of the station (`PlayerEgo::collidesWithStation`), the HUD offers **Dock** (tap, Enter, or controller X). It only appears after the player has left that range once, because the undock spawn is inside it; the original requires the autopilot instead. Docking loads `Station` straight away with no animation, like `MGame::dockEvent`. Launching from the station sets `GoF2Session.LaunchedFromStation`: a fixed camera 9000 units ahead watches the ship fly past for 7 s (`LevelScript`), then the chase camera eases in.
-- Not yet: traffic in flight (`Level::createMission`), autopilot, travel/jumps, missions, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
+- The HUD has one action prompt (tap, Enter, controller X): Mine / Abort / Stop mining (see "Mining"), else Dock.
+- Not yet: traffic in flight (`Level::createMission`), autopilot to stations, travel/jumps, missions, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
+
+## Mining
+
+Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_tables.py`). `GoF2Mining` (on the player ship, set up by `GoF2SpaceLevel`) runs lock -> autopilot approach -> landing -> minigame -> payout; `GoF2MiningGame` is the minigame logic (plain C#); `GoF2MiningView` draws the lock ring, ore plate, HUD messages and the minigame in the flight HUD.
+
+- **Asteroids** get an ore (`Galaxy::getAsteroidProbabilities`: ores near their cheapest system dominate, e.g. Mido = Pyresium, Gold) and a class from the scale (D/C/B, big ones 50 % A) in `GoF2OrbitBuilder.SpawnAsteroids`; stored on `GoF2Target` (`oreItem`, `quality`, `scale`).
+- **Lock:** needs a drill (category 19) mounted; the crosshair box (+-w/16) must hold the asteroid for the scanner's lock time (attr 29, 8000 ms without) - 200 ms. The action prompt then says Mine.
+- **Approach:** player steering off, full throttle, autopilot turn; last 2000 units: exhaust off, landing sound, chase camera frozen, the model pitches ~80 deg nose up; stops at `scale * 2500` units, asteroid spin off.
+- **Minigame:** layers = class (A 7 .. D 4), 6 s each inside the ring; ore rate `yield * ((layer+1)/7*2.35+0.15)` t/s; a 2.5 s off-target energy budget per session (empty = no ore). Drill: stick / WASD / left stick. Perfect runs with IMT Extract 1.3: D 14 t, C 20, B 28, A 37 + 1 core (verified in Play mode).
+- **Payout:** ore capped to free cargo (core first), "12t Pyresium" messages, the asteroid explodes; ores and cores are normal commodities in the shop.
+- **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no travel; releasing the stick stops the drill's player movement (the original keeps the last input). Not yet: medals/stats, Ultrascan class-A markers, the mining plant (station 103), the drill sound's layer parameter (pitch stands in).
 
 ## Station scene
 

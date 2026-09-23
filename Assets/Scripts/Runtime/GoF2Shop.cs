@@ -37,6 +37,36 @@ namespace GoF2Remake.Data
         static readonly HashSet<int> KaamoSpecials = new HashSet<int> { 200, 220, 208, 213, 216, 228, 229, 230, 231 };
         static readonly HashSet<int> SaoPerulaGoods = new HashSet<int> { 101, 102, 103, 107, 108, 109, 114, 124 };
 
+        // ---- cargo (Ship::getCurrentLoad / getMaxLoad) -----------------------------------------------------------
+
+        /// <summary>Every unit in cargo weighs 1 t; mounted items weigh nothing.</summary>
+        public static int CargoLoad() => GoF2Session.Cargo.Sum(s => s.amount);
+
+        /// <summary>Base cargo + (int)(base * sum of mounted compression (attr 22, category 12) % / 100). No ship mods yet.</summary>
+        public static int MaxLoad(GoF2Database db)
+        {
+            int b = db.Ship(GoF2Session.ShipIndex)?.cargo ?? 0, pct = 0;
+            foreach (var e in GoF2Session.Equipment) { var it = db.Item(e.item); if (it != null && it.categoryId == 12) pct += it.Attr(22); }
+            return b + (int)(b * pct / 100f);
+        }
+
+        public static int FreeCargo(GoF2Database db) => MaxLoad(db) - CargoLoad();
+
+        public static void AddToCargo(int item, int amount)
+        {
+            if (amount <= 0) return;
+            var stack = GoF2Session.Cargo.Find(s => s.item == item);
+            if (stack != null) stack.amount += amount;
+            else GoF2Session.Cargo.Add(new GoF2Stack(item, amount));
+        }
+
+        /// <summary>Ship::getFirstEquipmentOfSort: the first mounted item of a category, or null.</summary>
+        public static ItemData FirstMounted(GoF2Database db, int category)
+        {
+            foreach (var e in GoF2Session.Equipment) { var it = db.Item(e.item); if (it != null && it.categoryId == category) return it; }
+            return null;
+        }
+
         // ---- geometry ----------------------------------------------------------------------------------------
 
         public static int SystemOf(GoF2Database db, int station) => db.Stations.Find(s => s.index == station)?.system ?? 0;
@@ -177,6 +207,13 @@ namespace GoF2Remake.Data
                 }
                 else amount = Mathf.Max(1, r / 5);   // weapons, turrets, equipment: 1..3
                 list.Add(new GoF2Stack(idx, amount));
+            }
+            // Remake-only: there is no travel between systems yet, so the starting station always sells the cheapest
+            // drill (IMT Extract 1.3, normally a 70 % chance there) to keep mining reachable.
+            if (station == 78 && !list.Any(s => db.Item(s.item)?.categoryId == 19))
+            {
+                int at = list.FindIndex(s => s.item > 86);
+                list.Insert(at < 0 ? list.Count : at, new GoF2Stack(86, 1));   // keep the stock in index order
             }
             return list;
         }

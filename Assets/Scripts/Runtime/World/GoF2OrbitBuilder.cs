@@ -4,10 +4,13 @@
 // Level::createScene 0xc2910: createPlayer + an empty mission) built by the same Level::init code.
 //   Level::createSpace      sky (GoF2/SpaceSky), station at the origin, jumpgate, sun/planets (GoF2Backdrop)
 //   StarSystem::initLight   LIGHT0 toward the sun, LIGHT1 from the orbit planet (Unity +Z), skybox ambient, fog
-//   Level::createAsteroids  asteroids around the seeded centre (per-visit placement with UnityEngine.Random)
+//   Level::createAsteroids  asteroids around the seeded centre (per-visit placement with UnityEngine.Random), each
+//                           with its ore (Galaxy::getAsteroidProbabilities) and quality A..D for mining
 //   initParticleSystems     space dust + fog sprites around the camera
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using GoF2Remake.Data;
 using GoF2Remake.Visuals;
 using UnityEngine;
@@ -140,6 +143,8 @@ namespace GoF2Remake.World
             if (prefab == null) return root;
             int big = Random.Range(2, 10);
             var bigPositions = new Vector3[big];
+            var ores = OreProbabilities(db, layout);
+            int oreCursor = 0;
             for (int i = 0; i < layout.asteroidCount; i++)
             {
                 bool isBig = i < big;
@@ -157,6 +162,9 @@ namespace GoF2Remake.World
                 if (isBig) bigPositions[i] = pos;
 
                 float scale = isBig ? Random.Range(120, 220) * 0.01f : Random.Range(30, 100) * 0.01f;
+                int ore = PickOre(ores, ref oreCursor);
+                // Quality from the scale; the big ones (and the largest small ones) are 50 % A, else D..B.
+                int quality = scale < 0.4f ? 4 : scale < 0.7f ? 5 : scale < 0.92f ? 6 : Random.Range(0, 2) == 0 ? 7 : 4 + Random.Range(0, 3);
                 var euler = new Vector3(Random.Range(0, 100), Random.Range(0, 100), Random.Range(0, 100)) * 0.01f * 2f * Mathf.PI;
                 var go = Object.Instantiate(prefab, GoF2OrbitLayout.ToUnity(pos), GoF2OrbitLayout.RotationToUnity(euler), root);
                 go.name = $"Asteroid {i}";
@@ -169,6 +177,9 @@ namespace GoF2Remake.World
                 target.explosionPrefab = explosion;
                 target.explosionScale = scale;
                 target.destroyedSound = destroyedSound;
+                target.oreItem = ore;
+                target.quality = quality;
+                target.scale = scale;
                 float spin = 1f - Mathf.Clamp(scale, 0.9f, 1f);   // 0.1 rad/s for small, none for big
                 if (spin > 0f)
                 {
@@ -177,6 +188,42 @@ namespace GoF2Remake.World
                 }
             }
             return root;
+        }
+
+        /// <summary>Galaxy::getAsteroidProbabilities 0x1a4fb0: per ore 154..163, p = 100 - distance(system, the ore's cheapest
+        /// system), 0 below 50; Void Crystals (164) appended with 0 (100 in an alien orbit); sorted descending (stable),
+        /// then p[k] -= 2k for the positive ones.</summary>
+        public static List<(int item, int p)> OreProbabilities(GoF2Database db, GoF2OrbitLayout layout)
+        {
+            var list = new List<(int item, int p)>();
+            bool alien = layout.systemIndex < 0;
+            for (int item = 154; item <= 163; item++)
+            {
+                var it = db.Item(item);
+                int p = alien || it == null ? 0 : 100 - GoF2Shop.Distance(db, layout.systemIndex, it.lowestPriceSystem);
+                list.Add((item, p < 50 ? 0 : p));
+            }
+            list.Add((164, alien ? 100 : 0));
+            var sorted = list.Select((e, i) => (e, i)).OrderByDescending(x => x.e.p).ThenBy(x => x.i).Select(x => x.e).ToList();
+            for (int k = 0; k < sorted.Count; k++) if (sorted[k].p > 0) sorted[k] = (sorted[k].item, sorted[k].p - 2 * k);
+            return sorted;
+        }
+
+        /// <summary>Level::createAsteroids 0xbd34a: a cursor walks the pairs; a roll under p takes that ore and moves on
+        /// (wrapping after pair 5), a miss starts over at the top ore.</summary>
+        public static int PickOre(List<(int item, int p)> ores, ref int k)
+        {
+            for (int guard = 0; guard < 10000; guard++)
+            {
+                if (Random.Range(0, 100) < ores[k].p)
+                {
+                    int item = ores[k].item;
+                    k = k + 1 > 5 ? 0 : k + 1;
+                    if (item < 164 || item == 217 || ores[0].item == 164) return item;
+                }
+                else k = 0;
+            }
+            return ores[0].item;
         }
 
         static bool TooClose(Vector3 p, Vector3[] others, int count)

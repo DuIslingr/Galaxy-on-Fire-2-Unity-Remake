@@ -3,6 +3,7 @@
 // clouds; never stations). Registered in GoF2Target.All while enabled. The hit test uses 'radius' as the half-size
 // of an axis-aligned cube (Gun::calcCharacterCollision). Asteroids: radius = meshRadius * scale * 0.7, HP =
 // scale * 100 + 30 (PlayerAsteroid ctor); at 0 HP the asteroid-type explosion plays (about 10 s) with sound 21.
+// Asteroids also carry what mining needs (PlayerAsteroid +0x124 ore item, +0x14c quality 4..7 = D..A, +0x134 scale).
 
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,17 @@ namespace GoF2Remake.Flight
         public float explosionScale = 1f;
         public AudioClip destroyedSound;
 
+        [Header("Asteroid (mining)")]
+        [Tooltip("Ore item index (154-164, 217), -1 = not an asteroid.")]
+        public int oreItem = -1;
+        [Tooltip("4 D, 5 C, 6 B, 7 A: the minigame's layer count; class A also yields a core (ore + 11).")]
+        public int quality = 4;
+        public float scale = 1f;
+
+        /// <summary>PlayerAsteroid::getQualityString: A (7) .. D (4).</summary>
+        public string QualityLetter => ((char)('A' + Mathf.Clamp(7 - quality, 0, 4))).ToString();
+        public int CoreItem => oreItem == 217 ? 218 : oreItem + 11;
+
         public bool Alive => hp > 0f;
         public event Action<GoF2Target> Died;
 
@@ -35,6 +47,12 @@ namespace GoF2Remake.Flight
             if (!Alive) return;
             hp -= amount;
             if (hp <= 0f) Die();
+        }
+
+        /// <summary>Destroys it with its explosion and sound (a mined asteroid: PlayerEgo::stopMining sets HP to -1).</summary>
+        public void Explode()
+        {
+            if (Alive) Die();
         }
 
         void Die()

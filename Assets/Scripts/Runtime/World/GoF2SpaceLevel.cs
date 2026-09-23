@@ -43,6 +43,7 @@ namespace GoF2Remake.World
         public GoF2OrbitLayout Layout { get; private set; }
         public GoF2ShipController Player { get; private set; }
         public GoF2WeaponSystem Weapons { get; private set; }
+        public GoF2Mining Mining { get; private set; }
 
         /// <summary>PlayerEgo::collidesWithStation / calcCollision 0xab550: |pos| &lt; 16000 units.</summary>
         public const float DockRange = 16000f;
@@ -50,7 +51,8 @@ namespace GoF2Remake.World
 
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
-        public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange;
+        public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange
+                               && (Mining == null || Mining.State == GoF2Mining.Phase.Idle);
         bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
 
         GoF2Database db;
@@ -127,6 +129,10 @@ namespace GoF2Remake.World
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens).
             chase.baseFov = 1.22f * Mathf.Rad2Deg;
             chase.Snap();
+
+            // Asteroid mining (lock, autopilot approach, minigame): needs a drill (category 19) to lock.
+            Mining = root.AddComponent<GoF2Mining>();
+            Mining.Setup(db, ctrl, Weapons, chase);
 
             if (GoF2Session.LaunchedFromStation) StartLaunchCamera();
         }

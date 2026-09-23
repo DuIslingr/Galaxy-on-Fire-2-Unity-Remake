@@ -2,8 +2,10 @@
     <ui:Style src="../GoF2InputGlyphs.uss" />
     <ui:Style src="FlightHud.uss" />
     <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
+        <ui:VisualElement name="mining" class="mining" picking-mode="Ignore" />
         <ui:VisualElement name="safeArea" class="hud-safe" picking-mode="Ignore">
             <ui:VisualElement name="crosshair" class="crosshair" picking-mode="Ignore" />
+            <ui:VisualElement name="lockRing" class="lock-ring" picking-mode="Ignore" />
 
             <ui:VisualElement name="touchLayer" class="touch-layer" picking-mode="Ignore">
                 <ui:VisualElement name="stickZone" class="stick-zone">
@@ -44,6 +46,12 @@
                 <ui:VisualElement name="dockGlyph" class="dock-glyph" picking-mode="Ignore" />
                 <ui:Label name="dockLabel" class="dock-label gof-semibold" picking-mode="Ignore" />
             </ui:VisualElement>
+
+            <ui:VisualElement name="lockPlate" class="lock-plate" picking-mode="Ignore">
+                <ui:VisualElement name="lockClass" class="lock-class" picking-mode="Ignore" />
+                <ui:Label name="lockOre" class="lock-ore gof-semibold" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:VisualElement name="hudMessages" class="hud-messages" picking-mode="Ignore" />
 
             <ui:VisualElement name="speedPanel" class="speed-panel" picking-mode="Ignore">
                 <ui:VisualElement class="speed-row" picking-mode="Ignore">

@@ -66,18 +66,10 @@ namespace GoF2Remake.Data
         public bool IsMounted(int item) => GoF2Session.Equipment.Any(e => e.item == item);
 
         /// <summary>Ship::getCurrentLoad: every unit in cargo weighs 1 t; mounted items weigh nothing.</summary>
-        public int Load => GoF2Session.Cargo.Sum(s => s.amount);
+        public int Load => GoF2Shop.CargoLoad();
 
         /// <summary>Ship::getMaxLoad: base cargo + (int)(base * sum of mounted compression (attr 22) % / 100). No ship mods yet.</summary>
-        public int MaxLoad
-        {
-            get
-            {
-                int b = Ship?.cargo ?? 0, pct = 0;
-                foreach (var e in GoF2Session.Equipment) { var it = db.Item(e.item); if (it != null && it.categoryId == 12) pct += it.Attr(22); }
-                return b + (int)(b * pct / 100f);
-            }
-        }
+        public int MaxLoad => GoF2Shop.MaxLoad(db);
 
         public bool Overloaded => Load > MaxLoad;
 
@@ -147,12 +139,7 @@ namespace GoF2Remake.Data
             GoF2Session.Credits = Mathf.Max(0, GoF2Session.Credits + delta);
         }
 
-        static void AddToCargo(int item, int amount)
-        {
-            var stack = GoF2Session.Cargo.Find(s => s.item == item);
-            if (stack != null) stack.amount += amount;
-            else GoF2Session.Cargo.Add(new GoF2Stack(item, amount));
-        }
+        static void AddToCargo(int item, int amount) => GoF2Shop.AddToCargo(item, amount);
 
         // ---- mounting ------------------------------------------------------------------------------------------
 

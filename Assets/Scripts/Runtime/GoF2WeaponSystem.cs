@@ -51,6 +51,8 @@ namespace GoF2Remake.Flight
         /// <summary>Remaining missiles/rockets of the selected secondary weapon (-1 = none equipped).</summary>
         public int SecondaryAmmo { get; private set; } = -1;
         public string SecondaryName { get; private set; } = "";
+        /// <summary>No firing (asteroid docking and mining block the guns, MGame::OnTouchBegin).</summary>
+        public bool Blocked { get; set; }
         GoF2Stack secondaryStack;
         /// <summary>Raised when a player bullet hits something (the crosshair turns orange for 200 ms).</summary>
         public event Action Hit;
@@ -210,7 +212,7 @@ namespace GoF2Remake.Flight
         /// <summary>Touch / release of the missile button: fire one secondary (MGame::OnTouchEnd).</summary>
         public bool FireSecondary()
         {
-            if (SecondaryAmmo <= 0) return false;
+            if (SecondaryAmmo <= 0 || Blocked) return false;
             foreach (var r in rigs)
             {
                 if (!r.gun.isSecondary) continue;
@@ -228,8 +230,8 @@ namespace GoF2Remake.Flight
         void Update()
         {
             float dtMs = Time.deltaTime * 1000f;
-            bool primaryHeld = touchPrimary || (useBuiltInInput && firePrimaryAction.IsPressed());
-            if (useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame()) FireSecondary();
+            bool primaryHeld = !Blocked && (touchPrimary || (useBuiltInInput && firePrimaryAction.IsPressed()));
+            if (!Blocked && useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame()) FireSecondary();
 
             var cam = Camera.main;
             foreach (var r in rigs)

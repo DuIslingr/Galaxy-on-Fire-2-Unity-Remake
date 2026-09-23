@@ -52,6 +52,11 @@ namespace GoF2Remake.EditorTools
             if (audio == null) { audio = ScriptableObject.CreateInstance<GoF2CombatAudio>(); AssetDatabase.CreateAsset(audio, audioPath); }
             audio.asteroidDestroyed = FindClip(clips, "Destruction_Asteroid");
             audio.targetLock = FindClip(clips, "Target_Lock");
+            audio.miningDrill = FindClip(clips, "Mining_Drill_Add_1");
+            audio.miningLanding = FindClip(clips, "Mining_Landing");
+            audio.miningDrillBroken = FindClip(clips, "Mining_Drill_Broken");
+            audio.autopilotOn = FindClip(clips, "Autopilot_Activate");
+            audio.autopilotOff = FindClip(clips, "Autopilot_Deactivate");
             EditorUtility.SetDirty(audio);
 
             BuildCrosshair();
