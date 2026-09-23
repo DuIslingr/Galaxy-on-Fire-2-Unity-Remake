@@ -69,6 +69,44 @@ namespace GoF2Remake.EditorTools
             (Main, "logo_1", 1875, 1137, 98, 89, 0, false),
             (Main, "logo_2", 1659, 35, 90, 90, 0, false),
             (Main, "logo_3", 825, 1425, 88, 97, 0, false),
+            // Combat (ship_combat.md 7.9): ship markers per faction (red enemy, green friend, yellow neutral): dot 0x4cc
+            // 0x4cd 0x4cb, locked ring 0x4c8 0x4ca 0x4c9, near bracket 0x4db 0x4d2 0x4dc, hull bar frame 0x4da 0x4d3 0x4d5 /
+            // fill 0x4d9 0x4d4 0x4d6; crates 0x4f1 (far) 0x451 / 0x44d (off screen); player status (0x4ac/0x4ad shield
+            // icon, 0x4aa/0x4ab hull icon, 0x4a9 plate, 0x4ae/0x4af shield bar, 0x4a7/0x524/0x4a8 hull + armor bar), hit
+            // arcs 0x52c/0x52b (blue) 0x526/0x525 (red), message background 0x4c3.
+            (Ipad, "ship_dot_enemy", 66, 1284, 36, 36, 0, false),
+            (Ipad, "ship_dot_friend", 1761, 61, 36, 36, 0, false),
+            (Ipad, "ship_dot_neutral", 292, 58, 36, 36, 0, false),
+            (Ipad, "ship_ring_enemy", 232, 17, 58, 58, 0, false),
+            (Ipad, "ship_ring_friend", 292, 1382, 58, 58, 0, false),
+            (Ipad, "ship_ring_neutral", 38, 1748, 58, 58, 0, false),
+            (Ipad, "ship_bracket_enemy", 292, 1294, 81, 81, 0, false),
+            (Ipad, "ship_bracket_friend", 1, 1840, 81, 81, 0, false),
+            (Ipad, "ship_bracket_neutral", 149, 17, 81, 81, 0, false),
+            (Ipad, "ship_bar_enemy", 399, 89, 114, 10, 0, false),
+            (Ipad, "ship_bar_friend", 1821, 89, 114, 10, 0, false),
+            (Ipad, "ship_bar_neutral", 1329, 93, 114, 10, 0, false),
+            (Ipad, "ship_fill_enemy", 1445, 93, 110, 6, 0, false),
+            (Ipad, "ship_fill_friend", 399, 101, 110, 6, 0, false),
+            (Ipad, "ship_fill_neutral", 1445, 101, 110, 6, 0, false),
+            (Ipad, "crate_dot", 61, 455, 39, 39, 0, false),
+            (Ipad, "crate_off", 366, 1214, 58, 58, 0, false),
+            (Ipad, "crate_off_void", 295, 1578, 58, 58, 0, false),
+            (Main, "status_shield", 511, 78, 41, 42, 0, false),
+            (Main, "status_shield_hit", 503, 122, 41, 42, 0, false),
+            (Main, "status_hull", 272, 749, 41, 42, 0, false),
+            (Main, "status_hull_red", 250, 966, 41, 42, 0, false),
+            (Ipad, "status_plate", 112, 1741, 247, 39, 0, false),
+            (Ipad, "status_shield_frame", 829, 93, 248, 14, 0, false),
+            (Ipad, "status_shield_fill", 149, 1, 248, 14, 0, false),
+            (Ipad, "status_hull_frame", 579, 93, 248, 14, 0, false),
+            (Ipad, "status_hull_fill", 1440, 195, 248, 14, 0, false),
+            (Ipad, "status_armor_fill", 1079, 93, 248, 14, 0, false),
+            (Ipad, "hit_side_blue", 112, 112, 324, 1000, 0, false),
+            (Ipad, "hit_top_blue", 1012, 1670, 1000, 374, 0, false),
+            (Ipad, "hit_side_red", 438, 1074, 325, 892, 0, false),
+            (Ipad, "hit_top_red", 438, 112, 1000, 375, 0, false),
+            (Main, "message_bg", 1601, 746, 392, 44, 0, false),
         };
 
         [MenuItem("GoF2/Build HUD Images", priority = 15)]

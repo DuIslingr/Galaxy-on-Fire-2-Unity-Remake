@@ -34,6 +34,7 @@ namespace GoF2Remake.EditorTools
                 GoF2WeaponBuilder.Build();
                 GoF2HudImageBuilder.Build();
                 GoF2StarMapBuilder.Build();
+                GoF2CombatAssetsBuilder.Build();
                 if (!File.Exists($"{GoF2SkyboxBaker.SpaceSkyDir}/nebula_018.png")) GoF2SkyboxBaker.BakeSpaceSkies();
                 BuildScene();
             }

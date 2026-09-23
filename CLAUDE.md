@@ -18,7 +18,8 @@ Assets/
   Scripts/Runtime/   flight model, ship controller, chase camera, data loader, keyframe player
   Scripts/Runtime/World/  station orbits: GoF2OrbitLayout (seeded layout), GoF2OrbitBuilder (layout -> scene, shared by
                      the flight level and the menu background), GoF2SpaceLevel, GoF2Backdrop, GoF2SpaceDust,
-                     GoF2SystemJump (jumpgate / Khador travel); docked station: GoF2StationLevel + GoF2StationTables
+                     GoF2SystemJump (jumpgate / Khador travel), GoF2Traffic + GoF2NpcShip (NPC ships);
+                     docked station: GoF2StationLevel + GoF2StationTables
   Scripts/Editor/    import settings, prefab builder, asset pack installer, menu items
   Models/            1,125 converted .fbx meshes, each with a .gof2mesh.json sidecar (pivots, keyframes)
   Textures/          1,281 .png (diffuse, *_normal_specular = normal map, *_metallic_smoothness generated)
@@ -40,6 +41,7 @@ Assets/
   Resources/GoF2Hud/ flight HUD images (lock ring, plate, minigame, brackets, autopilot / fast-forward, star map rings and
                      icons, race logos), made by "Build HUD Images"
   Resources/GoF2StarMap/ StarMapAssets: what the star map can't load by name (overlay UXML, sun materials, Khador fx, sounds)
+  Resources/GoF2Combat/ CombatAssets: crates, wrecks, explosion, tractor beams, hit / death sounds, space and battle music
   Resources/GoF2LanguageTables.asset references every text table so any scene loads text on first use (GoF2Localization)
   Scenes/            MainMenu, Space (flight level), Station (docked: hangar + bar)
   Settings/          URP assets, GoF2_VolumeProfile (bloom)
@@ -57,6 +59,7 @@ Menu items (from `Scripts/Editor`):
 - **GoF2 > Build Item Icons**: `Resources/GoF2Icons`, one icon per item and ship cut from the original atlases per `Reference/research/item_icons.json` (see "Shop").
 - **GoF2 > Build HUD Images**: `Resources/GoF2Hud`, the HUD / star map images cut from the original interface atlases (rects in `Reference/research/mining.md`, `autopilot_travel.md`, `starmap_travel.md`). Also run by Create Space Scene.
 - **GoF2 > Build Star Map Assets**: `Resources/GoF2StarMap/StarMapAssets` (`GoF2StarMapAssets`). Also run by Create Space Scene, and by Create Station Scene when missing.
+- **GoF2 > Build Combat Assets**: `Resources/GoF2Combat/CombatAssets` (`GoF2CombatAssets`). Also run by Create Space Scene.
 - **GoF2 > Bake Skyboxes**: the old combined sky bakes (`Skyboxes/`, stars layer not matched to the system); only the Flight Test scene uses them.
 - **GoF2 > Bake Space Skies**: stars (3) and nebula (19, incl. Valkyrie/Supernova) layers as separate cubemaps for the flight levels.
 - **GoF2 > Add Post Processing To Scene**: global Volume with `Assets/Settings/GoF2_VolumeProfile.asset` (Bloom, threshold 1) + camera post-processing on.
@@ -124,7 +127,8 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Main menu background** (`GoF2MenuBackground`): the original's menu backdrop is a normal orbit level (Level type 2), so it builds a curated station's orbit with `GoF2OrbitBuilder` too (camera start angle automatic: lit side, planet behind). Menu-only: full-detail station, asteroids kept out of the camera orbit, and traffic of the system's race (fighter pairs, freighter 30% Nivelian, battleship in Terran space) on lanes picked relative to the orbiting camera each pass; some ships start in view (`GoF2Flyby.startProgress`), others fly in.
 - **Docking / launch:** within 16000 units of the station (`PlayerEgo::collidesWithStation`), the HUD offers **Dock** (tap, Enter, or controller X). It only appears after the player has left that range once, because the undock spawn is inside it; the original requires the autopilot instead. Docking loads `Station` straight away with no animation, like `MGame::dockEvent`. Launching from the station sets `GoF2Session.LaunchedFromStation`: a fixed camera 9000 units ahead watches the ship fly past for 7 s (`LevelScript`), then the chase camera eases in.
 - The HUD has one action prompt (tap, Enter, controller X): Autopilot / Jump / Autopilot off (see "Navigation"), Mine / Abort / Stop mining (see "Mining"), else Dock.
-- Not yet: traffic in flight (`Level::createMission`), missions, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
+- Music: the system race's space track, battle tracks by the number of hostile ships (see "NPCs and combat").
+- Not yet: missions, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
 
 ## Navigation (locks, autopilot, planet jump, fast-forward)
 
@@ -135,8 +139,8 @@ Research: `Reference/research/autopilot_travel.md` (+ `Reference/tools/autopilot
 - **Programmed destination** (`GoF2Session.ProgrammedStation`, from the star map; `LevelScript::setAutoPilotToProgrammedStation`): at the end of the launch / arrival camera the autopilot flies to its planet in this system (the planet lock then jumps by itself), or in another system to the gate (gate orbit) or the gate station's planet. Arriving at the destination's orbit clears it.
 - **Planet jump** (planet locked + action, no confirmation): sound 5, the camera freezes and looks at the ship, straight on at 8 u/ms for 3 s, HUD hidden, then `Space` reloads in that station's orbit (`GoF2Session.StationIndex`, `PreviousStationIndex`, `ArrivedByTravel`): arrival at 4x the previous station's planet billboard (~4 km), or the hidden gate in the gate orbit, facing the station, with the travel fly-in camera.
 - **Autopilot menu** (`Hud::initHudMenu(3)`): the touch autopilot button, Tab or the controller's View button while nothing else flies the ship; the game pauses (`Time.timeScale` 0). Entries: "Destination: X" (programmed station), Asteroid field (the field centre; like the original the autopilot keeps flying there until switched off), "<name> Station", Jumpgate (gate orbit only), and (remake placement, the original has it in the HUD's main menu) Khador Drive when the ship has one. Pick = "Target: X" + sound 28 + autopilot.
-- **Fast-forward** (hold the touch button, R, or controller Y) while the autopilot or an asteroid approach runs and the target is >= 20000 units (1 km) away: `Time.timeScale` = 5 for the whole game; stops on release, arrival or when the autopilot ends.
-- Not yet: menu entries for route waypoints / docking targets, hostile ships blocking fast-forward, mission restrictions.
+- **Fast-forward** (hold the touch button, R, or controller Y) while the autopilot or an asteroid approach runs, the target is >= 20000 units (1 km) away and no hostile ship is around: `Time.timeScale` = 5 for the whole game; stops on release, arrival or when the autopilot ends.
+- Not yet: menu entries for route waypoints / docking targets, mission restrictions.
 
 ## Star map and system travel
 
@@ -154,6 +158,21 @@ Research: `Reference/research/starmap_travel.md` (+ `Reference/tools/starmap/sta
 - **Arrival** from another system: the hidden gate in the gate orbit, else (0, 0, 100000), facing the station, with the 7 s fly-in camera; the orbit information (race logo, station, "<System> System", security level in its colour) shows during it. The programmed station is cleared: no autopilot leg follows a system jump.
 - **Remake-only (free play, no campaign):** the campaign takes the player out of gateless Mido; without it, a ship in a system without a jumpgate counts as having a Khador Drive (it still needs energy cells), and Var Hastra always stocks energy cells.
 - Not yet: mission maps and routes, the lounge's system-info reveal, the Void / wormhole, volatile goods (612), mission blocks (525), the map sounds 102 (Map_Whoosh) and the verified KhadorDrive sound (Jumpgate_4c stands in).
+
+## NPCs and combat
+
+Research: `Reference/research/npc_traffic_ai.md` (+ `Reference/tools/npc/`: `npc_tables.py orbit <station> <level>` simulates an orbit's traffic) and `ship_combat.md` (+ `Reference/tools/combat/combat_tables.py`). Plain C#: `GoF2Hitpoints` (pools), `GoF2Standing`, `GoF2NpcTables`, `GoF2Route`, `GoF2TrafficPlan`; MonoBehaviours: `GoF2Traffic` (level), `GoF2NpcShip` (one ship), `GoF2PlayerHealth` + `GoF2CombatRadar` (player), `GoF2Crate`, `GoF2Explosion`; HUD `GoF2CombatView`. `GoF2Target` is the shared hittable object (asteroids, NPCs, the player), `GoF2GunRig` the shared gun visuals.
+
+- **Traffic** (`Level::createMission`, random per visit): local fighters of the system race (security + rnd(2) + freighters/4), 0-1 jumpers (relaunch from the station every 10 s, fly off after 20 s), 0-4 freighters (fly game +Z at 1 u/ms, unarmed), raiders (90/65/35/10 % by security; 75 % pirates, else the system's enemy race; one model per group). Var Hastra: no freighters or jumpers. Special orbits: 102-104, Loma, systems 32/33 pirates only; 100, 101, 108, 10 empty. Every 45 s dead local fighters relaunch from the station and a destroyed raider group comes back (max 2 waves, security 0 / 1).
+- **NPC stats**: hull only, `4·campaign + 14·rank + 20` (freighters ×5, Extreme ×2), hit cube ±1000 units (±650 Extreme); one gun per fighter: 4 bullets, 16 u/ms, 3000 ms, reload `600 − 2·campaign`, damage 3..22 by rank, the race's projectile and shot sound. `GoF2Session.Rank` counts kills only (the original's XP adds statistics that don't exist yet).
+- **AI** (`PlayerFighter::update`): patrol the box in front of the station; attack anything inside ±50 000 units (hostile ships the player first, neutral / friendly ships the race-hostile ships: pirates / Void vs everyone, Terran vs Vossk, Nivelian vs Midorian); turn toward the target at `dt·48/65536` (like a handling-100 ship, no inertia); fire inside a ±0.0076 cone within ±35 000; circle away inside ±8000; boost 5 % per 5 s or after losing 40 %; re-roll the target every 5 s. Same-race ships never target or hit each other.
+- **Relations**: standing axes Terran/Vossk and Nivelian/Midorian (new game 30 / 0), hostile beyond ±70, pirates / Void always. Kills: standing −5 with the race (a pirate: +1 toward the system race), kills stat for hostile ships. Friendly fire on system-race / attack-race ships: 33 % of their hull → "Hold your fire!", 50 % → that ship turns, 66 % → the whole race turns and the station remembers it (next visit ≥ 7 hostile local fighters, "He's back!"). Radio texts show as HUD messages.
+- **Damage** (`Player::damage`): shield → armor → hull, no reduction (armor is a second pool). Player: hull = `ships.json armor`, shield attr 18 (regen: full in attr 19 ms, ≥ 101 ms ticks, no delay), armor attr 20, repair bots; invulnerable during the launch / arrival camera and jump scenes; a non-hostile NPC's stray hit does 20 %; touching an asteroid destroys it and costs 20. Hit feedback: camera shake 1000 ms, sounds 25 / 23 / 24 by layer, red shield icon 500 ms, blue / red hit arcs 300 ms. Hull / shield / armor persist between levels; docking repairs (assumed) and autosaves.
+- **Death**: NPC fighters tumble 1.5-3 s, explode (`GoF2Explosion`: camera-facing blast + debris, sound 18/19, camera rumble within 30 000 units) and drop a race container with their cargo (2/3 carry some; 60 s); freighters play their wreck animation then a ×6 explosion. The player: camera freezes, explosion at 3 s, "Game Over" at 8 s, "Tap to load last savegame." after 7 s more → the last docked state (`GoF2Session.Autosave` / `LoadAutosave`, in memory), or the main menu without one.
+- **Radar** (`GoF2CombatRadar`, only with a scanner): ship lock in the crosshair box after the scanner's attr 29 (sound 26), sticky until the ship dies or another lock completes; homing missiles use it. Crates: salvage lock (ring after 500 ms, tractor attr 24), the beam pulls at 10 u/ms and captures within 400 units (the first cargo entry, capped to free cargo); without a tractor beam "No tractor beam.".
+- **HUD** (`GoF2CombatView`): shield and hull/armor bars top-left (the speed readout moved below them); ship markers red / green / yellow: off screen a dot on the radar ellipse, far a dot (ring + distance when locked), near a hull bar (+ bracket when locked); crate markers; lock plate "<race> NN%" with the race icon; hit arcs.
+- **Music** (`Radar::draw` hostile counter, scanner only): 0 hostile ships → the system race's space track, 1-2 / 3-4 / 5+ → Space_Battle_Low / Medium / Full. Hostiles also block fast-forward.
+- Not yet: Wanted targets and bounties, wingmen, turrets and the Terran / Vossk battleship specials, pirate outposts, EMP weapons against NPCs, the emergency system, collisions with stations and ships (push-out), the radio window with portraits, the docking fine, signatures, the NPC engine sounds' real files (46/47 have no .ogg by name).
 
 ## Mining
 
@@ -207,10 +226,10 @@ Research: `Reference/research/shop.md` (+ `item_icons.json`, reference price cod
 
 Research: `Reference/research/weapons.md` (functions, per-item table, fx, sounds, lock-on, HUD rects). `weapon_fx.json` is generated from it by `Reference/tools/weapons/build_weapon_fx.py`; **GoF2 > Build Weapon Fx** turns it into `Resources/GoF2Weapons/item_XXX` (`GoF2WeaponFx`: projectile / muzzle / impact prefabs + shot sound) and cuts the crosshair.
 
-- `GoF2Gun` (plain C#): one per equipped weapon on its mount; bullet pool; attr 11 reload, attr 9 damage, **attr 13 speed in units/ms, attr 12 "range" = lifetime in ms**; straight along the nose (no convergence/aim assist); axis-aligned cube hit test; rockets/missiles coast 2 s past their lifetime; missiles home on `LockTarget` (none yet: no ships to lock).
+- `GoF2Gun` (plain C#): one per equipped weapon on its mount; bullet pool; attr 11 reload, attr 9 damage, **attr 13 speed in units/ms, attr 12 "range" = lifetime in ms**; straight along the nose (no convergence/aim assist); axis-aligned cube hit test (or local boxes for freighters), never hitting its `owner`; rockets/missiles coast 2 s past their lifetime; missiles home on `LockTarget` (the radar's ship lock). NPC guns use the same class (see "NPCs and combat"); `GoF2GunRig` draws projectiles, muzzle flashes and impacts for both.
 - `GoF2WeaponSystem` (player): primaries fire independently while held, secondary one per release (ammo = item amount, `GoF2Session.EquipmentAmounts`). Keys: Ctrl / LMB fire, F / RMB missile; controller RT fire, LT missile (throttle moved to LB/RB).
-- `GoF2Target`: hittable objects (asteroids now: radius meshRadius*scale*0.7, HP scale*100+30, rockets kill asteroids instantly, explosion prefab + sound 21). Stations are never hit.
-- Not yet: beams (items 9-11, 228 fire as projectiles), scatter burst, bombs/mines, lock-on radar, NPC ships.
+- `GoF2Target`: hittable objects (asteroids: radius meshRadius*scale*0.7, HP scale*100+30, rockets kill asteroids instantly, explosion prefab + sound 21; ships and the player with `GoF2Hitpoints`). Stations are never hit.
+- Not yet: beams (items 9-11, 228 fire as projectiles), scatter burst, bombs/mines, EMP effects.
 
 ## UI and platforms
 
@@ -257,8 +276,8 @@ Useful field offsets in the decompiled code:
 
 ## Roadmap (suggested order)
 
-1. Combat: player guns and missiles done (see "Weapons"). Still: beams, bombs/mines, lock-on (`Radar`), `Player::damage*` for ships.
-2. Enemy AI: `KIPlayer`, `PlayerFighter::update` (the largest AI function), `Route`, `Waypoint`.
+1. Combat: player guns and missiles, ship damage, lock-on and NPC ships done (see "Weapons", "NPCs and combat"). Still: beams, bombs/mines, EMP.
+2. NPCs: free-flight traffic and fighter AI done. Still: Wanted targets, wingmen, turrets, freelance missions.
 3. A star system scene: done as a first pass (see "Space scene"), with autopilot, planet jumps, the star map and jumpgate / Khador travel. Still: the extra sky layers, the Void.
 4. Stations and economy: station interior and shop done (see "Station scene", "Shop"). Still: agents and missions (`Generator`), blueprints, `Status` (save game).
 5. HUD and radar (`Hud`, `Radar`), then missions (`Mission`, `Objective`, `LevelScript`).

@@ -17,7 +17,10 @@
 //                  in the gate orbit, else (0, 0, 100000); the arrival camera then shows the orbit information.
 //   LevelScript::process 0x160d50: at the end of the launch / arrival camera the autopilot continues to a programmed
 //                  station (GoF2Navigation.ContinueToProgrammedStation), unless the Khador Drive is about to charge.
-// Not yet: traffic (Level::createMission), missions, lens flare, wormhole.
+//   Level::createMission etc.: the NPC traffic (GoF2Traffic) and ship combat: the player's pools and death
+//                  (GoF2PlayerHealth), ship / salvage locks (GoF2CombatRadar); invulnerable during the launch / arrival
+//                  camera and the jump scenes.
+// Not yet: missions, lens flare, wormhole.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -53,6 +56,10 @@ namespace GoF2Remake.World
         public GoF2Mining Mining { get; private set; }
         public GoF2Navigation Navigation { get; private set; }
         public GoF2SystemJump SystemJump { get; private set; }
+        public GoF2PlayerHealth Health { get; private set; }
+        public GoF2Traffic Traffic { get; private set; }
+        public GoF2CombatRadar Radar { get; private set; }
+        public GameObject Station { get; private set; }
         public GameObject Jumpgate { get; private set; }
         /// <summary>Hud::drawOrbitInformation: during the arrival camera after a gate / Khador jump.</summary>
         public bool OrbitInfoVisible => orbitInfo && launchCameraMs > 0f;
@@ -66,7 +73,7 @@ namespace GoF2Remake.World
 
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
-        public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange
+        public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
                                && (Mining == null || Mining.State == GoF2Mining.Phase.Idle);
         bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
 
@@ -90,7 +97,7 @@ namespace GoF2Remake.World
             GoF2OrbitBuilder.SetupSky(Layout, ambientIntensity);
             GoF2OrbitBuilder.SetupLights(Layout, sunLight, planetLight, sunIntensityAt2, planetLightIntensity);
             SetupCamera();
-            GoF2OrbitBuilder.SpawnStation(db, Layout);
+            Station = GoF2OrbitBuilder.SpawnStation(db, Layout);
             Jumpgate = GoF2OrbitBuilder.SpawnJumpgate(db, Layout);
             GoF2OrbitBuilder.SpawnAsteroids(db, Layout);
             orbitInfo = GoF2Session.ArrivedBySystemJump;
@@ -105,6 +112,21 @@ namespace GoF2Remake.World
             Mining.navigation = Navigation;
             SystemJump = Player.gameObject.AddComponent<GoF2SystemJump>();
             SystemJump.Setup(db, Navigation, Player, Weapons, chase, Jumpgate);
+
+            // Ship combat: the player's Player object, the orbit's NPC traffic, the ship / salvage locks.
+            Health = Player.gameObject.AddComponent<GoF2PlayerHealth>();
+            Health.Setup(db, Player, chase, Weapons, Mining);
+            Traffic = new GameObject("Traffic").AddComponent<GoF2Traffic>();
+            Traffic.Setup(db, Layout, Health.Target, Station);
+            Radar = Player.gameObject.AddComponent<GoF2CombatRadar>();
+            Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
+        }
+
+        void Update()
+        {
+            if (Health == null) return;
+            Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic);
+            Navigation.HostilesPresent = Traffic != null && Traffic.HostileCount > 0;
         }
 
         void SetupCamera()
@@ -199,7 +221,7 @@ namespace GoF2Remake.World
 
         void LateUpdate()
         {
-            if (Player == null) return;
+            if (Player == null || (Health != null && Health.Dead)) return;
             if (!InDockRange) leftDockRange = true;
             // MGame::dockEvent: the autopilot to the station docks within 16000 units (collision is off during the launch).
             if (Navigation != null && Navigation.GoingToStation && InDockRange && launchCameraMs <= 0f && Layout.hasStation) { Dock(); return; }

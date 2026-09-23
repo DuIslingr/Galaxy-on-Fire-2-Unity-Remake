@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b690c141ddffd594fad3db205d159f7c, type: 3}
+  m_Name: CombatAssets
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Flight.GoF2CombatAssets
+  crates:
+  - {fileID: 6259393692984745491, guid: b998943ab7e681745931940bad585e70, type: 3}
+  - {fileID: 3986050196059105532, guid: badca43bd4f159446b78f4ef19c488b7, type: 3}
+  - {fileID: 2438794118910809161, guid: 273388f0545f3e14e839de9601aa5628, type: 3}
+  - {fileID: 883951401650648952, guid: e8b6ea716f5d46447946b8e2ff081911, type: 3}
+  - {fileID: 3952436399856296714, guid: 45ae253d55c770b4fbddc0b67c4516d3, type: 3}
+  wrecks:
+  - {fileID: 1085608237480985132, guid: 7b2a9be3e3e488243a57a5f8742a81b2, type: 3}
+  - {fileID: 7332726349940136924, guid: 301d6fee53bf3b14e8c082956d36e3b7, type: 3}
+  - {fileID: 4616811829860090051, guid: 7a7ed91d2006ebc43ad8c1af16ffd7c2, type: 3}
+  - {fileID: 5061708962155787613, guid: a65638f675eac854387b5dbd96e4429e, type: 3}
+  - {fileID: 2346470690602213189, guid: 0cd452b3a83dec446b0314ce90f9a8e4, type: 3}
+  explosion: {fileID: 2544621396119628254, guid: a0a37cb24b835cc488bfca78fafd2091, type: 3}
+  debris: {fileID: 8808137499219596452, guid: 43172a83735682543b768c59fe6ccef2, type: 3}
+  tractorBeams:
+  - {fileID: 2035202387552685137, guid: 83616279c3f1dbc41b0d99ddd4a62a6c, type: 3}
+  - {fileID: 6736533759399342195, guid: 56aaa6354fe87b94b8d70b3e125fbd94, type: 3}
+  - {fileID: 9179073379202705753, guid: 39eb7dd1281d4ce45956f041a6a78d78, type: 3}
+  - {fileID: 3639165770361154041, guid: 01a0f216a91ab484aa22421ddbfe6596, type: 3}
+  hitShield:
+  - {fileID: 8300000, guid: 2180dc2e028978546a7ff4b4ad55be57, type: 3}
+  - {fileID: 8300000, guid: 5f72e4c9b8af0944fbf0d4214f9816be, type: 3}
+  hitArmor:
+  - {fileID: 8300000, guid: 676facd5d16502b4fbb2e24eb039edad, type: 3}
+  - {fileID: 8300000, guid: 13c0a86853dd6e54bb841ebc849b1ede, type: 3}
+  - {fileID: 8300000, guid: 015f44c0abbd6a34f88bec8e2f70cd37, type: 3}
+  hitHull:
+  - {fileID: 8300000, guid: 395615651bd1d5a49b32649044509c5a, type: 3}
+  - {fileID: 8300000, guid: c1f3f8a69fe7c7244a7d0831f4bb3cb8, type: 3}
+  shipDestroyed:
+  - {fileID: 8300000, guid: 2639c45fbcc377142967ac9189e9075e, type: 3}
+  - {fileID: 8300000, guid: 06bca39469ae32342a30d9eabb52f175, type: 3}
+  explosionBig:
+  - {fileID: 8300000, guid: 840068e6c6407b042ac645618440cb6b, type: 3}
+  - {fileID: 8300000, guid: a221cce1c0f26614698484509aa7b05f, type: 3}
+  - {fileID: 8300000, guid: a2efd9bab7feabb4cb2ce0f842b40106, type: 3}
+  - {fileID: 8300000, guid: 8dd6711f1d05a1e4682308df33efcb94, type: 3}
+  explosionMid:
+  - {fileID: 8300000, guid: 68384135bfceec04781a8f2bf13fc31d, type: 3}
+  - {fileID: 8300000, guid: 1c17ad86dea5d9e46a30730fb0dd3771, type: 3}
+  - {fileID: 8300000, guid: cd760d021f04d634684615e911106cd3, type: 3}
+  - {fileID: 8300000, guid: cb5c62a9de297904b80218561a8188c2, type: 3}
+  - {fileID: 8300000, guid: 43d0960404595dc4fa2e20d32a3e7425, type: 3}
+  shots:
+  - {fileID: 8300000, guid: d66490f1d05f9a645b6d15e2dd30f068, type: 3}
+  - {fileID: 8300000, guid: 81544dbda9e1c294eb5a96d45e6b7445, type: 3}
+  - {fileID: 8300000, guid: 5ec4b4e0bd59bf14ea6cfc1fd0981c22, type: 3}
+  - {fileID: 8300000, guid: 3d385b75ab7f241448baec4fa5b13d63, type: 3}
+  - {fileID: 8300000, guid: 30bbd26f78e4ea44c8d568398bfe85a1, type: 3}
+  targetLock: {fileID: 8300000, guid: b48c5e8a0fd8ffc4185f3566e1d65f9d, type: 3}
+  tractorLoop: {fileID: 8300000, guid: 4c06bea89665def46bde4c530e72b902, type: 3}
+  tractorClose: {fileID: 8300000, guid: 78668b3164210fe4aa2b7b6356ff0746, type: 3}
+  gameOver: {fileID: 8300000, guid: 33091f678d2e11840b0442925004df6c, type: 3}
+  engineFighter: {fileID: 8300000, guid: f41b6ef0b20bb5f48abbe4653162512b, type: 3}
+  engineFreighter: {fileID: 8300000, guid: fbaf711da8730e34590d8999d0fffd85, type: 3}
+  spaceMusic:
+  - {fileID: 8300000, guid: c53ce8fa1be5924458e2a9074747ada3, type: 3}
+  - {fileID: 8300000, guid: 75809b04641f2cc4ab5941877a23032b, type: 3}
+  - {fileID: 8300000, guid: a05387ead5bf1ab4eb7551ad50977041, type: 3}
+  - {fileID: 8300000, guid: 04638b3dbb48e2949bdc3c2b672e4688, type: 3}
+  battleMusic:
+  - {fileID: 8300000, guid: 88c1bf9983e9ae4449d5ada53e399f63, type: 3}
+  - {fileID: 8300000, guid: 110d13a82a6c20647921ce2d3daa248e, type: 3}
+  - {fileID: 8300000, guid: 7c0e94556116b264a9e6a30b73d6e07d, type: 3}

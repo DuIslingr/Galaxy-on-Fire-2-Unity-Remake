@@ -3,8 +3,34 @@
     <ui:Style src="FlightHud.uss" />
     <ui:VisualElement name="hud" class="hud" picking-mode="Ignore">
         <ui:VisualElement name="mining" class="mining" picking-mode="Ignore" />
+        <ui:VisualElement name="hitArcs" class="hit-arcs" picking-mode="Ignore">
+            <ui:VisualElement name="arcLeft" class="hit-arc hit-arc--left" picking-mode="Ignore" />
+            <ui:VisualElement name="arcRight" class="hit-arc hit-arc--right" picking-mode="Ignore" />
+            <ui:VisualElement name="arcTop" class="hit-arc hit-arc--top" picking-mode="Ignore" />
+            <ui:VisualElement name="arcBottom" class="hit-arc hit-arc--bottom" picking-mode="Ignore" />
+        </ui:VisualElement>
         <ui:VisualElement name="safeArea" class="hud-safe" picking-mode="Ignore">
+            <ui:VisualElement name="combatMarkers" class="nav-markers" picking-mode="Ignore" />
             <ui:VisualElement name="navMarkers" class="nav-markers" picking-mode="Ignore" />
+            <ui:VisualElement name="statusPanel" class="status-panel" picking-mode="Ignore">
+                <ui:VisualElement name="shieldRow" class="status-row" picking-mode="Ignore">
+                    <ui:VisualElement name="shieldIcon" class="status-icon" picking-mode="Ignore" />
+                    <ui:VisualElement class="status-plate" picking-mode="Ignore">
+                        <ui:VisualElement name="shieldFrame" class="status-bar" picking-mode="Ignore">
+                            <ui:VisualElement name="shieldFill" class="status-fill" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="hullRow" class="status-row" picking-mode="Ignore">
+                    <ui:VisualElement name="hullIcon" class="status-icon" picking-mode="Ignore" />
+                    <ui:VisualElement class="status-plate" picking-mode="Ignore">
+                        <ui:VisualElement name="hullFrame" class="status-bar" picking-mode="Ignore">
+                            <ui:VisualElement name="hullFill" class="status-fill" picking-mode="Ignore" />
+                            <ui:VisualElement name="armorFill" class="status-fill" picking-mode="Ignore" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:VisualElement name="crosshair" class="crosshair" picking-mode="Ignore" />
             <ui:VisualElement name="lockRing" class="lock-ring" picking-mode="Ignore" />
 
@@ -97,6 +123,10 @@
 
             <ui:Button name="menuButton" class="hud-menu-button gof-semibold" />
             <ui:VisualElement name="hints" class="hints" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="gameOver" class="game-over">
+            <ui:Label name="gameOverTitle" class="game-over-title gof-semibold" picking-mode="Ignore" />
+            <ui:Label name="gameOverText" class="game-over-text" picking-mode="Ignore" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

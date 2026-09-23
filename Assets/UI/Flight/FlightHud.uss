@@ -345,7 +345,7 @@
     display: none;
     position: absolute;
     left: 32px;
-    top: 170px;
+    top: 250px;
     width: 126px;
     height: 293px;
 }
@@ -472,7 +472,7 @@
 .speed-panel {
     position: absolute;
     left: 40px;
-    top: 34px;
+    top: 112px;
     width: 260px;
     padding: 12px 16px;
     background-color: rgba(4, 10, 18, 0.55);
@@ -633,4 +633,131 @@
     padding: 0;
     margin: 0;
     text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+/* ---- player status (Hud::draw: icon 41x42 at x 38, bar 248x14 at x 79 on the 247x39 row plate; shield y 10, hull y 58) ---- */
+
+.status-panel {
+    position: absolute;
+    left: 38px;
+    top: 10px;
+}
+
+.status-row {
+    flex-direction: row;
+    height: 48px;
+}
+
+.status-icon {
+    width: 41px;
+    height: 42px;
+}
+
+.status-plate {
+    width: 247px;
+    height: 39px;
+    margin-top: 1px;
+    justify-content: center;
+}
+
+.status-bar {
+    width: 248px;
+    height: 14px;
+}
+
+.status-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.hud-orbit-info .status-panel {
+    display: none;
+}
+
+/* ---- hit arcs on the radar ellipse (Hud::draw, 300 ms; sides at w/2 -+ 657, top / bottom at h/2 -+ 491) ---- */
+
+.hit-arcs {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    overflow: visible;
+}
+
+.hit-arc {
+    display: none;
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.hit-arc--shown {
+    display: flex;
+}
+
+.hud-cinematic .hit-arcs {
+    display: none;
+}
+
+/* ---- game over (MGame game-over state) ---------------------------------------------------- */
+
+.game-over {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(0, 0, 0, 0);
+    transition-duration: 4s;
+}
+
+.game-over--shown {
+    display: flex;
+}
+
+.game-over--dim {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.game-over-title {
+    font-size: 64px;
+    letter-spacing: 12px;
+    color: #FFFFFF;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+}
+
+.game-over-text {
+    margin-top: 28px;
+    max-width: 1100px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+    font-size: 24px;
+    color: var(--gof-text);
+    opacity: 0;
+}
+
+.game-over-text--shown {
+    opacity: 1;
+}
+
+.hud-message--green {
+    color: rgb(0, 237, 0);
+}
+
+.hud-message--red {
+    color: rgb(255, 42, 0);
+}
+
+.combat-label {
+    position: absolute;
+    font-size: 20px;
+    color: #FFFFFF;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }

@@ -142,6 +142,11 @@ namespace GoF2Remake.World
             HangarIndex = GoF2StationTables.HangarIndex(station, Layout.raceId);
             Stock = GoF2Shop.EnterStation(db, station);
             GoF2Session.VisitedStations.Add(station);   // Galaxy::setVisited: the star map's "Already visited"
+            // Docking repairs the ship (the original launches with Status hull / shield / armor = -1, "full", StarMap::
+            // depart; assumed for every launch) and autosaves (ModStation::autosave).
+            GoF2Session.PlayerHull = GoF2Session.PlayerArmor = -1;
+            GoF2Session.PlayerShield = -1f;
+            GoF2Session.Autosave();
             BarRace = GoF2StationTables.BarRace(Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
 

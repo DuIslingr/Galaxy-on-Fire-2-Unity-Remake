@@ -15,7 +15,7 @@
 //                                 the level reloads in the target station's orbit (arrival: GoF2SpaceLevel)
 //   MGame+0x160 fast-forward      held button: the whole game runs 5x (Time.timeScale) while the autopilot or an asteroid
 //                                 approach runs and the target is >= 20000 units away; releasing, arriving or the
-//                                 autopilot ending stops it (no hostile ships exist yet)
+//                                 autopilot ending stops it, and hostile ships around block it (Radar+0x54)
 //   Hud::initHudMenu(3) 0x18e080  the autopilot menu (autopilot button while the autopilot is off; the game pauses):
 //                                 549 "Asteroid field" (not in the alien orbit; flies to the field centre and, like the
 //                                 original, keeps going until switched off), "<name> Station" (not in empty orbits),
@@ -83,7 +83,11 @@ namespace GoF2Remake.Flight
         /// <summary>Lock ring frame 0..23 (no 500 ms delay for landmarks and planets), -1 = none.</summary>
         public int LockFrame => Candidate == null ? -1 : Locked != null ? 23 : Mathf.Min(23, (int)(23f * LockTimer / Mathf.Max(1, LockTimeMs)));
         /// <summary>Radar: the asteroid lock needs no landmark / planet candidate or lock and no autopilot.</summary>
-        public bool BlocksAsteroidLock => Candidate != null || Locked != null || Autopilot || Jumping;
+        public bool BlocksAsteroidLock => Candidate != null || Locked != null || Autopilot || Jumping || ShipLockActive;
+        /// <summary>GoF2CombatRadar has a ship / crate candidate this frame.</summary>
+        [NonSerialized] public bool ShipLockActive;
+        /// <summary>Radar+0x54: hostile ships around (GoF2Traffic): no fast-forward.</summary>
+        [NonSerialized] public bool HostilesPresent;
         public bool AboutToReach { get; private set; }
         public event Action<string> Message;
 
@@ -211,7 +215,7 @@ namespace GoF2Remake.Flight
         {
             get
             {
-                if (Jumping) return false;
+                if (Jumping || HostilesPresent) return false;
                 if (Autopilot) return !AboutToReach;
                 if (mining != null && mining.Target != null && mining.State == GoF2Mining.Phase.Approaching)
                     return (mining.Target.transform.position - ship.transform.position).magnitude / M >= AboutToReachUnits;

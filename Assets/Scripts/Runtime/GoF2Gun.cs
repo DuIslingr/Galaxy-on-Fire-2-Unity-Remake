@@ -7,6 +7,8 @@
 //                           missiles coast and still hit for 2000 ms after their lifetime
 //   Gun::calcCharacterCollision 0x17e154  axis-aligned cube |target - bullet + vel| < radius on every axis
 //   RocketGun::seekEnemy 0x18bd70  missiles steer 1/6 of the error per (30 fps) frame toward the locked target
+//   Level::assignGuns 0xcb638  NPC guns: 4 bullets, 16 u/ms, 3000 ms, the race's reload and damage, mount at the ship
+//                           centre (the item only gives the look); 'owner' is never hit by its own bullets
 // Units: positions in Unity metres, times in ms, velocities in metres per ms (game speed u/ms * 0.05).
 
 using System;
@@ -33,10 +35,13 @@ namespace GoF2Remake.Flight
         public readonly int itemIndex;
         public readonly Kind kind;
         public readonly int categoryId;
-        public readonly float damage, emp, reloadMs, lifetimeMs, speedUnitsPerMs;
+        public float damage;
+        public readonly float emp, reloadMs, lifetimeMs, speedUnitsPerMs;
         public readonly Vector3 mountLocal;   // Unity metres, ship space
         public readonly Bullet[] bullets;
         public readonly bool isSecondary;
+        /// <summary>The ship carrying the gun (never hit by it).</summary>
+        public GoF2Target owner;
         public float reloadAcc;               // ms since the last shot
         public float spreadError;             // Gun+0xe0: 2 auto-cannon/scatter, 20 thermo, 0 otherwise
 
@@ -71,6 +76,22 @@ namespace GoF2Remake.Flight
             bullets = new Bullet[pool];
             for (int i = 0; i < pool; i++) bullets[i].timer = -1e9f;
             reloadAcc = reloadMs + 1f;   // ready at start
+        }
+
+        /// <summary>Level::assignGuns: an NPC gun with the look of 'visualItem' and the generic NPC stats.</summary>
+        public GoF2Gun(ItemData visualItem, float damage, float reloadMs, int pool, float lifetimeMs, float speedUnitsPerMs)
+        {
+            itemIndex = visualItem.index;
+            categoryId = visualItem.categoryId;
+            kind = (Kind)visualItem.categoryId;
+            this.damage = damage;
+            this.reloadMs = Mathf.Max(1f, reloadMs);
+            this.lifetimeMs = lifetimeMs;
+            this.speedUnitsPerMs = speedUnitsPerMs;
+            mountLocal = Vector3.zero;
+            bullets = new Bullet[pool];
+            for (int i = 0; i < pool; i++) bullets[i].timer = -1e9f;
+            reloadAcc = UnityEngine.Random.Range(0f, this.reloadMs);
         }
 
         public bool IsActive(int i) => bullets[i].Active(FreeLimit);
@@ -129,10 +150,8 @@ namespace GoF2Remake.Flight
             for (int t = 0; t < targets.Count; t++)
             {
                 var target = targets[t];
-                if (target == null || !target.Alive) continue;
-                float r = target.radius;
-                var d = target.transform.position - b.position + b.velocity;   // one ms ahead, like the original
-                if (Mathf.Abs(d.x) >= r || Mathf.Abs(d.y) >= r || Mathf.Abs(d.z) >= r) continue;
+                if (target == null || target == owner || !target.Alive) continue;
+                if (!target.Contains(b.position - b.velocity)) continue;   // |target - bullet + vel| < r, like the original
                 var point = b.position;
                 b.timer = -1e9f;   // gone
                 Hit?.Invoke(i, target, point);

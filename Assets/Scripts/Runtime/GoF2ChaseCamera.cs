@@ -37,6 +37,18 @@ namespace GoF2Remake.Flight
 
         Camera cam;
         Vector3 slide;
+        float shakeMs, shakeUnits, rumble;
+
+        /// <summary>TargetFollowCamera::hit / hitSmall: the camera position jitters rnd(2a) - a units per axis per frame
+        /// ('ms' 1000 / a 6 when the player is hit, 50 / 2 per own shot).</summary>
+        public void Shake(float ms, float amplitudeUnits)
+        {
+            if (ms >= shakeMs) { shakeMs = ms; shakeUnits = amplitudeUnits; }
+        }
+
+        /// <summary>TargetFollowCamera::setRumblePercentage (explosions, each frame): the look-at point jitters by
+        /// p * (rnd(100) - 50) units per axis. The strongest caller this frame wins.</summary>
+        public void Rumble(float p) => rumble = Mathf.Max(rumble, p);
 
         void Awake() => cam = GetComponent<Camera>();
 
@@ -67,6 +79,22 @@ namespace GoF2Remake.Flight
 
             transform.position = Vector3.Lerp(transform.position, desiredPos, 1f - Mathf.Exp(-posK * dtMs));
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, 1f - Mathf.Exp(-rotK * dtMs));
+
+            if (shakeMs > 0f)
+            {
+                shakeMs -= dtMs;
+                float a = shakeUnits * target.metersPerUnit;
+                transform.position += new Vector3(Random.Range(-a, a), Random.Range(-a, a), Random.Range(-a, a));
+            }
+            if (rumble > 0f)
+            {
+                // 50 units at the look-at point (about 690 units away) = about 4 degrees.
+                var look = ship.TransformPoint(lookOffset);
+                float j = rumble * 50f * target.metersPerUnit;
+                look += new Vector3(Random.Range(-j, j), Random.Range(-j, j), Random.Range(-j, j));
+                transform.rotation = Quaternion.LookRotation(look - transform.position, transform.up);
+                rumble = 0f;
+            }
 
             if (cam != null)
                 cam.fieldOfView = GoF2Remake.Visuals.GoF2Aspect.VerticalFov(baseFov + boostFovAdd * model.BoostVisualPercent, cam.aspect);

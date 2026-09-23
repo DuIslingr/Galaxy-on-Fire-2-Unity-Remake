@@ -17,6 +17,9 @@
 // The star map (GoF2StarMap) covers everything while open; jump scenes and docking to the gate hide the HUD
 // (GoF2SystemJump.Cinematic); the Khador Drive's charge shows as a bar; after a gate / Khador jump the arrival camera shows
 // the orbit information (Hud::drawOrbitInformation: race logo, station, "<System> System", security level).
+// Combat (GoF2CombatView): ship / crate markers, the ship lock plate, the player's shield / hull / armor bars and hit arcs;
+// radio and salvage messages; after the player's death the "Game Over" screen (319) with "Tap to load last savegame."
+// (196) 7 s later, which reloads the last docked state (GoF2Session.LoadAutosave), or the main menu without one (199).
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -47,6 +50,13 @@ namespace GoF2Remake.UI
         GoF2Navigation nav;
         GoF2NavigationView navView;
         GoF2SystemJump jump;
+        GoF2CombatView combatView;
+        GoF2PlayerHealth health;
+        GoF2CombatRadar radar;
+        GoF2Traffic traffic;
+        VisualElement gameOver;
+        Label gameOverText;
+        float gameOverMs = -1f;
         VisualElement jumpCharge, jumpChargeFill, orbitInfo;
         bool orbitInfoFilled;
         bool lastAutopilot;
@@ -81,6 +91,9 @@ namespace GoF2Remake.UI
             if (mining != null) mining.Message -= OnMiningMessage;
             if (nav != null) nav.Message -= OnMiningMessage;
             if (jump != null) jump.Message -= OnMiningMessage;
+            if (traffic != null) traffic.Message -= OnMiningMessage;
+            if (radar != null) radar.Message -= OnCombatMessage;
+            if (health != null) health.GameOverStarted -= OnGameOver;
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             GoF2InputMode.Changed -= ApplyInputMode;
         }
@@ -123,6 +136,11 @@ namespace GoF2Remake.UI
             HookPress(dockPrompt, null, Interact);
             miningView = new GoF2MiningView(root);
             navView = new GoF2NavigationView(root);
+            combatView = new GoF2CombatView(root);
+            gameOver = root.Q("gameOver");
+            gameOverText = root.Q<Label>("gameOverText");
+            root.Q<Label>("gameOverTitle").text = GoF2Localization.Get(319).ToUpperInvariant();   // Game Over
+            gameOver.RegisterCallback<PointerDownEvent>(_ => LoadLastSave());
             navView.AutopilotButton += OnAutopilotButton;
             autopilotMenu = root.Q("autopilotMenu");
             autopilotMenuItems = root.Q("autopilotMenuItems");
@@ -356,9 +374,25 @@ namespace GoF2Remake.UI
                 if (nav != null) nav.Message += OnMiningMessage;
                 jump = level.SystemJump;
                 if (jump != null) jump.Message += OnMiningMessage;
+                health = level.Health;
+                radar = level.Radar;
+                traffic = level.Traffic;
+                if (traffic != null) traffic.Message += OnMiningMessage;
+                if (radar != null) radar.Message += OnCombatMessage;
+                if (health != null) health.GameOverStarted += OnGameOver;
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 chase = Camera.main != null ? Camera.main.GetComponent<GoF2ChaseCamera>() : null;
                 ApplyInputMode();
+            }
+
+            if (health != null && health.Dead)
+            {
+                // Dead: no HUD, no controls (PlayerEgo::explode); then the game-over screen.
+                root.EnableInClassList("hud-cinematic", true);
+                dockPrompt.EnableInClassList("dock-prompt--hidden", true);
+                ship.SetSteer(Vector2.zero);
+                UpdateGameOver();
+                return;
             }
 
             // The action prompt: navigation (autopilot / jump) first, then mining (lock / approach / minigame), else docking.
@@ -420,6 +454,9 @@ namespace GoF2Remake.UI
             lockRing.style.top = crosshair.style.top;
             navView.Update(nav, Camera.main, GoF2InputMode.Current == GoF2InputKind.Touch, phase,
                            level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
+            bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
+            bool plateFree = (nav == null || nav.Locked == null) && (mining == null || (mining.State == GoF2Mining.Phase.Idle && mining.Locked == null));
+            combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree);
         }
 
         /// <summary>The autopilot button (HUD key 0x40, MGame::OnTouchEnd): turns the autopilot off, cancels an asteroid
@@ -519,6 +556,38 @@ namespace GoF2Remake.UI
         }
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);
+        void OnCombatMessage(string text, int colour) => miningView?.ShowMessage(text, colour);
+
+        // ---- game over (MGame game-over state) ------------------------------------------------------------
+
+        void OnGameOver()
+        {
+            gameOverMs = 0f;
+            gameOver.AddToClassList("game-over--shown");
+            gameOverText.text = GoF2Localization.Get(GoF2Session.HasAutosave ? 196 : 199);
+        }
+
+        /// <summary>Overlay fades in after 3000 ms over 4000 ms, then the blinking "Tap to load last savegame.".</summary>
+        void UpdateGameOver()
+        {
+            if (gameOverMs < 0f) return;
+            gameOverMs += Time.unscaledDeltaTime * 1000f;
+            gameOver.EnableInClassList("game-over--dim", gameOverMs > 3000f);
+            bool ready = gameOverMs > 7000f;
+            gameOverText.EnableInClassList("game-over-text--shown", ready && (int)(gameOverMs / 500f) % 2 == 0);
+            if (ready && ((Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
+                          || (Gamepad.current != null && (Gamepad.current.buttonSouth.wasPressedThisFrame || Gamepad.current.startButton.wasPressedThisFrame))))
+                LoadLastSave();
+        }
+
+        /// <summary>GameRecord::load(last save) -> the station; no save -> the main menu.</summary>
+        void LoadLastSave()
+        {
+            if (gameOverMs < 7000f) return;
+            gameOverMs = -1f;
+            if (GoF2Session.LoadAutosave() && Application.CanStreamedLevelBeLoaded("Station")) SceneManager.LoadScene("Station");
+            else BackToMenu();
+        }
 
         /// <summary>Hud::drawOrbitInformation during the arrival camera after a gate / Khador jump.</summary>
         void UpdateOrbitInfo()

@@ -88,6 +88,36 @@ namespace GoF2Remake.Data
         /// <summary>Status+0x1dc (Status::jumpgateUsed).</summary>
         public static int JumpgatesUsed;
 
+        /// <summary>Standing: [0] Terran (+) / Vossk (-), [1] Nivelian (+) / Midorian (-), -100..100 (GoF2Standing);
+        /// a new game starts at 30 / 0.</summary>
+        public static int[] Standing = { 30, 0 };
+
+        /// <summary>Stations whose race the player attacked (Station::setAttackedFriends): on the next visit at least 7
+        /// hostile local fighters wait there.</summary>
+        public static HashSet<int> AttackedStations = new HashSet<int>();
+
+        /// <summary>Status+0x1c0 kills (also XP), +0x1d8 pirate kills.</summary>
+        public static int Kills, PirateKills;
+
+        /// <summary>Status+0x64 / +0x5c / +0x60: the player's hull, shield and armor between levels (-1 = full).</summary>
+        public static int PlayerHull = -1, PlayerArmor = -1;
+        public static float PlayerShield = -1f;
+
+        /// <summary>DAT_00252b0c: XP needed per rank 0..20 (Status::checkForLevelUp).</summary>
+        static readonly int[] RankXp = { 0, 7, 21, 42, 70, 105, 147, 196, 252, 315, 385, 462, 546, 637, 735, 840, 952, 1071, 1197, 1330, 1650 };
+
+        /// <summary>Status::getLevel: the player's rank 0..20 from XP. The remake counts kills only (the original adds
+        /// credits / 50, missions and other statistics that don't exist yet).</summary>
+        public static int Rank
+        {
+            get
+            {
+                int xp = Kills, r = 0;
+                for (int i = 0; i < RankXp.Length; i++) if (xp >= RankXp[i]) r = i;
+                return r;
+            }
+        }
+
         /// <summary>Status::resetGame: 2x Nirai Charged Pulse, 6 Edo missiles, Fluxed Matter Shield, T'yol,
         /// Telta Ecoscan, Synchrotron Boost.</summary>
         static List<GoF2Stack> StartEquipment() => new List<GoF2Stack>
@@ -96,8 +126,50 @@ namespace GoF2Remake.Data
             new GoF2Stack(54, 1), new GoF2Stack(59, 1), new GoF2Stack(82, 1), new GoF2Stack(73, 1),
         };
 
+        // ---- autosave (ModStation::autosave 0xe9eb4: save slot 0 when docking; game over reloads it) ----------------
+
+        class Snapshot
+        {
+            public int station, ship, credits, kills, pirateKills;
+            public List<GoF2Stack> equipment, cargo;
+            public int[] standing;
+            public HashSet<int> visited, attacked;
+            public bool[] visible;
+        }
+
+        static Snapshot autosave;
+        public static bool HasAutosave => autosave != null;
+
+        /// <summary>Remembers the docked state (the remake keeps it in memory; there is no save file yet).</summary>
+        public static void Autosave()
+        {
+            autosave = new Snapshot
+            {
+                station = StationIndex, ship = ShipIndex, credits = Credits, kills = Kills, pirateKills = PirateKills,
+                equipment = Equipment.ConvertAll(e => e.Clone()), cargo = Cargo.ConvertAll(e => e.Clone()),
+                standing = (int[])Standing.Clone(), visited = new HashSet<int>(VisitedStations), attacked = new HashSet<int>(AttackedStations),
+                visible = SystemVisible != null ? (bool[])SystemVisible.Clone() : null,
+            };
+        }
+
+        /// <summary>GameRecord::load(last save): back to the docked state of the last autosave.</summary>
+        public static bool LoadAutosave()
+        {
+            if (autosave == null) return false;
+            var a = autosave;
+            StationIndex = a.station; ShipIndex = a.ship; Credits = a.credits; Kills = a.kills; PirateKills = a.pirateKills;
+            Equipment = a.equipment.ConvertAll(e => e.Clone()); Cargo = a.cargo.ConvertAll(e => e.Clone());
+            Standing = (int[])a.standing.Clone(); VisitedStations = new HashSet<int>(a.visited); AttackedStations = new HashSet<int>(a.attacked);
+            SystemVisible = a.visible != null ? (bool[])a.visible.Clone() : null;
+            PlayerHull = PlayerArmor = -1; PlayerShield = -1f;
+            ProgrammedStation = -1; InstantJump = false;
+            ArrivedByTravel = LaunchedFromStation = ArrivedBySystemJump = false;
+            return true;
+        }
+
         public static void ResetNewGame()
         {
+            autosave = null;
             StationIndex = 78;
             PreviousStationIndex = -1;
             ShipIndex = 10;
@@ -119,6 +191,11 @@ namespace GoF2Remake.Data
             InstantJump = false;
             EnergyCellsForNextJump = 0;
             JumpgatesUsed = 0;
+            Standing = new[] { 30, 0 };
+            AttackedStations = new HashSet<int>();
+            Kills = PirateKills = 0;
+            PlayerHull = PlayerArmor = -1;
+            PlayerShield = -1f;
         }
     }
 }

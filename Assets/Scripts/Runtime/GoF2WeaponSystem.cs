@@ -21,7 +21,6 @@ namespace GoF2Remake.Flight
     public class GoF2WeaponSystem : MonoBehaviour
     {
         const float M = GoF2Gun.MetersPerUnit;
-        const int ImpactPool = 4;
 
         public bool useBuiltInInput = true;
         public InputAction firePrimaryAction = new InputAction("FirePrimary", InputActionType.Button);
@@ -30,16 +29,9 @@ namespace GoF2Remake.Flight
 
         class Rig
         {
-            public GoF2Gun gun;
-            public GoF2WeaponFx fx;
-            public Transform[] projectiles;
-            public bool billboard;
-            public GameObject muzzle;
-            public float muzzleMs, muzzleLength;
-            public GameObject[] impacts;
-            public float[] impactMs;
-            public float impactLength;
-            public int nextImpact;
+            public GoF2GunRig visuals;
+            public GoF2Gun gun => visuals.gun;
+            public GoF2WeaponFx fx => visuals.fx;
             public AudioSource loop;
         }
 
@@ -56,8 +48,15 @@ namespace GoF2Remake.Flight
         GoF2Stack secondaryStack;
         /// <summary>Raised when a player bullet hits something (the crosshair turns orange for 200 ms).</summary>
         public event Action Hit;
-        /// <summary>Locked target for homing missiles (Radar lock; none until there are ships to lock on).</summary>
+        /// <summary>Locked target for homing missiles (the radar's ship lock, GoF2CombatRadar).</summary>
         public GoF2Target LockTarget { get; set; }
+        /// <summary>The player's own hittable object: never hit by its own guns.</summary>
+        public GoF2Target Owner
+        {
+            get => owner;
+            set { owner = value; foreach (var r in rigs) r.gun.owner = value; }
+        }
+        GoF2Target owner;
 
         public bool HasPrimary => rigs.Exists(r => !r.gun.isSecondary);
 
@@ -136,44 +135,8 @@ namespace GoF2Remake.Flight
 
         Rig BuildRig(GoF2Gun gun)
         {
-            var fx = GoF2WeaponFx.Load(gun.itemIndex);
-            var rig = new Rig
-            {
-                gun = gun,
-                fx = fx,
-                // Blasters, thermo guns (and turrets) face the camera; lasers, cannons and rockets point along their flight.
-                billboard = gun.kind == GoF2Gun.Kind.Blaster || gun.kind == GoF2Gun.Kind.Thermo,
-            };
-            rig.projectiles = new Transform[gun.bullets.Length];
-            if (fx != null && fx.projectile != null)
-                for (int i = 0; i < rig.projectiles.Length; i++)
-                {
-                    var go = Instantiate(fx.projectile, fxRoot);
-                    go.name = $"{fx.projectile.name} {i}";
-                    StripForFx(go);
-                    go.SetActive(false);
-                    rig.projectiles[i] = go.transform;
-                }
-            if (fx != null && fx.muzzleFlash != null)
-            {
-                rig.muzzle = Instantiate(fx.muzzleFlash, transform, false);
-                rig.muzzle.transform.localPosition = gun.mountLocal;
-                StripForFx(rig.muzzle);
-                rig.muzzleLength = Mathf.Max(80f, MaxLength(rig.muzzle));
-                rig.muzzle.SetActive(false);
-            }
-            if (fx != null && fx.impact != null)
-            {
-                rig.impacts = new GameObject[ImpactPool];
-                rig.impactMs = new float[ImpactPool];
-                for (int i = 0; i < ImpactPool; i++)
-                {
-                    rig.impacts[i] = Instantiate(fx.impact, fxRoot);
-                    StripForFx(rig.impacts[i]);
-                    rig.impacts[i].SetActive(false);
-                }
-                rig.impactLength = Mathf.Max(200f, MaxLength(rig.impacts[0]));
-            }
+            var rig = new Rig { visuals = new GoF2GunRig(gun, GoF2WeaponFx.Load(gun.itemIndex), fxRoot, transform) };
+            var fx = rig.fx;
             if (fx != null && fx.shotLoops && fx.shot != null)
             {
                 rig.loop = gameObject.AddComponent<AudioSource>();
@@ -182,26 +145,9 @@ namespace GoF2Remake.Flight
                 rig.loop.playOnAwake = false;
                 rig.loop.spatialBlend = 0f;
             }
-            gun.Hit += (i, target, point) => OnHit(rig, target, point);
+            gun.owner = owner;
+            gun.Hit += (i, target, point) => OnHit(rig, i, target, point);
             return rig;
-        }
-
-        static float MaxLength(GameObject go)
-        {
-            float l = 0f;
-            foreach (var a in go.GetComponentsInChildren<GoF2PartAnimation>(true)) l = Mathf.Max(l, a.LengthMs);
-            return l;
-        }
-
-        /// <summary>Effects never cast shadows or cull by LOD.</summary>
-        static void StripForFx(GameObject go)
-        {
-            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
-            {
-                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                r.receiveShadows = false;
-            }
-            foreach (var lg in go.GetComponentsInChildren<LODGroup>(true)) lg.enabled = false;
         }
 
         // ---- input ------------------------------------------------------------------------------------------
@@ -243,7 +189,7 @@ namespace GoF2Remake.Flight
                     if (b >= 0) OnShot(r);
                 }
                 gun.Update(dtMs, GoF2Target.All, LockTarget);
-                UpdateVisuals(r, dtMs, cam);
+                r.visuals.UpdateVisuals(dtMs, cam, transform.forward);
                 if (r.loop != null)
                 {
                     bool firing = primaryHeld && !gun.isSecondary;
@@ -256,12 +202,7 @@ namespace GoF2Remake.Flight
         void OnShot(Rig r)
         {
             if (r.loop == null) PlayShot(r);
-            if (r.muzzle != null)
-            {
-                r.muzzle.SetActive(true);
-                GoF2PartAnimation.PlayOnce(r.muzzle);
-                r.muzzleMs = r.muzzleLength;
-            }
+            r.visuals.OnShot();
         }
 
         void PlayShot(Rig r)
@@ -269,53 +210,12 @@ namespace GoF2Remake.Flight
             if (r.fx != null && r.fx.shot != null) shotSource.PlayOneShot(r.fx.shot, shotVolume * GoF2Settings.SfxVolume);
         }
 
-        void UpdateVisuals(Rig r, float dtMs, Camera cam)
-        {
-            var gun = r.gun;
-            for (int i = 0; i < r.projectiles.Length; i++)
-            {
-                var t = r.projectiles[i];
-                if (t == null) continue;
-                bool active = gun.IsActive(i);
-                if (t.gameObject.activeSelf != active) t.gameObject.SetActive(active);
-                if (!active) continue;
-                ref var b = ref gun.bullets[i];
-                var rot = r.billboard && cam != null
-                    ? cam.transform.rotation
-                    : Quaternion.LookRotation(b.velocity.sqrMagnitude > 1e-9f ? b.velocity : transform.forward, b.up);
-                t.SetPositionAndRotation(b.position, rot);
-                t.localScale = Vector3.one * gun.VisualScale(i);
-            }
-            if (r.muzzle != null && r.muzzleMs > 0f)
-            {
-                r.muzzleMs -= dtMs;
-                if (r.muzzleMs <= 0f) r.muzzle.SetActive(false);
-            }
-            if (r.impacts != null)
-                for (int i = 0; i < r.impacts.Length; i++)
-                {
-                    if (r.impactMs[i] <= 0f) continue;
-                    r.impactMs[i] -= dtMs;
-                    if (r.impactMs[i] <= 0f) r.impacts[i].SetActive(false);
-                    else if (cam != null) r.impacts[i].transform.rotation = cam.transform.rotation;   // "_lookat" meshes
-                }
-        }
-
-        void OnHit(Rig r, GoF2Target target, Vector3 point)
+        void OnHit(Rig r, int bullet, GoF2Target target, Vector3 point)
         {
             // Rockets, missiles (and bombs) destroy asteroids outright; everything else deals its damage (attr 9).
             bool missile = r.gun.isSecondary;
-            target.Damage(missile && target.isAsteroid ? 9999f : r.gun.damage);
-            if (r.impacts != null)
-            {
-                int i = r.nextImpact;
-                r.nextImpact = (r.nextImpact + 1) % r.impacts.Length;
-                var go = r.impacts[i];
-                go.SetActive(true);
-                go.transform.position = point;
-                GoF2PartAnimation.PlayOnce(go);
-                r.impactMs[i] = r.impactLength;
-            }
+            target.Damage(missile && target.isAsteroid ? 9999f : r.gun.damage, false, r.gun.bullets[bullet].velocity);
+            r.visuals.ShowImpact(point);
             Hit?.Invoke();
         }
 

@@ -111,11 +111,14 @@ namespace GoF2Remake.UI
         // ---- messages ------------------------------------------------------------------------------------------
 
         /// <summary>Hud message queue: each line stays 3 s (at most 4 at a time).</summary>
-        public void ShowMessage(string text)
+        /// <param name="colour">Hud::drawEventQueue colours: 0 white, 1 red (255, 42, 0), 2 green (0, 237, 0).</param>
+        public void ShowMessage(string text, int colour = 0)
         {
             if (messages == null || string.IsNullOrEmpty(text)) return;
             var l = new Label(text) { pickingMode = PickingMode.Ignore };
             l.AddToClassList("hud-message");
+            if (colour == 1) l.AddToClassList("hud-message--red");
+            else if (colour == 2) l.AddToClassList("hud-message--green");
             l.AddToClassList("gof-semibold");
             messages.Add(l);
             while (messages.childCount > 4) messages.RemoveAt(0);
