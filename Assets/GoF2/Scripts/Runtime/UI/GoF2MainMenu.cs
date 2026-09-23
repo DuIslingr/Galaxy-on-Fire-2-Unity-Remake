@@ -59,7 +59,7 @@ namespace GoF2Remake.UI
         Label pressAnyKey, versionLabel, hintLabel;
         Button resumeButton, newGameButton, loadButton, optionsButton, aboutButton, exitButton;
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
-        VisualElement openPanel;
+        VisualElement openPanel, fpsRow;
         Action dialogYes;
         MenuState screen = MenuState.Splash;
         bool skipRequested;
@@ -92,7 +92,7 @@ namespace GoF2Remake.UI
             }
         }
 
-        void OnUIReload(PanelRenderer renderer, VisualElement rootElement)
+        void OnUIReload(PanelRenderer renderer, VisualElement rootElement, int version)
         {
             root = rootElement;
             root.style.flexGrow = 1;   // the default theme would stretch the document root; ours is custom
@@ -363,7 +363,7 @@ namespace GoF2Remake.UI
             {
                 foreach (var b in mainButtons.Query<Button>().ToList()) b.RemoveFromClassList("menu-button--hidden");
                 FocusFirst(mainButtons);
-            }).ExecuteLater(350);
+            }).ExecuteLater(200);
             root.schedule.Execute(() => mainButtons.RemoveFromClassList("main-buttons--revealing")).ExecuteLater(1200);
         }
 
@@ -529,6 +529,20 @@ namespace GoF2Remake.UI
             invert.RegisterValueChangedCallback(e => GoF2Settings.InvertPitch = e.newValue);
             foreach (var e in new VisualElement[] { music, fx, voice, brightness, bloomToggle, sens, invert }) HookFocusSound(e);
 
+            // Frame rate: one focusable row (left/right steps through it), segments clickable by touch/mouse.
+            fpsRow = root.Q("fpsRow");
+            var fpsChoices = root.Q("fpsChoices");
+            for (int i = 0; i <= (int)GoF2FrameRate.VSync; i++)
+            {
+                var mode = (GoF2FrameRate)i;
+                var b = new Button { name = "fps_" + mode, focusable = false };
+                b.AddToClassList("fps-choice");
+                b.AddToClassList("gof-semibold");
+                b.clicked += () => SetFrameRate(mode);
+                fpsChoices.Add(b);
+            }
+            HookFocusSound(fpsRow);
+
             var langList = root.Q("languageList");
             for (int i = 0; i < languageCodes.Length && i < languageNames.Length; i++)
             {
@@ -540,6 +554,14 @@ namespace GoF2Remake.UI
                 HookFocusSound(b);
                 langList.Add(b);
             }
+        }
+
+        void SetFrameRate(GoF2FrameRate mode)
+        {
+            if (mode == GoF2Settings.FrameRate) return;
+            Play(buttonRelease);
+            GoF2Settings.FrameRate = mode;
+            RefreshTexts();
         }
 
         void SelectTab(string page)
@@ -609,6 +631,20 @@ namespace GoF2Remake.UI
             root.Q<Toggle>("bloomToggle").label = GoF2Localization.Extra("bloom", "Bloom");
             root.Q<Slider>("sensitivitySlider").label = $"{GoF2Localization.Get(499)}: {GoF2Settings.Sensitivity:0.0}";
             root.Q<Toggle>("invertToggle").label = GoF2Localization.Get(500);
+            root.Q<Label>("fpsLabel").text = GoF2Localization.Extra("frameRate", "Frame rate");
+            foreach (var b in root.Q("fpsChoices").Query<Button>().ToList())
+            {
+                var mode = (GoF2FrameRate)Enum.Parse(typeof(GoF2FrameRate), b.name.Substring(4));
+                b.text = mode switch
+                {
+                    GoF2FrameRate.Fps30 => "30",
+                    GoF2FrameRate.Fps60 => "60",
+                    GoF2FrameRate.Fps120 => "120",
+                    GoF2FrameRate.Uncapped => GoF2Localization.Extra("fpsUncapped", "UNCAPPED"),
+                    _ => GoF2Localization.Extra("fpsVSync", "V-SYNC"),
+                };
+                b.EnableInClassList("fps-choice--active", mode == GoF2Settings.FrameRate);
+            }
             foreach (var b in root.Q("languageList").Query<Button>().ToList())
                 b.EnableInClassList("language-button--active", b.name == "lang_" + GoF2Localization.Language);
 
@@ -627,6 +663,15 @@ namespace GoF2Remake.UI
             bool vertical = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Down;
             bool horizontal = e.direction == NavigationMoveEvent.Direction.Left || e.direction == NavigationMoveEvent.Direction.Right;
             if (!vertical && !horizontal) return;
+
+            if (horizontal && focused != null && focused == fpsRow)
+            {
+                int dir = e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1;
+                SetFrameRate((GoF2FrameRate)Mathf.Clamp((int)GoF2Settings.FrameRate + dir, 0, (int)GoF2FrameRate.VSync));
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+                return;
+            }
 
             // Sliders and toggles keep left/right for themselves.
             if (horizontal && focused is BaseField<float> || horizontal && focused is BaseField<int>) return;

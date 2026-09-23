@@ -7,6 +7,9 @@ using UnityEngine;
 
 namespace GoF2Remake.Data
 {
+    /// <summary>Frame rate option (remake only; the original ran at the device's fixed rate).</summary>
+    public enum GoF2FrameRate { Fps30, Fps60, Fps120, Uncapped, VSync }
+
     public static class GoF2Settings
     {
         const string Prefix = "gof2.";
@@ -29,6 +32,13 @@ namespace GoF2Remake.Data
 
         /// <summary>Exposure offset for the brightness option (applied through post-processing).</summary>
         public static float BrightnessExposure => (Brightness - 1) * 0.35f;
+
+        /// <summary>Frame rate limit, applied by GoF2Bootstrap. V-Sync (display refresh rate) by default.</summary>
+        public static GoF2FrameRate FrameRate
+        {
+            get => (GoF2FrameRate)Mathf.Clamp(Mathf.RoundToInt(Get("frameRate", (float)GoF2FrameRate.VSync)), 0, (int)GoF2FrameRate.VSync);
+            set => Set("frameRate", (float)value);
+        }
 
         /// <summary>Language code of Localization/text_{code}.json.</summary>
         public static string Language

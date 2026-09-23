@@ -54,8 +54,8 @@
     -unity-background-scale-mode: scale-to-fit;
     background-position-x: left;
     opacity: 0;
-    transition-duration: 0.9s;
-    transition-timing-function: ease-in-out-cubic;
+    transition-duration: 0.45s;
+    transition-timing-function: ease-out-cubic;
 }
 
 .logo--instant {
@@ -465,6 +465,55 @@
 .option-row:hover {
     background-color: var(--gof-cyan-faint);
     border-left-color: var(--gof-amber);
+}
+
+.fps-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 40px;
+}
+
+.fps-label {
+    min-width: 220px;
+}
+
+.fps-choices {
+    flex-grow: 1;
+    flex-direction: row;
+}
+
+.fps-choice {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 4px 0 0;
+    min-height: 36px;
+    padding: 0 2px;
+    font-size: 15px;
+    -unity-text-align: middle-center;
+    letter-spacing: 1px;
+    color: var(--gof-text-dim);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.fps-choice:hover {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+}
+
+.fps-choice--active {
+    color: var(--gof-cyan);
+    background-color: var(--gof-cyan-faint);
+    border-bottom-color: var(--gof-cyan);
+}
+
+.fps-row:focus .fps-choice--active {
+    color: var(--gof-amber);
+    border-bottom-color: var(--gof-amber);
 }
 
 .language-list {

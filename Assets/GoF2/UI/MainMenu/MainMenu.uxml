@@ -75,6 +75,10 @@
                         <ui:Label name="graphicsHeader" class="section-header gof-semibold" />
                         <ui:SliderInt name="brightnessSlider" class="option-row" low-value="0" high-value="2" />
                         <ui:Toggle name="bloomToggle" class="option-row" />
+                        <ui:VisualElement name="fpsRow" class="option-row fps-row" focusable="true">
+                            <ui:Label name="fpsLabel" class="fps-label" picking-mode="Ignore" />
+                            <ui:VisualElement name="fpsChoices" class="fps-choices" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="controlsPage" class="tab-page">
                         <ui:Slider name="sensitivitySlider" class="option-row" low-value="0.2" high-value="2.2" />
