@@ -5,12 +5,18 @@
 // which the main menu background uses too. This adds the flight parts:
 //   createPlayer:  player ship at (10, 10, 10000) facing away from the station (+-8.8 deg), speed 2 u/ms
 //   MGame::reset:  camera fov 1.22 rad, near 20, far 300000 units; chase offsets (0, 600, -1338) / (0, 600, -650)
-// Not yet: traffic (Level::createMission), missions, docking, travel, HUD, lens flare, wormhole.
+//   MGame::dockEvent 0x1afebc: docking switches straight to the station module (no animation). The original needs the
+//                  autopilot aimed at the station plus a collision or |pos| < 16000; here the HUD offers "Dock" inside
+//                  16000 units once the player has flown out of that range after spawning (no autopilot yet).
+//   LevelScript 0x15e650 / process 0x160d50: after launching from the station a fixed camera 9000 units ahead of the
+//                  ship (+-500..2499 sideways and up) watches it fly past for 7 s, then the chase camera takes over.
+// Not yet: traffic (Level::createMission), missions, autopilot, travel, lens flare, wormhole.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
 using GoF2Remake.Visuals;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace GoF2Remake.World
 {
@@ -26,6 +32,7 @@ namespace GoF2Remake.World
 
         [Header("Orbit (-1 = GoF2Session)")]
         public int stationOverride = -1;
+        public string stationScene = "Station";
 
         [Header("Tuning (not recovered constants)")]
         [Tooltip("URP intensity for the original's LIGHT0 diffuse of 2.0 (clamp(15 * sunColour, 0, 2)).")]
@@ -37,7 +44,19 @@ namespace GoF2Remake.World
         public GoF2ShipController Player { get; private set; }
         public GoF2WeaponSystem Weapons { get; private set; }
 
+        /// <summary>PlayerEgo::collidesWithStation / calcCollision 0xab550: |pos| &lt; 16000 units.</summary>
+        public const float DockRange = 16000f;
+        const float LaunchCameraMs = 7000f;
+
+        /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
+        /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
+        public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange;
+        bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
+
         GoF2Database db;
+        GoF2ChaseCamera chase;
+        float launchCameraMs;
+        bool leftDockRange;
 
         void Awake()
         {
@@ -98,7 +117,7 @@ namespace GoF2Remake.World
             Weapons = root.AddComponent<GoF2WeaponSystem>();
             Weapons.Setup(db, GoF2Session.ShipIndex, GoF2Session.Equipment, GoF2Session.EquipmentAmounts);
 
-            var chase = mainCamera.GetComponent<GoF2ChaseCamera>();
+            chase = mainCamera.GetComponent<GoF2ChaseCamera>();
             if (chase == null) chase = mainCamera.gameObject.AddComponent<GoF2ChaseCamera>();
             chase.target = ctrl;
             // TargetFollowCamera offsets (game local) -> Unity local (-x, y, z) * 0.05.
@@ -108,6 +127,41 @@ namespace GoF2Remake.World
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens).
             chase.baseFov = 1.22f * Mathf.Rad2Deg;
             chase.Snap();
+
+            if (GoF2Session.LaunchedFromStation) StartLaunchCamera();
+        }
+
+        // LevelScript::LevelScript: TargetFollowCamera in look-at mode at playerPos + playerRotation * (+-(500..2499),
+        // +-(500..2499), 9000) (arrival by travel: +-(500..999), 7000); the chase camera takes over after 7000 ms.
+        void StartLaunchCamera()
+        {
+            GoF2Session.LaunchedFromStation = false;
+            bool travel = GoF2Session.ArrivedByTravel;
+            float Side() => (Random.value < 0.5f ? -1f : 1f) * (travel ? Random.Range(500, 1000) : Random.Range(500, 2500));
+            var local = new Vector3(-Side(), Side(), travel ? 7000f : 9000f) * M;   // ship-local game -> Unity (-x, y, z)
+            mainCamera.transform.position = Player.transform.TransformPoint(local);
+            mainCamera.transform.rotation = Quaternion.LookRotation(Player.transform.position - mainCamera.transform.position, Player.transform.up);
+            mainCamera.fieldOfView = GoF2Aspect.VerticalFov(chase.baseFov, mainCamera.aspect);
+            chase.enabled = false;
+            launchCameraMs = LaunchCameraMs;
+        }
+
+        void LateUpdate()
+        {
+            if (Player == null) return;
+            if (!InDockRange) leftDockRange = true;
+            if (launchCameraMs <= 0f) return;
+            launchCameraMs -= Time.deltaTime * 1000f;
+            var cam = mainCamera.transform;
+            cam.rotation = Quaternion.LookRotation(Player.transform.position - cam.position, Player.transform.up);
+            if (launchCameraMs <= 0f) chase.enabled = true;   // eases from here to the chase position
+        }
+
+        /// <summary>MGame::dockEvent: straight to the station module (SetCurrentApplicationModule(5)).</summary>
+        public void Dock()
+        {
+            GoF2Session.LaunchedFromStation = false;
+            if (Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);
         }
     }
 }

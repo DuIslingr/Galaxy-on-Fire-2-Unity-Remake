@@ -30,6 +30,9 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>Text by original ID; falls back to "#id" when missing.</summary>
+        /// <summary>False until a table is loaded (the main menu loads one; scenes started directly load their own).</summary>
+        public static bool IsLoaded => texts.Length > 0;
+
         public static string Get(int id) => id >= 0 && id < texts.Length && texts[id] != null ? Clean(texts[id]) : "#" + id;
 
         /// <summary>Remake-only strings (not in the original table), by key, with an English fallback.</summary>

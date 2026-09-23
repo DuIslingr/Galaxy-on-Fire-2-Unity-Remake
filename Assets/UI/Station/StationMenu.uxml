@@ -1,0 +1,41 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="../GoF2InputGlyphs.uss" />
+    <ui:Style src="StationMenu.uss" />
+    <ui:VisualElement name="stationRoot" class="station-root" picking-mode="Ignore">
+        <ui:VisualElement class="side-shade" picking-mode="Ignore" />
+        <ui:VisualElement class="bottom-shade" picking-mode="Ignore" />
+        <ui:VisualElement name="dragZone" class="drag-zone" />
+        <ui:VisualElement name="safeArea" class="station-safe" picking-mode="Ignore">
+            <ui:VisualElement class="top-bar" picking-mode="Ignore">
+                <ui:Label name="stationTitle" class="station-title gof-semibold" picking-mode="Ignore" />
+                <ui:Label name="viewTitle" class="view-title" picking-mode="Ignore" />
+                <ui:Button name="menuButton" class="station-menu-button gof-semibold" />
+            </ui:VisualElement>
+
+            <ui:VisualElement name="sidePanel" class="side-panel" picking-mode="Ignore">
+                <ui:VisualElement class="station-info" picking-mode="Ignore">
+                    <ui:Label name="systemName" class="info-system gof-semibold" picking-mode="Ignore" />
+                    <ui:Label name="techLevel" class="info-line" picking-mode="Ignore" />
+                    <ui:Label name="raceName" class="info-line" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:VisualElement class="station-buttons" picking-mode="Ignore">
+                    <ui:Button name="hangarButton" class="station-button gof-semibold" />
+                    <ui:Button name="loungeButton" class="station-button gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="hints" class="station-hints" picking-mode="Ignore" />
+            <ui:Button name="launchButton" class="launch-button gof-semibold" />
+        </ui:VisualElement>
+
+        <ui:VisualElement name="dialog" class="station-dialog-backdrop">
+            <ui:VisualElement class="station-dialog">
+                <ui:Label name="dialogText" class="station-dialog-text" />
+                <ui:VisualElement class="station-dialog-buttons">
+                    <ui:Button name="dialogYes" class="station-button station-dialog-button gof-semibold" />
+                    <ui:Button name="dialogNo" class="station-button station-dialog-button gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

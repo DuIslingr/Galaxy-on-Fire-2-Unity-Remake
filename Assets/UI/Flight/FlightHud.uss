@@ -215,6 +215,41 @@
     display: none;
 }
 
+/* ---- dock prompt (inside the station's dock range, GoF2SpaceLevel.CanDock) ---------------- */
+
+.dock-prompt {
+    position: absolute;
+    top: 120px;
+    left: 50%;
+    translate: -50% 0;
+    flex-direction: row;
+    align-items: center;
+    padding: 14px 28px;
+    background-color: rgba(4, 10, 18, 0.6);
+    border-width: 2px;
+    border-color: var(--gof-cyan);
+    border-radius: 4px;
+}
+
+.dock-prompt--hidden {
+    display: none;
+}
+
+.dock-glyph {
+    flex-direction: row;
+    margin-right: 12px;
+}
+
+.input-touch .dock-glyph {
+    display: none;
+}
+
+.dock-label {
+    font-size: 24px;
+    letter-spacing: 5px;
+    color: #FFFFFF;
+}
+
 /* ---- speed / throttle / boost readout ------------------------------------------------- */
 
 .speed-panel {
@@ -296,109 +331,6 @@
 .input-keyboard .hints,
 .input-gamepad .hints {
     display: flex;
-}
-
-.hint {
-    flex-direction: row;
-    align-items: center;
-    margin-top: 6px;
-    padding: 6px 12px;
-    background-color: rgba(4, 10, 18, 0.5);
-    border-radius: 4px;
-}
-
-.hint-label {
-    font-size: 17px;
-    letter-spacing: 2px;
-    color: var(--gof-text-dim);
-    margin-left: 10px;
-}
-
-.keycap {
-    min-width: 34px;
-    height: 34px;
-    padding: 0 8px;
-    margin: 0 2px;
-    font-size: 16px;
-    color: var(--gof-text);
-    -unity-text-align: middle-center;
-    border-width: 2px;
-    border-bottom-width: 4px;
-    border-color: rgba(216, 236, 247, 0.45);
-    border-radius: 6px;
-    background-color: rgba(255, 255, 255, 0.06);
-}
-
-.keycap--wide {
-    min-width: 110px;
-}
-
-.pad-face {
-    width: 36px;
-    height: 36px;
-    margin: 0 2px;
-    border-radius: 18px;
-    font-size: 18px;
-    color: #0B1016;
-    -unity-text-align: middle-center;
-}
-
-.pad-face--a {
-    background-color: #6BC24A;
-}
-
-.pad-face--y {
-    background-color: #F2C230;
-}
-
-.pad-stick {
-    width: 40px;
-    height: 40px;
-    margin: 0 2px;
-    border-radius: 20px;
-    border-width: 3px;
-    border-color: rgba(216, 236, 247, 0.6);
-    font-size: 13px;
-    color: var(--gof-text);
-    -unity-text-align: middle-center;
-}
-
-.pad-trigger {
-    min-width: 42px;
-    height: 32px;
-    padding: 0 6px;
-    margin: 0 2px;
-    border-radius: 6px;
-    border-top-left-radius: 14px;
-    border-top-right-radius: 14px;
-    background-color: rgba(216, 236, 247, 0.85);
-    font-size: 14px;
-    color: #0B1016;
-    -unity-text-align: middle-center;
-}
-
-.pad-bumper {
-    min-width: 40px;
-    height: 26px;
-    padding: 0 6px;
-    margin: 0 2px;
-    border-radius: 13px;
-    background-color: rgba(216, 236, 247, 0.85);
-    font-size: 13px;
-    color: #0B1016;
-    -unity-text-align: middle-center;
-}
-
-.pad-menu {
-    height: 30px;
-    padding: 0 10px;
-    margin: 0 2px;
-    border-radius: 15px;
-    background-color: rgba(216, 236, 247, 0.85);
-    font-size: 12px;
-    letter-spacing: 1px;
-    color: #0B1016;
-    -unity-text-align: middle-center;
 }
 
 /* Phones: a bit more room at the bottom for thumbs, smaller readout. */

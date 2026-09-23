@@ -1,0 +1,267 @@
+/* Docked-station screen over the 3D hangar / Space Lounge (GoF2StationMenu). Layout like ModStation::OnRender2D:
+   header with the station name, a left panel (system, tech level, race, the screen buttons), launch bottom-right.
+   The root gets input-touch / input-keyboard / input-gamepad (GoF2InputMode) and can-hover while a mouse is used.
+   Panel units at 1920x1080 (1600x900 on phones). */
+
+.station-root {
+    flex-grow: 1;
+}
+
+.drag-zone {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.side-shade {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 48%;
+    background-image: url("project://database/Assets/UI/MainMenu/Images/shade_left.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.bottom-shade {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 20%;
+    background-image: url("project://database/Assets/UI/MainMenu/Images/shade_bottom.png");
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.station-safe {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+/* ---- header ------------------------------------------------------------------------ */
+
+.top-bar {
+    flex-direction: row;
+    align-items: center;
+    padding: 34px 40px 0 48px;
+}
+
+.station-title {
+    font-size: 34px;
+    letter-spacing: 6px;
+    color: #FFFFFF;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.view-title {
+    flex-grow: 1;
+    margin-left: 22px;
+    padding-left: 22px;
+    border-left-width: 2px;
+    border-left-color: var(--gof-amber);
+    font-size: 24px;
+    letter-spacing: 4px;
+    color: var(--gof-text-dim);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.station-menu-button {
+    display: none;
+    padding: 12px 22px;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: var(--gof-text);
+    background-color: rgba(4, 10, 18, 0.55);
+    border-width: 2px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 4px;
+}
+
+.input-touch .station-menu-button,
+.input-keyboard .station-menu-button {
+    display: flex;
+}
+
+.can-hover .station-menu-button:hover {
+    border-color: var(--gof-amber);
+    color: #FFFFFF;
+}
+
+/* ---- left panel -------------------------------------------------------------------- */
+
+.side-panel {
+    position: absolute;
+    left: 48px;
+    top: 120px;
+    bottom: 40px;
+    width: 440px;
+}
+
+.station-info {
+    padding: 14px 18px;
+    border-left-width: 3px;
+    border-left-color: var(--gof-cyan);
+    background-color: rgba(4, 10, 18, 0.55);
+}
+
+.info-system {
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: #FFFFFF;
+    margin-bottom: 6px;
+}
+
+.info-line {
+    font-size: 18px;
+    letter-spacing: 1px;
+    color: var(--gof-text-dim);
+}
+
+.station-buttons {
+    flex-grow: 1;
+    justify-content: flex-end;
+}
+
+.station-button {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    margin: 4px 0;
+    padding: 14px 20px;
+    -unity-text-align: middle-left;
+    font-size: 26px;
+    letter-spacing: 5px;
+    color: var(--gof-text-dim);
+    translate: 0 0;
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.station-button--current {
+    color: #FFFFFF;
+    border-left-color: var(--gof-cyan);
+    background-color: rgba(4, 10, 18, 0.55);
+}
+
+.can-hover .station-button:hover,
+.station-button:focus {
+    color: #FFFFFF;
+    border-left-color: var(--gof-amber);
+    background-color: var(--gof-cyan-faint);
+    translate: 14px 0;
+}
+
+.station-button:active {
+    color: var(--gof-amber);
+}
+
+/* ---- launch ------------------------------------------------------------------------ */
+
+.launch-button {
+    position: absolute;
+    right: 40px;
+    bottom: 40px;
+    min-width: 260px;
+    padding: 20px 34px;
+    font-size: 28px;
+    letter-spacing: 6px;
+    -unity-text-align: middle-center;
+    color: #FFFFFF;
+    background-color: rgba(255, 166, 48, 0.16);
+    border-width: 2px;
+    border-color: var(--gof-amber);
+    border-radius: 4px;
+    transition-duration: 0.15s;
+}
+
+.can-hover .launch-button:hover,
+.launch-button:focus {
+    background-color: rgba(255, 166, 48, 0.38);
+    scale: 1.04 1.04;
+}
+
+.launch-button:active {
+    background-color: var(--gof-amber);
+    color: #0B1016;
+}
+
+/* ---- keyboard / controller hints (left of the launch button) ------------------------------ */
+
+.station-hints {
+    display: none;
+    position: absolute;
+    right: 340px;
+    bottom: 40px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: flex-end;
+    max-width: 1000px;
+}
+
+.input-keyboard .station-hints,
+.input-gamepad .station-hints {
+    display: flex;
+}
+
+.station-hints .hint {
+    margin-left: 8px;
+}
+
+/* ---- confirmation dialog (ChoiceWindow) ---------------------------------------------- */
+
+.station-dialog-backdrop {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.station-dialog-backdrop--shown {
+    display: flex;
+}
+
+.station-dialog {
+    width: 90%;
+    max-width: 700px;
+    padding: 36px 44px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-amber);
+}
+
+.station-dialog-text {
+    white-space: normal;
+    font-size: 24px;
+    color: var(--gof-text);
+    margin-bottom: 28px;
+}
+
+.station-dialog-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.station-dialog-button {
+    margin-left: 12px;
+    font-size: 22px;
+}
+
+/* Phones: narrower panel. */
+.layout-phone .side-panel {
+    width: 380px;
+}

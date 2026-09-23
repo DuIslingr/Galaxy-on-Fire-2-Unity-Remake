@@ -29,6 +29,10 @@ namespace GoF2Remake.Data
         /// <summary>Level::initStreamOutPosition: false = undocking from the station, true = arriving by travel.</summary>
         public static bool ArrivedByTravel;
 
+        /// <summary>Set by the station's launch button: the flight level starts with the launch camera
+        /// (LevelScript: a fixed camera 9000 units ahead watches the ship fly past for 7 s).</summary>
+        public static bool LaunchedFromStation;
+
         public static void ResetNewGame()
         {
             StationIndex = 78;
@@ -36,6 +40,7 @@ namespace GoF2Remake.Data
             Equipment = new[] { 2, 2, 54, 59, 82, 73, 36 };
             EquipmentAmounts = new[] { 1, 1, 1, 1, 1, 1, 6 };
             ArrivedByTravel = false;
+            LaunchedFromStation = false;
         }
     }
 }

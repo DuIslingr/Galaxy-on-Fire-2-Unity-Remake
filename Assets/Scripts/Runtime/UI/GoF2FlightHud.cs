@@ -9,6 +9,7 @@
 // units (where the bullets are after 22000 units), orange for 200 ms after a hit (weapons.md section 9). The chase camera uses the original's fixed touch-mode damping for
 // touch and the handling-dependent damping otherwise (TargetFollowCamera::resetShipHandling / setShipHandling).
 // Esc, the Android back button or the controller's Menu button returns to the main menu (no pause menu yet).
+// Near the station a "Dock" prompt appears (GoF2SpaceLevel.CanDock): tap it, Enter, or the controller's X.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -30,7 +31,8 @@ namespace GoF2Remake.UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualElement root, safeArea, hints, throttleTrack, throttleFill, throttleHandle, throttleBarFill, boostBarFill, boostButton, boostCharge, levelButton;
-        VisualElement fireButton, missileButton, crosshair;
+        VisualElement fireButton, missileButton, crosshair, dockPrompt, dockGlyph;
+        GoF2SpaceLevel level;
         Label speedValue, missileAmmo;
         GoF2WeaponSystem weapons;
         float hitFlashMs;
@@ -80,6 +82,8 @@ namespace GoF2Remake.UI
             missileButton = root.Q("missileButton");
             missileAmmo = root.Q<Label>("missileAmmo");
             crosshair = root.Q("crosshair");
+            dockPrompt = root.Q("dockPrompt");
+            dockGlyph = root.Q("dockGlyph");
 
             stick = new GoF2TouchStick(root.Q("stickZone"), root.Q("stickBase"), root.Q("stickKnob"), root.Q("stickGhost"), stickRadius);
             HookThrottle();
@@ -87,6 +91,7 @@ namespace GoF2Remake.UI
             HookPress(levelButton, () => ship?.AlignToHorizon());
             HookPress(fireButton, () => weapons?.SetPrimaryHeld(true), () => weapons?.SetPrimaryHeld(false));
             HookPress(missileButton, null, () => weapons?.FireSecondary());
+            HookPress(dockPrompt, null, Dock);
             root.Q<Button>("menuButton").clicked += BackToMenu;
 
             root.Q<Label>("stickCaption").text = GoF2Localization.Extra("hudSteer", "STEER");
@@ -96,6 +101,7 @@ namespace GoF2Remake.UI
             root.Q<Label>("missileCaption").text = GoF2Localization.Extra("hudMissile", "MISSILE");
             root.Q<Label>("speedUnit").text = "M/S";
             root.Q<Button>("menuButton").text = GoF2Localization.Extra("hudMenu", "MENU");
+            root.Q<Label>("dockLabel").text = GoF2Localization.Extra("hudDock", "DOCK");
 
             ApplyInputMode();
             UpdateLayout();
@@ -172,6 +178,9 @@ namespace GoF2Remake.UI
             if (kind != GoF2InputKind.Touch) { stick?.Release(); weapons?.SetPrimaryHeld(false); }
             if (chase != null) chase.handlingDependent = kind != GoF2InputKind.Touch;
             BuildHints(kind);
+            dockGlyph.Clear();
+            if (kind == GoF2InputKind.KeyboardMouse) dockGlyph.Add(GoF2InputGlyph.Key("ENTER", true));
+            else if (kind == GoF2InputKind.Gamepad) dockGlyph.Add(GoF2InputGlyph.Pad(GoF2PadButton.X));
         }
 
         void BuildHints(GoF2InputKind kind)
@@ -228,13 +237,22 @@ namespace GoF2Remake.UI
 
             if (ship == null)
             {
-                var level = FindAnyObjectByType<GoF2SpaceLevel>();
+                level = FindAnyObjectByType<GoF2SpaceLevel>();
                 ship = level != null ? level.Player : null;
                 if (ship == null) return;
                 weapons = level.Weapons;
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 chase = Camera.main != null ? Camera.main.GetComponent<GoF2ChaseCamera>() : null;
                 ApplyInputMode();
+            }
+
+            bool canDock = level.CanDock;
+            dockPrompt.EnableInClassList("dock-prompt--hidden", !canDock);
+            if (canDock && ((Keyboard.current != null && (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+                            || (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)))
+            {
+                Dock();
+                return;
             }
 
             ship.SetSteer(GoF2InputMode.Current == GoF2InputKind.Touch && stick != null ? stick.Value : Vector2.zero);
@@ -326,6 +344,11 @@ namespace GoF2Remake.UI
                 safeArea.style.bottom = sa.yMin * k;
                 Debug.Log($"GoF2FlightHud: screen {w}x{h}, safe area {raw} -> {sa}, panel {root.layout.size}, input {GoF2InputMode.Current}");
             }).ExecuteLater(1);
+        }
+
+        void Dock()
+        {
+            if (level != null && level.CanDock) level.Dock();
         }
 
         void BackToMenu()
