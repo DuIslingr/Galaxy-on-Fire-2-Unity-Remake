@@ -5,7 +5,8 @@
 //    with the exact texture/shader binding the original used.
 // 3) Menu "GoF2/Create Flight Test Scene": ship + chase camera, ready to press Play.
 //
-// Works with the Built-in pipeline and URP (detected automatically).
+// Materials use the GoF2 Shader Graphs (Shaders/*.shadergraph, URP) for unlit/additive/alpha layers and URP Lit
+// for bump-mapped hulls.
 
 using System.Collections.Generic;
 using System.IO;
@@ -197,6 +198,7 @@ namespace GoF2Remake.EditorTools
             }
             EditorUtility.ClearProgressBar();
             AssetDatabase.SaveAssets();
+            GoF2PostProcessing.ApplyGlow();
             Debug.Log($"GoF2: {mats.Count} materials, {made} prefabs created ({missing} meshes referenced by the game were not shipped in the OBB). Pipeline: {(urp ? "URP" : "Built-in")}");
         }
 
@@ -294,6 +296,7 @@ namespace GoF2Remake.EditorTools
             chase.offset = new Vector3(0f, size * 0.3f, -size * 1.4f);
             chase.lookOffset = new Vector3(0f, size * 0.1f, size * 0.8f);
             camGo.GetComponent<Camera>().farClipPlane = 50000f;
+            GoF2PostProcessing.AddToScene();
             Selection.activeGameObject = root;
             Debug.Log("GoF2: test scene created. Press Play: WASD/arrows steer, Q/E throttle, Space boost, R level.");
         }
