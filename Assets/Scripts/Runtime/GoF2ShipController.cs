@@ -8,7 +8,8 @@
 //   Throttle      E = up, Q = down / gamepad right trigger = up, left trigger = down
 //   Boost         Space / gamepad south button (A / Cross)
 //   AlignHorizon  R / gamepad north button (Y / Triangle)
-// For touch or your own UI, call SetSteer()/SetThrottle()/Boost() and untick 'useBuiltInInput'.
+// Touch or your own UI: call SetSteer()/SetThrottle()/Boost(); the stronger of the external steer and the
+// built-in actions wins, so both can be used at the same time (GoF2FlightHud's touch stick does this).
 
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -117,8 +118,8 @@ namespace GoF2Remake.Flight
             Model.Sensitivity = sensitivity;
             float dtMs = Time.deltaTime * 1000f;
 
-            Vector2 steer = externalSteer;
-            if (useBuiltInInput) steer = ReadInput();
+            Vector2 steer = useBuiltInInput ? ReadInput() : Vector2.zero;
+            if (externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
 
             // Model convention: +x = yaw left, +y = pitch down. Map "stick right = turn right".
             var model = new Vector2(-steer.x, invertPitch ? steer.y : -steer.y);

@@ -1,7 +1,7 @@
 // GoF2SpaceSceneBuilder.cs  (Editor only)
 // Menu "GoF2/Create Space Scene": Assets/Scenes/Space.unity, the flight level. The scene itself is almost empty
-// (camera, two directional lights, post-processing, GoF2SpaceLevel); GoF2SpaceLevel builds the current station
-// orbit at runtime from the data, like the original's Level::init. This also makes what it loads by name:
+// (camera, two directional lights, post-processing, GoF2SpaceLevel, the flight HUD); GoF2SpaceLevel builds the
+// current station orbit at runtime from the data, like the original's Level::init. This also makes what it loads by name:
 //   Resources/GoF2Backdrop/<texture>.mat  sun (additive), planet and ring (alpha) materials, space dust + fog sprites
 //   Resources/GoF2Sky/                    stars + nebula cubemaps (GoF2 > Bake Space Skies), if missing
 // Build settings: MainMenu 0, Space 1, FlightTest 2. The main menu's "Start new game" loads Space.
@@ -14,6 +14,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
+using UnityEngine.UIElements;
 
 namespace GoF2Remake.EditorTools
 {
@@ -109,6 +112,17 @@ namespace GoF2Remake.EditorTools
             level.mainCamera = cam;
             level.sunLight = sun;
             level.planetLight = planet;
+
+            // Flight HUD (touch controls / keyboard / controller hints, GoF2InputMode).
+            var hudGo = new GameObject("Flight HUD");
+            var panel = hudGo.AddComponent<PanelRenderer>();
+            panel.panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>($"{GoF2ImportSettings.Root}/UI/GoF2PanelSettings.asset");
+            panel.visualTreeAsset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>($"{GoF2ImportSettings.Root}/UI/Flight/FlightHud.uxml");
+            EditorUtility.SetDirty(panel);
+            hudGo.AddComponent<GoF2Remake.UI.GoF2FlightHud>();
+            var es = new GameObject("EventSystem");
+            es.AddComponent<EventSystem>();
+            es.AddComponent<InputSystemUIInputModule>();
 
             RenderSettings.skybox = AssetDatabase.LoadAssetAtPath<Material>($"{GoF2SkyboxBaker.SpaceSkyDir}/SpaceSky.mat");
             Directory.CreateDirectory("Assets/Scenes");
