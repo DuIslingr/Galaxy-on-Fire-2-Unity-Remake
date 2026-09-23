@@ -391,14 +391,14 @@ namespace GoF2Remake.UI
             pressAnyKey.AddToClassList("press-any-key--hidden");
             // Back to the logo's own (menu) placement: a transform-only transition, no relayout per frame.
             // Swap classes first and start the move once the styles are resolved again: a transition that starts
-            // before that still uses the title fade's 3.9 s duration instead of the 0.45 s of .logo.
+            // before that still uses the title fade's 3.9 s duration instead of the 0.9 s of .logo.
             logo.RemoveFromClassList("logo--title-visible");
             logo.AddToClassList("logo--menu");
             IVisualElementScheduledItem move = null;
             move = logo.schedule.Execute(() =>
             {
                 foreach (var d in logo.resolvedStyle.transitionDuration)
-                    if ((d.unit == TimeUnit.Millisecond ? d.value / 1000f : d.value) > 1f) return;
+                    if ((d.unit == TimeUnit.Millisecond ? d.value / 1000f : d.value) > 2f) return;
                 logo.style.translate = StyleKeyword.Null;
                 logo.style.scale = StyleKeyword.Null;
                 move.Pause();

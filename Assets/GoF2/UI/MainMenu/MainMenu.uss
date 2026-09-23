@@ -57,8 +57,8 @@
     -unity-background-scale-mode: scale-to-fit;
     background-position-x: left;
     opacity: 0;
-    transition-duration: 0.45s;
-    transition-timing-function: ease-out-cubic;
+    transition-duration: 0.9s;
+    transition-timing-function: ease-in-out-cubic;
 }
 
 .logo--instant {
