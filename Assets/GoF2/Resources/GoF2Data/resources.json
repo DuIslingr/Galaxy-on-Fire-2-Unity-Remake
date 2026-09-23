@@ -6480,6 +6480,120 @@
    "model": "Models/main/fx/explosion_void_station_alpha_lookat.fbx",
    "source": "data/assets/main/3d/meshes/fx/explosion_void_station_alpha_lookat.aem",
    "materialId": 27302
+  },
+  {
+   "id": 11761,
+   "model": "Models/supernova/fx/sn_sun_explosion_ring_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/fx/sn_sun_explosion_ring_anim_add.aem",
+   "materialId": -1
+  },
+  {
+   "id": 11762,
+   "model": "Models/supernova/fx/sn_sun_explosion_core_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/fx/sn_sun_explosion_core_anim_add.aem",
+   "materialId": -1
+  },
+  {
+   "id": 18771,
+   "model": "Models/supernova/stations/sn_station_midorian_wrecked.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_station_midorian_wrecked.aem",
+   "materialId": 11732
+  },
+  {
+   "id": 18772,
+   "model": "Models/supernova/stations/sn_station_midorian_wrecked_alpha_emissive.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_station_midorian_wrecked_alpha_emissive.aem",
+   "materialId": 11733
+  },
+  {
+   "id": 18781,
+   "model": "Models/supernova/stations/sn_burning_station.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_station.aem",
+   "materialId": 20007
+  },
+  {
+   "id": 18782,
+   "model": "Models/supernova/stations/sn_burning_station_emissive.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_station_emissive.aem",
+   "materialId": 20008
+  },
+  {
+   "id": 18783,
+   "model": "Models/supernova/stations/sn_burning_station_fire_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_station_fire_anim_add.aem",
+   "materialId": 11748
+  },
+  {
+   "id": 18784,
+   "model": "Models/supernova/stations/sn_burning_station_fire_anim_alpha.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_station_fire_anim_alpha.aem",
+   "materialId": 11749
+  },
+  {
+   "id": 18785,
+   "model": "Models/supernova/misc/sn_secure_container_nivelian.fbx",
+   "source": "data/assets/supernova/3d/meshes/misc/sn_secure_container_nivelian.aem",
+   "materialId": 34704
+  },
+  {
+   "id": 18786,
+   "model": "Models/supernova/misc/sn_junk_field.fbx",
+   "source": "data/assets/supernova/3d/meshes/misc/sn_junk_field.aem",
+   "materialId": 29097
+  },
+  {
+   "id": 18802,
+   "model": "Models/supernova/fx/sn_ship_blaze_glow_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/fx/sn_ship_blaze_glow_anim_add.aem",
+   "materialId": 11758
+  },
+  {
+   "id": 18803,
+   "model": "Models/supernova/fx/sn_ship_blaze_flames_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/fx/sn_ship_blaze_flames_anim_add.aem",
+   "materialId": 11756
+  },
+  {
+   "id": 18831,
+   "model": "Models/supernova/misc/sn_secure_container_nivelian_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/misc/sn_secure_container_nivelian_add.aem",
+   "materialId": 34705
+  },
+  {
+   "id": 18832,
+   "model": "Models/supernova/stations/sn_burning_station_fire_intro_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_station_fire_intro_anim_add.aem",
+   "materialId": 11748
+  },
+  {
+   "id": 18833,
+   "model": "Models/supernova/stations/sn_burning_station_fire_intro_anim_alpha.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_station_fire_intro_anim_alpha.aem",
+   "materialId": 11749
+  },
+  {
+   "id": 19095,
+   "model": "Models/supernova/stations/sn_burning_valkyrie_stage_1_fire_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_valkyrie_stage_1_fire_anim_add.aem",
+   "materialId": 11748
+  },
+  {
+   "id": 19096,
+   "model": "Models/supernova/stations/sn_burning_valkyrie_stage_1_smoke_anim_alpha.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_valkyrie_stage_1_smoke_anim_alpha.aem",
+   "materialId": 11749
+  },
+  {
+   "id": 19097,
+   "model": "Models/supernova/stations/sn_burning_valkyrie_stage_2_fire_anim_add.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_valkyrie_stage_2_fire_anim_add.aem",
+   "materialId": 11748
+  },
+  {
+   "id": 19098,
+   "model": "Models/supernova/stations/sn_burning_valkyrie_stage_2_smoke_anim_alpha.fbx",
+   "source": "data/assets/supernova/3d/meshes/stations/sn_burning_valkyrie_stage_2_smoke_anim_alpha.aem",
+   "materialId": 11749
   }
  ],
  "materials": [

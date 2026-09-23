@@ -1,0 +1,182 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4202433972307831345
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9105256863717141051}
+  - component: {fileID: 2066975204280229881}
+  m_Layer: 0
+  m_Name: hangar_vossk
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9105256863717141051
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4202433972307831345}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3474786913891163725}
+  - {fileID: 1868167320703349698}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2066975204280229881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4202433972307831345}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  rootMeshId: 14377
+  origin: Level::createScene @0xc2910, mode 0x17, UNK_00253e48[1] (4 slots, -1 = none)
+  lodDistancesGameUnits: []
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 0}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 180, z: 0}
+--- !u!1001 &6227609805089843340
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9105256863717141051}
+    m_Modifications:
+    - target: {fileID: 4956821569367884276, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_Name
+      value: hangar_vossk_anim_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+--- !u!4 &1868167320703349698 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5729135460674607950, guid: 7b2245e0ed559f94eb17b91ca233e9d4, type: 3}
+  m_PrefabInstance: {fileID: 6227609805089843340}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6468163208467709542
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 9105256863717141051}
+    m_Modifications:
+    - target: {fileID: 7111382609412700817, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_Name
+      value: hangar_vossk
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+--- !u!4 &3474786913891163725 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7636807968115089451, guid: 1744a91b0ddb74e4299c78f72d912691, type: 3}
+  m_PrefabInstance: {fileID: 6468163208467709542}
+  m_PrefabAsset: {fileID: 0}

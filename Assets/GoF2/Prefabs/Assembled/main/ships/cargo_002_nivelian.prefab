@@ -1,0 +1,431 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8568145700120224042
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6017195891676943082}
+  - component: {fileID: 4926787651924829012}
+  - component: {fileID: 9035565672500319519}
+  m_Layer: 0
+  m_Name: cargo_002_nivelian
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6017195891676943082
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8568145700120224042}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7156496982163970430}
+  - {fileID: 9217985966968126758}
+  - {fileID: 3268273562023192523}
+  - {fileID: 889373887886348589}
+  - {fileID: 7427888578240391332}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4926787651924829012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8568145700120224042}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  rootMeshId: 17060
+  origin: Globals::getShipGroup idx 15, param_2(race) not 0/3 (Nivelian=2; Vossk=1 would also land here)
+  lodDistancesGameUnits:
+  - 35000
+  - 60000
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 4616811829860090051, guid: 7a7ed91d2006ebc43ad8c1af16ffd7c2, type: 3}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!205 &9035565672500319519
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8568145700120224042}
+  serializedVersion: 3
+  m_LocalReferencePoint: {x: 0.002784729, y: 30.13456, z: -43.039734}
+  m_Size: 658.9085
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.32607514
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 8834395039581352584}
+    - renderer: {fileID: 1103760565797285395}
+    - renderer: {fileID: 6921236317765648147}
+  - screenRelativeHeight: 0.1902105
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 6921236317765648147}
+    - renderer: {fileID: 7474758310099831973}
+  - screenRelativeHeight: 0
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 6921236317765648147}
+    - renderer: {fileID: 2298741765243127014}
+  m_Enabled: 1
+  m_GlobalIlluminationLOD: 0
+--- !u!1001 &2372476059589151826
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6017195891676943082}
+    m_Modifications:
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5257836919493463958, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+      propertyPath: m_Name
+      value: cargo_002_nivelian
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+--- !u!4 &7156496982163970430 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4880853606026695980, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+  m_PrefabInstance: {fileID: 2372476059589151826}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &8834395039581352584 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 6518583411250446042, guid: ca684d00ac9438b4c9c9462855a12269, type: 3}
+  m_PrefabInstance: {fileID: 2372476059589151826}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5027744412562303633
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6017195891676943082}
+    m_Modifications:
+    - target: {fileID: 7194165286608181216, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_Name
+      value: cargo_002_nivelian_engine_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+--- !u!4 &3268273562023192523 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7538216100275309914, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+  m_PrefabInstance: {fileID: 5027744412562303633}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &6921236317765648147 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2723280454375380354, guid: 9d2d058c835a51f409af5b080dc2fa51, type: 3}
+  m_PrefabInstance: {fileID: 5027744412562303633}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7513986447857641424
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6017195891676943082}
+    m_Modifications:
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024124428041219143, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+      propertyPath: m_Name
+      value: cargo_002_nivelian_lod_1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+--- !u!4 &889373887886348589 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7210467563256297213, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+  m_PrefabInstance: {fileID: 7513986447857641424}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &7474758310099831973 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1151980088321977205, guid: 31e984fa63d435042ae08defcefbd1b0, type: 3}
+  m_PrefabInstance: {fileID: 7513986447857641424}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7770678432219588466
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6017195891676943082}
+    m_Modifications:
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2265859356835119342, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+      propertyPath: m_Name
+      value: cargo_002_nivelian_lights_add
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+--- !u!23 &1103760565797285395 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7243941869100632417, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+  m_PrefabInstance: {fileID: 7770678432219588466}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &9217985966968126758 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1457516706373524052, guid: 1d05484a33784e846bebbd179d9162bb, type: 3}
+  m_PrefabInstance: {fileID: 7770678432219588466}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &8899866963682033562
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 6017195891676943082}
+    m_Modifications:
+    - target: {fileID: 1719341772896931204, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_Name
+      value: cargo_002_nivelian_lod_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+--- !u!23 &2298741765243127014 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 7234021995265637244, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+  m_PrefabInstance: {fileID: 8899866963682033562}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7427888578240391332 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2060261139688937278, guid: 133dc301d6fc1684c87d261fc52a46a8, type: 3}
+  m_PrefabInstance: {fileID: 8899866963682033562}
+  m_PrefabAsset: {fileID: 0}

@@ -1,0 +1,251 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5836984749984421528
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3670058391672270024}
+  - component: {fileID: 5538768298923156025}
+  m_Layer: 0
+  m_Name: ship_061_elite_nivelian_prototype
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3670058391672270024
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5836984749984421528}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7349177744232552476}
+  - {fileID: 1225852826547814063}
+  - {fileID: 430236021543084134}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5538768298923156025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5836984749984421528}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  rootMeshId: 17353
+  origin: Globals::getShipGroup idx 61 (generic)
+  lodDistancesGameUnits: []
+  lastVisibleDistanceGameUnits: 80000
+  explosionPrefab: {fileID: 0}
+  playerVariantParts:
+  - {fileID: 1059280279532174044}
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!1001 &928555709025193535
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3670058391672270024}
+    m_Modifications:
+    - target: {fileID: 1633168896487959082, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_Name
+      value: ship_061_elite_nivelian_prototype_lights_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+--- !u!4 &1225852826547814063 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2153282308173590672, guid: 0b7a9e9bede85a741be28529ee8e2523, type: 3}
+  m_PrefabInstance: {fileID: 928555709025193535}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1401869493205006277
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3670058391672270024}
+    m_Modifications:
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2145720225174621465, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+      propertyPath: m_Name
+      value: ship_061_elite_nivelian_prototype_engine_glow_add
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+--- !u!4 &430236021543084134 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1624939105053300643, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+  m_PrefabInstance: {fileID: 1401869493205006277}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1059280279532174044 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2145720225174621465, guid: 81667ecb38590b741b55500a010a8d87, type: 3}
+  m_PrefabInstance: {fileID: 1401869493205006277}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1971953095444396450
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3670058391672270024}
+    m_Modifications:
+    - target: {fileID: 8497059327602965252, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_Name
+      value: ship_061_elite_nivelian_prototype
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+--- !u!4 &7349177744232552476 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 9124379555937771966, guid: f3926d1be4c7bba46b724093b30e9db3, type: 3}
+  m_PrefabInstance: {fileID: 1971953095444396450}
+  m_PrefabAsset: {fileID: 0}

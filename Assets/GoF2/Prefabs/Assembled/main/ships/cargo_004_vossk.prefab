@@ -1,0 +1,431 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1999847054805092699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4091369561050592775}
+  - component: {fileID: 5695484117833542154}
+  - component: {fileID: 1201175118079690363}
+  m_Layer: 0
+  m_Name: cargo_004_vossk
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4091369561050592775
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999847054805092699}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1776376945686085243}
+  - {fileID: 1776998213270410438}
+  - {fileID: 8793320305615626722}
+  - {fileID: 6692047412009885637}
+  - {fileID: 3853297247862416875}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5695484117833542154
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999847054805092699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  rootMeshId: 17013
+  origin: Globals::getShipGroup idx 13 (special branch param_1==0xd)
+  lodDistancesGameUnits:
+  - 35000
+  - 45000
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 7332726349940136924, guid: 301d6fee53bf3b14e8c082956d36e3b7, type: 3}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!205 &1201175118079690363
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1999847054805092699}
+  serializedVersion: 3
+  m_LocalReferencePoint: {x: 0, y: 14.487122, z: -49.3869}
+  m_Size: 814.43384
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.40304023
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 1706240414812789453}
+    - renderer: {fileID: 2509038174758837043}
+    - renderer: {fileID: 3281578252193271438}
+  - screenRelativeHeight: 0.31347573
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 3281578252193271438}
+    - renderer: {fileID: 2673664789549332179}
+  - screenRelativeHeight: 0
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 3281578252193271438}
+    - renderer: {fileID: 457727206350005810}
+  m_Enabled: 1
+  m_GlobalIlluminationLOD: 0
+--- !u!1001 &637445929775434845
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4091369561050592775}
+    m_Modifications:
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8762702108622993157, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+      propertyPath: m_Name
+      value: cargo_004_vossk_engine_add
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+--- !u!23 &3281578252193271438 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2689260008434565843, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+  m_PrefabInstance: {fileID: 637445929775434845}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &8793320305615626722 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8273270331967958463, guid: b96326440e935bb4a9eba0e137175ad7, type: 3}
+  m_PrefabInstance: {fileID: 637445929775434845}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2403316395224508697
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4091369561050592775}
+    m_Modifications:
+    - target: {fileID: 3654866116690732901, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_Name
+      value: cargo_004_vossk_lights_emissive
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+--- !u!4 &1776998213270410438 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4175788975543696863, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+  m_PrefabInstance: {fileID: 2403316395224508697}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2509038174758837043 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 255490674120438314, guid: e6cb0e27781a5a7489079e8783a93e4e, type: 3}
+  m_PrefabInstance: {fileID: 2403316395224508697}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &4681027344604303286
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4091369561050592775}
+    m_Modifications:
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9134461486836723943, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+      propertyPath: m_Name
+      value: cargo_004_vossk_lod_2
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+--- !u!23 &457727206350005810 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5092574924543994244, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+  m_PrefabInstance: {fileID: 4681027344604303286}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &3853297247862416875 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8471254406205270621, guid: 23d0ec51d707bd54ab7ce75ecc1092cd, type: 3}
+  m_PrefabInstance: {fileID: 4681027344604303286}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6025245055669603143
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4091369561050592775}
+    m_Modifications:
+    - target: {fileID: 4643454977822568326, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_Name
+      value: cargo_004_vossk
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+--- !u!23 &1706240414812789453 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4913480977080734090, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+  m_PrefabInstance: {fileID: 6025245055669603143}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1776376945686085243 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5420941006907536700, guid: 75a5c89961e833046add3bb8a101aaab, type: 3}
+  m_PrefabInstance: {fileID: 6025245055669603143}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7835694150567519423
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 4091369561050592775}
+    m_Modifications:
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4262876221021708736, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+      propertyPath: m_Name
+      value: cargo_004_vossk_lod_1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+--- !u!23 &2673664789549332179 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5307274068064490092, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+  m_PrefabInstance: {fileID: 7835694150567519423}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6692047412009885637 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3486656902275087226, guid: 1cc31b30af174c442bd43ede29d91002, type: 3}
+  m_PrefabInstance: {fileID: 7835694150567519423}
+  m_PrefabAsset: {fileID: 0}

@@ -1,0 +1,2781 @@
+[
+ {
+  "name": "jumpgate_terran",
+  "category": "jumpgates",
+  "origin": "Level::createSpace (0xbbba0) jumpgate loop; mesh table DAT_00254360[race*4+0..3] (u16: main, emissive, anim_add, jump_anim_add); LOD table DAT_00251fa0[race*2+0..1] (u16); race = SolarSystem::getRace (0 in alien orbit)",
+  "root": 15000,
+  "rootName": "jumpgate_terran",
+  "children": [
+   {
+    "mesh": 15002,
+    "meshName": "jumpgate_terran_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15001,
+    "meshName": "jumpgate_terran_anim_add",
+    "role": "anim_add (idle loop; LAST child, so it is also attached to the LOD meshes)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15003,
+    "meshName": "jumpgate_terran_jump_anim_add",
+    "role": "jump_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "NOT attached at build: PlayerJumpgate::addJumpAnimationHandle stores it; PlayerJumpgate::activate removes the idle anim_add child from the current (LOD) root, adds this one and SetAnimationState(1,0)"
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 15016,
+    "meshName": "jumpgate_terran_lod_1",
+    "distance": 40000,
+    "children": [
+     15001
+    ]
+   },
+   {
+    "mesh": 15020,
+    "meshName": "jumpgate_terran_lod_2",
+    "distance": 70000,
+    "children": [
+     15001
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "race": 0,
+   "raceName": "terran",
+   "playerRadius": 7500,
+   "farImpostor": "PlayerStaticFar::update: if dist to camera >= 295001 the object is placed at 295000 along the view ray and scaled by 295000/dist",
+   "lodChildMeshesCall": null
+  },
+  "notes": "Only the Vossk gate calls setLodChildMeshes (per-LOD emissives 15024/15025). Other races lose the emissive at LOD 1/2 and keep only anim_add. Vossk main/LOD meshes are *_anim (animated). AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "jumpgate_vossk_anim",
+  "category": "jumpgates",
+  "origin": "Level::createSpace (0xbbba0) jumpgate loop; mesh table DAT_00254360[race*4+0..3] (u16: main, emissive, anim_add, jump_anim_add); LOD table DAT_00251fa0[race*2+0..1] (u16); race = SolarSystem::getRace (0 in alien orbit)",
+  "root": 15004,
+  "rootName": "jumpgate_vossk_anim",
+  "children": [
+   {
+    "mesh": 15006,
+    "meshName": "jumpgate_vossk_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15005,
+    "meshName": "jumpgate_vossk_anim_add",
+    "role": "anim_add (idle loop; LAST child, so it is also attached to the LOD meshes)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15007,
+    "meshName": "jumpgate_vossk_jump_anim_add",
+    "role": "jump_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "NOT attached at build: PlayerJumpgate::addJumpAnimationHandle stores it; PlayerJumpgate::activate removes the idle anim_add child from the current (LOD) root, adds this one and SetAnimationState(1,0)"
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 15017,
+    "meshName": "jumpgate_vossk_lod_1_anim",
+    "distance": 40000,
+    "children": [
+     15024,
+     15005
+    ]
+   },
+   {
+    "mesh": 15021,
+    "meshName": "jumpgate_vossk_lod_2_anim",
+    "distance": 70000,
+    "children": [
+     15025,
+     15005
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "race": 1,
+   "raceName": "vossk",
+   "playerRadius": 11250,
+   "farImpostor": "PlayerStaticFar::update: if dist to camera >= 295001 the object is placed at 295000 along the view ray and scaled by 295000/dist",
+   "lodChildMeshesCall": [
+    15024,
+    15025
+   ]
+  },
+  "notes": "Only the Vossk gate calls setLodChildMeshes (per-LOD emissives 15024/15025). Other races lose the emissive at LOD 1/2 and keep only anim_add. Vossk main/LOD meshes are *_anim (animated). AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "jumpgate_nivelian",
+  "category": "jumpgates",
+  "origin": "Level::createSpace (0xbbba0) jumpgate loop; mesh table DAT_00254360[race*4+0..3] (u16: main, emissive, anim_add, jump_anim_add); LOD table DAT_00251fa0[race*2+0..1] (u16); race = SolarSystem::getRace (0 in alien orbit)",
+  "root": 15008,
+  "rootName": "jumpgate_nivelian",
+  "children": [
+   {
+    "mesh": 15010,
+    "meshName": "jumpgate_nivelian_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15009,
+    "meshName": "jumpgate_nivelian_anim_add",
+    "role": "anim_add (idle loop; LAST child, so it is also attached to the LOD meshes)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15011,
+    "meshName": "jumpgate_nivelian_jump_anim_add",
+    "role": "jump_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "NOT attached at build: PlayerJumpgate::addJumpAnimationHandle stores it; PlayerJumpgate::activate removes the idle anim_add child from the current (LOD) root, adds this one and SetAnimationState(1,0)"
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 15018,
+    "meshName": "jumpgate_nivelian_lod_1",
+    "distance": 40000,
+    "children": [
+     15009
+    ]
+   },
+   {
+    "mesh": 15022,
+    "meshName": "jumpgate_nivelian_lod_2",
+    "distance": 70000,
+    "children": [
+     15009
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "race": 2,
+   "raceName": "nivelian",
+   "playerRadius": 7500,
+   "farImpostor": "PlayerStaticFar::update: if dist to camera >= 295001 the object is placed at 295000 along the view ray and scaled by 295000/dist",
+   "lodChildMeshesCall": null
+  },
+  "notes": "Only the Vossk gate calls setLodChildMeshes (per-LOD emissives 15024/15025). Other races lose the emissive at LOD 1/2 and keep only anim_add. Vossk main/LOD meshes are *_anim (animated). AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "jumpgate_midorian",
+  "category": "jumpgates",
+  "origin": "Level::createSpace (0xbbba0) jumpgate loop; mesh table DAT_00254360[race*4+0..3] (u16: main, emissive, anim_add, jump_anim_add); LOD table DAT_00251fa0[race*2+0..1] (u16); race = SolarSystem::getRace (0 in alien orbit)",
+  "root": 15012,
+  "rootName": "jumpgate_midorian",
+  "children": [
+   {
+    "mesh": 15014,
+    "meshName": "jumpgate_midorian_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15013,
+    "meshName": "jumpgate_midorian_anim_add",
+    "role": "anim_add (idle loop; LAST child, so it is also attached to the LOD meshes)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 15015,
+    "meshName": "jumpgate_midorian_jump_anim_add",
+    "role": "jump_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "NOT attached at build: PlayerJumpgate::addJumpAnimationHandle stores it; PlayerJumpgate::activate removes the idle anim_add child from the current (LOD) root, adds this one and SetAnimationState(1,0)"
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 15019,
+    "meshName": "jumpgate_midorian_lod_1",
+    "distance": 40000,
+    "children": [
+     15013
+    ]
+   },
+   {
+    "mesh": 15023,
+    "meshName": "jumpgate_midorian_lod_2",
+    "distance": 70000,
+    "children": [
+     15013
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "race": 3,
+   "raceName": "midorian",
+   "playerRadius": 7500,
+   "farImpostor": "PlayerStaticFar::update: if dist to camera >= 295001 the object is placed at 295000 along the view ray and scaled by 295000/dist",
+   "lodChildMeshesCall": null
+  },
+  "notes": "Only the Vossk gate calls setLodChildMeshes (per-LOD emissives 15024/15025). Other races lose the emissive at LOD 1/2 and keep only anim_add. Vossk main/LOD meshes are *_anim (animated). AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "asteroid_01",
+  "category": "asteroids",
+  "origin": "Level::createAsteroids (0xbcfd0); mesh table UNK_00251fb0[type] (int32) = {16900,16921,16904,18836}; LOD meshes = id+1,+2,+3",
+  "root": 16900,
+  "rootName": "asteroid_01",
+  "children": [],
+  "lods": [
+   {
+    "mesh": 16901,
+    "meshName": "asteroid_01_lod_1",
+    "distance": 60000,
+    "children": []
+   },
+   {
+    "mesh": 16902,
+    "meshName": "asteroid_01_lod_2",
+    "distance": 100000,
+    "children": []
+   },
+   {
+    "mesh": 16903,
+    "meshName": "asteroid_01_lod_3",
+    "distance": 120000,
+    "children": []
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": "uniform random: 'near' asteroids (first rand(8)+2 of the field) (rand(100)+120)*0.01 = 1.20..2.19; others (rand(70)+30)*0.01 = 0.30..0.99",
+  "related": {
+   "typeIndex": 0,
+   "condition": "default (local_a8=0)",
+   "lodSets": {
+    "phone_near (first rand(8)+2 asteroids; listed in lods)": [
+     60000,
+     100000,
+     120000
+    ],
+    "phone_far (remaining asteroids)": [
+     40000,
+     70000,
+     90000
+    ],
+    "iPad (all)": [
+     100000,
+     120000,
+     150000
+    ]
+   },
+   "rotation": "random Euler at spawn (rand(100)*0.01*2pi on x and z; y lost in decompile) plus slow tumble",
+   "explosion": {
+    "ExplosionType": 2,
+    "billboardAlpha": 16915,
+    "billboardAlphaName": "asteroid_explosion_anim_alpha",
+    "debrisMesh": 16913,
+    "debrisMeshName": "asteroid_01_explosion_anim",
+    "note": "Explosion(type=asteroidType+2): geometry A (camera-facing) = alpha mesh, geometry B (world) = *_explosion_anim"
+   },
+   "collisionRadius": "meshTransformRadius(+0xe0) * scale * 0.7",
+   "hitpoints": "scale*100+30",
+   "fieldSize": "rand(40)+40 asteroids, RNG seeded with station index"
+  },
+  "notes": "No children. LODs set before any addChild. AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "asteroid_void",
+  "category": "asteroids",
+  "origin": "Level::createAsteroids (0xbcfd0); mesh table UNK_00251fb0[type] (int32) = {16900,16921,16904,18836}; LOD meshes = id+1,+2,+3",
+  "root": 16921,
+  "rootName": "asteroid_void",
+  "children": [],
+  "lods": [
+   {
+    "mesh": 16922,
+    "meshName": "asteroid_void_lod_1",
+    "distance": 60000,
+    "children": []
+   },
+   {
+    "mesh": 16923,
+    "meshName": "asteroid_void_lod_2",
+    "distance": 100000,
+    "children": []
+   },
+   {
+    "mesh": 16924,
+    "meshName": "asteroid_void_lod_3",
+    "distance": 120000,
+    "children": []
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": "uniform random: 'near' asteroids (first rand(8)+2 of the field) (rand(100)+120)*0.01 = 1.20..2.19; others (rand(70)+30)*0.01 = 0.30..0.99",
+  "related": {
+   "typeIndex": 1,
+   "condition": "alien orbit (Status::inAlienOrbit)",
+   "lodSets": {
+    "phone_near (first rand(8)+2 asteroids; listed in lods)": [
+     60000,
+     100000,
+     120000
+    ],
+    "phone_far (remaining asteroids)": [
+     40000,
+     70000,
+     90000
+    ],
+    "iPad (all)": [
+     100000,
+     120000,
+     150000
+    ]
+   },
+   "rotation": "random Euler at spawn (rand(100)*0.01*2pi on x and z; y lost in decompile) plus slow tumble",
+   "explosion": {
+    "ExplosionType": 3,
+    "billboardAlpha": 16915,
+    "billboardAlphaName": "asteroid_explosion_anim_alpha",
+    "debrisMesh": 16925,
+    "debrisMeshName": "asteroid_void_explosion_anim",
+    "note": "Explosion(type=asteroidType+2): geometry A (camera-facing) = alpha mesh, geometry B (world) = *_explosion_anim"
+   },
+   "collisionRadius": "meshTransformRadius(+0xe0) * scale * 0.7",
+   "hitpoints": "scale*100+30",
+   "fieldSize": "rand(40)+40 asteroids, RNG seeded with station index"
+  },
+  "notes": "No children. LODs set before any addChild. AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "v_asteroid_ice",
+  "category": "asteroids",
+  "origin": "Level::createAsteroids (0xbcfd0); mesh table UNK_00251fb0[type] (int32) = {16900,16921,16904,18836}; LOD meshes = id+1,+2,+3",
+  "root": 16904,
+  "rootName": "v_asteroid_ice",
+  "children": [],
+  "lods": [
+   {
+    "mesh": 16905,
+    "meshName": "v_asteroid_ice_lod_1",
+    "distance": 60000,
+    "children": []
+   },
+   {
+    "mesh": 16906,
+    "meshName": "v_asteroid_ice_lod_2",
+    "distance": 100000,
+    "children": []
+   },
+   {
+    "mesh": 16907,
+    "meshName": "v_asteroid_ice_lod_3",
+    "distance": 120000,
+    "children": []
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": "uniform random: 'near' asteroids (first rand(8)+2 of the field) (rand(100)+120)*0.01 = 1.20..2.19; others (rand(70)+30)*0.01 = 0.30..0.99",
+  "related": {
+   "typeIndex": 2,
+   "condition": "solar system index 0x16 (22)",
+   "lodSets": {
+    "phone_near (first rand(8)+2 asteroids; listed in lods)": [
+     60000,
+     100000,
+     120000
+    ],
+    "phone_far (remaining asteroids)": [
+     40000,
+     70000,
+     90000
+    ],
+    "iPad (all)": [
+     100000,
+     120000,
+     150000
+    ]
+   },
+   "rotation": "random Euler at spawn (rand(100)*0.01*2pi on x and z; y lost in decompile) plus slow tumble",
+   "explosion": {
+    "ExplosionType": 4,
+    "billboardAlpha": 16909,
+    "billboardAlphaName": "v_asteroid_ice_explosion_anim_alpha",
+    "debrisMesh": 16908,
+    "debrisMeshName": "v_asteroid_ice_explosion_anim",
+    "note": "Explosion(type=asteroidType+2): geometry A (camera-facing) = alpha mesh, geometry B (world) = *_explosion_anim"
+   },
+   "collisionRadius": "meshTransformRadius(+0xe0) * scale * 0.7",
+   "hitpoints": "scale*100+30",
+   "fieldSize": "rand(40)+40 asteroids, RNG seeded with station index"
+  },
+  "notes": "No children. LODs set before any addChild. AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "sn_asteroid_magma",
+  "category": "asteroids",
+  "origin": "Level::createAsteroids (0xbcfd0); mesh table UNK_00251fb0[type] (int32) = {16900,16921,16904,18836}; LOD meshes = id+1,+2,+3",
+  "root": 18836,
+  "rootName": "sn_asteroid_magma",
+  "children": [],
+  "lods": [
+   {
+    "mesh": 18837,
+    "meshName": "sn_asteroid_magma_lod_1",
+    "distance": 60000,
+    "children": []
+   },
+   {
+    "mesh": 18838,
+    "meshName": "sn_asteroid_magma_lod_2",
+    "distance": 100000,
+    "children": []
+   },
+   {
+    "mesh": 18839,
+    "meshName": "sn_asteroid_magma_lod_3",
+    "distance": 120000,
+    "children": []
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": "uniform random: 'near' asteroids (first rand(8)+2 of the field) (rand(100)+120)*0.01 = 1.20..2.19; others (rand(70)+30)*0.01 = 0.30..0.99",
+  "related": {
+   "typeIndex": 3,
+   "condition": "asteroid ore item 0xd9 (217) picked from Galaxy::getAsteroidProbabilities",
+   "lodSets": {
+    "phone_near (first rand(8)+2 asteroids; listed in lods)": [
+     60000,
+     100000,
+     120000
+    ],
+    "phone_far (remaining asteroids)": [
+     40000,
+     70000,
+     90000
+    ],
+    "iPad (all)": [
+     100000,
+     120000,
+     150000
+    ]
+   },
+   "rotation": "random Euler at spawn (rand(100)*0.01*2pi on x and z; y lost in decompile) plus slow tumble",
+   "explosion": {
+    "ExplosionType": 5,
+    "billboardAlpha": 18841,
+    "billboardAlphaName": "sn_asteroid_magma_explosion_anim_alpha",
+    "debrisMesh": 18840,
+    "debrisMeshName": "sn_asteroid_magma_explosion_anim",
+    "note": "Explosion(type=asteroidType+2): geometry A (camera-facing) = alpha mesh, geometry B (world) = *_explosion_anim"
+   },
+   "collisionRadius": "meshTransformRadius(+0xe0) * scale * 0.7",
+   "hitpoints": "scale*100+30",
+   "fieldSize": "rand(40)+40 asteroids, RNG seeded with station index"
+  },
+  "notes": "No children. LODs set before any addChild. AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "station_pirates",
+  "category": "stations_special",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x37a3 (PlayerFixedObject type 8)",
+  "root": 14243,
+  "rootName": "station_pirates",
+  "children": [
+   {
+    "mesh": 14244,
+    "meshName": "station_pirates_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14245,
+    "meshName": "station_pirates_lights_add",
+    "role": "lights_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 14246,
+   "wreckMeshName": "station_pirates_explosion_anim",
+   "boundingVolume": "getBoundingVolume(0x3ea)"
+  },
+  "notes": "Pirate station. Children at identity. Wreck (rendered after destruction) set via PlayerFixedObject::setWreckedMeshId (wreck transform radius field +0xe0 = 500000)."
+ },
+ {
+  "name": "v_station_battlestation_anim",
+  "category": "stations_special",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x4220 (PlayerFixedObject type 0); same assembly in PlayerStation::PlayerStation for station index 0x65",
+  "root": 16928,
+  "rootName": "v_station_battlestation_anim",
+  "children": [
+   {
+    "mesh": 16929,
+    "meshName": "v_station_battlestation_anim_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 16930,
+    "meshName": "v_station_battlestation_anim_add",
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18768,
+    "meshName": "sn_plasma_gun_valkyrie",
+    "role": "plasma_gun",
+    "variant": "PlayerStation only: campaign mission 0x9d at station 0x70",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18770,
+    "meshName": "sn_plasma_gun_valkyrie_alpha",
+    "role": "plasma_gun_alpha",
+    "variant": "PlayerStation only: campaign mission 0x9d at station 0x70",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18769,
+    "meshName": "sn_plasma_gun_valkyrie_lights_add",
+    "role": "plasma_gun_lights_add",
+    "variant": "PlayerStation only: campaign mission 0x9d at station 0x70",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 14246,
+   "wreckMeshName": "station_pirates_explosion_anim",
+   "spacePoints": "FileRead::loadSpacePoints(7)",
+   "boundingVolume": "getBoundingVolume(0x3eb)",
+   "turrets": "created separately in Level::createMission: 0x381b turret / 0x381d shield (bitmask 0x9f3 over 11 slots picks which)"
+  },
+  "notes": "Valkyrie battlestation. Transform::Update is called on root and both children right after building (starts animation). The wreck mesh reuses the pirate-station explosion mesh 14246."
+ },
+ {
+  "name": "sn_station_mining_plant_part1",
+  "category": "stations_special",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x4a88 (PlayerFixedObject type 3, invulnerable); placed by Level::createStaticObjects at station 0x67 at (0,0,0)",
+  "root": 19080,
+  "rootName": "sn_station_mining_plant_part1 (id 19080 also = test_dock in the table)",
+  "children": [
+   {
+    "mesh": 19085,
+    "meshName": "sn_station_mining_plant_part1_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19084,
+    "meshName": "sn_station_mining_plant_part1_alpha",
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19081,
+    "meshName": "sn_station_mining_plant_part1_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19086,
+    "meshName": "sn_station_mining_plant_part2",
+    "role": "part2",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19088,
+    "meshName": "sn_station_mining_plant_part2_emissive",
+    "role": "part2_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19087,
+    "meshName": "sn_station_mining_plant_part2_add",
+    "role": "part2_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19082,
+    "meshName": "sn_station_mining_plant_part1_glow_anim_add",
+    "role": "glow_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19083,
+    "meshName": "sn_station_mining_plant_part1_fire_anim_add",
+    "role": "fire_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 19080,
+   "spacePoints": "loadSpacePoints(1)",
+   "boundingVolume": "getBoundingVolume(0x7d0)",
+   "dockingType": 1,
+   "wreckMeshName": "sn_station_mining_plant_part1"
+  },
+  "notes": "All 8 children are added flat to the root at identity (part2 and its layers are siblings, not nested). Resource id 19080 is registered twice in BuildResourceList (mining plant, later data/meshes/test_dock.aem); gof2bin.mesh_name(19080) returns test_dock but the code means the mining plant."
+ },
+ {
+  "name": "sn_plasma_array_midorian_stage_001",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x493e+{0,3,6,9,12} (bitmask 0x1249), PlayerFixedObject type 3, invulnerable",
+  "root": 18750,
+  "rootName": "sn_plasma_array_midorian_stage_001",
+  "children": [
+   {
+    "mesh": 18752,
+    "meshName": "sn_plasma_array_midorian_stage_001_alpha",
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18751,
+    "meshName": "sn_plasma_array_midorian_stage_001_anim_add",
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stage": 1,
+   "selection": "Level::createStaticObjects at station 0x70 by campaign mission: <0x83 stage1, <0x87 stage2, <0x8a stage3, <0x8e stage4, <=0x91 stage5; placed at (-50000,0,50000), faces the light direction",
+   "boundingVolume": "getBoundingVolume(0x7d1)",
+   "destroyedFx": 19050,
+   "destroyedFxName": "sn_plasma_array_midorian_explosion_anim"
+  },
+  "notes": "Children = id+2 (alpha) then id+1 (anim_add). Root animation not updated for stage 5 during mission 0x91 (PlayerFixedObject::update)."
+ },
+ {
+  "name": "sn_plasma_array_midorian_stage_002",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x493e+{0,3,6,9,12} (bitmask 0x1249), PlayerFixedObject type 3, invulnerable",
+  "root": 18753,
+  "rootName": "sn_plasma_array_midorian_stage_002",
+  "children": [
+   {
+    "mesh": 18755,
+    "meshName": "sn_plasma_array_midorian_stage_002_alpha",
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18754,
+    "meshName": "sn_plasma_array_midorian_stage_002_anim_add",
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stage": 2,
+   "selection": "Level::createStaticObjects at station 0x70 by campaign mission: <0x83 stage1, <0x87 stage2, <0x8a stage3, <0x8e stage4, <=0x91 stage5; placed at (-50000,0,50000), faces the light direction",
+   "boundingVolume": "getBoundingVolume(0x7d1)",
+   "destroyedFx": 19050,
+   "destroyedFxName": "sn_plasma_array_midorian_explosion_anim"
+  },
+  "notes": "Children = id+2 (alpha) then id+1 (anim_add). Root animation not updated for stage 5 during mission 0x91 (PlayerFixedObject::update)."
+ },
+ {
+  "name": "sn_plasma_array_midorian_stage_003",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x493e+{0,3,6,9,12} (bitmask 0x1249), PlayerFixedObject type 3, invulnerable",
+  "root": 18756,
+  "rootName": "sn_plasma_array_midorian_stage_003",
+  "children": [
+   {
+    "mesh": 18758,
+    "meshName": "sn_plasma_array_midorian_stage_003_alpha",
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18757,
+    "meshName": "sn_plasma_array_midorian_stage_003_anim_add",
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stage": 3,
+   "selection": "Level::createStaticObjects at station 0x70 by campaign mission: <0x83 stage1, <0x87 stage2, <0x8a stage3, <0x8e stage4, <=0x91 stage5; placed at (-50000,0,50000), faces the light direction",
+   "boundingVolume": "getBoundingVolume(0x7d1)",
+   "destroyedFx": 19050,
+   "destroyedFxName": "sn_plasma_array_midorian_explosion_anim"
+  },
+  "notes": "Children = id+2 (alpha) then id+1 (anim_add). Root animation not updated for stage 5 during mission 0x91 (PlayerFixedObject::update)."
+ },
+ {
+  "name": "sn_plasma_array_midorian_stage_004",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x493e+{0,3,6,9,12} (bitmask 0x1249), PlayerFixedObject type 3, invulnerable",
+  "root": 18759,
+  "rootName": "sn_plasma_array_midorian_stage_004",
+  "children": [
+   {
+    "mesh": 18761,
+    "meshName": "sn_plasma_array_midorian_stage_004_alpha",
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18760,
+    "meshName": "sn_plasma_array_midorian_stage_004_anim_add",
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stage": 4,
+   "selection": "Level::createStaticObjects at station 0x70 by campaign mission: <0x83 stage1, <0x87 stage2, <0x8a stage3, <0x8e stage4, <=0x91 stage5; placed at (-50000,0,50000), faces the light direction",
+   "boundingVolume": "getBoundingVolume(0x7d1)",
+   "destroyedFx": 19050,
+   "destroyedFxName": "sn_plasma_array_midorian_explosion_anim"
+  },
+  "notes": "Children = id+2 (alpha) then id+1 (anim_add). Root animation not updated for stage 5 during mission 0x91 (PlayerFixedObject::update)."
+ },
+ {
+  "name": "sn_plasma_array_midorian_stage_005",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x493e+{0,3,6,9,12} (bitmask 0x1249), PlayerFixedObject type 3, invulnerable",
+  "root": 18762,
+  "rootName": "sn_plasma_array_midorian_stage_005",
+  "children": [
+   {
+    "mesh": 18764,
+    "meshName": "sn_plasma_array_midorian_stage_005_alpha",
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18763,
+    "meshName": "sn_plasma_array_midorian_stage_005_lights_anim_add",
+    "role": "lights_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18765,
+    "meshName": "sn_plasma_array_midorian_stage_005_glow_anim_add",
+    "role": "glow_anim_add",
+    "variant": "only if Status::getCurrentCampaignMission == 0x91 (145)",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stage": 5,
+   "selection": "Level::createStaticObjects at station 0x70 by campaign mission: <0x83 stage1, <0x87 stage2, <0x8a stage3, <0x8e stage4, <=0x91 stage5; placed at (-50000,0,50000), faces the light direction",
+   "boundingVolume": "getBoundingVolume(0x7d1)",
+   "destroyedFx": 19050,
+   "destroyedFxName": "sn_plasma_array_midorian_explosion_anim"
+  },
+  "notes": "Children = id+2 (alpha) then id+1 (anim_add). Root animation not updated for stage 5 during mission 0x91 (PlayerFixedObject::update)."
+ },
+ {
+  "name": "sn_cargo_001_midorian_wrecked",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x494e (uVar10==0x10), PlayerFixedObject id 0x494e type 3",
+  "root": 19072,
+  "rootName": "sn_cargo_001_midorian_wrecked_anim",
+  "children": [
+   {
+    "mesh": 18766,
+    "meshName": "sn_cargo_001_midorian_wrecked",
+    "role": "wrecked_hull",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 19072
+   },
+   {
+    "mesh": 19073,
+    "meshName": "sn_cargo_001_midorian_wrecked_glow_add",
+    "role": "glow_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18766
+   },
+   {
+    "mesh": 19074,
+    "meshName": "sn_cargo_001_midorian_wrecked_glow_anim_add",
+    "role": "glow_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18766
+   },
+   {
+    "mesh": 19075,
+    "meshName": "sn_cargo_001_midorian_wrecked_lights_add",
+    "role": "lights_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18766
+   },
+   {
+    "mesh": 19076,
+    "meshName": "sn_cargo_001_midorian_wrecked_lights_emissive",
+    "role": "lights_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18766
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 18300,
+   "wreckMeshName": "cargo_001_midorian_explosion_anim",
+   "spacePoints": "loadSpacePoints(3)",
+   "boundingVolumes": "2 BoundingAABs (second raw floats 0,-14,-98 / 4500,1405,8860)"
+  },
+  "notes": "NESTED: root is the *_wrecked_anim mesh; the static *_wrecked mesh is its child and the 4 glow/light layers are children of *_wrecked."
+ },
+ {
+  "name": "station_076_midorian (damaged variant)",
+  "category": "stations_special",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x495d (uVar10==0x1f), PlayerFixedObject id 0x495d type 3; also PlayerStation::PlayerStation station 0x6f (mission <=0x5d) with children 21876, 22076, 18781, 18782",
+  "root": 21076,
+  "rootName": "station_076_midorian",
+  "children": [
+   {
+    "mesh": 18784,
+    "meshName": "MISSING",
+    "role": "unknown (missing resource)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 21876,
+    "meshName": "station_076_midorian_emissive",
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22076,
+    "meshName": "station_076_midorian_lights_add",
+    "role": "lights_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18781,
+    "meshName": "MISSING",
+    "role": "unknown (missing resource)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18781,
+    "meshName": "MISSING",
+    "role": "unknown (missing resource, added twice)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18782,
+    "meshName": "MISSING",
+    "role": "unknown (missing resource)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18783,
+    "meshName": "MISSING",
+    "role": "unknown (missing resource)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 18300,
+   "spacePoints": "loadSpacePoints(6)",
+   "boundingVolume": "getBoundingVolume(0x6f)"
+  },
+  "notes": "Ids 18781-18784 are not meshes in the shipped resource table (BuildResourceList registers those ids as materials) - dev leftovers; build with 21076 + 21876 + 22076 only."
+ },
+ {
+  "name": "MISSING_0x4961",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x4961 (PlayerFixedObject type 2); 3 placed by Level::createCampaignMission",
+  "root": 18785,
+  "rootName": "MISSING",
+  "children": [
+   {
+    "mesh": 18831,
+    "meshName": "MISSING",
+    "role": "unknown (missing resource)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 18300,
+   "spacePoints": "loadSpacePoints(2)",
+   "boundingVolume": "getBoundingVolume(0x7d3)"
+  },
+  "notes": "Both ids missing from the shipped resource table (registered as materials). Cannot be built."
+ },
+ {
+  "name": "sn_carrier_terran_1",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x4974 (PlayerFixedObject type 0)",
+  "root": 18804,
+  "rootName": "sn_carrier_terran_1",
+  "children": [
+   {
+    "mesh": 18805,
+    "meshName": "sn_carrier_terran_2",
+    "role": "section_2",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18807,
+    "meshName": "sn_carrier_terran_3",
+    "role": "section_3",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18808,
+    "meshName": "sn_carrier_terran_1_emissive",
+    "role": "section_1_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18809,
+    "meshName": "sn_carrier_terran_2_emissive",
+    "role": "section_2_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18810,
+    "meshName": "sn_carrier_terran_3_emissive",
+    "role": "section_3_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18806,
+    "meshName": "sn_carrier_terran_lights_add",
+    "role": "lights_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 18766,
+   "wreckMeshName": "sn_cargo_001_midorian_wrecked",
+   "spacePoints": "loadSpacePoints(5)",
+   "boundingVolume": "getBoundingVolume(0x7d5)"
+  },
+  "notes": "Supernova terran carrier as a static object. All children flat at identity (sections pre-positioned in the mesh files). Overlaps with the ship agent."
+ },
+ {
+  "name": "sn_battleship_vossk",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x4a6b (PlayerFixedObject type 1)",
+  "root": 19051,
+  "rootName": "sn_battleship_vossk",
+  "children": [
+   {
+    "mesh": 19052,
+    "meshName": "sn_battleship_vossk_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19053,
+    "meshName": "sn_battleship_vossk_lights_add",
+    "role": "lights_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 18300,
+   "spacePoints": "loadSpacePoints(8)",
+   "boundingVolume": "getBoundingVolume(0x7d6)"
+  },
+  "notes": "Children at identity. Overlaps with the ship agent."
+ },
+ {
+  "name": "cargo_001_midorian (freighter with 3 containers)",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x4299 (PlayerFixedObject type 3)",
+  "root": 17049,
+  "rootName": "cargo_001_midorian",
+  "children": [
+   {
+    "mesh": 17055,
+    "meshName": "cargo_001_midorian_lights_emissive",
+    "role": "lights_emissive",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17052,
+    "meshName": "cargo_001_midorian_container",
+    "role": "container",
+    "variant": "container 0 (chain root)",
+    "position": [
+     0,
+     0,
+     -2150
+    ],
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17052,
+    "meshName": "cargo_001_midorian_container",
+    "role": "container",
+    "variant": "container 1; local offset (0,0,+2150) under container 0",
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "container 0"
+   },
+   {
+    "mesh": 17052,
+    "meshName": "cargo_001_midorian_container",
+    "role": "container",
+    "variant": "container 2; local offset (0,0,+4300) under container 0",
+    "position": [
+     0,
+     0,
+     2150
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "container 0"
+   },
+   {
+    "mesh": 17054,
+    "meshName": "cargo_001_midorian_engine_add",
+    "role": "engine_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17050,
+    "meshName": "cargo_001_midorian_lod_1",
+    "distance": 35000,
+    "children": [
+     17054,
+     "container_lod_1 chain: 17053 at z=-2150, 0, +2150 (same hierarchy as the containers)"
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "lodContainerMesh": 17053,
+   "lodContainerMeshName": "cargo_001_midorian_container_lod_1",
+   "wreckMesh": 18300,
+   "spacePoints": "loadSpacePoints(4)",
+   "boundingVolumes": "2 BoundingAABs; second raw floats (0,-14,-98 / 4500,1405,8860); first partially lost (-199 / 4708,980,1530,1240 visible)",
+   "offsetConstants": "z offsets from the literal pool: -2150 (0xcf174), 2150 (0xcf830), 4300 (0xcf82c)"
+  },
+  "notes": "Container positions recovered from disassembly (MatrixSetTranslation(0,0,z)); listed positions are relative to the root (containers 1 and 2 are children of container 0 at local +2150/+4300). LOD: setLodMeshes([17050],[35000]) after addChild(engine_add) -> engine_add stays at LOD; setLodChildTransform(lod container chain) attaches the lod_1 containers; lights_emissive and the full-detail containers vanish at LOD. AEGeometry LOD rule (setLodMeshes/updateLod): distances stored squared; LOD k is used when dist^2 > q*lodDist[k]^2 (q = 1.0 / 0.75 / 0.5 for detail setting >0.66 / >0.33 / else). At a LOD only the LAST child added before setLodMeshes (AEGeometry+0x14) plus setLodChildMeshes/setLodChildTransform children stay attached; all other base children disappear."
+ },
+ {
+  "name": "sn_station_113_midorian (col_box proxy)",
+  "category": "misc",
+  "origin": "Level::createStaticObject (0xcda54) branch 0x5279 (PlayerFixedObject id 0x41a0 type 1, invulnerable)",
+  "root": 16800,
+  "rootName": "col_box",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 21113,
+   "wreckMeshName": "sn_station_113_midorian",
+   "spacePoints": "loadSpacePoints(10)",
+   "boundingVolume": "getBoundingVolume(0x7d2)"
+  },
+  "notes": "Live geometry is col_box (16800, collision proxy); the station mesh 21113 is only the wreck geometry (PlayerFixedObject render state 4)."
+ },
+ {
+  "name": "turret_002 (static)",
+  "category": "turrets",
+  "origin": "PlayerTurret::PlayerTurret (0x182640) via Level::createStaticObject (0xcda54) branch 0x1a74",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6772,
+    "meshName": "turret_002",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6773,
+    "meshName": "turret_002_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     60,
+     0
+    ],
+    "rotation": "rotation order 2",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "hierarchy": "root (empty AEGeometry) -> pivot (empty, +0x144, yaw; transform radius 1e6) -> {gun +0x140, base +0x13c}",
+   "aim": "PlayerTurret::handleTurret -> handleRotation(pivot, gun)",
+   "range": 50000,
+   "destroyFx": "Explosion type 0 + addFireStreaks",
+   "fighterMounted": "Level::createFighterTurrets mounts turret_002 on a host KIPlayer with +0x78==0x2d at (0,172.25,-460.7) and ==0x33 at (0,470,-83) (probably ship indices 45/51, unverified)"
+  },
+  "notes": "Root is empty; base and gun sit under a yaw pivot. Gun offset 0x42700000 = 60."
+ },
+ {
+  "name": "turret_003 (static)",
+  "category": "turrets",
+  "origin": "PlayerTurret::PlayerTurret (0x182640) via Level::createStaticObject (0xcda54) branch 0x1a76",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6774,
+    "meshName": "turret_003",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6775,
+    "meshName": "turret_003_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     60,
+     0
+    ],
+    "rotation": "rotation order 2",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "hierarchy": "root (empty AEGeometry) -> pivot (empty, +0x144, yaw; transform radius 1e6) -> {gun +0x140, base +0x13c}",
+   "aim": "PlayerTurret::handleTurret -> handleRotation(pivot, gun)",
+   "range": 50000,
+   "destroyFx": "Explosion type 0 + addFireStreaks",
+   "fighterMounted": "Level::createFighterTurrets mounts turret_002 on a host KIPlayer with +0x78==0x2d at (0,172.25,-460.7) and ==0x33 at (0,470,-83) (probably ship indices 45/51, unverified)"
+  },
+  "notes": "Root is empty; base and gun sit under a yaw pivot. Gun offset 0x42700000 = 60."
+ },
+ {
+  "name": "v_station_battlestation_turret",
+  "category": "turrets",
+  "origin": "PlayerTurret::PlayerTurret (0x182640) via Level::createStaticObject (0xcda54) branch 0x381b",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 14363,
+    "meshName": "v_station_battlestation_turret",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 14364,
+    "meshName": "v_station_battlestation_turret_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     565,
+     -528
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "hierarchy": "root (empty) -> pivot (empty) -> {gun, base}",
+   "nameText": "GameText 0x682"
+  },
+  "notes": "Gun position (0x440d4000, 0xc4040000) = (0,565,-528) is set before the pi yaw; base and gun both get AEGeometry::rotate(0,pi,0)."
+ },
+ {
+  "name": "sn_sentry_gun_001",
+  "category": "turrets",
+  "origin": "PlayerTurret::PlayerTurret (0x182640) via Level::createStaticObject (0xcda54) branch 0x49c0+0 (Level::createSentryGuns creates 9; index/3 selects the type)",
+  "root": 18880,
+  "rootName": "sn_sentry_gun_001",
+  "children": [
+   {
+    "mesh": 18886,
+    "meshName": "sn_sentry_gun_001_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.5,
+  "related": {
+   "aim": "handleSentryGun rotates the whole root",
+   "radius": 800,
+   "hitpoints": 100,
+   "unusedMeshes": [
+    18883,
+    18889
+   ]
+  },
+  "notes": "Root = mesh (created in createStaticObject), child *_add; AEGeometry::setScaling(root, 0.5). PlayerTurret also creates a second base-mesh instance under a pivot that is never attached (not rendered). The *_anim / *_anim_add variants are never referenced."
+ },
+ {
+  "name": "sn_sentry_gun_002",
+  "category": "turrets",
+  "origin": "PlayerTurret::PlayerTurret (0x182640) via Level::createStaticObject (0xcda54) branch 0x49c0+1 (Level::createSentryGuns creates 9; index/3 selects the type)",
+  "root": 18881,
+  "rootName": "sn_sentry_gun_002",
+  "children": [
+   {
+    "mesh": 18887,
+    "meshName": "sn_sentry_gun_002_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.5,
+  "related": {
+   "aim": "handleSentryGun rotates the whole root",
+   "radius": 800,
+   "hitpoints": 100,
+   "unusedMeshes": [
+    18884,
+    18890
+   ]
+  },
+  "notes": "Root = mesh (created in createStaticObject), child *_add; AEGeometry::setScaling(root, 0.5). PlayerTurret also creates a second base-mesh instance under a pivot that is never attached (not rendered). The *_anim / *_anim_add variants are never referenced."
+ },
+ {
+  "name": "sn_sentry_gun_003",
+  "category": "turrets",
+  "origin": "PlayerTurret::PlayerTurret (0x182640) via Level::createStaticObject (0xcda54) branch 0x49c0+2 (Level::createSentryGuns creates 9; index/3 selects the type)",
+  "root": 18882,
+  "rootName": "sn_sentry_gun_003",
+  "children": [
+   {
+    "mesh": 18888,
+    "meshName": "sn_sentry_gun_003_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.5,
+  "related": {
+   "aim": "handleSentryGun rotates the whole root",
+   "radius": 800,
+   "hitpoints": 100,
+   "unusedMeshes": [
+    18885,
+    18891
+   ]
+  },
+  "notes": "Root = mesh (created in createStaticObject), child *_add; AEGeometry::setScaling(root, 0.5). PlayerTurret also creates a second base-mesh instance under a pivot that is never attached (not rendered). The *_anim / *_anim_add variants are never referenced."
+ },
+ {
+  "name": "turret_001 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0x2f",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6770,
+    "meshName": "turret_001",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6771,
+    "meshName": "turret_001_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     60,
+     0
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 47,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": false
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20)."
+ },
+ {
+  "name": "turret_002 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0x30",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6772,
+    "meshName": "turret_002",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6773,
+    "meshName": "turret_002_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     55,
+     0
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 48,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": false
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20)."
+ },
+ {
+  "name": "turret_003 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0x31",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6774,
+    "meshName": "turret_003",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6775,
+    "meshName": "turret_003_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     60,
+     0
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 49,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": false
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20)."
+ },
+ {
+  "name": "v_autoturret_001_anim (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0xb4",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6805,
+    "meshName": "v_autoturret_001_anim",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6806,
+    "meshName": "v_autoturret_001_gun_anim",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     84,
+     0
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 180,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": true
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20)."
+ },
+ {
+  "name": "v_autoturret_002 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0xb5",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6807,
+    "meshName": "v_autoturret_002",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6808,
+    "meshName": "v_autoturret_002_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     88,
+     -11
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 181,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": true
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20)."
+ },
+ {
+  "name": "v_autoturret_003 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0xb6",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 6809,
+    "meshName": "v_autoturret_003",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 6810,
+    "meshName": "v_autoturret_003_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     34,
+     88,
+     1.6
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 182,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": true
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20). The (34,88,1.6) offset of v_autoturret_003 decodes oddly (x=34) - verify visually."
+ },
+ {
+  "name": "sn_plasma_collector_001 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0xc6",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 18787,
+    "meshName": "sn_plasma_collector_001",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18788,
+    "meshName": "sn_plasma_collector_001_add",
+    "role": "base_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18787
+   },
+   {
+    "mesh": 18791,
+    "meshName": "sn_plasma_collector_001_gun_anim",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     80,
+     0
+    ],
+    "rotation": "rotation order 2",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18790,
+    "meshName": "sn_plasma_collector_001_gun_anim_add",
+    "role": "gun_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18791
+   },
+   {
+    "mesh": 19071,
+    "meshName": "sn_plasma_stream_anim_add",
+    "role": "plasma_stream_fx",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18791,
+    "note": "visible only while collecting (PlayerEgo+0x1a0)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 198,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": false
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20). Plasma collectors are NOT rotated by pi."
+ },
+ {
+  "name": "sn_plasma_collector_002 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0xc7",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 18792,
+    "meshName": "sn_plasma_collector_002",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18793,
+    "meshName": "sn_plasma_collector_002_add",
+    "role": "base_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18792
+   },
+   {
+    "mesh": 18795,
+    "meshName": "sn_plasma_collector_002_gun_anim",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     38,
+     0
+    ],
+    "rotation": "rotation order 2",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18794,
+    "meshName": "sn_plasma_collector_002_gun_anim_add",
+    "role": "gun_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18795
+   },
+   {
+    "mesh": 19071,
+    "meshName": "sn_plasma_stream_anim_add",
+    "role": "plasma_stream_fx",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18795,
+    "note": "visible only while collecting (PlayerEgo+0x1a0)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 199,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": false
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20). Plasma collectors are NOT rotated by pi."
+ },
+ {
+  "name": "sn_plasma_collector_003 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0xc8",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 18796,
+    "meshName": "sn_plasma_collector_003",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18797,
+    "meshName": "sn_plasma_collector_003_add",
+    "role": "base_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18796
+   },
+   {
+    "mesh": 18799,
+    "meshName": "sn_plasma_collector_003_gun_anim",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     75,
+     0
+    ],
+    "rotation": "rotation order 2",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18798,
+    "meshName": "sn_plasma_collector_003_gun_anim_add",
+    "role": "gun_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18799
+   },
+   {
+    "mesh": 18800,
+    "meshName": "sn_plasma_collector_003_gun_emissive",
+    "role": "gun_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18799
+   },
+   {
+    "mesh": 19071,
+    "meshName": "sn_plasma_stream_anim_add",
+    "role": "plasma_stream_fx",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18799,
+    "note": "visible only while collecting (PlayerEgo+0x1a0)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 200,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": false
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20). Plasma collectors are NOT rotated by pi."
+ },
+ {
+  "name": "sn_turret_004 (ship-mounted)",
+  "category": "turrets",
+  "origin": "PlayerEgo::checkForTurret (0xa722c) (same code in CutScene::checkForTurret); turret item index -> meshes item 0xe0",
+  "root": null,
+  "rootName": null,
+  "children": [
+   {
+    "mesh": 18842,
+    "meshName": "sn_turret_004",
+    "role": "base",
+    "variant": null,
+    "position": null,
+    "rotation": "rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18844,
+    "meshName": "sn_turret_004_add",
+    "role": "base_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18842
+   },
+   {
+    "mesh": 18843,
+    "meshName": "sn_turret_004_gun",
+    "role": "gun (pitch)",
+    "variant": null,
+    "position": [
+     0,
+     82,
+     0
+    ],
+    "rotation": "rotation order 2; rotate(0,pi,0)",
+    "scale": null,
+    "parent": "pivot"
+   },
+   {
+    "mesh": 18845,
+    "meshName": "sn_turret_004_gun_add",
+    "role": "gun_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": 18843
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "turretItemIndex": 224,
+   "mount": "base and gun setPosition(PlayerEgo+0x224 = ship turret mount point), then the gun is translated by the offset",
+   "pivotTransformRadius": 1000000.0,
+   "valkyrieFlag(PlayerEgo+0x180)": false
+  },
+  "notes": "Hierarchy: pivot (empty, +0x2c) -> {base +0xdc, gun +0x28}. Gun offset from literal pool (s16,s18,s20)."
+ },
+ {
+  "name": "rocket_explosive",
+  "category": "misc",
+  "origin": "RocketGun::RocketGun mesh 0x37a7; projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14247,
+  "rootName": "rocket_explosive",
+  "children": [
+   {
+    "mesh": 14248,
+    "meshName": "rocket_explosive_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "rocket_emp",
+  "category": "misc",
+  "origin": "RocketGun::RocketGun mesh 0x37a9; projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14249,
+  "rootName": "rocket_emp",
+  "children": [
+   {
+    "mesh": 14250,
+    "meshName": "rocket_emp_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "bomb_explosive_a",
+  "category": "misc",
+  "origin": "BombGun::BombGun mesh 0x3958; projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14680,
+  "rootName": "bomb_explosive_a",
+  "children": [
+   {
+    "mesh": 14681,
+    "meshName": "bomb_explosive_a_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "bomb_explosive_b",
+  "category": "misc",
+  "origin": "BombGun::BombGun mesh 0x395a; projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14682,
+  "rootName": "bomb_explosive_b",
+  "children": [
+   {
+    "mesh": 14683,
+    "meshName": "bomb_explosive_b_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "bomb_emp_a",
+  "category": "misc",
+  "origin": "BombGun::BombGun mesh 0x395c (child anim state 2); projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14684,
+  "rootName": "bomb_emp_a",
+  "children": [
+   {
+    "mesh": 14685,
+    "meshName": "bomb_emp_a_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "v_guided_missile_anim",
+  "category": "misc",
+  "origin": "BombGun::BombGun valkyrie guided missile (param_5): mesh transform + child 0x37d6, SetAnimationState(1,0); projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14293,
+  "rootName": "v_guided_missile_anim",
+  "children": [
+   {
+    "mesh": 14294,
+    "meshName": "v_guided_missile_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "v_mine_001",
+  "category": "misc",
+  "origin": "MineGun::MineGun: child = mesh id+1, SetAnimationState(2,0); projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14050,
+  "rootName": "v_mine_001",
+  "children": [
+   {
+    "mesh": 14051,
+    "meshName": "v_mine_001_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "v_mine_003",
+  "category": "misc",
+  "origin": "MineGun::MineGun; projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14052,
+  "rootName": "v_mine_003",
+  "children": [
+   {
+    "mesh": 14053,
+    "meshName": "v_mine_003_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "v_mine_002",
+  "category": "misc",
+  "origin": "MineGun::MineGun; projectile mesh from weapon table DAT_00252d1c[weaponIndex]",
+  "root": 14054,
+  "rootName": "v_mine_002",
+  "children": [
+   {
+    "mesh": 14055,
+    "meshName": "v_mine_002_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "objectGunScale": "ObjectGun: 0.7 if gun sort (+0x5c)==0xb (non-iPad); 0.6 on iPad for sorts 1,3,8"
+  },
+  "notes": "Weapon projectile (combat area; listed because the meshes live in misc/)."
+ },
+ {
+  "name": "explosion_anim_lookat_alpha",
+  "category": "fx",
+  "origin": "Explosion::Explosion (0xb4a90) types 0 and 6",
+  "root": 16821,
+  "rootName": "explosion_anim_lookat_alpha",
+  "children": [
+   {
+    "mesh": 16820,
+    "meshName": "explosion_anim_lookat_add",
+    "role": "add (child)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "billboard": "camera-facing (Explosion::render lookAt)",
+   "transformRadius": 20000.0,
+   "fireStreaks": "addFireStreaks: rand(7)+3 copies of 14292 explosion_debris_anim_add, random rotation (0..360 deg), scale (rand(50)+50)/100, radius 10000",
+   "usedBy": "ship explosions, turret destruction (type 0 + fire streaks), default bombs/mines"
+  },
+  "notes": "Root alpha + additive child."
+ },
+ {
+  "name": "sn_shock_blast_glow_anim_lookat_add",
+  "category": "fx",
+  "origin": "Explosion::Explosion (0xb4a90) type 0xb (BombGun weapon sort 0x2a)",
+  "root": 18996,
+  "rootName": "sn_shock_blast_glow_anim_lookat_add",
+  "children": [
+   {
+    "mesh": 18995,
+    "meshName": "sn_shock_blast_sphere_anim_add",
+    "role": "sphere (separate geometry B, world-oriented)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "note": "two separate AEGeometry objects rendered together; A camera-facing, B not"
+  },
+  "notes": "Not parent/child: geometry A (+4) and B (+8)."
+ },
+ {
+  "name": "asteroid_01_explosion_anim",
+  "category": "fx",
+  "origin": "Explosion::Explosion (0xb4a90) type 2 (asteroid type 0)",
+  "root": 16915,
+  "rootName": "asteroid_explosion_anim_alpha",
+  "children": [
+   {
+    "mesh": 16913,
+    "meshName": "asteroid_01_explosion_anim",
+    "role": "debris mesh (separate geometry B, world-oriented)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "transformRadiusB": 20000.0
+  },
+  "notes": "Geometry A (alpha billboard) and B (debris anim) are separate objects rendered together; both animations start at state (1,0)."
+ },
+ {
+  "name": "asteroid_void_explosion_anim",
+  "category": "fx",
+  "origin": "Explosion::Explosion (0xb4a90) type 3 (asteroid type 1)",
+  "root": 16915,
+  "rootName": "asteroid_explosion_anim_alpha",
+  "children": [
+   {
+    "mesh": 16925,
+    "meshName": "asteroid_void_explosion_anim",
+    "role": "debris mesh (separate geometry B, world-oriented)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "transformRadiusB": 20000.0
+  },
+  "notes": "Geometry A (alpha billboard) and B (debris anim) are separate objects rendered together; both animations start at state (1,0)."
+ },
+ {
+  "name": "v_asteroid_ice_explosion_anim",
+  "category": "fx",
+  "origin": "Explosion::Explosion (0xb4a90) type 4 (asteroid type 2)",
+  "root": 16909,
+  "rootName": "v_asteroid_ice_explosion_anim_alpha",
+  "children": [
+   {
+    "mesh": 16908,
+    "meshName": "v_asteroid_ice_explosion_anim",
+    "role": "debris mesh (separate geometry B, world-oriented)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "transformRadiusB": 20000.0
+  },
+  "notes": "Geometry A (alpha billboard) and B (debris anim) are separate objects rendered together; both animations start at state (1,0)."
+ },
+ {
+  "name": "sn_asteroid_magma_explosion_anim",
+  "category": "fx",
+  "origin": "Explosion::Explosion (0xb4a90) type 5 (asteroid type 3)",
+  "root": 18841,
+  "rootName": "sn_asteroid_magma_explosion_anim_alpha",
+  "children": [
+   {
+    "mesh": 18840,
+    "meshName": "sn_asteroid_magma_explosion_anim",
+    "role": "debris mesh (separate geometry B, world-oriented)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "transformRadiusB": 20000.0
+  },
+  "notes": "Geometry A (alpha billboard) and B (debris anim) are separate objects rendered together; both animations start at state (1,0)."
+ },
+ {
+  "name": "explosion_void_station",
+  "category": "fx",
+  "origin": "LevelScript::LevelScript, campaign mission 0x29 in alien orbit",
+  "root": 14285,
+  "rootName": "explosion_void_station_add",
+  "children": [
+   {
+    "mesh": 14286,
+    "meshName": "explosion_void_station_add_lookat",
+    "role": "add_lookat (separate geometry)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14287,
+    "meshName": "explosion_void_station_alpha_lookat",
+    "role": "alpha_lookat (separate geometry)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Three separate AEGeometry objects (+0xac, +0xb0, +0xb4), all SetAnimationState(1,0)."
+ },
+ {
+  "name": "sn_plasma_gun_fx_valkyrie_beam_anim_add",
+  "category": "fx",
+  "origin": "LevelScript::LevelScript, campaign mission 0x9d at the target station",
+  "root": 19061,
+  "rootName": "sn_plasma_gun_fx_valkyrie_beam_anim_add",
+  "children": [
+   {
+    "mesh": 19062,
+    "meshName": "sn_plasma_gun_fx_valkyrie_cone_anim_add",
+    "role": "cone_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19063,
+    "meshName": "sn_plasma_gun_fx_valkyrie_star_add",
+    "role": "star_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "extraMissing": "also builds 0x4a97 + child 0x4a98 and 0x4a99 + child 0x4a9a (ids 19095-19098) - missing from the resource table"
+  },
+  "notes": "Hidden at start; shown by the script."
+ },
+ {
+  "name": "sn_gas_cloud_green_anim_lookat_add",
+  "category": "misc",
+  "origin": "Level::createGasClouds -> PlayerGasCloud::PlayerGasCloud, plasma type default",
+  "root": 18997,
+  "rootName": "sn_gas_cloud_green_anim_lookat_add",
+  "children": [
+   {
+    "mesh": 19001,
+    "meshName": "sn_plasma_green_anim_lookat_add",
+    "role": "spark billboards (spawned on explode, array +0x134)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "kiGeometryPlaceholder": 14289,
+   "placeholderName": "bra"
+  },
+  "notes": "Cloud and sparks are camera-facing billboards. The KIPlayer geometry passed in is mesh 14289 (bra.fbx) - a placeholder; the cloud is +0x130."
+ },
+ {
+  "name": "sn_gas_cloud_blue_anim_lookat_add",
+  "category": "misc",
+  "origin": "Level::createGasClouds -> PlayerGasCloud::PlayerGasCloud, plasma type 0xca",
+  "root": 18998,
+  "rootName": "sn_gas_cloud_blue_anim_lookat_add",
+  "children": [
+   {
+    "mesh": 19002,
+    "meshName": "sn_plasma_blue_anim_lookat_add",
+    "role": "spark billboards (spawned on explode, array +0x134)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "kiGeometryPlaceholder": 14289,
+   "placeholderName": "bra"
+  },
+  "notes": "Cloud and sparks are camera-facing billboards. The KIPlayer geometry passed in is mesh 14289 (bra.fbx) - a placeholder; the cloud is +0x130."
+ },
+ {
+  "name": "sn_gas_cloud_violet_anim_lookat_add",
+  "category": "misc",
+  "origin": "Level::createGasClouds -> PlayerGasCloud::PlayerGasCloud, plasma type 0xcb",
+  "root": 18999,
+  "rootName": "sn_gas_cloud_violet_anim_lookat_add",
+  "children": [
+   {
+    "mesh": 19003,
+    "meshName": "sn_plasma_violet_anim_lookat_add",
+    "role": "spark billboards (spawned on explode, array +0x134)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "kiGeometryPlaceholder": 14289,
+   "placeholderName": "bra"
+  },
+  "notes": "Cloud and sparks are camera-facing billboards. The KIPlayer geometry passed in is mesh 14289 (bra.fbx) - a placeholder; the cloud is +0x130."
+ },
+ {
+  "name": "sn_gas_cloud_red_anim_lookat_add",
+  "category": "misc",
+  "origin": "Level::createGasClouds -> PlayerGasCloud::PlayerGasCloud, plasma type 0xcc",
+  "root": 19000,
+  "rootName": "sn_gas_cloud_red_anim_lookat_add",
+  "children": [
+   {
+    "mesh": 19004,
+    "meshName": "sn_plasma_red_anim_lookat_add",
+    "role": "spark billboards (spawned on explode, array +0x134)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "kiGeometryPlaceholder": 14289,
+   "placeholderName": "bra"
+  },
+  "notes": "Cloud and sparks are camera-facing billboards. The KIPlayer geometry passed in is mesh 14289 (bra.fbx) - a placeholder; the cloud is +0x130."
+ },
+ {
+  "name": "sun",
+  "category": "suns",
+  "origin": "StarSystem::StarSystem (0x15c200) geometry[0] + StarSystem+0x40; drawn by StarSystem::render/renderSunStreak",
+  "root": 6768,
+  "rootName": "plane",
+  "children": [
+   {
+    "mesh": 6768,
+    "meshName": "plane",
+    "role": "sun streak/glow (separate geometry, additive)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": [
+     0.45776367,
+     0.045776367,
+     0.22888184
+    ]
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": [
+   0.22888184,
+   0.22888184,
+   0.22888184
+  ],
+  "related": {
+   "texture": "DAT_00258960[SolarSystem::getTextureIndex] (u16, stride 4): sun_000..sun_010, sn_supernova; streak uses the same texture",
+   "supernova": "texture 11742 sn_sun_011; scale 0.99182 (mission<0x6a) or 1.37329; streak scale (1.98364, 0.19836, 0.99182); switchSunForSupernovaIntro swaps the sun mesh to 11761 (ring) and the streak (+0x40) to 11762 (core) (sn_sun_explosion_*), textures 11763/11764",
+   "placement": "camera-relative: setRotation(0, slot*0xaaa/65536*2pi, random pitch) then moveForward(-20000); sun slot from DAT_00258e20 or rand(14)+5",
+   "blend": "sun blend mode 2, streak 2",
+   "sunType": "DAT_002589ac[systemIndex] -> StarSystem+0x3c"
+  },
+  "notes": "Billboards on plane mesh 6768; scales are plane x/y/z. Re-oriented to the camera every frame with extra scaling from the lens-flare intensity."
+ },
+ {
+  "name": "planet",
+  "category": "planets",
+  "origin": "StarSystem::StarSystem geometry[1..n] (one per station of the system)",
+  "root": 6768,
+  "rootName": "plane",
+  "children": [
+   {
+    "mesh": 6768,
+    "meshName": "plane",
+    "role": "planet ring (texture 29080 sn_planet_ring.png, blend 1)",
+    "variant": "Status::orbitHasPlanetRing(station)",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "textures": "orbit planet (current station): DAT_00258a34[Station::getTextureIndex] planet_XXX_big; other planets: DAT_00258aa0[...] planet_XXX_small; tutorial 10043",
+   "scaleOrbitPlanet": "(rand(20000)+20000)/65536 (halved in mission 0); texIdx bits 0x21840 -> (rand(15000)+35000)/65536; bits 0x10200 -> (rand(13000)+32500)/65536; planet-ring orbit -> 26000/65536",
+   "scaleOtherPlanets": "(rand(40)*0.01+0.8)*0.035095",
+   "placement": "setRotation(0, slot*0xaaa/65536*2pi, 0) (+ optional 0x8000 yaw), moveForward(-20000), camera-relative"
+  },
+  "notes": "Planets/moons are textured billboards on plane 6768, not meshes."
+ },
+ {
+  "name": "skybox (normal system)",
+  "category": "skyboxes",
+  "origin": "Level::createSpace (skybox block) + Level::renderBG (draw order)",
+  "root": 17800,
+  "rootName": "skybox_000",
+  "children": [
+   {
+    "mesh": 17850,
+    "meshName": "skybox_stars",
+    "role": "stars layer (drawn first, blend 0)",
+    "variant": "mesh 17850 + systemIndex%3, texture 10086 + systemIndex%3",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14375,
+    "meshName": "skybox_asteroid_belt_alpha",
+    "role": "asteroid belt (lit, blend 8, only if graphics option >= 1)",
+    "variant": "system index 24/26 or 25; textures 33410/33411",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18847,
+    "meshName": "sn_skybox_planet_ring_alpha",
+    "role": "planet ring alpha (blend 1)",
+    "variant": "Status::inPlanetRingOrbit; texture 29018",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18848,
+    "meshName": "sn_skybox_storms_anim_add",
+    "role": "storms anim_add (blend 2, random re-rotation each loop)",
+    "variant": "Status::inStormOrbit; texture 29019",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17824,
+    "meshName": "sn_skybox_015_flares_1_anim",
+    "role": "supernova flares 1 anim (blend 2)",
+    "variant": "supernova system, mission < 0x9e; texture 10084 (10085 from mission 0x6a)",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17825,
+    "meshName": "sn_skybox_015_flares_2_anim",
+    "role": "supernova flares 2 anim (blend 2)",
+    "variant": "as flares 1",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "mainSkybox": "mesh 17800 + SolarSystem::getTextureIndex (0..18 -> skybox_000..010, v_skybox_011..013 (17814 = 013 w/ 2nd material), sn_skybox_015..018), texture 10065 + textureIndex, blend 2",
+   "alienOrbit": "stars 17852 + texture 10088; skybox 17810 + texture 10075",
+   "tutorial (mission 0, level type 3)": "skybox 17803 + texture 10068",
+   "supernova system": "mission 0x59: 17805 + 10070; else 17815 sn_skybox_015 + 10080",
+   "rotation": "random Euler angles (Level+0x1a4..0x1ac) seeded by station index; zero in fog-skybox orbits",
+   "specialSwitches": "switchSkyboxForIntro -> 17809; switchSkyboxForSupernovaReversal -> 17800",
+   "postEffect": "texture index > 15 with post effects: mesh field +0x1c = 0.22 (probably glow/bloom factor)"
+  },
+  "notes": "Skybox layers are drawn at infinity (camera translation removed). Not a transform hierarchy; layers in draw order: stars, skybox, planet ring, StarSystem (sun/planets), supernova flares, storms, asteroid belt."
+ }
+]

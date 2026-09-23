@@ -1,0 +1,433 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1795680595655433538
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1176119281034673602}
+  - component: {fileID: 8318138230770337028}
+  - component: {fileID: 5092145739183008680}
+  m_Layer: 0
+  m_Name: battleship_terran
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1176119281034673602
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795680595655433538}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 2}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 6308236518131063382}
+  - {fileID: 3342293268191775942}
+  - {fileID: 3396051114462865286}
+  - {fileID: 703928610852083286}
+  - {fileID: 7265855352121175886}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8318138230770337028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795680595655433538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  rootMeshId: 14311
+  origin: Globals::getShipGroup idx 14 (special branch param_1==0xe)
+  lodDistancesGameUnits:
+  - 35000
+  - 60000
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 2346470690602213189, guid: 0cd452b3a83dec446b0314ce90f9a8e4, type: 3}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!205 &5092145739183008680
+LODGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1795680595655433538}
+  serializedVersion: 3
+  m_LocalReferencePoint: {x: 0, y: -3.6472473, z: 11.065887}
+  m_Size: 1058.9219
+  m_FadeMode: 0
+  m_AnimateCrossFading: 0
+  m_LastLODIsBillboard: 0
+  m_LODs:
+  - screenRelativeHeight: 0.999
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5666519291160543356}
+    - renderer: {fileID: 5277484370895317152}
+    - renderer: {fileID: 3431865607024520187}
+  - screenRelativeHeight: 0.61136883
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5277484370895317152}
+    - renderer: {fileID: 3431865607024520187}
+    - renderer: {fileID: 2030525951244450998}
+  - screenRelativeHeight: 0
+    fadeTransitionWidth: 0
+    renderers:
+    - renderer: {fileID: 5277484370895317152}
+    - renderer: {fileID: 3431865607024520187}
+    - renderer: {fileID: 4994698404785003665}
+  m_Enabled: 1
+  m_GlobalIlluminationLOD: 0
+--- !u!1001 &1790935363037822157
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1176119281034673602}
+    m_Modifications:
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4463991443848800945, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+      propertyPath: m_Name
+      value: battleship_terran_lights_emissive
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+--- !u!4 &3342293268191775942 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3943068864615411723, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+  m_PrefabInstance: {fileID: 1790935363037822157}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &5277484370895317152 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5901908125466350701, guid: fbe81363c38078d48b6f473fed998096, type: 3}
+  m_PrefabInstance: {fileID: 1790935363037822157}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &4035599022874209207
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1176119281034673602}
+    m_Modifications:
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4219406748411651931, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+      propertyPath: m_Name
+      value: battleship_terran_lod_1
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+--- !u!4 &703928610852083286 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3586423008757431777, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+  m_PrefabInstance: {fileID: 4035599022874209207}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &2030525951244450998 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 2606655604423890689, guid: 2d043320792bc2a46bf297ad29fcb698, type: 3}
+  m_PrefabInstance: {fileID: 4035599022874209207}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5724011960979663428
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1176119281034673602}
+    m_Modifications:
+    - target: {fileID: 1418437694499760808, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_Name
+      value: battleship_terran
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+--- !u!23 &5666519291160543356 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 129553019833575992, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+  m_PrefabInstance: {fileID: 5724011960979663428}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &6308236518131063382 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1793731441182306322, guid: 32d8ff807b1616f48938d39832597ecc, type: 3}
+  m_PrefabInstance: {fileID: 5724011960979663428}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6842420671480020466
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1176119281034673602}
+    m_Modifications:
+    - target: {fileID: 3561073004985632774, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_Name
+      value: battleship_terran_lod_2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+--- !u!23 &4994698404785003665 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1992159924140941667, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+  m_PrefabInstance: {fileID: 6842420671480020466}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7265855352121175886 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4188534206497198780, guid: db1c8bcbfb3c26a4c94277cab818c084, type: 3}
+  m_PrefabInstance: {fileID: 6842420671480020466}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6946525210672070685
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1176119281034673602}
+    m_Modifications:
+    - target: {fileID: 4903823018238098721, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_Name
+      value: battleship_terran_lights_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+--- !u!4 &3396051114462865286 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5712307745626482587, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+  m_PrefabInstance: {fileID: 6946525210672070685}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &3431865607024520187 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 5748682513420921830, guid: cd7d6a379e1463e47bd59b0b34f70dfc, type: 3}
+  m_PrefabInstance: {fileID: 6946525210672070685}
+  m_PrefabAsset: {fileID: 0}

@@ -1,0 +1,434 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2850813604497874433
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8669229290578119139}
+  - component: {fileID: 1304810757316401260}
+  m_Layer: 0
+  m_Name: station_kaamo_club
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8669229290578119139
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2850813604497874433}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3858166046810034436}
+  - {fileID: 6371701321371650225}
+  - {fileID: 3050246293101972475}
+  - {fileID: 2397023817384131875}
+  - {fileID: 948962588503772110}
+  - {fileID: 8641047521085255811}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1304810757316401260
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2850813604497874433}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  rootMeshId: 21108
+  origin: PlayerStation::PlayerStation, race==3 branch, index==0x6c (108, Kaamo / Shima)
+  lodDistancesGameUnits: []
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 0}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!1001 &2979417865098135876
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8669229290578119139}
+    m_Modifications:
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8826493386844166991, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+      propertyPath: m_Name
+      value: station_kaamo_club_emissive
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+--- !u!4 &6371701321371650225 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8157655363233907189, guid: fe68668ae0769ad44a1f9b3f738e49f3, type: 3}
+  m_PrefabInstance: {fileID: 2979417865098135876}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5256005578737668042
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8669229290578119139}
+    m_Modifications:
+    - target: {fileID: 7131790734692575315, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_Name
+      value: station_kaamo_club_fx_anim_emissive
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+--- !u!4 &2397023817384131875 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7616402050312942313, guid: 7b839723ccde185408f43891f4eb9f37, type: 3}
+  m_PrefabInstance: {fileID: 5256005578737668042}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &5666778444219233100
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8669229290578119139}
+    m_Modifications:
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5243531534976180792, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+      propertyPath: m_Name
+      value: station_kaamo_club_fx_anim_add
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+--- !u!4 &948962588503772110 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4868132308711913602, guid: f0028342d8a2b854f84f9669f063d048, type: 3}
+  m_PrefabInstance: {fileID: 5666778444219233100}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6674234833330830974
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8669229290578119139}
+    m_Modifications:
+    - target: {fileID: 2323680818314531911, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_Name
+      value: station_kaamo_club_fx_anim_alpha
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+--- !u!4 &8641047521085255811 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 3131285730248527613, guid: a4e9c8122fd480f41963027b9a5ef80f, type: 3}
+  m_PrefabInstance: {fileID: 6674234833330830974}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7937582880496758031
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8669229290578119139}
+    m_Modifications:
+    - target: {fileID: 5829576202769049265, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_Name
+      value: station_kaamo_club
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 80387f7994a046742862f471e8460e09, type: 3}
+--- !u!4 &3858166046810034436 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6605936259018718219, guid: 80387f7994a046742862f471e8460e09, type: 3}
+  m_PrefabInstance: {fileID: 7937582880496758031}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &8032847709875430363
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 8669229290578119139}
+    m_Modifications:
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5648954385474302618, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+      propertyPath: m_Name
+      value: station_kaamo_club_fx_anim
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+--- !u!4 &3050246293101972475 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4985149131780843552, guid: f82f9be6f0f2f3644a60721893fc0d4f, type: 3}
+  m_PrefabInstance: {fileID: 8032847709875430363}
+  m_PrefabAsset: {fileID: 0}

@@ -1,0 +1,4900 @@
+[
+ {
+  "name": "ship_000_midorian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 0 (generic)",
+  "shipIndex": 0,
+  "shipName": "Betty",
+  "root": 17000,
+  "children": [
+   {
+    "mesh": 18700,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17900,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18000,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17100,
+    "distance": 5000,
+    "children": [
+     18000
+    ],
+    "childrenPlayer": [
+     17900
+    ]
+   },
+   {
+    "mesh": 17101,
+    "distance": 13000,
+    "children": [
+     18000
+    ],
+    "childrenPlayer": [
+     17900
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34200,
+   "npc": 32200
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17000
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17102 (None); npc variant (param_3=false): root and LOD meshes get material 32200 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_001_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 1 (generic)",
+  "shipIndex": 1,
+  "shipName": "Teneta",
+  "root": 17001,
+  "children": [
+   {
+    "mesh": 18701,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17901,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18001,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17103,
+    "distance": 5000,
+    "children": [
+     18001
+    ],
+    "childrenPlayer": [
+     17901
+    ]
+   },
+   {
+    "mesh": 17104,
+    "distance": 13000,
+    "children": [
+     18001
+    ],
+    "childrenPlayer": [
+     17901
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34201,
+   "npc": 32201
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17001
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17105 (None); npc variant (param_3=false): root and LOD meshes get material 32201 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_002_pirates",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 2 (generic)",
+  "shipIndex": 2,
+  "shipName": "Hiro",
+  "root": 17002,
+  "children": [
+   {
+    "mesh": 18702,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17902,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18002,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17106,
+    "distance": 5000,
+    "children": [
+     18002
+    ],
+    "childrenPlayer": [
+     17902
+    ]
+   },
+   {
+    "mesh": 17107,
+    "distance": 13000,
+    "children": [
+     18002
+    ],
+    "childrenPlayer": [
+     17902
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34202,
+   "npc": 32202
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17002
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17108 (None); npc variant (param_3=false): root and LOD meshes get material 32202 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_003_midorian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 3 (generic)",
+  "shipIndex": 3,
+  "shipName": "Badger",
+  "root": 17003,
+  "children": [
+   {
+    "mesh": 18703,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17903,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18003,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17109,
+    "distance": 5000,
+    "children": [
+     18003
+    ],
+    "childrenPlayer": [
+     17903
+    ]
+   },
+   {
+    "mesh": 17110,
+    "distance": 13000,
+    "children": [
+     18003
+    ],
+    "childrenPlayer": [
+     17903
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34203,
+   "npc": 32203
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17003
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17111 (None); npc variant (param_3=false): root and LOD meshes get material 32203 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_004_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 4 (generic)",
+  "shipIndex": 4,
+  "shipName": "Dace",
+  "root": 17004,
+  "children": [
+   {
+    "mesh": 18704,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17904,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18004,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17112,
+    "distance": 5000,
+    "children": [
+     18004
+    ],
+    "childrenPlayer": [
+     17904
+    ]
+   },
+   {
+    "mesh": 17113,
+    "distance": 13000,
+    "children": [
+     18004
+    ],
+    "childrenPlayer": [
+     17904
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34204,
+   "npc": 32204
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17004,
+    18704
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17114 (None); npc variant (param_3=false): root and LOD meshes get material 32204 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_005_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 5 (generic)",
+  "shipIndex": 5,
+  "shipName": "Inflict",
+  "root": 17005,
+  "children": [
+   {
+    "mesh": 18705,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17905,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18005,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17115,
+    "distance": 5000,
+    "children": [
+     18005
+    ],
+    "childrenPlayer": [
+     17905
+    ]
+   },
+   {
+    "mesh": 17116,
+    "distance": 13000,
+    "children": [
+     18005
+    ],
+    "childrenPlayer": [
+     17905
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34205,
+   "npc": 32205
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17005
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17117 (None); npc variant (param_3=false): root and LOD meshes get material 32205 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_006_midorian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 6 (generic)",
+  "shipIndex": 6,
+  "shipName": "Hector",
+  "root": 17006,
+  "children": [
+   {
+    "mesh": 18706,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17906,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18006,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17118,
+    "distance": 5000,
+    "children": [
+     18006
+    ],
+    "childrenPlayer": [
+     17906
+    ]
+   },
+   {
+    "mesh": 17119,
+    "distance": 13000,
+    "children": [
+     18006
+    ],
+    "childrenPlayer": [
+     17906
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34206,
+   "npc": 32206
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17006
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17120 (None); npc variant (param_3=false): root and LOD meshes get material 32206 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_007_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 7 (generic)",
+  "shipIndex": 7,
+  "shipName": "Anaan",
+  "root": 17007,
+  "children": [
+   {
+    "mesh": 18707,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17907,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18007,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17121,
+    "distance": 5000,
+    "children": [
+     18007
+    ],
+    "childrenPlayer": [
+     17907
+    ]
+   },
+   {
+    "mesh": 17122,
+    "distance": 13000,
+    "children": [
+     18007
+    ],
+    "childrenPlayer": [
+     17907
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34207,
+   "npc": 32207
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17007
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17123 (None); npc variant (param_3=false): root and LOD meshes get material 32207 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_008_void",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 8 (generic)",
+  "shipIndex": 8,
+  "shipName": "VoidX",
+  "root": 17008,
+  "children": [
+   {
+    "mesh": 18708,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17908,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18008,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17124,
+    "distance": 5000,
+    "children": [
+     18708,
+     18008
+    ],
+    "childrenPlayer": [
+     18708,
+     17908
+    ]
+   },
+   {
+    "mesh": 17125,
+    "distance": 13000,
+    "children": [
+     18708,
+     18008
+    ],
+    "childrenPlayer": [
+     18708,
+     17908
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34208,
+   "npc": 32208
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17008,
+    18708
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17126 (None); npc variant (param_3=false): root and LOD meshes get material 32208 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_009_vossk",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 9 (generic)",
+  "shipIndex": 9,
+  "shipName": "H'Soc",
+  "root": 17009,
+  "children": [
+   {
+    "mesh": 18709,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17909,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18009,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17127,
+    "distance": 5000,
+    "children": [
+     18709,
+     18009
+    ],
+    "childrenPlayer": [
+     18709,
+     17909
+    ]
+   },
+   {
+    "mesh": 17128,
+    "distance": 13000,
+    "children": [
+     18709,
+     18009
+    ],
+    "childrenPlayer": [
+     18709,
+     17909
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34209,
+   "npc": 32209
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17009,
+    18709
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17128 (Models/main/ships/ship_009_vossk_lod_2.fbx); npc variant (param_3=false): root and LOD meshes get material 32209 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_010_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 10 (generic)",
+  "shipIndex": 10,
+  "shipName": "Phantom",
+  "root": 17010,
+  "children": [
+   {
+    "mesh": 18710,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17910,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18010,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17130,
+    "distance": 5000,
+    "children": [
+     18010
+    ],
+    "childrenPlayer": [
+     17910
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34210,
+   "npc": 32210
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17010
+   ]
+  },
+  "notes": "npc variant (param_3=false): root and LOD meshes get material 32210 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_011_pirates",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 11 (generic)",
+  "shipIndex": 11,
+  "shipName": "Hernstein",
+  "root": 17011,
+  "children": [
+   {
+    "mesh": 18711,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17911,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18011,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17133,
+    "distance": 5000,
+    "children": [
+     18011
+    ],
+    "childrenPlayer": [
+     17911
+    ]
+   },
+   {
+    "mesh": 17134,
+    "distance": 13000,
+    "children": [
+     18011
+    ],
+    "childrenPlayer": [
+     17911
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34211,
+   "npc": 32211
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17011
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17135 (None); npc variant (param_3=false): root and LOD meshes get material 32211 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_012_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 12 (generic)",
+  "shipIndex": 12,
+  "shipName": "Type 43",
+  "root": 17012,
+  "children": [
+   {
+    "mesh": 18712,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17912,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18012,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17136,
+    "distance": 5000,
+    "children": [
+     18012
+    ],
+    "childrenPlayer": [
+     17912
+    ]
+   },
+   {
+    "mesh": 17137,
+    "distance": 13000,
+    "children": [
+     18012
+    ],
+    "childrenPlayer": [
+     17912
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34212,
+   "npc": 32212
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17012,
+    18712
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17138 (None); npc variant (param_3=false): root and LOD meshes get material 32212 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "cargo_004_vossk",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 13 (special branch param_1==0xd)",
+  "shipIndex": 13,
+  "shipName": "Vossk freighter (ships.json '-')",
+  "root": 17013,
+  "children": [
+   {
+    "mesh": 18713,
+    "role": "lights_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17038,
+    "role": "engine",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17139,
+    "distance": 35000,
+    "children": [
+     17040,
+     17038
+    ]
+   },
+   {
+    "mesh": 17140,
+    "distance": 45000,
+    "children": [
+     17041,
+     17038
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "lodManaged": true,
+  "scale": null,
+  "related": {
+   "explosion": 18303,
+   "explosionNote": "cargo_004_vossk_explosion_anim: wreck mesh via PlayerFixedObject::setWreckedMeshId, chosen by race 1 (Vossk) in Level::createShip; wreck collision index 4 (Globals::getWreckCollision)",
+   "hangarPreview": [
+    17013
+   ]
+  },
+  "notes": "same for player/npc (param_2/param_3 ignored, no material swap). LOD child meshes 17040/17041 are not in resources.json (nor in the emulated resource list). setLodLastVisibleDistance not called => never distance-culled. Generic table entries for idx 13 (LOD 17139/17140/17141, LOD children 17040/17041/17042) are dead data."
+ },
+ {
+  "name": "battleship_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 14 (special branch param_1==0xe)",
+  "shipIndex": 14,
+  "shipName": "Terran battleship (ships.json '-')",
+  "root": 14311,
+  "children": [
+   {
+    "mesh": 14316,
+    "role": "lights_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14315,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 14312,
+    "distance": 35000,
+    "children": [
+     14316,
+     14315
+    ]
+   },
+   {
+    "mesh": 14313,
+    "distance": 60000,
+    "children": [
+     14316,
+     14315
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "lodManaged": true,
+  "scale": [
+   2.0,
+   2.0,
+   2.0
+  ],
+  "related": {
+   "explosion": 18304,
+   "explosionNote": "battleship_terran_explosion_anim; Level::createShip race 0 && ship 0xe; 11 bounding boxes; wreck collision index 0",
+   "hangarPreview": [
+    17014
+   ]
+  },
+  "notes": "AEGeometry::setScaling(2.0,2.0,2.0) (floats recovered from disassembly: r1=r2=r3=0x40000000 at 0xf97a4, softfp ABI). No engine child is attached even though Models/main/ships/battleship_terran_engine_add.fbx exists (it has no resource id). Same for player/npc; no material swap; never distance-culled. Generic table entries for idx 14 (root 17014, LOD 17142-17144) are dead data and missing."
+ },
+ {
+  "name": "cargo_003_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 15, param_2(race)==0 (Terran)",
+  "shipIndex": 15,
+  "variantKey": "race=0",
+  "root": 17065,
+  "children": [
+   {
+    "mesh": 17070,
+    "role": "lights_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17074,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17069,
+    "role": "engine",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17066,
+    "distance": 25000,
+    "children": [
+     17070,
+     17069
+    ]
+   },
+   {
+    "mesh": 17067,
+    "distance": 45000,
+    "children": [
+     17070,
+     17069
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "lodManaged": true,
+  "scale": null,
+  "related": {
+   "explosion": 18302,
+   "explosionNote": "cargo_003_terran_explosion_anim; Level::createShip race 0 (non-battleship); wreck collision index 3",
+   "hangarPreview": [
+    17015
+   ]
+  },
+  "notes": "same for player/npc; no material swap; never distance-culled. LOD levels drop the lights_add (17074) but keep lights_emissive + engine."
+ },
+ {
+  "name": "cargo_002_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 15, param_2(race) not 0/3 (Nivelian=2; Vossk=1 would also land here)",
+  "shipIndex": 15,
+  "variantKey": "race=2 (any race other than 0 and 3)",
+  "root": 17060,
+  "children": [
+   {
+    "mesh": 17061,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17064,
+    "role": "engine",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17062,
+    "distance": 35000,
+    "children": [
+     17064
+    ]
+   },
+   {
+    "mesh": 17063,
+    "distance": 60000,
+    "children": [
+     17064
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "lodManaged": true,
+  "scale": null,
+  "related": {
+   "explosion": 18301,
+   "explosionNote": "cargo_002_nivelian_explosion_anim; Level::createShip race 2; wreck collision index 2 (race 1 would get 18303)",
+   "hangarPreview": [
+    17015
+   ]
+  },
+  "notes": "No setLodChildMeshes: LOD levels show only the LOD hull + engine (lights dropped). Same for player/npc; never distance-culled."
+ },
+ {
+  "name": "cargo_001_midorian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 15, param_2(race)==3 (Midorian)",
+  "shipIndex": 15,
+  "variantKey": "race=3",
+  "root": 17049,
+  "children": [
+   {
+    "mesh": 17055,
+    "role": "lights_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 17052,
+    "role": "container",
+    "variant": "random: container #1 present if nextInt(4)>=1",
+    "position": [
+     0,
+     0,
+     -2150
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "root",
+    "absolutePosition": [
+     0,
+     0,
+     -2150
+    ],
+    "boundingRadiusOverride": 100000.0,
+    "lodTwin": 17053
+   },
+   {
+    "mesh": 17052,
+    "role": "container",
+    "variant": "random: container #2 present if nextInt(4)>=2",
+    "position": [
+     0,
+     0,
+     2150
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "container #1",
+    "absolutePosition": [
+     0,
+     0,
+     0
+    ],
+    "lodTwin": 17053
+   },
+   {
+    "mesh": 17052,
+    "role": "container",
+    "variant": "random: container #3 present if nextInt(4)==3",
+    "position": [
+     0,
+     0,
+     4300
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "container #1",
+    "absolutePosition": [
+     0,
+     0,
+     2150
+    ],
+    "lodTwin": 17053
+   },
+   {
+    "mesh": 17054,
+    "role": "engine",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17050,
+    "distance": 35000,
+    "children": [
+     17054
+    ],
+    "childTransform": "container_lod_1 chain: 17053 at the same local positions/parenting as the containers above"
+   }
+  ],
+  "lastVisibleDistance": null,
+  "lodManaged": true,
+  "scale": null,
+  "related": {
+   "explosion": 18300,
+   "explosionNote": "cargo_001_midorian_explosion_anim; Level::createShip race 3; wreck collision index 1",
+   "hangarPreview": [
+    17015
+   ]
+  },
+  "notes": "Container count = AERandom::nextInt(4) (0..3). Each container is a transform with 17052 plus a parallel transform with 17053 (container_lod_1); both get local translation (0,0,z), z = -2150 (i=0), +2150 (i=1), +4300 (i=2) (recovered from disassembly: vldr s16=-2150.0 @0xf98c0, table @0xf9c84 = {4300.0, 2150.0}; x=y=0 passed as r2=r3=0). Containers #2/#3 are children of container #1, so absolute Z = 0 and +2150. Only the full-detail chain is added to the root; the lod_1 chain goes to the LOD transform via setLodChildTransform (called with -1 when there are 0 containers). First container transform: Transform+0xe0 (bounding-sphere radius used by Transform::InCameraVF) = 100000.0 to stop frustum culling. 17051 (cargo_001_midorian_lod_2) is unused (1 LOD only). Same for player/npc; never distance-culled."
+ },
+ {
+  "name": "ship_016_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 16 (generic)",
+  "shipIndex": 16,
+  "shipName": "Kinzer",
+  "root": 17016,
+  "children": [
+   {
+    "mesh": 18716,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17916,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18016,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17148,
+    "distance": 5000,
+    "children": [
+     18016
+    ],
+    "childrenPlayer": [
+     17916
+    ]
+   },
+   {
+    "mesh": 17149,
+    "distance": 13000,
+    "children": [
+     18016
+    ],
+    "childrenPlayer": [
+     17916
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34216,
+   "npc": 32216
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17016,
+    18716
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17150 (None); npc variant (param_3=false): root and LOD meshes get material 32216 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_017_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 17 (generic)",
+  "shipIndex": 17,
+  "shipName": "Ward",
+  "root": 17017,
+  "children": [
+   {
+    "mesh": 18717,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17917,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18017,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17151,
+    "distance": 5000,
+    "children": [
+     18017
+    ],
+    "childrenPlayer": [
+     17917
+    ]
+   },
+   {
+    "mesh": 17152,
+    "distance": 13000,
+    "children": [
+     18017
+    ],
+    "childrenPlayer": [
+     17917
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34217,
+   "npc": 32217
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17017
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17153 (None); npc variant (param_3=false): root and LOD meshes get material 32217 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_018_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 18 (generic)",
+  "shipIndex": 18,
+  "shipName": "Hatsuyuki",
+  "root": 17018,
+  "children": [
+   {
+    "mesh": 18718,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17918,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18018,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17154,
+    "distance": 5000,
+    "children": [
+     18018
+    ],
+    "childrenPlayer": [
+     17918
+    ]
+   },
+   {
+    "mesh": 17155,
+    "distance": 13000,
+    "children": [
+     18018
+    ],
+    "childrenPlayer": [
+     17918
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34218,
+   "npc": 32218
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17018,
+    18718
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17156 (None); npc variant (param_3=false): root and LOD meshes get material 32218 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_019_midorian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 19 (generic)",
+  "shipIndex": 19,
+  "shipName": "Nuyang II",
+  "root": 17019,
+  "children": [
+   {
+    "mesh": 18719,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17919,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18019,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17157,
+    "distance": 5000,
+    "children": [
+     18019
+    ],
+    "childrenPlayer": [
+     17919
+    ]
+   },
+   {
+    "mesh": 17158,
+    "distance": 13000,
+    "children": [
+     18019
+    ],
+    "childrenPlayer": [
+     17919
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34219,
+   "npc": 32219
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17019
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17159 (None); npc variant (param_3=false): root and LOD meshes get material 32219 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_020_midorian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 20 (generic)",
+  "shipIndex": 20,
+  "shipName": "Cicero",
+  "root": 17020,
+  "children": [
+   {
+    "mesh": 18720,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17920,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18020,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17160,
+    "distance": 5000,
+    "children": [
+     18020
+    ],
+    "childrenPlayer": [
+     17920
+    ]
+   },
+   {
+    "mesh": 17161,
+    "distance": 13000,
+    "children": [
+     18020
+    ],
+    "childrenPlayer": [
+     17920
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34220,
+   "npc": 32220
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17020
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17162 (None); npc variant (param_3=false): root and LOD meshes get material 32220 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_021_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 21 (generic)",
+  "shipIndex": 21,
+  "shipName": "Aegir",
+  "root": 17021,
+  "children": [
+   {
+    "mesh": 18721,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17921,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18021,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17163,
+    "distance": 5000,
+    "children": [
+     18021
+    ],
+    "childrenPlayer": [
+     17921
+    ]
+   },
+   {
+    "mesh": 17164,
+    "distance": 13000,
+    "children": [
+     18021
+    ],
+    "childrenPlayer": [
+     17921
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34221,
+   "npc": 32221
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17021,
+    18721
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17165 (None); npc variant (param_3=false): root and LOD meshes get material 32221 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_022_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 22 (generic)",
+  "shipIndex": 22,
+  "shipName": "Groza",
+  "root": 17022,
+  "children": [
+   {
+    "mesh": 18722,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17922,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18022,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17166,
+    "distance": 5000,
+    "children": [
+     18022
+    ],
+    "childrenPlayer": [
+     17922
+    ]
+   },
+   {
+    "mesh": 17167,
+    "distance": 13000,
+    "children": [
+     18022
+    ],
+    "childrenPlayer": [
+     17922
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34222,
+   "npc": 32222
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17022
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17168 (None); npc variant (param_3=false): root and LOD meshes get material 32222 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_023_pirates",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 23 (generic)",
+  "shipIndex": 23,
+  "shipName": "Azov",
+  "root": 17023,
+  "children": [
+   {
+    "mesh": 18723,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17923,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18023,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17169,
+    "distance": 5000,
+    "children": [
+     18023
+    ],
+    "childrenPlayer": [
+     17923
+    ]
+   },
+   {
+    "mesh": 17170,
+    "distance": 13000,
+    "children": [
+     18023
+    ],
+    "childrenPlayer": [
+     17923
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34223,
+   "npc": 32223
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17023
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17171 (None); npc variant (param_3=false): root and LOD meshes get material 32223 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_024_pirates",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 24 (generic)",
+  "shipIndex": 24,
+  "shipName": "Velasco",
+  "root": 17024,
+  "children": [
+   {
+    "mesh": 18724,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17924,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18024,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17172,
+    "distance": 5000,
+    "children": [
+     18024
+    ],
+    "childrenPlayer": [
+     17924
+    ]
+   },
+   {
+    "mesh": 17173,
+    "distance": 13000,
+    "children": [
+     18024
+    ],
+    "childrenPlayer": [
+     17924
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34224,
+   "npc": 32224
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17024
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17174 (None); npc variant (param_3=false): root and LOD meshes get material 32224 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_025_pirates",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 25 (generic)",
+  "shipIndex": 25,
+  "shipName": "Tyrion",
+  "root": 17025,
+  "children": [
+   {
+    "mesh": 18725,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17925,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18025,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17175,
+    "distance": 5000,
+    "children": [
+     18025
+    ],
+    "childrenPlayer": [
+     17925
+    ]
+   },
+   {
+    "mesh": 17176,
+    "distance": 13000,
+    "children": [
+     18025
+    ],
+    "childrenPlayer": [
+     17925
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34225,
+   "npc": 32225
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17025
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17177 (None); npc variant (param_3=false): root and LOD meshes get material 32225 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_026_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 26 (generic)",
+  "shipIndex": 26,
+  "shipName": "Hera",
+  "root": 17026,
+  "children": [
+   {
+    "mesh": 18726,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17926,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18026,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17178,
+    "distance": 5000,
+    "children": [
+     18026
+    ],
+    "childrenPlayer": [
+     17926
+    ]
+   },
+   {
+    "mesh": 17179,
+    "distance": 13000,
+    "children": [
+     18026
+    ],
+    "childrenPlayer": [
+     17926
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34226,
+   "npc": 32226
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17026
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17180 (None); npc variant (param_3=false): root and LOD meshes get material 32226 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_027_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 27 (generic)",
+  "shipIndex": 27,
+  "shipName": "Taipan",
+  "root": 17027,
+  "children": [
+   {
+    "mesh": 18727,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17927,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18027,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17181,
+    "distance": 5000,
+    "children": [
+     18027
+    ],
+    "childrenPlayer": [
+     17927
+    ]
+   },
+   {
+    "mesh": 17182,
+    "distance": 13000,
+    "children": [
+     18027
+    ],
+    "childrenPlayer": [
+     17927
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34227,
+   "npc": 32227
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17027
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17183 (None); npc variant (param_3=false): root and LOD meshes get material 32227 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_028_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 28 (generic)",
+  "shipIndex": 28,
+  "shipName": "Veteran",
+  "root": 17028,
+  "children": [
+   {
+    "mesh": 18728,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17928,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18028,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17184,
+    "distance": 5000,
+    "children": [
+     18028
+    ],
+    "childrenPlayer": [
+     17928
+    ]
+   },
+   {
+    "mesh": 17185,
+    "distance": 13000,
+    "children": [
+     18028
+    ],
+    "childrenPlayer": [
+     17928
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34228,
+   "npc": 32228
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17028
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17186 (None); npc variant (param_3=false): root and LOD meshes get material 32228 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_029_pirates",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 29 (generic)",
+  "shipIndex": 29,
+  "shipName": "Mantis",
+  "root": 17029,
+  "children": [
+   {
+    "mesh": 18729,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17929,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18029,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17187,
+    "distance": 5000,
+    "children": [
+     18029
+    ],
+    "childrenPlayer": [
+     17929
+    ]
+   },
+   {
+    "mesh": 17188,
+    "distance": 13000,
+    "children": [
+     18029
+    ],
+    "childrenPlayer": [
+     17929
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34229,
+   "npc": 32229
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17029
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17189 (None); npc variant (param_3=false): root and LOD meshes get material 32229 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_030_midorian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 30 (generic)",
+  "shipIndex": 30,
+  "shipName": "Berger CrossXT",
+  "root": 17030,
+  "children": [
+   {
+    "mesh": 18730,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17930,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18030,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17190,
+    "distance": 5000,
+    "children": [
+     18030
+    ],
+    "childrenPlayer": [
+     17930
+    ]
+   },
+   {
+    "mesh": 17191,
+    "distance": 13000,
+    "children": [
+     18030
+    ],
+    "childrenPlayer": [
+     17930
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34230,
+   "npc": 32230
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17030
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17192 (None); npc variant (param_3=false): root and LOD meshes get material 32230 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_031_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 31 (generic)",
+  "shipIndex": 31,
+  "shipName": "Salvéhn",
+  "root": 17031,
+  "children": [
+   {
+    "mesh": 18731,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17931,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18031,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17193,
+    "distance": 5000,
+    "children": [
+     18031
+    ],
+    "childrenPlayer": [
+     17931
+    ]
+   },
+   {
+    "mesh": 17194,
+    "distance": 13000,
+    "children": [
+     18031
+    ],
+    "childrenPlayer": [
+     17931
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34231,
+   "npc": 32231
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17031,
+    18731
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17195 (None); npc variant (param_3=false): root and LOD meshes get material 32231 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_032_pirates",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 32 (generic)",
+  "shipIndex": 32,
+  "shipName": "Wasp",
+  "root": 17032,
+  "children": [
+   {
+    "mesh": 18732,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17932,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18032,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17196,
+    "distance": 5000,
+    "children": [
+     18032
+    ],
+    "childrenPlayer": [
+     17932
+    ]
+   },
+   {
+    "mesh": 17197,
+    "distance": 13000,
+    "children": [
+     18032
+    ],
+    "childrenPlayer": [
+     17932
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34232,
+   "npc": 32232
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17032
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17198 (None); npc variant (param_3=false): root and LOD meshes get material 32232 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_033_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 33 (generic)",
+  "shipIndex": 33,
+  "shipName": "Furious",
+  "root": 17033,
+  "children": [
+   {
+    "mesh": 18733,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17933,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18033,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17199,
+    "distance": 5000,
+    "children": [
+     18033
+    ],
+    "childrenPlayer": [
+     17933
+    ]
+   },
+   {
+    "mesh": 17200,
+    "distance": 13000,
+    "children": [
+     18033
+    ],
+    "childrenPlayer": [
+     17933
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34233,
+   "npc": 32233
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17033
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17201 (None); npc variant (param_3=false): root and LOD meshes get material 32233 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_034_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 34 (generic)",
+  "shipIndex": 34,
+  "shipName": "Razor 6",
+  "root": 17034,
+  "children": [
+   {
+    "mesh": 18734,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17934,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18034,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17202,
+    "distance": 5000,
+    "children": [
+     18034
+    ],
+    "childrenPlayer": [
+     17934
+    ]
+   },
+   {
+    "mesh": 17203,
+    "distance": 13000,
+    "children": [
+     18034
+    ],
+    "childrenPlayer": [
+     17934
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34234,
+   "npc": 32234
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17034
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17204 (None); npc variant (param_3=false): root and LOD meshes get material 32234 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_035_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 35 (generic)",
+  "shipIndex": 35,
+  "shipName": "Night Owl",
+  "root": 17035,
+  "children": [
+   {
+    "mesh": 18735,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17935,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18035,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17205,
+    "distance": 5000,
+    "children": [
+     18035
+    ],
+    "childrenPlayer": [
+     17935
+    ]
+   },
+   {
+    "mesh": 17206,
+    "distance": 13000,
+    "children": [
+     18035
+    ],
+    "childrenPlayer": [
+     17935
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34235,
+   "npc": 32235
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17035,
+    18735
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17207 (None); npc variant (param_3=false): root and LOD meshes get material 32235 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "ship_036_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 36 (generic)",
+  "shipIndex": 36,
+  "shipName": "Cormorant",
+  "root": 17036,
+  "children": [
+   {
+    "mesh": 18736,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17936,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18036,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17208,
+    "distance": 5000,
+    "children": [
+     18036
+    ],
+    "childrenPlayer": [
+     17936
+    ]
+   },
+   {
+    "mesh": 17209,
+    "distance": 13000,
+    "children": [
+     18036
+    ],
+    "childrenPlayer": [
+     17936
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34236,
+   "npc": 32236
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17036
+   ]
+  },
+  "notes": "third LOD column (never read by code) = 17210 (None); npc variant (param_3=false): root and LOD meshes get material 32236 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial)"
+ },
+ {
+  "name": "v_ship_037_deep_science",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 37 (generic)",
+  "shipIndex": 37,
+  "shipName": "Cronus",
+  "root": 17211,
+  "children": [
+   {
+    "mesh": 17215,
+    "role": "lights_anim",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17937,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18037,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34237,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17211
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32237 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32237 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "v_ship_038_deep_science",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 38 (generic)",
+  "shipIndex": 38,
+  "shipName": "Typhon",
+  "root": 17216,
+  "children": [
+   {
+    "mesh": 18738,
+    "role": "lights_anim",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17938,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18038,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34238,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17216
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32238 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32238 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "v_ship_039_vossk",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 39 (generic)",
+  "shipIndex": 39,
+  "shipName": "S'Kanarr",
+  "root": 17221,
+  "children": [
+   {
+    "mesh": 18739,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18039,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17222,
+    "distance": 5000,
+    "children": [
+     18039
+    ],
+    "childrenPlayer": [
+     18739
+    ]
+   },
+   {
+    "mesh": 17223,
+    "distance": 13000,
+    "children": [
+     18039
+    ],
+    "childrenPlayer": [
+     18739
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34239,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17221,
+    18739
+   ]
+  },
+  "notes": "player variant (param_3=true): code skips the engine child for idx 0x27/0x29 (no engine_glow mesh exists), so the last child (shown at LOD levels, toggled by setExhaustVisible/cloak) is the lights mesh; npc variant (param_3=false): root and LOD meshes get material 32239 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32239 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "v_ship_040_deep_science",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 40 (generic)",
+  "shipIndex": 40,
+  "shipName": "Nemesis",
+  "root": 17227,
+  "children": [
+   {
+    "mesh": 17231,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17940,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18040,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34240,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17227
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32240 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32240 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "v_ship_041_vossk",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 41 (generic)",
+  "shipIndex": 41,
+  "shipName": "K'Suukk",
+  "root": 17233,
+  "children": [
+   {
+    "mesh": 18741,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18041,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 17234,
+    "distance": 5000,
+    "children": [
+     18041
+    ],
+    "childrenPlayer": [
+     18741
+    ]
+   },
+   {
+    "mesh": 17235,
+    "distance": 13000,
+    "children": [
+     18041
+    ],
+    "childrenPlayer": [
+     18741
+    ]
+   }
+  ],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34241,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17233,
+    18741
+   ]
+  },
+  "notes": "player variant (param_3=true): code skips the engine child for idx 0x27/0x29 (no engine_glow mesh exists), so the last child (shown at LOD levels, toggled by setExhaustVisible/cloak) is the lights mesh; npc variant (param_3=false): root and LOD meshes get material 32241 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32241 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "ship_042_retro",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 42 (generic)",
+  "shipIndex": 42,
+  "shipName": "Vol Noor",
+  "root": 17239,
+  "children": [
+   {
+    "mesh": 18742,
+    "role": "unknown (mesh missing)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17243,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17942,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18042,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34242,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17239,
+    18742
+   ]
+  },
+  "notes": "mesh ids not in resources.json: 18042 (npc engine_add), 18742; no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32242 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32242 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "ship_043_retro",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 43 (generic)",
+  "shipIndex": 43,
+  "shipName": "Wraith",
+  "root": 17245,
+  "children": [
+   {
+    "mesh": 18743,
+    "role": "unknown (mesh missing)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17249,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17943,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18043,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34243,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17245,
+    18743
+   ]
+  },
+  "notes": "mesh ids not in resources.json: 18043 (npc engine_add), 18743; no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32243 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32243 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_044_elite_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 44 (generic)",
+  "shipIndex": 44,
+  "shipName": "Specter",
+  "root": 17251,
+  "children": [
+   {
+    "mesh": 18779,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17944,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18044,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34244,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17251
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32244 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32244 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_045_most_wanted",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 45 (generic)",
+  "shipIndex": 45,
+  "shipName": "Bloodstar",
+  "root": 17257,
+  "children": [
+   {
+    "mesh": 18811,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17945,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18045,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34245,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17257
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32245 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32245 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_046_most_wanted",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 46 (generic)",
+  "shipIndex": 46,
+  "shipName": "Blue Fyre",
+  "root": 17263,
+  "children": [
+   {
+    "mesh": 18812,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17946,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18046,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34246,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17263
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32246 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32246 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_047_most_wanted",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 47 (generic)",
+  "shipIndex": 47,
+  "shipName": "Gator Custom",
+  "root": 17269,
+  "children": [
+   {
+    "mesh": 18813,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17947,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18047,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34247,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17269
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32247 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32247 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_048_most_wanted",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 48 (generic)",
+  "shipIndex": 48,
+  "shipName": "Amboss",
+  "root": 17275,
+  "children": [
+   {
+    "mesh": 18780,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17948,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18048,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34248,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17275
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32248 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32248 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_049_boss_nivelian",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 49 (generic)",
+  "shipIndex": 49,
+  "shipName": "Scimitar",
+  "root": 17281,
+  "children": [
+   {
+    "mesh": 17286,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17949,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18049,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34249,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17281,
+    17286
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32249 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32249 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "ship_050_unused",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 50 (generic)",
+  "shipIndex": 50,
+  "shipName": "-",
+  "root": 17287,
+  "children": [
+   {
+    "mesh": 17292,
+    "role": "unknown (mesh missing)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17291,
+    "role": "unknown (mesh missing)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17950,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18050,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": null,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17287,
+    17292
+   ]
+  },
+  "notes": "unused ship slot (ships.json name '-'); none of its meshes exist. mesh ids not in resources.json: 17287, 17291, 17292, 17950 (player engine_glow_add), 18050 (npc engine_add); no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32250 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32250 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_051_dropship_terran",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 51 (generic)",
+  "shipIndex": 51,
+  "shipName": "Rhino",
+  "root": 17293,
+  "children": [
+   {
+    "mesh": 18814,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17951,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18051,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34251,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17293
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32251 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32251 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_052_retro",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 52 (generic)",
+  "shipIndex": 52,
+  "shipName": "Gryphon",
+  "root": 17299,
+  "children": [
+   {
+    "mesh": 18815,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17952,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18052,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34252,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17299
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32252 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32252 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "ship_053_unused",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 53 (generic)",
+  "shipIndex": 53,
+  "shipName": "-",
+  "root": 17305,
+  "children": [
+   {
+    "mesh": 17310,
+    "role": "unknown (mesh missing)",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17953,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18053,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": null,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17305,
+    17310
+   ]
+  },
+  "notes": "unused ship slot (ships.json name '-'); none of its meshes exist. mesh ids not in resources.json: 17305, 17310, 17953 (player engine_glow_add), 18053 (npc engine_add); no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32253 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32253 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_054_vossk",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 54 (generic)",
+  "shipIndex": 54,
+  "shipName": "Na'srrk",
+  "root": 17311,
+  "children": [
+   {
+    "mesh": 17316,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 17954,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18054,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34254,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17311,
+    17316
+   ]
+  },
+  "notes": "no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32254 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32254 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_055_modified",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 55 (generic)",
+  "shipIndex": 55,
+  "shipName": "Groza Mk II",
+  "root": 17317,
+  "children": [
+   {
+    "mesh": 18818,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18818,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17955,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18055,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34255,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17317,
+    18818
+   ]
+  },
+  "notes": "B (unique instance) and C tables reference the same lights mesh, so it is attached twice (double additive brightness in the original); mesh ids not in resources.json: 18055 (npc engine_add); no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32255 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32255 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_056_modified",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 56 (generic)",
+  "shipIndex": 56,
+  "shipName": "Berger Cross Special",
+  "root": 17323,
+  "children": [
+   {
+    "mesh": 18819,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18819,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17956,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18056,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34256,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17323,
+    18819
+   ]
+  },
+  "notes": "B (unique instance) and C tables reference the same lights mesh, so it is attached twice (double additive brightness in the original); mesh ids not in resources.json: 18056 (npc engine_add); no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32256 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32256 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_057_modified",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 57 (generic)",
+  "shipIndex": 57,
+  "shipName": "Kinzer RS",
+  "root": 17329,
+  "children": [
+   {
+    "mesh": 18820,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18820,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17957,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18057,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34257,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17329,
+    18820
+   ]
+  },
+  "notes": "B (unique instance) and C tables reference the same lights mesh, so it is attached twice (double additive brightness in the original); mesh ids not in resources.json: 18057 (npc engine_add); no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32257 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32257 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_058_modified",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 58 (generic)",
+  "shipIndex": 58,
+  "shipName": "Phantom XT",
+  "root": 17335,
+  "children": [
+   {
+    "mesh": 18821,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18821,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17958,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18058,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34258,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17335,
+    18821
+   ]
+  },
+  "notes": "B (unique instance) and C tables reference the same lights mesh, so it is attached twice (double additive brightness in the original); mesh ids not in resources.json: 18058 (npc engine_add); no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32258 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32258 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_059_modified",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 59 (generic)",
+  "shipIndex": 59,
+  "shipName": "Teneta R.E.D.",
+  "root": 17341,
+  "children": [
+   {
+    "mesh": 18822,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18822,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17959,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18059,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": false,
+  "scale": null,
+  "materials": {
+   "player": 34259,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17341,
+    18822
+   ]
+  },
+  "notes": "B (unique instance) and C tables reference the same lights mesh, so it is attached twice (double additive brightness in the original); mesh ids not in resources.json: 18059 (npc engine_add); no LOD meshes => hasLod() false => never added to LODManager, so lastVisibleDistance is inert (always visible); npc variant (param_3=false): root get material 32259 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32259 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "sn_ship_060_modified",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 60 (generic)",
+  "shipIndex": 60,
+  "shipName": "Darkzov",
+  "root": 17347,
+  "children": [
+   {
+    "mesh": 18823,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18823,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17960,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18060,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34260,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17347,
+    18823
+   ]
+  },
+  "notes": "LOD table DAT_00254c10 holds 0 (not 0xFFFF) for this ship, so the code creates 2 LOD level(s) with mesh id 0 (nonexistent => LOD transform holds only the last child). hasLod() is therefore true (LODManager-managed, 80000 cull applies). Treat as 'no LOD mesh'; lods left empty here.; B (unique instance) and C tables reference the same lights mesh, so it is attached twice (double additive brightness in the original); mesh ids not in resources.json: 18060 (npc engine_add); npc variant (param_3=false): root and LOD meshes get material 32260 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32260 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "ship_061_elite_nivelian_prototype",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 61 (generic)",
+  "shipIndex": 61,
+  "shipName": "Ghost",
+  "root": 17353,
+  "children": [
+   {
+    "mesh": 18824,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17961,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18061,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34261,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17353
+   ]
+  },
+  "notes": "LOD table DAT_00254c10 holds 0 (not 0xFFFF) for this ship, so the code creates 2 LOD level(s) with mesh id 0 (nonexistent => LOD transform holds only the last child). hasLod() is therefore true (LODManager-managed, 80000 cull applies). Treat as 'no LOD mesh'; lods left empty here.; mesh ids not in resources.json: 18061 (npc engine_add); npc variant (param_3=false): root and LOD meshes get material 32261 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32261 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "ship_062_prototype",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 62 (generic)",
+  "shipIndex": 62,
+  "shipName": "Dark Angel",
+  "root": 17359,
+  "children": [
+   {
+    "mesh": 18825,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17962,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18062,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34262,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17359
+   ]
+  },
+  "notes": "LOD table DAT_00254c10 holds 0 (not 0xFFFF) for this ship, so the code creates 2 LOD level(s) with mesh id 0 (nonexistent => LOD transform holds only the last child). hasLod() is therefore true (LODManager-managed, 80000 cull applies). Treat as 'no LOD mesh'; lods left empty here.; LOD child table DAT_00254f10 holds 0 for this ship (nonexistent mesh 0); mesh ids not in resources.json: 18062 (npc engine_add); npc variant (param_3=false): root and LOD meshes get material 32262 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32262 does not exist in the resource table, so the swap is a silent no-op"
+ },
+ {
+  "name": "ship_063_vossk_prototype",
+  "category": "ships",
+  "origin": "Globals::getShipGroup idx 63 (generic)",
+  "shipIndex": 63,
+  "shipName": "N'Tirrk",
+  "root": 17365,
+  "children": [
+   {
+    "mesh": 17370,
+    "role": "lights_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "uniqueInstance": true,
+    "storedAt": "AEGeometry+0x20",
+    "table": "DAT_00254b10"
+   },
+   {
+    "mesh": 18826,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "table": "DAT_00254b90"
+   },
+   {
+    "mesh": 17963,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   },
+   {
+    "mesh": 18063,
+    "role": "engine",
+    "variant": "npc",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": 80000,
+  "lodManaged": true,
+  "scale": null,
+  "materials": {
+   "player": 34263,
+   "npc": null
+  },
+  "related": {
+   "explosion": null,
+   "fighterExplosion": {
+    "type": "Explosion(0)",
+    "meshes": [
+     16821,
+     16820
+    ],
+    "note": "generic explosion_anim_lookat_alpha root + explosion_anim_lookat_add child, plus fire streaks (PlayerFighter ctor -> Explosion::Explosion(0), addFireStreaks); not per ship, no wreck mesh"
+   },
+   "hangarPreview": [
+    17365,
+    17370
+   ]
+  },
+  "notes": "LOD table DAT_00254c10 holds 0 (not 0xFFFF) for this ship, so the code creates 2 LOD level(s) with mesh id 0 (nonexistent => LOD transform holds only the last child). hasLod() is therefore true (LODManager-managed, 80000 cull applies). Treat as 'no LOD mesh'; lods left empty here.; LOD child table DAT_00254f10 holds 0 for this ship (nonexistent mesh 0); mesh ids not in resources.json: 18063 (npc engine_add); npc variant (param_3=false): root and LOD meshes get material 32263 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32263 does not exist in the resource table, so the swap is a silent no-op"
+ }
+]

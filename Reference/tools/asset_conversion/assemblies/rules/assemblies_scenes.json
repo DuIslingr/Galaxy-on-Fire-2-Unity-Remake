@@ -1,0 +1,3616 @@
+[
+ {
+  "name": "hangar_terran",
+  "category": "hangars",
+  "origin": "Level::createScene @0xc2910, mode 0x17, UNK_00253e48[0] (4 slots, -1 = none); children DAT_00251fd0[0] + 0..UNK_00251fc0[0]-1",
+  "root": 14376,
+  "rootModel": "Models/main/hangars/hangar_terran.fbx",
+  "children": [
+   {
+    "mesh": 14302,
+    "model": "Models/main/hangars/hangar_terran_add.fbx",
+    "role": "layer_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14301,
+    "model": "Models/main/hangars/hangar_terran_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14380,
+    "model": "Models/main/hangars/hangar_terran_x1.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14381,
+    "model": "Models/main/hangars/hangar_terran_x1_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14382,
+    "model": "Models/main/hangars/hangar_terran_x2.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14383,
+    "model": "Models/main/hangars/hangar_terran_x2_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14384,
+    "model": "Models/main/hangars/hangar_terran_x3.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14385,
+    "model": "Models/main/hangars/hangar_terran_x3_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14386,
+    "model": "Models/main/hangars/hangar_terran_x4.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14387,
+    "model": "Models/main/hangars/hangar_terran_x4_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14388,
+    "model": "Models/main/hangars/hangar_terran_x5.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14389,
+    "model": "Models/main/hangars/hangar_terran_x5_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14390,
+    "model": "Models/main/hangars/hangar_terran_x6.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "selectedWhen": "SolarSystem::getRace()==0",
+   "playerShip": {
+    "position": [
+     "0",
+     "DAT_00253d48[shipIndex]",
+     "0"
+    ],
+    "shipYTable_DAT_00253d48": [
+     160,
+     150,
+     220,
+     310,
+     160,
+     180,
+     140,
+     170,
+     170,
+     110,
+     250,
+     205,
+     240,
+     250,
+     250,
+     250,
+     170,
+     170,
+     190,
+     460,
+     170,
+     210,
+     140,
+     170,
+     160,
+     190,
+     170,
+     240,
+     220,
+     280,
+     200,
+     200,
+     140,
+     160,
+     180,
+     150,
+     310,
+     390,
+     480,
+     200,
+     300,
+     300,
+     170,
+     200,
+     170,
+     370,
+     370,
+     300,
+     440,
+     340,
+     170,
+     470,
+     170,
+     170,
+     170,
+     170,
+     200,
+     170,
+     250,
+     150,
+     170,
+     250,
+     270,
+     170
+    ],
+    "notes": "createShip(race, 0, shipIndex) then vtable+0x48 setPosition(0, shipY, 0); trail removed, exhaust hidden, asleep, always friend. Turret (equipment type 2) is displayed via CutScene::checkForTurret (hangar_turret_* entries)."
+   },
+   "parkedShips": {
+    "max": 2,
+    "count": "AERandom.nextInt(max+1)",
+    "slotTable": "UNK_00253f10",
+    "slots": [
+     [
+      0,
+      0,
+      2891
+     ],
+     [
+      0,
+      0,
+      5781
+     ]
+    ],
+    "yAdd": "DAT_00253d48[shipIndex] added to slot y",
+    "rotation": "(0, nextInt(300)/100 rad, 0)",
+    "shipChoice": "Globals::getRandomEnemyFighter(race); 30%: random race 0..3, then 30%: race 8 (pirate); station 0x6c with status+0x114==3 uses Station::getShips() of status+0x14c instead",
+    "slotPick": "random free slot (up to 100 tries)"
+   },
+   "cameraPosition_DAT_002546c4": [
+    1076,
+    900,
+    -2273
+   ],
+   "cameraPosition_iPad_DAT_0025464c": [
+    725,
+    899,
+    -2271
+   ],
+   "cameraNote": "ModStation::OnInitialize reads [race*3] ints from this table as a camera/ease target (race index incl. 7/8); exact use unverified"
+  },
+  "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state. The x1..xN props (+shadow_alpha) get no transform of their own (placement is baked in the mesh). The loop adds a fresh copy under each static (so the original renders them up to 3x). hangar_terran_bot_*_anim(+_add) meshes have resource ids but NO code creates them (CutScene+0x38 bot array is never filled).",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ],
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "hangar_vossk",
+  "category": "hangars",
+  "origin": "Level::createScene @0xc2910, mode 0x17, UNK_00253e48[1] (4 slots, -1 = none)",
+  "root": 14377,
+  "rootModel": "Models/main/hangars/hangar_vossk.fbx",
+  "children": [
+   {
+    "mesh": 14304,
+    "model": "Models/main/hangars/hangar_vossk_anim_add.fbx",
+    "role": "layer_anim_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "selectedWhen": "SolarSystem::getRace()==1",
+   "playerShip": {
+    "position": [
+     "0",
+     "DAT_00253d48[shipIndex]",
+     "0"
+    ],
+    "shipYTable_DAT_00253d48": [
+     160,
+     150,
+     220,
+     310,
+     160,
+     180,
+     140,
+     170,
+     170,
+     110,
+     250,
+     205,
+     240,
+     250,
+     250,
+     250,
+     170,
+     170,
+     190,
+     460,
+     170,
+     210,
+     140,
+     170,
+     160,
+     190,
+     170,
+     240,
+     220,
+     280,
+     200,
+     200,
+     140,
+     160,
+     180,
+     150,
+     310,
+     390,
+     480,
+     200,
+     300,
+     300,
+     170,
+     200,
+     170,
+     370,
+     370,
+     300,
+     440,
+     340,
+     170,
+     470,
+     170,
+     170,
+     170,
+     170,
+     200,
+     170,
+     250,
+     150,
+     170,
+     250,
+     270,
+     170
+    ],
+    "notes": "createShip(race, 0, shipIndex) then vtable+0x48 setPosition(0, shipY, 0); trail removed, exhaust hidden, asleep, always friend. Turret (equipment type 2) is displayed via CutScene::checkForTurret (hangar_turret_* entries)."
+   },
+   "parkedShips": {
+    "max": 9,
+    "count": "AERandom.nextInt(max+1)",
+    "slotTable": "DAT_00253f28",
+    "slots": [
+     [
+      -3715,
+      0,
+      661
+     ],
+     [
+      -6983,
+      36,
+      2548
+     ],
+     [
+      -9408,
+      36,
+      5438
+     ],
+     [
+      -9408,
+      36,
+      16301
+     ],
+     [
+      -6983,
+      36,
+      19191
+     ],
+     [
+      -3715,
+      36,
+      21078
+     ],
+     [
+      -9408,
+      5359,
+      16301
+     ],
+     [
+      -6983,
+      5359,
+      19191
+     ],
+     [
+      -3715,
+      5359,
+      21078
+     ]
+    ],
+    "yAdd": "DAT_00253d48[shipIndex] added to slot y",
+    "rotation": "(0, nextInt(300)/100 rad, 0)",
+    "shipChoice": "Globals::getRandomEnemyFighter(race); 30%: random race 0..3, then 30%: race 8 (pirate); station 0x6c with status+0x114==3 uses Station::getShips() of status+0x14c instead",
+    "slotPick": "random free slot (up to 100 tries)"
+   },
+   "cameraPosition_DAT_002546c4": [
+    1787,
+    1086,
+    -1632
+   ],
+   "cameraPosition_iPad_DAT_0025464c": [
+    1630,
+    1199,
+    -1933
+   ],
+   "cameraNote": "ModStation::OnInitialize reads [race*3] ints from this table as a camera/ease target (race index incl. 7/8); exact use unverified"
+  },
+  "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state. Vossk hangar: no child props.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ],
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "hangar_nivelian",
+  "category": "hangars",
+  "origin": "Level::createScene @0xc2910, mode 0x17, UNK_00253e48[2] (4 slots, -1 = none); children DAT_00251fd0[2] + 0..UNK_00251fc0[2]-1",
+  "root": 14378,
+  "rootModel": "Models/main/hangars/hangar_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 14308,
+    "model": "Models/main/hangars/hangar_nivelian_add.fbx",
+    "role": "layer_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14307,
+    "model": "Models/main/hangars/hangar_nivelian_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14403,
+    "model": "Models/main/hangars/hangar_nivelian_x1.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14404,
+    "model": "Models/main/hangars/hangar_nivelian_x1_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14405,
+    "model": "Models/main/hangars/hangar_nivelian_x2.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14406,
+    "model": "Models/main/hangars/hangar_nivelian_x2_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14407,
+    "model": "Models/main/hangars/hangar_nivelian_x3.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14408,
+    "model": "Models/main/hangars/hangar_nivelian_x3_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14409,
+    "model": "Models/main/hangars/hangar_nivelian_x4.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14410,
+    "model": "Models/main/hangars/hangar_nivelian_x4_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14411,
+    "model": "Models/main/hangars/hangar_nivelian_x5.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14412,
+    "model": "Models/main/hangars/hangar_nivelian_x5_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "selectedWhen": "SolarSystem::getRace()==2",
+   "playerShip": {
+    "position": [
+     "0",
+     "DAT_00253d48[shipIndex]",
+     "0"
+    ],
+    "shipYTable_DAT_00253d48": [
+     160,
+     150,
+     220,
+     310,
+     160,
+     180,
+     140,
+     170,
+     170,
+     110,
+     250,
+     205,
+     240,
+     250,
+     250,
+     250,
+     170,
+     170,
+     190,
+     460,
+     170,
+     210,
+     140,
+     170,
+     160,
+     190,
+     170,
+     240,
+     220,
+     280,
+     200,
+     200,
+     140,
+     160,
+     180,
+     150,
+     310,
+     390,
+     480,
+     200,
+     300,
+     300,
+     170,
+     200,
+     170,
+     370,
+     370,
+     300,
+     440,
+     340,
+     170,
+     470,
+     170,
+     170,
+     170,
+     170,
+     200,
+     170,
+     250,
+     150,
+     170,
+     250,
+     270,
+     170
+    ],
+    "notes": "createShip(race, 0, shipIndex) then vtable+0x48 setPosition(0, shipY, 0); trail removed, exhaust hidden, asleep, always friend. Turret (equipment type 2) is displayed via CutScene::checkForTurret (hangar_turret_* entries)."
+   },
+   "parkedShips": {
+    "max": 2,
+    "count": "AERandom.nextInt(max+1)",
+    "slotTable": "DAT_00253fe8",
+    "slots": [
+     [
+      4096,
+      0,
+      0
+     ],
+     [
+      4096,
+      0,
+      4096
+     ]
+    ],
+    "yAdd": "DAT_00253d48[shipIndex] added to slot y",
+    "rotation": "(0, nextInt(300)/100 rad, 0)",
+    "shipChoice": "Globals::getRandomEnemyFighter(race); 30%: random race 0..3, then 30%: race 8 (pirate); station 0x6c with status+0x114==3 uses Station::getShips() of status+0x14c instead",
+    "slotPick": "random free slot (up to 100 tries)"
+   },
+   "cameraPosition_DAT_002546c4": [
+    -2247,
+    1010,
+    -1845
+   ],
+   "cameraPosition_iPad_DAT_0025464c": [
+    -2934,
+    1027,
+    -1890
+   ],
+   "cameraNote": "ModStation::OnInitialize reads [race*3] ints from this table as a camera/ease target (race index incl. 7/8); exact use unverified"
+  },
+  "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state. The x1..xN props (+shadow_alpha) get no transform of their own (placement is baked in the mesh). The loop adds a fresh copy under each static (so the original renders them up to 3x). hangar_nivelian_bot_*_anim(+_add) meshes have resource ids but NO code creates them (CutScene+0x38 bot array is never filled).",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ],
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "hangar_midorian",
+  "category": "hangars",
+  "origin": "Level::createScene @0xc2910, mode 0x17, UNK_00253e48[3] (4 slots, -1 = none); children DAT_00251fd0[3] + 0..UNK_00251fc0[3]-1",
+  "root": 14379,
+  "rootModel": "Models/main/hangars/hangar_midorian.fbx",
+  "children": [
+   {
+    "mesh": 14310,
+    "model": "Models/main/hangars/hangar_midorian_add.fbx",
+    "role": "layer_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14264,
+    "model": "Models/main/hangars/hangar_midorian_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14391,
+    "model": "Models/main/hangars/hangar_midorian_x1.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14392,
+    "model": "Models/main/hangars/hangar_midorian_x1_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14393,
+    "model": "Models/main/hangars/hangar_midorian_x2.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14394,
+    "model": "Models/main/hangars/hangar_midorian_x2_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14395,
+    "model": "Models/main/hangars/hangar_midorian_x3.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14396,
+    "model": "Models/main/hangars/hangar_midorian_x3_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14397,
+    "model": "Models/main/hangars/hangar_midorian_x4.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14398,
+    "model": "Models/main/hangars/hangar_midorian_x4_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14399,
+    "model": "Models/main/hangars/hangar_midorian_x5.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14400,
+    "model": "Models/main/hangars/hangar_midorian_x5_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14401,
+    "model": "Models/main/hangars/hangar_midorian_x5.fbx",
+    "role": "hangar_prop",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   },
+   {
+    "mesh": 14402,
+    "model": "Models/main/hangars/hangar_midorian_x5_shadow_alpha.fbx",
+    "role": "hangar_prop_shadow",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "parent": "root (game adds it under EVERY static: room, add, alpha; add once in Unity)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "selectedWhen": "SolarSystem::getRace()==3",
+   "playerShip": {
+    "position": [
+     "0",
+     "DAT_00253d48[shipIndex]",
+     "0"
+    ],
+    "shipYTable_DAT_00253d48": [
+     160,
+     150,
+     220,
+     310,
+     160,
+     180,
+     140,
+     170,
+     170,
+     110,
+     250,
+     205,
+     240,
+     250,
+     250,
+     250,
+     170,
+     170,
+     190,
+     460,
+     170,
+     210,
+     140,
+     170,
+     160,
+     190,
+     170,
+     240,
+     220,
+     280,
+     200,
+     200,
+     140,
+     160,
+     180,
+     150,
+     310,
+     390,
+     480,
+     200,
+     300,
+     300,
+     170,
+     200,
+     170,
+     370,
+     370,
+     300,
+     440,
+     340,
+     170,
+     470,
+     170,
+     170,
+     170,
+     170,
+     200,
+     170,
+     250,
+     150,
+     170,
+     250,
+     270,
+     170
+    ],
+    "notes": "createShip(race, 0, shipIndex) then vtable+0x48 setPosition(0, shipY, 0); trail removed, exhaust hidden, asleep, always friend. Turret (equipment type 2) is displayed via CutScene::checkForTurret (hangar_turret_* entries)."
+   },
+   "parkedShips": {
+    "max": 3,
+    "count": "AERandom.nextInt(max+1)",
+    "slotTable": "DAT_00253f94",
+    "slots": [
+     [
+      -4096,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      4096
+     ],
+     [
+      -4096,
+      0,
+      4096
+     ]
+    ],
+    "yAdd": "DAT_00253d48[shipIndex] added to slot y",
+    "rotation": "(0, nextInt(300)/100 rad, 0)",
+    "shipChoice": "Globals::getRandomEnemyFighter(race); 30%: random race 0..3, then 30%: race 8 (pirate); station 0x6c with status+0x114==3 uses Station::getShips() of status+0x14c instead",
+    "slotPick": "random free slot (up to 100 tries)"
+   },
+   "cameraPosition_DAT_002546c4": [
+    1800,
+    800,
+    -1778
+   ],
+   "cameraPosition_iPad_DAT_0025464c": [
+    1759,
+    909,
+    -2232
+   ],
+   "cameraNote": "ModStation::OnInitialize reads [race*3] ints from this table as a camera/ease target (race index incl. 7/8); exact use unverified"
+  },
+  "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state. The x1..xN props (+shadow_alpha) get no transform of their own (placement is baked in the mesh). The loop adds a fresh copy under each static (so the original renders them up to 3x). Child id range 14391..14402 contains x5 twice (14399/14401) and never x6: resources.json maps 14401/14402 to hangar_midorian_x5(+shadow); hangar_midorian_x6(+shadow).fbx exist without a resource id.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ],
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "hangar_deep_science",
+  "category": "hangars",
+  "origin": "Level::createScene @0xc2910, mode 0x17, UNK_00253e48[7] (4 slots, -1 = none)",
+  "root": 14362,
+  "rootModel": "Models/valkyrie/hangars/v_hangar_deep_science.fbx",
+  "children": [
+   {
+    "mesh": 14358,
+    "model": "Models/valkyrie/hangars/v_hangar_deep_science_emissive.fbx",
+    "role": "layer_emissive",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14360,
+    "model": "Models/valkyrie/hangars/v_hangar_deep_science_anim_add.fbx",
+    "role": "layer_anim_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14359,
+    "model": "Models/valkyrie/hangars/v_hangar_deep_science_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "selectedWhen": "station index 100 (Status::getStation()->getIndex()==100)",
+   "playerShip": {
+    "position": [
+     "0",
+     "DAT_00253d48[shipIndex]",
+     "0"
+    ],
+    "shipYTable_DAT_00253d48": [
+     160,
+     150,
+     220,
+     310,
+     160,
+     180,
+     140,
+     170,
+     170,
+     110,
+     250,
+     205,
+     240,
+     250,
+     250,
+     250,
+     170,
+     170,
+     190,
+     460,
+     170,
+     210,
+     140,
+     170,
+     160,
+     190,
+     170,
+     240,
+     220,
+     280,
+     200,
+     200,
+     140,
+     160,
+     180,
+     150,
+     310,
+     390,
+     480,
+     200,
+     300,
+     300,
+     170,
+     200,
+     170,
+     370,
+     370,
+     300,
+     440,
+     340,
+     170,
+     470,
+     170,
+     170,
+     170,
+     170,
+     200,
+     170,
+     250,
+     150,
+     170,
+     250,
+     270,
+     170
+    ],
+    "notes": "createShip(race, 0, shipIndex) then vtable+0x48 setPosition(0, shipY, 0); trail removed, exhaust hidden, asleep, always friend. Turret (equipment type 2) is displayed via CutScene::checkForTurret (hangar_turret_* entries)."
+   },
+   "parkedShips": {
+    "max": 3,
+    "count": "AERandom.nextInt(max+1)",
+    "slotTable": "UNK_00253fc4",
+    "slots": [
+     [
+      -1961,
+      0,
+      8512
+     ],
+     [
+      -1961,
+      0,
+      5562
+     ],
+     [
+      -1961,
+      0,
+      2610
+     ]
+    ],
+    "yAdd": "DAT_00253d48[shipIndex] added to slot y",
+    "rotation": "(0, nextInt(300)/100 rad, 0)",
+    "shipChoice": "ship index 37/38/40 (nextInt(3): 0->0x25, 1->0x26, else 0x28); station 0x6c with status+0x114==3 uses Station::getShips() of status+0x14c instead",
+    "slotPick": "random free slot (up to 100 tries)"
+   },
+   "cameraPosition_DAT_002546c4": [
+    1200,
+    800,
+    -2678
+   ],
+   "cameraPosition_iPad_DAT_0025464c": [
+    1200,
+    800,
+    -2978
+   ],
+   "cameraNote": "ModStation::OnInitialize reads [race*3] ints from this table as a camera/ease target (race index incl. 7/8); exact use unverified"
+  },
+  "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ],
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "hangar_battlestation",
+  "category": "hangars",
+  "origin": "Level::createScene @0xc2910, mode 0x17, UNK_00253e48[8] (4 slots, -1 = none)",
+  "root": 14354,
+  "rootModel": "Models/valkyrie/hangars/v_hangar_battlestation.fbx",
+  "children": [
+   {
+    "mesh": 14355,
+    "model": "Models/valkyrie/hangars/v_hangar_battlestation_emissive.fbx",
+    "role": "layer_emissive",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14357,
+    "model": "Models/valkyrie/hangars/v_hangar_battlestation_add.fbx",
+    "role": "layer_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   },
+   {
+    "mesh": 14356,
+    "model": "Models/valkyrie/hangars/v_hangar_battlestation_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic with the same world transform as the room (pos 0, rot (0,pi,0)); identity relative to root"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "selectedWhen": "station index 101 (0x65)",
+   "playerShip": {
+    "position": [
+     "0",
+     "DAT_00253d48[shipIndex]",
+     "0"
+    ],
+    "shipYTable_DAT_00253d48": [
+     160,
+     150,
+     220,
+     310,
+     160,
+     180,
+     140,
+     170,
+     170,
+     110,
+     250,
+     205,
+     240,
+     250,
+     250,
+     250,
+     170,
+     170,
+     190,
+     460,
+     170,
+     210,
+     140,
+     170,
+     160,
+     190,
+     170,
+     240,
+     220,
+     280,
+     200,
+     200,
+     140,
+     160,
+     180,
+     150,
+     310,
+     390,
+     480,
+     200,
+     300,
+     300,
+     170,
+     200,
+     170,
+     370,
+     370,
+     300,
+     440,
+     340,
+     170,
+     470,
+     170,
+     170,
+     170,
+     170,
+     200,
+     170,
+     250,
+     150,
+     170,
+     250,
+     270,
+     170
+    ],
+    "notes": "createShip(race, 0, shipIndex) then vtable+0x48 setPosition(0, shipY, 0); trail removed, exhaust hidden, asleep, always friend. Turret (equipment type 2) is displayed via CutScene::checkForTurret (hangar_turret_* entries)."
+   },
+   "parkedShips": {
+    "max": 0,
+    "count": "AERandom.nextInt(max+1)",
+    "slotTable": "DAT_00253fb8",
+    "slots": [
+     [
+      4096,
+      0,
+      0
+     ]
+    ],
+    "yAdd": "DAT_00253d48[shipIndex] added to slot y",
+    "rotation": "(0, nextInt(300)/100 rad, 0)",
+    "shipChoice": "Globals::getRandomEnemyFighter(race); 30%: random race 0..3, then 30%: race 8 (pirate); station 0x6c with status+0x114==3 uses Station::getShips() of status+0x14c instead",
+    "slotPick": "random free slot (up to 100 tries)"
+   },
+   "cameraPosition_DAT_002546c4": [
+    2200,
+    800,
+    -1678
+   ],
+   "cameraPosition_iPad_DAT_0025464c": [
+    1759,
+    909,
+    -2232
+   ],
+   "cameraNote": "ModStation::OnInitialize reads [race*3] ints from this table as a camera/ease target (race index incl. 7/8); exact use unverified"
+  },
+  "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state. No parked ships (max 0) although one slot [4096,0,0] exists. CutScene::process uses index 10 for this station (vs 8 here).",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ],
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "hangar_turret_item_47",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 47 (0x2f)",
+  "root": 6770,
+  "rootModel": "Models/main/turrets/turret_001.fbx",
+  "children": [
+   {
+    "mesh": 6771,
+    "model": "Models/main/turrets/turret_001_gun.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     60,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 47,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 60, 0]); base and gun rotated (0,pi,0): yes. Gun rotation order set to 2.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "hangar_turret_item_48",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 48 (0x30)",
+  "root": 6772,
+  "rootModel": "Models/main/turrets/turret_002.fbx",
+  "children": [
+   {
+    "mesh": 6773,
+    "model": "Models/main/turrets/turret_002_gun.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     55,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 48,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 55, 0]); base and gun rotated (0,pi,0): yes. Gun rotation order set to 2.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "hangar_turret_item_49",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 49 (0x31)",
+  "root": 6774,
+  "rootModel": "Models/main/turrets/turret_003.fbx",
+  "children": [
+   {
+    "mesh": 6775,
+    "model": "Models/main/turrets/turret_003_gun.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     60,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 49,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 60, 0]); base and gun rotated (0,pi,0): yes. Gun rotation order set to 2.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "hangar_turret_item_180",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 180 (0xb4)",
+  "root": 6805,
+  "rootModel": "Models/valkyrie/turrets/v_autoturret_001_anim.fbx",
+  "children": [
+   {
+    "mesh": 6806,
+    "model": "Models/valkyrie/turrets/v_autoturret_001_gun_anim.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     84,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 180,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 84, 0]); base and gun rotated (0,pi,0): yes. Gun rotation order set to 2.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "hangar_turret_item_181",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 181 (0xb5)",
+  "root": 6807,
+  "rootModel": "Models/valkyrie/turrets/v_autoturret_002.fbx",
+  "children": [
+   {
+    "mesh": 6808,
+    "model": "Models/valkyrie/turrets/v_autoturret_002_gun.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     88,
+     -11
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 181,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 88, -11]); base and gun rotated (0,pi,0): yes. Gun rotation order set to 2.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "hangar_turret_item_182",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 182 (0xb6)",
+  "root": 6809,
+  "rootModel": "Models/valkyrie/turrets/v_autoturret_003.fbx",
+  "children": [
+   {
+    "mesh": 6810,
+    "model": "Models/valkyrie/turrets/v_autoturret_003_gun.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     34,
+     88,
+     1.6
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 182,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([34, 88, 1.6]); base and gun rotated (0,pi,0): yes. Gun rotation order set to 2.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "hangar_turret_item_198",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 198 (0xc6)",
+  "root": 18787,
+  "rootModel": "Models/supernova/turrets/sn_plasma_collector_001.fbx",
+  "children": [
+   {
+    "mesh": 18788,
+    "model": "Models/supernova/turrets/sn_plasma_collector_001_add.fbx",
+    "role": "base_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "root (AEGeometry::addChild)"
+   },
+   {
+    "mesh": 18791,
+    "model": "Models/supernova/turrets/sn_plasma_collector_001_gun_anim.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     80,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   },
+   {
+    "mesh": 18790,
+    "model": "Models/supernova/turrets/sn_plasma_collector_001_gun_anim_add.fbx",
+    "role": "gun_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "gun (AEGeometry::addChild)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 198,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 80, 0]); base and gun rotated (0,pi,0): NO (plasma collectors 0xc6..0xc8 skip it). Gun rotation order set to 2."
+ },
+ {
+  "name": "hangar_turret_item_199",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 199 (0xc7)",
+  "root": 18792,
+  "rootModel": "Models/supernova/turrets/sn_plasma_collector_002.fbx",
+  "children": [
+   {
+    "mesh": 18793,
+    "model": "Models/supernova/turrets/sn_plasma_collector_002_add.fbx",
+    "role": "base_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "root (AEGeometry::addChild)"
+   },
+   {
+    "mesh": 18795,
+    "model": "Models/supernova/turrets/sn_plasma_collector_002_gun_anim.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     38,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   },
+   {
+    "mesh": 18794,
+    "model": "Models/supernova/turrets/sn_plasma_collector_002_gun_anim_add.fbx",
+    "role": "gun_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "gun (AEGeometry::addChild)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 199,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 38, 0]); base and gun rotated (0,pi,0): NO (plasma collectors 0xc6..0xc8 skip it). Gun rotation order set to 2."
+ },
+ {
+  "name": "hangar_turret_item_200",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 200 (0xc8)",
+  "root": 18796,
+  "rootModel": "Models/supernova/turrets/sn_plasma_collector_003.fbx",
+  "children": [
+   {
+    "mesh": 18797,
+    "model": "Models/supernova/turrets/sn_plasma_collector_003_add.fbx",
+    "role": "base_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "root (AEGeometry::addChild)"
+   },
+   {
+    "mesh": 18799,
+    "model": "Models/supernova/turrets/sn_plasma_collector_003_gun_anim.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     75,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   },
+   {
+    "mesh": 18798,
+    "model": "Models/supernova/turrets/sn_plasma_collector_003_gun_anim_add.fbx",
+    "role": "gun_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "gun (AEGeometry::addChild)"
+   },
+   {
+    "mesh": 18800,
+    "model": "Models/supernova/turrets/sn_plasma_collector_003_gun_emissive.fbx",
+    "role": "gun_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "gun (AEGeometry::addChild)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 200,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 75, 0]); base and gun rotated (0,pi,0): NO (plasma collectors 0xc6..0xc8 skip it). Gun rotation order set to 2."
+ },
+ {
+  "name": "hangar_turret_item_224",
+  "category": "hangar_turret",
+  "origin": "CutScene::checkForTurret @0xa4594, item index 224 (0xe0)",
+  "root": 18842,
+  "rootModel": "Models/supernova/turrets/sn_turret_004.fbx",
+  "children": [
+   {
+    "mesh": 18844,
+    "model": "Models/supernova/turrets/sn_turret_004_add.fbx",
+    "role": "base_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "root (AEGeometry::addChild)"
+   },
+   {
+    "mesh": 18843,
+    "model": "Models/supernova/turrets/sn_turret_004_gun.fbx",
+    "role": "gun",
+    "variant": null,
+    "position": [
+     0,
+     82,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "turret container (sibling of base)",
+    "note": "gun: setPosition(mount), translate(offset) BEFORE its rotation, so the offset is in the ship/container frame (if parented under the pi-rotated base in Unity, use (-x, y, -z)); gun gets the same rotation as the base"
+   },
+   {
+    "mesh": 18845,
+    "model": "Models/supernova/turrets/sn_turret_004_gun_add.fbx",
+    "role": "gun_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "gun (AEGeometry::addChild)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "item": 224,
+   "mount": "FileRead::loadWeaponPositions(shipIndex)[2][0] (turret slot of weapons_hd.json)",
+   "parent": "empty container AEGeometry (CutScene+0x64) added as child of the player ship geometry in the hangar"
+  },
+  "notes": "Base and gun both setPosition(turret mount); gun then translate([0, 82, 0]); base and gun rotated (0,pi,0): yes. Gun rotation order set to 2.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "bar_terran",
+  "category": "bars",
+  "origin": "Level::createScene @0xc2910 mode 4, DAT_00254150[0]; CutScene::initialize @0xa4074 mode 4",
+  "root": 14025,
+  "rootModel": "Models/main/bars/bar_terran.fbx",
+  "children": [
+   {
+    "mesh": 14026,
+    "model": "Models/main/bars/bar_terran_add.fbx",
+    "role": "layer_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic at (0,0,0)"
+   },
+   {
+    "mesh": 14027,
+    "model": "Models/main/bars/bar_terran_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic at (0,0,0)"
+   },
+   {
+    "mesh": 14280,
+    "model": "Models/main/bars/bar_terran_bot_anim.fbx",
+    "role": "animated_prop_bar_bot",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "animated": "continuous (Transform::Update each frame)",
+    "note": "CutScene::initialize mode 4, race 0: AEGeometry(0x37c8) stored at CutScene+0x30"
+   },
+   {
+    "mesh": 14279,
+    "model": "Models/main/bars/bar_terran_bot_anim_add.fbx",
+    "role": "animated_prop_layer",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "parent": "bar_terran_bot_anim (AEGeometry::addChild)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "visitorSlots_UNK_00254000": [
+    [
+     -2325,
+     0,
+     -964
+    ],
+    [
+     -1023,
+     212,
+     745
+    ],
+    [
+     -1098,
+     212,
+     427
+    ],
+    [
+     -1164,
+     212,
+     -227
+    ],
+    [
+     -1979,
+     0,
+     -108
+    ],
+    [
+     -2556,
+     0,
+     646
+    ],
+    [
+     -1439,
+     212,
+     -860
+    ]
+   ],
+   "visitors": "one visitor per Station::getAgents() entry, random free slot of the 7 (array length 3*agents + statics)",
+   "visitorAssembly": "see bar_visitor entry",
+   "glowMesh": 14281,
+   "shadowMesh": 14348
+  },
+  "notes": "Bar = Level(mode 4), CutScene(4). Statics: PlayerStatic(-1, AEGeometry(id), 0,0,0), no rotation. All enemies-list geometries get Transform::Update(dt) every frame in CutScene::process, so *_anim meshes loop.",
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "bar_vossk",
+  "category": "bars",
+  "origin": "Level::createScene @0xc2910 mode 4, DAT_00254150[1]; CutScene::initialize @0xa4074 mode 4",
+  "root": 14028,
+  "rootModel": "Models/main/bars/bar_vossk.fbx",
+  "children": [
+   {
+    "mesh": 14029,
+    "model": "Models/main/bars/bar_vossk_anim_add.fbx",
+    "role": "layer_anim_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic at (0,0,0)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "visitorSlots_UNK_00254000": [
+    [
+     -694,
+     102,
+     -271
+    ],
+    [
+     914,
+     102,
+     453
+    ],
+    [
+     -680,
+     102,
+     1734
+    ],
+    [
+     -417,
+     102,
+     1454
+    ],
+    [
+     462,
+     102,
+     -101
+    ],
+    [
+     285,
+     102,
+     913
+    ],
+    [
+     -680,
+     102,
+     155
+    ]
+   ],
+   "visitors": "one visitor per Station::getAgents() entry, random free slot of the 7 (array length 3*agents + statics)",
+   "visitorAssembly": "see bar_visitor entry",
+   "glowMesh": 14282,
+   "shadowMesh": 14348
+  },
+  "notes": "Bar = Level(mode 4), CutScene(4). Statics: PlayerStatic(-1, AEGeometry(id), 0,0,0), no rotation. All enemies-list geometries get Transform::Update(dt) every frame in CutScene::process, so *_anim meshes loop. Only 2 statics (3rd table slot is 0xffff). Fog: FogSetParameter(0x2601, 0, 5000.0 (0x459c4000), 1.0, 0x11e0cff) + FogEnable. bar_vossk_alpha and bar_vossk_bot_a/b/c_anim_alpha FBX have no resource id and no code. CutScene::process has a Vossk branch that animates CutScene+0x30/+0x34 every 20 s / 22 s, but those pointers are only set for Terran (dead/unfinished).",
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "bar_nivelian",
+  "category": "bars",
+  "origin": "Level::createScene @0xc2910 mode 4, DAT_00254150[2]; CutScene::initialize @0xa4074 mode 4",
+  "root": 14031,
+  "rootModel": "Models/main/bars/bar_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 14032,
+    "model": "Models/main/bars/bar_nivelian_anim_add.fbx",
+    "role": "layer_anim_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic at (0,0,0)"
+   },
+   {
+    "mesh": 14033,
+    "model": "Models/main/bars/bar_nivelian_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic at (0,0,0)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "visitorSlots_UNK_00254000": [
+    [
+     -1279,
+     0,
+     264
+    ],
+    [
+     -1220,
+     0,
+     -192
+    ],
+    [
+     -1849,
+     0,
+     -1214
+    ],
+    [
+     -875,
+     0,
+     -686
+    ],
+    [
+     48,
+     0,
+     -911
+    ],
+    [
+     -457,
+     0,
+     -2195
+    ],
+    [
+     -794,
+     0,
+     -1788
+    ]
+   ],
+   "visitors": "one visitor per Station::getAgents() entry, random free slot of the 7 (array length 3*agents + statics)",
+   "visitorAssembly": "see bar_visitor entry",
+   "glowMesh": 14283,
+   "shadowMesh": 14348
+  },
+  "notes": "Bar = Level(mode 4), CutScene(4). Statics: PlayerStatic(-1, AEGeometry(id), 0,0,0), no rotation. All enemies-list geometries get Transform::Update(dt) every frame in CutScene::process, so *_anim meshes loop. bar_nivelian_anim_add and bar_nivelian_alpha are explicitly updated each frame.",
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "bar_midorian",
+  "category": "bars",
+  "origin": "Level::createScene @0xc2910 mode 4, DAT_00254150[3]; CutScene::initialize @0xa4074 mode 4",
+  "root": 14034,
+  "rootModel": "Models/main/bars/bar_midorian_anim.fbx",
+  "children": [
+   {
+    "mesh": 14035,
+    "model": "Models/main/bars/bar_midorian_add.fbx",
+    "role": "layer_add",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic at (0,0,0)"
+   },
+   {
+    "mesh": 14036,
+    "model": "Models/main/bars/bar_midorian_alpha.fbx",
+    "role": "layer_alpha",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "separate PlayerStatic at (0,0,0)"
+   },
+   {
+    "mesh": 14038,
+    "model": "Models/main/bars/bar_midorian_alpha_anim.fbx",
+    "role": "animated_prop_one_shot",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "animated": "SetAnimationState(0,0) at init; every 2000 ms 30% chance: SetAnimationState(3,0) then (1,0) (restart once)",
+    "note": "CutScene::initialize mode 4, race 3: AEGeometry(0x36d6) stored at CutScene+0x2c"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "visitorSlots_UNK_00254000": [
+    [
+     1542,
+     -10,
+     -642
+    ],
+    [
+     1357,
+     -10,
+     -1986
+    ],
+    [
+     1924,
+     -10,
+     -1377
+    ],
+    [
+     -194,
+     -10,
+     -2542
+    ],
+    [
+     979,
+     -10,
+     -202
+    ],
+    [
+     1047,
+     -10,
+     220
+    ],
+    [
+     2319,
+     -10,
+     -498
+    ]
+   ],
+   "visitors": "one visitor per Station::getAgents() entry, random free slot of the 7 (array length 3*agents + statics)",
+   "visitorAssembly": "see bar_visitor entry",
+   "glowMesh": 14284,
+   "shadowMesh": 14348
+  },
+  "notes": "Bar = Level(mode 4), CutScene(4). Statics: PlayerStatic(-1, AEGeometry(id), 0,0,0), no rotation. All enemies-list geometries get Transform::Update(dt) every frame in CutScene::process, so *_anim meshes loop. The room mesh itself is bar_midorian_anim (animated, updated each frame).",
+  "rootPosition": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "bar_visitor",
+  "category": "bars",
+  "origin": "Level::createScene @0xc2910 mode 4 (loop over Station agents, disasm 0xc2b38..0xc2cac)",
+  "root": 14725,
+  "rootModel": "Models/main/bars/bar_visitor_terran_m.fbx",
+  "children": [
+   {
+    "mesh": 14281,
+    "model": "Models/main/bars/bar_visitor_glow.fbx",
+    "role": "glow_under_visitor",
+    "variant": "by BAR race: 14281+race (0x37c9 terran, 0x37ca vossk, 0x37cb nivelian, 0x37cc midorian), DAT_00251fe0",
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14348,
+    "model": "Models/main/bars/bar_visitor_shadow.fbx",
+    "role": "shadow",
+    "variant": null,
+    "position": [
+     0,
+     20,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "placed at slot + (0, 20, 0) (vadd.f32 s20, s20, 20.0)"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "visitorMeshByAgentRace_DAT_00254380": {
+    "terran": [
+     14725,
+     "Models/main/bars/bar_visitor_terran_m.fbx"
+    ],
+    "vossk": [
+     14726,
+     "Models/main/bars/bar_visitor_vossk.fbx"
+    ],
+    "nivelian": [
+     14723,
+     "Models/main/bars/bar_visitor_nivelian.fbx"
+    ],
+    "midorian": [
+     14725,
+     "Models/main/bars/bar_visitor_terran_m.fbx"
+    ],
+    "4": [
+     14722,
+     "Models/main/bars/bar_visitor_multipod.fbx"
+    ],
+    "5": [
+     14725,
+     "Models/main/bars/bar_visitor_terran_m.fbx"
+    ],
+    "6": [
+     14720,
+     "Models/main/bars/bar_visitor_bobolan.fbx"
+    ],
+    "deep_science": [
+     14721,
+     "Models/main/bars/bar_visitor_grey.fbx"
+    ]
+   },
+   "femaleTerran": [
+    14724,
+    "Models/main/bars/bar_visitor_terran_f.fbx"
+   ],
+   "midorianRule": "agent race 3: if Agent::getImageParts()!=null && parts[0]==2 use index 2 (nivelian mesh) else index 3 (terran_m)",
+   "agentRaceIndex": "0 terran,1 vossk,2 nivelian,3 midorian,4 multipod,5 cyborg(->terran_m),6 bobolan,7 grey"
+  },
+  "notes": "Visitor, glow and shadow are three separate PlayerStatics; visitor and glow share the slot position, shadow is +20 in y. No rotation. Slot position comes from the bar entry (related.visitorSlots_UNK_00254000)."
+ },
+ {
+  "name": "galaxymap_background",
+  "category": "galaxymap",
+  "origin": "StarMap::init (disasm 0xd7576..0xd765a)",
+  "root": 16850,
+  "rootModel": "Models/main/galaxymap/map_bg_plane.fbx",
+  "children": [
+   {
+    "mesh": 16851,
+    "model": "Models/main/galaxymap/map_fog_layer_0.fbx",
+    "role": "fog_layer_0",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 16852,
+    "model": "Models/main/galaxymap/map_fog_layer_1.fbx",
+    "role": "fog_layer_1",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Three separate AEGeometries, each setRotation(0,pi,0) + setPosition(-3000,-2500,0) (0xc53b8000 / 0xc51c4000); combined here because the transform is identical.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ],
+  "rootPosition": [
+   -3000,
+   -2500,
+   0
+  ]
+ },
+ {
+  "name": "galaxymap_sun",
+  "category": "galaxymap",
+  "origin": "StarMap::StarMap (disasm 0xd6a18..0xd6b6a), one per system (0x22 systems)",
+  "root": 18070,
+  "rootModel": "Models/main/misc/plane.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.012,
+  "related": {
+   "meshId": "18070 + SolarSystem::getTextureIndex() (all plane.fbx, per-id material); system 27 uses 18075 (0x469b) after campaign mission 0x9d",
+   "scaleRule": "0.012 (0x3c449ba6); textureIndex 15 before mission 0x9e: 0.018 if mission<=0x69 else 0.025",
+   "position": [
+    "int((100-getX)/100*14000)-10000",
+    "int((100-getY)/100*13000)-9000",
+    "int((100-getZ)/100*6000)+1000"
+   ],
+   "parent": "StarMap+0x6c root AEGeometry (identity)"
+  },
+  "notes": "Galaxy-map sun billboards. map_sun_*.fbx are NOT used (no resource id)."
+ },
+ {
+  "name": "galaxymap_wormhole",
+  "category": "galaxymap",
+  "origin": "StarMap::StarMap (campaign mission > 0x1f and status+0x7c >= 0)",
+  "root": 16994,
+  "rootModel": "Models/main/misc/wormhole_anim_add.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "position": "position of the sun geometry of system status+0x7c",
+   "animation": "SetAnimationState(2,0) (loop)"
+  },
+  "notes": "wormhole_anim_add on the galaxy map.",
+  "rootRotation": [
+   0,
+   3.1415927,
+   0
+  ]
+ },
+ {
+  "name": "galaxymap_planet_000",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (0)",
+  "root": 18180,
+  "rootModel": "Models/main/galaxymap/map_planet_000.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.078125,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 320,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_001",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (1)",
+  "root": 18181,
+  "rootModel": "Models/main/galaxymap/map_planet_001.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_002",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (2)",
+  "root": 18182,
+  "rootModel": "Models/main/galaxymap/map_planet_002.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_003",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (3)",
+  "root": 18183,
+  "rootModel": "Models/main/galaxymap/map_planet_003.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_004",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (4)",
+  "root": 18184,
+  "rootModel": "Models/main/galaxymap/map_planet_004.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_005",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (5)",
+  "root": 18185,
+  "rootModel": "Models/main/galaxymap/map_planet_005.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_006",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (6)",
+  "root": 18186,
+  "rootModel": "Models/main/galaxymap/map_planet_006.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_007",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (7)",
+  "root": 18187,
+  "rootModel": "Models/main/galaxymap/map_planet_007.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_008",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (8)",
+  "root": 18188,
+  "rootModel": "Models/main/galaxymap/map_planet_008.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.078125,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 320,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_009",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (9)",
+  "root": 18189,
+  "rootModel": "Models/main/galaxymap/map_planet_009.fbx",
+  "children": [
+   {
+    "mesh": 16853,
+    "model": "Models/main/galaxymap/map_planet_ring.fbx",
+    "role": "planet_ring",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "TransformCreate + TransformAddMesh(0x41d5) + TransformSetLocal(planet matrix): same position/scale as the planet, sibling under the system container"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Always ringed (textureIndex in bitmask 0x210200 = {9,16,21}). Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_010",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (10)",
+  "root": 18190,
+  "rootModel": "Models/main/galaxymap/map_planet_010.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_011",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (11)",
+  "root": 18191,
+  "rootModel": "Models/main/galaxymap/map_planet_011.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_012",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (12)",
+  "root": 18192,
+  "rootModel": "Models/main/galaxymap/map_planet_012.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.078125,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 320,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_013",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (13)",
+  "root": 18193,
+  "rootModel": "Models/main/galaxymap/map_planet_013.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_014",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (14)",
+  "root": 18194,
+  "rootModel": "Models/main/galaxymap/map_planet_014.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.078125,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 320,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_015",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (15)",
+  "root": 18195,
+  "rootModel": "Models/main/galaxymap/map_planet_015.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_016",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (16)",
+  "root": 18196,
+  "rootModel": "Models/main/galaxymap/map_planet_016.fbx",
+  "children": [
+   {
+    "mesh": 16853,
+    "model": "Models/main/galaxymap/map_planet_ring.fbx",
+    "role": "planet_ring",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "TransformCreate + TransformAddMesh(0x41d5) + TransformSetLocal(planet matrix): same position/scale as the planet, sibling under the system container"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Always ringed (textureIndex in bitmask 0x210200 = {9,16,21}). Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_017",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (17)",
+  "root": 18197,
+  "rootModel": "Models/main/galaxymap/map_planet_017.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_018",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (18)",
+  "root": 18198,
+  "rootModel": "Models/main/galaxymap/map_planet_018.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.078125,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 320,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_019",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (19)",
+  "root": 18199,
+  "rootModel": "Models/main/galaxymap/map_planet_019.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_020",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (20)",
+  "root": 18200,
+  "rootModel": "Models/valkyrie/galaxymap/v_map_planet_020.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.078125,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 320,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_021",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (21)",
+  "root": 18201,
+  "rootModel": "Models/valkyrie/galaxymap/v_map_planet_021.fbx",
+  "children": [
+   {
+    "mesh": 16853,
+    "model": "Models/main/galaxymap/map_planet_ring.fbx",
+    "role": "planet_ring",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "TransformCreate + TransformAddMesh(0x41d5) + TransformSetLocal(planet matrix): same position/scale as the planet, sibling under the system container"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Always ringed (textureIndex in bitmask 0x210200 = {9,16,21}). Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_022",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (22)",
+  "root": 18202,
+  "rootModel": "Models/valkyrie/galaxymap/v_map_planet_022.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_024",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (24)",
+  "root": 18204,
+  "rootModel": "Models/supernova/galaxymap/sn_map_planet_024.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_025",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (25)",
+  "root": 18205,
+  "rootModel": "Models/supernova/galaxymap/sn_map_planet_025.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0625,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 256,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_planet_026",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, planet = 0x4704 + Station::getTextureIndex() (26)",
+  "root": 18206,
+  "rootModel": "Models/supernova/galaxymap/sn_map_planet_026.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.046875,
+  "related": {
+   "ringAlsoIf": "Status::orbitHasPlanetRing(stationIndex)==1 (any planet)",
+   "scaleTable_DAT_00254484": 192,
+   "placement": "rotY(slot*(65536/n)*2pi/65536) applied to (0,0,radius); radius1 = 6400+1600+rand(5600), radiusK = radiusK-1 + 1600 + rand(5600); slot = random free of n"
+  },
+  "notes": "Planet scale = DAT_00254484[tex] << 4 / 65536."
+ },
+ {
+  "name": "galaxymap_orbit",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem, one per station",
+  "root": 6779,
+  "rootModel": "Models/main/galaxymap/map_orbit.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "scale": "2*radius/65536 (uniform)",
+   "rotation": "(0, nextInt(3141)/1000, 0)"
+  },
+  "notes": "map_orbit, child of the system container."
+ },
+ {
+  "name": "galaxymap_system_sun",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem (disasm 0xd7ef2..0xd7f94)",
+  "root": 6768,
+  "rootModel": "Models/main/misc/plane.fbx",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.004,
+  "related": {
+   "texture": "DAT_00254420[systemTextureIndex] (0x2734 for system 27), created into StarMap+0x178",
+   "scaleRule": "0.004 (0x3b83126f); textureIndex 15: 0.007 if mission<=0x69, 0.01 if <=0x9d",
+   "position": "galaxy-map sun position of the selected system"
+  },
+  "notes": "plane.fbx id 6768 used as the sun billboard in system view.",
+  "rootRotation": [
+   0,
+   0,
+   0
+  ]
+ },
+ {
+  "name": "galaxymap_system_container",
+  "category": "galaxymap",
+  "origin": "StarMap::initStarSystem (disasm 0xd7d66..0xd7dd6)",
+  "root": null,
+  "rootModel": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": 0.0078125,
+  "related": {
+   "children": "planets (+rings) and orbits",
+   "position": "galaxy-map sun position of the selected system"
+  },
+  "notes": "Empty AEGeometry (StarMap+0xa4): setScaling(1/128), setRotation(0,90,0) then setRotation(-pi/8, pi/8, -pi/32). Planet slot 0 is null and hidden.",
+  "rootRotation": [
+   -0.3927,
+   0.3927,
+   -0.0982
+  ]
+ },
+ {
+  "name": "shop_preview_ship_04",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[4] / DAT_002586b0[4]",
+  "root": 17004,
+  "rootModel": "Models/main/ships/ship_004_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 18704,
+    "model": "Models/main/ships/ship_004_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_08",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[8] / DAT_002586b0[8]",
+  "root": 17008,
+  "rootModel": "Models/main/ships/ship_008_void.fbx",
+  "children": [
+   {
+    "mesh": 18708,
+    "model": "Models/main/ships/ship_008_void_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_09",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[9] / DAT_002586b0[9]",
+  "root": 17009,
+  "rootModel": "Models/main/ships/ship_009_vossk.fbx",
+  "children": [
+   {
+    "mesh": 18709,
+    "model": "Models/main/ships/ship_009_vossk_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_12",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[12] / DAT_002586b0[12]",
+  "root": 17012,
+  "rootModel": "Models/main/ships/ship_012_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 18712,
+    "model": "Models/main/ships/ship_012_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_16",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[16] / DAT_002586b0[16]",
+  "root": 17016,
+  "rootModel": "Models/main/ships/ship_016_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 18716,
+    "model": "Models/main/ships/ship_016_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_18",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[18] / DAT_002586b0[18]",
+  "root": 17018,
+  "rootModel": "Models/main/ships/ship_018_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 18718,
+    "model": "Models/main/ships/ship_018_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_21",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[21] / DAT_002586b0[21]",
+  "root": 17021,
+  "rootModel": "Models/main/ships/ship_021_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 18721,
+    "model": "Models/main/ships/ship_021_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_31",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[31] / DAT_002586b0[31]",
+  "root": 17031,
+  "rootModel": "Models/main/ships/ship_031_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 18731,
+    "model": "Models/main/ships/ship_031_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_35",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[35] / DAT_002586b0[35]",
+  "root": 17035,
+  "rootModel": "Models/main/ships/ship_035_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 18735,
+    "model": "Models/main/ships/ship_035_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_39",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[39] / DAT_002586b0[39]",
+  "root": 17221,
+  "rootModel": "Models/valkyrie/ships/v_ship_039_vossk.fbx",
+  "children": [
+   {
+    "mesh": 18739,
+    "model": "Models/valkyrie/ships/v_ship_039_vossk_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_41",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[41] / DAT_002586b0[41]",
+  "root": 17233,
+  "rootModel": "Models/valkyrie/ships/v_ship_041_vossk.fbx",
+  "children": [
+   {
+    "mesh": 18741,
+    "model": "Models/valkyrie/ships/v_ship_041_vossk_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_42",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[42] / DAT_002586b0[42]",
+  "root": 17239,
+  "rootModel": "Models/main/ships/ship_042_retro.fbx",
+  "children": [
+   {
+    "mesh": 18742,
+    "model": null,
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here. Mesh id missing from resources.json."
+ },
+ {
+  "name": "shop_preview_ship_43",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[43] / DAT_002586b0[43]",
+  "root": 17245,
+  "rootModel": "Models/main/ships/ship_043_retro.fbx",
+  "children": [
+   {
+    "mesh": 18743,
+    "model": null,
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here. Mesh id missing from resources.json."
+ },
+ {
+  "name": "shop_preview_ship_49",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[49] / DAT_002586b0[49]",
+  "root": 17281,
+  "rootModel": "Models/supernova/ships/sn_ship_049_boss_nivelian.fbx",
+  "children": [
+   {
+    "mesh": 17286,
+    "model": "Models/supernova/ships/sn_ship_049_boss_nivelian_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_50",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[50] / DAT_002586b0[50]",
+  "root": 17287,
+  "rootModel": null,
+  "children": [
+   {
+    "mesh": 17292,
+    "model": null,
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here. Mesh id missing from resources.json."
+ },
+ {
+  "name": "shop_preview_ship_53",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[53] / DAT_002586b0[53]",
+  "root": 17305,
+  "rootModel": null,
+  "children": [
+   {
+    "mesh": 17310,
+    "model": null,
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here. Mesh id missing from resources.json."
+ },
+ {
+  "name": "shop_preview_ship_54",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[54] / DAT_002586b0[54]",
+  "root": 17311,
+  "rootModel": "Models/supernova/ships/sn_ship_054_vossk.fbx",
+  "children": [
+   {
+    "mesh": 17316,
+    "model": "Models/supernova/ships/sn_ship_054_vossk_emissive.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_55",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[55] / DAT_002586b0[55]",
+  "root": 17317,
+  "rootModel": "Models/supernova/ships/sn_ship_055_modified.fbx",
+  "children": [
+   {
+    "mesh": 18818,
+    "model": "Models/supernova/ships/sn_ship_055_modified_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_56",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[56] / DAT_002586b0[56]",
+  "root": 17323,
+  "rootModel": "Models/supernova/ships/sn_ship_056_modified.fbx",
+  "children": [
+   {
+    "mesh": 18819,
+    "model": "Models/supernova/ships/sn_ship_056_modified_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_57",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[57] / DAT_002586b0[57]",
+  "root": 17329,
+  "rootModel": "Models/supernova/ships/sn_ship_057_modified.fbx",
+  "children": [
+   {
+    "mesh": 18820,
+    "model": "Models/supernova/ships/sn_ship_057_modified_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_58",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[58] / DAT_002586b0[58]",
+  "root": 17335,
+  "rootModel": "Models/supernova/ships/sn_ship_058_modified.fbx",
+  "children": [
+   {
+    "mesh": 18821,
+    "model": "Models/supernova/ships/sn_ship_058_modified_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_59",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[59] / DAT_002586b0[59]",
+  "root": 17341,
+  "rootModel": "Models/supernova/ships/sn_ship_059_modified.fbx",
+  "children": [
+   {
+    "mesh": 18822,
+    "model": "Models/supernova/ships/sn_ship_059_modified_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_60",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[60] / DAT_002586b0[60]",
+  "root": 17347,
+  "rootModel": "Models/supernova/ships/sn_ship_060_modified.fbx",
+  "children": [
+   {
+    "mesh": 18823,
+    "model": "Models/supernova/ships/sn_ship_060_modified_lights_add.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ },
+ {
+  "name": "shop_preview_ship_63",
+  "category": "shop_preview",
+  "origin": "ListItemWindow (ship list item), DAT_00258630[63] / DAT_002586b0[63]",
+  "root": 17365,
+  "rootModel": "Models/main/ships/ship_063_vossk_prototype.fbx",
+  "children": [
+   {
+    "mesh": 17370,
+    "model": "Models/main/ships/ship_063_vossk_prototype_lights_emissive.fbx",
+    "role": "lights",
+    "variant": null,
+    "position": [
+     0,
+     0,
+     0
+    ],
+    "rotation": null,
+    "scale": null,
+    "note": "own transform (this+0x88) given the same local matrix as the ship"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Rotating ship preview in shop/hangar lists. Only ships with a 2nd table entry get a 2nd mesh; no engine/glow meshes here."
+ }
+]

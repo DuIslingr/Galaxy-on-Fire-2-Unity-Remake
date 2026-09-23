@@ -1,0 +1,193 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &6348832034400013052
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3823304764483664681}
+  - component: {fileID: 3975714263530647677}
+  m_Layer: 0
+  m_Name: sn_gas_cloud_red_anim_lookat_add
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3823304764483664681
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6348832034400013052}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3788561264416656426}
+  - {fileID: 7701553178586655607}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3975714263530647677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6348832034400013052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  rootMeshId: 19000
+  origin: Level::createGasClouds -> PlayerGasCloud::PlayerGasCloud, plasma type 0xcc
+  lodDistancesGameUnits: []
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 0}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts:
+  - {fileID: 7037641203357086157}
+  conditions:
+  - spawned when the object explodes
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!1001 &413339284007628516
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3823304764483664681}
+    m_Modifications:
+    - target: {fileID: 7212163512024260393, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_Name
+      value: sn_plasma_red_anim_lookat_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 7212163512024260393, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+--- !u!1 &7037641203357086157 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7212163512024260393, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+  m_PrefabInstance: {fileID: 413339284007628516}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &7701553178586655607 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8024587893258126739, guid: 184d8352947acc943a2e53fad2bf87bb, type: 3}
+  m_PrefabInstance: {fileID: 413339284007628516}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7027155021825703794
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3823304764483664681}
+    m_Modifications:
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6799596011278412258, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+      propertyPath: m_Name
+      value: sn_gas_cloud_red_anim_lookat_add
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+--- !u!4 &3788561264416656426 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6131321208808534872, guid: 182cafe4007ce0244900de96a13f030a, type: 3}
+  m_PrefabInstance: {fileID: 7027155021825703794}
+  m_PrefabAsset: {fileID: 0}

@@ -1,0 +1,4482 @@
+[
+ {
+  "name": "station_000_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21000,
+  "children": [
+   {
+    "mesh": 21800,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22000,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 0,
+   "stationName": "Neh\u00c3\u00a9bru",
+   "system": "Suteo",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 0 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_001_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21001,
+  "children": [
+   {
+    "mesh": 21801,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22001,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 1,
+   "stationName": "Mahasa",
+   "system": "Suteo",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 1 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_002_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21002,
+  "children": [
+   {
+    "mesh": 21802,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22002,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 2,
+   "stationName": "Anesa",
+   "system": "Suteo",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 2 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_003_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21003,
+  "children": [
+   {
+    "mesh": 21803,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22003,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 3,
+   "stationName": "G\u00c3\u00a9hlon",
+   "system": "Suteo",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 3 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_004_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21004,
+  "children": [
+   {
+    "mesh": 21804,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22004,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 4,
+   "stationName": "Pos\u00c3\u00a9ho",
+   "system": "Suteo",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 4 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_005_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21005,
+  "children": [
+   {
+    "mesh": 21805,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22005,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 5,
+   "stationName": "Decimus",
+   "system": "Pan",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 5 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_006_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21006,
+  "children": [
+   {
+    "mesh": 21806,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22006,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 6,
+   "stationName": "Emisto",
+   "system": "Pan",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 6 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_007_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21007,
+  "children": [
+   {
+    "mesh": 21807,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22007,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 7,
+   "stationName": "Binon",
+   "system": "Pan",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 7 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_008_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21008,
+  "children": [
+   {
+    "mesh": 21808,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22008,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 8,
+   "stationName": "Taygete",
+   "system": "Pan",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 8 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_009_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21009,
+  "children": [
+   {
+    "mesh": 21809,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22009,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 9,
+   "stationName": "Coppolite",
+   "system": "Pan",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 9 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_010_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21010,
+  "children": [
+   {
+    "mesh": 21810,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22010,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 10,
+   "stationName": "Thynome",
+   "system": "Wolf-Reiser",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 10 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_020_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21020,
+  "children": [
+   {
+    "mesh": 21820,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22020,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 20,
+   "stationName": "Kallsta Omba",
+   "system": "Eanya",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 20 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_021_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21021,
+  "children": [
+   {
+    "mesh": 21821,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22021,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 21,
+   "stationName": "Euclades",
+   "system": "Eanya",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 21 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_022_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21022,
+  "children": [
+   {
+    "mesh": 21822,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22022,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 22,
+   "stationName": "Dekato",
+   "system": "Eanya",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 22 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_023_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21023,
+  "children": [
+   {
+    "mesh": 21823,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22023,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 23,
+   "stationName": "Psa Tori",
+   "system": "Eanya",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 23 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_024_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21024,
+  "children": [
+   {
+    "mesh": 21824,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22024,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 24,
+   "stationName": "Sao Noma",
+   "system": "Eanya",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 24 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_030_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21030,
+  "children": [
+   {
+    "mesh": 21830,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22030,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 30,
+   "stationName": "N\u00c3\u00a9hma",
+   "system": "Beh\u00c3\u00a9n",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 30 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_031_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21031,
+  "children": [
+   {
+    "mesh": 21831,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22031,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 31,
+   "stationName": "Neso Aehma",
+   "system": "Beh\u00c3\u00a9n",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 31 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_032_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21032,
+  "children": [
+   {
+    "mesh": 21832,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22032,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 32,
+   "stationName": "Duhnu",
+   "system": "Beh\u00c3\u00a9n",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 32 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_033_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21033,
+  "children": [
+   {
+    "mesh": 21833,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22033,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 33,
+   "stationName": "N\u00c3\u00a9h Suhnu",
+   "system": "Beh\u00c3\u00a9n",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 33 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_035_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21035,
+  "children": [
+   {
+    "mesh": 21835,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22035,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 35,
+   "stationName": "Io Ombak",
+   "system": "Aquila",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 35 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_036_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21036,
+  "children": [
+   {
+    "mesh": 21836,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22036,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 36,
+   "stationName": "Dendra Ekta",
+   "system": "Aquila",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 36 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_037_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21037,
+  "children": [
+   {
+    "mesh": 21837,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22037,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 37,
+   "stationName": "Carme",
+   "system": "Aquila",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 37 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_038_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21038,
+  "children": [
+   {
+    "mesh": 21838,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22038,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 38,
+   "stationName": "Nepis",
+   "system": "Aquila",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 38 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_039_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21039,
+  "children": [
+   {
+    "mesh": 21839,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22039,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 39,
+   "stationName": "Tsoj Delev",
+   "system": "Aquila",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 39 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_040_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21040,
+  "children": [
+   {
+    "mesh": 21840,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22040,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 40,
+   "stationName": "Valadon",
+   "system": "Buntta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 40 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_041_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21041,
+  "children": [
+   {
+    "mesh": 21841,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22041,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 41,
+   "stationName": "Ko-on",
+   "system": "Buntta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 41 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_042_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21042,
+  "children": [
+   {
+    "mesh": 21842,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22042,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 42,
+   "stationName": "Epigome",
+   "system": "Buntta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 42 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_043_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21043,
+  "children": [
+   {
+    "mesh": 21843,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22043,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 43,
+   "stationName": "Arpalys",
+   "system": "Buntta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 43 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_044_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21044,
+  "children": [
+   {
+    "mesh": 21844,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22044,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 44,
+   "stationName": "Isonoma",
+   "system": "Buntta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 44 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_045_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21045,
+  "children": [
+   {
+    "mesh": 21845,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22045,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 45,
+   "stationName": "\u00c3\u2030hna",
+   "system": "Weymire",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 45 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_046_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21046,
+  "children": [
+   {
+    "mesh": 21846,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22046,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 46,
+   "stationName": "Himo",
+   "system": "Weymire",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 46 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_047_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21047,
+  "children": [
+   {
+    "mesh": 21847,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22047,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 47,
+   "stationName": "Bosm\u00c3\u00a9h",
+   "system": "Weymire",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 47 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_048_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21048,
+  "children": [
+   {
+    "mesh": 21848,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22048,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 48,
+   "stationName": "Sahi",
+   "system": "Weymire",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 48 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_049_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21049,
+  "children": [
+   {
+    "mesh": 21849,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22049,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 49,
+   "stationName": "Siam\u00c3\u00a9h",
+   "system": "Weymire",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 49 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_055_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21055,
+  "children": [
+   {
+    "mesh": 21855,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22055,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 55,
+   "stationName": "Kappa",
+   "system": "Union",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 55 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_056_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21056,
+  "children": [
+   {
+    "mesh": 21856,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22056,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 56,
+   "stationName": "Suttnar",
+   "system": "Union",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 56 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_057_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21057,
+  "children": [
+   {
+    "mesh": 21857,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22057,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 57,
+   "stationName": "Tornard",
+   "system": "Union",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 57 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_065_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21065,
+  "children": [
+   {
+    "mesh": 21865,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22065,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 65,
+   "stationName": "Lopat",
+   "system": "Vulpes",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 65 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_066_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21066,
+  "children": [
+   {
+    "mesh": 21866,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22066,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 66,
+   "stationName": "Inari Onu",
+   "system": "Vulpes",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 66 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_067_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21067,
+  "children": [
+   {
+    "mesh": 21867,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22067,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 67,
+   "stationName": "Orcon",
+   "system": "Vulpes",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 67 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_068_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21068,
+  "children": [
+   {
+    "mesh": 21868,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22068,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 68,
+   "stationName": "Sorox",
+   "system": "Vulpes",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 68 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_069_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21069,
+  "children": [
+   {
+    "mesh": 21869,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22069,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 69,
+   "stationName": "Oni",
+   "system": "Vulpes",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 69 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_070_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21070,
+  "children": [
+   {
+    "mesh": 21870,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22070,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 70,
+   "stationName": "Dis",
+   "system": "Magnetar",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 70 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_071_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21071,
+  "children": [
+   {
+    "mesh": 21871,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22071,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 71,
+   "stationName": "Unotok",
+   "system": "Magnetar",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 71 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_072_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21072,
+  "children": [
+   {
+    "mesh": 21872,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22072,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 72,
+   "stationName": "Zepar",
+   "system": "Magnetar",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 72 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_073_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21073,
+  "children": [
+   {
+    "mesh": 21873,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22073,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 73,
+   "stationName": "Lon Nion",
+   "system": "Magnetar",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 73 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_074_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21074,
+  "children": [
+   {
+    "mesh": 21874,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22074,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 74,
+   "stationName": "Kanado",
+   "system": "Magnetar",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 74 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_075_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21075,
+  "children": [
+   {
+    "mesh": 21875,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22075,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 75,
+   "stationName": "Deuter IV",
+   "system": "Mido",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 75 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_076_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21076,
+  "children": [
+   {
+    "mesh": 21876,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22076,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 76,
+   "stationName": "Yrdal Gedal",
+   "system": "Mido",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 76 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_077_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21077,
+  "children": [
+   {
+    "mesh": 21877,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22077,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 77,
+   "stationName": "Heinsten",
+   "system": "Mido",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 77 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_078_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21078,
+  "children": [
+   {
+    "mesh": 21878,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22078,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 78,
+   "stationName": "Var Hastra",
+   "system": "Mido",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 78 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_079_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21079,
+  "children": [
+   {
+    "mesh": 21879,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22079,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 79,
+   "stationName": "Kernstal",
+   "system": "Mido",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 79 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_080_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21080,
+  "children": [
+   {
+    "mesh": 21880,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22080,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 80,
+   "stationName": "Kumppa",
+   "system": "Prospero",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 80 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "22080 (Models/main/stations/station_080_terran_lights_add.fbx) is in resources.json but the FBX does not exist (mesh absent from the OBB)"
+ },
+ {
+  "name": "station_081_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21081,
+  "children": [
+   {
+    "mesh": 21881,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22081,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 81,
+   "stationName": "Teres",
+   "system": "Prospero",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 81 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_082_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21082,
+  "children": [
+   {
+    "mesh": 21882,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22082,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 82,
+   "stationName": "Plural Z",
+   "system": "Prospero",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 82 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_083_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21083,
+  "children": [
+   {
+    "mesh": 21883,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22083,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 83,
+   "stationName": "Marktesh",
+   "system": "Prospero",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 83 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_084_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21084,
+  "children": [
+   {
+    "mesh": 21884,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22084,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 84,
+   "stationName": "Urda Arcturius",
+   "system": "Prospero",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 84 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_085_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21085,
+  "children": [
+   {
+    "mesh": 21885,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22085,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 85,
+   "stationName": "Genoh",
+   "system": "Nesla",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 85 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_086_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21086,
+  "children": [
+   {
+    "mesh": 21886,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22086,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 86,
+   "stationName": "Hamina",
+   "system": "Nesla",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 86 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_087_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21087,
+  "children": [
+   {
+    "mesh": 21887,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22087,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 87,
+   "stationName": "Ges\u00c3\u00a9hn",
+   "system": "Nesla",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 87 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_088_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21088,
+  "children": [
+   {
+    "mesh": 21888,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22088,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 88,
+   "stationName": "Ao\u00c3\u00a9h",
+   "system": "Nesla",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 88 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_089_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21089,
+  "children": [
+   {
+    "mesh": 21889,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22089,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 89,
+   "stationName": "Ahma \u00c3\u2030soh",
+   "system": "Nesla",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 89 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_090_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21090,
+  "children": [
+   {
+    "mesh": 21890,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22090,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 90,
+   "stationName": "Festus",
+   "system": "Pescal Inartu",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 90 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_091_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21091,
+  "children": [
+   {
+    "mesh": 21891,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22091,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 91,
+   "stationName": "Dima",
+   "system": "Pescal Inartu",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 91 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_092_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21092,
+  "children": [
+   {
+    "mesh": 21892,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22092,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 92,
+   "stationName": "Fejar",
+   "system": "Pescal Inartu",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 92 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_093_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21093,
+  "children": [
+   {
+    "mesh": 21893,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22093,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 93,
+   "stationName": "Maissa",
+   "system": "Pescal Inartu",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 93 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_094_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21094,
+  "children": [
+   {
+    "mesh": 21894,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22094,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 94,
+   "stationName": "Sobotnik",
+   "system": "Pescal Inartu",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 94 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_095_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21095,
+  "children": [
+   {
+    "mesh": 21895,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22095,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 95,
+   "stationName": "Gome C",
+   "system": "Augmenta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 95 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_096_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21096,
+  "children": [
+   {
+    "mesh": 21896,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22096,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 96,
+   "stationName": "Kalun Amir",
+   "system": "Augmenta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 96 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_097_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21097,
+  "children": [
+   {
+    "mesh": 21897,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22097,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 97,
+   "stationName": "Nyrand",
+   "system": "Augmenta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 97 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_098_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21098,
+  "children": [
+   {
+    "mesh": 21898,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22098,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 98,
+   "stationName": "Alioth",
+   "system": "Augmenta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 98 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "station_099_terran",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 0 (Terran) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21099,
+  "children": [
+   {
+    "mesh": 21899,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22099,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 99,
+   "stationName": "Damarque I",
+   "system": "Augmenta",
+   "race": "Terran",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 99 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": ""
+ },
+ {
+  "name": "v_station_105_loma",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21105,
+  "children": [
+   {
+    "mesh": 21905,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22105,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 105,
+   "stationName": "Var Destro",
+   "system": "Loma",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 105 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Valkyrie DLC Loma station."
+ },
+ {
+  "name": "v_station_106_loma",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21106,
+  "children": [
+   {
+    "mesh": 21906,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22106,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 106,
+   "stationName": "Sao Perula",
+   "system": "Loma",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 106 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Valkyrie DLC Loma station."
+ },
+ {
+  "name": "v_station_107_loma",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21107,
+  "children": [
+   {
+    "mesh": 21907,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22107,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 107,
+   "stationName": "Quineros",
+   "system": "Loma",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 107 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Valkyrie DLC Loma station."
+ },
+ {
+  "name": "sn_station_112_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21112,
+  "children": [
+   {
+    "mesh": 21912,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22112,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 112,
+   "stationName": "Var Lupra",
+   "system": "Ginoya ",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 112 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels). 22112 (Models/supernova/stations/sn_station_112_midorian_add.fbx) is in resources.json but the FBX does not exist (mesh absent from the OBB)"
+ },
+ {
+  "name": "sn_station_113_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21113,
+  "children": [
+   {
+    "mesh": 21913,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22113,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 113,
+   "stationName": "Tadram",
+   "system": "Ginoya ",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 113 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_114_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21114,
+  "children": [
+   {
+    "mesh": 21914,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22114,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 114,
+   "stationName": "Midantha",
+   "system": "Talidor",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 114 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_115_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21115,
+  "children": [
+   {
+    "mesh": 21915,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22115,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 115,
+   "stationName": "Tergalon",
+   "system": "Talidor",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 115 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_116_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21116,
+  "children": [
+   {
+    "mesh": 21916,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22116,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 116,
+   "stationName": "Psa Leri",
+   "system": "Talidor",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 116 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_117_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21117,
+  "children": [
+   {
+    "mesh": 21917,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22117,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 117,
+   "stationName": "Merlur",
+   "system": "Talidor",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 117 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_118_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 3 (Midorian) -> race==3 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21118,
+  "children": [
+   {
+    "mesh": 21918,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22118,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 118,
+   "stationName": "Sao Laros",
+   "system": "Talidor",
+   "race": "Midorian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 118 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_119_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21119,
+  "children": [
+   {
+    "mesh": 21919,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22119,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 119,
+   "stationName": "Lan Man\u00c3\u00a9h",
+   "system": "Par\u00c3\u00a9ah",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 119 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_120_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21120,
+  "children": [
+   {
+    "mesh": 21920,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22120,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 120,
+   "stationName": "Katash\u00c3\u00a1n",
+   "system": "Par\u00c3\u00a9ah",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 120 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_121_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21121,
+  "children": [
+   {
+    "mesh": 21921,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22121,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 121,
+   "stationName": "N\u00c3\u00a9van",
+   "system": "Par\u00c3\u00a9ah",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 121 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_122_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21122,
+  "children": [
+   {
+    "mesh": 21922,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22122,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 122,
+   "stationName": "Okana",
+   "system": "Par\u00c3\u00a9ah",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 122 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "sn_station_123_nivelian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation @0x146cf0 default path: root=21000+index; race 2 (Nivelian) -> (race|2)==2 branch: children 0x5528+index (=21800+i, emissive) then 22000+index (lights)",
+  "root": 21123,
+  "children": [
+   {
+    "mesh": 21923,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22123,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14): animated every frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 123,
+   "stationName": "Shel\u00c3\u00a9n",
+   "system": "Par\u00c3\u00a9ah",
+   "race": "Nivelian",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 123 (FileRead::loadStationCollision(index)) -> BoundingAAB/BoundingSphere list"
+  },
+  "notes": "Supernova DLC station (child file named *_add = same role as *_lights_add; carries 10 animation channels)."
+ },
+ {
+  "name": "station_kaamo_club",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation, race==3 branch, index==0x6c (108, Kaamo / Shima)",
+  "root": 21108,
+  "children": [
+   {
+    "mesh": 21908,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22108,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22900,
+    "role": "anim",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "fx_anim; transform kept in this+0x160, animated every frame by PlayerStation::update"
+   },
+   {
+    "mesh": 22901,
+    "role": "anim_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "this+0x164, animated every frame"
+   },
+   {
+    "mesh": 22902,
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "this+0x168, animated every frame"
+   },
+   {
+    "mesh": 22903,
+    "role": "anim_alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "this+0x16c; also the last child (+0x14), so Update is called twice per frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 108,
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "collision.json id 108"
+  },
+  "notes": "22108 (0x565c) is not in the resource table at all (engine gets no mesh)"
+ },
+ {
+  "name": "station_vossk",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation first block: loadStationCollision(index)==NULL, index not 109/110, not in alien orbit",
+  "root": 16436,
+  "children": [
+   {
+    "mesh": 16439,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 16442,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child, animated per frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "usedFor": "every station without a collision.json entry: all Vossk-race stations (11-19, 25-29, 34, 50-54, 58-64, 124-131). Terran 102-104 and 132-134 also lack collision but are Status::inEmptyOrbit, so Level::createSpace creates no station there.",
+   "collision": "collision.json id 1000",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)"
+  },
+  "notes": "Children are separate AEGeometry objects attached with AEGeometry::addChild (identity local transform)."
+ },
+ {
+  "name": "station_void",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation first block: no collision entry AND Status::inAlienOrbit()==1 AND Status::dlc1Won()==0",
+  "root": 16443,
+  "children": [
+   {
+    "mesh": 16446,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 16449,
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "collision": "collision.json id 1001",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "fx": "LevelScript (mission 0x29 in alien orbit) spawns explosion_void_station_add 14285, _add_lookat 14286, _alpha_lookat 14287 as separate objects"
+  },
+  "notes": "All three meshes carry 9 animation channels, but PlayerStation::update does not animate while inAlienOrbit."
+ },
+ {
+  "name": "v_station_battlestation_anim",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation: (a) alien orbit + dlc1Won branch, (b) index==0x65 (101, Valkyrie / Herjaza) branch",
+  "root": 16928,
+  "children": [
+   {
+    "mesh": 16929,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "TransformCreate+TransformAddMesh, identity"
+   },
+   {
+    "mesh": 16930,
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "identity; last child (+0x14)"
+   },
+   {
+    "mesh": 18768,
+    "role": "plasma_gun",
+    "variant": "index 101 only, campaign mission 0x9d (157) while current station == 0x70 (112)",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "sn_plasma_gun_valkyrie (supernova/misc)"
+   },
+   {
+    "mesh": 18770,
+    "role": "plasma_gun_alpha",
+    "variant": "same as above",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18769,
+    "role": "plasma_gun_lights",
+    "variant": "same as above",
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 101,
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "collision": "alien-orbit variant: collision.json id 1003 (0x3eb); index 101: collision.json id 101",
+   "animation": "alien-orbit variant: Transform::Update(root, +0x14, +0x10, transform[+0xf8]) once at construction. Index 101: root updated once (mission 157 at station 112, or campaign mission > 0x4f). PlayerStation::update never animates index 101.",
+   "missionTurretLayout_0x50": {
+    "source": "Level::createCampaignMission case 0x50 (mission 80): PlayerStation(101) at (0,0,160000) with rotation reset to (0,0,0); 12 PlayerTurret objects from DAT_002539d4 (stride 0x1c: pos xyz, rot xyz, 1 unused float); bit (i-1) of mask 0x9f3 set -> 0x381b turret, else 0x381d shield. Positions are offsets from the station origin in engine space (same frame as the station's mesh vertices, e.g. turret 9 sits on emissive part2 at (29691,4579,-3426)). Rotations in radians, applied with AEGeometry::setRotation.",
+    "entries": [
+     {
+      "i": 1,
+      "mesh": 14363,
+      "position": [
+       -3994.97,
+       23359.0,
+       -7378.1
+      ],
+      "rotation": [
+       0,
+       0,
+       1.5708
+      ]
+     },
+     {
+      "i": 2,
+      "mesh": 14363,
+      "position": [
+       3994.96,
+       23359.0,
+       -7378.1
+      ],
+      "rotation": [
+       0,
+       0,
+       -1.5708
+      ]
+     },
+     {
+      "i": 3,
+      "mesh": 14365,
+      "position": [
+       1988.03,
+       -37327.1,
+       -4511.46
+      ],
+      "rotation": [
+       0,
+       0,
+       -1.5708
+      ]
+     },
+     {
+      "i": 4,
+      "mesh": 14365,
+      "position": [
+       -1995.02,
+       -37327.1,
+       -4511.46
+      ],
+      "rotation": [
+       0,
+       0,
+       1.5708
+      ]
+     },
+     {
+      "i": 5,
+      "mesh": 14363,
+      "position": [
+       -3264.75,
+       -22848.6,
+       791.524
+      ],
+      "rotation": [
+       0,
+       0,
+       1.5708
+      ]
+     },
+     {
+      "i": 6,
+      "mesh": 14363,
+      "position": [
+       3273.29,
+       -22848.6,
+       791.524
+      ],
+      "rotation": [
+       0,
+       0,
+       -1.5708
+      ]
+     },
+     {
+      "i": 7,
+      "mesh": 14363,
+      "position": [
+       -29726.7,
+       -10994.8,
+       -3765.53
+      ],
+      "rotation": [
+       0,
+       0,
+       3.1416
+      ]
+     },
+     {
+      "i": 8,
+      "mesh": 14363,
+      "position": [
+       29716.2,
+       -10994.8,
+       -3765.53
+      ],
+      "rotation": [
+       0,
+       0,
+       3.1416
+      ]
+     },
+     {
+      "i": 9,
+      "mesh": 14363,
+      "position": [
+       29716.2,
+       4854.22,
+       -3758.77
+      ],
+      "rotation": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "i": 10,
+      "mesh": 14365,
+      "position": [
+       17013.0,
+       -764.391,
+       -1690.65
+      ],
+      "rotation": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "i": 11,
+      "mesh": 14365,
+      "position": [
+       -17013.3,
+       -764.512,
+       -1690.65
+      ],
+      "rotation": [
+       0,
+       0,
+       0
+      ]
+     },
+     {
+      "i": 12,
+      "mesh": 14363,
+      "position": [
+       -29726.7,
+       4854.22,
+       -3758.77
+      ],
+      "rotation": [
+       0,
+       0,
+       0
+      ]
+     }
+    ]
+   },
+   "missionLaser_0x50": "LevelScript::LevelScript mission 0x50 adds v_station_battlestation_laser_anim_add (14366) as a separate AEGeometry at the enemies' position, animation state 1",
+   "unusedLod": "v_station_battlestation_anim_lod_1.fbx exists but is not in the resource table and never used"
+  },
+  "notes": ""
+ },
+ {
+  "name": "v_station_battlestation_anim",
+  "category": "stations",
+  "origin": "Level::createStaticObject @0xcda54 param 0x4220 (PlayerFixedObject kind 0); createCampaignMission (case ~0x9a) as a friendly dockable object",
+  "root": 16928,
+  "children": [
+   {
+    "mesh": 16929,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 16930,
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": "setWreckedMeshId(0x37a6 = 14246 station_pirates_explosion_anim); hp 9999999",
+   "dockPoints": "FileRead::loadSpacePoints(7) = docks_hd.json 'station' 7 (same set as sn_docking_points_battlestation.json)",
+   "boundingVolume": "getBoundingVolume(.., 0x3eb) = collision 1003",
+   "animation": "Transform::Update on root, +0x14, +0x10 once at creation; PlayerFixedObject::update skips root animation for 0x4220"
+  },
+  "notes": "Same meshes as the PlayerStation variant."
+ },
+ {
+  "name": "v_station_deep_science",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation, index==100 (Kothar / Beidan), campaign mission != 0x50 and dlc1Won()==0",
+  "root": 16931,
+  "children": [
+   {
+    "mesh": 16936,
+    "role": "anim",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "emitters_anim_add; transform kept in this+0x140, animated every frame"
+   },
+   {
+    "mesh": 16932,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 16933,
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14), animated every frame; setLodMeshes also re-parents this transform under the LOD1 transform, so it stays visible at LOD1"
+   }
+  ],
+  "lods": [
+   {
+    "mesh": 16934,
+    "distance": 70000,
+    "children": [
+     16935,
+     16933
+    ]
+   }
+  ],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 100,
+   "collision": "collision.json id 100",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "lodRule": "AEGeometry::setLodMeshes([0x4226],[70000],1) + setLodChildMeshes([0x4227]). Distances are stored squared; AEGeometry::updateLod uses LOD i when dist^2 > f*d_i^2, f = 1.0 (quality param > 0.66), 0.75 (0.33..0.66), 0.5 (<= 0.33).",
+   "unused": "v_station_deep_science_lod_1_add.fbx and v_station_deep_science_anim_add.fbx exist but are not in the resource table"
+  },
+  "notes": ""
+ },
+ {
+  "name": "v_station_deep_science_damaged",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation, index==100, dlc1Won()!=0 and mission != 0x50",
+  "root": 14371,
+  "children": [
+   {
+    "mesh": 16938,
+    "role": "anim",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "damaged_emitters_anim_add; this+0x140, animated every frame"
+   },
+   {
+    "mesh": 14372,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14373,
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 100,
+   "collision": "collision.json id 1005 (0x3ed)",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "animation": "Transform::SetAnimationState(0,0) on root, emissive and add at construction",
+   "unused": "v_station_deep_science_damaged_lod_1.fbx exists but is not in the resource table (no LOD for this variant)"
+  },
+  "notes": ""
+ },
+ {
+  "name": "v_station_deep_science_explosion_anim",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation, index==100 and current campaign mission == 0x50 (80)",
+  "root": 14367,
+  "children": [
+   {
+    "mesh": 16938,
+    "role": "anim",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "uses the DAMAGED emitters mesh 0x422a (uVar17 = (mission==0x50)|dlc1Won); this+0x140"
+   },
+   {
+    "mesh": 14368,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14369,
+    "role": "anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 100,
+   "collision": "collision.json id 1005",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "animation": "SetAnimationState(0,0) at construction; LevelScript mission 0x50 then sets state 1 on root/+0x14/+0x10 and state 2 on the emitters (+0x140)",
+   "laser": "LevelScript mission 0x50 adds v_station_deep_science_explosion_laser_anim_add (14370) separately: hidden, rotation (0, pi, 0), anim state 1, radius 1e6"
+  },
+  "notes": "v_station_deep_science_explosion_emitters_anim_add (16937, 0x4229) is in resources.json but never referenced."
+ },
+ {
+  "name": "sn_burning_station",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation, index==0x6f (111, Luur / Ginoya) and campaign mission <= 0x5d (93)",
+  "root": 21076,
+  "children": [
+   {
+    "mesh": 21876,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22076,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18781,
+    "role": "burning_overlay",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "sn_burning_station"
+   },
+   {
+    "mesh": 18782,
+    "role": "burning_overlay_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child (+0x14), animated per frame"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 111,
+   "collision": "collision.json id 111",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "hull": "Luur reuses station_076_midorian (0x5254) as its hull; the default root for indices 109..111 is 0x5254, there is no station_111 mesh"
+  },
+  "notes": "18781 (Models/supernova/stations/sn_burning_station.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 18782 (Models/supernova/stations/sn_burning_station_emissive.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly)"
+ },
+ {
+  "name": "station_076_midorian",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation, index==111 with campaign mission exactly 0x5e (94): falls through to the race-3 branch",
+  "root": 21076,
+  "children": [
+   {
+    "mesh": 21911,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22111,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": 111,
+   "collision": "collision.json id 111",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)"
+  },
+  "notes": "Edge case: only the bare station_076 hull is effectively shown. 21911 (0x5597) is not in the resource table at all (engine gets no mesh); 22111 (0x565f) is not in the resource table at all (engine gets no mesh)"
+ },
+ {
+  "name": "sn_station_midorian_wrecked",
+  "category": "stations",
+  "origin": "PlayerStation::PlayerStation LAB_00147430: index 0x6d/0x6e (109/110) always, index 111 when campaign mission > 0x5e (94)",
+  "root": 18771,
+  "children": [
+   {
+    "mesh": 18772,
+    "role": "alpha_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18773,
+    "role": "unknown",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18774,
+    "role": "unknown",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "stationIndex": [
+    109,
+    110,
+    111
+   ],
+   "collision": "FileRead::loadStaticCollision(0x7d2) = static_collisions.json id 2002 (station collision discarded)",
+   "rootRotation": "root rotation (0, pi, 0) rad: AEGeometry::setRotation(0, 3.14159274 [0x40490fdb], 0) at the end of PlayerStation::PlayerStation (engine Euler, radians)",
+   "emptyOrbit": "109, 110 and 111 (after mission 93) are Status::inEmptyOrbit; Level::createSpace still creates a PlayerStation for indices 0x1b, 0x6e, 0x6f, so 110 and 111 show this, 109 shows nothing"
+  },
+  "notes": "18771 (Models/supernova/stations/sn_station_midorian_wrecked.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 18772 (Models/supernova/stations/sn_station_midorian_wrecked_alpha_emissive.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 18773 (0x4955) is not in the resource table at all (engine gets no mesh); 18774 (0x4956) is not in the resource table at all (engine gets no mesh)"
+ },
+ {
+  "name": "sn_burning_station",
+  "category": "stations",
+  "origin": "Level::createStaticObject param 0x495d (0x493e+0x1f branch), PlayerFixedObject kind 3; called from Level::createMission and createCampaignMission (e.g. case 0x5e)",
+  "root": 21076,
+  "children": [
+   {
+    "mesh": 18784,
+    "role": "fire_alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "sn_burning_station_fire_anim_alpha, added first"
+   },
+   {
+    "mesh": 21876,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22076,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18781,
+    "role": "burning_overlay",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18781,
+    "role": "burning_overlay",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "the code adds a second AEGeometry with the same id 0x495d (duplicate, probably a bug)"
+   },
+   {
+    "mesh": 18782,
+    "role": "burning_overlay_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18783,
+    "role": "fire_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "sn_burning_station_fire_anim_add; last child"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": "setWreckedMeshId(0x477c = 18300 cargo_001_midorian_explosion_anim)",
+   "dockPoints": "loadSpacePoints(6) = docks_hd.json 'station' 6",
+   "boundingVolume": "getBoundingVolume(.., 0x6f) = collision 111",
+   "hitpoints": 9999999,
+   "animation": "PlayerFixedObject::update advances only the ROOT transform (station_076 has no channels); the fire _anim meshes have 1 channel each"
+  },
+  "notes": "18781 (Models/supernova/stations/sn_burning_station.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 18782 (Models/supernova/stations/sn_burning_station_emissive.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 18783 (Models/supernova/stations/sn_burning_station_fire_anim_add.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 18784 (Models/supernova/stations/sn_burning_station_fire_anim_alpha.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly). sn_burning_station_add.fbx exists but is not in the resource table."
+ },
+ {
+  "name": "station_076_midorian",
+  "category": "stations",
+  "origin": "Level::createCampaignMission case 0x59 (mission 89), object #1: PlayerFixedObject(0x495d, kind 0) with hand-built geometry (intact Luur)",
+  "root": 21076,
+  "children": [
+   {
+    "mesh": 21876,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 22076,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "position": [
+    -77000.0,
+    -3000.0,
+    90000.0
+   ]
+  },
+  "notes": "Rotation set with AEGeometry::setRotation, float args lost in the decompile."
+ },
+ {
+  "name": "sn_burning_station_fire_intro",
+  "category": "stations",
+  "origin": "Level::createCampaignMission case 0x59 (mission 89), object #2: PlayerFixedObject(0x495d), KIPlayer::setVisible(false) at start",
+  "root": 21076,
+  "children": [
+   {
+    "mesh": 21876,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18832,
+    "role": "fire_intro_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18833,
+    "role": "fire_intro_alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "position": [
+    -77000.0,
+    -3000.0,
+    90000.0
+   ]
+  },
+  "notes": "18832 (Models/supernova/stations/sn_burning_station_fire_intro_anim_add.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 18833 (Models/supernova/stations/sn_burning_station_fire_intro_anim_alpha.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly)"
+ },
+ {
+  "name": "station_pirates",
+  "category": "stations",
+  "origin": "Level::createStaticObject param 0x37a3 (PlayerFixedObject kind 8); used by Level::createMission / createCampaignMission",
+  "root": 14243,
+  "children": [
+   {
+    "mesh": 14244,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 14245,
+    "role": "lights",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": "14246 station_pirates_explosion_anim (setWreckedMeshId(0x37a6)); on death it takes the station matrix and plays its animation (SetAnimationState 1); wreck collision index 5",
+   "boundingVolume": "getBoundingVolume(.., 0x3ea) = collision 1002",
+   "hitpoints": "((level<21 ? level*15+20 : 320) + (gameWon ? 180 : mission*4)) * 5, scaled by difficulty option"
+  },
+  "notes": ""
+ },
+ {
+  "name": "sn_station_mining_plant",
+  "category": "stations",
+  "origin": "Level::createStaticObject param 0x4a88 (PlayerFixedObject kind 3, invulnerable); used by createMission, createCampaignMission, createStaticObjects",
+  "root": 19080,
+  "children": [
+   {
+    "mesh": 19085,
+    "role": "emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19084,
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19081,
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19086,
+    "role": "part2",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19088,
+    "role": "part2_emissive",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19087,
+    "role": "part2_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19082,
+    "role": "glow_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 19083,
+    "role": "fire_anim_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "last child"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": "19080 (itself)",
+   "dockPoints": "loadSpacePoints(1) = docks_hd.json 'station' 1",
+   "boundingVolume": "getBoundingVolume(.., 0x7d0) = static_collisions.json id 2000",
+   "unused": "sn_station_mining_plant_lod_1_part1/2 and lod_2_part1/2 FBX exist but are not in the resource table; no LOD is set up"
+  },
+  "notes": "All 8 children are flat siblings under the part1 root, all at identity (child order as listed)."
+ },
+ {
+  "name": "sn_station_113_midorian",
+  "category": "stations",
+  "origin": "Level::createStaticObject param 0x5279: PlayerFixedObject(0x41a0) whose geometry is col_box (16800) and whose WRECK mesh is 0x5279; createCampaignMission case 0x66 (mission 102)",
+  "root": 16800,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "wreckMesh": 21113,
+   "placement": "position (0,0,0), AEGeometry::rotate(0, pi, 0), friendly, docking type 0",
+   "dockPoints": "loadSpacePoints(10) = docks_hd.json 'station' 10",
+   "boundingVolume": "getBoundingVolume(.., 0x7d2) = static collision 2002",
+   "regular": "Station 113 (Tadram) is also assembled normally by PlayerStation (21113 + 21913 + 22113)"
+  },
+  "notes": "The visible mesh is the wreck geometry (21113 alone, no emissive/add), rendered in PlayerFixedObject states 3/4; col_box is a proxy."
+ },
+ {
+  "name": "v_station_battlestation_turret",
+  "category": "stations",
+  "origin": "PlayerTurret::PlayerTurret @0x182640 id 0x381b (Level::createStaticObject(0x381b) passes an EMPTY root AEGeometry)",
+  "root": null,
+  "children": [
+   {
+    "mesh": 14363,
+    "role": "turret_base",
+    "variant": null,
+    "position": null,
+    "rotation": "(0, pi, 0) via AEGeometry::rotate",
+    "scale": null,
+    "note": "this+0x13c, child of pivot this+0x144"
+   },
+   {
+    "mesh": 14364,
+    "role": "turret_gun",
+    "variant": null,
+    "position": [
+     0.0,
+     565.0,
+     -528.0
+    ],
+    "rotation": "rotation order 2; rotate(0, pi, 0) after setPosition; aimed at runtime",
+    "scale": null,
+    "note": "this+0x140, child of pivot this+0x144"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "hierarchy": "emptyRoot -> pivot (this+0x144, empty AEGeometry, radius 1e6) -> [gun 14364, base 14363]",
+   "usedBy": "battlestation mission 80 layout (see v_station_battlestation_anim related.missionTurretLayout_0x50); also 2 per capital ship in Level::createMission (table UNK_00253464, not a station)"
+  },
+  "notes": "Root is an empty AEGeometry(Canvas) with no mesh."
+ },
+ {
+  "name": "v_station_battlestation_shield",
+  "category": "stations",
+  "origin": "Level::createStaticObject(0x381d) + PlayerTurret::PlayerTurret(0x381d)",
+  "root": 14365,
+  "children": [
+   {
+    "mesh": 14365,
+    "role": "shield_duplicate",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "note": "PlayerTurret base AEGeometry(0x381d) under an empty pivot, not rotated"
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "nameText": "GameText 0x681",
+   "usedBy": "battlestation mission 80 layout"
+  },
+  "notes": "createStaticObject makes AEGeometry(0x381d) the root (0x381d is not in its empty-root list), and PlayerTurret adds a second AEGeometry(0x381d) under a pivot, so the shield mesh is drawn twice in the same place."
+ },
+ {
+  "name": "v_station_battlestation_laser_anim_add",
+  "category": "stations",
+  "origin": "LevelScript::LevelScript campaign mission 0x50: standalone AEGeometry(0x381e) at Level::getEnemies()[0] position, animation state 1",
+  "root": 14366,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": ""
+ },
+ {
+  "name": "v_station_deep_science_explosion_laser_anim_add",
+  "category": "stations",
+  "origin": "LevelScript::LevelScript campaign mission 0x50: standalone AEGeometry(0x3822), radius 1e6, anim state 1, hidden, setRotation(0, pi, 0)",
+  "root": 14370,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": ""
+ },
+ {
+  "name": "sn_burning_valkyrie_stage_1",
+  "category": "stations",
+  "origin": "LevelScript::LevelScript campaign mission 0x9d (157), not alien orbit, at the mission target station: AEGeometry(0x4a97) + child 0x4a98; hidden, positioned and shown later in LevelScript::update",
+  "root": 19095,
+  "children": [
+   {
+    "mesh": 19096,
+    "role": "smoke_alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {
+   "next": "sn_burning_valkyrie_stage_2 replaces it"
+  },
+  "notes": "19095 (Models/supernova/stations/sn_burning_valkyrie_stage_1_fire_anim_add.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 19096 (Models/supernova/stations/sn_burning_valkyrie_stage_1_smoke_anim_alpha.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly). Fire FX for the Valkyrie ship, not a station."
+ },
+ {
+  "name": "sn_burning_valkyrie_stage_2",
+  "category": "stations",
+  "origin": "LevelScript::LevelScript mission 157: AEGeometry(0x4a99) + child 0x4a9a",
+  "root": 19097,
+  "children": [
+   {
+    "mesh": 19098,
+    "role": "smoke_alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "19097 (Models/supernova/stations/sn_burning_valkyrie_stage_2_fire_anim_add.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly); 19098 (Models/supernova/stations/sn_burning_valkyrie_stage_2_smoke_anim_alpha.fbx) exists in the game and as FBX but is MISSING from resources.json (emulator lost its path; id recovered from BuildResourceList disassembly). Fire FX for the Valkyrie ship."
+ },
+ {
+  "name": "v_station_deep_science_explosion_emitters_anim_add",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": 16937,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: id 16937 is in resources.json but never referenced (code uses 0x422a instead)"
+ },
+ {
+  "name": "v_station_battlestation_anim_lod_1",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "v_station_deep_science_anim_add",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "v_station_deep_science_damaged_lod_1",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "v_station_deep_science_lod_1_add",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "sn_burning_station_add",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "sn_station_mining_plant_lod_1_part1",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "sn_station_mining_plant_lod_1_part2",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "sn_station_mining_plant_lod_2_part1",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ },
+ {
+  "name": "sn_station_mining_plant_lod_2_part2",
+  "category": "stations",
+  "origin": "unreferenced",
+  "root": null,
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "FBX exists under Models/*/stations but no code assembles it: not in the resource table"
+ }
+]
