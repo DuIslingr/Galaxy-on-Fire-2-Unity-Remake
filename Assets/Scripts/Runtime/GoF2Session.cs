@@ -21,12 +21,33 @@ namespace GoF2Remake.Data
         public static bool IsExtreme => Difficulty > 1f;
 
         /// <summary>
-        /// Status+0x1e8, the campaign mission. Shop stock, ship dealers and several locks depend on it. There is no
-        /// campaign yet, so the remake plays as if past the tutorial: 20 unlocks the hangar (5), map (9), lounge (13) and
-        /// the Mido ship dealer (16), and skips the tutorial's free-gear-only shop at Var Hastra (&lt; 7).
+        /// Status+0x1e8, the campaign index (GoF2Story): one value per story step, 0..162. Shop stock, ship dealers, NPC
+        /// strength and several locks depend on it.
         /// </summary>
+        public static int CampaignMission;
+
+        /// <summary>Status slot 0: the current step's mission (GoF2Story).</summary>
+        public static GoF2StoryMission StoryMission = new GoF2StoryMission();
+        /// <summary>Status+0x100: playing time (s) when the current step started.</summary>
+        public static float StoryStepStart;
+        /// <summary>Status+0x178: a story radio call is due in space (indices 93 / 111 / 143).</summary>
+        public static bool StoryRadioPending;
+        /// <summary>Status+0x1c4: freelance missions completed.</summary>
+        public static int FreelanceCompleted;
+        /// <summary>Status+0x174: the counter of story types 0xa8 / 0xb8.</summary>
+        public static int StoryCounter;
+        /// <summary>Status+0x7c / +0x80: the Void-invasion system and station (-1 none, -10 never again).</summary>
+        public static int VoidInvasionSystem = -1, VoidInvasionStation = -1;
+        /// <summary>Items the story made unsaleable (Item::setUnsaleable: Gunant's Drill, the Alien Remains ...).</summary>
+        public static HashSet<int> Unsaleable = new HashSet<int>();
+
+        /// <summary>
+        /// Remake-only free play: no story steps. Plays as if past the tutorial (index 20: hangar, map, lounge and the Mido
+        /// ship dealer unlocked), with the remake's help for leaving gateless Mido (GoF2GalaxyMap.HasJumpDrive, Var Hastra's
+        /// drill and energy cells). Saves from before the story load as free play.
+        /// </summary>
+        public static bool FreePlay;
         public const int FreePlayMission = 20;
-        public static int CampaignMission = FreePlayMission;
 
         /// <summary>Current station (Status::getStation): one flight level = one station orbit.</summary>
         public static int StationIndex = 78;
@@ -155,7 +176,15 @@ namespace GoF2Remake.Data
             Equipment = StartEquipment();
             Cargo = new List<GoF2Stack>();
             Credits = 0;
-            CampaignMission = FreePlayMission;
+            CampaignMission = 0;
+            StoryMission = new GoF2StoryMission();
+            StoryStepStart = 0f;
+            StoryRadioPending = false;
+            FreelanceCompleted = 0;
+            StoryCounter = 0;
+            VoidInvasionSystem = VoidInvasionStation = -1;
+            Unsaleable = new HashSet<int>();
+            FreePlay = false;
             RecentStations = new List<GoF2StationStock>();
             LastDepartureTime = -1f;
             SeenItems = new HashSet<int>();

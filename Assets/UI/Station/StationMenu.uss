@@ -261,6 +261,20 @@
     font-size: 22px;
 }
 
+/* Menu buttons the story hasn't unlocked yet (ModStation::OnInitialize: half transparent). */
+.station-button:disabled {
+    opacity: 0.35;
+}
+
+/* The story dialogue (UI/Dialogue) fills the screen. */
+.dialogue-instance {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
 /* ---- system menu (Menu 172: Save game, Back to Main Menu) ------------------------------ */
 
 .system-menu {

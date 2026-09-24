@@ -5,10 +5,21 @@
 #   index, type (-1 = empty mission), reward, station (-1 = none / any), value (statusValue), goodsItem / goodsAmount
 #   (Mission::setProductionGoods; goodsItem 0 with an amount = passengers), visible, objectiveText (DAT_00258f68, -1 past
 #   the table), briefing / success pages [{speaker, text}] (speaker name = text 1597 + speaker).
-# The side effects of each step (loaner ships, items, systems...) are code in GoF2StoryEffects, not data.
+# Also, from Reference/tools/dialogue/story_table.py (dialogue_cutscenes.md):
+#   pages get 'voice' (the .ogg name, '' = silent; German files are the same name with 'de_' in the _deu folder),
+#   speakers [{portrait: [body, part0..3]}] (index = speaker id), portraitOffsets[body][part] = [anchor 16 top / 32 bottom, y],
+#   radio[index] = [{text, speaker, trigger, param, count, voice}] (Level::createRadioMessages per campaign index).
+# The side effects of each step (loaner ships, items, systems...) are code in GoF2Story, not data.
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'dialogue'))
 import campaign_flow_tables as C
+import story_table as ST
+
+P = ST.build()
+by_mission = {m['mission']: m for m in P['missions']}
+def voice(v):
+    return v['name'] if v and (v.get('eng') or v.get('deu')) else ''
 
 root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 out = os.path.join(root, 'Assets', 'Resources', 'GoF2Data', 'story.json')
@@ -18,7 +29,12 @@ for n in range(163):
     t = C.T.get(n, {})
     typ = t.get('type')
     goods = t.get('goods') or (-1, 0)
-    pages = lambda tab: [dict(speaker=s, text=x) for s, x in tab[n]] if n < C.N_DIALOG else []
+    pm = by_mission.get(n, {})
+    vmap = {}
+    for kind in ('briefing', 'success'):
+        for pg in pm.get(kind, []):
+            vmap[(kind, pg['text'])] = voice(pg.get('voice'))
+    pages = lambda tab, kind: [dict(speaker=s, text=x, voice=vmap.get((kind, x), '')) for s, x in tab[n]] if n < C.N_DIALOG else []
     steps.append(dict(
         index=n,
         type=typ if isinstance(typ, int) else -1,
@@ -29,10 +45,14 @@ for n in range(163):
         goodsAmount=goods[1],
         visible=bool(t.get('visible', True)),
         objectiveText=C.OBJECTIVE[n] if n < 164 else -1,
-        briefing=pages(C.BRIEF),
-        success=pages(C.SUCC),
+        briefing=pages(C.BRIEF, 'briefing'),
+        success=pages(C.SUCC, 'success'),
+        radio=[dict(text=r['text'], speaker=r['speaker'], trigger=r['trigger'], param=r['param'], count=r.get('count', 1),
+                    voice=voice(r.get('voice'))) for r in pm.get('radio', [])],
     ))
 
-json.dump(dict(steps=steps), open(out, 'w', encoding='utf-8'), indent=1)
-print('wrote', out, len(steps), 'steps,', sum(len(s['briefing']) for s in steps), 'briefing pages,',
+speakers = [dict(portrait=sp['portrait'] or [-1, -1, -1, -1, -1]) for sp in P['speakers']]
+offsets = [dict(parts=[dict(anchor=o[0], y=o[1]) for o in body]) for body in P['portraitParts']['offsetsHD']]
+json.dump(dict(steps=steps, speakers=speakers, portraitOffsets=offsets), open(out, 'w', encoding='utf-8'), indent=1)
+print('wrote', out, len(steps), 'steps,', sum(len(x['radio']) for x in steps), 'radio messages,', sum(len(s['briefing']) for s in steps), 'briefing pages,',
       sum(len(s['success']) for s in steps), 'success pages')

@@ -107,6 +107,8 @@ namespace GoF2Remake.EditorTools
             (Ipad, "hit_side_red", 438, 1074, 325, 892, 0, false),
             (Ipad, "hit_top_red", 438, 112, 1000, 375, 0, false),
             (Main, "message_bg", 1601, 746, 392, 44, 0, false),
+            (Ipad, "portrait_bg", 1459, 955, 160, 200, 0, false),     // 0x485 ImageFactory::reload (dialogue_cutscenes.md 1.3)
+            (Ipad, "portrait_frame", 1879, 249, 160, 200, 0, false),  // 0x511
         };
 
         [MenuItem("GoF2/Build HUD Images", priority = 15)]

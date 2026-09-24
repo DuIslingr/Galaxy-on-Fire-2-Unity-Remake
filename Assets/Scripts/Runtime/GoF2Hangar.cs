@@ -18,7 +18,7 @@ namespace GoF2Remake.Data
 {
     public class GoF2Hangar
     {
-        public enum Result { Ok, NoStock, NoCredits, NothingToSell, NoFreeSlot, Swap, NotMountable, SameShip }
+        public enum Result { Ok, NoStock, NoCredits, NothingToSell, NoFreeSlot, Swap, NotMountable, SameShip, NotSaleable }
 
         readonly GoF2Database db;
         readonly Dictionary<int, int> prices = new Dictionary<int, int>();
@@ -60,7 +60,9 @@ namespace GoF2Remake.Data
         // ---- queries -----------------------------------------------------------------------------------------
 
         public ShipData Ship => db.Ship(GoF2Session.ShipIndex);
-        public int PriceOf(int item) => prices.TryGetValue(item, out int p) ? p : 0;
+        public int PriceOf(int item) => GoF2Story.AdjustPrice(Station, item, prices.TryGetValue(item, out int p) ? p : 0);
+        /// <summary>Item::isSaleable: story items (Gunant's Drill, the Alien Remains...) can't be sold or demounted (323).</summary>
+        public static bool IsSaleable(int item) => !GoF2Session.Unsaleable.Contains(item);
         public int StockOf(int item) => Stock.items.Where(s => s.item == item).Sum(s => s.amount);
         public int CargoOf(int item) => GoF2Session.Cargo.Where(s => s.item == item).Sum(s => s.amount);
         public bool IsMounted(int item) => GoF2Session.Equipment.Any(e => e.item == item);
@@ -118,6 +120,7 @@ namespace GoF2Remake.Data
         {
             var stack = GoF2Session.Cargo.Find(s => s.item == item && s.amount > 0);
             if (stack == null) return Result.NothingToSell;
+            if (!IsSaleable(item)) return Result.NotSaleable;
             stack.amount--;
             if (stack.amount <= 0) GoF2Session.Cargo.Remove(stack);
             var row = Stock.items.Find(s => s.item == item);

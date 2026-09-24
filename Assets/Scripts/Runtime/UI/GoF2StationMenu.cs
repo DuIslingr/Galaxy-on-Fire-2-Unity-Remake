@@ -17,7 +17,12 @@
 // slot list (slot 0 "This slot is reserved for the auto-save game." 487; a used slot asks "Are you sure you want to
 // overwrite this game?" 49; then "Game saved." 50, MenuTouchWindow::saveGame 0x14bcf8), Back to Main Menu (522, confirm
 // "Are you sure? Your progress won't be saved." 523). The original's Options / Help entries are in the main menu here.
-// Not yet (the original's other buttons): Missions, Status.
+// Story (ModStation::OnUpdate 0xed2a8 / OnTouchEnd 0xea4ec, campaign_flow.md 3.1): while no window is open, a completed
+// campaign mission (GoF2Story.IsComplete, docked; the lounge types need the lounge with its intro over) opens its
+// success conversation (GoF2DialogueView); closing it advances the story, then by the new index: reload the station
+// (9, 44, 75, 76, 83), launch into a story orbit (78, 89, 99, 109, 119, 133, 144, 160) or credit the reward. The menu
+// buttons unlock with the story: Hangar from 5, Map from 9, Space Lounge from 12.
+// Not yet (the original's other buttons): Missions, Status; the ending after index 43 (credits) is a plain advance.
 
 using GoF2Remake.Data;
 using GoF2Remake.World;
@@ -59,6 +64,8 @@ namespace GoF2Remake.UI
         ScrollView saveSlotList;
         Button saveGameButton, mainMenuButton, systemClose, saveBack;
         int lastSavedSlot = -1;
+        GoF2DialogueView storyDialogue;
+        AudioSource voiceSource;
         Label viewTitle, toast;
         GoF2HangarWindow hangarWindow;
         System.Action dialogAction;
@@ -94,6 +101,12 @@ namespace GoF2Remake.UI
 
         void OnUIReload(PanelRenderer renderer, VisualElement rootElement, int version)
         {
+            // The first load can come before GoF2StationLevel.Awake has built the station: try again next frame.
+            if (level != null && level.Layout == null)
+            {
+                rootElement.schedule.Execute(() => OnUIReload(renderer, rootElement, version)).ExecuteLater(1);
+                return;
+            }
             if (!GoF2Localization.IsLoaded && languageTables != null && languageTables.Length > 0)
             {
                 int i = languageCodes != null ? System.Array.IndexOf(languageCodes, GoF2Settings.Language) : -1;
@@ -116,6 +129,14 @@ namespace GoF2Remake.UI
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", CloseDialog);
             hangarWindow = new GoF2HangarWindow(this, level, root);
+            root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
+            if (voiceSource == null)
+            {
+                voiceSource = gameObject.AddComponent<AudioSource>();
+                voiceSource.playOnAwake = false;
+                voiceSource.spatialBlend = 0f;
+            }
+            storyDialogue = new GoF2DialogueView(root, voiceSource) { ButtonSound = push => Play(push ? buttonPush : buttonRelease) };
             Bind("menuButton", OpenSystemMenu);
             systemMenu = root.Q("systemMenu");
             systemMain = root.Q("systemMenuMain");
@@ -187,7 +208,17 @@ namespace GoF2Remake.UI
             viewTitle.text = HangarOpen ? GoF2Localization.Get(167).ToUpperInvariant() : lounge ? GoF2Localization.Get(398).ToUpperInvariant() : "";
             viewTitle.style.display = viewTitle.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             dragVelocity = 0f;
+            ApplyStoryLocks();
             BuildHints(GoF2InputMode.Current);
+        }
+
+        /// <summary>ModStation::OnInitialize: Hangar from index 5, Map from 9, Space Lounge from 12 (half transparent before).</summary>
+        void ApplyStoryLocks()
+        {
+            int station = level != null && level.Station != null ? level.Station.index : -1;
+            hangarButton.SetEnabled(GoF2Story.HangarUnlocked);
+            mapButton.SetEnabled(GoF2Story.MapUnlocked);
+            loungeButton.SetEnabled(GoF2Story.LoungeUnlocked(station));
         }
 
         bool HangarOpen => hangarWindow != null && hangarWindow.IsOpen;
@@ -195,7 +226,7 @@ namespace GoF2Remake.UI
         /// <summary>Station button 0 (ModStation::OnKeyPress): the Hangar window over the main view.</summary>
         void OpenHangar()
         {
-            if (HangarOpen || level == null) return;
+            if (HangarOpen || level == null || !GoF2Story.HangarUnlocked) return;
             if (level.View != GoF2StationView.Hangar) level.SetView(GoF2StationView.Hangar);
             hangarWindow.Open();
             root.AddToClassList("hangar-open");
@@ -214,6 +245,7 @@ namespace GoF2Remake.UI
 
         void OpenLounge()
         {
+            if (level == null || !GoF2Story.LoungeUnlocked(level.Station != null ? level.Station.index : -1)) return;
             CloseHangar();
             level?.SetView(GoF2StationView.Lounge);
         }
@@ -223,7 +255,7 @@ namespace GoF2Remake.UI
         /// autopilot to it or, for another system with a drive, the Khador charge.</summary>
         void OpenMap()
         {
-            if (level == null || GoF2StarMap.IsOpen) return;
+            if (level == null || GoF2StarMap.IsOpen || !GoF2Story.MapUnlocked) return;
             if (new GoF2Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(GoF2Localization.Get(204), null, true); return; }
             CloseHangar();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
@@ -304,6 +336,58 @@ namespace GoF2Remake.UI
         void BackToMenu()
         {
             if (Application.CanStreamedLevelBeLoaded(menuScene)) SceneManager.LoadScene(menuScene);
+        }
+
+        // ---- story (ModStation::OnUpdate / OnTouchEnd) ---------------------------------------------------
+
+        /// <summary>Status::missionCompleted(docked): the completed campaign mission's success conversation.</summary>
+        bool CheckStory()
+        {
+            if (level == null || level.Station == null || GoF2Session.FreePlay) return false;
+            var ctx = new GoF2StoryContext
+            {
+                docked = true,
+                inLounge = level.View == GoF2StationView.Lounge && !level.IntroPlaying,
+                station = level.Station.index,
+            };
+            if (!GoF2Story.IsComplete(level.Database, ctx)) return false;
+            GoF2Story.Mission.won = true;
+            CloseHangar();
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            var step = GoF2Story.Step;
+            if (step != null && step.success.Count > 0) storyDialogue.Show(step.success, _ => AfterStorySuccess());
+            else AfterStorySuccess();
+            return true;
+        }
+
+        /// <summary>ModStation::OnTouchEnd after a campaign success conversation.</summary>
+        void AfterStorySuccess()
+        {
+            var db = level.Database;
+            int reward = GoF2Story.Mission.reward;
+            int n = GoF2Story.Advance(db);
+            if (n == 9 || n == 44 || n == 75 || n == 76 || n == 83)
+            {
+                GoF2Session.Autosave();
+                SceneManager.LoadScene(gameObject.scene.name);   // a fresh station module; the next conversation follows
+                return;
+            }
+            int launchTo = n switch { 89 => 109, 99 => 10, 109 => 114, 119 => 10, 133 => 120, 144 => 112, 160 => 10, _ => -1 };
+            if (n == 78) { level.Launch(); return; }   // escape from Valkyrie: departStation + space
+            if (launchTo >= 0)
+            {
+                // initStreamOutPosition + departStation(target): straight into the story orbit.
+                GoF2Session.PreviousStationIndex = GoF2Session.StationIndex;
+                GoF2Session.StationIndex = launchTo;
+                GoF2Session.ArrivedByTravel = n != 144 && n != 160;
+                GoF2Session.LaunchedFromStation = false;
+                SceneManager.LoadScene(level.spaceScene);
+                return;
+            }
+            GoF2Session.Credits += reward;
+            GoF2Session.Autosave();
+            ApplyStoryLocks();
+            Select(launchButton);
         }
 
         // ---- system menu (MenuTouchWindow: Save game, Back to Main Menu) -----------------------------------
@@ -534,18 +618,18 @@ namespace GoF2Remake.UI
             if (kind == GoF2InputKind.KeyboardMouse)
             {
                 if (hangar) Hint(rotate, GoF2InputGlyph.Key("A"), GoF2InputGlyph.Key("D"));
-                Hint(GoF2Localization.Get(167).ToUpperInvariant(), GoF2InputGlyph.Key("1"));
-                Hint(GoF2Localization.Get(398).ToUpperInvariant(), GoF2InputGlyph.Key("2"));
-                Hint(GoF2Localization.Get(177).ToUpperInvariant(), GoF2InputGlyph.Key("M"));
+                if (hangarButton.enabledSelf) Hint(GoF2Localization.Get(167).ToUpperInvariant(), GoF2InputGlyph.Key("1"));
+                if (loungeButton.enabledSelf) Hint(GoF2Localization.Get(398).ToUpperInvariant(), GoF2InputGlyph.Key("2"));
+                if (mapButton.enabledSelf) Hint(GoF2Localization.Get(177).ToUpperInvariant(), GoF2InputGlyph.Key("M"));
                 Hint(launch, GoF2InputGlyph.Key("L"));
                 Hint(back, GoF2InputGlyph.Key("ESC"));
             }
             else if (kind == GoF2InputKind.Gamepad)
             {
                 if (hangar) Hint(rotate, GoF2InputGlyph.Pad(GoF2PadButton.RightStick));
-                Hint($"{GoF2Localization.Get(167)} / {GoF2Localization.Get(398)}".ToUpperInvariant(),
-                     GoF2InputGlyph.Pad(GoF2PadButton.LeftBumper), GoF2InputGlyph.Pad(GoF2PadButton.RightBumper));
-                Hint(GoF2Localization.Get(177).ToUpperInvariant(), GoF2InputGlyph.Pad(GoF2PadButton.Y));
+                if (hangarButton.enabledSelf) Hint(GoF2Localization.Get(167).ToUpperInvariant(), GoF2InputGlyph.Pad(GoF2PadButton.LeftBumper));
+                if (loungeButton.enabledSelf) Hint(GoF2Localization.Get(398).ToUpperInvariant(), GoF2InputGlyph.Pad(GoF2PadButton.RightBumper));
+                if (mapButton.enabledSelf) Hint(GoF2Localization.Get(177).ToUpperInvariant(), GoF2InputGlyph.Pad(GoF2PadButton.Y));
                 Hint(launch, GoF2InputGlyph.Pad(GoF2PadButton.X));
                 Hint(T("hudBack", "BACK"), GoF2InputGlyph.Pad(GoF2PadButton.B));
                 Hint(T("hudMenu", "MENU"), GoF2InputGlyph.Pad(GoF2PadButton.Menu));
@@ -571,6 +655,8 @@ namespace GoF2Remake.UI
             if (root == null || level == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
             if (GoF2StarMap.IsOpen) return;   // the map has its own input
+            if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
 
             var kb = Keyboard.current;
             var pad = Gamepad.current;

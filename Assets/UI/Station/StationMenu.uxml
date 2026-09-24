@@ -1,4 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Template name="Dialogue" src="../Dialogue/Dialogue.uxml" />
     <ui:Style src="../GoF2InputGlyphs.uss" />
     <ui:Style src="StationMenu.uss" />
     <ui:Style src="HangarWindow.uss" />
@@ -94,6 +95,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
+        <ui:Instance template="Dialogue" name="storyDialogue" class="dialogue-instance" picking-mode="Ignore" />
         <ui:VisualElement name="dialog" class="station-dialog-backdrop">
             <ui:VisualElement class="station-dialog">
                 <ui:Label name="dialogText" class="station-dialog-text" />

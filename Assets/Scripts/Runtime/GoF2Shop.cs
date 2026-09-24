@@ -60,6 +60,23 @@ namespace GoF2Remake.Data
             else GoF2Session.Cargo.Add(new GoF2Stack(item, amount));
         }
 
+        /// <summary>Removes up to 'amount' units of an item from the cargo hold.</summary>
+        public static void RemoveFromCargo(int item, int amount)
+        {
+            for (int i = GoF2Session.Cargo.Count - 1; i >= 0 && amount > 0; i--)
+            {
+                var s = GoF2Session.Cargo[i];
+                if (s.item != item) continue;
+                int take = Mathf.Min(amount, s.amount);
+                s.amount -= take;
+                amount -= take;
+                if (s.amount <= 0) GoF2Session.Cargo.RemoveAt(i);
+            }
+        }
+
+        /// <summary>Adds a row to a station's stock, keeping item index order.</summary>
+        public static void InsertStock(GoF2StationStock stock, GoF2Stack row) => InsertSorted(stock.items, row);
+
         /// <summary>Ship::getFirstEquipmentOfSort: the first mounted item of a category, or null.</summary>
         public static ItemData FirstMounted(GoF2Database db, int category)
         {
@@ -208,11 +225,11 @@ namespace GoF2Remake.Data
                 else amount = Mathf.Max(1, r / 5);   // weapons, turrets, equipment: 1..3
                 list.Add(new GoF2Stack(idx, amount));
             }
-            // Remake-only, while there is no campaign: the starting station always sells the cheapest drill (IMT Extract 1.3,
+            // Remake-only, in free play (no story): the starting station always sells the cheapest drill (IMT Extract 1.3,
             // normally a 70 % chance there) to keep mining reachable, and energy cells, which the free-play Khador jump out of
             // gateless Mido needs (GoF2GalaxyMap.HasJumpDrive).
-            if (station == 78 && !list.Any(s => db.Item(s.item)?.categoryId == 19)) InsertSorted(list, new GoF2Stack(86, 1));
-            if (station == 78 && !list.Any(s => s.item == GoF2GalaxyMap.EnergyCellItem))
+            if (GoF2Session.FreePlay && station == 78 && !list.Any(s => db.Item(s.item)?.categoryId == 19)) InsertSorted(list, new GoF2Stack(86, 1));
+            if (GoF2Session.FreePlay && station == 78 && !list.Any(s => s.item == GoF2GalaxyMap.EnergyCellItem))
                 InsertSorted(list, new GoF2Stack(GoF2GalaxyMap.EnergyCellItem, Random.Range(0, 15) + 5));
             return list;
         }

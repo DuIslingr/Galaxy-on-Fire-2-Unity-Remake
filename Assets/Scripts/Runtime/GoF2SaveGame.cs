@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class GoF2SaveData
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -32,6 +32,13 @@ namespace GoF2Remake.Data
         public bool[] systemVisible;
         public int jumpgatesUsed, kills, pirateKills;
         public int[] standing;
+        // version 2: the story
+        public bool freePlay;
+        public GoF2StoryMission storyMission;
+        public float storyStepStart;
+        public bool storyRadioPending;
+        public int freelanceCompleted, storyCounter, voidInvasionSystem = -1, voidInvasionStation = -1;
+        public List<int> unsaleable;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -129,6 +136,15 @@ namespace GoF2Remake.Data
                 kills = GoF2Session.Kills,
                 pirateKills = GoF2Session.PirateKills,
                 standing = (int[])GoF2Session.Standing.Clone(),
+                freePlay = GoF2Session.FreePlay,
+                storyMission = GoF2Session.StoryMission,
+                storyStepStart = GoF2Session.StoryStepStart,
+                storyRadioPending = GoF2Session.StoryRadioPending,
+                freelanceCompleted = GoF2Session.FreelanceCompleted,
+                storyCounter = GoF2Session.StoryCounter,
+                voidInvasionSystem = GoF2Session.VoidInvasionSystem,
+                voidInvasionStation = GoF2Session.VoidInvasionStation,
+                unsaleable = new List<int>(GoF2Session.Unsaleable),
             };
         }
 
@@ -162,6 +178,23 @@ namespace GoF2Remake.Data
             GoF2Session.Kills = s.kills;
             GoF2Session.PirateKills = s.pirateKills;
             if (s.standing != null && s.standing.Length == 2) GoF2Session.Standing = s.standing;
+            if (s.version < 2)
+            {
+                // Saved before the story existed: free play at index 20.
+                GoF2Session.FreePlay = true;
+                GoF2Session.CampaignMission = GoF2Session.FreePlayMission;
+                return;
+            }
+            GoF2Session.FreePlay = s.freePlay;
+            GoF2Session.StoryMission = s.storyMission ?? new GoF2StoryMission();
+            GoF2Session.StoryStepStart = s.storyStepStart;
+            GoF2Session.StoryRadioPending = s.storyRadioPending;
+            GoF2Session.FreelanceCompleted = s.freelanceCompleted;
+            GoF2Session.StoryCounter = s.storyCounter;
+            GoF2Session.VoidInvasionSystem = s.voidInvasionSystem;
+            GoF2Session.VoidInvasionStation = s.voidInvasionStation;
+            GoF2Session.Unsaleable = new HashSet<int>(s.unsaleable ?? new List<int>());
+            GoF2Story.RepairCheckpoint();
         }
     }
 }

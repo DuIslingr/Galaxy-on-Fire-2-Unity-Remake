@@ -1,0 +1,30 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Dialogue.uss" />
+    <ui:VisualElement name="dialogueRoot" class="dialogue-backdrop">
+        <ui:VisualElement class="dialogue-box">
+            <ui:VisualElement class="dialogue-header">
+                <ui:Label name="dialogueSpeaker" class="dialogue-speaker gof-semibold" />
+            </ui:VisualElement>
+            <ui:VisualElement class="dialogue-body">
+                <ui:VisualElement name="dialoguePortrait" class="portrait" />
+                <ui:ScrollView name="dialogueScroll" class="dialogue-text-scroll">
+                    <ui:Label name="dialogueText" class="dialogue-text" />
+                </ui:ScrollView>
+            </ui:VisualElement>
+            <ui:VisualElement class="dialogue-footer">
+                <ui:Button name="dialogueBack" class="dialogue-button gof-semibold" />
+                <ui:Button name="dialogueSkip" class="dialogue-button gof-semibold" />
+                <ui:Button name="dialogueNext" class="dialogue-button dialogue-button--primary gof-semibold" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="dialogueConfirm" class="dialogue-confirm">
+            <ui:VisualElement class="dialogue-confirm-box">
+                <ui:Label name="dialogueConfirmText" class="dialogue-confirm-text" />
+                <ui:VisualElement class="dialogue-confirm-buttons">
+                    <ui:Button name="dialogueConfirmYes" class="dialogue-button dialogue-button--primary gof-semibold" />
+                    <ui:Button name="dialogueConfirmNo" class="dialogue-button gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

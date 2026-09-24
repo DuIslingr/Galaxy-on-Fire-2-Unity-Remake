@@ -1,0 +1,224 @@
+/* Story dialogue window (DialogueWindow, dialogue_cutscenes.md 1.2): a 694x486 box centred on 1920x1080, 60 px header
+   with the speaker's name, the 160x200 portrait at (10, 70), the text right of it, Back / Skip / Next in the footer.
+   Also the radio box (Radio::draw 2.3) and the portrait layers (ImageFactory::drawChar 1.3). */
+
+.dialogue-backdrop {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.55);
+    justify-content: center;
+    align-items: center;
+}
+
+.dialogue-backdrop--shown {
+    display: flex;
+}
+
+.dialogue-box {
+    width: 820px;
+    height: 520px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-cyan);
+}
+
+.dialogue-header {
+    height: 60px;
+    flex-direction: row;
+    align-items: center;
+    padding: 0 20px;
+    background-color: rgba(62, 200, 255, 0.08);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--gof-line);
+}
+
+.dialogue-speaker {
+    font-size: 24px;
+    letter-spacing: 3px;
+    color: #FFFFFF;
+}
+
+.dialogue-body {
+    flex-grow: 1;
+    flex-direction: row;
+    padding: 16px 20px 0 16px;
+}
+
+.dialogue-text-scroll {
+    flex-grow: 1;
+    margin-left: 20px;
+}
+
+.dialogue-text {
+    white-space: normal;
+    font-size: 24px;
+    color: var(--gof-text);
+}
+
+.dialogue-footer {
+    height: 84px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.dialogue-button {
+    min-width: 178px;
+    height: 56px;
+    margin: 0;
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--gof-text);
+    background-color: rgba(4, 10, 18, 0.55);
+    border-width: 2px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 4px;
+    -unity-text-align: middle-center;
+    padding: 0 18px;
+}
+
+.can-hover .dialogue-button:hover,
+.dialogue-button:focus {
+    border-color: var(--gof-amber);
+    color: #FFFFFF;
+}
+
+.dialogue-button--primary {
+    border-color: var(--gof-cyan);
+    color: #FFFFFF;
+}
+
+.dialogue-button--hidden {
+    visibility: hidden;
+}
+
+.dialogue-confirm {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+}
+
+.dialogue-confirm--shown {
+    display: flex;
+}
+
+.dialogue-confirm-box {
+    width: 520px;
+    padding: 30px 36px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-amber);
+}
+
+.dialogue-confirm-text {
+    font-size: 24px;
+    color: var(--gof-text);
+    margin-bottom: 24px;
+}
+
+.dialogue-confirm-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+}
+
+.dialogue-confirm-buttons .dialogue-button {
+    margin-left: 12px;
+}
+
+/* ---- portrait (160x200: background, parts 2, 1, 0, 3, frame) ---------------------------------- */
+
+.portrait {
+    width: 160px;
+    height: 200px;
+    flex-shrink: 0;
+    overflow: hidden;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.portrait-layers {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 160px;
+    height: 200px;
+}
+
+.portrait--mirrored .portrait-layers {
+    scale: -1 1;
+}
+
+.portrait-part,
+.portrait-frame {
+    position: absolute;
+    left: 0;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.portrait-frame {
+    top: 0;
+    width: 160px;
+    height: 200px;
+}
+
+/* ---- radio (Radio::draw: 840 px wide at y 100, centred, translucent) --------------------------- */
+
+.radio {
+    display: none;
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    width: 840px;
+    margin-left: -420px;
+    background-color: rgba(4, 10, 18, 0.72);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-cyan);
+}
+
+.radio--shown {
+    display: flex;
+}
+
+.radio-header {
+    height: 50px;
+    justify-content: center;
+    padding: 0 16px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--gof-line);
+}
+
+.radio-speaker {
+    font-size: 21px;
+    letter-spacing: 3px;
+    color: #FFFFFF;
+}
+
+.radio-body {
+    flex-direction: row;
+    padding: 5px;
+}
+
+.radio-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin: 7px 10px 10px 14px;
+    white-space: normal;
+    font-size: 22px;
+    color: var(--gof-text);
+}

@@ -445,7 +445,12 @@ namespace GoF2Remake.UI
                     }
                     if (r != GoF2Hangar.Result.Ok) { ReleaseArrow(); break; }
                 }
-                else if (hangar.Sell(selected.item) != GoF2Hangar.Result.Ok) { ReleaseArrow(); break; }
+                else
+                {
+                    var r = hangar.Sell(selected.item);
+                    if (r == GoF2Hangar.Result.NotSaleable) menu.ShowToast(GoF2Localization.Get(323));
+                    if (r != GoF2Hangar.Result.Ok) { ReleaseArrow(); break; }
+                }
                 changed = true;
             }
             if (!changed) return;
@@ -463,6 +468,7 @@ namespace GoF2Remake.UI
                 case RowKind.Slot when selected.equipment >= 0:
                 {
                     int item = GoF2Session.Equipment[selected.equipment].item;
+                    if (!GoF2Hangar.IsSaleable(item)) { menu.ShowToast(GoF2Localization.Get(323)); break; }
                     hangar.Demount(selected.equipment);
                     menu.PlayClip(menu.shopDemount);
                     menu.ShowToast(GoF2Localization.Get(209).Replace("#N", GoF2ItemInfo.ItemName(item)));

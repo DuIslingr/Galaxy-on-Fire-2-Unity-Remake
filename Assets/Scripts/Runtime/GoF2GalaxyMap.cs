@@ -127,7 +127,7 @@ namespace GoF2Remake.Data
         public static bool HasJumpDrive(GoF2Database db)
         {
             if (HasIntegratedDrive(GoF2Session.ShipIndex) || GoF2Session.Equipment.Exists(e => e.item == KhadorDriveItem)) return true;
-            if (GoF2Session.CampaignMission != GoF2Session.FreePlayMission) return false;
+            if (!GoF2Session.FreePlay) return false;
             int system = db.Stations.Find(s => s.index == GoF2Session.StationIndex)?.system ?? -1;
             return (db.Systems.Find(s => s.index == system)?.jumpgateStation ?? 0) < 0;
         }

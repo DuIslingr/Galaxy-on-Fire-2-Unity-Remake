@@ -30,7 +30,7 @@ namespace GoF2Remake.UI
     {
         [Header("Flow")]
         public bool showSplash = true;
-        [Tooltip("Scene loaded by Start new game (until the campaign exists).")]
+        [Tooltip("Fallback scene for Leave() without a scene name.")]
         public string gameScene = "Space";
         public string versionText = "Galaxy on Fire 2 Remake  ·  pre-alpha";
 
@@ -468,7 +468,8 @@ namespace GoF2Remake.UI
             GoF2Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
             GoF2Session.Campaign = pendingCampaign;
             GoF2Session.Difficulty = difficulty;
-            StartCoroutine(Leave());
+            // MenuTouchWindow::startGOF2 / startValkyrie / startSupernova: the story's first step (GoF2Story).
+            StartCoroutine(Leave(GoF2Story.StartCampaign(GoF2Database.Load(), pendingCampaign)));
         }
 
         /// <summary>GameRecord::load: the saved (docked) state, then the station.</summary>

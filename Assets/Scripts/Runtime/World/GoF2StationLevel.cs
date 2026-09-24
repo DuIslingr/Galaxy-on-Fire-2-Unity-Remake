@@ -136,17 +136,18 @@ namespace GoF2Remake.World
         {
             db = GoF2Database.Load();
             int station = stationOverride >= 0 ? stationOverride : GoF2Session.StationIndex;
+            Stock = GoF2Shop.EnterStation(db, station);
+            GoF2Story.OnDocked(db, station, Stock);   // ModStation::OnInitialize's story tweaks (index 1: Betty ...)
             shipIndex = shipOverride >= 0 ? shipOverride : GoF2Session.ShipIndex;
             Station = db.Stations.Find(s => s.index == station);
             Layout = GoF2OrbitLayout.Build(db, station);
             HangarIndex = GoF2StationTables.HangarIndex(station, Layout.raceId);
-            Stock = GoF2Shop.EnterStation(db, station);
             GoF2Session.VisitedStations.Add(station);   // Galaxy::setVisited: the star map's "Already visited"
             // Docking repairs the ship (the original launches with Status hull / shield / armor = -1, "full", StarMap::
             // depart; assumed for every launch) and autosaves (ModStation::autosave).
             GoF2Session.PlayerHull = GoF2Session.PlayerArmor = -1;
             GoF2Session.PlayerShield = -1f;
-            GoF2Session.Autosave();
+            if (!(GoF2Story.Index == 77 && station == 101)) GoF2Session.Autosave();
             BarRace = GoF2StationTables.BarRace(Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
 
