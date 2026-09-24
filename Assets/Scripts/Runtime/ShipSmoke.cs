@@ -10,6 +10,7 @@
 // (ParticleSystemSprite::updateSingle 0x1b3cf0, IParticleSystem::emit 0x1b2790). Sizes are the sprite's full edge.
 // The ship-aligned emission boxes stand in for the original's axis line plus world-axis jitter.
 
+using GoF2Remake.Data;
 using UnityEngine;
 
 namespace GoF2Remake.Flight
@@ -109,6 +110,7 @@ namespace GoF2Remake.Flight
         /// <summary>enableSystemEmit: new particles on / off; the living ones burn out.</summary>
         public void SetEmitting(bool on)
         {
+            on &= Settings.QualityEffects;   // Quality Low / Medium: "Smoke off" (510 / 511)
             if (on == Emitting) return;
             Emitting = on;
             foreach (var ps in new[] { smoke, fire })

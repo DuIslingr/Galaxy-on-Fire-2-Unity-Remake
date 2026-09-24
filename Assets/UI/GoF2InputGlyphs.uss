@@ -1,6 +1,10 @@
 /* Input hints shared by the HUDs (InputGlyph): a hint row (glyphs + label), keyboard keycaps and Xbox-style
    controller buttons (the game always shows Xbox labels). */
 
+.hints--off {
+    display: none;   /* the button hints option (Settings.InputHints) */
+}
+
 .hint {
     flex-direction: row;
     align-items: center;

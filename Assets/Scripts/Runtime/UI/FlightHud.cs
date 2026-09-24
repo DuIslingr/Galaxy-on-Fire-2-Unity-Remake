@@ -123,6 +123,7 @@ namespace GoF2Remake.UI
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");
             hints = root.Q("hints");
+            InputGlyph.TrackHintsOption(hints);
             throttleTrack = root.Q("throttleTrack");
             throttleFill = root.Q("throttleFill");
             throttleHandle = root.Q("throttleHandle");
@@ -416,7 +417,7 @@ namespace GoF2Remake.UI
         {
             if (root == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
-            lensFlare?.Update(level != null ? level.Backdrop : null, StarMap.IsOpen);   // StarSystem::render2D, under the HUD
+            lensFlare?.Update(level != null ? level.Backdrop : null, StarMap.IsOpen || !Settings.LensFlare);   // StarSystem::render2D, under the HUD
 
             bool mapOpen = StarMap.IsOpen;
             root.EnableInClassList("hud-map", mapOpen);

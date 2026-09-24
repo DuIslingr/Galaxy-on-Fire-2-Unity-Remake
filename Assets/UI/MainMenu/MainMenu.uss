@@ -340,14 +340,17 @@
 
 .tab-row {
     flex-direction: row;
+    flex-wrap: wrap;   /* five tabs: a second line on narrow panels rather than wrapped words */
     margin-bottom: 18px;
 }
 
 .tab-button {
-    margin: 0 8px 0 0;
-    padding: 10px 18px;
-    font-size: 17px;
-    letter-spacing: 3px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    margin: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 16px;
+    letter-spacing: 2px;
     color: var(--gof-text-dim);
     background-color: rgba(255, 255, 255, 0.03);
     border-width: 0;
@@ -397,53 +400,21 @@
     border-left-color: var(--gof-amber);
 }
 
-.fps-row {
+.options-scroll {
+    height: 560px;
+    flex-shrink: 1;
+    min-height: 160px;
+}
+
+.options-footer {
     flex-direction: row;
-    align-items: center;
-    min-height: 40px;
+    justify-content: space-between;
+    align-items: flex-end;
 }
 
-.fps-label {
-    min-width: 220px;
-}
-
-.fps-choices {
-    flex-grow: 1;
-    flex-direction: row;
-}
-
-.fps-choice {
-    flex-grow: 1;
-    flex-basis: 0;
-    margin: 0 4px 0 0;
-    min-height: 36px;
-    padding: 0 2px;
-    font-size: 15px;
-    -unity-text-align: middle-center;
-    letter-spacing: 1px;
+.options-defaults {
+    align-self: auto;
     color: var(--gof-text-dim);
-    background-color: rgba(255, 255, 255, 0.04);
-    border-width: 0;
-    border-bottom-width: 2px;
-    border-bottom-color: rgba(0, 0, 0, 0);
-    border-radius: 0;
-    transition-duration: 0.15s;
-}
-
-.can-hover .fps-choice:hover {
-    color: #FFFFFF;
-    background-color: var(--gof-cyan-faint);
-}
-
-.fps-choice--active {
-    color: var(--gof-cyan);
-    background-color: var(--gof-cyan-faint);
-    border-bottom-color: var(--gof-cyan);
-}
-
-.fps-row:focus .fps-choice--active {
-    color: var(--gof-amber);
-    border-bottom-color: var(--gof-amber);
 }
 
 .language-list {

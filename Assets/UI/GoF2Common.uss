@@ -116,6 +116,99 @@
     border-color: var(--gof-amber);
 }
 
+/* ---- ChoiceRow (options with fixed values: segments or a stepper) ------------------------ */
+
+.choice-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 40px;
+}
+
+.choice-label {
+    min-width: 220px;
+    color: var(--gof-text);
+}
+
+.choice-segments,
+.choice-stepper {
+    flex-grow: 1;
+    flex-direction: row;
+    align-items: center;
+}
+
+.choice-segment {
+    flex-grow: 1;
+    flex-basis: auto;   /* long values (UNCAPPED) get the room they need */
+    white-space: nowrap;
+    margin: 0 4px 0 0;
+    min-height: 36px;
+    padding: 0 8px;
+    font-size: 15px;
+    -unity-text-align: middle-center;
+    letter-spacing: 1px;
+    color: var(--gof-text-dim);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.can-hover .choice-segment:hover {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+}
+
+.choice-segment--active {
+    color: var(--gof-cyan);
+    background-color: var(--gof-cyan-faint);
+    border-bottom-color: var(--gof-cyan);
+}
+
+.choice-row:focus .choice-segment--active,
+.autopilot-menu-item--selected .choice-segment--active {
+    color: var(--gof-amber);
+    border-bottom-color: var(--gof-amber);
+}
+
+.choice-arrow {
+    width: 40px;
+    min-height: 36px;
+    font-size: 22px;
+    -unity-text-align: middle-center;
+    color: var(--gof-cyan);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 0;
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.can-hover .choice-arrow:hover {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+}
+
+.choice-value {
+    flex-grow: 1;
+    font-size: 17px;
+    letter-spacing: 1px;
+    -unity-text-align: middle-center;
+    color: var(--gof-cyan);
+}
+
+.choice-row:focus .choice-value,
+.autopilot-menu-item--selected .choice-value {
+    color: var(--gof-amber);
+}
+
+.option-description {
+    margin: 0 0 6px 13px;
+    font-size: 15px;
+    color: var(--gof-text-dim);
+    white-space: normal;
+}
+
 /* ---- ScrollView ----------------------------------------------------------------------
    Unity's default theme normally provides this structure; our theme is standalone:
    ScrollView > content-and-vertical-scroll-container (row) > content-viewport > content-container.

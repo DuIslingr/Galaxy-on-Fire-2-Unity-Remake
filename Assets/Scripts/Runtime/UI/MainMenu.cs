@@ -57,6 +57,7 @@ namespace GoF2Remake.UI
         public TextAsset[] languageTables;
 
         [Header("Post-processing")]
+        [Tooltip("The menu's volume (bloom and brightness are applied to every global volume by Bootstrap).")]
         public Volume postVolume;
 
         enum MenuState { Splash, Title, Menu, Leaving }
@@ -65,14 +66,13 @@ namespace GoF2Remake.UI
         Label pressAnyKey, versionLabel, hintLabel;
         Button resumeButton, newGameButton, loadButton, optionsButton, aboutButton, exitButton;
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
-        VisualElement openPanel, fpsRow;
+        VisualElement openPanel;
+        readonly List<OptionControl> optionControls = new List<OptionControl>();
         Action dialogYes;
         MenuState screen = MenuState.Splash;
         bool skipRequested;
         Campaign pendingCampaign;
         IVisualElementScheduledItem pulse;
-        Bloom bloom;
-        ColorAdjustments colorAdjustments;
         IDisposable anyKey;
         PanelSettings runtimePanel;
         PanelRenderer panelRenderer;
@@ -125,7 +125,7 @@ namespace GoF2Remake.UI
             resumeButton = Bind("resumeButton", () => LoadSlot(SaveGame.MostRecentSlot()));
             newGameButton = Bind("newGameButton", () => OpenPanel("campaignPanel"));
             loadButton = Bind("loadButton", () => { BuildSlots(); OpenPanel("loadPanel"); });
-            optionsButton = Bind("optionsButton", () => { OpenPanel("optionsPanel"); SelectTab("soundPage"); });
+            optionsButton = Bind("optionsButton", () => { OpenPanel("optionsPanel"); SelectTab(OptionPages[0].page); });
             aboutButton = Bind("aboutButton", () => OpenPanel("aboutPanel"));
             exitButton = Bind("exitButton", () => ShowDialog(Localization.Get(390), Localization.Get(53), Quit));
             resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);   // only with a save
@@ -143,6 +143,14 @@ namespace GoF2Remake.UI
                 sv.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
                 new DragScroll(sv);
             }
+            // The option pages scroll by wheel, touch and focus only (a drag would fight the sliders).
+            foreach (var (_, pg) in OptionPages)
+            {
+                if (!(root.Q(pg) is ScrollView sv)) continue;
+                sv.mode = ScrollViewMode.Vertical;
+                sv.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                sv.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            }
             foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack" })
             {
                 var b = root.Q<Button>(n);
@@ -159,22 +167,20 @@ namespace GoF2Remake.UI
             Bind("dialogYes", () => { var a = dialogYes; CloseDialog(); a?.Invoke(); });
             Bind("dialogNo", CloseDialog);
 
-            Bind("tabSound", () => SelectTab("soundPage"));
-            Bind("tabControls", () => SelectTab("controlsPage"));
-            Bind("tabLanguage", () => SelectTab("languagePage"));
+            foreach (var (tab, pg) in OptionPages) Bind(tab, () => SelectTab(pg));
+            Bind("optionsDefaults", () => { Settings.ResetToDefaults(); RefreshTexts(); });   // 497
             SetupOptions();
 
             root.RegisterCallback<NavigationCancelEvent>(_ => Back(), TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationMoveEvent>(OnNavigate, TrickleDown.TrickleDown);
+            root.RegisterCallback<NavigationSubmitEvent>(e =>
+            {
+                if (screen == MenuState.Menu && root.focusController?.focusedElement is ChoiceRow row) { row.Cycle(); e.StopPropagation(); }
+            }, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) SetTouchMode(false); }, TrickleDown.TrickleDown);
             root.RegisterCallback<FocusInEvent>(e => { if (e.target is VisualElement v) EnsureVisible(v); });
 
-            if (postVolume != null && postVolume.profile != null)
-            {
-                postVolume.profile.TryGet(out bloom);
-                postVolume.profile.TryGet(out colorAdjustments);
-            }
             ApplySettings();
 
             RefreshTexts();
@@ -546,46 +552,36 @@ namespace GoF2Remake.UI
 
         // ---- options ---------------------------------------------------------------------------
 
+        static readonly (string tab, string page)[] OptionPages =
+        {
+            ("tabSound", "soundPage"), ("tabGraphics", "graphicsPage"), ("tabControls", "controlsPage"), ("tabGameplay", "gameplayPage"),
+            ("tabLanguage", "languagePage"),
+        };
+
+        static string PageName(OptionPage p) => p switch
+        {
+            OptionPage.Sound => "soundPage",
+            OptionPage.Graphics => "graphicsPage",
+            OptionPage.Controls => "controlsPage",
+            _ => "gameplayPage",
+        };
+
+        /// <summary>One row per OptionsCatalog entry on its tab, then the language buttons.</summary>
         void SetupOptions()
         {
-            var music = root.Q<Slider>("musicSlider");
-            music.value = Settings.MusicVolume;
-            music.RegisterValueChangedCallback(e => Settings.MusicVolume = e.newValue);
-            var fx = root.Q<Slider>("fxSlider");
-            fx.value = Settings.SfxVolume;
-            fx.RegisterValueChangedCallback(e => Settings.SfxVolume = e.newValue);
-            fx.RegisterCallback<PointerCaptureOutEvent>(_ => Play(infoSound));   // original: FX preview on release
-            var voice = root.Q<Slider>("voiceSlider");
-            voice.value = Settings.VoiceVolume;
-            voice.RegisterValueChangedCallback(e => Settings.VoiceVolume = e.newValue);
-            voice.RegisterCallback<PointerCaptureOutEvent>(_ => PlayVoicePreview());
-            var brightness = root.Q<SliderInt>("brightnessSlider");
-            brightness.value = Settings.Brightness;
-            brightness.RegisterValueChangedCallback(e => { Settings.Brightness = e.newValue; RefreshTexts(); });
-            var bloomToggle = root.Q<Toggle>("bloomToggle");
-            bloomToggle.value = Settings.Bloom;
-            bloomToggle.RegisterValueChangedCallback(e => Settings.Bloom = e.newValue);
-            var sens = root.Q<Slider>("sensitivitySlider");
-            sens.value = Settings.Sensitivity;
-            sens.RegisterValueChangedCallback(e => { Settings.Sensitivity = e.newValue; RefreshTexts(); });
-            var invert = root.Q<Toggle>("invertToggle");
-            invert.value = Settings.InvertPitch;
-            invert.RegisterValueChangedCallback(e => Settings.InvertPitch = e.newValue);
-            foreach (var e in new VisualElement[] { music, fx, voice, brightness, bloomToggle, sens, invert }) HookFocusSound(e);
-
-            // Frame rate: one focusable row (left/right steps through it), segments clickable by touch/mouse.
-            fpsRow = root.Q("fpsRow");
-            var fpsChoices = root.Q("fpsChoices");
-            for (int i = 0; i <= (int)FrameRate.VSync; i++)
+            optionControls.Clear();
+            foreach (var def in OptionsCatalog.All())
             {
-                var mode = (FrameRate)i;
-                var b = new Button { name = "fps_" + mode, focusable = false };
-                b.AddToClassList("fps-choice");
-                b.AddToClassList("gof-semibold");
-                b.clicked += () => SetFrameRate(mode);
-                fpsChoices.Add(b);
+                var c = new OptionControl(def);
+                c.Field.AddToClassList("option-row");
+                HookFocusSound(c.Field);
+                if (def.kind == OptionKind.Choice || def.kind == OptionKind.Toggle) c.Changed += () => Play(buttonRelease);
+                // Original: the FX volume plays a sample on release; remake: the voice volume a voice line.
+                if (def.id == "sfx") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => Play(infoSound));
+                if (def.id == "voice") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => PlayVoicePreview());
+                root.Q(PageName(def.page)).Add(c.Root);
+                optionControls.Add(c);
             }
-            HookFocusSound(fpsRow);
 
             var langList = root.Q("languageList");
             for (int i = 0; i < languageCodes.Length && i < languageNames.Length; i++)
@@ -600,17 +596,9 @@ namespace GoF2Remake.UI
             }
         }
 
-        void SetFrameRate(FrameRate mode)
-        {
-            if (mode == Settings.FrameRate) return;
-            Play(buttonRelease);
-            Settings.FrameRate = mode;
-            RefreshTexts();
-        }
-
         void SelectTab(string page)
         {
-            foreach (var (tab, p) in new[] { ("tabSound", "soundPage"), ("tabControls", "controlsPage"), ("tabLanguage", "languagePage") })
+            foreach (var (tab, p) in OptionPages)
             {
                 root.Q(tab).EnableInClassList("tab-button--active", p == page);
                 root.Q(p).EnableInClassList("tab-page--active", p == page);
@@ -622,12 +610,6 @@ namespace GoF2Remake.UI
             if (musicSource != null && screen != MenuState.Leaving && !fadingMusic) musicSource.volume = Settings.MusicVolume;
             if (sfxSource != null) sfxSource.volume = Settings.SfxVolume;
             if (voiceSource != null) voiceSource.volume = Settings.VoiceVolume;
-            if (bloom != null) bloom.active = Settings.Bloom;
-            if (colorAdjustments != null)
-            {
-                colorAdjustments.postExposure.overrideState = true;
-                colorAdjustments.postExposure.value = Settings.BrightnessExposure;
-            }
         }
 
         // ---- text ------------------------------------------------------------------------------
@@ -660,36 +642,17 @@ namespace GoF2Remake.UI
             Set("extremeDesc", Localization.Extra("extremeDesc", "For veterans who finished the game: tougher enemies and a harsher economy."));
             Set("loadTitle", T(29));
             Set("optionsTitle", T(31));
-            Set("tabSound", T(489));
-            Set("tabControls", T(498));
+            Set("tabSound", OptionsCatalog.PageTitle(OptionPage.Sound).ToUpperInvariant());
+            Set("tabGraphics", OptionsCatalog.PageTitle(OptionPage.Graphics).ToUpperInvariant());
+            Set("tabControls", OptionsCatalog.PageTitle(OptionPage.Controls).ToUpperInvariant());
+            Set("tabGameplay", OptionsCatalog.PageTitle(OptionPage.Gameplay).ToUpperInvariant());
             Set("tabLanguage", T(0));
-            Set("volumeHeader", T(501));
-            Set("graphicsHeader", T(502));
+            Set("optionsDefaults", T(497));
             Set("aboutTitle", T(43));
             Set("dialogYes", T(134));
             Set("dialogNo", T(135));
 
-            root.Q<Slider>("musicSlider").label = Localization.Get(34);
-            root.Q<Slider>("fxSlider").label = Localization.Get(35);
-            root.Q<Slider>("voiceSlider").label = Localization.Get(36);
-            root.Q<SliderInt>("brightnessSlider").label = $"{Localization.Get(503)}: {Localization.Get(513 + Settings.Brightness)}";
-            root.Q<Toggle>("bloomToggle").label = Localization.Extra("bloom", "Bloom");
-            root.Q<Slider>("sensitivitySlider").label = $"{Localization.Get(499)}: {Settings.Sensitivity:0.0}";
-            root.Q<Toggle>("invertToggle").label = Localization.Get(500);
-            root.Q<Label>("fpsLabel").text = Localization.Extra("frameRate", "Frame rate");
-            foreach (var b in root.Q("fpsChoices").Query<Button>().ToList())
-            {
-                var mode = (FrameRate)Enum.Parse(typeof(FrameRate), b.name.Substring(4));
-                b.text = mode switch
-                {
-                    FrameRate.Fps30 => "30",
-                    FrameRate.Fps60 => "60",
-                    FrameRate.Fps120 => "120",
-                    FrameRate.Uncapped => Localization.Extra("fpsUncapped", "UNCAPPED"),
-                    _ => Localization.Extra("fpsVSync", "V-SYNC"),
-                };
-                b.EnableInClassList("fps-choice--active", mode == Settings.FrameRate);
-            }
+            foreach (var c in optionControls) c.Refresh();
             foreach (var b in root.Q("languageList").Query<Button>().ToList())
                 b.EnableInClassList("language-button--active", b.name == "lang_" + Localization.Language);
 
@@ -710,10 +673,9 @@ namespace GoF2Remake.UI
             bool horizontal = e.direction == NavigationMoveEvent.Direction.Left || e.direction == NavigationMoveEvent.Direction.Right;
             if (!vertical && !horizontal) return;
 
-            if (horizontal && focused != null && focused == fpsRow)
+            if (horizontal && focused is ChoiceRow choiceRow)
             {
-                int dir = e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1;
-                SetFrameRate((FrameRate)Mathf.Clamp((int)Settings.FrameRate + dir, 0, (int)FrameRate.VSync));
+                choiceRow.Step(e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1);
                 e.StopPropagation();
                 root.focusController?.IgnoreEvent(e);
                 return;

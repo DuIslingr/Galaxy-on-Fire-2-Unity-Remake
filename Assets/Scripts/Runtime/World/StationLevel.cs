@@ -401,7 +401,7 @@ namespace GoF2Remake.World
 
         static void SetFog(bool on, float end)
         {
-            RenderSettings.fog = on;
+            Bootstrap.SetSceneFog(on);   // off below Quality High
             if (!on) return;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogStartDistance = 0f;

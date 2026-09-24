@@ -5,6 +5,7 @@
 // setRumblePercentage (the look-at point jitters by p * (rnd(100) - 50) units per axis). Release = resetCamera: the chase
 // camera takes over again. Plain C#, driven by CampaignLevel's LateUpdate.
 
+using GoF2Remake.Data;
 using GoF2Remake.Flight;
 using GoF2Remake.Visuals;
 using UnityEngine;
@@ -75,7 +76,7 @@ namespace GoF2Remake.World
         {
             var look = target != null ? target.position : lookPoint;
             if (Rumble > 0f)
-                look += new Vector3(Random.Range(0, 100) - 50, Random.Range(0, 100) - 50, Random.Range(0, 100) - 50) * (Rumble * M);
+                look += new Vector3(Random.Range(0, 100) - 50, Random.Range(0, 100) - 50, Random.Range(0, 100) - 50) * (Rumble * M * Settings.CameraShake);
             var d = look - cam.transform.position;
             if (d.sqrMagnitude > 1e-6f) cam.transform.rotation = Quaternion.LookRotation(d, Vector3.up);
         }

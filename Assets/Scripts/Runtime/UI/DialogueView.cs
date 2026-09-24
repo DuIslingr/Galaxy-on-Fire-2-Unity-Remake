@@ -206,8 +206,9 @@ namespace GoF2Remake.UI
             if (Pressed(k => k.escapeKey.wasPressedThisFrame, g => g.buttonNorth.wasPressedThisFrame || g.startButton.wasPressedThisFrame))
             { ButtonSound?.Invoke(false); AskSkip(); return; }
 
-            // DialogueWindow::update: with voice on, turn the page once the line has ended and its pause passed.
-            if (voice != null && voice.clip != null && !voice.isPlaying && Settings.VoiceVolume > 0f && page < pages.Count - 1)
+            // DialogueWindow::update: with voice on, turn the page once the line has ended and its pause passed (remake: the
+            // auto-advance option can turn it off).
+            if (Settings.AutoAdvanceDialogue && voice != null && voice.clip != null && !voice.isPlaying && Settings.VoiceVolume > 0f && page < pages.Count - 1)
             {
                 pauseMs += unscaledDtMs;
                 if (pauseMs >= VoicePauseMs) { page++; LoadPage(); }

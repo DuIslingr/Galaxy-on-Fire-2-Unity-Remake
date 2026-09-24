@@ -68,6 +68,7 @@ namespace GoF2Remake.Flight
             var model = target.Model;
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // TargetFollowCamera gets the player's dt
             if (constantRumble > 0f) rumble = Mathf.Max(rumble, constantRumble);
+            rumble *= GoF2Remake.Data.Settings.CameraShake;   // the camera shake option
             if (follow != null)
             {
                 var fp = follow.TransformPoint(followOffset);
@@ -109,7 +110,7 @@ namespace GoF2Remake.Flight
             if (shakeMs > 0f)
             {
                 shakeMs -= dtMs;
-                float a = shakeUnits * target.metersPerUnit;
+                float a = shakeUnits * target.metersPerUnit * GoF2Remake.Data.Settings.CameraShake;
                 transform.position += new Vector3(Random.Range(-a, a), Random.Range(-a, a), Random.Range(-a, a));
             }
             if (rumble > 0f)

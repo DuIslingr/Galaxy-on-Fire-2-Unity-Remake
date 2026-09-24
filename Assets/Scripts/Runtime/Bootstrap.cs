@@ -1,38 +1,90 @@
 // Bootstrap.cs
-// Process-wide startup settings, applied before the first scene loads, and the frame rate option
-// (Settings.FrameRate), re-applied whenever the settings change.
+// Process-wide startup settings, applied before the first scene loads, and the options that act on the whole process
+// (Settings), re-applied whenever the settings change: frame rate, master volume, window mode and resolution, render
+// scale and MSAA (the URP asset), the Quality option's detail (LOD bias) and fog, the stick dead zone, and bloom /
+// brightness on every scene's global post-processing volume.
 // Mobile players default to 30 fps and are always synced to the display, so there "V-Sync" means the
 // display's refresh rate (120 Hz on the S24) and "Uncapped" can't go beyond it either.
 
+using System.Collections.Generic;
+using System.Linq;
 using GoF2Remake.Data;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
 
 namespace GoF2Remake
 {
     public static class Bootstrap
     {
+        // The project's own values, the "default" of the render scale / MSAA options and the base of the LOD bias.
+        static float defaultRenderScale = 1f, defaultLodBias = 1f, defaultDeadzone = Settings.DefaultDeadzone;
+        static int defaultMsaa = 1;
+        static UniversalRenderPipelineAsset urp;
+
+        /// <summary>The platform's render scale and MSAA samples (what the options' 0 = default stands for).</summary>
+        public static float DefaultRenderScale => defaultRenderScale;
+        public static int DefaultMsaa => defaultMsaa;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Init()
         {
             int editorVSync = QualitySettings.vSyncCount;
             if (Application.isMobilePlatform) Screen.sleepTimeout = SleepTimeout.NeverSleep;   // no screen dimming while playing
-            ApplyFrameRate();
-            Settings.Changed -= ApplyFrameRate;
-            Settings.Changed += ApplyFrameRate;
+            urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            if (urp != null) { defaultRenderScale = urp.renderScale; defaultMsaa = urp.msaaSampleCount; }
+            defaultLodBias = QualitySettings.lodBias;
+            defaultDeadzone = InputSystem.settings.defaultDeadzoneMin;
+
+            ApplyAll();
+            ApplyDisplay();
+            Settings.Changed -= ApplyAll;
+            Settings.Changed += ApplyAll;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
 #if UNITY_EDITOR
-            // Leaving Play mode (Application.quitting in the Editor): restore the Editor's vSyncCount, or the
-            // Play-mode value would stick to QualitySettings.asset, and unhook, because with domain reload off
-            // the subscription would survive into edit mode.
+            // Leaving Play mode (Application.quitting in the Editor): restore the Editor's values, or the Play-mode ones would
+            // stick to QualitySettings.asset and the URP asset, and unhook, because with domain reload off the subscriptions
+            // would survive into edit mode.
             System.Action restore = null;
             restore = () =>
             {
-                Settings.Changed -= ApplyFrameRate;
+                Settings.Changed -= ApplyAll;
+                SceneManager.sceneLoaded -= OnSceneLoaded;
                 QualitySettings.vSyncCount = editorVSync;
+                QualitySettings.lodBias = defaultLodBias;
+                if (urp != null) { urp.renderScale = defaultRenderScale; urp.msaaSampleCount = defaultMsaa; }
+                InputSystem.settings.defaultDeadzoneMin = defaultDeadzone;
+                AudioListener.volume = 1f;
                 Application.quitting -= restore;
             };
             Application.quitting += restore;
 #endif
         }
+
+        static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => ApplyPostProcessing();
+
+        static void ApplyAll()
+        {
+            if (!Application.isPlaying) return;
+            ApplyFrameRate();
+            AudioListener.volume = Settings.MasterVolume;
+            if (urp != null)
+            {
+                urp.renderScale = Settings.RenderScale > 0f ? Settings.RenderScale : defaultRenderScale;
+                urp.msaaSampleCount = Settings.Msaa > 0 ? Settings.Msaa : defaultMsaa;
+            }
+            QualitySettings.lodBias = defaultLodBias * (Settings.Quality >= 2 ? 1f : Settings.Quality == 1 ? 0.6f : 0.35f);
+            if (!Mathf.Approximately(InputSystem.settings.defaultDeadzoneMin, Settings.StickDeadzone))
+                InputSystem.settings.defaultDeadzoneMin = Settings.StickDeadzone;
+            ApplyFog();
+            ApplyPostProcessing();
+            ApplyDisplay();
+        }
+
+        // ---- frame rate --------------------------------------------------------------------------------------
 
         public static int DisplayRefreshRate
         {
@@ -67,6 +119,75 @@ namespace GoF2Remake
         {
             QualitySettings.vSyncCount = 0;   // targetFrameRate is ignored while vSyncCount > 0
             Application.targetFrameRate = fps;
+        }
+
+        // ---- window ------------------------------------------------------------------------------------------
+
+        /// <summary>Window mode and resolution apply to desktop players only (the Editor's Game view keeps its own).</summary>
+        public static bool HasDisplayOptions => !Application.isMobilePlatform && !Application.isEditor;
+
+        /// <summary>The display's resolutions, distinct sizes, smallest first.</summary>
+        public static List<Vector2Int> Resolutions()
+        {
+            var list = Screen.resolutions.Select(r => new Vector2Int(r.width, r.height)).Distinct()
+                .Where(r => r.y >= 480).OrderBy(r => r.x * r.y).ToList();
+            var native = NativeResolution;
+            if (!list.Contains(native)) list.Add(native);
+            return list;
+        }
+
+        static Vector2Int NativeResolution
+        {
+            get { var d = Screen.mainWindowDisplayInfo; return d.width > 0 ? new Vector2Int(d.width, d.height) : new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height); }
+        }
+
+        static void ApplyDisplay()
+        {
+            if (!HasDisplayOptions) return;
+            var mode = Settings.DisplayMode switch
+            {
+                DisplayMode.Fullscreen => FullScreenMode.ExclusiveFullScreen,
+                DisplayMode.Windowed => FullScreenMode.Windowed,
+                _ => FullScreenMode.FullScreenWindow,
+            };
+            var size = Settings.Resolution;
+            if (size.x <= 0 || size.y <= 0)
+            {
+                size = NativeResolution;
+                if (mode == FullScreenMode.Windowed) size = new Vector2Int(size.x * 4 / 5, size.y * 4 / 5);   // a window that fits
+            }
+            if (Screen.fullScreenMode == mode && Screen.width == size.x && Screen.height == size.y) return;
+            Screen.SetResolution(size.x, size.y, mode);
+        }
+
+        // ---- fog (the Quality option) ------------------------------------------------------------------------
+
+        static bool sceneFog;
+
+        /// <summary>The level's fog (the system's, a Vossk hangar's): on only with Quality High ("Fog on", 512).</summary>
+        public static void SetSceneFog(bool on)
+        {
+            sceneFog = on;
+            ApplyFog();
+        }
+
+        static void ApplyFog() => RenderSettings.fog = sceneFog && Settings.QualityEffects;
+
+        // ---- post-processing ---------------------------------------------------------------------------------
+
+        /// <summary>Bloom and the brightness exposure on every global volume (its runtime copy of the profile).</summary>
+        public static void ApplyPostProcessing()
+        {
+            if (!Application.isPlaying) return;
+            foreach (var v in Object.FindObjectsByType<Volume>(FindObjectsInactive.Exclude))
+            {
+                if (!v.isGlobal || v.sharedProfile == null) continue;
+                var p = v.profile;
+                if (p.TryGet(out Bloom bloom)) bloom.active = Settings.Bloom;
+                if (!p.TryGet(out ColorAdjustments color)) color = p.Add<ColorAdjustments>();
+                color.postExposure.overrideState = true;
+                color.postExposure.value = Settings.BrightnessExposure;
+            }
         }
     }
 }

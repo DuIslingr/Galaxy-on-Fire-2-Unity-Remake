@@ -2,7 +2,7 @@
 // The in-flight pause menu (MenuTouchWindow mode 1, Reference/research/mainmenu_notes.md 2.4): header 40 "Pause", then
 // 41 Resume, 129 Missions, 166 Cargo hold, 31 Options, 395 Skip (the original only for a few cutscenes; here the
 // prologue / rescue, IntroCutscenes.Skip) and 522 Back to Main Menu (confirm 523). The game and its sounds pause while it
-// is open. Options holds the in-flight subset (volumes, sensitivity, invert); the rest stays in the main menu. Not built:
+// is open. Options holds the main menu's options (OptionsCatalog) but the language. Not built:
 // 59 Action Freeze (photo mode) and the screenshot share buttons (60 / 61).
 // Plain class driven by FlightHud: Esc / controller Menu / the touch Menu button open it; Esc / B step back.
 
@@ -82,12 +82,7 @@ namespace GoF2Remake.UI
             AudioListener.pause = audioWasPaused;
             if (level != null && level.Navigation != null) level.Navigation.PauseMenuOpen = false;   // restores its own time scale
             else Time.timeScale = previousTimeScale;
-            // Options changed in flight reach the ship at once.
-            if (level != null && level.Player != null)
-            {
-                level.Player.sensitivity = Settings.Sensitivity;
-                level.Player.invertPitch = Settings.InvertPitch;
-            }
+            // Options changed here reach the ship at once (SpaceLevel.ApplyOptions).
         }
 
         // ---- pages --------------------------------------------------------------------------------------------
@@ -214,37 +209,27 @@ namespace GoF2Remake.UI
             }
         }
 
-        readonly List<VisualElement> optionRows = new List<VisualElement>();
+        readonly Dictionary<VisualElement, OptionControl> optionRows = new Dictionary<VisualElement, OptionControl>();
 
-        /// <summary>The in-flight options: music / FX / voice volume, sensitivity, invert (the main menu's Options pages).</summary>
+        /// <summary>The main menu's options (OptionsCatalog) page by page under their headings, then Default settings (497).
+        /// Rows don't take focus: the keys / D-pad drive them through Tick.</summary>
         void BuildOptions()
         {
             optionRows.Clear();
-            Slider Volume(int text, float value, Action<float> set)
+            Scroll();
+            OptionPage? page = null;
+            foreach (var def in OptionsCatalog.All())
             {
-                var s = new Slider(Localization.Get(text), 0f, 1f) { value = value };
-                s.RegisterValueChangedCallback(e => set(e.newValue));
-                return s;
-            }
-            var sens = new Slider($"{Localization.Get(499)}: {Settings.Sensitivity:0.0}", 0.2f, 2.2f) { value = Settings.Sensitivity };
-            sens.RegisterValueChangedCallback(e => { Settings.Sensitivity = e.newValue; sens.label = $"{Localization.Get(499)}: {Settings.Sensitivity:0.0}"; });
-            var invert = new Toggle(Localization.Get(500)) { value = Settings.InvertPitch };
-            invert.RegisterValueChangedCallback(e => Settings.InvertPitch = e.newValue);
-            foreach (var e in new VisualElement[]
-                     {
-                         Volume(34, Settings.MusicVolume, v => Settings.MusicVolume = v),
-                         Volume(35, Settings.SfxVolume, v => Settings.SfxVolume = v),
-                         Volume(36, Settings.VoiceVolume, v => Settings.VoiceVolume = v),
-                         sens, invert,
-                     })
-            {
-                e.AddToClassList("pause-option");
-                e.focusable = false;
-                body.Add(e);
-                items.Add(e);
+                if (page != def.page) { page = def.page; Text(OptionsCatalog.PageTitle(def.page).ToUpperInvariant(), "pause-heading"); }
+                var c = new OptionControl(def);
+                c.Field.focusable = false;
+                c.Root.AddToClassList("pause-option");
+                scroll.Add(c.Root);
+                items.Add(c.Root);
                 actions.Add(null);
-                optionRows.Add(e);
+                optionRows[c.Root] = c;
             }
+            Item(T(497), () => { Settings.ResetToDefaults(); foreach (var c in optionRows.Values) c.Refresh(); });
         }
 
         void Highlight()
@@ -276,7 +261,8 @@ namespace GoF2Remake.UI
             {
                 index = (index + move + items.Count) % items.Count;
                 Highlight();
-                if (scroll != null) scroll.scrollOffset += new Vector2(0f, move * 120f);
+                if (scroll != null && scroll.contentContainer.Contains(items[index])) scroll.ScrollTo(items[index]);
+                else if (scroll != null) scroll.scrollOffset += new Vector2(0f, move * 120f);
             }
             int side = 0;
             if (kb != null && (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame)) side = -1;
@@ -284,12 +270,12 @@ namespace GoF2Remake.UI
             if (pad != null && (pad.dpad.left.wasPressedThisFrame || pad.leftStick.left.wasPressedThisFrame)) side = -1;
             if (pad != null && (pad.dpad.right.wasPressedThisFrame || pad.leftStick.right.wasPressedThisFrame)) side = 1;
             var current = index < items.Count ? items[index] : null;
-            if (side != 0 && current is Slider slider)
-                slider.value = Mathf.Clamp(slider.value + side * (slider.highValue - slider.lowValue) / 20f, slider.lowValue, slider.highValue);
+            optionRows.TryGetValue(current ?? backdrop, out var option);
+            if (side != 0 && option != null) option.Step(side);
             bool confirm = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
                            || (pad != null && pad.buttonSouth.wasPressedThisFrame);
             if (!confirm || current == null) return;
-            if (current is Toggle toggle) toggle.value = !toggle.value;
+            if (option != null) option.Activate();
             else actions[index]?.Invoke();
         }
     }

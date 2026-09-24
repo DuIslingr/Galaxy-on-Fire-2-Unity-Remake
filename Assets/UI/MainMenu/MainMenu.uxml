@@ -64,30 +64,23 @@
                     <ui:VisualElement class="panel-accent" />
                     <ui:VisualElement class="tab-row">
                         <ui:Button name="tabSound" class="tab-button gof-semibold" />
+                        <ui:Button name="tabGraphics" class="tab-button gof-semibold" />
                         <ui:Button name="tabControls" class="tab-button gof-semibold" />
+                        <ui:Button name="tabGameplay" class="tab-button gof-semibold" />
                         <ui:Button name="tabLanguage" class="tab-button gof-semibold" />
                     </ui:VisualElement>
-                    <ui:VisualElement name="soundPage" class="tab-page">
-                        <ui:Label name="volumeHeader" class="section-header gof-semibold" />
-                        <ui:Slider name="musicSlider" class="option-row" low-value="0" high-value="1" />
-                        <ui:Slider name="fxSlider" class="option-row" low-value="0" high-value="1" />
-                        <ui:Slider name="voiceSlider" class="option-row" low-value="0" high-value="1" />
-                        <ui:Label name="graphicsHeader" class="section-header gof-semibold" />
-                        <ui:SliderInt name="brightnessSlider" class="option-row" low-value="0" high-value="2" />
-                        <ui:Toggle name="bloomToggle" class="option-row" />
-                        <ui:VisualElement name="fpsRow" class="option-row fps-row" focusable="true">
-                            <ui:Label name="fpsLabel" class="fps-label" picking-mode="Ignore" />
-                            <ui:VisualElement name="fpsChoices" class="fps-choices" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="controlsPage" class="tab-page">
-                        <ui:Slider name="sensitivitySlider" class="option-row" low-value="0.2" high-value="2.2" />
-                        <ui:Toggle name="invertToggle" class="option-row" />
-                    </ui:VisualElement>
+                    <!-- Option rows are built from OptionsCatalog (MainMenu.SetupOptions). -->
+                    <ui:ScrollView name="soundPage" class="tab-page options-scroll" />
+                    <ui:ScrollView name="graphicsPage" class="tab-page options-scroll" />
+                    <ui:ScrollView name="controlsPage" class="tab-page options-scroll" />
+                    <ui:ScrollView name="gameplayPage" class="tab-page options-scroll" />
                     <ui:VisualElement name="languagePage" class="tab-page">
                         <ui:VisualElement name="languageList" class="language-list" />
                     </ui:VisualElement>
-                    <ui:Button name="optionsBack" class="menu-button back-button gof-semibold" />
+                    <ui:VisualElement class="options-footer">
+                        <ui:Button name="optionsBack" class="menu-button back-button gof-semibold" />
+                        <ui:Button name="optionsDefaults" class="menu-button back-button options-defaults gof-semibold" />
+                    </ui:VisualElement>
                 </ui:VisualElement>
 
                 <ui:VisualElement name="aboutPanel" class="panel">

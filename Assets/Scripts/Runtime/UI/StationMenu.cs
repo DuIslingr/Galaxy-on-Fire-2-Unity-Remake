@@ -128,6 +128,7 @@ namespace GoF2Remake.UI
             safeArea = root.Q("safeArea");
             dragZone = root.Q("dragZone");
             hints = root.Q("hints");
+            InputGlyph.TrackHintsOption(hints);
             dialog = root.Q("dialog");
             viewTitle = root.Q<Label>("viewTitle");
             toast = root.Q<Label>("toast");

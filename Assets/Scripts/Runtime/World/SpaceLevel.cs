@@ -124,6 +124,16 @@ namespace GoF2Remake.World
         float launchCameraMs;
         bool leftDockRange, orbitInfo;
 
+        void OnEnable() => Settings.Changed += ApplyOptions;
+        void OnDisable() => Settings.Changed -= ApplyOptions;
+
+        /// <summary>Options changed in flight (the pause menu) reach the ship and the chase camera at once.</summary>
+        void ApplyOptions()
+        {
+            if (Player != null) { Player.sensitivity = Settings.Sensitivity; Player.invertPitch = Settings.InvertPitch; }
+            if (chase != null) chase.baseFov = Settings.FieldOfView;
+        }
+
         void Awake()
         {
             db = Database.Load();
@@ -414,8 +424,9 @@ namespace GoF2Remake.World
             chase.offset = new Vector3(0f, 600f, -1338f) * M;
             chase.lookOffset = new Vector3(0f, 600f, -650f) * M;
             // CameraSetPerspective(1.22 rad) is the vertical FOV: with the level look offset the ship then sits in the
-            // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens).
-            chase.baseFov = 1.22f * Mathf.Rad2Deg;
+            // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens). Remake: the
+            // field of view option (Settings.OriginalFov by default).
+            chase.baseFov = Settings.FieldOfView;
             chase.Snap();
             // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount.
             Turret = PlayerTurret.Attach(root, db, Session.ShipIndex, Session.Equipment, chase);
@@ -529,7 +540,8 @@ namespace GoF2Remake.World
                 return;
             }
             if (launchCameraMs <= 0f) return;
-            if (Time.timeScale > 0f && PlayerTriedToFly()) { EndLaunchCamera(true); return; }
+            // Remake option: no launch / arrival camera = skipped at once.
+            if (!Settings.LaunchCamera || Time.timeScale > 0f && PlayerTriedToFly()) { EndLaunchCamera(true); return; }
             launchCameraMs -= Time.deltaTime * 1000f;
             var cam = mainCamera.transform;
             cam.rotation = Quaternion.LookRotation(Player.transform.position - cam.position, Player.transform.up);

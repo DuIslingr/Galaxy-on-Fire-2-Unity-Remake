@@ -2,6 +2,7 @@
 // Small UI Toolkit elements that show an input: a keyboard keycap or an Xbox-style controller button (the game
 // always uses Xbox labels, whatever pad is connected). Styled by UI/GoF2InputGlyphs.uss (.keycap, .pad-*).
 
+using GoF2Remake.Data;
 using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
@@ -10,6 +11,16 @@ namespace GoF2Remake.UI
 
     public static class InputGlyph
     {
+        /// <summary>The button hints option (Settings.InputHints): hides a HUD's hint row container while it is off.</summary>
+        public static void TrackHintsOption(VisualElement hints)
+        {
+            if (hints == null) return;
+            void Apply() => hints.EnableInClassList("hints--off", !Settings.InputHints);
+            Apply();
+            Settings.Changed += Apply;
+            hints.RegisterCallback<DetachFromPanelEvent>(_ => Settings.Changed -= Apply);
+        }
+
         public static VisualElement Key(string text, bool wide = false)
         {
             var l = Text(text, "keycap");

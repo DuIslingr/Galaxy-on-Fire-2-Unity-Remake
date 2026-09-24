@@ -953,6 +953,25 @@
     min-width: 250px;
 }
 
+.pause-option .choice-value,
+.pause-option .option-description {
+    min-width: 0;
+}
+
+.pause-option .choice-value {
+    font-size: 20px;
+    color: var(--gof-cyan);
+}
+
+.pause-option .option-description {
+    font-size: 17px;
+    color: var(--gof-text-dim);
+}
+
+.pause-option.autopilot-menu-item--selected .choice-value {
+    color: var(--gof-amber);
+}
+
 /* ---- lens flare (StarSystem::render2D, LensFlareView): under the HUD ---------------------- */
 
 .lens-flare {

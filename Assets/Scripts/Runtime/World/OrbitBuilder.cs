@@ -42,7 +42,7 @@ namespace GoF2Remake.World
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
             DynamicGI.UpdateEnvironment();
 
-            RenderSettings.fog = layout.fog;
+            Bootstrap.SetSceneFog(layout.fog);   // off below Quality High
             if (layout.fog)
             {
                 RenderSettings.fogMode = FogMode.Linear;
