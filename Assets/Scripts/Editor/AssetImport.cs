@@ -48,6 +48,13 @@ namespace GoF2Remake.EditorTools
                 ti.textureShape = TextureImporterShape.TextureCube;
                 ti.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
             }
+            else if (IsFxAtlas(assetPath, name))
+            {
+                // Effect atlases (explosions, projectiles, sparks): each mesh maps one cell, so mipmaps and wrapping
+                // blend the neighbouring cells into its edges (lines on explosions). No mips, clamped.
+                ti.mipmapEnabled = false;
+                ti.wrapMode = TextureWrapMode.Clamp;
+            }
             else if (assetPath.Contains("/Textures/textures/"))
             {
                 // 2D UI/HUD art (fonts, icons, portraits). Imported as sprites.
@@ -56,6 +63,16 @@ namespace GoF2Remake.EditorTools
                 ti.mipmapEnabled = false;
                 ti.alphaIsTransparency = true;
             }
+        }
+
+        /// <summary>The fx textures that are atlases of separate cells (not the tiling fog, noise, stream and sphere maps).</summary>
+        public static bool IsFxAtlas(string path, string name)
+        {
+            if (!path.Contains("/fx/") || name.EndsWith("_normal")) return false;
+            foreach (var tiled in new[] { "fog", "v_fog_ice", "cloak_map", "v_shield_noise", "sn_plasma_stream", "sn_shock_blast_sphere",
+                                          "sn_supernova", "sn_ship_blaze_flames" })
+                if (name == tiled) return false;
+            return true;
         }
 
         void OnPreprocessModel()
