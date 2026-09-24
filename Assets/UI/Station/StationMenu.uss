@@ -1,6 +1,6 @@
-/* Docked-station screen over the 3D hangar / Space Lounge (GoF2StationMenu). Layout like ModStation::OnRender2D:
+/* Docked-station screen over the 3D hangar / Space Lounge (StationMenu). Layout like ModStation::OnRender2D:
    header with the station name, a left panel (system, tech level, race, the screen buttons), launch bottom-right.
-   The root gets input-touch / input-keyboard / input-gamepad (GoF2InputMode) and can-hover while a mouse is used.
+   The root gets input-touch / input-keyboard / input-gamepad (InputMode) and can-hover while a mouse is used.
    Panel units at 1920x1080 (1600x900 on phones). */
 
 .station-root {
@@ -319,7 +319,7 @@
     width: 380px;
 }
 
-/* The star map (GoF2StarMap) is open: it draws the whole screen. */
+/* The star map (StarMap) is open: it draws the whole screen. */
 .station-map-open .station-safe,
 .station-map-open .side-shade,
 .station-map-open .bottom-shade,

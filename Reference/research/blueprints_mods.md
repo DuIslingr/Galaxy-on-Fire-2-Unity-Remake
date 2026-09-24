@@ -394,17 +394,17 @@ items {204, 209}, shipping 200 $/unit, autocomplete 1.25 / 2 000 000, mod table 
 - `GoF2Blueprint` (one per product; mirrors `BluePrint`): `Item`, `Remaining int[]`, `MoneySpent`, `Unlocked`,
   `TimesProduced`, `StationIndex` (−1), `Quantity`; `AddItem(item, n, station, unitPrice)`, `IsEmpty`, `IsCompleted`,
   `CompletionRate`, `CurrentAmount(item)`, `AutocompletePrice()`, `Complete()`, `Reset()`.
-- `GoF2BlueprintBook` (session state; `GoF2Session.Blueprints` + `PendingProducts`): `Unlock(item)`, `IsUnlocked`,
+- `GoF2BlueprintBook` (session state; `Session.Blueprints` + `PendingProducts`): `Unlock(item)`, `IsUnlocked`,
   `AddPending(item, qty, station)` (merging), `CollectAt(station) → list` (docking), `GoodsProduced`,
   `HiddenFound bool[5]`.
-- `GoF2Workshop` (one opening of the ingredients list, like `GoF2Hangar`): `Select(ingredient)` → `NeedsStartConfirm`
+- `GoF2Workshop` (one opening of the ingredients list, like `Hangar`): `Select(ingredient)` → `NeedsStartConfirm`
   (empty and cargo > 0) / `Refused528`; `MoveOne()` (cargo → pending, capped by remaining); `Commit()` returns
   `NeedsShipping(cost)` / `Volatile` / `Committed` / `Completed(atThisStation)`; `Revert()`; `Autocomplete(credits)`.
   Keep the "no take-back" rule and the 200 $/unit shipping.
 - `GoF2ShipMods` or fields on the ship state: `int[] Mods` per owned ship; `MaxHull = armor + 40·has(0)`,
-  `Cargo = base + 30·has(1)`, equipment slots + has(2), handling/100 + 0.2·has(3) (feed `GoF2FlightModel`).
+  `Cargo = base + 30·has(1)`, equipment slots + has(2), handling/100 + 0.2·has(3) (feed `FlightModel`).
 - `GoF2KaamoStorage`: `Items` (same stack type as cargo), `Ships (index, race, mods)`, `Owned` state 0–3.
-- Save: extend `GoF2SaveData` (bump version) with blueprints (per product: remaining[], unlocked, timesProduced,
+- Save: extend `SaveData` (bump version) with blueprints (per product: remaining[], unlocked, timesProduced,
   station), pending products, hidden flags, goods produced, per-ship mods, storage items/ships, Kaamo state.
 
 ### 4.3 UI Toolkit (Hangar window, `UI/Station`, next to the Ship / Shop tabs)
@@ -425,8 +425,8 @@ items {204, 209}, shipping 200 $/unit, autocomplete 1.25 / 2 000 000, mod table 
 
 ### 4.4 Remake decisions to make
 
-- Free play (`GoF2Session.FreePlay`) and the current campaign state: the 15 lounge sellers need campaign > 16 (and the
-  generic lounge doesn't exist yet); campaign unlocks come from `GoF2Story.Advance` side effects (steps 34, 58, 72, 104,
+- Free play (`Session.FreePlay`) and the current campaign state: the 15 lounge sellers need campaign > 16 (and the
+  generic lounge doesn't exist yet); campaign unlocks come from `Story.Advance` side effects (steps 34, 58, 72, 104,
   141 — add the pre-investments).
 - IAP content: decide whether the Kaamo Club is only the in-game purchase (30 M + 50 Buskat after clearing the pirates)
   and whether the VIP ×2 surcharge applies (the original charges double without the card).

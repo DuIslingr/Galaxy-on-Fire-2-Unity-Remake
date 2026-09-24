@@ -1,4 +1,4 @@
-/* In-flight HUD. The root gets input-touch / input-keyboard / input-gamepad from GoF2FlightHud (GoF2InputMode):
+/* In-flight HUD. The root gets input-touch / input-keyboard / input-gamepad from FlightHud (InputMode):
    touch controls only show for touch, the hint row only for keyboard and controller. Panel units at 1920x1080
    (1600x900 on phones, so everything is relatively bigger there). */
 
@@ -215,7 +215,7 @@
     display: none;
 }
 
-/* ---- dock prompt (inside the station's dock range, GoF2SpaceLevel.CanDock) ---------------- */
+/* ---- dock prompt (inside the station's dock range, SpaceLevel.CanDock) ---------------- */
 
 .dock-prompt {
     position: absolute;
@@ -250,7 +250,7 @@
     color: #FFFFFF;
 }
 
-/* ---- asteroid lock (GoF2MiningView) and HUD messages ------------------------------------ */
+/* ---- asteroid lock (MiningView) and HUD messages ------------------------------------ */
 
 .lock-ring {
     display: none;
@@ -314,7 +314,7 @@
     opacity: 0;
 }
 
-/* ---- navigation markers (GoF2NavigationView): brackets, names, distances, gate icons -------- */
+/* ---- navigation markers (NavigationView): brackets, names, distances, gate icons -------- */
 
 .nav-markers {
     position: absolute;
@@ -555,7 +555,7 @@
     width: 220px;
 }
 
-/* ---- star map open (GoF2StarMap draws the whole screen) ------------------------------------ */
+/* ---- star map open (StarMap draws the whole screen) ------------------------------------ */
 
 .hud-map .hud {
     display: none;

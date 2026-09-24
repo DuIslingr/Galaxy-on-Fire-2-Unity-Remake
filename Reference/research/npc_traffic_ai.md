@@ -23,7 +23,7 @@ Helper scripts, `Reference/tools/npc/`:
 
 - **Spawning** happens once, when the orbit is built (`Level::createMission` 0xbda70, empty-mission branch). The
   RNG (`Globals::rnd`, a `java.util.Random`) is **re-seeded with `time(NULL)`** first, so traffic is random per visit:
-  use `UnityEngine.Random` (or `GoF2JavaRandom` with a time seed). Groups, in array order: **local fighters**
+  use `UnityEngine.Random` (or `JavaRandom` with a time seed). Groups, in array order: **local fighters**
   (system race), **jumpers** (system race, launch from the station later), **freighters**, optional carrier/battleship
   with turrets, **raiders** (75 % pirates, 25 % the system's enemy race; all of one ship model), pirate-base guards,
   late-game Specters, a Wanted target with wingmen. Counts depend on security level, player level and difficulty (§2).
@@ -407,7 +407,7 @@ forward·3000, slot 1 = player + right·4000 − forward·3000, slot 2 = player 
 
 One global `java.util.Random` (`Globals::rnd`) for everything (spawning, AI decisions, loot, radio text choice),
 reseeded with `time(NULL)` at the start of the free-flight branch and after `createWingmen`. Nothing about traffic is
-reproducible between visits, so the remake can use `UnityEngine.Random`. (Keep `GoF2JavaRandom` only for the seeded
+reproducible between visits, so the remake can use `UnityEngine.Random`. (Keep `JavaRandom` only for the seeded
 orbit layout.)
 
 ### 2.9 Freelance missions (summary only)
@@ -706,7 +706,7 @@ collision avoidance (§5.7); push(dt) (bump after a collision)
 
 Turn rate: the heading moves by `k = 0.000732·dt` per frame toward the target direction, so the angular rate is
 `0.732·cos(α/2)` rad/s for an angle α to the target: **42°/s** when nearly aligned, slower when the target is behind
-(0 exactly behind). The player's flight model (`GoF2FlightModel`, `angle = dt·rate·2π/65536·0.033` with
+(0 exactly behind). The player's flight model (`FlightModel`, `angle = dt·rate·2π/65536·0.033` with
 `rate = 750·H/63`) gives 0.000753 rad/ms for H = 20 (handling 100, no agility) at full stick, i.e. **NPCs turn like a
 handling-100 ship**, but without ramp-up, inertia or speed loss. Unlike the player's `moveToPosition` autopilot
 (autopilot_travel.md) there is no world-up constraint; the up vector is carried along and only the auto-level roll
@@ -906,39 +906,39 @@ flight (those texts are campaign radio).
 
 ## 9. Unity build recipe
 
-Consistent with the remake: `GoF2SpaceLevel` builds the orbit; ships are `Resources/Assembled/main/ships/ship_XXX_*`
+Consistent with the remake: `SpaceLevel` builds the orbit; ships are `Resources/Assembled/main/ships/ship_XXX_*`
 prefabs (`db.Assemblies.Find(a => a.category == "ships" && a.name.StartsWith($"ship_{idx:000}_"))`), NPC variant via
-`GoF2AssembledObject.SetPlayerVariant(false)`; hittable objects are `GoF2Target`; bullets are `GoF2Gun`. Game → Unity:
+`AssembledObject.SetPlayerVariant(false)`; hittable objects are `Target`; bullets are `Gun`. Game → Unity:
 positions `(x, y, −z)·0.05`, directions `(x, y, −z)`; speeds u/ms × 50 = m/s (2 u/ms = 100 m/s).
 
-1. **Plain C# tables** `GoF2NpcTables` (namespace `GoF2Remake.Flight`): fighter pools (§2.5), `NpcHp`, `NpcGun`,
+1. **Plain C# tables** `NpcTables` (namespace `GoF2Remake.Flight`): fighter pools (§2.5), `NpcHp`, `NpcGun`,
    `EnemyRace`, `RaiderChance`, shot sounds, level thresholds. Unit-test against `npc_tables.py`.
-2. **Standing** `GoF2Standing` (plain C#, state in `GoF2Session`: s0 = 30, s1 = 0, signature from the equipped sort-29
+2. **Standing** `Standing` (plain C#, state in `Session`: s0 = 30, s1 = 0, signature from the equipped sort-29
    item, per-station "attacked friends" set, player level/XP counters): `IsEnemy/IsFriend/ApplyDelict/ApplyKill`,
    `RacesHostile` (§4.1–4.3). Save with the session.
-3. **Routes** `GoF2Route` (plain C#): waypoints in game units, index, loop, `Update(pos)` with the ±2000 box,
+3. **Routes** `Route` (plain C#): waypoints in game units, index, loop, `Update(pos)` with the ±2000 box,
    `Clone`, default patrol factory (§5.8).
-4. **Traffic plan** `GoF2TrafficPlan` (plain C#): §2.2–2.3 → a list of spawn specs (group, race, ship, kind,
+4. **Traffic plan** `TrafficPlan` (plain C#): §2.2–2.3 → a list of spawn specs (group, race, ship, kind,
    game position, route, flags, HP, EMP, gun) using `UnityEngine.Random`. Start with local fighters, jumpers,
    freighters, raiders and pirate-base escorts; add Wanted, outposts, Terran/Vossk specials, black market later.
 5. **Brain** `GoF2FighterBrain` (plain C#): §5.2–5.6 on a small pose struct (position, rotation basis in game space,
    speed) plus an `IList<INpcTargetInfo>` enemy list (position, active, alive, hostileToPlayer, race, cloaked,
    isPlayer). Returns fire requests. Keep the per-frame quirks (×1.05/×0.95 per frame) behind `dt`-scaled helpers
    (e.g. `speed *= Mathf.Pow(1.05f, dt/33.3f)`), like weapons.md does for missile homing.
-6. **`GoF2NpcShip`** (MonoBehaviour, one per fighter): instantiates the prefab, adds `GoF2Target` (radius
-   1000 u → 50 m, 650 u hardcore; `maxHp = hp`), owns the brain and an NPC `GoF2Gun` (new constructor from `NpcGun`:
+6. **`NpcShip`** (MonoBehaviour, one per fighter): instantiates the prefab, adds `Target` (radius
+   1000 u → 50 m, 650 u hardcore; `maxHp = hp`), owns the brain and an NPC `Gun` (new constructor from `NpcGun`:
    4 bullets, 16 u/ms, 3000 ms, reload, damage, projectile/sound of the race item, mount at the centre), 3D engine
    loop 46, bank on the model child, death sequence (§5.10) with the ship explosion prefab and sound 20, crates later.
-   `GoF2Target.Damage` needs a source (player / NPC) for §4.5.
-7. **`GoF2Freighter`** (MonoBehaviour): +Z mover at 1 u/ms (50 m/s), 5× HP, `GoF2Target` with the boxes of
+   `Target.Damage` needs a source (player / NPC) for §4.5.
+7. **`GoF2Freighter`** (MonoBehaviour): +Z mover at 1 u/ms (50 m/s), 5× HP, `Target` with the boxes of
    `freighter_boxes.py` (or the prefab bounds), wreck prefab `cargo_*_explosion_anim` on death, engine loop 47.
-8. **`GoF2Traffic`** (MonoBehaviour on the level, created by `GoF2SpaceLevel` after the asteroids): spawns the plan,
+8. **`Traffic`** (MonoBehaviour on the level, created by `SpaceLevel` after the asteroids): spawns the plan,
    builds enemy lists (§4.4), updates ships in array order, runs `updateOrbit` (§7: 10 s jumper relaunch at the
    station, 45 s police relaunch and raider waves), radio messages (a HUD line with portrait, 426–447), the hostile
-   count for combat music 140/141/142 vs the system music, and exposes the ship list to `GoF2Navigation`/radar
+   count for combat music 140/141/142 vs the system music, and exposes the ship list to `Navigation`/radar
    (hostile count also blocks fast-forward, autopilot_travel.md).
-9. **Player side**: the player's guns already hit every `GoF2Target`; add a player damage model (`Player::damage`:
-   shield → armor → hull from the ship/equipment, `Incoming_Fire_*` 25/23/24, weapons.md §5) as a `GoF2Target`-like
+9. **Player side**: the player's guns already hit every `Target`; add a player damage model (`Player::damage`:
+   shield → armor → hull from the ship/equipment, `Incoming_Fire_*` 25/23/24, weapons.md §5) as a `Target`-like
    receiver for NPC bullets (×0.2 from non-hostile shooters), friendly-fire bookkeeping (§4.5) and kill/standing
    updates; radar colours by hostile/friend/neutral; locking a Wanted uncovers it.
 10. Later: wingmen (hire in the bar, formation/commands), Wanted boards, turrets, freelance missions, the black-market

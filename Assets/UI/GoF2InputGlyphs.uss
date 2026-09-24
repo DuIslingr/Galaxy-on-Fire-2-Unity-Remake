@@ -1,4 +1,4 @@
-/* Input hints shared by the HUDs (GoF2InputGlyph): a hint row (glyphs + label), keyboard keycaps and Xbox-style
+/* Input hints shared by the HUDs (InputGlyph): a hint row (glyphs + label), keyboard keycaps and Xbox-style
    controller buttons (the game always shows Xbox labels). */
 
 .hint {

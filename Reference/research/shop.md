@@ -413,7 +413,7 @@ Missions 6/7 won't let you launch without a mounted weapon + armor (529/530).
    `iphone4` rects (116×56) are a consistent alternative.
 2. **Data**: `Item` runtime = items.json row + `price`, `amount`, `stationAmount`, `unsaleable`. `ShopStation` = stock list +
    ship list, cached for the last 3 stations.
-3. **Prices**: port `tools/shop/prices.py` (JavaRandom already exists as `GoF2JavaRandom`); price the stock list, cargo list and
+3. **Prices**: port `tools/shop/prices.py` (JavaRandom already exists as `JavaRandom`); price the stock list, cargo list and
    equipment list each with a fresh `Random(stationIndex)` whenever the hangar opens.
 4. **Stock**: port §4.3/§4.4 with `UnityEngine.Random` (the original is time-seeded); run on arrival at a station not in the stack;
    `computerTradeGoods` on re-entry after 30 s.

@@ -1,4 +1,4 @@
-/* Status window (GoF2StatusWindow, StatusWindow 0x18345c): on HD both columns side by side - pilot, ship, reputation
+/* Status window (StatusWindow, StatusWindow 0x18345c): on HD both columns side by side - pilot, ship, reputation
    and statistics on the left, the 45 medals in three columns on the right. The root gets status-open while it shows. */
 
 .status-window {

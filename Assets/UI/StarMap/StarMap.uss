@@ -1,7 +1,7 @@
-/* Star map overlay (GoF2StarMap) over its own 3D camera: labels, rings and icons follow the suns / planets (StarMap::draw,
+/* Star map overlay (StarMap) over its own 3D camera: labels, rings and icons follow the suns / planets (StarMap::draw,
    drawOnScreenInfo), header "Map", the system block in the system view, the energy line, the key legend, the footer with
    back and key buttons, and the ChoiceWindow. HD pixels = panel units (1920x1080 reference).
-   The root gets input-touch / input-keyboard / input-gamepad (GoF2InputMode) and map-dialog-only for the jumpgate prompt. */
+   The root gets input-touch / input-keyboard / input-gamepad (InputMode) and map-dialog-only for the jumpgate prompt. */
 
 .map-root {
     flex-grow: 1;

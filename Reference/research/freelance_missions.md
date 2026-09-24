@@ -497,38 +497,38 @@ location, travels-to, last seen.
 Plain C# (unit-testable), MonoBehaviours only for the scene side. `UnityEngine.Random` (or an injected `System.Random`)
 is fine: the original's RNG is time-seeded, nothing here is reproducible.
 
-- **`GoF2Agent`** (data): name, race, male, station, offer (enum `AgentOffer`), portrait parts[5], known, accepted,
+- **`Agent`** (data): name, race, male, station, offer (enum `AgentOffer`), portrait parts[5], known, accepted,
   sell item/qty/price, costs, wingman names, `GoF2Mission Mission`, chosen text IDs, stored offer text.
 - **`GoF2Mission`** (data): type (enum `FreelanceType` 0..15), client name/race/portrait, agent ref, target station,
   difficulty, good, amount, reward, bonus, targetName, failed/won. Serialise with the save (the original saves the
   freelance mission with its agent, `RecordHandler::writeMission`).
-- **`GoF2AgentGenerator`**: `CreateAgents(station, session)` / `CreateAgent` / `CreateMission` /
+- **`AgentGenerator`**: `CreateAgents(station, session)` / `CreateAgent` / `CreateMission` /
   `GenerateStationIndex` exactly as §1.3-2.5 (port `mission_tables.py`); keep the 15-flag "types used" array and the
   purchase-offer-creates-mission-at-first-chat rule. Store the result on the station entry of the existing 3-station
-  cache in `GoF2Session` (the shop already keeps the last 3 stations' stock there) so agents persist with the stock.
+  cache in `Session` (the shop already keeps the last 3 stations' stock there) so agents persist with the stock.
   Free play is campaign 20, so the early-type table and the offer-5/6 lock do not apply; story agents from
   `agents.json` count because campaign > 16.
-- **`GoF2LoungeChat`** (plain C#): builds the offer text from text IDs (§3.1, `GoF2Localization.Get` + `#`
-  replacements), the choice list (§3.2) and applies an accepted offer (§3.3) against `GoF2Session` (credits, cargo
+- **`LoungeChat`** (plain C#): builds the offer text from text IDs (§3.1, `Localization.Get` + `#`
+  replacements), the choice list (§3.2) and applies an accepted offer (§3.3) against `Session` (credits, cargo
   with an "unsaleable" flag for items 115-117, passengers, standing, wingmen). The Station menu gets a Space Lounge
   visitor list/tap → chat panel (UI Toolkit) with the portrait (`ImageFactory` parts → the character atlas; not yet
   cut) and the 3-5 choice buttons.
-- **`GoF2FreelanceMissions`** (plain C#, in `GoF2Session`): one active mission; `OnDepart(station)` decides whether the
+- **`GoF2FreelanceMissions`** (plain C#, in `Session`): one active mission; `OnDepart(station)` decides whether the
   new orbit is a mission orbit (§4.1); `OnDocked(station)` = `missionCompleted/missionFailed(docked)` (§5) returning
   a result for the station UI (dialog text IDs, payout with the 1 000 001 guard, standing +5, cargo clean-up,
   Documents into the target station's stock for type 14).
-- **`GoF2MissionOrbit`** (MonoBehaviour, next to `GoF2Traffic` in the Space scene): when the level mission is set,
-  spawn §4.1 instead of the free-flight traffic using the existing `GoF2NpcShip` / `GoF2Target` (asleep = the
+- **`GoF2MissionOrbit`** (MonoBehaviour, next to `Traffic` in the Space scene): when the level mission is set,
+  spawn §4.1 instead of the free-flight traffic using the existing `NpcShip` / `Target` (asleep = the
   "sleeping" state, always-enemy/friend flags, HP multipliers), and evaluate the success/failure objectives
   (`GoF2Objective` plain C# with the §4.1 kinds, polled once the level is 5 s old); junk removal needs the space-junk
   prop and a 121 s timer (HUD countdown). Recovery/Salvage need EMP + salvage lock on the carrier (not implemented in
   combat yet: "EMP weapons against NPCs" is on the NPC to-do list), Challenge needs per-killer kill counters, Escort
   and Intercept need NPC freighters as fixed objects (the traffic freighters can be reused).
 - Carrying Courier/Passenger/Ore missions adds `int(d/10·5)` pirates around the player in free-flight orbits — hook
-  into `GoF2TrafficPlan`.
+  into `TrafficPlan`.
 - Briefing / success / failure dialogs: a `DialogueWindow`-like overlay in the flight HUD (pauses the game), texts per
   §4.2-4.4, reward message + sound 36 (`Mission_accomplished`).
-- Missions window: a Freelance pane in the station menu (offer text, reward, portrait, Show on map → `GoF2StarMap`
+- Missions window: a Freelance pane in the station menu (offer text, reward, portrait, Show on map → `StarMap`
   with a target marker, Discard with 418 confirmation).
 - Type 15 (Ore Mining) is unreachable in the original generator; keep it out of the remake's roll (or enable it
   deliberately as a remake-only option, since `Level::createMission` supports it).

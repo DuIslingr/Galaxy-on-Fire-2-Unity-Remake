@@ -40,7 +40,7 @@ read in the decompile; *(assumed)* / *(uncertain)* = inference.
   greeting instead, the rude small-talk lines their own "NEG" greetings (§3). All 252 used events have English and
   German files.
 - **Portraits**: generic agents use exactly the story-portrait composition; every part texture of every generic set
-  exists and the remake's `GoF2StoryAssets` already imports them (§2).
+  exists and the remake's `StoryAssets` already imports them (§2).
 - **News ticker**: a scrolling "+++"-separated line at the bottom of the **station main view** (not the lounge),
   59 items from `ticker.json`, campaign-window items always, 2 random others (§4). The lounge "system-info reveal" is
   the **coordinates seller** (offer 4): after buying, "Okay." opens the star map reveal (§1.8).
@@ -259,8 +259,8 @@ Coverage (`agent_portraits.py`, **verified: every variant of every generic set h
 
 Files: `Assets/Textures/textures/<set>_<part>_<variant>_ipad_large.png` (160 px wide, image in the top-left of a
 power-of-two canvas; the image height is the manifest region height). For all generic sets the file name equals
-`set_part_variant` of the descriptor, so **the remake's `GoF2Portrait.Show(box, descriptor, mirrored)` + the part
-textures `GoF2StoryAssetsBuilder` already imports (regex `^(\d+)_(\d)_(\d+)_ipad_large$`) cover every generic agent**.
+`set_part_variant` of the descriptor, so **the remake's `Portrait.Show(box, descriptor, mirrored)` + the part
+textures `StoryAssetsBuilder` already imports (regex `^(\d+)_(\d)_(\d+)_ipad_large$`) cover every generic agent**.
 The only set where file name ≠ descriptor is 11 (computer screens: descriptor part 0 variant 1 → id 5147 → file
 `11_3_3`), which is why story speakers go through `ShowSpeaker` (image ids); agents never use set 11. `portrait.py
 --parts` / `BASE_IDS` handle all sets. Bobolian part 3: `nextInt(0)` is called for it (count 0); its base is −1 so
@@ -514,8 +514,8 @@ medal symbols 0x25c7dc; story objective texts 0x258f68; portrait bases 0x2583f0,
 
 ## 9. Remake implementation notes (UI Toolkit)
 
-The remake already has plain-C# agents / chat / freelance code (`GoF2Agent`, `GoF2AgentGenerator`, `GoF2LoungeChat`,
-`GoF2Freelance`) and `UI/Station/Lounge.uss`; these notes are about presentation and the two new windows.
+The remake already has plain-C# agents / chat / freelance code (`Agent`, `AgentGenerator`, `LoungeChat`,
+`Freelance`) and `UI/Station/Lounge.uss`; these notes are about presentation and the two new windows.
 
 **Lounge selection (world → UI).**
 - Keep the visitors as the only selectors. Each frame project the two points of `updateScreenPositions`
@@ -531,8 +531,8 @@ The remake already has plain-C# agents / chat / freelance code (`GoF2Agent`, `Go
 - A tap during the first 3 s intro skips it (camera jumps to B) instead of selecting.
 
 **Chat panels.** One `VisualElement` root (`.lounge-chat`, absolute) with two children stacked vertically at the
-reference sizes (806×272 and 806×220–224, 6 px apart, 10 px padding): agent panel = `GoF2Portrait.Show(box,
-agent.portraitParts, false)` + a `ScrollView` text area (596×252 content); player panel = `GoF2Portrait.Show(box,
+reference sizes (806×272 and 806×220–224, 6 px apart, 10 px padding): agent panel = `Portrait.Show(box,
+agent.portraitParts, false)` + a `ScrollView` text area (596×252 content); player panel = `Portrait.Show(box,
 {0,0,0,0,0}, true)` + the answer column (616 px wide; row 1: Okay | No thanks as two half buttons, green/red text;
 rows 2–3: full-width buttons). Place the root beside the visitor like §1.3 (left of it, else right, vertical clamp
 68..h−84−272, then clamp into the safe area); on narrow/phone layouts centre it instead (the non-iPad rule: x centred,
@@ -540,29 +540,29 @@ y 68). No title/name bar (the original has none), but showing the name above the
 improvement if wanted.
 - Answer visibility per the §1.3 table; after "What's the risk?" collapse to a single white "Okay." that returns to the
   offer; "No thanks." closes immediately (optionally show the 845–849 line briefly — remake choice; the original never
-  shows it on HD). Keep `GoF2LoungeChat.Choice.Repeat` out of the touch UI to match HD, or keep it as an extra
+  shows it on HD). Keep `LoungeChat.Choice.Repeat` out of the touch UI to match HD, or keep it as an extra
   row — either way it must not count for any medal.
 - Confirmations and refusals: the existing modal dialog (ChoiceWindow equivalent) above the chat; "Yes" → the deal →
   closing line with one "Okay.".
 - "Let me see it." → the existing item details window (HangarWindow's details view) full screen; for the ship dealer
-  the 3D ship view. "Show it on the map." → `GoF2StarMap.Open` in mission mode with the target marker; the coordinates
+  the 3D ship view. "Show it on the map." → `StarMap.Open` in mission mode with the target marker; the coordinates
   seller's closing "Okay." → the star map reveal of the new system.
 - Hide the footer back button in states 2/3 (the player must answer), show it in state 0 (leave) — same as the
   original; Esc/B in state 2 = "No thanks." is a reasonable controller mapping.
 
-**Voice.** Build a `LOUNGE` clip table in an editor step (like `GoF2StoryAssetsBuilder`: `Audio/LOUNGE_eng` +
+**Voice.** Build a `LOUNGE` clip table in an editor step (like `StoryAssetsBuilder`: `Audio/LOUNGE_eng` +
 `LOUNGE_deu` with the `de_` prefix), keyed by name; `GoF2LoungeVoice.Pick(agent, text)` ports §3 (plain C#, returns
 the clip name). Play on a 2D UI AudioSource when a chat opens; stop it when the chat closes.
 
-**Portraits.** Nothing new to import: `GoF2Portrait.Show` with the agent's descriptor works for all generic sets
+**Portraits.** Nothing new to import: `Portrait.Show` with the agent's descriptor works for all generic sets
 (§2). Skip parts whose count is 0 (Bobolian part 3) when generating.
 
 **News ticker.** A `VisualElement` strip at the bottom of the station main view right of the left panel (x = 360 at
 1920 px reference, height = one text line, above the footer), `overflow: hidden`, containing a `Label` with the
 joined string (duplicated once for a seamless wrap) moved by `style.translate` at 50 px/s (unscaled time); drag
-scrolls it. Selection and tokens per §4 in plain C# (`GoF2NewsTicker.Build(race, campaign, rnd)`), items from
+scrolls it. Selection and tokens per §4 in plain C# (`NewsTicker.Build(race, campaign, rnd)`), items from
 `ticker.json`. Hidden at stations 101, 108 and in system 25. Keep the 10-minute cooldown/cache for flag items in
-`GoF2Session` (not saved by the original? `Status+0x160/0x168/0x170` are Status fields — save them with the session
+`Session` (not saved by the original? `Status+0x160/0x168/0x170` are Status fields — save them with the session
 *(assumed)*).
 
 **Station menu.** Add buttons 3 "Missions" (129, locked before campaign 9, help 635) and 4 "Status" (169, help 640);
@@ -572,27 +572,27 @@ background, the Missions window is a centred 1300×1000 panel).
 
 **Missions window (`UI/Station/MissionsWindow.uxml`).** Two columns in a 1300×1000 panel: each a section header
 (90 px plate style) "Story" / "Freelance", a bordered body with a `ScrollView` text, and a bottom button row.
-Story: `GoF2Story` objective text (`story.json objectiveText`, `#` → target station, counters refreshed), "Show on
+Story: `Story` objective text (`story.json objectiveText`, `#` → target station, counters refreshed), "Show on
 map" → star map with the campaign target (hidden when the game is won; text 650/670 then). Freelance: empty → 174
-"-BLANK-"; else the client portrait (`GoF2Portrait.Show`), name, station, mission type name, the stored offer text with
+"-BLANK-"; else the client portrait (`Portrait.Show`), name, station, mission type name, the stored offer text with
 #C = reward + bonus, "Show on map", and in the station only a red "Discard" with a 418 confirmation → the existing
 freelance discard. Tabs "Missions" / "Most Wanted" only once Wanted targets exist.
 
 **Status window (`UI/Station/StatusWindow.uxml`).** Two halves on wide screens (phones: tabs 577 Statistics / 168
 Medals, like the original phone layout):
 - left: title plate with "Keith T. Maxwell"; a pilot card (portrait {0,0,0,0,0}, credits, "Level N" from the session's
-  level/rank, play time hh:mm — needs a play-time counter in `GoF2Session`); a ship card (`Resources/GoF2Icons` ship
+  level/rank, play time hh:mm — needs a play-time counter in `Session`); a ship card (`Resources/GoF2Icons` ship
   icon, name, fire power = sum of mounted primary DPS as in `Ship::getFirePower` *(formula not traced, uncertain)*,
-  defense = hull + shield + armor); reputation: two bars built from `GoF2Session.Standing` (−100..100 → marker offset
+  defense = hull + shield + armor); reputation: two bars built from `Session.Standing` (−100..100 → marker offset
   ±82 px of a 164 px track), emblem images 0x490–0x49b cut like the HUD images (add them to "Build HUD Images");
-  statistics: the 11 rows of §6.1 (add the missing counters to `GoF2Session`: asteroids destroyed, crates salvaged,
+  statistics: the 11 rows of §6.1 (add the missing counters to `Session`: asteroids destroyed, crates salvaged,
   stations visited = `VisitedStations.Count`, battleships, goods produced, ore/cores mined, wingmen hired, missions
   completed; `JumpgatesUsed` and `Kills` exist).
 - right: a `ScrollView` with a 3-column grid of 45 medal tiles (228×84 plate by level + 54×54 symbol + name below,
   colours per §6.2; cut plates 2413–2416, 8035, 8045, overlay 2412 and symbols 2376–2411 / 8036–8044 with
   `atlas.rect`); tapping an earned tile shows the hint text (1552 + i, `#` = threshold) in a box at the bottom.
-- Medals themselves need `GoF2Achievements` (plain C#, §6.3 thresholds, checked on docking, best level kept, saved).
-  The lounge already has the counters for Chatterbox / Naysayer / Daredevil / Tracker (`GoF2Session.AgentsTalkedTo`,
+- Medals themselves need `Achievements` (plain C#, §6.3 thresholds, checked on docking, best level kept, saved).
+  The lounge already has the counters for Chatterbox / Naysayer / Daredevil / Tracker (`Session.AgentsTalkedTo`,
   `OffersDeclined`, `AcceptedBlindRisk`, `AcceptedBlindMap`).
 
 ---------------------------------------------------------------------------------------------------

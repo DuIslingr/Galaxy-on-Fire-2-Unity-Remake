@@ -255,7 +255,7 @@ In fog systems every planet (index ≥ 1) is drawn with blend 21 and transform c
 
 `systems.json unknownTriple` is the system's RGB flash colour (`Level::flashScreen` → `i_r / i_g / i_b`, with `r_min = r/3`), used for explosion and EMP screen flashes, not for the backdrop. The void default is (10, 136, 10).
 
-## Comparison with `GoF2SkyboxBaker.cs` (mismatches)
+## Comparison with `SkyboxBaker.cs` (mismatches)
 
 1. **Wrong stars layer.** The baker uses `skybox_stars_{nebulaIndex % 3}`; the game uses `systemIndex % 3`. A sky is really the pair (textureIndex, systemIndex % 3). For example, Suteo (system 0) is `skybox_004` with `stars_000`, but the baker bakes `004` with `stars_001`. About 2/3 of the systems get the wrong stars.
 2. **Only 000..010 are baked.** Systems 22..32 use `v_skybox_011`..`014` and `sn_skybox_015`..`018` (textureIndex 11..18), which are loaded from `Models/valkyrie|supernova/skyboxes/...`. `LoadMesh($"Models/main/skyboxes/{name}")` cannot find them. Index 14 must use the mesh `v_skybox_013.fbx` with the texture `v_skybox_014.png`.

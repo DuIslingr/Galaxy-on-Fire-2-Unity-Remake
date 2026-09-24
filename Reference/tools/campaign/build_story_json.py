@@ -11,7 +11,7 @@
 #   the part texture's name without _ipad_large, resolved through the image ids like portrait.py: bodies 11 / 12 do not
 #   follow the body_part_variant naming), portraitOffsets[body][part] = [anchor 16 top / 32 bottom, y],
 #   radio[index] = [{text, speaker, trigger, param, count, voice}] (Level::createRadioMessages per campaign index).
-# The side effects of each step (loaner ships, items, systems...) are code in GoF2Story, not data.
+# The side effects of each step (loaner ships, items, systems...) are code in Story, not data.
 import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'dialogue'))

@@ -150,7 +150,7 @@
     display: none;
 }
 
-/* ---- save slots (main menu Load, station Save game; GoF2SaveSlotRow) ------------------------------------------------------------------- */
+/* ---- save slots (main menu Load, station Save game; SaveSlotRow) ------------------------------------------------------------------- */
 
 .slot-list {
     height: 520px;

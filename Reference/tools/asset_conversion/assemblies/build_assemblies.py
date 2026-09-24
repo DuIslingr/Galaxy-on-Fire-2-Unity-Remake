@@ -9,7 +9,7 @@
 # rules/name_groups.json groups every mesh by name; groups that no code rule covers are assembled from
 # their layers (_add/_alpha/_emissive/...) as a fallback, marked "origin": "name-based".
 #
-# Output schema (see GoF2AssemblyBuilder.cs): entries[] {name, pack, category, origin, notes, root,
+# Output schema (see AssemblyBuilder.cs): entries[] {name, pack, category, origin, notes, root,
 #   parts[] {key, parent, mesh, model, material, role, variant, condition, position, rotation, scale, lods},
 #   lodDistances, lastVisibleDistance, scale, spawnRotation, explosionModel}
 # Positions are game units (engine space), rotations euler degrees (engine space).

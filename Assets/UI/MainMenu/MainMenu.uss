@@ -1,5 +1,5 @@
 /* Main menu. Landscape only. Layout in reference pixels: the panel is always 1080 units tall (900 on phones),
-   so its width varies with the aspect ratio. GoF2MainMenu adds layout-narrow (4:3, 16:10) and layout-phone to
+   so its width varies with the aspect ratio. MainMenu adds layout-narrow (4:3, 16:10) and layout-phone to
    the root; on ultrawide screens the UI stays inside a centred 21:9 safe area. */
 
 .menu-root {
@@ -41,10 +41,10 @@
     opacity: 1;
 }
 
-/* Hover styles only apply while the root has can-hover (mouse in use). With touch GoF2MainMenu removes it,
+/* Hover styles only apply while the root has can-hover (mouse in use). With touch MainMenu removes it,
    so a finger sliding over the UI doesn't light up everything it passes. */
 
-/* ---- logo: top-left in the menu; GoF2MainMenu moves it to the centre for the title screen with
+/* ---- logo: top-left in the menu; MainMenu moves it to the centre for the title screen with
    translate + scale (transform-only, so the transition to the menu costs no layout per frame) ---- */
 
 .logo {

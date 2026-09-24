@@ -458,11 +458,11 @@ Consequences for `fmod_event_ids.txt` (ids 0–161, heuristic): it misses the ev
 ## 6. Remake implementation notes
 
 **Data.** Generate `story.json` with `story_table.py` (ids only) into `Assets/Resources/GoF2Data/` when implementing;
-load with JsonUtility (flatten the nested voice objects if needed). Text via `GoF2Localization.Get(id)`. Voice clip
+load with JsonUtility (flatten the nested voice objects if needed). Text via `Localization.Get(id)`. Voice clip
 path = `Audio/VOICE_<lang>/…` from the table (`eng`/`deu` fields), German when the UI language is German, English
 otherwise (like FMOD's two language banks).
 
-**Portraits (`GoF2Portrait`, plain C# + a VisualElement).** Descriptor → up to 4 layers + background + frame, in the
+**Portraits (`Portrait`, plain C# + a VisualElement).** Descriptor → up to 4 layers + background + frame, in the
 order bg, part2, part1, part0, part3, frame; each layer at (0, y) top- or bottom-anchored per `offsetsHD`, width 160,
 native height; mirrored with `scale: -1 1` for Keith in the dialogue window. Build the textures with an editor step
 (like "Build HUD Images") that crops the `_ipad_large` part PNGs and the two atlas rects into `Resources/GoF2Portraits`,
@@ -480,7 +480,7 @@ briefing opens. Auto-advance when the voice setting is on: clip end + pause (FMO
 ~500 ms, tweakable; uncertain). Alien-font speakers (19, 56): a separate font asset (the magenta glyph font 1310 is in
 `gof2_interface`).
 
-**Radio widget (flight HUD).** `GoF2Radio` (plain C#: message list, trigger evaluation per §2.2 against a context
+**Radio widget (flight HUD).** `Radio` (plain C#: message list, trigger evaluation per §2.2 against a context
 interface for enemies/route/time/script step) + `GoF2RadioView` in `UI/Flight`: an 840 px wide panel at y = 100,
 centred, header 60 with the name, portrait 160×200, text 670 px wide (30 px lines), translucent; appears 2 s after the
 trigger, stays `lines·2000 + 1500` ms (count lines after layout), voice at appearance. Do not pause the game; block

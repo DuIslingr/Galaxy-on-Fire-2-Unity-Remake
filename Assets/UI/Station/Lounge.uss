@@ -1,4 +1,4 @@
-/* Space Lounge (GoF2LoungePanel) and the Missions window (GoF2MissionsWindow) over the station screen.
+/* Space Lounge (LoungePanel) and the Missions window (MissionsWindow) over the station screen.
    The root gets lounge-open while the bar is shown (intro over), chat-open while talking to an agent and missions-open
    while the Missions window is up. Panel units at 1920x1080. */
 

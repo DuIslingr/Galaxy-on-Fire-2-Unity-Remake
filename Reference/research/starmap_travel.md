@@ -668,8 +668,8 @@ All rects are verified by cropping. Unless noted they come from `gof2_interface_
 ## 12. Unity build recipe
 
 1. **Data**:
-   - `GoF2Session`: `SystemVisible[34]` (init from `initiallyVisible`), `VisitedStations` (set on docking), `ProgrammedStation` (−1 = none), `DoInstantJump`, `EnergyCellsForNextJump`, `JumpgatesUsed`;
-   - plain C# `GoF2GalaxyMap`: sun positions §2.2, BFS path + cells §7.2, `IsInRoutes`, system-map layout §2.3 with `GoF2JavaRandom(system·1000)`;
+   - `Session`: `SystemVisible[34]` (init from `initiallyVisible`), `VisitedStations` (set on docking), `ProgrammedStation` (−1 = none), `DoInstantJump`, `EnergyCellsForNextJump`, `JumpgatesUsed`;
+   - plain C# `GalaxyMap`: sun positions §2.2, BFS path + cells §7.2, `IsInRoutes`, system-map layout §2.3 with `JavaRandom(system·1000)`;
    - unit-test it against `starmap_tables.py` (Mido layout, Augmenta cells).
 2. **Map scene / overlay**:
    - an own camera and root (additive scene or a disabled root in Space / Station), with the game paused (`Time.timeScale = 0`, the map on unscaled time);
@@ -682,12 +682,12 @@ All rects are verified by cropping. Unless noted they come from `gof2_interface_
    - auto-centre divisor 30;
    - selection: tap → select + centre; tap again → zoom.
 4. **System view**:
-   - container at the sun, scale 1/128, rotation (pitch −π/8, yaw π/8, roll −π/32) with the game order Rx·Ry·Rz (mirror via `GoF2OrbitLayout.RotationToUnity`);
+   - container at the sun, scale 1/128, rotation (pitch −π/8, yaw π/8, roll −π/32) with the game order Rx·Ry·Rz (mirror via `OrbitLayout.RotationToUnity`);
    - planets / orbits / rings per §2.3, planet self-spin 0.0002 rad/ms, one point light at the sun (ambient 0.2, diffuse 2), sun sprite scale 0.004;
    - drag: 16.25 / 65536 turn per px, pitch clamp ±45°, auto-rotate factor 0.25 to yaw `0x8000 − angle`, pitch −3096.
 5. **Zoom**: lerp the camera `pos → sun − (0, 0, 500)` (game) with `0.5 − 0.5·cos(π·t)` over 2184.5 ms, cross-fade the overlays with the same t, sounds 106 / 107.
 6. **Confirm dialog** and outcomes per §6:
-   - station: set `ProgrammedStation`, launch (existing launch sequence), and at its end the autopilot (the routing already exists in `GoF2Navigation`: planet jump / gate station planet / gate);
+   - station: set `ProgrammedStation`, launch (existing launch sequence), and at its end the autopilot (the routing already exists in `Navigation`: planet jump / gate station planet / gate);
    - gate: jump scene;
    - Khador: charge.
    - Replace the current "Reaching the gate: Not available." with §8.1.

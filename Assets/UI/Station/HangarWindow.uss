@@ -1,4 +1,4 @@
-/* The station's Hangar window (GoF2HangarWindow): tabs Ship / Shop, the item list on the left, the selected row's
+/* The station's Hangar window (HangarWindow): tabs Ship / Shop, the item list on the left, the selected row's
    details, trade arrows and action on the right, cargo load and credits in the footer. Shown while the station root
    has hangar-open; it then replaces the side panel and the launch button. */
 

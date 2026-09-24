@@ -595,7 +595,7 @@ public abstract class StoryEffect { }                 // RevealSystem(n), GiveIt
                                                       // LoanShip(ship, race, items[]), RestoreOwnShip, UnlockBlueprint(bp, ingredients),
                                                       // SetVoidInvasion(system, station), AddCredits(n), StationStock(...)
 
-public sealed class StoryState {       // lives in GoF2Session / the save game
+public sealed class StoryState {       // lives in Session / the save game
     public int Index;                                 // Status+0x1e8
     public StoryMission Current;                      // slot 0 (type, target, statusValue, goods, won, visible)
     public long StepStartMs;                          // Status+0x100
@@ -626,7 +626,7 @@ public static class StoryRules {       // Status::missionCompleted / nextCampaig
   `LevelScript` research; until then a step can be marked "auto-succeed after N seconds" for testing the flow.
 - Wire the restrictions through one query (`BlocksDockingAndJumps`) used by the Dock prompt, planet-jump lock, Khador
   Drive and the star map; the requirement boxes of §7 are a small per-index table.
-- Replace the remake's free-play assumptions (`GoF2Session.CampaignMission = 20`, Var Hastra drill/energy cells) once the
+- Replace the remake's free-play assumptions (`Session.CampaignMission = 20`, Var Hastra drill/energy cells) once the
   story runs: start at index 0 with the prologue, or at index 1 in Betty if the prologue level is not built yet.
 - Save games: persist `Index`, the current mission (type/target/statusValue/goods/visible), invasion station, parked ship,
   target list, counter; on load apply the §1.5 checkpoint repairs.

@@ -484,78 +484,78 @@ market system, visible with options[0x35]) sells the unlock ships. Boards 1-3 ar
 
 ## Remake implementation notes
 
-Current state in the project (read-only survey): `GoF2Session.Wingmen / WingmanRace / WingmanContractMs` and
-`GoF2Wingmen.Hire/Dismiss` exist (hire from `GoF2LoungeChat`), saved by `GoF2SaveGame`. Missing: the portrait parts
-(`Status+0x28`), the hired counter (`Status+0xd4`), anything in flight. Note that `GoF2Wingmen.Hired` requires
+Current state in the project (read-only survey): `Session.Wingmen / WingmanRace / WingmanContractMs` and
+`Wingmen.Hire/Dismiss` exist (hire from `LoungeChat`), saved by `SaveGame`. Missing: the portrait parts
+(`Status+0x28`), the hired counter (`Status+0xd4`), anything in flight. Note that `Wingmen.Hired` requires
 `WingmanContractMs > 0`; the original spawns wingmen as long as the list is non-empty and dismisses them only at the
 next docking (§1.8), so the spawn check should use `Wingmen.Count > 0`.
 
 **Plain C#**
 
-- `GoF2Wingmen` (extend): `HiredTotal` (+0xd4, medal 27), `PortraitParts[5]`, `TickContract(dtMs)` (called by the
+- `Wingmen` (extend): `HiredTotal` (+0xd4, medal 27), `PortraitParts[5]`, `TickContract(dtMs)` (called by the
   flight level with the fast-forward-scaled dt while not paused), `OnDocked()` → returns the goodbye dialogue data
   (313, names[0], portrait, race) when `Count > 0 && ContractMs < 1` and dismisses, `OnWingmanDied(name)`
-  (`wingmanDied`: remove the name, dismiss when it was the last), `ShipFor(name, race)` = `GoF2JavaRandom(5 *
-  name.Length)` + the `getRandomEnemyFighter` loop (port `wingmen_wanted.py wingman`; `GoF2NpcTables.RandomFighter`
-  uses UnityEngine.Random, so add an overload taking a `GoF2JavaRandom`), `SpawnOffset(slot)`, `FormationOffset(slot)`,
+  (`wingmanDied`: remove the name, dismiss when it was the last), `ShipFor(name, race)` = `JavaRandom(5 *
+  name.Length)` + the `getRandomEnemyFighter` loop (port `wingmen_wanted.py wingman`; `NpcTables.RandomFighter`
+  uses UnityEngine.Random, so add an overload taking a `JavaRandom`), `SpawnOffset(slot)`, `FormationOffset(slot)`,
   `enum GoF2WingmanCommand { ToggleWeapon = 0, FireAtWill = 1, SecureWaypoint = 2, AttackTarget = 3 }`,
   `WeaponLabelEmp` (Status+0xf8, reset on docking).
-- `GoF2WantedBoard` (new, state in `GoF2Session`: per entry active / terminated / current / travelsTo / lastSeen,
+- `GoF2WantedBoard` (new, state in `Session`: per entry active / terminated / current / travelsTo / lastSeen,
   `CollectedBounties[4]`, hint flags): `Accessible(station, campaign)`, `ActivateNew(station)` → count (docking),
   `Move(enteringStation, programmedStation)` (every orbit change except relaunching from the docked station),
   `InOrbit(station)` → entry or null, `OnKilled(index)` → reward, `OnSurrender(index)`, `ListFor(systemRace, campaign)`,
-  `UnlockedDealerShips()` for station 107. Route picking uses `GoF2GalaxyMap`'s gate path (BFS over visible
+  `UnlockedDealerShips()` for station 107. Route picking uses `GalaxyMap`'s gate path (BFS over visible
   systems; check it counts nodes incl. the start) and UnityEngine.Random (the original RNG is time-seeded). Save it in
-  `GoF2SaveData` (bump the version); the static fields come from `wanted.json` (add a `WantedData` class to
-  `GoF2Database`).
+  `SaveData` (bump the version); the static fields come from `wanted.json` (add a `WantedData` class to
+  `Database`).
 - Free play note: the remake's free play runs at campaign 20, so the board would never open. Either keep it for the
   Supernova campaign or add a remake-only switch (e.g. treat free play as campaign ≥ 162, or unlock boards after
   the main game) – a design decision, flag it in CLAUDE.md like the other remake-only rules.
 
-**Spawning: `GoF2TrafficPlan` / `GoF2Traffic` / `GoF2NpcShip`**
+**Spawning: `TrafficPlan` / `Traffic` / `NpcShip`**
 
-- Extend `GoF2SpawnSpec` with `wingmanSlot = -1` (≥ 0 = wingman), `wantedIndex = -1`, `speedOverride` (4.5 for the
+- Extend `SpawnSpec` with `wingmanSlot = -1` (≥ 0 = wingman), `wantedIndex = -1`, `speedOverride` (4.5 for the
   wanted), `name` (string; the existing `nameText` is a text id), `extraGuns` / a gun-profile enum (wanted weapon ×4,
   wingman EMP secondary), and `unarmed`.
-- Wanted: in `GoF2TrafficPlan.Build` after computing `local`: `if (wanted != null) { local = min(local, 2); }`, then emit
+- Wanted: in `TrafficPlan.Build` after computing `local`: `if (wanted != null) { local = min(local, 2); }`, then emit
   the wanted spec first (`group = Local`, race `race < 4 ? race : 8`, ship, position `wpLocal + Jitter()`,
   `hitpoints = h`, loot, `wantedIndex`), its `numWingmen` escorts (`hitpoints = h/2`, `RandomFighter(race)`), then the
   `local` police as now. Only for free-flight orbits (the plan is only used there already).
 - Wingmen: not part of the plan (they are appended after campaign/freelance spawns too). Add
-  `GoF2Traffic.SpawnWingmen(GoF2Target player)` called by `GoF2SpaceLevel` after `Setup` (and by `GoF2CampaignLevel`
-  / the freelance orbit builder) when `GoF2Wingmen.Count > 0`, not in a supernova system, campaign ≠ 158; specs with
+  `Traffic.SpawnWingmen(Target player)` called by `SpaceLevel` after `Setup` (and by `CampaignLevel`
+  / the freelance orbit builder) when `Wingmen.Count > 0`, not in a supernova system, campaign ≠ 158; specs with
   `alwaysFriend = true`, `hitpoints = max(600, …)` semantics of `setHitpoints` (HP 600, max = max(600, formula)),
-  `unarmed` when the freelance mission type is Challenge; place with `GoF2NpcShip.Place(ToUnity(pos), forward)`.
+  `unarmed` when the freelance mission type is Challenge; place with `NpcShip.Place(ToUnity(pos), forward)`.
   `ConnectPlayers`: a wingman's enemy list is the player + every other ship (also its own race).
-- `GoF2NpcShip` additions (keep them in a plain `GoF2FighterBrain`-style helper if the MonoBehaviour grows):
+- `NpcShip` additions (keep them in a plain `GoF2FighterBrain`-style helper if the MonoBehaviour grows):
   - `UpdateRelations`: wingman → hostile false, friend true regardless of standing (today `alwaysFriend` does this).
   - `UpdateTargeting`: the wingman branches of §1.5 (hostile-to-player scan with no distance limit, command 3 target
-    with fallback to 1, command 1 idle → formation); `route` replaced every frame by a one-point looping `GoF2Route`
-    at the formation point (command 1); command 2 = `GoF2Route` clone of the player route (`GoF2Navigation` /
-    `GoF2Story` waypoint route) limited to the current waypoint.
+    with fallback to 1, command 1 idle → formation); `route` replaced every frame by a one-point looping `Route`
+    at the formation point (command 1); command 2 = `Route` clone of the player route (`Navigation` /
+    `Story` waypoint route) limited to the current waypoint.
   - `SetWingmanCommand(cmd, target)` with the side effects of 0xf096c (boost off for 1, re-target timers for 2/3,
     ignore 2 without a route and 3 without a lock, 0 toggles the fired slot and keeps the command).
-  - Second gun (EMP): `GoF2Gun` with EMP damage 8 per hit; needs NPC EMP handling (`GoF2Hitpoints.empDisabled` exists
+  - Second gun (EMP): `Gun` with EMP damage 8 per hit; needs NPC EMP handling (`Hitpoints.empDisabled` exists
     for the player's EMP weapons; NPC-fired EMP against NPCs is still on the to-do list).
   - Drift during the launch/arrival camera (the level already knows `LaunchedFromStation` / `ArrivedByTravel`).
-  - Death: `traffic.OnShipDied` → if wingman `GoF2Wingmen.OnWingmanDied(name)`; kills by wingmen are NPC kills
+  - Death: `traffic.OnShipDied` → if wingman `Wingmen.OnWingmanDied(name)`; kills by wingmen are NPC kills
     (`byPlayer = false`, which the damage source already distinguishes).
-  - Wanted: speed 4.5 and no boost; uncover when `GoF2CombatRadar.Locked == Target` (set `alwaysEnemy`, escorts
-    `alwaysEnemy + turnedEnemy`, radio); `attackWanted` on the first player hit (in `GoF2Target.Damage` before the
+  - Wanted: speed 4.5 and no boost; uncover when `CombatRadar.Locked == Target` (set `alwaysEnemy`, escorts
+    `alwaysEnemy + turnedEnemy`, radio); `attackWanted` on the first player hit (in `Target.Damage` before the
     friendly-fire bookkeeping, and no standing penalty); surrender at `hull < max/3` for index 0/1 (story hook:
-    mark the campaign mission won through `GoF2Story`); on death pay via `GoF2WantedBoard.OnKilled` whoever killed it,
+    mark the campaign mission won through `Story`); on death pay via `GoF2WantedBoard.OnKilled` whoever killed it,
     show "Bounty collected" + credits (3206, sound 36) and queue the kill line; exclude it from the 45 s police
-    relaunch in `GoF2Traffic.UpdateOrbit`.
-- Radio: the free-flight radio is a HUD message today (`GoF2Traffic.Radio`). The wanted lines need speakers (Keith,
-  the wanted's portrait from `portraitParts`) and chaining; reuse `GoF2Radio` (trigger 5 time / 6 chain) with a small
-  world adapter, or queue `GoF2RadioLine`s directly.
-- Music: in `GoF2Traffic.UpdateMusic`, an uncovered (always-enemy) living wanted → 151 (`SN_WantedBoardCriminals`,
+    relaunch in `Traffic.UpdateOrbit`.
+- Radio: the free-flight radio is a HUD message today (`Traffic.Radio`). The wanted lines need speakers (Keith,
+  the wanted's portrait from `portraitParts`) and chaining; reuse `Radio` (trigger 5 time / 6 chain) with a small
+  world adapter, or queue `RadioLine`s directly.
+- Music: in `Traffic.UpdateMusic`, an uncovered (always-enemy) living wanted → 151 (`SN_WantedBoardCriminals`,
   check the .ogg exists in the audio banks) before the 140/141/142 choice.
 - HUD / UI: a Wingmen entry in the flight menu (the remake's autopilot menu is the only in-flight menu so far: add an
   action menu or put "Wingmen" there as a remake placement), the 4 command buttons with the 310/311 label, a keyboard
   / controller binding for the direct "Wingmen" key (remake choice, e.g. G / D-pad), pause while open
-  (`GoF2Navigation.Paused`, `Time.timeScale` 0 like the autopilot menu); lock plate "<name> NN%" for a locked wanted
-  in `GoF2CombatView`. Station: a Most Wanted tab in `GoF2MissionsWindow` (list, portrait via `GoF2Portrait`, the
-  3223/3224 text, Show on map → `GoF2StarMap.Open` with a target marker at `travelsTo`), messages 3230/3231 and hint
-  601/613/3232 on docking, the goodbye dialogue 313 through `GoF2DialogueView`.
-- Shop: `GoF2Shop` dealer list for station 107 adds ships 45-48 (race 8, `adjustPrice`) per terminated entry 6/12/18/24.
+  (`Navigation.Paused`, `Time.timeScale` 0 like the autopilot menu); lock plate "<name> NN%" for a locked wanted
+  in `CombatView`. Station: a Most Wanted tab in `MissionsWindow` (list, portrait via `Portrait`, the
+  3223/3224 text, Show on map → `StarMap.Open` with a target marker at `travelsTo`), messages 3230/3231 and hint
+  601/613/3232 on docking, the goodbye dialogue 313 through `DialogueView`.
+- Shop: `Shop` dealer list for station 107 adds ships 45-48 (race 8, `adjustPrice`) per terminated entry 6/12/18/24.
