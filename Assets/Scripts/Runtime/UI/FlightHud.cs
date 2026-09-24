@@ -59,6 +59,8 @@ namespace GoF2Remake.UI
         Traffic traffic;
         StorySpace story;
         DialogueView storyDialogue;
+        Button introSkip;
+        InputKind introSkipKind;
         GoF2Remake.World.FreelanceOrbit freelance;
         AudioSource voiceSource;
         VisualElement radioBox, radioPortrait, screenFade;
@@ -166,6 +168,12 @@ namespace GoF2Remake.UI
                 voiceSource.ignoreListenerPause = true;
             }
             storyDialogue = new DialogueView(root, voiceSource);
+            // Remake-only: skip the prologue / rescue (the original's unreachable skip branches, IntroCutscenes.Skip).
+            introSkip = new Button { focusable = false };
+            introSkip.AddToClassList("intro-skip");
+            introSkip.clicked += SkipIntro;
+            root.Add(introSkip);
+            introSkipKind = (InputKind)(-1);
             radioBox = root.Q("radio");
             screenFade = root.Q("screenFade");
             radioPortrait = root.Q("radioPortrait");
@@ -427,6 +435,7 @@ namespace GoF2Remake.UI
                 BackToMenu();
                 return;
             }
+            if (UpdateIntroSkip()) return;
             if (nav != null && ((Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
                                 || (Gamepad.current != null && Gamepad.current.selectButton.wasPressedThisFrame)))
                 OnAutopilotButton();
@@ -591,6 +600,43 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>Layout::drawFade: the campaign level's full-screen fade.</summary>
+        /// <summary>The Skip button during the prologue / rescue (tap, Backspace, controller B); hidden while a dialogue is
+        /// open. True when the skip was used this frame.</summary>
+        bool UpdateIntroSkip()
+        {
+            var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
+            bool shown = intro != null && intro.CanSkip && !storyDialogue.IsOpen && (health == null || !health.Dead);
+            introSkip.EnableInClassList("intro-skip--shown", shown);
+            if (!shown) return false;
+            var kind = InputMode.Current;
+            if (kind != introSkipKind)
+            {
+                introSkipKind = kind;
+                introSkip.Clear();
+                if (kind == InputKind.KeyboardMouse) introSkip.Add(InputGlyph.Key("BACKSPACE", true));
+                else if (kind == InputKind.Gamepad) introSkip.Add(InputGlyph.Pad(PadButton.B));
+                var l = new Label(Localization.Get(395).ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                l.AddToClassList("intro-skip-label");
+                l.AddToClassList("gof-semibold");
+                introSkip.Add(l);
+            }
+            if ((Keyboard.current != null && Keyboard.current.backspaceKey.wasPressedThisFrame)
+                || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame))
+            {
+                SkipIntro();
+                return true;
+            }
+            return false;
+        }
+
+        void SkipIntro()
+        {
+            var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
+            if (intro == null || !intro.CanSkip || storyDialogue.IsOpen) return;
+            storyDialogue.ButtonSound?.Invoke(false);
+            intro.Skip();
+        }
+
         void UpdateFade()
         {
             var c = level != null ? level.Campaign : null;

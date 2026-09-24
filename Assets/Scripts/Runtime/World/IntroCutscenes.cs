@@ -10,7 +10,10 @@
 // The state number is the level-script event (radio trigger 27). Plain C#, run by CampaignLevel.
 // The broken ship's smoke and fire (PlayerEgo::setLevel 0xa6f90, records 15 / 42) start at step 11 and never stop
 // (Reference/research/prologue_particles.md A); created but never enabled in the rescue, so not built there.
-// Not reproduced: the player engine sound; the original's unreachable skip branches.
+// Skip (remake-only button, the flight HUD's Skip): MGame::OnTouchEnd 0x1a98d8 has skip branches for both indices that no
+// button reaches in this build (levelscript_cutscenes.md 3): index 0 = nextCampaignMission + setKills(3) + the flight
+// level again (the rescue), index 1 = straight to the station (module 5).
+// Not reproduced: the player engine sound.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -53,6 +56,24 @@ namespace GoF2Remake.World
         }
 
         public CutsceneCamera Camera => cam;
+
+        /// <summary>The skip still does something (not already loading the next scene).</summary>
+        public bool CanSkip => !loading;
+
+        /// <summary>MGame::OnTouchEnd's skip branches (see the header).</summary>
+        public void Skip()
+        {
+            if (loading) return;
+            loading = true;
+            if (index == 0)
+            {
+                Session.Kills = 3;   // setKills(3): the three pirates of the prologue
+                Story.Advance(level.Database);
+                Session.LaunchedFromStation = Session.ArrivedByTravel = false;
+                SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            }
+            else level.Dock();
+        }
 
         // ---- set-up (Level::createCampaignMission cases 0 / 1 + the LevelScript constructor) ------------------------
 

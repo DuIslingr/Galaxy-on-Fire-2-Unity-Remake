@@ -46,6 +46,8 @@ namespace GoF2Remake.World
         public bool FadeDone => fadeMs >= fadeLength;
 
         IntroCutscenes intro;
+        /// <summary>The prologue / rescue cutscene of this level (indices 0 / 1), null otherwise.</summary>
+        public IntroCutscenes Intro => intro != null && Story.Index == BuiltIndex ? intro : null;
         AudioSource music;
         readonly AudioSource[] loops = new AudioSource[3];
         float fadeMs, fadeLength = 1f;
