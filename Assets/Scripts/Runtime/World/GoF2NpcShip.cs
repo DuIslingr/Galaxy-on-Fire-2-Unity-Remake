@@ -177,7 +177,7 @@ namespace GoF2Remake.World
             engine = gameObject.AddComponent<AudioSource>();
             Setup3D(engine);
             engine.loop = true;
-            engine.clip = assets != null ? (spec.freighter ? assets.engineFreighter : assets.engineFighter) : null;
+            engine.clip = assets != null ? GoF2CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines) : null;
             engine.volume = 0.6f * GoF2Settings.SfxVolume;
             if (engine.clip != null) engine.Play();
 

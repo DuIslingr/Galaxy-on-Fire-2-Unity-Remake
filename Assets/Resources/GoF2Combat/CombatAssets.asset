@@ -67,8 +67,15 @@ MonoBehaviour:
   tractorLoop: {fileID: 8300000, guid: 4c06bea89665def46bde4c530e72b902, type: 3}
   tractorClose: {fileID: 8300000, guid: 78668b3164210fe4aa2b7b6356ff0746, type: 3}
   gameOver: {fileID: 8300000, guid: 33091f678d2e11840b0442925004df6c, type: 3}
-  engineFighter: {fileID: 8300000, guid: f41b6ef0b20bb5f48abbe4653162512b, type: 3}
-  engineFreighter: {fileID: 8300000, guid: fbaf711da8730e34590d8999d0fffd85, type: 3}
+  enemyEngines:
+  - {fileID: 8300000, guid: 44892212b259b1e45b663e9ddeb0c6c4, type: 3}
+  - {fileID: 8300000, guid: c6eb0c47e4b743549a5f30a786b36800, type: 3}
+  - {fileID: 8300000, guid: 45995cfba56c7974ea36af953daa2b31, type: 3}
+  - {fileID: 8300000, guid: 56f445b893ac0094b904c4c6e6d2997d, type: 3}
+  - {fileID: 8300000, guid: f6b47256332637048ba8cee5f8dcb5dc, type: 3}
+  freighterEngines:
+  - {fileID: 8300000, guid: 212666a8a37ed5d4a9c9873ae7834327, type: 3}
+  - {fileID: 8300000, guid: fbaf711da8730e34590d8999d0fffd85, type: 3}
   spaceMusic:
   - {fileID: 8300000, guid: c53ce8fa1be5924458e2a9074747ada3, type: 3}
   - {fileID: 8300000, guid: 75809b04641f2cc4ab5941877a23032b, type: 3}

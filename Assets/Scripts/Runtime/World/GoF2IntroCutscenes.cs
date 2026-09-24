@@ -79,6 +79,7 @@ namespace GoF2Remake.World
                                            spec => { spec.inactive = true; spec.alwaysEnemy = true; spec.noLoot = true; spec.hitpoints = 150; });
                 p.SetVisible(false);
                 p.SetExhaust(false);
+                p.SetEngineSound(false);   // silent while they hide in the belt
             }
             // Player at (0, 0, -60 000) facing +Z, computer-controlled; camera (-1000, -500, -40 000) looking at it.
             Player.SetPositionAndRotation(ToUnity(new Vector3(0, 0, -60000)), Quaternion.LookRotation(Dir(new Vector3(0, 0, 1)), Vector3.up));
@@ -173,7 +174,7 @@ namespace GoF2Remake.World
                     }
                     else if (Step == 2 && Over(7))
                     {
-                        foreach (var p in pirates) { p.SetExhaust(true); p.SetVisible(true); p.Wake(); }
+                        foreach (var p in pirates) { p.SetExhaust(true); p.SetEngineSound(true); p.SetVisible(true); p.Wake(); }
                         cam.SetDolly(Vector3.zero);
                         Step = 3;
                     }

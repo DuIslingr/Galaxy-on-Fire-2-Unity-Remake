@@ -8,7 +8,8 @@
 //   smoke       materials 20101 sprite_smoke (alpha) / 27250 sprite_fire (additive) of the burning-ship sprites (GoF2ShipSmoke)
 //   sounds      25 / 23 / 24 incoming fire shield / armor / hull, 20 ship destroyed, 18 / 19 explosion big / mid,
 //               0 tractor beam loop, 4 tractor door, 37 game over, NPC shots per race (52, 55, 54, 53, 61), engine loops
-//               46 / 47 (no .ogg by those names: Spaceship_Engine_07 / Engine_Freighter_02 stand in)
+//               46 Spaceship_Engine_Enemy / 47 Spaceship_Engine_Freighter: their FEV sound definitions Engine_Enemy_01 (one
+//               of Engine_09, Engine_newnew_05 / 02 / 06_mixdown / 03, equal weights) and Engine_Freighter (Engine_Freighter_03 / 02)
 //   music       134 / 139 / 138 / 137 space no-combat per race, 140 / 141 / 142 Space_Battle_Low / Medium / Full
 
 using UnityEngine;
@@ -29,7 +30,11 @@ namespace GoF2Remake.Flight
         public Material smokeMaterial, fireMaterial;
 
         public AudioClip[] hitShield, hitArmor, hitHull, shipDestroyed, explosionBig, explosionMid, shots;
-        public AudioClip targetLock, tractorLoop, tractorClose, gameOver, engineFighter, engineFreighter;
+        public AudioClip targetLock, tractorLoop, tractorClose, gameOver;
+        [Tooltip("Sound 46: one picked per ship.")]
+        public AudioClip[] enemyEngines;
+        [Tooltip("Sound 47: one picked per ship.")]
+        public AudioClip[] freighterEngines;
         [Tooltip("No-combat music by race: Terran, Vossk, Nivelian, Midorian.")]
         public AudioClip[] spaceMusic;
         [Tooltip("Space_Battle_Low, Medium, Full.")]

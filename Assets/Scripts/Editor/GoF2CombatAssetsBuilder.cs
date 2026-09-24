@@ -46,8 +46,9 @@ namespace GoF2Remake.EditorTools
             a.tractorLoop = Clip("SFX_SPACE/Tractor_Beam_v1.ogg");
             a.tractorClose = Clip("SFX_SPACE/Tractor_Beam_Close_Door_01c.ogg");
             a.gameOver = Clip("SFX_SPACE/game_over_v02.ogg");
-            a.engineFighter = Clip("SFX_SPACE/Spaceship_Engine_07.ogg");
-            a.engineFreighter = Clip("SFX_SPACE/Engine_Freighter_02.ogg");
+            a.enemyEngines = new[] { "Engine_09", "Engine_newnew_05", "Engine_newnew_02", "Engine_newnew_06_mixdown", "Engine_newnew_03" }
+                .Select(n => Clip($"SFX_SPACE/{n}.ogg")).ToArray();
+            a.freighterEngines = new[] { Clip("SFX_SPACE/Engine_Freighter_03.ogg"), Clip("SFX_SPACE/Engine_Freighter_02.ogg") };
             a.spaceMusic = new[] { Clip("MUSIC/Space_Terraner.ogg"), Clip("MUSIC/Space_Vossk.ogg"), Clip("MUSIC/Space_Nivelianer.ogg"), Clip("MUSIC/Space_Midorianer.ogg") };
             a.battleMusic = new[] { Clip("MUSIC/Space_Battle_Low.ogg"), Clip("MUSIC/Space_Battle_Medium.ogg"), Clip("MUSIC/Space_Battle_Full.ogg") };
 
