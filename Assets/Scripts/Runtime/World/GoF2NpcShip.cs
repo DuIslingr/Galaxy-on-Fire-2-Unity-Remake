@@ -17,6 +17,8 @@
 //               (away - fwd) * speed * 0.03 plus an extra step (fighters fly through asteroids and each other)
 //   death       sound 20, 1.5..3 s tumbling along the death direction, then Explosion type 0, the hull 300 ms more,
 //               a crate with the cargo; gone once the explosion ended and the crate is gone (60 s)
+// Damage smoke (PlayerFighter::update 0xf1b0e): below 33 % of the hull a fighter trails the prologue's smoke and fire
+//   (GoF2ShipSmoke), off again when repaired to 33 %; they keep running through the death tumble and stop at the explosion.
 // Freighters (PlayerFixedObject): unarmed, fly game +Z at 1 u/ms, never turn, x5 hull; death: their wreck animation
 // (cargo_*_explosion_anim, ~10 s, still moving), then a x6 explosion; the crate appears at once; the wreck then stays
 // where it is (state 4) with its wreck volumes. Their boxes (GoF2Obstacle, Level::createShip) are what bullets hit, the
@@ -108,6 +110,8 @@ namespace GoF2Remake.World
         GameObject wreck;
         GoF2Crate crate;
         GoF2Obstacle obstacle;
+        GoF2ShipSmoke smoke;
+        bool smoking;   // PlayerFighter +0x1f4
 
         static Vector3 ToUnity(Vector3 game) => new Vector3(game.x, game.y, -game.z) * M;
         static Vector3 ToGame(Vector3 unity) => new Vector3(unity.x, unity.y, -unity.z) / M;
@@ -152,6 +156,7 @@ namespace GoF2Remake.World
             Target.Damaged += OnDamaged;
             Target.Died += OnDied;
             lastHull = Hp.hull;
+            if (!spec.freighter) smoke = new GoF2ShipSmoke(transform);
 
             if (!spec.freighter && spec.ship != 51)
             {
@@ -215,6 +220,8 @@ namespace GoF2Remake.World
             lastHull = Hp.hull;
             damageSinceBoost = 0;
             damageByPlayer = 0;
+            smoking = false;
+            smoke?.Clear();
             Current = State.Fly;
             speed = GoF2NpcTables.BaseSpeed;
             boosting = panic = false;
@@ -233,6 +240,8 @@ namespace GoF2Remake.World
         {
             Current = State.Dead;
             rig?.HideAll();
+            smoking = false;
+            smoke?.Clear();
             if (wreck != null) Destroy(wreck);
             gameObject.SetActive(false);
         }
@@ -249,9 +258,10 @@ namespace GoF2Remake.World
                 rig.UpdateVisuals(dtMs, Camera.main, transform.forward);
             }
             if (Current == State.Dead) { UpdateDead(dtMs); return; }
-            if (Current == State.Dying) { UpdateDying(dtMs); return; }
+            if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }
             UpdateRelations();
             Hp.Update(dtMs);
+            UpdateSmoke();
             if (Asleep) { UpdateSleep(); return; }
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
             if (IsFreighter)
@@ -268,6 +278,17 @@ namespace GoF2Remake.World
             Steer(dtMs);
             Avoid(true, dtMs);
             Avoid(false, dtMs);
+        }
+
+        /// <summary>PlayerFighter::update 0xf1b0e..0xf1bc0: smoke and fire switch on when the hull drops below a third of its
+        /// maximum and off when it is back at a third; only the crossings act.</summary>
+        void UpdateSmoke()
+        {
+            if (smoke == null) return;
+            bool low = Hp.hull < 0.33f * Hp.maxHull;
+            if (low == smoking) return;
+            smoking = low;
+            smoke.SetEmitting(low);
         }
 
         /// <summary>§4.2: hostile / friend flags for the markers and the AI.</summary>
@@ -586,6 +607,7 @@ namespace GoF2Remake.World
             if (dyingMs > 0f) return;
             explosion = GoF2Explosion.Spawn(transform.position, IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : 1f);
             Current = State.Dead;
+            smoke?.SetEmitting(false);   // the end of the tumble: Explosion::start, smoke and fire off
             deadMs = 0f;
             if (obstacle != null) obstacle.volumes = GoF2CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
             if (!IsFreighter) DropCrate();

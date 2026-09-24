@@ -30,6 +30,9 @@ namespace GoF2Remake.EditorTools
             a.debris = Prefab("Prefabs/main/fx/explosion_debris_anim_add.prefab");
             a.tractorBeams = new[] { Find("projectile_068_anim_add"), Find("projectile_069_anim_add"), Find("projectile_070_anim_add"), Find("v_projectile_194_anim_add") };
 
+            a.smokeMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20101_sprite_smoke.mat");
+            a.fireMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27250_sprite_fire.mat");
+            if (a.smokeMaterial == null || a.fireMaterial == null) Debug.LogWarning("GoF2: missing sprite_smoke / sprite_fire materials");
             a.hitShield = Clips("SFX_SPACE", "Incoming_Fire_Shield");
             a.hitArmor = Clips("SFX_SPACE", "Incoming_Fire_Armor");
             a.hitHull = Clips("SFX_SPACE", "Incoming_Fire_Hull");

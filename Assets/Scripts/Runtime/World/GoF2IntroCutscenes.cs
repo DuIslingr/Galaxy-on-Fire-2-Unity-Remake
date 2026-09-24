@@ -8,7 +8,9 @@
 //   index 1, the rescue: the drifting Phantom, Gunant Breh's salvager (Midorian ship 30) closes in, his three radio lines,
 //     fade to black, docked at Var Hastra (the first station conversation follows)
 // The state number is the level-script event (radio trigger 27). Plain C#, run by GoF2CampaignLevel.
-// Not reproduced: the broken ship's smoke particles and the player engine sound; the original's unreachable skip branches.
+// The broken ship's smoke and fire (PlayerEgo::setLevel 0xa6f90, records 15 / 42) start at step 11 and never stop
+// (Reference/research/prologue_particles.md A); created but never enabled in the rescue, so not built there.
+// Not reproduced: the player engine sound; the original's unreachable skip branches.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -31,6 +33,7 @@ namespace GoF2Remake.World
         float fxMs, fxLength;
         bool soundsPlayed, loading;
         GameObject fx;
+        GoF2ShipSmoke smoke;
         readonly Vector3[] bobBase = new Vector3[3];
 
         GoF2ShipController Ship => level.Player;
@@ -80,6 +83,7 @@ namespace GoF2Remake.World
             // Player at (0, 0, -60 000) facing +Z, computer-controlled; camera (-1000, -500, -40 000) looking at it.
             Player.SetPositionAndRotation(ToUnity(new Vector3(0, 0, -60000)), Quaternion.LookRotation(Dir(new Vector3(0, 0, 1)), Vector3.up));
             cam.LookAt(new Vector3(-1000, -500, -40000), Player);
+            smoke = new GoF2ShipSmoke(Ship.visualModel != null ? Ship.visualModel : Player);
             campaign.PlayMusic(assets?.introAtmo, true);   // MenuTouchWindow::startGOF2: 143 IntroAtmo
             Step = 0;
         }
@@ -278,6 +282,7 @@ namespace GoF2Remake.World
                         SetPlayerVisible(true);
                         SetPlayerExhaust(false);
                         campaign.PlayLoop(2, assets?.engineBrokenLoop);
+                        smoke?.SetEmitting(true);   // PlayerEgo::startSmokeEmission 0xadc20
                         playerSpeed = 2f;
                         cam.Rumble = 0f;
                         Step = 12;

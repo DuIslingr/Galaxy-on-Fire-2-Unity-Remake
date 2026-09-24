@@ -5,6 +5,7 @@
 //   wrecks      cargo_003_terran / 004_vossk / 002_nivelian / 001_midorian _explosion_anim, battleship_terran_explosion_anim
 //   explosion   Explosion type 0: explosion_anim_lookat_alpha (+ _add child), 3..9 explosion_debris streaks
 //   tractor     beam meshes of items 68, 69, 70, 194 (projectile_068..070, v_projectile_194)
+//   smoke       materials 20101 sprite_smoke (alpha) / 27250 sprite_fire (additive) of the burning-ship sprites (GoF2ShipSmoke)
 //   sounds      25 / 23 / 24 incoming fire shield / armor / hull, 20 ship destroyed, 18 / 19 explosion big / mid,
 //               0 tractor beam loop, 4 tractor door, 37 game over, NPC shots per race (52, 55, 54, 53, 61), engine loops
 //               46 / 47 (no .ogg by those names: Spaceship_Engine_07 / Engine_Freighter_02 stand in)
@@ -25,6 +26,7 @@ namespace GoF2Remake.Flight
         public GameObject explosion, debris;
         [Tooltip("Items 68, 69, 70, 194.")]
         public GameObject[] tractorBeams;
+        public Material smokeMaterial, fireMaterial;
 
         public AudioClip[] hitShield, hitArmor, hitHull, shipDestroyed, explosionBig, explosionMid, shots;
         public AudioClip targetLock, tractorLoop, tractorClose, gameOver, engineFighter, engineFreighter;

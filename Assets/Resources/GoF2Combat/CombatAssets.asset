@@ -31,6 +31,8 @@ MonoBehaviour:
   - {fileID: 6736533759399342195, guid: 56aaa6354fe87b94b8d70b3e125fbd94, type: 3}
   - {fileID: 9179073379202705753, guid: 39eb7dd1281d4ce45956f041a6a78d78, type: 3}
   - {fileID: 3639165770361154041, guid: 01a0f216a91ab484aa22421ddbfe6596, type: 3}
+  smokeMaterial: {fileID: 2100000, guid: 8a65392e41da3774cb30a68b139f249e, type: 2}
+  fireMaterial: {fileID: 2100000, guid: 3a415f5608dda9e43ab90ac04a20faac, type: 2}
   hitShield:
   - {fileID: 8300000, guid: 2180dc2e028978546a7ff4b4ad55be57, type: 3}
   - {fileID: 8300000, guid: 5f72e4c9b8af0944fbf0d4214f9816be, type: 3}
