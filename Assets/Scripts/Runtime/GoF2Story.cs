@@ -260,7 +260,8 @@ namespace GoF2Remake.Data
                 case 25: GoF2Session.Unsaleable.Add(131); break;                            // Alien Remains
                 case 26: GoF2Session.VoidInvasionSystem = GoF2Session.VoidInvasionStation = -1; break;
                 case 28: GoF2Session.VoidInvasionSystem = 18; GoF2Session.VoidInvasionStation = 91; break;
-                case 34: GoF2Shop.RemoveFromCargo(164, 50); break;                          // the Void Crystals (+ Khador blueprint: no blueprints yet)
+                case 34: GoF2Shop.RemoveFromCargo(164, 50); GoF2Blueprints.UnlockFromStory(db, n); break;   // the Void Crystals -> the Khador blueprint
+                case 58: case 72: case 104: case 141: GoF2Blueprints.UnlockFromStory(db, n); break;     // Liberator, Disruptor, Gamma II, Chromo Plasma
                 case 42: GoF2Session.VoidInvasionSystem = GoF2Session.VoidInvasionStation = -10; break;
                 case 45:
                     GoF2Session.Credits += 40000;

@@ -37,6 +37,7 @@
                 <ui:VisualElement class="hangar-top">
                     <ui:Button name="tabShip" class="hangar-tab gof-semibold" />
                     <ui:Button name="tabShop" class="hangar-tab gof-semibold" />
+                    <ui:Button name="tabBlueprints" class="hangar-tab gof-semibold" />
                     <ui:VisualElement class="hangar-top-spacer" picking-mode="Ignore" />
                     <ui:Button name="hangarClose" class="hangar-close gof-semibold" />
                 </ui:VisualElement>

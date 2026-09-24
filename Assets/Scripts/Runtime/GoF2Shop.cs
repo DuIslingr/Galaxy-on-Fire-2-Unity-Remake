@@ -52,6 +52,9 @@ namespace GoF2Remake.Data
 
         public static int FreeCargo(GoF2Database db) => MaxLoad(db) - CargoLoad();
 
+        /// <summary>Units of an item in the hold.</summary>
+        public static int CargoOf(int item) { int n = 0; foreach (var s in GoF2Session.Cargo) if (s.item == item) n += s.amount; return n; }
+
         public static void AddToCargo(int item, int amount)
         {
             if (amount <= 0) return;

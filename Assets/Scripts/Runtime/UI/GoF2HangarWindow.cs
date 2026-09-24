@@ -9,7 +9,15 @@
 // Controls: tap / click a row; up / down select, left / right sell / buy (held arrows repeat like HangarWindow::update:
 // after 200 ms, every 30 ms after 1.5 s, 5 units at a time after 4 s), Enter / A the row's action, Q / E or LB / RB
 // switch tabs. Sounds: 0x7c row, 0x65 buy (Button_to_ship), 0x64 sell (Button_to_station), 0x62 mount, 0x60 demount.
-// Not yet: Blueprints tab (272), the full-screen details window, Kaamo Club storage.
+//   Blueprints tab (272, HangarList::initBlueprintTab 0x143208; blueprints_mods.md 1.5): 273 "Available blueprints" with
+//             the unlocked ones (progress "N%  (station)", highlighted while the hold carries a missing ingredient) and
+//             274 "Products finished" waiting elsewhere. Edit (283) opens the ingredients (tab 4): the right arrow moves
+//             one unit from the hold into the blueprint (held arrows repeat), invested goods can't be taken back; the
+//             first unit asks 212 "Start production at this station?" (528 for 210 / 223 without gate routes); leaving
+//             the ingredient commits it, at another station than the production station for 200 $ per unit (288;
+//             volatile goods 289); Autocomplete (hard-coded English) for int(qty * maxPrice * 1.25) (195). A finished
+//             run goes to the hold here (211) or waits at the production station (210).
+// Not yet: the full-screen details window, Kaamo Club storage.
 
 using System;
 using System.Collections.Generic;
@@ -23,8 +31,8 @@ namespace GoF2Remake.UI
 {
     public class GoF2HangarWindow
     {
-        public enum Tab { Ship, Shop }
-        enum RowKind { Header, ShopItem, ShopShip, OwnShip, Slot, CargoItem }
+        public enum Tab { Ship, Shop, Blueprints }
+        enum RowKind { Header, ShopItem, ShopShip, OwnShip, Slot, CargoItem, Blueprint, Pending, Ingredient, Autocomplete }
 
         class Row
         {
@@ -40,8 +48,13 @@ namespace GoF2Remake.UI
         readonly GoF2StationLevel level;
         readonly VisualElement window, details, detailIcon, detailStats, tradeBox, sellButton, buyButton;
         readonly ScrollView list, detailScroll;
-        readonly Label detailName, detailSub, detailText, tradeStock, tradeCargo, tradePrice, cargoLabel, creditsLabel;
-        readonly Button tabShip, tabShop, actionButton;
+        readonly Label detailName, detailSub, detailText, tradeStock, tradeCargo, tradePrice, cargoLabel, creditsLabel, tradeStockLabel, tradeCargoLabel, sellLabel, buyLabel;
+        readonly Button tabShip, tabShop, tabBlueprints, actionButton;
+        /// <summary>Tab 4: the blueprint whose ingredients are listed (-1 = the blueprint list).</summary>
+        int editing = -1;
+        /// <summary>Item+0x3c blueprintAmount: units moved from the hold but not committed yet, per ingredient.</summary>
+        readonly Dictionary<int, int> pendingUnits = new Dictionary<int, int>();
+        bool startConfirmed;
         readonly List<Row> rows = new List<Row>();
         GoF2Hangar hangar;
         Row selected;
@@ -81,24 +94,27 @@ namespace GoF2Remake.UI
             creditsLabel = root.Q<Label>("creditsLabel");
             tabShip = root.Q<Button>("tabShip");
             tabShop = root.Q<Button>("tabShop");
+            tabBlueprints = root.Q<Button>("tabBlueprints");
             actionButton = root.Q<Button>("actionButton");
+            tradeStockLabel = root.Q<Label>("tradeStockLabel");
+            tradeCargoLabel = root.Q<Label>("tradeCargoLabel");
 
             string T(int id) => GoF2Localization.Get(id).ToUpperInvariant();
             tabShip.text = T(183);
             tabShop.text = T(185);
-            root.Q<Label>("tradeStockLabel").text = T(136);
-            root.Q<Label>("tradeCargoLabel").text = T(183);
-            root.Q<Label>("sellLabel").text = "‹ " + GoF2Localization.Extra("shopSell", "SELL");
-            root.Q<Label>("buyLabel").text = GoF2Localization.Extra("shopBuy", "BUY") + " ›";
+            tabBlueprints.text = T(272);
+            sellLabel = root.Q<Label>("sellLabel");
+            buyLabel = root.Q<Label>("buyLabel");
             root.Q<Button>("hangarClose").text = GoF2Localization.Extra("hudBack", "BACK");
 
             tabShip.clicked += () => { menu.PlayPush(); SetTab(Tab.Ship); };
             tabShop.clicked += () => { menu.PlayPush(); SetTab(Tab.Shop); };
-            root.Q<Button>("hangarClose").clicked += () => { menu.PlayRelease(); menu.CloseHangar(); };
+            tabBlueprints.clicked += () => { menu.PlayPush(); SetTab(Tab.Blueprints); };
+            root.Q<Button>("hangarClose").clicked += () => { menu.PlayRelease(); if (!Back()) menu.CloseHangar(); };
             actionButton.clicked += Action;
             HookArrow(sellButton, -1);
             HookArrow(buyButton, 1);
-            foreach (var b in new VisualElement[] { tabShip, tabShop, actionButton }) b.focusable = false;
+            foreach (var b in new VisualElement[] { tabShip, tabShop, tabBlueprints, actionButton }) b.focusable = false;
             list.focusable = detailScroll.focusable = false;
         }
 
@@ -117,19 +133,38 @@ namespace GoF2Remake.UI
             if (!IsOpen) return;
             AutoEquip();
             IsOpen = false;
+            editing = -1;
             ReleaseArrow();
+        }
+
+        /// <summary>HangarWindow::readyToClose: an uncommitted shipment to another station asks first.</summary>
+        public bool ReadyToClose()
+        {
+            if (!HasPending) return true;
+            Commit(() => menu.CloseHangar());
+            return false;
+        }
+
+        /// <summary>Back inside the window: the ingredient list returns to the blueprint list (after committing).</summary>
+        public bool Back()
+        {
+            if (editing < 0) return false;
+            Commit(() => { editing = -1; selected = null; Rebuild(); });
+            return true;
         }
 
         public void SetTab(Tab t)
         {
-            if (tab == t && rows.Count > 0) return;
+            if (tab == t && rows.Count > 0 && editing < 0) return;
+            if (HasPending) { Commit(() => SetTab(t)); return; }
             AutoEquip();
             tab = t;
+            editing = -1;
             selected = null;
             Rebuild();
         }
 
-        public void NextTab() => SetTab(tab == Tab.Ship ? Tab.Shop : Tab.Ship);
+        public void NextTab() => SetTab(tab == Tab.Ship ? Tab.Shop : tab == Tab.Shop ? Tab.Blueprints : Tab.Ship);
 
         // ---- list --------------------------------------------------------------------------------------------
 
@@ -138,6 +173,7 @@ namespace GoF2Remake.UI
             if (!IsOpen) return;
             tabShip.EnableInClassList("hangar-tab--active", tab == Tab.Ship);
             tabShop.EnableInClassList("hangar-tab--active", tab == Tab.Shop);
+            tabBlueprints.EnableInClassList("hangar-tab--active", tab == Tab.Blueprints);
             var keep = selected;
             float scroll = list.scrollOffset.y;
             rows.Clear();
@@ -159,6 +195,30 @@ namespace GoF2Remake.UI
                     if (ofType.Count == 0) continue;
                     AddHeader(T(typeHeaders[type]));
                     foreach (int i in ofType) AddRow(new Row { kind = RowKind.ShopItem, item = i, type = type });
+                }
+            }
+            else if (tab == Tab.Blueprints)
+            {
+                var db = level.Database;
+                if (editing >= 0)
+                {
+                    // Tab 4 (HangarList::fillIngredientsList 0x14378c): the product, its ingredients, Autocomplete.
+                    AddHeader(GoF2ItemInfo.ItemName(editing).ToUpperInvariant());
+                    var parts = db.Item(editing).blueprint;
+                    for (int k = 0; k < parts.Count; k++) AddRow(new Row { kind = RowKind.Ingredient, item = parts[k].item, type = k });
+                    AddRow(new Row { kind = RowKind.Autocomplete, item = editing });
+                }
+                else
+                {
+                    AddHeader(T(273));
+                    foreach (var p in GoF2Blueprints.Products(db))
+                        if (GoF2Blueprints.IsUnlocked(p.index)) AddRow(new Row { kind = RowKind.Blueprint, item = p.index });
+                    if (GoF2Session.PendingProducts.Count > 0)
+                    {
+                        AddHeader(T(274));
+                        for (int i = 0; i < GoF2Session.PendingProducts.Count; i++)
+                            AddRow(new Row { kind = RowKind.Pending, item = GoF2Session.PendingProducts[i].item, equipment = i });
+                    }
                 }
             }
             else
@@ -269,6 +329,53 @@ namespace GoF2Remake.UI
                     subText.text = GoF2Localization.Get(284);   // Available in cargo
                     break;
                 }
+                case RowKind.Blueprint:
+                {
+                    tex = GoF2ItemInfo.ItemIcon(row.item);
+                    name.text = GoF2ItemInfo.ItemName(row.item);
+                    var st = GoF2Blueprints.State(db, row.item);
+                    float rate = GoF2Blueprints.CompletionRate(db, st);
+                    if (rate > 0f)
+                    {
+                        string where = st.station >= 0 ? $"  ({db.Stations.Find(s => s.index == st.station)?.name})" : "";
+                        subText.text = $"{(int)(rate * 100f)}%{where}";
+                        var bar = new VisualElement { pickingMode = PickingMode.Ignore };
+                        bar.AddToClassList("bp-bar");
+                        var fill = new VisualElement { pickingMode = PickingMode.Ignore };
+                        fill.AddToClassList("bp-bar-fill");
+                        fill.style.width = Length.Percent(rate * 100f);
+                        bar.Add(fill);
+                        texts.Add(bar);
+                    }
+                    else subText.text = GoF2ItemInfo.Category(db.Item(row.item));
+                    name.EnableInClassList("row-name--helps", GoF2Blueprints.CargoHelps(db, st));
+                    break;
+                }
+                case RowKind.Pending:
+                {
+                    var pp = GoF2Session.PendingProducts[row.equipment];
+                    tex = GoF2ItemInfo.ItemIcon(pp.item);
+                    name.text = (pp.quantity >= 2 ? $"{pp.quantity}x " : "") + GoF2ItemInfo.ItemName(pp.item);
+                    subText.text = $"{GoF2Localization.Get(275)} {db.Stations.Find(s => s.index == pp.station)?.name}";
+                    break;
+                }
+                case RowKind.Ingredient:
+                {
+                    tex = GoF2ItemInfo.ItemIcon(row.item);
+                    name.text = GoF2ItemInfo.ItemName(row.item);
+                    var st = GoF2Blueprints.State(db, editing);
+                    int total = GoF2Blueprints.Total(db, editing, row.type);
+                    int invested = GoF2Blueprints.Invested(db, st, row.type) + Pending(row.item);
+                    subText.text = $"{GoF2Localization.Get(183)} {hangar.CargoOf(row.item)} t   |   {GoF2Localization.Get(271)} {invested} / {total} t";
+                    if (invested >= total) sub.Insert(0, Badge("✓", "row-badge--mounted"));
+                    break;
+                }
+                case RowKind.Autocomplete:
+                    name.text = GoF2Localization.Extra("bpAutocomplete", "Autocomplete");   // a hard-coded English label in the original
+                    subText.text = GoF2ItemInfo.ItemName(row.item);
+                    price.text = GoF2ItemInfo.Credits(GoF2Blueprints.AutoCompletePrice(db, row.item));
+                    price.EnableInClassList("row-price--expensive", GoF2Blueprints.AutoCompletePrice(db, row.item) > GoF2Session.Credits);
+                    break;
             }
             if (tex != null) icon.style.backgroundImage = new StyleBackground(tex);
             sub.Add(subText);
@@ -295,6 +402,7 @@ namespace GoF2Remake.UI
         void Select(Row row, bool sound)
         {
             if (row == null || !row.Selectable || row == selected) return;
+            if (HasPending) { Commit(() => Select(row, sound)); return; }   // leaving an ingredient commits it
             if (sound) menu.PlayPush();
             ReleaseArrow();
             selected = row;
@@ -343,6 +451,11 @@ namespace GoF2Remake.UI
             string T(int id) => GoF2Localization.Get(id);
 
             int item = selected.kind == RowKind.Slot && selected.equipment >= 0 ? GoF2Session.Equipment[selected.equipment].item : selected.item;
+            if (item >= 0 && tab == Tab.Blueprints)
+            {
+                ShowBlueprintDetails(item);
+                return;
+            }
             if (item >= 0)
             {
                 var it = db.Item(item);
@@ -355,6 +468,10 @@ namespace GoF2Remake.UI
                 if (selected.kind == RowKind.ShopItem)
                 {
                     tradeBox.RemoveFromClassList("trade-box--hidden");
+                    tradeStockLabel.text = T(136).ToUpperInvariant();
+                    tradeCargoLabel.text = T(183).ToUpperInvariant();
+                    sellLabel.text = "‹ " + GoF2Localization.Extra("shopSell", "SELL");
+                    buyLabel.text = GoF2Localization.Extra("shopBuy", "BUY") + " ›";
                     int stock = hangar.StockOf(item), cargo = hangar.CargoOf(item), price = hangar.PriceOf(item);
                     tradeStock.text = $"{stock} t";
                     tradeCargo.text = $"{cargo} t";
@@ -397,6 +514,188 @@ namespace GoF2Remake.UI
             if (selected.item >= 0) GoF2Session.SeenItems.Add(selected.item);   // the original marks inspected items
         }
 
+        void ShowBlueprintDetails(int item)
+        {
+            var db = level.Database;
+            string T(int id) => GoF2Localization.Get(id);
+            var it = db.Item(item);
+            detailIcon.style.backgroundImage = new StyleBackground(GoF2ItemInfo.ItemIcon(item));
+            detailName.text = GoF2ItemInfo.ItemName(item);
+            detailSub.text = $"{GoF2ItemInfo.Category(it)}  ·  {T(133)} {it.techLevel}";
+            foreach (var (label, value) in GoF2ItemInfo.ItemStats(it)) AddStat(label, value);
+            detailText.text = GoF2ItemInfo.ItemText(db, it, hangar.SystemIndex);
+            switch (selected.kind)
+            {
+                case RowKind.Blueprint:
+                    ShowAction(T(283).ToUpperInvariant(), true);   // Edit
+                    break;
+                case RowKind.Autocomplete:
+                    ShowAction($"{GoF2Localization.Extra("bpAutocomplete", "Autocomplete").ToUpperInvariant()}   {GoF2ItemInfo.Credits(GoF2Blueprints.AutoCompletePrice(db, editing))}", true);
+                    break;
+                case RowKind.Ingredient:
+                {
+                    // Trade mode: the hold (183 "Ship") on the left, the blueprint (271) on the right; right arrow = add.
+                    var st = GoF2Blueprints.State(db, editing);
+                    int total = GoF2Blueprints.Total(db, editing, selected.type);
+                    int invested = GoF2Blueprints.Invested(db, st, selected.type) + Pending(item);
+                    int cargo = hangar.CargoOf(item);
+                    tradeBox.RemoveFromClassList("trade-box--hidden");
+                    tradeStockLabel.text = T(183).ToUpperInvariant();
+                    tradeCargoLabel.text = T(271).ToUpperInvariant();
+                    sellLabel.text = "‹";
+                    buyLabel.text = GoF2Localization.Extra("bpAdd", "ADD") + " ›";
+                    tradeStock.text = $"{cargo} t";
+                    tradeCargo.text = $"{invested} / {total} t";
+                    tradePrice.text = "";
+                    sellButton.EnableInClassList("trade-arrow--disabled", true);   // invested goods can't be taken back
+                    buyButton.EnableInClassList("trade-arrow--disabled", cargo <= 0 || invested >= total);
+                    break;
+                }
+            }
+            detailScroll.scrollOffset = Vector2.zero;
+        }
+
+        int Pending(int ingredient) => pendingUnits.TryGetValue(ingredient, out int n) ? n : 0;
+        bool HasPending { get { foreach (var kv in pendingUnits) if (kv.Value > 0) return true; return false; } }
+        int StationIndex => level.Station != null ? level.Station.index : GoF2Session.StationIndex;
+
+        /// <summary>Item::transactionBlueprint: one unit from the hold into the blueprint (not committed yet).</summary>
+        void AddIngredient(int units)
+        {
+            var db = level.Database;
+            int item = selected.item;
+            var st = GoF2Blueprints.State(db, editing);
+            if (GoF2Blueprints.IsEmpty(st) && !startConfirmed && !HasPending)
+            {
+                ReleaseArrow();
+                if (!GoF2Blueprints.CanStartIn(db, editing, StationIndex)) { menu.ShowToast(GoF2Localization.Get(528)); return; }
+                menu.ShowDialog(GoF2Localization.Get(212), () => { startConfirmed = true; AddIngredient(1); });   // Start production here?
+                return;
+            }
+            int moved = 0;
+            for (int n = 0; n < units; n++)
+            {
+                int left = st.remaining[selected.type] - Pending(item);
+                if (left <= 0 || hangar.CargoOf(item) <= 0) break;
+                GoF2Shop.RemoveFromCargo(item, 1);
+                pendingUnits[item] = Pending(item) + 1;
+                moved++;
+            }
+            if (moved == 0) { ReleaseArrow(); return; }
+            menu.PlayClip(menu.shopSell);
+            Rebuild();
+        }
+
+        /// <summary>setSellMode(false): the pending units go into the blueprint; at another station than the production
+        /// station for 200 $ per unit (288), volatile goods never (289); a completed run is produced.</summary>
+        void Commit(System.Action after)
+        {
+            var db = level.Database;
+            if (!HasPending || editing < 0) { pendingUnits.Clear(); after?.Invoke(); return; }
+            var st = GoF2Blueprints.State(db, editing);
+            int units = 0; bool volatileGoods = false;
+            foreach (var kv in pendingUnits) { units += kv.Value; if (kv.Value > 0 && GoF2Blueprints.IsVolatile(kv.Key)) volatileGoods = true; }
+            bool elsewhere = !GoF2Blueprints.IsEmpty(st) && st.station >= 0 && st.station != StationIndex;
+            if (elsewhere && volatileGoods)
+            {
+                Revert();
+                menu.ShowDialog(GoF2Localization.Get(289), null, true);
+                return;
+            }
+            if (elsewhere)
+            {
+                int cost = GoF2Blueprints.ShippingPerUnit * units;
+                string where = db.Stations.Find(s => s.index == st.station)?.name ?? "";
+                menu.ShowDialog(GoF2Localization.Get(288).Replace("#S", where).Replace("#C", GoF2ItemInfo.Credits(cost)), () =>
+                {
+                    if (cost > GoF2Session.Credits)
+                    {
+                        int need = cost - GoF2Session.Credits;
+                        Revert();
+                        menu.ShowToast(GoF2Localization.Get(203).Replace("#C", GoF2ItemInfo.Credits(need)));
+                        return;
+                    }
+                    GoF2Session.Credits -= cost;
+                    Apply();
+                    after?.Invoke();
+                });
+                // "No" reverts: the dialog's No only closes it, so revert now and re-apply on Yes.
+                pendingSnapshot = new Dictionary<int, int>(pendingUnits);
+                Revert();
+                return;
+            }
+            Apply();
+            after?.Invoke();
+        }
+
+        Dictionary<int, int> pendingSnapshot;
+
+        void Apply()
+        {
+            var db = level.Database;
+            var units = pendingSnapshot ?? pendingUnits;
+            if (pendingSnapshot != null)
+                foreach (var kv in pendingSnapshot) GoF2Shop.RemoveFromCargo(kv.Key, kv.Value);   // taken back out of the hold
+            foreach (var kv in units) GoF2Blueprints.Invest(db, editing, kv.Key, kv.Value, StationIndex);
+            pendingUnits.Clear();
+            pendingSnapshot = null;
+            startConfirmed = false;
+            if (GoF2Blueprints.IsCompleted(GoF2Blueprints.State(db, editing))) Finish();
+            else Rebuild();
+        }
+
+        void Revert()
+        {
+            foreach (var kv in pendingUnits) GoF2Shop.AddToCargo(kv.Key, kv.Value);
+            pendingUnits.Clear();
+            startConfirmed = false;
+            Rebuild();
+        }
+
+        /// <summary>A completed run: 211 to the hold (then the Shop tab) or 210 waiting at the production station.</summary>
+        void Finish()
+        {
+            var db = level.Database;
+            int product = editing;
+            int station = GoF2Blueprints.State(db, product).station;
+            bool here = GoF2Blueprints.Produce(db, product, StationIndex);
+            hangar = new GoF2Hangar(db, level.Stock);   // the new product needs its price
+            string name = GoF2ItemInfo.ItemName(product);
+            if (here)
+            {
+                menu.ShowDialog(GoF2Localization.Get(211).Replace("#N", name), null, true);
+                editing = -1;
+                SetTab(Tab.Shop);
+            }
+            else
+            {
+                string where = db.Stations.Find(s => s.index == station)?.name ?? "";
+                menu.ShowDialog(GoF2Localization.Get(210).Replace("#N", name).Replace("#S", where), null, true);
+                editing = -1;
+                selected = null;
+                Rebuild();
+            }
+        }
+
+        /// <summary>Autocomplete (button 23): 195 "Autocomplete blueprint for #C?"; an empty blueprint takes this station.</summary>
+        void AskAutocomplete()
+        {
+            var db = level.Database;
+            int price = GoF2Blueprints.AutoCompletePrice(db, editing);
+            if (price > GoF2Session.Credits) { menu.ShowToast(GoF2Localization.Get(203).Replace("#C", GoF2ItemInfo.Credits(price - GoF2Session.Credits))); return; }
+            if (!GoF2Blueprints.CanStartIn(db, editing, StationIndex) && GoF2Blueprints.IsEmpty(GoF2Blueprints.State(db, editing)))
+            { menu.ShowToast(GoF2Localization.Get(528)); return; }
+            menu.ShowDialog(GoF2Localization.Get(195).Replace("#C", GoF2ItemInfo.Credits(price)), () =>
+            {
+                Revert();
+                var st = GoF2Blueprints.State(db, editing);
+                if (GoF2Blueprints.IsEmpty(st) || st.station < 0) st.station = StationIndex;
+                for (int k = 0; k < st.remaining.Count; k++) st.remaining[k] = 0;   // BluePrint::complete
+                GoF2Session.Credits -= price;
+                Finish();
+            });
+        }
+
         void ShowAction(string text, bool enabled)
         {
             actionButton.text = text;
@@ -430,6 +729,11 @@ namespace GoF2Remake.UI
         /// <summary>Left / right: sell / buy one unit of the selected shop item (Item::transaction).</summary>
         public void Trade(int direction, bool sound = true, int units = 1)
         {
+            if (selected != null && selected.kind == RowKind.Ingredient)
+            {
+                if (direction > 0) AddIngredient(units); else ReleaseArrow();
+                return;
+            }
             if (selected == null || selected.kind != RowKind.ShopItem) return;
             bool changed = false;
             for (int n = 0; n < units; n++)
@@ -465,6 +769,18 @@ namespace GoF2Remake.UI
             var db = level.Database;
             switch (selected.kind)
             {
+                case RowKind.Blueprint:
+                    // Edit (283) -> tab 4, the ingredients.
+                    menu.PlayRelease();
+                    editing = selected.item;
+                    pendingUnits.Clear();
+                    startConfirmed = false;
+                    selected = null;
+                    Rebuild();
+                    break;
+                case RowKind.Autocomplete:
+                    AskAutocomplete();
+                    break;
                 case RowKind.Slot when selected.equipment >= 0:
                 {
                     int item = GoF2Session.Equipment[selected.equipment].item;

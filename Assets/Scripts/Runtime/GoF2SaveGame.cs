@@ -48,6 +48,9 @@ namespace GoF2Remake.Data
         public int wingmanRace;
         public float wingmanContractMs;
         public List<int> unlockedBlueprints, shipMods;
+        public List<GoF2BlueprintState> blueprints;
+        public List<GoF2PendingProduct> pendingProducts;
+        public int goodsProduced;
         public int agentsTalkedTo, offersDeclined, offersRepeated, acceptedBlindRisk, acceptedBlindMap, containersDelivered, passengersDelivered;
 
         [Serializable]
@@ -161,6 +164,7 @@ namespace GoF2Remake.Data
                 informerKilled = GoF2Session.InformerKilled,
                 wingmen = GoF2Session.Wingmen, wingmanRace = GoF2Session.WingmanRace, wingmanContractMs = GoF2Session.WingmanContractMs,
                 unlockedBlueprints = new List<int>(GoF2Session.UnlockedBlueprints), shipMods = GoF2Session.ShipMods,
+                blueprints = GoF2Session.Blueprints, pendingProducts = GoF2Session.PendingProducts, goodsProduced = GoF2Session.GoodsProduced,
                 informerFailed = GoF2Session.InformerFailed,
                 agentsTalkedTo = GoF2Session.AgentsTalkedTo, offersDeclined = GoF2Session.OffersDeclined, offersRepeated = GoF2Session.OffersRepeated,
                 acceptedBlindRisk = GoF2Session.AcceptedBlindRisk, acceptedBlindMap = GoF2Session.AcceptedBlindMap,
@@ -225,6 +229,9 @@ namespace GoF2Remake.Data
                 GoF2Session.WingmanContractMs = s.wingmanContractMs;
                 GoF2Session.UnlockedBlueprints = new HashSet<int>(s.unlockedBlueprints ?? new List<int>());
                 GoF2Session.ShipMods = s.shipMods ?? new List<int>();
+                GoF2Session.Blueprints = s.blueprints ?? new List<GoF2BlueprintState>();
+                GoF2Session.PendingProducts = s.pendingProducts ?? new List<GoF2PendingProduct>();
+                GoF2Session.GoodsProduced = s.goodsProduced;
                 GoF2Session.InformerFailed = s.informerFailed;
                 GoF2Session.AgentsTalkedTo = s.agentsTalkedTo; GoF2Session.OffersDeclined = s.offersDeclined; GoF2Session.OffersRepeated = s.offersRepeated;
                 GoF2Session.AcceptedBlindRisk = s.acceptedBlindRisk; GoF2Session.AcceptedBlindMap = s.acceptedBlindMap;

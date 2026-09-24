@@ -50,8 +50,13 @@ namespace GoF2Remake.Data
         public static List<string> Wingmen = new List<string>();
         public static int WingmanRace;
         public static float WingmanContractMs;
-        /// <summary>Blueprints the player owns (BluePrint::unlock), by blueprint index.</summary>
+        /// <summary>Blueprints the player owns (BluePrint::unlock), by product item index.</summary>
         public static HashSet<int> UnlockedBlueprints = new HashSet<int>();
+        /// <summary>Status+0x18: each touched blueprint's progress (GoF2Blueprints); +0x1c products waiting at a station;
+        /// +0x1d4 goods produced (completed runs).</summary>
+        public static List<GoF2BlueprintState> Blueprints = new List<GoF2BlueprintState>();
+        public static List<GoF2PendingProduct> PendingProducts = new List<GoF2PendingProduct>();
+        public static int GoodsProduced;
         /// <summary>Ship::addMod: the mods bought for the current ship.</summary>
         public static List<int> ShipMods = new List<int>();
         public static void AddShipMod(int mod) { if (mod >= 0 && !ShipMods.Contains(mod)) ShipMods.Add(mod); }
@@ -210,6 +215,9 @@ namespace GoF2Remake.Data
             WingmanRace = 0;
             WingmanContractMs = 0f;
             UnlockedBlueprints = new HashSet<int>();
+            Blueprints = new List<GoF2BlueprintState>();
+            PendingProducts = new List<GoF2PendingProduct>();
+            GoodsProduced = 0;
             ShipMods = new List<int>();
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;
             StoryCounter = 0;

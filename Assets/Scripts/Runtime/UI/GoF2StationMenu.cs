@@ -248,6 +248,7 @@ namespace GoF2Remake.UI
         public void CloseHangar()
         {
             if (!HangarOpen) return;
+            if (!hangarWindow.ReadyToClose()) return;   // an uncommitted blueprint shipment asks first
             hangarWindow.Close();
             root.RemoveFromClassList("hangar-open");
             OnViewChanged();
@@ -375,7 +376,7 @@ namespace GoF2Remake.UI
             if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
             else if (missions != null && missions.IsOpen) { Play(buttonRelease); missions.Close(); }
             else if (lounge != null && lounge.ChatOpen) { Play(buttonRelease); lounge.CloseChat(); }
-            else if (HangarOpen) { Play(buttonRelease); CloseHangar(); }
+            else if (HangarOpen) { Play(buttonRelease); if (!hangarWindow.Back()) CloseHangar(); }
             else if (SavePageOpen) { Play(buttonRelease); ShowSystemPage(false); }
             else if (SystemMenuOpen) { Play(buttonRelease); CloseSystemMenu(); }
             else if (level != null && level.View == GoF2StationView.Lounge) { Play(buttonRelease); level.SetView(GoF2StationView.Hangar); }
@@ -466,6 +467,22 @@ namespace GoF2Remake.UI
                 else GoF2Freelance.Fail();
                 Select(launchButton);
             });
+            return true;
+        }
+
+        bool pendingChecked;
+
+        /// <summary>ModStation::checkPendingProducts 0xee258 (once per docking): blueprint products waiting here move to the
+        /// hold, 213 "The following items have been moved to your cargo hold:" + one line each.</summary>
+        bool CheckPendingProducts()
+        {
+            if (pendingChecked || level == null || level.Station == null) return false;
+            pendingChecked = true;
+            var moved = GoF2Blueprints.CollectPending(level.Database, level.Station.index);
+            if (moved.Count == 0) return false;
+            string text = GoF2Localization.Get(213);
+            foreach (var p in moved) text += $"\n{p.quantity}x {GoF2ItemInfo.ItemName(p.item)}";
+            ShowDialog(text, null, true);
             return true;
         }
 
@@ -682,8 +699,8 @@ namespace GoF2Remake.UI
             }
             if (HangarOpen)
             {
-                string select = T("hudSelect", "SELECT"), trade = $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";
-                string tabs = $"{GoF2Localization.Get(183)} / {GoF2Localization.Get(185)}".ToUpperInvariant(), confirm = T("hudConfirm", "CONFIRM");
+                string select = T("hudSelect", "SELECT"), trade = $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";   // ingredients: ADD
+                string tabs = $"{GoF2Localization.Get(183)} / {GoF2Localization.Get(185)} / {GoF2Localization.Get(272)}".ToUpperInvariant(), confirm = T("hudConfirm", "CONFIRM");
                 if (kind == GoF2InputKind.KeyboardMouse)
                 {
                     Hint(select, GoF2InputGlyph.Key("W"), GoF2InputGlyph.Key("S"));
@@ -747,6 +764,7 @@ namespace GoF2Remake.UI
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPendingProducts()) return;
             lounge?.Update();
 
             var kb = Keyboard.current;
