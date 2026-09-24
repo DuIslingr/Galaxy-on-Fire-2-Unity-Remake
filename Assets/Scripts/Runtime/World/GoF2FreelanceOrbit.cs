@@ -272,6 +272,7 @@ namespace GoF2Remake.World
             var ex = assets != null ? assets.explosion : null;
             t.explosionPrefab = ex;
             t.explosionScale = 0.5f;
+            t.Died += _ => GoF2Session.JunkDestroyed++;   // Status+0xb0
             junk.Add(t);
         }
 

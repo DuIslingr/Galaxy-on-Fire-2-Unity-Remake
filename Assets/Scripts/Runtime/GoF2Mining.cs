@@ -305,12 +305,16 @@ namespace GoF2Remake.Flight
                     if (Game.GotCore)
                     {
                         GoF2Shop.AddToCargo(core, 1);
+                        GoF2Session.CoresMined++;
+                        GoF2Session.CoreTypesMined.Add(core);
                         Say($"1t {GoF2Localization.Get(1274 + core)}");
                         n = Mathf.Min(n, GoF2Shop.FreeCargo(db));
                     }
                     if (n > 0)
                     {
                         GoF2Shop.AddToCargo(ore, n);
+                        GoF2Session.OreMined += n;
+                        GoF2Session.OreTypesMined.Add(ore);
                         Say($"{n}t {GoF2Localization.Get(1274 + ore)}");
                     }
                     if (GoF2Shop.FreeCargo(db) <= 0) Say(GoF2Localization.Get(322));

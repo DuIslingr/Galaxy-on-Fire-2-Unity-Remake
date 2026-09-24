@@ -62,7 +62,8 @@ namespace GoF2Remake.UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualElement root, safeArea, dragZone, hints, dialog;
-        Button hangarButton, loungeButton, mapButton, missionsButton, launchButton, dialogYes, dialogNo;
+        Button hangarButton, loungeButton, mapButton, missionsButton, statusButton, launchButton, dialogYes, dialogNo;
+        GoF2StatusWindow status;
         GoF2LoungePanel lounge;
         GoF2MissionsWindow missions;
         Label tickerText;
@@ -134,6 +135,7 @@ namespace GoF2Remake.UI
             loungeButton = Bind("loungeButton", OpenLounge);
             mapButton = Bind("mapButton", OpenMap);
             missionsButton = Bind("missionsButton", OpenMissions);
+            statusButton = Bind("statusButton", OpenStatus);
             launchButton = Bind("launchButton", AskLaunch);
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", CloseDialog);
@@ -141,6 +143,7 @@ namespace GoF2Remake.UI
             lounge = new GoF2LoungePanel(this, level, root);
             SetupTicker();
             missions = new GoF2MissionsWindow(this, level, root);
+            status = new GoF2StatusWindow(this, level, root);
             root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
             if (voiceSource == null)
             {
@@ -177,6 +180,7 @@ namespace GoF2Remake.UI
             loungeButton.text = T(398).ToUpperInvariant();
             mapButton.text = T(177).ToUpperInvariant();
             missionsButton.text = T(129).ToUpperInvariant();
+            statusButton.text = T(169).ToUpperInvariant();
             launchButton.text = GoF2Localization.Extra("stationLaunch", "LAUNCH");
             dialogNo.text = T(135).ToUpperInvariant();
             root.Q<Button>("menuButton").text = GoF2Localization.Extra("hudMenu", "MENU");
@@ -302,6 +306,40 @@ namespace GoF2Remake.UI
             BuildHints(GoF2InputMode.Current);
         }
 
+        /// <summary>The Status window (169).</summary>
+        void OpenStatus()
+        {
+            if (level == null || status == null || status.IsOpen) return;
+            CloseHangar();
+            lounge?.CloseChat(false);
+            if (missions != null && missions.IsOpen) missions.Close();
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            status.Open();
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        public void OnStatusClosed()
+        {
+            Select(statusButton);
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        bool medalsChecked;
+
+        /// <summary>Achievements::checkForNewMedal on docking: "New medal!" (353) with each improved medal.</summary>
+        bool CheckMedals()
+        {
+            if (medalsChecked || level == null) return false;
+            medalsChecked = true;
+            var improved = GoF2Achievements.Check(level.Database);
+            if (improved.Count == 0) return false;
+            var names = new System.Collections.Generic.List<string>();
+            foreach (int m in improved) if (m != 0) names.Add(GoF2Localization.Get(1507 + m));
+            if (names.Count == 0) return false;
+            ShowToast($"{GoF2Localization.Get(353)} {string.Join(", ", names)}");
+            return false;
+        }
+
         public void OnMissionsClosed()
         {
             Select(missionsButton);
@@ -411,6 +449,7 @@ namespace GoF2Remake.UI
         {
             if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
             else if (missions != null && missions.IsOpen) { Play(buttonRelease); missions.Close(); }
+            else if (status != null && status.IsOpen) { Play(buttonRelease); status.Close(); }
             else if (lounge != null && lounge.ChatOpen) { Play(buttonRelease); lounge.CloseChat(); }
             else if (HangarOpen) { Play(buttonRelease); if (!hangarWindow.Back()) CloseHangar(); }
             else if (SavePageOpen) { Play(buttonRelease); ShowSystemPage(false); }
@@ -700,11 +739,12 @@ namespace GoF2Remake.UI
                 root.focusController?.IgnoreEvent(e);
                 return;
             }
-            var stationItems = new VisualElement[] { hangarButton, loungeButton, mapButton, missionsButton, launchButton };
+            var stationItems = new VisualElement[] { hangarButton, loungeButton, mapButton, missionsButton, statusButton, launchButton };
             VisualElement[] items;
             if (DialogOpen) items = new VisualElement[] { dialogYes, dialogNo };
             else if (SystemMenuOpen) items = SystemMenuItems();
             else if (missions != null && missions.IsOpen) { items = missions.NavItems(); vertical |= horizontal; }
+            else if (status != null && status.IsOpen) { items = status.NavItems(); vertical |= horizontal; }
             else if (lounge != null && lounge.ChatOpen) items = lounge.NavItems();
             else if (lounge != null && lounge.Active)
             {
@@ -814,6 +854,7 @@ namespace GoF2Remake.UI
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPendingProducts()) return;
+            CheckMedals();
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
             lounge?.Update();
             UpdateTicker();
@@ -830,6 +871,8 @@ namespace GoF2Remake.UI
             if (toastMs > 0f && (toastMs -= Time.unscaledDeltaTime * 1000f) <= 0f) toast.RemoveFromClassList("station-toast--shown");
             if (DialogOpen || SystemMenuOpen) return;
             if (missions != null && missions.IsOpen) return;
+            if (status != null && status.IsOpen) return;
+            if (kb != null && kb.digit5Key.wasPressedThisFrame) { Play(buttonRelease); OpenStatus(); return; }
             if (lounge != null && lounge.ChatOpen) return;
             if ((kb != null && kb.digit4Key.wasPressedThisFrame) || (pad != null && pad.selectButton.wasPressedThisFrame))
             {

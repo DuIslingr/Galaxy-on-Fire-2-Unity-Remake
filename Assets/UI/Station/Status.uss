@@ -1,0 +1,231 @@
+/* Status window (GoF2StatusWindow, StatusWindow 0x18345c): on HD both columns side by side - pilot, ship, reputation
+   and statistics on the left, the 45 medals in three columns on the right. The root gets status-open while it shows. */
+
+.status-window {
+    display: none;
+    position: absolute;
+    left: 48px;
+    right: 40px;
+    top: 110px;
+    bottom: 96px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-cyan);
+}
+
+.status-open .status-window {
+    display: flex;
+}
+
+.status-open .side-panel,
+.status-open .launch-button,
+.status-open .side-shade,
+.status-open .station-ticker,
+.status-open .lounge-tags,
+.status-open .lounge-list {
+    display: none;
+}
+
+.status-body {
+    flex-grow: 1;
+    flex-direction: row;
+    padding: 14px 20px 18px 20px;
+}
+
+.status-left {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding-right: 18px;
+}
+
+.status-right {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding-left: 18px;
+    border-left-width: 1px;
+    border-left-color: var(--gof-line);
+}
+
+.status-plate {
+    font-size: 20px;
+    letter-spacing: 4px;
+    color: var(--gof-amber);
+    margin: 10px 0 6px 0;
+}
+
+.status-row {
+    flex-direction: row;
+}
+
+.status-box {
+    flex-grow: 1;
+    flex-basis: 0;
+    padding: 10px 14px;
+    margin-right: 10px;
+    background-color: rgba(62, 200, 255, 0.05);
+    border-width: 1px;
+    border-color: var(--gof-line);
+}
+
+.status-box--last {
+    margin-right: 0;
+}
+
+.status-pilot {
+    flex-direction: row;
+}
+
+.status-pilot-lines {
+    flex-grow: 1;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.status-big {
+    font-size: 22px;
+    color: #FFFFFF;
+}
+
+.status-line {
+    font-size: 18px;
+    color: var(--gof-text);
+}
+
+.status-ship-icon {
+    width: 178px;
+    height: 86px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Reputation: emblem, bar from the centre toward the liked side, emblem. */
+.rep-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.rep-emblem {
+    width: 44px;
+    height: 44px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.rep-emblem--hostile {
+    -unity-background-image-tint-color: #FF4A3A;
+}
+
+.rep-track {
+    flex-grow: 1;
+    height: 12px;
+    margin: 0 10px;
+    background-color: rgba(255, 255, 255, 0.10);
+    border-radius: 6px;
+}
+
+.rep-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background-color: var(--gof-cyan);
+    border-radius: 6px;
+}
+
+.rep-marker {
+    position: absolute;
+    top: -8px;
+    width: 4px;
+    height: 28px;
+    margin-left: -2px;
+    background-color: #FFFFFF;
+}
+
+.rep-names {
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: 16px;
+}
+
+.rep-name {
+    font-size: 16px;
+    color: var(--gof-text-dim);
+}
+
+.stat-line {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 3px 0;
+}
+
+.stat-line-label {
+    font-size: 18px;
+    color: var(--gof-text-dim);
+}
+
+.stat-line-value {
+    font-size: 18px;
+    color: #FFFFFF;
+}
+
+/* Medals: three columns; plates coloured by grade (none translucent blue, gold, silver, bronze). */
+.medal-scroll {
+    flex-grow: 1;
+}
+
+.medal-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.medal {
+    width: 32%;
+    margin: 0 1% 10px 0;
+    padding: 10px 8px;
+    align-items: center;
+    background-color: rgba(33, 152, 255, 0.10);
+    border-width: 1px;
+    border-color: rgba(33, 152, 255, 0.25);
+    border-radius: 4px;
+}
+
+.medal-grade {
+    font-size: 15px;
+    letter-spacing: 2px;
+    color: rgba(33, 152, 255, 0.6);
+}
+
+.medal-name {
+    font-size: 18px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    color: rgba(150, 200, 255, 0.45);
+}
+
+.medal--gold { border-color: #FAD10E; background-color: rgba(250, 209, 14, 0.12); }
+.medal--gold .medal-name, .medal--gold .medal-grade { color: #FAD10E; }
+.medal--silver { border-color: #E6ECF0; background-color: rgba(230, 236, 240, 0.10); }
+.medal--silver .medal-name, .medal--silver .medal-grade { color: #FFFFFF; }
+.medal--bronze { border-color: #CE8258; background-color: rgba(206, 130, 88, 0.12); }
+.medal--bronze .medal-name, .medal--bronze .medal-grade { color: #CE8258; }
+
+.can-hover .medal--earned:hover,
+.medal--selected {
+    border-width: 2px;
+}
+
+.medal-hint {
+    margin-top: 10px;
+    padding: 10px 14px;
+    min-height: 60px;
+    white-space: normal;
+    font-size: 18px;
+    color: var(--gof-text);
+    background-color: rgba(4, 10, 18, 0.8);
+    border-width: 1px;
+    border-color: var(--gof-line);
+}
+
+/* The main view's key hints don't belong over the window. */
+.status-open .station-hints {
+    display: none;
+}

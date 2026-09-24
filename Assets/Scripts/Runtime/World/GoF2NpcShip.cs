@@ -701,6 +701,7 @@ namespace GoF2Remake.World
         {
             traffic.OnShipDied(this, !Target.killedByNpc);
             if (IsWingman) GoF2Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract
+            if (Spec.ship == 14 && !Target.killedByNpc) GoF2Session.BattleshipsDestroyed++;   // Status+0x118
             Current = State.Dying;
             deathDir = transform.forward;
             if (engine != null) engine.Stop();

@@ -53,6 +53,9 @@ namespace GoF2Remake.Data
         public List<GoF2BlueprintState> blueprints;
         public List<GoF2PendingProduct> pendingProducts;
         public int goodsProduced;
+        public int[] medals;
+        public int asteroidsDestroyed, oreMined, coresMined, cratesSalvaged, junkDestroyed, battleshipsDestroyed, highestCredits, lastArrivalHullPercent = 100;
+        public List<int> oreTypesMined, coreTypesMined;
         public int agentsTalkedTo, offersDeclined, offersRepeated, acceptedBlindRisk, acceptedBlindMap, containersDelivered, passengersDelivered;
 
         [Serializable]
@@ -168,6 +171,10 @@ namespace GoF2Remake.Data
                 wingmanPortrait = GoF2Session.WingmanPortrait, wingmenHired = GoF2Session.WingmenHired,
                 unlockedBlueprints = new List<int>(GoF2Session.UnlockedBlueprints), shipMods = GoF2Session.ShipMods,
                 blueprints = GoF2Session.Blueprints, pendingProducts = GoF2Session.PendingProducts, goodsProduced = GoF2Session.GoodsProduced,
+                medals = GoF2Session.Medals, asteroidsDestroyed = GoF2Session.AsteroidsDestroyed, oreMined = GoF2Session.OreMined, coresMined = GoF2Session.CoresMined,
+                cratesSalvaged = GoF2Session.CratesSalvaged, junkDestroyed = GoF2Session.JunkDestroyed, battleshipsDestroyed = GoF2Session.BattleshipsDestroyed,
+                highestCredits = GoF2Session.HighestCredits, lastArrivalHullPercent = GoF2Session.LastArrivalHullPercent,
+                oreTypesMined = new List<int>(GoF2Session.OreTypesMined), coreTypesMined = new List<int>(GoF2Session.CoreTypesMined),
                 informerFailed = GoF2Session.InformerFailed,
                 agentsTalkedTo = GoF2Session.AgentsTalkedTo, offersDeclined = GoF2Session.OffersDeclined, offersRepeated = GoF2Session.OffersRepeated,
                 acceptedBlindRisk = GoF2Session.AcceptedBlindRisk, acceptedBlindMap = GoF2Session.AcceptedBlindMap,
@@ -237,6 +244,12 @@ namespace GoF2Remake.Data
                 GoF2Session.Blueprints = s.blueprints ?? new List<GoF2BlueprintState>();
                 GoF2Session.PendingProducts = s.pendingProducts ?? new List<GoF2PendingProduct>();
                 GoF2Session.GoodsProduced = s.goodsProduced;
+                if (s.medals != null && s.medals.Length == 45) GoF2Session.Medals = s.medals;
+                GoF2Session.AsteroidsDestroyed = s.asteroidsDestroyed; GoF2Session.OreMined = s.oreMined; GoF2Session.CoresMined = s.coresMined;
+                GoF2Session.CratesSalvaged = s.cratesSalvaged; GoF2Session.JunkDestroyed = s.junkDestroyed; GoF2Session.BattleshipsDestroyed = s.battleshipsDestroyed;
+                GoF2Session.HighestCredits = s.highestCredits; GoF2Session.LastArrivalHullPercent = s.lastArrivalHullPercent;
+                GoF2Session.OreTypesMined = new HashSet<int>(s.oreTypesMined ?? new List<int>());
+                GoF2Session.CoreTypesMined = new HashSet<int>(s.coreTypesMined ?? new List<int>());
                 GoF2Session.InformerFailed = s.informerFailed;
                 GoF2Session.AgentsTalkedTo = s.agentsTalkedTo; GoF2Session.OffersDeclined = s.offersDeclined; GoF2Session.OffersRepeated = s.offersRepeated;
                 GoF2Session.AcceptedBlindRisk = s.acceptedBlindRisk; GoF2Session.AcceptedBlindMap = s.acceptedBlindMap;

@@ -198,6 +198,7 @@ namespace GoF2Remake.Flight
             if (free <= 0) { Message?.Invoke(GoF2Localization.Get(322), 1); crate.pulled = false; return; }
             int n = Mathf.Max(1, Mathf.Min(entry.amount, free));
             GoF2Shop.AddToCargo(entry.item, n);
+            GoF2Session.CratesSalvaged += n;   // Status::getCapturedCrates
             entry.amount -= n;
             Message?.Invoke($"{n}t {GoF2Localization.Get(1274 + entry.item)}", 2);
             if (!crate.HasLoot) Destroy(crate.gameObject);

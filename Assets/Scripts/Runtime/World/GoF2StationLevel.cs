@@ -154,6 +154,10 @@ namespace GoF2Remake.World
             GoF2Session.VisitedStations.Add(station);   // Galaxy::setVisited: the star map's "Already visited"
             // Docking repairs the ship (the original launches with Status hull / shield / armor = -1, "full", StarMap::
             // depart; assumed for every launch) and autosaves (ModStation::autosave).
+            // Survivor medal: the hull % this ship arrived with (before the repair).
+            int maxHull = (db.Ship(GoF2Session.ShipIndex)?.armor ?? 100) + (GoF2Session.HasMod(0) ? 40 : 0);
+            GoF2Session.LastArrivalHullPercent = GoF2Session.PlayerHull < 0 ? 100 : Mathf.RoundToInt(100f * GoF2Session.PlayerHull / Mathf.Max(1, maxHull));
+            GoF2Session.HighestCredits = Mathf.Max(GoF2Session.HighestCredits, GoF2Session.Credits);
             GoF2Session.PlayerHull = GoF2Session.PlayerArmor = -1;
             GoF2Session.PlayerShield = -1f;
             if (!(GoF2Story.Index == 77 && station == 101)) GoF2Session.Autosave();

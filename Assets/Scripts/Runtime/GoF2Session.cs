@@ -62,6 +62,15 @@ namespace GoF2Remake.Data
         public static List<GoF2BlueprintState> Blueprints = new List<GoF2BlueprintState>();
         public static List<GoF2PendingProduct> PendingProducts = new List<GoF2PendingProduct>();
         public static int GoodsProduced;
+
+        /// <summary>Achievements: the 45 medal grades (0 none, 1 gold, 2 silver, 3 bronze; GoF2Achievements).</summary>
+        public static int[] Medals = new int[45];
+        /// <summary>Statistics for the Status window and the medals: Status+0xd8 asteroids destroyed, +0xa0 / +0xa4 ore /
+        /// cores mined (t) and the types (+0x94 / +0x98), crates salvaged (t), +0xb0 junk destroyed, +0x118 battleships
+        /// destroyed, the highest credits, the hull % on the last arrival at a station (Survivor).</summary>
+        public static int AsteroidsDestroyed, OreMined, CoresMined, CratesSalvaged, JunkDestroyed, BattleshipsDestroyed, HighestCredits;
+        public static int LastArrivalHullPercent = 100;
+        public static HashSet<int> OreTypesMined = new HashSet<int>(), CoreTypesMined = new HashSet<int>();
         /// <summary>Ship+0x78 (Ship::addMod, each at most once; Reference/research/blueprints_mods.md 2): the current ship's
         /// mods: 0 +40 hull, 1 +30 t cargo, 2 +1 equipment slot, 3 handling +0.2. They belong to the hull (cleared when
         /// the ship is traded).</summary>
@@ -229,6 +238,11 @@ namespace GoF2Remake.Data
             Blueprints = new List<GoF2BlueprintState>();
             PendingProducts = new List<GoF2PendingProduct>();
             GoodsProduced = 0;
+            Medals = new int[45];
+            AsteroidsDestroyed = OreMined = CoresMined = CratesSalvaged = JunkDestroyed = BattleshipsDestroyed = HighestCredits = 0;
+            LastArrivalHullPercent = 100;
+            OreTypesMined = new HashSet<int>();
+            CoreTypesMined = new HashSet<int>();
             ShipMods = new List<int>();
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;
             StoryCounter = 0;

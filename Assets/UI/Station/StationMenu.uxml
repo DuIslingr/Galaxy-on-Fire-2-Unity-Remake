@@ -5,6 +5,7 @@
     <ui:Style src="HangarWindow.uss" />
     <ui:Style src="../Dialogue/Dialogue.uss" />
     <ui:Style src="Lounge.uss" />
+    <ui:Style src="Status.uss" />
     <ui:VisualElement name="stationRoot" class="station-root" picking-mode="Ignore">
         <ui:VisualElement class="side-shade" picking-mode="Ignore" />
         <ui:VisualElement class="bottom-shade" picking-mode="Ignore" />
@@ -28,6 +29,7 @@
                     <ui:Button name="loungeButton" class="station-button gof-semibold" />
                     <ui:Button name="mapButton" class="station-button gof-semibold" />
                     <ui:Button name="missionsButton" class="station-button gof-semibold" />
+                    <ui:Button name="statusButton" class="station-button gof-semibold" />
                 </ui:VisualElement>
             </ui:VisualElement>
 
@@ -136,6 +138,26 @@
                             <ui:Button name="freelanceMap" class="station-button chat-choice gof-semibold" />
                             <ui:Button name="freelanceDiscard" class="station-button chat-choice missions-discard gof-semibold" />
                         </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement name="statusWindow" class="status-window">
+                <ui:VisualElement class="hangar-top">
+                    <ui:Label name="statusTitle" class="missions-title gof-semibold" picking-mode="Ignore" />
+                    <ui:VisualElement class="hangar-top-spacer" picking-mode="Ignore" />
+                    <ui:Button name="statusClose" class="hangar-close gof-semibold" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-body" picking-mode="Ignore">
+                    <ui:ScrollView name="statusLeftScroll" class="status-left">
+                        <ui:VisualElement name="statusLeft" picking-mode="Ignore" />
+                    </ui:ScrollView>
+                    <ui:VisualElement class="status-right" picking-mode="Ignore">
+                        <ui:Label name="medalsTitle" class="status-plate gof-semibold" picking-mode="Ignore" />
+                        <ui:ScrollView name="medalScroll" class="medal-scroll">
+                            <ui:VisualElement name="medalGrid" class="medal-grid" picking-mode="Ignore" />
+                        </ui:ScrollView>
+                        <ui:Label name="medalHint" class="medal-hint" picking-mode="Ignore" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
