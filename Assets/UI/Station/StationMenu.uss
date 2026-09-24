@@ -261,6 +261,44 @@
     font-size: 22px;
 }
 
+/* ---- system menu (Menu 172: Save game, Back to Main Menu) ------------------------------ */
+
+.system-menu {
+    width: 90%;
+    max-width: 820px;
+    max-height: 92%;
+    padding: 32px 40px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-top-width: 3px;
+    border-top-color: var(--gof-cyan);
+}
+
+.system-menu-title {
+    font-size: 28px;
+    letter-spacing: 6px;
+    color: #FFFFFF;
+    margin-bottom: 20px;
+}
+
+.system-menu-page {
+    display: none;
+    flex-shrink: 1;
+}
+
+.system-menu-page--shown {
+    display: flex;
+}
+
+.system-slot-list {
+    height: 480px;
+}
+
+.system-menu-back {
+    margin-top: 16px;
+}
+
 /* Phones: narrower panel. */
 .layout-phone .side-panel {
     width: 380px;

@@ -12,7 +12,11 @@
 //   Keyboard:   keycap hints; A/D or arrows turn the ship, 1 hangar, 2 lounge, M map, L launch, Esc back.
 //   Controller: Xbox hints; right stick turns the ship, LB hangar / RB lounge, Y map, X launch, B back, Menu to the main menu.
 //   In the hangar window: up / down select, left / right sell / buy, Enter / A confirm, Q / E or LB / RB switch tabs.
-// Esc / B: dialog -> no, hangar window / lounge -> main view, main view -> main menu (the original opens its system menu).
+// Esc / B: dialog -> no, hangar window / lounge -> main view, main view -> the system menu.
+// System menu (MenuTouchWindow, "Menu" 172; the Menu button, Esc on the main view, controller Menu): Save game (30) with the
+// slot list (slot 0 "This slot is reserved for the auto-save game." 487; a used slot asks "Are you sure you want to
+// overwrite this game?" 49; then "Game saved." 50, MenuTouchWindow::saveGame 0x14bcf8), Back to Main Menu (522, confirm
+// "Are you sure? Your progress won't be saved." 523). The original's Options / Help entries are in the main menu here.
 // Not yet (the original's other buttons): Missions, Status.
 
 using GoF2Remake.Data;
@@ -51,6 +55,10 @@ namespace GoF2Remake.UI
         PanelSettings runtimePanel;
         VisualElement root, safeArea, dragZone, hints, dialog;
         Button hangarButton, loungeButton, mapButton, launchButton, dialogYes, dialogNo;
+        VisualElement systemMenu, systemMain, systemSave;
+        ScrollView saveSlotList;
+        Button saveGameButton, mainMenuButton, systemClose, saveBack;
+        int lastSavedSlot = -1;
         Label viewTitle, toast;
         GoF2HangarWindow hangarWindow;
         System.Action dialogAction;
@@ -108,7 +116,19 @@ namespace GoF2Remake.UI
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", CloseDialog);
             hangarWindow = new GoF2HangarWindow(this, level, root);
-            Bind("menuButton", BackToMenu);
+            Bind("menuButton", OpenSystemMenu);
+            systemMenu = root.Q("systemMenu");
+            systemMain = root.Q("systemMenuMain");
+            systemSave = root.Q("systemMenuSave");
+            saveSlotList = root.Q<ScrollView>("saveSlotList");
+            saveSlotList.mode = ScrollViewMode.Vertical;
+            saveSlotList.verticalScrollerVisibility = ScrollerVisibility.Hidden;   // drag / wheel / focus scrolling instead
+            saveSlotList.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+            new GoF2DragScroll(saveSlotList);
+            saveGameButton = Bind("saveGameButton", () => ShowSystemPage(true));
+            mainMenuButton = Bind("mainMenuButton", () => ShowDialog(GoF2Localization.Get(523), BackToMenu));
+            systemClose = Bind("systemMenuClose", CloseSystemMenu);
+            saveBack = Bind("saveBack", () => ShowSystemPage(false));
 
             var st = level != null ? level.Station : null;
             string T(int id) => GoF2Localization.Get(id);
@@ -126,6 +146,10 @@ namespace GoF2Remake.UI
             launchButton.text = GoF2Localization.Extra("stationLaunch", "LAUNCH");
             dialogNo.text = T(135).ToUpperInvariant();
             root.Q<Button>("menuButton").text = GoF2Localization.Extra("hudMenu", "MENU");
+            root.Q<Label>("systemMenuTitle").text = T(172).ToUpperInvariant();       // Menu
+            saveGameButton.text = T(30).ToUpperInvariant();                          // Save game
+            mainMenuButton.text = T(522).ToUpperInvariant();                         // Back to Main Menu
+            systemClose.text = saveBack.text = GoF2Localization.Extra("hudBack", "BACK");
 
             HookDrag();
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
@@ -242,7 +266,14 @@ namespace GoF2Remake.UI
         {
             dialog.RemoveFromClassList("station-dialog-backdrop--shown");
             dialogAction = null;
-            if (!HangarOpen) Select(launchButton);
+            if (SystemMenuOpen)
+            {
+                // Back to the slot just picked (or the first item of the page).
+                var items = SystemMenuItems();
+                int i = SavePageOpen && lastSavedSlot >= 0 && lastSavedSlot < items.Length ? lastSavedSlot : 0;
+                Select(items[i]);
+            }
+            else if (!HangarOpen) Select(launchButton);
             else if (root.focusController?.focusedElement is VisualElement f) f.Blur();
         }
 
@@ -264,13 +295,89 @@ namespace GoF2Remake.UI
         {
             if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
             else if (HangarOpen) { Play(buttonRelease); CloseHangar(); }
+            else if (SavePageOpen) { Play(buttonRelease); ShowSystemPage(false); }
+            else if (SystemMenuOpen) { Play(buttonRelease); CloseSystemMenu(); }
             else if (level != null && level.View == GoF2StationView.Lounge) { Play(buttonRelease); level.SetView(GoF2StationView.Hangar); }
-            else BackToMenu();
+            else { Play(buttonRelease); OpenSystemMenu(); }
         }
 
         void BackToMenu()
         {
             if (Application.CanStreamedLevelBeLoaded(menuScene)) SceneManager.LoadScene(menuScene);
+        }
+
+        // ---- system menu (MenuTouchWindow: Save game, Back to Main Menu) -----------------------------------
+
+        bool SystemMenuOpen => systemMenu != null && systemMenu.ClassListContains("station-dialog-backdrop--shown");
+        bool SavePageOpen => SystemMenuOpen && systemSave.ClassListContains("system-menu-page--shown");
+
+        void OpenSystemMenu()
+        {
+            if (SystemMenuOpen || level == null) return;
+            CloseHangar();
+            systemMenu.AddToClassList("station-dialog-backdrop--shown");
+            ShowSystemPage(false);
+        }
+
+        void CloseSystemMenu()
+        {
+            if (!SystemMenuOpen) return;
+            systemMenu.RemoveFromClassList("station-dialog-backdrop--shown");
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            Select(launchButton);
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        void ShowSystemPage(bool save)
+        {
+            systemMain.EnableInClassList("system-menu-page--shown", !save);
+            systemSave.EnableInClassList("system-menu-page--shown", save);
+            root.Q<Label>("systemMenuTitle").text = GoF2Localization.Get(save ? 30 : 172).ToUpperInvariant();   // Save game / Menu
+            if (save) BuildSaveSlots();
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            Select(save ? saveSlotList.contentContainer.ElementAt(1) : saveGameButton);   // slot 1: the first manual slot
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        void BuildSaveSlots()
+        {
+            saveSlotList.Clear();
+            for (int i = 0; i < GoF2SaveGame.SlotCount; i++)
+            {
+                int slot = i;
+                var save = GoF2SaveGame.Preview(i);
+                var row = GoF2SaveSlotRow.Build(level.Database, i, save, GoF2Localization.Extra("autosaveHint", "Saved automatically when you dock"));
+                row.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
+                row.clicked += () => { Play(buttonRelease); PickSaveSlot(slot, save != null); };
+                row.RegisterCallback<FocusInEvent>(_ => saveSlotList.ScrollTo(row));
+                saveSlotList.Add(row);
+            }
+        }
+
+        /// <summary>MenuTouchWindow::OnTouchEnd save mode: slot 0 is reserved, a used slot asks before overwriting.</summary>
+        void PickSaveSlot(int slot, bool used)
+        {
+            lastSavedSlot = slot;
+            if (slot == GoF2SaveGame.AutoSaveSlot) { ShowDialog(GoF2Localization.Get(487), null, true); return; }
+            if (used) ShowDialog(GoF2Localization.Get(49), () => SaveTo(slot));
+            else SaveTo(slot);
+        }
+
+        /// <summary>MenuTouchWindow::saveGame: write the slot, refresh the list, "Game saved." (50).</summary>
+        void SaveTo(int slot)
+        {
+            bool ok = GoF2SaveGame.Save(slot);
+            BuildSaveSlots();
+            lastSavedSlot = slot;
+            ShowDialog(ok ? GoF2Localization.Get(50) : GoF2Localization.Extra("saveFailed", "The game could not be saved."), null, true);
+        }
+
+        /// <summary>The system menu's focusable items (its buttons, or the slot rows plus Back).</summary>
+        VisualElement[] SystemMenuItems()
+        {
+            if (!SavePageOpen) return new VisualElement[] { saveGameButton, mainMenuButton, systemClose };
+            var list = new System.Collections.Generic.List<VisualElement>(saveSlotList.contentContainer.Children()) { saveBack };
+            return list.ToArray();
         }
 
         // ---- turning the ship (ModStation::OnTouchMove / OnTouchEnd) ----------------------------------------
@@ -326,7 +433,7 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-gamepad", kind == GoF2InputKind.Gamepad);
             SetTouchMode(kind == GoF2InputKind.Touch);
             if (kind == GoF2InputKind.Gamepad && !HangarOpen && root.focusController?.focusedElement == null)
-                Select(DialogOpen ? dialogYes : level != null && level.View == GoF2StationView.Lounge ? loungeButton : hangarButton);
+                Select(DialogOpen ? dialogYes : SystemMenuOpen ? SystemMenuItems()[0] : level != null && level.View == GoF2StationView.Lounge ? loungeButton : hangarButton);
             BuildHints(kind);
         }
 
@@ -364,7 +471,9 @@ namespace GoF2Remake.UI
                 root.focusController?.IgnoreEvent(e);
                 return;
             }
-            var items = DialogOpen ? new VisualElement[] { dialogYes, dialogNo } : new VisualElement[] { hangarButton, loungeButton, mapButton, launchButton };
+            var items = DialogOpen ? new VisualElement[] { dialogYes, dialogNo }
+                      : SystemMenuOpen ? SystemMenuItems()
+                      : new VisualElement[] { hangarButton, loungeButton, mapButton, launchButton };
             if (DialogOpen ? horizontal : vertical)
             {
                 var focused = root.focusController?.focusedElement as VisualElement;
@@ -381,6 +490,23 @@ namespace GoF2Remake.UI
             if (hints == null) return;
             hints.Clear();
             string T(string key, string english) => GoF2Localization.Extra(key, english);
+            if (SystemMenuOpen)
+            {
+                string select = T("hudSelect", "SELECT"), confirm = T("hudConfirm", "CONFIRM"), close = T("hudBack", "BACK");
+                if (kind == GoF2InputKind.KeyboardMouse)
+                {
+                    Hint(select, GoF2InputGlyph.Key("W"), GoF2InputGlyph.Key("S"));
+                    Hint(confirm, GoF2InputGlyph.Key("ENTER", true));
+                    Hint(close, GoF2InputGlyph.Key("ESC"));
+                }
+                else if (kind == GoF2InputKind.Gamepad)
+                {
+                    Hint(select, GoF2InputGlyph.Pad(GoF2PadButton.DPad));
+                    Hint(confirm, GoF2InputGlyph.Pad(GoF2PadButton.A));
+                    Hint(close, GoF2InputGlyph.Pad(GoF2PadButton.B));
+                }
+                return;
+            }
             if (HangarOpen)
             {
                 string select = T("hudSelect", "SELECT"), trade = $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";
@@ -449,9 +575,14 @@ namespace GoF2Remake.UI
             var kb = Keyboard.current;
             var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)) { Back(); return; }
-            if (pad != null && pad.startButton.wasPressedThisFrame) { BackToMenu(); return; }
+            if (pad != null && pad.startButton.wasPressedThisFrame && !DialogOpen)
+            {
+                Play(buttonRelease);
+                if (SystemMenuOpen) CloseSystemMenu(); else OpenSystemMenu();
+                return;
+            }
             if (toastMs > 0f && (toastMs -= Time.unscaledDeltaTime * 1000f) <= 0f) toast.RemoveFromClassList("station-toast--shown");
-            if (DialogOpen) return;
+            if (DialogOpen || SystemMenuOpen) return;
 
             if (HangarOpen)
             {

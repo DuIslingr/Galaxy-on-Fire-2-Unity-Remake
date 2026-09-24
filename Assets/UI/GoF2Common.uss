@@ -149,3 +149,80 @@
 .unity-scroll-view__horizontal-scroller {
     display: none;
 }
+
+/* ---- save slots (main menu Load, station Save game; GoF2SaveSlotRow) ------------------------------------------------------------------- */
+
+.slot-list {
+    height: 520px;
+    flex-shrink: 1;
+    min-height: 120px;
+    border-top-width: 1px;
+    border-top-color: var(--gof-line);
+}
+
+.slot-row {
+    flex-shrink: 0;
+    flex-direction: row;
+    align-items: center;
+    height: 64px;
+    margin: 0;
+    padding: 0 20px 0 14px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(62, 200, 255, 0.12);
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.can-hover .slot-row:hover,
+.slot-row:focus {
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+}
+
+.slot-index {
+    width: 58px;
+    font-size: 22px;
+    letter-spacing: 2px;
+    color: var(--gof-cyan);
+    -unity-text-align: middle-left;
+}
+
+.slot-info {
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.slot-name {
+    font-size: 20px;
+    color: var(--gof-text);
+    -unity-text-align: middle-left;
+}
+
+.slot-sub {
+    font-size: 14px;
+    color: var(--gof-text-dim);
+    -unity-text-align: middle-left;
+}
+
+.slot-state {
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--gof-text-dim);
+}
+
+.slot-row--empty .slot-index {
+    color: var(--gof-cyan-soft);
+}
+
+.slot-row--empty .slot-name {
+    color: var(--gof-text-dim);
+}
+
+.slot-row--empty:focus .slot-name,
+.can-hover .slot-row--empty:hover .slot-name {
+    color: var(--gof-text);
+}

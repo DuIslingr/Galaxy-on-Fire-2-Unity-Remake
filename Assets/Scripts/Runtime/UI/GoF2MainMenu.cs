@@ -534,41 +534,7 @@ namespace GoF2Remake.UI
             {
                 int slot = i;
                 var save = GoF2SaveGame.Preview(i);
-                var row = new Button { focusable = true };
-                row.AddToClassList("slot-row");
-                row.EnableInClassList("slot-row--empty", save == null);
-
-                var index = new Label(i.ToString("00"));
-                index.AddToClassList("slot-index");
-                index.AddToClassList("gof-semibold");
-                var info = new VisualElement();
-                info.AddToClassList("slot-info");
-                var name = new Label(i == 0 ? GoF2Localization.Get(486) : $"{GoF2Localization.Extra("slot", "Slot")} {i}");
-                name.AddToClassList("slot-name");
-                info.Add(name);
-                string subText = null;
-                if (save != null)
-                {
-                    // RecordHandler::recordStoreWritePreview: station, system, credits, playing time, ship.
-                    var st = db.Stations.Find(x => x.index == save.station);
-                    var ship = db.Ship(save.ship);
-                    subText = $"{st?.name} · {st?.systemName}  ·  {ship?.name}";
-                }
-                else if (i == 0) subText = GoF2Localization.Extra("autosaveHint", "Saved automatically when you dock");
-                if (subText != null)
-                {
-                    var sub = new Label(subText);
-                    sub.AddToClassList("slot-sub");
-                    info.Add(sub);
-                }
-                var state = new Label(save == null ? GoF2Localization.Get(174)   // -BLANK-
-                    : $"{save.credits:N0} Cr  ·  {(int)(save.playSeconds / 3600)}:{(int)(save.playSeconds / 60) % 60:00} h");
-                state.AddToClassList("slot-state");
-
-                foreach (var e in new VisualElement[] { index, info, state }) e.pickingMode = PickingMode.Ignore;
-                row.Add(index);
-                row.Add(info);
-                row.Add(state);
+                var row = GoF2SaveSlotRow.Build(db, i, save, GoF2Localization.Extra("autosaveHint", "Saved automatically when you dock"));
                 row.clicked += () => { Play(buttonPush); if (save != null) LoadSlot(slot); };
                 HookFocusSound(row);
                 list.Add(row);

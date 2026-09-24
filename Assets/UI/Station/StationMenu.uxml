@@ -79,6 +79,21 @@
             <ui:Label name="toast" class="station-toast" picking-mode="Ignore" />
         </ui:VisualElement>
 
+        <ui:VisualElement name="systemMenu" class="station-dialog-backdrop">
+            <ui:VisualElement class="system-menu">
+                <ui:Label name="systemMenuTitle" class="system-menu-title gof-semibold" />
+                <ui:VisualElement name="systemMenuMain" class="system-menu-page">
+                    <ui:Button name="saveGameButton" class="station-button gof-semibold" />
+                    <ui:Button name="mainMenuButton" class="station-button gof-semibold" />
+                    <ui:Button name="systemMenuClose" class="station-button gof-semibold" />
+                </ui:VisualElement>
+                <ui:VisualElement name="systemMenuSave" class="system-menu-page">
+                    <ui:ScrollView name="saveSlotList" class="slot-list system-slot-list" />
+                    <ui:Button name="saveBack" class="station-button system-menu-back gof-semibold" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
         <ui:VisualElement name="dialog" class="station-dialog-backdrop">
             <ui:VisualElement class="station-dialog">
                 <ui:Label name="dialogText" class="station-dialog-text" />
