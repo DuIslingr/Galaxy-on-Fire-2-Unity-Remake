@@ -562,6 +562,8 @@ namespace GoF2Remake.UI
             weapons?.SetPrimaryHeld(false);
             autopilotMenuItems.Clear();
             menuButtons.Clear();
+            menuActions.Clear();
+            root.Q<Label>("autopilotMenuTitle").text = GoF2Localization.Get(571).ToUpperInvariant();
             foreach (var t in nav.MenuEntries())
             {
                 var target = t;
@@ -569,7 +571,7 @@ namespace GoF2Remake.UI
                 b.AddToClassList("autopilot-menu-item");
                 b.AddToClassList("gof-semibold");
                 b.focusable = false;
-                b.clicked += () => { nav.ChooseMenuEntry(target); HideAutopilotMenu(); };
+                b.clicked += () => ChooseMenuTarget(target);
                 autopilotMenuItems.Add(b);
                 menuButtons.Add((b, target));
             }
@@ -632,9 +634,50 @@ namespace GoF2Remake.UI
                            || (pad != null && (pad.buttonSouth.wasPressedThisFrame || pad.buttonWest.wasPressedThisFrame));
             if (confirm && menuIndex < menuButtons.Count)
             {
-                nav.ChooseMenuEntry(menuButtons[menuIndex].target);
-                HideAutopilotMenu();
+                if (menuIndex < menuActions.Count && menuActions[menuIndex] != null) menuActions[menuIndex]();
+                else ChooseMenuTarget(menuButtons[menuIndex].target);
             }
+        }
+
+        readonly System.Collections.Generic.List<System.Action> menuActions = new System.Collections.Generic.List<System.Action>();
+
+        void ChooseMenuTarget(GoF2Navigation.Target target)
+        {
+            if (target != null && target.kind == GoF2Navigation.Kind.Wingmen) { OpenWingmanMenu(); return; }
+            nav.ChooseMenuEntry(target);
+            HideAutopilotMenu();
+        }
+
+        /// <summary>Hud::initHudMenu(2): 307 Fire at will, 308 Attack my target, 309 Secure next waypoint, 310 / 311 Use laser /
+        /// Use EMP blaster; a command goes to every living wingman, closes the menu and resumes the game.</summary>
+        void OpenWingmanMenu()
+        {
+            var traffic = level != null ? level.Traffic : null;
+            if (traffic == null) return;
+            autopilotMenuItems.Clear();
+            menuButtons.Clear();
+            menuActions.Clear();
+            root.Q<Label>("autopilotMenuTitle").text = GoF2Localization.Get(306).ToUpperInvariant();
+            foreach (var (command, text) in new[] { (1, 307), (3, 308), (2, 309), (0, GoF2Session.WingmanShowEmp ? 311 : 310) })
+            {
+                int cmd = command;
+                System.Action act = () =>
+                {
+                    traffic.CommandWingmen(cmd, level.Radar != null ? level.Radar.Locked : null, nav.PlayerRoute);
+                    CloseAutopilotMenu();
+                    root.Q<Label>("autopilotMenuTitle").text = GoF2Localization.Get(571).ToUpperInvariant();
+                };
+                var b = new Button { text = GoF2Localization.Get(text).ToUpperInvariant() };
+                b.AddToClassList("autopilot-menu-item");
+                b.AddToClassList("gof-semibold");
+                b.focusable = false;
+                b.clicked += act;
+                autopilotMenuItems.Add(b);
+                menuButtons.Add((b, null));
+                menuActions.Add(act);
+            }
+            menuIndex = 0;
+            HighlightMenu();
         }
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);

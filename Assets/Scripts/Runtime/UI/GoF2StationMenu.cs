@@ -470,6 +470,19 @@ namespace GoF2Remake.UI
             return true;
         }
 
+        bool wingmenChecked;
+
+        /// <summary>ModStation::checkHints: an expired wingman contract ends here, 313 from the first wingman.</summary>
+        bool CheckWingmenContract()
+        {
+            if (wingmenChecked) return false;
+            wingmenChecked = true;
+            GoF2Session.WingmanShowEmp = true;   // Status+0xf8 reset on the station visit
+            if (!GoF2Wingmen.Expired) return false;
+            storyDialogue.ShowAgentMessage(GoF2Localization.Get(313), GoF2Session.Wingmen[0], GoF2Session.WingmanPortrait, GoF2Wingmen.Dismiss);
+            return true;
+        }
+
         bool pendingChecked;
 
         /// <summary>ModStation::checkPendingProducts 0xee258 (once per docking): blueprint products waiting here move to the
@@ -765,6 +778,7 @@ namespace GoF2Remake.UI
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPendingProducts()) return;
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
             lounge?.Update();
 
             var kb = Keyboard.current;

@@ -40,7 +40,7 @@ namespace GoF2Remake.Flight
 {
     public class GoF2Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen }
 
         public class Target
         {
@@ -69,6 +69,11 @@ namespace GoF2Remake.Flight
         public bool Paused { get => paused; set { paused = value; ApplyTimeScale(); } }
         /// <summary>The autopilot to the jumpgate is inside its sphere (Level::collideStream, radius 7500 / Vossk 11250).</summary>
         public bool ReachedGate => AutopilotTarget?.kind == Kind.Jumpgate && (AutopilotTarget.Position - ship.transform.position).magnitude < gateRadiusUnits * M;
+        /// <summary>Wingmen fly with the player: the menu offers 306 "Wingmen" (the HUD's action-menu entry in the original).</summary>
+        public Func<bool> HasWingmen;
+        /// <summary>The player route (campaign / freelance waypoints), null = none.</summary>
+        public GoF2Route PlayerRoute => playerRoute;
+
         /// <summary>The "Khador Drive" menu entry was picked (GoF2SystemJump opens the star map).</summary>
         public event Action KhadorRequested;
         public Target Candidate { get; private set; }
@@ -215,6 +220,7 @@ namespace GoF2Remake.Flight
             var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
             if (gate != null) list.Add(gate);
             if (GoF2GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = GoF2Localization.Get(1359) });
+            if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = GoF2Localization.Get(306) });
             return list;
         }
 

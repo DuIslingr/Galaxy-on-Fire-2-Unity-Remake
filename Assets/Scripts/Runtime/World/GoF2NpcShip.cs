@@ -17,6 +17,11 @@
 //               (away - fwd) * speed * 0.03 plus an extra step (fighters fly through asteroids and each other)
 //   death       sound 20, 1.5..3 s tumbling along the death direction, then Explosion type 0, the hull 300 ms more,
 //               a crate with the cargo; gone once the explosion ended and the crate is gone (60 s)
+// Wingmen (Level::createWingmen 0xcb338, PlayerFighter::update; Reference/research/wingmen_wanted.md 1): always friend,
+//   formation points (slot 0 -right*4000 -fwd*3000, 1 +right*4000 -fwd*3000, 2 +up*2000 -fwd*2000 around the player);
+//   command 1 "Fire at will" attacks the first hostile ship of the orbit at any distance (and ends boosts for good),
+//   2 scouts the player's next waypoint, 3 sticks to the player's locked ship; a laser (the race's NPC gun) and a Dia EMP
+//   Mk III (item 18) to switch between; unarmed in a Challenge; a dead one leaves the contract; no friendly-fire reaction.
 // Damage smoke (PlayerFighter::update 0xf1b0e): below 33 % of the hull a fighter trails the prologue's smoke and fire
 //   (GoF2ShipSmoke), off again when repaired to 33 %; they keep running through the death tumble and stop at the explosion.
 // Freighters (PlayerFixedObject): unarmed, fly game +Z at 1 u/ms, never turn, x5 hull; death: their wreck animation
@@ -117,6 +122,16 @@ namespace GoF2Remake.World
         GoF2ShipSmoke smoke;
         bool smoking;   // PlayerFighter +0x1f4
 
+        // wingman (KIPlayer+0xd8 / +0xdc / +0xe0 / +0xe4)
+        public bool IsWingman { get; private set; }
+        int wingSlot, wingCommand = 1, scoutStart;
+        GoF2Target wingTarget;
+        GoF2Route scout;
+        GoF2Gun empGun;
+        GoF2GunRig empRig;
+        bool useEmp, evasionOff;
+        Transform fxRootRef;
+
         static Vector3 ToUnity(Vector3 game) => new Vector3(game.x, game.y, -game.z) * M;
         static Vector3 ToGame(Vector3 unity) => new Vector3(unity.x, unity.y, -unity.z) / M;
         /// <summary>Game rotation identity: facing game +Z = Unity -Z.</summary>
@@ -127,6 +142,7 @@ namespace GoF2Remake.World
             traffic = owner;
             db = database;
             Spec = spec;
+            fxRootRef = fxRoot;
             assets = GoF2CombatAssets.Load();
             transform.SetPositionAndRotation(ToUnity(spec.position), GameForward);
             if (prefab != null)
@@ -247,6 +263,7 @@ namespace GoF2Remake.World
         {
             Current = State.Dead;
             rig?.HideAll();
+            empRig?.HideAll();
             smoking = false;
             smoke?.Clear();
             if (wreck != null) Destroy(wreck);
@@ -264,6 +281,11 @@ namespace GoF2Remake.World
                 gun.Update(dtMs, enemies, null);
                 rig.UpdateVisuals(dtMs, Camera.main, transform.forward);
             }
+            if (empGun != null)
+            {
+                empGun.Update(dtMs, enemies, null);
+                empRig.UpdateVisuals(dtMs, Camera.main, transform.forward);
+            }
             if (Current == State.Dead) { UpdateDead(dtMs); return; }
             if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }
             UpdateRelations();
@@ -280,7 +302,7 @@ namespace GoF2Remake.World
             }
             reselectTimer += dtMs;
             boostTimer += dtMs;
-            UpdateTargeting();
+            if (IsWingman) UpdateWingman(); else UpdateTargeting();
             if (IsJumper && followingWaypoint) { jumpMs += dtMs; if (jumpMs >= 20000f) { jumpMs = 0f; Current = State.JumpingOut; } }
             else jumpMs = 0f;
             UpdateBoost(dtMs);
@@ -370,6 +392,90 @@ namespace GoF2Remake.World
             transform.SetPositionAndRotation(position, Quaternion.LookRotation(forward, Vector3.up));
         }
 
+        // ---- wingman ------------------------------------------------------------------------------------------
+
+        /// <summary>KIPlayer::setWingman(true, slot) + the createWingmen setup; 'armed' false in a Challenge.</summary>
+        public void MakeWingman(int slot, bool armed)
+        {
+            IsWingman = true;
+            wingSlot = slot;
+            wingCommand = 1;
+            alwaysFriend = true;
+            if (!armed)
+            {
+                rig?.HideAll();
+                gun = null;
+                return;
+            }
+            // Level::assignGuns: slot 1 = Dia EMP Mk III, damage 0, 4 bullets, reload 400, 3000 ms, speed 16.
+            var emp = db.Item(18);
+            if (emp == null) return;
+            empGun = new GoF2Gun(emp, 0f, 400f, 4, 3000f, 16f) { owner = Target, emp = emp.Stat("empDamage", 8) };
+            empRig = new GoF2GunRig(empGun, GoF2WeaponFx.Load(18), fxRootRef, null, 2);
+            empGun.Hit += (b, hit, point) => { if (hit.hitpoints != null) hit.hitpoints.DamageEmp((int)empGun.emp); empRig.ShowImpact(point); };
+        }
+
+        /// <summary>PlayerFighter::setWingmanCommand 0xf096c: 1 fire at will (boosts off for good), 2 secure the next
+        /// waypoint (a clone of the player's route), 3 attack the locked ship; 0 toggles laser / EMP blaster.</summary>
+        public void WingmanCommand(int command, GoF2Target locked, GoF2Route playerRoute)
+        {
+            if (!IsWingman || Current != State.Fly) return;
+            switch (command)
+            {
+                case 0: useEmp = !useEmp; return;
+                case 1: evasionOff = true; boosting = panic = false; break;
+                case 2:
+                    if (playerRoute == null || playerRoute.Waypoint == null) return;
+                    scout = playerRoute.Clone();
+                    scout.index = playerRoute.index;
+                    scoutStart = playerRoute.index;
+                    reselectTimer = 5001f;
+                    break;
+                case 3:
+                    if (locked == null || !locked.Alive) return;   // no lock: ignored
+                    wingTarget = locked;
+                    reselectTimer = 5001f;
+                    break;
+            }
+            wingCommand = command;
+            speed = baseSpeed;
+        }
+
+        /// <summary>The wingman branches of the target selection and the formation route.</summary>
+        void UpdateWingman()
+        {
+            target = null;
+            attacking = false;
+            followingWaypoint = false;
+            var player = traffic.Player != null ? traffic.Player.transform : null;
+            if (wingCommand == 3)
+            {
+                if (wingTarget == null || !wingTarget.Alive) { wingCommand = 1; wingTarget = null; }
+                else if (InBox(wingTarget)) { target = wingTarget; attacking = true; }
+            }
+            if (wingCommand == 2 && scout != null)
+            {
+                scout.Update(ToGame(transform.position));
+                var wp = scout.Waypoint;
+                if (wp.HasValue && scout.index <= scoutStart) { targetPos = ToUnity(wp.Value); followingWaypoint = true; return; }
+                scout = null;
+                wingCommand = 1;
+            }
+            if (!attacking && wingCommand != 3 && gun != null)
+                foreach (var s in traffic.Ships)
+                {
+                    if (s == this || s.Gone || s.IsWingman || s.Current != State.Fly || s.Hidden) continue;
+                    if (s.Target.Alive && s.Target.hostileToPlayer) { target = s.Target; attacking = true; break; }
+                }
+            if (target != null) { targetPos = target.transform.position; return; }
+            if (player == null) { targetPos = transform.position + transform.forward; return; }
+            // Formation point (per frame a one-point route).
+            Vector3 f = player.forward, r = player.right, u = player.up;
+            Vector3 off = wingSlot == 0 ? -r * 4000f - f * 3000f : wingSlot == 1 ? r * 4000f - f * 3000f : u * 2000f - f * 2000f;
+            targetPos = player.position + off * M;
+            followingWaypoint = true;
+        }
+
         /// <summary>§5.3 target selection.</summary>
         void UpdateTargeting()
         {
@@ -451,10 +557,12 @@ namespace GoF2Remake.World
                     if (Mathf.Abs(local.x) < GoF2NpcTables.FireCone && Mathf.Abs(local.y) < GoF2NpcTables.FireCone
                         && Mathf.Abs(d.x) < fr && Mathf.Abs(d.y) < fr && Mathf.Abs(d.z) < fr)
                     {
-                        if (gun == null || !target.Targetable) attacking = false;
-                        else if (gun.TryFire(transform) >= 0)
+                        var firing = useEmp && empGun != null ? empGun : gun;
+                        if (firing == null || !target.Targetable) attacking = false;
+                        else if (firing.TryFire(transform) >= 0)
                         {
-                            var clip = assets != null && assets.shots != null && assets.shots.Length == 5 ? assets.shots[GoF2NpcTables.ShotSound(Race)] : null;
+                            var clip = firing == empGun ? GoF2WeaponFx.Load(18)?.shot
+                                     : assets != null && assets.shots != null && assets.shots.Length == 5 ? assets.shots[GoF2NpcTables.ShotSound(Mathf.Clamp(Race, 0, 9))] : null;
                             if (clip != null) sfx.PlayOneShot(clip, 0.8f * GoF2Settings.SfxVolume);
                         }
                     }
@@ -513,7 +621,7 @@ namespace GoF2Remake.World
                 lastHull = Hp.hull;
                 if (damageSinceBoost >= 0.4f * Hp.maxHull) { damageSinceBoost = 0; boostTimer = 10000f; panic = true; }
             }
-            if (Spec.speed > 0f) return;   // a fixed-speed ship (setSpeed) never boosts
+            if (Spec.speed > 0f || evasionOff) return;   // a fixed-speed ship (setSpeed) / a wingman after "Fire at will" never boosts
             if (boostTimer > 5000f && !boosting)
             {
                 boostTimer = 0f;
@@ -577,7 +685,7 @@ namespace GoF2Remake.World
         /// <summary>Player::damage friendly-fire bookkeeping (§4.5), hits by the player only.</summary>
         void OnDamaged(GoF2Target t, int dmg, bool byNpc)
         {
-            if (byNpc || alwaysEnemy || Race == GoF2Standing.Void || Race == GoF2Standing.Specter) return;
+            if (byNpc || alwaysEnemy || IsWingman || Race == GoF2Standing.Void || Race == GoF2Standing.Specter) return;
             if (Target.hostileToPlayer && !turnedEnemy) return;
             if (Race != traffic.SystemRace && Race != traffic.AttackRace) return;
             damageByPlayer += dmg;
@@ -592,6 +700,7 @@ namespace GoF2Remake.World
         void OnDied(GoF2Target t)
         {
             traffic.OnShipDied(this, !Target.killedByNpc);
+            if (IsWingman) GoF2Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract
             Current = State.Dying;
             deathDir = transform.forward;
             if (engine != null) engine.Stop();

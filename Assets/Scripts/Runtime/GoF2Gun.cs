@@ -36,7 +36,9 @@ namespace GoF2Remake.Flight
         public readonly Kind kind;
         public readonly int categoryId;
         public float damage;
-        public readonly float emp, reloadMs, lifetimeMs, speedUnitsPerMs;
+        /// <summary>EMP per hit (attr 10); settable for the wingmen's Dia EMP Mk III.</summary>
+        public float emp;
+        public readonly float reloadMs, lifetimeMs, speedUnitsPerMs;
         public readonly Vector3 mountLocal;   // Unity metres, ship space
         public readonly Bullet[] bullets;
         public readonly bool isSecondary;

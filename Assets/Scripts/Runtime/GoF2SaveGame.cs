@@ -47,6 +47,8 @@ namespace GoF2Remake.Data
         public List<string> wingmen;
         public int wingmanRace;
         public float wingmanContractMs;
+        public int[] wingmanPortrait;
+        public int wingmenHired;
         public List<int> unlockedBlueprints, shipMods;
         public List<GoF2BlueprintState> blueprints;
         public List<GoF2PendingProduct> pendingProducts;
@@ -163,6 +165,7 @@ namespace GoF2Remake.Data
                 usedMissionTypes = GoF2Session.UsedMissionTypes,
                 informerKilled = GoF2Session.InformerKilled,
                 wingmen = GoF2Session.Wingmen, wingmanRace = GoF2Session.WingmanRace, wingmanContractMs = GoF2Session.WingmanContractMs,
+                wingmanPortrait = GoF2Session.WingmanPortrait, wingmenHired = GoF2Session.WingmenHired,
                 unlockedBlueprints = new List<int>(GoF2Session.UnlockedBlueprints), shipMods = GoF2Session.ShipMods,
                 blueprints = GoF2Session.Blueprints, pendingProducts = GoF2Session.PendingProducts, goodsProduced = GoF2Session.GoodsProduced,
                 informerFailed = GoF2Session.InformerFailed,
@@ -227,6 +230,8 @@ namespace GoF2Remake.Data
                 GoF2Session.Wingmen = s.wingmen ?? new List<string>();
                 GoF2Session.WingmanRace = s.wingmanRace;
                 GoF2Session.WingmanContractMs = s.wingmanContractMs;
+                if (s.wingmanPortrait != null && s.wingmanPortrait.Length == 5) GoF2Session.WingmanPortrait = s.wingmanPortrait;
+                GoF2Session.WingmenHired = s.wingmenHired;
                 GoF2Session.UnlockedBlueprints = new HashSet<int>(s.unlockedBlueprints ?? new List<int>());
                 GoF2Session.ShipMods = s.shipMods ?? new List<int>();
                 GoF2Session.Blueprints = s.blueprints ?? new List<GoF2BlueprintState>();

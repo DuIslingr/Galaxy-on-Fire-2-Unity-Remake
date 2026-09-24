@@ -50,6 +50,11 @@ namespace GoF2Remake.Data
         public static List<string> Wingmen = new List<string>();
         public static int WingmanRace;
         public static float WingmanContractMs;
+        /// <summary>Status+0x28: the hiring agent's portrait (the goodbye dialogue); +0xd4 wingmen hired (statistic, medal 27);
+        /// +0xf8 the menu shows "Use EMP blaster" (reset on every station visit, not saved).</summary>
+        public static int[] WingmanPortrait = new int[5];
+        public static int WingmenHired;
+        public static bool WingmanShowEmp = true;
         /// <summary>Blueprints the player owns (BluePrint::unlock), by product item index.</summary>
         public static HashSet<int> UnlockedBlueprints = new HashSet<int>();
         /// <summary>Status+0x18: each touched blueprint's progress (GoF2Blueprints); +0x1c products waiting at a station;
@@ -214,6 +219,9 @@ namespace GoF2Remake.Data
             Wingmen = new List<string>();
             WingmanRace = 0;
             WingmanContractMs = 0f;
+            WingmanPortrait = new int[5];
+            WingmenHired = 0;
+            WingmanShowEmp = true;
             UnlockedBlueprints = new HashSet<int>();
             Blueprints = new List<GoF2BlueprintState>();
             PendingProducts = new List<GoF2PendingProduct>();

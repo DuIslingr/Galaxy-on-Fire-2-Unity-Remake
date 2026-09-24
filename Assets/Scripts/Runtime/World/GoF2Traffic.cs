@@ -103,6 +103,43 @@ namespace GoF2Remake.World
             return ship;
         }
 
+        /// <summary>Level::createWingmen 0xcb338: the hired wingmen next to the player (after every other ship). The model
+        /// comes from a generator seeded with 5 x the name's length, so each wingman flies the same ship everywhere; 600
+        /// hull at least; unarmed in a Challenge. Not at campaign 158.</summary>
+        public void SpawnWingmen(Transform player, bool unarmed)
+        {
+            var names = GoF2Session.Wingmen;
+            if (names == null || names.Count == 0 || player == null || GoF2Session.CampaignMission == 158) return;
+            int race = GoF2Session.WingmanRace;
+            float[] right = { -1000f, 2000f, 0f };
+            for (int i = 0; i < Mathf.Min(3, names.Count); i++)
+            {
+                var state = UnityEngine.Random.state;
+                UnityEngine.Random.InitState(5 * names[i].Length);
+                int ship = GoF2NpcTables.RandomFighter(race <= 3 ? race : GoF2Standing.Pirate);   // races 4-7: the pirate pool
+                UnityEngine.Random.state = state;
+                var pos = player.position + (player.right * right[i] - player.forward * 2000f + Vector3.up * (i == 2 ? 1000f : 0f)) * 0.05f;
+                var spec = new GoF2SpawnSpec
+                {
+                    group = GoF2NpcGroup.Wingman, race = race, ship = ship, alwaysFriend = true, noLoot = true, name = names[i],
+                    position = new Vector3(pos.x, pos.y, -pos.z) / 0.05f, hitpoints = Mathf.Max(600, GoF2NpcTables.Hull(0, ship)),
+                };
+                var s = Create(spec);
+                s.transform.rotation = player.rotation;
+                s.MakeWingman(i, !unarmed);
+            }
+            ConnectPlayers();
+        }
+
+        public List<GoF2NpcShip> LivingWingmen => Ships.FindAll(s => s.IsWingman && !s.Gone && s.Current == GoF2NpcShip.State.Fly);
+
+        /// <summary>The wingman menu's command for every living wingman (MGame::OnTouchEnd, menu 2).</summary>
+        public void CommandWingmen(int command, GoF2Target locked, GoF2Route playerRoute)
+        {
+            if (command == 0) GoF2Session.WingmanShowEmp = !GoF2Session.WingmanShowEmp;   // Status+0xf8
+            foreach (var w in LivingWingmen) w.WingmanCommand(command, locked, playerRoute);
+        }
+
         /// <summary>Level::createShip for a campaign level: one ship; call ConnectPlayers once all are spawned.</summary>
         public GoF2NpcShip SpawnShip(GoF2SpawnSpec spec) => Create(spec);
 

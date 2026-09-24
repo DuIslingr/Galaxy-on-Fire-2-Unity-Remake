@@ -170,6 +170,9 @@ namespace GoF2Remake.World
                 Freelance.Setup(this, Traffic);
                 Navigation.SetRoute(Freelance.PlayerRoute);
             }
+            // Level::createWingmen: after the mission's ships (Challenge: unarmed).
+            Traffic.SpawnWingmen(Player.transform, Freelance != null && Freelance.Type == GoF2MissionType.Challenge);
+            Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             Story = gameObject.AddComponent<GoF2StorySpace>();
             Story.Setup(this, Campaign);
             Navigation.JumpsBlocked = () => !GoF2Story.PlanetJumpsAllowed || GoF2Story.BlocksJumps(Layout.stationIndex);
@@ -179,6 +182,8 @@ namespace GoF2Remake.World
 
         void Update()
         {
+            // MGame::OnUpdate: the wingmen's contract runs down while flying (fast-forward included, not while paused).
+            if (GoF2Session.Wingmen.Count > 0 && GoF2Session.WingmanContractMs > 0f) GoF2Session.WingmanContractMs = Mathf.Max(0f, GoF2Session.WingmanContractMs - Time.deltaTime * 1000f);
             if (Health == null) return;
             Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic)
                                   || (Campaign != null && Campaign.PlayerInvulnerable);

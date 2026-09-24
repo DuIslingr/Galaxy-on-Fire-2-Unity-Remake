@@ -20,7 +20,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
-    public enum GoF2NpcGroup { Local, Jumper, Freighter, Raider }
+    public enum GoF2NpcGroup { Local, Jumper, Freighter, Raider, Wingman }
 
     public class GoF2SpawnSpec
     {
