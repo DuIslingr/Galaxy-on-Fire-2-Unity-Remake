@@ -89,6 +89,13 @@ namespace GoF2Remake.Data
                 SetChoices();
                 return;
             }
+            if (a.offer == GoF2AgentOffer.SellMod && GoF2Session.HasMod(a.sellMod))
+            {
+                Text = T(858);   // the mod is already on this hull
+                closing = true;
+                SetChoices();
+                return;
+            }
             Text = Compose(a, a.textIds);
             closing = !HasDeal;
             SetChoices();
@@ -105,6 +112,7 @@ namespace GoF2Remake.Data
                     case GoF2AgentOffer.SmallTalk: return false;
                     case GoF2AgentOffer.Diplomat: return GoF2Standing.IsEnemy(a.race);
                     case GoF2AgentOffer.Mission: case GoF2AgentOffer.Purchase: return a.HasMission;
+                    case GoF2AgentOffer.SellMod: return !GoF2Session.HasMod(a.sellMod);   // installed on this hull: 858
                     default: return true;
                 }
             }

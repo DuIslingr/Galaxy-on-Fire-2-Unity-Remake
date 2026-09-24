@@ -62,9 +62,12 @@ namespace GoF2Remake.Data
         public static List<GoF2BlueprintState> Blueprints = new List<GoF2BlueprintState>();
         public static List<GoF2PendingProduct> PendingProducts = new List<GoF2PendingProduct>();
         public static int GoodsProduced;
-        /// <summary>Ship::addMod: the mods bought for the current ship.</summary>
+        /// <summary>Ship+0x78 (Ship::addMod, each at most once; Reference/research/blueprints_mods.md 2): the current ship's
+        /// mods: 0 +40 hull, 1 +30 t cargo, 2 +1 equipment slot, 3 handling +0.2. They belong to the hull (cleared when
+        /// the ship is traded).</summary>
         public static List<int> ShipMods = new List<int>();
         public static void AddShipMod(int mod) { if (mod >= 0 && !ShipMods.Contains(mod)) ShipMods.Add(mod); }
+        public static bool HasMod(int mod) => ShipMods.Contains(mod);
         /// <summary>Status+0x174: the counter of story types 0xa8 / 0xb8.</summary>
         public static int StoryCounter;
         /// <summary>Status+0x7c / +0x80: the Void-invasion system and station (-1 none, -10 never again).</summary>

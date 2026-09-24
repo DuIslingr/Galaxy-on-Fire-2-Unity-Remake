@@ -241,7 +241,7 @@ namespace GoF2Remake.World
             var ctrl = root.AddComponent<GoF2ShipController>();
             var equipment = new System.Collections.Generic.List<ItemData>();
             foreach (var e in GoF2Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
-            if (ship != null) ctrl.stats = GoF2Database.BuildFlightStats(ship, equipment);
+            if (ship != null) ctrl.stats = GoF2Database.BuildFlightStats(ship, equipment, GoF2Session.HasMod(3) ? 1 : 0);   // mod 3: handling +0.2
             ctrl.sensitivity = GoF2Settings.Sensitivity;
             ctrl.invertPitch = GoF2Settings.InvertPitch;
             ctrl.ApplyStats();

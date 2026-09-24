@@ -60,7 +60,7 @@ namespace GoF2Remake.Flight
             sfx.playOnAwake = false;
             sfx.spatialBlend = 0f;
 
-            int hull = db.Ship(GoF2Session.ShipIndex)?.armor ?? 100;
+            int hull = (db.Ship(GoF2Session.ShipIndex)?.armor ?? 100) + (GoF2Session.HasMod(0) ? 40 : 0);   // Ship::getMaxHP: +40 with mod 0
             var shieldItem = GoF2Shop.FirstMounted(db, 9);
             var armorItem = GoF2Shop.FirstMounted(db, 10);
             var repair = GoF2Shop.FirstMounted(db, 15);

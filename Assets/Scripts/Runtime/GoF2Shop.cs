@@ -42,10 +42,11 @@ namespace GoF2Remake.Data
         /// <summary>Every unit in cargo weighs 1 t; mounted items weigh nothing.</summary>
         public static int CargoLoad() => GoF2Session.Cargo.Sum(s => s.amount);
 
-        /// <summary>Base cargo + (int)(base * sum of mounted compression (attr 22, category 12) % / 100). No ship mods yet.</summary>
+        /// <summary>Base cargo (+30 with mod 1, Ship::refreshValue, before compression) + (int)(base * sum of mounted
+        /// compression (attr 22, category 12) % / 100).</summary>
         public static int MaxLoad(GoF2Database db)
         {
-            int b = db.Ship(GoF2Session.ShipIndex)?.cargo ?? 0, pct = 0;
+            int b = (db.Ship(GoF2Session.ShipIndex)?.cargo ?? 0) + (GoF2Session.HasMod(1) ? 30 : 0), pct = 0;
             foreach (var e in GoF2Session.Equipment) { var it = db.Item(e.item); if (it != null && it.categoryId == 12) pct += it.Attr(22); }
             return b + (int)(b * pct / 100f);
         }

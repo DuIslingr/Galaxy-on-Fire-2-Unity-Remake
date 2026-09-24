@@ -84,7 +84,7 @@ namespace GoF2Remake.Data
         {
             var s = Ship?.slots;
             if (s == null) return 0;
-            return type switch { 0 => s.primary, 1 => s.secondary, 2 => s.turret, 3 => s.equipment, _ => 0 };
+            return type switch { 0 => s.primary, 1 => s.secondary, 2 => s.turret, 3 => s.equipment + (GoF2Session.HasMod(2) ? 1 : 0), _ => 0 };   // mod 2: +1 equipment slot
         }
 
         public int TypeOf(int item) => db.Item(item)?.TypeId ?? 4;
@@ -237,6 +237,7 @@ namespace GoF2Remake.Data
             ChangeCredits(ShipPrice(old) - ShipPrice(ship));
             var mounted = GoF2Session.Equipment;
             GoF2Session.ShipIndex = ship;
+            GoF2Session.ShipMods = new List<int>();   // mods stay with the old hull (Ship::clone copies them)
             GoF2Session.Equipment = new List<GoF2Stack>();
             foreach (var e in mounted)
             {
