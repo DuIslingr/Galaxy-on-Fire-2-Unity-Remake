@@ -56,6 +56,9 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement class="touch-buttons" picking-mode="Ignore">
+                        <ui:VisualElement name="turretButton" class="touch-button touch-button--small touch-button--hidden">
+                            <ui:Label name="turretCaption" class="touch-button-label touch-button-label--small gof-semibold" picking-mode="Ignore" />
+                        </ui:VisualElement>
                         <ui:VisualElement name="levelButton" class="touch-button touch-button--small">
                             <ui:Label name="levelCaption" class="touch-button-label gof-semibold" picking-mode="Ignore" />
                         </ui:VisualElement>

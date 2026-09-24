@@ -50,6 +50,15 @@ namespace GoF2Remake.Flight
         /// p * (rnd(100) - 50) units per axis. The strongest caller this frame wins.</summary>
         public void Rumble(float p) => rumble = Mathf.Max(rumble, p);
 
+        /// <summary>TargetFollowCamera on another object (the Liberator; the turret view): the camera sits at
+        /// follow.TransformPoint(followOffset) looking at follow.TransformPoint(followLookOffset), world up unless
+        /// followUsesUp; 'followRigid' snaps instead of easing. Null = behind the ship.</summary>
+        [System.NonSerialized] public Transform follow;
+        [System.NonSerialized] public Vector3 followOffset, followLookOffset;
+        [System.NonSerialized] public bool followRigid, followUsesUp;
+        /// <summary>A constant rumble on top (PlayerEgo::update: 0.2 while the Liberator is steered).</summary>
+        [System.NonSerialized] public float constantRumble;
+
         void Awake() => cam = GetComponent<Camera>();
 
         void LateUpdate()
@@ -58,6 +67,23 @@ namespace GoF2Remake.Flight
             var ship = target.transform;
             var model = target.Model;
             float dtMs = Time.deltaTime * 1000f;
+            if (constantRumble > 0f) rumble = Mathf.Max(rumble, constantRumble);
+            if (follow != null)
+            {
+                var fp = follow.TransformPoint(followOffset);
+                var fr = Quaternion.LookRotation(follow.TransformPoint(followLookOffset) - fp, followUsesUp ? follow.up : Vector3.up);
+                float k = followRigid ? 1f : 1f - Mathf.Exp(-0.01f * dtMs);
+                transform.position = Vector3.Lerp(transform.position, fp, k);
+                transform.rotation = Quaternion.Slerp(transform.rotation, fr, k);
+                if (rumble > 0f)
+                {
+                    float j = rumble * 0.6f;
+                    transform.rotation *= Quaternion.Euler(Random.Range(-j, j), Random.Range(-j, j), 0f);
+                    rumble = 0f;
+                }
+                if (cam != null) cam.fieldOfView = GoF2Remake.Visuals.Aspect.VerticalFov(baseFov, cam.aspect);
+                return;
+            }
 
             float posK = positionCoefficient, rotK = rotationCoefficient;
             if (handlingDependent)

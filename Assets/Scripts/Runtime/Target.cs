@@ -47,6 +47,8 @@ namespace GoF2Remake.Flight
         public bool untargetable;
         [Tooltip("The owner handles the death (ships): no automatic explosion, renderers stay on.")]
         public bool customDeath;
+        /// <summary>Takes no damage (a sentry gun's first 3 s, Player+0xc2 cleared).</summary>
+        [NonSerialized] public bool invulnerable;
         [Tooltip("Local-space hit boxes (metres) instead of the cube (big ships).")]
         public Bounds[] boxes;
 
@@ -80,7 +82,7 @@ namespace GoF2Remake.Flight
         /// <summary>Player::damage: 'byNpc' = an NPC gun fired it (friendGun); 'hitVector' = the bullet velocity.</summary>
         public void Damage(float amount, bool byNpc = false, Vector3 hitVector = default)
         {
-            if (!Alive) return;
+            if (!Alive || invulnerable) return;
             int dmg = Mathf.Max(0, (int)amount);
             lastHitVector = hitVector;
             bool dead;

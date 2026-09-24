@@ -51,6 +51,11 @@ namespace GoF2Remake.Flight
         /// <summary>An autopilot moves the ship (asteroid docking, PlayerEgo+0x145): no input, no flight model step and
         /// no cosmetic banking; it reports its speed through ExternalSpeedMetersPerSecond.</summary>
         [System.NonSerialized] public bool externalControl;
+        /// <summary>The turret view / the Liberator: the ship flies straight on its throttle (no steering, auto-level on);
+        /// the stick goes to <see cref="SteerInput"/> instead.</summary>
+        [System.NonSerialized] public bool steeringLocked;
+        /// <summary>The stick this frame (keys, stick, touch), also while steering is locked.</summary>
+        public Vector2 SteerInput { get; private set; }
         [System.NonSerialized] public float ExternalSpeedMetersPerSecond;
 
         /// <summary>Autopilot (PlayerEgo::setAutoPilot): the world position to fly to, re-read every frame; null = off.
@@ -131,7 +136,8 @@ namespace GoF2Remake.Flight
 
             Vector2 steer = useBuiltInInput ? ReadInput() : Vector2.zero;
             if (externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
-            if (autopilotTarget != null) steer = Vector2.zero;
+            SteerInput = steer;
+            if (autopilotTarget != null || steeringLocked) steer = Vector2.zero;
 
             // Model convention: +x = yaw left, +y = pitch down. Map "stick right = turn right".
             var model = new Vector2(-steer.x, invertPitch ? steer.y : -steer.y);

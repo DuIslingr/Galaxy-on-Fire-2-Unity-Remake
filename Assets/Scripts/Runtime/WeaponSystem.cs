@@ -49,6 +49,7 @@ namespace GoF2Remake.Flight
         }
 
         readonly List<Rig> rigs = new List<Rig>();
+        Database db;
         Transform fxRoot;
         AudioSource shotSource;
         bool touchPrimary;
@@ -89,6 +90,10 @@ namespace GoF2Remake.Flight
         Target owner;
 
         public bool HasPrimary => rigs.Exists(r => !r.gun.isSecondary);
+        /// <summary>PlayerEgo::setTurretMode: the fire button fires the turret; primaries and secondaries are silent.</summary>
+        [NonSerialized] public bool TurretView;
+        /// <summary>The fire button is held this frame (not paused, not latched): the turret view fires with it.</summary>
+        public bool FireHeld { get; private set; }
 
         void Awake()
         {
@@ -130,6 +135,7 @@ namespace GoF2Remake.Flight
         /// <summary>Level::createPlayer: one gun per equipped primary/secondary item on the ship's mounts.</summary>
         public void Setup(Database db, int shipIndex, IList<ItemStack> equipment)
         {
+            this.db = db;
             fxRoot = new GameObject("Player weapon fx").transform;
             var primaryMounts = db.MountsOf(shipIndex, 0);
             var secondaryMounts = db.MountsOf(shipIndex, 1);
@@ -207,7 +213,7 @@ namespace GoF2Remake.Flight
         /// flight, else fire the selected secondary.</summary>
         public bool FireSecondary()
         {
-            if (Blocked) return false;
+            if (Blocked || TurretView) return false;
             bool detonated = false;
             foreach (var r in rigs) if (r.gun.isSecondary && r.gun.BombInFlight) { r.gun.Detonate(); detonated = true; }
             if (detonated) return true;
@@ -215,8 +221,15 @@ namespace GoF2Remake.Flight
             foreach (var r in rigs)
             {
                 if (!r.gun.isSecondary || r.gun.itemIndex != SelectedSecondary || r.stack == null || r.stack.amount <= 0) continue;
+                if (r.gun.kind == Gun.Kind.Sentry && !SentryGun.CanDeploy) return false;   // Level+0x6c > 2: refused, no cost
                 int b = r.gun.TryFire(transform);
                 if (b < 0) continue;
+                if (r.gun.kind == Gun.Kind.Sentry)
+                {
+                    // SentryGun::update: the deploy "bullet" places the next free sentry object; it isn't drawn.
+                    SentryGun.Deploy(db, r.gun.itemIndex, r.gun.bullets[b].position, transform.rotation, FindAnyObjectByType<World.Traffic>());
+                    r.gun.bullets[b].timer = -1e9f;
+                }
                 r.stack.amount--;
                 PlayShot(r);
                 r.visuals.OnShot();
@@ -248,7 +261,9 @@ namespace GoF2Remake.Flight
             if (halted) { primaryLatched |= primaryPressed; secondaryLatched |= secondaryPressed; }
             if (!primaryPressed) primaryLatched = false;
             bool primaryHeld = !halted && (touchPrimary || (primaryPressed && !primaryLatched));
-            if (!halted && useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame() && !secondaryLatched) FireSecondary();
+            FireHeld = primaryHeld;
+            if (TurretView) primaryHeld = false;
+            if (!halted && !TurretView && useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame() && !secondaryLatched) FireSecondary();
             if (!secondaryPressed) secondaryLatched = false;
             if (!halted && useBuiltInInput && cycleSecondaryAction.WasPressedThisFrame()) CycleSecondary();
 

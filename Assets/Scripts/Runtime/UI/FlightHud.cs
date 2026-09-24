@@ -40,6 +40,9 @@ namespace GoF2Remake.UI
 
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
+        VisualElement turretButton;
+        Label turretCaption;
+        bool lastTurretView, lastTurretAuto;
         VisualElement root, safeArea, hints, throttleTrack, throttleFill, throttleHandle, throttleBarFill, boostBarFill, boostButton, boostCharge, levelButton;
         VisualElement fireButton, missileButton, crosshair, dockPrompt, dockGlyph;
         Label dockLabel;
@@ -120,6 +123,8 @@ namespace GoF2Remake.UI
             boostButton = root.Q("boostButton");
             boostCharge = root.Q("boostCharge");
             levelButton = root.Q("levelButton");
+            turretButton = root.Q("turretButton");
+            turretCaption = root.Q<Label>("turretCaption");
             speedValue = root.Q<Label>("speedValue");
             fireButton = root.Q("fireButton");
             missileButton = root.Q("missileButton");
@@ -141,6 +146,7 @@ namespace GoF2Remake.UI
             HookThrottle();
             HookPress(boostButton, () => ship?.Boost());
             HookPress(levelButton, () => ship?.AlignToHorizon());
+            HookPress(turretButton, () => level?.Turret?.Toggle());
             HookPress(fireButton, () => weapons?.SetPrimaryHeld(true), () => weapons?.SetPrimaryHeld(false));
             HookPress(missileButton, null, () => weapons?.FireSecondary());
             HookPress(dockPrompt, null, Interact);
@@ -283,6 +289,26 @@ namespace GoF2Remake.UI
                 }
                 return;
             }
+            var turretNow = level != null ? level.Turret : null;
+            if (turretNow != null && turretNow.InTurretView)
+            {
+                // PlayerEgo::setTurretMode: the stick aims the turret, fire fires it, the ship flies straight.
+                string aimLabel = T("hudAimTurret", "AIM TURRET"), fire = T("hudFire", "FIRE"), exit = T("hudTurretExit", "CHASE VIEW");
+                if (kind == InputKind.KeyboardMouse)
+                {
+                    Hint(aimLabel, InputGlyph.Key("W"), InputGlyph.Key("A"), InputGlyph.Key("S"), InputGlyph.Key("D"));
+                    Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("Q"), InputGlyph.Key("E"));
+                    Hint(fire, InputGlyph.Key("CTRL"));
+                    Hint(exit, InputGlyph.Key("V"));
+                }
+                else if (kind == InputKind.Gamepad)
+                {
+                    Hint(aimLabel, InputGlyph.Pad(PadButton.LeftStick));
+                    Hint(fire, InputGlyph.Pad(PadButton.RightTrigger));
+                    Hint(exit, InputGlyph.Pad(PadButton.DPad));
+                }
+                return;
+            }
             if (lastAutopilot)
             {
                 // Autopilot: throttle, boost and guns still work; fast-forward is held.
@@ -331,6 +357,8 @@ namespace GoF2Remake.UI
                 Hint(T("hudFire", "FIRE"), InputGlyph.Key("CTRL"));
                 Hint(T("hudMissile", "MISSILE"), InputGlyph.Key("F"));
                 if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), InputGlyph.Key("G"));
+                if (level != null && level.Turret != null)
+                    Hint(level.Turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : T("hudTurretView", "TURRET VIEW"), InputGlyph.Key(level.Turret.IsAuto ? "T" : "V"));
                 Hint(T("hudBoost", "BOOST"), InputGlyph.Key("SPACE", true));
                 Hint(T("hudLevel", "LEVEL"), InputGlyph.Key("R"));
                 Hint(Localization.Get(571).ToUpperInvariant(), InputGlyph.Key("TAB"));
@@ -343,6 +371,8 @@ namespace GoF2Remake.UI
                 Hint(T("hudFire", "FIRE"), InputGlyph.Pad(PadButton.RightTrigger));
                 Hint(T("hudMissile", "MISSILE"), InputGlyph.Pad(PadButton.LeftTrigger));
                 if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), InputGlyph.Pad(PadButton.DPad));
+                if (level != null && level.Turret != null)
+                    Hint(level.Turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : T("hudTurretView", "TURRET VIEW"), InputGlyph.Pad(PadButton.DPad));
                 Hint(T("hudBoost", "BOOST"), InputGlyph.Pad(PadButton.A));
                 Hint(T("hudLevel", "LEVEL"), InputGlyph.Pad(PadButton.Y));
                 Hint(Localization.Get(571).ToUpperInvariant(), InputGlyph.Pad(PadButton.View));
@@ -428,6 +458,7 @@ namespace GoF2Remake.UI
                     freelance.RewardMessage += OnMiningMessage;
                 }
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
+                if (level.Turret != null) level.Turret.Message += OnMiningMessage;   // HUD event 0x20 / 0x21 (auto fire on / off)
                 chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
                 ApplyInputMode();
             }
@@ -471,6 +502,19 @@ namespace GoF2Remake.UI
             var phase = mining != null ? mining.State : Mining.Phase.Idle;
             bool autopilot = nav != null && nav.Autopilot;
             if (phase != lastPhase || autopilot != lastAutopilot) { lastPhase = phase; lastAutopilot = autopilot; BuildHints(InputMode.Current); }
+            // The turret: the touch button (turret view / auto-fire) and the hints of the turret view.
+            var turret = level != null ? level.Turret : null;
+            if (turretButton != null)
+            {
+                turretButton.EnableInClassList("touch-button--hidden", turret == null);
+                if (turret != null)
+                {
+                    turretCaption.text = turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : Localization.Extra("hudTurret", "TURRET");
+                    turretButton.EnableInClassList("touch-button--pressed", turret.InTurretView || (turret.IsAuto && turret.AutoEnabled));
+                }
+            }
+            bool tv = turret != null && turret.InTurretView, ta = turret != null && turret.AutoEnabled;
+            if (tv != lastTurretView || ta != lastTurretAuto) { lastTurretView = tv; lastTurretAuto = ta; BuildHints(InputMode.Current); }
             root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic));   // jumps: no HUD
             jumpCharge.EnableInClassList("jump-charge--shown", jump != null && jump.Charging);
             if (jump != null && jump.Charging) jumpChargeFill.style.width = Length.Percent(jump.ChargeRate * 100f);

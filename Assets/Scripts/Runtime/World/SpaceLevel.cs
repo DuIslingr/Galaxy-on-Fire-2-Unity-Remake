@@ -73,6 +73,8 @@ namespace GoF2Remake.World
         public FreelanceOrbit FreelanceOrbit { get; private set; }
         /// <summary>The Kaamo Club's pirate siege (station 108 before it's freed), null elsewhere.</summary>
         public KaamoSiege Siege { get; private set; }
+        /// <summary>The player's turret (null without a turret item / mount).</summary>
+        public PlayerTurret Turret { get; private set; }
         /// <summary>MGame::dockEvent: 525 while a mission holds the player here (the story's blocks, the Kaamo siege).</summary>
         public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex) || (Siege != null && Siege.Active);
         /// <summary>A story conversation is open (the game is paused).</summary>
@@ -283,6 +285,8 @@ namespace GoF2Remake.World
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens).
             chase.baseFov = 1.22f * Mathf.Rad2Deg;
             chase.Snap();
+            // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount.
+            Turret = PlayerTurret.Attach(root, db, Session.ShipIndex, Session.Equipment, chase);
 
             // Asteroid mining (lock, autopilot approach, minigame): needs a drill (category 19) to lock.
             Mining = root.AddComponent<Mining>();
