@@ -143,7 +143,8 @@ namespace GoF2Remake.Data
             var stock = recent.Find(s => s.station == station);
             if (stock == null)
             {
-                stock = new GoF2StationStock { station = station, items = GenerateItems(db, station), ships = GenerateShips(db, station) };
+                stock = new GoF2StationStock { station = station, items = GenerateItems(db, station), ships = GenerateShips(db, station),
+                                               agents = GoF2AgentGenerator.CreateAgents(db, station) };
                 recent.Add(stock);
                 while (recent.Count > RecentStationCount) recent.RemoveAt(0);
             }
@@ -156,6 +157,8 @@ namespace GoF2Remake.Data
                     if (r < row.amount) row.amount -= r;
                 }
             }
+            if (stock.agents == null || (stock.agents.Count == 0 && station != 108)) stock.agents = GoF2AgentGenerator.CreateAgents(db, station);   // saves from before the bar
+            GoF2Freelance.OnEnterStation(stock);
             return stock;
         }
 

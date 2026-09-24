@@ -28,6 +28,9 @@ namespace GoF2Remake.UI
             public int speaker;
             public string text;
             public string voice;
+            /// <summary>A bar agent instead of a story speaker (freelance briefings / results): its name and portrait parts.</summary>
+            public string agentName;
+            public int[] agentPortrait;
             public static Page From(GoF2DialoguePage p) => new Page { speaker = p.speaker, text = GoF2Localization.Get(p.text), voice = p.voice };
         }
 
@@ -103,6 +106,14 @@ namespace GoF2Remake.UI
             LoadPage();
         }
 
+        /// <summary>The one-page note from a bar agent (DialogueWindow(mission, level, mode)): name, generated portrait, OK.</summary>
+        public void ShowAgentMessage(string body, string name, int[] portraitParts, Action onClosed)
+        {
+            Show(new List<Page> { new Page { speaker = -1, text = body, agentName = name, agentPortrait = portraitParts } }, _ => onClosed?.Invoke());
+            message = true;
+            LoadPage();
+        }
+
         /// <summary>The one-page note: text, a speaker's portrait and name, OK.</summary>
         public void ShowMessage(string body, int speakerId, Action onClosed)
         {
@@ -114,10 +125,11 @@ namespace GoF2Remake.UI
         void LoadPage()
         {
             var p = pages[page];
-            speaker.text = GoF2StoryTable.SpeakerName(p.speaker).ToUpperInvariant();
+            speaker.text = (p.agentName ?? GoF2StoryTable.SpeakerName(p.speaker)).ToUpperInvariant();
             text.text = p.text;
             scroll.scrollOffset = Vector2.zero;
-            GoF2Portrait.ShowSpeaker(portrait, p.speaker, p.speaker == 0);
+            if (p.agentPortrait != null) GoF2Portrait.Show(portrait, p.agentPortrait, false);
+            else GoF2Portrait.ShowSpeaker(portrait, p.speaker, p.speaker == 0);
             bool last = page == pages.Count - 1;
             back.EnableInClassList("dialogue-button--hidden", message || page == 0);
             skip.EnableInClassList("dialogue-button--hidden", message || pages.Count <= 1);

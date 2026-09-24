@@ -67,6 +67,7 @@ MonoBehaviour:
   tractorLoop: {fileID: 8300000, guid: 4c06bea89665def46bde4c530e72b902, type: 3}
   tractorClose: {fileID: 8300000, guid: 78668b3164210fe4aa2b7b6356ff0746, type: 3}
   gameOver: {fileID: 8300000, guid: 33091f678d2e11840b0442925004df6c, type: 3}
+  missionAccomplished: {fileID: 8300000, guid: 50ab33ee061dcd243972c73d974e2715, type: 3}
   enemyEngines:
   - {fileID: 8300000, guid: 44892212b259b1e45b663e9ddeb0c6c4, type: 3}
   - {fileID: 8300000, guid: c6eb0c47e4b743549a5f30a786b36800, type: 3}

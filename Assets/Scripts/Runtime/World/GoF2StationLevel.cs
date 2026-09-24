@@ -6,14 +6,15 @@
 //     turntable at (0, Y[ship], 0) (NPC engine meshes, exhaust off), 0..N parked ships on fixed slots; camera from the
 //     phone table relative to the ship pivot with a slow random position drift (ModStation::OnUpdate 0xed2a8);
 //     one fixed light from the camera side plus a per-race ambient (ModStation::resetLight 0xe9f1c); Vossk fog.
-//   Bar (SpaceLounge 0x197890): room per race (no rotation = Unity yaw 180), 3..4 visitors on random slots as
+//   Bar (SpaceLounge 0x197890): room per race (no rotation = Unity yaw 180), one visitor per bar agent (Stock.agents,
+//     GoF2AgentGenerator) on random slots as
 //     camera-facing billboards with a glow behind and a floor shadow (updateScreenPositions 0x19ec30); camera eases
 //     from A to B in 3 s on the first visit, then sways around the room origin (SpaceLounge::update 0x19ef20); lit by
 //     the system's sun (StarSystem::initLight); Terran service bot loops, the Midorian prop replays now and then.
 // Both show the current system's sky behind the room (Level::createSpace builds the StarSystem for these levels).
 // Music per station/race, ambience per screen (Station_Atmo_Mainview / _Lounge).
 // Arrival also rolls or refreshes the station's shop stock (GoF2Shop.EnterStation); the shop itself is GoF2HangarWindow.
-// Not yet: agents and chat, map, missions, status, turret on the player ship (CutScene::checkForTurret),
+// Not yet: turret on the player ship (CutScene::checkForTurret),
 // home-base stored ships.
 
 using System;
@@ -117,7 +118,15 @@ namespace GoF2Remake.World
         float midorianTimer;
         float nextAmbienceAdd;
 
-        class Visitor { public Transform body, glow; public Vector3 feet; }
+        class Visitor { public Transform body, glow; public Vector3 feet; public GoF2Agent agent; public float height; }
+
+        /// <summary>The bar's agents with their visitor billboards (in Stock.agents order).</summary>
+        public int VisitorAgentCount => visitors.Count;
+        public GoF2Agent VisitorAgent(int i) => visitors[i].agent;
+        /// <summary>World position just above the visitor's head (name labels, taps).</summary>
+        public Vector3 VisitorHead(int i) => visitors[i].feet + Vector3.up * visitors[i].height;
+        public Vector3 VisitorFeet(int i) => visitors[i].feet;
+        public Camera MainCamera => mainCamera;
 
         /// <summary>AEEngine EaseInOut (0x7aa34): a + (b - a) * (sin(phi) * 0.5 + 0.5), phi 3pi/2 -> 5pi/2, Increase(d) adds
         /// d / 65536 * 2pi, so a whole leg takes 32768 units of d.</summary>
@@ -242,24 +251,29 @@ namespace GoF2Remake.World
                     if (a.gameObject.name.Contains("alpha_anim")) { midorianProp = a; a.loop = false; a.play = false; }
             }
 
-            // Generator::createAgents: 3 + nextInt(2) generic agents (no story agents yet), race = system race, 20 % any
-            // of the 8 races; Terrans 40 % female.
-            VisitorCount = 3 + Random.Range(0, 2);
+            // One visitor per agent (Generator::createAgents, kept with the stock): slot nextInt(7) re-rolled until free,
+            // the mesh by the agent's race (Level::createScene 0xc2b3e: a Midorian with a Nivelian face uses the Nivelian
+            // mesh, female Terrans their own).
+            var agents = Stock != null ? Stock.agents : new List<GoF2Agent>();
             var slots = GoF2StationTables.VisitorSlots[BarRace];
             var taken = new bool[slots.Length];
+            VisitorCount = Mathf.Min(agents.Count, slots.Length);
             for (int i = 0; i < VisitorCount; i++)
             {
                 int slot;
                 do slot = Random.Range(0, slots.Length); while (taken[slot]);
                 taken[slot] = true;
-                int race = Random.value < 0.2f ? Random.Range(0, 8) : BarRace;
-                bool female = race == 0 && Random.value < 0.4f;
-                var prefab = VisitorPrefab(GoF2StationTables.VisitorFor(race, female));
+                var agent = agents[i];
+                int race = agent.race == 3 && agent.portrait != null && agent.portrait[0] == 2 ? 2 : agent.race;
+                var prefab = VisitorPrefab(GoF2StationTables.VisitorFor(race, !agent.male));
                 if (prefab == null) continue;
                 var feet = GoF2OrbitLayout.ToUnity(slots[slot]);
-                var v = new Visitor { feet = feet };
+                var v = new Visitor { feet = feet, agent = agent };
                 v.body = Instantiate(prefab, feet, Quaternion.identity, barRoot).transform;
                 v.body.name = $"Visitor {i} ({prefab.name})";
+                var bounds = new Bounds(feet, Vector3.zero);
+                foreach (var r in v.body.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
+                v.height = Mathf.Max((bounds.max.y - feet.y) * 0.55f, 60f * M);   // the billboard quad is about twice the figure
                 if (visitorGlow != null)
                 {
                     v.glow = Instantiate(visitorGlow, feet, Quaternion.identity, barRoot).transform;

@@ -31,6 +31,8 @@ namespace GoF2Remake.Flight
 
         public AudioClip[] hitShield, hitArmor, hitHull, shipDestroyed, explosionBig, explosionMid, shots;
         public AudioClip targetLock, tractorLoop, tractorClose, gameOver;
+        [Tooltip("Sound 36 Mission_accomplished.")]
+        public AudioClip missionAccomplished;
         [Tooltip("Sound 46: one picked per ship.")]
         public AudioClip[] enemyEngines;
         [Tooltip("Sound 47: one picked per ship.")]

@@ -33,7 +33,8 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
-    public enum GoF2StarMapMode { Station, Gate, Khador }
+    /// <summary>Mission = StarMap(true, mission, ...): view only, centred on a mission's target, no departure.</summary>
+    public enum GoF2StarMapMode { Station, Gate, Khador, Mission }
 
     /// <summary>What the player picked: station -1 = closed without a destination.</summary>
     public struct GoF2StarMapResult
@@ -55,7 +56,7 @@ namespace GoF2Remake.UI
 
         class Item
         {
-            public VisualElement root, ring, pulse, raceIcon, visited, gate;
+            public VisualElement root, ring, pulse, raceIcon, visited, gate, story, freelance;
             public Label name, line1, line2;
         }
 
@@ -65,7 +66,7 @@ namespace GoF2Remake.UI
         public GoF2StarMapMode Mode => mode;
         bool jumpDrive;
         Action<GoF2StarMapResult> onClosed;
-        int promptStation = -1;
+        int promptStation = -1, focusStation = -1;
 
         int currentStation, currentSystem;
         SystemData current;
@@ -122,7 +123,8 @@ namespace GoF2Remake.UI
 
         /// <summary>Opens the map. promptStation >= 0 (jumpgate with a programmed station) first shows only "Destination: X /
         /// Travel to this station?": Yes returns that station, No opens the map.</summary>
-        public static GoF2StarMap Open(GoF2Database db, GoF2StarMapMode mode, bool jumpDrive, Action<GoF2StarMapResult> closed, int promptStation = -1)
+        public static GoF2StarMap Open(GoF2Database db, GoF2StarMapMode mode, bool jumpDrive, Action<GoF2StarMapResult> closed, int promptStation = -1,
+                                       int focusStation = -1)
         {
             var assets = GoF2StarMapAssets.Load();
             if (assets == null || assets.layout == null || assets.panelSettings == null)
@@ -140,6 +142,7 @@ namespace GoF2Remake.UI
             map.jumpDrive = jumpDrive;
             map.onClosed = closed;
             map.promptStation = promptStation;
+            map.focusStation = focusStation;
             var pr = go.AddComponent<PanelRenderer>();
             pr.panelSettings = assets.panelSettings;
             pr.visualTreeAsset = assets.layout;
@@ -246,8 +249,18 @@ namespace GoF2Remake.UI
             root.RemoveFromClassList("map-dialog-only");
             BuildWorld();
             BuildSystemItems();
+            if (focusStation >= 0)
+            {
+                // The mission map: the target's system selected and gliding to the centre.
+                Select(SystemOf(focusStation));
+                autoCentre = true;
+            }
             ApplyInputMode();
         }
+
+        /// <summary>StarMap::draw: the story / freelance icons on the mission targets (the offered mission in mission mode).</summary>
+        int StoryTarget => GoF2Session.StoryMission != null && GoF2Session.StoryMission.visible && !GoF2Session.FreePlay ? GoF2Session.StoryMission.station : -1;
+        int FreelanceTarget => mode == GoF2StarMapMode.Mission && focusStation >= 0 ? focusStation : GoF2Freelance.Active ? GoF2Freelance.Mission.target : -1;
 
         // ---- 3D --------------------------------------------------------------------------------------------
 
@@ -459,6 +472,14 @@ namespace GoF2Remake.UI
             it.visited = Img(it.root, "map-icon", Tex("map_visited"));
             it.visited.style.left = 71.5f - 7f - 18f;
             it.visited.style.top = -71.5f + 10f - 35f + 143f;
+            it.story = Img(it.root, "map-icon", Tex("map_story"));
+            it.freelance = Img(it.root, "map-icon", Tex("map_freelance"));
+            foreach (var icon in new[] { it.story, it.freelance })
+            {
+                icon.style.left = -71.5f - 7f + (icon == it.freelance ? -22f : 0f);
+                icon.style.top = -71.5f + 10f;
+                icon.style.display = DisplayStyle.None;
+            }
             if (planet)
             {
                 it.gate = Img(it.root, "map-icon", Tex("gate_icon"));
@@ -503,6 +524,8 @@ namespace GoF2Remake.UI
                 bool fully = s.stations.Count > 0 && s.stations.TrueForAll(st => GoF2Session.VisitedStations.Contains(st));
                 it.visited.style.display = fully ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = s.index == currentSystem ? DisplayStyle.Flex : DisplayStyle.None;
+                it.story.style.display = StoryTarget >= 0 && SystemOf(StoryTarget) == s.index ? DisplayStyle.Flex : DisplayStyle.None;
+                it.freelance.style.display = FreelanceTarget >= 0 && SystemOf(FreelanceTarget) == s.index ? DisplayStyle.Flex : DisplayStyle.None;
                 systemItems[s.index] = it;
             }
         }
@@ -516,6 +539,8 @@ namespace GoF2Remake.UI
                 it.visited.style.display = GoF2Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = p.station == currentStation ? DisplayStyle.Flex : DisplayStyle.None;
+                it.story.style.display = p.station == StoryTarget ? DisplayStyle.Flex : DisplayStyle.None;
+                it.freelance.style.display = p.station == FreelanceTarget ? DisplayStyle.Flex : DisplayStyle.None;
                 planetItems.Add(it);
             }
         }
@@ -758,7 +783,7 @@ namespace GoF2Remake.UI
         void TryZoomIn()
         {
             if (selected < 0) return;
-            if (!jumpDrive && !GoF2GalaxyMap.IsInRoutes(current, selected)) { ShowDialog(T(420), null, null, true); return; }
+            if (!jumpDrive && mode != GoF2StarMapMode.Mission && !GoF2GalaxyMap.IsInRoutes(current, selected)) { ShowDialog(T(420), null, null, true); return; }
             Play(assets.zoomIn);
             zoomSystem = selected;
             BuildSystem(selected);
@@ -793,6 +818,7 @@ namespace GoF2Remake.UI
         void Confirm(int k)
         {
             int station = planets[k].station;
+            if (mode == GoF2StarMapMode.Mission) { ShowDialog(StationName(station), null, null, true); return; }   // view only
             if (station == currentStation) { ShowDialog(T(419), null, null, true); return; }
             bool otherSystem = SystemOf(station) != currentSystem;
             if (jumpDrive && otherSystem)

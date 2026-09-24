@@ -22,7 +22,10 @@
 // success conversation (GoF2DialogueView); closing it advances the story, then by the new index: reload the station
 // (9, 44, 75, 76, 83), launch into a story orbit (78, 89, 99, 109, 119, 133, 144, 160) or credit the reward. The menu
 // buttons unlock with the story: Hangar from 5, Map from 9, Space Lounge from 12.
-// Not yet (the original's other buttons): Missions, Status; the ending after index 43 (credits) is a plain advance.
+// Space Lounge: the agents and their chat (GoF2LoungePanel). Missions (129): the Missions window (GoF2MissionsWindow).
+// Freelance delivery (ModStation::OnUpdate, Status::missionCompleted / missionFailed docked): a finished or failed freelance
+// mission opens the client's message; closing it pays (reward message + sound 36) or cleans up (GoF2Freelance).
+// Not yet (the original's other buttons): Status; the ending after index 43 (credits) is a plain advance.
 
 using GoF2Remake.Data;
 using GoF2Remake.World;
@@ -59,7 +62,9 @@ namespace GoF2Remake.UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualElement root, safeArea, dragZone, hints, dialog;
-        Button hangarButton, loungeButton, mapButton, launchButton, dialogYes, dialogNo;
+        Button hangarButton, loungeButton, mapButton, missionsButton, launchButton, dialogYes, dialogNo;
+        GoF2LoungePanel lounge;
+        GoF2MissionsWindow missions;
         VisualElement systemMenu, systemMain, systemSave;
         ScrollView saveSlotList;
         Button saveGameButton, mainMenuButton, systemClose, saveBack;
@@ -125,10 +130,13 @@ namespace GoF2Remake.UI
             hangarButton = Bind("hangarButton", OpenHangar);
             loungeButton = Bind("loungeButton", OpenLounge);
             mapButton = Bind("mapButton", OpenMap);
+            missionsButton = Bind("missionsButton", OpenMissions);
             launchButton = Bind("launchButton", AskLaunch);
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", CloseDialog);
             hangarWindow = new GoF2HangarWindow(this, level, root);
+            lounge = new GoF2LoungePanel(this, level, root);
+            missions = new GoF2MissionsWindow(this, level, root);
             root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
             if (voiceSource == null)
             {
@@ -164,6 +172,7 @@ namespace GoF2Remake.UI
             hangarButton.text = T(167).ToUpperInvariant();
             loungeButton.text = T(398).ToUpperInvariant();
             mapButton.text = T(177).ToUpperInvariant();
+            missionsButton.text = T(129).ToUpperInvariant();
             launchButton.text = GoF2Localization.Extra("stationLaunch", "LAUNCH");
             dialogNo.text = T(135).ToUpperInvariant();
             root.Q<Button>("menuButton").text = GoF2Localization.Extra("hudMenu", "MENU");
@@ -202,12 +211,13 @@ namespace GoF2Remake.UI
         void OnViewChanged()
         {
             if (root == null || level == null) return;
-            bool lounge = level.View == GoF2StationView.Lounge;
+            bool inLounge = level.View == GoF2StationView.Lounge;
             hangarButton.EnableInClassList("station-button--current", HangarOpen);
-            loungeButton.EnableInClassList("station-button--current", lounge);
-            viewTitle.text = HangarOpen ? GoF2Localization.Get(167).ToUpperInvariant() : lounge ? GoF2Localization.Get(398).ToUpperInvariant() : "";
+            loungeButton.EnableInClassList("station-button--current", inLounge);
+            viewTitle.text = HangarOpen ? GoF2Localization.Get(167).ToUpperInvariant() : inLounge ? GoF2Localization.Get(398).ToUpperInvariant() : "";
             viewTitle.style.display = viewTitle.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             dragVelocity = 0f;
+            lounge?.OnViewChanged();
             ApplyStoryLocks();
             BuildHints(GoF2InputMode.Current);
         }
@@ -242,6 +252,29 @@ namespace GoF2Remake.UI
             OnViewChanged();
             Select(hangarButton);
         }
+
+        /// <summary>The Missions window (129) over the current view.</summary>
+        void OpenMissions()
+        {
+            if (level == null || missions == null || missions.IsOpen) return;
+            CloseHangar();
+            lounge?.CloseChat(false);
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            missions.Open();
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        public void OnMissionsClosed()
+        {
+            Select(missionsButton);
+            BuildHints(GoF2InputMode.Current);
+        }
+
+        /// <summary>Focus for keyboard / controller (not in touch mode).</summary>
+        public void Focus(VisualElement e) => Select(e);
+
+        /// <summary>Credits changed outside the hangar window (a deal in the lounge).</summary>
+        public void RefreshCredits() => BuildHints(GoF2InputMode.Current);
 
         void OpenLounge()
         {
@@ -305,6 +338,8 @@ namespace GoF2Remake.UI
                 int i = SavePageOpen && lastSavedSlot >= 0 && lastSavedSlot < items.Length ? lastSavedSlot : 0;
                 Select(items[i]);
             }
+            else if (missions != null && missions.IsOpen) Select(missions.NavItems()[0]);
+            else if (lounge != null && lounge.ChatOpen) lounge.FocusFirst();
             else if (!HangarOpen) Select(launchButton);
             else if (root.focusController?.focusedElement is VisualElement f) f.Blur();
         }
@@ -326,6 +361,8 @@ namespace GoF2Remake.UI
         void Back()
         {
             if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
+            else if (missions != null && missions.IsOpen) { Play(buttonRelease); missions.Close(); }
+            else if (lounge != null && lounge.ChatOpen) { Play(buttonRelease); lounge.CloseChat(); }
             else if (HangarOpen) { Play(buttonRelease); CloseHangar(); }
             else if (SavePageOpen) { Play(buttonRelease); ShowSystemPage(false); }
             else if (SystemMenuOpen) { Play(buttonRelease); CloseSystemMenu(); }
@@ -388,6 +425,36 @@ namespace GoF2Remake.UI
             GoF2Session.Autosave();
             ApplyStoryLocks();
             Select(launchButton);
+        }
+
+        // ---- freelance (ModStation::OnUpdate: Status::missionCompleted / missionFailed, docked) --------------
+
+        bool CheckFreelance()
+        {
+            if (level == null || level.Station == null) return false;
+            var result = GoF2Freelance.CheckDocked(level.Station.index);
+            if (result == GoF2Freelance.DockResult.None) return false;
+            CloseHangar();
+            lounge?.CloseChat(false);
+            if (missions != null && missions.IsOpen) missions.Close();
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            var m = GoF2Freelance.Mission;
+            bool success = result == GoF2Freelance.DockResult.Success;
+            string text = success ? GoF2Freelance.SuccessText() : GoF2Freelance.FailureText();
+            storyDialogue.ShowAgentMessage(text, m.clientName, m.clientPortrait, () =>
+            {
+                if (success)
+                {
+                    // Layout::showMissionRewardMessage + Mission_accomplished (36), changeCredits(reward + bonus).
+                    int paid = GoF2Freelance.Succeed(true);
+                    ShowToast($"{GoF2Localization.Get(216)} +{GoF2ItemInfo.Credits(paid)}");
+                    var combat = GoF2Remake.Flight.GoF2CombatAssets.Load();
+                    Play(combat != null ? combat.missionAccomplished : null);
+                }
+                else GoF2Freelance.Fail();
+                Select(launchButton);
+            });
+            return true;
         }
 
         // ---- system menu (MenuTouchWindow: Save game, Back to Main Menu) -----------------------------------
@@ -555,9 +622,19 @@ namespace GoF2Remake.UI
                 root.focusController?.IgnoreEvent(e);
                 return;
             }
-            var items = DialogOpen ? new VisualElement[] { dialogYes, dialogNo }
-                      : SystemMenuOpen ? SystemMenuItems()
-                      : new VisualElement[] { hangarButton, loungeButton, mapButton, launchButton };
+            var stationItems = new VisualElement[] { hangarButton, loungeButton, mapButton, missionsButton, launchButton };
+            VisualElement[] items;
+            if (DialogOpen) items = new VisualElement[] { dialogYes, dialogNo };
+            else if (SystemMenuOpen) items = SystemMenuItems();
+            else if (missions != null && missions.IsOpen) { items = missions.NavItems(); vertical |= horizontal; }
+            else if (lounge != null && lounge.ChatOpen) items = lounge.NavItems();
+            else if (lounge != null && lounge.Active)
+            {
+                var l = new System.Collections.Generic.List<VisualElement>(lounge.NavItems());
+                l.AddRange(stationItems);
+                items = l.ToArray();
+            }
+            else items = stationItems;
             if (DialogOpen ? horizontal : vertical)
             {
                 var focused = root.focusController?.focusedElement as VisualElement;
@@ -657,6 +734,8 @@ namespace GoF2Remake.UI
             if (GoF2StarMap.IsOpen) return;   // the map has its own input
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
+            lounge?.Update();
 
             var kb = Keyboard.current;
             var pad = Gamepad.current;
@@ -669,6 +748,20 @@ namespace GoF2Remake.UI
             }
             if (toastMs > 0f && (toastMs -= Time.unscaledDeltaTime * 1000f) <= 0f) toast.RemoveFromClassList("station-toast--shown");
             if (DialogOpen || SystemMenuOpen) return;
+            if (missions != null && missions.IsOpen)
+            {
+                if ((kb != null && (kb.qKey.wasPressedThisFrame || kb.eKey.wasPressedThisFrame))
+                    || (pad != null && (pad.leftShoulder.wasPressedThisFrame || pad.rightShoulder.wasPressedThisFrame)))
+                { Play(buttonPush); missions.NextTab(); }
+                return;
+            }
+            if (lounge != null && lounge.ChatOpen) return;
+            if ((kb != null && kb.digit4Key.wasPressedThisFrame) || (pad != null && pad.selectButton.wasPressedThisFrame))
+            {
+                Play(buttonRelease);
+                OpenMissions();
+                return;
+            }
 
             if (HangarOpen)
             {

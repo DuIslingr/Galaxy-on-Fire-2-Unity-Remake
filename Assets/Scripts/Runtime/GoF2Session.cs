@@ -34,6 +34,27 @@ namespace GoF2Remake.Data
         public static bool StoryRadioPending;
         /// <summary>Status+0x1c4: freelance missions completed.</summary>
         public static int FreelanceCompleted;
+        /// <summary>Status missions[1]: the freelance mission (GoF2Freelance), type -1 = none.</summary>
+        public static GoF2FreelanceMission FreelanceMission = new GoF2FreelanceMission();
+        /// <summary>Status+0x34: passengers aboard (Passenger missions).</summary>
+        public static int Passengers;
+        /// <summary>Status+0x50: freelance types already offered (every type once before repeats).</summary>
+        public static bool[] UsedMissionTypes = new bool[15];
+        /// <summary>Status+0xf0 / +0xf1: the Informer mission's spy is dead / another ship died in its orbit.</summary>
+        public static bool InformerKilled, InformerFailed;
+        /// <summary>Bar statistics: Status+0xd0 agents talked to, +0xe0 declines, +0xe4 repeats, +0xe8 / +0xec accepted
+        /// without asking the risk / for the map, +0x9c containers and +0xb8 passengers delivered.</summary>
+        public static int AgentsTalkedTo, OffersDeclined, OffersRepeated, AcceptedBlindRisk, AcceptedBlindMap, ContainersDelivered, PassengersDelivered;
+        /// <summary>Status+0xd4 / +0x2c / +0x30: hired wingmen (the agent and its friends), their race and the contract time
+        /// left (ms); GoF2Wingmen.</summary>
+        public static List<string> Wingmen = new List<string>();
+        public static int WingmanRace;
+        public static float WingmanContractMs;
+        /// <summary>Blueprints the player owns (BluePrint::unlock), by blueprint index.</summary>
+        public static HashSet<int> UnlockedBlueprints = new HashSet<int>();
+        /// <summary>Ship::addMod: the mods bought for the current ship.</summary>
+        public static List<int> ShipMods = new List<int>();
+        public static void AddShipMod(int mod) { if (mod >= 0 && !ShipMods.Contains(mod)) ShipMods.Add(mod); }
         /// <summary>Status+0x174: the counter of story types 0xa8 / 0xb8.</summary>
         public static int StoryCounter;
         /// <summary>Status+0x7c / +0x80: the Void-invasion system and station (-1 none, -10 never again).</summary>
@@ -181,6 +202,16 @@ namespace GoF2Remake.Data
             StoryStepStart = 0f;
             StoryRadioPending = false;
             FreelanceCompleted = 0;
+            FreelanceMission = new GoF2FreelanceMission();
+            Passengers = 0;
+            UsedMissionTypes = new bool[15];
+            InformerKilled = InformerFailed = false;
+            Wingmen = new List<string>();
+            WingmanRace = 0;
+            WingmanContractMs = 0f;
+            UnlockedBlueprints = new HashSet<int>();
+            ShipMods = new List<int>();
+            AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;
             StoryCounter = 0;
             VoidInvasionSystem = VoidInvasionStation = -1;
             Unsaleable = new HashSet<int>();

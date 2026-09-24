@@ -1,0 +1,411 @@
+// GoF2LoungeChat.cs
+// A conversation with a bar agent (SpaceLounge::startChat 0x198974 / onKeyPress 0x19c6fc / OnTouchEnd 0x1a0360;
+// Reference/research/freelance_missions.md 3). Plain C#, driven by the station menu's chat panel:
+//   Start      the offer text: greeting 750-755 + 756 / 757 (#N), intro 758-763 (missions, purchases), the body per offer
+//              (mission 786 + type (+ 802), reward line 764-766 (+ 767 bonus); small talk 820-840 without repeats in one
+//              lounge visit; item 768-772 + 773 / 774 (+ 775); purchase 777 / 778; wingmen 779-781; diplomat 878-883;
+//              story sellers 874 / 875 + 886 + index + 876 / 877 / 879), the question 841-843. Known agents: the stored
+//              offer again (the bonus re-evaluated), or 857 / 858 / 859 once accepted
+//   Choices    860 Okay, 861 No thanks, 862 What was that?, 804 Show it on the map / 776 Let me see it, 807 What's the risk?
+//   Choose     decline 845-849, repeat, map (805 / 806 or the star map), risk 808 + int(d / 10 * 5), accept -> the checks
+//              (337 / 338 / 203 / 785) and the confirmation (865 (+ 864), 866 / 868-873 / 885)
+//   Confirm    "Yes": 850-852 then the deal (mission 853-855 / Challenge 856); see GoF2Freelance.Accept and Deal below
+// The original's single random generator isn't reproducible; UnityEngine.Random picks the text variants.
+
+using System;
+using System.Collections.Generic;
+using GoF2Remake.Flight;
+using GoF2Remake.UI;
+using Random = UnityEngine.Random;
+
+namespace GoF2Remake.Data
+{
+    public class GoF2LoungeChat
+    {
+        public enum Choice { Okay, NoThanks, Repeat, Map, Risk }
+        public enum Outcome { None, Confirm, Refused, ShowMap, Closed }
+
+        /// <summary>Blueprint index -> produced item (set by the blueprint table); -1 = unknown.</summary>
+        public static Func<int, int> BlueprintProduct = _ => -1;
+
+        readonly GoF2Database db;
+        readonly int station;
+        readonly HashSet<int> smallTalkUsed;
+        public GoF2Agent Agent { get; }
+        public string Text { get; private set; } = "";
+        public List<Choice> Choices { get; } = new List<Choice>();
+        /// <summary>The confirmation question after Okay (Outcome.Confirm).</summary>
+        public string ConfirmText { get; private set; } = "";
+        /// <summary>The station to show on the star map (Outcome.ShowMap).</summary>
+        public int MapTarget { get; private set; } = -1;
+        /// <summary>After the deal: the star map opens on the bought system (offer 4).</summary>
+        public int RevealedSystem { get; private set; } = -1;
+        bool askedRisk, askedMap;
+
+        static string T(int id) => GoF2Localization.Get(id);
+        static string C(int credits) => GoF2ItemInfo.Credits(credits);
+
+        /// <summary>'smallTalkUsed': SpaceLounge+0x58, the small-talk lines said during this lounge visit.</summary>
+        public GoF2LoungeChat(GoF2Database db, GoF2Agent agent, int station, HashSet<int> smallTalkUsed)
+        {
+            this.db = db;
+            this.station = station;
+            this.smallTalkUsed = smallTalkUsed ?? new HashSet<int>();
+            Agent = agent;
+        }
+
+        // ---- the opening --------------------------------------------------------------------------------------
+
+        public void Start()
+        {
+            var a = Agent;
+            Choices.Clear();
+            if (!a.known)
+            {
+                GoF2Session.AgentsTalkedTo++;
+                a.known = true;
+                if (a.offer == GoF2AgentOffer.Purchase && !a.HasMission) a.mission = GoF2AgentGenerator.CreateMission(db, a, station, true);
+                a.textIds = PickTextIds(a);
+            }
+            else if (a.accepted || a.offer == GoF2AgentOffer.SmallTalk && a.textIds.Count == 0)
+            {
+                Text = T(a.offer == GoF2AgentOffer.Purchase ? 857
+                         : a.offer == GoF2AgentOffer.Wingmen || a.HasMission && a.mission.type == GoF2MissionType.Challenge ? 859 : 858);
+                return;
+            }
+            Text = Compose(a, a.textIds);
+            SetChoices();
+        }
+
+        bool HasDeal
+        {
+            get
+            {
+                var a = Agent;
+                if (a.accepted) return false;
+                switch (a.offer)
+                {
+                    case GoF2AgentOffer.SmallTalk: return false;
+                    case GoF2AgentOffer.Diplomat: return GoF2Standing.IsEnemy(a.race);
+                    case GoF2AgentOffer.Mission: case GoF2AgentOffer.Purchase: return a.HasMission;
+                    default: return true;
+                }
+            }
+        }
+
+        bool IsMissionOffer => Agent.offer == GoF2AgentOffer.Mission || Agent.offer == GoF2AgentOffer.Purchase;
+        bool IsSeller => Agent.offer == GoF2AgentOffer.SellItem || Agent.offer == GoF2AgentOffer.SellBlueprint || Agent.offer == GoF2AgentOffer.SellMod
+                         || Agent.offer == GoF2AgentOffer.KaamoSpecial || Agent.offer == GoF2AgentOffer.ShipDealer;
+
+        void SetChoices()
+        {
+            Choices.Clear();
+            if (!HasDeal) return;
+            Choices.Add(Choice.Okay);
+            Choices.Add(Choice.NoThanks);
+            Choices.Add(Choice.Repeat);
+            if (IsMissionOffer || IsSeller) Choices.Add(Choice.Map);
+            if (IsMissionOffer) Choices.Add(Choice.Risk);
+        }
+
+        public static string ChoiceLabel(GoF2Agent agent, Choice c) => c switch
+        {
+            Choice.Okay => T(860),
+            Choice.NoThanks => T(861),
+            Choice.Repeat => T(862),
+            Choice.Map => agent.offer == GoF2AgentOffer.Mission || agent.offer == GoF2AgentOffer.Purchase ? T(804) : T(776),
+            _ => T(807),
+        };
+
+        // ---- text -------------------------------------------------------------------------------------------
+
+        /// <summary>The variant ids of the first chat: [greeting, name line, intro, body variant, reward line, question],
+        /// -1 = none.</summary>
+        List<int> PickTextIds(GoF2Agent a)
+        {
+            int greet = -1, nameLine = -1, intro = -1, body = -1, reward = -1, question = -1;
+            bool story = a.IsStory;
+            bool challenge = a.HasMission && a.mission.type == GoF2MissionType.Challenge;
+            if (story) greet = 874 + Random.Range(0, 2);
+            else if (a.offer != GoF2AgentOffer.SmallTalk && a.offer != GoF2AgentOffer.Diplomat && !challenge)
+            {
+                greet = 750 + Random.Range(0, 6);
+                nameLine = 756 + Random.Range(0, 2);
+            }
+            if (!story && (a.offer == GoF2AgentOffer.Mission && !challenge || a.offer == GoF2AgentOffer.Purchase)) intro = 758 + Random.Range(0, 6);
+            switch (a.offer)
+            {
+                case GoF2AgentOffer.Mission: reward = 764 + Random.Range(0, 3); break;
+                case GoF2AgentOffer.SmallTalk: body = PickSmallTalk(a); break;
+                case GoF2AgentOffer.SellItem: body = 768 + Random.Range(0, 5); reward = 773 + Random.Range(0, 2); break;
+                case GoF2AgentOffer.Purchase: body = 777 + Random.Range(0, 2); break;
+            }
+            if (a.offer != GoF2AgentOffer.SmallTalk && a.offer != GoF2AgentOffer.Diplomat) question = 841 + Random.Range(0, 3);
+            return new List<int> { greet, nameLine, intro, body, reward, question };
+        }
+
+        /// <summary>820-840 without repeats in one visit; 836 only from Terrans, 833 only from men (otherwise 824).</summary>
+        int PickSmallTalk(GoF2Agent a)
+        {
+            int line = 0;
+            for (int i = 0; i < 100; i++) { line = Random.Range(0, 21); if (!smallTalkUsed.Contains(line)) break; }
+            smallTalkUsed.Add(line);
+            if (line == 16 && a.race != 0) line = 4;
+            if (line == 13 && !a.male) line = 4;
+            return 820 + line;
+        }
+
+        string StationName(int s) => db.Stations.Find(x => x.index == s)?.name ?? "";
+        string SystemName(int s) => db.Systems.Find(x => x.index == s)?.name ?? "";
+
+        /// <summary>SpaceLounge::startChat / Globals::getAgentMissionText 0xfa7d4: the offer text from its ids.</summary>
+        public string Compose(GoF2Agent a, List<int> ids)
+        {
+            int Id(int k) => ids != null && k < ids.Count ? ids[k] : -1;
+            var parts = new List<string>();
+            if (Id(0) >= 0) parts.Add(T(Id(0)));
+            if (Id(1) >= 0) parts.Add(T(Id(1)).Replace("#N", a.name));
+            if (Id(2) >= 0) parts.Add(T(Id(2)));
+            string head = string.Join(" ", parts);
+            string body = Body(a, ids);
+            string text = head.Length > 0 && body.Length > 0 ? head + " " + body : head + body;
+            if (Id(5) >= 0) text += "\n" + T(Id(5));
+            return text;
+        }
+
+        string Body(GoF2Agent a, List<int> ids)
+        {
+            int Id(int k) => ids != null && k < ids.Count ? ids[k] : -1;
+            switch (a.offer)
+            {
+                case GoF2AgentOffer.Mission:
+                    return a.HasMission ? MissionText(a.mission, Id(4)) : "";
+                case GoF2AgentOffer.SmallTalk:
+                {
+                    int line = Id(3) >= 0 ? Id(3) : 824;
+                    var stations = db.Stations;
+                    return T(line).Replace("#S", stations[Random.Range(0, stations.Count)].name).Replace("#N", a.name)
+                                  .Replace("#ORE", T(1428 + Random.Range(0, 10)));
+                }
+                case GoF2AgentOffer.SellItem:
+                case GoF2AgentOffer.KaamoSpecial:
+                {
+                    int intro = Id(3) >= 0 ? Id(3) : 768, line = Id(4) >= 0 ? Id(4) : 773;
+                    string s = T(intro) + "\n" + T(line).Replace("#Q", a.sellQuantity.ToString()).Replace("#P", GoF2ItemInfo.ItemName(a.sellItem))
+                                                        .Replace("#C", C(a.sellPrice));
+                    if (a.sellQuantity > 1) s += " " + T(775).Replace("#C", C(a.sellPrice / a.sellQuantity));
+                    return s;
+                }
+                case GoF2AgentOffer.Purchase:
+                {
+                    var m = a.mission;
+                    return T(Id(3) >= 0 ? Id(3) : 777).Replace("#Q", m.amount.ToString()).Replace("#P", GoF2ItemInfo.ItemName(m.good)).Replace("#C", C(m.reward));
+                }
+                case GoF2AgentOffer.Wingmen:
+                    return T(779 + a.wingmen.Count).Replace("#C", C(a.costs)).Replace("#W", a.wingmen.Count > 0 ? a.wingmen[0] : "");
+                case GoF2AgentOffer.Diplomat:
+                {
+                    if (!GoF2Standing.IsEnemy(a.race)) return T(883);
+                    a.costs = GoF2AgentGenerator.DiplomatCosts(a.race);
+                    int id = a.race switch { 2 => 878, 3 => 880, 0 => 881, _ => 882 };
+                    return T(id).Replace("#C", C(a.costs));
+                }
+                case GoF2AgentOffer.SellBlueprint:
+                    return StoryLine(a) + " " + T(876).Replace("#N", BlueprintName(a.sellBlueprint)).Replace("#C", C(a.sellPrice));
+                case GoF2AgentOffer.SellSystem:
+                    return StoryLine(a) + " " + T(877).Replace("#S", SystemName(a.sellSystem)).Replace("#C", C(a.sellPrice));
+                case GoF2AgentOffer.SellMod:
+                    return StoryLine(a) + " " + T(879).Replace("#SHIP_NAME", GoF2ItemInfo.ShipName(GoF2Session.ShipIndex)).Replace("#N", a.name)
+                                                      .Replace("#C", C(ModPrice(a)));
+                case GoF2AgentOffer.ShipDealer:
+                    return StoryLine(a);
+            }
+            return "";
+        }
+
+        string StoryLine(GoF2Agent a) => a.storyIndex >= 0 ? T(886 + a.storyIndex) : "";
+
+        static string BlueprintName(int bp)
+        {
+            int item = BlueprintProduct(bp);
+            return item >= 0 ? GoF2ItemInfo.ItemName(item) : "";
+        }
+
+        /// <summary>Agent::getModPricePercentage 0x1a698c: the ship's price x 20 / 30 / 40 / 20 % (mods 0..3).</summary>
+        int ModPrice(GoF2Agent a)
+        {
+            int[] pct = { 20, 30, 40, 20 };
+            int ship = db.Ship(GoF2Session.ShipIndex)?.price ?? 0;
+            return a.sellMod >= 0 && a.sellMod < pct.Length ? ship * pct[a.sellMod] / 100 : a.sellPrice;
+        }
+
+        /// <summary>786 + type (#P, #Q, #S, #N; Recovery / Salvage + 802) and the reward line with #C = reward + the current
+        /// bonus (+ 767 with the bonus percentage). Challenge: 798 only.</summary>
+        public string MissionText(GoF2FreelanceMission m, int rewardLine)
+        {
+            if (m.status == -1) return T(803).Replace("#S", StationName(m.target));
+            if (m.type == GoF2MissionType.Challenge) return T(798).Replace("#C", C(m.reward));
+            string s = T(786 + m.type);
+            if (m.type == GoF2MissionType.Recovery || m.type == GoF2MissionType.Salvage) s += " " + T(802);
+            string good = m.type == GoF2MissionType.Courier ? T(813 + m.good)
+                        : m.type == GoF2MissionType.Purchase || m.type == GoF2MissionType.OreMining ? GoF2ItemInfo.ItemName(m.good) : "";
+            string where = m.type == GoF2MissionType.StolenGoods ? SystemName(db.Stations.Find(x => x.index == m.target)?.system ?? 0) : StationName(m.target);
+            s = s.Replace("#P", good).Replace("#Q", m.amount.ToString()).Replace("#S", where).Replace("#N", m.targetName).Replace("#C", C(m.Total));
+            if (m.type != GoF2MissionType.Purchase)
+            {
+                s += "\n" + T(rewardLine >= 0 ? rewardLine : 765).Replace("#C", C(m.Total));
+                int bonus = m.CurrentBonus;
+                if (bonus > 0) s += " " + T(767).Replace("#P", ((int)Math.Round(GoF2AgentGenerator.MissionBonus(m.clientRace) * 100f)).ToString());
+            }
+            return s;
+        }
+
+        // ---- choices ----------------------------------------------------------------------------------------
+
+        public Outcome Choose(Choice c)
+        {
+            var a = Agent;
+            switch (c)
+            {
+                case Choice.NoThanks:
+                    GoF2Session.OffersDeclined++;
+                    Text = T(845 + Random.Range(0, 5));
+                    Choices.Clear();
+                    return Outcome.Closed;
+                case Choice.Repeat:
+                    GoF2Session.OffersRepeated++;
+                    Text = Compose(a, a.textIds);
+                    return Outcome.None;
+                case Choice.Risk:
+                    askedRisk = true;
+                    Text = T(808 + (int)(a.mission.difficulty / 10f * 5f));
+                    return Outcome.None;
+                case Choice.Map:
+                    askedMap = true;
+                    if (!IsMissionOffer) { MapTarget = -1; return Outcome.ShowMap; }   // "Let me see it": the item details
+                    int target = a.mission.target;
+                    if (target == station) { Text = T(805); return Outcome.None; }
+                    int sysHere = db.Stations.Find(x => x.index == station)?.system ?? -1;
+                    if ((db.Stations.Find(x => x.index == target)?.system ?? -2) == sysHere) { Text = T(806); return Outcome.None; }
+                    MapTarget = target;
+                    return Outcome.ShowMap;
+                default:
+                    return Accept();
+            }
+        }
+
+        Outcome Accept()
+        {
+            var a = Agent;
+            Outcome Refuse(string text) { Text = text; return Outcome.Refused; }
+            switch (a.offer)
+            {
+                case GoF2AgentOffer.Mission:
+                case GoF2AgentOffer.Purchase:
+                {
+                    var m = a.mission;
+                    string refusal = GoF2Freelance.AcceptRefusal(db, m);
+                    if (refusal != null) return Refuse(refusal);
+                    int upFront = GoF2Freelance.UpFrontCost(m);
+                    if (upFront > GoF2Session.Credits) return Refuse(T(203).Replace("#C", C(upFront - GoF2Session.Credits)));
+                    ConfirmText = T(865).Replace("#M", m.Name).Replace("#C", C(m.Total));
+                    if (GoF2Freelance.Active) ConfirmText += " " + T(864);
+                    return Outcome.Confirm;
+                }
+                case GoF2AgentOffer.Wingmen:
+                    if (GoF2Session.Wingmen.Count > 0) return Refuse(T(785));
+                    if (a.costs > GoF2Session.Credits) return Refuse(T(203).Replace("#C", C(a.costs - GoF2Session.Credits)));
+                    ConfirmText = T(866).Replace("#Q", (a.wingmen.Count + 1).ToString()).Replace("#C", C(a.costs));
+                    return Outcome.Confirm;
+                case GoF2AgentOffer.Diplomat:
+                    if (a.costs > GoF2Session.Credits) return Refuse(T(203).Replace("#C", C(a.costs - GoF2Session.Credits)));
+                    ConfirmText = T(885).Replace("#C", C(a.costs));
+                    return Outcome.Confirm;
+            }
+            int price = Price(a);
+            if (price > GoF2Session.Credits) return Refuse(T(203).Replace("#C", C(price - GoF2Session.Credits)));
+            ConfirmText = a.offer switch
+            {
+                GoF2AgentOffer.SellBlueprint => T(869).Replace("#P", BlueprintName(a.sellBlueprint)).Replace("#C", C(price)),
+                GoF2AgentOffer.SellSystem => T(870).Replace("#S", SystemName(a.sellSystem)).Replace("#C", C(price)),
+                GoF2AgentOffer.SellMod => T(871).Replace("#C", C(price)),
+                GoF2AgentOffer.ShipDealer => T(873).Replace("#C", C(price)),
+                _ => T(868).Replace("#Q", a.sellQuantity.ToString()).Replace("#P", GoF2ItemInfo.ItemName(a.sellItem)).Replace("#C", C(price)),
+            };
+            return Outcome.Confirm;
+        }
+
+        int Price(GoF2Agent a) => a.offer == GoF2AgentOffer.SellMod ? ModPrice(a) : a.sellPrice;
+
+        /// <summary>"Yes" on the confirmation: 850-852 and the deal.</summary>
+        public void Confirm()
+        {
+            var a = Agent;
+            string thanks = T(850 + Random.Range(0, 3));
+            switch (a.offer)
+            {
+                case GoF2AgentOffer.Mission:
+                case GoF2AgentOffer.Purchase:
+                    if (!askedRisk) GoF2Session.AcceptedBlindRisk++;
+                    if (!askedMap) GoF2Session.AcceptedBlindMap++;
+                    GoF2Freelance.Accept(db, a);
+                    thanks += " " + (a.mission.type == GoF2MissionType.Challenge ? T(856) : T(853 + Random.Range(0, 3)));
+                    break;
+                case GoF2AgentOffer.Wingmen:
+                    GoF2Session.Credits -= a.costs;
+                    GoF2Wingmen.Hire(a);
+                    a.accepted = true;
+                    break;
+                case GoF2AgentOffer.Diplomat:
+                    GoF2Session.Credits -= a.costs;
+                    Rehabilitate(a.race);
+                    a.accepted = true;
+                    break;
+                case GoF2AgentOffer.SellSystem:
+                    GoF2Session.Credits -= a.sellPrice;
+                    var vis = GoF2GalaxyMap.Visibility(db);
+                    if (vis != null && a.sellSystem >= 0 && a.sellSystem < vis.Length) vis[a.sellSystem] = true;
+                    RevealedSystem = a.sellSystem;
+                    a.accepted = true;
+                    break;
+                case GoF2AgentOffer.SellBlueprint:
+                    GoF2Session.Credits -= a.sellPrice;
+                    GoF2Session.UnlockedBlueprints.Add(a.sellBlueprint);
+                    a.accepted = true;
+                    break;
+                case GoF2AgentOffer.SellMod:
+                    GoF2Session.Credits -= ModPrice(a);
+                    GoF2Session.AddShipMod(a.sellMod);
+                    break;
+                default:
+                    GoF2Session.Credits -= a.sellPrice;
+                    GiveItem(a.sellItem, a.sellQuantity);
+                    a.accepted = true;
+                    break;
+            }
+            Text = thanks;
+            Choices.Clear();
+        }
+
+        /// <summary>Standing::rehabilitate 0x14289c: the race's axis just inside the neutral band (+-35).</summary>
+        static void Rehabilitate(int race)
+        {
+            if (race == 0) GoF2Session.Standing[0] = -35;
+            else if (race == 1) GoF2Session.Standing[0] = 35;
+            else if (race == 2) GoF2Session.Standing[1] = -35;
+            else if (race == 3) GoF2Session.Standing[1] = 35;
+        }
+
+        /// <summary>Bought items go to the hold; secondaries join a mounted stack of the same item.</summary>
+        void GiveItem(int item, int amount)
+        {
+            var it = db.Item(item);
+            if (it != null && it.TypeId == 1)
+            {
+                var mounted = GoF2Session.Equipment.Find(e => e.item == item);
+                if (mounted != null) { mounted.amount += amount; return; }
+            }
+            GoF2Shop.AddToCargo(item, amount);
+        }
+    }
+}

@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class GoF2SaveData
     {
-        public const int CurrentVersion = 2;
+        public const int CurrentVersion = 3;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -39,6 +39,16 @@ namespace GoF2Remake.Data
         public bool storyRadioPending;
         public int freelanceCompleted, storyCounter, voidInvasionSystem = -1, voidInvasionStation = -1;
         public List<int> unsaleable;
+        // version 3: the bar (agents live in recentStations)
+        public GoF2FreelanceMission freelanceMission;
+        public int passengers;
+        public bool[] usedMissionTypes;
+        public bool informerKilled, informerFailed;
+        public List<string> wingmen;
+        public int wingmanRace;
+        public float wingmanContractMs;
+        public List<int> unlockedBlueprints, shipMods;
+        public int agentsTalkedTo, offersDeclined, offersRepeated, acceptedBlindRisk, acceptedBlindMap, containersDelivered, passengersDelivered;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -145,6 +155,16 @@ namespace GoF2Remake.Data
                 voidInvasionSystem = GoF2Session.VoidInvasionSystem,
                 voidInvasionStation = GoF2Session.VoidInvasionStation,
                 unsaleable = new List<int>(GoF2Session.Unsaleable),
+                freelanceMission = GoF2Session.FreelanceMission,
+                passengers = GoF2Session.Passengers,
+                usedMissionTypes = GoF2Session.UsedMissionTypes,
+                informerKilled = GoF2Session.InformerKilled,
+                wingmen = GoF2Session.Wingmen, wingmanRace = GoF2Session.WingmanRace, wingmanContractMs = GoF2Session.WingmanContractMs,
+                unlockedBlueprints = new List<int>(GoF2Session.UnlockedBlueprints), shipMods = GoF2Session.ShipMods,
+                informerFailed = GoF2Session.InformerFailed,
+                agentsTalkedTo = GoF2Session.AgentsTalkedTo, offersDeclined = GoF2Session.OffersDeclined, offersRepeated = GoF2Session.OffersRepeated,
+                acceptedBlindRisk = GoF2Session.AcceptedBlindRisk, acceptedBlindMap = GoF2Session.AcceptedBlindMap,
+                containersDelivered = GoF2Session.ContainersDelivered, passengersDelivered = GoF2Session.PassengersDelivered,
             };
         }
 
@@ -194,6 +214,22 @@ namespace GoF2Remake.Data
             GoF2Session.VoidInvasionSystem = s.voidInvasionSystem;
             GoF2Session.VoidInvasionStation = s.voidInvasionStation;
             GoF2Session.Unsaleable = new HashSet<int>(s.unsaleable ?? new List<int>());
+            if (s.version >= 3)
+            {
+                GoF2Session.FreelanceMission = s.freelanceMission ?? new GoF2FreelanceMission();
+                GoF2Session.Passengers = s.passengers;
+                if (s.usedMissionTypes != null && s.usedMissionTypes.Length == 15) GoF2Session.UsedMissionTypes = s.usedMissionTypes;
+                GoF2Session.InformerKilled = s.informerKilled;
+                GoF2Session.Wingmen = s.wingmen ?? new List<string>();
+                GoF2Session.WingmanRace = s.wingmanRace;
+                GoF2Session.WingmanContractMs = s.wingmanContractMs;
+                GoF2Session.UnlockedBlueprints = new HashSet<int>(s.unlockedBlueprints ?? new List<int>());
+                GoF2Session.ShipMods = s.shipMods ?? new List<int>();
+                GoF2Session.InformerFailed = s.informerFailed;
+                GoF2Session.AgentsTalkedTo = s.agentsTalkedTo; GoF2Session.OffersDeclined = s.offersDeclined; GoF2Session.OffersRepeated = s.offersRepeated;
+                GoF2Session.AcceptedBlindRisk = s.acceptedBlindRisk; GoF2Session.AcceptedBlindMap = s.acceptedBlindMap;
+                GoF2Session.ContainersDelivered = s.containersDelivered; GoF2Session.PassengersDelivered = s.passengersDelivered;
+            }
             GoF2Story.RepairCheckpoint();
         }
     }
