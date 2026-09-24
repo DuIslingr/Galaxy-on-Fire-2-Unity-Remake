@@ -65,6 +65,9 @@ namespace GoF2Remake.UI
         Button hangarButton, loungeButton, mapButton, missionsButton, launchButton, dialogYes, dialogNo;
         GoF2LoungePanel lounge;
         GoF2MissionsWindow missions;
+        Label tickerText;
+        float tickerX;
+        bool tickerReady;
         VisualElement systemMenu, systemMain, systemSave;
         ScrollView saveSlotList;
         Button saveGameButton, mainMenuButton, systemClose, saveBack;
@@ -136,6 +139,7 @@ namespace GoF2Remake.UI
             dialogNo = Bind("dialogNo", CloseDialog);
             hangarWindow = new GoF2HangarWindow(this, level, root);
             lounge = new GoF2LoungePanel(this, level, root);
+            SetupTicker();
             missions = new GoF2MissionsWindow(this, level, root);
             root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
             if (voiceSource == null)
@@ -253,6 +257,38 @@ namespace GoF2Remake.UI
             root.RemoveFromClassList("hangar-open");
             OnViewChanged();
             Select(hangarButton);
+        }
+
+        /// <summary>NewsTicker: built once per docking (ModStation::OnInitialize state 0x3c), main view only.</summary>
+        void SetupTicker()
+        {
+            tickerText = root.Q<Label>("tickerText");
+            var st = level != null ? level.Station : null;
+            bool shown = st != null && GoF2NewsTicker.ShownAt(st.index, st.system);
+            root.EnableInClassList("ticker-off", !shown);
+            if (!shown) return;
+            tickerText.text = GoF2NewsTicker.Build(level.Database, st.system, level.Layout.raceId);
+            tickerX = 0f;
+            tickerReady = false;
+        }
+
+        /// <summary>NewsTicker::update: x -= dt * 50 px/s, wrapping after the text (doubled when shorter than the strip).</summary>
+        void UpdateTicker()
+        {
+            if (tickerText == null || root.ClassListContains("ticker-off")) return;
+            float strip = tickerText.parent.resolvedStyle.width, w = tickerText.resolvedStyle.width;
+            if (float.IsNaN(strip) || float.IsNaN(w) || w <= 0f) return;
+            if (!tickerReady)
+            {
+                tickerReady = true;
+                string single = tickerText.text;
+                if (single.Length > 0 && w < strip * 2f) tickerText.text = single + single;   // draw it twice for the wrap
+                tickerX = strip;
+                return;
+            }
+            tickerX -= Time.unscaledDeltaTime * GoF2NewsTicker.ScrollPxPerSecond;
+            if (tickerX < -w * 0.5f) tickerX += w * 0.5f;
+            tickerText.style.left = tickerX;
         }
 
         /// <summary>The Missions window (129) over the current view.</summary>
@@ -780,6 +816,7 @@ namespace GoF2Remake.UI
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPendingProducts()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
             lounge?.Update();
+            UpdateTicker();
 
             var kb = Keyboard.current;
             var pad = Gamepad.current;

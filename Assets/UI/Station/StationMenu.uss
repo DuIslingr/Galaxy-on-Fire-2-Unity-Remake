@@ -72,6 +72,7 @@
 
 .station-menu-button {
     display: none;
+    margin-left: auto;   /* right-aligned even when the view title is hidden */
     padding: 12px 22px;
     font-size: 20px;
     letter-spacing: 3px;
@@ -323,5 +324,40 @@
 .station-map-open .side-shade,
 .station-map-open .bottom-shade,
 .station-map-open .drag-zone {
+    display: none;
+}
+
+/* ---- news ticker (NewsTicker: the main view's bottom strip, scrolling left at 50 px/s) ------------------ */
+
+.station-ticker {
+    position: absolute;
+    left: 500px;
+    right: 40px;
+    bottom: 168px;
+    height: 36px;
+    overflow: hidden;
+    background-color: rgba(4, 10, 18, 0.6);
+    border-top-width: 1px;
+    border-bottom-width: 1px;
+    border-top-color: var(--gof-line);
+    border-bottom-color: var(--gof-line);
+}
+
+.station-ticker-text {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    -unity-text-align: middle-left;
+    white-space: nowrap;
+    font-size: 20px;
+    color: var(--gof-text);
+}
+
+.hangar-open .station-ticker,
+.lounge-open .station-ticker,
+.chat-open .station-ticker,
+.missions-open .station-ticker,
+.station-map-open .station-ticker,
+.ticker-off .station-ticker {
     display: none;
 }

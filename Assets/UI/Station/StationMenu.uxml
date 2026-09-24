@@ -81,6 +81,10 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
+            <ui:VisualElement name="ticker" class="station-ticker" picking-mode="Ignore">
+                <ui:Label name="tickerText" class="station-ticker-text" picking-mode="Ignore" />
+            </ui:VisualElement>
+
             <ui:VisualElement name="loungeList" class="lounge-list" picking-mode="Ignore" />
 
             <ui:VisualElement name="chatWindow" class="chat-window">
