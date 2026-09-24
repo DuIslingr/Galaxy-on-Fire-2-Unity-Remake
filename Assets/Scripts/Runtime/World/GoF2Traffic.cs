@@ -167,7 +167,9 @@ namespace GoF2Remake.World
             int hostiles = 0;
             if (hasScanner)
                 foreach (var s in Ships)
-                    if (!s.Gone && s.Current != GoF2NpcShip.State.Dying && s.Current != GoF2NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer && !s.IsFreighter)
+                    // Radar::draw 0x156xxx: only active ships (Player::isActive) count, so a ship held back by its level
+                    // script doesn't start the battle music or block fast-forward before it shows up.
+                    if (!s.Gone && !s.Inactive && s.Current != GoF2NpcShip.State.Dying && s.Current != GoF2NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer && !s.IsFreighter)
                         hostiles++;
             HostileCount = hostiles;
             UpdateMusic(Time.unscaledDeltaTime);

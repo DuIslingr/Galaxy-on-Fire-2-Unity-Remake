@@ -76,6 +76,9 @@ namespace GoF2Remake.World
             if (on && !engine.isPlaying) engine.Play(); else if (!on) engine.Stop();
         }
         bool inactive;
+        /// <summary>setInitActive(false) (Player::isActive 0xb0022 false): waits for its script; not on the radar's hostile
+        /// counter.</summary>
+        public bool Inactive => inactive;
         [System.NonSerialized] public List<GoF2Target> enemies = new List<GoF2Target>();
 
         GoF2Traffic traffic;
