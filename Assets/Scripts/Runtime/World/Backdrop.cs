@@ -44,6 +44,15 @@ namespace GoF2Remake.World
         public readonly List<(int station, Transform transform, bool orbitPlanet)> PlanetTargets = new List<(int, Transform, bool)>();
         readonly List<Body> rings = new List<Body>();
         float flareIntensity;
+
+        /// <summary>StarSystem::render2D: the sun projects in front and within -W..2W, -H..2H (the flare is drawn).</summary>
+        public bool FlareVisible { get; private set; }
+        /// <summary>LensFlare+0: K * (1 - d / (H / 2)), K = 64 (80 for flare colour 5).</summary>
+        public float FlareIntensity => flareIntensity;
+        /// <summary>DAT_002589ac[system]: the flare colour index.</summary>
+        public int FlareColor => layout != null ? layout.flareColor : 3;
+        /// <summary>The sun's screen position (pixels, origin bottom-left).</summary>
+        public Vector2 SunScreen { get; private set; }
         static Mesh quad;
 
         public void Build(OrbitLayout orbit, Camera camera)
@@ -151,10 +160,13 @@ namespace GoF2Remake.World
             // Lens flare intensity (StarSystem::render2D): from the sun's screen position, used for the swelling.
             flareIntensity = 0f;
             var sp = cam.WorldToScreenPoint(c + sun.dir * Distance);
-            if (sp.z > 0f)
+            float W = Screen.width, H = Screen.height;
+            FlareVisible = sp.z > 0f && sp.x > -W && sp.x < 2f * W && sp.y > -H && sp.y < 2f * H;
+            SunScreen = new Vector2(sp.x, sp.y);
+            if (FlareVisible)
             {
-                float d = Vector2.Distance(new Vector2(sp.x, sp.y), new Vector2(Screen.width * 0.5f, Screen.height * 0.5f));
-                flareIntensity = 64f * (1f - d / (Screen.height * 0.5f));
+                float d = Vector2.Distance(new Vector2(sp.x, sp.y), new Vector2(W * 0.5f, H * 0.5f));
+                flareIntensity = (layout.flareColor == 5 ? 80f : 64f) * (1f - d / (H * 0.5f));
             }
             float e = Mathf.Max((flareIntensity - 10f) / 64f, 0f);
 

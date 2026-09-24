@@ -86,6 +86,7 @@ namespace GoF2Remake.Visuals
             OrbitBuilder.SpawnDust(Layout, transform);
             var cam = menuCamera != null ? menuCamera.GetComponent<Camera>() : Camera.main;
             OrbitBuilder.SpawnBackdrop(Layout, cam, transform);
+            SkyLayers.Spawn(Layout, cam, transform);
         }
 
         void SpawnTraffic(Database db, Vector3 centre)

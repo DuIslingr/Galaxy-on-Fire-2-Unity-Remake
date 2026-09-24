@@ -61,6 +61,7 @@ Menu items (from `Scripts/Editor`):
 - **GoF2 > Build HUD Images**: `Resources/GoF2Hud`, the HUD / star map images cut from the original interface atlases (rects in `Reference/research/mining.md`, `autopilot_travel.md`, `starmap_travel.md`). Also run by Create Space Scene.
 - **GoF2 > Build Star Map Assets**: `Resources/GoF2StarMap/StarMapAssets` (`StarMapAssets`). Also run by Create Space Scene, and by Create Station Scene when missing.
 - **GoF2 > Build Combat Assets**: `Resources/GoF2Combat/CombatAssets` (`CombatAssets`). Also run by Create Space Scene.
+- **GoF2 > Build Sky Layers**: `Resources/GoF2Backdrop/SkyLayerAssets` + the `sky_*` materials (see "Space scene"). Also run by Create Space Scene.
 - **GoF2 > Bake Skyboxes**: the old combined sky bakes (`Skyboxes/`, stars layer not matched to the system); only the Flight Test scene uses them.
 - **GoF2 > Bake Space Skies**: stars (3) and nebula (19, incl. Valkyrie/Supernova) layers as separate cubemaps for the flight levels.
 - **GoF2 > Add Post Processing To Scene**: global Volume with `Assets/Settings/GoF2_VolumeProfile.asset` (Bloom, threshold 1) + camera post-processing on.
@@ -129,7 +130,9 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Docking / launch:** within 16000 units of the station (`PlayerEgo::collidesWithStation`), the HUD offers **Dock** (tap, Enter, or controller X). It only appears after the player has left that range once, because the undock spawn is inside it; the original requires the autopilot instead. Docking loads `Station` straight away with no animation, like `MGame::dockEvent`. Launching from the station sets `Session.LaunchedFromStation`: a fixed camera 9000 units ahead watches the ship fly past for 7 s (`LevelScript`), then the chase camera eases in. The player has no control meanwhile (`ShipController.inputLocked`, weapons blocked); any key, button, stick, click or tap except Esc / Tab / Menu / View skips it (`LevelScript::skipSequence`) and snaps the chase camera behind the ship. Same for the arrival fly-in.
 - The HUD has one action prompt (tap, Enter, controller X): Autopilot / Jump / Autopilot off (see "Navigation"), Mine / Abort / Stop mining (see "Mining"), else Dock.
 - Music: the system race's space track, battle tracks by the number of hostile ships (see "NPCs and combat").
-- Not yet: missions, lens flare, wormhole, supernova/storm/ring/asteroid-belt sky layers.
+- **Lens flare** (`LensFlareView` in the flight HUD, under the HUD; `StarSystem::render2D` / `LensFlare::render2D`): 7 images of `gof2_interface.png` (1288-1290 → `GoF2Hud/flare_0..2`) on the line centre → sun at t 0.5 / 0.25 / 0.75 / 0.125 / 1/11 / -0.75 / -0.2, alpha 70 + I (40 + I), plus a full-screen glare of alpha I, tinted by the system's flare colour; I = 64 (80 Ginoya) · (1 − d / (H/2)) (`Backdrop.FlareIntensity`, also the sun swelling); shown while the sun projects in front within −W..2W / −H..2H, no occlusion. Sizes assume a 768-high canvas (64 px images).
+- **Extra sky layers** (`SkyLayers`, `GoF2/SkyLayer` far-plane shader, assets in `Resources/GoF2Backdrop/SkyLayerAssets` from **GoF2 > Build Sky Layers**): camera-centred, world-aligned meshes in the original's order: planet ring sky (stations 120 / 126 / 130 / 132, before the sun and planets), supernova flares (system 27, mission ≠ 89 and < 158, the nasty texture from 106, ×1.5 speed above 106), storms (mission ≥ 90 in system 27 or nebula 16 / 18, a new random rotation each loop), asteroid belt (systems 24-26, lit by LIGHT0, clamped to LDR). The storm / flare parts use `PartAnimation.applyMaterialChannels`: `extra` = opacity (`_Fade`), `v5_0` = UV scroll (`_UVOffset`, 100 = one texture width, assumed).
+- Not yet: missions, wormhole, the alien-orbit / prologue sky exceptions.
 
 ## Navigation (locks, autopilot, planet jump, fast-forward)
 
@@ -352,7 +355,7 @@ Useful field offsets in the decompiled code:
 
 - The FMOD event file (`Audio/_FMOD_GOF2.fev.bytes`) isn't parsed properly: `Reference/research/fmod_event_ids.txt` maps SFX/music IDs by name order (verified), voice events are still unmapped.
 - Data conversion lost some non-ASCII characters (U+FFFD in `stations.json` names like "Neh?bru" and a few texts).
-- `PartAnimation`: the rotation axis mapping is unconfirmed. The `extra` channel (0 to 100, probably opacity) and the `v5_*` channels (UV/colour effects) aren't applied.
+- `PartAnimation`: the rotation axis mapping is unconfirmed. The `extra` channel (0 to 100, opacity) and `v5_0` (UV scroll) are only applied where `applyMaterialChannels` is on (the sky layers); the other `v5_*` channels aren't applied.
 - The default steering sensitivity is a guess (1.0), and the tilt-control ramp isn't implemented.
 - 13 resources referenced by the code aren't in the OBB (dev leftovers).
 
@@ -361,6 +364,6 @@ Useful field offsets in the decompiled code:
 0. Story: data, rules, dialogue, radio, docked / in-flight flow and the first levels done (see "Story"); freelance missions, the Missions window done (see "Bar and freelance"). Next: the remaining campaign levels and cutscenes, the ending.
 1. Combat: guns, missiles, special weapons, turrets, sentries, ship damage, lock-on, NPC ships, capital ships, pirate bases and the combat equipment done (see "Weapons", "NPCs and combat", "Combat equipment"). Still: cargo stealing, spectral filters.
 2. NPCs: free-flight traffic, fighter AI, wingmen, freelance mission orbits, capital-ship turrets done. Still: Wanted targets.
-3. A star system scene: done as a first pass (see "Space scene"), with autopilot, planet jumps, the star map and jumpgate / Khador travel. Still: the extra sky layers, the Void.
+3. A star system scene: done (see "Space scene"), with the lens flare and the extra sky layers, autopilot, planet jumps, the star map and jumpgate / Khador travel. Still: the Void.
 4. Stations and economy: station interior, shop, bar agents, blueprints, Status window done (see "Station scene", "Shop", "Bar and freelance"). Kaamo Club done (see "Kaamo Club"). Still: the Most Wanted board.
 5. HUD and radar (`Hud`, `Radar`), then missions (`Mission`, `Objective`, `LevelScript`).

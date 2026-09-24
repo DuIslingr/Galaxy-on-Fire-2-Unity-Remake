@@ -1,0 +1,121 @@
+// SkyLayers.cs
+// The extra sky layers of an orbit (Level::createSpace 0xbbba0 / renderBG 0xd43f0; Reference/research/space_backdrop.md,
+// "Skybox layers"). Camera-centred meshes, world-aligned (identity model matrix, not rotated by R_sky), drawn by
+// GoF2/SkyLayer on the far plane in the original's order: the ring sky before the sun and planets, the rest after them.
+//   planet ring sky   Status::inPlanetRingOrbit: stations 120, 126, 130, 132                         alpha
+//   supernova flares  the supernova system (27), mission != 89 and < 158; the nasty texture from 106,
+//                     animation x1.5 above 106                                                        additive
+//   storms            Status::inStormOrbit: mission >= 90 and (system 27 or nebula texture 16 / 18);
+//                     a new random rotation (3 x nextInt(65536), unseeded) each time the animation wraps   additive
+//   asteroid belt     systems 24, 25, 26 (the effects setting is always on here)                     alpha + LIGHT0
+// The storm / flare parts animate with their `extra` (opacity) and `v5_0` (UV scroll) channels (PartAnimation).
+// Not built: the alien-orbit and prologue sky exceptions (their own levels handle the sky).
+
+using GoF2Remake.Data;
+using GoF2Remake.Visuals;
+using UnityEngine;
+
+namespace GoF2Remake.World
+{
+    public class SkyLayers : MonoBehaviour
+    {
+        const int RingQueue = 2899, FlaresQueue = 2904, StormsQueue = 2906, BeltQueue = 2907;
+
+        Camera cam;
+        Transform stormRoot;
+        PartAnimation stormAnim;
+        int stormLoops;
+
+        public static bool InPlanetRingOrbit(int station) => station == 120 || station == 126 || station == 130 || station == 132;
+
+        public static SkyLayers Spawn(OrbitLayout layout, Camera camera, Transform parent = null)
+        {
+            var go = new GameObject("Sky layers");
+            go.transform.SetParent(parent, false);
+            var layers = go.AddComponent<SkyLayers>();
+            layers.Build(layout, camera);
+            return layers;
+        }
+
+        void Build(OrbitLayout layout, Camera camera)
+        {
+            cam = camera;
+            var a = SkyLayerAssets.Load();
+            if (a == null) { Debug.LogWarning($"SkyLayers: missing Resources/{SkyLayerAssets.ResourcePath}"); return; }
+            int mission = Session.FreePlay ? 20 : Session.CampaignMission;
+            bool supernova = layout.systemIndex == 27;
+
+            if (InPlanetRingOrbit(layout.stationIndex)) Add(a.ringSky, a.ringSkyMaterial, RingQueue, 1f);
+            if (supernova && mission != 89 && mission < 158)
+            {
+                var mat = mission < 106 ? a.flaresMaterial : a.flaresNastyMaterial;
+                float speed = mission > 106 ? 1.5f : 1f;
+                Add(a.flares1, mat, FlaresQueue, speed);
+                Add(a.flares2, mat, FlaresQueue + 1, speed);
+            }
+            if (mission >= 90 && (supernova || layout.systemTexture == 16 || layout.systemTexture == 18))
+            {
+                stormRoot = Add(a.storms, a.stormsMaterial, StormsQueue, 1f);
+                stormAnim = stormRoot != null ? stormRoot.GetComponentInChildren<PartAnimation>() : null;
+                if (stormRoot != null) stormRoot.rotation = RandomRotation();
+            }
+            if (layout.systemIndex >= 24 && layout.systemIndex <= 26)
+            {
+                var belt = Add(a.asteroidBelt, a.asteroidBeltMaterial, BeltQueue, 1f);
+                if (belt != null)
+                {
+                    // Blend 8 + light 0: lit by LIGHT0 (toward the sun, clamp(15 * sun colour, 0, 2)) plus the sun-colour ambient.
+                    var block = new MaterialPropertyBlock();
+                    var c = layout.sunColor;
+                    block.SetVector("_LightDir", OrbitLayout.DirToUnity(layout.lightDirection).normalized);
+                    block.SetColor("_LightColor", new Color(Mathf.Clamp(15f * c.r, 0f, 2f), Mathf.Clamp(15f * c.g, 0f, 2f), Mathf.Clamp(15f * c.b, 0f, 2f)));
+                    block.SetColor("_Ambient", c);
+                    foreach (var r in belt.GetComponentsInChildren<Renderer>()) r.SetPropertyBlock(block);
+                }
+            }
+        }
+
+        Transform Add(GameObject prefab, Material mat, int queue, float speed)
+        {
+            if (prefab == null || mat == null) return null;
+            var go = Instantiate(prefab, transform, false);
+            go.transform.rotation = OrbitLayout.RotationToUnity(Vector3.zero);   // world-aligned: game identity
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+            {
+                var m = new Material(mat) { renderQueue = queue };
+                var mats = new Material[r.sharedMaterials.Length];
+                for (int i = 0; i < mats.Length; i++) mats[i] = m;
+                r.sharedMaterials = mats;
+                r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                r.receiveShadows = false;
+                r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+                r.allowOcclusionWhenDynamic = false;
+            }
+            foreach (var lg in go.GetComponentsInChildren<LODGroup>(true)) lg.enabled = false;
+            foreach (var anim in go.GetComponentsInChildren<PartAnimation>(true))
+            {
+                anim.speed = speed;
+                anim.loop = true;
+                anim.applyMaterialChannels = true;
+            }
+            return go.transform;
+        }
+
+        /// <summary>The storm layer's re-roll: three random Euler angles (the decompiler lost the arguments).</summary>
+        static Quaternion RandomRotation() => OrbitLayout.RotationToUnity(new Vector3(
+            Random.Range(0, 65536) / 65536f * 2f * Mathf.PI, Random.Range(0, 65536) / 65536f * 2f * Mathf.PI,
+            Random.Range(0, 65536) / 65536f * 2f * Mathf.PI));
+
+        void LateUpdate()
+        {
+            if (cam == null) return;
+            transform.position = cam.transform.position;   // at infinity: camera-centred
+            if (stormAnim != null && stormAnim.Loops != stormLoops)
+            {
+                stormLoops = stormAnim.Loops;
+                stormRoot.rotation = RandomRotation();
+            }
+        }
+    }
+}

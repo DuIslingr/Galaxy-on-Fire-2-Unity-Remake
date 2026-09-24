@@ -952,3 +952,26 @@
     color: var(--gof-text);
     min-width: 250px;
 }
+
+/* ---- lens flare (StarSystem::render2D, LensFlareView): under the HUD ---------------------- */
+
+.lens-flare {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.lens-flare-glare {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.lens-flare-image {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}

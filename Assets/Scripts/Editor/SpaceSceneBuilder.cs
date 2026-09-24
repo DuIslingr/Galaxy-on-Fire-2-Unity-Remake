@@ -31,6 +31,7 @@ namespace GoF2Remake.EditorTools
             try
             {
                 BuildBackdropMaterials();
+                BuildSkyLayers();
                 WeaponBuilder.Build();
                 HudImageBuilder.Build();
                 StarMapBuilder.Build();
@@ -68,6 +69,51 @@ namespace GoF2Remake.EditorTools
             MakeMaterial($"{T}/main/fx/fog.png", dust, BlendMode.SrcAlpha, BlendMode.One, 3000);
             MakeMaterial($"{T}/valkyrie/fx/v_fog_ice.png", dust, BlendMode.SrcAlpha, BlendMode.One, 3000);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Resources/GoF2Backdrop/SkyLayerAssets: the extra sky layer meshes (per-mesh prefabs) and their
+        /// GoF2/SkyLayer materials (space_backdrop.md, skybox layers).</summary>
+        [MenuItem("GoF2/Build Sky Layers", priority = 13)]
+        public static void BuildSkyLayers()
+        {
+            Directory.CreateDirectory(BackdropDir);
+            var shader = Shader.Find("GoF2/SkyLayer");
+            string T = ImportSettings.Root + "/Textures", P = ImportSettings.Root + "/Prefabs";
+            Material Mat(string name, string tex, BlendMode src, BlendMode dst, bool repeat, bool lit)
+            {
+                var t = AssetDatabase.LoadAssetAtPath<Texture2D>(tex);
+                if (t == null) { Debug.LogWarning($"GoF2: missing texture {tex}"); return null; }
+                if (repeat && AssetImporter.GetAtPath(tex) is TextureImporter ti && ti.wrapMode != TextureWrapMode.Repeat) { ti.wrapMode = TextureWrapMode.Repeat; ti.SaveAndReimport(); }
+                string path = $"{BackdropDir}/{name}.mat";
+                var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (m == null) { m = new Material(shader); AssetDatabase.CreateAsset(m, path); }
+                m.shader = shader;
+                m.SetTexture("_MainTex", t);
+                m.SetFloat("_SrcBlend", (float)src);
+                m.SetFloat("_DstBlend", (float)dst);
+                m.SetFloat("_Lit", lit ? 1f : 0f);
+                EditorUtility.SetDirty(m);
+                return m;
+            }
+            GameObject Prefab(string rel) => AssetDatabase.LoadAssetAtPath<GameObject>($"{P}/{rel}.prefab");
+
+            string assetPath = $"{BackdropDir}/SkyLayerAssets.asset";
+            var a = AssetDatabase.LoadAssetAtPath<SkyLayerAssets>(assetPath);
+            if (a == null) { a = ScriptableObject.CreateInstance<SkyLayerAssets>(); AssetDatabase.CreateAsset(a, assetPath); }
+            // Blend 1 = alpha, 2 = additive, 8 = alpha + lighting (PaintCanvas::SetBlendMode).
+            a.ringSky = Prefab("supernova/skyboxes/sn_skybox_planet_ring_alpha");
+            a.ringSkyMaterial = Mat("sky_planet_ring", $"{T}/supernova/skyboxes/sn_skybox_planet_ring.png", BlendMode.SrcAlpha, BlendMode.OneMinusSrcAlpha, false, false);
+            a.storms = Prefab("supernova/skyboxes/sn_skybox_storms_anim_add");
+            a.stormsMaterial = Mat("sky_storms", $"{T}/supernova/skyboxes/sn_skybox_storms.png", BlendMode.One, BlendMode.One, false, false);
+            a.flares1 = Prefab("supernova/skyboxes/sn_skybox_015_flares_1_anim");
+            a.flares2 = Prefab("supernova/skyboxes/sn_skybox_015_flares_2_anim");
+            a.flaresMaterial = Mat("sky_supernova_flares", $"{T}/supernova/skyboxes/sn_skybox_015_flares.png", BlendMode.One, BlendMode.One, true, false);
+            a.flaresNastyMaterial = Mat("sky_supernova_flares_nasty", $"{T}/supernova/skyboxes/sn_skybox_015_flares_nasty.png", BlendMode.One, BlendMode.One, true, false);
+            a.asteroidBelt = Prefab("main/skyboxes/skybox_asteroid_belt_alpha");
+            a.asteroidBeltMaterial = Mat("sky_asteroid_belt", $"{T}/main/skyboxes/skybox_asteroid_belt_diffuse.png", BlendMode.SrcAlpha, BlendMode.OneMinusSrcAlpha, false, true);
+            EditorUtility.SetDirty(a);
+            AssetDatabase.SaveAssets();
+            Debug.Log("GoF2: sky layers built");
         }
 
         static void MakeMaterial(string texPath, Shader shader, BlendMode src, BlendMode dst, int queue, string name = null)

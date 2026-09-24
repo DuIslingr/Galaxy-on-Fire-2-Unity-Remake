@@ -149,6 +149,7 @@ namespace GoF2Remake.World
             SpawnPlayer();
             OrbitBuilder.SpawnDust(Layout);
             var backdrop = OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
+            SkyLayers.Spawn(Layout, mainCamera);   // ring sky, storms, supernova flares, asteroid belt
             Backdrop = backdrop;
 
             // Locks on the station, the jumpgate and the other stations' planets; autopilot, planet jump, fast-forward.

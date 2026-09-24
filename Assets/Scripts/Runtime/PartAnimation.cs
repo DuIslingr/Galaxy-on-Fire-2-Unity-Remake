@@ -9,6 +9,8 @@
 // left their channel). Rotation axis mapping could not be
 // fully confirmed from the decompiled code, so it is exposed below: if a part spins around the wrong
 // axis, change the rotation mapping in the inspector.
+// applyMaterialChannels (opt-in, the sky layers): the `extra` channel (0..100, opacity) goes to the part renderer's _Fade
+// and `v5_0` (a UV scroll, assumed 100 = one texture width) to its _UVOffset.x, through a MaterialPropertyBlock.
 
 using System;
 using System.Collections.Generic;
@@ -50,8 +52,10 @@ namespace GoF2Remake.Visuals
         public AxisMap[] positionMap = { new AxisMap { source = 0, sign = 1 }, new AxisMap { source = 2, sign = 1 }, new AxisMap { source = 1, sign = 1 } };
         public AxisMap[] rotationMap = { new AxisMap { source = 0, sign = -1 }, new AxisMap { source = 2, sign = -1 }, new AxisMap { source = 1, sign = -1 } };
         public bool rotationInRadians = true;
+        [Tooltip("Apply the `extra` (opacity) and `v5_0` (UV scroll) channels to the part renderers (_Fade / _UVOffset).")]
+        public bool applyMaterialChannels;
 
-        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; }
+        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv; public Renderer renderer; public MaterialPropertyBlock block; }
         readonly List<Track> tracks = new List<Track>();
         float timeMs, lengthMs;
 
@@ -71,6 +75,8 @@ namespace GoF2Remake.Visuals
                 foreach (var c in p.channels)
                 {
                     if (c.keys == null || c.keys.Length == 0 || string.IsNullOrEmpty(c.target) || c.target.Length < 4) continue;
+                    if (c.target == "extra") { tk.extra = c.keys; continue; }   // not in the length: the transform channels set it
+                    if (c.target == "v5_0") { tk.uv = c.keys; continue; }
                     int axis = "XYZ".IndexOf(c.target[3]);
                     if (axis < 0) continue;
                     if (c.target.StartsWith("pos")) tk.pos[axis] = c.keys;
@@ -82,6 +88,9 @@ namespace GoF2Remake.Visuals
             }
             enabled = tracks.Count > 0 && lengthMs > 0f;
         }
+
+        /// <summary>How often the looping animation has wrapped (the storm sky re-rolls its rotation on each).</summary>
+        public int Loops { get; private set; }
 
         /// <summary>Length of the animation in ms (0 if it has no keyframes).</summary>
         public float LengthMs => lengthMs;
@@ -130,7 +139,11 @@ namespace GoF2Remake.Visuals
         {
             if (!play) return;
             timeMs += Time.deltaTime * 1000f * speed;
-            if (timeMs > lengthMs) timeMs = loop ? timeMs % Mathf.Max(1f, lengthMs) : lengthMs;
+            if (timeMs > lengthMs)
+            {
+                if (loop) Loops++;
+                timeMs = loop ? timeMs % Mathf.Max(1f, lengthMs) : lengthMs;
+            }
 
             foreach (var tk in tracks)
             {
@@ -150,6 +163,15 @@ namespace GoF2Remake.Visuals
                     var s = new[] { Eval(tk.scl[0], timeMs, 1), Eval(tk.scl[1], timeMs, 1), Eval(tk.scl[2], timeMs, 1) };
                     var v = new Vector3(s[positionMap[0].source], s[positionMap[1].source], s[positionMap[2].source]);
                     tk.tr.localScale = Vector3.Scale(tk.baseScale, v);
+                }
+                if (applyMaterialChannels && (tk.extra != null || tk.uv != null))
+                {
+                    if (tk.renderer == null) { tk.renderer = tk.tr.GetComponent<Renderer>(); tk.block = new MaterialPropertyBlock(); }
+                    if (tk.renderer == null) continue;
+                    tk.renderer.GetPropertyBlock(tk.block);
+                    if (tk.extra != null) tk.block.SetFloat("_Fade", Mathf.Clamp01(Eval(tk.extra, timeMs, 100f) / 100f));
+                    if (tk.uv != null) tk.block.SetVector("_UVOffset", new Vector4(Eval(tk.uv, timeMs, 0f) / 100f, 0f, 0f, 0f));
+                    tk.renderer.SetPropertyBlock(tk.block);
                 }
             }
         }

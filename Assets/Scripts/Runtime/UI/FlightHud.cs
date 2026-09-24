@@ -59,6 +59,7 @@ namespace GoF2Remake.UI
         Traffic traffic;
         StorySpace story;
         DialogueView storyDialogue;
+        LensFlareView lensFlare;
         PauseMenu pauseMenu;
         Button introSkip;
         InputKind introSkipKind;
@@ -161,6 +162,7 @@ namespace GoF2Remake.UI
             miningView = new MiningView(root);
             navView = new NavigationView(root);
             combatView = new CombatView(root);
+            lensFlare = new LensFlareView(root);
             root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
             if (voiceSource == null)
             {
@@ -414,6 +416,7 @@ namespace GoF2Remake.UI
         {
             if (root == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
+            lensFlare?.Update(level != null ? level.Backdrop : null, StarMap.IsOpen);   // StarSystem::render2D, under the HUD
 
             bool mapOpen = StarMap.IsOpen;
             root.EnableInClassList("hud-map", mapOpen);

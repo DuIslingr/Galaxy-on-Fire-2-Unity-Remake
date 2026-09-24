@@ -14,7 +14,7 @@ namespace GoF2Remake.EditorTools
     {
         public const string OutDir = ImportSettings.Root + "/Resources/GoF2Hud";
         const string AtlasDir = ImportSettings.Root + "/Textures/textures/";
-        const string Main = "gof2_interface_iphone4.png", Ipad = "gof2_interface2_ipad_large.png";
+        const string Main = "gof2_interface_iphone4.png", Ipad = "gof2_interface2_ipad_large.png", Low = "gof2_interface.png";
 
         // atlas, name, x, y, w, h, frames (0 = single image), wrap (marquee strips repeat)
         static readonly (string atlas, string name, int x, int y, int w, int h, int frames, bool repeat)[] Images =
@@ -49,6 +49,9 @@ namespace GoF2Remake.EditorTools
             (Ipad, "fastforward", 1120, 1295, 109, 109, 0, false),
             (Ipad, "fastforward_on", 1208, 782, 109, 109, 0, false),
             (Ipad, "button_pill", 1740, 112, 126, 293, 0, false),
+            (Low, "flare_0", 71, 934, 64, 64, 0, false),     // 1288 lens flare: big hexagon (space_backdrop.md)
+            (Low, "flare_1", 160, 902, 64, 64, 0, false),    // 1289 small hexagon
+            (Low, "flare_2", 285, 601, 64, 64, 0, false),    // 1290 glow
             (Ipad, "time_extender", 1904, 489, 109, 109, 0, false),     // 0x543 idle clock (combat_equipment.md 3.1)
             (Ipad, "time_extender_on", 1390, 489, 109, 109, 0, false),  // 0x542 active / pressed / flashing
             (Ipad, "emp_bar", 112, 2020, 114, 10, 0, false),            // 0x4d8 EMP bar frame under a near ship (4.1)
