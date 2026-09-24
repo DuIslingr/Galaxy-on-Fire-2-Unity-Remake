@@ -20,7 +20,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
-    public enum NpcGroup { Local, Jumper, Freighter, Raider, Wingman }
+    public enum NpcGroup { Local, Jumper, Freighter, Raider, Wingman, Escort, Special, Turret, Guard, Outpost }
 
     public class SpawnSpec
     {
@@ -48,6 +48,12 @@ namespace GoF2Remake.Flight
         public float hitRadius = -1f; // Player+0x40, the bullet hit cube's half size (units)
         public GameObject wreckPrefab; // setWreckedMeshId: the wreck animation played on death, then the explosion
         public float explosionScale = 1f;
+        // Capital-ship turrets (PlayerTurret, npc_combat_specials.md 1): a static turret object.
+        public string turretAssembly;  // turret_002_static (Terran) / turret_003_static (Vossk)
+        public Vector3 rotation;       // game Euler (radians, Rx*Ry*Rz) of the root
+        public float scale = 1f;       // setScaling (turrets 6)
+        public bool guard;             // PlayerFighter+0x12b: waking calls Level::pirateStationAction(true)
+        public int lootItem = -1, lootAmount;   // a fixed crate (the pirate outposts, DAT_002543e0)
     }
 
     public static class TrafficPlan
@@ -87,6 +93,10 @@ namespace GoF2Remake.Flight
                 raiders += rank / 4;
             }
             if (secEff == 3 && raidersOn && !hardcore) raiders = Random.Range(0, 2) + 1;
+            // A pirate-base system (npc_combat_specials.md 3.2): no raider group; instead pirates near the player.
+            bool baseSystem = PirateBases.SystemHasBase(db, system.index);
+            int baseEscorts = 0;
+            if (baseSystem) { raidersOn = false; raiders = 0; baseEscorts = hardcore ? Random.Range(0, 3) + 4 : 2; }
 
             int jumpers = 0, freighters = 0, x = 0;
             if (station != 78) { jumpers = Random.Range(0, 2); freighters = Random.Range(0, 5); x = Random.Range(0, 2); }
@@ -99,7 +109,16 @@ namespace GoF2Remake.Flight
             // named "Informer" (1663); no jumpers, freighters or raiders.
             bool informer = fm != null && fm.type == MissionType.Informer && fm.target == station;
             if (informer) { local = Session.InformerKilled ? 6 : 7; jumpers = freighters = raiders = escorts = 0; }
-            if (jumpers + local + freighters + raiders + escorts == 0) local = 4;
+            // The "big battle" (npc_traffic_ai.md 2.2): raiders on, campaign > 0x1f, 8 %: 9 raiders against 9 locals.
+            if (raidersOn && !informer && Session.CampaignMission > 0x1f && Random.Range(0, 100) < 8) raiders = local = 9;
+            // The capital-ship specials (npc_combat_specials.md 2.1): the first freighter becomes the battleship / carrier
+            // (Terran) or the Vossk battleship.
+            int cm = Session.CampaignMission;
+            bool terran = sysRace == 0 && freighters > 0 && Random.Range(0, 100) < 30;
+            bool vossk = sysRace == 1 && freighters > 0 && Random.Range(0, 100) < 30 && cm > 0x8c;
+            bool carrier = terran && Random.Range(0, 100) < 30 && cm > 0x67;
+            if (terran || vossk) freighters--;
+            if (jumpers + local + freighters + raiders + escorts == 0 && !terran && !vossk) local = 4;
 
             // 1 local fighters around one point in front of the station
             var wpLocal = new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 30000) + 20000);
@@ -128,9 +147,97 @@ namespace GoF2Remake.Flight
                     position = new Vector3(s * (Random.Range(0, 60000) - 80000), Random.Range(0, 40000) - 20000, Random.Range(0, 160000) - 80000),
                 });
             }
+            if (terran || vossk) AddCapitalShip(list, terran, carrier);
             // 4 raiders
             AddRaiders(list, raiders, raiderRace, raiderSpawn);
+            // Pirate-base system: the escorts near the player; the base station's orbit: the outpost and its guards.
+            for (int i = 0; i < baseEscorts; i++)
+                list.Add(new SpawnSpec { group = NpcGroup.Escort, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate),
+                                             position = playerGame + new Vector3(Random.Range(0, 160000) - 80000, Random.Range(0, 100000) - 50000, Random.Range(0, 160000) - 80000) });
+            if (PirateBases.StationHasBase(station)) AddPirateBase(list, station, hardcore);
             return list;
+        }
+
+        // ---- capital ships (npc_combat_specials.md 2.2 - 2.4) ---------------------------------------------------
+
+        /// <summary>Table 0x253604 / 0x253544 / 0x2536ac: the turrets' offsets from their host (game units) and rotations.</summary>
+        static readonly (Vector3 pos, Vector3 rot)[] BattleshipTurrets =
+        {
+            (new Vector3(5322, 1893, -15571), new Vector3(0, 0, -Mathf.PI / 2)), (new Vector3(2356, 1115, 7324), new Vector3(0, 0, -Mathf.PI / 2)),
+            (new Vector3(0, -4261, 4876), new Vector3(0, 0, Mathf.PI)), (new Vector3(-5322, 1893, -15571), new Vector3(0, 0, Mathf.PI / 2)),
+            (new Vector3(0, 5669, -13872), Vector3.zero), (new Vector3(-2356, 1115, 7324), new Vector3(0, 0, Mathf.PI / 2)),
+            (new Vector3(0, 2855, 4161), Vector3.zero),
+        };
+        static readonly (Vector3 pos, Vector3 rot)[] CarrierTurrets =
+        {
+            (new Vector3(-6726, 2458, -66), new Vector3(0, Mathf.PI / 2, 0)), (new Vector3(5824, 2458, 10243), new Vector3(0, -Mathf.PI / 2, 0)),
+            (new Vector3(-6726, 2458, 2100), new Vector3(0, Mathf.PI / 2, 0)), (new Vector3(5824, 2458, 8437), new Vector3(0, -Mathf.PI / 2, 0)),
+            (new Vector3(-5549, -2743, 11954), new Vector3(-Mathf.PI, Mathf.PI / 2, 0)), (new Vector3(-5549, -2743, -3711), new Vector3(-Mathf.PI, Mathf.PI / 2, 0)),
+            (new Vector3(4981, -2743, 14659), new Vector3(Mathf.PI, -2.1817f, 0)), (new Vector3(0, 2458, -32811), Vector3.zero),
+        };
+        static readonly Vector3[] VosskTurrets =
+        {
+            new Vector3(10283, -1123, 26039), new Vector3(-10171, -1083, 25907), new Vector3(-15624, -787, -7569),
+            new Vector3(15624, -787, -7569), new Vector3(0, 4901, 3084),
+        };
+
+        static void AddCapitalShip(List<SpawnSpec> list, bool terran, bool carrier)
+        {
+            Vector3 host;
+            if (terran && !carrier)
+            {
+                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 10000) - 5000, Random.Range(0, 80000) + 40000);
+                list.Add(new SpawnSpec { group = NpcGroup.Special, race = 0, ship = 14, freighter = true, stationary = true, position = host });
+                foreach (var t in BattleshipTurrets) list.Add(Turret(0, host + t.pos, t.rot));
+            }
+            else if (terran)
+            {
+                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 10000) - 5000, Random.Range(0, 80000) + 40000);
+                list.Add(new SpawnSpec { group = NpcGroup.Special, race = 0, ship = -1, position = host, fixedObject = "sn_carrier_terran_1",
+                                         collisionId = 2005, hitRadius = 0f, hitpoints = 9999999, noLoot = true, stationary = true });
+                foreach (var t in CarrierTurrets) list.Add(Turret(0, host + t.pos, t.rot));
+            }
+            else
+            {
+                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 80000) + 60000);
+                list.Add(new SpawnSpec { group = NpcGroup.Special, race = 1, ship = -1, position = host, fixedObject = "sn_battleship_vossk",
+                                         collisionId = 2006, hitRadius = 0f, hitpoints = 9999999, noLoot = true, stationary = true, nameText = 1667 });
+                foreach (var t in VosskTurrets) list.Add(Turret(1, host + t, Vector3.zero));
+            }
+        }
+
+        /// <summary>Level::createStaticObject 0x1a74 / 0x1a76: 1000 HP, scale 6, name 1666 "Turret", no loot.</summary>
+        static SpawnSpec Turret(int race, Vector3 pos, Vector3 rot) => new SpawnSpec
+        {
+            group = NpcGroup.Turret, race = race, ship = -1, position = pos, rotation = rot, scale = 6f, hitpoints = 1000,
+            turretAssembly = race == 1 ? "turret_003_static" : "turret_002_static", noLoot = true, nameText = 1666, stationary = true,
+        };
+
+        // ---- pirate bases (npc_combat_specials.md 3) --------------------------------------------------------
+
+        static void AddPirateBase(List<SpawnSpec> list, int station, bool hardcore)
+        {
+            int i = PirateBases.IndexOf(station);
+            var table = PirateBases.OutpostPositions[i];
+            var assets = CombatAssets.Load();
+            var loot = PirateBases.Loot[i];
+            list.Add(new SpawnSpec
+            {
+                group = NpcGroup.Outpost, race = Standing.Pirate, ship = -1, position = table + Jitter() / 2f,   // +-10000
+                fixedObject = "station_pirates", collisionId = 1002, hitRadius = 7500f, hitpoints = KaamoClub.OutpostHull(),
+                wreckPrefab = assets != null ? assets.outpostWreck : null, explosionScale = 8f, stationary = true, asleep = true,
+                nameText = 441, lootItem = loot.item, lootAmount = loot.amount, alwaysEnemy = true,
+            });
+            int guards = hardcore ? 10 : 5;
+            for (int g = 0; g < guards; g++)
+            {
+                float S() => Random.value < 0.5f ? -1f : 1f;
+                list.Add(new SpawnSpec
+                {
+                    group = NpcGroup.Guard, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate), asleep = true, guard = true,
+                    position = table + new Vector3(S() * Random.Range(0, 20000) + 10000, S() * Random.Range(0, 20000) + 10000, S() * Random.Range(0, 20000) + 10000),
+                });
+            }
         }
 
         static Vector3 RaiderSpawn() => new Vector3(Random.Range(0, 100000) - 50000, 0f, Random.Range(0, 50000) + 50000);

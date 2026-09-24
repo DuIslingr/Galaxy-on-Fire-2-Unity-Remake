@@ -60,6 +60,7 @@ namespace GoF2Remake.EditorTools
             a.shockGlow = Prefab("Prefabs/supernova/fx/sn_shock_blast_glow_anim_lookat_add.prefab");
             a.shockSphere = Prefab("Prefabs/supernova/fx/sn_shock_blast_sphere_anim_add.prefab");
             a.fireworksBurst = Prefab("Prefabs/supernova/fx/sn_fireworks_lookat_anim_add.prefab");
+            a.garbageExplosion = Clips("SFX_SPACE", "Garbage_Explosion");
 
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();

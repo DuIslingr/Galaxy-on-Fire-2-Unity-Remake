@@ -557,6 +557,33 @@ namespace GoF2Remake.UI
             return true;
         }
 
+        bool baseChecked;
+
+        /// <summary>ModStation::OnInitialize / checkHints (npc_combat_specials.md 3.6, 3.7): a pirate base's station is unmanned
+        /// (434 from Security, closing it relaunches at once); after an outpost kill the next docking pays 20000 (442).</summary>
+        bool CheckPirateBase()
+        {
+            if (baseChecked || level == null || level.Station == null) return false;
+            baseChecked = true;
+            int st = level.Station.index;
+            if (PirateBases.StationHasBase(st))
+            {
+                CloseHangar();
+                storyDialogue.ShowAgentMessage(Localization.Get(434), Localization.Get(PirateBases.SecurityName), PirateBases.Portrait, level.Launch);
+                return true;
+            }
+            if (!Session.PirateBaseRewardPending) return false;
+            Session.PirateBaseRewardPending = false;
+            storyDialogue.ShowAgentMessage(Localization.Get(442), Localization.Get(PirateBases.NivelianName), PirateBases.Portrait, () =>
+            {
+                Session.Credits += PirateBases.Reward;
+                RefreshCredits();
+                ShowToast($"+{ItemInfo.Credits(PirateBases.Reward)}");
+                Session.Autosave();
+            });
+            return true;
+        }
+
         bool kaamoChecked;
 
         /// <summary>ModStation::OnInitialize 0xe8080 at the Kaamo Club (kaamo_club.md 4): state 1 -> the 18-page first
@@ -897,6 +924,7 @@ namespace GoF2Remake.UI
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
             if (StarMap.IsOpen) return;   // the map has its own input
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPirateBase()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckKaamo()) return;

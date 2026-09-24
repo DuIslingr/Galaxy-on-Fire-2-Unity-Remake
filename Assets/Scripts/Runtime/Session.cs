@@ -85,6 +85,12 @@ namespace GoF2Remake.Data
         public static int SelectedSecondary = -1;
         /// <summary>Status+200: nukes detonated (medal 20).</summary>
         public static int BombsDetonated;
+        /// <summary>Status+0x4c: the four pirate bases destroyed (PirateBases.Stations order).</summary>
+        public static bool[] PirateBaseDestroyed = new bool[4];
+        /// <summary>Status+0xf9: an outpost was destroyed; the next docking pays the reward (not saved, like the original).</summary>
+        public static bool PirateBaseRewardPending;
+        /// <summary>The radio hints already given (0x23 / 0x24: the Nivelian pirate hints).</summary>
+        public static HashSet<int> Hints = new HashSet<int>();
         /// <summary>Status+0x14c, the storage station: its goods (station 108's stock while owned) and parked hulls.</summary>
         public static List<ItemStack> KaamoItems = new List<ItemStack>();
         public static List<StoredShip> KaamoShips = new List<StoredShip>();
@@ -258,6 +264,9 @@ namespace GoF2Remake.Data
             KaamoState = 0;
             SelectedSecondary = -1;
             BombsDetonated = 0;
+            PirateBaseDestroyed = new bool[4];
+            PirateBaseRewardPending = false;
+            Hints = new HashSet<int>();
             KaamoItems = new List<ItemStack>();
             KaamoShips = new List<StoredShip>();
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;

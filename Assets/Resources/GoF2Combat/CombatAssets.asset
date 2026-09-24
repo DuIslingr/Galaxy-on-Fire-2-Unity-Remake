@@ -97,3 +97,6 @@ MonoBehaviour:
   shockGlow: {fileID: 5011795013501720976, guid: 496c333f2d10bae498b6b6804e369da9, type: 3}
   shockSphere: {fileID: 1796280572203570749, guid: e1571245309358049ba4cbcb2c49188c, type: 3}
   fireworksBurst: {fileID: 3472133665024365946, guid: ce073c3e37077a847a2f94eedccbb0a6, type: 3}
+  garbageExplosion:
+  - {fileID: 8300000, guid: 7ca84c974ec880746978cd876676c009, type: 3}
+  - {fileID: 8300000, guid: c66f1efd6bae5c046a911064f9194dc1, type: 3}

@@ -63,6 +63,8 @@ namespace GoF2Remake.Data
         public List<StoredShip> kaamoShips;
         // version 5: combat
         public int selectedSecondary = -1, bombsDetonated;
+        public bool[] pirateBaseDestroyed;
+        public List<int> hints;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -187,6 +189,7 @@ namespace GoF2Remake.Data
                 containersDelivered = Session.ContainersDelivered, passengersDelivered = Session.PassengersDelivered,
                 kaamoState = Session.KaamoState, kaamoItems = Session.KaamoItems, kaamoShips = Session.KaamoShips,
                 selectedSecondary = Session.SelectedSecondary, bombsDetonated = Session.BombsDetonated,
+                pirateBaseDestroyed = Session.PirateBaseDestroyed, hints = new List<int>(Session.Hints),
             };
         }
 
@@ -273,6 +276,8 @@ namespace GoF2Remake.Data
             {
                 Session.SelectedSecondary = s.selectedSecondary;
                 Session.BombsDetonated = s.bombsDetonated;
+                if (s.pirateBaseDestroyed != null && s.pirateBaseDestroyed.Length == 4) Session.PirateBaseDestroyed = s.pirateBaseDestroyed;
+                Session.Hints = new HashSet<int>(s.hints ?? new List<int>());
             }
             Story.RepairCheckpoint();
         }

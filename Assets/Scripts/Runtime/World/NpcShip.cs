@@ -31,6 +31,14 @@
 // Static objects (PlayerFixedObject 0x17ece0, the Kaamo siege's Pirate Outposts, kaamo_club.md 3.2): an assembled object
 // that never moves, no gun, engine or loot, a +-hitRadius hit cube, the level's static volumes; death: the wreck animation
 // (20 s), then an x8 explosion, and the wreck stays.
+// Turrets (PlayerTurret 0x182640, npc_combat_specials.md 1): the capital ships' satellites, turret_002_static /
+// turret_003_static at scale 6, 1000 HP, +-1000 hit cube, no collision; every 3000 ms the nearest race-hostile target
+// within 50000 (the player when hostile to it), yaw / pitch at 2 pi / 4096 rad per ms toward its position + heading *
+// 1500, pitch -8.8 .. +52.7 deg (a target out of reach is dropped), fire when aligned (+-0.05) with the fighters' gun
+// in the look of item 20 (Vossk 15); death: sound 22, an explosion, gone after 4500 ms, no crate. Killing the Terran
+// battleship destroys every turret; its wreck explodes x6.
+// Sleeping fixed objects (the pirate bases' outposts) stay visible but can't be hit, locked or counted until any enemy
+// comes within +-50000; guards call Level::pirateStationAction(true) when they wake.
 // Friendly fire (Player::damage): hits by the player on system-race / attack-race ships add up: > 33 % of the hull ->
 // radio "Hold your fire!", >= 50 % -> this ship turns hostile, >= 66 % -> the whole race turns hostile (10 / 25 / 40 % on
 // Extreme). NPC bullets never hit their own race; a non-hostile NPC's stray hit on the player does 20 %.
@@ -54,6 +62,13 @@ namespace GoF2Remake.World
         public bool IsFreighter => Spec.freighter;
         /// <summary>Level::createStaticObject: a Pirate Outpost (never moves, never shoots).</summary>
         public bool IsFixed => Spec.fixedObject != null;
+        /// <summary>A capital ship's turret (PlayerTurret).</summary>
+        public bool IsTurret => Spec.turretAssembly != null;
+        TurretAim turretAim;
+        Transform turretBarrel;
+        Target turretTarget, turretIgnored;
+        float turretPickMs;
+        const float TurretRangeUnits = 50000f, TurretLeadUnits = 1500f, TurretPickMs = 3000f, TurretDeathMs = 4500f;
         public Target Target { get; private set; }
         public Hitpoints Hp => Target.hitpoints;
         public State Current { get; private set; } = State.Fly;
@@ -66,7 +81,7 @@ namespace GoF2Remake.World
         public bool Asleep { get; private set; }
         /// <summary>PlayerFighter: a sleeping hostile ship is invisible after the tutorial (index &gt; 1): no model, no marker,
         /// no lock.</summary>
-        public bool Hidden => forcedHidden || (Asleep && Target.hostileToPlayer && Session.CampaignMission > 1);
+        public bool Hidden => forcedHidden || (Asleep && !IsFixed && Target.hostileToPlayer && Session.CampaignMission > 1);
         bool forcedHidden;
 
         /// <summary>KIPlayer::setVisible (cutscenes): hidden ships have no model, marker or lock.</summary>
@@ -176,12 +191,13 @@ namespace GoF2Remake.World
             Spec = spec;
             fxRootRef = fxRoot;
             assets = CombatAssets.Load();
-            transform.SetPositionAndRotation(ToUnity(spec.position), GameForward);
+            transform.SetPositionAndRotation(ToUnity(spec.position), spec.turretAssembly != null ? OrbitLayout.RotationToUnity(spec.rotation) : GameForward);
             if (prefab != null)
             {
                 modelGo = Instantiate(prefab, transform, false);
                 modelGo.GetComponent<AssembledObject>()?.SetPlayerVariant(false);
                 model = modelGo.transform;
+                if (spec.scale != 1f) model.localScale *= spec.scale;
             }
 
             int kind = spec.freighter ? 1 : 0;
@@ -215,9 +231,10 @@ namespace GoF2Remake.World
             Target.Damaged += OnDamaged;
             Target.Died += OnDied;
             lastHull = Hp.hull;
-            if (!spec.freighter && spec.fixedObject == null) smoke = new ShipSmoke(transform);
+            if (!spec.freighter && spec.fixedObject == null && spec.turretAssembly == null) smoke = new ShipSmoke(transform);
 
-            if (!spec.freighter && spec.fixedObject == null && spec.ship != 51)
+            if (spec.turretAssembly != null) SetupTurret();
+            else if (!spec.freighter && spec.fixedObject == null && spec.ship != 51)
             {
                 var item = db.Item(NpcTables.GunItem(spec.race));
                 if (item != null)
@@ -229,7 +246,8 @@ namespace GoF2Remake.World
                 }
             }
             route = (spec.route ?? Route.DefaultPatrol(spec.race)).Clone();
-            loot = spec.missionCrate >= 0 ? new List<ItemStack> { new ItemStack(spec.missionCrate, 1) }
+            loot = spec.lootItem >= 0 ? new List<ItemStack> { new ItemStack(spec.lootItem, Mathf.Max(1, spec.lootAmount)) }
+                 : spec.missionCrate >= 0 ? new List<ItemStack> { new ItemStack(spec.missionCrate, 1) }
                  : spec.noLoot ? new List<ItemStack>() : NpcTables.RollLoot(db, spec.freighter);
 
             sfx = gameObject.AddComponent<AudioSource>();
@@ -237,7 +255,8 @@ namespace GoF2Remake.World
             engine = gameObject.AddComponent<AudioSource>();
             Setup3D(engine);
             engine.loop = true;
-            engine.clip = assets == null || spec.fixedObject != null ? null : CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines);
+            engine.clip = assets == null || spec.fixedObject != null || spec.turretAssembly != null || spec.ship == 14 ? null
+                        : CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines);
             engine.volume = 0.6f * Settings.SfxVolume;
             if (engine.clip != null) engine.Play();
 
@@ -295,6 +314,79 @@ namespace GoF2Remake.World
             if (engine != null && engine.clip != null) engine.Play();
         }
 
+        // ---- turrets (PlayerTurret::handleTurret / pickEnemy / handleRotation) ---------------------------------------
+
+        void SetupTurret()
+        {
+            Target.radius = 1000f * M;   // the normal +-1000 cube (Player radius 1000), no collision volume
+            Transform pivot = model != null ? model.Find("pivot") : null;
+            if (pivot != null) foreach (Transform c in pivot) if (c.name.Contains("_gun")) turretBarrel = c;
+            if (pivot != null && turretBarrel != null)
+                turretAim = new TurretAim(pivot, turretBarrel)
+                {
+                    // Pitch counter -600 .. +100 ms at 2 pi / 4096 rad per ms: about 52.7 deg up, 8.8 deg down.
+                    pitchMax = 600f * TurretAim.RadPerMs, pitchMin = -100f * TurretAim.RadPerMs,
+                };
+            var item = db.Item(Spec.race == 1 ? 15 : 20);
+            if (item != null)
+            {
+                gun = new Gun(item, NpcTables.GunDamage(Spec.race), NpcTables.GunReloadMs, NpcTables.GunPool,
+                                  NpcTables.GunLifetimeMs, NpcTables.GunSpeed) { owner = Target };
+                rig = new GunRig(gun, WeaponFx.Load(item.index), fxRootRef, turretBarrel, 2);
+                gun.Hit += OnGunHit;
+            }
+        }
+
+        void UpdateTurret(float dtMs)
+        {
+            if (turretAim == null || gun == null) return;
+            turretPickMs += dtMs;
+            if (turretPickMs > TurretPickMs)
+            {
+                turretPickMs = 0f;
+                turretTarget = PickTurretTarget();
+            }
+            if (turretTarget == null) return;
+            var at = turretTarget.transform.position + turretTarget.transform.forward * TurretLeadUnits * M;
+            bool aligned = turretAim.Step(at, dtMs);
+            if (turretAim.LimitHit) { turretIgnored = turretTarget; turretPickMs += dtMs; return; }   // out of reach: dropped
+            if (!aligned) return;
+            // Bullets from the barrel frame, the usual 100 ahead in the scaled frame (about 600 units).
+            int b = gun.TryFire(turretBarrel.position + turretBarrel.forward * 600f * M, Quaternion.LookRotation(turretBarrel.forward, turretBarrel.up), false);
+            if (b >= 0)
+            {
+                rig.OnShot();
+                Sfx.PlayAt(assets != null && assets.shots != null && assets.shots.Length > 0 ? assets.shots[Race == 1 ? 1 : 0] : null, transform.position, 0.6f);
+            }
+        }
+
+        /// <summary>pickEnemy 0x182e90: the nearest (Euclidean) active target within 50000 that is hostile to this turret's race;
+        /// the player only when the turret is hostile to it; the last unreachable one only when nothing else is there.</summary>
+        Target PickTurretTarget()
+        {
+            Target best = null, ignored = null;
+            float bestD = TurretRangeUnits * M;
+            foreach (var e in enemies)
+            {
+                if (!Valid(e)) continue;
+                bool candidate = e.isPlayer ? Target.hostileToPlayer : e.isShip && e.race >= 0 && Standing.RacesHostile(e.race, Race);
+                if (!candidate) continue;
+                float d = (e.transform.position - transform.position).magnitude;
+                if (d >= bestD) continue;
+                if (e == turretIgnored) { ignored = e; continue; }
+                bestD = d;
+                best = e;
+            }
+            return best ?? ignored;
+        }
+
+        /// <summary>The Terran battleship died: every turret of the level takes 9 999 999 (not credited to the player).</summary>
+        public void DestroyAsTurret()
+        {
+            if (!IsTurret || !Target.Alive) return;
+            Target.Damage(9999999f, true);
+        }
+
         /// <summary>KIPlayer::setDead: inactive until relaunched.</summary>
         void SetDead()
         {
@@ -330,8 +422,9 @@ namespace GoF2Remake.World
             UpdatePush(dtMs);
             UpdateSmoke();
             UpdateMissionCrate();
-            if (Spec.stationary) return;   // parked: a target that neither flies nor shoots
             if (Asleep) { UpdateSleep(); return; }
+            if (IsTurret) { UpdateTurret(dtMs); return; }
+            if (Spec.stationary) return;   // parked: a target that neither flies nor shoots
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
             if (IsFreighter)
             {
@@ -411,7 +504,7 @@ namespace GoF2Remake.World
             {
                 if (!Valid(e)) continue;
                 var d = e.transform.position - transform.position;
-                float r = (e.isPlayer ? 25000f : 50000f) * M;
+                float r = (e.isPlayer && !IsFixed ? 25000f : 50000f) * M;   // fixed objects: any enemy within +-50000
                 if (Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r) { Wake(); return; }
             }
         }
@@ -419,6 +512,7 @@ namespace GoF2Remake.World
         /// <summary>KIPlayer vtable +0x0c: awake (visible, flying, attacking).</summary>
         public void Wake()
         {
+            if (Asleep && Spec.guard) traffic?.PirateStationAction(true);   // a pirate base's guard woke
             Asleep = inactive = false;
             Target.untargetable = false;
             if (modelGo != null && Current == State.Fly) modelGo.SetActive(!forcedHidden);
@@ -744,8 +838,20 @@ namespace GoF2Remake.World
             deathDir = transform.forward;
             if (engine != null) engine.Stop();
             Sfx.PlayAt(assets != null ? CombatAssets.Pick(assets.shipDestroyed) : null, transform.position);
+            if (IsTurret)
+            {
+                // PlayerTurret::update: sound 22, an explosion with fire streaks, the turret gone at once, inactive after 4500 ms.
+                dyingMs = TurretDeathMs;
+                if (modelGo != null) modelGo.SetActive(false);
+                rig?.HideAll();
+                Explosion.Spawn(0, transform.position, transform.forward, 1f, assets != null ? CombatAssets.Pick(assets.garbageExplosion) : null, true);
+                return;
+            }
+            if (Spec.group == NpcGroup.Outpost) traffic.PirateStationAction(false);   // a pirate base's outpost destroyed
+            if (Spec.ship == 14) traffic.DestroyTurrets();   // PlayerFixedObject::update: every turret of the level goes too
             if (IsFixed)
             {
+                DropCrate();
                 // PlayerFixedObject::update state 3: the hull swapped for the wreck animation (plays once), smoke.
                 dyingMs = 20000f;
                 if (Spec.wreckPrefab != null && modelGo != null)
@@ -783,6 +889,7 @@ namespace GoF2Remake.World
         void UpdateDying(float dtMs)
         {
             float frames = dtMs / 33.3f;
+            if (IsTurret) { dyingMs -= dtMs; if (dyingMs <= 0f) SetDead(); return; }
             if (IsFixed) { }
             else if (IsFreighter) transform.position += transform.forward * NpcTables.FreighterSpeed * dtMs * M;
             else
@@ -792,7 +899,7 @@ namespace GoF2Remake.World
             }
             dyingMs -= dtMs;
             if (dyingMs > 0f) return;
-            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : 1f);
+            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? 6f : 1f);   // the battleship x6 too
             Current = State.Dead;
             smoke?.SetEmitting(false);   // the end of the tumble: Explosion::start, smoke and fire off
             deadMs = 0f;

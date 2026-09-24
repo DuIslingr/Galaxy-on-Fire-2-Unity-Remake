@@ -49,6 +49,8 @@ namespace GoF2Remake.Flight
         public GameObject outpostWreck;
         [Tooltip("Explosion types 7 (EMP), 8-10 (scatter), 11 (shock blast glow + sphere), 13 (fireworks).")]
         public GameObject explosionEmp, explosionScatter, shockGlow, shockSphere, fireworksBurst;
+        [Tooltip("Sound 22 Garbage_Explosion: turrets, sentries, scatter bursts, mines.")]
+        public AudioClip[] garbageExplosion;
 
         static CombatAssets cached;
         public static CombatAssets Load() => cached != null ? cached : cached = Resources.Load<CombatAssets>(ResourcePath);

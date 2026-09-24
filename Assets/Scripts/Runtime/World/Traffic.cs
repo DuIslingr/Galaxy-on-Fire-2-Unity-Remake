@@ -78,6 +78,15 @@ namespace GoF2Remake.World
             music.playOnAwake = false;
             music.spatialBlend = 0f;
 
+            // MGame::OnUpdate hints 0x23 / 0x24 (npc_combat_specials.md 3.5): the first Nivelian system visit, then a later one.
+            if (!storyOrbit && SystemRace == 2)
+            {
+                if (Session.Hints.Add(0x23)) Radio(443, 443);
+                else if (Session.Hints.Add(0x24)) Radio(444, 444);
+            }
+            // Level::initParticleSystems: the red static fog around a pirate base's outpost.
+            foreach (var s in Ships) if (s.Spec.group == NpcGroup.Outpost) SpawnRedFog(s.transform.position);
+
             // Level+0x18a: back at a station whose race the player attacked.
             if (Session.AttackedStations.Contains(StationIndex))
             {
@@ -93,7 +102,9 @@ namespace GoF2Remake.World
 
         NpcShip Create(SpawnSpec spec)
         {
-            var prefab = spec.fixedObject != null ? AssembledObject.LoadPrefab(db.AssemblyByName(spec.fixedObject))
+            var prefab = spec.turretAssembly != null ? AssembledObject.LoadPrefab(db.AssemblyByName(spec.turretAssembly))
+                       : spec.ship == 14 ? AssembledObject.LoadPrefab(db.AssemblyByName("battleship_terran"))
+                       : spec.fixedObject != null ? AssembledObject.LoadPrefab(db.AssemblyByName(spec.fixedObject))
                        : spec.freighter ? AssembledObject.LoadPrefab(db.AssemblyByName(NpcTables.FreighterAssembly(spec.race)))
                                         : AssembledObject.LoadPrefab(ShipAssembly(spec.ship, spec.race));
             var go = new GameObject($"NPC {spec.group} {spec.race}/{spec.ship}");
@@ -165,6 +176,68 @@ namespace GoF2Remake.World
         }
 
         void Radio(int firstText, int lastText) => Message?.Invoke(Localization.Get(UnityEngine.Random.Range(firstText, lastText + 1)));
+
+        bool baseWakeRadio, baseDestroyedRadio;
+
+        /// <summary>Level::pirateStationAction 0xd6338: a guard woke (radio 435-437, once per level) or the outpost died
+        /// (the base destroyed, the reward pending, radio 438-440, once).</summary>
+        public void PirateStationAction(bool guardWoke)
+        {
+            if (guardWoke)
+            {
+                if (baseWakeRadio) return;
+                baseWakeRadio = true;
+                Radio(435, 437);
+                return;
+            }
+            if (baseDestroyedRadio || PirateBases.IndexOf(StationIndex) < 0) return;
+            baseDestroyedRadio = true;
+            PirateBases.Destroyed(StationIndex);
+            Radio(438, 440);
+        }
+
+        /// <summary>SET_FOG_STATIC (space_props.md 4): 30 sprites of 32768 units within +-40000 of the outpost, colour
+        /// 0xE2282880, forever, not tied to the camera.</summary>
+        void SpawnRedFog(Vector3 at)
+        {
+            var go = new GameObject("Pirate base fog");
+            go.transform.SetParent(transform, false);
+            go.transform.position = at;
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            var main = ps.main;
+            main.loop = false;
+            main.playOnAwake = false;
+            main.maxParticles = 30;
+            main.startLifetime = float.PositiveInfinity;
+            main.startSpeed = 0f;
+            main.startSize = 32768f * 0.05f;
+            main.startColor = new Color(0xE2 / 255f, 0x28 / 255f, 0x28 / 255f, 0x80 / 255f);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.cullingMode = ParticleSystemCullingMode.AlwaysSimulate;
+            var emission = ps.emission;
+            emission.enabled = false;
+            var shape = ps.shape;
+            shape.enabled = false;
+            var r = go.GetComponent<ParticleSystemRenderer>();
+            r.renderMode = ParticleSystemRenderMode.Billboard;
+            r.maxParticleSize = 10f;
+            r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            if (assets != null && assets.smokeMaterial != null) r.sharedMaterial = assets.smokeMaterial;
+            var p = new ParticleSystem.EmitParams { applyShapeToPosition = false };
+            for (int i = 0; i < 30; i++)
+            {
+                p.position = at + new Vector3(UnityEngine.Random.Range(-40000f, 40000f), UnityEngine.Random.Range(-40000f, 40000f), UnityEngine.Random.Range(-40000f, 40000f)) * 0.05f;
+                p.rotation = UnityEngine.Random.Range(0f, 360f);
+                ps.Emit(p, 1);
+            }
+        }
+
+        /// <summary>The Terran battleship died: its turrets go with it.</summary>
+        public void DestroyTurrets()
+        {
+            foreach (var s in Ships.ToArray()) s.DestroyAsTurret();
+        }
 
         /// <summary>Level::friendTurnedEnemy: radio 0 once per level.</summary>
         public void FriendTurnedEnemy(int race)

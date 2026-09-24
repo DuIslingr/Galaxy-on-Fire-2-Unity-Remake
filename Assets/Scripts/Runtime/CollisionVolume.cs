@@ -190,12 +190,17 @@ namespace GoF2Remake.Flight
             new float[] { 0, -85, 24, 4335, 1245, 10880,   0, 710, 292, 2990, 935, 11450,   0, 1510, -2886, 2750, 1010, 2750 },
             // Midorian freighter (race 3)
             new float[] { 0, -199, 4708, 980, 1530, 1240,   0, -14, -98, 4500, 1405, 8860 },
+            // Terran battleship (ship 14, npc_combat_specials.md 2.2)
+            new float[] { 0, -2240, 21608, 760, 640, 2890,   0, -2342, 18392, 1260, 3560, 3670,   0, -786, 8926, 7410, 7740, 15540,
+                          0, -4950, 9656, 820, 1040, 7150,   0, 3420, -452, 1310, 940, 4880,   0, -270, -9018, 7520, 6870, 20470,
+                          0, -5088, -7962, 1300, 2900, 13210,   0, 3526, -11604, 3260, 880, 10640,   0, 5212, -12332, 3260, 2640, 8410,
+                          0, 2004, -15852, 15860, 2510, 10910,   0, -2610, -15852, 15860, 2510, 10910 },
         };
 
         /// <summary>A freighter's boxes (Level::createShip): Terran / pirate 0, Vossk 1, Nivelian 2, Midorian 3.</summary>
         public static List<CollisionVolume> ForFreighter(int ship, int race)
         {
-            int k = ship == 13 || race == 1 ? 1 : race == 2 ? 2 : race == 3 ? 3 : 0;
+            int k = ship == 14 ? 4 : ship == 13 || race == 1 ? 1 : race == 2 ? 2 : race == 3 ? 3 : 0;
             var t = FreighterBoxes[k];
             var list = new List<CollisionVolume>();
             for (int i = 0; i + 5 < t.Length; i += 6)
