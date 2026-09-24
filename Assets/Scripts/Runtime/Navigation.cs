@@ -280,7 +280,7 @@ namespace GoF2Remake.Flight
             if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
             if (target.kind == Kind.KhadorDrive)
             {
-                if (JumpsBlocked != null && JumpsBlocked() && Story.Index != 78) { Say(Localization.Get(525)); return; }
+                if (JumpsBlocked != null && JumpsBlocked() && Story.ForcedKhadorTarget(Session.StationIndex) == null) { Say(Localization.Get(525)); return; }
                 KhadorRequested?.Invoke();
                 return;
             }

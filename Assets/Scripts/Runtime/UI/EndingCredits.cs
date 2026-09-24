@@ -154,7 +154,7 @@ namespace GoF2Remake.UI
             if (line == null || index == radioShown) return;
             radioShown = index;
             radioSpeaker.text = StoryTable.SpeakerName(line.speaker).ToUpperInvariant();
-            radioText.text = Localization.Get(line.text);
+            AlienText.Set(radioText, Localization.Get(line.text), StoryTable.UsesAlienFont(line.speaker));
             Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
             if (clip != null) { voice.clip = clip; voice.volume = Settings.VoiceVolume; voice.Play(); }

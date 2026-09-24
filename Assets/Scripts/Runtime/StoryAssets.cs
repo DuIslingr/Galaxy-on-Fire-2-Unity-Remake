@@ -52,6 +52,9 @@ namespace GoF2Remake.Data
         public AudioClip outroSong;           // 144 OutroSong (the ending)
         public AudioClip voidMusic;           // 145 Space_NoCombat_Void (the alien orbit)
         public AudioClip voidBattle;          // 136 Space_Combat_Void (the alien orbit / an attacked station)
+        [Header("Valkyrie campaign (campaign_levels_b.md 78 / 80)")]
+        public AudioClip deepScienceAttacked; // 1121 (name-matched DLC_MUSIC/DeepScienceAttacked, index 80)
+        public AudioClip valkyrieBattlemode;  // 1122 (name-matched DLC_MUSIC/ValkyrieBattlemode_CutSeq, index 78)
         [Tooltip("UI/Ending/Ending.uxml: the ending's overlay (EndingCredits, shown by the main menu).")]
         public VisualTreeAsset endingUxml;
 

@@ -10,7 +10,8 @@
 // 0x10 a hostile ship active, 0x14 >= n ships dead, 0x15 ship[p] EMP-disabled, 0x16 crate cargo captured, 0x17 station
 // locked, 0x18 ship[p] inactive but alive after 59 999 ms, 0x19 the route past waypoint 0 with >= p ships alive, 0x1a
 // ship 0 active within 5000 of z = p, 0x1b level-script event, 0x1c player armor gone, 0x1e dead count among ships 2-5.
-// Lines are counted for the duration from the text length (the original counts wrapped lines of 670 px).
+// Lines are counted for the duration from the text length (the original counts wrapped lines of 670 px; the alien font's
+// glyphs are about twice as wide, AlienText).
 
 using System;
 using System.Collections.Generic;
@@ -43,7 +44,7 @@ namespace GoF2Remake.Flight
 
     public class Radio
     {
-        const float DelayMs = 2000f, LineMs = 2000f, ExtraMs = 1500f, CharsPerLine = 55f;
+        const float DelayMs = 2000f, LineMs = 2000f, ExtraMs = 1500f, CharsPerLine = 55f, AlienCharsPerLine = 30f;
 
         readonly List<RadioLine> lines;
         readonly bool[] triggered, over;
@@ -88,7 +89,8 @@ namespace GoF2Remake.Flight
                 triggered[i] = true;
                 showing = i;
                 showMs = 0f;
-                int n = Mathf.Max(1, Mathf.CeilToInt(Localization.Get(lines[i].text).Length / CharsPerLine));
+                float perLine = StoryTable.UsesAlienFont(lines[i].speaker) ? AlienCharsPerLine : CharsPerLine;
+                int n = Mathf.Max(1, Mathf.CeilToInt(Localization.Get(lines[i].text).Length / perLine));
                 durationMs = n * LineMs + ExtraMs;
                 return;
             }

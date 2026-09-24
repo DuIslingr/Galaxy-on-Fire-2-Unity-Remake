@@ -7712,4 +7712,6 @@ MonoBehaviour:
   outroSong: {fileID: 8300000, guid: d7a6933560ac989439a2eff8b48ad997, type: 3}
   voidMusic: {fileID: 8300000, guid: 3064cb1e71b920841a949c19248df5e9, type: 3}
   voidBattle: {fileID: 8300000, guid: f3b023e826917174b8e24d9ba63daf87, type: 3}
+  deepScienceAttacked: {fileID: 8300000, guid: 50a9fda00caa3674597341ea3e0023f8, type: 3}
+  valkyrieBattlemode: {fileID: 8300000, guid: 994447893c7aea54cb9fec4590935f6d, type: 3}
   endingUxml: {fileID: 9197481963319205126, guid: 6b6d311224d2db04e9c2ae730c2f6974, type: 3}

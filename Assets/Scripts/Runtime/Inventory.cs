@@ -30,6 +30,18 @@ namespace GoF2Remake.Data
         public List<Agent> agents = new List<Agent>();  // Generator::createAgents (the bar's visitors)
     }
 
+    /// <summary>Status+0x8c: the player's own ship while the story lends another (steps 48-54, 56-57): hull type, equipment,
+    /// cargo, mods and damage, all given back together.</summary>
+    [Serializable]
+    public class ParkedShip
+    {
+        public int ship;
+        public List<ItemStack> equipment = new List<ItemStack>(), cargo = new List<ItemStack>();
+        public List<int> mods = new List<int>();
+        public int hull = -1, armor = -1;
+        public float shield = -1f;
+    }
+
     [Serializable]
     public class StoredShip
     {

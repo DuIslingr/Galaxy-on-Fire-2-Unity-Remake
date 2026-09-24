@@ -41,7 +41,7 @@ for n in range(163):
     steps.append(dict(
         index=n,
         type=typ if isinstance(typ, int) else -1,
-        reward=t.get('reward', 0) or 0,
+        reward=t.get('reward') if isinstance(t.get('reward'), int) else 0,   # 60: '50000 + 50000*v' is set in code
         station=t.get('station') if isinstance(t.get('station'), int) else -1,
         value=t.get('value') if isinstance(t.get('value'), int) else 0,   # 13: 'missionCount+1' is set in code
         goodsItem=goods[0] if goods[0] is not None else -1,

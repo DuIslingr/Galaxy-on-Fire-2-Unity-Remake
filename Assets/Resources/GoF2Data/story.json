@@ -3700,7 +3700,7 @@
   {
    "index": 60,
    "type": 11,
-   "reward": "50000 + 50000*v",
+   "reward": 0,
    "station": 101,
    "value": 0,
    "goodsItem": -1,

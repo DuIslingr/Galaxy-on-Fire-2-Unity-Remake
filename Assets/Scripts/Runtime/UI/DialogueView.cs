@@ -1,7 +1,8 @@
 // DialogueView.cs
 // The story dialogue window (DialogueWindow, Reference/research/dialogue_cutscenes.md 1), shared by the station menu and
 // the flight HUD, which host UI/Dialogue/Dialogue.uxml as a template instance and call Tick every frame:
-//   pages          (speaker, text id, voice): portrait (mirrored for Keith, speaker 0) and name (text 1597 + speaker)
+//   pages          (speaker, text id, voice): portrait (mirrored for Keith, speaker 0) and name (text 1597 + speaker);
+//                  the Void (19) and Corny (56) talk in the alien font (AlienText)
 //   buttons        Back (179, from page 2), Skip (395, only with more than one page: confirm "Skip the dialogue?" 396 with
 //                  Yes 134 / No 135), Next (180) / Close (181) on the last page (DialogueWindow::OnTouchEnd 0x196020)
 //   voice          the page's line plays when it opens; with voice on (the remake: voice volume > 0) the window turns the
@@ -126,7 +127,7 @@ namespace GoF2Remake.UI
         {
             var p = pages[page];
             speaker.text = (p.agentName ?? StoryTable.SpeakerName(p.speaker)).ToUpperInvariant();
-            text.text = p.text;
+            AlienText.Set(text, p.text, p.agentName == null && StoryTable.UsesAlienFont(p.speaker));
             scroll.scrollOffset = Vector2.zero;
             if (p.agentPortrait != null) Portrait.Show(portrait, p.agentPortrait, false);
             else Portrait.ShowSpeaker(portrait, p.speaker, p.speaker == 0);

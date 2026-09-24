@@ -102,6 +102,10 @@ namespace GoF2Remake.Data
         public static List<StoredShip> KaamoShips = new List<StoredShip>();
         /// <summary>Status+0x174: the counter of story types 0xa8 / 0xb8.</summary>
         public static int StoryCounter;
+        /// <summary>Status+0x8c: the own ship parked while a story loaner is flown (null = none).</summary>
+        public static ParkedShip ParkedShip;
+        /// <summary>Status+0x90: the target stations of a type-0xa3 step (step 59's convoys); -1 = that one is done.</summary>
+        public static List<int> StoryTargets = new List<int>();
         /// <summary>Status+0x7c / +0x80: the Void-invasion system and station (-1 none, -10 never again).</summary>
         public static int VoidInvasionSystem = -1, VoidInvasionStation = -1;
         /// <summary>Status+0x88: departures to other stations since the invasion station was rolled (index 32-44, re-rolled at 10).</summary>
@@ -296,6 +300,8 @@ namespace GoF2Remake.Data
             KaamoShips = new List<StoredShip>();
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;
             StoryCounter = 0;
+            ParkedShip = null;
+            StoryTargets = new List<int>();
             VoidInvasionSystem = VoidInvasionStation = -1;
             InvasionDepartures = 0;
             VoidReturnStation = 10;

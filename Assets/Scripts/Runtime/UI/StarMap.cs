@@ -42,6 +42,7 @@ namespace GoF2Remake.UI
         public int station;
         public bool instantJump;   // Khador jump to another system
         public int cells;          // energy cells for that jump
+        public bool toVoid;        // 422 answered Yes: the Khador jump into the Void (station is -1 then)
     }
 
     public class StarMap : MonoBehaviour
@@ -67,6 +68,7 @@ namespace GoF2Remake.UI
         bool jumpDrive;
         Action<StarMapResult> onClosed;
         int promptStation = -1, focusStation = -1;
+        bool askVoid;
 
         int currentStation, currentSystem;
         SystemData current;
@@ -126,8 +128,10 @@ namespace GoF2Remake.UI
 
         /// <summary>Opens the map. promptStation >= 0 (jumpgate with a programmed station) first shows only "Destination: X /
         /// Travel to this station?": Yes returns that station, No opens the map.</summary>
+        /// <param name="askVoid">StarMap::askForJumpIntoAlienWorld: first "Jump to the Void's system?" (422); Yes returns
+        /// toVoid, No opens the map.</param>
         public static StarMap Open(Database db, StarMapMode mode, bool jumpDrive, Action<StarMapResult> closed, int promptStation = -1,
-                                       int focusStation = -1)
+                                       int focusStation = -1, bool askVoid = false)
         {
             var assets = StarMapAssets.Load();
             if (assets == null || assets.layout == null || assets.panelSettings == null)
@@ -146,6 +150,7 @@ namespace GoF2Remake.UI
             map.onClosed = closed;
             map.promptStation = promptStation;
             map.focusStation = focusStation;
+            map.askVoid = askVoid;
             var pr = go.AddComponent<PanelRenderer>();
             pr.panelSettings = assets.panelSettings;
             pr.visualTreeAsset = assets.layout;
@@ -236,7 +241,12 @@ namespace GoF2Remake.UI
                 currentSystem = db.Stations.Find(s => s.index == currentStation)?.system ?? 0;
                 current = db.Systems.Find(s => s.index == currentSystem);
                 visible = GalaxyMap.Visibility(db);
-                if (promptStation >= 0)
+                if (askVoid)
+                {
+                    root.AddToClassList("map-dialog-only");
+                    ShowDialog(T(422), () => Close(new StarMapResult { station = -1, toVoid = true }), RevealMap);
+                }
+                else if (promptStation >= 0)
                 {
                     root.AddToClassList("map-dialog-only");
                     ShowDialog($"{T(574)}: {StationName(promptStation)}\n{T(421)}",

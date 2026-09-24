@@ -77,6 +77,12 @@ namespace GoF2Remake.World
         public bool IsJumper => Spec.group == NpcGroup.Jumper;
 
         [System.NonSerialized] public bool alwaysEnemy, turnedEnemy, alwaysFriend;
+        /// <summary>Player::setShootingEnabled / removeAllGuns (level scripts): false = it still hunts, never fires.</summary>
+        [System.NonSerialized] public bool shootingEnabled = true;
+        /// <summary>KIPlayer+0x20 set by a level script (index 64: Khador sits still): no steering, no flying, no firing.</summary>
+        [System.NonSerialized] public bool frozen;
+        /// <summary>PlayerFighter+0x124, the detection box's half size (units); -1 = NpcTables.DetectRange.</summary>
+        [System.NonSerialized] public float detectRange = -1f;
         /// <summary>setToSleep / setInitActive(false): no flying or shooting until woken (Wake, or the player close by).</summary>
         public bool Asleep { get; private set; }
         /// <summary>PlayerFighter: a sleeping hostile ship is invisible after the tutorial (index &gt; 1): no model, no marker,
@@ -357,7 +363,7 @@ namespace GoF2Remake.World
             var at = turretTarget.transform.position + turretTarget.transform.forward * TurretLeadUnits * M;
             bool aligned = turretAim.Step(at, dtMs);
             if (turretAim.LimitHit) { turretIgnored = turretTarget; turretPickMs += dtMs; return; }   // out of reach: dropped
-            if (!aligned) return;
+            if (!aligned || !shootingEnabled) return;
             // Bullets from the barrel frame, the usual 100 ahead in the scaled frame (about 600 units).
             int b = gun.TryFire(turretBarrel.position + turretBarrel.forward * 600f * M, Quaternion.LookRotation(turretBarrel.forward, turretBarrel.up), false);
             if (b >= 0)
@@ -432,7 +438,7 @@ namespace GoF2Remake.World
             UpdateMissionCrate();
             if (Asleep) { UpdateSleep(); return; }
             if (IsTurret) { UpdateTurret(dtMs); return; }
-            if (parked) return;   // parked: a target that neither flies nor shoots
+            if (parked || frozen) return;   // parked: a target that neither flies nor shoots
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
             if (IsFreighter)
             {
@@ -501,7 +507,7 @@ namespace GoF2Remake.World
         bool InBox(Target t)
         {
             var d = t.transform.position - transform.position;
-            float r = NpcTables.DetectRange * M;
+            float r = (detectRange > 0f ? detectRange : NpcTables.DetectRange) * M;
             return Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r;
         }
 
@@ -576,6 +582,19 @@ namespace GoF2Remake.World
         {
             Spec.speed = unitsPerMs;
             speed = baseSpeed = unitsPerMs;
+        }
+
+        /// <summary>Level::assignGuns' per-mission guns (index 70: every ship the Disruptor Laser 183 at x2.5 damage).</summary>
+        public void SetGun(int itemIndex, float damageFactor)
+        {
+            var item = db.Item(itemIndex);
+            if (item == null || IsFreighter || IsFixed) return;
+            rig?.HideAll();
+            if (gun != null) gun.Hit -= OnGunHit;
+            gun = new Gun(item, NpcTables.GunDamage(Spec.race) * damageFactor, NpcTables.GunReloadMs, NpcTables.GunPool,
+                              NpcTables.GunLifetimeMs, NpcTables.GunSpeed) { owner = Target };
+            rig = new GunRig(gun, WeaponFx.Load(item.index), fxRootRef, IsTurret ? turretBarrel : null, 2);
+            gun.Hit += OnGunHit;
         }
 
         /// <summary>Only this target (the level script aims ships at Errkt's freighter / at the player).</summary>
@@ -763,7 +782,7 @@ namespace GoF2Remake.World
                     {
                         var firing = useEmp && empGun != null ? empGun : gun;
                         if (firing == null || !target.Targetable) attacking = false;
-                        else if (firing.TryFire(transform) >= 0)
+                        else if (shootingEnabled && firing.TryFire(transform) >= 0)
                         {
                             var clip = firing == empGun ? WeaponFx.Load(18)?.shot
                                      : assets != null && assets.shots != null && assets.shots.Length == 5 ? assets.shots[NpcTables.ShotSound(Mathf.Clamp(Race, 0, 9))] : null;

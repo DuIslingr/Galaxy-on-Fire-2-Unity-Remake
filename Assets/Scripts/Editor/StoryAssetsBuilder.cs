@@ -76,6 +76,8 @@ namespace GoF2Remake.EditorTools
             a.outroSong = Clip("MUSIC/OutroSong_02b.ogg");
             a.voidMusic = Clip("MUSIC/Space_NoCombat_Void.ogg");
             a.voidBattle = Clip("MUSIC/Space_Battle_Void.ogg");
+            a.deepScienceAttacked = Clip("DLC_MUSIC/DeepScienceAttacked_02.ogg");
+            a.valkyrieBattlemode = Clip("DLC_MUSIC/ValkyrieBattlemode_CutSeq_01.ogg");
             a.endingUxml = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>($"{Root}/UI/Ending/Ending.uxml");
 
             EditorUtility.SetDirty(a);

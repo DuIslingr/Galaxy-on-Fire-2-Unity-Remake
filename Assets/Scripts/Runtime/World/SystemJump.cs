@@ -51,6 +51,14 @@ namespace GoF2Remake.World
         float chargeMs, animMs, animLength, speed;
         bool activated, hidden;
         int targetStation;
+        /// <summary>A Khador jump without the map (the Void in or out, Story.ForcedKhadorTarget): charging, then the jump, to
+        /// this station (-1 = the Void), for jumpCells energy cells; a story-forced one is never refused for missing cells.</summary>
+        int? storyTarget;
+        int jumpCells;
+        bool storyForced;
+
+        /// <summary>startChargingJumpDrive 0x1a9710: 1 cell out of the Void, 2 into it; x2 on Extreme.</summary>
+        static int VoidCells(bool intoVoid) => (Session.IsExtreme ? 2 : 1) * (intoVoid ? 2 : 1);
         GameObject fx;
 
         /// <summary>The HUD is hidden: docked to the gate or a jump scene running.</summary>
@@ -95,7 +103,7 @@ namespace GoF2Remake.World
                         if (GateBlocked != null && GateBlocked()) nav.Refuse();   // MGame::dockEvent: 525 on a mission
                         else DockToStream();
                     }
-                    else if (Session.InstantJump && Time.timeSinceLevelLoad * 1000f > 5000f && !nav.Jumping && !nav.Paused && !StarMap.IsOpen)
+                    else if ((Session.InstantJump || storyTarget.HasValue) && Time.timeSinceLevelLoad * 1000f > 5000f && !nav.Jumping && !nav.Paused && !StarMap.IsOpen)
                         StartCharging();
                     break;
                 case State.AtGate:
@@ -195,26 +203,46 @@ namespace GoF2Remake.World
         /// <summary>MGame::UseKhadorDrive: the star map in jump mode (refused while charging or jumping).</summary>
         void OpenKhadorMap()
         {
-            if (state != State.None || nav.Jumping) return;
+            if (state != State.None || nav.Jumping || storyTarget.HasValue) return;
+            var forced = Story.ForcedKhadorTarget(Session.StationIndex);
+            bool inVoid = Session.StationIndex == Session.VoidOrbit;
+            if (forced.HasValue || inVoid)
+            {
+                // MGame::UseKhadorDrive: in the Void straight back to Status+0x84 (100 at index 80); index 78: programmedStation =
+                // the Void, startChargingJumpDrive, nextCampaignMission (-> 79). No map.
+                if (Story.Index == 78 && !inVoid) Story.Advance(db);
+                storyTarget = forced ?? Session.VoidReturnStation;
+                jumpCells = VoidCells(!inVoid);
+                storyForced = forced.HasValue;
+                return;
+            }
             nav.Paused = true;
             if (weapons != null) weapons.Blocked = true;
+            // askForJumpIntoAlienWorld outside the Void (remake: only after the main story, whose Void is reached by wormholes).
+            bool askVoid = !Session.FreePlay && Story.GameWon;
             var map = StarMap.Open(db, StarMapMode.Khador, true, r =>
             {
                 nav.Paused = false;
                 if (weapons != null) weapons.Blocked = false;
+                if (r.toVoid) { storyTarget = Session.VoidOrbit; jumpCells = VoidCells(true); storyForced = false; return; }
                 if (r.station < 0) return;
                 Session.ProgrammedStation = r.station;
                 if (r.instantJump) { Session.InstantJump = true; Session.EnergyCellsForNextJump = r.cells; }
                 else nav.ContinueToProgrammedStation();
-            });
+            }, -1, -1, askVoid);
             if (map == null) { nav.Paused = false; if (weapons != null) weapons.Blocked = false; }
         }
 
         void StartCharging()
         {
             Session.InstantJump = false;
-            int cells = Session.EnergyCellsForNextJump;
-            if (GalaxyMap.CellsInCargo() < cells) { Message?.Invoke(Localization.Get(579)); return; }
+            int cells = storyTarget.HasValue ? jumpCells : Session.EnergyCellsForNextJump;
+            if (GalaxyMap.CellsInCargo() < cells)
+            {
+                // Remake: the story's own jumps (78 into the Void, 80 out of it) take what there is instead of stranding the player.
+                if (storyForced) cells = GalaxyMap.CellsInCargo();
+                else { Message?.Invoke(Localization.Get(579)); storyTarget = null; return; }
+            }
             GalaxyMap.RemoveCells(cells);
             if (cells > 0) Message?.Invoke($"-{cells}t {Localization.Get(1396)}");
             Play(assets != null ? assets.jumpgateCharge : null);
@@ -224,8 +252,8 @@ namespace GoF2Remake.World
 
         void StartKhadorScene()
         {
-            int station = Session.ProgrammedStation;
-            if (station < 0) { state = State.None; return; }
+            int station = storyTarget ?? Session.ProgrammedStation;
+            if (station < 0 && !storyTarget.HasValue) { state = State.None; return; }
             BeginScene(station);
             state = State.KhadorScene;
             var fxPos = ship.transform.position + ship.transform.forward * 3000f * M;
@@ -287,6 +315,7 @@ namespace GoF2Remake.World
         void Arrive(bool viaGate)
         {
             weapons?.StoreAmmo();
+            if (targetStation == Session.VoidOrbit) Session.VoidReturnStation = Session.StationIndex;
             Session.PreviousStationIndex = Session.StationIndex;
             Session.StationIndex = targetStation;
             Session.ArrivedByTravel = true;

@@ -54,6 +54,9 @@ namespace GoF2Remake.Flight
         public float scale = 1f;       // setScaling (turrets 6)
         public bool guard;             // PlayerFighter+0x12b: waking calls Level::pirateStationAction(true)
         public int lootItem = -1, lootAmount;   // a fixed crate (the pirate outposts, DAT_002543e0)
+        // Campaign step 59's arms convoy (Level::createMission 0xbe742): its freighter, escorts and turrets (Traffic scripts it).
+        public int convoyRole;         // SpawnSpec.ConvoyFreighter / ConvoyEscort / ConvoyTurret, 0 = none
+        public const int ConvoyFreighter = 1, ConvoyEscort = 2, ConvoyTurret = 3;
     }
 
     public static class TrafficPlan
@@ -147,6 +150,14 @@ namespace GoF2Remake.Flight
             if ((cm == 0x2a || cm == 0x2b) && !Session.FreePlay) raiders = escorts = 0;
             if (jumpers + local + freighters + raiders + escorts == 0 && !terran && !vossk) local = 4;
 
+            // Campaign step 59 (type 0xa3) at one of its target stations still to do (Status+0x90): the rival arms convoy
+            // and the local fighters instead of the rest of the traffic.
+            if (!Session.FreePlay && Session.StoryMission != null && Session.StoryMission.type == StoryType.TargetList && Session.StoryTargets.Contains(station))
+            {
+                AddConvoy(list, sysRace, local);
+                return list;
+            }
+
             // 1 local fighters around one point in front of the station
             var wpLocal = new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 30000) + 20000);
             for (int i = 0; i < local; i++)
@@ -183,6 +194,48 @@ namespace GoF2Remake.Flight
                                              position = playerGame + new Vector3(Random.Range(0, 160000) - 80000, Random.Range(0, 100000) - 50000, Random.Range(0, 160000) - 80000) });
             if (PirateBases.StationHasBase(station)) AddPirateBase(list, station, hardcore);
             return list;
+        }
+
+        // ---- step 59's arms convoy (Level::createMission 0xbe742, npc_combat_specials.md 4) --------------------------
+
+        /// <summary>Table 0x253464 (per system race): the two battlestation turrets' offsets from the freighter and rotations.</summary>
+        static readonly (Vector3 pos, Vector3 rot)[][] ConvoyTurrets =
+        {
+            new[] { (new Vector3(0, -1097.14f, -4178.23f), new Vector3(0, 0, Mathf.PI)), (new Vector3(0, 1158.09f, 1180.59f), Vector3.zero) },
+            new[] { (new Vector3(0, -1096.98f, -2691.52f), new Vector3(0, 0, Mathf.PI)), (new Vector3(0, 1893.48f, 1068.07f), Vector3.zero) },
+            new[] { (new Vector3(0, -484.719f, 1741.22f), new Vector3(0, 0, Mathf.PI)), (new Vector3(0, 1458.84f, -2304.28f), Vector3.zero) },
+            new[] { (new Vector3(0, -516.08f, -3744.45f), new Vector3(0, 0, Mathf.PI)), (new Vector3(0, 515.766f, -3744.45f), Vector3.zero) },
+        };
+
+        /// <summary>[0] the freighter "Arms delivery" (1664) parked at C = (+-(80000..109999), -6000..-3001, 120000..169999),
+        /// its crate one of items 0 / 1 / 2 / 36 / 22 / 23; [1-5] escorts looping on C; [6-7] battlestation turrets (1000 HP,
+        /// scale 0.3); then the local fighters at the usual point in front of the station. The player's route is C
+        /// (Traffic.ConvoyRoute).</summary>
+        static void AddConvoy(List<SpawnSpec> list, int race, int local)
+        {
+            var wpLocal = new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 30000) + 20000);
+            float sign = Random.Range(0, 2) == 0 ? 1f : -1f;
+            var c = new Vector3(sign * (Random.Range(0, 30000) + 80000), Random.Range(0, 3000) - 6000, Random.Range(0, 50000) + 120000);
+            int[] loot = { 0, 1, 2, 0x24, 0x16, 0x17 };
+            list.Add(new SpawnSpec
+            {
+                group = NpcGroup.Special, race = race, ship = race == 1 ? 13 : 15, freighter = true, stationary = true, position = c,
+                nameText = 1664, lootItem = loot[Random.Range(0, loot.Length)], lootAmount = 1, convoyRole = SpawnSpec.ConvoyFreighter,
+            });
+            var loop = new Route(true);
+            loop.points.Add(c);
+            for (int i = 0; i < 5; i++)
+                list.Add(new SpawnSpec { group = NpcGroup.Escort, race = race, ship = NpcTables.RandomFighter(race), position = c + Jitter(),
+                                         route = loop, convoyRole = SpawnSpec.ConvoyEscort });
+            foreach (var t in ConvoyTurrets[race])
+                list.Add(new SpawnSpec
+                {
+                    group = NpcGroup.Turret, race = race, ship = -1, position = c + t.pos, rotation = t.rot, scale = 0.3f, hitpoints = 1000,
+                    turretAssembly = "v_station_battlestation_turret", noLoot = true, nameText = 1666, stationary = true,
+                    convoyRole = SpawnSpec.ConvoyTurret,
+                });
+            for (int i = 0; i < local; i++)
+                list.Add(new SpawnSpec { group = NpcGroup.Local, race = race, ship = NpcTables.RandomFighter(race), position = wpLocal + Jitter() });
         }
 
         // ---- capital ships (npc_combat_specials.md 2.2 - 2.4) ---------------------------------------------------

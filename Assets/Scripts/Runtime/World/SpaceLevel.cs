@@ -202,13 +202,21 @@ namespace GoF2Remake.World
                 Siege = new GameObject("Kaamo siege").AddComponent<KaamoSiege>();
                 Siege.Setup(this, Traffic);
             }
+            // Step 59's arms convoy: its point is the player's route until the freighter is gone.
+            if (Traffic.ConvoyRoute != null)
+            {
+                Navigation.SetRoute(Traffic.ConvoyRoute);
+                Traffic.ConvoyDone += () => { Navigation.SetAutopilot(null); Navigation.SetRoute(null); };
+            }
             // Level::createWingmen: after the mission's ships (Challenge: unarmed).
             Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
             Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             StorySpace = gameObject.AddComponent<StorySpace>();
             StorySpace.Setup(this, Campaign);
             Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex) || (Siege != null && Siege.Active)
-                                            || Layout.alienOrbit;   // remake: no Khador Drive out of the Void (the wormhole is the way back)
+                                            || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100)   // escorting Khador (MGame::UseKhadorDrive)
+                                            // remake: no Khador Drive out of the Void in the main story (its wormhole is the way back)
+                                            || (Layout.alienOrbit && !Story.GameWon && Story.ForcedKhadorTarget(Layout.stationIndex) == null);
             Navigation.SetWormhole(Wormhole);
             Navigation.PlanetJumpRefused = st => StorySpace != null && StorySpace.RefusePlanetJump(st);
             SystemJump.GateBlocked = () => Siege != null && Siege.Active;
@@ -313,6 +321,22 @@ namespace GoF2Remake.World
             Session.ArrivedByTravel = true;
             Session.LaunchedFromStation = false;
             Session.ComingFromVoid = true;
+            Session.ProgrammedStation = -1;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+
+        /// <summary>A level script's jump to another orbit (MGame::OnTouchEnd after index 64's / 80's success conversation:
+        /// switch_to_target_setting, departStation, initStreamOutPosition): hull, shield and armor kept, a stream-out arrival.</summary>
+        public void TravelTo(int station)
+        {
+            if (Leaving) return;
+            Leaving = true;
+            Weapons?.StoreAmmo();
+            if (station == Session.VoidOrbit) Session.VoidReturnStation = Layout.stationIndex;
+            Session.PreviousStationIndex = Layout.stationIndex;
+            Session.StationIndex = station;
+            Session.ArrivedByTravel = true;
+            Session.LaunchedFromStation = false;
             Session.ProgrammedStation = -1;
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
@@ -463,6 +487,12 @@ namespace GoF2Remake.World
             chase.enabled = true;   // eases from here to the chase position
             if (skipped) chase.Snap();
             if (Session.ProgrammedStation >= 0 && !Session.InstantJump) Navigation?.ContinueToProgrammedStation();
+        }
+
+        /// <summary>A level that opens on its own cutscene (LevelScript ctor, index 78 / 81): no launch / arrival camera.</summary>
+        public void EndStartSequence()
+        {
+            if (launchCameraMs > 0f) EndLaunchCamera(true);
         }
 
         /// <summary>MGame::OnTouchEnd -> LevelScript::skipSequence: the player tried to fly (steer, throttle, boost, fire, a

@@ -6,11 +6,13 @@
 //                                   space) or the campaign level's win objective -> the success conversation; closing it
 //                                   credits the reward and advances the story (index &gt; 45 without pages: advance at
 //                                   once); the level keeps running with the new index. New index 15 -> station 98
-//                                   (arrested), 22 -> back into Kappa's station
+//                                   (arrested), 22 -> back into Kappa's station; Valkyrie: 65 -> straight into Kothar's
+//                                   orbit with Khador, 74 -> docked at Kothar, 81 -> into the alien orbit (Alice stranded)
 //   MGame::gameOverCheck 0x1b0d04   the campaign level's fail objective -> "Mission failed!" (392, + 527 at 38 / 40 / 41)
 //                                   and "Game Over" (319), then the last save; a failure or the player's death counts
 //                                   toward Globals::lastCampaignMissionFailCount (3 in a row: NPC guns x0.7)
-//   successCheck, index 38          the surviving freighters become unkillable (9 999 999)
+//   successCheck, index 38          the surviving freighters become unkillable (9 999 999); 63: the pirates stop shooting
+//                                   (removeAllGuns); 73: the surviving convoy freighters unkillable and moving again
 //   Navigation (index 24)           the jump to Sahi needs a scanner and a tractor beam: Carla's note 532 instead
 //   MGame::OnUpdate 0x1ac778        add-on entry calls: in free flight (no level mission, not mining, no autopilot) at
 //                                   index 45 the Valkyrie call (conversation 46), at 84 the Supernova call (85), each
@@ -76,6 +78,11 @@ namespace GoF2Remake.World
             // MGame::successCheck, index 0x26: the remaining freighters get 9 999 999 hull.
             if (Story.Index == 38 && campaign != null)
                 foreach (var s in campaign.Ships) if (s != null && s.IsFreighter && s.Target.Alive) s.SetHull(9999999);
+            if (Story.Index == 63 && campaign != null)
+                foreach (var s in campaign.Ships) if (s != null && s.Race == Flight.Standing.Pirate) s.shootingEnabled = false;
+            if (Story.Index == 73 && campaign != null)
+                foreach (var s in campaign.Ships)
+                    if (s != null && s.IsFreighter && s.Target.Alive) { s.SetHull(9999999); s.frozen = false; s.SetMoving(true); }
             int reward = Story.Mission.reward;
             var step = Story.Step;
             if (step != null && step.success.Count > 0) Open(step.success, _ => AfterSuccess(reward));
@@ -89,6 +96,9 @@ namespace GoF2Remake.World
             int n = Story.Advance(level.Database);
             if (n == 15) { Session.StationIndex = 98; level.Dock(); }       // arrested: taken to Alioth
             else if (n == 22) level.Dock();                                       // back into Kappa's station
+            else if (n == 65) level.TravelTo(100);                                // Khador freed: on to Kothar (MGame::OnTouchEnd 3246)
+            else if (n == 74) { Session.StationIndex = 100; level.Dock(); }  // the convoy taken: docked at Kothar (3290)
+            else if (n == 81) level.TravelTo(Session.VoidOrbit);                  // Alice's drive: after her into the Void (3270)
         }
 
         /// <summary>MGame::gameOverCheck: Globals::lastCampaignMissionFailed / FailCount.</summary>

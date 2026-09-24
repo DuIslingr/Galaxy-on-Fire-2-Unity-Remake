@@ -160,7 +160,7 @@ namespace GoF2Remake.World
             Session.HighestCredits = Mathf.Max(Session.HighestCredits, Session.Credits);
             Session.PlayerHull = Session.PlayerArmor = -1;
             Session.PlayerShield = -1f;
-            if (!(Story.Index == 77 && station == 101)) Session.Autosave();
+            if (Story.AutosaveAllowed(station)) Session.Autosave();
             BarRace = StationTables.BarRace(Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
 
@@ -438,6 +438,15 @@ namespace GoF2Remake.World
             Session.LastDepartureTime = Time.realtimeSinceStartup;   // Status+0x70, for computerTradeGoods
             Session.ArrivedByTravel = false;
             Session.LaunchedFromStation = true;
+            int storyOrbit = Story.LaunchStation;
+            if (storyOrbit >= 0)
+            {
+                // Index 48: departStation(58) + initStreamOutPosition, arriving in B'akrram's orbit (Taret Orskk flies).
+                Session.PreviousStationIndex = Session.StationIndex;
+                Session.StationIndex = storyOrbit;
+                Session.ArrivedByTravel = true;
+                Session.LaunchedFromStation = false;
+            }
             if (Application.CanStreamedLevelBeLoaded(spaceScene)) SceneManager.LoadScene(spaceScene);
         }
 

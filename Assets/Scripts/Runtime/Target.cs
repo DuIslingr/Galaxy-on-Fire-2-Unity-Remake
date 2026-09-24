@@ -63,6 +63,8 @@ namespace GoF2Remake.Flight
         [NonSerialized] public bool killedByNpc;
         /// <summary>Player+0xc4: the last hit's vector (the bullet velocity).</summary>
         [NonSerialized] public Vector3 lastHitVector;
+        /// <summary>Player::damage's weapon argument: the item of the player weapon that hit last (-1 = none / an NPC).</summary>
+        [NonSerialized] public int lastPlayerWeapon = -1;
         /// <summary>KIPlayer+0x18: a named ship's name (the lock plate shows it instead of race and hull), null = none.</summary>
         [NonSerialized] public string displayName;
         /// <summary>A crate is waiting to be salvaged from this (dead) ship: the radar may lock it.</summary>

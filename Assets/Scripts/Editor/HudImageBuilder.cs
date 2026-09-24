@@ -120,6 +120,22 @@ namespace GoF2Remake.EditorTools
             (Main, "message_bg", 1601, 746, 392, 44, 0, false),
             (Ipad, "portrait_bg", 1459, 955, 160, 200, 0, false),     // 0x485 ImageFactory::reload (dialogue_cutscenes.md 1.3)
             (Ipad, "portrait_frame", 1879, 249, 160, 200, 0, false),  // 0x511
+            // Alien font (resource 1310 = font 1 of texture 10062, Globals::loadFont; AlienText): the magenta glyph row,
+            // 26 glyphs = A..Z (the order is assumed, the .aei glyph table wasn't converted), boxes measured from the
+            // alpha, all at y 263 so they share a baseline. The same row sits at gof2_interface.png (720..1018, 782).
+            (Main, "alien_A", 1064, 263, 22, 31, 0, false), (Main, "alien_B", 1089, 263, 18, 31, 0, false),
+            (Main, "alien_C", 1111, 263, 21, 31, 0, false), (Main, "alien_D", 1136, 263, 17, 31, 0, false),
+            (Main, "alien_E", 1158, 263, 19, 31, 0, false), (Main, "alien_F", 1178, 263, 20, 31, 0, false),
+            (Main, "alien_G", 1200, 263, 20, 31, 0, false), (Main, "alien_H", 1224, 263, 21, 31, 0, false),
+            (Main, "alien_I", 1249, 263, 8, 31, 0, false),  (Main, "alien_J", 1261, 263, 21, 31, 0, false),
+            (Main, "alien_K", 1286, 263, 17, 31, 0, false), (Main, "alien_L", 1303, 263, 23, 31, 0, false),
+            (Main, "alien_M", 1327, 263, 27, 31, 0, false), (Main, "alien_N", 1359, 263, 16, 31, 0, false),
+            (Main, "alien_O", 1380, 263, 19, 31, 0, false), (Main, "alien_P", 1402, 263, 22, 31, 0, false),
+            (Main, "alien_Q", 1427, 263, 20, 31, 0, false), (Main, "alien_R", 1450, 263, 20, 31, 0, false),
+            (Main, "alien_S", 1476, 263, 17, 31, 0, false), (Main, "alien_T", 1496, 263, 21, 31, 0, false),
+            (Main, "alien_U", 1517, 263, 23, 31, 0, false), (Main, "alien_V", 1542, 263, 22, 31, 0, false),
+            (Main, "alien_W", 1569, 263, 25, 31, 0, false), (Main, "alien_X", 1598, 263, 22, 31, 0, false),
+            (Main, "alien_Y", 1625, 263, 18, 31, 0, false), (Main, "alien_Z", 1646, 263, 20, 31, 0, false),
         };
 
         [MenuItem("GoF2/Build HUD Images", priority = 15)]

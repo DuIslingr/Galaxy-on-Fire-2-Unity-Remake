@@ -96,6 +96,21 @@ namespace GoF2Remake.Data
             return false;
         }
 
+        /// <summary>BluePrint::reset on every started blueprint whose production station is 'station' (index 77 -> 78: what
+        /// was invested on Valkyrie is lost).</summary>
+        public static void ResetAtStation(Database db, int station)
+        {
+            foreach (var s in Session.Blueprints)
+            {
+                if (IsEmpty(s) || s.station != station) continue;
+                var it = db.Item(s.item);
+                s.remaining.Clear();
+                if (it != null) foreach (var part in it.blueprint) s.remaining.Add(part.amount);
+                s.moneySpent = 0;
+                s.station = -1;
+            }
+        }
+
         /// <summary>BluePrint::addItem(item, n, station).</summary>
         public static void Invest(Database db, int product, int ingredient, int units, int station)
         {

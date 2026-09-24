@@ -7,6 +7,8 @@
 // at fire time, following the mount, its animation restarted per shot and hidden when it ends. Mines are drawn at x0.7
 // and tumble (MineGun). Scatter shells have no impact mesh (their burst explosion replaces it).
 // The guided Liberator (BombGun, attr 15): its deploy animation plays once per launch, starting 500 ms after it.
+// Projectiles, muzzle flashes and impacts fade by their `extra` (opacity) channel: without it an impact's big glow part
+// (radius ~3600 units, meant at 20 % and gone after 267 ms) stayed at full brightness and the impact looked far too big.
 
 using GoF2Remake.Visuals;
 using UnityEngine;
@@ -47,6 +49,7 @@ namespace GoF2Remake.Flight
                     var go = Object.Instantiate(fx.projectile, fxRoot);
                     go.name = $"{fx.projectile.name} {i}";
                     StripForFx(go);
+                    EnableFades(go);
                     go.SetActive(false);
                     projectiles[i] = go.transform;
                 }
@@ -55,6 +58,7 @@ namespace GoF2Remake.Flight
                 muzzle = Object.Instantiate(fx.muzzleFlash, muzzleParent, false);
                 muzzle.transform.localPosition = gun.mountLocal;
                 StripForFx(muzzle);
+                EnableFades(muzzle);
                 muzzleLength = Mathf.Max(80f, MaxLength(muzzle));
                 muzzle.SetActive(false);
             }
@@ -78,6 +82,7 @@ namespace GoF2Remake.Flight
                 {
                     impacts[i] = Object.Instantiate(fx.impact, fxRoot);
                     StripForFx(impacts[i]);
+                    EnableFades(impacts[i]);
                     impacts[i].SetActive(false);
                 }
                 impactLength = Mathf.Max(200f, MaxLength(impacts[0]));
@@ -89,6 +94,12 @@ namespace GoF2Remake.Flight
             float l = 0f;
             foreach (var a in go.GetComponentsInChildren<PartAnimation>(true)) l = Mathf.Max(l, a.LengthMs);
             return l;
+        }
+
+        /// <summary>The part animations apply their `extra` channel as opacity (PartAnimation.applyMaterialChannels).</summary>
+        public static void EnableFades(GameObject go)
+        {
+            foreach (var a in go.GetComponentsInChildren<PartAnimation>(true)) a.applyMaterialChannels = true;
         }
 
         public static void StripForFx(GameObject go)

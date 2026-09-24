@@ -74,6 +74,12 @@ namespace GoF2Remake.World
                 foreach (var spec in TrafficPlan.Build(db, StationIndex, sys, player != null ? new Vector3(player.transform.position.x, player.transform.position.y, -player.transform.position.z) / 0.05f : Vector3.zero,
                                                        wormhole != null && wormhole.Visible ? wormhole.GamePosition : (Vector3?)null)) Create(spec);
             ConnectPlayers();
+            convoyFreighter = Ships.Find(s => s.Spec.convoyRole == SpawnSpec.ConvoyFreighter);
+            if (convoyFreighter != null)
+            {
+                ConvoyRoute = new Route(false);
+                ConvoyRoute.points.Add(convoyFreighter.Spec.position);
+            }
             Debug.Log($"Traffic: {Ships.Count} ships ({CountGroup(NpcGroup.Local)} local, {CountGroup(NpcGroup.Jumper)} jumpers, " +
                       $"{CountGroup(NpcGroup.Freighter)} freighters, {CountGroup(NpcGroup.Raider)} raiders)");
 
@@ -326,6 +332,9 @@ namespace GoF2Remake.World
                 else if (byPlayer && !Session.InformerKilled) Session.InformerFailed = true;
             }
             if (!byPlayer || blackMarket) return;
+            // Player::damage: the convoy freighter ("Arms delivery") destroyed by the Liberator (0xb3) -> step 59's bonus.
+            if (ship.Spec.convoyRole == SpawnSpec.ConvoyFreighter && ship.Target.lastPlayerWeapon == 179 && Session.StoryMission != null)
+                Session.StoryMission.value++;
             Standing.ApplyKill(ship.Race, SystemRace);
             if (ship.Target.hostileToPlayer)
             {
@@ -342,6 +351,7 @@ namespace GoF2Remake.World
             UpdateOrbit(dtMs);
             UpdateAlienAttackers(dtMs);
             UpdateChatter(dtMs);
+            UpdateConvoy();
             int hostiles = 0;
             if (hasScanner)
                 foreach (var s in Ships)
@@ -351,6 +361,45 @@ namespace GoF2Remake.World
                         hostiles++;
             HostileCount = hostiles;
             UpdateMusic(Time.unscaledDeltaTime);
+        }
+
+        // ---- step 59's arms convoy (LevelScript::process, LevelScript+0xa9) ------------------------------------------
+
+        NpcShip convoyFreighter;
+        int convoyStep;
+        /// <summary>The convoy point as the player's route (Level+0x108), null = none / done.</summary>
+        public Route ConvoyRoute { get; private set; }
+        /// <summary>The convoy freighter died: the player's route and autopilot are cleared.</summary>
+        public event Action ConvoyDone;
+
+        /// <summary>Step 0: the player within 50 000 of the freighter -> the freighter, its escorts and turrets always-enemy,
+        /// radio 0xe. Then the freighter dead -> its turrets destroyed, this station done in Status+0x90 (-1), radio 0xf.</summary>
+        void UpdateConvoy()
+        {
+            if (convoyFreighter == null || convoyStep >= 2 || Player == null) return;
+            if (convoyStep == 0 && (convoyFreighter.transform.position - Player.transform.position).magnitude < 50000f * 0.05f)
+            {
+                foreach (var s in Ships) if (s.Spec.convoyRole > 0) s.alwaysEnemy = true;
+                ConvoyRadio(0x88f, false);
+                convoyStep = 1;
+            }
+            if (convoyFreighter.Target.Alive) return;
+            foreach (var s in Ships) if (s.Spec.convoyRole == SpawnSpec.ConvoyTurret) s.DestroyAsTurret();
+            for (int i = 0; i < Session.StoryTargets.Count; i++) if (Session.StoryTargets[i] == StationIndex) Session.StoryTargets[i] = -1;
+            ConvoyRadio(0x88e, true);
+            ConvoyRoute = null;
+            ConvoyDone?.Invoke();
+            convoyStep = 2;
+        }
+
+        /// <summary>Level::createRadioMessage(0xe / 0xf, system race): text 'baseText' - 2 per target station still to do
+        /// (0xe: 2185 / 2187 / 2189 "too close" lines; 0xf: 2186 / 2188, none after the last one).</summary>
+        void ConvoyRadio(int baseText, bool afterKill)
+        {
+            int text = baseText;
+            foreach (int t in Session.StoryTargets) if (t >= 0) text -= 2;
+            if (afterKill && (text < 0x889 || text > 0x88d)) return;
+            Radio(text, text, SystemRace);
         }
 
         /// <summary>Level::updateOrbit: relaunches and raider waves (not in a campaign orbit).</summary>

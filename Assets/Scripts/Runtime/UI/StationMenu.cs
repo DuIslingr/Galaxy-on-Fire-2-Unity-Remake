@@ -238,6 +238,7 @@ namespace GoF2Remake.UI
             mapButton.SetEnabled(Story.MapUnlocked);
             missionsButton.SetEnabled(Story.MapUnlocked);   // Missions: locked before campaign 9 like the Map
             loungeButton.SetEnabled(Story.LoungeUnlocked(station));
+            if (hints != null) BuildHints(InputMode.Current);   // the key hints follow the enabled buttons
         }
 
         bool HangarOpen => hangarWindow != null && hangarWindow.IsOpen;
@@ -377,6 +378,7 @@ namespace GoF2Remake.UI
         {
             if (level == null || StarMap.IsOpen || !Story.MapUnlocked) return;
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
+            if (Story.MapRefusal is string refusal) { ShowDialog(refusal, null, true); return; }   // index 77: take the Cronus
             CloseHangar();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             root.AddToClassList("station-map-open");
@@ -523,6 +525,8 @@ namespace GoF2Remake.UI
                 return;
             }
             int n = Story.Advance(db);
+            Story.AfterDockedAdvance(n, level.Station.index);                // Khador's ships and rum at Kothar (77, 84)
+            if (Story.ShipSwapped(n)) level.ReplacePlayerShip(Session.ShipIndex);   // the loaner / the own ship on the turntable
             if (n == 9 || n == 44 || n == 75 || n == 76 || n == 83)
             {
                 Session.Autosave();
@@ -936,27 +940,21 @@ namespace GoF2Remake.UI
                 }
                 return;
             }
+            // No turn-ship, launch or menu hints: the drag / stick, the Launch button and the Menu button cover those.
             bool hangar = level == null || level.View == StationView.Hangar;
-            string rotate = T("stationRotate", "TURN SHIP"), launch = T("stationLaunch", "LAUNCH");
-            string back = hangar ? T("hudMenu", "MENU") : T("hudBack", "BACK");
             if (kind == InputKind.KeyboardMouse)
             {
-                if (hangar) Hint(rotate, InputGlyph.Key("A"), InputGlyph.Key("D"));
                 if (hangarButton.enabledSelf) Hint(Localization.Get(167).ToUpperInvariant(), InputGlyph.Key("1"));
                 if (loungeButton.enabledSelf) Hint(Localization.Get(398).ToUpperInvariant(), InputGlyph.Key("2"));
                 if (mapButton.enabledSelf) Hint(Localization.Get(177).ToUpperInvariant(), InputGlyph.Key("M"));
-                Hint(launch, InputGlyph.Key("L"));
-                Hint(back, InputGlyph.Key("ESC"));
+                if (!hangar) Hint(T("hudBack", "BACK"), InputGlyph.Key("ESC"));
             }
             else if (kind == InputKind.Gamepad)
             {
-                if (hangar) Hint(rotate, InputGlyph.Pad(PadButton.RightStick));
                 if (hangarButton.enabledSelf) Hint(Localization.Get(167).ToUpperInvariant(), InputGlyph.Pad(PadButton.LeftBumper));
                 if (loungeButton.enabledSelf) Hint(Localization.Get(398).ToUpperInvariant(), InputGlyph.Pad(PadButton.RightBumper));
                 if (mapButton.enabledSelf) Hint(Localization.Get(177).ToUpperInvariant(), InputGlyph.Pad(PadButton.Y));
-                Hint(launch, InputGlyph.Pad(PadButton.X));
-                Hint(T("hudBack", "BACK"), InputGlyph.Pad(PadButton.B));
-                Hint(T("hudMenu", "MENU"), InputGlyph.Pad(PadButton.Menu));
+                if (!hangar) Hint(T("hudBack", "BACK"), InputGlyph.Pad(PadButton.B));
             }
         }
 

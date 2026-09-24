@@ -100,6 +100,11 @@ Button style 4 = the 3-slice bar of style 0: caps 1116/1117, middle 1115 (presse
 scroll bar when it overflows (`ScrollTouchWindow::draw` 0x1a310c); pages are table entries, not text pagination.
 Font: `Globals::font`, **alien font** (`Globals::fontAlien`, magenta glyphs) when the speaker is 19 (Void) or 56
 (Corny, robot) — same rule in the radio.
+The alien font is resource 1310 = font 1 of texture 10062 (`gof2_interface.aei`; font 0 = 1111, the Latin one),
+spacing 0. Its glyph table lives in the .aei trailer (not converted), but the atlas holds exactly 26 magenta glyphs in
+one row, measured from the alpha: HD `gof2_interface_iphone4.png` x 1064..1665, y 263..293 (x per glyph in
+`HudImageBuilder`), low-res `gof2_interface.png` x 720..1018, y 782..793. The Void / Corny texts are uppercase
+gibberish (1838 "ASLDFJK OWUT ..."), so the glyphs are taken as A..Z in order.
 
 While drawn, the Skip / Next button positions are published in `Globals::other_buttons_x/y[2..3]` and
 `is_dialogue_window_visible = 1`: the desktop/controller key layer (`keyReleased` 0x729fc) simulates taps on those

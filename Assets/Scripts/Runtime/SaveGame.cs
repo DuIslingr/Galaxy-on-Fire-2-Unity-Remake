@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -67,6 +67,10 @@ namespace GoF2Remake.Data
         public int graveRiserKills;
         public long cloakMs;
         public List<int> hints;
+        // version 6: the Valkyrie story (the parked own ship, step 59's target stations)
+        public bool hasParkedShip;
+        public ParkedShip parkedShip;
+        public List<int> storyTargets;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -194,6 +198,7 @@ namespace GoF2Remake.Data
                 selectedSecondary = Session.SelectedSecondary, bombsDetonated = Session.BombsDetonated,
                 pirateBaseDestroyed = Session.PirateBaseDestroyed, hints = new List<int>(Session.Hints),
                 graveRiserKills = Session.GraveRiserKills, cloakMs = Session.CloakMs,
+                hasParkedShip = Session.ParkedShip != null, parkedShip = Session.ParkedShip, storyTargets = new List<int>(Session.StoryTargets),
             };
         }
 
@@ -285,6 +290,11 @@ namespace GoF2Remake.Data
                 Session.Hints = new HashSet<int>(s.hints ?? new List<int>());
                 Session.GraveRiserKills = s.graveRiserKills;
                 Session.CloakMs = s.cloakMs;
+            }
+            if (s.version >= 6)
+            {
+                Session.ParkedShip = s.hasParkedShip ? s.parkedShip : null;   // JsonUtility writes an empty object for null
+                Session.StoryTargets = s.storyTargets ?? new List<int>();
             }
             Story.RepairCheckpoint();
         }

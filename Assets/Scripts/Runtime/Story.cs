@@ -8,7 +8,9 @@
 //   MGame::dockEvent / Radar / UseKhadorDrive   BlocksDockingAndJumps: "Not possible on a mission." (525, §7)
 //   ModStation::OnInitialize 0x0e8080      OnDocked: step-specific station tweaks (Betty at index 1, free EMP bombs...)
 // State lives in Session (CampaignMission = the index, StoryMission = slot 0) and is saved by SaveGame.
-// Only the main campaign's side effects (0-45) are implemented so far; the add-ons' come with their levels.
+// Side effects built: the main campaign (0-45) and the Valkyrie add-on (46-84: the loaner ships parked in Status+0x8c,
+// the systems it reveals, step 59's target stations, the Liberator / Disruptor blueprints, the mines, the jump drive);
+// the Supernova add-on's (85-162) come with its levels.
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -179,10 +181,12 @@ namespace GoF2Remake.Data
                 // completes once out of the Void).
                 case StoryType.DelayedCall: return c.docked || (c.levelMs >= 10000f && !atTarget);
                 case StoryType.CallAfterLaunch: return !c.docked && c.levelMs > 10000f;
-                case StoryType.InOrbit: return !c.docked && m.station >= 0 && atTarget;
+                case StoryType.InOrbit: return !c.docked && atTarget;   // 79 / 152: the alien orbit (-1)
                 case StoryType.DeliverOrMount:
                     return c.docked && atTarget && (CargoOf(m.goodsItem) >= m.goodsAmount || Session.Equipment.Exists(e => e.item == m.goodsItem));
                 case StoryType.Counter: return Session.StoryCounter >= m.value;
+                // 0xa3: every target station of Status+0x90 done (negative), wherever the player is (step 59).
+                case StoryType.TargetList: return Session.StoryTargets.Count > 0 && Session.StoryTargets.TrueForAll(t => t < 0);
                 case StoryType.ScriptFlag: return m.value == 1;
                 case StoryType.Lounge: return c.docked && atTarget && c.inLounge;
                 case StoryType.LoungeWithGoods: return c.docked && atTarget && c.inLounge && CargoOf(m.goodsItem) >= m.goodsAmount;
@@ -253,9 +257,29 @@ namespace GoF2Remake.Data
 
         /// <summary>ModStation::OnInitialize menu buttons: Hangar from 5, Map / Missions from 9 (not at 15), Lounge from 12
         /// (not at 15, never at stations 100 / 101).</summary>
-        public static bool HangarUnlocked => Session.FreePlay || Index >= 5;
-        public static bool MapUnlocked => Session.FreePlay || (Index >= 9 && Index != 15);
-        public static bool LoungeUnlocked(int station) => station != 100 && station != 101 && (Session.FreePlay || (Index >= 12 && Index != 15));
+        /// <summary>ModStation::OnKeyPress (the menu buttons, 528 "Not available." otherwise): no Hangar in a loaner (48, 49,
+        /// 56), no Lounge at 49, no Map at 48 / 49.</summary>
+        public static bool HangarUnlocked => Session.FreePlay || (Index >= 5 && Index != 48 && Index != 49 && Index != 56);
+        public static bool MapUnlocked => Session.FreePlay || (Index >= 9 && Index != 15 && Index != 48 && Index != 49);
+        public static bool LoungeUnlocked(int station) => station != 100 && station != 101 && (Session.FreePlay || (Index >= 12 && Index != 15 && Index != 49));
+        /// <summary>ModStation::OnKeyPress, the Map at index 77: only in the Cronus Khador left in the hangar (326), else null.</summary>
+        public static string MapRefusal => !Session.FreePlay && Index == 77 && Session.ShipIndex != 37 ? Localization.Get(326) : null;
+        /// <summary>ModStation::OnInitialize: no autosave while imprisoned on Valkyrie (index 77 at station 101).</summary>
+        public static bool AutosaveAllowed(int station) => Session.FreePlay || Index != 77 || station != 101;
+        /// <summary>MGame::UseKhadorDrive's story cases (campaign_levels_b.md 78-80): at index 78 (escaping Valkyrie) the drive
+        /// is always allowed and misjumps into the alien orbit, advancing the story (-> 79); in the alien orbit at index 80 it
+        /// goes to Kothar (Status+0x84 = 100). Null = the normal star map.</summary>
+        public static int? ForcedKhadorTarget(int station)
+        {
+            if (Session.FreePlay) return null;
+            if (Index == 78 && station != Session.VoidOrbit) return Session.VoidOrbit;
+            if (Index == 80 && station == Session.VoidOrbit) return 100;
+            return null;
+        }
+
+        /// <summary>ModStation::OnTouchEnd: launching at index 48 goes straight into B'akrram's orbit (58) with the arrival
+        /// fly-in (Taret Orskk chauffeurs the player); -1 = a normal launch.</summary>
+        public static int LaunchStation => !Session.FreePlay && Index == 48 ? 58 : -1;
         /// <summary>Planet jumps are refused (HUD event 0x15, 525) before index 10 and at 48 (campaign_levels_a.md 1.7).</summary>
         public static bool PlanetJumpsAllowed => Session.FreePlay || (Index >= 10 && Index != 48);
         /// <summary>The autopilot is off at index 0-1 and 48; planet locks from index 2.</summary>
@@ -268,18 +292,20 @@ namespace GoF2Remake.Data
         {
             int next = Index + 1;
             if (next == 53 || next == 129) next++;   // cases 52 / 128 run twice
+            var previous = Session.StoryMission;
             Session.CampaignMission = next;
             Session.StoryStepStart = Session.PlaySeconds;
             if (next == 93 || next == 111 || next == 143) Session.StoryRadioPending = true;
             var step = StoryTable.Step(next);
             // Steps without a creating case (45's +40 000 aside, 46, 107, >= 162) keep the old mission object.
             if (step != null && step.type != -1 || next == GameWonIndex || next >= LastIndex) Session.StoryMission = StoryMission.From(step);
-            ApplyStepEffects(db, next);
+            ApplyStepEffects(db, next, previous);
             return next;
         }
 
-        /// <summary>The side effects of the nextCampaignMission case that creates step 'n' (campaign_flow.md 4).</summary>
-        static void ApplyStepEffects(Database db, int n)
+        /// <summary>The side effects of the nextCampaignMission case that creates step 'n' (campaign_flow.md 4; the Valkyrie
+        /// cases 0x2f-0x53 read from the decompile). 'previous' = the mission the step replaced.</summary>
+        static void ApplyStepEffects(Database db, int n, StoryMission previous)
         {
             switch (n)
             {
@@ -298,13 +324,133 @@ namespace GoF2Remake.Data
                 case 26: Session.VoidInvasionSystem = Session.VoidInvasionStation = -1; break;
                 case 28: Session.VoidInvasionSystem = 18; Session.VoidInvasionStation = 91; break;
                 case 34: Shop.RemoveFromCargo(164, 50); Blueprints.UnlockFromStory(db, n); break;   // the Void Crystals -> the Khador blueprint
-                case 58: case 72: case 104: case 141: Blueprints.UnlockFromStory(db, n); break;     // Liberator, Disruptor, Gamma II, Chromo Plasma
+                case 58: Blueprints.UnlockFromStory(db, n); RestoreOwnShip(); break;              // Liberator; the own ship back
+                case 72: case 104: case 141: Blueprints.UnlockFromStory(db, n); break;              // Disruptor, Gamma II, Chromo Plasma
                 case 42: Session.VoidInvasionSystem = Session.VoidInvasionStation = -10; break;
                 case 45:
                     Session.Credits += 40000;
                     Session.VoidInvasionSystem = Session.VoidInvasionStation = -10;
                     break;
+                // ---- Valkyrie (cases 0x2f-0x53) ----
+                case 48:   // Taret Orskk's H'Soc (race 1) with a D'iol and a Hiroto Proscan; the own ship parked
+                    ParkOwnShip();
+                    LendShip(9, new ItemStack(58, 1), new ItemStack(83, 1));
+                    break;
+                case 49:   // the stolen K'Suukk: three FlaK 9-9, D'iol, Proscan, H'Belam (the H'Soc stays behind)
+                    LendShip(41, new ItemStack(177, 1), new ItemStack(177, 1), new ItemStack(177, 1),
+                             new ItemStack(58, 1), new ItemStack(83, 1), new ItemStack(52, 1));
+                    break;
+                case 55: RevealSystem(db, 23); RestoreOwnShip(); break;                    // Herjaza; the K'Suukk delivered
+                case 56:   // the S'Kanarr for the turret test: Skuld AT XR, H'Belam, D'iol, Proscan
+                    ParkOwnShip();
+                    LendShip(39, new ItemStack(181, 1), new ItemStack(52, 1), new ItemStack(58, 1), new ItemStack(83, 1));
+                    break;
+                case 59:   // the rival convoys at Suttnar, Ohna and Dekato; the Liberator blueprint locked again
+                    Session.StoryTargets = new List<int> { 56, 45, 22 };
+                    Session.UnlockedBlueprints.Remove(179);
+                    Session.StoryMission.value = 0;
+                    break;
+                case 60:   // 50 000 + 50 000 per convoy freighter the Liberator destroyed (Player::damage, weapon 0xb3)
+                {
+                    int v = previous != null ? previous.value : 0;
+                    Session.StoryMission.reward = v * 50000 + 50000;
+                    Session.StoryMission.value = v > 0 ? 1 : 0;
+                    break;
+                }
+                case 62: RevealSystem(db, 22); break;                                       // Beidan (Kothar)
+                case 63: RevealSystem(db, 24); break;                                       // Skavac
+                case 67:   // Cornelius' mines: 5 each of AMR Saber, Neutha EMP and Ksann'k in this station's stock
+                    Session.StoryMission.value = 0;
+                    AddToCurrentStock(new ItemStack(60, 5), new ItemStack(61, 5), new ItemStack(62, 5));
+                    break;
+                case 69: Shop.RemoveFromCargo(175, CargoOf(175)); break;                // the Void Essence handed to Netor
+                case 75: RemoveCurrentDealerShips(); break;                                 // Station::removeShips
+                case 77: SetJumpDriveSaleable(db, false); break;                            // the jump drive can't be sold
+                case 78:   // imprisoned: the jump drive taken (mounted, else the one in the hold); Valkyrie's blueprints reset
+                {
+                    int drive = Session.Equipment.FindIndex(e => db.Item(e.item)?.categoryId == 18);
+                    if (drive >= 0) Session.Equipment.RemoveAt(drive);
+                    else Shop.RemoveFromCargo(GalaxyMap.KhadorDriveItem, 1);
+                    Blueprints.ResetAtStation(db, 101);
+                    break;
+                }
+                case 84:   // dlc1Won: the jump drive saleable again, one more Khador Drive in the hold
+                    SetJumpDriveSaleable(db, true);
+                    Shop.AddToCargo(GalaxyMap.KhadorDriveItem, 1);
+                    break;
             }
+        }
+
+        // ---- the Valkyrie's loaner ships (Status+0x8c, Status::setShip) ---------------------------------------------
+
+        /// <summary>Status+0x8c = the current ship (its equipment, cargo, mods and damage go with it).</summary>
+        static void ParkOwnShip()
+        {
+            Session.ParkedShip = new ParkedShip
+            {
+                ship = Session.ShipIndex, equipment = Session.Equipment, cargo = Session.Cargo, mods = Session.ShipMods,
+                hull = Session.PlayerHull, armor = Session.PlayerArmor, shield = Session.PlayerShield,
+            };
+        }
+
+        /// <summary>Status::setShip(Ship::makeShip(ship)) with setEquipment: a fresh hull, empty hold, full health.</summary>
+        static void LendShip(int ship, params ItemStack[] equipment)
+        {
+            Session.ShipIndex = ship;
+            Session.Equipment = new List<ItemStack>(equipment);
+            Session.Cargo = new List<ItemStack>();
+            Session.ShipMods = new List<int>();
+            Session.PlayerHull = Session.PlayerArmor = -1;
+            Session.PlayerShield = -1f;
+            Session.SelectedSecondary = -1;
+        }
+
+        /// <summary>setShip(Status+0x8c): the own ship back, the loaner gone.</summary>
+        static void RestoreOwnShip()
+        {
+            var p = Session.ParkedShip;
+            if (p == null) return;
+            Session.ShipIndex = p.ship;
+            Session.Equipment = p.equipment ?? new List<ItemStack>();
+            Session.Cargo = p.cargo ?? new List<ItemStack>();
+            Session.ShipMods = p.mods ?? new List<int>();
+            Session.PlayerHull = p.hull;
+            Session.PlayerArmor = p.armor;
+            Session.PlayerShield = p.shield;
+            Session.SelectedSecondary = -1;
+            Session.ParkedShip = null;
+        }
+
+        /// <summary>Item::setUnsaleable on the first jump drive (mounted, else in the hold).</summary>
+        static void SetJumpDriveSaleable(Database db, bool saleable)
+        {
+            if (Shop.FirstMounted(db, 18) == null && CargoOf(GalaxyMap.KhadorDriveItem) == 0) return;
+            if (saleable) Session.Unsaleable.Remove(GalaxyMap.KhadorDriveItem); else Session.Unsaleable.Add(GalaxyMap.KhadorDriveItem);
+        }
+
+        /// <summary>Station::addItem on the station the player is docked at (Status+0x198).</summary>
+        static void AddToCurrentStock(params ItemStack[] items)
+        {
+            var stock = Session.RecentStations.Find(r => r.station == Session.StationIndex);
+            if (stock == null) return;
+            foreach (var it in items)
+            {
+                var row = stock.items.Find(x => x.item == it.item);
+                if (row != null) row.amount += it.amount; else Shop.InsertStock(stock, new ItemStack(it.item, it.amount));
+            }
+        }
+
+        static void RemoveCurrentDealerShips()
+        {
+            var stock = Session.RecentStations.Find(r => r.station == Session.StationIndex);
+            stock?.ships.Clear();
+        }
+
+        /// <summary>Station::addShip on a station's dealer, once.</summary>
+        public static void AddDealerShip(int station, int ship)
+        {
+            var stock = Session.RecentStations.Find(r => r.station == station);
+            if (stock != null && !stock.ships.Contains(ship)) stock.ships.Add(ship);
         }
 
         static void RevealSystem(Database db, int system)
@@ -334,7 +480,31 @@ namespace GoF2Remake.Data
             }
             // Index 27 at the target: the Alien Remains are handed over.
             if (Index == 27 && station == Mission.station) { Session.Unsaleable.Remove(131); Shop.RemoveFromCargo(131, CargoOf(131)); }
+            // Kothar (100): Khador's ships. Index 77: the Cronus (price 0); at 80-84 (and after the add-on) the Cronus, the
+            // Typhon and the Nemesis.
+            if (station == 100 && stock != null)
+            {
+                if (Index == 77) AddDealerShip(100, 37);
+                if (Dlc1Won || (Index >= 80 && Index <= 84)) { AddDealerShip(100, 37); AddDealerShip(100, 38); AddDealerShip(100, 40); }
+            }
         }
+
+        /// <summary>ModStation::OnTouchEnd after a docked success conversation, by the new index 'n' (campaign_flow.md 3.1 3):
+        /// Khador's gifts at Kothar (77: the Cronus; 84: the Typhon, the Nemesis and a bottle of S'kloptorr Rum).</summary>
+        public static void AfterDockedAdvance(int n, int station)
+        {
+            if (station != 100) return;
+            if (n == 77) AddDealerShip(100, 37);
+            if (n == 84)
+            {
+                AddDealerShip(100, 38);
+                AddDealerShip(100, 40);
+                Shop.AddToCargo(137, 1);
+            }
+        }
+
+        /// <summary>The docked success conversations after which the hangar shows the new (loaner / own) ship.</summary>
+        public static bool ShipSwapped(int n) => n == 48 || n == 49 || n == 55 || n == 56 || n == 58;
 
         /// <summary>The price the shop charges ('price' = the normal one): the tutorial gear at Var Hastra before step 7 and the EMP
         /// bombs at Kappa in step 20 are free.</summary>

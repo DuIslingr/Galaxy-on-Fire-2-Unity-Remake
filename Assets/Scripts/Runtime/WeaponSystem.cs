@@ -340,6 +340,7 @@ namespace GoF2Remake.Flight
             // Rockets, missiles and bombs destroy asteroids outright; everything else deals its damage (attr 9).
             bool missile = r.gun.isSecondary;
             bool wasAlive = target.Alive;
+            target.lastPlayerWeapon = r.gun.itemIndex;
             target.Damage(missile && target.isAsteroid ? 9999f : r.gun.damage, false, r.gun.bullets[bullet].velocity);
             if (wasAlive && !target.Alive && target.isAsteroid) Session.AsteroidsDestroyed++;   // Status+0xd8
             ApplyEmp(target, (int)r.gun.emp);
@@ -351,6 +352,7 @@ namespace GoF2Remake.Flight
         void OnAreaHit(Rig r, Target target, int dmg, int emp, Vector3 center)
         {
             bool wasAlive = target.Alive;
+            target.lastPlayerWeapon = r.gun.itemIndex;
             if (dmg > 0) target.Damage(dmg, false, (target.transform.position - center).normalized);
             if (wasAlive && !target.Alive && target.isAsteroid) Session.AsteroidsDestroyed++;
             ApplyEmp(target, emp);

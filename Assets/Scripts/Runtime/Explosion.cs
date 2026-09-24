@@ -80,6 +80,7 @@ namespace GoF2Remake.Flight
                             d.transform.localRotation = Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), 0f);
                             d.transform.localScale *= Random.Range(50, 100) * 0.01f * scale;
                             GunRig.StripForFx(d);
+                            foreach (var a in d.GetComponentsInChildren<PartAnimation>(true)) a.applyMaterialChannels = true;   // fade as they stretch
                             e.lengthMs = Mathf.Max(e.lengthMs, PartAnimation.PlayOnce(d));
                         }
                     }
@@ -100,7 +101,7 @@ namespace GoF2Remake.Flight
             var go = Instantiate(prefab, pivot, false);
             go.transform.localScale *= scale;
             GunRig.StripForFx(go);
-            foreach (var a in go.GetComponentsInChildren<PartAnimation>(true)) a.speed = speed;
+            foreach (var a in go.GetComponentsInChildren<PartAnimation>(true)) { a.speed = speed; a.applyMaterialChannels = true; }   // their `extra` fade-out
             float len = PartAnimation.PlayOnce(go) / Mathf.Max(0.05f, speed);
             lengthMs = Mathf.Max(lengthMs, len);
             if (faceCamera) lookAt.Add(pivot);

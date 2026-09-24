@@ -669,7 +669,7 @@ namespace GoF2Remake.UI
                 shownChatter = chatter;
                 radioShown = -1;
                 radioSpeaker.text = chatter.speaker.ToUpperInvariant();
-                radioText.text = chatter.text;
+                AlienText.Set(radioText, chatter.text, chatter.portrait == null && StoryTable.UsesAlienFont(chatter.speakerId));
                 if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
                 else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
                 return;
@@ -679,7 +679,7 @@ namespace GoF2Remake.UI
             if (line == null || index == radioShown) { if (line == null) radioShown = -1; return; }
             radioShown = index;
             radioSpeaker.text = StoryTable.SpeakerName(line.speaker).ToUpperInvariant();
-            radioText.text = Localization.Get(line.text);
+            AlienText.Set(radioText, Localization.Get(line.text), StoryTable.UsesAlienFont(line.speaker));
             Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
             if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }

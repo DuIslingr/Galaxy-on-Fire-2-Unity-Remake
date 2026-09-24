@@ -9,8 +9,10 @@
 // left their channel). Rotation axis mapping could not be
 // fully confirmed from the decompiled code, so it is exposed below: if a part spins around the wrong
 // axis, change the rotation mapping in the inspector.
-// applyMaterialChannels (opt-in, the sky layers): the `extra` channel (0..100, opacity) goes to the part renderer's _Fade
+// applyMaterialChannels (opt-in: the sky layers, explosions): the `extra` channel (0..100, opacity) goes to the part
+// renderer's _Fade, or for the GoF2 Shader Graphs (no _Fade) scales their _Color tint (rgb on additive, alpha otherwise),
 // and `v5_0` (a UV scroll, assumed 100 = one texture width) to its _UVOffset.x, through a MaterialPropertyBlock.
+// Without it an explosion's debris streaks never fade and hang in space fully stretched (long lines).
 
 using System;
 using System.Collections.Generic;
@@ -55,7 +57,7 @@ namespace GoF2Remake.Visuals
         [Tooltip("Apply the `extra` (opacity) and `v5_0` (UV scroll) channels to the part renderers (_Fade / _UVOffset).")]
         public bool applyMaterialChannels;
 
-        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv; public Renderer renderer; public MaterialPropertyBlock block; }
+        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; }
         readonly List<Track> tracks = new List<Track>();
         float timeMs, lengthMs;
 
@@ -161,15 +163,33 @@ namespace GoF2Remake.Visuals
                 if (tk.scl[0] != null || tk.scl[1] != null || tk.scl[2] != null)
                 {
                     var s = new[] { Eval(tk.scl[0], timeMs, 1), Eval(tk.scl[1], timeMs, 1), Eval(tk.scl[2], timeMs, 1) };
-                    var v = new Vector3(s[positionMap[0].source], s[positionMap[1].source], s[positionMap[2].source]);
+                    // Scale keys are in the mesh's own (engine) axis order, not the Z-up layout of the position keys: the ship
+                    // explosion's debris streak (explosion_debris_anim_add) stretches sclZ 45x along its length (engine Z) while it
+                    // flies about as far; swapped, the 45x went across its width and every streak became a 2.9 km line.
+                    var v = new Vector3(s[0], s[1], s[2]);
                     tk.tr.localScale = Vector3.Scale(tk.baseScale, v);
                 }
                 if (applyMaterialChannels && (tk.extra != null || tk.uv != null))
                 {
-                    if (tk.renderer == null) { tk.renderer = tk.tr.GetComponent<Renderer>(); tk.block = new MaterialPropertyBlock(); }
+                    if (tk.renderer == null)
+                    {
+                        tk.renderer = tk.tr.GetComponent<Renderer>();
+                        tk.block = new MaterialPropertyBlock();
+                        var mat = tk.renderer != null ? tk.renderer.sharedMaterial : null;
+                        // 0 = _Fade, 1 = _Color rgb (additive), 2 = _Color alpha, -1 = nothing to fade
+                        tk.fadeMode = mat == null ? -1 : mat.HasProperty("_Fade") ? 0 : !mat.HasProperty("_Color") ? -1
+                                    : mat.shader.name.Contains("Additive") ? 1 : 2;
+                        if (tk.fadeMode > 0) tk.baseColor = mat.GetColor("_Color");
+                    }
                     if (tk.renderer == null) continue;
                     tk.renderer.GetPropertyBlock(tk.block);
-                    if (tk.extra != null) tk.block.SetFloat("_Fade", Mathf.Clamp01(Eval(tk.extra, timeMs, 100f) / 100f));
+                    if (tk.extra != null)
+                    {
+                        float f = Mathf.Clamp01(Eval(tk.extra, timeMs, 100f) / 100f);
+                        if (tk.fadeMode == 0) tk.block.SetFloat("_Fade", f);
+                        else if (tk.fadeMode == 1) tk.block.SetColor("_Color", new Color(tk.baseColor.r * f, tk.baseColor.g * f, tk.baseColor.b * f, tk.baseColor.a));
+                        else if (tk.fadeMode == 2) tk.block.SetColor("_Color", new Color(tk.baseColor.r, tk.baseColor.g, tk.baseColor.b, tk.baseColor.a * f));
+                    }
                     if (tk.uv != null) tk.block.SetVector("_UVOffset", new Vector4(Eval(tk.uv, timeMs, 0f) / 100f, 0f, 0f, 0f));
                     tk.renderer.SetPropertyBlock(tk.block);
                 }

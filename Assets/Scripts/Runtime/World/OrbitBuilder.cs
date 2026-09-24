@@ -86,7 +86,7 @@ namespace GoF2Remake.World
 
         // ---- objects -----------------------------------------------------------------------------------------
 
-        static GameObject Spawn(Database db, string assembly, Vector3 gamePos, Quaternion rot, string label, Transform parent)
+        public static GameObject Spawn(Database db, string assembly, Vector3 gamePos, Quaternion rot, string label, Transform parent)
         {
             var prefab = AssembledObject.LoadPrefab(db.AssemblyByName(assembly));
             if (prefab == null) return null;
@@ -103,7 +103,9 @@ namespace GoF2Remake.World
             if (layout.alienOrbit) return Story.Dlc1Won ? "v_station_battlestation_anim" : "station_void";
             switch (layout.stationIndex)
             {
-                case 100: return "v_station_deep_science";
+                // Kothar: exploding while Alice attacks (index 80), damaged after the add-on.
+                case 100: return !Session.FreePlay && Story.Index == 80 ? "v_station_deep_science_explosion_anim"
+                               : Story.Dlc1Won ? "v_station_deep_science_damaged" : "v_station_deep_science";
                 case 101: return "v_station_battlestation_anim";
                 case 108: return "station_kaamo_club";
                 case 109: case 110: return "sn_station_midorian_wrecked";

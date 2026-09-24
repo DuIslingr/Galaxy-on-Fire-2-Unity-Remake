@@ -7,7 +7,8 @@
 // without a case spawn nothing (an empty orbit) but still play their radio lines. The level keeps running after its
 // success dialogue with the next index (e.g. 4 -> 5 on the same ships).
 // Built: 0 / 1 (the prologue and the rescue cutscenes, IntroCutscenes), 4 / 5 (mining, the pirate ambush), 7 (the pirate
-// trap with Gunant Breh); the rest of the main campaign (14 - 42) in MainCampaignLevels.
+// trap with Gunant Breh); the rest of the main campaign (14 - 42) in MainCampaignLevels, the Valkyrie add-on (48 - 81) in
+// ValkyrieLevels.
 // Level+0x20 / +0x24: hostile ships killed by NPCs / by the player (Level::enemyDied); Level+0x1c: crate cargo captured
 // here; LevelScript+0: a time limit (the HUD counts it down; index 29's survival objective).
 // Cutscene support: the look-at camera (CutsceneCamera), fades (Layout::startFade: full-screen colour over n ms),
@@ -50,6 +51,7 @@ namespace GoF2Remake.World
         public SpaceLevel Level => level;
         public Traffic Traffic => traffic;
         MainCampaignLevels main;
+        ValkyrieLevels valkyrie;
         int cratesAtStart;
 
         // Cutscene state (LevelScript: this[0x11] cinematic, player invulnerable / no collision, startSequenceOver).
@@ -93,6 +95,7 @@ namespace GoF2Remake.World
             Build(BuiltIndex);
             traffic.MusicMuted = MusicOwned;
             traffic.ConnectPlayers(main != null ? main.PlayerExemptRace : -99);
+            valkyrie?.AfterConnect();
             Radio = new Radio(Story.Step?.radio);
             Debug.Log($"CampaignLevel: index {BuiltIndex}, {Ships.Count} ships, {Radio.Count} radio lines");
         }
@@ -102,6 +105,9 @@ namespace GoF2Remake.World
 
         /// <summary>MGame::dialogueEvent: the briefing restarts the mission clock.</summary>
         public void ResetClock() => MissionMs = 0f;
+
+        /// <summary>A slot of Level+0xf8 that holds no NpcShip (index 80's battlestation is scenery the radio doesn't count).</summary>
+        public void AddPlaceholder() => Ships.Add(null);
 
         /// <summary>Level::createShip(race, kind, ship, waypoint ...): at the waypoint +- 20 000 per axis.</summary>
         public NpcShip SpawnShip(int race, int ship, Vector3 waypoint, bool jitter = true, System.Action<SpawnSpec> setup = null)
@@ -144,6 +150,9 @@ namespace GoF2Remake.World
                 default:
                     main = new MainCampaignLevels(this, level);
                     if (!main.Build(index)) main = null;
+                    if (main != null) break;
+                    valkyrie = new ValkyrieLevels(this, level);
+                    if (!valkyrie.Build(index)) valkyrie = null;
                     break;
             }
         }
@@ -180,6 +189,7 @@ namespace GoF2Remake.World
             }
             if (intro != null && Story.Index == BuiltIndex) intro.Tick(dtMs);
             main?.Tick(Story.Index, dtMs);
+            valkyrie?.Tick(Story.Index, dtMs);
             Script(Story.Index);
             if (!level.Dialogue && level.LaunchCameraOver) Radio?.Update(dtMs, this);   // not during the launch / arrival camera
         }
@@ -188,6 +198,7 @@ namespace GoF2Remake.World
         {
             if (intro != null) intro.LateTick(Time.deltaTime * 1000f);
             main?.LateTick(Time.deltaTime * 1000f);
+            valkyrie?.LateTick(Time.deltaTime * 1000f);
         }
 
         // ---- cutscene helpers ------------------------------------------------------------------------------
