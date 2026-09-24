@@ -93,10 +93,31 @@ namespace GoF2Remake.UI
                 () => RenderScales.Select(Percent).ToArray(),
                 () => Nearest(RenderScales, Settings.RenderScale > 0f ? Settings.RenderScale : Bootstrap.DefaultRenderScale),
                 i => Settings.RenderScale = RenderScales[i]));
+            // Only the upscalers this device runs (Android: FSR 1 needs GLES 3.1 / Vulkan, STP Vulkan).
+            var upscalers = new List<int> { Settings.UpscalerOff };
+            if (Bootstrap.FsrSupported) upscalers.Add(Settings.UpscalerFsr);
+            if (Bootstrap.StpSupported) upscalers.Add(Settings.UpscalerStp);
+            if (upscalers.Count > 1)
+                list.Add(Choice("upscaler", OptionPage.Graphics, () => X("upscaler", "Upscaler"), true,
+                    () => upscalers.Select(u => u == Settings.UpscalerFsr ? "FSR 1" : u == Settings.UpscalerStp ? "STP" : X("off", "Off")).ToArray(),
+                    () => Math.Max(0, upscalers.IndexOf(Bootstrap.ActiveUpscaler)),
+                    i => Settings.Upscaler = upscalers[i],
+                    () => Bootstrap.ActiveUpscaler switch
+                    {
+                        Settings.UpscalerFsr => X("upscalerFsr", "AMD FidelityFX Super Resolution 1: sharp upscaling from the render scale"),
+                        Settings.UpscalerStp => X("upscalerStp", "Unity Spatial-Temporal Post-processing: temporal anti-aliasing and upscaling, replaces MSAA"),
+                        _ => X("upscalerOff", "Plain scaling from the render scale"),
+                    }));
+            // MSAA with STP on: STP's temporal anti-aliasing takes its place (shown as off); picking MSAA turns STP off.
             list.Add(Choice("msaa", OptionPage.Graphics, () => X("antiAliasing", "Anti-aliasing"), true,
                 () => new[] { X("off", "Off"), "MSAA 2×", "MSAA 4×", "MSAA 8×" },
-                () => Math.Max(0, Array.IndexOf(MsaaSamples, Settings.Msaa > 0 ? Settings.Msaa : Bootstrap.DefaultMsaa)),
-                i => Settings.Msaa = MsaaSamples[i]));
+                () => Bootstrap.ActiveUpscaler == Settings.UpscalerStp ? 0
+                    : Math.Max(0, Array.IndexOf(MsaaSamples, Settings.Msaa > 0 ? Settings.Msaa : Bootstrap.DefaultMsaa)),
+                i =>
+                {
+                    if (i > 0 && Bootstrap.ActiveUpscaler == Settings.UpscalerStp) Settings.Upscaler = Settings.UpscalerOff;
+                    Settings.Msaa = MsaaSamples[i];
+                }));
             list.Add(Choice("brightness", OptionPage.Graphics, () => Localization.Get(503), true,
                 () => new[] { Localization.Get(513), Localization.Get(514), Localization.Get(515) },
                 () => Settings.Brightness, i => Settings.Brightness = i));

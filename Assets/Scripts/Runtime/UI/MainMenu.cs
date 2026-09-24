@@ -576,6 +576,8 @@ namespace GoF2Remake.UI
                 c.Field.AddToClassList("option-row");
                 HookFocusSound(c.Field);
                 if (def.kind == OptionKind.Choice || def.kind == OptionKind.Toggle) c.Changed += () => Play(buttonRelease);
+                // Options depend on each other (STP turns MSAA off): every row follows a change.
+                c.Changed += () => { foreach (var o in optionControls) if (o != c) o.Refresh(); };
                 // Original: the FX volume plays a sample on release; remake: the voice volume a voice line.
                 if (def.id == "sfx") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => Play(infoSound));
                 if (def.id == "voice") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => PlayVoicePreview());

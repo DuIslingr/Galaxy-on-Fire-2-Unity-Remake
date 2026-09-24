@@ -1,8 +1,11 @@
 // Bootstrap.cs
 // Process-wide startup settings, applied before the first scene loads, and the options that act on the whole process
 // (Settings), re-applied whenever the settings change: frame rate, master volume, window mode and resolution, render
-// scale and MSAA (the URP asset), the Quality option's detail (LOD bias) and fog, the stick dead zone, and bloom /
-// brightness on every scene's global post-processing volume.
+// scale, upscaler and MSAA (the URP asset), the Quality option's detail (LOD bias) and fog, the stick dead zone, and
+// bloom / brightness on every scene's global post-processing volume.
+// The URP assets themselves are saved with STP selected: URP strips STP's compute shaders from a player build unless a
+// pipeline asset uses it (STPResourceStripper). Players never see that value: the upscaler option replaces it before the
+// first scene, "off" being URP's automatic filter.
 // Mobile players default to 30 fps and are always synced to the display, so there "V-Sync" means the
 // display's refresh rate (120 Hz on the S24) and "Uncapped" can't go beyond it either.
 
@@ -22,6 +25,7 @@ namespace GoF2Remake
         // The project's own values, the "default" of the render scale / MSAA options and the base of the LOD bias.
         static float defaultRenderScale = 1f, defaultLodBias = 1f, defaultDeadzone = Settings.DefaultDeadzone;
         static int defaultMsaa = 1;
+        static UpscalingFilterSelection defaultUpscaling = UpscalingFilterSelection.Auto;
         static UniversalRenderPipelineAsset urp;
 
         /// <summary>The platform's render scale and MSAA samples (what the options' 0 = default stands for).</summary>
@@ -34,7 +38,7 @@ namespace GoF2Remake
             int editorVSync = QualitySettings.vSyncCount;
             if (Application.isMobilePlatform) Screen.sleepTimeout = SleepTimeout.NeverSleep;   // no screen dimming while playing
             urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-            if (urp != null) { defaultRenderScale = urp.renderScale; defaultMsaa = urp.msaaSampleCount; }
+            if (urp != null) { defaultRenderScale = urp.renderScale; defaultMsaa = urp.msaaSampleCount; defaultUpscaling = urp.upscalingFilter; }
             defaultLodBias = QualitySettings.lodBias;
             defaultDeadzone = InputSystem.settings.defaultDeadzoneMin;
 
@@ -55,7 +59,7 @@ namespace GoF2Remake
                 SceneManager.sceneLoaded -= OnSceneLoaded;
                 QualitySettings.vSyncCount = editorVSync;
                 QualitySettings.lodBias = defaultLodBias;
-                if (urp != null) { urp.renderScale = defaultRenderScale; urp.msaaSampleCount = defaultMsaa; }
+                if (urp != null) { urp.renderScale = defaultRenderScale; urp.msaaSampleCount = defaultMsaa; urp.upscalingFilter = defaultUpscaling; }
                 InputSystem.settings.defaultDeadzoneMin = defaultDeadzone;
                 AudioListener.volume = 1f;
                 Application.quitting -= restore;
@@ -73,8 +77,12 @@ namespace GoF2Remake
             AudioListener.volume = Settings.MasterVolume;
             if (urp != null)
             {
+                int upscaler = ActiveUpscaler;
                 urp.renderScale = Settings.RenderScale > 0f ? Settings.RenderScale : defaultRenderScale;
-                urp.msaaSampleCount = Settings.Msaa > 0 ? Settings.Msaa : defaultMsaa;
+                urp.upscalingFilter = upscaler == Settings.UpscalerFsr ? UpscalingFilterSelection.FSR
+                    : upscaler == Settings.UpscalerStp ? UpscalingFilterSelection.STP : UpscalingFilterSelection.Auto;
+                // STP runs on URP's temporal anti-aliasing, which needs MSAA off (UniversalCameraData.IsTemporalAAEnabled).
+                urp.msaaSampleCount = upscaler == Settings.UpscalerStp ? 1 : Settings.Msaa > 0 ? Settings.Msaa : defaultMsaa;
             }
             QualitySettings.lodBias = defaultLodBias * (Settings.Quality >= 2 ? 1f : Settings.Quality == 1 ? 0.6f : 0.35f);
             if (!Mathf.Approximately(InputSystem.settings.defaultDeadzoneMin, Settings.StickDeadzone))
@@ -83,6 +91,21 @@ namespace GoF2Remake
             ApplyPostProcessing();
             ApplyDisplay();
         }
+
+        // ---- upscaler ----------------------------------------------------------------------------------------
+
+        /// <summary>FSR 1 needs shader model 4.5 (FSRUtils); STP compute shaders and no OpenGL ES (STP.IsSupported), so on
+        /// Android it runs on Vulkan only.</summary>
+        public static bool FsrSupported => FSRUtils.IsSupported();
+        public static bool StpSupported => STP.IsSupported();
+
+        /// <summary>The upscaler option as far as this device supports it (else off).</summary>
+        public static int ActiveUpscaler => Settings.Upscaler switch
+        {
+            Settings.UpscalerFsr when FsrSupported => Settings.UpscalerFsr,
+            Settings.UpscalerStp when StpSupported => Settings.UpscalerStp,
+            _ => Settings.UpscalerOff,
+        };
 
         // ---- frame rate --------------------------------------------------------------------------------------
 

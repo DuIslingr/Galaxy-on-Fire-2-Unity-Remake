@@ -57,6 +57,11 @@ namespace GoF2Remake.Data
         /// <summary>URP render scale; 0 = the platform's render pipeline asset (1 on PC, 0.8 on mobile).</summary>
         public static float RenderScale { get => Get("renderScale", 0f); set => Set("renderScale", value <= 0f ? 0f : Mathf.Clamp(value, 0.5f, 2f)); }
 
+        /// <summary>Upscaler (the URP asset's upscaling filter): 0 off (URP's automatic bilinear / point), 1 AMD FSR 1
+        /// (sharpening, also at 100 %), 2 Unity STP (temporal: anti-aliasing and upscaling, replaces MSAA).</summary>
+        public static int Upscaler { get => Mathf.RoundToInt(Get("upscaler", 0f)); set => Set("upscaler", Mathf.Clamp(value, 0, 2)); }
+        public const int UpscalerOff = 0, UpscalerFsr = 1, UpscalerStp = 2;
+
         /// <summary>MSAA samples (1 = off, 2, 4, 8); 0 = the platform's render pipeline asset.</summary>
         public static int Msaa { get => Mathf.RoundToInt(Get("msaa", 0f)); set => Set("msaa", value); }
 
@@ -116,7 +121,7 @@ namespace GoF2Remake.Data
             foreach (var key in new[]
                      {
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
-                         "frameRate", "renderScale", "msaa", "quality", "brightness", "bloom", "lensFlare", "fov", "cameraShake",
+                         "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "lensFlare", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);

@@ -223,6 +223,7 @@ namespace GoF2Remake.UI
                 if (page != def.page) { page = def.page; Text(OptionsCatalog.PageTitle(def.page).ToUpperInvariant(), "pause-heading"); }
                 var c = new OptionControl(def);
                 c.Field.focusable = false;
+                c.Changed += () => { foreach (var o in optionRows.Values) if (o != c) o.Refresh(); };   // STP turns MSAA off
                 c.Root.AddToClassList("pause-option");
                 scroll.Add(c.Root);
                 items.Add(c.Root);
