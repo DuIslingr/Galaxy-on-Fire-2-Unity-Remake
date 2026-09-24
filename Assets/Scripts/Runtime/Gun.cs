@@ -330,6 +330,24 @@ namespace GoF2Remake.Flight
             }
         }
 
+        /// <summary>Attr 15 = 1 (the Liberator): a remote-steered bomb.</summary>
+        public bool Guided { get; set; }
+
+        /// <summary>PlayerEgo::left / right / up / down in rocket control: turns bullet 'i' by the stick (x yaw, y pitch)
+        /// at 'rateRadPerMs' (the original's rates were stored but their reader wasn't found: a tuned rate).</summary>
+        public void SteerBullet(int i, Vector2 stick, float dtMs, float rateRadPerMs)
+        {
+            ref var b = ref bullets[i];
+            float speed = b.velocity.magnitude;
+            if (speed < 1e-9f) return;
+            var fwd = b.velocity / speed;
+            var right = Vector3.Cross(b.up, fwd).normalized;
+            var rot = Quaternion.AngleAxis(stick.x * rateRadPerMs * dtMs * Mathf.Rad2Deg, b.up)
+                    * Quaternion.AngleAxis(-stick.y * rateRadPerMs * dtMs * Mathf.Rad2Deg, right);
+            b.velocity = rot * fwd * speed;
+            b.up = rot * b.up;
+        }
+
         /// <summary>Gun::ignite for every bomb in flight (the secondary pressed again).</summary>
         public void Detonate()
         {

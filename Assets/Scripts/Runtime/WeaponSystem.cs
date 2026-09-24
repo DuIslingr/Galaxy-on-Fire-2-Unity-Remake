@@ -14,6 +14,11 @@
 //   Hits: primary damage (attr 9) to the target; rockets / missiles / bombs kill asteroids instantly (9999). Area hits
 //     (Gun::ignite) go the same way (hull damage + EMP); the shock blast pushes NPC ships away (PlayerFighter::initPush).
 //   BombGun::update: in hardcore mode the player takes damage * clamp((mag/2 - d)/(mag/2) * 0.5, 0, 1) (shock blast x0.2).
+//   The Liberator (179, attr 15 = 1; weapons_special.md 3.7): while it flies the stick steers the missile instead of the
+//     ship (PlayerEgo::setRocketControl; the ship flies straight on its throttle), the camera follows it (camOffset
+//     (0, 450, -1400), targetOffset (0, 0, 1700) around a point 350 ahead of it, world up, constant rumble 0.2) and its
+//     engine loop (1116) plays; detonation (the next press, contact, 20 s) resets the camera. The turn rate was lost
+//     (a: 1.5 rad/s at full stick).
 // Input (Input System, editable in the inspector): fire = Left Ctrl / left mouse / gamepad right trigger,
 // missile = F / right mouse / gamepad left trigger. Touch: FlightHud calls SetPrimaryHeld / FireSecondary.
 
@@ -50,6 +55,12 @@ namespace GoF2Remake.Flight
 
         readonly List<Rig> rigs = new List<Rig>();
         Database db;
+        const float LiberatorTurnRadPerMs = 0.0015f;
+        Rig liberator;
+        Transform liberatorAnchor;
+        AudioSource liberatorLoop;
+        /// <summary>The Liberator is being steered (PlayerEgo+0x194): the HUD's hints and the ship's steering follow it.</summary>
+        public bool SteeringMissile => liberator != null;
         Transform fxRoot;
         AudioSource shotSource;
         bool touchPrimary;
@@ -164,6 +175,7 @@ namespace GoF2Remake.Flight
                     gun.reloadMs = Mathf.Max(1f, (int)(gun.reloadMs * fireRate));
                 }
                 if (gun.isBeam) gun.AutoAim = BeamTarget;
+                gun.Guided = item.Attr(15) == 1;
                 var rig = BuildRig(gun);
                 if (secondary) rig.stack = equipment[e];
                 rigs.Add(rig);
@@ -233,6 +245,7 @@ namespace GoF2Remake.Flight
                 r.stack.amount--;
                 PlayShot(r);
                 r.visuals.OnShot();
+                if (r.gun.Guided) StartLiberator(r);
                 return true;
             }
             return false;
@@ -267,6 +280,7 @@ namespace GoF2Remake.Flight
             if (!secondaryPressed) secondaryLatched = false;
             if (!halted && useBuiltInInput && cycleSecondaryAction.WasPressedThisFrame()) CycleSecondary();
 
+            if (liberator != null) UpdateLiberator(dtMs);
             var cam = Camera.main;
             foreach (var r in rigs)
             {
@@ -369,6 +383,72 @@ namespace GoF2Remake.Flight
                 if (f > 0f && gun.damage > 0f) owner.Damage((int)(f * gun.damage), false, (transform.position - point).normalized);
             }
             Detonated?.Invoke(point);
+        }
+
+        // ---- the Liberator (PlayerEgo::setRocketControl, BombGun guided) ------------------------------------------
+
+        void StartLiberator(Rig r)
+        {
+            liberator = r;
+            var ship = GetComponent<ShipController>();
+            if (ship != null) ship.steeringLocked = true;
+            if (liberatorAnchor == null) liberatorAnchor = new GameObject("Liberator camera target").transform;
+            PlaceLiberatorAnchor();
+            var chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
+            if (chase != null)
+            {
+                chase.follow = liberatorAnchor;
+                chase.followOffset = new Vector3(0f, 450f, -1400f) * M;
+                chase.followLookOffset = new Vector3(0f, 0f, 1700f) * M;
+                chase.followRigid = false;
+                chase.followUsesUp = false;
+                chase.constantRumble = 0.2f;
+            }
+            if (r.fx != null && r.fx.engineLoop != null)
+            {
+                if (liberatorLoop == null)
+                {
+                    liberatorLoop = gameObject.AddComponent<AudioSource>();
+                    liberatorLoop.loop = true;
+                    liberatorLoop.playOnAwake = false;
+                    liberatorLoop.spatialBlend = 0f;
+                }
+                liberatorLoop.clip = r.fx.engineLoop;
+                liberatorLoop.volume = shotVolume * Settings.SfxVolume;
+                liberatorLoop.Play();
+            }
+        }
+
+        void UpdateLiberator(float dtMs)
+        {
+            if (!liberator.gun.BombInFlight || (owner != null && !owner.Alive)) { EndLiberator(); return; }
+            var ship = GetComponent<ShipController>();
+            if (Time.timeScale > 0f && !Blocked) liberator.gun.SteerBullet(0, ship != null ? ship.SteerInput : Vector2.zero, dtMs, LiberatorTurnRadPerMs);
+            PlaceLiberatorAnchor();
+        }
+
+        /// <summary>BombGun+0xe8: a helper at the missile + its direction * 350, carrying the missile's orientation.</summary>
+        void PlaceLiberatorAnchor()
+        {
+            ref var b = ref liberator.gun.bullets[0];
+            var dir = b.velocity.sqrMagnitude > 1e-9f ? b.velocity.normalized : transform.forward;
+            liberatorAnchor.SetPositionAndRotation(b.position + dir * 350f * M, Quaternion.LookRotation(dir, b.up));
+        }
+
+        /// <summary>Detonation: LevelScript::resetCamera, setRocketControl(null), the loop stops.</summary>
+        void EndLiberator()
+        {
+            liberator = null;
+            var ship = GetComponent<ShipController>();
+            if (ship != null) ship.steeringLocked = false;
+            var chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
+            if (chase != null && chase.follow == liberatorAnchor)
+            {
+                chase.follow = null;
+                chase.constantRumble = 0f;
+                chase.Snap();
+            }
+            if (liberatorLoop != null) liberatorLoop.Stop();
         }
 
         void StopLoops()

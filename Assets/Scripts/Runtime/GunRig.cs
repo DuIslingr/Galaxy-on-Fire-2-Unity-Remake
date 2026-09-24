@@ -6,6 +6,7 @@
 // Beams (BeamGun::update 0x1a6b04): one mesh 1 unit long along +Z, scaled (1, 1, beam length) along the direction chosen
 // at fire time, following the mount, its animation restarted per shot and hidden when it ends. Mines are drawn at x0.7
 // and tumble (MineGun). Scatter shells have no impact mesh (their burst explosion replaces it).
+// The guided Liberator (BombGun, attr 15): its deploy animation plays once per launch, starting 500 ms after it.
 
 using GoF2Remake.Visuals;
 using UnityEngine;
@@ -20,6 +21,8 @@ namespace GoF2Remake.Flight
         readonly Transform ship;
         float beamMs, beamLength;
         Vector3[] spin;
+        bool[] wasActive;
+        PartAnimation[][] projAnims;
         readonly bool billboard;
         readonly GameObject muzzle;
         readonly float muzzleLength;
@@ -55,6 +58,10 @@ namespace GoF2Remake.Flight
                 muzzleLength = Mathf.Max(80f, MaxLength(muzzle));
                 muzzle.SetActive(false);
             }
+            wasActive = new bool[projectiles.Length];
+            projAnims = new PartAnimation[projectiles.Length][];
+            for (int i = 0; i < projectiles.Length; i++)
+                projAnims[i] = projectiles[i] != null ? projectiles[i].GetComponentsInChildren<PartAnimation>(true) : new PartAnimation[0];
             if (gun.kind == Gun.Kind.Mine)
             {
                 // MineGun: a random tumble per mine, (rnd(200) - 100) / 50 per axis (read as rad/s).
@@ -136,8 +143,17 @@ namespace GoF2Remake.Flight
                 if (t == null) continue;
                 bool active = gun.IsActive(i);
                 if (t.gameObject.activeSelf != active) t.gameObject.SetActive(active);
+                bool launched = active && !wasActive[i];
+                wasActive[i] = active;
                 if (!active) continue;
                 ref var b = ref gun.bullets[i];
+                if (gun.Guided)
+                {
+                    // BombGun::update: restarted on launch (state 3 -> 1), advancing only after the first 500 ms, once.
+                    if (launched) PartAnimation.PlayOnce(t.gameObject);
+                    float sp = b.age >= 500f ? 1f : 0f;
+                    foreach (var a in projAnims[i]) a.speed = sp;
+                }
                 var rot = billboard && cam != null
                     ? cam.transform.rotation
                     : Quaternion.LookRotation(b.velocity.sqrMagnitude > 1e-9f ? b.velocity : fallbackForward, b.up);
