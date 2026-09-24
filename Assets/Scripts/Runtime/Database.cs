@@ -104,6 +104,22 @@ namespace GoF2Remake.Data
         public List<SystemData> Systems = new List<SystemData>();
         public List<StationData> Stations = new List<StationData>();
         public List<AssemblyData> Assemblies = new List<AssemblyData>();
+
+        /// <summary>Globals::getShipGroup: a ship's assembled object, the main pack's "ship_NNN_*" first, else the add-ons'
+        /// "v_ship_NNN_*" / "sn_ship_NNN_*" (ships 39-41 and 44+); the variant ending in 'raceName' when there is one.</summary>
+        public AssemblyData ShipAssembly(int ship, string raceName = null)
+        {
+            string p = $"ship_{ship:000}_";
+            bool Match(AssemblyData a, bool main) =>
+                a.category == "ships" && (main ? a.name.StartsWith(p) : a.name.StartsWith("v_" + p) || a.name.StartsWith("sn_" + p));
+            foreach (bool main in new[] { true, false })
+            {
+                if (raceName != null) { var r = Assemblies.Find(a => Match(a, main) && a.name.EndsWith(raceName)); if (r != null) return r; }
+                var any = Assemblies.Find(a => Match(a, main));
+                if (any != null) return any;
+            }
+            return null;
+        }
         public List<WeaponMountSet> WeaponMounts = new List<WeaponMountSet>();
 
         [System.Serializable] class ItemAttributes { public int index; public int[] keys, values; }

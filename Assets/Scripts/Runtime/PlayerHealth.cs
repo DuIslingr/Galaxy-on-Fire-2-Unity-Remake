@@ -12,7 +12,13 @@
 //   MGame::gameOverCheck / PlayerEgo::explode  hull < 1: the camera freezes, the ship tumbles, explodes at 3 s, "Game Over"
 //                                   and sound 37 at 8 s; then FlightHud offers "Tap to load last savegame." (196)
 // Hull / shield / armor are kept in Session between levels (-1 = full; docking repairs, see StationLevel).
-// Not yet: the emergency system (item 185), EMP immunity is implicit (no points), volatile cargo.
+// Emergency system (item 185, combat_equipment.md 2): the hull running out sets it to 1 instead, 10 s invulnerable (attr 41)
+//   inside the v_shield bubble (grows / shrinks over 5 %), sound 1115, the item is used up; kills meanwhile count for
+//   medal 43. Shield injector (227, 3.5): an empty shield takes 30 t Blue Plasma (item 202) and refills at 0.15 per ms
+//   (at least 1 per frame), sounds 2258 / 2257 / 2259. Gamma (3.6): in the supernova orbits (109-113) a 0..100 pool drains
+//   at the station's rate (less with a gamma shield: x (100 - attr 52) / 100), "Warning: Gamma shield low" (3201) below 15,
+//   death at 0; full again in any other orbit.
+// Not yet: volatile cargo. EMP immunity is implicit (no points).
 
 using System;
 using GoF2Remake.Data;
@@ -38,6 +44,12 @@ namespace GoF2Remake.Flight
         /// <summary>Set by the level each frame: the launch camera / jump scenes (Player::setVulnerable(false)).</summary>
         [NonSerialized] public bool invulnerable;
         public event Action GameOverStarted;
+        /// <summary>A HUD message ("-30t Blue Plasma", "Warning: Gamma shield low").</summary>
+        public event Action<string> Message;
+        /// <summary>The emergency system's bubble is up (PlayerEgo::emergencySystemActive).</summary>
+        public static bool EmergencyActive { get; private set; }
+        /// <summary>The supernova radiation pool (0..100), -1 = none in this orbit.</summary>
+        public float Gamma { get; private set; } = -1f;
 
         ShipController ship;
         ChaseCamera chase;
@@ -49,6 +61,18 @@ namespace GoF2Remake.Flight
         bool hasRepair, exploded;
         float lastCombined, deathMs;
         Vector3 deathSpin;
+        // emergency system
+        bool hasEmergency;
+        float emergencyMs, emergencyLength = 10000f, bubbleScale;
+        GameObject bubble;
+        Material bubbleMaterial;
+        // shield injector
+        bool hasInjector, injecting;
+        int injectorCost = 30;
+        AudioSource injectorLoop;
+        // gamma
+        float gammaRate;
+        bool gammaWarned;
 
         public void Setup(Database db, ShipController controller, ChaseCamera chaseCamera, WeaponSystem weaponSystem)
         {
@@ -85,10 +109,138 @@ namespace GoF2Remake.Flight
             Target.maxHp = hull;
             lastCombined = Hp.Combined;
             if (weapons != null) weapons.Owner = Target;
+
+            var emergency = Shop.FirstMounted(db, 27);
+            if (emergency != null) { hasEmergency = true; emergencyLength = emergency.Attr(41, 10000); }
+            Target.SaveFromDeath = TryEmergency;
+            EmergencyActive = false;
+            var injector = Shop.FirstMounted(db, 43);
+            if (injector != null) { hasInjector = true; injectorCost = injector.Attr(59, 30); }
+            SetupGamma(db);
+        }
+
+        // ---- emergency system (PlayerEgo::tryToStartEmergencySystem 0xad6f0) ------------------------------------
+
+        bool TryEmergency()
+        {
+            if (!hasEmergency || emergencyMs > 0f || Dead) return false;
+            hasEmergency = false;
+            Hp.hull = 1;
+            Target.hp = 1;
+            emergencyMs = emergencyLength;
+            EmergencyActive = true;
+            Session.Equipment.RemoveAll(e => e.item == 185);   // used up for good
+            if (assets != null && assets.invincibility != null) sfx.PlayOneShot(assets.invincibility, Settings.SfxVolume);
+            if (assets != null && assets.shieldBubble != null)
+            {
+                bubble = Instantiate(assets.shieldBubble, ship.visualModel != null ? ship.visualModel : transform, false);
+                GunRig.StripForFx(bubble);
+                // Material 27150 draws with SimpleRefractionShader: an invisible sphere bending the screen behind its rim.
+                if (assets.shieldBubbleShader != null)
+                    foreach (var br in bubble.GetComponentsInChildren<Renderer>())
+                    {
+                        var src = br.sharedMaterial;
+                        bubbleMaterial = new Material(assets.shieldBubbleShader);
+                        if (src != null && src.HasProperty("_BaseMap")) bubbleMaterial.SetTexture("_NoiseMap", src.GetTexture("_BaseMap"));
+                        br.sharedMaterial = bubbleMaterial;
+                    }
+                OpaqueTexture.Request(this, true);
+                var r = ship.visualModel != null ? ship.visualModel.GetComponentInChildren<Renderer>() : null;
+                float radiusUnits = r != null ? r.bounds.extents.magnitude / M : 1500f;
+                bubbleScale = radiusUnits / 500f + 0.1f;
+                bubble.transform.localScale = Vector3.zero;
+            }
+            return true;
+        }
+
+        void UpdateEmergency(float dtMs)
+        {
+            if (emergencyMs <= 0f) return;
+            emergencyMs -= dtMs;
+            Hp.vulnerable = false;
+            if (bubble != null)
+            {
+                float t = emergencyMs, d = emergencyLength, edge = 0.05f * d;
+                float f = t > d - edge ? (d - t) / edge : t < edge ? t / edge : 1f;
+                bubble.transform.localScale = Vector3.one * bubbleScale * Mathf.Clamp01(f);
+            }
+            if (bubbleMaterial != null) bubbleMaterial.SetFloat("_Anim", (emergencyLength - emergencyMs) * 0.001f);   // mesh+0x24 += dt * 0.001
+            if (emergencyMs <= 0f) EndEmergency();
+        }
+
+        void EndEmergency()
+        {
+            EmergencyActive = false;
+            if (bubble != null) Destroy(bubble);
+            if (bubbleMaterial != null) Destroy(bubbleMaterial);
+            OpaqueTexture.Request(this, false);
+        }
+
+        // ---- shield injector (PlayerEgo::update 0xa8f4e) ------------------------------------------------------
+
+        void UpdateInjector(float dtMs)
+        {
+            if (!hasInjector || Hp.maxShield <= 0) return;
+            if (!injecting)
+            {
+                if (Hp.shield >= 1f || Shop.CargoOf(202) < injectorCost) return;
+                Shop.RemoveFromCargo(202, injectorCost);
+                injecting = true;
+                Message?.Invoke($"-{injectorCost}t {Localization.Get(1476)}");
+                if (assets != null && assets.injectorInit != null) sfx.PlayOneShot(assets.injectorInit, Settings.SfxVolume);
+                if (assets != null && assets.injectorLoop != null)
+                {
+                    if (injectorLoop == null) { injectorLoop = gameObject.AddComponent<AudioSource>(); injectorLoop.loop = true; injectorLoop.spatialBlend = 0f; }
+                    injectorLoop.clip = assets.injectorLoop;
+                    injectorLoop.volume = Settings.SfxVolume;
+                    injectorLoop.Play();
+                }
+            }
+            if (Hp.shield < Hp.maxShield)
+            {
+                Hp.shield = Mathf.Min(Hp.maxShield, (int)(Hp.shield + Mathf.Max(dtMs * 0.15f, 1f)));
+                if (injectorLoop != null) injectorLoop.pitch = 0.8f + 0.4f * Hp.ShieldFraction;   // FMOD parameter 0 = the shield fraction
+                return;
+            }
+            injecting = false;
+            if (injectorLoop != null) injectorLoop.Stop();
+            if (assets != null && assets.injectorEnd != null) sfx.PlayOneShot(assets.injectorEnd, Settings.SfxVolume);
+        }
+
+        // ---- gamma (Status::getGammaRayDamagePerSecond 0xba160, Level::update) ------------------------------------
+
+        void SetupGamma(Database db)
+        {
+            int st = Session.StationIndex, cm = Session.CampaignMission;
+            float[] early = { 0.7f, 0.4f, 0.4f, 0.3f, 0.2f }, mid = { 3f, 2f, 1f, 0.5f, 0.3f };
+            float rate = st < 109 || st > 113 ? 0f : cm < 106 ? early[st - 109] : cm < 158 ? mid[st - 109] : st == 109 ? 1f : 0f;
+            var gammaShield = Shop.FirstMounted(db, 38);
+            if (rate > 0f && gammaShield != null) rate *= (100 - gammaShield.Attr(52)) / 100f;
+            gammaRate = rate;
+            if (rate <= 0f) { Gamma = -1f; Session.PlayerGamma = -1f; return; }
+            Gamma = Session.PlayerGamma >= 0f ? Session.PlayerGamma : 100f;
+            gammaWarned = Gamma < 15f;
+            var clip = gammaShield == null || assets == null ? null : gammaShield.index == 205 ? assets.gammaShield2 : assets.gammaShield1;
+            if (clip != null)
+            {
+                var loop = gameObject.AddComponent<AudioSource>();
+                loop.clip = clip; loop.loop = true; loop.spatialBlend = 0f; loop.volume = 0.6f * Settings.SfxVolume; loop.Play();
+            }
+        }
+
+        void UpdateGamma(float dtMs)
+        {
+            if (Gamma < 0f || !Hp.vulnerable) return;
+            Gamma = Mathf.Max(0f, Gamma - dtMs * gammaRate / 1000f);
+            Session.PlayerGamma = Gamma;
+            if (!gammaWarned && Gamma < 15f) { gammaWarned = true; Message?.Invoke(Localization.Get(3201)); }
+            if (Gamma < 1f) { Hp.hull = 0; Target.hp = 0; }   // PlayerEgo::update: the gamma pool empty = death
         }
 
         void OnDestroy()
         {
+            OpaqueTexture.Request(this, false);
+            EmergencyActive = false;
             // Docking / jumping saves the ship state to Status (MGame::dockEvent, departStation).
             if (Target != null && Hp != null && !Dead)
             {
@@ -107,7 +259,10 @@ namespace GoF2Remake.Flight
             if (Dead) { UpdateDeath(dtMs); return; }
 
             Hp.vulnerable = !invulnerable;
+            UpdateEmergency(dtMs);
+            UpdateGamma(dtMs);
             Hp.RegenerateShield(dtMs, shieldRechargeMs);
+            UpdateInjector(dtMs);
             if (hasRepair) Hp.Repair(dtMs, repairHullMs, repairArmorMs);
             Target.hp = Hp.hull;
 
@@ -145,7 +300,10 @@ namespace GoF2Remake.Flight
 
         void StartDeath()
         {
+            if (TryEmergency()) return;
             Dead = true;
+            if (EmergencyActive) EndEmergency();
+            if (injectorLoop != null) injectorLoop.Stop();
             deathMs = 0f;
             ship.ExternalSpeedMetersPerSecond = ship.SpeedMetersPerSecond;
             ship.externalControl = true;

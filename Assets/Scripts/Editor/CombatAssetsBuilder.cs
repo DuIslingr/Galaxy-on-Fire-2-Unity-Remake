@@ -61,6 +61,25 @@ namespace GoF2Remake.EditorTools
             a.shockSphere = Prefab("Prefabs/supernova/fx/sn_shock_blast_sphere_anim_add.prefab");
             a.fireworksBurst = Prefab("Prefabs/supernova/fx/sn_fireworks_lookat_anim_add.prefab");
             a.garbageExplosion = Clips("SFX_SPACE", "Garbage_Explosion");
+            a.empSparkMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27260_khador_jump.mat");
+            a.shieldBubble = Prefab("Prefabs/valkyrie/fx/v_shield.prefab");
+            a.shieldBubbleShader = Shader.Find("GoF2/ShieldBubble");
+            a.invincibility = Clip("DLC_SFX/Invincibility_01.ogg");
+            a.injectorInit = Clip("DLC2_SFX/PlasmaInjector_Init_02.ogg");
+            a.injectorLoop = Clip("DLC2_SFX/PlasmaInjector_Loop_03.ogg");
+            a.injectorEnd = Clip("DLC2_SFX/PlasmaInjector_End_01.ogg");
+            a.gammaShield1 = Clip("DLC2_SFX/Gamma_Shield_01.ogg");
+            a.gammaShield2 = Clip("DLC2_SFX/Gamma_Shield_03.ogg");
+            a.cloak = Clip("SFX_SPACE/Cloak_02.ogg");
+            a.timeShift = Clip("DLC_SFX/TimeShift_01b.ogg");
+            a.cloakShader = Shader.Find("GoF2/Cloak");
+            a.cloakMap = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Textures/main/fx/cloak_map.png");
+            a.repairBeam = Prefab("Prefabs/supernova/fx/sn_projectile_207_anim_add.prefab");
+            a.transfusionBeam = Prefab("Prefabs/supernova/fx/sn_projectile_222_anim_add.prefab");
+            a.repairLoop1 = Clip("DLC2_SFX/Nirai_SPP_C1_2.ogg");
+            a.repairLoop2 = Clip("DLC2_SFX/Nirai_SPP_M50_2.ogg");
+            a.drainLoop1 = Clip("DLC2_SFX/Crimso_Drain.ogg");
+            a.drainLoop2 = Clip("DLC2_SFX/Pandorra_Leech_01.ogg");
 
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();

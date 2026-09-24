@@ -40,7 +40,7 @@ namespace GoF2Remake.Flight
 {
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak }
 
         public class Target
         {
@@ -48,6 +48,7 @@ namespace GoF2Remake.Flight
             public Transform transform;      // null for fixed positions
             public Vector3 fixedPosition;
             public int station = -1;         // planets: the station it leads to
+            public bool disabled;            // drawn half-transparent, ignores taps (the cloak while not ready)
             public string name;
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
@@ -76,6 +77,9 @@ namespace GoF2Remake.Flight
 
         /// <summary>The "Khador Drive" menu entry was picked (SystemJump opens the star map).</summary>
         public event Action KhadorRequested;
+        /// <summary>The player's cloak and time extender (null = not mounted), set by SpaceLevel.</summary>
+        public PlayerCloak Cloak;
+        public TimeExtender Extender;
         public Target Candidate { get; private set; }
         public Target Locked { get; private set; }
         public float LockTimer { get; private set; }
@@ -221,6 +225,8 @@ namespace GoF2Remake.Flight
             if (gate != null) list.Add(gate);
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
+            // Hud::initHudMenu(0) 0x18e734: the cloak entry (the item's name), unusable while cloaked / charging / recharging.
+            if (Cloak != null) list.Add(new Target { kind = Kind.Cloak, name = Cloak.ItemName, disabled = !Cloak.Rules.Available });
             return list;
         }
 
@@ -247,8 +253,9 @@ namespace GoF2Remake.Flight
         public void ChooseMenuEntry(Target target)
         {
             CloseMenu();
-            if (target == null) return;
+            if (target == null || target.disabled) return;
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
+            if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
             if (target.kind == Kind.KhadorDrive)
             {
                 if (JumpsBlocked != null && JumpsBlocked() && Story.Index != 78) { Say(Localization.Get(525)); return; }
@@ -269,7 +276,7 @@ namespace GoF2Remake.Flight
         {
             get
             {
-                if (Jumping || HostilesPresent) return false;
+                if (Jumping || HostilesPresent || TimeExtender.Active) return false;
                 if (Autopilot) return !AboutToReach;
                 if (mining != null && mining.Target != null && mining.State == Mining.Phase.Approaching)
                     return (mining.Target.transform.position - ship.transform.position).magnitude / M >= AboutToReachUnits;
@@ -438,7 +445,7 @@ namespace GoF2Remake.Flight
 
         void ApplyTimeScale()
         {
-            float scale = MenuOpen || paused ? 0f : FastForward ? FastForwardScale : 1f;
+            float scale = MenuOpen || paused ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
             if (Time.timeScale != scale) Time.timeScale = scale;
         }
 

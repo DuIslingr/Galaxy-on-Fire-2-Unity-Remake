@@ -64,10 +64,13 @@ namespace GoF2Remake.UI
         VisualElement radioBox, radioPortrait, screenFade;
         Label radioSpeaker, radioText;
         int radioShown = -1;
+        Traffic.Chatter shownChatter;
         VisualElement gameOver;
         Label gameOverText;
         float gameOverMs = -1f;
         VisualElement jumpCharge, jumpChargeFill, orbitInfo;
+        Label jumpChargeLabel;
+        bool lastCloakCharging;
         bool orbitInfoFilled;
         bool lastAutopilot;
         VisualElement autopilotMenu, autopilotMenuItems;
@@ -139,7 +142,8 @@ namespace GoF2Remake.UI
             jumpCharge = root.Q("jumpCharge");
             jumpChargeFill = root.Q("jumpChargeFill");
             orbitInfo = root.Q("orbitInfo");
-            root.Q<Label>("jumpChargeLabel").text = Localization.Get(1359).ToUpperInvariant();   // Khador Drive
+            jumpChargeLabel = root.Q<Label>("jumpChargeLabel");
+            jumpChargeLabel.text = Localization.Get(1359).ToUpperInvariant();   // Khador Drive
             orbitInfoFilled = false;
 
             stick = new TouchStick(root.Q("stickZone"), root.Q("stickBase"), root.Q("stickKnob"), root.Q("stickGhost"), stickRadius);
@@ -459,6 +463,8 @@ namespace GoF2Remake.UI
                 }
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 if (level.Turret != null) level.Turret.Message += OnMiningMessage;   // HUD event 0x20 / 0x21 (auto fire on / off)
+                if (health != null) health.Message += OnMiningMessage;             // injector / gamma messages
+                if (level.Cloak != null) level.Cloak.Message += OnMiningMessage;   // cells paid, "Cloak ready", 583
                 chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
                 ApplyInputMode();
             }
@@ -516,8 +522,19 @@ namespace GoF2Remake.UI
             bool tv = turret != null && turret.InTurretView, ta = turret != null && turret.AutoEnabled;
             if (tv != lastTurretView || ta != lastTurretAuto) { lastTurretView = tv; lastTurretAuto = ta; BuildHints(InputMode.Current); }
             root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic));   // jumps: no HUD
-            jumpCharge.EnableInClassList("jump-charge--shown", jump != null && jump.Charging);
+            // The Khador Drive's charge bar, shared with the cloak's "Cloak charging" (317, Hud::draw 0x1933f6).
+            var cloak = level != null && level.Cloak != null ? level.Cloak.Rules : null;
+            bool cloakCharging = cloak != null && cloak.State == Cloak.Phase.Charging && (jump == null || !jump.Charging);
+            jumpCharge.EnableInClassList("jump-charge--shown", (jump != null && jump.Charging) || cloakCharging);
+            if (cloakCharging != lastCloakCharging)
+            {
+                lastCloakCharging = cloakCharging;
+                jumpChargeLabel.text = (cloakCharging ? Localization.Get(317) : Localization.Get(1359)).ToUpperInvariant();
+            }
             if (jump != null && jump.Charging) jumpChargeFill.style.width = Length.Percent(jump.ChargeRate * 100f);
+            else if (cloakCharging) jumpChargeFill.style.width = Length.Percent(Mathf.Min(1f, cloak.ChargeRate * 1.05f) * 100f);
+            // The time extender: the fast-forward slot's clock (touch) while it isn't fast-forward.
+            if (navView.ConsumeExtenderTap()) level?.Extender?.Toggle();
             UpdateOrbitInfo();
             // Fast-forward: the touch button, or hold R / controller Y (MGame key 0x100, hold-to-use).
             bool ffHeld = navView.FastForwardPressed
@@ -588,6 +605,21 @@ namespace GoF2Remake.UI
             var radio = level != null && level.Campaign != null ? level.Campaign.Radio : null;
             var line = radio?.Visible;
             int index = radio != null ? radio.VisibleIndex : -1;
+            // Generic chatter (Level::createRadioMessage) in the same box while the level's own radio is quiet.
+            var chatter = line == null && level != null && level.Traffic != null ? level.Traffic.ChatterVisible : null;
+            if (chatter != null)
+            {
+                radioBox.EnableInClassList("radio--shown", true);
+                if (chatter == shownChatter) return;
+                shownChatter = chatter;
+                radioShown = -1;
+                radioSpeaker.text = chatter.speaker.ToUpperInvariant();
+                radioText.text = chatter.text;
+                if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
+                else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
+                return;
+            }
+            shownChatter = null;
             radioBox.EnableInClassList("radio--shown", line != null);
             if (line == null || index == radioShown) { if (line == null) radioShown = -1; return; }
             radioShown = index;
@@ -629,6 +661,7 @@ namespace GoF2Remake.UI
                 b.AddToClassList("gof-semibold");
                 b.focusable = false;
                 b.clicked += () => ChooseMenuTarget(target);
+                if (t.disabled) b.AddToClassList("autopilot-menu-item--disabled");
                 autopilotMenuItems.Add(b);
                 menuButtons.Add((b, target));
             }
@@ -700,6 +733,7 @@ namespace GoF2Remake.UI
 
         void ChooseMenuTarget(Navigation.Target target)
         {
+            if (target != null && target.disabled) return;   // TouchButton+0xa7: half-transparent, no taps
             if (target != null && target.kind == Navigation.Kind.Wingmen) { OpenWingmanMenu(); return; }
             nav.ChooseMenuEntry(target);
             HideAutopilotMenu();

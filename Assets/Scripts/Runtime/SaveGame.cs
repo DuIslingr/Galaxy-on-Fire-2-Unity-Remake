@@ -64,6 +64,8 @@ namespace GoF2Remake.Data
         // version 5: combat
         public int selectedSecondary = -1, bombsDetonated;
         public bool[] pirateBaseDestroyed;
+        public int graveRiserKills;
+        public long cloakMs;
         public List<int> hints;
 
         [Serializable]
@@ -190,6 +192,7 @@ namespace GoF2Remake.Data
                 kaamoState = Session.KaamoState, kaamoItems = Session.KaamoItems, kaamoShips = Session.KaamoShips,
                 selectedSecondary = Session.SelectedSecondary, bombsDetonated = Session.BombsDetonated,
                 pirateBaseDestroyed = Session.PirateBaseDestroyed, hints = new List<int>(Session.Hints),
+                graveRiserKills = Session.GraveRiserKills, cloakMs = Session.CloakMs,
             };
         }
 
@@ -278,6 +281,8 @@ namespace GoF2Remake.Data
                 Session.BombsDetonated = s.bombsDetonated;
                 if (s.pirateBaseDestroyed != null && s.pirateBaseDestroyed.Length == 4) Session.PirateBaseDestroyed = s.pirateBaseDestroyed;
                 Session.Hints = new HashSet<int>(s.hints ?? new List<int>());
+                Session.GraveRiserKills = s.graveRiserKills;
+                Session.CloakMs = s.cloakMs;
             }
             Story.RepairCheckpoint();
         }

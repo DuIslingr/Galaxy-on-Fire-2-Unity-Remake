@@ -91,6 +91,12 @@ namespace GoF2Remake.Data
         public static bool PirateBaseRewardPending;
         /// <summary>The radio hints already given (0x23 / 0x24: the Nivelian pirate hints).</summary>
         public static HashSet<int> Hints = new HashSet<int>();
+        /// <summary>Status+0x13c best: kills during one emergency-system bubble (medal 43 "Grave Riser").</summary>
+        public static int GraveRiserKills;
+        /// <summary>Status+0xc0: ms spent cloaked (medal 19 "Ninja", minutes).</summary>
+        public static long CloakMs;
+        /// <summary>Status+0x68: the gamma pool (0..100) carried between the supernova orbits, -1 = full.</summary>
+        public static float PlayerGamma = -1f;
         /// <summary>Status+0x14c, the storage station: its goods (station 108's stock while owned) and parked hulls.</summary>
         public static List<ItemStack> KaamoItems = new List<ItemStack>();
         public static List<StoredShip> KaamoShips = new List<StoredShip>();
@@ -267,6 +273,9 @@ namespace GoF2Remake.Data
             PirateBaseDestroyed = new bool[4];
             PirateBaseRewardPending = false;
             Hints = new HashSet<int>();
+            GraveRiserKills = 0;
+            CloakMs = 0;
+            PlayerGamma = -1f;
             KaamoItems = new List<ItemStack>();
             KaamoShips = new List<StoredShip>();
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;

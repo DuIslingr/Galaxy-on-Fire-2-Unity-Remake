@@ -1,0 +1,89 @@
+// Cloak.cs
+// The player's cloaking device as plain rules (Reference/research/combat_equipment.md 1): items 94-96 (sort 21) or the
+// integrated cloak of ships 44 Specter / 49 Scimitar (items[95]'s stats).
+//   PlayerEgo::toggleCloaking 0xa65a4   ready + enough energy cells (item 122, attr 38) -> pay, charge for attr 36 ms
+//   PlayerEgo::update 0xa941a..0xa98e0  charge done -> cloaked for attr 35 ms (Player+0x5e untargetable); 2000 ms fade in
+//                                       and out; the end starts the cooldown (7000 ms, 12000 Extreme: PlayerEgo+0x368);
+//                                       cooldown over -> "Cloak ready" (316)
+//   getCloakingPercentage 0xa81a0       0..100 over the first / last 2000 ms, 100 between
+// Nothing ends the cloak early (firing, hits, boosting and locks don't touch it). Every level starts ready.
+
+using UnityEngine;
+
+namespace GoF2Remake.Flight
+{
+    public class Cloak
+    {
+        public enum Phase { Ready, Charging, Cloaked, Cooldown }
+
+        public const int EnergyCellItem = 122, FadeMs = 2000;
+
+        public readonly int item, durationMs, chargeMs, cells;
+        public readonly float cooldownMs;
+
+        public Phase State { get; private set; } = Phase.Ready;
+        /// <summary>PlayerEgo+0x208: ms into the current charge / cloak.</summary>
+        public float Timer { get; private set; }
+        /// <summary>PlayerEgo+0x20c: cooldown left (ms).</summary>
+        public float CooldownLeft { get; private set; }
+
+        public Cloak(int item, int durationMs, int chargeMs, int cells, bool extreme)
+        {
+            this.item = item;
+            this.durationMs = Mathf.Max(durationMs, 2 * FadeMs);
+            this.chargeMs = chargeMs;
+            this.cells = cells;
+            cooldownMs = extreme ? 12000f : 7000f;
+        }
+
+        public bool Cloaked => State == Phase.Cloaked;
+        /// <summary>The menu entry is usable (Hud::initHudMenu: half-transparent while cloaked / charging / recharging).</summary>
+        public bool Available => State == Phase.Ready;
+        public float ChargeRate => State == Phase.Charging ? Mathf.Clamp01(Timer / chargeMs) : 0f;
+        /// <summary>getCloakRechargeRate: 1 - cooldownLeft / cooldownLength (the entry's fill while recharging).</summary>
+        public float RechargeRate => State == Phase.Cooldown ? 1f - CooldownLeft / cooldownMs : 1f;
+
+        /// <summary>getCloakingPercentage.</summary>
+        public float Percentage
+        {
+            get
+            {
+                if (State != Phase.Cloaked) return 0f;
+                if (Timer < FadeMs) return Timer * 100f / FadeMs;
+                if (Timer > durationMs - FadeMs) return Mathf.Max(0f, (1f - (Timer - (durationMs - FadeMs)) / FadeMs) * 100f);
+                return 100f;
+            }
+        }
+
+        /// <summary>toggleCloaking from the ready state: false = not enough cells (583). The caller removes the cells.</summary>
+        public bool TryStart(int cellsInCargo)
+        {
+            if (State != Phase.Ready || cellsInCargo < cells) return false;
+            State = Phase.Charging;
+            Timer = 0f;
+            return true;
+        }
+
+        public enum Event { None, Engaged, Ended, Ready }
+
+        public Event Update(float dtMs)
+        {
+            switch (State)
+            {
+                case Phase.Charging:
+                    Timer += dtMs;
+                    if (Timer > chargeMs) { State = Phase.Cloaked; Timer = 0f; return Event.Engaged; }
+                    break;
+                case Phase.Cloaked:
+                    Timer += dtMs;
+                    if (Timer > durationMs) { State = Phase.Cooldown; Timer = 0f; CooldownLeft = cooldownMs; return Event.Ended; }
+                    break;
+                case Phase.Cooldown:
+                    CooldownLeft -= dtMs;
+                    if (CooldownLeft <= 0f) { CooldownLeft = 0f; State = Phase.Ready; return Event.Ready; }
+                    break;
+            }
+            return Event.None;
+        }
+    }
+}

@@ -81,8 +81,8 @@ namespace GoF2Remake.World
             // MGame::OnUpdate hints 0x23 / 0x24 (npc_combat_specials.md 3.5): the first Nivelian system visit, then a later one.
             if (!storyOrbit && SystemRace == 2)
             {
-                if (Session.Hints.Add(0x23)) Radio(443, 443);
-                else if (Session.Hints.Add(0x24)) Radio(444, 444);
+                if (Session.Hints.Add(0x23)) Radio(443, 443, 2);
+                else if (Session.Hints.Add(0x24)) Radio(444, 444, 2);
             }
             // Level::initParticleSystems: the red static fog around a pirate base's outpost.
             foreach (var s in Ships) if (s.Spec.group == NpcGroup.Outpost) SpawnRedFog(s.transform.position);
@@ -91,7 +91,7 @@ namespace GoF2Remake.World
             if (Session.AttackedStations.Contains(StationIndex))
             {
                 AlarmAllFriends(SystemRace, false);
-                Radio(445, 447);
+                Radio(445, 447, SystemRace);
             }
         }
 
@@ -169,15 +169,57 @@ namespace GoF2Remake.World
 
         AssemblyData ShipAssembly(int ship, int race)
         {
-            string prefix = $"ship_{ship:000}_";
             string raceName = race switch { 0 => "terran", 1 => "vossk", 2 => "nivelian", 3 => "midorian", 9 => "void", _ => "pirate" };
-            return db.Assemblies.Find(a => a.category == "ships" && a.name.StartsWith(prefix) && a.name.EndsWith(raceName))
-                   ?? db.Assemblies.Find(a => a.category == "ships" && a.name.StartsWith(prefix));
+            return db.ShipAssembly(ship, raceName);
         }
 
-        void Radio(int firstText, int lastText) => Message?.Invoke(Localization.Get(UnityEngine.Random.Range(firstText, lastText + 1)));
+        // ---- generic radio chatter (Level::createRadioMessage(kind, race) 0xd5568; combat_equipment.md 6) ------------
+
+        /// <summary>One generic radio line: a random face of the race (ImageFactory::createChar) or the Pirate Boss (speaker 9).</summary>
+        public class Chatter
+        {
+            public string text, speaker;
+            public int[] portrait;      // a generic face, or null with speakerId
+            public int speakerId = -1;  // a story speaker (9 Pirate Boss)
+        }
+
+        readonly Queue<Chatter> chatterQueue = new Queue<Chatter>();
+        Chatter chatter;
+        float chatterMs, chatterDurationMs;
+
+        /// <summary>The generic line on screen (after the 2000 ms delay), null = none.</summary>
+        public Chatter ChatterVisible => chatter != null && chatterMs >= 2000f ? chatter : null;
+
+        /// <summary>Speaker image by race: 0 -> 64, 2 -> 65, 3 -> 21, 8 -> 9 (Pirate Boss), else 63; the name 1597 + image.</summary>
+        void Radio(int firstText, int lastText, int race)
+        {
+            int image = race == 0 ? 64 : race == 2 ? 65 : race == 3 ? 21 : race == 8 ? 9 : 63;
+            var c = new Chatter { text = Localization.Get(UnityEngine.Random.Range(firstText, lastText + 1)), speaker = Localization.Get(1597 + image) };
+            if (image == 9) c.speakerId = 9;
+            else c.portrait = AgentGenerator.CreatePortrait(UnityEngine.Random.value < 0.8f, race == 0 || race == 2 || race == 3 ? race : 1);
+            chatterQueue.Enqueue(c);
+        }
+
+        /// <summary>Radio::update: hidden 2000 ms, then lines * 2000 + 1500 ms (world time).</summary>
+        void UpdateChatter(float dtMs)
+        {
+            if (chatter != null)
+            {
+                chatterMs += dtMs;
+                if (chatterMs >= 2000f + chatterDurationMs) chatter = null;
+                return;
+            }
+            if (chatterQueue.Count == 0) return;
+            chatter = chatterQueue.Dequeue();
+            chatterMs = 0f;
+            chatterDurationMs = Mathf.Max(1, Mathf.CeilToInt(chatter.text.Length / 55f)) * 2000f + 1500f;
+        }
 
         bool baseWakeRadio, baseDestroyedRadio;
+        int emergencyKills;
+
+        /// <summary>A HUD message (Hud::hudEvent), e.g. "Signature invalid".</summary>
+        public void Warn(string text) => Message?.Invoke(text);
 
         /// <summary>Level::pirateStationAction 0xd6338: a guard woke (radio 435-437, once per level) or the outpost died
         /// (the base destroyed, the reward pending, radio 438-440, once).</summary>
@@ -187,13 +229,13 @@ namespace GoF2Remake.World
             {
                 if (baseWakeRadio) return;
                 baseWakeRadio = true;
-                Radio(435, 437);
+                Radio(435, 437, Standing.Pirate);
                 return;
             }
             if (baseDestroyedRadio || PirateBases.IndexOf(StationIndex) < 0) return;
             baseDestroyedRadio = true;
             PirateBases.Destroyed(StationIndex);
-            Radio(438, 440);
+            Radio(438, 440, Standing.Pirate);
         }
 
         /// <summary>SET_FOG_STATIC (space_props.md 4): 30 sprites of 32768 units within +-40000 of the outpost, colour
@@ -244,7 +286,7 @@ namespace GoF2Remake.World
         {
             if (radioTurned) return;
             radioTurned = true;
-            Radio(426, 428);
+            Radio(426, 428, race);
         }
 
         /// <summary>Level::alarmAllFriends: every ship of 'race' turns hostile; radio 1 once; the station remembers it.</summary>
@@ -254,7 +296,7 @@ namespace GoF2Remake.World
             if (radio && !radioAlarm)
             {
                 radioAlarm = true;
-                Radio(429, 431);
+                Radio(429, 431, race);
                 if (race == SystemRace) Session.AttackedStations.Add(StationIndex);
             }
         }
@@ -274,6 +316,8 @@ namespace GoF2Remake.World
             Standing.ApplyKill(ship.Race, SystemRace);
             if (ship.Target.hostileToPlayer)
             {
+                if (PlayerHealth.EmergencyActive) Session.GraveRiserKills = Mathf.Max(Session.GraveRiserKills, ++emergencyKills);
+                else emergencyKills = 0;
                 Session.Kills++;
                 if (ship.Race == Standing.Pirate) Session.PirateKills++;
             }
@@ -283,6 +327,7 @@ namespace GoF2Remake.World
         {
             float dtMs = Time.deltaTime * 1000f;
             UpdateOrbit(dtMs);
+            UpdateChatter(dtMs);
             int hostiles = 0;
             if (hasScanner)
                 foreach (var s in Ships)

@@ -51,6 +51,23 @@ namespace GoF2Remake.Flight
         public GameObject explosionEmp, explosionScatter, shockGlow, shockSphere, fireworksBurst;
         [Tooltip("Sound 22 Garbage_Explosion: turrets, sentries, scatter bursts, mines.")]
         public AudioClip[] garbageExplosion;
+        [Tooltip("The EMP lightning (records 17 / 18: material 27260 khador_jump, additive).")]
+        public Material empSparkMaterial;
+        [Tooltip("The emergency system's bubble (mesh 14374 v_shield), its refraction shader (GoF2/ShieldBubble, " +
+                 "SimpleRefractionShader) and its sound (1115 Invincibility_01).")]
+        public GameObject shieldBubble;
+        public Shader shieldBubbleShader;
+        public AudioClip invincibility;
+        [Tooltip("The shield injector (2258 init, 2257 loop, 2259 end) and the gamma shield loops (2260 / 2261).")]
+        public AudioClip injectorInit, injectorLoop, injectorEnd, gammaShield1, gammaShield2;
+        [Tooltip("The cloak (sound 30 Cloak_02) and the time extender (1120 TimeShift_01b).")]
+        public AudioClip cloak, timeShift;
+        [Tooltip("The cloak's shader (GoF2/Cloak) and dissolve map (Textures/main/fx/cloak_map.png).")]
+        public Shader cloakShader;
+        public Texture2D cloakMap;
+        [Tooltip("Repair / transfusion beams (19092 / 19093) and their loops (2271 / 2272 / 2267 / 2268).")]
+        public GameObject repairBeam, transfusionBeam;
+        public AudioClip repairLoop1, repairLoop2, drainLoop1, drainLoop2;
 
         static CombatAssets cached;
         public static CombatAssets Load() => cached != null ? cached : cached = Resources.Load<CombatAssets>(ResourcePath);

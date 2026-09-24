@@ -49,6 +49,10 @@ namespace GoF2Remake.EditorTools
             (Ipad, "fastforward", 1120, 1295, 109, 109, 0, false),
             (Ipad, "fastforward_on", 1208, 782, 109, 109, 0, false),
             (Ipad, "button_pill", 1740, 112, 126, 293, 0, false),
+            (Ipad, "time_extender", 1904, 489, 109, 109, 0, false),     // 0x543 idle clock (combat_equipment.md 3.1)
+            (Ipad, "time_extender_on", 1390, 489, 109, 109, 0, false),  // 0x542 active / pressed / flashing
+            (Ipad, "emp_bar", 112, 2020, 114, 10, 0, false),            // 0x4d8 EMP bar frame under a near ship (4.1)
+            (Ipad, "emp_fill", 1581, 89, 110, 6, 0, false),             // 0x4d7 white fill
             (Main, "autopilot_title", 1, 1982, 83, 51, 0, false),   // 0x4f4 autopilot menu title icon
             (Main, "race_0", 226, 90, 36, 36, 0, false),
             (Main, "race_1", 273, 1889, 36, 36, 0, false),

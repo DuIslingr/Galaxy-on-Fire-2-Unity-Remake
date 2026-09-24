@@ -6,7 +6,10 @@
 //   callers: kill 5, steal cargo 2, EMP-disable 2, mission completed -5; a pirate kill applyDelict(enemyRace(system), 1)
 // Pirates (8) and the Void (9) are always enemies. Between NPCs (no standing, PlayerFighter::update / PlayerTurret::
 // pickEnemy): pirates, the Void and race 10 fight everyone else, Terran fights Vossk, Nivelian fights Midorian.
-// Not yet: signatures (sort 29 items override the standing).
+// Signatures (items 189-192, sort 29; combat_equipment.md 3.3, Standing::setPlayerSignatureRace 0x142898): with a
+// signature of race S mounted, S is a friend (+100), its rival an enemy (-100), the other two races neutral (70) whatever
+// the axes say; a pirate kill then gives no +1. Friendly fire on the signature's race (33 % / 10 % hc) or on any race
+// 0..3 (50 % / 25 % hc) makes it invalid: the item is removed, delict 100 toward S, "Signature invalid" (324).
 
 using GoF2Remake.Data;
 using UnityEngine;
@@ -18,8 +21,36 @@ namespace GoF2Remake.Flight
         public const int Pirate = 8, Void = 9, Specter = 10;
         static readonly int[] EnemyRace = { 1, 0, 3, 2 };   // DAT_00252020, Standing::getEnemyRace
 
-        /// <summary>The value toward 'race' (positive = liked), races 0..3.</summary>
-        public static int Toward(int race) => race switch
+        /// <summary>The mounted signature's race (items 189-192: Terran, Vossk, Nivelian, Midorian), -1 = none.</summary>
+        public static int SignatureRace
+        {
+            get
+            {
+                foreach (var e in Session.Equipment) if (e.item >= 189 && e.item <= 192) return e.item - 189;
+                return -1;
+            }
+        }
+
+        /// <summary>Removes the mounted signature (Player::damage friendly fire): delict 100 toward its race.</summary>
+        public static bool InvalidateSignature()
+        {
+            int s = SignatureRace;
+            if (s < 0) return false;
+            Session.Equipment.RemoveAll(e => e.item == 189 + s);
+            ApplyDelict(s, 100);
+            return true;
+        }
+
+        /// <summary>The value toward 'race' (positive = liked), races 0..3; a signature overrides it (Standing::getStanding).</summary>
+        public static int Toward(int race)
+        {
+            int sig = SignatureRace;
+            if (sig >= 0 && race >= 0 && race <= 3) return race == sig ? 100 : race == EnemyRace[sig] ? -100 : 70;
+            return RawToward(race);
+        }
+
+        /// <summary>The standing axes themselves (the Status window, mission bonuses).</summary>
+        public static int RawToward(int race) => race switch
         {
             0 => Session.Standing[0],
             1 => -Session.Standing[0],
@@ -47,7 +78,7 @@ namespace GoF2Remake.Flight
         /// <summary>A kill by the player: race 0..3 -> delict 5; a pirate -> 1 toward the system race.</summary>
         public static void ApplyKill(int race, int systemRace)
         {
-            if (race == Pirate) { int e = EnemyRaceOf(systemRace); if (e >= 0) ApplyDelict(e, 1); return; }
+            if (race == Pirate) { int e = EnemyRaceOf(systemRace); if (e >= 0 && SignatureRace < 0) ApplyDelict(e, 1); return; }
             ApplyDelict(race, 5);
         }
 

@@ -336,8 +336,7 @@ namespace GoF2Remake.World
         /// <summary>createShip(race, 0, idx, null, false): NPC mesh group, setExhaustVisible(false), asleep.</summary>
         GameObject SpawnShip(int index, Vector3 gamePos, float gameYaw, Transform parent, string label)
         {
-            string prefix = $"ship_{index:000}_";
-            var entry = db.Assemblies.Find(a => a.category == "ships" && a.name.StartsWith(prefix));
+            var entry = db.ShipAssembly(index);
             if (entry == null) return null;
             var go = Spawn(entry.name, OrbitLayout.ToUnity(gamePos), OrbitLayout.RotationToUnity(new Vector3(0f, gameYaw, 0f)), parent, label);
             var asm = go != null ? go.GetComponent<AssembledObject>() : null;

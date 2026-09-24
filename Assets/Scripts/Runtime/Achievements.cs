@@ -66,7 +66,9 @@ namespace GoF2Remake.Data
                 case 32: return Session.OffersDeclined;
                 case 33: return Session.AcceptedBlindRisk;
                 case 34: return Session.AcceptedBlindMap;
+                case 19: return (int)(Session.CloakMs / 60000);   // Ninja: minutes cloaked
                 case 20: return Session.BombsDetonated;
+                case 43: return Session.GraveRiserKills;
                 case 37: return Session.KaamoShips.Count;   // Ship Collector: stored hulls (one per type)
                 case 39: return Session.BattleshipsDestroyed;
             }

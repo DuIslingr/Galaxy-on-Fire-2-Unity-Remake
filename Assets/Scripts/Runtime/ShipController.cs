@@ -131,7 +131,7 @@ namespace GoF2Remake.Flight
         void Update()
         {
             Model.Sensitivity = sensitivity;
-            float dtMs = Time.deltaTime * 1000f;
+            float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
             if (externalControl) { SpeedMetersPerSecond = ExternalSpeedMetersPerSecond; return; }
 
             Vector2 steer = useBuiltInInput ? ReadInput() : Vector2.zero;
@@ -158,7 +158,7 @@ namespace GoF2Remake.Flight
             transform.position += transform.forward * (r.forwardUnits * metersPerUnit)
                                 + transform.right * (r.sidePushUnits * metersPerUnit);
 
-            SpeedMetersPerSecond = Time.deltaTime > 0f ? r.forwardUnits * metersPerUnit / Time.deltaTime : 0f;
+            SpeedMetersPerSecond = dtMs > 0f ? r.forwardUnits * metersPerUnit / (dtMs / 1000f) : 0f;
 
             UpdateVisualBank();
         }

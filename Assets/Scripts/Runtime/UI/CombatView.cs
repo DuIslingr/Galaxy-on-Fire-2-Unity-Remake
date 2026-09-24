@@ -28,7 +28,7 @@ namespace GoF2Remake.UI
 
         class Marker
         {
-            public VisualElement dot, bar, fill, bracket;
+            public VisualElement dot, bar, fill, bracket, emp, empFill;
             public Label distance;
             public bool used;
         }
@@ -102,7 +102,7 @@ namespace GoF2Remake.UI
         {
             if (!markers.TryGetValue(key, out var m))
             {
-                m = new Marker { dot = NewImage(), bar = NewImage(), fill = NewImage(), bracket = NewImage() };
+                m = new Marker { dot = NewImage(), bar = NewImage(), fill = NewImage(), bracket = NewImage(), emp = NewImage(), empFill = NewImage() };
                 m.distance = new Label { pickingMode = PickingMode.Ignore };
                 m.distance.AddToClassList("combat-label");
                 m.distance.AddToClassList("gof-semibold");
@@ -133,6 +133,7 @@ namespace GoF2Remake.UI
                         if (s.Gone || !s.Target.Alive || s.Hidden) continue;
                         int f = s.Target.hostileToPlayer ? 0 : s.Target.friendToPlayer ? 1 : 2;
                         DrawShip(Get(s), s.transform.position, f, s.Target.HullFraction, radar.Locked == s.Target, cam, origin, centre);
+                        DrawEmp(Get(s), s.Hp != null ? s.Hp.EmpFraction : 1f);
                     }
                 foreach (var c in Object.FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
                     DrawCrate(Get(c), c.transform.position, c.race == 9, cam, origin, centre);
@@ -162,11 +163,12 @@ namespace GoF2Remake.UI
                 if (kv.Key == null)   // destroyed (a collected or expired crate): drop its elements
                 {
                     m.dot.RemoveFromHierarchy(); m.bar.RemoveFromHierarchy(); m.fill.RemoveFromHierarchy();
-                    m.bracket.RemoveFromHierarchy(); m.distance.RemoveFromHierarchy();
+                    m.bracket.RemoveFromHierarchy(); m.distance.RemoveFromHierarchy(); m.emp.RemoveFromHierarchy(); m.empFill.RemoveFromHierarchy();
                     (gone ??= new List<Object>()).Add(kv.Key);
                     continue;
                 }
                 Show(m.dot, false); Show(m.bar, false); Show(m.fill, false); Show(m.bracket, false); Show(m.distance, false);
+                Show(m.emp, false); Show(m.empFill, false);
             }
             if (gone != null) foreach (var k in gone) markers.Remove(k);
         }
@@ -238,10 +240,26 @@ namespace GoF2Remake.UI
             }
         }
 
+        /// <summary>Radar::draw (ship_combat.md 7.2): a near ship's EMP bar 8 px under its hull bar while EMP &lt; max.</summary>
+        void DrawEmp(Marker m, float emp)
+        {
+            bool on = m.bar.style.display.value == DisplayStyle.Flex && emp < 1f;
+            Show(m.emp, on);
+            Show(m.empFill, on);
+            if (!on) return;
+            Image(m.emp, Tex("emp_bar"));
+            Image(m.empFill, Tex("emp_fill"));
+            float x = m.bar.style.left.value.value, y = m.bar.style.top.value.value + 18f;
+            Place(m.emp, x, y);
+            Place(m.empFill, x + 2f, y + 2f);
+            m.empFill.style.width = Mathf.Clamp01(emp) * 110f;
+        }
+
         void DrawCrate(Marker m, Vector3 world, bool voidCrate, Camera cam, Vector2 origin, Vector2 centre)
         {
             bool onScreen = Project(cam, world, origin, centre, out var p, out bool near);
             Show(m.bar, false); Show(m.fill, false); Show(m.distance, false); Show(m.bracket, false);
+            Show(m.emp, false); Show(m.empFill, false);
             Show(m.dot, true);
             var tex = !onScreen ? Tex(voidCrate ? "crate_off_void" : "crate_off") : near ? Tex("bracket") : Tex("crate_dot");
             Image(m.dot, tex);

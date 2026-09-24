@@ -33,7 +33,11 @@ namespace GoF2Remake.UI
         readonly VisualElement layer, lockRing, lockPlate, lockClass, navButtons, fastForward, autopilotButton;
         readonly Label lockOre;
         readonly Texture2D[] lockFrames = new Texture2D[24];
-        readonly Texture2D autopilotOff, autopilotOn, fastForwardOff, fastForwardOn;
+        readonly Texture2D autopilotOff, autopilotOn, fastForwardOff, fastForwardOn, clockOff, clockOn;
+        bool clockMode, extenderTap;
+
+        /// <summary>The clock was tapped this frame (the time extender's button, HUD key 0x100 outside the autopilot).</summary>
+        public bool ConsumeExtenderTap() { bool t = extenderTap; extenderTap = false; return t; }
         readonly List<Marker> markers = new List<Marker>();
         readonly Dictionary<int, Texture2D> raceIcons = new Dictionary<int, Texture2D>();
         Navigation built;
@@ -62,12 +66,20 @@ namespace GoF2Remake.UI
             autopilotOn = Tex("autopilot_on");
             fastForwardOff = Tex("fastforward");
             fastForwardOn = Tex("fastforward_on");
+            clockOff = Tex("time_extender");
+            clockOn = Tex("time_extender_on");
             Image(root.Q("navButtonPill"), Tex("button_pill"));
             Image(fastForward, fastForwardOff);
             Image(autopilotButton, autopilotOn);
 
             // Fast-forward is hold-to-use (MGame::OnTouchEnd ends it on any release); the autopilot button is a tap.
-            fastForward.RegisterCallback<PointerDownEvent>(e => { fastForwardPressed = true; fastForward.CapturePointer(e.pointerId); e.StopPropagation(); });
+            fastForward.RegisterCallback<PointerDownEvent>(e =>
+            {
+                e.StopPropagation();
+                if (clockMode) { extenderTap = true; return; }
+                fastForwardPressed = true;
+                fastForward.CapturePointer(e.pointerId);
+            });
             fastForward.RegisterCallback<PointerUpEvent>(e => { fastForwardPressed = false; fastForward.ReleasePointer(e.pointerId); });
             fastForward.RegisterCallback<PointerCancelEvent>(e => fastForwardPressed = false);
             autopilotButton.RegisterCallback<PointerUpEvent>(e => { AutopilotButton?.Invoke(); e.StopPropagation(); });
@@ -237,9 +249,20 @@ namespace GoF2Remake.UI
             bool visible = touch && nav != null && !nav.Jumping && (miningPhase == Mining.Phase.Idle || approach);
             navButtons.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             bool canFf = active && nav.CanFastForward;
-            fastForward.style.visibility = canFf ? Visibility.Visible : Visibility.Hidden;
+            var ext = nav != null ? nav.Extender : null;
+            clockMode = !canFf && ext != null && !nav.Autopilot && !approach && !nav.Jumping;
+            fastForward.style.visibility = canFf || clockMode ? Visibility.Visible : Visibility.Hidden;
             if (!canFf) fastForwardPressed = false;
-            Image(fastForward, fastForwardPressed && nav.FastForward ? fastForwardOn : fastForwardOff);
+            if (clockMode)
+            {
+                Image(fastForward, ext.Running || ext.Flashing ? clockOn : clockOff);
+                fastForward.EnableInClassList("nav-button--dim", !ext.Ready && !ext.Running);   // tinted while not ready
+            }
+            else
+            {
+                fastForward.EnableInClassList("nav-button--dim", false);
+                Image(fastForward, fastForwardPressed && nav.FastForward ? fastForwardOn : fastForwardOff);
+            }
             Image(autopilotButton, active || nav != null && nav.MenuOpen ? autopilotOn : autopilotOff);
         }
 

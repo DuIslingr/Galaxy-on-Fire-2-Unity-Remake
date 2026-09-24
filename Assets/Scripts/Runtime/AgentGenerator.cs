@@ -44,7 +44,7 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>Standing::getMissionBonus 0x142b34: max(0, standing toward the race / 100), races 0..3.</summary>
-        public static float MissionBonus(int race) => race >= 0 && race <= 3 ? Math.Max(0f, Standing.Toward(race) / 100f) : 0f;
+        public static float MissionBonus(int race) => race >= 0 && race <= 3 ? Math.Max(0f, Standing.RawToward(race) / 100f) : 0f;
 
         static int SystemOf(Database db, int station) => db.Stations.Find(s => s.index == station)?.system ?? 0;
         static SystemData Sys(Database db, int system) => db.Systems.Find(s => s.index == system);

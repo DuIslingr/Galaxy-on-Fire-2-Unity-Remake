@@ -266,7 +266,7 @@ namespace GoF2Remake.Flight
 
         void Update()
         {
-            float dtMs = Time.deltaTime * 1000f;
+            float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;
             // The game is paused (Time.timeScale 0: dialogues, the autopilot menu, the star map): no firing at all.
             bool halted = Blocked || Time.timeScale <= 0f;
             bool primaryPressed = useBuiltInInput && firePrimaryAction.IsPressed();

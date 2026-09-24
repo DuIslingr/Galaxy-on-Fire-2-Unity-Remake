@@ -140,6 +140,7 @@ namespace GoF2Remake.World
         Crate crate;
         Obstacle obstacle;
         ShipSmoke smoke;
+        EmpSparks sparks;
         bool smoking;   // PlayerFighter +0x1f4
 
         // wingman (KIPlayer+0xd8 / +0xdc / +0xe0 / +0xe4)
@@ -300,7 +301,7 @@ namespace GoF2Remake.World
             damageSinceBoost = 0;
             damageByPlayer = 0;
             smoking = false;
-            smoke?.Clear();
+            smoke?.Clear(); sparks?.Clear();
             Current = State.Fly;
             speed = baseSpeed;
             boosting = panic = false;
@@ -368,7 +369,7 @@ namespace GoF2Remake.World
             float bestD = TurretRangeUnits * M;
             foreach (var e in enemies)
             {
-                if (!Valid(e)) continue;
+                if (!Valid(e) || e.cloaked) continue;   // PlayerTurret::handleTurret: no aiming at a cloaked target
                 bool candidate = e.isPlayer ? Target.hostileToPlayer : e.isShip && e.race >= 0 && Standing.RacesHostile(e.race, Race);
                 if (!candidate) continue;
                 float d = (e.transform.position - transform.position).magnitude;
@@ -394,7 +395,7 @@ namespace GoF2Remake.World
             rig?.HideAll();
             empRig?.HideAll();
             smoking = false;
-            smoke?.Clear();
+            smoke?.Clear(); sparks?.Clear();
             if (wreck != null) Destroy(wreck);
             gameObject.SetActive(false);
         }
@@ -421,6 +422,7 @@ namespace GoF2Remake.World
             Hp.Update(dtMs);
             UpdatePush(dtMs);
             UpdateSmoke();
+            UpdateSparks();
             UpdateMissionCrate();
             if (Asleep) { UpdateSleep(); return; }
             if (IsTurret) { UpdateTurret(dtMs); return; }
@@ -451,6 +453,14 @@ namespace GoF2Remake.World
             if (low == smoking) return;
             smoking = low;
             smoke.SetEmitting(low);
+        }
+
+        /// <summary>PlayerFighter::update 0xf3138: the EMP spark systems emit while the ship is disabled.</summary>
+        void UpdateSparks()
+        {
+            bool on = Hp.empDisabled;
+            if (on && sparks == null) sparks = new EmpSparks(transform);
+            sparks?.SetEmitting(on);
         }
 
         /// <summary>Freelance Recovery / Salvage: the Hijacker's container comes loose once its EMP is down (the original
@@ -502,7 +512,7 @@ namespace GoF2Remake.World
             if (inactive) return;
             foreach (var e in enemies)
             {
-                if (!Valid(e)) continue;
+                if (!Valid(e) || e.cloaked) continue;   // no waking for a cloaked target
                 var d = e.transform.position - transform.position;
                 float r = (e.isPlayer && !IsFixed ? 25000f : 50000f) * M;   // fixed objects: any enemy within +-50000
                 if (Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r) { Wake(); return; }
@@ -681,7 +691,7 @@ namespace GoF2Remake.World
 
             if (attacking && !followingWaypoint && target != null)
             {
-                if (target.untargetable) attacking = false;
+                if (target.untargetable || target.cloaked) attacking = false;   // a cloaked player: chased, never fired at
                 else
                 {
                     var d = targetPos - transform.position;
@@ -823,6 +833,11 @@ namespace GoF2Remake.World
             damageByPlayer += dmg;
             bool hc = Session.IsExtreme;
             float max = Hp.maxHull;
+            // Player::damage: a signature of this race, or any of races 0..3 at the higher threshold, becomes invalid.
+            int sig = Standing.SignatureRace;
+            if (sig >= 0 && Race <= 3 && ((Race == sig && damageByPlayer >= max * (hc ? 0.10f : 0.33f)) || damageByPlayer >= max * (hc ? 0.25f : 0.50f))
+                && Standing.InvalidateSignature())
+                traffic.Warn(Localization.Get(324));
             if (damageByPlayer > max * (hc ? 0.10f : 0.33f)) traffic.FriendTurnedEnemy(Race);
             if (damageByPlayer >= max * (hc ? 0.25f : 0.50f)) turnedEnemy = true;
             if (damageByPlayer >= max * (hc ? 0.40f : 0.66f)) traffic.AlarmAllFriends(Race, true);
@@ -835,6 +850,7 @@ namespace GoF2Remake.World
             if (IsWingman) Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract
             if (Spec.ship == 14 && !Target.killedByNpc) Session.BattleshipsDestroyed++;   // Status+0x118
             Current = State.Dying;
+            sparks?.Clear();
             deathDir = transform.forward;
             if (engine != null) engine.Stop();
             Sfx.PlayAt(assets != null ? CombatAssets.Pick(assets.shipDestroyed) : null, transform.position);

@@ -45,8 +45,13 @@ namespace GoF2Remake.Flight
         public bool hostileToPlayer, friendToPlayer;
         [Tooltip("Player+0x5e: NPCs don't attack it.")]
         public bool untargetable;
+        /// <summary>The player's cloak (Player+0x5e set by PlayerEgo::toggleCloaking): NPCs keep it as their target but don't
+        /// fire, turrets don't aim at it, sleepers don't wake for it.</summary>
+        [NonSerialized] public bool cloaked;
         [Tooltip("The owner handles the death (ships): no automatic explosion, renderers stay on.")]
         public bool customDeath;
+        /// <summary>Asked when the hull runs out: true = saved (PlayerEgo::tryToStartEmergencySystem).</summary>
+        [NonSerialized] public Func<bool> SaveFromDeath;
         /// <summary>Takes no damage (a sentry gun's first 3 s, Player+0xc2 cleared).</summary>
         [NonSerialized] public bool invulnerable;
         [Tooltip("Local-space hit boxes (metres) instead of the cube (big ships).")]
@@ -98,6 +103,7 @@ namespace GoF2Remake.Flight
                 dead = hp <= 0f;
             }
             Damaged?.Invoke(this, dmg, byNpc);
+            if (dead && SaveFromDeath != null && SaveFromDeath()) dead = false;   // the player's emergency system
             if (dead) { killedByNpc = byNpc; Die(); }
         }
 

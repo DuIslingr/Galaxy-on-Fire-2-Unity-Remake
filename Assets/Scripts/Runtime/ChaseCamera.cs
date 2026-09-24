@@ -66,7 +66,7 @@ namespace GoF2Remake.Flight
             if (target == null) return;
             var ship = target.transform;
             var model = target.Model;
-            float dtMs = Time.deltaTime * 1000f;
+            float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // TargetFollowCamera gets the player's dt
             if (constantRumble > 0f) rumble = Mathf.Max(rumble, constantRumble);
             if (follow != null)
             {

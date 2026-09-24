@@ -75,6 +75,8 @@ namespace GoF2Remake.World
         public KaamoSiege Siege { get; private set; }
         /// <summary>The player's turret (null without a turret item / mount).</summary>
         public PlayerTurret Turret { get; private set; }
+        public PlayerCloak Cloak { get; private set; }
+        public TimeExtender Extender { get; private set; }
         /// <summary>MGame::dockEvent: 525 while a mission holds the player here (the story's blocks, the Kaamo siege).</summary>
         public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex) || (Siege != null && Siege.Active);
         /// <summary>A story conversation is open (the game is paused).</summary>
@@ -192,7 +194,17 @@ namespace GoF2Remake.World
             SystemJump.GateBlocked = () => Siege != null && Siege.Active;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
+            // Equipment (combat_equipment.md): the cloak (autopilot menu entry), the time extender, the repair / transfusion beams.
+            Cloak = PlayerCloak.Attach(Player.gameObject, db, Session.ShipIndex, Health.Target, Player.visualModel);
+            Navigation.Cloak = Cloak;
+            Navigation.Extender = Extender;
+            if (Extender != null) Extender.Blocked = () => ExtenderBlocked;
+            RepairBeam.AttachAll(Player.gameObject, db, Health.Target, Traffic);
         }
+
+        /// <summary>A cinematic, a jump, the launch camera or the player's death stops the time extender (MGame::OnUpdate 0x1af162).</summary>
+        bool ExtenderBlocked => launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Cutscene
+                                || Health == null || Health.Dead;
 
         void Update()
         {
@@ -205,7 +217,8 @@ namespace GoF2Remake.World
                             || (Campaign != null && Campaign.CollisionOff);   // PlayerEgo+0x144
             Collision.ignoreGate = Navigation.GoingToGate;
             // Hostiles, or a radio line on screen, block fast-forward (MGame::OnUpdate).
-            Navigation.HostilesPresent = (Traffic != null && Traffic.HostileCount > 0) || (Campaign != null && Campaign.Radio != null && Campaign.Radio.Busy);
+            Navigation.HostilesPresent = (Traffic != null && (Traffic.HostileCount > 0 || Traffic.ChatterVisible != null)) || (Campaign != null && Campaign.Radio != null && Campaign.Radio.Busy);
+            if (Extender != null && ExtenderBlocked) Extender.Cancel();
         }
 
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see Obstacle).</summary>
@@ -260,8 +273,7 @@ namespace GoF2Remake.World
             ctrl.invertPitch = Settings.InvertPitch;
             ctrl.ApplyStats();
 
-            string prefix = $"ship_{Session.ShipIndex:000}_";
-            var entry = db.Assemblies.Find(a => a.category == "ships" && a.name.StartsWith(prefix));
+            var entry = db.ShipAssembly(Session.ShipIndex);
             var prefab = AssembledObject.LoadPrefab(entry);
             if (prefab != null)
             {
@@ -287,6 +299,7 @@ namespace GoF2Remake.World
             chase.Snap();
             // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount.
             Turret = PlayerTurret.Attach(root, db, Session.ShipIndex, Session.Equipment, chase);
+            Extender = TimeExtender.Attach(root, db);
 
             // Asteroid mining (lock, autopilot approach, minigame): needs a drill (category 19) to lock.
             Mining = root.AddComponent<Mining>();

@@ -584,6 +584,42 @@ namespace GoF2Remake.UI
             return true;
         }
 
+        bool fineChecked;
+
+        /// <summary>ModStation::OnInitialize 0xe8080 (combat_equipment.md 7): an enemy race's station (205: |standing| / 100 *
+        /// 2800 +- 100) or one whose forces the player attacked (206: rank * 150 + 1000) demands a bribe, x10 hardcore. Yes =
+        /// pay, the attack forgotten (the standing stays); not enough credits = 203; No = straight back into space.</summary>
+        bool CheckDockingFine()
+        {
+            if (fineChecked || level == null || level.Station == null) return false;
+            fineChecked = true;
+            int st = level.Station.index;
+            var sys = level.Database.Systems.Find(s => s.index == level.Station.system);
+            int race = sys != null ? sys.raceId : -1;
+            if (st == 100 || st == 101 || st == 108 || level.Station.system == 25 || race < 0 || race > 3 || PirateBases.StationHasBase(st)) return false;
+            if (!Session.FreePlay && Session.CampaignMission == 0x30) return false;
+            bool enemy = GoF2Remake.Flight.Standing.IsEnemy(race);
+            bool attacked = Session.AttackedStations.Contains(st);
+            if (!enemy && !attacked) return false;
+            int fine = enemy ? (int)(Mathf.Abs(GoF2Remake.Flight.Standing.Toward(race)) / 100f * 2800f) + Random.Range(0, 200) - 100
+                             : Session.Rank * 150 + 1000;
+            if (Session.IsExtreme) fine *= 10;
+            CloseHangar();
+            ShowChoice(Localization.Get(enemy ? 205 : 206).Replace("#C", ItemInfo.Credits(fine)), Localization.Get(134), Localization.Get(135), () =>
+            {
+                if (Session.Credits < fine)
+                {
+                    ShowDialog(Localization.Get(203).Replace("#C", ItemInfo.Credits(fine - Session.Credits)), level.Launch, true);
+                    return;
+                }
+                Session.Credits -= fine;
+                Session.AttackedStations.Remove(st);
+                RefreshCredits();
+                Session.Autosave();
+            }, level.Launch);
+            return true;
+        }
+
         bool kaamoChecked;
 
         /// <summary>ModStation::OnInitialize 0xe8080 at the Kaamo Club (kaamo_club.md 4): state 1 -> the 18-page first
@@ -925,6 +961,7 @@ namespace GoF2Remake.UI
             if (StarMap.IsOpen) return;   // the map has its own input
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPirateBase()) return;
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckDockingFine()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckKaamo()) return;
