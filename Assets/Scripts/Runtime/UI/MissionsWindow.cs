@@ -107,7 +107,7 @@ namespace GoF2Remake.UI
         static void Show(VisualElement e, bool on) => e.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
 
         /// <summary>Globals::getAgentMissionText: the offer text rebuilt from the stored ids with the current values.</summary>
-        static string FreelanceText(Database db, FreelanceMission m)
+        public static string FreelanceText(Database db, FreelanceMission m)
         {
             var agent = new Agent
             {

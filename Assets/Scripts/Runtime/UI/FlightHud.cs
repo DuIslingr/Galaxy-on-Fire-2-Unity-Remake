@@ -59,6 +59,7 @@ namespace GoF2Remake.UI
         Traffic traffic;
         StorySpace story;
         DialogueView storyDialogue;
+        PauseMenu pauseMenu;
         Button introSkip;
         InputKind introSkipKind;
         GoF2Remake.World.FreelanceOrbit freelance;
@@ -103,6 +104,7 @@ namespace GoF2Remake.UI
 
         void OnDisable()
         {
+            pauseMenu?.Close();   // the scene is going: sounds and time back to normal
             if (mining != null) mining.Message -= OnMiningMessage;
             if (nav != null) nav.Message -= OnMiningMessage;
             if (jump != null) jump.Message -= OnMiningMessage;
@@ -168,6 +170,8 @@ namespace GoF2Remake.UI
                 voiceSource.ignoreListenerPause = true;
             }
             storyDialogue = new DialogueView(root, voiceSource);
+            pauseMenu?.Close();   // a UI reload rebuilds it: don't leave the game paused
+            pauseMenu = new PauseMenu(root, BackToMenu);
             // Remake-only: skip the prologue / rescue (the original's unreachable skip branches, IntroCutscenes.Skip).
             introSkip = new Button { focusable = false };
             introSkip.AddToClassList("intro-skip");
@@ -190,7 +194,7 @@ namespace GoF2Remake.UI
             root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();   // Autopilot
             var menuIcon = Resources.Load<Texture2D>("GoF2Hud/autopilot_title");
             if (menuIcon != null) root.Q("autopilotMenuIcon").style.backgroundImage = new StyleBackground(menuIcon);
-            root.Q<Button>("menuButton").clicked += BackToMenu;
+            root.Q<Button>("menuButton").clicked += OpenPause;
 
             root.Q<Label>("stickCaption").text = Localization.Extra("hudSteer", "STEER");
             root.Q<Label>("boostCaption").text = Localization.Extra("hudBoost", "BOOST");
@@ -429,10 +433,12 @@ namespace GoF2Remake.UI
                 return;
             }
 
+            if (pauseMenu.IsOpen) { pauseMenu.Tick(); return; }
             if ((Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame))
             {
-                BackToMenu();
+                // MenuTouchWindow(1): the pause menu; after the player's death straight back to the main menu.
+                if (health != null && health.Dead) BackToMenu(); else OpenPause();
                 return;
             }
             if (UpdateIntroSkip()) return;
@@ -964,6 +970,16 @@ namespace GoF2Remake.UI
         void Dock()
         {
             if (level != null && level.CanDock) level.Dock();
+        }
+
+        void OpenPause()
+        {
+            if (level == null || pauseMenu.IsOpen || (health != null && health.Dead) || StarMap.IsOpen || storyDialogue.IsOpen) return;
+            if (nav != null && nav.MenuOpen) CloseAutopilotMenu();
+            stick?.Release();
+            ship?.SetSteer(Vector2.zero);
+            weapons?.SetPrimaryHeld(false);
+            pauseMenu.Open(level);
         }
 
         void BackToMenu()

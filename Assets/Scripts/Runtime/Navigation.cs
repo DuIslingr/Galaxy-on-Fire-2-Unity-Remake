@@ -68,6 +68,9 @@ namespace GoF2Remake.Flight
         public bool MenuOpen { get; private set; }
         /// <summary>Paused by the star map / the jumpgate prompt (SystemJump).</summary>
         public bool Paused { get => paused; set { paused = value; ApplyTimeScale(); } }
+        /// <summary>The flight HUD's pause menu is open (MenuTouchWindow mode 1): the game is paused.</summary>
+        public bool PauseMenuOpen { get => pauseMenuOpen; set { pauseMenuOpen = value; ApplyTimeScale(); } }
+        bool pauseMenuOpen;
         /// <summary>The autopilot to the jumpgate is inside its sphere (Level::collideStream, radius 7500 / Vossk 11250).</summary>
         public bool ReachedGate => AutopilotTarget?.kind == Kind.Jumpgate && (AutopilotTarget.Position - ship.transform.position).magnitude < gateRadiusUnits * M;
         /// <summary>Wingmen fly with the player: the menu offers 306 "Wingmen" (the HUD's action-menu entry in the original).</summary>
@@ -291,7 +294,7 @@ namespace GoF2Remake.Flight
             if (ship == null) return;
             float dtMs = Time.deltaTime * 1000f;
             if (Jumping) { UpdateJump(dtMs); return; }
-            if (paused) return;
+            if (paused || pauseMenuOpen) return;
             if (Autopilot) AboutToReach = (AutopilotTarget.Position - ship.transform.position).magnitude / M < AboutToReachUnits;
             if (MenuOpen) return;   // paused
             UpdateLock(dtMs);
@@ -445,7 +448,7 @@ namespace GoF2Remake.Flight
 
         void ApplyTimeScale()
         {
-            float scale = MenuOpen || paused ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
+            float scale = MenuOpen || paused || pauseMenuOpen ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
             if (Time.timeScale != scale) Time.timeScale = scale;
         }
 

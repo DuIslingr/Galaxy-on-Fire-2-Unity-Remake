@@ -838,3 +838,117 @@
     font-size: 26px;
     margin-left: 10px;
 }
+
+/* ---- pause menu (MenuTouchWindow mode 1, PauseMenu) ------------------------------------------ */
+
+.pause-backdrop {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.55);
+}
+
+.pause-backdrop--shown {
+    display: flex;
+}
+
+.pause-panel {
+    width: 620px;
+    max-height: 86%;
+    padding: 18px 20px 20px 20px;
+    background-color: var(--gof-panel);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-left-width: 3px;
+    border-left-color: var(--gof-amber);
+}
+
+.pause-title {
+    margin-bottom: 12px;
+}
+
+.pause-body {
+    flex-shrink: 1;
+}
+
+.pause-scroll {
+    flex-shrink: 0;   /* otherwise the panel squeezes it to one row */
+    max-height: 560px;
+    margin-bottom: 10px;
+}
+
+.pause-text {
+    font-size: 22px;
+    color: var(--gof-text);
+    white-space: normal;
+    margin: 4px 0 12px 0;
+}
+
+.pause-heading,
+.pause-heading--red {
+    font-size: 22px;
+    letter-spacing: 3px;
+    color: var(--gof-amber);
+    margin: 6px 0 4px 0;
+    -unity-font-style: bold;
+}
+
+.pause-heading--red {
+    color: rgb(255, 80, 60);
+}
+
+.pause-subheading {
+    font-size: 20px;
+    color: #FFFFFF;
+    white-space: normal;
+}
+
+.pause-cargo-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--gof-line);
+}
+
+.pause-cargo-icon {
+    width: 90px;
+    height: 44px;
+    margin-right: 14px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.pause-cargo-name {
+    flex-grow: 1;
+    font-size: 22px;
+    color: var(--gof-text);
+}
+
+.pause-cargo-amount {
+    font-size: 22px;
+    color: #FFFFFF;
+}
+
+.pause-option {
+    margin: 4px 0;
+    padding: 8px 18px;
+    font-size: 22px;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+.pause-option.autopilot-menu-item--selected {
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+}
+
+.pause-option Label {
+    font-size: 22px;
+    color: var(--gof-text);
+    min-width: 250px;
+}

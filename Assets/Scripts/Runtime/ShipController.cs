@@ -123,6 +123,9 @@ namespace GoF2Remake.Flight
             Model.Sensitivity = sensitivity;
         }
 
+        /// <summary>LevelScript's start sequence (the launch / arrival camera): the player's input is ignored.</summary>
+        [System.NonSerialized] public bool inputLocked;
+
         public void SetSteer(Vector2 steer) => externalSteer = Vector2.ClampMagnitude(steer, 1f);
         public void SetThrottle(float t) => Model.SetThrottle(t);
         public void Boost() => Model.Boost();
@@ -134,8 +137,9 @@ namespace GoF2Remake.Flight
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
             if (externalControl) { SpeedMetersPerSecond = ExternalSpeedMetersPerSecond; return; }
 
-            Vector2 steer = useBuiltInInput ? ReadInput() : Vector2.zero;
-            if (externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
+            // The launch / arrival camera: no steering, throttle, boost or levelling (the ship flies on).
+            Vector2 steer = useBuiltInInput && !inputLocked ? ReadInput() : Vector2.zero;
+            if (!inputLocked && externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
             SteerInput = steer;
             if (autopilotTarget != null || steeringLocked) steer = Vector2.zero;
 

@@ -32,6 +32,8 @@ using GoF2Remake.Data;
 using GoF2Remake.Flight;
 using GoF2Remake.Visuals;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 
 namespace GoF2Remake.World
@@ -333,6 +335,42 @@ namespace GoF2Remake.World
             mainCamera.fieldOfView = Aspect.VerticalFov(chase.baseFov, mainCamera.aspect);
             chase.enabled = false;
             launchCameraMs = LaunchCameraMs;
+            Player.inputLocked = true;
+            if (Weapons != null) Weapons.Blocked = true;
+        }
+
+        /// <summary>The end of the start sequence (LevelScript +0x24 > 7000): the chase camera and the controls come back, then
+        /// the autopilot to a programmed station. 'skipped' (LevelScript::skipSequence, any input): the camera snaps
+        /// behind the ship instead of easing there.</summary>
+        void EndLaunchCamera(bool skipped)
+        {
+            launchCameraMs = 0f;
+            Player.inputLocked = false;
+            if (Weapons != null) Weapons.Blocked = false;
+            chase.enabled = true;   // eases from here to the chase position
+            if (skipped) chase.Snap();
+            if (Session.ProgrammedStation >= 0 && !Session.InstantJump) Navigation?.ContinueToProgrammedStation();
+        }
+
+        /// <summary>MGame::OnTouchEnd -> LevelScript::skipSequence: the player tried to fly (steer, throttle, boost, fire, a
+        /// tap, any key or button except the pause and autopilot-menu ones) during the start sequence.</summary>
+        static bool PlayerTriedToFly()
+        {
+            var kb = Keyboard.current;
+            if (kb != null && kb.anyKey.wasPressedThisFrame && !kb.escapeKey.wasPressedThisFrame && !kb.tabKey.wasPressedThisFrame) return true;
+            var mouse = Mouse.current;
+            if (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)) return true;
+            var touch = Touchscreen.current;
+            if (touch != null && touch.primaryTouch.press.wasPressedThisFrame) return true;
+            var pad = Gamepad.current;
+            if (pad != null)
+            {
+                if (pad.leftStick.ReadValue().sqrMagnitude > 0.25f || pad.rightStick.ReadValue().sqrMagnitude > 0.25f) return true;
+                if (pad.rightTrigger.wasPressedThisFrame || pad.leftTrigger.wasPressedThisFrame) return true;
+                foreach (var c in pad.allControls)
+                    if (c is ButtonControl b && b.wasPressedThisFrame && b != pad.startButton && b != pad.selectButton) return true;
+            }
+            return false;
         }
 
         void LateUpdate()
@@ -348,14 +386,11 @@ namespace GoF2Remake.World
                 return;
             }
             if (launchCameraMs <= 0f) return;
+            if (Time.timeScale > 0f && PlayerTriedToFly()) { EndLaunchCamera(true); return; }
             launchCameraMs -= Time.deltaTime * 1000f;
             var cam = mainCamera.transform;
             cam.rotation = Quaternion.LookRotation(Player.transform.position - cam.position, Player.transform.up);
-            if (launchCameraMs <= 0f)
-            {
-                chase.enabled = true;   // eases from here to the chase position
-                if (Session.ProgrammedStation >= 0 && !Session.InstantJump) Navigation?.ContinueToProgrammedStation();
-            }
+            if (launchCameraMs <= 0f) EndLaunchCamera(false);
         }
 
         /// <summary>The last save (auto-save slot) after a failed mission, or the main menu without one.</summary>
