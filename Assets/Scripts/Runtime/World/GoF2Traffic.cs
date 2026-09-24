@@ -208,10 +208,14 @@ namespace GoF2Remake.World
             if (anyBack) raiderWaves++;
         }
 
+        /// <summary>A cutscene plays its own music (the prologue / rescue): the traffic music stays silent.</summary>
+        public bool MusicMuted { get; set; }
+
         /// <summary>Radar::draw music choice: switch (with a short fade) only when the category changes.</summary>
         void UpdateMusic(float dt)
         {
             if (assets == null || music == null) return;
+            if (MusicMuted) { if (music.isPlaying) music.Stop(); musicCategory = pendingCategory = -1; return; }
             int cat = HostileCount <= 0 ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
             if (cat != musicCategory && cat != pendingCategory) pendingCategory = cat;
             if (pendingCategory >= 0)

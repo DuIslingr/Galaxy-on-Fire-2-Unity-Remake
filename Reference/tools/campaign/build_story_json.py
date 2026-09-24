@@ -7,7 +7,9 @@
 #   the table), briefing / success pages [{speaker, text}] (speaker name = text 1597 + speaker).
 # Also, from Reference/tools/dialogue/story_table.py (dialogue_cutscenes.md):
 #   pages get 'voice' (the .ogg name, '' = silent; German files are the same name with 'de_' in the _deu folder),
-#   speakers [{portrait: [body, part0..3]}] (index = speaker id), portraitOffsets[body][part] = [anchor 16 top / 32 bottom, y],
+#   speakers [{portrait: [body, part0..3], layers: [{key, anchor, y}]}] (index = speaker id; layers in draw order, key =
+#   the part texture's name without _ipad_large, resolved through the image ids like portrait.py: bodies 11 / 12 do not
+#   follow the body_part_variant naming), portraitOffsets[body][part] = [anchor 16 top / 32 bottom, y],
 #   radio[index] = [{text, speaker, trigger, param, count, voice}] (Level::createRadioMessages per campaign index).
 # The side effects of each step (loaner ships, items, systems...) are code in GoF2Story, not data.
 import json, os, sys
@@ -15,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'dialogue'))
 import campaign_flow_tables as C
 import story_table as ST
+import portrait as PT
 
 P = ST.build()
 by_mission = {m['mission']: m for m in P['missions']}
@@ -51,7 +54,21 @@ for n in range(163):
                     voice=voice(r.get('voice'))) for r in pm.get('radio', [])],
     ))
 
-speakers = [dict(portrait=sp['portrait'] or [-1, -1, -1, -1, -1]) for sp in P['speakers']]
+def layers(desc):
+    out = []
+    if not desc or desc[0] < 0:
+        return out
+    offs = PT.offsets('large')
+    body = desc[0]
+    for k in (2, 1, 0, 3):
+        v = desc[k + 1]
+        if v == -1 or PT.BASE_IDS[body][k] < 0:
+            continue
+        png, rect = PT.part_png(PT.BASE_IDS[body][k] + v, False)
+        anchor, y = offs[body][k]
+        out.append(dict(key=os.path.basename(png).replace('_ipad_large.png', ''), anchor=anchor, y=y))
+    return out
+speakers = [dict(portrait=sp['portrait'] or [-1, -1, -1, -1, -1], layers=layers(sp['portrait'])) for sp in P['speakers']]
 offsets = [dict(parts=[dict(anchor=o[0], y=o[1]) for o in body]) for body in P['portraitParts']['offsetsHD']]
 json.dump(dict(steps=steps, speakers=speakers, portraitOffsets=offsets), open(out, 'w', encoding='utf-8'), indent=1)
 print('wrote', out, len(steps), 'steps,', sum(len(x['radio']) for x in steps), 'radio messages,', sum(len(s['briefing']) for s in steps), 'briefing pages,',

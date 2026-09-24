@@ -57,7 +57,7 @@ namespace GoF2Remake.UI
         GoF2StorySpace story;
         GoF2DialogueView storyDialogue;
         AudioSource voiceSource;
-        VisualElement radioBox, radioPortrait;
+        VisualElement radioBox, radioPortrait, screenFade;
         Label radioSpeaker, radioText;
         int radioShown = -1;
         VisualElement gameOver;
@@ -153,6 +153,7 @@ namespace GoF2Remake.UI
             }
             storyDialogue = new GoF2DialogueView(root, voiceSource);
             radioBox = root.Q("radio");
+            screenFade = root.Q("screenFade");
             radioPortrait = root.Q("radioPortrait");
             radioSpeaker = root.Q<Label>("radioSpeaker");
             radioText = root.Q<Label>("radioText");
@@ -428,6 +429,19 @@ namespace GoF2Remake.UI
                 return;
             }
 
+            if (level.Cutscene)
+            {
+                // A LevelScript cutscene (MGame+0x5f): no HUD, no controls; the radio and fades still show.
+                root.EnableInClassList("hud-cinematic", true);
+                dockPrompt.EnableInClassList("dock-prompt--hidden", true);
+                ship.SetSteer(Vector2.zero);
+                weapons?.SetPrimaryHeld(false);
+                combatView.Update(radar, traffic, health, Camera.main, true, false);
+                UpdateRadio();
+                UpdateFade();
+                return;
+            }
+
             // The action prompt: navigation (autopilot / jump) first, then mining (lock / approach / minigame), else docking.
             string prompt = nav != null ? nav.PromptText : null;
             if (prompt == null && mining != null) prompt = mining.PromptText;
@@ -491,6 +505,16 @@ namespace GoF2Remake.UI
             bool plateFree = (nav == null || nav.Locked == null) && (mining == null || (mining.State == GoF2Mining.Phase.Idle && mining.Locked == null));
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree);
             UpdateRadio();
+            UpdateFade();
+        }
+
+        /// <summary>Layout::drawFade: the campaign level's full-screen fade.</summary>
+        void UpdateFade()
+        {
+            var c = level != null ? level.Campaign : null;
+            float a = c != null ? c.FadeAlpha : 0f;
+            screenFade.style.opacity = a;
+            if (c != null && a > 0f) screenFade.style.backgroundColor = c.FadeColor;
         }
 
         /// <summary>Radio::draw: the campaign level's current radio line (portrait, name, text; its voice once).</summary>
@@ -504,7 +528,7 @@ namespace GoF2Remake.UI
             radioShown = index;
             radioSpeaker.text = GoF2StoryTable.SpeakerName(line.speaker).ToUpperInvariant();
             radioText.text = GoF2Localization.Get(line.text);
-            GoF2Portrait.Show(radioPortrait, GoF2StoryTable.Portrait(line.speaker), false);
+            GoF2Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = GoF2StoryAssets.Load()?.Voice(line.voice);
             if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = GoF2Settings.VoiceVolume; voiceSource.Play(); }
         }

@@ -47,6 +47,19 @@ namespace GoF2Remake.EditorTools
             a.portraitFrame = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Resources/GoF2Hud/portrait_frame.png");
             if (a.portraitBackground == null || a.portraitFrame == null) Debug.LogWarning("GoF2: portrait background / frame missing, run Build HUD Images");
 
+            a.introAtmo = Clip("MUSIC/IntroAtmo_02.ogg");
+            a.battleFull = Clip("MUSIC/Space_Battle_Full.ogg");
+            a.timeShift = Clip("MUSIC/TimeShift_Start.ogg");
+            a.cutsceneExplosion = Clip("SFX_SPACE/Cutscenes_Explosion_01.ogg");
+            a.rumble = Clip("SFX_SPACE/Rumble_CutScene_01.ogg");
+            a.timeJump = Clip("CUTSCENES/SpaceTimeJump_01.ogg");
+            a.timeJumpEnd = a.timeJump;
+            a.engineBroken = Clip("SFX_SPACE/Engine_09_Broken.ogg");
+            a.engineBrokenLoop = Clip("SFX_SPACE/Spaceship_Engine_05_Broken_02.ogg");
+            a.introSky = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_003.mat");
+            a.introSkyAfterJump = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_009.mat");
+            a.hyperDrive = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/fx/hyper_drive.prefab");
+
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();
             Debug.Log($"GoF2: story assets at {AssetPath} ({a.voiceClipsEng.Count} English / {a.voiceClipsDeu.Count} German voice lines, " +
@@ -64,6 +77,13 @@ namespace GoF2Remake.EditorTools
             foreach (Match m in entry.Matches(File.ReadAllText(path)))
                 map[Path.GetFileName(m.Groups[3].Value)] = int.Parse(m.Groups[2].Value);
             return map;
+        }
+
+        static AudioClip Clip(string rel)
+        {
+            var c = AssetDatabase.LoadAssetAtPath<AudioClip>($"{Root}/Audio/{rel}");
+            if (c == null) Debug.LogWarning($"GoF2: missing clip {rel}");
+            return c;
         }
 
         static void AddVoices(string folder, string prefix, System.Collections.Generic.List<string> names, System.Collections.Generic.List<AudioClip> clips)

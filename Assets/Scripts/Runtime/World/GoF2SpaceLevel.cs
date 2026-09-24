@@ -71,8 +71,14 @@ namespace GoF2Remake.World
         public GoF2CampaignLevel Campaign { get; private set; }
         /// <summary>A story conversation is open (the game is paused).</summary>
         public bool Dialogue => Story != null && Story.DialogueOpen;
-        /// <summary>LevelScript startSequenceOver: the launch / arrival camera has ended.</summary>
-        public bool StartSequenceOver => launchCameraMs <= 0f;
+        /// <summary>LevelScript startSequenceOver: the launch / arrival camera has ended (in the prologue / rescue the
+        /// cutscene script decides).</summary>
+        public bool StartSequenceOver => launchCameraMs <= 0f && (Campaign == null || Campaign.StartSequenceOver);
+        public bool LaunchCameraOver => launchCameraMs <= 0f;
+        /// <summary>A LevelScript cutscene owns the camera (MGame+0x5f): no HUD, no player control.</summary>
+        public bool Cutscene => Campaign != null && Campaign.Cutscene;
+        public Transform Asteroids { get; private set; }
+        public GoF2Backdrop Backdrop { get; private set; }
         public GameObject Station { get; private set; }
         public GameObject Jumpgate { get; private set; }
         /// <summary>Hud::drawOrbitInformation: during the arrival camera after a gate / Khador jump.</summary>
@@ -112,15 +118,26 @@ namespace GoF2Remake.World
             GoF2OrbitBuilder.SetupSky(Layout, ambientIntensity);
             GoF2OrbitBuilder.SetupLights(Layout, sunLight, planetLight, sunIntensityAt2, planetLightIntensity);
             SetupCamera();
+            // Status::inEmptyOrbit: Var Hastra (78) has no station while the index is 0 or 1 (the prologue and the rescue);
+            // Level::init: the prologue's asteroid belt is centred on the origin, under its own sky (Level::createSpace).
+            bool prologue = station == 78 && !GoF2Session.FreePlay && GoF2Story.Index <= 1;
+            if (prologue) Layout.hasStation = false;
+            if (prologue && GoF2Story.Index == 0) Layout.asteroidCentre = Vector3.zero;
             Station = GoF2OrbitBuilder.SpawnStation(db, Layout);
             Jumpgate = GoF2OrbitBuilder.SpawnJumpgate(db, Layout);
             AddObstacles();
-            GoF2OrbitBuilder.SpawnAsteroids(db, Layout);
+            Asteroids = GoF2OrbitBuilder.SpawnAsteroids(db, Layout);
+            if (prologue && GoF2Story.Index == 0)
+            {
+                var story = GoF2StoryAssets.Load();
+                if (story != null && story.introSky != null) { RenderSettings.skybox = story.introSky; DynamicGI.UpdateEnvironment(); }
+            }
             orbitInfo = GoF2Session.ArrivedBySystemJump;
             GoF2Session.ArrivedBySystemJump = false;
             SpawnPlayer();
             GoF2OrbitBuilder.SpawnDust(Layout);
             var backdrop = GoF2OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
+            Backdrop = backdrop;
 
             // Locks on the station, the jumpgate and the other stations' planets; autopilot, planet jump, fast-forward.
             Navigation = Player.gameObject.AddComponent<GoF2Navigation>();
@@ -153,8 +170,10 @@ namespace GoF2Remake.World
         void Update()
         {
             if (Health == null) return;
-            Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic);
-            Collision.off = Health.invulnerable;   // PlayerEgo+0x144: off in the same sequences
+            Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic)
+                                  || (Campaign != null && Campaign.PlayerInvulnerable);
+            Collision.off = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic)
+                            || (Campaign != null && Campaign.CollisionOff);   // PlayerEgo+0x144
             Collision.ignoreGate = Navigation.GoingToGate;
             // Hostiles, or a radio line on screen, block fast-forward (MGame::OnUpdate).
             Navigation.HostilesPresent = (Traffic != null && Traffic.HostileCount > 0) || (Campaign != null && Campaign.Radio != null && Campaign.Radio.Busy);

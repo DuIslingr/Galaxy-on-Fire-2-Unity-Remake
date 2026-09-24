@@ -77,8 +77,8 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>MenuTouchWindow::startGOF2 / startValkyrie / startSupernova 0x1540f0 / 0x153ba4 / 0x153e14 after
-        /// Status::resetGame. Returns the scene to load. The prologue (index 0, a scripted flight level) isn't built yet, so
-        /// the main game starts like skipping it (MGame::OnTouchEnd: index 1, 3 kills) and docks at Var Hastra.</summary>
+        /// Status::resetGame. Returns the scene to load: the main game starts in flight with the prologue (index 0, the
+        /// Phantom in the Dareius belt), the add-ons docked.</summary>
         public static string StartCampaign(GoF2Database db, GoF2Campaign campaign)
         {
             StartNewGame(0);
@@ -105,10 +105,9 @@ namespace GoF2Remake.Data
                     GoF2Session.Kills = 386;
                     break;
                 default:
-                    Advance(db);   // skipping the prologue: nextCampaignMission, setKills(3)
-                    GoF2Session.Kills = 3;
                     GoF2Session.StationIndex = 78;
-                    break;
+                    GoF2Session.LaunchedFromStation = GoF2Session.ArrivedByTravel = false;
+                    return "Space";   // module 2: the prologue
             }
             return "Station";
         }

@@ -15,7 +15,39 @@ namespace GoF2Remake.UI
     {
         static readonly int[] DrawOrder = { 2, 1, 0, 3 };
 
-        /// <summary>Fills 'box' (class .portrait) with the portrait of a descriptor (null = empty box).</summary>
+        /// <summary>A story speaker's portrait (its layers resolved through the image ids, GoF2StoryTable).</summary>
+        public static void ShowSpeaker(VisualElement box, int speaker, bool mirrored)
+        {
+            box.Clear();
+            box.EnableInClassList("portrait--mirrored", mirrored);
+            var assets = GoF2StoryAssets.Load();
+            if (assets == null) return;
+            if (assets.portraitBackground != null) box.style.backgroundImage = assets.portraitBackground;
+            var layers = new VisualElement { pickingMode = PickingMode.Ignore };
+            layers.AddToClassList("portrait-layers");
+            box.Add(layers);
+            foreach (var l in GoF2StoryTable.PortraitLayers(speaker))
+            {
+                var (tex, imageHeight) = assets.Part(l.key);
+                if (tex == null) continue;
+                var e = new VisualElement { pickingMode = PickingMode.Ignore };
+                e.AddToClassList("portrait-part");
+                e.style.backgroundImage = tex;
+                e.style.width = tex.width;
+                e.style.height = tex.height;
+                e.style.top = l.anchor == 32 ? l.y - imageHeight : l.y;
+                layers.Add(e);
+            }
+            if (assets.portraitFrame != null)
+            {
+                var frame = new VisualElement { pickingMode = PickingMode.Ignore };
+                frame.AddToClassList("portrait-frame");
+                frame.style.backgroundImage = assets.portraitFrame;
+                box.Add(frame);
+            }
+        }
+
+        /// <summary>Fills 'box' (class .portrait) with the portrait of a descriptor (null = empty box); random agents.</summary>
         public static void Show(VisualElement box, int[] descriptor, bool mirrored)
         {
             box.Clear();

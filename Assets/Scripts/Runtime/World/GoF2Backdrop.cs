@@ -86,6 +86,19 @@ namespace GoF2Remake.World
             }
         }
 
+        /// <summary>StarSystem::switchPlanetForIntro 0x15d820 (the prologue's time jump): the orbit planet gets planet_000_big
+        /// and twice its size.</summary>
+        public void SwitchOrbitPlanetForIntro()
+        {
+            var mat = Load("planet_000_big");
+            foreach (var p in planets)
+            {
+                if (!p.orbitPlanet) continue;
+                if (mat != null) p.t.GetComponent<MeshRenderer>().sharedMaterial = mat;
+                p.scale *= 2f;
+            }
+        }
+
         static void SetProps(Transform t, bool mirror, Color tint)
         {
             var block = new MaterialPropertyBlock();

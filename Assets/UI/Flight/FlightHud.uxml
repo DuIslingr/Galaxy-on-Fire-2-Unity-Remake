@@ -130,6 +130,7 @@
             <ui:Label name="gameOverTitle" class="game-over-title gof-semibold" picking-mode="Ignore" />
             <ui:Label name="gameOverText" class="game-over-text" picking-mode="Ignore" />
         </ui:VisualElement>
+        <ui:VisualElement name="screenFade" class="screen-fade" picking-mode="Ignore" />
         <ui:VisualElement name="radio" class="radio" picking-mode="Ignore">
             <ui:VisualElement class="radio-header" picking-mode="Ignore">
                 <ui:Label name="radioSpeaker" class="radio-speaker gof-semibold" picking-mode="Ignore" />

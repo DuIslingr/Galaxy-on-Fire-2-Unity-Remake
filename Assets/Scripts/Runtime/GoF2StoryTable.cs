@@ -31,11 +31,21 @@ namespace GoF2Remake.Data
         public string voice = "";
     }
 
-    /// <summary>A story speaker's portrait descriptor {body, part0..part3} (PTR 0x2647ec).</summary>
+    /// <summary>A story speaker's portrait descriptor {body, part0..part3} (PTR 0x2647ec) and its layers in draw order.</summary>
     [Serializable]
     public class GoF2Speaker
     {
         public int[] portrait = { -1, -1, -1, -1, -1 };
+        public List<GoF2PortraitLayer> layers = new List<GoF2PortraitLayer>();
+    }
+
+    /// <summary>One portrait part: the texture key ("body_part_variant" file name) and where it sits (anchor 16 top /
+    /// 32 bottom at y).</summary>
+    [Serializable]
+    public class GoF2PortraitLayer
+    {
+        public string key;
+        public int anchor, y;
     }
 
     [Serializable]
@@ -101,6 +111,10 @@ namespace GoF2Remake.Data
 
         /// <summary>A story speaker's portrait descriptor, null for ids without one (1660+ names, random faces).</summary>
         public static int[] Portrait(int speaker) => speaker >= 0 && speaker < Data.speakers.Count ? Data.speakers[speaker].portrait : null;
+
+        /// <summary>A story speaker's portrait layers (draw order), empty for ids without a portrait.</summary>
+        public static List<GoF2PortraitLayer> PortraitLayers(int speaker) =>
+            speaker >= 0 && speaker < Data.speakers.Count && Data.speakers[speaker].layers != null ? Data.speakers[speaker].layers : new List<GoF2PortraitLayer>();
 
         /// <summary>IMAGE_OFFSETS_IPAD_LARGE: where a body's part sits in the 160x200 portrait.</summary>
         public static GoF2PortraitOffset PortraitOffset(int body, int part) =>

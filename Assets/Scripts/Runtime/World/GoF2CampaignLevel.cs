@@ -6,7 +6,10 @@
 // GoF2SpaceLevel when GoF2Story.IsLevelMission holds for the orbit; normal traffic is off then (GoF2Traffic). Indices
 // without a case spawn nothing (an empty orbit) but still play their radio lines. The level keeps running after its
 // success dialogue with the next index (e.g. 4 -> 5 on the same ships).
-// Built so far: 4 / 5 (mining, the pirate ambush), 7 (the pirate trap with Gunant Breh).
+// Built so far: 0 / 1 (the prologue and the rescue cutscenes, GoF2IntroCutscenes), 4 / 5 (mining, the pirate ambush),
+// 7 (the pirate trap with Gunant Breh).
+// Cutscene support: the look-at camera (GoF2CutsceneCamera), fades (Layout::startFade: full-screen colour over n ms),
+// the level's own music and sound loops, and flags for the level (HUD off, invulnerable, no collision, start sequence).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -30,6 +33,24 @@ namespace GoF2Remake.World
         public bool Won => win != null && win();
         public bool Failed => fail != null && fail();
 
+        // Cutscene state (LevelScript: this[0x11] cinematic, player invulnerable / no collision, startSequenceOver).
+        public bool Cutscene { get; set; }
+        public bool PlayerInvulnerable { get; set; }
+        public bool CollisionOff { get; set; }
+        public bool StartSequenceOver { get; set; } = true;
+        /// <summary>The level plays its own music (the traffic music stays silent).</summary>
+        public bool MusicOwned { get; set; }
+        /// <summary>Layout::drawFade: the full-screen colour's opacity now (0 = none).</summary>
+        public float FadeAlpha { get; private set; }
+        public Color FadeColor { get; private set; } = Color.black;
+        public bool FadeDone => fadeMs >= fadeLength;
+
+        GoF2IntroCutscenes intro;
+        AudioSource music;
+        readonly AudioSource[] loops = new AudioSource[3];
+        float fadeMs, fadeLength = 1f;
+        bool fadeIn, fading;
+
         GoF2SpaceLevel level;
         GoF2Traffic traffic;
         System.Func<bool> win, fail;
@@ -43,7 +64,11 @@ namespace GoF2Remake.World
             level = spaceLevel;
             traffic = npcTraffic;
             BuiltIndex = GoF2Story.Index;
+            music = gameObject.AddComponent<AudioSource>();
+            music.playOnAwake = false;
+            music.spatialBlend = 0f;
             Build(BuiltIndex);
+            traffic.MusicMuted = MusicOwned;
             traffic.ConnectPlayers();
             Radio = new GoF2Radio(GoF2Story.Step?.radio);
             Debug.Log($"GoF2CampaignLevel: index {BuiltIndex}, {Ships.Count} ships, {Radio.Count} radio lines");
@@ -53,7 +78,7 @@ namespace GoF2Remake.World
         public void ResetClock() => MissionMs = 0f;
 
         /// <summary>Level::createShip(race, kind, ship, waypoint ...): at the waypoint +- 20 000 per axis.</summary>
-        GoF2NpcShip Ship(int race, int ship, Vector3 waypoint, bool jitter = true, System.Action<GoF2SpawnSpec> setup = null)
+        public GoF2NpcShip SpawnShip(int race, int ship, Vector3 waypoint, bool jitter = true, System.Action<GoF2SpawnSpec> setup = null)
         {
             var spec = new GoF2SpawnSpec { group = GoF2NpcGroup.Raider, race = race, ship = ship, position = waypoint + (jitter ? Jitter() : Vector3.zero) };
             setup?.Invoke(spec);
@@ -67,9 +92,14 @@ namespace GoF2Remake.World
             var player = level.Player.transform;
             switch (index)
             {
+                case 0:
+                case 1:
+                    intro = new GoF2IntroCutscenes(this, level, index);
+                    intro.Build();
+                    break;
                 case 4:
                     // One pirate (ship 2 Hiro) far out, inactive, always-enemy, asleep; index 5's script brings it in.
-                    Ship(GoF2Standing.Pirate, 2, new Vector3(0, 0, -200000), true, s => { s.inactive = true; s.alwaysEnemy = true; });
+                    SpawnShip(GoF2Standing.Pirate, 2, new Vector3(0, 0, -200000), true, s => { s.inactive = true; s.alwaysEnemy = true; });
                     break;
                 case 7:
                 {
@@ -79,9 +109,9 @@ namespace GoF2Remake.World
                     route.points.Add(new Vector3(-4000, -3000, 80000));
                     route.points.Add(new Vector3(10000, 7000, 160000));
                     PlayerRoute = route;
-                    for (int i = 0; i < 3; i++) Ship(GoF2Standing.Pirate, 2, route.points[1], true, s => { s.asleep = true; });
+                    for (int i = 0; i < 3; i++) SpawnShip(GoF2Standing.Pirate, 2, route.points[1], true, s => { s.asleep = true; });
                     var gunantPos = ToGame(player.TransformPoint(new Vector3(-700, 50, 6000) * M));
-                    Ship(3, 30, gunantPos, false, s => { s.alwaysFriend = true; s.hitpoints = 9999999; s.route = route.Clone(); s.nameText = 1599; });
+                    SpawnShip(3, 30, gunantPos, false, s => { s.alwaysFriend = true; s.hitpoints = 9999999; s.route = route.Clone(); s.nameText = 1599; });
                     win = () => DeadRange(0, 3);   // Objective 0x12 (0, 3)
                     break;
                 }
@@ -100,9 +130,62 @@ namespace GoF2Remake.World
             if (dtMs <= 0f) return;
             MissionMs += dtMs;
             if (PlayerRoute != null && level.Player != null) PlayerRoute.Update(ToGame(level.Player.transform.position));
+            if (fading)
+            {
+                fadeMs += dtMs;
+                float t = Mathf.Clamp01(fadeMs / fadeLength);
+                FadeAlpha = fadeIn ? 1f - t : t;
+                if (fadeIn && t >= 1f) fading = false;   // a fade-out stays opaque (enableFillScreen)
+            }
+            if (intro != null && GoF2Story.Index == BuiltIndex) intro.Tick(dtMs);
             Script(GoF2Story.Index);
-            if (!level.Dialogue && level.StartSequenceOver) Radio?.Update(dtMs, this);   // not during the launch / arrival camera
+            if (!level.Dialogue && level.LaunchCameraOver) Radio?.Update(dtMs, this);   // not during the launch / arrival camera
         }
+
+        void LateUpdate()
+        {
+            if (intro != null) intro.LateTick(Time.deltaTime * 1000f);
+        }
+
+        // ---- cutscene helpers ------------------------------------------------------------------------------
+
+        /// <summary>Layout::startFade: in = from the colour to clear, out = from clear to the colour (then held).</summary>
+        public void Fade(bool fadingIn, Color colour, float ms, bool fromOpaque = false)
+        {
+            fadeIn = fadingIn;
+            FadeColor = colour;
+            fadeLength = Mathf.Max(1f, ms);
+            fadeMs = 0f;
+            fading = true;
+            FadeAlpha = fadingIn ? 1f : 0f;
+        }
+
+        /// <summary>Stop the music and play another track (null = silence).</summary>
+        public void PlayMusic(AudioClip clip, bool loop)
+        {
+            music.Stop();
+            music.clip = clip;
+            music.loop = loop;
+            music.volume = GoF2Settings.MusicVolume;
+            if (clip != null) music.Play();
+        }
+
+        /// <summary>A looping sound in one of three slots (the rumble, the broken engines).</summary>
+        public void PlayLoop(int slot, AudioClip clip)
+        {
+            if (loops[slot] == null)
+            {
+                loops[slot] = gameObject.AddComponent<AudioSource>();
+                loops[slot].playOnAwake = false;
+                loops[slot].spatialBlend = 0f;
+                loops[slot].loop = true;
+            }
+            loops[slot].clip = clip;
+            loops[slot].volume = GoF2Settings.SfxVolume;
+            if (clip != null) loops[slot].Play();
+        }
+
+        public void StopLoop(int slot) { if (loops[slot] != null) loops[slot].Stop(); }
 
         /// <summary>LevelScript::process per index (campaign_levels_a.md 3).</summary>
         void Script(int index)

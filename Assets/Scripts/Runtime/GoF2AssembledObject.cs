@@ -53,6 +53,13 @@ namespace GoF2Remake.Visuals
                  "Not baked into the prefab, which stays in model space.")]
         public Vector3 spawnRotationEngine;
 
+        /// <summary>The engine exhaust on / off: the player parts ('player') or the NPC parts (cutscenes: engines off).</summary>
+        public void SetExhaust(bool on, bool player)
+        {
+            var parts = player ? playerVariantParts : npcVariantParts;
+            if (parts != null) foreach (var g in parts) if (g != null) g.SetActive(on);
+        }
+
         /// <summary>Switches between the player and NPC parts (engine meshes etc.).</summary>
         public void SetPlayerVariant(bool player)
         {

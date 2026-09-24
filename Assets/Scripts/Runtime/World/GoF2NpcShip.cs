@@ -54,7 +54,25 @@ namespace GoF2Remake.World
         public bool Asleep { get; private set; }
         /// <summary>PlayerFighter: a sleeping hostile ship is invisible after the tutorial (index &gt; 1): no model, no marker,
         /// no lock.</summary>
-        public bool Hidden => Asleep && Target.hostileToPlayer && GoF2Session.CampaignMission > 1;
+        public bool Hidden => forcedHidden || (Asleep && Target.hostileToPlayer && GoF2Session.CampaignMission > 1);
+        bool forcedHidden;
+
+        /// <summary>KIPlayer::setVisible (cutscenes): hidden ships have no model, marker or lock.</summary>
+        public void SetVisible(bool visible)
+        {
+            forcedHidden = !visible;
+            if (modelGo != null && Current == State.Fly) modelGo.SetActive(!Hidden);
+        }
+
+        /// <summary>The engine exhaust meshes (cutscenes: "exhaust hidden" while the pirates wait).</summary>
+        public void SetExhaust(bool on) => modelGo?.GetComponent<GoF2AssembledObject>()?.SetExhaust(on, false);
+
+        /// <summary>The engine loop (PlayerFighter: no NPC engine sound in index 1).</summary>
+        public void SetEngineSound(bool on)
+        {
+            if (engine == null || engine.clip == null) return;
+            if (on && !engine.isPlaying) engine.Play(); else if (!on) engine.Stop();
+        }
         bool inactive;
         [System.NonSerialized] public List<GoF2Target> enemies = new List<GoF2Target>();
 
@@ -297,7 +315,7 @@ namespace GoF2Remake.World
         {
             Asleep = inactive = false;
             Target.untargetable = false;
-            if (modelGo != null && Current == State.Fly) modelGo.SetActive(true);
+            if (modelGo != null && Current == State.Fly) modelGo.SetActive(!forcedHidden);
         }
 
         /// <summary>Places the ship (Unity world position) facing 'forward'.</summary>

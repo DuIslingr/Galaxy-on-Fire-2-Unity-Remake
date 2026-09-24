@@ -117,7 +117,7 @@ namespace GoF2Remake.UI
             speaker.text = GoF2StoryTable.SpeakerName(p.speaker).ToUpperInvariant();
             text.text = p.text;
             scroll.scrollOffset = Vector2.zero;
-            GoF2Portrait.Show(portrait, GoF2StoryTable.Portrait(p.speaker), p.speaker == 0);
+            GoF2Portrait.ShowSpeaker(portrait, p.speaker, p.speaker == 0);
             bool last = page == pages.Count - 1;
             back.EnableInClassList("dialogue-button--hidden", message || page == 0);
             skip.EnableInClassList("dialogue-button--hidden", message || pages.Count <= 1);
