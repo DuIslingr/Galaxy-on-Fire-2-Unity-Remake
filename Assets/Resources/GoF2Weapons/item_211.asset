@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 77d20991657c9be4ab3a93aa6506ddd5, type: 3}
-  m_Name: item_046
-  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Flight.GoF2WeaponFx
-  item: 46
-  projectile: {fileID: 8844508235065316109, guid: adcd1d44a95d911419f486d12e23b6a7, type: 3}
+  m_Name: item_211
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Flight.WeaponFx
+  item: 211
+  projectile: {fileID: 0}
   muzzleFlash: {fileID: 0}
   impact: {fileID: 0}
-  shot: {fileID: 8300000, guid: e47eaa061b17fbe469aed62c6ebd78b8, type: 3}
+  shot: {fileID: 8300000, guid: 52e47e6ba07c8f844a5089fa714b907a, type: 3}
   shotLoops: 0
-  explosionType: 0
-  explosionSound: {fileID: 8300000, guid: 4866b069cc7a16847a860aca30af8e50, type: 3}
+  explosionType: -1
+  explosionSound: {fileID: 0}
   engineLoop: {fileID: 0}
   turretMounted: {fileID: 0}
-  sentry: {fileID: 0}
+  sentry: {fileID: 7006926833711962464, guid: 6fe13631945308b43b8eff2540e6d1b2, type: 3}

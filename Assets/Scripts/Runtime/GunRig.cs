@@ -3,6 +3,9 @@
 // mount, a small pool of impact effects. Plain C#, shared by the player's WeaponSystem and the NPC ships.
 // Blasters and thermo guns face the camera; lasers, cannons and rockets point along their flight. Projectiles shrink over
 // their last 1000 ms (Gun.VisualScale). Effects never cast shadows or cull by LOD.
+// Beams (BeamGun::update 0x1a6b04): one mesh 1 unit long along +Z, scaled (1, 1, beam length) along the direction chosen
+// at fire time, following the mount, its animation restarted per shot and hidden when it ends. Mines are drawn at x0.7
+// and tumble (MineGun). Scatter shells have no impact mesh (their burst explosion replaces it).
 
 using GoF2Remake.Visuals;
 using UnityEngine;
@@ -14,6 +17,9 @@ namespace GoF2Remake.Flight
         public readonly Gun gun;
         public readonly WeaponFx fx;
         readonly Transform[] projectiles;
+        readonly Transform ship;
+        float beamMs, beamLength;
+        Vector3[] spin;
         readonly bool billboard;
         readonly GameObject muzzle;
         readonly float muzzleLength;
@@ -29,6 +35,7 @@ namespace GoF2Remake.Flight
         {
             this.gun = gun;
             this.fx = fx;
+            ship = muzzleParent;
             billboard = gun.kind == Gun.Kind.Blaster || gun.kind == Gun.Kind.Thermo;
             projectiles = new Transform[gun.bullets.Length];
             if (fx != null && fx.projectile != null)
@@ -48,7 +55,15 @@ namespace GoF2Remake.Flight
                 muzzleLength = Mathf.Max(80f, MaxLength(muzzle));
                 muzzle.SetActive(false);
             }
-            if (fx != null && fx.impact != null && impactPool > 0)
+            if (gun.kind == Gun.Kind.Mine)
+            {
+                // MineGun: a random tumble per mine, (rnd(200) - 100) / 50 per axis (read as rad/s).
+                spin = new Vector3[projectiles.Length];
+                for (int i = 0; i < spin.Length; i++)
+                    spin[i] = new Vector3(Random.Range(0, 200) - 100, Random.Range(0, 200) - 100, Random.Range(0, 200) - 100) / 50f;
+            }
+            if (gun.isBeam && projectiles.Length > 0 && projectiles[0] != null) beamLength = Mathf.Max(200f, MaxLength(projectiles[0].gameObject));
+            if (fx != null && fx.impact != null && impactPool > 0 && gun.kind != Gun.Kind.ScatterGun)
             {
                 impacts = new GameObject[impactPool];
                 impactMs = new float[impactPool];
@@ -82,6 +97,12 @@ namespace GoF2Remake.Flight
         /// <summary>A shot left the gun: the muzzle flash.</summary>
         public void OnShot()
         {
+            if (gun.isBeam && projectiles.Length > 0 && projectiles[0] != null)
+            {
+                projectiles[0].gameObject.SetActive(true);
+                PartAnimation.PlayOnce(projectiles[0].gameObject);
+                beamMs = beamLength;
+            }
             if (muzzle == null) return;
             muzzle.SetActive(true);
             PartAnimation.PlayOnce(muzzle);
@@ -103,6 +124,12 @@ namespace GoF2Remake.Flight
 
         public void UpdateVisuals(float dtMs, Camera cam, Vector3 fallbackForward)
         {
+            if (gun.isBeam)
+            {
+                UpdateBeam(dtMs);
+                projectilesDone(dtMs, cam);
+                return;
+            }
             for (int i = 0; i < projectiles.Length; i++)
             {
                 var t = projectiles[i];
@@ -114,9 +141,29 @@ namespace GoF2Remake.Flight
                 var rot = billboard && cam != null
                     ? cam.transform.rotation
                     : Quaternion.LookRotation(b.velocity.sqrMagnitude > 1e-9f ? b.velocity : fallbackForward, b.up);
+                if (spin != null) rot = Quaternion.Euler(spin[i] * (b.age * 0.001f * Mathf.Rad2Deg));
                 t.SetPositionAndRotation(b.position, rot);
-                t.localScale = Vector3.one * gun.VisualScale(i);
+                t.localScale = Vector3.one * gun.VisualScale(i) * (spin != null ? 0.7f : 1f);
             }
+            projectilesDone(dtMs, cam);
+        }
+
+        /// <summary>The beam: at the mount, along the fire-time direction, scaled to its length (units).</summary>
+        void UpdateBeam(float dtMs)
+        {
+            var t = projectiles.Length > 0 ? projectiles[0] : null;
+            if (t == null) return;
+            if (beamMs <= 0f) { if (t.gameObject.activeSelf) t.gameObject.SetActive(false); return; }
+            beamMs -= dtMs;
+            var from = ship != null ? ship.TransformPoint(gun.mountLocal) : gun.bullets[0].position;
+            var dir = gun.BeamDir.sqrMagnitude > 1e-9f ? gun.BeamDir : Vector3.forward;
+            t.SetPositionAndRotation(from, Quaternion.LookRotation(dir, ship != null ? ship.up : Vector3.up));
+            t.localScale = new Vector3(1f, 1f, gun.BeamLengthUnits);
+            if (beamMs <= 0f) t.gameObject.SetActive(false);
+        }
+
+        void projectilesDone(float dtMs, Camera cam)
+        {
             if (muzzle != null && muzzleMs > 0f)
             {
                 muzzleMs -= dtMs;

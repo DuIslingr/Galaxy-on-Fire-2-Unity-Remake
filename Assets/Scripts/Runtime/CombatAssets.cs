@@ -47,6 +47,8 @@ namespace GoF2Remake.Flight
         public AudioClip homeBaseMusic;
         [Tooltip("Mesh 14246 station_pirates_explosion_anim: a Pirate Outpost's wreck animation (20 s).")]
         public GameObject outpostWreck;
+        [Tooltip("Explosion types 7 (EMP), 8-10 (scatter), 11 (shock blast glow + sphere), 13 (fireworks).")]
+        public GameObject explosionEmp, explosionScatter, shockGlow, shockSphere, fireworksBurst;
 
         static CombatAssets cached;
         public static CombatAssets Load() => cached != null ? cached : cached = Resources.Load<CombatAssets>(ResourcePath);

@@ -121,6 +121,7 @@
                 <ui:VisualElement class="bar bar--boost" picking-mode="Ignore">
                     <ui:VisualElement name="boostBarFill" class="bar-fill bar-fill--boost" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <ui:Label name="secondaryLabel" class="secondary-label gof-semibold" />
             </ui:VisualElement>
 
             <ui:Button name="menuButton" class="hud-menu-button gof-semibold" />

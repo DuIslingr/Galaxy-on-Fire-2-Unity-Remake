@@ -514,6 +514,23 @@
     background-color: var(--gof-amber);
 }
 
+/* Hud::updateSecondaryWeaponString: "<name> (<amount>)" of the selected secondary; tap to switch (touch). */
+.secondary-label {
+    display: none;
+    margin-top: 10px;
+    font-size: 17px;
+    color: var(--gof-amber);
+    white-space: normal;
+}
+
+.secondary-label--shown {
+    display: flex;
+}
+
+.secondary-label--empty {
+    color: var(--gof-text-dim);
+}
+
 /* ---- menu button (touch) --------------------------------------------------------------- */
 
 .hud-menu-button {

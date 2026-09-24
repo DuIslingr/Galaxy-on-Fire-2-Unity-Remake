@@ -139,6 +139,33 @@ namespace GoF2Remake.World
 
         static Vector3 ToUnity(Vector3 game) => new Vector3(game.x, game.y, -game.z) * M;
         static Vector3 ToGame(Vector3 unity) => new Vector3(unity.x, unity.y, -unity.z) / M;
+        // PlayerFighter::initPush 0xf3b00 / push 0xf3c50 (the shock blast): pushed away from the blast centre for
+        // (1 - min(d / radius, 1)) * 5000 ms at a speed that fades over that time, tumbling. The start speed was lost in the
+        // decompile (a: 4 u/ms).
+        const float PushSpeedUnits = 4f, PushMaxMs = 5000f;
+        Vector3 pushDir, pushTumble;
+        float pushMs, pushTotalMs;
+
+        /// <summary>The shock blast: 'center' and 'radius' in Unity metres.</summary>
+        public void InitPush(Vector3 center, float radius)
+        {
+            if (IsFixed || IsFreighter || radius <= 0f) return;
+            var away = transform.position - center;
+            float d = away.magnitude;
+            pushTotalMs = pushMs = (1f - Mathf.Min(d / radius, 1f)) * PushMaxMs;
+            pushDir = d > 1e-3f ? away / d : Random.onUnitSphere;
+            pushTumble = Random.onUnitSphere * 0.2f;
+        }
+
+        void UpdatePush(float dtMs)
+        {
+            if (pushMs <= 0f) return;
+            float k = pushMs / Mathf.Max(1f, pushTotalMs);
+            transform.position += pushDir * PushSpeedUnits * k * dtMs * M;
+            transform.Rotate(pushTumble, k * dtMs * 0.05f, Space.World);
+            pushMs -= dtMs;
+        }
+
         /// <summary>Game rotation identity: facing game +Z = Unity -Z.</summary>
         static readonly Quaternion GameForward = Quaternion.Euler(0f, 180f, 0f);
 
@@ -163,9 +190,8 @@ namespace GoF2Remake.World
             Target.race = spec.race;
             Target.customDeath = true;
             Target.radius = (spec.hitRadius > 0f ? spec.hitRadius : NpcTables.HitRadiusUnits) * M;
-            Target.hitpoints = new Hitpoints(NpcTables.Hull(kind, spec.ship));
-            Target.hitpoints.SetEmp(NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));
-            if (spec.hitpoints > 0) Target.hitpoints = new Hitpoints(spec.hitpoints);
+            Target.hitpoints = new Hitpoints(spec.hitpoints > 0 ? spec.hitpoints : NpcTables.Hull(kind, spec.ship));
+            Target.hitpoints.SetEmp(NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));   // also with a hull override
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
             Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? Localization.Get(spec.nameText) : null;
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;
@@ -301,6 +327,7 @@ namespace GoF2Remake.World
             if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }
             UpdateRelations();
             Hp.Update(dtMs);
+            UpdatePush(dtMs);
             UpdateSmoke();
             UpdateMissionCrate();
             if (Spec.stationary) return;   // parked: a target that neither flies nor shoots

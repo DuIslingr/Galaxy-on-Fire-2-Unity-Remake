@@ -81,6 +81,10 @@ namespace GoF2Remake.Data
         /// <summary>Status+0x114 (Reference/research/kaamo_club.md 2): the Kaamo Club, 0 not owned, 1 Mkkt Bkkt's call
         /// heard, 2 purchasable, 3 owned.</summary>
         public static int KaamoState;
+        /// <summary>Status+0xf4: the selected secondary weapon item (-1 = none), kept while it stays mounted.</summary>
+        public static int SelectedSecondary = -1;
+        /// <summary>Status+200: nukes detonated (medal 20).</summary>
+        public static int BombsDetonated;
         /// <summary>Status+0x14c, the storage station: its goods (station 108's stock while owned) and parked hulls.</summary>
         public static List<ItemStack> KaamoItems = new List<ItemStack>();
         public static List<StoredShip> KaamoShips = new List<StoredShip>();
@@ -252,6 +256,8 @@ namespace GoF2Remake.Data
             CoreTypesMined = new HashSet<int>();
             ShipMods = new List<int>();
             KaamoState = 0;
+            SelectedSecondary = -1;
+            BombsDetonated = 0;
             KaamoItems = new List<ItemStack>();
             KaamoShips = new List<StoredShip>();
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;

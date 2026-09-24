@@ -18,3 +18,8 @@ MonoBehaviour:
   impact: {fileID: 7312914096283677352, guid: 18e4d9b9372268548945f5457e8e8532, type: 3}
   shot: {fileID: 8300000, guid: eaafe621f8f33a24a8aa227626139a3a, type: 3}
   shotLoops: 0
+  explosionType: -1
+  explosionSound: {fileID: 0}
+  engineLoop: {fileID: 0}
+  turretMounted: {fileID: 0}
+  sentry: {fileID: 0}

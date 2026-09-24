@@ -70,7 +70,7 @@ namespace GoF2Remake.UI
         VisualElement autopilotMenu, autopilotMenuItems;
         readonly System.Collections.Generic.List<(Button button, Navigation.Target target)> menuButtons = new System.Collections.Generic.List<(Button, Navigation.Target)>();
         int menuIndex, lastMenuMove, menuOpenedFrame;
-        Label speedValue, missileAmmo;
+        Label speedValue, missileAmmo, secondaryLabel;
         WeaponSystem weapons;
         float hitFlashMs;
         const float CrosshairDistanceMeters = 22000f * 0.05f;   // 0x46abe000
@@ -124,6 +124,9 @@ namespace GoF2Remake.UI
             fireButton = root.Q("fireButton");
             missileButton = root.Q("missileButton");
             missileAmmo = root.Q<Label>("missileAmmo");
+            secondaryLabel = root.Q<Label>("secondaryLabel");
+            // Remake: a tap on the secondary's name switches to the next mounted one (the original's HUD quick menu).
+            secondaryLabel?.RegisterCallback<PointerDownEvent>(e => { weapons?.CycleSecondary(); e.StopPropagation(); });
             crosshair = root.Q("crosshair");
             dockPrompt = root.Q("dockPrompt");
             dockGlyph = root.Q("dockGlyph");
@@ -327,6 +330,7 @@ namespace GoF2Remake.UI
                 Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("Q"), InputGlyph.Key("E"));
                 Hint(T("hudFire", "FIRE"), InputGlyph.Key("CTRL"));
                 Hint(T("hudMissile", "MISSILE"), InputGlyph.Key("F"));
+                if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), InputGlyph.Key("G"));
                 Hint(T("hudBoost", "BOOST"), InputGlyph.Key("SPACE", true));
                 Hint(T("hudLevel", "LEVEL"), InputGlyph.Key("R"));
                 Hint(Localization.Get(571).ToUpperInvariant(), InputGlyph.Key("TAB"));
@@ -338,6 +342,7 @@ namespace GoF2Remake.UI
                 Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Pad(PadButton.LeftBumper), InputGlyph.Pad(PadButton.RightBumper));
                 Hint(T("hudFire", "FIRE"), InputGlyph.Pad(PadButton.RightTrigger));
                 Hint(T("hudMissile", "MISSILE"), InputGlyph.Pad(PadButton.LeftTrigger));
+                if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), InputGlyph.Pad(PadButton.DPad));
                 Hint(T("hudBoost", "BOOST"), InputGlyph.Pad(PadButton.A));
                 Hint(T("hudLevel", "LEVEL"), InputGlyph.Pad(PadButton.Y));
                 Hint(Localization.Get(571).ToUpperInvariant(), InputGlyph.Pad(PadButton.View));
@@ -500,6 +505,14 @@ namespace GoF2Remake.UI
             missileButton.EnableInClassList("touch-button--hidden", ammo < 0);
             missileButton.EnableInClassList("touch-button--disabled", ammo == 0);
             missileAmmo.text = ammo >= 0 ? ammo.ToString() : "";
+            if (secondaryLabel != null)
+            {
+                bool any = weapons != null && weapons.SelectedSecondary >= 0;
+                secondaryLabel.EnableInClassList("secondary-label--shown", any);
+                secondaryLabel.EnableInClassList("secondary-label--empty", ammo == 0);
+                string text = any ? $"{weapons.SecondaryName} ({ammo})" : "";
+                if (secondaryLabel.text != text) secondaryLabel.text = text;
+            }
             fireButton.EnableInClassList("touch-button--hidden", weapons == null || !weapons.HasPrimary);
             UpdateCrosshair();
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == Mining.Phase.Idle);

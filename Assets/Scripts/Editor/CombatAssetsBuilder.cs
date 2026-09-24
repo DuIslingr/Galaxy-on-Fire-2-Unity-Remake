@@ -55,6 +55,11 @@ namespace GoF2Remake.EditorTools
             a.battleMusic = new[] { Clip("MUSIC/Space_Battle_Low.ogg"), Clip("MUSIC/Space_Battle_Medium.ogg"), Clip("MUSIC/Space_Battle_Full.ogg") };
             a.homeBaseMusic = Clip("MUSIC/HomeBase_NoCombat.ogg");
             a.outpostWreck = Prefab("Prefabs/main/stations/station_pirates_explosion_anim.prefab");
+            a.explosionEmp = Prefab("Prefabs/main/fx/explosion_emp_anim_lookat_add.prefab");
+            a.explosionScatter = Prefab("Prefabs/valkyrie/fx/v_scattergun_000_explosion_lookat_anim_add.prefab");
+            a.shockGlow = Prefab("Prefabs/supernova/fx/sn_shock_blast_glow_anim_lookat_add.prefab");
+            a.shockSphere = Prefab("Prefabs/supernova/fx/sn_shock_blast_sphere_anim_add.prefab");
+            a.fireworksBurst = Prefab("Prefabs/supernova/fx/sn_fireworks_lookat_anim_add.prefab");
 
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();

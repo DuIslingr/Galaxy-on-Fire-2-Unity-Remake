@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -61,6 +61,8 @@ namespace GoF2Remake.Data
         public int kaamoState;
         public List<ItemStack> kaamoItems;
         public List<StoredShip> kaamoShips;
+        // version 5: combat
+        public int selectedSecondary = -1, bombsDetonated;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -184,6 +186,7 @@ namespace GoF2Remake.Data
                 acceptedBlindRisk = Session.AcceptedBlindRisk, acceptedBlindMap = Session.AcceptedBlindMap,
                 containersDelivered = Session.ContainersDelivered, passengersDelivered = Session.PassengersDelivered,
                 kaamoState = Session.KaamoState, kaamoItems = Session.KaamoItems, kaamoShips = Session.KaamoShips,
+                selectedSecondary = Session.SelectedSecondary, bombsDetonated = Session.BombsDetonated,
             };
         }
 
@@ -265,6 +268,11 @@ namespace GoF2Remake.Data
                 Session.KaamoState = s.kaamoState;
                 Session.KaamoItems = s.kaamoItems ?? new List<ItemStack>();
                 Session.KaamoShips = s.kaamoShips ?? new List<StoredShip>();
+            }
+            if (s.version >= 5)
+            {
+                Session.SelectedSecondary = s.selectedSecondary;
+                Session.BombsDetonated = s.bombsDetonated;
             }
             Story.RepairCheckpoint();
         }

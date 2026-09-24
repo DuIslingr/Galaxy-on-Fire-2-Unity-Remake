@@ -92,3 +92,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 7c0e94556116b264a9e6a30b73d6e07d, type: 3}
   homeBaseMusic: {fileID: 8300000, guid: 1ccd10462d8fed2449daebaba2b5ef8f, type: 3}
   outpostWreck: {fileID: 2553691981631646173, guid: 4ea973f77c7f9e2489e65a5f4fe9d9b5, type: 3}
+  explosionEmp: {fileID: 8404218890661094357, guid: 7cd18410a9f2fd64fa8d55e70de2bdf4, type: 3}
+  explosionScatter: {fileID: 414524297884949190, guid: ef38d1e79f972014d8beb8c62591324a, type: 3}
+  shockGlow: {fileID: 5011795013501720976, guid: 496c333f2d10bae498b6b6804e369da9, type: 3}
+  shockSphere: {fileID: 1796280572203570749, guid: e1571245309358049ba4cbcb2c49188c, type: 3}
+  fireworksBurst: {fileID: 3472133665024365946, guid: ce073c3e37077a847a2f94eedccbb0a6, type: 3}
