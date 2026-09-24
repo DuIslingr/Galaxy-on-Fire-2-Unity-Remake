@@ -1,10 +1,11 @@
 // GoF2Session.cs
 // Choices made in the main menu that the game scenes read (MenuTouchWindow: startGOF2 / startValkyrie /
 // startSupernova, difficulty stored at options+0x2c: Normal 0.5, Extreme 1.5), and the player's state (the
-// original's Status). Until there is a save system, a new game starts like Status::resetGame 0xba78c: 0 credits,
-// ship 10 "Phantom" at station 78 "Var Hastra" (system 15 Mido) with the starting equipment, empty cargo.
+// original's Status). A new game starts like Status::resetGame 0xba78c: 0 credits, ship 10 "Phantom" at station 78
+// "Var Hastra" (system 15 Mido) with the starting equipment, empty cargo. Saving and loading: GoF2SaveGame.
 
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace GoF2Remake.Data
 {
@@ -126,50 +127,28 @@ namespace GoF2Remake.Data
             new GoF2Stack(54, 1), new GoF2Stack(59, 1), new GoF2Stack(82, 1), new GoF2Stack(73, 1),
         };
 
-        // ---- autosave (ModStation::autosave 0xe9eb4: save slot 0 when docking; game over reloads it) ----------------
+        // ---- playing time (Status::getPlayingTime, shown in the save previews) ------------------------------------
 
-        class Snapshot
+        static float playBase, playSince;
+        public static float PlaySeconds
         {
-            public int station, ship, credits, kills, pirateKills;
-            public List<GoF2Stack> equipment, cargo;
-            public int[] standing;
-            public HashSet<int> visited, attacked;
-            public bool[] visible;
+            get => playBase + (Time.realtimeSinceStartup - playSince);
+            set { playBase = value; playSince = Time.realtimeSinceStartup; }
         }
 
-        static Snapshot autosave;
-        public static bool HasAutosave => autosave != null;
+        // ---- auto-save (slot 0, see GoF2SaveGame) ---------------------------------------------------------------
 
-        /// <summary>Remembers the docked state (the remake keeps it in memory; there is no save file yet).</summary>
-        public static void Autosave()
-        {
-            autosave = new Snapshot
-            {
-                station = StationIndex, ship = ShipIndex, credits = Credits, kills = Kills, pirateKills = PirateKills,
-                equipment = Equipment.ConvertAll(e => e.Clone()), cargo = Cargo.ConvertAll(e => e.Clone()),
-                standing = (int[])Standing.Clone(), visited = new HashSet<int>(VisitedStations), attacked = new HashSet<int>(AttackedStations),
-                visible = SystemVisible != null ? (bool[])SystemVisible.Clone() : null,
-            };
-        }
+        public static bool HasAutosave => GoF2SaveGame.Exists(GoF2SaveGame.AutoSaveSlot);
 
-        /// <summary>GameRecord::load(last save): back to the docked state of the last autosave.</summary>
-        public static bool LoadAutosave()
-        {
-            if (autosave == null) return false;
-            var a = autosave;
-            StationIndex = a.station; ShipIndex = a.ship; Credits = a.credits; Kills = a.kills; PirateKills = a.pirateKills;
-            Equipment = a.equipment.ConvertAll(e => e.Clone()); Cargo = a.cargo.ConvertAll(e => e.Clone());
-            Standing = (int[])a.standing.Clone(); VisitedStations = new HashSet<int>(a.visited); AttackedStations = new HashSet<int>(a.attacked);
-            SystemVisible = a.visible != null ? (bool[])a.visible.Clone() : null;
-            PlayerHull = PlayerArmor = -1; PlayerShield = -1f;
-            ProgrammedStation = -1; InstantJump = false;
-            ArrivedByTravel = LaunchedFromStation = ArrivedBySystemJump = false;
-            return true;
-        }
+        /// <summary>ModStation::autosave 0xe9eb4: save slot 0 when docking.</summary>
+        public static void Autosave() => GoF2SaveGame.AutoSave();
+
+        /// <summary>GameRecord::load(last save): back to the docked state of the auto-save.</summary>
+        public static bool LoadAutosave() => GoF2SaveGame.Load(GoF2SaveGame.AutoSaveSlot);
 
         public static void ResetNewGame()
         {
-            autosave = null;
+            PlaySeconds = 0f;
             StationIndex = 78;
             PreviousStationIndex = -1;
             ShipIndex = 10;

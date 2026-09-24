@@ -122,13 +122,13 @@ namespace GoF2Remake.UI
             versionLabel = root.Q<Label>("versionLabel");
             hintLabel = root.Q<Label>("hintLabel");
 
-            resumeButton = Bind("resumeButton", () => { });           // needs the save system
+            resumeButton = Bind("resumeButton", () => LoadSlot(GoF2SaveGame.MostRecentSlot()));
             newGameButton = Bind("newGameButton", () => OpenPanel("campaignPanel"));
             loadButton = Bind("loadButton", () => { BuildSlots(); OpenPanel("loadPanel"); });
             optionsButton = Bind("optionsButton", () => { OpenPanel("optionsPanel"); SelectTab("soundPage"); });
             aboutButton = Bind("aboutButton", () => OpenPanel("aboutPanel"));
             exitButton = Bind("exitButton", () => ShowDialog(GoF2Localization.Get(390), GoF2Localization.Get(53), Quit));
-            resumeButton.AddToClassList("menu-button--gone");        // original: only shown when a save exists
+            resumeButton.EnableInClassList("menu-button--gone", GoF2SaveGame.MostRecentSlot() < 0);   // only with a save
 
             foreach (var n in new[] { "campaignPanel", "difficultyPanel", "loadPanel", "optionsPanel", "aboutPanel" })
             {
@@ -471,16 +471,24 @@ namespace GoF2Remake.UI
             StartCoroutine(Leave());
         }
 
-        IEnumerator Leave()
+        /// <summary>GameRecord::load: the saved (docked) state, then the station.</summary>
+        void LoadSlot(int slot)
         {
+            if (slot < 0 || !GoF2SaveGame.Load(slot)) return;
+            StartCoroutine(Leave("Station"));
+        }
+
+        IEnumerator Leave(string scene = null)
+        {
+            scene ??= gameScene;
             screen = MenuState.Leaving;
             fade.AddToClassList("fade--on");
             StartCoroutine(FadeMusic(0f, 1.2f));
             yield return new WaitForSeconds(1.3f);
-            if (Application.CanStreamedLevelBeLoaded(gameScene)) SceneManager.LoadScene(gameScene);
+            if (Application.CanStreamedLevelBeLoaded(scene)) SceneManager.LoadScene(scene);
             else
             {
-                Debug.LogWarning($"GoF2MainMenu: scene '{gameScene}' is not in the build settings.");
+                Debug.LogWarning($"GoF2MainMenu: scene '{scene}' is not in the build settings.");
                 fade.RemoveFromClassList("fade--on");
                 screen = MenuState.Menu;
                 StartCoroutine(FadeMusic(GoF2Settings.MusicVolume, 1f));
@@ -515,17 +523,20 @@ namespace GoF2Remake.UI
             if (openPanel != null) FocusFirst(openPanel); else Select(exitButton);
         }
 
-        // ---- save slots (RecordHandler: 12 slots, slot 0 = Auto-save; no save system yet) --------
+        // ---- save slots (RecordHandler: 12 slots, slot 0 = Auto-save; GoF2SaveGame) ------------
 
         void BuildSlots()
         {
             var list = root.Q<ScrollView>("slotList");
             list.Clear();
-            for (int i = 0; i < 12; i++)
+            var db = GoF2Database.Load();
+            for (int i = 0; i < GoF2SaveGame.SlotCount; i++)
             {
+                int slot = i;
+                var save = GoF2SaveGame.Preview(i);
                 var row = new Button { focusable = true };
                 row.AddToClassList("slot-row");
-                row.AddToClassList("slot-row--empty");   // no save system yet
+                row.EnableInClassList("slot-row--empty", save == null);
 
                 var index = new Label(i.ToString("00"));
                 index.AddToClassList("slot-index");
@@ -535,20 +546,30 @@ namespace GoF2Remake.UI
                 var name = new Label(i == 0 ? GoF2Localization.Get(486) : $"{GoF2Localization.Extra("slot", "Slot")} {i}");
                 name.AddToClassList("slot-name");
                 info.Add(name);
-                if (i == 0)
+                string subText = null;
+                if (save != null)
                 {
-                    var sub = new Label(GoF2Localization.Extra("autosaveHint", "Saved automatically when you dock"));
+                    // RecordHandler::recordStoreWritePreview: station, system, credits, playing time, ship.
+                    var st = db.Stations.Find(x => x.index == save.station);
+                    var ship = db.Ship(save.ship);
+                    subText = $"{st?.name} · {st?.systemName}  ·  {ship?.name}";
+                }
+                else if (i == 0) subText = GoF2Localization.Extra("autosaveHint", "Saved automatically when you dock");
+                if (subText != null)
+                {
+                    var sub = new Label(subText);
                     sub.AddToClassList("slot-sub");
                     info.Add(sub);
                 }
-                var state = new Label(GoF2Localization.Get(174));   // -BLANK-
+                var state = new Label(save == null ? GoF2Localization.Get(174)   // -BLANK-
+                    : $"{save.credits:N0} Cr  ·  {(int)(save.playSeconds / 3600)}:{(int)(save.playSeconds / 60) % 60:00} h");
                 state.AddToClassList("slot-state");
 
                 foreach (var e in new VisualElement[] { index, info, state }) e.pickingMode = PickingMode.Ignore;
                 row.Add(index);
                 row.Add(info);
                 row.Add(state);
-                row.clicked += () => Play(buttonPush);
+                row.clicked += () => { Play(buttonPush); if (save != null) LoadSlot(slot); };
                 HookFocusSound(row);
                 list.Add(row);
             }
