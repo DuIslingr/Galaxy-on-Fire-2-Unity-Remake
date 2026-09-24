@@ -39,6 +39,9 @@ namespace GoF2Remake.Flight
         Transform fxRoot;
         AudioSource shotSource;
         bool touchPrimary;
+        /// <summary>A fire button pressed while the game was paused or the guns blocked (e.g. the mouse click on a dialogue's
+        /// Next): ignored until it is released, so it neither fires when the game resumes nor launches a missile on release.</summary>
+        bool primaryLatched, secondaryLatched;
 
         /// <summary>Remaining missiles/rockets of the selected secondary weapon (-1 = none equipped).</summary>
         public int SecondaryAmmo { get; private set; } = -1;
@@ -176,8 +179,15 @@ namespace GoF2Remake.Flight
         void Update()
         {
             float dtMs = Time.deltaTime * 1000f;
-            bool primaryHeld = !Blocked && (touchPrimary || (useBuiltInInput && firePrimaryAction.IsPressed()));
-            if (!Blocked && useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame()) FireSecondary();
+            // The game is paused (Time.timeScale 0: dialogues, the autopilot menu, the star map): no firing at all.
+            bool halted = Blocked || Time.timeScale <= 0f;
+            bool primaryPressed = useBuiltInInput && firePrimaryAction.IsPressed();
+            bool secondaryPressed = useBuiltInInput && fireSecondaryAction.IsPressed();
+            if (halted) { primaryLatched |= primaryPressed; secondaryLatched |= secondaryPressed; }
+            if (!primaryPressed) primaryLatched = false;
+            bool primaryHeld = !halted && (touchPrimary || (primaryPressed && !primaryLatched));
+            if (!halted && useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame() && !secondaryLatched) FireSecondary();
+            if (!secondaryPressed) secondaryLatched = false;
 
             var cam = Camera.main;
             foreach (var r in rigs)
