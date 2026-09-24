@@ -228,6 +228,7 @@ namespace GoF2Remake.UI
             int station = level != null && level.Station != null ? level.Station.index : -1;
             hangarButton.SetEnabled(GoF2Story.HangarUnlocked);
             mapButton.SetEnabled(GoF2Story.MapUnlocked);
+            missionsButton.SetEnabled(GoF2Story.MapUnlocked);   // Missions: locked before campaign 9 like the Map
             loungeButton.SetEnabled(GoF2Story.LoungeUnlocked(station));
         }
 
@@ -256,7 +257,7 @@ namespace GoF2Remake.UI
         /// <summary>The Missions window (129) over the current view.</summary>
         void OpenMissions()
         {
-            if (level == null || missions == null || missions.IsOpen) return;
+            if (level == null || missions == null || missions.IsOpen || !GoF2Story.MapUnlocked) return;
             CloseHangar();
             lounge?.CloseChat(false);
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
@@ -268,6 +269,17 @@ namespace GoF2Remake.UI
         {
             Select(missionsButton);
             BuildHints(GoF2InputMode.Current);
+        }
+
+        /// <summary>A lounge voice greeting (2D, SFX not paused); null stops the current one.</summary>
+        public void PlayVoice(AudioClip clip)
+        {
+            if (voiceSource == null) return;
+            voiceSource.Stop();
+            if (clip == null) return;
+            voiceSource.clip = clip;
+            voiceSource.volume = GoF2Settings.VoiceVolume;
+            voiceSource.Play();
         }
 
         /// <summary>Focus for keyboard / controller (not in touch mode).</summary>
@@ -748,13 +760,7 @@ namespace GoF2Remake.UI
             }
             if (toastMs > 0f && (toastMs -= Time.unscaledDeltaTime * 1000f) <= 0f) toast.RemoveFromClassList("station-toast--shown");
             if (DialogOpen || SystemMenuOpen) return;
-            if (missions != null && missions.IsOpen)
-            {
-                if ((kb != null && (kb.qKey.wasPressedThisFrame || kb.eKey.wasPressedThisFrame))
-                    || (pad != null && (pad.leftShoulder.wasPressedThisFrame || pad.rightShoulder.wasPressedThisFrame)))
-                { Play(buttonPush); missions.NextTab(); }
-                return;
-            }
+            if (missions != null && missions.IsOpen) return;
             if (lounge != null && lounge.ChatOpen) return;
             if ((kb != null && kb.digit4Key.wasPressedThisFrame) || (pad != null && pad.selectButton.wasPressedThisFrame))
             {

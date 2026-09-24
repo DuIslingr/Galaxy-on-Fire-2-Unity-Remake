@@ -14,7 +14,7 @@ namespace GoF2Remake.EditorTools
     {
         const string Root = GoF2ImportSettings.Root;
         public const string AssetPath = Root + "/Resources/GoF2Story/StoryAssets.asset";
-        static readonly string[] VoiceBanks = { "VOICE", "DLC_VOICE", "DLC2_VOICE" };
+        static readonly string[] VoiceBanks = { "VOICE", "DLC_VOICE", "DLC2_VOICE", "LOUNGE" };   // LOUNGE: the bar greetings
         static readonly Regex PartName = new Regex(@"^(\d+)_(\d)_(\d+)_ipad_large$");
 
         [MenuItem("GoF2/Build Story Assets", priority = 18)]

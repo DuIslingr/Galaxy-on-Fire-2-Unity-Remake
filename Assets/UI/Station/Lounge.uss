@@ -198,6 +198,15 @@
     letter-spacing: 1px;
 }
 
+/* TouchButton colours: Okay green (0x00ed00), No thanks red (0xff2a00); a lone Okay stays white. */
+.chat-choice--ok {
+    color: #3CF03C;
+}
+
+.chat-choice--no {
+    color: #FF5A3A;
+}
+
 /* ---- missions window --------------------------------------------------------------------- */
 
 .missions-window {
@@ -218,25 +227,59 @@
     display: flex;
 }
 
+.missions-title {
+    font-size: 24px;
+    letter-spacing: 5px;
+    color: #FFFFFF;
+    padding: 12px 8px;
+}
+
 .missions-body {
     flex-grow: 1;
     flex-direction: row;
-    padding: 20px;
+    padding: 16px 20px;
 }
 
-.missions-main {
+/* MissionsWindow (HD): Story and Freelance side by side, each with its own Show on map. */
+.missions-section {
     flex-grow: 1;
+    flex-basis: 0;
+    padding-right: 16px;
 }
 
-.missions-main .chat-scroll {
+.missions-section--right {
+    padding-right: 0;
+    padding-left: 16px;
+    border-left-width: 1px;
+    border-left-color: var(--gof-line);
+}
+
+.missions-heading {
+    font-size: 22px;
+    letter-spacing: 4px;
+    color: var(--gof-amber);
+    margin-bottom: 10px;
+}
+
+.missions-client {
+    flex-direction: row;
+    margin-bottom: 10px;
+}
+
+.missions-client-lines {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.missions-scroll {
     max-height: none;
-    margin-top: 10px;
+    flex-grow: 1;
 }
 
 .missions-footer {
     flex-direction: row;
     justify-content: flex-end;
-    padding: 10px 20px 16px 20px;
+    padding-top: 10px;
 }
 
 .missions-footer .chat-choice {

@@ -6,10 +6,15 @@
 //              lounge visit; item 768-772 + 773 / 774 (+ 775); purchase 777 / 778; wingmen 779-781; diplomat 878-883;
 //              story sellers 874 / 875 + 886 + index + 876 / 877 / 879), the question 841-843. Known agents: the stored
 //              offer again (the bonus re-evaluated), or 857 / 858 / 859 once accepted
-//   Choices    860 Okay, 861 No thanks, 862 What was that?, 804 Show it on the map / 776 Let me see it, 807 What's the risk?
-//   Choose     decline 845-849, repeat, map (805 / 806 or the star map), risk 808 + int(d / 10 * 5), accept -> the checks
-//              (337 / 338 / 203 / 785) and the confirmation (865 (+ 864), 866 / 868-873 / 885)
-//   Confirm    "Yes": 850-852 then the deal (mission 853-855 / Challenge 856); see GoF2Freelance.Accept and Deal below
+//   Choices    the HD answer buttons (Reference/research/lounge_ui.md 1.3 / 1.6): 860 Okay + 861 No thanks, plus 776 Let me
+//              see it (sellers 2 / 3 / 9 / 10) or 804 Show it on the map + 807 What's the risk? (missions other than
+//              Challenge); a single "Okay." for small talk, closing lines and after the risk answer. 862 "What was that?"
+//              is the phone path's (unreachable on HD) and isn't offered
+//   Choose     No thanks closes the chat (Status+0xe0; its 845-849 line is never visible on HD), map (805 / 806 or the
+//              star map), risk 808 + int(d / 10 * 5) (Okay returns to the offer), accept -> the checks (337 / 338 / 203 /
+//              785, shown as a message) and the confirmation (865 (+ 864), 866 / 868-873 / 885)
+//   Confirm    "Yes": 850-852 then the deal (mission 853-855 / Challenge 856); a single "Okay." closes the chat
+//   Voice      SpaceLounge::getSoundId 0x19fdb4: one lounge greeting per chat start by offer, race and gender
 // The original's single random generator isn't reproducible; UnityEngine.Random picks the text variants.
 
 using System;
@@ -24,6 +29,15 @@ namespace GoF2Remake.Data
     {
         public enum Choice { Okay, NoThanks, Repeat, Map, Risk }
         public enum Outcome { None, Confirm, Refused, ShowMap, Closed }
+
+        /// <summary>The single "Okay." closes the chat (small talk, closing lines).</summary>
+        bool closing;
+        /// <summary>SpaceLounge+0x36: the risk line is shown; "Okay." returns to the offer.</summary>
+        bool riskShown;
+        /// <summary>The message of a failed check (Outcome.Refused, the ChoiceWindow as a message).</summary>
+        public string RefusalText { get; private set; } = "";
+        /// <summary>The single white "Okay." (not the green / red pair).</summary>
+        public bool SingleOkay => Choices.Count == 1;
 
         /// <summary>A story seller's blueprint -> the produced item (agents.json sellBlueprint is the product's item index).</summary>
         public static Func<int, int> BlueprintProduct = bp => bp;
@@ -71,9 +85,12 @@ namespace GoF2Remake.Data
             {
                 Text = T(a.offer == GoF2AgentOffer.Purchase ? 857
                          : a.offer == GoF2AgentOffer.Wingmen || a.HasMission && a.mission.type == GoF2MissionType.Challenge ? 859 : 858);
+                closing = true;
+                SetChoices();
                 return;
             }
             Text = Compose(a, a.textIds);
+            closing = !HasDeal;
             SetChoices();
         }
 
@@ -97,15 +114,22 @@ namespace GoF2Remake.Data
         bool IsSeller => Agent.offer == GoF2AgentOffer.SellItem || Agent.offer == GoF2AgentOffer.SellBlueprint || Agent.offer == GoF2AgentOffer.SellMod
                          || Agent.offer == GoF2AgentOffer.KaamoSpecial || Agent.offer == GoF2AgentOffer.ShipDealer;
 
+        /// <summary>drawLounge: which answer buttons show (lounge_ui.md 1.3).</summary>
         void SetChoices()
         {
             Choices.Clear();
-            if (!HasDeal) return;
             Choices.Add(Choice.Okay);
+            if (closing || riskShown) return;
             Choices.Add(Choice.NoThanks);
-            Choices.Add(Choice.Repeat);
-            if (IsMissionOffer || IsSeller) Choices.Add(Choice.Map);
-            if (IsMissionOffer) Choices.Add(Choice.Risk);
+            var a = Agent;
+            bool seller = a.offer == GoF2AgentOffer.SellItem || a.offer == GoF2AgentOffer.SellBlueprint
+                          || a.offer == GoF2AgentOffer.KaamoSpecial || a.offer == GoF2AgentOffer.ShipDealer;
+            if (seller) Choices.Add(Choice.Map);
+            else if (a.offer == GoF2AgentOffer.Mission && a.HasMission && a.mission.type != GoF2MissionType.Challenge)
+            {
+                Choices.Add(Choice.Map);
+                Choices.Add(Choice.Risk);
+            }
         }
 
         public static string ChoiceLabel(GoF2Agent agent, Choice c) => c switch
@@ -269,8 +293,6 @@ namespace GoF2Remake.Data
             {
                 case Choice.NoThanks:
                     GoF2Session.OffersDeclined++;
-                    Text = T(845 + Random.Range(0, 5));
-                    Choices.Clear();
                     return Outcome.Closed;
                 case Choice.Repeat:
                     GoF2Session.OffersRepeated++;
@@ -278,7 +300,9 @@ namespace GoF2Remake.Data
                     return Outcome.None;
                 case Choice.Risk:
                     askedRisk = true;
+                    riskShown = true;
                     Text = T(808 + (int)(a.mission.difficulty / 10f * 5f));
+                    SetChoices();
                     return Outcome.None;
                 case Choice.Map:
                     askedMap = true;
@@ -290,6 +314,14 @@ namespace GoF2Remake.Data
                     MapTarget = target;
                     return Outcome.ShowMap;
                 default:
+                    if (closing) return Outcome.Closed;
+                    if (riskShown)
+                    {
+                        riskShown = false;
+                        Text = Compose(a, a.textIds);   // the bonus re-evaluated
+                        SetChoices();
+                        return Outcome.None;
+                    }
                     return Accept();
             }
         }
@@ -297,7 +329,7 @@ namespace GoF2Remake.Data
         Outcome Accept()
         {
             var a = Agent;
-            Outcome Refuse(string text) { Text = text; return Outcome.Refused; }
+            Outcome Refuse(string text) { RefusalText = text; return Outcome.Refused; }
             switch (a.offer)
             {
                 case GoF2AgentOffer.Mission:
@@ -384,7 +416,65 @@ namespace GoF2Remake.Data
                     break;
             }
             Text = thanks;
-            Choices.Clear();
+            closing = true;
+            SetChoices();
+        }
+
+        // ---- voice (SpaceLounge::getSoundId 0x19fdb4 / getSpecificSoundForRace 0x1a0080) ---------------------
+
+        /// <summary>The lounge greeting file for this chat start (LOUNGE_eng / _deu), null = silent (pirates, others).</summary>
+        public string VoiceName()
+        {
+            var a = Agent;
+            string set = a.race switch
+            {
+                0 or 5 => a.male ? "TERRAN_MALE" : "TERRAN_FEMALE",
+                1 => "VOSSK",
+                2 => "NIVELIAN",
+                3 => a.portrait == null || a.portrait[0] == 2 ? "NIVELIAN" : "TERRAN_MALE",
+                4 => "MULTIPOD",
+                6 => "BOBOLAN",
+                7 => "GREY",
+                _ => null,
+            };
+            if (set == null) return null;
+            string kind; int count;
+            int type = a.HasMission ? a.mission.type : -1;
+            switch (a.offer)
+            {
+                case GoF2AgentOffer.Mission:
+                    if (type == GoF2MissionType.Courier || type == GoF2MissionType.Passenger) { kind = "DELIVERY"; count = 4; }
+                    else if (type == GoF2MissionType.Challenge) { kind = "CHALLENGE"; count = 4; }
+                    else { kind = Random.Range(0, 2) == 0 ? "SPECIAL" : "FIGHT"; count = 4; }
+                    break;
+                case GoF2AgentOffer.SmallTalk: kind = "GENERIC"; count = 2; break;
+                case GoF2AgentOffer.SellItem: case GoF2AgentOffer.SellBlueprint: case GoF2AgentOffer.SellMod:
+                case GoF2AgentOffer.KaamoSpecial: case GoF2AgentOffer.ShipDealer: kind = "BLUEPRINT"; count = 2; break;
+                case GoF2AgentOffer.SellSystem: kind = "COORDINATES"; count = 2; break;
+                case GoF2AgentOffer.Purchase: kind = "PRODUCTION"; count = 4; break;
+                case GoF2AgentOffer.Wingmen: kind = "WINGMAN"; count = 4; break;
+                case GoF2AgentOffer.Diplomat: kind = "DIPLOMAT"; count = 4; break;
+                default: return null;
+            }
+            if (a.offer != GoF2AgentOffer.SmallTalk && Random.Range(0, 100) < 30) { kind = "GENERIC"; count = 2; }
+            if (a.accepted) { kind = "GENERIC"; count = 2; }
+            if (a.offer == GoF2AgentOffer.SmallTalk && a.textIds.Count > 3)
+            {
+                int line = a.textIds[3];
+                if (line == 820 || line == 824 || line == 827 || line == 833) { kind = "GENERIC_NEG"; count = 2; }
+            }
+            return $"{set}_GREETING_LOUNGE_{kind}_{Random.Range(1, count + 1):00}";
+        }
+
+        /// <summary>drawLounge's hover label: a generic agent never talked to shows its race; otherwise the name and, for known
+        /// agents, the role (the mission type, 306 Wingmen, 305 Merchant, 884 Diplomat).</summary>
+        public static (string name, string role) Plate(GoF2Agent a)
+        {
+            if (!a.known && !a.IsStory) return (T(406 + a.race), "");
+            if (!a.known) return (a.name, "");
+            string role = a.HasMission ? a.mission.Name : a.offer == GoF2AgentOffer.Wingmen ? T(306) : a.offer == GoF2AgentOffer.SellItem ? T(305)
+                        : a.offer == GoF2AgentOffer.Diplomat ? T(884) : "";
+            return (a.name, role);
         }
 
         /// <summary>Standing::rehabilitate 0x14289c: the race's axis just inside the neutral band (+-35).</summary>

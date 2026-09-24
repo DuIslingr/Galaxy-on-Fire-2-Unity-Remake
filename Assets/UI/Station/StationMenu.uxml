@@ -101,23 +101,37 @@
 
             <ui:VisualElement name="missionsWindow" class="missions-window">
                 <ui:VisualElement class="hangar-top">
-                    <ui:Button name="missionsTabStory" class="hangar-tab gof-semibold" />
-                    <ui:Button name="missionsTabFreelance" class="hangar-tab gof-semibold" />
+                    <ui:Label name="missionsTitle" class="missions-title gof-semibold" picking-mode="Ignore" />
                     <ui:VisualElement class="hangar-top-spacer" picking-mode="Ignore" />
                     <ui:Button name="missionsClose" class="hangar-close gof-semibold" />
                 </ui:VisualElement>
                 <ui:VisualElement class="missions-body" picking-mode="Ignore">
-                    <ui:VisualElement name="missionsPortrait" class="portrait chat-portrait" picking-mode="Ignore" />
-                    <ui:VisualElement class="missions-main" picking-mode="Ignore">
-                        <ui:Label name="missionsHeading" class="chat-name gof-semibold" picking-mode="Ignore" />
-                        <ui:ScrollView name="missionsScroll" class="chat-scroll">
-                            <ui:Label name="missionsText" class="chat-text" picking-mode="Ignore" />
+                    <ui:VisualElement class="missions-section" picking-mode="Ignore">
+                        <ui:Label name="storyHeading" class="missions-heading gof-semibold" picking-mode="Ignore" />
+                        <ui:ScrollView name="storyScroll" class="chat-scroll missions-scroll">
+                            <ui:Label name="storyText" class="chat-text" picking-mode="Ignore" />
                         </ui:ScrollView>
+                        <ui:VisualElement class="missions-footer" picking-mode="Ignore">
+                            <ui:Button name="storyMap" class="station-button chat-choice gof-semibold" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement class="missions-footer" picking-mode="Ignore">
-                    <ui:Button name="missionsMap" class="station-button chat-choice gof-semibold" />
-                    <ui:Button name="missionsDiscard" class="station-button chat-choice missions-discard gof-semibold" />
+                    <ui:VisualElement class="missions-section missions-section--right" picking-mode="Ignore">
+                        <ui:Label name="freelanceHeading" class="missions-heading gof-semibold" picking-mode="Ignore" />
+                        <ui:VisualElement class="missions-client" picking-mode="Ignore">
+                            <ui:VisualElement name="missionsPortrait" class="portrait chat-portrait" picking-mode="Ignore" />
+                            <ui:VisualElement class="missions-client-lines" picking-mode="Ignore">
+                                <ui:Label name="freelanceClient" class="chat-name gof-semibold" picking-mode="Ignore" />
+                                <ui:Label name="freelanceWhere" class="chat-sub" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:ScrollView name="freelanceScroll" class="chat-scroll missions-scroll">
+                            <ui:Label name="freelanceText" class="chat-text" picking-mode="Ignore" />
+                        </ui:ScrollView>
+                        <ui:VisualElement class="missions-footer" picking-mode="Ignore">
+                            <ui:Button name="freelanceMap" class="station-button chat-choice gof-semibold" />
+                            <ui:Button name="freelanceDiscard" class="station-button chat-choice missions-discard gof-semibold" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
 

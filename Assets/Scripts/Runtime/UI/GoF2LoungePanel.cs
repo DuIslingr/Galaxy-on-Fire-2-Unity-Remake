@@ -1,10 +1,12 @@
 // GoF2LoungePanel.cs
 // The Space Lounge's agents over the 3D bar (SpaceLounge 0x197890; Reference/research/freelance_missions.md 3,
-// station_interior.md 2): a name tag over every visitor billboard and a visitor list at the side (tap either, or
-// select with the keys / D-pad and confirm) open the chat with that agent (GoF2LoungeChat): portrait (ImageFactory::
-// createChar parts), name, the agent's text and the choice buttons (Okay / No thanks / What was that? / Show it on the
-// map or Let me see it / What's the risk?). A deal asks through the station's confirmation dialog; "Show it on the map"
-// opens the star map in mission mode (view only). The camera does not move while talking, like the original.
+// lounge_ui.md 1): tapping a visitor opens the chat with that agent (GoF2LoungeChat): portrait (ImageFactory::createChar
+// parts), the agent's text, the answer buttons (green Okay / red No thanks, Let me see it or Show it on the map / What's
+// the risk?; a single white Okay for closing lines) and one lounge voice greeting. A deal asks through the station's
+// confirmation dialog, failed checks show as a message; "Show it on the map" opens the star map in mission mode (view
+// only), bought coordinates open it on the new system when the chat closes. The camera does not move while talking.
+// The plates over the visitors show what the original's hover label shows (the race until talked to, then the name and
+// role); the remake shows them all the time and adds a visitor list for keyboard / controller.
 // Plain class driven by GoF2StationMenu (like GoF2HangarWindow).
 
 using System.Collections.Generic;
@@ -75,7 +77,7 @@ namespace GoF2Remake.UI
 
                 var tag = new VisualElement();
                 tag.AddToClassList("lounge-tag");
-                var name = new Label(a.name) { pickingMode = PickingMode.Ignore };
+                var name = new Label { pickingMode = PickingMode.Ignore };
                 name.AddToClassList("lounge-tag-name");
                 name.AddToClassList("gof-semibold");
                 tag.Add(name);
@@ -91,11 +93,11 @@ namespace GoF2Remake.UI
                 row.AddToClassList("lounge-row");
                 var titles = new VisualElement { pickingMode = PickingMode.Ignore };
                 titles.AddToClassList("lounge-row-titles");
-                var rn = new Label(a.name) { pickingMode = PickingMode.Ignore };
+                var rn = new Label { pickingMode = PickingMode.Ignore };
                 rn.AddToClassList("lounge-row-name");
                 rn.AddToClassList("gof-semibold");
                 titles.Add(rn);
-                var rs = new Label(Subtitle(a)) { pickingMode = PickingMode.Ignore };
+                var rs = new Label { pickingMode = PickingMode.Ignore };
                 rs.AddToClassList("lounge-row-sub");
                 titles.Add(rs);
                 row.Add(titles);
@@ -108,18 +110,22 @@ namespace GoF2Remake.UI
             RefreshMarks();
         }
 
-        /// <summary>The race (406 + race; Multipod, Cyborg ... from the same table), or "Diplomat" (884).</summary>
-        static string Subtitle(GoF2Agent a) => a.offer == GoF2AgentOffer.Diplomat ? $"{T(884)} · {T(406 + a.race)}" : T(406 + a.race);
-
-        /// <summary>A mark on agents with something to offer that the player hasn't heard yet.</summary>
+        /// <summary>The plates (race until talked to, then name + role) and a mark on agents not heard yet (remake).</summary>
         void RefreshMarks()
         {
             for (int i = 0; i < tagItems.Count; i++)
             {
                 var a = level.VisitorAgent(i);
+                var (name, role) = GoF2LoungeChat.Plate(a);
+                tagItems[i].Q<Label>(className: "lounge-tag-name").text = role.Length > 0 ? $"{name}  <color=#FFA630>{role}</color>" : name;
                 var mark = tagItems[i].Q(className: "lounge-tag-mark");
                 mark.style.display = a.accepted ? DisplayStyle.None : DisplayStyle.Flex;
                 mark.EnableInClassList("lounge-tag-mark--known", a.known);
+                if (i < rows.Count)
+                {
+                    rows[i].Q<Label>(className: "lounge-row-name").text = name;
+                    rows[i].Q<Label>(className: "lounge-row-sub").text = role.Length > 0 ? role : a.known || a.IsStory ? T(406 + a.race) : "";
+                }
             }
         }
 
@@ -161,9 +167,11 @@ namespace GoF2Remake.UI
             var a = level.VisitorAgent(index);
             chat = new GoF2LoungeChat(Db, a, Station, smallTalkUsed);
             chat.Start();
+            menu.PlayVoice(GoF2StoryAssets.Load()?.Voice(chat.VoiceName()));   // SpaceLounge::getSoundId
             root.AddToClassList("chat-open");
-            chatName.text = a.name.ToUpperInvariant();
-            chatSub.text = Subtitle(a);
+            var (plateName, plateRole) = GoF2LoungeChat.Plate(a);
+            chatName.text = plateName.ToUpperInvariant();
+            chatSub.text = plateRole.Length > 0 ? plateRole : T(406 + a.race);
             GoF2Portrait.Show(portrait, a.portrait, false);
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             ShowChat();
@@ -173,6 +181,7 @@ namespace GoF2Remake.UI
         {
             if (chat == null) return;
             chat = null;
+            menu.PlayVoice(null);
             root.RemoveFromClassList("chat-open");
             RefreshMarks();
             if (focusRow && selected >= 0 && selected < rows.Count) menu.Focus(rows[selected]);
@@ -191,6 +200,9 @@ namespace GoF2Remake.UI
                 b.AddToClassList("station-button");
                 b.AddToClassList("chat-choice");
                 b.AddToClassList("gof-semibold");
+                // TouchButton colours: Okay green, No thanks red, a lone Okay white.
+                if (!chat.SingleOkay && c == GoF2LoungeChat.Choice.Okay) b.AddToClassList("chat-choice--ok");
+                if (c == GoF2LoungeChat.Choice.NoThanks) b.AddToClassList("chat-choice--no");
                 b.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
                 b.clicked += () => { menu.PlayRelease(); Choose(choice); };
                 choices.Add(b);
@@ -216,6 +228,21 @@ namespace GoF2Remake.UI
                     if (chat.MapTarget >= 0) OpenMissionMap(chat.MapTarget);
                     else ShowGoods();
                     return;
+                case GoF2LoungeChat.Outcome.Refused:
+                    menu.ShowDialog(chat.RefusalText, null, true);   // the ChoiceWindow as a message
+                    return;
+                case GoF2LoungeChat.Outcome.Closed:
+                {
+                    int reveal = chat.RevealedSystem;
+                    CloseChat();
+                    if (reveal >= 0)
+                    {
+                        // Bought coordinates: the star map opens on the newly visible system (StarMap(false, 0, true, sys)).
+                        var sys = Db.Systems.Find(s => s.index == reveal);
+                        if (sys != null && sys.stations.Count > 0) OpenMissionMap(sys.stations[0]);
+                    }
+                    return;
+                }
             }
             int focused = choiceButtons.FindIndex(b => b == root.focusController?.focusedElement);
             ShowChat();
@@ -227,11 +254,7 @@ namespace GoF2Remake.UI
             if (chat != done) return;
             ShowChat();
             menu.RefreshCredits();
-            if (done.RevealedSystem >= 0)
-            {
-                var sys = Db.Systems.Find(s => s.index == done.RevealedSystem);
-                if (sys != null && sys.stations.Count > 0) OpenMissionMap(sys.stations[0]);
-            }
+            RefreshMarks();
         }
 
         /// <summary>"Let me see it" (offers 2, 3, 8, 9, 10): the goods' name, category and description.</summary>
@@ -249,7 +272,7 @@ namespace GoF2Remake.UI
         void OpenMissionMap(int station)
         {
             root.AddToClassList("station-map-open");
-            var map = GoF2StarMap.Open(Db, GoF2StarMapMode.Mission, true, _ =>
+            var map = GoF2StarMap.Open(Db, GoF2StarMapMode.Mission, false, _ =>
             {
                 root.RemoveFromClassList("station-map-open");
                 if (chat != null && choiceButtons.Count > 0) menu.Focus(choiceButtons[0]);
