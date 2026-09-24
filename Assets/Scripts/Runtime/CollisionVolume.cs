@@ -110,6 +110,7 @@ namespace GoF2Remake.Flight
             staticVolumes ??= Load("static_collisions");
             int[] v;
             if (stationIndex == 109 || stationIndex == 110) staticVolumes.TryGetValue(2002, out v);
+            else if (alienOrbit) station.TryGetValue(1001, out v);   // the Void station
             else if (!station.TryGetValue(stationIndex, out v)) station.TryGetValue(1000, out v);   // Vossk
             return Parse(v, alienOrbit ? 0.9f : 1f, alienOrbit ? 0.4f : 0.5f, 1f);
         }

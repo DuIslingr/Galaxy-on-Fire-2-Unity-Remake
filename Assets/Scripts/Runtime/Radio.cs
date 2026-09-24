@@ -4,10 +4,12 @@
 //   RadioMessage::triggered 0x17c5d8    tested in array order while no line is showing; the first newly true one shows
 //   Radio::update / draw 0x180380       nothing for 2000 ms, then the box for lines * 2000 + 1500 ms; the voice plays when
 //                                       it appears; "over" when the display time has passed
-// Trigger types implemented (the rest never fire yet): 0 route waypoint passed, 1 any listed ship dead, 3 / 4 no
-// enemies / friends left, 5 time, 6 chained on a line, 8 any listed ship active, 9 all listed dead, 0xc / 0x13 / 0x1f
-// listed ship below 1/2, 1/4, 3/4 hull, 0xf any ship dead, 0x10 a hostile ship active, 0x14 >= n ships dead, 0x16 crate
-// cargo captured, 0x17 station locked, 0x1b level-script event, 0x1c player armor gone, 0x1e dead count among ships 2-5.
+// Trigger types implemented (the rest never fire yet): 0 route waypoint passed, 1 any listed ship dead, 2 any listed
+// friendly ship dead, 3 / 4 no enemies / friends left, 5 time, 6 chained on a line, 8 any listed ship active, 9 all listed
+// dead, 10 any listed friendly ship active, 0xc / 0x13 / 0x1f listed ship below 1/2, 1/4, 3/4 hull, 0xf any ship dead,
+// 0x10 a hostile ship active, 0x14 >= n ships dead, 0x15 ship[p] EMP-disabled, 0x16 crate cargo captured, 0x17 station
+// locked, 0x18 ship[p] inactive but alive after 59 999 ms, 0x19 the route past waypoint 0 with >= p ships alive, 0x1a
+// ship 0 active within 5000 of z = p, 0x1b level-script event, 0x1c player armor gone, 0x1e dead count among ships 2-5.
 // Lines are counted for the duration from the text length (the original counts wrapped lines of 670 px).
 
 using System;
@@ -33,6 +35,10 @@ namespace GoF2Remake.Flight
         bool PlayerArmorGone { get; }
         int EnemiesLeft { get; }
         int FriendsLeft { get; }
+        bool ShipFriendly(int i);          // Player+0x5d
+        bool ShipEmpDisabled(int i);       // KIPlayer+0x20
+        bool ShipInactive(int i);          // Player::isActive false (hidden / parked by its script), not dead
+        float ShipGameZ(int i);            // game-space z of the ship
     }
 
     public class Radio
@@ -98,20 +104,26 @@ namespace GoF2Remake.Flight
             {
                 case 0: return w.RouteIndex > p;
                 case 1: return Any(w.ShipDead);
+                case 2: return Any(k => w.ShipDead(k) && w.ShipFriendly(k));
                 case 3: return w.EnemiesLeft < 1;
                 case 4: return w.FriendsLeft < 1;
                 case 5: return w.MissionMs >= p;
                 case 6: return Triggered(p) && Over(p);   // shows right after that line
                 case 8: return Any(w.ShipActive);
                 case 9: return All(w.ShipDead);
+                case 10: return Any(k => w.ShipActive(k) && w.ShipFriendly(k));
                 case 0xc: return Any(k => !w.ShipDead(k) && w.ShipHullFraction(k) < 0.5f);
                 case 0x13: return Any(k => !w.ShipDead(k) && w.ShipHullFraction(k) < 0.25f);
                 case 0x1f: return Any(k => !w.ShipDead(k) && w.ShipHullFraction(k) < 0.75f);
                 case 0xf: return DeadShips() > 0;
                 case 0x10: for (int k = 0; k < w.ShipCount; k++) if (w.ShipActive(k) && w.ShipHostile(k)) return true; return false;
                 case 0x14: return DeadShips() >= p;
+                case 0x15: return p < w.ShipCount && w.ShipEmpDisabled(p);
                 case 0x16: return w.CrateCargoCaptured >= p;
                 case 0x17: return w.StationLocked;
+                case 0x18: return p < w.ShipCount && w.ShipInactive(p) && !w.ShipDead(p) && w.MissionMs > 59999f;
+                case 0x19: { if (w.RouteIndex < 1) return false; int alive = 0; for (int k = 0; k < w.ShipCount; k++) if (!w.ShipDead(k)) alive++; return alive >= p; }
+                case 0x1a: return w.ShipCount > 0 && w.ShipActive(0) && Mathf.Abs(w.ShipGameZ(0) - p) < 5000f;
                 case 0x1b: return w.ScriptEvent == p;
                 case 0x1c: return w.PlayerArmorGone;
                 case 0x1e: { int d = 0; for (int k = 2; k <= 5 && k < w.ShipCount; k++) if (w.ShipDead(k)) d++; return d == p; }

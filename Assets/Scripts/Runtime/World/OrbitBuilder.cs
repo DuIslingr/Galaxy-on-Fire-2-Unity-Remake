@@ -99,6 +99,8 @@ namespace GoF2Remake.World
         public static string StationAssembly(Database db, OrbitLayout layout)
         {
             // Special cases, as they are before the campaign changes them.
+            // PlayerStation: in the alien orbit the Void station (16443, collision 1001), after the Valkyrie add-on the battlestation.
+            if (layout.alienOrbit) return Story.Dlc1Won ? "v_station_battlestation_anim" : "station_void";
             switch (layout.stationIndex)
             {
                 case 100: return "v_station_deep_science";

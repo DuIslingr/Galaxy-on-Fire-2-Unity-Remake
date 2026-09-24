@@ -34,6 +34,8 @@ namespace GoF2Remake.World
         public int systemTexture, stationTexture;
         public int raceId;
         public bool hasStation;
+        /// <summary>Status::inAlienOrbit: the Void's home orbit (Session.VoidOrbit): Void station, sky 010, Void asteroids.</summary>
+        public bool alienOrbit;
 
         // Level::createSpace
         public bool hasJumpgate;
@@ -126,6 +128,7 @@ namespace GoF2Remake.World
         {
             var st = db.Stations.Find(s => s.index == stationIndex);
             var sys = st != null ? db.Systems.Find(s => s.index == st.system) : null;
+            bool alien = stationIndex == Session.VoidOrbit;
             var o = new OrbitLayout
             {
                 stationIndex = stationIndex,
@@ -134,7 +137,10 @@ namespace GoF2Remake.World
                 stationTexture = st != null ? st.textureIndex : 23,
                 raceId = sys != null ? sys.raceId : 0,
                 hasStation = st != null && System.Array.IndexOf(EmptyOrbits, stationIndex) < 0,
+                alienOrbit = alien,
             };
+            // Status::inEmptyOrbit: the alien orbit has its Void station until the mother ship is destroyed (index 43..83).
+            if (alien) o.hasStation = Story.Index < 43 || Story.Index > 83 && Story.Index < 154;
             o.BuildGates(sys);
             o.BuildSky();
             o.BuildStarSystem(db, sys);
@@ -158,6 +164,8 @@ namespace GoF2Remake.World
                 var pos = new Vector3(r * Mathf.Sin(ang), 0f, r * Mathf.Cos(ang));
                 if (i == 1) jumpgate = pos; else { hiddenJumpgate = pos; hiddenGateAngle = a; }
             }
+            // Alien orbit: landmark 2 (the arrival point) at (0, rand(20000) - 10000, rand(50000) + 170000), facing the origin.
+            if (alienOrbit) hiddenJumpgate = new Vector3(0f, Random.Range(0, 20000) - 10000, Random.Range(0, 50000) + 170000);
         }
 
         // Level::createSpace: R_sky = Rx * Ry * Rz from 3 draws (seed 2*station); none in the fog skies (17, 18).
@@ -185,7 +193,14 @@ namespace GoF2Remake.World
             sunPitch = Angle(rnd.NextInt(4096) - 2048);
             lightDirection = -Direction(sunPitch, Angle(sunSlot * 0xAAA));
 
-            if (sys == null) return;
+            if (sys == null)
+            {
+                // The alien orbit: only its own planet (planet_void_big), sized like a normal orbit planet.
+                if (alienOrbit)
+                    planets.Add(new Planet { station = stationIndex, isOrbitPlanet = true, scale = (rnd.NextInt(20000) + 20000) / 65536f,
+                                             flip = sunSlot >= 12, texture = PlanetTexture(23, true) });
+                return;
+            }
             bool ringOrbit = System.Array.IndexOf(RingStations, stationIndex) >= 0;
             foreach (int stIdx in sys.stations)
             {
@@ -242,6 +257,7 @@ namespace GoF2Remake.World
             int p = Mathf.Clamp(stationTexture, 0, 26) * 3;
             planetLightColor = new Color(PlanetLightColors[p], PlanetLightColors[p + 1], PlanetLightColors[p + 2]) * 1.5f;
             dustFogTint = new Color32((byte)(DustFogTints[s] * 0.6f), (byte)(DustFogTints[s + 1] * 0.6f), (byte)(DustFogTints[s + 2] * 0.6f), 0xbb);
+            if (alienOrbit) dustFogTint = new Color32(0x92, 0x74, 0xd4, 0xbb);   // initParticleSystems: 0x9274d4 in the alien orbit
             switch (systemTexture)
             {
                 case 11: fog = true; fogColor = new Color32(0xdb, 0x69, 0x23, 255); fogEnd = 50000f; break;
@@ -263,7 +279,9 @@ namespace GoF2Remake.World
             asteroidCount = rnd.NextInt(40) + 40;
             int cx = rnd.NextInt(100000) - 50000, cy = rnd.NextInt(100000) - 50000, cz = rnd.NextInt(100000) + 20000;
             asteroidCentre = new Vector3(cx, cy, cz);
-            asteroidType = systemIndex == 22 ? 2 : 0;
+            asteroidType = alienOrbit ? 1 : systemIndex == 22 ? 2 : 0;   // space_props.md: the alien orbit's Void asteroids
+            // space_props.md 2: the alien orbit's field sits at (-30000, 0, 30000).
+            if (alienOrbit) asteroidCentre = new Vector3(-30000f, 0f, 30000f);
         }
 
         public string AsteroidAssembly => asteroidType switch { 1 => "asteroid_void", 2 => "v_asteroid_ice", 3 => "sn_asteroid_magma", _ => "asteroid_01" };

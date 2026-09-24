@@ -100,7 +100,7 @@ namespace GoF2Remake.World
             if (engine == null || engine.clip == null) return;
             if (on && !engine.isPlaying) engine.Play(); else if (!on) engine.Stop();
         }
-        bool inactive;
+        bool inactive, parked;
         /// <summary>setInitActive(false) (Player::isActive 0xb0022 false): waits for its script; not on the radar's hostile
         /// counter.</summary>
         public bool Inactive => inactive;
@@ -216,6 +216,7 @@ namespace GoF2Remake.World
             alwaysFriend = spec.alwaysFriend;
             Asleep = spec.asleep || spec.inactive;
             inactive = spec.inactive;
+            parked = spec.stationary;
             if (spec.freighter)
             {
                 obstacle = gameObject.AddComponent<Obstacle>();
@@ -249,7 +250,7 @@ namespace GoF2Remake.World
             route = (spec.route ?? Route.DefaultPatrol(spec.race)).Clone();
             loot = spec.lootItem >= 0 ? new List<ItemStack> { new ItemStack(spec.lootItem, Mathf.Max(1, spec.lootAmount)) }
                  : spec.missionCrate >= 0 ? new List<ItemStack> { new ItemStack(spec.missionCrate, 1) }
-                 : spec.noLoot ? new List<ItemStack>() : NpcTables.RollLoot(db, spec.freighter);
+                 : spec.noLoot ? new List<ItemStack>() : RollLoot();
 
             sfx = gameObject.AddComponent<AudioSource>();
             Setup3D(sfx);
@@ -310,10 +311,15 @@ namespace GoF2Remake.World
             attacking = false;
             targetIdx = -1;
             route = (Spec.route ?? Route.DefaultPatrol(Spec.race)).Clone();
-            loot = NpcTables.RollLoot(db, Spec.freighter);
+            loot = Spec.noLoot ? new List<ItemStack>() : RollLoot();
             crate = null;
             if (engine != null && engine.clip != null) engine.Play();
         }
+
+        /// <summary>Level::enemyDied / Generator::getLootList: a Void ship carries 1-3 t Alien Remains (131), the others the
+        /// usual loot.</summary>
+        List<ItemStack> RollLoot() => Spec.race == Standing.Void ? new List<ItemStack> { new ItemStack(131, Random.Range(0, 3) + 1) }
+                                                                 : NpcTables.RollLoot(db, Spec.freighter);
 
         // ---- turrets (PlayerTurret::handleTurret / pickEnemy / handleRotation) ---------------------------------------
 
@@ -426,7 +432,7 @@ namespace GoF2Remake.World
             UpdateMissionCrate();
             if (Asleep) { UpdateSleep(); return; }
             if (IsTurret) { UpdateTurret(dtMs); return; }
-            if (Spec.stationary) return;   // parked: a target that neither flies nor shoots
+            if (parked) return;   // parked: a target that neither flies nor shoots
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
             if (IsFreighter)
             {
@@ -532,6 +538,62 @@ namespace GoF2Remake.World
         public void Place(Vector3 position, Vector3 forward)
         {
             transform.SetPositionAndRotation(position, Quaternion.LookRotation(forward, Vector3.up));
+        }
+
+        // ---- level-script controls (LevelScript, Level::createCampaignMission) ------------------------------------
+
+        /// <summary>PlayerFixedObject::setMoving: a freighter flies game +Z at 1 u/ms, or stays parked (still a target).</summary>
+        public void SetMoving(bool on) => parked = !on;
+        public bool Moving => !parked;
+
+        /// <summary>KIPlayer::setRoute: fly this route (game units) when there is nothing to attack.</summary>
+        public void SetRoute(Route r)
+        {
+            route = r != null ? r.Clone() : Route.DefaultPatrol(Race);
+            attacking = false;
+            targetIdx = -1;
+        }
+
+        /// <summary>Player::setMaxHitpoints + setHitpoints.</summary>
+        public void SetHull(int hull, bool alsoMax = true)
+        {
+            if (alsoMax) Hp.maxHull = Mathf.Max(1, hull);
+            Hp.hull = Mathf.Clamp(hull, 1, Hp.maxHull);
+            Target.hp = Hp.hull;
+            Target.maxHp = Hp.maxHull;
+            lastHull = Hp.hull;
+        }
+
+        /// <summary>KIPlayer::setRace (index 40: Errkt's freighter becomes Vossk).</summary>
+        public void SetRace(int race)
+        {
+            Spec.race = race;
+            Target.race = race;
+        }
+
+        /// <summary>setSpeed: a fixed speed (no boosts), u/ms.</summary>
+        public void SetSpeed(float unitsPerMs)
+        {
+            Spec.speed = unitsPerMs;
+            speed = baseSpeed = unitsPerMs;
+        }
+
+        /// <summary>Only this target (the level script aims ships at Errkt's freighter / at the player).</summary>
+        public void SetOnlyEnemy(Target t)
+        {
+            enemies.Clear();
+            if (t != null) enemies.Add(t);
+            attacking = false;
+            targetIdx = -1;
+            reselectTimer = 0f;
+        }
+
+        /// <summary>KIPlayer::setActive(false) + parked far away (index 40: the freighter after the wormhole).</summary>
+        public void Deactivate()
+        {
+            Asleep = inactive = true;
+            Target.untargetable = true;
+            if (engine != null) engine.Stop();
         }
 
         // ---- wingman ------------------------------------------------------------------------------------------

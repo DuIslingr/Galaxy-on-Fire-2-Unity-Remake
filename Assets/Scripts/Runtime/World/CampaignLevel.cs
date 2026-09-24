@@ -6,8 +6,10 @@
 // SpaceLevel when Story.IsLevelMission holds for the orbit; normal traffic is off then (Traffic). Indices
 // without a case spawn nothing (an empty orbit) but still play their radio lines. The level keeps running after its
 // success dialogue with the next index (e.g. 4 -> 5 on the same ships).
-// Built so far: 0 / 1 (the prologue and the rescue cutscenes, IntroCutscenes), 4 / 5 (mining, the pirate ambush),
-// 7 (the pirate trap with Gunant Breh).
+// Built: 0 / 1 (the prologue and the rescue cutscenes, IntroCutscenes), 4 / 5 (mining, the pirate ambush), 7 (the pirate
+// trap with Gunant Breh); the rest of the main campaign (14 - 42) in MainCampaignLevels.
+// Level+0x20 / +0x24: hostile ships killed by NPCs / by the player (Level::enemyDied); Level+0x1c: crate cargo captured
+// here; LevelScript+0: a time limit (the HUD counts it down; index 29's survival objective).
 // Cutscene support: the look-at camera (CutsceneCamera), fades (Layout::startFade: full-screen colour over n ms),
 // the level's own music and sound loops, and flags for the level (HUD off, invulnerable, no collision, start sequence).
 
@@ -32,6 +34,23 @@ namespace GoF2Remake.World
         /// <summary>Level::checkObjective (Level+0x28) / checkGameOver (+0x2c).</summary>
         public bool Won => win != null && win();
         public bool Failed => fail != null && fail();
+        /// <summary>The level script sets / replaces the objectives.</summary>
+        public System.Func<bool> WinObjective { get => win; set => win = value; }
+        public System.Func<bool> FailObjective { get => fail; set => fail = value; }
+        /// <summary>MGame::removeObjectives (after a success dialogue, index 42).</summary>
+        public void RemoveObjectives() { win = fail = null; TimeLimitMs = 0f; }
+        /// <summary>Level+0x20 / +0x24: hostile ships killed by NPCs / by the player.</summary>
+        public int NpcKills { get; private set; }
+        public int PlayerKills { get; private set; }
+        /// <summary>LevelScript+0: the mission's time limit (0 = none), shown on the HUD.</summary>
+        public float TimeLimitMs { get; set; }
+        public float TimeLeftMs => TimeLimitMs > 0f ? Mathf.Max(0f, TimeLimitMs - MissionMs) : -1f;
+        /// <summary>Errkt's freighter's hull (ship 0 at index 40), -1 = none.</summary>
+        public int FreighterHull => Ships.Count > 0 && Ships[0] != null ? Ships[0].Hp.hull : -1;
+        public SpaceLevel Level => level;
+        public Traffic Traffic => traffic;
+        MainCampaignLevels main;
+        int cratesAtStart;
 
         // Cutscene state (LevelScript: this[0x11] cinematic, player invulnerable / no collision, startSequenceOver).
         public bool Cutscene { get; set; }
@@ -69,12 +88,17 @@ namespace GoF2Remake.World
             music = gameObject.AddComponent<AudioSource>();
             music.playOnAwake = false;
             music.spatialBlend = 0f;
+            cratesAtStart = Session.CratesSalvaged;
+            traffic.ShipDied += OnShipDied;
             Build(BuiltIndex);
             traffic.MusicMuted = MusicOwned;
-            traffic.ConnectPlayers();
+            traffic.ConnectPlayers(main != null ? main.PlayerExemptRace : -99);
             Radio = new Radio(Story.Step?.radio);
             Debug.Log($"CampaignLevel: index {BuiltIndex}, {Ships.Count} ships, {Radio.Count} radio lines");
         }
+
+        /// <summary>Level+0x108 set by a level (the HUD waypoints).</summary>
+        public void SetPlayerRoute(Route route) => PlayerRoute = route;
 
         /// <summary>MGame::dialogueEvent: the briefing restarts the mission clock.</summary>
         public void ResetClock() => MissionMs = 0f;
@@ -117,10 +141,25 @@ namespace GoF2Remake.World
                     win = () => DeadRange(0, 3);   // Objective 0x12 (0, 3)
                     break;
                 }
+                default:
+                    main = new MainCampaignLevels(this, level);
+                    if (!main.Build(index)) main = null;
+                    break;
             }
         }
 
-        bool DeadRange(int a, int b)
+        void OnShipDied(NpcShip ship, bool byPlayer)
+        {
+            if (ship == null || !ship.Target.hostileToPlayer) return;
+            if (byPlayer) PlayerKills++; else NpcKills++;
+        }
+
+        void OnDestroy()
+        {
+            if (traffic != null) traffic.ShipDied -= OnShipDied;
+        }
+
+        public bool DeadRange(int a, int b)
         {
             for (int i = a; i < b; i++) if (!ShipDead(i)) return false;
             return true;
@@ -140,6 +179,7 @@ namespace GoF2Remake.World
                 if (fadeIn && t >= 1f) fading = false;   // a fade-out stays opaque (enableFillScreen)
             }
             if (intro != null && Story.Index == BuiltIndex) intro.Tick(dtMs);
+            main?.Tick(Story.Index, dtMs);
             Script(Story.Index);
             if (!level.Dialogue && level.LaunchCameraOver) Radio?.Update(dtMs, this);   // not during the launch / arrival camera
         }
@@ -147,6 +187,7 @@ namespace GoF2Remake.World
         void LateUpdate()
         {
             if (intro != null) intro.LateTick(Time.deltaTime * 1000f);
+            main?.LateTick(Time.deltaTime * 1000f);
         }
 
         // ---- cutscene helpers ------------------------------------------------------------------------------
@@ -214,9 +255,14 @@ namespace GoF2Remake.World
         public bool ShipDead(int i) => i >= 0 && i < Ships.Count && (Ships[i] == null || !Ships[i].Target.Alive);
         public bool ShipActive(int i) => i >= 0 && i < Ships.Count && Ships[i] != null && !Ships[i].Gone && !Ships[i].Asleep && Ships[i].Target.Alive;
         public float ShipHullFraction(int i) => i >= 0 && i < Ships.Count && Ships[i] != null ? Ships[i].Target.HullFraction : 0f;
-        public bool ShipHostile(int i) => i >= 0 && i < Ships.Count && Ships[i] != null && Ships[i].Target.hostileToPlayer && !Ships[i].alwaysFriend;
+        /// <summary>Radio trigger 0x10 / the enemies-left counter: a ship that isn't always-friend.</summary>
+        public bool ShipHostile(int i) => i >= 0 && i < Ships.Count && Ships[i] != null && !Ships[i].alwaysFriend && !Ships[i].IsWingman;
+        public bool ShipFriendly(int i) => i >= 0 && i < Ships.Count && Ships[i] != null && Ships[i].Target.friendToPlayer;
+        public bool ShipEmpDisabled(int i) => i >= 0 && i < Ships.Count && Ships[i] != null && Ships[i].Target.Alive && Ships[i].Hp.empDisabled;
+        public bool ShipInactive(int i) => i >= 0 && i < Ships.Count && Ships[i] != null && (Ships[i].Inactive || Ships[i].Gone);
+        public float ShipGameZ(int i) => i >= 0 && i < Ships.Count && Ships[i] != null ? -Ships[i].transform.position.z / M : 0f;
         public int RouteIndex => PlayerRoute != null ? PlayerRoute.index : 0;
-        public int CrateCargoCaptured => 0;
+        public int CrateCargoCaptured => Session.CratesSalvaged - cratesAtStart;
         public bool StationLocked => level.Navigation != null && level.Navigation.Locked != null && level.Navigation.Locked.kind == Navigation.Kind.Station;
         public bool PlayerArmorGone => level.Health != null && level.Health.HasArmor && level.Health.Hp.armor < 1;
         public int EnemiesLeft { get { int n = 0; for (int i = 0; i < Ships.Count; i++) if (!ShipDead(i) && ShipHostile(i)) n++; return n; } }

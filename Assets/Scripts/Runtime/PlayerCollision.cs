@@ -7,6 +7,9 @@
 //   NPC fighters                               none: the player flies through them (they have no volumes)
 //   asteroids                                  the asteroid is destroyed (damage 9999, normal death), the player takes
 //                                              20 (shield -> armor -> hull), camera hit(); no push
+//   the wormhole (Wormhole)                    visible and not shrinking, within 40000 units: its loop sound, the ship
+//                                              pulled toward it by (40000 - d) / 256 units per 30 fps frame, camera
+//                                              hit(); within 1000 units the ship is inside (PlayerEgo+0x25)
 // Collision is off during the launch / arrival camera and the jump scenes (PlayerEgo+0x144, set by the level), while
 // mining (PlayerEgo+0x356 with a mining phase 1-3) and once dead.
 // The 1000 ms jitter of the ship model after a hit (PlayerEgo+0x328 / +0x32c, +-0.006 units) is too small to see and
@@ -26,6 +29,10 @@ namespace GoF2Remake.Flight
         [NonSerialized] public bool ignoreGate;
         /// <summary>This frame the ship touched the station (MGame::dockEvent: with the autopilot to it, that docks).</summary>
         public bool TouchingStation { get; private set; }
+        /// <summary>The orbit's wormhole (landmark 3), null = none.</summary>
+        [NonSerialized] public GoF2Remake.World.Wormhole wormhole;
+        /// <summary>PlayerEgo::isInWormhole: pulled within 1000 units (and alive).</summary>
+        public bool InWormhole { get; private set; }
 
         PlayerHealth health;
         ChaseCamera chase;
@@ -41,8 +48,9 @@ namespace GoF2Remake.Flight
         void Update()
         {
             TouchingStation = false;
-            if (off || health == null || health.Dead) return;
+            if (off || health == null || health.Dead) { wormhole?.SetSound(false); return; }
             if (mining != null && mining.State != Mining.Phase.Idle) return;
+            CheckWormhole();
             CheckObstacles(true);
             CheckObstacles(false);
             CheckAsteroids();
@@ -67,6 +75,21 @@ namespace GoF2Remake.Flight
                 if (o.isStation) TouchingStation = true;
                 Hit();
             }
+        }
+
+        void CheckWormhole()
+        {
+            var w = wormhole;
+            if (w == null) return;
+            if (!w.Visible || w.Shrinking) { w.SetSound(false); return; }
+            var d = w.transform.position - transform.position;
+            float units = d.magnitude / GoF2Remake.World.OrbitLayout.MetersPerUnit;
+            float pull = GoF2Remake.World.Wormhole.RadiusUnits - units;
+            if (pull < 1f) { w.SetSound(false); return; }
+            w.SetSound(true);
+            transform.position += d.normalized * ((int)pull >> 8) * (Time.deltaTime * 1000f / 33.3f) * GoF2Remake.World.OrbitLayout.MetersPerUnit;
+            Hit();
+            if (units < GoF2Remake.World.Wormhole.InsideUnits) InWormhole = true;
         }
 
         /// <summary>The asteroid part: the asteroid is destroyed, the player takes 20.</summary>

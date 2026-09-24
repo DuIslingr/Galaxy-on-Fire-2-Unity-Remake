@@ -37,7 +37,7 @@ namespace GoF2Remake.Data
         public StoryMission storyMission;
         public float storyStepStart;
         public bool storyRadioPending;
-        public int freelanceCompleted, storyCounter, voidInvasionSystem = -1, voidInvasionStation = -1;
+        public int freelanceCompleted, storyCounter, voidInvasionSystem = -1, voidInvasionStation = -1, invasionDepartures;
         public List<int> unsaleable;
         // version 3: the bar (agents live in recentStations)
         public FreelanceMission freelanceMission;
@@ -172,6 +172,7 @@ namespace GoF2Remake.Data
                 storyCounter = Session.StoryCounter,
                 voidInvasionSystem = Session.VoidInvasionSystem,
                 voidInvasionStation = Session.VoidInvasionStation,
+                invasionDepartures = Session.InvasionDepartures,
                 unsaleable = new List<int>(Session.Unsaleable),
                 freelanceMission = Session.FreelanceMission,
                 passengers = Session.Passengers,
@@ -241,6 +242,7 @@ namespace GoF2Remake.Data
             Session.StoryCounter = s.storyCounter;
             Session.VoidInvasionSystem = s.voidInvasionSystem;
             Session.VoidInvasionStation = s.voidInvasionStation;
+            Session.InvasionDepartures = s.invasionDepartures;
             Session.Unsaleable = new HashSet<int>(s.unsaleable ?? new List<int>());
             if (s.version >= 3)
             {

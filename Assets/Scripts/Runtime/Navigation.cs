@@ -40,7 +40,7 @@ namespace GoF2Remake.Flight
 {
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole }
 
         public class Target
         {
@@ -49,6 +49,7 @@ namespace GoF2Remake.Flight
             public Vector3 fixedPosition;
             public int station = -1;         // planets: the station it leads to
             public bool disabled;            // drawn half-transparent, ignores taps (the cloak while not ready)
+            public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
@@ -124,8 +125,23 @@ namespace GoF2Remake.Flight
             if (!Targets.Contains(routeTarget)) Targets.Add(routeTarget);
         }
 
+        /// <summary>Landmark 3: named 545 "Wormhole" near the centre, icon 0x450 elsewhere; never a lock candidate (Radar::draw).</summary>
+        public void SetWormhole(GoF2Remake.World.Wormhole wormhole)
+        {
+            this.wormhole = wormhole;
+            Targets.RemoveAll(t => t.kind == Kind.Wormhole);
+            if (wormhole == null) return;
+            wormholeTarget = new Target { kind = Kind.Wormhole, transform = wormhole.transform, name = Localization.Get(545), hidden = !wormhole.Visible };
+            Targets.Add(wormholeTarget);
+        }
+        GoF2Remake.World.Wormhole wormhole;
+        Target wormholeTarget;
+
         /// <summary>Set by the level: planet jumps and the Khador Drive are refused (story, campaign_flow.md 7).</summary>
         public Func<bool> JumpsBlocked;
+        /// <summary>Set by the level: a story rule refuses the jump to this station itself (index 24: Sahi needs a scanner and a
+        /// tractor beam, 532) and shows why; true = refused.</summary>
+        public Func<int, bool> PlanetJumpRefused;
 
         /// <summary>HUD event 0x15: "Not possible on a mission." (525); the autopilot stops.</summary>
         public void Refuse()
@@ -152,6 +168,7 @@ namespace GoF2Remake.Flight
             : Autopilot ? Localization.Extra("hudAutopilotOff", "AUTOPILOT OFF")
             : Locked == null ? null
             : Locked.kind == Kind.Planet ? Localization.Extra("hudJump", "JUMP")
+            : layout != null && layout.alienOrbit ? null   // MGame::OnTouchBegin: no autopilot to the Void station
             : Localization.Extra("hudAutopilot", "AUTOPILOT");
 
         ShipController ship;
@@ -190,6 +207,8 @@ namespace GoF2Remake.Flight
             if (layout.hasStation && st != null)
                 Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = st.index,
                                          name = st.index == 101 ? st.name : $"{st.name} {Localization.Get(136)}" });
+            else if (layout.hasStation && layout.alienOrbit)   // the Void station: 415 "Void", distance only, no autopilot
+                Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = Session.VoidOrbit, name = Localization.Get(415) });
             if (layout.hasJumpgate)
                 Targets.Add(new Target { kind = Kind.Jumpgate, fixedPosition = OrbitLayout.ToUnity(layout.jumpgate), name = Localization.Get(547) });
             if (layout.systemIndex >= 0)
@@ -223,7 +242,7 @@ namespace GoF2Remake.Flight
                                       name = $"{Localization.Get(574)}: {db.Stations.Find(s => s.index == prog)?.name}" });
             if (AsteroidField != null) list.Add(AsteroidField);
             var station = Targets.Find(t => t.kind == Kind.Station);
-            if (station != null) list.Add(station);
+            if (station != null && !layout.alienOrbit) list.Add(station);
             var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
             if (gate != null) list.Add(gate);
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
@@ -313,6 +332,7 @@ namespace GoF2Remake.Flight
         void UpdateLock(float dtMs)
         {
             UpdateRoute();
+            if (wormholeTarget != null) wormholeTarget.hidden = !wormhole.Visible;
             var cam = Camera.main;
             Target best = null;
             bool miningBusy = mining != null && (mining.State != Mining.Phase.Idle || mining.Locked != null);
@@ -326,7 +346,7 @@ namespace GoF2Remake.Flight
                     // Landmarks first (not during the autopilot), then planets (also during the autopilot).
                     foreach (var t in Targets)
                     {
-                        if (t.kind == Kind.Planet || Autopilot) continue;
+                        if (t.kind == Kind.Planet || t.kind == Kind.Wormhole || t.hidden || Autopilot) continue;
                         var p = cam.WorldToScreenPoint(t.Position);
                         if (p.z <= 0f || p.x < 0f || p.y < 0f || p.x > w || p.y > h) continue;
                         if (Mathf.Abs(p.x - w / 2f) >= centre || Mathf.Abs(p.y - h / 2f) >= centre) continue;
@@ -349,7 +369,11 @@ namespace GoF2Remake.Flight
             if (Locked != null && !wasLocked) Play(sounds?.targetLock);
             wasLocked = Locked != null;
             // The autopilot flying to a programmed station's planet jumps as soon as that planet is locked.
-            if (Locked != null && Locked == AutopilotTarget && Locked.kind == Kind.Planet) StartJump(Locked);
+            if (Locked != null && Locked == AutopilotTarget && Locked.kind == Kind.Planet)
+            {
+                if (PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) { SetAutopilot(null); return; }
+                StartJump(Locked);
+            }
         }
 
         /// <summary>LevelScript::setAutoPilotToProgrammedStation: autopilot toward the programmed station (see the header);
@@ -384,7 +408,9 @@ namespace GoF2Remake.Flight
                 return;
             }
             if (Locked == null) return;
+            if (Locked.kind != Kind.Planet && layout.alienOrbit) return;
             if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(Localization.Get(525)); return; }
+            if (Locked.kind == Kind.Planet && PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) return;
             if (Locked.kind == Kind.Planet) StartJump(Locked);
             else
             {

@@ -183,6 +183,8 @@ namespace GoF2Remake.UI
             if (!started)
             {
                 started = true;
+                // The main story's ending plays over this scene's backdrop (ModStation's CutScene(2)), then the station.
+                if (Session.EndingPending) { EndingCredits.Begin(gameObject, root, musicSource); return; }
                 foreach (var b in mainButtons.Query<Button>().ToList()) b.AddToClassList("menu-button--hidden");
                 StartCoroutine(Run());
             }

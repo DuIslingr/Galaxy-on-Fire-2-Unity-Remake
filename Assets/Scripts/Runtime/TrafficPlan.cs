@@ -61,9 +61,21 @@ namespace GoF2Remake.Flight
         static Vector3 Jitter() => new Vector3(Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000);
 
         /// <summary>'playerGame': the player's start (game units), where freelance escorts gather.</summary>
-        public static List<SpawnSpec> Build(Database db, int station, SystemData system, Vector3 playerGame = default)
+        /// <param name="wormholeGame">The orbit's visible wormhole (game units), where a Void raid comes from; null = none.</param>
+        public static List<SpawnSpec> Build(Database db, int station, SystemData system, Vector3 playerGame = default, Vector3? wormholeGame = null)
         {
             var list = new List<SpawnSpec>();
+            // The alien orbit (npc_traffic_ai.md 2.1): 2 Void fighters, more with the player's level (2 at index 0x21 / 0x44),
+            // anywhere in the orbit, always enemy; nothing else.
+            if (station == Session.VoidOrbit)
+            {
+                int n = 2, more = Session.Rank / 2 - 1 + Random.Range(0, 2);
+                if (more >= 2 && Session.CampaignMission != 0x21 && Session.CampaignMission != 0x44) n = more;
+                for (int i = 0; i < n; i++)
+                    list.Add(new SpawnSpec { group = NpcGroup.Raider, race = Standing.Void, ship = NpcTables.RandomFighter(Standing.Void), alwaysEnemy = true,
+                                             position = new Vector3(Random.Range(0, 120000) - 60000, Random.Range(0, 80000) - 40000, Random.Range(0, 120000) - 60000) });
+                return list;
+            }
             if (system == null || station == 100 || station == 101 || station == 108 || station == 10) return list;
             int sysRace = Mathf.Clamp(system.raceId, 0, 3);
             bool hardcore = Session.IsExtreme;
@@ -97,9 +109,21 @@ namespace GoF2Remake.Flight
             bool baseSystem = PirateBases.SystemHasBase(db, system.index);
             int baseEscorts = 0;
             if (baseSystem) { raidersOn = false; raiders = 0; baseEscorts = hardcore ? Random.Range(0, 3) + 4 : 2; }
+            // Coming out of the Void, or at the station the Void attack (index < 45, not 42): 2-5 Void raiders from the
+            // wormhole and at least 2 freighters for them to hunt (Level::createMission, npc_traffic_ai.md 2.2).
+            int cmIndex = Session.CampaignMission;
+            bool voidRaid = !Session.FreePlay && cmIndex != 42 && cmIndex < 45 && (Session.ComingFromVoid || station == Session.VoidInvasionStation);
+            if (voidRaid)
+            {
+                raidersOn = true;
+                raiders = Random.Range(0, 4) + 2;
+                raiderRace = Standing.Void;
+                if (wormholeGame.HasValue) raiderSpawn = wormholeGame.Value;
+            }
 
             int jumpers = 0, freighters = 0, x = 0;
             if (station != 78) { jumpers = Random.Range(0, 2); freighters = Random.Range(0, 5); x = Random.Range(0, 2); }
+            if (voidRaid) freighters = Mathf.Max(freighters, 2);
             int local = secEff + x + freighters / 4;
             if (Session.AttackedStations.Contains(station)) local = Mathf.Max(local, 7);
             // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier and Passenger missions (types 0, 0xb).
@@ -118,6 +142,9 @@ namespace GoF2Remake.Flight
             bool vossk = sysRace == 1 && freighters > 0 && Random.Range(0, 100) < 30 && cm > 0x8c;
             bool carrier = terran && Random.Range(0, 100) < 30 && cm > 0x67;
             if (terran || vossk) freighters--;
+            // Campaign 0x24 / 0x25 in S'kolptorr: no local fighters, no raiders; 0x2a / 0x2b: no raiders, no pirate escorts.
+            if ((cm == 0x24 || cm == 0x25) && system.index == 5 && !Session.FreePlay) local = raiders = 0;
+            if ((cm == 0x2a || cm == 0x2b) && !Session.FreePlay) raiders = escorts = 0;
             if (jumpers + local + freighters + raiders + escorts == 0 && !terran && !vossk) local = 4;
 
             // 1 local fighters around one point in front of the station

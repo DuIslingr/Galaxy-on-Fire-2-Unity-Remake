@@ -26,7 +26,13 @@
 //   Story (StorySpace, CampaignLevel): an orbit built around a campaign mission (Story.IsLevelMission) gets
 //                  the campaign level instead of normal traffic; briefings, success / failure, the add-on entry calls. On a
 //                  story mission the station refuses docking and the planet jumps / Khador Drive are blocked (525).
-// Not yet: lens flare, wormhole.
+//   Wormhole (landmark 3): exists until the game is won, visible when coming out of the Void, at the station the Void
+//                  attack or in the alien orbit (Session.VoidOrbit, the Void's home: its station, sky 010, Void asteroids);
+//                  arriving from the Void it closes behind the player (LevelScript::LevelScript: player - dir * 10000,
+//                  reset(true)). MGame::OnUpdate, the player inside it: an active campaign mission advances first (index
+//                  < 41, not 29 / 40; 40 only once Errkt's freighter went through, carrying its hull into 41), entering too
+//                  early at 29 / 40 / 41 kills the player, 42 in the alien orbit is the level script's; then the ride:
+//                  into the alien orbit (remembering this station, Status+0x84) or back out to that station.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -93,6 +99,8 @@ namespace GoF2Remake.World
         public Backdrop Backdrop { get; private set; }
         public GameObject Station { get; private set; }
         public GameObject Jumpgate { get; private set; }
+        /// <summary>Landmark 3 (PlayerWormHole), null once the game is won.</summary>
+        public Wormhole Wormhole { get; private set; }
         /// <summary>Hud::drawOrbitInformation: during the arrival camera after a gate / Khador jump.</summary>
         public bool OrbitInfoVisible => orbitInfo && launchCameraMs > 0f;
         /// <summary>This orbit's station (name, tech level) and its system's jumpgate station (-1 = none).</summary>
@@ -120,6 +128,9 @@ namespace GoF2Remake.World
         {
             db = Database.Load();
             int station = stationOverride >= 0 ? stationOverride : Session.StationIndex;
+            ComingFromVoid = Session.ComingFromVoid;
+            // Status::departStation: the Void-invasion re-roll counter (index 32-44).
+            Story.OnDepart(db, station);
             Layout = OrbitLayout.Build(db, station);
             var st = db.Stations.Find(s => s.index == station);
             StationInfo = st;
@@ -137,6 +148,7 @@ namespace GoF2Remake.World
             if (prologue && Story.Index == 0) Layout.asteroidCentre = Vector3.zero;
             Station = OrbitBuilder.SpawnStation(db, Layout);
             Jumpgate = OrbitBuilder.SpawnJumpgate(db, Layout);
+            SpawnWormhole();
             AddObstacles();
             Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
             if (prologue && Story.Index == 0)
@@ -147,6 +159,7 @@ namespace GoF2Remake.World
             orbitInfo = Session.ArrivedBySystemJump;
             Session.ArrivedBySystemJump = false;
             SpawnPlayer();
+            PlaceArrivalWormhole();
             OrbitBuilder.SpawnDust(Layout);
             var backdrop = OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
             SkyLayers.Spawn(Layout, mainCamera);   // ring sky, storms, supernova flares, asteroid belt
@@ -164,13 +177,14 @@ namespace GoF2Remake.World
             Health.Setup(db, Player, chase, Weapons);
             Collision = Player.gameObject.AddComponent<PlayerCollision>();
             Collision.Setup(Health, chase, Mining);
+            Collision.wormhole = Wormhole;
             bool storyOrbit = !Session.FreePlay && Story.IsLevelMission(station);
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
             bool freelanceOrbit = !storyOrbit && Freelance.IsMissionOrbit(station);
             // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
             bool siege = !storyOrbit && !freelanceOrbit && KaamoClub.SiegeAt(station);
             Traffic = new GameObject("Traffic").AddComponent<Traffic>();
-            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege);
+            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege, Wormhole);
             if (storyOrbit)
             {
                 Campaign = new GameObject("Campaign").AddComponent<CampaignLevel>();
@@ -193,7 +207,10 @@ namespace GoF2Remake.World
             Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             StorySpace = gameObject.AddComponent<StorySpace>();
             StorySpace.Setup(this, Campaign);
-            Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex) || (Siege != null && Siege.Active);
+            Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex) || (Siege != null && Siege.Active)
+                                            || Layout.alienOrbit;   // remake: no Khador Drive out of the Void (the wormhole is the way back)
+            Navigation.SetWormhole(Wormhole);
+            Navigation.PlanetJumpRefused = st => StorySpace != null && StorySpace.RefusePlanetJump(st);
             SystemJump.GateBlocked = () => Siege != null && Siege.Active;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
@@ -203,7 +220,11 @@ namespace GoF2Remake.World
             Navigation.Extender = Extender;
             if (Extender != null) Extender.Blocked = () => ExtenderBlocked;
             RepairBeam.AttachAll(Player.gameObject, db, Health.Target, Traffic);
+            Session.ComingFromVoid = false;   // Level::init / LevelScript have used it (the Void raid, the closing wormhole)
         }
+
+        /// <summary>Level::comingFromAlienWorld for this level (the session flag is cleared once the level is built).</summary>
+        public bool ComingFromVoid { get; private set; }
 
         /// <summary>A cinematic, a jump, the launch camera or the player's death stops the time extender (MGame::OnUpdate 0x1af162).</summary>
         bool ExtenderBlocked => launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Cutscene
@@ -222,6 +243,78 @@ namespace GoF2Remake.World
             // Hostiles, or a radio line on screen, block fast-forward (MGame::OnUpdate).
             Navigation.HostilesPresent = (Traffic != null && (Traffic.HostileCount > 0 || Traffic.ChatterVisible != null)) || (Campaign != null && Campaign.Radio != null && Campaign.Radio.Busy);
             if (Extender != null && ExtenderBlocked) Extender.Cancel();
+            UpdateWormholeRide();
+        }
+
+        // ---- the wormhole (landmark 3) -----------------------------------------------------------------------
+
+        /// <summary>Level::createSpace: landmark 3 while the game isn't won, at a random spot (time-seeded).</summary>
+        void SpawnWormhole()
+        {
+            if (Session.FreePlay || Story.GameWon) return;
+            bool attacked = Layout.stationIndex == Session.VoidInvasionStation;
+            bool visible = (ComingFromVoid || attacked || Layout.alienOrbit) && Story.Index < 43;
+            var pos = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 40000) + 40000);
+            Wormhole = Wormhole.Spawn(StoryAssets.Load(), pos, visible);
+            Wormhole.alienOrbit = Layout.alienOrbit;
+            Wormhole.attackedStation = attacked;
+        }
+
+        /// <summary>LevelScript::LevelScript 0x16056c: coming out of the Void (or in the alien orbit) the wormhole sits
+        /// 10000 units behind the player and closes after a second (reset(true)).</summary>
+        void PlaceArrivalWormhole()
+        {
+            if (Wormhole == null) return;
+            Wormhole.player = Player.transform;
+            if (!(ComingFromVoid || Layout.alienOrbit) || Story.Index >= 43) return;
+            var p = Player.transform.position - Player.transform.forward * 10000f * M;
+            Wormhole.ResetTimer(true);
+            Wormhole.transform.position = p;
+            Wormhole.SetVisible(true);
+        }
+
+        bool riding, rode;
+        /// <summary>The level is being left (wormhole ride, docking): the story checks stop.</summary>
+        public bool Leaving { get; private set; }
+
+        /// <summary>MGame::OnUpdate, PlayerEgo::isInWormhole (see the header).</summary>
+        void UpdateWormholeRide()
+        {
+            if (riding || Collision == null || !Collision.InWormhole || Health == null || Health.Dead) return;
+            int index = Story.Index;
+            bool active = !Session.FreePlay && Campaign != null && Story.IsLevelMission(Layout.stationIndex);
+            if (index == 42)
+            {
+                if (Layout.alienOrbit) return;   // the mother ship's explosion: the level script rides out itself
+                RideWormhole();
+                return;
+            }
+            if (active)
+            {
+                if (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3)) { riding = true; Health.Kill(); return; }
+                if (index == 40) Session.LastFreighterHull = Campaign.FreighterHull;
+                if (index < 41) Story.Advance(db);
+            }
+            RideWormhole();
+        }
+
+        /// <summary>The ride: into the alien orbit (remembering this station as Status+0x84), or out of it back there; the
+        /// hull etc. are kept (Status), a stream-out arrival with the wormhole behind the player.</summary>
+        public void RideWormhole()
+        {
+            if (rode) return;
+            rode = riding = true;
+            Leaving = true;
+            Weapons?.StoreAmmo();
+            int from = Layout.stationIndex;
+            if (Layout.alienOrbit) Session.StationIndex = Session.VoidReturnStation;
+            else { Session.VoidReturnStation = from; Session.StationIndex = Session.VoidOrbit; }
+            Session.PreviousStationIndex = from;
+            Session.ArrivedByTravel = true;
+            Session.LaunchedFromStation = false;
+            Session.ComingFromVoid = true;
+            Session.ProgrammedStation = -1;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see Obstacle).</summary>
@@ -316,11 +409,29 @@ namespace GoF2Remake.World
         /// when that station isn't in this system.</summary>
         Vector3 ArrivalPosition()
         {
-            if (Layout.hasJumpgate) return OrbitLayout.ToUnity(Layout.hiddenJumpgate);
+            if (Layout.hasJumpgate || Layout.alienOrbit) return OrbitLayout.ToUnity(Layout.hiddenJumpgate);
             var from = Layout.planets.Find(p => p.station == Session.PreviousStationIndex);
             if (from == null) return OrbitLayout.ToUnity(new Vector3(0f, 0f, 100000f));
             return OrbitLayout.ToUnity(-4f * OrbitLayout.BackdropDistance * OrbitLayout.Direction(from.pitch, from.yaw));
         }
+
+        /// <summary>Level::createCampaignMission / LevelScript: the level puts the player somewhere else (Unity pose); the launch /
+        /// arrival camera is placed again around the new pose.</summary>
+        public void MovePlayer(Vector3 position, Quaternion rotation)
+        {
+            Player.transform.SetPositionAndRotation(position, rotation);
+            chase.Snap();
+            if (launchCameraMs <= 0f) return;
+            bool travel = launchTravel;
+            float Side() => (Random.value < 0.5f ? -1f : 1f) * (travel ? Random.Range(500, 1000) : Random.Range(500, 2500));
+            var local = new Vector3(-Side(), Side(), travel ? 7000f : 9000f) * M;
+            mainCamera.transform.position = Player.transform.TransformPoint(local);
+            mainCamera.transform.rotation = Quaternion.LookRotation(Player.transform.position - mainCamera.transform.position, Player.transform.up);
+            PlaceArrivalWormhole();
+        }
+        bool launchTravel;
+        /// <summary>Level::initStreamOutPosition: this level began with an arrival by travel (planet jump, gate, wormhole).</summary>
+        public bool StreamOutArrival => launchTravel;
 
         // LevelScript::LevelScript: TargetFollowCamera in look-at mode at playerPos + playerRotation * (+-(500..2499),
         // +-(500..2499), 9000) (arrival by travel: +-(500..999), 7000); the chase camera takes over after 7000 ms.
@@ -328,6 +439,7 @@ namespace GoF2Remake.World
         {
             Session.LaunchedFromStation = false;
             bool travel = Session.ArrivedByTravel;
+            launchTravel = travel;
             Session.ArrivedByTravel = false;
             float Side() => (Random.value < 0.5f ? -1f : 1f) * (travel ? Random.Range(500, 1000) : Random.Range(500, 2500));
             var local = new Vector3(-Side(), Side(), travel ? 7000f : 9000f) * M;   // ship-local game -> Unity (-x, y, z)
@@ -404,6 +516,7 @@ namespace GoF2Remake.World
         /// <summary>MGame::dockEvent: straight to the station module (SetCurrentApplicationModule(5)).</summary>
         public void Dock()
         {
+            Leaving = true;
             Session.LaunchedFromStation = false;
             Weapons?.StoreAmmo();   // MGame::dockEvent saves the ship state to Status
             if (Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);

@@ -77,6 +77,9 @@ namespace GoF2Remake.UI
         Camera cam;
         readonly Transform[] suns = new Transform[64];
         float sunScale = 0.012f;
+        /// <summary>StarMap::StarMap: the early-warning wormhole at the system the Void attack (index > 0x1f).</summary>
+        Transform wormhole;
+        Vector3 wormholeScale = Vector3.one;
         GameObject systemRoot;
         Light sunLight;
         readonly List<GalaxyMap.Planet> planets = new List<GalaxyMap.Planet>();
@@ -259,7 +262,7 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>StarMap::draw: the story / freelance icons on the mission targets (the offered mission in mission mode).</summary>
-        int StoryTarget => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay ? Session.StoryMission.station : -1;
+        int StoryTarget => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay ? Story.TargetStation : -1;
         int FreelanceTarget => mode == StarMapMode.Mission && focusStation >= 0 ? focusStation : Freelance.Active ? Freelance.Mission.target : -1;
 
         // ---- 3D --------------------------------------------------------------------------------------------
@@ -328,9 +331,41 @@ namespace GoF2Remake.UI
                 if (mat != null) foreach (var r in sun.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mat;
                 suns[s.index] = sun.transform;
             }
+            // The wormhole (galaxymap_wormhole, looping animation, rotation (0, pi, 0)) at the attacked system's sun, turned to
+            // the camera every frame; scale 0.02 - 0.014 * zoom; in that system's view it moves to the attacked station's planet.
+            int wsys = Session.VoidInvasionSystem;
+            if (!Session.FreePlay && Session.CampaignMission > 0x1f && wsys >= 0 && wsys < suns.Length && suns[wsys] != null)
+            {
+                var w = Spawn("galaxymap_wormhole", world.transform);
+                if (w != null)
+                {
+                    w.name = "Wormhole";
+                    wormhole = w.transform;
+                    wormholeScale = w.transform.localScale;
+                    foreach (var a in w.GetComponentsInChildren<GoF2Remake.Visuals.PartAnimation>(true)) a.loop = true;
+                }
+            }
             start = current != null ? new Vector2(GalaxyMap.SunPosition(current).x, GalaxyMap.SunPosition(current).y) / 20f : Vector2.zero;
             pan = Vector2.zero;
             UpdateCamera();
+        }
+
+        void UpdateWormhole()
+        {
+            if (wormhole == null || cam == null) return;
+            int wsys = Session.VoidInvasionSystem;
+            var pos = SunGame(wsys);
+            float t = 0f;
+            if (zoomSystem == wsys && (systemView || zoomDir != 0))
+            {
+                t = systemView && zoomDir == 0 ? 1f : ZoomEase;
+                int k = planets.FindIndex(p => p.station == Session.VoidInvasionStation);
+                if (k >= 0) pos = Vector3.Lerp(pos, PlanetGame(k), t);
+            }
+            wormhole.localPosition = U(pos);
+            wormhole.localScale = wormholeScale * (0.02f - 0.014f * t);   // the prefab is unscaled
+            var d = cam.transform.position - wormhole.position;
+            if (d.sqrMagnitude > 1e-8f) wormhole.rotation = Quaternion.LookRotation(d.normalized, Vector3.up);
         }
 
         void RestoreScene()
@@ -1033,6 +1068,7 @@ namespace GoF2Remake.UI
             spin += dtMs * 0.0002f;
             UpdateCamera();
             UpdateSystemTransforms();
+            UpdateWormhole();
             UpdateOverlay();
         }
 

@@ -40,7 +40,7 @@ namespace GoF2Remake.UI
             storyScroll = Scroll("storyScroll");
             freelanceScroll = Scroll("freelanceScroll");
             close = Bind("missionsClose", Close);
-            storyMap = Bind("storyMap", () => ShowOnMap(Session.StoryMission.station, storyMap));
+            storyMap = Bind("storyMap", () => ShowOnMap(Story.TargetStation, storyMap));
             freelanceMap = Bind("freelanceMap", () => ShowOnMap(Freelance.Mission.target, freelanceMap));
             discard = Bind("freelanceDiscard", AskDiscard);
             root.Q<Label>("missionsTitle").text = T(129).ToUpperInvariant();
@@ -88,7 +88,7 @@ namespace GoF2Remake.UI
             // Story: the objective text; no button once there is nothing to show.
             bool story = !Session.FreePlay && !Session.StoryMission.IsEmpty && Session.StoryMission.visible;
             storyText.text = story ? Story.ObjectiveText(db) : T(174);
-            Show(storyMap, story && Session.StoryMission.station >= 0);
+            Show(storyMap, story && Story.TargetStation >= 0);
 
             var m = Freelance.Mission;
             bool active = Freelance.Active;

@@ -59,6 +59,24 @@ namespace GoF2Remake.EditorTools
             a.introSky = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_003.mat");
             a.introSkyAfterJump = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_009.mat");
             a.hyperDrive = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/fx/hyper_drive.prefab");
+            a.wormhole = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/misc/wormhole_anim_add.prefab");
+            a.scannerProbe = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/misc/scanner_probe.prefab");
+            a.voidStationExplosion = new[]
+            {
+                AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/fx/explosion_void_station_add.prefab"),
+                AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/fx/explosion_void_station_add_lookat.prefab"),
+                AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/fx/explosion_void_station_alpha_lookat.prefab"),
+            };
+            a.wormholeSound = Clip("SFX_SPACE/Wormhole_1b.ogg");
+            a.empHit = Clip("SFX_SPACE/Explosion_EMP_GL1_01.ogg");
+            a.probeLaunch = Clip("SFX_SPACE/Explosion_Bomb_AMR_Tormentor_01.ogg");
+            a.mothershipLoop = Clip("CUTSCENES/Mothership_Xplosion_Loop_01.ogg");
+            a.mothershipCutscene = Clip("CUTSCENES/Mothership_Xplosion_CutSeq.ogg");
+            a.errktCutscene = Clip("MUSIC/Errkt_CutSeq_01.ogg");
+            a.outroSong = Clip("MUSIC/OutroSong_02b.ogg");
+            a.voidMusic = Clip("MUSIC/Space_NoCombat_Void.ogg");
+            a.voidBattle = Clip("MUSIC/Space_Battle_Void.ogg");
+            a.endingUxml = AssetDatabase.LoadAssetAtPath<UnityEngine.UIElements.VisualTreeAsset>($"{Root}/UI/Ending/Ending.uxml");
 
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();

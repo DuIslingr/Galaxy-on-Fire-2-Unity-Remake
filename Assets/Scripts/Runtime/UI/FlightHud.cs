@@ -600,7 +600,7 @@ namespace GoF2Remake.UI
             lockRing.style.left = crosshair.style.left;
             lockRing.style.top = crosshair.style.top;
             navView.Update(nav, Camera.main, InputMode.Current == InputKind.Touch, phase,
-                           level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
+                           level.Layout.alienOrbit ? Standing.Void : level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
             bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
             bool plateFree = (nav == null || nav.Locked == null) && (mining == null || (mining.State == Mining.Phase.Idle && mining.Locked == null));
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree);
@@ -828,11 +828,13 @@ namespace GoF2Remake.UI
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);
 
-        /// <summary>Junk removal's time limit as a HUD message: every 10 s, then every second from 10 s.</summary>
+        /// <summary>Junk removal's time limit (and a campaign level's, LevelScript+0: index 29's survival) as a HUD message:
+        /// every 10 s, then every second from 10 s.</summary>
         void UpdateFreelanceTimer()
         {
-            if (freelance == null || freelance.DialogueOpen) return;
-            float left = freelance.TimeLeftMs;
+            float left = -1f;
+            if (freelance != null && !freelance.DialogueOpen) left = freelance.TimeLeftMs;
+            else if (freelance == null && level != null && level.Campaign != null && !level.Dialogue && !level.Cutscene) left = level.Campaign.TimeLeftMs;
             if (left < 0f || left <= 0f && lastTimerSecond == 0) return;
             int sec = Mathf.CeilToInt(left / 1000f);
             if (sec == lastTimerSecond) return;

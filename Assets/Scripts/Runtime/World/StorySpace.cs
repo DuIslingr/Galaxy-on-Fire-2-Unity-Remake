@@ -8,7 +8,10 @@
 //                                   once); the level keeps running with the new index. New index 15 -> station 98
 //                                   (arrested), 22 -> back into Kappa's station
 //   MGame::gameOverCheck 0x1b0d04   the campaign level's fail objective -> "Mission failed!" (392, + 527 at 38 / 40 / 41)
-//                                   and "Game Over" (319), then the last save
+//                                   and "Game Over" (319), then the last save; a failure or the player's death counts
+//                                   toward Globals::lastCampaignMissionFailCount (3 in a row: NPC guns x0.7)
+//   successCheck, index 38          the surviving freighters become unkillable (9 999 999)
+//   Navigation (index 24)           the jump to Sahi needs a scanner and a tractor beam: Carla's note 532 instead
 //   MGame::OnUpdate 0x1ac778        add-on entry calls: in free flight (no level mission, not mining, no autopilot) at
 //                                   index 45 the Valkyrie call (conversation 46), at 84 the Supernova call (85), each
 //                                   followed by two nextCampaignMission (the remake owns both add-ons)
@@ -40,9 +43,13 @@ namespace GoF2Remake.World
 
         void Update()
         {
-            if (Session.FreePlay || level == null || DialogueRequested == null || DialogueOpen) return;
+            if (Session.FreePlay || level == null || DialogueRequested == null || DialogueOpen || level.Leaving) return;
             levelMs += Time.deltaTime * 1000f;
-            if (level.Health != null && level.Health.Dead) return;
+            if (level.Health != null && level.Health.Dead)
+            {
+                if (!failed && campaign != null) { failed = true; CountFailure(); }
+                return;
+            }
             if (!level.StartSequenceOver) return;
             if (!briefingChecked)
             {
@@ -61,10 +68,14 @@ namespace GoF2Remake.World
 
         void CheckSuccess()
         {
-            var ctx = new StoryContext { docked = false, levelMs = levelMs, station = Session.StationIndex };
+            // This level's orbit (Session.StationIndex already names the next one on the frame a ride / jump starts).
+            var ctx = new StoryContext { docked = false, levelMs = levelMs, station = level.Layout.stationIndex };
             bool levelWon = campaign != null && Story.Index == campaign.BuiltIndex && campaign.Won;
             if (Story.Mission.won || !(Story.IsComplete(level.Database, ctx) || levelWon)) return;
             Story.Mission.won = true;
+            // MGame::successCheck, index 0x26: the remaining freighters get 9 999 999 hull.
+            if (Story.Index == 38 && campaign != null)
+                foreach (var s in campaign.Ships) if (s != null && s.IsFreighter && s.Target.Alive) s.SetHull(9999999);
             int reward = Story.Mission.reward;
             var step = Story.Step;
             if (step != null && step.success.Count > 0) Open(step.success, _ => AfterSuccess(reward));
@@ -80,9 +91,27 @@ namespace GoF2Remake.World
             else if (n == 22) level.Dock();                                       // back into Kappa's station
         }
 
+        /// <summary>MGame::gameOverCheck: Globals::lastCampaignMissionFailed / FailCount.</summary>
+        static void CountFailure()
+        {
+            int index = Story.Index;
+            if (Session.LastFailedMission == index) Session.FailCount++;
+            else { Session.LastFailedMission = index; Session.FailCount = 1; }
+        }
+
+        /// <summary>Navigation.PlanetJumpRefused: index 24 needs a scanner and a tractor beam for the jump to Sahi (532, Carla).</summary>
+        public bool RefusePlanetJump(int station)
+        {
+            if (Session.FreePlay || Story.Index != 24 || station != Story.Mission.station) return false;
+            if (Shop.FirstMounted(level.Database, 17) != null && Shop.FirstMounted(level.Database, 13) != null) return false;
+            ShowPages(new List<DialoguePage> { new DialoguePage { speaker = 6, text = 532, voice = "MSG_MISSION_24_NO_EQUIPMENT_INSTALLED" } }, null);
+            return true;
+        }
+
         void Fail()
         {
             failed = true;
+            CountFailure();
             int index = Story.Index;
             string text = Localization.Get(392);
             if (index == 38 || index == 40 || index == 41) text += "\n" + Localization.Get(527);

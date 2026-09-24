@@ -84,6 +84,8 @@ namespace GoF2Remake.Flight
             if (d > 21) d = 22;
             int dmg = d == 0 ? 3 : d + 2;
             if (race == 9) dmg = (int)(dmg * 0.8f); else if (race == 10) dmg = (int)(dmg * 0.7f);
+            // Level::assignGuns: the same campaign mission failed 3+ times in a row -> NPC guns x0.7.
+            if (!Session.FreePlay && Session.FailCount >= 3 && Session.LastFailedMission == Session.CampaignMission) dmg = (int)(dmg * 0.7f);
             return Mathf.Max(1, dmg);
         }
 

@@ -14,7 +14,8 @@ namespace GoF2Remake.EditorTools
     {
         public const string OutDir = ImportSettings.Root + "/Resources/GoF2Hud";
         const string AtlasDir = ImportSettings.Root + "/Textures/textures/";
-        const string Main = "gof2_interface_iphone4.png", Ipad = "gof2_interface2_ipad_large.png", Low = "gof2_interface.png";
+        const string Main = "gof2_interface_iphone4.png", Ipad = "gof2_interface2_ipad_large.png", Low = "gof2_interface.png",
+                     Logos = "gof2_logos_ipad2.png";
 
         // atlas, name, x, y, w, h, frames (0 = single image), wrap (marquee strips repeat)
         static readonly (string atlas, string name, int x, int y, int w, int h, int frames, bool repeat)[] Images =
@@ -44,6 +45,8 @@ namespace GoF2Remake.EditorTools
             // 0x4a0 pirates, 0x49d void.
             (Ipad, "bracket", 292, 1653, 81, 81, 0, false),
             (Ipad, "gate_icon", 1776, 17, 26, 26, 0, false),
+            (Ipad, "wormhole_icon", 355, 1578, 58, 58, 0, false),       // 0x450 the wormhole off the centre (Radar::draw)
+            (Logos, "ending_logo", 0, 0, 452, 156, 0, false),           // 0x1b5a the ending's logo (dialogue_cutscenes.md 3.4)
             (Ipad, "autopilot", 1, 515, 109, 109, 0, false),
             (Ipad, "autopilot_on", 1097, 782, 109, 109, 0, false),
             (Ipad, "fastforward", 1120, 1295, 109, 109, 0, false),

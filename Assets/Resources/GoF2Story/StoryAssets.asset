@@ -7697,3 +7697,19 @@ MonoBehaviour:
   introSky: {fileID: 2100000, guid: 285128267b6f1ea4bb50a4ea11f2859b, type: 2}
   introSkyAfterJump: {fileID: 2100000, guid: 42928d5d95342ae47b51e5229e6edccd, type: 2}
   hyperDrive: {fileID: 3958461172637767444, guid: 371d1219021d1fd45aec74d0453dcd58, type: 3}
+  wormhole: {fileID: 5722040181389032401, guid: 9889eb94cf966c74ca9fe9b91a691ba3, type: 3}
+  scannerProbe: {fileID: 4723210594566127378, guid: 5c930e75f1b6cad49bf8f3471b57d3bd, type: 3}
+  voidStationExplosion:
+  - {fileID: 6209044956405264259, guid: 14fd36ff2744ca14f9bb4869eb26a93a, type: 3}
+  - {fileID: 7356079448520634187, guid: 14291b9522b9e494ea048a384287ef51, type: 3}
+  - {fileID: 8148985553806236038, guid: 9d5b394b05cf6604ca97ddb9243862a2, type: 3}
+  wormholeSound: {fileID: 8300000, guid: 59ad8c12efa20a042a9c97ff832cf164, type: 3}
+  empHit: {fileID: 8300000, guid: 11455cb27cfe6364b819d445782cacdb, type: 3}
+  probeLaunch: {fileID: 8300000, guid: 9f968904ebb208843807a791b23db2cc, type: 3}
+  mothershipLoop: {fileID: 8300000, guid: dda1ab447476b2c46b771d56d3b7a096, type: 3}
+  mothershipCutscene: {fileID: 8300000, guid: 3b6b3f2ba733e414fbe7542306adcf27, type: 3}
+  errktCutscene: {fileID: 8300000, guid: 968d027cbd790b34cbc0263206914fbc, type: 3}
+  outroSong: {fileID: 8300000, guid: d7a6933560ac989439a2eff8b48ad997, type: 3}
+  voidMusic: {fileID: 8300000, guid: 3064cb1e71b920841a949c19248df5e9, type: 3}
+  voidBattle: {fileID: 8300000, guid: f3b023e826917174b8e24d9ba63daf87, type: 3}
+  endingUxml: {fileID: 9197481963319205126, guid: 6b6d311224d2db04e9c2ae730c2f6974, type: 3}

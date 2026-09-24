@@ -104,6 +104,22 @@ namespace GoF2Remake.Data
         public static int StoryCounter;
         /// <summary>Status+0x7c / +0x80: the Void-invasion system and station (-1 none, -10 never again).</summary>
         public static int VoidInvasionSystem = -1, VoidInvasionStation = -1;
+        /// <summary>Status+0x88: departures to other stations since the invasion station was rolled (index 32-44, re-rolled at 10).</summary>
+        public static int InvasionDepartures;
+        /// <summary>The alien orbit (Status+0x78, the Void's home orbit): StationIndex while the player is there.</summary>
+        public const int VoidOrbit = -1;
+        public static bool InVoidOrbit => StationIndex == VoidOrbit;
+        /// <summary>Status+0x84: the station a wormhole ride out of the Void returns to (not saved: only set in flight).</summary>
+        public static int VoidReturnStation = 10;
+        /// <summary>Level::comingFromAlienWorld: the next level starts with a wormhole closing behind the player.</summary>
+        public static bool ComingFromVoid;
+        /// <summary>Level::lastMissionFreighterHitpoints: Errkt's freighter's hull carried from index 40 into 41 (-1 none).</summary>
+        public static int LastFreighterHull = -1;
+        /// <summary>Globals::lastCampaignMissionFailed / FailCount: the campaign index that failed and how often in a row (globals:
+        /// they survive loading a save, unlike the rest of Session).</summary>
+        public static int LastFailedMission = -1, FailCount;
+        /// <summary>The ending (ModStation::OnTouchEnd at index 43) is to be shown by the main menu's backdrop.</summary>
+        public static bool EndingPending;
         /// <summary>Items the story made unsaleable (Item::setUnsaleable: Gunant's Drill, the Alien Remains ...).</summary>
         public static HashSet<int> Unsaleable = new HashSet<int>();
 
@@ -281,6 +297,11 @@ namespace GoF2Remake.Data
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;
             StoryCounter = 0;
             VoidInvasionSystem = VoidInvasionStation = -1;
+            InvasionDepartures = 0;
+            VoidReturnStation = 10;
+            ComingFromVoid = false;
+            LastFreighterHull = -1;
+            EndingPending = false;
             Unsaleable = new HashSet<int>();
             FreePlay = false;
             RecentStations = new List<StationStock>();

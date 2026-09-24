@@ -50,9 +50,12 @@ namespace GoF2Remake.World
 
         /// <summary>'storyOrbit': the orbit is built around a campaign mission (Level::init calls createCampaignMission
         /// instead of createMission), so no normal traffic; the campaign level spawns its ships with SpawnShip.</summary>
-        public void Setup(Database database, OrbitLayout layout, Target player, GameObject station, bool storyOrbit = false)
+        public void Setup(Database database, OrbitLayout layout, Target player, GameObject station, bool storyOrbit = false, Wormhole wormhole = null)
         {
             db = database;
+            Wormhole = wormhole;
+            // Level::update: updateAlienAttackers in the alien orbit and at the station the Void attack; their music.
+            VoidAttack = layout.alienOrbit || (!Session.FreePlay && Session.CampaignMission < 45 && layout.stationIndex == Session.VoidInvasionStation);
             Player = player;
             assets = CombatAssets.Load();
             StationIndex = layout.stationIndex;
@@ -68,7 +71,8 @@ namespace GoF2Remake.World
             fxRoot.SetParent(transform, false);
             IsStoryOrbit = storyOrbit;
             if (!storyOrbit)
-                foreach (var spec in TrafficPlan.Build(db, StationIndex, sys, player != null ? new Vector3(player.transform.position.x, player.transform.position.y, -player.transform.position.z) / 0.05f : Vector3.zero)) Create(spec);
+                foreach (var spec in TrafficPlan.Build(db, StationIndex, sys, player != null ? new Vector3(player.transform.position.x, player.transform.position.y, -player.transform.position.z) / 0.05f : Vector3.zero,
+                                                       wormhole != null && wormhole.Visible ? wormhole.GamePosition : (Vector3?)null)) Create(spec);
             ConnectPlayers();
             Debug.Log($"Traffic: {Ships.Count} ships ({CountGroup(NpcGroup.Local)} local, {CountGroup(NpcGroup.Jumper)} jumpers, " +
                       $"{CountGroup(NpcGroup.Freighter)} freighters, {CountGroup(NpcGroup.Raider)} raiders)");
@@ -99,6 +103,11 @@ namespace GoF2Remake.World
 
         Transform fxRoot;
         public bool IsStoryOrbit { get; private set; }
+        /// <summary>The orbit's wormhole (landmark 3), null = none.</summary>
+        public Wormhole Wormhole { get; private set; }
+        /// <summary>The alien orbit or a station under Void attack: dead Void ships come back, Void music.</summary>
+        public bool VoidAttack { get; private set; }
+        float alienMs;
 
         NpcShip Create(SpawnSpec spec)
         {
@@ -302,8 +311,12 @@ namespace GoF2Remake.World
         }
 
         /// <summary>Level::enemyDied / friendDied bookkeeping and Standing::applyKill.</summary>
+        /// <summary>Level::enemyDied / friendDied: a ship died, killed by the player or not (the campaign's kill counters).</summary>
+        public event Action<NpcShip, bool> ShipDied;
+
         public void OnShipDied(NpcShip ship, bool byPlayer)
         {
+            ShipDied?.Invoke(ship, byPlayer);
             // Informer mission (PlayerFighter::update ~0xf1cb0): the spy dead -> Status+0xf0; the player shooting another
             // ship in its orbit -> Status+0xf1 (failed on the next docking).
             var fm = Session.FreelanceMission;
@@ -327,6 +340,7 @@ namespace GoF2Remake.World
         {
             float dtMs = Time.deltaTime * 1000f;
             UpdateOrbit(dtMs);
+            UpdateAlienAttackers(dtMs);
             UpdateChatter(dtMs);
             int hostiles = 0;
             if (hasScanner)
@@ -374,15 +388,38 @@ namespace GoF2Remake.World
             if (anyBack) raiderWaves++;
         }
 
+        /// <summary>Level::updateAlienAttackers 0xd5ce0: every 45 000 ms (10 000 at index 41) the dead Void ships come back, at
+        /// the wormhole +-10 000 while it is open, else around the player (+-40 000, +-30 000, 40 000 ahead: the fixed z offset
+        /// is assumed).</summary>
+        void UpdateAlienAttackers(float dtMs)
+        {
+            if (!VoidAttack) return;
+            alienMs += dtMs;
+            if (alienMs < (Session.CampaignMission == 41 ? 10000f : 45000f)) return;
+            alienMs = 0f;
+            foreach (var s in Ships)
+            {
+                if (!s.Gone || s.Race != Standing.Void || s.IsWingman) continue;
+                Vector3 at;
+                float R(float r) => UnityEngine.Random.Range(-r, r);
+                if (Wormhole != null && Wormhole.Visible) at = Wormhole.transform.position + new Vector3(R(10000f), R(10000f), R(10000f)) * M;
+                else if (Player != null) at = Player.transform.position + new Vector3(R(40000f), R(30000f), -40000f) * M;
+                else continue;
+                s.Revive(at);
+            }
+        }
+
         /// <summary>A cutscene plays its own music (the prologue / rescue): the traffic music stays silent.</summary>
         public bool MusicMuted { get; set; }
+        /// <summary>Radar::draw: no battle music (campaign index 16, the first Void contact).</summary>
+        public bool NoBattleMusic { get; set; }
 
         /// <summary>Radar::draw music choice: switch (with a short fade) only when the category changes.</summary>
         void UpdateMusic(float dt)
         {
             if (assets == null || music == null) return;
             if (MusicMuted) { if (music.isPlaying) music.Stop(); musicCategory = pendingCategory = -1; return; }
-            int cat = HostileCount <= 0 ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
+            int cat = HostileCount <= 0 || NoBattleMusic ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
             if (cat != musicCategory && cat != pendingCategory) pendingCategory = cat;
             if (pendingCategory >= 0)
             {
@@ -395,6 +432,10 @@ namespace GoF2Remake.World
                     var clip = musicCategory == 0 ? (StationIndex == KaamoClub.Station && assets.homeBaseMusic != null ? assets.homeBaseMusic
                                                      : assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null)
                                                   : (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
+                    // Radar::draw: 145 Space_NoCombat_Void in the alien orbit, 136 Space_Combat_Void there and at an attacked station.
+                    var story = StoryAssets.Load();
+                    if (story != null && musicCategory == 0 && StationIndex == Session.VoidOrbit && story.voidMusic != null) clip = story.voidMusic;
+                    if (story != null && musicCategory > 0 && VoidAttack && story.voidBattle != null) clip = story.voidBattle;
                     music.clip = clip;
                     if (clip != null) music.Play();
                 }

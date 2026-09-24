@@ -11,6 +11,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace GoF2Remake.Data
 {
@@ -38,6 +39,21 @@ namespace GoF2Remake.Data
         public AudioClip engineBrokenLoop;    // 156 Spaceship_Engine_05_Broken
         public Material introSky, introSkyAfterJump;
         public GameObject hyperDrive;         // mesh 15027 hyper_drive
+        [Header("Void campaign (campaign_levels_a.md 3.5-3.16)")]
+        public GameObject wormhole;           // mesh 16994 wormhole_anim_add (PlayerWormHole, landmark 3)
+        public GameObject scannerProbe;       // mesh 14290 scanner_probe (index 29)
+        public GameObject[] voidStationExplosion;   // meshes 14285-14287 explosion_void_station_* (index 42)
+        public AudioClip wormholeSound;       // 34 Wormhole
+        public AudioClip empHit;              // 15 Explosion_EMP_GL1 (index 14)
+        public AudioClip probeLaunch;         // 14 (index 29)
+        public AudioClip mothershipLoop;      // 153 Mothership_Xplosion_Loop_01
+        public AudioClip mothershipCutscene;  // 154 Mothership_Xplosion_CutSeq
+        public AudioClip errktCutscene;       // 155 Errkt_CutSeq_01
+        public AudioClip outroSong;           // 144 OutroSong (the ending)
+        public AudioClip voidMusic;           // 145 Space_NoCombat_Void (the alien orbit)
+        public AudioClip voidBattle;          // 136 Space_Combat_Void (the alien orbit / an attacked station)
+        [Tooltip("UI/Ending/Ending.uxml: the ending's overlay (EndingCredits, shown by the main menu).")]
+        public VisualTreeAsset endingUxml;
 
         Dictionary<string, AudioClip> eng, deu;
         Dictionary<string, (Texture2D tex, int height)> parts;

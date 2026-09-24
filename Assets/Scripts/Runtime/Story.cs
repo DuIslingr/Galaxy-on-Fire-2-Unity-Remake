@@ -63,6 +63,11 @@ namespace GoF2Remake.Data
         public static StoryMission Mission => Session.StoryMission;
         public static StoryStep Step => StoryTable.Step(Index);
 
+        /// <summary>Where the current mission is: its target station, or for type 0xa1 (index 40) the station the Void attack
+        /// (Status+0x80, shown on the map by the early-warning wormhole). -1 = none / the alien orbit.</summary>
+        public static int TargetStation => Mission == null ? -1
+                                          : Mission.type == StoryType.VoidInvasion && Index < GameWonIndex ? Session.VoidInvasionStation : Mission.station;
+
         /// <summary>Status::gameWon: index &gt; 44.</summary>
         public static bool GameWon => Index >= GameWonIndex;
         /// <summary>Status::dlc1Won: index &gt; 83.</summary>
@@ -170,7 +175,9 @@ namespace GoF2Remake.Data
                 case StoryType.ReachOrbit: return !c.docked && atTarget && c.levelMs >= 10000f;
                 case StoryType.WeaponAndArmor:
                     return Mounted(db, it => it.TypeId == 0) && Mounted(db, it => it.categoryId == 10);
-                case StoryType.DelayedCall: return c.docked || (c.levelMs >= 10000f && (m.station < 0 || !atTarget));
+                // 0xa0: docked anywhere, or 10 s in space at another orbit than the target (-1 = the alien orbit: index 42
+                // completes once out of the Void).
+                case StoryType.DelayedCall: return c.docked || (c.levelMs >= 10000f && !atTarget);
                 case StoryType.CallAfterLaunch: return !c.docked && c.levelMs > 10000f;
                 case StoryType.InOrbit: return !c.docked && m.station >= 0 && atTarget;
                 case StoryType.DeliverOrMount:
@@ -196,13 +203,43 @@ namespace GoF2Remake.Data
             var m = Mission;
             if (m == null || m.IsEmpty) return false;
             if (m.type == StoryType.DelayedCall) return m.station != station;
+            // Rule 2: index < 45, type 0xa1 in the orbit the Void attack (Status+0x80), not the alien orbit.
+            if (m.type == StoryType.VoidInvasion)
+                return Index < GameWonIndex && station == Session.VoidInvasionStation && station != Session.VoidOrbit;
             return m.station == station && !NotLevelTypes.Contains(m.type);
+        }
+
+        /// <summary>Status::departStation's Void-invasion bookkeeping: from index 32 to 44 every 10th departure to a station
+        /// that is neither the campaign target nor the attacked one re-rolls the attacked station (a random visible system,
+        /// not 10 or 15, then a random station of it); from index 45 on nothing is attacked any more (-10).</summary>
+        public static void OnDepart(Database db, int station)
+        {
+            if (Session.FreePlay || station == Session.VoidOrbit) return;
+            if (Index >= GameWonIndex) { Session.VoidInvasionSystem = Session.VoidInvasionStation = -10; return; }
+            if (Index < 32 || Index > 44 || station == Mission.station || station == Session.VoidInvasionStation) return;
+            if (++Session.InvasionDepartures < 10) return;
+            Session.InvasionDepartures = 0;
+            GalaxyMap.Visibility(db);
+            var systems = new List<int>();
+            for (int i = 0; i < db.Systems.Count; i++)
+            {
+                int s = db.Systems[i].index;
+                if (s == 10 || s == 15) continue;
+                if (Session.SystemVisible != null && s < Session.SystemVisible.Length && !Session.SystemVisible[s]) continue;
+                if (db.Systems[i].stations == null || db.Systems[i].stations.Count == 0) continue;
+                systems.Add(i);
+            }
+            if (systems.Count == 0) return;
+            var sys = db.Systems[systems[Random.Range(0, systems.Count)]];
+            Session.VoidInvasionSystem = sys.index;
+            Session.VoidInvasionStation = sys.stations[Random.Range(0, sys.stations.Count)];
         }
 
         /// <summary>"On a mission" (campaign_flow.md 7): the level mission is not a docking / lounge type, so docking,
         /// planet jumps and the Khador Drive are refused with 525. Indices 49-54 also refuse docking except at Kanado.</summary>
         public static bool BlocksDocking(int station)
         {
+            if (station == Session.VoidOrbit) return true;   // Level::collideStation: no docking at the Void station
             if (Index >= 49 && Index <= 54 && station != 74) return true;
             return BlocksJumps(station);
         }

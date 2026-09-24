@@ -391,13 +391,24 @@ namespace GoF2Remake.UI
             Session.ProgrammedStation = result.station == Session.StationIndex ? -1 : result.station;
             Session.InstantJump = result.instantJump;
             Session.EnergyCellsForNextJump = result.instantJump ? result.cells : 0;
+            if (RefuseLaunchForStory()) return;
             level.Launch();
+        }
+
+        /// <summary>ModStation::leaveStation at campaign index 21: "Equip the EMP bombs before leaving." (531) without an EMP
+        /// bomb (items 41-43) mounted.</summary>
+        bool RefuseLaunchForStory()
+        {
+            if (Session.FreePlay || Story.Index != 21 || Session.Equipment.Exists(e => e.item >= 41 && e.item <= 43)) return false;
+            ShowDialog(Localization.Get(531), null, true);
+            return true;
         }
 
         /// <summary>ModStation::leaveStation: refused while the cargo hold is overloaded (204), else "Depart the station?".</summary>
         void AskLaunch()
         {
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
+            if (RefuseLaunchForStory()) return;
             ShowDialog(Localization.Get(397), level.Launch);
         }
 
@@ -502,6 +513,15 @@ namespace GoF2Remake.UI
         {
             var db = level.Database;
             int reward = Story.Mission.reward;
+            if (Story.Index == 43)
+            {
+                // ModStation::OnTouchEnd: index 43 starts the ending (the credits over the space backdrop, EndingCredits in the
+                // main menu scene); nextCampaignMission (-> 44) and the station module follow when it is over.
+                Session.Credits += reward;
+                Session.EndingPending = true;
+                BackToMenu();
+                return;
+            }
             int n = Story.Advance(db);
             if (n == 9 || n == 44 || n == 75 || n == 76 || n == 83)
             {

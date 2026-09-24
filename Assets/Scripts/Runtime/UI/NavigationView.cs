@@ -116,22 +116,23 @@ namespace GoF2Remake.UI
             foreach (var t in nav.Targets)
             {
                 var m = new Marker { target = t };
-                if (t.kind != Navigation.Kind.Planet)
+                bool wormhole = t.kind == Navigation.Kind.Wormhole;
+                if (t.kind != Navigation.Kind.Planet && !wormhole)
                 {
                     m.bracket = new VisualElement { pickingMode = PickingMode.Ignore };
                     m.bracket.AddToClassList("nav-abs");
                     Image(m.bracket, Tex("bracket"));
                     layer.Add(m.bracket);
                 }
-                if (t.kind == Navigation.Kind.Jumpgate || t.kind == Navigation.Kind.Waypoint || (t.kind == Navigation.Kind.Planet && t.station == gateStation))
+                if (t.kind == Navigation.Kind.Jumpgate || t.kind == Navigation.Kind.Waypoint || wormhole || (t.kind == Navigation.Kind.Planet && t.station == gateStation))
                 {
                     m.icon = new VisualElement { pickingMode = PickingMode.Ignore };
                     m.icon.AddToClassList("nav-abs");
-                    Image(m.icon, Tex(t.kind == Navigation.Kind.Waypoint ? "map_story" : "gate_icon"));
+                    Image(m.icon, Tex(t.kind == Navigation.Kind.Waypoint ? "map_story" : wormhole ? "wormhole_icon" : "gate_icon"));
                     layer.Add(m.icon);
                 }
                 // Radar::draw: the gold story icon 0x454 next to the campaign target's planet (visible missions only).
-                if (t.kind == Navigation.Kind.Planet && !Session.FreePlay && Story.Mission.visible && t.station == Story.Mission.station)
+                if (t.kind == Navigation.Kind.Planet && !Session.FreePlay && Story.Mission.visible && t.station == Story.TargetStation)
                 {
                     m.story = new VisualElement { pickingMode = PickingMode.Ignore };
                     m.story.AddToClassList("nav-abs");
@@ -140,8 +141,9 @@ namespace GoF2Remake.UI
                 }
                 m.name = Text(layer, null);
                 m.name.text = t.name;
-                if (t.kind == Navigation.Kind.Station) { m.tech = Text(layer, "nav-label--dim"); m.tech.text = techLine; }
-                if (t.kind != Navigation.Kind.Planet) m.distance = Text(layer, "nav-label--dim");
+                // Radar::draw: the Void station and the gate get the distance only, the wormhole its name only.
+                if (t.kind == Navigation.Kind.Station && t.station != Session.VoidOrbit) { m.tech = Text(layer, "nav-label--dim"); m.tech.text = techLine; }
+                if (t.kind != Navigation.Kind.Planet && !wormhole) m.distance = Text(layer, "nav-label--dim");
                 markers.Add(m);
             }
         }
@@ -161,6 +163,14 @@ namespace GoF2Remake.UI
             foreach (var m in markers)
             {
                 var t = m.target;
+                if (t.hidden)
+                {
+                    if (m.bracket != null) m.bracket.style.display = DisplayStyle.None;
+                    if (m.icon != null) m.icon.style.display = DisplayStyle.None;
+                    m.name.style.display = DisplayStyle.None;
+                    if (m.distance != null) m.distance.style.display = DisplayStyle.None;
+                    continue;
+                }
                 var sp = cam.WorldToScreenPoint(t.Position);
                 bool onScreen = sp.z > 0f && sp.x >= 0f && sp.y >= 0f && sp.x <= w && sp.y <= h;
                 bool nearCentre = onScreen && Mathf.Abs(sp.x - w / 2f) < w / 6f && Mathf.Abs(sp.y - h / 2f) < w / 6f;
@@ -183,17 +193,20 @@ namespace GoF2Remake.UI
                 }
 
                 // Landmarks: labels near the centre; elsewhere the jumpgate icon on the radar ellipse, the station nothing.
-                bool station = t.kind == Navigation.Kind.Station;
+                bool station = t.kind == Navigation.Kind.Station && t.station != Session.VoidOrbit;
                 float lx = station ? 50f : 10f;
                 m.name.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
-                m.distance.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
+                if (m.distance != null) m.distance.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
                 if (m.tech != null) m.tech.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
                 if (nearCentre)
                 {
                     Place(m.name, p.x + lx, p.y);
                     if (m.tech != null) Place(m.tech, p.x + lx, p.y + 30f);
-                    Place(m.distance, p.x + lx, p.y + (station ? 60f : 30f));
-                    m.distance.text = Navigation.FormatDistance((t.Position - cam.transform.position).magnitude / M);
+                    if (m.distance != null)
+                    {
+                        Place(m.distance, p.x + lx, p.y + (station ? 60f : 30f));
+                        m.distance.text = Navigation.FormatDistance((t.Position - cam.transform.position).magnitude / M);
+                    }
                 }
                 if (m.icon != null)
                 {
@@ -201,7 +214,8 @@ namespace GoF2Remake.UI
                     if (!nearCentre)
                     {
                         Vector2 q = onScreen ? p : OffScreen(cam, t.Position, centre);
-                        Place(m.icon, q.x - 13f, q.y - 13f);
+                        float half = t.kind == Navigation.Kind.Wormhole ? 29f : 13f;
+                        Place(m.icon, q.x - half, q.y - half);
                     }
                 }
             }
