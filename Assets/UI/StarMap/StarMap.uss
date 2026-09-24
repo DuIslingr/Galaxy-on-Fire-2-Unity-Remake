@@ -100,6 +100,13 @@
     height: 36px;
 }
 
+/* 0x545 at (nameLeft, ty + 3): the owned Kaamo Club's house in Shima. */
+.map-race-icon--home {
+    top: 3px;
+    width: 18px;
+    height: 18px;
+}
+
 .map-line {
     position: absolute;
     left: -300px;

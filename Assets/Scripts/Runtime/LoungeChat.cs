@@ -54,6 +54,8 @@ namespace GoF2Remake.Data
         public int MapTarget { get; private set; } = -1;
         /// <summary>After the deal: the star map opens on the bought system (offer 4).</summary>
         public int RevealedSystem { get; private set; } = -1;
+        /// <summary>The Kaamo dealer's ship went to the club (the hangar's parked hulls change).</summary>
+        public bool BoughtShip { get; private set; }
         bool askedRisk, askedMap;
 
         static string T(int id) => Localization.Get(id);
@@ -73,6 +75,7 @@ namespace GoF2Remake.Data
         public void Start()
         {
             var a = Agent;
+            bool first = !a.known;
             Choices.Clear();
             if (!a.known)
             {
@@ -85,6 +88,22 @@ namespace GoF2Remake.Data
             {
                 Text = T(a.offer == AgentOffer.Purchase ? 857
                          : a.offer == AgentOffer.Wingmen || a.HasMission && a.mission.type == MissionType.Challenge ? 859 : 858);
+                closing = true;
+                SetChoices();
+                return;
+            }
+            if (a.offer == AgentOffer.ShipDealer && !KaamoClub.Owned)
+            {
+                // Until the club is owned the dealer only greets (750-755); that chat doesn't count as talked to.
+                Text = T(750 + Random.Range(0, 6));
+                if (first) Session.AgentsTalkedTo--;
+                closing = true;
+                SetChoices();
+                return;
+            }
+            if (a.offer == AgentOffer.ShipDealer && (a.sellShip < 0 || a.sellShip == Session.ShipIndex || KaamoClub.HasShip(a.sellShip)))
+            {
+                Text = T(858);
                 closing = true;
                 SetChoices();
                 return;
@@ -251,7 +270,8 @@ namespace GoF2Remake.Data
                     return StoryLine(a) + " " + T(879).Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex)).Replace("#N", a.name)
                                                       .Replace("#C", C(ModPrice(a)));
                 case AgentOffer.ShipDealer:
-                    return StoryLine(a);
+                    // 912 "I have a very unique ship on offer." + (remake) the ship and its price in the item line.
+                    return StoryLine(a) + " " + T(773).Replace("#Q", "1").Replace("#P", ItemInfo.ShipName(a.sellShip)).Replace("#C", C(a.sellPrice));
             }
             return "";
         }
@@ -418,6 +438,13 @@ namespace GoF2Remake.Data
                 case AgentOffer.SellMod:
                     Session.Credits -= ModPrice(a);
                     Session.AddShipMod(a.sellMod);
+                    break;
+                case AgentOffer.ShipDealer:
+                    // SpaceLounge::onKeyPress: a bare hull (no equipment, no mods, race 0) into the club's storage.
+                    Session.Credits -= a.sellPrice;
+                    KaamoClub.Store(a.sellShip, 0, null);
+                    a.accepted = true;
+                    BoughtShip = true;
                     break;
                 default:
                     Session.Credits -= a.sellPrice;

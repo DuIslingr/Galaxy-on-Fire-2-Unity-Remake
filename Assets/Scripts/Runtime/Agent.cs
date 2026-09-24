@@ -92,6 +92,8 @@ namespace GoF2Remake.Data
         public int sellItem = -1, sellQuantity, sellPrice;
         /// <summary>Agent+0x5c / +0x60 / +0x84: a story agent's system coordinates / blueprint / mod for sale.</summary>
         public int sellSystem = -1, sellBlueprint = -1, sellMod = -1;
+        /// <summary>Offer 10 (agent 26, the Kaamo Club's dealer): the ship on offer (-1 = none left).</summary>
+        public int sellShip = -1;
         /// <summary>Agent+0x58: wingmen / diplomat price.</summary>
         public int costs;
         /// <summary>Agent+0x08..0x10: the wingman friends' names.</summary>

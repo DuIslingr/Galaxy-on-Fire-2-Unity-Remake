@@ -9,6 +9,10 @@
 //   autoEquipSecondaryWeapons 0x1761c4  bought missiles of a mounted type join the mounted stack
 //   HangarWindow::selectItem / OnTouchEnd (ships): trade-in at full price, equipment moves to the new ship's slots,
 //                                    the rest to cargo; the dealer then sells your old ship
+// Kaamo Club (Reference/research/kaamo_club.md 6): at the owned club (storage mode, HangarWindow+0x11d) transfers are
+// free (Item::transaction(.., free = true)); stored hulls can be used (332 / 333: cargo and equipment move over, the old
+// hull takes the row) or sold (330 / 334, the ship's price, mods add nothing). Buying a ship elsewhere while owning the
+// club can keep the old hull (327 -> 331 Keep: 328 when that type is already stored, else the full price).
 
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +22,7 @@ namespace GoF2Remake.Data
 {
     public class Hangar
     {
-        public enum Result { Ok, NoStock, NoCredits, NothingToSell, NoFreeSlot, Swap, NotMountable, SameShip, NotSaleable }
+        public enum Result { Ok, NoStock, NoCredits, NothingToSell, NoFreeSlot, Swap, NotMountable, SameShip, NotSaleable, Passengers, AlreadyStored }
 
         readonly Database db;
         readonly Dictionary<int, int> prices = new Dictionary<int, int>();
@@ -60,6 +64,8 @@ namespace GoF2Remake.Data
         // ---- queries -----------------------------------------------------------------------------------------
 
         public ShipData Ship => db.Ship(Session.ShipIndex);
+        /// <summary>HangarWindow+0x11d: the owned Kaamo Club's storage (free transfers, no prices).</summary>
+        public bool Storage => KaamoClub.StorageAt(Station);
         public int PriceOf(int item) => Story.AdjustPrice(Station, item, prices.TryGetValue(item, out int p) ? p : 0);
         /// <summary>Item::isSaleable: story items (Gunant's Drill, the Alien Remains...) can't be sold or demounted (323).</summary>
         public static bool IsSaleable(int item) => !Session.Unsaleable.Contains(item);
@@ -105,12 +111,12 @@ namespace GoF2Remake.Data
             need = 0;
             var row = Stock.items.Find(s => s.item == item && s.amount > 0);
             if (row == null) return Result.NoStock;
-            int price = PriceOf(item);
+            int price = Storage ? 0 : PriceOf(item);
             if (Session.Credits < price) { need = price - Session.Credits; return Result.NoCredits; }
             row.amount--;
             if (row.amount <= 0) Stock.items.Remove(row);
             AddToCargo(item, 1);
-            ChangeCredits(-price);
+            if (price > 0) ChangeCredits(-price);
             Session.SeenItems.Add(item);
             return Result.Ok;
         }
@@ -130,7 +136,7 @@ namespace GoF2Remake.Data
                 int at = Stock.items.FindIndex(s => s.item > item);
                 Stock.items.Insert(at < 0 ? Stock.items.Count : at, new ItemStack(item, 1));   // the stock stays in index order
             }
-            ChangeCredits(PriceOf(item));
+            if (!Storage) ChangeCredits(PriceOf(item));
             Session.SeenItems.Add(item);
             return Result.Ok;
         }
@@ -222,6 +228,7 @@ namespace GoF2Remake.Data
         public Result CanBuyShip(int ship, out int need)
         {
             need = 0;
+            if (Session.Passengers > 0) return Result.Passengers;   // 336
             if (ship == Session.ShipIndex) return Result.SameShip;
             int cost = ShipPrice(ship) - ShipPrice(Session.ShipIndex);
             if (Session.Credits < cost) { need = cost - Session.Credits; return Result.NoCredits; }
@@ -235,9 +242,19 @@ namespace GoF2Remake.Data
             if (CanBuyShip(ship, out _) != Result.Ok) return false;
             int old = Session.ShipIndex;
             ChangeCredits(ShipPrice(old) - ShipPrice(ship));
+            SwitchTo(ship, null);   // mods stay with the old hull (Ship::clone copies them)
+            int row = Stock.ships.IndexOf(ship);
+            if (row >= 0) Stock.ships[row] = old; else Stock.ships.Add(old);
+            return true;
+        }
+
+        /// <summary>The new hull becomes the flown ship: every mounted item moves to the first free slot of its type (in
+        /// slot order, secondaries with their ammo), the rest to the hold; the cargo stays with the player.</summary>
+        void SwitchTo(int ship, List<int> mods)
+        {
             var mounted = Session.Equipment;
             Session.ShipIndex = ship;
-            Session.ShipMods = new List<int>();   // mods stay with the old hull (Ship::clone copies them)
+            Session.ShipMods = mods != null ? new List<int>(mods) : new List<int>();
             Session.Equipment = new List<ItemStack>();
             foreach (var e in mounted)
             {
@@ -245,8 +262,61 @@ namespace GoF2Remake.Data
                 if (MountedOfType(type).Count < SlotCount(type)) Session.Equipment.Add(e);
                 else AddToCargo(e.item, Mathf.Max(1, e.amount));
             }
-            int row = Stock.ships.IndexOf(ship);
-            if (row >= 0) Stock.ships[row] = old; else Stock.ships.Add(old);
+        }
+
+        // ---- Kaamo Club ------------------------------------------------------------------------------------------
+
+        /// <summary>327 -> 331 "Keep": the old hull goes to the club, the new one costs its full price.</summary>
+        public Result CanKeepAndBuyShip(int ship, out int need)
+        {
+            need = 0;
+            if (KaamoClub.HasShip(Session.ShipIndex)) return Result.AlreadyStored;   // 328 (the old ship's type)
+            int cost = ShipPrice(ship);
+            if (Session.Credits < cost) { need = cost - Session.Credits; return Result.NoCredits; }
+            return Result.Ok;
+        }
+
+        public bool KeepAndBuyShip(int ship)
+        {
+            if (CanKeepAndBuyShip(ship, out _) != Result.Ok) return false;
+            int old = Session.ShipIndex;
+            var oldMods = Session.ShipMods;
+            ChangeCredits(-ShipPrice(ship));
+            SwitchTo(ship, null);
+            Stock.ships.Remove(ship);   // the bought row is gone
+            KaamoClub.Store(old, 0, oldMods);   // a bare hull (makeShip(old) + its mods; Ship::clone resets the race to 0)
+            return true;
+        }
+
+        /// <summary>Row button 1 "Use" (332): 336 with passengers, 329 for the same type, else 333 asks.</summary>
+        public Result CanUseStored(int index)
+        {
+            if (index < 0 || index >= Session.KaamoShips.Count) return Result.NoStock;
+            if (Session.Passengers > 0) return Result.Passengers;
+            if (Session.KaamoShips[index].ship == Session.ShipIndex) return Result.SameShip;
+            return Result.Ok;
+        }
+
+        /// <summary>333 -> Yes: the stored hull (its own mods) becomes the flown ship; the old hull takes its row.</summary>
+        public bool UseStored(int index)
+        {
+            if (CanUseStored(index) != Result.Ok) return false;
+            var stored = Session.KaamoShips[index];
+            var old = new StoredShip(Session.ShipIndex, 0, Session.ShipMods);
+            SwitchTo(stored.ship, stored.mods);
+            Session.KaamoShips[index] = old;
+            return true;
+        }
+
+        /// <summary>The stored hull's sell value (ListItem::getPrice = the adjusted Ship::getPrice; mods add nothing).</summary>
+        public int StoredPrice(int index) => index >= 0 && index < Session.KaamoShips.Count ? ShipPrice(Session.KaamoShips[index].ship) : 0;
+
+        /// <summary>Row button 10 "Sell" (330) -> 334 -> Yes.</summary>
+        public bool SellStored(int index)
+        {
+            if (index < 0 || index >= Session.KaamoShips.Count) return false;
+            ChangeCredits(StoredPrice(index));
+            Session.KaamoShips.RemoveAt(index);
             return true;
         }
     }

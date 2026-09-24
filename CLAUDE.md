@@ -201,7 +201,35 @@ Research: `Reference/research/freelance_missions.md` (agents, offers, mission ge
 - **Blueprints** (`Blueprints`, the hangar's Blueprints tab 272): 25 products keyed by item (items.json ingredients), per-ingredient progress, production station (first investment; 212), 200 $ per unit shipping from another station (288; volatile 204 / 209 refused, 289), 210 / 223 need gate routes (528), Autocomplete `int(qty*maxPrice*1.25)` (210: 2 000 000 + the rest's value), a finished run to the hold (211) or waiting at the production station (210, collected on docking, 213). Unlocks: lounge sellers, campaign steps 34 / 58 / 72 / 104 / 141 with pre-invested ingredients.
 - **Wingmen** (`Wingmen`, `Traffic.SpawnWingmen`, `NpcShip` wingman mode): spawned next to the player in every orbit (model seeded by the name length, 600 hull, unarmed in a Challenge), formation slots, attack the first hostile ship; the flight menu's Wingmen entry (306) gives the commands 307-311 (fire at will, attack my target, secure next waypoint, laser / EMP blaster); a dead wingman leaves the contract; the 10-minute contract runs while flying, goodbye 313 at the next docking.
 - **Station extras**: the news ticker on the main view (`NewsTicker`: the campaign window's story news + 2 random items, tokens, 50 px/s; not at 101 / 108 / Loma); the Status window (`StatusWindow`: pilot, ship, reputation bars, statistics, 45 medals by grade with hints; `Achievements` checks on docking, "New medal!" 353; with all base medals the wingman fans pay you).
-- Not yet: the Most Wanted board (Supernova, campaign 128+), Kaamo Club storage and ship dealer, the medal images (text plates stand in), the booze / cloak / bomb / alien-remains medal counters, freelance type 15 Ore Mining (unreachable in the original's generator).
+- Not yet: the Most Wanted board (Supernova, campaign 128+), the medal images (text plates stand in), the booze / cloak / bomb / alien-remains medal counters, freelance type 15 Ore Mining (unreachable in the original's generator).
+
+## Kaamo Club (station 108, Shima)
+
+Research: `Reference/research/kaamo_club.md` (states, the siege, docking conversations, storage rules, save; corrects
+`blueprints_mods.md` 3 on 457 / 3162 / 3163), `blueprints_mods.md` 2-3, `shop.md` 5. Rules in `KaamoClub` (plain C#:
+`Session.KaamoState` 0-3, `KaamoItems`, `KaamoShips` = `StoredShip` index / race / mods; save v4), the orbit in
+`KaamoSiege`, the storage in `Hangar` / `HangarWindow`.
+
+- **Siege** (state 0, `Level::createMission`): 4 Pirate Outposts (`station_pirates`, name 441) at fixed points as `NpcShip`
+  static objects (`SpawnSpec.fixedObject`: never move, no gun / engine / loot, a +-7500 hit cube, the `collision.json`
+  1002 volumes with the static-object rule `CollisionVolume.ForStaticObject`; death: wreck animation 14246 then an x8
+  explosion, the wreck stays; hull `5 (4 campaign + 15 rank + 20)`), 6 (8) pirates within +-20000, respawned every
+  22.5 s while an outpost stands. At 5 s Mkkt Bkkt calls (457, voiced) and the state becomes 1; all dead = 458,
+  missions completed +1. Docking, the gate and the Khador Drive give 525 while it runs. Remake: the siege keeps the
+  player's freelance mission (the original overwrites it). Music 146 `HomeBase_NoCombat` in the orbit (all states).
+- **Docking** (`StationMenu.CheckKaamo`): state 1 = the 18-page first visit (459-475 + 476, voiced) -> 2; state 2 = 476
+  (not enough: >= 30 000 001 $ and 50 t Buskat in the hold) or 477 -> Yes: pay, (remake) the unused 6-page purchase
+  talk 479-484, 485 -> owned (3), the storage cleared.
+- **Storage** (owned, at 108): the Shop tab becomes 186 "Store": the storage is 108's stock (one list), free transfers,
+  no prices, unsaleable goods refused (323), mounted items not listed; stored hulls with their sell value, row buttons
+  332 "Use" (336 / 329 / 333: cargo and equipment move over, the old hull takes the row) and 330 "Sell" (334; X / pad X).
+  One hull per type. The Midorian hangar parks the first 3 stored hulls.
+- **Buying elsewhere** while owning it: 304, then 327 with 330 Sell (trade-in) / 331 Keep (328 when the old type is
+  stored, else the full price and the old hull goes to the club, the dealer row is gone).
+- **Lounge**: agents 21-26 once campaign > 16 (mechanics = ship mods, 25 special items, 26 a ship of [55..60] the player
+  neither flies nor stores, bare hull into the storage, greeting only until owned). Medal 37 counts the stored hulls;
+  the map shows Shima as "Secure" after the siege and the orange house when owned.
+- Not wired in the original and left out: the IAP purchase (78 / 478), advert 189, radio 3162 / 3163 (voiced, never sent).
 
 ## Mining
 
@@ -238,7 +266,7 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   - Esc or B steps back: dialog, then lounge, then the system menu (Save game, Back to Main Menu).
   - Music per race and station, ambience per screen.
 - Missions (129, unlocks with the Map) and Status (169): see "Bar and freelance".
-- Not yet: the turret on the player ship in the hangar, home-base stored ships (Kaamo Club).
+- Not yet: the turret on the player ship in the hangar. The Kaamo Club parks its stored hulls: see "Kaamo Club".
 
 ## Shop
 
@@ -251,7 +279,8 @@ Research: `Reference/research/shop.md` (+ `item_icons.json`, reference price cod
 - **Ships:** price -1 % in systems of the ship's race; trade-in at full price; equipment that doesn't fit goes to cargo; the hangar's turntable swaps the model.
 - **New game:** 0 credits, like the original (sell starting gear to get money). `Session.CampaignMission` is a free-play 20 (past the tutorial locks) until there is a campaign. Var Hastra always stocks a drill and energy cells then (remake-only, see "Mining" and "Star map and system travel").
 - Blueprints tab: see "Bar and freelance". Ship mods (Kaamo mechanics): +40 hull, +30 t cargo, +1 equipment slot, handling +0.2, kept with the hull (`Session.ShipMods`).
-- Not yet: Kaamo Club storage, DLC-won / supernova dealer extras, the Supernova wrecks' hidden blueprints (hacking minigame).
+- Kaamo Club storage (Store tab, stored hulls, 327 Sell / Keep): see "Kaamo Club".
+- Not yet: DLC-won / supernova dealer extras, the Supernova wrecks' hidden blueprints (hacking minigame).
 
 ## Weapons
 
@@ -312,5 +341,5 @@ Useful field offsets in the decompiled code:
 1. Combat: player guns and missiles, ship damage, lock-on and NPC ships done (see "Weapons", "NPCs and combat"). Still: beams, bombs/mines, EMP.
 2. NPCs: free-flight traffic, fighter AI, wingmen, freelance mission orbits done. Still: Wanted targets, turrets.
 3. A star system scene: done as a first pass (see "Space scene"), with autopilot, planet jumps, the star map and jumpgate / Khador travel. Still: the extra sky layers, the Void.
-4. Stations and economy: station interior, shop, bar agents, blueprints, Status window done (see "Station scene", "Shop", "Bar and freelance"). Still: Kaamo Club storage, the Most Wanted board.
+4. Stations and economy: station interior, shop, bar agents, blueprints, Status window done (see "Station scene", "Shop", "Bar and freelance"). Kaamo Club done (see "Kaamo Club"). Still: the Most Wanted board.
 5. HUD and radar (`Hud`, `Radar`), then missions (`Mission`, `Objective`, `LevelScript`).

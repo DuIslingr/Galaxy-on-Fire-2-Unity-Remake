@@ -346,6 +346,21 @@
     display: none;
 }
 
+/* The Kaamo Club storage's second row button (Sell, 330) under Use (332). */
+.detail-action--secondary {
+    margin-top: 8px;
+    background-color: rgba(255, 74, 58, 0.12);
+    border-color: #FF4A3A;
+}
+
+.can-hover .detail-action--secondary:hover {
+    background-color: rgba(255, 74, 58, 0.34);
+}
+
+.detail-action--secondary:active {
+    background-color: #FF4A3A;
+}
+
 .detail-action--disabled {
     opacity: 0.35;
 }

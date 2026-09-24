@@ -65,6 +65,7 @@ namespace GoF2Remake.EditorTools
             (Main, "map_story", 475, 147, 26, 23, 0, false),
             (Main, "map_freelance", 547, 124, 26, 23, 0, false),
             (Main, "map_products", 370, 47, 20, 18, 0, false),
+            (Main, "map_home", 249, 487, 18, 18, 0, false),       // 0x545 orange house (the owned Kaamo Club)
             (Main, "logo_0", 337, 1464, 93, 103, 0, false),
             (Main, "logo_1", 1875, 1137, 98, 89, 0, false),
             (Main, "logo_2", 1659, 35, 90, 90, 0, false),

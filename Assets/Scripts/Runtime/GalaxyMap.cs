@@ -55,6 +55,10 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>SolarSystem::hasNoOwner: no race icon, race line or logo.</summary>
+        /// <summary>StarMap::drawOnScreenInfo: Shima reads 3 "Secure" once the Kaamo Club's siege is over (Status+0x114 &gt; 1).</summary>
+        public static int SecurityOf(SystemData s) =>
+            s == null ? 0 : s.index == KaamoClub.SystemIndex && Session.KaamoState > 1 ? 3 : s.securityLevel;
+
         public static bool HasOwner(int system) => system != 23 && system != 24 && system != 26 && system != 32 && system != 33;
 
         /// <summary>The galaxy-view sun sprite position (game units).</summary>

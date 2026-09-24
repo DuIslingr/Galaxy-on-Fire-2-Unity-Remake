@@ -19,6 +19,9 @@
 //   Level::createShip 0xcf83c                  freighter boxes as code constants (Reference/tools/npc/freighter_boxes.py):
 //                                              centre offset and full size in game space
 //   PlayerJumpgate::PlayerJumpgate 0xb1a8c     one sphere of the gate radius (7500, Vossk system 11250) at the gate
+//   Level::getBoundingVolume 0xd3b78           static objects (the Pirate Outposts: id 1002 from collision.json, ids
+//                                              >= 2000 from static_collisions.json): centre (a, c, -b), box half
+//                                              1.2 (|d|, |f|, |e|), sphere r = 0.6 |d| (kaamo_club.md 3.2)
 
 using System;
 using System.Collections.Generic;
@@ -109,6 +112,35 @@ namespace GoF2Remake.Flight
             if (stationIndex == 109 || stationIndex == 110) staticVolumes.TryGetValue(2002, out v);
             else if (!station.TryGetValue(stationIndex, out v)) station.TryGetValue(1000, out v);   // Vossk
             return Parse(v, alienOrbit ? 0.9f : 1f, alienOrbit ? 0.4f : 0.5f, 1f);
+        }
+
+        /// <summary>A static object's volumes (Level::getBoundingVolume), relative to the object.</summary>
+        public static List<CollisionVolume> ForStaticObject(int id)
+        {
+            station ??= Load("collision");
+            staticVolumes ??= Load("static_collisions");
+            int[] v;
+            if (id < 2000) station.TryGetValue(id, out v); else staticVolumes.TryGetValue(id, out v);
+            var list = new List<CollisionVolume>();
+            if (v == null || v.Length == 0) return list;
+            int count = v[0], i = 1;
+            for (int n = 0; n < count && i < v.Length; n++)
+            {
+                int type = v[i];
+                if (type == 1 && i + 6 < v.Length)
+                {
+                    list.Add(Box(ToUnity(v[i + 1], v[i + 3], -v[i + 2]),
+                                 new Vector3(Mathf.Abs(v[i + 4]), Mathf.Abs(v[i + 6]), Mathf.Abs(v[i + 5])) * (1.2f * M)));
+                    i += 7;
+                }
+                else if (type == 0 && i + 4 < v.Length)
+                {
+                    list.Add(Sphere(ToUnity(v[i + 1], v[i + 3], -v[i + 2]), Mathf.Abs(v[i + 4]) * 0.6f * M));
+                    i += 5;
+                }
+                else break;
+            }
+            return list;
         }
 
         /// <summary>A freighter / battleship wreck's volumes (Globals::getWreckCollision).</summary>

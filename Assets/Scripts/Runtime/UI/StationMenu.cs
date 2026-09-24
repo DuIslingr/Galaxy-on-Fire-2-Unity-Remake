@@ -77,7 +77,7 @@ namespace GoF2Remake.UI
         AudioSource voiceSource;
         Label viewTitle, toast;
         HangarWindow hangarWindow;
-        System.Action dialogAction;
+        System.Action dialogAction, dialogNoAction;
         float toastMs;
         Vector2Int lastScreen;
         Rect lastSafeArea;
@@ -138,7 +138,7 @@ namespace GoF2Remake.UI
             statusButton = Bind("statusButton", OpenStatus);
             launchButton = Bind("launchButton", AskLaunch);
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
-            dialogNo = Bind("dialogNo", CloseDialog);
+            dialogNo = Bind("dialogNo", () => { var a = dialogNoAction; CloseDialog(); a?.Invoke(); });
             hangarWindow = new HangarWindow(this, level, root);
             lounge = new LoungePanel(this, level, root);
             SetupTicker();
@@ -405,8 +405,10 @@ namespace GoF2Remake.UI
         public void ShowDialog(string text, System.Action onYes, bool info = false)
         {
             dialogAction = onYes;
+            dialogNoAction = null;
             root.Q<Label>("dialogText").text = text;
             dialogYes.text = info ? Localization.Extra("ok", "OK") : Localization.Get(134).ToUpperInvariant();
+            dialogNo.text = Localization.Get(135).ToUpperInvariant();
             dialogNo.style.display = info ? DisplayStyle.None : DisplayStyle.Flex;
             dialog.AddToClassList("station-dialog-backdrop--shown");
             Play(infoSound);
@@ -414,10 +416,20 @@ namespace GoF2Remake.UI
             Select(dialogYes);
         }
 
+        /// <summary>ChoiceWindow with its own two labels (327: 330 "Sell" / 331 "Keep").</summary>
+        public void ShowChoice(string text, string yes, string no, System.Action onYes, System.Action onNo)
+        {
+            ShowDialog(text, onYes);
+            dialogNoAction = onNo;
+            dialogYes.text = yes.ToUpperInvariant();
+            dialogNo.text = no.ToUpperInvariant();
+        }
+
         void CloseDialog()
         {
             dialog.RemoveFromClassList("station-dialog-backdrop--shown");
             dialogAction = null;
+            dialogNoAction = null;
             if (SystemMenuOpen)
             {
                 // Back to the slot just picked (or the first item of the page).
@@ -541,6 +553,35 @@ namespace GoF2Remake.UI
                 }
                 else Freelance.Fail();
                 Select(launchButton);
+            });
+            return true;
+        }
+
+        bool kaamoChecked;
+
+        /// <summary>ModStation::OnInitialize 0xe8080 at the Kaamo Club (kaamo_club.md 4): state 1 -> the 18-page first
+        /// visit and state 2; state 2 -> 476 (not enough credits / buskat) or 477 -> Yes: pay, 479-484 (remake), 485, owned.</summary>
+        bool CheckKaamo()
+        {
+            if (kaamoChecked || level == null || level.Station == null) return false;
+            kaamoChecked = true;
+            if (level.Station.index != KaamoClub.Station || Session.KaamoState < 1 || Session.KaamoState > 2) return false;
+            CloseHangar();
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            if (Session.KaamoState == 1)
+            {
+                Session.KaamoState = 2;
+                storyDialogue.Show(KaamoClub.FirstVisitPages(), _ => { Session.Autosave(); Select(launchButton); });
+                return true;
+            }
+            if (!KaamoClub.CanBuy) { ShowDialog(Localization.Get(476), null, true); return true; }
+            ShowDialog(Localization.Get(477), () =>
+            {
+                KaamoClub.Buy();
+                level.Stock.items = Session.KaamoItems;   // the (cleared) storage is the station's stock now
+                RefreshCredits();
+                Session.Autosave();
+                storyDialogue.Show(KaamoClub.PurchasePages(), _ => ShowDialog(Localization.Get(485), null, true));
             });
             return true;
         }
@@ -788,14 +829,18 @@ namespace GoF2Remake.UI
             }
             if (HangarOpen)
             {
-                string select = T("hudSelect", "SELECT"), trade = $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";   // ingredients: ADD
-                string tabs = $"{Localization.Get(183)} / {Localization.Get(185)} / {Localization.Get(272)}".ToUpperInvariant(), confirm = T("hudConfirm", "CONFIRM");
+                bool store = hangarWindow != null && hangarWindow.StorageMode;   // the Kaamo Club's storage
+                string select = T("hudSelect", "SELECT"), trade = store ? $"{T("shopStore", "STORE")} / {T("shopTake", "TAKE")}"
+                                                                        : $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";   // ingredients: ADD
+                string tabs = $"{Localization.Get(183)} / {Localization.Get(store ? 186 : 185)} / {Localization.Get(272)}".ToUpperInvariant(), confirm = T("hudConfirm", "CONFIRM");
+                string sellShip = T("kaamoSellShip", "SELL SHIP");
                 if (kind == InputKind.KeyboardMouse)
                 {
                     Hint(select, InputGlyph.Key("W"), InputGlyph.Key("S"));
                     Hint(trade, InputGlyph.Key("A"), InputGlyph.Key("D"));
                     Hint(confirm, InputGlyph.Key("ENTER", true));
                     Hint(tabs, InputGlyph.Key("Q"), InputGlyph.Key("E"));
+                    if (store) Hint(sellShip, InputGlyph.Key("X"));
                     Hint(T("hudBack", "BACK"), InputGlyph.Key("ESC"));
                 }
                 else if (kind == InputKind.Gamepad)
@@ -803,6 +848,7 @@ namespace GoF2Remake.UI
                     Hint($"{select} / {trade}", InputGlyph.Pad(PadButton.DPad));
                     Hint(confirm, InputGlyph.Pad(PadButton.A));
                     Hint(tabs, InputGlyph.Pad(PadButton.LeftBumper), InputGlyph.Pad(PadButton.RightBumper));
+                    if (store) Hint(sellShip, InputGlyph.Pad(PadButton.X));
                     Hint(T("hudBack", "BACK"), InputGlyph.Pad(PadButton.B));
                 }
                 return;
@@ -853,6 +899,7 @@ namespace GoF2Remake.UI
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckKaamo()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPendingProducts()) return;
             CheckMedals();
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
@@ -902,6 +949,8 @@ namespace GoF2Remake.UI
                 hangarWindow.Update(dtMs);
                 if ((kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) || (pad != null && pad.buttonSouth.wasPressedThisFrame))
                     hangarWindow.Action();
+                else if ((kb != null && kb.xKey.wasPressedThisFrame) || (pad != null && pad.buttonWest.wasPressedThisFrame))
+                    hangarWindow.SecondaryAction();   // Sell a stored hull (Kaamo Club)
                 else if ((kb != null && (kb.qKey.wasPressedThisFrame || kb.eKey.wasPressedThisFrame))
                          || (pad != null && (pad.leftShoulder.wasPressedThisFrame || pad.rightShoulder.wasPressedThisFrame)))
                 {

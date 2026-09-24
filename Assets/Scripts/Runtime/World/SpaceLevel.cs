@@ -71,6 +71,10 @@ namespace GoF2Remake.World
         public CampaignLevel Campaign { get; private set; }
         /// <summary>The freelance mission's orbit (FreelanceOrbit), null = none.</summary>
         public FreelanceOrbit FreelanceOrbit { get; private set; }
+        /// <summary>The Kaamo Club's pirate siege (station 108 before it's freed), null elsewhere.</summary>
+        public KaamoSiege Siege { get; private set; }
+        /// <summary>MGame::dockEvent: 525 while a mission holds the player here (the story's blocks, the Kaamo siege).</summary>
+        public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex) || (Siege != null && Siege.Active);
         /// <summary>A story conversation is open (the game is paused).</summary>
         public bool Dialogue => StorySpace != null && StorySpace.DialogueOpen;
         /// <summary>LevelScript startSequenceOver: the launch / arrival camera has ended (in the prologue / rescue the
@@ -96,7 +100,7 @@ namespace GoF2Remake.World
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
         public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
-                               && !Story.BlocksDocking(Layout.stationIndex)
+                               && !DockingBlocked
                                && (Mining == null || Mining.State == Mining.Phase.Idle);
         bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
 
@@ -156,8 +160,10 @@ namespace GoF2Remake.World
             bool storyOrbit = !Session.FreePlay && Story.IsLevelMission(station);
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
             bool freelanceOrbit = !storyOrbit && Freelance.IsMissionOrbit(station);
+            // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
+            bool siege = !storyOrbit && !freelanceOrbit && KaamoClub.SiegeAt(station);
             Traffic = new GameObject("Traffic").AddComponent<Traffic>();
-            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit);
+            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege);
             if (storyOrbit)
             {
                 Campaign = new GameObject("Campaign").AddComponent<CampaignLevel>();
@@ -170,12 +176,18 @@ namespace GoF2Remake.World
                 FreelanceOrbit.Setup(this, Traffic);
                 Navigation.SetRoute(FreelanceOrbit.PlayerRoute);
             }
+            else if (siege)
+            {
+                Siege = new GameObject("Kaamo siege").AddComponent<KaamoSiege>();
+                Siege.Setup(this, Traffic);
+            }
             // Level::createWingmen: after the mission's ships (Challenge: unarmed).
             Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
             Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             StorySpace = gameObject.AddComponent<StorySpace>();
             StorySpace.Setup(this, Campaign);
-            Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex);
+            Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex) || (Siege != null && Siege.Active);
+            SystemJump.GateBlocked = () => Siege != null && Siege.Active;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
         }
@@ -314,7 +326,7 @@ namespace GoF2Remake.World
             // is off during the launch).
             if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation)
             {
-                if (Story.BlocksDocking(Layout.stationIndex)) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
+                if (DockingBlocked) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
                 Dock();
                 return;
             }

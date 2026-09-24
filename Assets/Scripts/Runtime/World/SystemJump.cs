@@ -75,6 +75,9 @@ namespace GoF2Remake.World
             nav.KhadorRequested += OpenKhadorMap;
         }
 
+        /// <summary>Set by the level: the gate refuses the jump (the Kaamo siege).</summary>
+        public System.Func<bool> GateBlocked;
+
         void OnDestroy()
         {
             if (nav != null) nav.KhadorRequested -= OpenKhadorMap;
@@ -87,7 +90,11 @@ namespace GoF2Remake.World
             switch (state)
             {
                 case State.None:
-                    if (nav.ReachedGate) DockToStream();
+                    if (nav.ReachedGate)
+                    {
+                        if (GateBlocked != null && GateBlocked()) nav.Refuse();   // MGame::dockEvent: 525 on a mission
+                        else DockToStream();
+                    }
                     else if (Session.InstantJump && Time.timeSinceLevelLoad * 1000f > 5000f && !nav.Jumping && !nav.Paused && !StarMap.IsOpen)
                         StartCharging();
                     break;

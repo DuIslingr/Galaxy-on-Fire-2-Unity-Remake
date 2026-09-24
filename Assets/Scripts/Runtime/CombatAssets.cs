@@ -43,6 +43,10 @@ namespace GoF2Remake.Flight
         public AudioClip[] spaceMusic;
         [Tooltip("Space_Battle_Low, Medium, Full.")]
         public AudioClip[] battleMusic;
+        [Tooltip("146 HomeBase_NoCombat: the Kaamo Club's orbit.")]
+        public AudioClip homeBaseMusic;
+        [Tooltip("Mesh 14246 station_pirates_explosion_anim: a Pirate Outpost's wreck animation (20 s).")]
+        public GameObject outpostWreck;
 
         static CombatAssets cached;
         public static CombatAssets Load() => cached != null ? cached : cached = Resources.Load<CombatAssets>(ResourcePath);

@@ -175,6 +175,14 @@ namespace GoF2Remake.Data
                 a.sellQuantity = k == 3 || k == 4 ? 10 : 1;
                 a.sellPrice = SinglePrice(db.Item(a.sellItem)) * a.sellQuantity;
             }
+            else if (a.offer == AgentOffer.ShipDealer)
+            {
+                // A random ship of DAT_00251f40 the player neither flies nor stores; price = the prototype's price (not
+                // race-adjusted); none left = the offer counts as accepted ("nothing left").
+                var ships = KaamoClub.DealerCandidates();
+                if (ships.Count == 0) a.accepted = true;
+                else { a.sellShip = ships[R(ships.Count)]; a.sellPrice = db.Ship(a.sellShip)?.price ?? 0; }
+            }
             return a;
         }
 

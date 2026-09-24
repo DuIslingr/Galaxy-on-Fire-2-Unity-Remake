@@ -521,6 +521,13 @@ namespace GoF2Remake.UI
                 bool owned = GalaxyMap.HasOwner(s.index) && s.raceId >= 0 && s.raceId <= 3;
                 if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(Tex($"race_{s.raceId}"));
                 it.raceIcon.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
+                if (s.index == KaamoClub.SystemIndex && KaamoClub.Owned)
+                {
+                    // 0x545, the orange house of the owned Kaamo Club, where an owner's race icon would be.
+                    it.raceIcon.style.backgroundImage = new StyleBackground(Tex("map_home"));
+                    it.raceIcon.AddToClassList("map-race-icon--home");
+                    it.raceIcon.style.display = DisplayStyle.Flex;
+                }
                 bool fully = s.stations.Count > 0 && s.stations.TrueForAll(st => Session.VisitedStations.Contains(st));
                 it.visited.style.display = fully ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = s.index == currentSystem ? DisplayStyle.Flex : DisplayStyle.None;
@@ -619,7 +626,7 @@ namespace GoF2Remake.UI
                 if (sel && owned) { it.line1.text = T(406 + sys.raceId); it.line1.style.top = y; y += 30f; }
                 it.line1.style.display = sel && owned ? DisplayStyle.Flex : DisplayStyle.None;
                 it.line2.style.display = sel ? DisplayStyle.Flex : DisplayStyle.None;
-                if (sel) SetSecurity(it.line2, sys.securityLevel, y);
+                if (sel) SetSecurity(it.line2, GalaxyMap.SecurityOf(sys), y);
                 if (sel) it.root.BringToFront();
             }
 
@@ -682,7 +689,7 @@ namespace GoF2Remake.UI
             var race = root.Q<Label>("systemRace");
             race.text = owned ? T(406 + sys.raceId) : "";
             race.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
-            SetSecurity(root.Q<Label>("systemSecurity"), sys.securityLevel, 0f);
+            SetSecurity(root.Q<Label>("systemSecurity"), GalaxyMap.SecurityOf(sys), 0f);
             root.Q<Label>("systemSecurity").style.top = StyleKeyword.Auto;
         }
 

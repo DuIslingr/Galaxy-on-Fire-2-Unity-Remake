@@ -53,6 +53,8 @@ namespace GoF2Remake.EditorTools
             a.freighterEngines = new[] { Clip("SFX_SPACE/Engine_Freighter_03.ogg"), Clip("SFX_SPACE/Engine_Freighter_02.ogg") };
             a.spaceMusic = new[] { Clip("MUSIC/Space_Terraner.ogg"), Clip("MUSIC/Space_Vossk.ogg"), Clip("MUSIC/Space_Nivelianer.ogg"), Clip("MUSIC/Space_Midorianer.ogg") };
             a.battleMusic = new[] { Clip("MUSIC/Space_Battle_Low.ogg"), Clip("MUSIC/Space_Battle_Medium.ogg"), Clip("MUSIC/Space_Battle_Full.ogg") };
+            a.homeBaseMusic = Clip("MUSIC/HomeBase_NoCombat.ogg");
+            a.outpostWreck = Prefab("Prefabs/main/stations/station_pirates_explosion_anim.prefab");
 
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();

@@ -275,7 +275,7 @@ at most once per ship) and calls `refreshValue`.
 ### 2.2 Buying (v, `SpaceLounge::startChat` 0x198974, `Globals::getAgentMissionText` 0xfa7d4, `onKeyPress`)
 
 - The Kaamo agents 21–26 exist at station 108 once the campaign index is > 16 (only story agents there). Radio 3163
-  announces the mechanics and dealers.
+  has the text for announcing the mechanics and dealers, but no code sends it (corrected in `kaamo_club.md` 4.3).
 - At every chat the price is recomputed: **`sellItemPrice = currentShip.price × pct / 100`** (`Ship::getPrice`, the
   adjusted price of the ship you fly).
 - Already installed on the current ship → 858 "I don't have anything left, sorry.". Else text 874/875 + " " + **886 +
@@ -306,6 +306,9 @@ agents with index > 18.
 ---
 
 ## 3. Kaamo Club (station 108, Shima system 26)
+
+See `kaamo_club.md` for the complete spec (the siege, the dialogue order, storage rules); it corrects §3.1 (457 is shown
+on entering the orbit and sets state 1; the win shows 458; 478 is never used).
 
 ### 3.1 Owning the club (v)
 

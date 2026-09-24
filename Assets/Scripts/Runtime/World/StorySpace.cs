@@ -102,6 +102,13 @@ namespace GoF2Remake.World
             Open(call.success, _ => { Story.Advance(level.Database); Story.Advance(level.Database); });
         }
 
+        /// <summary>A conversation from another level script (the Kaamo siege's calls), paused like the story's.</summary>
+        public void ShowPages(List<DialoguePage> pages, Action<bool> after)
+        {
+            if (DialogueRequested == null) { after?.Invoke(false); return; }
+            Open(pages, after);
+        }
+
         void Open(List<DialoguePage> pages, Action<bool> after)
         {
             DialogueOpen = true;

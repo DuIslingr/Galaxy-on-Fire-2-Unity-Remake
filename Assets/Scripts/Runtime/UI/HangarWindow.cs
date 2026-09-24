@@ -17,7 +17,13 @@
 //             the ingredient commits it, at another station than the production station for 200 $ per unit (288;
 //             volatile goods 289); Autocomplete (hard-coded English) for int(qty * maxPrice * 1.25) (195). A finished
 //             run goes to the hold here (211) or waits at the production station (210).
-// Not yet: the full-screen details window, Kaamo Club storage.
+//   Kaamo Club (Reference/research/kaamo_club.md 6, HangarWindow+0x11d = the owned club): the Shop tab becomes 186
+//             "Store": the storage (left) and the hold (right), no prices, free transfers (unsaleable goods refused, 323),
+//             mounted items aren't listed (demount first); the stored hulls under 173 "Ships" with their sell value and the
+//             row buttons 332 "Use" (336 passengers / 329 same type / 333 -> switch) and 330 "Sell" (334). Buying a ship
+//             elsewhere while owning the club asks 327 "sell or keep?" (330 Sell = trade-in, 331 Keep: 328 when the old
+//             type is already stored, else the full price and the old hull goes to the club).
+// Not yet: the full-screen details window.
 
 using System;
 using System.Collections.Generic;
@@ -32,7 +38,7 @@ namespace GoF2Remake.UI
     public class HangarWindow
     {
         public enum Tab { Ship, Shop, Blueprints }
-        enum RowKind { Header, ShopItem, ShopShip, OwnShip, Slot, CargoItem, Blueprint, Pending, Ingredient, Autocomplete }
+        enum RowKind { Header, ShopItem, ShopShip, OwnShip, Slot, CargoItem, Blueprint, Pending, Ingredient, Autocomplete, StoredShip }
 
         class Row
         {
@@ -49,7 +55,7 @@ namespace GoF2Remake.UI
         readonly VisualElement window, details, detailIcon, detailStats, tradeBox, sellButton, buyButton;
         readonly ScrollView list, detailScroll;
         readonly Label detailName, detailSub, detailText, tradeStock, tradeCargo, tradePrice, cargoLabel, creditsLabel, tradeStockLabel, tradeCargoLabel, sellLabel, buyLabel;
-        readonly Button tabShip, tabShop, tabBlueprints, actionButton;
+        readonly Button tabShip, tabShop, tabBlueprints, actionButton, actionButton2;
         /// <summary>Tab 4: the blueprint whose ingredients are listed (-1 = the blueprint list).</summary>
         int editing = -1;
         /// <summary>Item+0x3c blueprintAmount: units moved from the hold but not committed yet, per ingredient.</summary>
@@ -96,6 +102,7 @@ namespace GoF2Remake.UI
             tabShop = root.Q<Button>("tabShop");
             tabBlueprints = root.Q<Button>("tabBlueprints");
             actionButton = root.Q<Button>("actionButton");
+            actionButton2 = root.Q<Button>("actionButton2");
             tradeStockLabel = root.Q<Label>("tradeStockLabel");
             tradeCargoLabel = root.Q<Label>("tradeCargoLabel");
 
@@ -112,9 +119,10 @@ namespace GoF2Remake.UI
             tabBlueprints.clicked += () => { menu.PlayPush(); SetTab(Tab.Blueprints); };
             root.Q<Button>("hangarClose").clicked += () => { menu.PlayRelease(); if (!Back()) menu.CloseHangar(); };
             actionButton.clicked += Action;
+            if (actionButton2 != null) actionButton2.clicked += SecondaryAction;
             HookArrow(sellButton, -1);
             HookArrow(buyButton, 1);
-            foreach (var b in new VisualElement[] { tabShip, tabShop, tabBlueprints, actionButton }) b.focusable = false;
+            foreach (var b in new VisualElement[] { tabShip, tabShop, tabBlueprints, actionButton, actionButton2 }) if (b != null) b.focusable = false;
             list.focusable = detailScroll.focusable = false;
         }
 
@@ -124,6 +132,7 @@ namespace GoF2Remake.UI
         {
             IsOpen = true;
             hangar = new Hangar(level.Database, level.Stock);   // prices are recomputed on every open, like the original
+            tabShop.text = Localization.Get(hangar.Storage ? 186 : 185).ToUpperInvariant();   // "Store" at the owned club
             selected = null;
             Rebuild();
         }
@@ -183,7 +192,14 @@ namespace GoF2Remake.UI
 
             if (tab == Tab.Shop)
             {
-                if (hangar.Stock.ships.Count > 0)
+                if (hangar.Storage)
+                {
+                    // Station::getShips(108): the parked hulls.
+                    if (Session.KaamoShips.Count > 0) AddHeader(T(173));
+                    for (int i = 0; i < Session.KaamoShips.Count; i++)
+                        AddRow(new Row { kind = RowKind.StoredShip, ship = Session.KaamoShips[i].ship, equipment = i });
+                }
+                else if (hangar.Stock.ships.Count > 0)
                 {
                     AddHeader(T(173));
                     foreach (int s in hangar.Stock.ships) AddRow(new Row { kind = RowKind.ShopShip, ship = s });
@@ -284,9 +300,20 @@ namespace GoF2Remake.UI
                     if (!Session.SeenItems.Contains(row.item)) sub.Add(Badge(Localization.Extra("shopNew", "NEW"), "row-badge--new"));
                     else if (hangar.IsMounted(row.item)) sub.Add(Badge(Localization.Extra("shopMounted", "MOUNTED"), "row-badge--mounted"));
                     subText.text = $"{ItemInfo.Category(it)}   {hangar.StockOf(row.item)} t  |  {hangar.CargoOf(row.item)} t";
+                    if (hangar.Storage) break;   // the storage draws no prices
                     int p = hangar.PriceOf(row.item);
                     price.text = ItemInfo.Credits(p);
                     price.EnableInClassList("row-price--expensive", p > Session.Credits);
+                    break;
+                }
+                case RowKind.StoredShip:
+                {
+                    var stored = Session.KaamoShips[row.equipment];
+                    tex = ItemInfo.ShipIcon(row.ship);
+                    name.text = ItemInfo.ShipName(row.ship);
+                    int race = row.ship < Shop.ShipRace.Length ? Shop.ShipRace[row.ship] : 0;
+                    subText.text = (race <= 3 || race == 8 ? Localization.Get(406 + race) : "") + (stored.mods.Count > 0 ? "  (+)" : "");
+                    price.text = ItemInfo.Credits(hangar.StoredPrice(row.equipment));   // the sell value
                     break;
                 }
                 case RowKind.ShopShip:
@@ -447,6 +474,7 @@ namespace GoF2Remake.UI
             tradeBox.AddToClassList("trade-box--hidden");
             actionButton.AddToClassList("detail-action--hidden");
             actionButton.RemoveFromClassList("detail-action--disabled");
+            actionButton2?.AddToClassList("detail-action--hidden");
             if (selected == null) return;
             string T(int id) => Localization.Get(id);
 
@@ -470,13 +498,14 @@ namespace GoF2Remake.UI
                     tradeBox.RemoveFromClassList("trade-box--hidden");
                     tradeStockLabel.text = T(136).ToUpperInvariant();
                     tradeCargoLabel.text = T(183).ToUpperInvariant();
-                    sellLabel.text = "‹ " + Localization.Extra("shopSell", "SELL");
-                    buyLabel.text = Localization.Extra("shopBuy", "BUY") + " ›";
+                    bool store = hangar.Storage;
+                    sellLabel.text = "‹ " + (store ? Localization.Extra("shopStore", "STORE") : Localization.Extra("shopSell", "SELL"));
+                    buyLabel.text = (store ? Localization.Extra("shopTake", "TAKE") : Localization.Extra("shopBuy", "BUY")) + " ›";
                     int stock = hangar.StockOf(item), cargo = hangar.CargoOf(item), price = hangar.PriceOf(item);
                     tradeStock.text = $"{stock} t";
                     tradeCargo.text = $"{cargo} t";
-                    tradePrice.text = ItemInfo.Credits(price);
-                    tradePrice.EnableInClassList("trade-price--expensive", price > Session.Credits);
+                    tradePrice.text = store ? "" : ItemInfo.Credits(price);
+                    tradePrice.EnableInClassList("trade-price--expensive", !store && price > Session.Credits);
                     sellButton.EnableInClassList("trade-arrow--disabled", cargo <= 0);
                     buyButton.EnableInClassList("trade-arrow--disabled", stock <= 0);
                 }
@@ -501,6 +530,18 @@ namespace GoF2Remake.UI
                 {
                     int delta = hangar.ShipPrice(selected.ship) - hangar.ShipPrice(Session.ShipIndex);
                     ShowAction($"{T(301).ToUpperInvariant()}   {ItemInfo.Credits(delta)}", true);
+                }
+                else if (selected.kind == RowKind.StoredShip)
+                {
+                    // Row buttons 1 "Use" (332) and 10 "Sell" (330).
+                    ShowAction(T(332).ToUpperInvariant(), selected.ship != Session.ShipIndex);
+                    if (actionButton2 != null)
+                    {
+                        actionButton2.text = $"{T(330).ToUpperInvariant()}   {ItemInfo.Credits(hangar.StoredPrice(selected.equipment))}";
+                        actionButton2.RemoveFromClassList("detail-action--hidden");
+                    }
+                    if (Session.KaamoShips[selected.equipment].mods.Count > 0)
+                        foreach (int mod in Session.KaamoShips[selected.equipment].mods) AddStat(ModName(mod), "(+)");
                 }
             }
             else
@@ -821,13 +862,40 @@ namespace GoF2Remake.UI
                 {
                     int ship = selected.ship;
                     var r = hangar.CanBuyShip(ship, out int need);
+                    if (r == Hangar.Result.Passengers) { menu.ShowToast(Localization.Get(336)); break; }
                     if (r == Hangar.Result.SameShip) { menu.ShowToast(Localization.Get(329)); break; }
                     if (r == Hangar.Result.NoCredits) { menu.ShowToast(Localization.Get(203).Replace("#C", ItemInfo.Credits(need))); break; }
-                    menu.ShowDialog(Localization.Get(304), () =>
+                    void Bought()
                     {
-                        if (!hangar.BuyShip(ship)) return;
                         level.ReplacePlayerShip(ship);
                         menu.ShowToast(Localization.Get(303).Replace("#N", db.Ship(ship)?.name ?? ItemInfo.ShipName(ship)));
+                        selected = null;
+                        Rebuild();
+                    }
+                    void TradeIn() { if (hangar.BuyShip(ship)) Bought(); }
+                    if (!KaamoClub.Owned) { menu.ShowDialog(Localization.Get(304), TradeIn); break; }
+                    // 304, then 327 "sell your old ship or keep it and have it brought to your station?" (330 / 331).
+                    menu.ShowDialog(Localization.Get(304), () => menu.ShowChoice(Localization.Get(327), Localization.Get(330), Localization.Get(331), TradeIn, () =>
+                    {
+                        var k = hangar.CanKeepAndBuyShip(ship, out int missing);
+                        if (k == Hangar.Result.AlreadyStored) { menu.ShowDialog(Localization.Get(328), null, true); return; }
+                        if (k == Hangar.Result.NoCredits) { menu.ShowToast(Localization.Get(203).Replace("#C", ItemInfo.Credits(missing))); return; }
+                        if (hangar.KeepAndBuyShip(ship)) Bought();
+                    }));
+                    break;
+                }
+                case RowKind.StoredShip:
+                {
+                    int index = selected.equipment;
+                    var r = hangar.CanUseStored(index);
+                    if (r == Hangar.Result.Passengers) { menu.ShowToast(Localization.Get(336)); break; }
+                    if (r == Hangar.Result.SameShip) { menu.ShowToast(Localization.Get(329)); break; }
+                    if (r != Hangar.Result.Ok) break;
+                    menu.ShowDialog(Localization.Get(333), () =>
+                    {
+                        if (!hangar.UseStored(index)) return;
+                        level.ReplacePlayerShip(Session.ShipIndex);
+                        level.RefreshParkedShips();
                         selected = null;
                         Rebuild();
                     });
@@ -835,6 +903,32 @@ namespace GoF2Remake.UI
                 }
             }
         }
+
+        /// <summary>The second row button (X / controller X): Sell a stored hull (330 -> 334).</summary>
+        public void SecondaryAction()
+        {
+            if (selected == null || selected.kind != RowKind.StoredShip) return;
+            int index = selected.equipment;
+            menu.PlayRelease();
+            menu.ShowDialog(Localization.Get(334), () =>
+            {
+                if (!hangar.SellStored(index)) return;
+                level.RefreshParkedShips();
+                selected = null;
+                Rebuild();
+            });
+        }
+
+        /// <summary>The Kaamo mechanics' mods (907-910 texts' subjects): +40 hull, +30 t cargo, +1 slot, handling.</summary>
+        static string ModName(int mod) => mod switch
+        {
+            0 => Localization.Get(165),   // Armor
+            1 => Localization.Get(166),   // Cargo hold
+            2 => Localization.Get(269),   // Equipment
+            _ => Localization.Get(164),   // Handling
+        };
+
+        public bool StorageMode => hangar != null && hangar.Storage;
 
         // ---- held trade arrows ---------------------------------------------------------------------------------
 

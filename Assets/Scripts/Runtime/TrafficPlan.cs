@@ -42,6 +42,12 @@ namespace GoF2Remake.Flight
         public bool stationary;    // KIPlayer+0x48 = 0: parked (Protection's mining ships), still a target
         public float speed = -1f;  // setSpeed (u/ms, -1 = the normal 2.0 with boosts): 3.0 for the Challenge rival / Wanted
         public int missionCrate = -1; // PlayerFighter::setMissionCrate: carries only this item; EMP-disabling it drops the crate
+        // Static objects (Level::createStaticObject 0xcda54, PlayerFixedObject): the Kaamo siege's Pirate Outposts.
+        public string fixedObject;    // assembly name: a target that never moves, has no gun, no engine and no loot
+        public int collisionId = -1;  // Level::getBoundingVolume id (collision.json below 2000, else static_collisions.json)
+        public float hitRadius = -1f; // Player+0x40, the bullet hit cube's half size (units)
+        public GameObject wreckPrefab; // setWreckedMeshId: the wreck animation played on death, then the explosion
+        public float explosionScale = 1f;
     }
 
     public static class TrafficPlan

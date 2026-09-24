@@ -162,6 +162,8 @@ namespace GoF2Remake.Data
                 }
             }
             if (stock.agents == null || (stock.agents.Count == 0 && station != 108)) stock.agents = AgentGenerator.CreateAgents(db, station);   // saves from before the bar
+            // Status::departStation: at the owned club the storage is the station's stock (one shared list here).
+            if (KaamoClub.StorageAt(station)) stock.items = Session.KaamoItems;
             Freelance.OnEnterStation(stock);
             return stock;
         }

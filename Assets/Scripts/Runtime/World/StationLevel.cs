@@ -214,24 +214,39 @@ namespace GoF2Remake.World
             ApplyShipYaw();
         }
 
+        readonly List<GameObject> parkedShips = new List<GameObject>();
+
+        /// <summary>The club's parked hulls changed (Use / Sell in the storage): park them again.</summary>
+        public void RefreshParkedShips()
+        {
+            if (!KaamoClub.StorageAt(Layout.stationIndex)) return;
+            foreach (var go in parkedShips) if (go != null) Destroy(go);
+            parkedShips.Clear();
+            SpawnParkedShips();
+        }
+
         /// <summary>Level::createScene 0x17: count = nextInt(max + 1), 70 % a fighter of the hangar's race, 30 % a random race
-        /// (of those 30 % pirates); random free slot, yaw nextInt(300) / 100 rad.</summary>
+        /// (of those 30 % pirates); random free slot, yaw nextInt(300) / 100 rad. The owned Kaamo Club (kaamo_club.md 6.6)
+        /// parks the first min(stored, max) hulls of its storage instead, in list order.</summary>
         void SpawnParkedShips()
         {
             var slots = StationTables.ParkedSlots[HangarIndex];
             int max = StationTables.ParkedMax[HangarIndex];
             if (slots == null || max <= 0) return;
-            int count = Mathf.Min(Random.Range(0, max + 1), slots.Length);
+            bool club = KaamoClub.StorageAt(Layout.stationIndex);
+            int count = Mathf.Min(club ? Mathf.Min(Session.KaamoShips.Count, max) : Random.Range(0, max + 1), slots.Length);
             var taken = new bool[slots.Length];
             for (int n = 0; n < count; n++)
             {
-                int ship = Layout.stationIndex == 100 ? StationTables.DeepScienceShips[Random.Range(0, 3)] : RandomParkedShip();
+                int ship = club ? Session.KaamoShips[n].ship
+                         : Layout.stationIndex == 100 ? StationTables.DeepScienceShips[Random.Range(0, 3)] : RandomParkedShip();
                 int slot = Random.Range(0, slots.Length), tries = 0;
                 while (taken[slot] && ++tries < 100) slot = Random.Range(0, slots.Length);
                 if (taken[slot]) break;
                 taken[slot] = true;
                 var pos = slots[slot] + new Vector3(0f, StationTables.ShipY(ship), 0f);
-                SpawnShip(ship, pos, Random.Range(0, 300) / 100f, hangarRoot, $"Parked ship {n}");
+                var parked = SpawnShip(ship, pos, Random.Range(0, 300) / 100f, hangarRoot, $"Parked ship {n}");
+                if (parked != null) parkedShips.Add(parked);
             }
         }
 

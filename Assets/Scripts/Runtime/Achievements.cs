@@ -66,6 +66,7 @@ namespace GoF2Remake.Data
                 case 32: return Session.OffersDeclined;
                 case 33: return Session.AcceptedBlindRisk;
                 case 34: return Session.AcceptedBlindMap;
+                case 37: return Session.KaamoShips.Count;   // Ship Collector: stored hulls (one per type)
                 case 39: return Session.BattleshipsDestroyed;
             }
             return null;

@@ -71,6 +71,7 @@
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:Button name="actionButton" class="detail-action gof-semibold" />
+                        <ui:Button name="actionButton2" class="detail-action detail-action--secondary gof-semibold" />
                         <ui:ScrollView name="detailScroll" class="detail-scroll">
                             <ui:VisualElement name="detailStats" class="detail-stats" picking-mode="Ignore" />
                             <ui:Label name="detailText" class="detail-text" picking-mode="Ignore" />

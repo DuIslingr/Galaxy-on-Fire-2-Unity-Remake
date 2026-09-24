@@ -93,7 +93,8 @@ namespace GoF2Remake.World
 
         NpcShip Create(SpawnSpec spec)
         {
-            var prefab = spec.freighter ? AssembledObject.LoadPrefab(db.AssemblyByName(NpcTables.FreighterAssembly(spec.race)))
+            var prefab = spec.fixedObject != null ? AssembledObject.LoadPrefab(db.AssemblyByName(spec.fixedObject))
+                       : spec.freighter ? AssembledObject.LoadPrefab(db.AssemblyByName(NpcTables.FreighterAssembly(spec.race)))
                                         : AssembledObject.LoadPrefab(ShipAssembly(spec.ship, spec.race));
             var go = new GameObject($"NPC {spec.group} {spec.race}/{spec.ship}");
             go.transform.SetParent(transform, false);
@@ -272,7 +273,9 @@ namespace GoF2Remake.World
                 {
                     musicCategory = pendingCategory;
                     pendingCategory = -1;
-                    var clip = musicCategory == 0 ? (assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null)
+                    // Globals::playMusicAndFadeOutCurrent: 146 HomeBase_NoCombat in the Kaamo Club's orbit.
+                    var clip = musicCategory == 0 ? (StationIndex == KaamoClub.Station && assets.homeBaseMusic != null ? assets.homeBaseMusic
+                                                     : assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null)
                                                   : (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
                     music.clip = clip;
                     if (clip != null) music.Play();

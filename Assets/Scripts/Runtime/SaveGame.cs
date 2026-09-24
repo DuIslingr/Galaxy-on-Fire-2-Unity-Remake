@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -57,6 +57,10 @@ namespace GoF2Remake.Data
         public int asteroidsDestroyed, oreMined, coresMined, cratesSalvaged, junkDestroyed, battleshipsDestroyed, highestCredits, lastArrivalHullPercent = 100;
         public List<int> oreTypesMined, coreTypesMined;
         public int agentsTalkedTo, offersDeclined, offersRepeated, acceptedBlindRisk, acceptedBlindMap, containersDelivered, passengersDelivered;
+        // version 4: the Kaamo Club
+        public int kaamoState;
+        public List<ItemStack> kaamoItems;
+        public List<StoredShip> kaamoShips;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -179,6 +183,7 @@ namespace GoF2Remake.Data
                 agentsTalkedTo = Session.AgentsTalkedTo, offersDeclined = Session.OffersDeclined, offersRepeated = Session.OffersRepeated,
                 acceptedBlindRisk = Session.AcceptedBlindRisk, acceptedBlindMap = Session.AcceptedBlindMap,
                 containersDelivered = Session.ContainersDelivered, passengersDelivered = Session.PassengersDelivered,
+                kaamoState = Session.KaamoState, kaamoItems = Session.KaamoItems, kaamoShips = Session.KaamoShips,
             };
         }
 
@@ -254,6 +259,12 @@ namespace GoF2Remake.Data
                 Session.AgentsTalkedTo = s.agentsTalkedTo; Session.OffersDeclined = s.offersDeclined; Session.OffersRepeated = s.offersRepeated;
                 Session.AcceptedBlindRisk = s.acceptedBlindRisk; Session.AcceptedBlindMap = s.acceptedBlindMap;
                 Session.ContainersDelivered = s.containersDelivered; Session.PassengersDelivered = s.passengersDelivered;
+            }
+            if (s.version >= 4)
+            {
+                Session.KaamoState = s.kaamoState;
+                Session.KaamoItems = s.kaamoItems ?? new List<ItemStack>();
+                Session.KaamoShips = s.kaamoShips ?? new List<StoredShip>();
             }
             Story.RepairCheckpoint();
         }

@@ -77,6 +77,13 @@ namespace GoF2Remake.Data
         public static List<int> ShipMods = new List<int>();
         public static void AddShipMod(int mod) { if (mod >= 0 && !ShipMods.Contains(mod)) ShipMods.Add(mod); }
         public static bool HasMod(int mod) => ShipMods.Contains(mod);
+
+        /// <summary>Status+0x114 (Reference/research/kaamo_club.md 2): the Kaamo Club, 0 not owned, 1 Mkkt Bkkt's call
+        /// heard, 2 purchasable, 3 owned.</summary>
+        public static int KaamoState;
+        /// <summary>Status+0x14c, the storage station: its goods (station 108's stock while owned) and parked hulls.</summary>
+        public static List<ItemStack> KaamoItems = new List<ItemStack>();
+        public static List<StoredShip> KaamoShips = new List<StoredShip>();
         /// <summary>Status+0x174: the counter of story types 0xa8 / 0xb8.</summary>
         public static int StoryCounter;
         /// <summary>Status+0x7c / +0x80: the Void-invasion system and station (-1 none, -10 never again).</summary>
@@ -244,6 +251,9 @@ namespace GoF2Remake.Data
             OreTypesMined = new HashSet<int>();
             CoreTypesMined = new HashSet<int>();
             ShipMods = new List<int>();
+            KaamoState = 0;
+            KaamoItems = new List<ItemStack>();
+            KaamoShips = new List<StoredShip>();
             AgentsTalkedTo = OffersDeclined = OffersRepeated = AcceptedBlindRisk = AcceptedBlindMap = ContainersDelivered = PassengersDelivered = 0;
             StoryCounter = 0;
             VoidInvasionSystem = VoidInvasionStation = -1;

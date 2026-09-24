@@ -744,7 +744,7 @@ namespace GoF2Remake.UI
             if (tex != null) { logo.style.backgroundImage = new StyleBackground(tex); logo.style.width = tex.width; logo.style.height = tex.height; }
             orbitInfo.Q<Label>("orbitStation").text = st == null ? "" : st.index == 101 ? st.name : $"{st.name} {Localization.Get(136)}";
             orbitInfo.Q<Label>("orbitSystem").text = st == null ? "" : $"{st.systemName} {Localization.Get(137)}";
-            int sec = Mathf.Clamp(level.Database.Systems.Find(s => s.index == system)?.securityLevel ?? 0, 0, 3);
+            int sec = Mathf.Clamp(GalaxyMap.SecurityOf(level.Database.Systems.Find(s => s.index == system)), 0, 3);
             var secLabel = orbitInfo.Q<Label>("orbitSecurity");
             secLabel.text = Localization.Get(402 + sec);
             secLabel.style.color = (Color)GalaxyMap.SecurityColours[sec];

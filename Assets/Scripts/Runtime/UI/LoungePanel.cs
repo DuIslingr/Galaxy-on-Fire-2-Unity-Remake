@@ -221,7 +221,7 @@ namespace GoF2Remake.UI
                 case LoungeChat.Outcome.Confirm:
                 {
                     var current = chat;
-                    menu.ShowDialog(current.ConfirmText, () => { current.Confirm(); AfterDeal(current); });
+                    menu.ShowDialog(current.ConfirmText, () => { current.Confirm(); if (current.BoughtShip) level.RefreshParkedShips(); AfterDeal(current); });
                     return;
                 }
                 case LoungeChat.Outcome.ShowMap:
@@ -261,6 +261,13 @@ namespace GoF2Remake.UI
         void ShowGoods()
         {
             var a = chat.Agent;
+            if (a.offer == AgentOffer.ShipDealer && a.sellShip >= 0)
+            {
+                // Offer 10: the ship's details (ListItemWindow::set(ship)).
+                chatText.text = $"{ItemInfo.ShipName(a.sellShip)}\n{Localization.Get(406 + Mathf.Clamp(Shop.ShipRace[a.sellShip], 0, 3))}\n\n{Localization.Get(977 + a.sellShip)}";
+                chatScroll.scrollOffset = Vector2.zero;
+                return;
+            }
             int item = a.offer == AgentOffer.SellBlueprint ? LoungeChat.BlueprintProduct(a.sellBlueprint) : a.sellItem;
             var it = item >= 0 ? Db.Item(item) : null;
             if (it == null) { chatText.text = chat.Text; return; }

@@ -90,3 +90,5 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 88c1bf9983e9ae4449d5ada53e399f63, type: 3}
   - {fileID: 8300000, guid: 110d13a82a6c20647921ce2d3daa248e, type: 3}
   - {fileID: 8300000, guid: 7c0e94556116b264a9e6a30b73d6e07d, type: 3}
+  homeBaseMusic: {fileID: 8300000, guid: 1ccd10462d8fed2449daebaba2b5ef8f, type: 3}
+  outpostWreck: {fileID: 2553691981631646173, guid: 4ea973f77c7f9e2489e65a5f4fe9d9b5, type: 3}

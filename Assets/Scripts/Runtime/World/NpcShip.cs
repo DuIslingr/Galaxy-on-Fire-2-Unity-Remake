@@ -28,6 +28,9 @@
 // (cargo_*_explosion_anim, ~10 s, still moving), then a x6 explosion; the crate appears at once; the wreck then stays
 // where it is (state 4) with its wreck volumes. Their boxes (Obstacle, Level::createShip) are what bullets hit, the
 // player slides along and fighters steer out of.
+// Static objects (PlayerFixedObject 0x17ece0, the Kaamo siege's Pirate Outposts, kaamo_club.md 3.2): an assembled object
+// that never moves, no gun, engine or loot, a +-hitRadius hit cube, the level's static volumes; death: the wreck animation
+// (20 s), then an x8 explosion, and the wreck stays.
 // Friendly fire (Player::damage): hits by the player on system-race / attack-race ships add up: > 33 % of the hull ->
 // radio "Hold your fire!", >= 50 % -> this ship turns hostile, >= 66 % -> the whole race turns hostile (10 / 25 / 40 % on
 // Extreme). NPC bullets never hit their own race; a non-hostile NPC's stray hit on the player does 20 %.
@@ -49,6 +52,8 @@ namespace GoF2Remake.World
         public SpawnSpec Spec { get; private set; }
         public int Race => Spec.race;
         public bool IsFreighter => Spec.freighter;
+        /// <summary>Level::createStaticObject: a Pirate Outpost (never moves, never shoots).</summary>
+        public bool IsFixed => Spec.fixedObject != null;
         public Target Target { get; private set; }
         public Hitpoints Hp => Target.hitpoints;
         public State Current { get; private set; } = State.Fly;
@@ -157,7 +162,7 @@ namespace GoF2Remake.World
             Target.isShip = true;
             Target.race = spec.race;
             Target.customDeath = true;
-            Target.radius = NpcTables.HitRadiusUnits * M;
+            Target.radius = (spec.hitRadius > 0f ? spec.hitRadius : NpcTables.HitRadiusUnits) * M;
             Target.hitpoints = new Hitpoints(NpcTables.Hull(kind, spec.ship));
             Target.hitpoints.SetEmp(NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));
             if (spec.hitpoints > 0) Target.hitpoints = new Hitpoints(spec.hitpoints);
@@ -175,12 +180,18 @@ namespace GoF2Remake.World
                 obstacle.volumes = CollisionVolume.ForFreighter(spec.ship, spec.race);
                 Target.boxes = LocalBoxes(obstacle.volumes);
             }
+            else if (spec.fixedObject != null && spec.collisionId >= 0)
+            {
+                obstacle = gameObject.AddComponent<Obstacle>();
+                obstacle.projectFromVolume = false;
+                obstacle.volumes = CollisionVolume.ForStaticObject(spec.collisionId);
+            }
             Target.Damaged += OnDamaged;
             Target.Died += OnDied;
             lastHull = Hp.hull;
-            if (!spec.freighter) smoke = new ShipSmoke(transform);
+            if (!spec.freighter && spec.fixedObject == null) smoke = new ShipSmoke(transform);
 
-            if (!spec.freighter && spec.ship != 51)
+            if (!spec.freighter && spec.fixedObject == null && spec.ship != 51)
             {
                 var item = db.Item(NpcTables.GunItem(spec.race));
                 if (item != null)
@@ -200,7 +211,7 @@ namespace GoF2Remake.World
             engine = gameObject.AddComponent<AudioSource>();
             Setup3D(engine);
             engine.loop = true;
-            engine.clip = assets != null ? CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines) : null;
+            engine.clip = assets == null || spec.fixedObject != null ? null : CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines);
             engine.volume = 0.6f * Settings.SfxVolume;
             if (engine.clip != null) engine.Play();
 
@@ -706,7 +717,19 @@ namespace GoF2Remake.World
             deathDir = transform.forward;
             if (engine != null) engine.Stop();
             Sfx.PlayAt(assets != null ? CombatAssets.Pick(assets.shipDestroyed) : null, transform.position);
-            if (IsFreighter)
+            if (IsFixed)
+            {
+                // PlayerFixedObject::update state 3: the hull swapped for the wreck animation (plays once), smoke.
+                dyingMs = 20000f;
+                if (Spec.wreckPrefab != null && modelGo != null)
+                {
+                    wreck = Instantiate(Spec.wreckPrefab, transform, false);
+                    float len = PartAnimation.PlayOnce(wreck);
+                    if (len > 0f) dyingMs = len;
+                    modelGo.SetActive(false);
+                }
+            }
+            else if (IsFreighter)
             {
                 dyingMs = 10000f;
                 var wreckPrefab = assets != null && assets.wrecks != null && assets.wrecks.Length == 5
@@ -733,7 +756,8 @@ namespace GoF2Remake.World
         void UpdateDying(float dtMs)
         {
             float frames = dtMs / 33.3f;
-            if (IsFreighter) transform.position += transform.forward * NpcTables.FreighterSpeed * dtMs * M;
+            if (IsFixed) { }
+            else if (IsFreighter) transform.position += transform.forward * NpcTables.FreighterSpeed * dtMs * M;
             else
             {
                 transform.Rotate(spinAxis, 0.05f * frames * Mathf.Rad2Deg, Space.World);
@@ -741,11 +765,11 @@ namespace GoF2Remake.World
             }
             dyingMs -= dtMs;
             if (dyingMs > 0f) return;
-            explosion = Explosion.Spawn(transform.position, IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : 1f);
+            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : 1f);
             Current = State.Dead;
             smoke?.SetEmitting(false);   // the end of the tumble: Explosion::start, smoke and fire off
             deadMs = 0f;
-            if (obstacle != null) obstacle.volumes = CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
+            if (obstacle != null && !IsFixed) obstacle.volumes = CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
             if (!IsFreighter) DropCrate();
         }
 
@@ -763,7 +787,7 @@ namespace GoF2Remake.World
         void UpdateDead(float dtMs)
         {
             deadMs += dtMs;
-            if (IsFreighter && wreck != null) return;   // state 4: the wreck stays for the rest of the level
+            if ((IsFreighter || IsFixed) && wreck != null) return;   // state 4: the wreck stays for the rest of the level
             if (deadMs > 300f)
             {
                 if (modelGo != null && modelGo.activeSelf) modelGo.SetActive(false);
