@@ -328,7 +328,45 @@ and `mainmenu_notes.md`.
 
 The story cutscenes are scripted in **`LevelScript::process`** (0x160d50) inside normal flight levels.
 
-(§3.1–3.3: LevelScript cutscenes, skip rules, presentation — see below.)
+Details (per-step tables, camera positions, sounds, constructor setup): **`levelscript_cutscenes.md`**. Summary:
+
+### 3.1 LevelScript cutscenes
+
+- `LevelScript::process` returns the **cutscene-active flag** `this[0x11]` (stored in `MGame+0x5f`): HUD, radar and
+  lock plate are not drawn, the player is computer-controlled (often invulnerable/hidden), the camera is a fixed
+  look-at camera (`TargetFollowCamera::setLookAtCam`) repositioned per step and dollied per frame; giving control
+  back calls `resetCamera` (chase offsets). Step counter `+0x1c` (= radio trigger 0x1b), step timer `+0x90`, level
+  clock `+8`.
+- Every level starts with the generic 7 s fly-in (`+0x20` startSequence, `+0x24` timer); the campaign scripts are
+  mostly driven by their own radio messages (step advances when msg[n] fires/ends), so the radio table (§2) and the
+  script are one unit.
+- Decoded scenes: **M0** prologue (pirate ambush, hyperdrive accident with fx mesh 15027, time-space jump with
+  sounds 157/158/160/159, planet/skybox swap, fade to black → M1), **M1** Var Hastra salvage (fixed camera, fade in/out
+  → station), **M14** Terran arrest (EMP, flash, cruiser), **M16** first Void contact (wormhole), **M24** the wormhole
+  takes Keith, **M29** probe launch, **M40/M41** Errkt's freighter and death (sound 155 `Errkt_CutSeq_01`), **M42**
+  mothership explosion and wormhole escape (153/154). Partly decoded: add-on scenes (M78, 80, 81, the Supernova intro
+  M89 with its white flash and sun growth, "Meanwhile…" interludes, M105/106, M144/145, M154/157/158).
+
+### 3.2 Skip rules
+
+- Fly-in: a tap during the start sequence → `LevelScript::skipSequence` 0x16f57c (timer to 7001, player vulnerable;
+  not in mission 0).
+- Story cutscenes are **not skippable** in the base game. The pause menu offers Skip (395) only for missions 154, 157,
+  158 while `canSkipCutsceneNow` 0x16f5b8 allows; `skipCutscene` 0x16f61c marks their first 8/4/3 radio messages
+  triggered + finished and jumps the step/timers. (MGame's skip branches for M0/M1 have no button in this build.)
+- Dialogue pages have their own Skip (§1.5).
+
+### 3.3 Presentation
+
+- No letterbox bars, no text overlays other than the radio box: captions ("3598 A.D. …", "Meanwhile…") are radio
+  messages from speaker 17 "Story". The dialogue window and radio are still drawn during cutscenes (the radio not
+  during the generic fly-in).
+- Fades: `Layout::startFade(out, colour, ms)` / `drawFade` 0xe7978 (black or white full-screen alpha ramp), opaque
+  black fill over level switches, `Level::flashScreen`, camera rumble `setRumblePercentage`.
+- `Globals::isCinematicModeActive` / `MGame::setCinematicMode` / `MenuTouchWindow::inCinematicMode` are the "Action
+  Freeze" photo mode, not story cutscenes.
+- Sound id note: `levelscript_cutscenes.md` calls id 161 disputed; §5.2 resolves it (161 = `Engine_09_Broken`, matching
+  its use as a stopped engine loop in M0; 162 = `Alert`).
 
 ### 3.4 Intro (new game) and ending
 
