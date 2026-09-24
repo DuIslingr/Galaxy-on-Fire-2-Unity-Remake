@@ -299,8 +299,15 @@ namespace GoF2Remake.Data
             if (Index == 27 && station == Mission.station) { Session.Unsaleable.Remove(131); Shop.RemoveFromCargo(131, CargoOf(131)); }
         }
 
-        /// <summary>The price the shop charges ('price' = the normal one): index 20 at Kappa gives the EMP bombs away.</summary>
-        public static int AdjustPrice(int station, int item, int price) => Index == 20 && station == 55 && item == 41 ? 0 : price;
+        /// <summary>The price the shop charges ('price' = the normal one): the tutorial gear at Var Hastra before step 7 and the EMP
+        /// bombs at Kappa in step 20 are free.</summary>
+        public static int AdjustPrice(int station, int item, int price)
+        {
+            // Generator::getItemBuyList (shop.md 4.3): Var Hastra before step 7 stocks the tutorial gear 0 / 22 / 55 at price 0
+            // (steps 5-6: "go and get yourself a weapon and some armor plating"); selling there pays the same 0.
+            if (station == 78 && Session.CampaignMission < 7) return 0;
+            return Index == 20 && station == 55 && item == 41 ? 0 : price;
+        }
 
         /// <summary>The Missions window's objective text for the current step ('#' = the target station).</summary>
         public static string ObjectiveText(Database db)
