@@ -40,7 +40,7 @@ namespace GoF2Remake.Flight
 {
     public class GoF2Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint }
 
         public class Target
         {
@@ -79,6 +79,48 @@ namespace GoF2Remake.Flight
         public bool Autopilot => AutopilotTarget != null;
         public bool GoingToStation => AutopilotTarget?.kind == Kind.Station;
         public bool GoingToGate => AutopilotTarget?.kind == Kind.Jumpgate;
+        /// <summary>A campaign level's player route (Level+0x108, PlayerEgo::setRoute): its current waypoint is a landmark
+        /// target named "Waypoint" (548): marked on the HUD, lockable, and the autopilot flies to it; "Waypoint reached."
+        /// (543) / "Last waypoint reached." (544) as the route advances.</summary>
+        public void SetRoute(GoF2Route route)
+        {
+            playerRoute = route;
+            routeTarget = null;
+            Targets.RemoveAll(t => t.kind == Kind.Waypoint);
+            if (route == null) return;
+            routeTarget = new Target { kind = Kind.Waypoint, name = GoF2Localization.Get(548) };
+            routeIndex = route.index;
+            UpdateRoute();
+        }
+
+        GoF2Route playerRoute;
+        Target routeTarget;
+        int routeIndex;
+
+        void UpdateRoute()
+        {
+            if (playerRoute == null) return;
+            if (playerRoute.index != routeIndex)
+            {
+                routeIndex = playerRoute.index;
+                Say(GoF2Localization.Get(playerRoute.Waypoint == null ? 544 : 543));
+                if (AutopilotTarget == routeTarget) SetAutopilot(playerRoute.Waypoint == null ? null : routeTarget);
+            }
+            var wp = playerRoute.Waypoint;
+            if (wp == null) { Targets.Remove(routeTarget); if (Locked == routeTarget || Candidate == routeTarget) Locked = Candidate = null; return; }
+            routeTarget.fixedPosition = new Vector3(wp.Value.x, wp.Value.y, -wp.Value.z) * M;
+            if (!Targets.Contains(routeTarget)) Targets.Add(routeTarget);
+        }
+
+        /// <summary>Set by the level: planet jumps and the Khador Drive are refused (story, campaign_flow.md 7).</summary>
+        public Func<bool> JumpsBlocked;
+
+        /// <summary>HUD event 0x15: "Not possible on a mission." (525); the autopilot stops.</summary>
+        public void Refuse()
+        {
+            Say(GoF2Localization.Get(525));
+            SetAutopilot(null);
+        }
         public bool Jumping { get; private set; }
         public bool FastForward { get; private set; }
         /// <summary>Lock ring frame 0..23 (no 500 ms delay for landmarks and planets), -1 = none.</summary>
@@ -201,7 +243,12 @@ namespace GoF2Remake.Flight
             CloseMenu();
             if (target == null) return;
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
-            if (target.kind == Kind.KhadorDrive) { KhadorRequested?.Invoke(); return; }
+            if (target.kind == Kind.KhadorDrive)
+            {
+                if (JumpsBlocked != null && JumpsBlocked() && GoF2Story.Index != 78) { Say(GoF2Localization.Get(525)); return; }
+                KhadorRequested?.Invoke();
+                return;
+            }
             Say($"{GoF2Localization.Get(546)}: {target.name}");
             Play(sounds?.autopilotOn);
             SetAutopilot(target);
@@ -249,6 +296,7 @@ namespace GoF2Remake.Flight
         /// <summary>Radar::draw, landmark and planet blocks.</summary>
         void UpdateLock(float dtMs)
         {
+            UpdateRoute();
             var cam = Camera.main;
             Target best = null;
             bool miningBusy = mining != null && (mining.State != GoF2Mining.Phase.Idle || mining.Locked != null);
@@ -320,6 +368,7 @@ namespace GoF2Remake.Flight
                 return;
             }
             if (Locked == null) return;
+            if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(GoF2Localization.Get(525)); return; }
             if (Locked.kind == Kind.Planet) StartJump(Locked);
             else
             {

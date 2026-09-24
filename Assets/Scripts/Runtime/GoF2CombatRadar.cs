@@ -112,7 +112,7 @@ namespace GoF2Remake.Flight
                     if (traffic != null)
                         foreach (var s in traffic.Ships)
                         {
-                            if (s.Gone || !s.Target.Alive) continue;
+                            if (s.Gone || !s.Target.Alive || s.Hidden) continue;
                             if (InBox(cam, c, box, s.transform.position, out float d) && d < bestD) { bestD = d; best = s.Target; }
                         }
                     if (best == null)

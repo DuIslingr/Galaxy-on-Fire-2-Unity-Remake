@@ -30,6 +30,13 @@ namespace GoF2Remake.Flight
         public Vector3 position;   // game units
         public GoF2Route route;    // null = the default patrol
         public bool startsDead;    // jumpers
+        // Campaign levels (Level::createCampaignMission, campaign_levels_a.md 1.2):
+        public bool asleep;        // setToSleep: waits until the player is within +-25 000 or a target within +-50 000
+        public bool inactive;      // setInitActive(false): waits until the level script wakes it
+        public bool alwaysEnemy, alwaysFriend;
+        public int hitpoints = -1; // Player::setHitpoints / setMaxHitpoints override (-1 = the createShip formula)
+        public bool noLoot;        // KIPlayer+0x4c / +0x48 = 0: no cargo, no crate
+        public int nameText = -1;  // KIPlayer+0x18: the name the lock plate shows (text id)
     }
 
     public static class GoF2TrafficPlan

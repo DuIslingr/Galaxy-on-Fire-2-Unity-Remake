@@ -747,6 +747,19 @@
     opacity: 1;
 }
 
+/* The story dialogue (UI/Dialogue) fills the screen. */
+.dialogue-instance {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.hud-cinematic .radio {
+    top: 60px;
+}
+
 .hud-message--green {
     color: rgb(0, 237, 0);
 }

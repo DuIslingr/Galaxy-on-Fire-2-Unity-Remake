@@ -54,6 +54,12 @@ namespace GoF2Remake.UI
         GoF2PlayerHealth health;
         GoF2CombatRadar radar;
         GoF2Traffic traffic;
+        GoF2StorySpace story;
+        GoF2DialogueView storyDialogue;
+        AudioSource voiceSource;
+        VisualElement radioBox, radioPortrait;
+        Label radioSpeaker, radioText;
+        int radioShown = -1;
         VisualElement gameOver;
         Label gameOverText;
         float gameOverMs = -1f;
@@ -137,6 +143,20 @@ namespace GoF2Remake.UI
             miningView = new GoF2MiningView(root);
             navView = new GoF2NavigationView(root);
             combatView = new GoF2CombatView(root);
+            root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
+            if (voiceSource == null)
+            {
+                voiceSource = gameObject.AddComponent<AudioSource>();
+                voiceSource.playOnAwake = false;
+                voiceSource.spatialBlend = 0f;
+                voiceSource.ignoreListenerPause = true;
+            }
+            storyDialogue = new GoF2DialogueView(root, voiceSource);
+            radioBox = root.Q("radio");
+            radioPortrait = root.Q("radioPortrait");
+            radioSpeaker = root.Q<Label>("radioSpeaker");
+            radioText = root.Q<Label>("radioText");
+            radioShown = -1;
             gameOver = root.Q("gameOver");
             gameOverText = root.Q<Label>("gameOverText");
             root.Q<Label>("gameOverTitle").text = GoF2Localization.Get(319).ToUpperInvariant();   // Game Over
@@ -346,6 +366,13 @@ namespace GoF2Remake.UI
             root.EnableInClassList("hud-map", mapOpen);
             if (mapOpen) return;   // the map has its own input
 
+            if (storyDialogue != null && storyDialogue.IsOpen)
+            {
+                ship?.SetSteer(Vector2.zero);
+                storyDialogue.Tick(Time.unscaledDeltaTime * 1000f);
+                return;
+            }
+
             if (nav != null && nav.MenuOpen)
             {
                 UpdateAutopilotMenu();
@@ -380,6 +407,12 @@ namespace GoF2Remake.UI
                 if (traffic != null) traffic.Message += OnMiningMessage;
                 if (radar != null) radar.Message += OnCombatMessage;
                 if (health != null) health.GameOverStarted += OnGameOver;
+                story = level.Story;
+                if (story != null)
+                {
+                    story.DialogueRequested += (pages, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.Show(pages, closed); };
+                    story.MessageRequested += (text, speaker, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowMessage(text, speaker, closed); };
+                }
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 chase = Camera.main != null ? Camera.main.GetComponent<GoF2ChaseCamera>() : null;
                 ApplyInputMode();
@@ -457,6 +490,23 @@ namespace GoF2Remake.UI
             bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
             bool plateFree = (nav == null || nav.Locked == null) && (mining == null || (mining.State == GoF2Mining.Phase.Idle && mining.Locked == null));
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree);
+            UpdateRadio();
+        }
+
+        /// <summary>Radio::draw: the campaign level's current radio line (portrait, name, text; its voice once).</summary>
+        void UpdateRadio()
+        {
+            var radio = level != null && level.Campaign != null ? level.Campaign.Radio : null;
+            var line = radio?.Visible;
+            int index = radio != null ? radio.VisibleIndex : -1;
+            radioBox.EnableInClassList("radio--shown", line != null);
+            if (line == null || index == radioShown) { if (line == null) radioShown = -1; return; }
+            radioShown = index;
+            radioSpeaker.text = GoF2StoryTable.SpeakerName(line.speaker).ToUpperInvariant();
+            radioText.text = GoF2Localization.Get(line.text);
+            GoF2Portrait.Show(radioPortrait, GoF2StoryTable.Portrait(line.speaker), false);
+            var clip = GoF2StoryAssets.Load()?.Voice(line.voice);
+            if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = GoF2Settings.VoiceVolume; voiceSource.Play(); }
         }
 
         /// <summary>The autopilot button (HUD key 0x40, MGame::OnTouchEnd): turns the autopilot off, cancels an asteroid

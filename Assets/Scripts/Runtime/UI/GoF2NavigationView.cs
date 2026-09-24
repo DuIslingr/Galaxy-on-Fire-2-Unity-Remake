@@ -26,7 +26,7 @@ namespace GoF2Remake.UI
         class Marker
         {
             public GoF2Navigation.Target target;
-            public VisualElement bracket, icon;
+            public VisualElement bracket, icon, story;
             public Label name, tech, distance;
         }
 
@@ -37,6 +37,7 @@ namespace GoF2Remake.UI
         readonly List<Marker> markers = new List<Marker>();
         readonly Dictionary<int, Texture2D> raceIcons = new Dictionary<int, Texture2D>();
         GoF2Navigation built;
+        int builtCount;
         string techLine;
         int systemRace, gateStation = -1;
         bool fastForwardPressed;
@@ -94,6 +95,7 @@ namespace GoF2Remake.UI
         void Build(GoF2Navigation nav, int race, int jumpgateStation, int techLevel)
         {
             built = nav;
+            builtCount = nav.Targets.Count;
             systemRace = race;
             gateStation = jumpgateStation;
             techLine = $"{GoF2Localization.Get(133)}: {techLevel}";
@@ -109,12 +111,20 @@ namespace GoF2Remake.UI
                     Image(m.bracket, Tex("bracket"));
                     layer.Add(m.bracket);
                 }
-                if (t.kind == GoF2Navigation.Kind.Jumpgate || (t.kind == GoF2Navigation.Kind.Planet && t.station == gateStation))
+                if (t.kind == GoF2Navigation.Kind.Jumpgate || t.kind == GoF2Navigation.Kind.Waypoint || (t.kind == GoF2Navigation.Kind.Planet && t.station == gateStation))
                 {
                     m.icon = new VisualElement { pickingMode = PickingMode.Ignore };
                     m.icon.AddToClassList("nav-abs");
-                    Image(m.icon, Tex("gate_icon"));
+                    Image(m.icon, Tex(t.kind == GoF2Navigation.Kind.Waypoint ? "map_story" : "gate_icon"));
                     layer.Add(m.icon);
+                }
+                // Radar::draw: the gold story icon 0x454 next to the campaign target's planet (visible missions only).
+                if (t.kind == GoF2Navigation.Kind.Planet && !GoF2Session.FreePlay && GoF2Story.Mission.visible && t.station == GoF2Story.Mission.station)
+                {
+                    m.story = new VisualElement { pickingMode = PickingMode.Ignore };
+                    m.story.AddToClassList("nav-abs");
+                    Image(m.story, Tex("map_story"));
+                    layer.Add(m.story);
                 }
                 m.name = Text(layer, null);
                 m.name.text = t.name;
@@ -131,7 +141,7 @@ namespace GoF2Remake.UI
             layer.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             UpdateButtons(nav, touch, miningPhase);
             if (!show) return;
-            if (built != nav) Build(nav, race, jumpgateStation, techLevel);
+            if (built != nav || builtCount != nav.Targets.Count) Build(nav, race, jumpgateStation, techLevel);
 
             var origin = layer.worldBound.position;
             float w = Screen.width, h = Screen.height;
@@ -154,6 +164,7 @@ namespace GoF2Remake.UI
                 {
                     bool inBox = nav.Candidate == t;   // the name shows only while the planet is in the lock box
                     if (m.icon != null) { m.icon.style.display = onScreen ? DisplayStyle.Flex : DisplayStyle.None; Place(m.icon, p.x + 10f, p.y - 10f); }
+                    if (m.story != null) { m.story.style.display = onScreen ? DisplayStyle.Flex : DisplayStyle.None; Place(m.story, p.x - 36f, p.y - 10f); }
                     m.name.style.display = onScreen && inBox ? DisplayStyle.Flex : DisplayStyle.None;
                     Place(m.name, p.x + (m.icon != null ? 24f : 10f), p.y - 10f);
                     continue;

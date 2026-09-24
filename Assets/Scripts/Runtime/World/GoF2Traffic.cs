@@ -48,7 +48,9 @@ namespace GoF2Remake.World
         float fade = 1f;
         GoF2CombatAssets assets;
 
-        public void Setup(GoF2Database database, GoF2OrbitLayout layout, GoF2Target player, GameObject station)
+        /// <summary>'storyOrbit': the orbit is built around a campaign mission (Level::init calls createCampaignMission
+        /// instead of createMission), so no normal traffic; the campaign level spawns its ships with SpawnShip.</summary>
+        public void Setup(GoF2Database database, GoF2OrbitLayout layout, GoF2Target player, GameObject station, bool storyOrbit = false)
         {
             db = database;
             Player = player;
@@ -62,25 +64,12 @@ namespace GoF2Remake.World
             hasScanner = GoF2Shop.FirstMounted(db, 17) != null;
             if (station != null) StationPosition = station.transform.position;
 
-            var fxRoot = new GameObject("NPC weapon fx").transform;
+            fxRoot = new GameObject("NPC weapon fx").transform;
             fxRoot.SetParent(transform, false);
-            foreach (var spec in GoF2TrafficPlan.Build(db, StationIndex, sys))
-            {
-                var prefab = spec.freighter ? GoF2AssembledObject.LoadPrefab(db.AssemblyByName(GoF2NpcTables.FreighterAssembly(spec.race)))
-                                            : GoF2AssembledObject.LoadPrefab(ShipAssembly(spec.ship, spec.race));
-                var go = new GameObject($"NPC {spec.group} {spec.race}/{spec.ship}");
-                go.transform.SetParent(transform, false);
-                var ship = go.AddComponent<GoF2NpcShip>();
-                Ships.Add(ship);
-                ship.Setup(this, db, spec, prefab, fxRoot);
-            }
-            // Level::connectPlayers.
-            foreach (var s in Ships)
-            {
-                s.enemies.Clear();
-                if (Player != null) s.enemies.Add(Player);
-                foreach (var o in Ships) if (o != s && o.Race != s.Race) s.enemies.Add(o.Target);
-            }
+            IsStoryOrbit = storyOrbit;
+            if (!storyOrbit)
+                foreach (var spec in GoF2TrafficPlan.Build(db, StationIndex, sys)) Create(spec);
+            ConnectPlayers();
             Debug.Log($"GoF2Traffic: {Ships.Count} ships ({CountGroup(GoF2NpcGroup.Local)} local, {CountGroup(GoF2NpcGroup.Jumper)} jumpers, " +
                       $"{CountGroup(GoF2NpcGroup.Freighter)} freighters, {CountGroup(GoF2NpcGroup.Raider)} raiders)");
 
@@ -98,6 +87,36 @@ namespace GoF2Remake.World
         }
 
         int CountGroup(GoF2NpcGroup g) => Ships.FindAll(s => s.Spec.group == g).Count;
+
+        Transform fxRoot;
+        public bool IsStoryOrbit { get; private set; }
+
+        GoF2NpcShip Create(GoF2SpawnSpec spec)
+        {
+            var prefab = spec.freighter ? GoF2AssembledObject.LoadPrefab(db.AssemblyByName(GoF2NpcTables.FreighterAssembly(spec.race)))
+                                        : GoF2AssembledObject.LoadPrefab(ShipAssembly(spec.ship, spec.race));
+            var go = new GameObject($"NPC {spec.group} {spec.race}/{spec.ship}");
+            go.transform.SetParent(transform, false);
+            var ship = go.AddComponent<GoF2NpcShip>();
+            Ships.Add(ship);
+            ship.Setup(this, db, spec, prefab, fxRoot);
+            return ship;
+        }
+
+        /// <summary>Level::createShip for a campaign level: one ship; call ConnectPlayers once all are spawned.</summary>
+        public GoF2NpcShip SpawnShip(GoF2SpawnSpec spec) => Create(spec);
+
+        /// <summary>Level::connectPlayers: each ship's enemy list is the player first, then every ship of another race.
+        /// 'playerExempt': ships of these races leave the player out (campaign 16 / 24 / 28: the Void attack the others).</summary>
+        public void ConnectPlayers(int playerExemptRace = -99)
+        {
+            foreach (var s in Ships)
+            {
+                s.enemies.Clear();
+                if (Player != null && s.Race != playerExemptRace) s.enemies.Add(Player);
+                foreach (var o in Ships) if (o != s && o.Race != s.Race) s.enemies.Add(o.Target);
+            }
+        }
 
         AssemblyData ShipAssembly(int ship, int race)
         {
@@ -154,9 +173,10 @@ namespace GoF2Remake.World
             UpdateMusic(Time.unscaledDeltaTime);
         }
 
-        /// <summary>Level::updateOrbit: relaunches and raider waves.</summary>
+        /// <summary>Level::updateOrbit: relaunches and raider waves (not in a campaign orbit).</summary>
         void UpdateOrbit(float dtMs)
         {
+            if (IsStoryOrbit) return;
             jumperMs += dtMs;
             respawnMs += dtMs;
             if (jumperMs > 10000f)

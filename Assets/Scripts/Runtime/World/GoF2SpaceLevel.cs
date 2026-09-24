@@ -23,7 +23,10 @@
 //   PlayerEgo::calcCollision: the ship slides along the station, the visible jumpgate and freighters (GoF2Obstacle,
 //                  GoF2PlayerCollision), touching an asteroid destroys it; off during the launch / arrival camera and the
 //                  jump scenes. MGame::dockEvent: the autopilot to the station also docks on touching the station.
-// Not yet: missions, lens flare, wormhole.
+//   Story (GoF2StorySpace, GoF2CampaignLevel): an orbit built around a campaign mission (GoF2Story.IsLevelMission) gets
+//                  the campaign level instead of normal traffic; briefings, success / failure, the add-on entry calls. On a
+//                  story mission the station refuses docking and the planet jumps / Khador Drive are blocked (525).
+// Not yet: lens flare, wormhole.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -63,6 +66,13 @@ namespace GoF2Remake.World
         public GoF2Traffic Traffic { get; private set; }
         public GoF2CombatRadar Radar { get; private set; }
         public GoF2PlayerCollision Collision { get; private set; }
+        public GoF2StorySpace Story { get; private set; }
+        /// <summary>The campaign level of a story orbit, null in a normal orbit.</summary>
+        public GoF2CampaignLevel Campaign { get; private set; }
+        /// <summary>A story conversation is open (the game is paused).</summary>
+        public bool Dialogue => Story != null && Story.DialogueOpen;
+        /// <summary>LevelScript startSequenceOver: the launch / arrival camera has ended.</summary>
+        public bool StartSequenceOver => launchCameraMs <= 0f;
         public GameObject Station { get; private set; }
         public GameObject Jumpgate { get; private set; }
         /// <summary>Hud::drawOrbitInformation: during the arrival camera after a gate / Khador jump.</summary>
@@ -78,6 +88,7 @@ namespace GoF2Remake.World
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
         public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
+                               && !GoF2Story.BlocksDocking(Layout.stationIndex)
                                && (Mining == null || Mining.State == GoF2Mining.Phase.Idle);
         bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
 
@@ -123,8 +134,18 @@ namespace GoF2Remake.World
             Health.Setup(db, Player, chase, Weapons);
             Collision = Player.gameObject.AddComponent<GoF2PlayerCollision>();
             Collision.Setup(Health, chase, Mining);
+            bool storyOrbit = !GoF2Session.FreePlay && GoF2Story.IsLevelMission(station);
             Traffic = new GameObject("Traffic").AddComponent<GoF2Traffic>();
-            Traffic.Setup(db, Layout, Health.Target, Station);
+            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit);
+            if (storyOrbit)
+            {
+                Campaign = new GameObject("Campaign").AddComponent<GoF2CampaignLevel>();
+                Campaign.Setup(this, Traffic);
+                Navigation.SetRoute(Campaign.PlayerRoute);
+            }
+            Story = gameObject.AddComponent<GoF2StorySpace>();
+            Story.Setup(this, Campaign);
+            Navigation.JumpsBlocked = () => !GoF2Story.PlanetJumpsAllowed || GoF2Story.BlocksJumps(Layout.stationIndex);
             Radar = Player.gameObject.AddComponent<GoF2CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
         }
@@ -135,7 +156,8 @@ namespace GoF2Remake.World
             Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic);
             Collision.off = Health.invulnerable;   // PlayerEgo+0x144: off in the same sequences
             Collision.ignoreGate = Navigation.GoingToGate;
-            Navigation.HostilesPresent = Traffic != null && Traffic.HostileCount > 0;
+            // Hostiles, or a radio line on screen, block fast-forward (MGame::OnUpdate).
+            Navigation.HostilesPresent = (Traffic != null && Traffic.HostileCount > 0) || (Campaign != null && Campaign.Radio != null && Campaign.Radio.Busy);
         }
 
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see GoF2Obstacle).</summary>
@@ -258,6 +280,7 @@ namespace GoF2Remake.World
             // is off during the launch).
             if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation)
             {
+                if (GoF2Story.BlocksDocking(Layout.stationIndex)) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
                 Dock();
                 return;
             }
@@ -270,6 +293,13 @@ namespace GoF2Remake.World
                 chase.enabled = true;   // eases from here to the chase position
                 if (GoF2Session.ProgrammedStation >= 0 && !GoF2Session.InstantJump) Navigation?.ContinueToProgrammedStation();
             }
+        }
+
+        /// <summary>The last save (auto-save slot) after a failed mission, or the main menu without one.</summary>
+        public void LoadLastSave()
+        {
+            if (GoF2Session.LoadAutosave() && Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);
+            else SceneManager.LoadScene(0);
         }
 
         /// <summary>MGame::dockEvent: straight to the station module (SetCurrentApplicationModule(5)).</summary>

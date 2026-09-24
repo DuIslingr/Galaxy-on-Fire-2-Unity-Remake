@@ -220,6 +220,8 @@ namespace GoF2Remake.Data
         public static bool HangarUnlocked => GoF2Session.FreePlay || Index >= 5;
         public static bool MapUnlocked => GoF2Session.FreePlay || (Index >= 9 && Index != 15);
         public static bool LoungeUnlocked(int station) => station != 100 && station != 101 && (GoF2Session.FreePlay || (Index >= 12 && Index != 15));
+        /// <summary>Planet jumps are refused (HUD event 0x15, 525) before index 10 and at 48 (campaign_levels_a.md 1.7).</summary>
+        public static bool PlanetJumpsAllowed => GoF2Session.FreePlay || (Index >= 10 && Index != 48);
         /// <summary>The autopilot is off at index 0-1 and 48; planet locks from index 2.</summary>
         public static bool AutopilotAllowed => GoF2Session.FreePlay || (Index > 1 && Index != 48);
 

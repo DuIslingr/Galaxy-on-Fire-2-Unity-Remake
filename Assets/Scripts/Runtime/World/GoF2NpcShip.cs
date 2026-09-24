@@ -49,7 +49,13 @@ namespace GoF2Remake.World
         public bool Gone => !gameObject.activeSelf;
         public bool IsJumper => Spec.group == GoF2NpcGroup.Jumper;
 
-        [System.NonSerialized] public bool alwaysEnemy, turnedEnemy;
+        [System.NonSerialized] public bool alwaysEnemy, turnedEnemy, alwaysFriend;
+        /// <summary>setToSleep / setInitActive(false): no flying or shooting until woken (Wake, or the player close by).</summary>
+        public bool Asleep { get; private set; }
+        /// <summary>PlayerFighter: a sleeping hostile ship is invisible after the tutorial (index &gt; 1): no model, no marker,
+        /// no lock.</summary>
+        public bool Hidden => Asleep && Target.hostileToPlayer && GoF2Session.CampaignMission > 1;
+        bool inactive;
         [System.NonSerialized] public List<GoF2Target> enemies = new List<GoF2Target>();
 
         GoF2Traffic traffic;
@@ -112,7 +118,12 @@ namespace GoF2Remake.World
             Target.radius = GoF2NpcTables.HitRadiusUnits * M;
             Target.hitpoints = new GoF2Hitpoints(GoF2NpcTables.Hull(kind, spec.ship));
             Target.hitpoints.SetEmp(GoF2NpcTables.Emp(kind), GoF2NpcTables.EmpRecoveryMs(kind));
+            if (spec.hitpoints > 0) Target.hitpoints = new GoF2Hitpoints(spec.hitpoints);
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
+            alwaysEnemy = spec.alwaysEnemy;
+            alwaysFriend = spec.alwaysFriend;
+            Asleep = spec.asleep || spec.inactive;
+            inactive = spec.inactive;
             if (spec.freighter)
             {
                 obstacle = gameObject.AddComponent<GoF2Obstacle>();
@@ -136,7 +147,7 @@ namespace GoF2Remake.World
                 }
             }
             route = (spec.route ?? GoF2Route.DefaultPatrol(spec.race)).Clone();
-            loot = GoF2NpcTables.RollLoot(db, spec.freighter);
+            loot = spec.noLoot ? new List<GoF2Stack>() : GoF2NpcTables.RollLoot(db, spec.freighter);
 
             sfx = gameObject.AddComponent<AudioSource>();
             Setup3D(sfx);
@@ -223,6 +234,7 @@ namespace GoF2Remake.World
             if (Current == State.Dying) { UpdateDying(dtMs); return; }
             UpdateRelations();
             Hp.Update(dtMs);
+            if (Asleep) { UpdateSleep(); return; }
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
             if (IsFreighter)
             {
@@ -247,6 +259,7 @@ namespace GoF2Remake.World
             bool alwaysHostile = r == GoF2Standing.Pirate || r == GoF2Standing.Void || r == GoF2Standing.Specter;
             bool hostile = alwaysHostile || GoF2Standing.IsEnemy(r);
             bool friend = !alwaysHostile && GoF2Standing.IsFriend(r);
+            if (alwaysFriend) { hostile = false; friend = true; }
             if (turnedEnemy || alwaysEnemy) { hostile = true; friend = false; }
             Target.hostileToPlayer = hostile;
             Target.friendToPlayer = friend;
@@ -260,6 +273,38 @@ namespace GoF2Remake.World
         }
 
         static bool Valid(GoF2Target t) => t != null && t.Targetable;
+
+        /// <summary>State 5 (sleeping): wakes when the player comes within +-25 000 per axis or any listed target within
+        /// +-50 000; hostile sleepers stay hidden after the tutorial (PlayerFighter, index &gt; 1). An inactive ship only
+        /// wakes by script.</summary>
+        void UpdateSleep()
+        {
+            bool hide = Hidden;
+            if (modelGo != null && modelGo.activeSelf == hide) modelGo.SetActive(!hide);
+            Target.untargetable = true;
+            if (inactive) return;
+            foreach (var e in enemies)
+            {
+                if (!Valid(e)) continue;
+                var d = e.transform.position - transform.position;
+                float r = (e.isPlayer ? 25000f : 50000f) * M;
+                if (Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r) { Wake(); return; }
+            }
+        }
+
+        /// <summary>KIPlayer vtable +0x0c: awake (visible, flying, attacking).</summary>
+        public void Wake()
+        {
+            Asleep = inactive = false;
+            Target.untargetable = false;
+            if (modelGo != null && Current == State.Fly) modelGo.SetActive(true);
+        }
+
+        /// <summary>Places the ship (Unity world position) facing 'forward'.</summary>
+        public void Place(Vector3 position, Vector3 forward)
+        {
+            transform.SetPositionAndRotation(position, Quaternion.LookRotation(forward, Vector3.up));
+        }
 
         /// <summary>§5.3 target selection.</summary>
         void UpdateTargeting()
