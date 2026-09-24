@@ -147,7 +147,8 @@ namespace GoF2Remake.UI
                 if (plateFree && locked != null)
                 {
                     lockPlate.EnableInClassList("lock-plate--shown", true);
-                    lockOre.text = $"{RaceName(locked.race)} {Mathf.RoundToInt(locked.HullFraction * 100f)}%";
+                    // Radar::drawCurrentLock: a named ship shows its name, the others race + hull.
+                    lockOre.text = string.IsNullOrEmpty(locked.displayName) ? $"{RaceName(locked.race)} {Mathf.RoundToInt(locked.HullFraction * 100f)}%" : locked.displayName;
                     var icon = locked.race >= 0 && locked.race <= 3 || locked.race == 8 || locked.race == 9 ? Tex($"race_{locked.race}") : null;
                     lockClass.style.display = icon != null ? DisplayStyle.Flex : DisplayStyle.None;
                     Image(lockClass, icon);

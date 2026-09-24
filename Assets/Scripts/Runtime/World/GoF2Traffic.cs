@@ -68,7 +68,7 @@ namespace GoF2Remake.World
             fxRoot.SetParent(transform, false);
             IsStoryOrbit = storyOrbit;
             if (!storyOrbit)
-                foreach (var spec in GoF2TrafficPlan.Build(db, StationIndex, sys)) Create(spec);
+                foreach (var spec in GoF2TrafficPlan.Build(db, StationIndex, sys, player != null ? new Vector3(player.transform.position.x, player.transform.position.y, -player.transform.position.z) / 0.05f : Vector3.zero)) Create(spec);
             ConnectPlayers();
             Debug.Log($"GoF2Traffic: {Ships.Count} ships ({CountGroup(GoF2NpcGroup.Local)} local, {CountGroup(GoF2NpcGroup.Jumper)} jumpers, " +
                       $"{CountGroup(GoF2NpcGroup.Freighter)} freighters, {CountGroup(GoF2NpcGroup.Raider)} raiders)");
@@ -151,6 +151,14 @@ namespace GoF2Remake.World
         /// <summary>Level::enemyDied / friendDied bookkeeping and Standing::applyKill.</summary>
         public void OnShipDied(GoF2NpcShip ship, bool byPlayer)
         {
+            // Informer mission (PlayerFighter::update ~0xf1cb0): the spy dead -> Status+0xf0; the player shooting another
+            // ship in its orbit -> Status+0xf1 (failed on the next docking).
+            var fm = GoF2Session.FreelanceMission;
+            if (fm != null && fm.type == GoF2MissionType.Informer && fm.target == StationIndex)
+            {
+                if (ship.Spec.nameText == 1663) GoF2Session.InformerKilled = true;
+                else if (byPlayer && !GoF2Session.InformerKilled) GoF2Session.InformerFailed = true;
+            }
             if (!byPlayer || blackMarket) return;
             GoF2Standing.ApplyKill(ship.Race, SystemRace);
             if (ship.Target.hostileToPlayer)

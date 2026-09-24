@@ -56,6 +56,7 @@ namespace GoF2Remake.UI
         GoF2Traffic traffic;
         GoF2StorySpace story;
         GoF2DialogueView storyDialogue;
+        GoF2Remake.World.GoF2FreelanceOrbit freelance;
         AudioSource voiceSource;
         VisualElement radioBox, radioPortrait, screenFade;
         Label radioSpeaker, radioText;
@@ -374,6 +375,7 @@ namespace GoF2Remake.UI
                 return;
             }
 
+            UpdateFreelanceTimer();
             if (nav != null && nav.MenuOpen)
             {
                 UpdateAutopilotMenu();
@@ -413,6 +415,12 @@ namespace GoF2Remake.UI
                 {
                     story.DialogueRequested += (pages, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.Show(pages, closed); };
                     story.MessageRequested += (text, speaker, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowMessage(text, speaker, closed); };
+                }
+                freelance = level.Freelance;
+                if (freelance != null)
+                {
+                    freelance.MessageRequested += (text, name, portrait, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowAgentMessage(text, name, portrait, closed); };
+                    freelance.RewardMessage += OnMiningMessage;
                 }
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
                 chase = Camera.main != null ? Camera.main.GetComponent<GoF2ChaseCamera>() : null;
@@ -630,6 +638,19 @@ namespace GoF2Remake.UI
         }
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);
+
+        /// <summary>Junk removal's time limit as a HUD message: every 10 s, then every second from 10 s.</summary>
+        void UpdateFreelanceTimer()
+        {
+            if (freelance == null || freelance.DialogueOpen) return;
+            float left = freelance.TimeLeftMs;
+            if (left < 0f || left <= 0f && lastTimerSecond == 0) return;
+            int sec = Mathf.CeilToInt(left / 1000f);
+            if (sec == lastTimerSecond) return;
+            lastTimerSecond = sec;
+            if (sec % 10 == 0 || sec <= 10) OnMiningMessage($"{sec / 60}:{sec % 60:00}");
+        }
+        int lastTimerSecond = -1;
         void OnCombatMessage(string text, int colour) => miningView?.ShowMessage(text, colour);
 
         // ---- game over (MGame game-over state) ------------------------------------------------------------

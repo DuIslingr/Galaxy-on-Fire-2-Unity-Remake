@@ -25,8 +25,8 @@ namespace GoF2Remake.Data
         public enum Choice { Okay, NoThanks, Repeat, Map, Risk }
         public enum Outcome { None, Confirm, Refused, ShowMap, Closed }
 
-        /// <summary>Blueprint index -> produced item (set by the blueprint table); -1 = unknown.</summary>
-        public static Func<int, int> BlueprintProduct = _ => -1;
+        /// <summary>A story seller's blueprint -> the produced item (agents.json sellBlueprint is the product's item index).</summary>
+        public static Func<int, int> BlueprintProduct = bp => bp;
 
         readonly GoF2Database db;
         readonly int station;

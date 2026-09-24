@@ -94,7 +94,8 @@ namespace GoF2Remake.World
         int damageByPlayer;
 
         // flight
-        float speed = GoF2NpcTables.BaseSpeed, targetSpeed;
+        float speed = GoF2NpcTables.BaseSpeed, targetSpeed, baseSpeed = GoF2NpcTables.BaseSpeed;
+        bool empWasDisabled;
         bool boosting, panic;
         float boostTimer, boostDuration, reselectTimer = 0f, jumpMs;
         int lastHull, damageSinceBoost;
@@ -145,6 +146,8 @@ namespace GoF2Remake.World
             Target.hitpoints.SetEmp(GoF2NpcTables.Emp(kind), GoF2NpcTables.EmpRecoveryMs(kind));
             if (spec.hitpoints > 0) Target.hitpoints = new GoF2Hitpoints(spec.hitpoints);
             Target.hp = Target.maxHp = Target.hitpoints.maxHull;
+            Target.displayName = !string.IsNullOrEmpty(spec.name) ? spec.name : spec.nameText >= 0 ? GoF2Localization.Get(spec.nameText) : null;
+            if (spec.speed > 0f) speed = baseSpeed = spec.speed;
             alwaysEnemy = spec.alwaysEnemy;
             alwaysFriend = spec.alwaysFriend;
             Asleep = spec.asleep || spec.inactive;
@@ -173,7 +176,8 @@ namespace GoF2Remake.World
                 }
             }
             route = (spec.route ?? GoF2Route.DefaultPatrol(spec.race)).Clone();
-            loot = spec.noLoot ? new List<GoF2Stack>() : GoF2NpcTables.RollLoot(db, spec.freighter);
+            loot = spec.missionCrate >= 0 ? new List<GoF2Stack> { new GoF2Stack(spec.missionCrate, 1) }
+                 : spec.noLoot ? new List<GoF2Stack>() : GoF2NpcTables.RollLoot(db, spec.freighter);
 
             sfx = gameObject.AddComponent<AudioSource>();
             Setup3D(sfx);
@@ -226,7 +230,7 @@ namespace GoF2Remake.World
             smoking = false;
             smoke?.Clear();
             Current = State.Fly;
-            speed = GoF2NpcTables.BaseSpeed;
+            speed = baseSpeed;
             boosting = panic = false;
             targetSpeed = 0f;
             jumpMs = 0f;
@@ -265,6 +269,8 @@ namespace GoF2Remake.World
             UpdateRelations();
             Hp.Update(dtMs);
             UpdateSmoke();
+            UpdateMissionCrate();
+            if (Spec.stationary) return;   // parked: a target that neither flies nor shoots
             if (Asleep) { UpdateSleep(); return; }
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
             if (IsFreighter)
@@ -293,6 +299,22 @@ namespace GoF2Remake.World
             smoking = low;
             smoke.SetEmitting(low);
         }
+
+        /// <summary>Freelance Recovery / Salvage: the Hijacker's container comes loose once its EMP is down (the original
+        /// tractors it out of the disabled ship; the remake drops it as a crate for the tractor beam).</summary>
+        void UpdateMissionCrate()
+        {
+            bool disabled = Hp.empDisabled;
+            if (disabled && !empWasDisabled && Spec.missionCrate >= 0 && loot.Count > 0 && crate == null)
+            {
+                DropCrate();
+                loot = new List<GoF2Stack>();
+            }
+            empWasDisabled = disabled;
+        }
+
+        /// <summary>The mission container was taken from this ship (dropped by the EMP or collected).</summary>
+        public bool MissionCrateTaken => Spec.missionCrate >= 0 && loot.Count == 0;
 
         /// <summary>§4.2: hostile / friend flags for the markers and the AI.</summary>
         void UpdateRelations()
@@ -491,6 +513,7 @@ namespace GoF2Remake.World
                 lastHull = Hp.hull;
                 if (damageSinceBoost >= 0.4f * Hp.maxHull) { damageSinceBoost = 0; boostTimer = 10000f; panic = true; }
             }
+            if (Spec.speed > 0f) return;   // a fixed-speed ship (setSpeed) never boosts
             if (boostTimer > 5000f && !boosting)
             {
                 boostTimer = 0f;

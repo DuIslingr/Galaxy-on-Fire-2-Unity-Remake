@@ -69,6 +69,8 @@ namespace GoF2Remake.World
         public GoF2StorySpace Story { get; private set; }
         /// <summary>The campaign level of a story orbit, null in a normal orbit.</summary>
         public GoF2CampaignLevel Campaign { get; private set; }
+        /// <summary>The freelance mission's orbit (GoF2FreelanceOrbit), null = none.</summary>
+        public GoF2FreelanceOrbit Freelance { get; private set; }
         /// <summary>A story conversation is open (the game is paused).</summary>
         public bool Dialogue => Story != null && Story.DialogueOpen;
         /// <summary>LevelScript startSequenceOver: the launch / arrival camera has ended (in the prologue / rescue the
@@ -152,13 +154,21 @@ namespace GoF2Remake.World
             Collision = Player.gameObject.AddComponent<GoF2PlayerCollision>();
             Collision.Setup(Health, chase, Mining);
             bool storyOrbit = !GoF2Session.FreePlay && GoF2Story.IsLevelMission(station);
+            // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
+            bool freelanceOrbit = !storyOrbit && GoF2Freelance.IsMissionOrbit(station);
             Traffic = new GameObject("Traffic").AddComponent<GoF2Traffic>();
-            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit);
+            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit);
             if (storyOrbit)
             {
                 Campaign = new GameObject("Campaign").AddComponent<GoF2CampaignLevel>();
                 Campaign.Setup(this, Traffic);
                 Navigation.SetRoute(Campaign.PlayerRoute);
+            }
+            else if (freelanceOrbit)
+            {
+                Freelance = new GameObject("Freelance mission").AddComponent<GoF2FreelanceOrbit>();
+                Freelance.Setup(this, Traffic);
+                Navigation.SetRoute(Freelance.PlayerRoute);
             }
             Story = gameObject.AddComponent<GoF2StorySpace>();
             Story.Setup(this, Campaign);

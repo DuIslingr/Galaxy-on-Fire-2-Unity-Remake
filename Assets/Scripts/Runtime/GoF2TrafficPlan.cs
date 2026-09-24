@@ -37,13 +37,19 @@ namespace GoF2Remake.Flight
         public int hitpoints = -1; // Player::setHitpoints / setMaxHitpoints override (-1 = the createShip formula)
         public bool noLoot;        // KIPlayer+0x4c / +0x48 = 0: no cargo, no crate
         public int nameText = -1;  // KIPlayer+0x18: the name the lock plate shows (text id)
+        public string name;        // KIPlayer+0x18 as a literal (freelance: the agent's / the Wanted target's name)
+        // Freelance levels (Level::createMission 0xbda70, freelance_missions.md 4.1):
+        public bool stationary;    // KIPlayer+0x48 = 0: parked (Protection's mining ships), still a target
+        public float speed = -1f;  // setSpeed (u/ms, -1 = the normal 2.0 with boosts): 3.0 for the Challenge rival / Wanted
+        public int missionCrate = -1; // PlayerFighter::setMissionCrate: carries only this item; EMP-disabling it drops the crate
     }
 
     public static class GoF2TrafficPlan
     {
         static Vector3 Jitter() => new Vector3(Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000);
 
-        public static List<GoF2SpawnSpec> Build(GoF2Database db, int station, SystemData system)
+        /// <summary>'playerGame': the player's start (game units), where freelance escorts gather.</summary>
+        public static List<GoF2SpawnSpec> Build(GoF2Database db, int station, SystemData system, Vector3 playerGame = default)
         {
             var list = new List<GoF2SpawnSpec>();
             if (system == null || station == 100 || station == 101 || station == 108 || station == 10) return list;
@@ -80,12 +86,24 @@ namespace GoF2Remake.Flight
             if (station != 78) { jumpers = Random.Range(0, 2); freighters = Random.Range(0, 5); x = Random.Range(0, 2); }
             int local = secEff + x + freighters / 4;
             if (GoF2Session.AttackedStations.Contains(station)) local = Mathf.Max(local, 7);
-            if (jumpers + local + freighters + raiders == 0) local = 4;
+            // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier and Passenger missions (types 0, 0xb).
+            var fm = GoF2Session.FreelanceMission;
+            int escorts = fm != null && (fm.type == GoF2MissionType.Courier || fm.type == GoF2MissionType.Passenger) ? (int)(fm.difficulty / 10f * 5f) : 0;
+            // An Informer mission at its target station: only 7 local fighters (6 once the informer is dead), the first
+            // named "Informer" (1663); no jumpers, freighters or raiders.
+            bool informer = fm != null && fm.type == GoF2MissionType.Informer && fm.target == station;
+            if (informer) { local = GoF2Session.InformerKilled ? 6 : 7; jumpers = freighters = raiders = escorts = 0; }
+            if (jumpers + local + freighters + raiders + escorts == 0) local = 4;
 
             // 1 local fighters around one point in front of the station
             var wpLocal = new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 30000) + 20000);
             for (int i = 0; i < local; i++)
-                list.Add(new GoF2SpawnSpec { group = GoF2NpcGroup.Local, race = sysRace, ship = GoF2NpcTables.RandomFighter(sysRace), position = wpLocal + Jitter() });
+                list.Add(new GoF2SpawnSpec { group = GoF2NpcGroup.Local, race = sysRace, ship = GoF2NpcTables.RandomFighter(sysRace), position = wpLocal + Jitter(),
+                                             nameText = informer && i == 0 && !GoF2Session.InformerKilled ? 1663 : -1 });
+            // 5 pirate escorts around the player
+            for (int i = 0; i < escorts; i++)
+                list.Add(new GoF2SpawnSpec { group = GoF2NpcGroup.Raider, race = GoF2Standing.Pirate, ship = GoF2NpcTables.RandomFighter(GoF2Standing.Pirate),
+                                             position = playerGame + new Vector3(Random.Range(0, 160000) - 80000, Random.Range(0, 100000) - 50000, Random.Range(0, 160000) - 80000) });
             // 2 jumpers (dead until relaunched from the station), each with a far one-point route
             for (int i = 0; i < jumpers; i++)
             {

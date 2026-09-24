@@ -28,6 +28,7 @@ namespace GoF2Remake.EditorTools
                 .Select(n => Prefab($"Prefabs/main/ships/{n}_explosion_anim.prefab")).ToArray();
             a.explosion = Prefab("Resources/Assembled/main/fx/explosion_anim_lookat_alpha.prefab");
             a.debris = Prefab("Prefabs/main/fx/explosion_debris_anim_add.prefab");
+            a.junk = new[] { "space_junk_001", "space_junk_002", "space_junk_003" }.Select(n => Prefab($"Prefabs/main/misc/{n}.prefab")).ToArray();
             a.tractorBeams = new[] { Find("projectile_068_anim_add"), Find("projectile_069_anim_add"), Find("projectile_070_anim_add"), Find("v_projectile_194_anim_add") };
 
             a.smokeMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20101_sprite_smoke.mat");

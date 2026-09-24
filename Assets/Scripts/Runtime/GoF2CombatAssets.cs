@@ -33,6 +33,8 @@ namespace GoF2Remake.Flight
         public AudioClip targetLock, tractorLoop, tractorClose, gameOver;
         [Tooltip("Sound 36 Mission_accomplished.")]
         public AudioClip missionAccomplished;
+        [Tooltip("Space junk 0x4215-0x4217 (freelance Junk removal).")]
+        public GameObject[] junk;
         [Tooltip("Sound 46: one picked per ship.")]
         public AudioClip[] enemyEngines;
         [Tooltip("Sound 47: one picked per ship.")]

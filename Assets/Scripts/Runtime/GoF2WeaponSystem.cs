@@ -215,6 +215,10 @@ namespace GoF2Remake.Flight
             // Rockets, missiles (and bombs) destroy asteroids outright; everything else deals its damage (attr 9).
             bool missile = r.gun.isSecondary;
             target.Damage(missile && target.isAsteroid ? 9999f : r.gun.damage, false, r.gun.bullets[bullet].velocity);
+            // Player::damageEmp (EMP weapons, empDamage): disabling a ship of races 0..3 costs standing 2 (applyDelict).
+            if (r.gun.emp > 0f && target.hitpoints != null && target.isShip && target.Alive && target.hitpoints.DamageEmp((int)r.gun.emp)
+                && target.race >= 0 && target.race <= 3 && !target.hostileToPlayer)
+                GoF2Standing.ApplyDelict(target.race, 2);
             r.visuals.ShowImpact(point);
             Hit?.Invoke();
         }
