@@ -43,7 +43,7 @@ namespace GoF2Remake.UI
         VisualElement turretButton;
         Label turretCaption;
         bool lastTurretView, lastTurretAuto;
-        VisualElement root, safeArea, hints, throttleTrack, throttleFill, throttleHandle, throttleBarFill, boostBarFill, boostButton, boostCharge, levelButton;
+        VisualElement root, safeArea, hints, throttleTrack, throttleFill, throttleHandle, boostButton, boostCharge, levelButton;
         VisualElement fireButton, missileButton, crosshair, dockPrompt, dockGlyph;
         Label dockLabel;
         SpaceLevel level;
@@ -83,7 +83,7 @@ namespace GoF2Remake.UI
         VisualElement autopilotMenu, autopilotMenuItems;
         readonly System.Collections.Generic.List<(Button button, Navigation.Target target)> menuButtons = new System.Collections.Generic.List<(Button, Navigation.Target)>();
         int menuIndex, lastMenuMove, menuOpenedFrame;
-        Label speedValue, missileAmmo, secondaryLabel;
+        Label missileAmmo, secondaryLabel;
         WeaponSystem weapons;
         float hitFlashMs;
         const float CrosshairDistanceMeters = 22000f * 0.05f;   // 0x46abe000
@@ -131,14 +131,11 @@ namespace GoF2Remake.UI
             throttleTrack = root.Q("throttleTrack");
             throttleFill = root.Q("throttleFill");
             throttleHandle = root.Q("throttleHandle");
-            throttleBarFill = root.Q("throttleBarFill");
-            boostBarFill = root.Q("boostBarFill");
             boostButton = root.Q("boostButton");
             boostCharge = root.Q("boostCharge");
             levelButton = root.Q("levelButton");
             turretButton = root.Q("turretButton");
             turretCaption = root.Q<Label>("turretCaption");
-            speedValue = root.Q<Label>("speedValue");
             fireButton = root.Q("fireButton");
             missileButton = root.Q("missileButton");
             missileAmmo = root.Q<Label>("missileAmmo");
@@ -214,7 +211,6 @@ namespace GoF2Remake.UI
             root.Q<Label>("levelCaption").text = Localization.Extra("hudLevel", "LEVEL");
             root.Q<Label>("fireCaption").text = Localization.Extra("hudFire", "FIRE");
             root.Q<Label>("missileCaption").text = Localization.Extra("hudMissile", "MISSILE");
-            root.Q<Label>("speedUnit").text = "M/S";
             root.Q<Button>("menuButton").text = Localization.Extra("hudMenu", "MENU");
             root.Q<Label>("dockLabel").text = Localization.Extra("hudDock", "DOCK");
 
@@ -435,6 +431,18 @@ namespace GoF2Remake.UI
 
             if (storyDialogue != null && storyDialogue.IsOpen)
             {
+                // No radio box under a conversation: the success dialogue can open on the frame a radio line ends, before
+                // UpdateRadio hid it (the dialogue's voice takes over the shared voice source). A line still due shows again
+                // when the window closes.
+                if (radioBox.ClassListContains("radio--shown"))
+                {
+                    radioBox.RemoveFromClassList("radio--shown");
+                    shownChatter = null;
+                    radioShown = -1;
+                }
+                // Nor the docking's transfer counter or hacking board (their state comes back with the next HUD frame).
+                transferCounter?.EnableInClassList("transfer-counter--hidden", true);
+                hackingView?.Update(null);
                 ship?.SetSteer(Vector2.zero);
                 storyDialogue.Tick(Time.unscaledDeltaTime * 1000f);
                 return;
@@ -591,15 +599,12 @@ namespace GoF2Remake.UI
 
             var model = ship.Model;
             float throttle = model.Throttle;
-            speedValue.text = Mathf.RoundToInt(ship.SpeedMetersPerSecond).ToString();
-            throttleBarFill.style.width = Length.Percent(throttle * 100f);
             throttleFill.style.height = Length.Percent(throttle * 100f);
             throttleHandle.style.bottom = Length.Percent(throttle * 100f);
 
             // Recharge 0..1; empty while boosting, and when there is no booster at all (never ready, nothing recharging).
             float boost = model.IsBoosting ? 0f : Mathf.Clamp01(model.BoostRechargePercent);
             if (!model.BoostReady && !model.IsBoosting && boost >= 1f) boost = 0f;
-            boostBarFill.style.width = Length.Percent(boost * 100f);
             boostCharge.style.height = Length.Percent(boost * 100f);
             boostButton.EnableInClassList("touch-button--disabled", !model.BoostReady && !model.IsBoosting);
 
@@ -638,6 +643,7 @@ namespace GoF2Remake.UI
             // inline, which the .hud-launch rule can't override).
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree, !level.LaunchCameraOver);
             UpdateRadio();
+            PlaceDockPrompt();
             UpdateFade();
         }
 
@@ -718,6 +724,21 @@ namespace GoF2Remake.UI
             Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
             if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
+        }
+
+        /// <summary>The action prompt sits under the radio box while a radio line shows (remake layout: both are centred at
+        /// the top; the box's height depends on its lines, so it is measured).</summary>
+        void PlaceDockPrompt()
+        {
+            if (!radioBox.ClassListContains("radio--shown") || dockPrompt.parent == null)
+            {
+                dockPrompt.style.top = StyleKeyword.Null;
+                return;
+            }
+            var r = radioBox.worldBound;
+            if (float.IsNaN(r.yMax) || r.height <= 0f) return;
+            float y = dockPrompt.parent.WorldToLocal(new Vector2(r.center.x, r.yMax)).y + 12f;
+            dockPrompt.style.top = Mathf.Max(120f, y);
         }
 
         /// <summary>The autopilot button (HUD key 0x40, MGame::OnTouchEnd): turns the autopilot off, cancels an asteroid
@@ -895,7 +916,8 @@ namespace GoF2Remake.UI
             gameOverMs += Time.unscaledDeltaTime * 1000f;
             gameOver.EnableInClassList("game-over--dim", gameOverMs > 3000f);
             bool ready = gameOverMs > 7000f;
-            gameOverText.EnableInClassList("game-over-text--shown", ready && (int)(gameOverMs / 500f) % 2 == 0);
+            // The original blinks "Tap to load last savegame." every 500 ms; the remake keeps it on (it fades in once).
+            gameOverText.EnableInClassList("game-over-text--shown", ready);
             if (ready && ((Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
                           || (Gamepad.current != null && (Gamepad.current.buttonSouth.wasPressedThisFrame || Gamepad.current.startButton.wasPressedThisFrame))))
                 LoadLastSave();

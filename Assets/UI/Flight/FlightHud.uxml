@@ -114,16 +114,6 @@
             </ui:VisualElement>
 
             <ui:VisualElement name="speedPanel" class="speed-panel" picking-mode="Ignore">
-                <ui:VisualElement class="speed-row" picking-mode="Ignore">
-                    <ui:Label name="speedValue" class="speed-value gof-semibold" picking-mode="Ignore" />
-                    <ui:Label name="speedUnit" class="speed-unit" picking-mode="Ignore" />
-                </ui:VisualElement>
-                <ui:VisualElement class="bar" picking-mode="Ignore">
-                    <ui:VisualElement name="throttleBarFill" class="bar-fill" picking-mode="Ignore" />
-                </ui:VisualElement>
-                <ui:VisualElement class="bar bar--boost" picking-mode="Ignore">
-                    <ui:VisualElement name="boostBarFill" class="bar-fill bar-fill--boost" picking-mode="Ignore" />
-                </ui:VisualElement>
                 <ui:Label name="secondaryLabel" class="secondary-label gof-semibold" />
             </ui:VisualElement>
 

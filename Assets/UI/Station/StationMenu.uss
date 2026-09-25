@@ -328,12 +328,13 @@
 }
 
 /* ---- news ticker (NewsTicker: the main view's bottom strip, scrolling left at 50 px/s) ------------------ */
+/* Remake layout: the full width of the UI along its bottom edge, always filled (StationMenu.UpdateTicker). */
 
 .station-ticker {
     position: absolute;
-    left: 500px;
-    right: 40px;
-    bottom: 168px;
+    left: 0;
+    right: 0;
+    bottom: 0;
     height: 36px;
     overflow: hidden;
     background-color: rgba(4, 10, 18, 0.6);

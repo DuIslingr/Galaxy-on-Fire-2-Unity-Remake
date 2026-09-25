@@ -177,6 +177,13 @@ namespace GoF2Remake.World
         Target wingTarget;
         Route scout;
         Gun empGun;
+        // Player::shoot slot 1 (Level::assignGuns): a second gun; the Wanted pilots toggle the fired slot every 20 000 ms
+        // (PlayerFighter+0x2e0), Harval's cluster missiles too.
+        Gun secondGun;
+        GunRig secondRig;
+        bool useSecond;
+        float slotMs;
+        const float SlotToggleMs = 20000f;
         GunRig empRig;
         bool useEmp, evasionOff;
         Transform fxRootRef;
@@ -297,6 +304,7 @@ namespace GoF2Remake.World
             if ((spec.race == Standing.Specter || spec.ship == 49) && spec.fixedObject == null && modelGo != null) cloak = new NpcCloak(model);
             // Level::assignGuns: a Most Wanted criminal fires its own weapon at x4.
             if (spec.gunItem >= 0 && gun != null) SetGun(spec.gunItem, spec.gunFactor);
+            if (spec.secondaryItem >= 0 && gun != null) SetSecondaryGun(spec.secondaryItem, spec.secondaryFactor);
         }
 
         static void Setup3D(AudioSource s)
@@ -435,6 +443,7 @@ namespace GoF2Remake.World
             Current = State.Dead;
             rig?.HideAll();
             empRig?.HideAll();
+            secondRig?.HideAll();
             smoking = false;
             smoke?.Clear(); sparks?.Clear();
             if (wreck != null) Destroy(wreck);
@@ -451,8 +460,15 @@ namespace GoF2Remake.World
             if (dtMs <= 0f) return;
             if (gun != null)
             {
-                gun.Update(dtMs, enemies, null);
+                gun.Update(dtMs, enemies, HomingTarget);
                 rig.UpdateVisuals(dtMs, Camera.main, transform.forward);
+            }
+            if (secondGun != null)
+            {
+                secondGun.Update(dtMs, enemies, HomingTarget);
+                secondRig.UpdateVisuals(dtMs, Camera.main, transform.forward);
+                slotMs += dtMs;
+                if (slotMs >= SlotToggleMs) { slotMs = 0f; useSecond = !useSecond; }
             }
             if (empGun != null)
             {
@@ -629,11 +645,47 @@ namespace GoF2Remake.World
             if (item == null || IsFreighter || IsFixed) return;
             rig?.HideAll();
             if (gun != null) gun.Hit -= OnGunHit;
-            gun = new Gun(item, NpcTables.GunDamage(Spec.race) * damageFactor, NpcTables.GunReloadMs, NpcTables.GunPool,
-                              NpcTables.GunLifetimeMs, NpcTables.GunSpeed) { owner = Target };
+            gun = MakeGun(item, NpcTables.GunDamage(Spec.race) * damageFactor);
             rig = new GunRig(gun, WeaponFx.Load(item.index), fxRootRef, IsTurret ? turretBarrel : null, 2);
             gun.Hit += OnGunHit;
         }
+
+        /// <summary>Level::assignGuns' second slot: a Wanted flying ship's G'liissk, Harval's Shesha (index 157 / 158).</summary>
+        public void SetSecondaryGun(int itemIndex, float damageFactor)
+        {
+            var item = db.Item(itemIndex);
+            if (item == null || IsFreighter || IsFixed || IsTurret) return;
+            secondRig?.HideAll();
+            secondGun = MakeGun(item, NpcTables.GunDamage(Spec.race) * damageFactor);
+            secondRig = new GunRig(secondGun, WeaponFx.Load(item.index), fxRootRef, null, 2);
+            var g = secondGun;
+            var r = secondRig;
+            secondGun.Hit += (b, hit, point) =>
+            {
+                float dmg = g.damage;
+                if (hit.isPlayer && !Target.hostileToPlayer) dmg = (int)(dmg * 0.2f);
+                hit.Damage(dmg, true, g.bullets[b].velocity);
+                r.ShowImpact(point);
+            };
+            useSecond = false;
+            slotMs = 0f;
+        }
+
+        /// <summary>Level::assignGuns: rockets / missiles (sorts 4, 5, 40) become a RocketGun (speed 8, lifetime 10 000, reload
+        /// 3000, homing for 5 / 40 after 1000 ms); every other item only gives the look of the NPC gun (16 u/ms, 3000 ms).</summary>
+        Gun MakeGun(ItemData item, float damage)
+        {
+            bool rocket = item.categoryId == (int)Gun.Kind.Rocket || item.categoryId == (int)Gun.Kind.Missile || item.categoryId == (int)Gun.Kind.ClusterMissile;
+            if (!rocket)
+                return new Gun(item, damage, NpcTables.GunReloadMs, NpcTables.GunPool, NpcTables.GunLifetimeMs, NpcTables.GunSpeed) { owner = Target };
+            int pool = item.categoryId == (int)Gun.Kind.ClusterMissile ? Mathf.Max(1, item.index - 211) : NpcTables.GunPool;
+            return new Gun(item, damage, RocketReloadMs, pool, RocketLifetimeMs, RocketSpeed) { owner = Target, homingDelayMs = 1000f };
+        }
+
+        const float RocketReloadMs = 3000f, RocketLifetimeMs = 10000f, RocketSpeed = 8f;
+
+        /// <summary>RocketGun::seekEnemy for an NPC: its current target (PlayerFighter+0x34), while it attacks.</summary>
+        Target HomingTarget => attacking && target != null && target.Alive && !target.cloaked ? target : null;
 
         /// <summary>Only this target (the level script aims ships at Errkt's freighter / at the player).</summary>
         public void SetOnlyEnemy(Target t)
@@ -818,11 +870,12 @@ namespace GoF2Remake.World
                     if (Mathf.Abs(local.x) < NpcTables.FireCone && Mathf.Abs(local.y) < NpcTables.FireCone
                         && Mathf.Abs(d.x) < fr && Mathf.Abs(d.y) < fr && Mathf.Abs(d.z) < fr)
                     {
-                        var firing = useEmp && empGun != null ? empGun : gun;
+                        var firing = useEmp && empGun != null ? empGun : useSecond && secondGun != null ? secondGun : gun;
                         if (firing == null || !target.Targetable) attacking = false;
                         else if (shootingEnabled && !RadarHidden && firing.TryFire(transform) >= 0)
                         {
                             var clip = firing == empGun ? WeaponFx.Load(18)?.shot
+                                     : firing == secondGun ? WeaponFx.Load(secondGun.itemIndex)?.shot
                                      : assets != null && assets.shots != null && assets.shots.Length == 5 ? assets.shots[NpcTables.ShotSound(Mathf.Clamp(Race, 0, 9))] : null;
                             if (clip != null) sfx.PlayOneShot(clip, 0.8f * Settings.SfxVolume);
                         }

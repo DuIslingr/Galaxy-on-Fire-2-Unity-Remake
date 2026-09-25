@@ -17,8 +17,11 @@
 //   MGame::OnUpdate 0x1ac778        add-on entry calls: in free flight (no level mission, not mining, no autopilot) at
 //                                   index 45 the Valkyrie call (conversation 46), at 84 the Supernova call (85), each
 //                                   followed by two nextCampaignMission (the remake owns both add-ons); the chapter calls
-//                                   (Status+0x178, set at 93 / 111 / 143): 12 s into a flight outside the Void, Carla's
-//                                   hail and Keith's reply (0xc60 + 2k / 0xc61 + 2k, k = 0 / 1 / 2)
+//                                   (Status+0x178, set at 93 / 111 / 143): outside the Void, the level 5 s old and 12 s
+//                                   of playing time since the step began (Status+0x100), Carla's hail and Keith's reply
+//                                   (0xc60 + 2k / 0xc61 + 2k, k = 0 / 1 / 2); at 122-124 without a freelance mission and
+//                                   not mining, an hour after the step began (then again every hour) Mrs Moonsprocket
+//                                   complains (radio 0x1c: 0xc5c / 0xc5d at 122, else 0xc5e / 0xc5f, speaker 38)
 //   Supernova                       after a space success conversation (MGame::OnTouchEnd, campaign_levels_b.md 3,
 //                                   campaign_levels_c.md 1.5): 95 -> Thynome's orbit, 96 -> Alioth's, 100 -> docked at
 //                                   Katashun, 110 -> docked at Thynome, 120 -> docked at Bak S'ondorr, 126 -> Katashun's
@@ -74,14 +77,38 @@ namespace GoF2Remake.World
             if (campaign != null && !failed && campaign.Failed && Story.Index == campaign.BuiltIndex) { Fail(); return; }
             if (levelMs >= 5000f) CheckSuccess();
             if (levelMs >= 5000f && !DialogueOpen) CheckAddonEntry();
-            CheckChapterCall();
+            if (levelMs >= 5000f && !DialogueOpen && !level.Navigation.Jumping && (level.SystemJump == null || !level.SystemJump.Cinematic))
+            {
+                CheckPassengerComplaint();
+                CheckChapterCall();
+            }
             CheckDecoyScan();
         }
 
-        /// <summary>MGame::OnUpdate, Status+0x178: the chapter's radio call once, 12 000 ms into a flight outside the Void.</summary>
+        /// <summary>Playing time since the step began (Status::getPlayingTime - Status+0x100), ms.</summary>
+        static float StepAgeMs => (Session.PlaySeconds - Session.StoryStepStart) * 1000f;
+
+        static readonly string[] ComplaintVoices =
+            { "MOONSPROCKET_PASSENGER_TALK_0_0", "MOONSPROCKET_PASSENGER_TALK_0_1_Alt2", "MOONSPROCKET_PASSENGER_TALK_1_0", "MOONSPROCKET_PASSENGER_TALK_1_1" };
+
+        /// <summary>MGame::OnUpdate at 0x7a-0x7c: Mrs Moonsprocket (Level::createRadioMessage 0x1c, image 0x26) asks to be
+        /// dropped off, one of two lines, once an hour of playing time has passed since Status+0x100 (which it resets).</summary>
+        void CheckPassengerComplaint()
+        {
+            int n = Story.Index;
+            if (n < 0x7a || n > 0x7c || level.Traffic == null || StepAgeMs <= 3600000f) return;
+            if (Session.FreelanceMission != null && !Session.FreelanceMission.IsEmpty) return;
+            if (level.Mining != null && level.Mining.State != Flight.Mining.Phase.Idle) return;
+            int text = (n == 0x7a ? 0xc5c : 0xc5e) + UnityEngine.Random.Range(0, 2);
+            level.Traffic.QueueLine(text, 0x26, ComplaintVoices[text - 0xc5c]);
+            Session.StoryStepStart = Session.PlaySeconds;
+        }
+
+        /// <summary>MGame::OnUpdate, Status+0x178: the chapter's radio call once, outside the Void, 12 000 ms of playing time
+        /// after the step began (the level at least 5 s old: the caller).</summary>
         void CheckChapterCall()
         {
-            if (!Session.StoryRadioPending || levelMs < 12000f || level.Layout.alienOrbit || level.Traffic == null) return;
+            if (!Session.StoryRadioPending || StepAgeMs <= 12000f || level.Layout.alienOrbit || level.Traffic == null) return;
             if (campaign != null && campaign.Cutscene) return;
             Session.StoryRadioPending = false;
             int k = Story.Index >= 143 ? 2 : Story.Index >= 111 ? 1 : 0;

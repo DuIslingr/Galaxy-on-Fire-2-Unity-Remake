@@ -15,7 +15,9 @@
 //              3          the hacking game (HackingGame(0, 4), (0, 1) at campaign 91)
 //   undock     state 3: back out to the approach point, then the chase camera behind the ship and the controls back
 // Remake picks: the docked orientation (the points' second vector wasn't traced): nose along the approach, the object's up;
-// the undock eases back to the approach point over 1500 ms instead of flying there.
+// the undock eases back to the approach point over 1500 ms instead of flying there; the approach reaches its point within
+// PlayerEgo+0x1d8 = 0x578 (1400) units, and a ship circling it (its turning circle is ~2500 units across at 2 u/ms) starts
+// the ease-in after 4 s within 4000 units.
 
 using System;
 using System.Collections.Generic;
@@ -32,7 +34,9 @@ namespace GoF2Remake.Flight
         public const int DropOff = 1, Pickup = 2, Hackable = 3;
 
         const float M = 0.05f;
-        const float EnterMs = 2000f, LeaveMs = 1500f, ApproachReachUnits = 600f;
+        const float EnterMs = 2000f, LeaveMs = 1500f, ApproachReachUnits = 1400f;
+        const float CircleUnits = 4000f, CircleMs = 4000f;
+        float circleMs;
         const float PassengerMs = 1500f, OreMs = 1000f;
 
         public Phase State { get; private set; } = Phase.Idle;
@@ -192,7 +196,10 @@ namespace GoF2Remake.Flight
         {
             if (Target == null) return;
             var at = Target.transform.TransformPoint(approachLocal);
-            if ((at - ship.transform.position).magnitude / M > ApproachReachUnits) return;
+            float d = (at - ship.transform.position).magnitude / M;
+            circleMs = d < CircleUnits ? circleMs + Time.deltaTime * 1000f : 0f;
+            if (d > ApproachReachUnits && circleMs < CircleMs) return;
+            circleMs = 0f;
             // State 2: the ease-in.
             ship.autopilotTarget = null;
             ship.externalControl = true;

@@ -46,6 +46,10 @@ namespace GoF2Remake.Visuals
         public TextAsset meta;
         public bool play = true;
         public bool loop = true;
+        /// <summary>A looping animation skips its keys before this time (ms), at the start and at every wrap: the sky layers'
+        /// first key is a one-off flash (the supernova flares 100 -> 50 over the first second, the storm parts all at 100
+        /// for 33 ms) that looped from 0 blinked the whole sky.</summary>
+        public float loopStartMs;
         public float speed = 1f;
         [Tooltip("Must match the model import scale (ImportSettings.ModelScale).")]
         public float metersPerUnit = 0.05f;
@@ -156,11 +160,13 @@ namespace GoF2Remake.Visuals
         {
             if (!play) return;
             timeMs += Time.deltaTime * 1000f * speed;
+            float start = loop ? Mathf.Clamp(loopStartMs, 0f, lengthMs - 1f) : 0f;
             if (timeMs > lengthMs)
             {
                 if (loop) Loops++;
-                timeMs = loop ? timeMs % Mathf.Max(1f, lengthMs) : lengthMs;
+                timeMs = loop ? start + (timeMs - lengthMs) % Mathf.Max(1f, lengthMs - start) : lengthMs;
             }
+            if (timeMs < start) timeMs = start;
             Apply();
         }
 

@@ -51,12 +51,14 @@ namespace GoF2Remake.World
             {
                 var mat = mission < 106 ? a.flaresMaterial : a.flaresNastyMaterial;
                 float speed = mission > 106 ? 1.5f : 1f;
-                Add(a.flares1, mat, FlaresQueue, speed);
-                Add(a.flares2, mat, FlaresQueue + 1, speed);
+                // Their loop is 1000 .. 60000 ms: the UV scroll runs one texture width over it (a seamless wrap); the first
+                // second is a one-off fade from 100 to the steady 50.
+                Add(a.flares1, mat, FlaresQueue, speed, 1000f);
+                Add(a.flares2, mat, FlaresQueue + 1, speed, 1000f);
             }
             if (mission >= 90 && (supernova || layout.systemTexture == 16 || layout.systemTexture == 18))
             {
-                stormRoot = Add(a.storms, a.stormsMaterial, StormsQueue, 1f);
+                stormRoot = Add(a.storms, a.stormsMaterial, StormsQueue, 1f, 33f);   // every part at 100 in its first 33 ms
                 stormAnim = stormRoot != null ? stormRoot.GetComponentInChildren<PartAnimation>() : null;
                 if (stormRoot != null) stormRoot.rotation = RandomRotation();
             }
@@ -76,7 +78,7 @@ namespace GoF2Remake.World
             }
         }
 
-        Transform Add(GameObject prefab, Material mat, int queue, float speed)
+        Transform Add(GameObject prefab, Material mat, int queue, float speed, float loopStartMs = 0f)
         {
             if (prefab == null || mat == null) return null;
             var go = Instantiate(prefab, transform, false);
@@ -98,6 +100,7 @@ namespace GoF2Remake.World
             {
                 anim.speed = speed;
                 anim.loop = true;
+                anim.loopStartMs = loopStartMs;
                 anim.applyMaterialChannels = true;
             }
             return go.transform;

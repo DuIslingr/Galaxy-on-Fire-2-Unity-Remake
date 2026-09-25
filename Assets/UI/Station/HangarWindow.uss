@@ -425,7 +425,7 @@
 
 .station-toast {
     position: absolute;
-    top: 120px;
+    bottom: 52px;   /* under the windows (at the top it covered their header tabs), above the news ticker */
     left: 50%;
     translate: -50% 0;
     max-width: 900px;

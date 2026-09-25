@@ -32,7 +32,9 @@
 // "uncertain"): the cutscene cameras' middle drift axis (0), the camera paths of 157 (qualitative), the helper shots of
 // 145 and 157 (a rocket mesh flying at 8 / 35 u/ms), the Rhinos' and shuttles' docking (a stop of the route's docking time
 // at each end, unloading while at the drop-off), the hidden-blueprint-wreck-like freighter route of 154 (straight to
-// Valkyrie, "docked" within 3000 units), Harval's rocket gun (left out: one gun per NPC).
+// Valkyrie, "docked" within 3000 units).
+// Harval in 157 / 158 (Level::assignGuns, campaign 0x9d / 0x9e): item 7 Berger Retribution x3 and the Shesha cluster
+// missiles (item 0xd6) x4 in the second slot, toggled every 20 s like a Wanted pilot's.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -594,6 +596,7 @@ namespace GoF2Remake.World
             var harval = c.SpawnShip(2, 49, start, false, s => { s.alwaysEnemy = true; s.nameText = 1636; s.inactive = true; s.route = er; s.speed = 5f; s.noLoot = true; });
             harval.SetVisible(false);
             harval.CloakingPossible = false;
+            ArmHarval(harval);
             var alice = c.SpawnShip(3, 20, new Vector3(50000, 50000, 50000), false, s => { s.alwaysFriend = true; s.nameText = 1623; s.inactive = true; s.noLoot = true; s.hitpoints = 9999999; });
             alice.SetVisible(false);
             // [23] Valkyrie with the plasma gun at (-120000, 0, 20000).
@@ -615,6 +618,7 @@ namespace GoF2Remake.World
             harval.CloakingPossible = false;
             harval.scriptedSpeed = 0f;
             harval.SetVisible(false);
+            ArmHarval(harval);
             for (int i = 0; i < 3; i++)
                 c.SpawnShip(Standing.Specter, -1, new Vector3(50000, 50000, 50000), false, s =>
                 {
@@ -628,6 +632,13 @@ namespace GoF2Remake.World
             c.Fade(true, Color.black, 8000f);
             playerSpeed = 0.1f;
             Step = 1;
+        }
+
+        /// <summary>Level::assignGuns at 0x9d / 0x9e: Harval's Scimitar fires item 7 x3, and the Shesha (0xd6) x4 in slot 1.</summary>
+        static void ArmHarval(NpcShip harval)
+        {
+            harval.SetGun(7, 3f);
+            harval.SetSecondaryGun(214, 4f);
         }
 
         // ---- cutscene helpers (LevelScript "cutscene on" / "off") ------------------------------------------------------
@@ -1400,9 +1411,9 @@ namespace GoF2Remake.World
                         foreach (var a in explosionAnim.GetComponentsInChildren<PartAnimation>(true)) { a.speed = 0.3f; a.loop = false; a.Restart(); }
                     }
                     if (helper != null) { Object.Destroy(helper); helper = null; }
-                    Step = 5;
+                    Step = 6;   // event 5 is radio 2's trigger: only once the aftermath is over
                     break;
-                case 5:
+                case 6:
                     for (int i = 0; i <= 12; i++)
                     {
                         var s = S(i);
@@ -1413,8 +1424,7 @@ namespace GoF2Remake.World
                     if (stepMs < 10000f) break;
                     for (int i = 0; i <= 12; i++) Remove(S(i));
                     LeaveCutscene();
-                    Step = 6;   // radio 2 on event 5 in the original; the step past it
-                    c.Event = 5;
+                    c.Event = 5;   // radio 2, then the win (Objective(4, 2))
                     break;
             }
         }

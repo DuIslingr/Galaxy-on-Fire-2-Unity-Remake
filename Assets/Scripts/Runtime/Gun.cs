@@ -14,7 +14,8 @@
 //                           inside 1x
 //   Gun::ignite 0x17dd08    area damage f = clamp((mag - d) / mag, 0, 1) (mines: (10000 - d) / 10000) to every target
 //                           within attr 14; EMP bombs (sort 6) do EMP only and skip asteroids; asteroids take x0.6
-//   RocketGun::seekEnemy 0x18bd70  missiles steer 1/6 of the error per (30 fps) frame toward the locked target
+//   RocketGun::seekEnemy 0x18bd70  missiles steer 1/6 of the error per (30 fps) frame toward the locked target (an NPC's:
+//                           its current target, from 1000 ms after the launch: NPC rockets have no trails)
 //   RocketGun::update       cluster rockets corkscrew around their path (radius ~670 units)
 //   MineGun::update 0x181c8c  mines drop (forward + up) at 2 u/ms and stop within 500 ms
 //   Level::assignGuns 0xcb638  NPC guns: 4 bullets, 16 u/ms, 3000 ms, the race's reload and damage, mount at the ship
@@ -70,6 +71,8 @@ namespace GoF2Remake.Flight
         public Target owner;
         public float reloadAcc;               // ms since the last shot
         public float spreadError;             // Gun+0xe0: 2 auto-cannon/scatter, 20 thermo, 0 otherwise
+        /// <summary>RocketGun::update: homing only once the bullet is this old (NPC rockets 1000 ms, the player's at once).</summary>
+        public float homingDelayMs;
 
         /// <summary>Beams: picks the nearest auto-aim target (on screen, &lt; 60000 units, in the crosshair box), or null.</summary>
         public Func<Target> AutoAim;
@@ -248,7 +251,7 @@ namespace GoF2Remake.Flight
             {
                 ref var b = ref bullets[i];
                 if (b.timer <= limit) continue;
-                if (steer > 0f)
+                if (steer > 0f && b.age >= homingDelayMs)
                 {
                     float speed = b.velocity.magnitude;
                     var desired = (lockTarget.transform.position - b.position).normalized;

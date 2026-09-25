@@ -67,8 +67,9 @@ namespace GoF2Remake.UI
         LoungePanel lounge;
         MissionsWindow missions;
         Label tickerText;
-        float tickerX;
+        float tickerX, tickerUnitWidth;
         bool tickerReady;
+        string tickerSingle = "";
         VisualElement systemMenu, systemMain, systemSave;
         ScrollView saveSlotList;
         Button saveGameButton, mainMenuButton, systemClose, saveBack;
@@ -273,27 +274,39 @@ namespace GoF2Remake.UI
             bool shown = st != null && NewsTicker.ShownAt(st.index, st.system);
             root.EnableInClassList("ticker-off", !shown);
             if (!shown) return;
-            tickerText.text = NewsTicker.Build(level.Database, st.system, level.Layout.raceId);
+            tickerSingle = NewsTicker.Build(level.Database, st.system, level.Layout.raceId) ?? "";
+            tickerText.text = tickerSingle;
             tickerX = 0f;
             tickerReady = false;
+            tickerText.style.visibility = Visibility.Hidden;   // until it starts at the strip's right edge
         }
 
-        /// <summary>NewsTicker::update: x -= dt * 50 px/s, wrapping after the text (doubled when shorter than the strip).</summary>
+        /// <summary>NewsTicker::update: x -= dt * 50 px/s. Remake: the strip is never empty: the news (one copy = the items +
+        /// separator) is repeated to cover the strip plus one copy, starts already filled, and wraps by exactly one copy
+        /// (the original scrolled one text in from the right edge).</summary>
         void UpdateTicker()
         {
             if (tickerText == null || root.ClassListContains("ticker-off")) return;
-            float strip = tickerText.parent.resolvedStyle.width, w = tickerText.resolvedStyle.width;
-            if (float.IsNaN(strip) || float.IsNaN(w) || w <= 0f) return;
+            float strip = tickerText.parent.resolvedStyle.width;
+            if (float.IsNaN(strip) || strip <= 0f) return;
             if (!tickerReady)
             {
+                string unit = tickerSingle + NewsTicker.Separator;
+                var size = tickerText.MeasureTextSize(unit, 0f, VisualElement.MeasureMode.Undefined, 0f, VisualElement.MeasureMode.Undefined);
+                if (tickerSingle.Length == 0 || float.IsNaN(size.x) || size.x <= 0f) return;
                 tickerReady = true;
-                string single = tickerText.text;
-                if (single.Length > 0 && w < strip * 2f) tickerText.text = single + single;   // draw it twice for the wrap
-                tickerX = strip;
+                tickerUnitWidth = size.x;
+                int copies = Mathf.CeilToInt(strip / tickerUnitWidth) + 1;
+                var sb = new System.Text.StringBuilder(unit.Length * copies);
+                for (int i = 0; i < copies; i++) sb.Append(unit);
+                tickerText.text = sb.ToString();
+                tickerX = 0f;
+                tickerText.style.left = tickerX;
+                tickerText.style.visibility = StyleKeyword.Null;
                 return;
             }
             tickerX -= Time.unscaledDeltaTime * NewsTicker.ScrollPxPerSecond;
-            if (tickerX < -w * 0.5f) tickerX += w * 0.5f;
+            if (tickerX <= -tickerUnitWidth) tickerX += tickerUnitWidth;
             tickerText.style.left = tickerX;
         }
 
@@ -343,6 +356,7 @@ namespace GoF2Remake.UI
             if (station == 107)
                 foreach (int ship in WantedBoard.QuinerosShips(db)) Story.AddDealerShip(107, ship);
             string note = null;
+            if ((Session.WantedHints & 1) == 0 && Session.CampaignMission >= WantedBoard.AllBoards) Session.WantedHints |= 1;   // 613 says it all
             if ((Session.WantedHints & 1) == 0 && Session.CampaignMission >= WantedBoard.StorylineFirst && WantedBoard.Accessible(db, station))
             { Session.WantedHints |= 1; note = Localization.Get(601); }
             else if ((Session.WantedHints & 2) == 0 && Session.CampaignMission >= WantedBoard.AllBoards)
@@ -1012,22 +1026,12 @@ namespace GoF2Remake.UI
                 }
                 return;
             }
-            // No turn-ship, launch or menu hints: the drag / stick, the Launch button and the Menu button cover those.
+            // The main view shows no hints: the buttons cover hangar / lounge / map / launch / menu (their keys still work:
+            // 1 / 2 / M / L, LB / RB / Y / X). Only the lounge's way back.
             bool hangar = level == null || level.View == StationView.Hangar;
-            if (kind == InputKind.KeyboardMouse)
-            {
-                if (hangarButton.enabledSelf) Hint(Localization.Get(167).ToUpperInvariant(), InputGlyph.Key("1"));
-                if (loungeButton.enabledSelf) Hint(Localization.Get(398).ToUpperInvariant(), InputGlyph.Key("2"));
-                if (mapButton.enabledSelf) Hint(Localization.Get(177).ToUpperInvariant(), InputGlyph.Key("M"));
-                if (!hangar) Hint(T("hudBack", "BACK"), InputGlyph.Key("ESC"));
-            }
-            else if (kind == InputKind.Gamepad)
-            {
-                if (hangarButton.enabledSelf) Hint(Localization.Get(167).ToUpperInvariant(), InputGlyph.Pad(PadButton.LeftBumper));
-                if (loungeButton.enabledSelf) Hint(Localization.Get(398).ToUpperInvariant(), InputGlyph.Pad(PadButton.RightBumper));
-                if (mapButton.enabledSelf) Hint(Localization.Get(177).ToUpperInvariant(), InputGlyph.Pad(PadButton.Y));
-                if (!hangar) Hint(T("hudBack", "BACK"), InputGlyph.Pad(PadButton.B));
-            }
+            if (hangar) return;
+            if (kind == InputKind.KeyboardMouse) Hint(T("hudBack", "BACK"), InputGlyph.Key("ESC"));
+            else if (kind == InputKind.Gamepad) Hint(T("hudBack", "BACK"), InputGlyph.Pad(PadButton.B));
         }
 
         void Hint(string label, params VisualElement[] glyphs)
@@ -1048,6 +1052,8 @@ namespace GoF2Remake.UI
         {
             if (root == null || level == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
+            UpdateTicker();   // scrolls on under dialogs and windows (it used to wait, then fly in again)
+            if (lounge != null && lounge.Active != root.ClassListContains("lounge-open")) lounge.OnViewChanged();   // also under a dialog
             if (StarMap.IsOpen) return;   // the map has its own input
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPirateBase()) return;
@@ -1060,7 +1066,6 @@ namespace GoF2Remake.UI
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWanted()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
             lounge?.Update();
-            UpdateTicker();
 
             var kb = Keyboard.current;
             var pad = Gamepad.current;
@@ -1172,6 +1177,7 @@ namespace GoF2Remake.UI
         {
             lastScreen = ScreenSize();
             lastSafeArea = Screen.safeArea;
+            tickerReady = false;   // the strip's width changes: fill it again
             bool offscreen = runtimePanel != null && runtimePanel.targetTexture != null;
             float w = Mathf.Max(1, lastScreen.x), h = Mathf.Max(1, lastScreen.y);
             float inches = Screen.dpi > 0f ? Mathf.Sqrt(w * w + h * h) / Screen.dpi : 20f;

@@ -4,7 +4,7 @@
 //   1. every story item whose campaign window holds (param1 > 0, param1 <= campaign <= param2) for the system's race
 //   2. then 2 random items (100 tries): always-items (param2 >= 161, param1 <= campaign), 50 % each, for the race, not
 //      picked yet; item 13 (the lounge drink) not in systems past 21; 'flag' items at most once per 10 minutes of play
-//   joined with "    +++    ", doubled when shorter than the strip; scrolls left at 50 px/s.
+//   joined with "    +++    "; scrolls left at 50 px/s (the station repeats it to keep the strip full).
 // Tokens: #PLANET_NAME / #SYSTEM_NAME (a random station), #DRINK_NAME (1406 + system; its #SYSTEM_NAME = that system),
 // #CHILD_NAME (a first name), #SHIP_NAME (913 + a random fighter), #PLATFORM_NUMBER (A-F + 0-9), #CATASTROPHE (3237 +
 // rnd 5), #VICTIMS, #BERGER_LASER (1279 + rnd 4), #VOSSK_SHIP_OR_ITEM / #VOSSK_REVENUE (3242), #PROFESSION (3243 + rnd 4),

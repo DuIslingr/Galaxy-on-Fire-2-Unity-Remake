@@ -477,60 +477,25 @@
     visibility: visible;
 }
 
-/* ---- speed / throttle / boost readout ------------------------------------------------- */
+/* ---- the selected secondary under the status bars (remake: no speed / throttle / boost readout) ----------- */
 
 .speed-panel {
     position: absolute;
     left: 40px;
     top: 112px;
-    width: 260px;
-    padding: 12px 16px;
-    background-color: rgba(4, 10, 18, 0.55);
-    border-left-width: 3px;
-    border-left-color: var(--gof-cyan);
-}
-
-.speed-row {
-    flex-direction: row;
-    align-items: flex-end;
-    margin-bottom: 8px;
-}
-
-.speed-value {
-    font-size: 40px;
-    color: #FFFFFF;
-    -unity-text-align: lower-left;
-}
-
-.speed-unit {
-    font-size: 18px;
-    color: var(--gof-text-dim);
-    margin: 0 0 7px 8px;
-}
-
-.bar {
-    height: 6px;
-    margin-top: 5px;
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.bar-fill {
-    height: 100%;
-    width: 100%;
-    background-color: var(--gof-cyan);
-}
-
-.bar-fill--boost {
-    background-color: var(--gof-amber);
+    max-width: 320px;
 }
 
 /* Hud::updateSecondaryWeaponString: "<name> (<amount>)" of the selected secondary; tap to switch (touch). */
 .secondary-label {
     display: none;
-    margin-top: 10px;
+    padding: 8px 14px;
     font-size: 17px;
     color: var(--gof-amber);
     white-space: normal;
+    background-color: rgba(4, 10, 18, 0.55);
+    border-left-width: 3px;
+    border-left-color: var(--gof-amber);
 }
 
 .secondary-label--shown {
@@ -577,9 +542,9 @@
     display: flex;
 }
 
-/* Phones: a bit more room at the bottom for thumbs, smaller readout. */
+/* Phones: a narrower secondary plate. */
 .layout-phone .speed-panel {
-    width: 220px;
+    max-width: 240px;
 }
 
 /* ---- star map open (StarMap draws the whole screen) ------------------------------------ */
@@ -768,6 +733,8 @@
     font-size: 24px;
     color: var(--gof-text);
     opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.6s;
 }
 
 .game-over-text--shown {

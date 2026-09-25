@@ -66,6 +66,8 @@ namespace GoF2Remake.Flight
         public int wantedEscortOf = -1;
         public int gunItem = -1;       // Level::assignGuns: the wanted's own weapon ...
         public float gunFactor = 1f;   // ... at x4
+        public int secondaryItem = -1;     // a second gun slot (the wanted flying ships 45-48: G'liissk rockets) ...
+        public float secondaryFactor = 1f; // ... at x4
         public int hiddenBlueprint = -1;   // a Supernova wreck's hidden blueprint (TrafficPlan.HiddenBlueprints slot)
     }
 
@@ -262,6 +264,8 @@ namespace GoF2Remake.Flight
             {
                 group = NpcGroup.Local, race = race, ship = w.ship, position = wpLocal + Jitter(), hitpoints = hull, name = w.name,
                 lootItem = w.loot, lootAmount = w.lootAmount, wantedIndex = w.index, speed = 4.5f, gunItem = w.weapon, gunFactor = 4f,
+                // Level::assignGuns: the wanted's flying ships 45-48 add a rocket gun (item 31 G'liissk, 4 x damage).
+                secondaryItem = w.ship >= 45 && w.ship <= 48 ? 31 : -1, secondaryFactor = 4f,
             });
             for (int i = 0; i < w.numWingmen; i++)
                 list.Add(new SpawnSpec { group = NpcGroup.Escort, race = race, ship = NpcTables.RandomFighter(race), position = wpLocal + Jitter(),
