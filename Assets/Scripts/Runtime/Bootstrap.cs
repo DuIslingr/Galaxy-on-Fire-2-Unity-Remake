@@ -95,9 +95,38 @@ namespace GoF2Remake
         // ---- upscaler ----------------------------------------------------------------------------------------
 
         /// <summary>FSR 1 needs shader model 4.5 (FSRUtils); STP compute shaders and no OpenGL ES (STP.IsSupported), so on
-        /// Android it runs on Vulkan only.</summary>
+        /// Android it runs on Vulkan only, and its compute shaders in the build (StpResourcesPresent).</summary>
         public static bool FsrSupported => FSRUtils.IsSupported();
-        public static bool StpSupported => STP.IsSupported();
+        public static bool StpSupported => STP.IsSupported() && StpResourcesPresent;
+
+        static bool? stpResources;
+
+        /// <summary>STP.RuntimeResources (its compute shaders) survived the build: URP's STPResourceStripper drops them when no
+        /// pipeline asset had STP selected at build time, and STP then fails every frame (the game froze on Android). The
+        /// type is internal, so GraphicsSettings.TryGetRenderPipelineSettings is called through reflection.</summary>
+        static bool StpResourcesPresent
+        {
+            get
+            {
+                if (stpResources.HasValue) return stpResources.Value;
+                bool present = false;
+                try
+                {
+                    var type = typeof(STP).GetNestedType("RuntimeResources", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+                    var method = typeof(GraphicsSettings).GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                        .FirstOrDefault(m => m.Name == "TryGetRenderPipelineSettings" && m.IsGenericMethodDefinition && m.GetParameters().Length == 1);
+                    if (type != null && method != null)
+                    {
+                        var args = new object[] { null };
+                        present = (bool)method.MakeGenericMethod(type).Invoke(null, args) && args[0] != null;
+                    }
+                }
+                catch (System.Exception e) { Debug.LogWarning($"Bootstrap: STP resources check failed ({e.Message})"); }
+                if (!present) Debug.LogWarning("Bootstrap: STP's resources are not in this build; the STP upscaler is unavailable.");
+                stpResources = present;
+                return present;
+            }
+        }
 
         /// <summary>The upscaler option as far as this device supports it (else off).</summary>
         public static int ActiveUpscaler => Settings.Upscaler switch
