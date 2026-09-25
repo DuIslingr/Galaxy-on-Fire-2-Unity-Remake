@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83d43439e25062a4f83f0de7607335e1, type: 3}
+  m_Name: SupernovaAssets
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Data.SupernovaAssets
+  docking: {fileID: 8300000, guid: 275e7a5bd26c70d40839b4c70e9e2497, type: 3}
+  hackingTurn: {fileID: 8300000, guid: e9bf983af23afab43af8c0dd789a1c56, type: 3}
+  hackingSolved: {fileID: 8300000, guid: f9d92dc529a9e344e8b28a78dc69e466, type: 3}
+  transferLoop: {fileID: 8300000, guid: 6ded16b864b13c74c957f287e546a261, type: 3}
+  plasmaCollected: {fileID: 8300000, guid: aca6a9485483f8940bbf0f67d33bf638, type: 3}
+  ionizingBlast: {fileID: 8300000, guid: 3d41849f333313e4fbec7b8063036eee, type: 3}
+  carrierJump: {fileID: 8300000, guid: efecd5e7d6ce39d469d7e193ee24e8b6, type: 3}
+  valkyrieBeam: {fileID: 8300000, guid: ed1b7712d04d41741860d0fe40b91b42, type: 3}
+  selfDestruct: {fileID: 8300000, guid: 0102d6bc1a6833c4b9f2aaf8d8198afd, type: 3}
+  explosion: {fileID: 8300000, guid: 4114f4b43ff0a9b408f347f59d03bd29, type: 3}
+  launch: {fileID: 8300000, guid: 8d2f5cd7f20b9f84abc1457686c9617f, type: 3}
+  wantedMusic: {fileID: 8300000, guid: dc6406409e76c8a4ab12a31d9a7a84ae, type: 3}
+  stealthMusic1: {fileID: 8300000, guid: cacb7624bc883554c946f02fbfea0f8d, type: 3}
+  stealthMusic2: {fileID: 8300000, guid: 2f26329ef2cddc04eb1dbffa36c155ff, type: 3}
+  gammaRayMusic: {fileID: 8300000, guid: a2ffaa307f5e8bb45a6b0d279dfc168c, type: 3}
+  supernovaIntro: {fileID: 8300000, guid: c90057ab0f0785f4d870fcc569f63afd, type: 3}
+  katashunMusic: {fileID: 8300000, guid: fa54455bf7598b442885f61ec379290e, type: 3}
+  mission102: {fileID: 8300000, guid: 973ad118e8c0f3e48904244380a1c9e3, type: 3}
+  mission102Loop: {fileID: 8300000, guid: 87eb9ac16298f3347adce5e021a3180c, type: 3}
+  supernovaIntroSky: {fileID: 2100000, guid: 722d643405cba4f42b450528e2ddcccf, type: 2}

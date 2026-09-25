@@ -95,6 +95,17 @@ namespace GoF2Remake.World
             }
         }
 
+        /// <summary>A level script's scale on the sun billboard (the supernova cutscenes: planets[0] x0.95 / x4 per frame).</summary>
+        [System.NonSerialized] public float sunScaleFactor = 1f;
+
+        /// <summary>StarSystem::switchSunForSupernovaIntro / Expansion: the sun billboard gets another texture.</summary>
+        public void SwitchSun(string texture)
+        {
+            var mat = Load(texture);
+            if (mat == null || sun == null) return;
+            foreach (var b in new[] { sun, streak }) b.t.GetComponent<MeshRenderer>().sharedMaterial = mat;
+        }
+
         /// <summary>StarSystem::switchPlanetForIntro 0x15d820 (the prologue's time jump): the orbit planet gets planet_000_big
         /// and twice its size.</summary>
         public void SwitchOrbitPlanetForIntro()
@@ -170,7 +181,7 @@ namespace GoF2Remake.World
             }
             float e = Mathf.Max((flareIntensity - 10f) / 64f, 0f);
 
-            float s = layout.sunScale;
+            float s = layout.sunScale * sunScaleFactor;
             var sunRot = Quaternion.LookRotation(sun.dir, cam.transform.up);
             Place(sun, c, sunRot, new Vector3(s + e, s + e, 1f));
             // renderSunStreak: the scaled sun matrix scaled again by (e * (s + e + 1), s / ((1 - e) * 6 + 6)).

@@ -117,11 +117,12 @@ namespace GoF2Remake.UI
         static void Show(VisualElement e, bool on) => e.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
 
         /// <param name="plateFree">No landmark / asteroid owns the top plate this frame.</param>
-        public void Update(CombatRadar radar, Traffic traffic, PlayerHealth health, Camera cam, bool cinematic, bool plateFree)
+        /// <param name="markersOff">Hide the ship / crate markers only (the launch / arrival camera).</param>
+        public void Update(CombatRadar radar, Traffic traffic, PlayerHealth health, Camera cam, bool cinematic, bool plateFree, bool markersOff = false)
         {
             UpdateStatus(health, cinematic);
             foreach (var m in markers.Values) m.used = false;
-            bool show = radar != null && radar.HasScanner && cam != null && layer.panel != null && !cinematic && health != null && !health.Dead;
+            bool show = radar != null && radar.HasScanner && cam != null && layer.panel != null && !cinematic && !markersOff && health != null && !health.Dead;
             layer.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (show)
             {
@@ -130,7 +131,7 @@ namespace GoF2Remake.UI
                 if (traffic != null)
                     foreach (var s in traffic.Ships)
                     {
-                        if (s.Gone || !s.Target.Alive || s.Hidden) continue;
+                        if (s.Gone || !s.Target.Alive || s.Hidden || s.RadarHidden || s.DockingType > 0) continue;
                         int f = s.Target.hostileToPlayer ? 0 : s.Target.friendToPlayer ? 1 : 2;
                         DrawShip(Get(s), s.transform.position, f, s.Target.HullFraction, radar.Locked == s.Target, cam, origin, centre);
                         DrawEmp(Get(s), s.Hp != null ? s.Hp.EmpFraction : 1f);

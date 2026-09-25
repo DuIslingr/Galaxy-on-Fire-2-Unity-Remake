@@ -110,10 +110,36 @@
             <ui:VisualElement name="missionsWindow" class="missions-window">
                 <ui:VisualElement class="hangar-top">
                     <ui:Label name="missionsTitle" class="missions-title gof-semibold" picking-mode="Ignore" />
+                    <ui:Button name="missionsTab" class="missions-tab gof-semibold" />
+                    <ui:Button name="wantedTab" class="missions-tab gof-semibold" />
                     <ui:VisualElement class="hangar-top-spacer" picking-mode="Ignore" />
                     <ui:Button name="missionsClose" class="hangar-close gof-semibold" />
                 </ui:VisualElement>
-                <ui:VisualElement class="missions-body" picking-mode="Ignore">
+                <!-- WantedWindow (3219 "Most Wanted"): the board's list and the selected criminal's details. -->
+                <ui:VisualElement name="wantedBody" class="missions-body wanted-body" picking-mode="Ignore">
+                    <ui:VisualElement class="missions-section wanted-list-section" picking-mode="Ignore">
+                        <ui:Label name="wantedListHeading" class="missions-heading gof-semibold" picking-mode="Ignore" />
+                        <ui:ScrollView name="wantedList" class="chat-scroll missions-scroll" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="missions-section missions-section--right" picking-mode="Ignore">
+                        <ui:Label name="wantedDetailsHeading" class="missions-heading gof-semibold" picking-mode="Ignore" />
+                        <ui:VisualElement class="missions-client" picking-mode="Ignore">
+                            <ui:VisualElement name="wantedPortrait" class="portrait chat-portrait" picking-mode="Ignore" />
+                            <ui:VisualElement class="missions-client-lines" picking-mode="Ignore">
+                                <ui:Label name="wantedName" class="chat-name gof-semibold" picking-mode="Ignore" />
+                                <ui:Label name="wantedStatus" class="chat-sub" picking-mode="Ignore" />
+                                <ui:Label name="wantedBounty" class="chat-sub" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:ScrollView name="wantedScroll" class="chat-scroll missions-scroll">
+                            <ui:Label name="wantedText" class="chat-text" picking-mode="Ignore" />
+                        </ui:ScrollView>
+                        <ui:VisualElement class="missions-footer" picking-mode="Ignore">
+                            <ui:Button name="wantedMap" class="station-button chat-choice gof-semibold" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="missionsBody" class="missions-body" picking-mode="Ignore">
                     <ui:VisualElement class="missions-section" picking-mode="Ignore">
                         <ui:Label name="storyHeading" class="missions-heading gof-semibold" picking-mode="Ignore" />
                         <ui:ScrollView name="storyScroll" class="chat-scroll missions-scroll">

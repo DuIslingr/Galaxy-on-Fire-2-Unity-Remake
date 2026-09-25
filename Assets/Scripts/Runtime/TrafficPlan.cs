@@ -57,10 +57,29 @@ namespace GoF2Remake.Flight
         // Campaign step 59's arms convoy (Level::createMission 0xbe742): its freighter, escorts and turrets (Traffic scripts it).
         public int convoyRole;         // SpawnSpec.ConvoyFreighter / ConvoyEscort / ConvoyTurret, 0 = none
         public const int ConvoyFreighter = 1, ConvoyEscort = 2, ConvoyTurret = 3;
+        // Supernova story objects (PlayerFixedObject::setDockingType, KIPlayer::setSpacePoints, KIPlayer+0x70):
+        public int dockingType;        // 0 none, 1 drop-off, 2 pick-up, 3 hackable (ObjectDocking)
+        public int spacePoints = -1;   // the SpacePoints set (docks_hd.json)
+        public bool radarHidden;       // KIPlayer+0x70: no marker, no lock
+        // The Most Wanted criminal (KIPlayer+0x3e / +0x44) and its escort (wingmen_wanted.md 2.6).
+        public int wantedIndex = -1;
+        public int wantedEscortOf = -1;
+        public int gunItem = -1;       // Level::assignGuns: the wanted's own weapon ...
+        public float gunFactor = 1f;   // ... at x4
+        public int hiddenBlueprint = -1;   // a Supernova wreck's hidden blueprint (TrafficPlan.HiddenBlueprints slot)
     }
 
     public static class TrafficPlan
     {
+        /// <summary>Station::stationHasHiddenBlueprint 0xb3ec8 (blueprints_mods.md 1.4 3): per slot the station
+        /// (DAT_0025273c), the blueprint (DAT_002521f0), the wreck's race (DAT_00253754) and position (DAT_00253768).</summary>
+        public static readonly (int station, int blueprint, int race, Vector3 position)[] HiddenBlueprints =
+        {
+            (132, 226, 1, new Vector3(-20000, 30000, 80000)), (133, 221, 3, new Vector3(40000, -30000, 100000)),
+            (134, 223, 2, new Vector3(-80000, 80000, -90000)), (129, 225, 0, new Vector3(40000, 20000, 140000)),
+            (123, 227, 2, new Vector3(40000, 20000, 140000)),
+        };
+
         static Vector3 Jitter() => new Vector3(Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000);
 
         /// <summary>'playerGame': the player's start (game units), where freelance escorts gather.</summary>
@@ -148,7 +167,19 @@ namespace GoF2Remake.Flight
             // Campaign 0x24 / 0x25 in S'kolptorr: no local fighters, no raiders; 0x2a / 0x2b: no raiders, no pirate escorts.
             if ((cm == 0x24 || cm == 0x25) && system.index == 5 && !Session.FreePlay) local = raiders = 0;
             if ((cm == 0x2a || cm == 0x2b) && !Session.FreePlay) raiders = escorts = 0;
-            if (jumpers + local + freighters + raiders + escorts == 0 && !terran && !vossk) local = 4;
+            // Status::getWantedInCurrentOrbit: a Most Wanted criminal here caps the police at 2 (it and its escort come first).
+            var wanted = WantedBoard.InOrbit(db, station);
+            if (wanted != null) local = Mathf.Min(local, 2);
+            // Late-campaign Specter raids (100 < campaign < 0x91): (campaign / 144 * 15 + 5) % (x2 Extreme), 2-4 (x2).
+            int specters = 0;
+            if (!Session.FreePlay && cm > 100 && cm < 0x91)
+            {
+                int p = (int)(cm / 144f * 15f + 5f) << (hardcore ? 1 : 0);
+                if (Random.Range(0, 100) < p) specters = (Random.Range(0, 3) + 2) << (hardcore ? 1 : 0);
+            }
+            // The supernova system (27) before campaign 0x9e: no local fighters, jumpers, freighters or raiders.
+            if (!Session.FreePlay && system.index == 27 && cm < 0x9e) local = jumpers = freighters = raiders = 0;
+            if (jumpers + local + freighters + raiders + escorts == 0 && !terran && !vossk && wanted == null) local = 4;
 
             // Campaign step 59 (type 0xa3) at one of its target stations still to do (Status+0x90): the rival arms convoy
             // and the local fighters instead of the rest of the traffic.
@@ -160,6 +191,7 @@ namespace GoF2Remake.Flight
 
             // 1 local fighters around one point in front of the station
             var wpLocal = new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 30000) + 20000);
+            if (wanted != null) AddWanted(list, wanted, wpLocal);
             for (int i = 0; i < local; i++)
                 list.Add(new SpawnSpec { group = NpcGroup.Local, race = sysRace, ship = NpcTables.RandomFighter(sysRace), position = wpLocal + Jitter(),
                                              nameText = informer && i == 0 && !Session.InformerKilled ? 1663 : -1 });
@@ -193,7 +225,47 @@ namespace GoF2Remake.Flight
                 list.Add(new SpawnSpec { group = NpcGroup.Escort, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate),
                                              position = playerGame + new Vector3(Random.Range(0, 160000) - 80000, Random.Range(0, 100000) - 50000, Random.Range(0, 160000) - 80000) });
             if (PirateBases.StationHasBase(station)) AddPirateBase(list, station, hardcore);
+            // 8 a Supernova wreck with a hidden blueprint: dockable and hackable (docking type 3) until it is found.
+            // Remake: the damaged Midorian freighter stands in for every race's wreck (its docking points are known).
+            for (int k = 0; k < HiddenBlueprints.Length; k++)
+            {
+                if (HiddenBlueprints[k].station != station) continue;
+                bool found = (Session.HiddenBlueprintsFound & (1 << k)) != 0;
+                list.Add(new SpawnSpec
+                {
+                    group = NpcGroup.Special, race = HiddenBlueprints[k].race, ship = -1, position = HiddenBlueprints[k].position,
+                    fixedObject = "sn_cargo_001_midorian_wrecked", stationary = true, alwaysFriend = true, hitpoints = 9999999, noLoot = true,
+                    nameText = 3211, dockingType = found ? 0 : 3, spacePoints = 3, hiddenBlueprint = k, hitRadius = 4000f,
+                });
+            }
+            // 7 Specters around the player, always enemy.
+            for (int i = 0; i < specters; i++)
+            {
+                float S() => Random.value < 0.5f ? -1f : 1f;
+                list.Add(new SpawnSpec { group = NpcGroup.Special, race = Standing.Specter, ship = 44, alwaysEnemy = true,
+                                         position = playerGame + new Vector3(S() * (Random.Range(0, 50000) + 20000), S() * (Random.Range(0, 50000) + 10000), S() * (Random.Range(0, 50000) + 20000)) });
+            }
             return list;
+        }
+
+        // ---- the Most Wanted criminal (Level::createMission 0xbda70, wingmen_wanted.md 2.6) ---------------------------
+
+        /// <summary>[0] the criminal at the police's point (its race, pirates for races 4+), hull 15 * min(rank, 20) +
+        /// its hitpoints + 4 * 45 (x2 Extreme), speed 4.5, its weapon x4, its loot and name; then its escort of the same race
+        /// at half that hull.</summary>
+        static void AddWanted(List<SpawnSpec> list, WantedData w, Vector3 wpLocal)
+        {
+            int race = w.race < 4 ? w.race : Standing.Pirate;
+            int h = 15 * Mathf.Min(Session.Rank, 20) + w.hitpoints + 4 * 45;
+            int hull = Session.IsExtreme ? h * 2 : h;
+            list.Add(new SpawnSpec
+            {
+                group = NpcGroup.Local, race = race, ship = w.ship, position = wpLocal + Jitter(), hitpoints = hull, name = w.name,
+                lootItem = w.loot, lootAmount = w.lootAmount, wantedIndex = w.index, speed = 4.5f, gunItem = w.weapon, gunFactor = 4f,
+            });
+            for (int i = 0; i < w.numWingmen; i++)
+                list.Add(new SpawnSpec { group = NpcGroup.Escort, race = race, ship = NpcTables.RandomFighter(race), position = wpLocal + Jitter(),
+                                         hitpoints = hull / 2, wantedEscortOf = w.index });
         }
 
         // ---- step 59's arms convoy (Level::createMission 0xbe742, npc_combat_specials.md 4) --------------------------

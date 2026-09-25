@@ -1,0 +1,245 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8550625899336825111
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 853350224234740523}
+  - component: {fileID: 4716780349634574020}
+  m_Layer: 0
+  m_Name: sn_plasma_gun_valkyrie
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &853350224234740523
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550625899336825111}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7979863815426676082}
+  - {fileID: 6028431295486676561}
+  - {fileID: 6547161384889768765}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4716780349634574020
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550625899336825111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.AssembledObject
+  rootMeshId: 18768
+  origin: PlayerStation::PlayerStation for campaign 0x9d at station 112 (meshes 0x4950 / 0x4952 / 0x4951)
+  lodDistancesGameUnits: []
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 0}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!1001 &1825483939233066847
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 853350224234740523}
+    m_Modifications:
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8980336572865618071, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+      propertyPath: m_Name
+      value: sn_plasma_gun_valkyrie
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+--- !u!4 &7979863815426676082 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8641070837290170925, guid: 2391277f12ff4a84192fd1d3948ec34d, type: 3}
+  m_PrefabInstance: {fileID: 1825483939233066847}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &2461406464705756974
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 853350224234740523}
+    m_Modifications:
+    - target: {fileID: 8340468704023215785, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_Name
+      value: sn_plasma_gun_valkyrie_lights_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+--- !u!4 &6547161384889768765 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8715763476332586003, guid: 3543e999abfb1704baf4db7a740c18e4, type: 3}
+  m_PrefabInstance: {fileID: 2461406464705756974}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6474209242429525858
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 853350224234740523}
+    m_Modifications:
+    - target: {fileID: 88833939408722825, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_Name
+      value: sn_plasma_gun_valkyrie_alpha
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+--- !u!4 &6028431295486676561 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 752181762104541491, guid: fc0435f6d57fb0b469cebe406e6b8297, type: 3}
+  m_PrefabInstance: {fileID: 6474209242429525858}
+  m_PrefabAsset: {fileID: 0}

@@ -49,6 +49,9 @@ namespace GoF2Remake.UI
         SpaceLevel level;
         Mining mining;
         MiningView miningView;
+        ObjectDocking docking;
+        HackingView hackingView;
+        Label transferCounter;
         Mining.Phase lastPhase;
         Navigation nav;
         NavigationView navView;
@@ -107,6 +110,7 @@ namespace GoF2Remake.UI
         {
             pauseMenu?.Close();   // the scene is going: sounds and time back to normal
             if (mining != null) mining.Message -= OnMiningMessage;
+            if (docking != null) docking.Message -= OnMiningMessage;
             if (nav != null) nav.Message -= OnMiningMessage;
             if (jump != null) jump.Message -= OnMiningMessage;
             if (traffic != null) traffic.Message -= OnMiningMessage;
@@ -161,6 +165,12 @@ namespace GoF2Remake.UI
             HookPress(missileButton, null, () => weapons?.FireSecondary());
             HookPress(dockPrompt, null, Interact);
             miningView = new MiningView(root);
+            hackingView = new HackingView(root);
+            transferCounter = new Label { pickingMode = PickingMode.Ignore };
+            transferCounter.AddToClassList("transfer-counter");
+            transferCounter.AddToClassList("gof-semibold");
+            transferCounter.AddToClassList("transfer-counter--hidden");
+            root.Add(transferCounter);
             navView = new NavigationView(root);
             combatView = new CombatView(root);
             lensFlare = new LensFlareView(root);
@@ -458,6 +468,9 @@ namespace GoF2Remake.UI
                 weapons = level.Weapons;
                 mining = level.Mining;
                 if (mining != null) mining.Message += OnMiningMessage;
+                docking = level.Docking;
+                if (docking != null) docking.Message += OnMiningMessage;
+                if (level.GasClouds != null) level.GasClouds.Message += OnMiningMessage;
                 nav = level.Navigation;
                 if (nav != null) nav.Message += OnMiningMessage;
                 jump = level.SystemJump;
@@ -466,6 +479,13 @@ namespace GoF2Remake.UI
                 radar = level.Radar;
                 traffic = level.Traffic;
                 if (traffic != null) traffic.Message += OnMiningMessage;
+                // Layout::showMissionRewardMessage(reward, bounty): "Bounty collected" (3206) and the credits, sound 36.
+                if (traffic != null) traffic.BountyCollected += reward =>
+                {
+                    miningView?.ShowMessage($"{Localization.Get(3206)}  +{ItemInfo.Credits(reward)}", 2);
+                    var ca = CombatAssets.Load();
+                    if (ca != null && ca.missionAccomplished != null) Sfx.PlayAt(ca.missionAccomplished, Camera.main != null ? Camera.main.transform.position : Vector3.zero);
+                };
                 if (radar != null) radar.Message += OnCombatMessage;
                 if (health != null) health.GameOverStarted += OnGameOver;
                 story = level.StorySpace;
@@ -498,6 +518,8 @@ namespace GoF2Remake.UI
                 return;
             }
 
+            // The launch / arrival camera: no HUD but the orbit information until it ends or is skipped (MGame+0x5f).
+            root.EnableInClassList("hud-launch", !level.LaunchCameraOver);
             if (level.Cutscene)
             {
                 // A LevelScript cutscene (MGame+0x5f): no HUD, no controls; the radio and fades still show.
@@ -512,7 +534,8 @@ namespace GoF2Remake.UI
             }
 
             // The action prompt: navigation (autopilot / jump) first, then mining (lock / approach / minigame), else docking.
-            string prompt = nav != null ? nav.PromptText : null;
+            string prompt = docking != null ? docking.PromptText : null;
+            if (prompt == null && nav != null) prompt = nav.PromptText;
             if (prompt == null && mining != null) prompt = mining.PromptText;
             if (prompt == null && level.CanDock) prompt = Localization.Extra("hudDock", "DOCK");
             dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null);
@@ -597,6 +620,13 @@ namespace GoF2Remake.UI
             UpdateCrosshair();
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == Mining.Phase.Idle);
             miningView.UpdateGame(mining, Time.deltaTime * 1000f);
+            hackingView?.Update(docking);
+            if (transferCounter != null)
+            {
+                bool on = docking != null && docking.TransferLabel != null;
+                transferCounter.EnableInClassList("transfer-counter--hidden", !on);
+                if (on) transferCounter.text = $"{docking.TransferLabel.ToUpperInvariant()}  {docking.TransferDone} / {docking.TransferTotal}";
+            }
             var lockRing = root.Q("lockRing");
             lockRing.style.left = crosshair.style.left;
             lockRing.style.top = crosshair.style.top;
@@ -604,7 +634,9 @@ namespace GoF2Remake.UI
                            level.Layout.alienOrbit ? Standing.Void : level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
             bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
             bool plateFree = (nav == null || nav.Locked == null) && (mining == null || (mining.State == Mining.Phase.Idle && mining.Locked == null));
-            combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree);
+            // Radar::draw isn't called while the launch / arrival camera runs: no ship markers (their layer sets its display
+            // inline, which the .hud-launch rule can't override).
+            combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree, !level.LaunchCameraOver);
             UpdateRadio();
             UpdateFade();
         }
@@ -673,6 +705,8 @@ namespace GoF2Remake.UI
                 AlienText.Set(radioText, chatter.text, chatter.portrait == null && StoryTable.UsesAlienFont(chatter.speakerId));
                 if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
                 else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
+                var voiceClip = StoryAssets.Load()?.Voice(chatter.voice);
+                if (voiceClip != null && voiceSource != null) { voiceSource.clip = voiceClip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
                 return;
             }
             shownChatter = null;
@@ -902,7 +936,8 @@ namespace GoF2Remake.UI
         /// <summary>The action prompt: mining (mine / abort / stop) when it has something to do, else dock.</summary>
         void Interact()
         {
-            if (nav != null && nav.PromptText != null) nav.Interact();
+            if (docking != null && docking.PromptText != null) docking.Interact();
+            else if (nav != null && nav.PromptText != null) nav.Interact();
             else if (mining != null && mining.PromptText != null) mining.Interact();
             else Dock();
         }

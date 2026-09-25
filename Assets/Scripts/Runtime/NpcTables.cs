@@ -61,11 +61,15 @@ namespace GoF2Remake.Flight
 
         static float Difficulty => Session.IsExtreme ? 2f : 1f;   // x + x * (options[0x2c] - 0.5)
 
+        /// <summary>The campaign index the NPC formulas use: capped at 45 once the main story is won (Level::createShip's
+        /// "gameWon ? 180 : 4 * campaign", assignGuns' 600 - 2 * 45).</summary>
+        static int StatCampaign => !Session.FreePlay && Session.CampaignMission >= Story.GameWonIndex ? Story.GameWonIndex : Session.CampaignMission;
+
         /// <summary>Level::createShip hull. kind: 0 fighter, 1 fixed object (freighter / battleship 14).</summary>
         public static int Hull(int kind, int ship)
         {
             int rank = Mathf.Min(Session.Rank, 20);
-            float hp = 4 * Session.CampaignMission + 14 * rank + 20;
+            float hp = 4 * StatCampaign + 14 * rank + 20;
             if (ship == 51) hp *= 1.7f; else if (ship == 49) hp *= 17f; else if (ship == 44) hp *= 2.25f;
             if (kind == 1) hp *= ship == 14 ? 25 : 5;
             return (int)(hp * Difficulty);
@@ -89,7 +93,7 @@ namespace GoF2Remake.Flight
             return Mathf.Max(1, dmg);
         }
 
-        public static float GunReloadMs => 600f - 2f * Session.CampaignMission;
+        public static float GunReloadMs => 600f - 2f * StatCampaign;
 
         /// <summary>The item whose projectile / impact an NPC gun of this race shows.</summary>
         public static int GunItem(int race) => race switch { 0 => 0, 1 => 3, 2 => 7, 3 => 25, 9 => 5, 10 => 229, _ => 19 };

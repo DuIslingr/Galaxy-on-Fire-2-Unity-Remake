@@ -105,6 +105,21 @@ namespace GoF2Remake.Visuals
             if (enabled) Update();
         }
 
+        /// <summary>Shows the pose at 'atMs' and stops there (an object whose animation the original never advances).</summary>
+        public void Hold(float atMs = 0f)
+        {
+            timeMs = Mathf.Clamp(atMs, 0f, lengthMs);
+            if (tracks != null) Apply();
+            play = false;
+        }
+
+        /// <summary>Hold() on every part animation under 'root'.</summary>
+        public static void HoldAll(GameObject root, float atMs = 0f)
+        {
+            if (root == null) return;
+            foreach (var a in root.GetComponentsInChildren<PartAnimation>(true)) a.Hold(atMs);
+        }
+
         /// <summary>Plays every part animation under 'root' once from the start; returns the longest length in ms.</summary>
         public static float PlayOnce(GameObject root)
         {
@@ -146,7 +161,11 @@ namespace GoF2Remake.Visuals
                 if (loop) Loops++;
                 timeMs = loop ? timeMs % Mathf.Max(1f, lengthMs) : lengthMs;
             }
+            Apply();
+        }
 
+        void Apply()
+        {
             foreach (var tk in tracks)
             {
                 if (tk.pos[0] != null || tk.pos[1] != null || tk.pos[2] != null)

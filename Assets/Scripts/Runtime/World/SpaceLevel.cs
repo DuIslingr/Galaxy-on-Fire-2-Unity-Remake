@@ -70,6 +70,10 @@ namespace GoF2Remake.World
         public Mining Mining { get; private set; }
         public Navigation Navigation { get; private set; }
         public SystemJump SystemJump { get; private set; }
+        /// <summary>Docking at a story object (ObjectDocking).</summary>
+        public ObjectDocking Docking { get; private set; }
+        /// <summary>The orbit's plasma clouds (null without a spectral filter).</summary>
+        public GasCloudField GasClouds { get; private set; }
         public PlayerHealth Health { get; private set; }
         public Traffic Traffic { get; private set; }
         public CombatRadar Radar { get; private set; }
@@ -141,6 +145,10 @@ namespace GoF2Remake.World
             ComingFromVoid = Session.ComingFromVoid;
             // Status::departStation: the Void-invasion re-roll counter (index 32-44).
             Story.OnDepart(db, station);
+            // Status::moveWanted: a real orbit change (not a launch from the docked station, not to / from the Void) moves the
+            // Most Wanted criminals one system along their routes.
+            if ((Session.ArrivedByTravel || Session.ArrivedBySystemJump) && station != Session.VoidOrbit && Session.PreviousStationIndex != Session.VoidOrbit)
+                WantedBoard.Move(db, station, Session.ProgrammedStation);
             Layout = OrbitLayout.Build(db, station);
             var st = db.Stations.Find(s => s.index == station);
             StationInfo = st;
@@ -156,6 +164,8 @@ namespace GoF2Remake.World
             bool prologue = station == 78 && !Session.FreePlay && Story.Index <= 1;
             if (prologue) Layout.hasStation = false;
             if (prologue && Story.Index == 0) Layout.asteroidCentre = Vector3.zero;
+            var snCentre = SupernovaLevels.AsteroidCentre(Story.Index, station, station == Session.VoidOrbit);
+            if (snCentre.HasValue && Story.IsLevelMission(station)) Layout.asteroidCentre = snCentre.Value;
             Station = OrbitBuilder.SpawnStation(db, Layout);
             Jumpgate = OrbitBuilder.SpawnJumpgate(db, Layout);
             SpawnWormhole();
@@ -195,6 +205,13 @@ namespace GoF2Remake.World
             bool siege = !storyOrbit && !freelanceOrbit && KaamoClub.SiegeAt(station);
             Traffic = new GameObject("Traffic").AddComponent<Traffic>();
             Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege, Wormhole);
+            // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
+            Docking = Player.gameObject.AddComponent<ObjectDocking>();
+            Docking.Setup(db, Player, chase, Weapons);
+            Navigation.Docking = Docking;
+            Navigation.Ships = Traffic.Ships;
+            Collision.docking = Docking;
+            Docking.HackWon += ship => Traffic.OnHackWon(ship);   // a Supernova wreck's hidden blueprint
             if (storyOrbit)
             {
                 Campaign = new GameObject("Campaign").AddComponent<CampaignLevel>();
@@ -232,6 +249,7 @@ namespace GoF2Remake.World
             SystemJump.GateBlocked = () => Siege != null && Siege.Active;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
+            Traffic.LockedTarget = () => Radar != null ? Radar.Locked : null;   // locking a Most Wanted criminal uncovers it
             // Equipment (combat_equipment.md): the cloak (autopilot menu entry), the time extender, the repair / transfusion beams.
             Cloak = PlayerCloak.Attach(Player.gameObject, db, Session.ShipIndex, Health.Target, Player.visualModel);
             Navigation.Cloak = Cloak;
@@ -430,6 +448,8 @@ namespace GoF2Remake.World
             chase.Snap();
             // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount.
             Turret = PlayerTurret.Attach(root, db, Session.ShipIndex, Session.Equipment, chase);
+            // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).
+            GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
             Extender = TimeExtender.Attach(root, db);
 
             // Asteroid mining (lock, autopilot approach, minigame): needs a drill (category 19) to lock.

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: item_009
   m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Flight.GoF2WeaponFx
   item: 9
-  projectile: {fileID: 1266267141275383580, guid: 92da7030e25d78641a05b4b49d8de7a1, type: 3}
+  projectile: {fileID: 7598199503338455907, guid: bb77d7fc181a10b479281f118abcfeef, type: 3}
   muzzleFlash: {fileID: 2208557916851929683, guid: 5887dee2e97fc7945bd0e59d612e3596, type: 3}
   impact: {fileID: 802696765838572338, guid: e0351e54e97ff3040af9224790be8ab7, type: 3}
   shot: {fileID: 8300000, guid: 454b04b3770da7346ba14e148c073cf1, type: 3}

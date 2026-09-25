@@ -195,6 +195,7 @@ namespace GoF2Remake.UI
                 // Landmarks: labels near the centre; elsewhere the jumpgate icon on the radar ellipse, the station nothing.
                 bool station = t.kind == Navigation.Kind.Station && t.station != Session.VoidOrbit;
                 float lx = station ? 50f : 10f;
+                if (t.kind == Navigation.Kind.DockingTarget && m.name.text != t.name) m.name.text = t.name;   // renamed by the level
                 m.name.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
                 if (m.distance != null) m.distance.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;
                 if (m.tech != null) m.tech.style.display = nearCentre ? DisplayStyle.Flex : DisplayStyle.None;

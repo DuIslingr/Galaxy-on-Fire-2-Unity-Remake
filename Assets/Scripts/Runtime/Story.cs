@@ -8,9 +8,11 @@
 //   MGame::dockEvent / Radar / UseKhadorDrive   BlocksDockingAndJumps: "Not possible on a mission." (525, §7)
 //   ModStation::OnInitialize 0x0e8080      OnDocked: step-specific station tweaks (Betty at index 1, free EMP bombs...)
 // State lives in Session (CampaignMission = the index, StoryMission = slot 0) and is saved by SaveGame.
-// Side effects built: the main campaign (0-45) and the Valkyrie add-on (46-84: the loaner ships parked in Status+0x8c,
-// the systems it reveals, step 59's target stations, the Liberator / Disruptor blueprints, the mines, the jump drive);
-// the Supernova add-on's (85-162) come with its levels.
+// Side effects built: the main campaign (0-45), the Valkyrie add-on (46-84: the loaner ships parked in Status+0x8c,
+// the systems it reveals, step 59's target stations, the Liberator / Disruptor blueprints, the mines, the jump drive) and
+// the Supernova add-on (85-162, cases 0x54-0xa1: the Luxury goods and the Gamma Shield I / repair beam / plasma kit
+// handed over, systems 27-31 revealed, the evacuation / hacking counters, the mutagen, the Gamma Shield II and Chromo
+// Plasma blueprints).
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -171,7 +173,11 @@ namespace GoF2Remake.Data
             {
                 case StoryType.DockedAny:
                 case StoryType.Dock: return c.docked && atTarget;
-                case StoryType.Purchase: return c.docked && atTarget && CargoOf(m.goodsItem) >= m.goodsAmount;
+                // Index 143: the Chromo Plasma also counts while it waits at the target as a finished blueprint product
+                // (Status+0x1c), docked or in the target's orbit.
+                case StoryType.Purchase:
+                    if (Index == 143 && atTarget && Session.PendingProducts.Exists(p => p.item == m.goodsItem && p.station == m.station)) return true;
+                    return c.docked && atTarget && CargoOf(m.goodsItem) >= m.goodsAmount;
                 case StoryType.FreelanceCount: return Session.FreelanceCompleted >= m.value;
                 case StoryType.CargoLoad: return CargoLoad() >= m.value;
                 case StoryType.ReachOrbit: return !c.docked && atTarget && c.levelMs >= 10000f;
@@ -191,7 +197,7 @@ namespace GoF2Remake.Data
                 case StoryType.Lounge: return c.docked && atTarget && c.inLounge;
                 case StoryType.LoungeWithGoods: return c.docked && atTarget && c.inLounge && CargoOf(m.goodsItem) >= m.goodsAmount;
                 case StoryType.AmountReached: return m.value >= m.goodsAmount;
-                case StoryType.Passengers: return m.value == 0;
+                case StoryType.Passengers: return m.value == 0 && Index != 92;   // 92: the level script (the Specter attack) ends it
                 case StoryType.EquipCategory: return c.docked && Mounted(db, it => it.categoryId == m.value);
                 default: return false;   // level-driven types (0x04, 0x01, 0x06, 0x0a, 0x0c, 0xa1, 0xa3 ...)
             }
@@ -297,8 +303,10 @@ namespace GoF2Remake.Data
             Session.StoryStepStart = Session.PlaySeconds;
             if (next == 93 || next == 111 || next == 143) Session.StoryRadioPending = true;
             var step = StoryTable.Step(next);
-            // Steps without a creating case (45's +40 000 aside, 46, 107, >= 162) keep the old mission object.
-            if (step != null && step.type != -1 || next == GameWonIndex || next >= LastIndex) Session.StoryMission = StoryMission.From(step);
+            // Steps without a creating case (46, 107) keep the old mission object; 45, 84, 128, 130 and 162 get an empty one
+            // (Mission(), hidden).
+            if (step != null && step.type != -1 || next == GameWonIndex || next == Dlc1WonIndex || next == 128 || next == 130 || next >= LastIndex)
+                Session.StoryMission = StoryMission.From(step);
             ApplyStepEffects(db, next, previous);
             return next;
         }
@@ -378,6 +386,25 @@ namespace GoF2Remake.Data
                     SetJumpDriveSaleable(db, true);
                     Shop.AddToCargo(GalaxyMap.KhadorDriveItem, 1);
                     break;
+                // ---- Supernova (cases 0x54-0xa1) ----
+                case 89:   // the Luxury goods (104) delivered; Ginoya (27) and Talidor (28) on the map
+                    Shop.RemoveFromCargo(104, Mathf.Min(10, CargoOf(104)));
+                    RevealSystem(db, 27); RevealSystem(db, 28);
+                    break;
+                case 90: Session.VisitedStations.Remove(109); break;                      // Naneroh un-visited (Galaxy::getVisited)
+                case 91: RevealSystem(db, 27); RevealSystem(db, 28); Session.StoryCounter = 0; break;   // 10 miners to rescue
+                case 94: Shop.AddToCargo(205, 1); Session.StoryCounter = 0; break;         // Gamma Shield I; 83 to evacuate
+                case 98: RevealSystem(db, 29); break;                                       // Paraah
+                case 102: Shop.AddToCargo(207, 1); break;                                   // the repair beam; 1700 evacuees
+                case 113: Shop.RemoveFromCargo(146, Mathf.Min(1, CargoOf(146))); break;   // the Magnetar Juice drunk
+                case 117: RevealSystem(db, 30); break;                                      // Me'enkk
+                case 119: if (CargoOf(209) > 0) Session.Unsaleable.Add(209); break;        // the K'mirkk Toad Mutagen kept
+                case 122: Session.Unsaleable.Remove(209); Shop.RemoveFromCargo(209, Mathf.Min(1, CargoOf(209))); break;   // handed to Moonsprocket
+                case 139: RevealSystem(db, 31); Session.StoryCounter = 0; break;           // Wah'norr; the cargo bots' counter
+                case 142:   // Gunant's plasma kit: 15 Ion Lambda Mk1, a Spectral Filter SA-1, a PE Proton collector
+                    Shop.AddToCargo(197, 15); Shop.AddToCargo(196, 1); Shop.AddToCargo(198, 1);
+                    break;
+                case 144: Shop.RemoveFromCargo(210, Mathf.Min(1, CargoOf(210))); break;   // the Chromo Plasma for the array
             }
         }
 
@@ -514,6 +541,33 @@ namespace GoF2Remake.Data
             // (steps 5-6: "go and get yourself a weapon and some armor plating"); selling there pays the same 0.
             if (station == 78 && Session.CampaignMission < 7) return 0;
             return Index == 20 && station == 55 && item == 41 ? 0 : price;
+        }
+
+        /// <summary>MGame::OnTouchBegin's planet-jump gates for the campaign target (campaign_levels_b.md 3, campaign_levels_c.md
+        /// 3.8 / 3.10 / 3.11): the text id of the refusal, -1 = allowed.</summary>
+        public static int RequirementRefusal(Database db, int station)
+        {
+            if (Session.FreePlay || Mission == null || station != Mission.station) return -1;
+            switch (Index)
+            {
+                case 91: case 94: return Freelance.MaxPassengers(db) < 1 ? 3214 : -1;          // passenger cabins
+                case 105: return Session.Equipment.Exists(e => e.item == 206) ? -1 : 3217;      // Gamma Shield II
+                case 135: return Shop.FirstMounted(db, 19) != null ? -1 : 3213;                 // a mining drill
+                case 139:   // Vol Noor (42) or a Vossk ship, with the Vossk Signature (190)
+                {
+                    int ship = Session.ShipIndex;
+                    bool vossk = ship == 42 || (ship < Shop.ShipRace.Length && Shop.ShipRace[ship] == 1);
+                    return vossk && Session.Equipment.Exists(e => e.item == 190) ? -1 : 3215;
+                }
+                case 142:   // a spectral filter, a plasma collector and 15 ionizing missiles; 1 t free cargo
+                {
+                    int ionizing = 0;
+                    foreach (var e in Session.Equipment) if (db.Item(e.item)?.categoryId == 34) ionizing += e.amount;
+                    if (Shop.FirstMounted(db, 33) == null || Shop.FirstMounted(db, 35) == null || ionizing < 15) return 3216;
+                    return Shop.FreeCargo(db) < 1 ? 3218 : -1;
+                }
+            }
+            return -1;
         }
 
         /// <summary>The Missions window's objective text for the current step ('#' = the target station).</summary>

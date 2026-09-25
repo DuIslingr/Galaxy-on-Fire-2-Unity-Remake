@@ -1,0 +1,53 @@
+// SpacePoints.cs
+// The docking points of the story's static objects (FileRead::loadSpacePoints(n), KIPlayer::setSpacePoints; data
+// Resources/GoF2Data/docks_hd.json, whose "station" field is the point set n, not a station): per point a type (1 = the
+// approach point KIPlayer::getNearestNavigationPoint picks, 2 = the docking point getNearestDockingPoint picks near it,
+// 3 / 4 = unused by the player's docking) and an offset in the object's engine space.
+// Sets (Level::createStaticObject 0xcda54): 1 mining plant, 2 containers (container_003, the secure containers), 3 the
+// damaged Midorian freighter, 4 cargo_001_midorian, 5 the Terran carrier, 6 the burning station, 7 the battlestation,
+// 8 the Vossk battleship, 11-14 the Supernova wrecks with hidden blueprints (Level::createMission, table DAT_002537a4).
+
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace GoF2Remake.Data
+{
+    public static class SpacePoints
+    {
+        public const int Approach = 1, Dock = 2;
+
+        [Serializable] class PointJson { public int id; public float[] position_engine; }
+        [Serializable] class SetJson { public int station; public PointJson[] points; }
+        [Serializable] class FileJson { public SetJson[] sets; }
+
+        public struct Point { public int type; public Vector3 engine; }
+
+        static Dictionary<int, List<Point>> sets;
+
+        /// <summary>The points of set n (empty when unknown). The first set of a number wins (the file lists 6 twice).</summary>
+        public static List<Point> Set(int n)
+        {
+            if (sets == null) Load();
+            return sets.TryGetValue(n, out var list) ? list : new List<Point>();
+        }
+
+        static void Load()
+        {
+            sets = new Dictionary<int, List<Point>>();
+            var text = Resources.Load<TextAsset>("GoF2Data/docks_hd");
+            if (text == null) return;
+            var file = JsonUtility.FromJson<FileJson>("{\"sets\":" + text.text + "}");
+            if (file?.sets == null) return;
+            foreach (var s in file.sets)
+            {
+                if (s?.points == null || sets.ContainsKey(s.station)) continue;
+                var list = new List<Point>();
+                foreach (var p in s.points)
+                    if (p?.position_engine != null && p.position_engine.Length == 3)
+                        list.Add(new Point { type = p.id, engine = new Vector3(p.position_engine[0], p.position_engine[1], p.position_engine[2]) });
+                sets[s.station] = list;
+            }
+        }
+    }
+}

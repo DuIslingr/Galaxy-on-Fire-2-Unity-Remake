@@ -14,6 +14,7 @@
 using GoF2Remake.Data;
 using GoF2Remake.Visuals;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace GoF2Remake.World
 {
@@ -107,10 +108,19 @@ namespace GoF2Remake.World
             Random.Range(0, 65536) / 65536f * 2f * Mathf.PI, Random.Range(0, 65536) / 65536f * 2f * Mathf.PI,
             Random.Range(0, 65536) / 65536f * 2f * Mathf.PI));
 
+        // At infinity: camera-centred. Set right before each camera renders: a camera moved later in the frame (the chase /
+        // cutscene cameras' LateUpdate) would otherwise leave the layers a frame behind, jittering at speed.
+        void OnEnable() => RenderPipelineManager.beginCameraRendering += OnBeginCamera;
+        void OnDisable() => RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
+        void OnBeginCamera(ScriptableRenderContext context, Camera camera)
+        {
+            if (camera == cam) transform.position = camera.transform.position;
+        }
+
         void LateUpdate()
         {
             if (cam == null) return;
-            transform.position = cam.transform.position;   // at infinity: camera-centred
+            transform.position = cam.transform.position;
             if (stormAnim != null && stormAnim.Loops != stormLoops)
             {
                 stormLoops = stormAnim.Loops;

@@ -32,7 +32,7 @@ Transform:
   m_Children:
   - {fileID: 9209803469065849436}
   - {fileID: 4239042179246910639}
-  - {fileID: 8447196604088193738}
+  - {fileID: 7208289580087839492}
   - {fileID: 61614292534866096}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.AssembledObject
   rootMeshId: 17317
   origin: Globals::getShipGroup idx 55 (generic)
   lodDistancesGameUnits: []
@@ -250,7 +250,7 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4526217944672617523, guid: 0345cf3a3e8fa9340aeeed56e456c607, type: 3}
   m_PrefabInstance: {fileID: 4692627978891382383}
   m_PrefabAsset: {fileID: 0}
---- !u!1001 &6312103982760306571
+--- !u!1001 &5092335885431127621
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -307,8 +307,8 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fd791d4d167a1704d86c60e95a83f721, type: 3}
---- !u!4 &8447196604088193738 stripped
+--- !u!4 &7208289580087839492 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2495946024809510209, guid: fd791d4d167a1704d86c60e95a83f721, type: 3}
-  m_PrefabInstance: {fileID: 6312103982760306571}
+  m_PrefabInstance: {fileID: 5092335885431127621}
   m_PrefabAsset: {fileID: 0}

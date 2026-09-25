@@ -8,7 +8,7 @@
 // success dialogue with the next index (e.g. 4 -> 5 on the same ships).
 // Built: 0 / 1 (the prologue and the rescue cutscenes, IntroCutscenes), 4 / 5 (mining, the pirate ambush), 7 (the pirate
 // trap with Gunant Breh); the rest of the main campaign (14 - 42) in MainCampaignLevels, the Valkyrie add-on (48 - 81) in
-// ValkyrieLevels.
+// ValkyrieLevels, the Supernova add-on (87 - 158) in SupernovaLevels.
 // Level+0x20 / +0x24: hostile ships killed by NPCs / by the player (Level::enemyDied); Level+0x1c: crate cargo captured
 // here; LevelScript+0: a time limit (the HUD counts it down; index 29's survival objective).
 // Cutscene support: the look-at camera (CutsceneCamera), fades (Layout::startFade: full-screen colour over n ms),
@@ -52,6 +52,7 @@ namespace GoF2Remake.World
         public Traffic Traffic => traffic;
         MainCampaignLevels main;
         ValkyrieLevels valkyrie;
+        SupernovaLevels supernova;
         int cratesAtStart;
 
         // Cutscene state (LevelScript: this[0x11] cinematic, player invulnerable / no collision, startSequenceOver).
@@ -153,6 +154,9 @@ namespace GoF2Remake.World
                     if (main != null) break;
                     valkyrie = new ValkyrieLevels(this, level);
                     if (!valkyrie.Build(index)) valkyrie = null;
+                    if (valkyrie != null) break;
+                    supernova = new SupernovaLevels(this, level);
+                    if (!supernova.Build(index)) supernova = null;
                     break;
             }
         }
@@ -190,6 +194,7 @@ namespace GoF2Remake.World
             if (intro != null && Story.Index == BuiltIndex) intro.Tick(dtMs);
             main?.Tick(Story.Index, dtMs);
             valkyrie?.Tick(Story.Index, dtMs);
+            supernova?.Tick(Story.Index, dtMs);
             Script(Story.Index);
             if (!level.Dialogue && level.LaunchCameraOver) Radio?.Update(dtMs, this);   // not during the launch / arrival camera
         }
@@ -199,6 +204,7 @@ namespace GoF2Remake.World
             if (intro != null) intro.LateTick(Time.deltaTime * 1000f);
             main?.LateTick(Time.deltaTime * 1000f);
             valkyrie?.LateTick(Time.deltaTime * 1000f);
+            supernova?.LateTick(Time.deltaTime * 1000f);
         }
 
         // ---- cutscene helpers ------------------------------------------------------------------------------

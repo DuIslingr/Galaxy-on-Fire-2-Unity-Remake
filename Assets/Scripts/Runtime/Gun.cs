@@ -83,6 +83,8 @@ namespace GoF2Remake.Flight
         public event Action<Target, int, int, Vector3> AreaHit;
         /// <summary>A bomb, mine, scatter shell or the shock blast went off at this point (the explosion).</summary>
         public event Action<Vector3> Ignited;
+        /// <summary>Any gun's bomb / mine / blast went off (gun, Unity point): the gas clouds listen for the ionizing missiles.</summary>
+        public static event Action<Gun, Vector3> Detonated;
 
         public bool Homing => kind == Kind.Missile || kind == Kind.ClusterMissile || kind == Kind.Thermo;
         bool Coasts => kind == Kind.Rocket || kind == Kind.Missile || kind == Kind.ClusterMissile;
@@ -369,6 +371,7 @@ namespace GoF2Remake.Flight
                 b.timer = -1e9f;
                 AreaDamage(at, targets, true);
                 Ignited?.Invoke(at);
+                Detonated?.Invoke(this, at);
             }
         }
 

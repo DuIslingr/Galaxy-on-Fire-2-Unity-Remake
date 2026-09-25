@@ -15,7 +15,7 @@ namespace GoF2Remake.EditorTools
         public const string OutDir = ImportSettings.Root + "/Resources/GoF2Hud";
         const string AtlasDir = ImportSettings.Root + "/Textures/textures/";
         const string Main = "gof2_interface_iphone4.png", Ipad = "gof2_interface2_ipad_large.png", Low = "gof2_interface.png",
-                     Logos = "gof2_logos_ipad2.png";
+                     Logos = "gof2_logos_ipad2.png", Ipad3 = "gof2_interface3_ipad_large.png";
 
         // atlas, name, x, y, w, h, frames (0 = single image), wrap (marquee strips repeat)
         static readonly (string atlas, string name, int x, int y, int w, int h, int frames, bool repeat)[] Images =
@@ -136,6 +136,21 @@ namespace GoF2Remake.EditorTools
             (Main, "alien_U", 1517, 263, 23, 31, 0, false), (Main, "alien_V", 1542, 263, 22, 31, 0, false),
             (Main, "alien_W", 1569, 263, 25, 31, 0, false), (Main, "alien_X", 1598, 263, 22, 31, 0, false),
             (Main, "alien_Y", 1625, 263, 18, 31, 0, false), (Main, "alien_Z", 1646, 263, 20, 31, 0, false),
+            // HackingGame::HackingGame 0x179638 (the Supernova hacking game, images 0x1f44-0x1f55 of the iPad-large atlas 3):
+            // the six code tiles (0x1f4a-0x1f4f) and their solved (gold) versions (0x1f50-0x1f55), the rotate buttons
+            // (0x1f44 idle, 0x1f46 turning), the slashed marks on the target pattern (0x1f45), the frames (0x1f49 the
+            // puzzle's half, 0x1f48 the target's half, both drawn mirrored) and the bar between them (0x1f47).
+            (Ipad3, "hack_tile_0", 717, 843, 256, 180, 0, false), (Ipad3, "hack_tile_1", 57, 425, 256, 180, 0, false),
+            (Ipad3, "hack_tile_2", 57, 676, 256, 180, 0, false), (Ipad3, "hack_tile_3", 315, 679, 256, 180, 0, false),
+            (Ipad3, "hack_tile_4", 975, 661, 256, 180, 0, false), (Ipad3, "hack_tile_5", 717, 661, 256, 180, 0, false),
+            (Ipad3, "hack_gold_0", 57, 183, 256, 180, 0, false), (Ipad3, "hack_gold_1", 1578, 61, 256, 180, 0, false),
+            (Ipad3, "hack_gold_2", 975, 479, 256, 180, 0, false), (Ipad3, "hack_gold_3", 57, 1, 256, 180, 0, false),
+            (Ipad3, "hack_gold_4", 717, 479, 256, 180, 0, false), (Ipad3, "hack_gold_5", 975, 843, 256, 180, 0, false),
+            (Ipad3, "hack_button", 127, 607, 62, 62, 0, false), (Ipad3, "hack_button_on", 1285, 61, 291, 291, 0, false),
+            (Ipad3, "hack_blocked", 57, 607, 68, 67, 0, false), (Ipad3, "hack_bar", 315, 1, 770, 58, 0, false),
+            (Ipad3, "hack_frame_top", 717, 61, 566, 416, 0, false), (Ipad3, "hack_frame_bottom", 315, 61, 400, 400, 0, false),
+            // Radar::draw with a plasma collector: the crosshair while a plasma spark is in range (0x1f5d).
+            (Ipad3, "plasma_crosshair", 1285, 354, 214, 214, 0, false),
         };
 
         [MenuItem("GoF2/Build HUD Images", priority = 15)]

@@ -16435,6 +16435,222 @@
    "explosionModel": ""
   },
   {
+   "name": "container_003_terran",
+   "pack": "main",
+   "category": "misc",
+   "origin": "Level::createStaticObject 0x4260 (space-point set 2); campaign 89 enemies[0]",
+   "notes": "Single mesh.",
+   "root": 16992,
+   "parts": [
+    {
+     "key": "hull",
+     "parent": "",
+     "mesh": 16992,
+     "model": "Models/main/misc/container_003_terran.fbx",
+     "material": 0,
+     "role": "hull",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    }
+   ],
+   "lodDistances": [],
+   "lastVisibleDistance": 0.0,
+   "scale": [],
+   "spawnRotation": [],
+   "explosionModel": ""
+  },
+  {
+   "name": "sn_secure_container_nivelian",
+   "pack": "supernova",
+   "category": "misc",
+   "origin": "Level::createStaticObject 0x4961 + AEGeometry 0x498f (space-point set 2, docking type 3); campaign 125",
+   "notes": "Children at identity.",
+   "root": 18785,
+   "parts": [
+    {
+     "key": "hull",
+     "parent": "",
+     "mesh": 18785,
+     "model": "Models/supernova/misc/sn_secure_container_nivelian.fbx",
+     "material": 0,
+     "role": "hull",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    },
+    {
+     "key": "add",
+     "parent": "",
+     "mesh": 18831,
+     "model": "Models/supernova/misc/sn_secure_container_nivelian_add.fbx",
+     "material": 0,
+     "role": "add",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    }
+   ],
+   "lodDistances": [],
+   "lastVisibleDistance": 0.0,
+   "scale": [],
+   "spawnRotation": [],
+   "explosionModel": ""
+  },
+  {
+   "name": "sn_junk_field",
+   "pack": "supernova",
+   "category": "misc",
+   "origin": "Level::createStaticObject 0x4962; campaign 125 enemies[11..14]",
+   "notes": "Single mesh, radar-hidden scenery.",
+   "root": 18786,
+   "parts": [
+    {
+     "key": "hull",
+     "parent": "",
+     "mesh": 18786,
+     "model": "Models/supernova/misc/sn_junk_field.fbx",
+     "material": 0,
+     "role": "hull",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    }
+   ],
+   "lodDistances": [],
+   "lastVisibleDistance": 0.0,
+   "scale": [],
+   "spawnRotation": [],
+   "explosionModel": ""
+  },
+  {
+   "name": "sn_plasma_array_midorian_explosion_anim",
+   "pack": "supernova",
+   "category": "misc",
+   "origin": "Level::createCampaignMission 0x91 enemies[13] (mesh 0x4a6a), played at 0.3 speed",
+   "notes": "Single animated mesh.",
+   "root": 19050,
+   "parts": [
+    {
+     "key": "hull",
+     "parent": "",
+     "mesh": 19050,
+     "model": "Models/supernova/misc/sn_plasma_array_midorian_explosion_anim.fbx",
+     "material": 0,
+     "role": "hull",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    }
+   ],
+   "lodDistances": [],
+   "lastVisibleDistance": 0.0,
+   "scale": [],
+   "spawnRotation": [],
+   "explosionModel": ""
+  },
+  {
+   "name": "sn_plasma_gun_valkyrie",
+   "pack": "supernova",
+   "category": "misc",
+   "origin": "PlayerStation::PlayerStation for campaign 0x9d at station 112 (meshes 0x4950 / 0x4952 / 0x4951)",
+   "notes": "Children at identity; sits on the battlestation.",
+   "root": 18768,
+   "parts": [
+    {
+     "key": "hull",
+     "parent": "",
+     "mesh": 18768,
+     "model": "Models/supernova/misc/sn_plasma_gun_valkyrie.fbx",
+     "material": 0,
+     "role": "hull",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    },
+    {
+     "key": "alpha",
+     "parent": "",
+     "mesh": 18770,
+     "model": "Models/supernova/misc/sn_plasma_gun_valkyrie_alpha.fbx",
+     "material": 0,
+     "role": "alpha",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    },
+    {
+     "key": "lights_add",
+     "parent": "",
+     "mesh": 18769,
+     "model": "Models/supernova/misc/sn_plasma_gun_valkyrie_lights_add.fbx",
+     "material": 0,
+     "role": "lights_add",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    }
+   ],
+   "lodDistances": [],
+   "lastVisibleDistance": 0.0,
+   "scale": [],
+   "spawnRotation": [],
+   "explosionModel": ""
+  },
+  {
+   "name": "projectile_009_anim_add",
+   "pack": "main",
+   "category": "fx",
+   "origin": "LevelScript::LevelScript campaign 0x59 (+0xdc, scaled (1, 1, 500000): a long beam)",
+   "notes": "Single fx mesh.",
+   "root": 14229,
+   "parts": [
+    {
+     "key": "hull",
+     "parent": "",
+     "mesh": 14229,
+     "model": "Models/main/fx/projectile_009_anim_add.fbx",
+     "material": 0,
+     "role": "hull",
+     "variant": "",
+     "condition": "",
+     "position": [],
+     "rotation": [],
+     "scale": [],
+     "lods": []
+    }
+   ],
+   "lodDistances": [],
+   "lastVisibleDistance": 0.0,
+   "scale": [],
+   "spawnRotation": [],
+   "explosionModel": ""
+  },
+  {
    "name": "hangar_terran",
    "pack": "main",
    "category": "hangars",

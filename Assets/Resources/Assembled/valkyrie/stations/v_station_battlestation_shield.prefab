@@ -31,7 +31,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 196382530503748679}
-  - {fileID: 1243142539043256016}
+  - {fileID: 3083545748068813166}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4150669750160938013
@@ -45,7 +45,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2AssembledObject
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.AssembledObject
   rootMeshId: 14365
   origin: Level::createStaticObject(0x381d) + PlayerTurret::PlayerTurret(0x381d)
   lodDistancesGameUnits: []
@@ -56,7 +56,7 @@ MonoBehaviour:
   conditionalParts: []
   conditions: []
   spawnRotationEngine: {x: 0, y: 0, z: 0}
---- !u!1001 &3061880705221899619
+--- !u!1001 &1294660990138895069
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -113,10 +113,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 596d8cc005c9e64489ddb1ee3480ba53, type: 3}
---- !u!4 &1243142539043256016 stripped
+--- !u!4 &3083545748068813166 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4268704133215028147, guid: 596d8cc005c9e64489ddb1ee3480ba53, type: 3}
-  m_PrefabInstance: {fileID: 3061880705221899619}
+  m_PrefabInstance: {fileID: 1294660990138895069}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4144660844338393076
 PrefabInstance:

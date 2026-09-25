@@ -290,6 +290,72 @@
     color: #FF6A5A;
 }
 
+/* The Missions / Most Wanted tabs (129 / 3219) next to the title; only with a board here. */
+.missions-tab {
+    margin: 0 0 0 10px;
+    padding: 6px 16px;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--gof-text-dim);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+}
+
+.missions-tab--active {
+    color: var(--gof-cyan);
+    border-bottom-color: var(--gof-cyan);
+}
+
+.missions-tab:focus,
+.can-hover .missions-tab:hover {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+}
+
+.missions-tab--hidden,
+.missions-body--hidden {
+    display: none;
+}
+
+.wanted-list-section {
+    flex-grow: 0.8;
+}
+
+.wanted-row {
+    margin: 2px 0;
+    padding: 8px 12px;
+    font-size: 20px;
+    -unity-text-align: middle-left;
+    color: var(--gof-text-dim);
+    background-color: rgba(255, 255, 255, 0.03);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+}
+
+.wanted-row--active {
+    color: #FFFFFF;
+}
+
+.wanted-row--dead {
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.wanted-row--story {
+    color: var(--gof-amber);
+}
+
+.wanted-row--selected,
+.wanted-row:focus,
+.can-hover .wanted-row:hover {
+    background-color: var(--gof-cyan-faint);
+    border-left-color: var(--gof-amber);
+}
+
 .portrait-hidden {
     display: none;
 }

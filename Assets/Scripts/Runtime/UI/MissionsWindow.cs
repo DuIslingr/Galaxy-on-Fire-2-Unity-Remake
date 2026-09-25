@@ -6,6 +6,11 @@
 //                    (#C = reward + the current standing bonus), 424 "Show on map" and, only in a station, 423 "Discard"
 //                    (red) -> 418 "Are you sure?"; no mission: 174 "-BLANK-"
 // Show on map opens the star map in mission mode (StarMap(true, mission)). Locked before campaign 9 like the Map.
+// The tab 3219 "Most Wanted" (WantedWindow 0xf4a58, wingmen_wanted.md 2.5) when the station has a board
+// (WantedBoard.Accessible): the board's criminals (active ones bright, the storyline one gold), and for the selected one
+// the portrait, name, "3226 Status: 3228 Alive / 3227 Deceased", "3225 Bounty: N$" and "3223 Departed from" /
+// "3224 Travelling to" (3229 N/A while inactive, " --" once dead) with its description (3174 + index); 424 Show on map
+// for an active one (the star map centred on where it is travelling to).
 // Plain class driven by StationMenu.
 
 using System.Collections.Generic;
@@ -24,6 +29,13 @@ namespace GoF2Remake.UI
         readonly Button close, storyMap, freelanceMap, discard;
         readonly Label storyText, freelanceText, freelanceClient, freelanceWhere;
         readonly ScrollView storyScroll, freelanceScroll;
+        readonly Button missionsTab, wantedTab, wantedMap;
+        readonly VisualElement missionsBody, wantedBody, wantedPortrait;
+        readonly ScrollView wantedList, wantedScroll;
+        readonly Label wantedName, wantedStatus, wantedBounty, wantedText;
+        readonly List<Button> wantedRows = new List<Button>();
+        bool wantedShown;
+        int wantedSelected = -1;
 
         static string T(int id) => Localization.Get(id);
 
@@ -49,6 +61,24 @@ namespace GoF2Remake.UI
             close.text = Localization.Extra("hudBack", "BACK");
             storyMap.text = freelanceMap.text = T(424).ToUpperInvariant();
             discard.text = T(423).ToUpperInvariant();
+
+            missionsBody = root.Q("missionsBody");
+            wantedBody = root.Q("wantedBody");
+            wantedPortrait = root.Q("wantedPortrait");
+            wantedName = root.Q<Label>("wantedName");
+            wantedStatus = root.Q<Label>("wantedStatus");
+            wantedBounty = root.Q<Label>("wantedBounty");
+            wantedText = root.Q<Label>("wantedText");
+            wantedList = Scroll("wantedList");
+            wantedScroll = Scroll("wantedScroll");
+            missionsTab = Bind("missionsTab", () => ShowTab(false));
+            wantedTab = Bind("wantedTab", () => ShowTab(true));
+            wantedMap = Bind("wantedMap", ShowWantedOnMap);
+            missionsTab.text = T(129).ToUpperInvariant();
+            wantedTab.text = T(3219).ToUpperInvariant();
+            wantedMap.text = T(424).ToUpperInvariant();
+            root.Q<Label>("wantedListHeading").text = T(3221);
+            root.Q<Label>("wantedDetailsHeading").text = T(3222);
         }
 
         ScrollView Scroll(string name)
@@ -72,6 +102,7 @@ namespace GoF2Remake.UI
         public void Open()
         {
             root.AddToClassList("missions-open");
+            wantedShown = false;
             Fill();
         }
 
@@ -82,9 +113,26 @@ namespace GoF2Remake.UI
             menu.OnMissionsClosed();
         }
 
+        bool BoardHere => level.Station != null && WantedBoard.Accessible(level.Database, level.Station.index);
+
+        void ShowTab(bool wanted)
+        {
+            wantedShown = wanted && BoardHere;
+            Fill();
+        }
+
         void Fill()
         {
             var db = level.Database;
+            bool board = BoardHere;
+            missionsTab.EnableInClassList("missions-tab--hidden", !board);
+            wantedTab.EnableInClassList("missions-tab--hidden", !board);
+            missionsTab.EnableInClassList("missions-tab--active", !wantedShown);
+            wantedTab.EnableInClassList("missions-tab--active", wantedShown);
+            root.Q<Label>("missionsTitle").text = (wantedShown ? T(3219) : T(129)).ToUpperInvariant();
+            missionsBody.EnableInClassList("missions-body--hidden", wantedShown);
+            wantedBody.EnableInClassList("missions-body--hidden", !wantedShown);
+            if (wantedShown) { FillWanted(); return; }
             // Story: the objective text; no button once there is nothing to show.
             bool story = !Session.FreePlay && !Session.StoryMission.IsEmpty && Session.StoryMission.visible;
             storyText.text = story ? Story.ObjectiveText(db) : T(174);
@@ -137,10 +185,88 @@ namespace GoF2Remake.UI
         public VisualElement[] NavItems()
         {
             var l = new List<VisualElement>();
-            foreach (var b in new[] { storyMap, freelanceMap, discard })
-                if (b.style.display != DisplayStyle.None) l.Add(b);
+            if (!missionsTab.ClassListContains("missions-tab--hidden")) { l.Add(missionsTab); l.Add(wantedTab); }
+            if (wantedShown)
+            {
+                l.AddRange(wantedRows);
+                if (wantedMap.style.display != DisplayStyle.None) l.Add(wantedMap);
+            }
+            else
+                foreach (var b in new[] { storyMap, freelanceMap, discard })
+                    if (b.style.display != DisplayStyle.None) l.Add(b);
             l.Add(close);
             return l.ToArray();
+        }
+
+        // ---- the Most Wanted board ---------------------------------------------------------------------------
+
+        void FillWanted()
+        {
+            var db = level.Database;
+            wantedList.Clear();
+            wantedRows.Clear();
+            var list = WantedBoard.ListFor(db, level.Station.index);
+            int story = WantedBoard.StorylineRow;
+            // WantedWindow::init: the first active entry is selected.
+            if (wantedSelected < 0 || !list.Exists(w => w.index == wantedSelected))
+                wantedSelected = (list.Find(w => WantedBoard.State(db, w.index)?.active == true) ?? (list.Count > 0 ? list[0] : null))?.index ?? -1;
+            foreach (var w in list)
+            {
+                var st = WantedBoard.State(db, w.index);
+                int index = w.index;
+                var b = new Button { text = w.name };
+                b.AddToClassList("wanted-row");
+                b.AddToClassList("gof-semibold");
+                b.EnableInClassList("wanted-row--active", st != null && st.active);
+                b.EnableInClassList("wanted-row--dead", st != null && st.terminated);
+                b.EnableInClassList("wanted-row--story", index == story);
+                b.EnableInClassList("wanted-row--selected", index == wantedSelected);
+                b.RegisterCallback<PointerDownEvent>(_ => menu.PlayPush(), TrickleDown.TrickleDown);
+                b.clicked += () => { menu.PlayRelease(); wantedSelected = index; FillWanted(); };
+                b.RegisterCallback<FocusInEvent>(_ => { if (wantedSelected != index) { wantedSelected = index; ShowWantedDetails(); foreach (var r in wantedRows) r.EnableInClassList("wanted-row--selected", r == b); } });
+                wantedList.Add(b);
+                wantedRows.Add(b);
+            }
+            ShowWantedDetails();
+            menu.Focus(wantedRows.Count > 0 ? wantedRows[Mathf.Max(0, list.FindIndex(w => w.index == wantedSelected))] : close);
+        }
+
+        void ShowWantedDetails()
+        {
+            var db = level.Database;
+            var w = wantedSelected >= 0 && wantedSelected < db.Wanted.Count ? db.Wanted[wantedSelected] : null;
+            var st = w != null ? WantedBoard.State(db, w.index) : null;
+            wantedPortrait.EnableInClassList("portrait-hidden", w == null);
+            if (w == null)
+            {
+                wantedName.text = wantedStatus.text = wantedBounty.text = "";
+                wantedText.text = T(174);
+                Show(wantedMap, false);
+                return;
+            }
+            Portrait.Show(wantedPortrait, w.portraitParts, false);
+            wantedName.text = w.name.ToUpperInvariant();
+            bool dead = st != null && st.terminated;
+            wantedStatus.text = $"{T(3226)} {(dead ? T(3227) : T(3228))}";
+            wantedBounty.text = $"{T(3225)} {ItemInfo.Credits(w.reward)}";
+            string Place(int station)
+            {
+                var s = db.Stations.Find(x => x.index == station);
+                return s == null ? T(3229) : $"{s.name} ({s.systemName})";
+            }
+            string from = dead ? " --" : st != null && st.active ? Place(st.lastSeen) : T(3229);
+            string to = dead ? " --" : st != null && st.active ? Place(st.travelsTo) : T(3229);
+            wantedText.text = $"{T(3223)}\n{from}\n\n{T(3224)}\n{to}\n\n{T(3174 + w.index)}";
+            wantedScroll.scrollOffset = Vector2.zero;
+            Show(wantedMap, st != null && st.active && !dead && st.travelsTo >= 0);
+        }
+
+        /// <summary>WantedWindow::OnTouchEnd 424: the star map on the criminal's destination (Mission(0, 0, travelsTo)).</summary>
+        void ShowWantedOnMap()
+        {
+            var st = WantedBoard.State(level.Database, wantedSelected);
+            if (st == null || st.travelsTo < 0) return;
+            ShowOnMap(st.travelsTo, wantedMap);
         }
     }
 }

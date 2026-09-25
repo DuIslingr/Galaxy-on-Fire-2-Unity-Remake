@@ -151,6 +151,28 @@ namespace GoF2Remake.World
 
         // wingman (KIPlayer+0xd8 / +0xdc / +0xe0 / +0xe4)
         public bool IsWingman { get; private set; }
+        /// <summary>PlayerFixedObject::getDockingType (ObjectDocking.DropOff / Pickup / Hackable, 0 = not dockable); level
+        /// scripts change it.</summary>
+        public int DockingType { get; set; }
+        public int SpacePointSet => Spec.spacePoints;
+        /// <summary>Level::getDockingTarget's index (the hacking game's dock index).</summary>
+        public int DockIndex { get; set; } = -1;
+        /// <summary>KIPlayer+0x70: skipped by the radar and the HUD markers (Radar::draw); also while cloaked.</summary>
+        public bool RadarHidden { get => radarHidden || (cloak != null && cloak.Hidden); set => radarHidden = value; }
+        bool radarHidden;
+        NpcCloak cloak;
+
+        /// <summary>The Specters (race 10) and Harval's Scimitar (ship 49) can cloak (NpcCloak).</summary>
+        public bool CanCloak => cloak != null;
+        public bool Cloaked => cloak != null && cloak.Cloaked;
+        /// <summary>setCloakingPossible: may cloak on its own.</summary>
+        public bool CloakingPossible { get => cloak != null && cloak.Possible; set { if (cloak != null) cloak.Possible = value; } }
+        /// <summary>PlayerFighter::cloak(ms) from a level script; 0 uncloaks.</summary>
+        public void Cloak(float ms) => cloak?.Cloak(ms);
+
+        /// <summary>A level script flies it (AI off): straight ahead at this speed (u/ms), no targeting, no firing; -1 = off.
+        /// The script may also turn it (transform).</summary>
+        [System.NonSerialized] public float scriptedSpeed = -1f;
         int wingSlot, wingCommand = 1, scoutStart;
         Target wingTarget;
         Route scout;
@@ -198,7 +220,10 @@ namespace GoF2Remake.World
             Spec = spec;
             fxRootRef = fxRoot;
             assets = CombatAssets.Load();
-            transform.SetPositionAndRotation(ToUnity(spec.position), spec.turretAssembly != null ? OrbitLayout.RotationToUnity(spec.rotation) : GameForward);
+            transform.SetPositionAndRotation(ToUnity(spec.position),
+                spec.turretAssembly != null || spec.fixedObject != null ? OrbitLayout.RotationToUnity(spec.rotation) : GameForward);
+            DockingType = spec.dockingType;
+            RadarHidden = spec.radarHidden;
             if (prefab != null)
             {
                 modelGo = Instantiate(prefab, transform, false);
@@ -269,6 +294,9 @@ namespace GoF2Remake.World
             if (engine.clip != null) engine.Play();
 
             if (spec.startsDead) SetDead();
+            if ((spec.race == Standing.Specter || spec.ship == 49) && spec.fixedObject == null && modelGo != null) cloak = new NpcCloak(model);
+            // Level::assignGuns: a Most Wanted criminal fires its own weapon at x4.
+            if (spec.gunItem >= 0 && gun != null) SetGun(spec.gunItem, spec.gunFactor);
         }
 
         static void Setup3D(AudioSource s)
@@ -403,6 +431,7 @@ namespace GoF2Remake.World
         /// <summary>KIPlayer::setDead: inactive until relaunched.</summary>
         void SetDead()
         {
+            cloak?.Stop();
             Current = State.Dead;
             rig?.HideAll();
             empRig?.HideAll();
@@ -411,6 +440,8 @@ namespace GoF2Remake.World
             if (wreck != null) Destroy(wreck);
             gameObject.SetActive(false);
         }
+
+        void OnDestroy() => cloak?.Dispose();
 
         // ---- per frame -------------------------------------------------------------------------------------
 
@@ -432,6 +463,7 @@ namespace GoF2Remake.World
             if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }
             UpdateRelations();
             Hp.Update(dtMs);
+            cloak?.Update(dtMs, !Asleep && !frozen && !inactive && scriptedSpeed < 0f, panic);
             UpdatePush(dtMs);
             UpdateSmoke();
             UpdateSparks();
@@ -439,6 +471,12 @@ namespace GoF2Remake.World
             if (Asleep) { UpdateSleep(); return; }
             if (IsTurret) { UpdateTurret(dtMs); return; }
             if (parked || frozen) return;   // parked: a target that neither flies nor shoots
+            if (scriptedSpeed >= 0f)
+            {
+                transform.position += transform.forward * scriptedSpeed * dtMs * M;
+                speed = scriptedSpeed;
+                return;
+            }
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
             if (IsFreighter)
             {
@@ -782,7 +820,7 @@ namespace GoF2Remake.World
                     {
                         var firing = useEmp && empGun != null ? empGun : gun;
                         if (firing == null || !target.Targetable) attacking = false;
-                        else if (shootingEnabled && firing.TryFire(transform) >= 0)
+                        else if (shootingEnabled && !RadarHidden && firing.TryFire(transform) >= 0)
                         {
                             var clip = firing == empGun ? WeaponFx.Load(18)?.shot
                                      : assets != null && assets.shots != null && assets.shots.Length == 5 ? assets.shots[NpcTables.ShotSound(Mathf.Clamp(Race, 0, 9))] : null;
@@ -908,6 +946,8 @@ namespace GoF2Remake.World
         /// <summary>Player::damage friendly-fire bookkeeping (§4.5), hits by the player only.</summary>
         void OnDamaged(Target t, int dmg, bool byNpc)
         {
+            // Player::damage on a Most Wanted criminal (+0x3e): Level::attackWanted instead of the friendly-fire rules.
+            if (!byNpc && Spec.wantedIndex >= 0) { traffic.AttackWanted(this, dmg); return; }
             if (byNpc || alwaysEnemy || IsWingman || Race == Standing.Void || Race == Standing.Specter) return;
             if (Target.hostileToPlayer && !turnedEnemy) return;
             if (Race != traffic.SystemRace && Race != traffic.AttackRace) return;
@@ -927,6 +967,7 @@ namespace GoF2Remake.World
         /// <summary>Hull &lt; 1: the dying state (§5.10) / the freighter wreck (§6).</summary>
         void OnDied(Target t)
         {
+            cloak?.Stop();
             traffic.OnShipDied(this, !Target.killedByNpc);
             if (IsWingman) Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract
             if (Spec.ship == 14 && !Target.killedByNpc) Session.BattleshipsDestroyed++;   // Status+0x118

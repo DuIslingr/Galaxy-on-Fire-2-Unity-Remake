@@ -16,7 +16,15 @@
 //   Navigation (index 24)           the jump to Sahi needs a scanner and a tractor beam: Carla's note 532 instead
 //   MGame::OnUpdate 0x1ac778        add-on entry calls: in free flight (no level mission, not mining, no autopilot) at
 //                                   index 45 the Valkyrie call (conversation 46), at 84 the Supernova call (85), each
-//                                   followed by two nextCampaignMission (the remake owns both add-ons)
+//                                   followed by two nextCampaignMission (the remake owns both add-ons); the chapter calls
+//                                   (Status+0x178, set at 93 / 111 / 143): 12 s into a flight outside the Void, Carla's
+//                                   hail and Keith's reply (0xc60 + 2k / 0xc61 + 2k, k = 0 / 1 / 2)
+//   Supernova                       after a space success conversation (MGame::OnTouchEnd, campaign_levels_b.md 3,
+//                                   campaign_levels_c.md 1.5): 95 -> Thynome's orbit, 96 -> Alioth's, 100 -> docked at
+//                                   Katashun, 110 -> docked at Thynome, 120 -> docked at Bak S'ondorr, 126 -> Katashun's
+//                                   orbit, 127 -> Alioth's, 134 -> docked at Var Lupra, 144 -> Var Lupra's orbit again,
+//                                   155 -> the orbit the Void was entered from, 161 -> Maissa's orbit, 162 -> docked at
+//                                   Maissa; step 125's decoy scans (MGame::OnInitialize) in the freighter stations' orbits
 // The conversation is shown by the flight HUD (DialogueRequested); the game is paused meanwhile (Navigation.Paused).
 
 using System;
@@ -66,6 +74,35 @@ namespace GoF2Remake.World
             if (campaign != null && !failed && campaign.Failed && Story.Index == campaign.BuiltIndex) { Fail(); return; }
             if (levelMs >= 5000f) CheckSuccess();
             if (levelMs >= 5000f && !DialogueOpen) CheckAddonEntry();
+            CheckChapterCall();
+            CheckDecoyScan();
+        }
+
+        /// <summary>MGame::OnUpdate, Status+0x178: the chapter's radio call once, 12 000 ms into a flight outside the Void.</summary>
+        void CheckChapterCall()
+        {
+            if (!Session.StoryRadioPending || levelMs < 12000f || level.Layout.alienOrbit || level.Traffic == null) return;
+            if (campaign != null && campaign.Cutscene) return;
+            Session.StoryRadioPending = false;
+            int k = Story.Index >= 143 ? 2 : Story.Index >= 111 ? 1 : 0;
+            level.Traffic.QueueLine(0xc60 + 2 * k, 6, $"CARLA_ANNOYING_CALL_{k}_0");
+            level.Traffic.QueueLine(0xc61 + 2 * k, 0, $"CARLA_ANNOYING_CALL_{k}_1");
+        }
+
+        static readonly int[] FreighterStations = { 15, 30, 40, 45, 60, 70, 80, 85, 95 };
+        bool decoyChecked;
+
+        /// <summary>MGame::OnInitialize at index 125 (campaign_levels_c.md 3.5): a freighter mission station not scanned yet
+        /// gets its bit (Status::getFreighterMissionStationBit) and Keith scans (0xaf4 + rnd(4) at 1500 ms, 0xafa + rnd(4)).</summary>
+        void CheckDecoyScan()
+        {
+            if (decoyChecked || Story.Index != 125 || level.Traffic == null || levelMs < 1500f) return;
+            decoyChecked = true;
+            int bit = System.Array.IndexOf(FreighterStations, level.Layout.stationIndex);
+            if (bit < 0 || (Story.Mission.value & (1 << bit)) != 0) return;
+            Story.Mission.value |= 1 << bit;
+            level.Traffic.QueueLine(0xaf4 + UnityEngine.Random.Range(0, 4), 0);
+            level.Traffic.QueueLine(0xafa + UnityEngine.Random.Range(0, 4), 0);
         }
 
         void CheckSuccess()
@@ -99,6 +136,18 @@ namespace GoF2Remake.World
             else if (n == 65) level.TravelTo(100);                                // Khador freed: on to Kothar (MGame::OnTouchEnd 3246)
             else if (n == 74) { Session.StationIndex = 100; level.Dock(); }  // the convoy taken: docked at Kothar (3290)
             else if (n == 81) level.TravelTo(Session.VoidOrbit);                  // Alice's drive: after her into the Void (3270)
+            // Supernova (MGame::OnTouchEnd ~3315, campaign_levels_c.md 1.5).
+            else if (n == 95) level.TravelTo(10);                                 // "Meanwhile, back on Thynome station..."
+            else if (n == 96 || n == 127) level.TravelTo(98);                     // on to Alioth
+            else if (n == 100) { Session.StationIndex = 120; level.Dock(); }      // docked at Katashun
+            else if (n == 110) { Session.StationIndex = 10; level.Dock(); }       // docked at Thynome (its lounge)
+            else if (n == 120) { Session.StationIndex = 126; level.Dock(); }      // back at Bak S'ondorr
+            else if (n == 126) level.TravelTo(120);                               // Harval and the refugees at Katashun
+            else if (n == 134) { Session.StationIndex = 112; level.Dock(); }      // docked at Var Lupra
+            else if (n == 144) level.TravelTo(112);                               // the array firing cutscene
+            else if (n == 155) level.TravelTo(Session.VoidReturnStation >= 0 ? Session.VoidReturnStation : 98);   // out of the Void
+            else if (n == 161) level.TravelTo(93);                                // "Meanwhile on Maissa..."
+            else if (n == 162) { Session.StationIndex = 93; level.Dock(); }       // the end: docked at Maissa
         }
 
         /// <summary>MGame::gameOverCheck: Globals::lastCampaignMissionFailed / FailCount.</summary>
@@ -112,6 +161,9 @@ namespace GoF2Remake.World
         /// <summary>Navigation.PlanetJumpRefused: index 24 needs a scanner and a tractor beam for the jump to Sahi (532, Carla).</summary>
         public bool RefusePlanetJump(int station)
         {
+            // The Supernova's requirement notes (3213-3218).
+            int refusal = Story.RequirementRefusal(level.Database, station);
+            if (refusal >= 0) { OpenText(Localization.Get(refusal), 16, null); return true; }
             if (Session.FreePlay || Story.Index != 24 || station != Story.Mission.station) return false;
             if (Shop.FirstMounted(level.Database, 17) != null && Shop.FirstMounted(level.Database, 13) != null) return false;
             ShowPages(new List<DialoguePage> { new DialoguePage { speaker = 6, text = 532, voice = "MSG_MISSION_24_NO_EQUIPMENT_INSTALLED" } }, null);

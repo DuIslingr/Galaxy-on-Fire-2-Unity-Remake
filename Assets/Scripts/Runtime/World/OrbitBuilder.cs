@@ -109,7 +109,10 @@ namespace GoF2Remake.World
                 case 101: return "v_station_battlestation_anim";
                 case 108: return "station_kaamo_club";
                 case 109: case 110: return "sn_station_midorian_wrecked";
-                case 111: return "sn_burning_station_luur";
+                // Luur (PlayerStation::PlayerStation): burning up to campaign 0x5d, the bare hull at 0x5e (its level adds the
+                // burning platform), the wreck after.
+                case 111: return Session.CampaignMission <= 0x5d ? "sn_burning_station_luur"
+                               : Session.CampaignMission == 0x5e ? "station_111_luur_mission_94" : "sn_station_midorian_wrecked";
             }
             string prefix = $"station_{layout.stationIndex:000}_";
             var entry = db.Assemblies.Find(a => a.category == "stations" && (a.name.StartsWith(prefix)
@@ -123,7 +126,11 @@ namespace GoF2Remake.World
             if (!layout.hasStation && layout.stationIndex != 110) return null;   // 110 keeps its wreck in the empty orbit
             string name = StationAssembly(db, layout);
             if (name == null) { Debug.LogWarning($"OrbitBuilder: no station assembly for {layout.stationIndex}"); return null; }
-            return Spawn(db, name, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Station", parent);
+            var go = Spawn(db, name, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Station", parent);
+            // PlayerStation::update advances the station's animation every frame except at 101 and in the alien orbit: the
+            // battlestation's arms (and the Void station) hold their first frame there.
+            if (layout.stationIndex == 101 || layout.alienOrbit) PartAnimation.HoldAll(go);
+            return go;
         }
 
         public static GameObject SpawnJumpgate(Database db, OrbitLayout layout, Transform parent = null)

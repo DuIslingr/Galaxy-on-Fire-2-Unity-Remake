@@ -37,6 +37,8 @@ namespace GoF2Remake.Flight
         PlayerHealth health;
         ChaseCamera chase;
         Mining mining;
+        /// <summary>Docking at a story object: no collision while easing in, docked or leaving (set by the level).</summary>
+        [System.NonSerialized] public ObjectDocking docking;
 
         public void Setup(PlayerHealth playerHealth, ChaseCamera chaseCamera, Mining miningSystem)
         {
@@ -50,6 +52,7 @@ namespace GoF2Remake.Flight
             TouchingStation = false;
             if (off || health == null || health.Dead) { wormhole?.SetSound(false); return; }
             if (mining != null && mining.State != Mining.Phase.Idle) return;
+            if (docking != null && docking.Busy && docking.State != ObjectDocking.Phase.Approach) return;   // easing onto a docking point
             CheckWormhole();
             CheckObstacles(true);
             CheckObstacles(false);

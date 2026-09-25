@@ -26,8 +26,10 @@
 //                                 jumpgate, otherwise the planet of the system's gate station. Run at the end of the
 //                                 launch / arrival camera ("Autopilot On" + 28) and from the menu.
 // Reaching the jumpgate (Level::collideStream) is handled by SystemJump (ReachedGate).
+// Docking targets (Level::getDockingTarget, MGame::OnTouchBegin 0x1a838c): the story's dockable objects are locked like a
+// landmark; the action docks (ObjectDocking), and the autopilot menu lists them (Hud::initHudMenu(3)).
 // Remake-only: the autopilot menu also lists "Khador Drive" (1359) when the ship has one; the original has it in the HUD's
-// main menu. Not yet: menu entries for route waypoints and docking targets, mission restrictions.
+// main menu. Not yet: menu entries for route waypoints, mission restrictions.
 
 using System;
 using System.Collections.Generic;
@@ -40,7 +42,7 @@ namespace GoF2Remake.Flight
 {
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget }
 
         public class Target
         {
@@ -51,6 +53,7 @@ namespace GoF2Remake.Flight
             public bool disabled;            // drawn half-transparent, ignores taps (the cloak while not ready)
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
+            public NpcShip dockingShip;     // docking targets: the object
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
 
@@ -137,6 +140,34 @@ namespace GoF2Remake.Flight
         GoF2Remake.World.Wormhole wormhole;
         Target wormholeTarget;
 
+        /// <summary>ObjectDocking on the player (set by the level): locked docking targets dock through it.</summary>
+        [NonSerialized] public ObjectDocking Docking;
+        /// <summary>The level's ships (Traffic.Ships): those with a docking type are docking targets.</summary>
+        [NonSerialized] public List<NpcShip> Ships;
+
+        /// <summary>Level::getDockingTarget: the dockable objects, lockable while visible and not radar-hidden.</summary>
+        void UpdateDockingTargets()
+        {
+            if (Ships == null) return;
+            foreach (var s in Ships)
+            {
+                if (s == null || s.DockingType <= 0) continue;
+                if (!Targets.Exists(t => t.dockingShip == s))
+                {
+                    s.DockIndex = Targets.FindAll(t => t.kind == Kind.DockingTarget).Count;   // Level::getDockingTarget's index
+                    Targets.Add(new Target { kind = Kind.DockingTarget, transform = s.transform, dockingShip = s });
+                }
+            }
+            foreach (var t in Targets)
+            {
+                if (t.kind != Kind.DockingTarget) continue;
+                var s = t.dockingShip;
+                t.name = s != null ? s.Target.displayName ?? "" : "";
+                t.hidden = s == null || s.Gone || !s.Target.Alive || s.DockingType <= 0 || s.RadarHidden || s.Hidden || s.Inactive;
+                if (t.hidden && (Locked == t || Candidate == t)) { Locked = Candidate = null; LockTimer = 0f; }
+            }
+        }
+
         /// <summary>Set by the level: planet jumps and the Khador Drive are refused (story, campaign_flow.md 7).</summary>
         public Func<bool> JumpsBlocked;
         /// <summary>Set by the level: a story rule refuses the jump to this station itself (index 24: Sahi needs a scanner and a
@@ -168,6 +199,7 @@ namespace GoF2Remake.Flight
             : Autopilot ? Localization.Extra("hudAutopilotOff", "AUTOPILOT OFF")
             : Locked == null ? null
             : Locked.kind == Kind.Planet ? Localization.Extra("hudJump", "JUMP")
+            : Locked.kind == Kind.DockingTarget ? Localization.Extra("hudDock", "DOCK")
             : layout != null && layout.alienOrbit ? null   // MGame::OnTouchBegin: no autopilot to the Void station
             : Localization.Extra("hudAutopilot", "AUTOPILOT");
 
@@ -245,6 +277,7 @@ namespace GoF2Remake.Flight
             if (station != null && !layout.alienOrbit) list.Add(station);
             var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
             if (gate != null) list.Add(gate);
+            foreach (var t in Targets) if (t.kind == Kind.DockingTarget && !t.hidden) list.Add(t);
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
             // Hud::initHudMenu(0) 0x18e734: the cloak entry (the item's name), unusable while cloaked / charging / recharging.
@@ -253,7 +286,7 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>MGame::OnTouchEnd, autopilot button: only while nothing else flies the ship; pauses the game.</summary>
-        public bool CanOpenMenu => !Autopilot && !Jumping && !paused && (mining == null || mining.State == Mining.Phase.Idle);
+        public bool CanOpenMenu => !Autopilot && !Jumping && !paused && (mining == null || mining.State == Mining.Phase.Idle) && (Docking == null || !Docking.Busy);
 
         public void OpenMenu()
         {
@@ -278,6 +311,7 @@ namespace GoF2Remake.Flight
             if (target == null || target.disabled) return;
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
             if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
+            if (target.kind == Kind.DockingTarget) { Docking?.Dock(target.dockingShip); return; }
             if (target.kind == Kind.KhadorDrive)
             {
                 if (JumpsBlocked != null && JumpsBlocked() && Story.ForcedKhadorTarget(Session.StationIndex) == null) { Say(Localization.Get(525)); return; }
@@ -332,6 +366,8 @@ namespace GoF2Remake.Flight
         void UpdateLock(float dtMs)
         {
             UpdateRoute();
+            UpdateDockingTargets();
+            if (Docking != null && Docking.Busy) { Candidate = Locked = null; LockTimer = 0f; wasLocked = false; return; }
             if (wormholeTarget != null) wormholeTarget.hidden = !wormhole.Visible;
             var cam = Camera.main;
             Target best = null;
@@ -412,6 +448,7 @@ namespace GoF2Remake.Flight
             if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(Localization.Get(525)); return; }
             if (Locked.kind == Kind.Planet && PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) return;
             if (Locked.kind == Kind.Planet) StartJump(Locked);
+            else if (Locked.kind == Kind.DockingTarget) { var s = Locked.dockingShip; SetAutopilot(null); Docking?.Dock(s); }
             else
             {
                 Say($"{Localization.Get(546)}: {Locked.name}");                 // Target: Var Hastra Station

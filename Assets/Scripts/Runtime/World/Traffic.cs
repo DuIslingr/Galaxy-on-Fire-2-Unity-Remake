@@ -73,7 +73,9 @@ namespace GoF2Remake.World
             if (!storyOrbit)
                 foreach (var spec in TrafficPlan.Build(db, StationIndex, sys, player != null ? new Vector3(player.transform.position.x, player.transform.position.y, -player.transform.position.z) / 0.05f : Vector3.zero,
                                                        wormhole != null && wormhole.Visible ? wormhole.GamePosition : (Vector3?)null)) Create(spec);
+            AddCampaignStatics(layout);
             ConnectPlayers();
+            wantedShip = Ships.Find(s => s.Spec.wantedIndex >= 0);
             convoyFreighter = Ships.Find(s => s.Spec.convoyRole == SpawnSpec.ConvoyFreighter);
             if (convoyFreighter != null)
             {
@@ -137,6 +139,8 @@ namespace GoF2Remake.World
         {
             var names = Session.Wingmen;
             if (names == null || names.Count == 0 || player == null || Session.CampaignMission == 158) return;
+            // Level::createWingmen: not in the supernova system (27) either, before campaign 0x9e.
+            if (!Session.FreePlay && Session.CampaignMission < 0x9e && (db.Stations.Find(s => s.index == StationIndex)?.system ?? -1) == 27) return;
             int race = Session.WingmanRace;
             float[] right = { -1000f, 2000f, 0f };
             for (int i = 0; i < Mathf.Min(3, names.Count); i++)
@@ -196,6 +200,13 @@ namespace GoF2Remake.World
             public string text, speaker;
             public int[] portrait;      // a generic face, or null with speakerId
             public int speakerId = -1;  // a story speaker (9 Pirate Boss)
+            public string voice;        // Globals::getDialogueSoundId (the story's radio calls)
+        }
+
+        /// <summary>A story speaker's line in the radio box (Level::createRadioMessage 0x13 / 0x1b), with its voice.</summary>
+        public void QueueLine(int text, int speakerId, string voice = null)
+        {
+            chatterQueue.Enqueue(new Chatter { text = Localization.Get(text), speaker = StoryTable.SpeakerName(speakerId), speakerId = speakerId, voice = voice });
         }
 
         readonly Queue<Chatter> chatterQueue = new Queue<Chatter>();
@@ -331,6 +342,8 @@ namespace GoF2Remake.World
                 if (ship.Spec.nameText == 1663) Session.InformerKilled = true;
                 else if (byPlayer && !Session.InformerKilled) Session.InformerFailed = true;
             }
+            // PlayerFighter::update's death: a Most Wanted criminal pays its bounty whoever killed it; no standing hit.
+            if (ship.Spec.wantedIndex >= 0) { WantedKilled(ship); if (byPlayer && ship.Target.hostileToPlayer) Session.Kills++; return; }
             if (!byPlayer || blackMarket) return;
             // Player::damage: the convoy freighter ("Arms delivery") destroyed by the Liberator (0xb3) -> step 59's bonus.
             if (ship.Spec.convoyRole == SpawnSpec.ConvoyFreighter && ship.Target.lastPlayerWeapon == 179 && Session.StoryMission != null)
@@ -352,6 +365,7 @@ namespace GoF2Remake.World
             UpdateAlienAttackers(dtMs);
             UpdateChatter(dtMs);
             UpdateConvoy();
+            UpdateWanted();
             int hostiles = 0;
             if (hasScanner)
                 foreach (var s in Ships)
@@ -361,6 +375,144 @@ namespace GoF2Remake.World
                         hostiles++;
             HostileCount = hostiles;
             UpdateMusic(Time.unscaledDeltaTime);
+        }
+
+        // ---- Level::createStaticObjects 0xcadb0 (campaign_levels_c.md 4, space_props.md 3) ------------------------------
+
+        /// <summary>The Supernova's orbit objects in every level: the Mining Plant at Coromesk (103) for campaign > 0x54 (not
+        /// at 0x87, whose level has its own), and at Var Lupra (112) for 0x80..0x91 the plasma array at (-50000, 0, 50000)
+        /// facing the sun in its build stage (stage 5 with its glow at 0x91). Friendly, unkillable, never moving.</summary>
+        void AddCampaignStatics(OrbitLayout layout)
+        {
+            if (Session.FreePlay || layout.alienOrbit) return;
+            int cm = Session.CampaignMission;
+            if (layout.stationIndex == 103 && cm > 0x54 && cm != 0x87) Create(MiningPlant());
+            if (layout.stationIndex == 112 && cm >= 0x80 && cm <= 0x91) Create(PlasmaArray(layout, cm));
+        }
+
+        /// <summary>Level::createStaticObject 0x4a88: the Mining Plant (3210), docking type 1 (the titanium goes in here).</summary>
+        public static SpawnSpec MiningPlant() => new SpawnSpec
+        {
+            group = NpcGroup.Special, race = 3, ship = -1, position = Vector3.zero, fixedObject = "sn_station_mining_plant", stationary = true,
+            alwaysFriend = true, hitpoints = 9999999, noLoot = true, nameText = 3210, dockingType = ObjectDocking.DropOff, spacePoints = 1, hitRadius = 8000f,
+        };
+
+        /// <summary>The plasma array (3207) in the build stage of campaign 'cm' (stages 1-5: from 0x80, 0x83, 0x87, 0x8a, 0x8e).</summary>
+        public static SpawnSpec PlasmaArray(OrbitLayout layout, int cm)
+        {
+            int stage = cm < 0x83 ? 1 : cm < 0x87 ? 2 : cm < 0x8a ? 3 : cm < 0x8e ? 4 : 5;
+            var sun = layout.lightDirection;
+            float yaw = Mathf.Atan2(sun.x, sun.z);
+            return new SpawnSpec
+            {
+                group = NpcGroup.Special, race = 3, ship = -1, position = new Vector3(-50000, 0, 50000), rotation = new Vector3(0, yaw, 0),
+                fixedObject = $"sn_plasma_array_midorian_stage_00{stage}", stationary = true, alwaysFriend = true, hitpoints = 9999999, noLoot = true,
+                nameText = 3207, hitRadius = 8000f,
+            };
+        }
+
+        /// <summary>PlayerEgo::update's hacking won at a hidden-blueprint wreck: Status::unlockBluePrint, the wreck's flag and
+        /// loot cleared, docking type 0, Level::createRadioMessage(k + 0x15) (3156 + k, BLUEPRINT_RECOVERED_k), found for good.</summary>
+        public void OnHackWon(NpcShip ship)
+        {
+            int k = ship != null ? ship.Spec.hiddenBlueprint : -1;
+            if (k < 0 || k >= TrafficPlan.HiddenBlueprints.Length || (Session.HiddenBlueprintsFound & (1 << k)) != 0) return;
+            Session.HiddenBlueprintsFound |= 1 << k;
+            Blueprints.Unlock(TrafficPlan.HiddenBlueprints[k].blueprint);
+            ship.DockingType = 0;
+            QueueLine(3156 + k, 0, $"BLUEPRINT_RECOVERED_{k}");
+        }
+
+        // ---- the Most Wanted criminal (wingmen_wanted.md 2.6-2.7) -----------------------------------------------------
+
+        NpcShip wantedShip;
+        bool wantedUncovered, wantedAttacked, wantedSurrendered;
+        int damageAfterSurrender;
+        /// <summary>The player's radar ship lock (CombatRadar.Locked), set by the level: locking the criminal uncovers it.</summary>
+        public Func<Target> LockedTarget;
+        /// <summary>A bounty was paid (the reward message: 3206 + credits, sound 36).</summary>
+        public event Action<int> BountyCollected;
+        /// <summary>An uncovered criminal is alive (Radar::draw: music 151).</summary>
+        public bool WantedUncovered => wantedShip != null && wantedShip.Target.Alive && wantedShip.alwaysEnemy;
+
+        WantedData WantedOf(NpcShip s) => s != null && s.Spec.wantedIndex >= 0 && s.Spec.wantedIndex < db.Wanted.Count ? db.Wanted[s.Spec.wantedIndex] : null;
+
+        void UpdateWanted()
+        {
+            if (wantedShip == null || !wantedShip.Target.Alive) return;
+            // PlayerFighter::update ~0xf0f00: the radar lock on it uncovers it (a scanner is needed to lock ships).
+            if (!wantedUncovered && !wantedShip.alwaysEnemy && !wantedSurrendered && LockedTarget != null && LockedTarget() == wantedShip.Target)
+                UncoverWanted();
+            // Player::damage -> Level::almostKillWanted: the storyline criminals give up at a third of their hull.
+            var w = WantedOf(wantedShip);
+            if (w != null && WantedBoard.IsStoryline(w.index) && !wantedSurrendered && wantedShip.Hp.hull < wantedShip.Hp.maxHull / 3)
+            {
+                wantedSurrendered = true;
+                wantedShip.alwaysEnemy = false;
+                wantedShip.turnedEnemy = false;
+                wantedShip.alwaysFriend = true;
+                wantedShip.shootingEnabled = false;
+                damageAfterSurrender = 0;
+                WantedBoard.OnSurrender(db, w.index, StationIndex);
+            }
+        }
+
+        /// <summary>Level::uncoverWanted 0xd63ac: it and its escort turn on the player; the uncover line (or the storyline talk).</summary>
+        void UncoverWanted()
+        {
+            wantedUncovered = true;
+            TurnWantedHostile();
+            var w = WantedOf(wantedShip);
+            if (w == null) return;
+            if (w.index == 0) { WantedLine(3134, -1, w); WantedLine(3135, w.index, w); }
+            else if (w.index == 1) { WantedLine(3139, -1, w); WantedLine(3140, w.index, w); }
+            else WantedLine(3141 + UnityEngine.Random.Range(0, 5), -1, w);
+        }
+
+        /// <summary>Level::attackWanted 0xd642c: the player's first hit (instead of the friendly-fire rules).</summary>
+        public void AttackWanted(NpcShip s, int dmg)
+        {
+            if (s != wantedShip) return;
+            if (wantedSurrendered)
+            {
+                // A surrendered criminal fights again when the player keeps shooting (above 5 % of its hull).
+                damageAfterSurrender += dmg;
+                if (damageAfterSurrender > s.Hp.maxHull / 20) { s.alwaysFriend = false; s.alwaysEnemy = true; s.shootingEnabled = true; }
+                return;
+            }
+            if (wantedAttacked) return;
+            wantedAttacked = true;
+            TurnWantedHostile();
+            var w = WantedOf(s);
+            if (w == null) return;
+            if (w.index == 0) { WantedLine(3132, w.index, w); WantedLine(3133, -1, w); }
+            else if (w.index == 1) { WantedLine(3136, w.index, w); WantedLine(3137, -1, w); WantedLine(3138, w.index, w); }
+            else if ((w.index | 4) == 6) WantedLine(3146 + UnityEngine.Random.Range(0, 5), w.index, w);   // only wanted 2 and 6 taunt
+        }
+
+        void TurnWantedHostile()
+        {
+            wantedShip.alwaysEnemy = true;
+            foreach (var s in Ships)
+                if (s.Spec.wantedEscortOf == wantedShip.Spec.wantedIndex && s.Target.Alive) { s.alwaysEnemy = true; s.turnedEnemy = true; }
+        }
+
+        void WantedKilled(NpcShip ship)
+        {
+            var w = WantedOf(ship);
+            if (w == null) return;
+            int reward = WantedBoard.OnKilled(db, w.index);
+            if (reward > 0) BountyCollected?.Invoke(reward);
+            WantedLine(3151 + UnityEngine.Random.Range(0, 5), -1, w);   // Level::killWanted: "a job well done"
+        }
+
+        /// <summary>Level::createRadioMessage(0x10 / 0x11 / 0x12): Keith (speaker 0) or the criminal (image 10000 + i: its face).</summary>
+        void WantedLine(int text, int wantedSpeaker, WantedData w)
+        {
+            var c = new Chatter { text = Localization.Get(text) };
+            if (wantedSpeaker < 0) { c.speakerId = 0; c.speaker = Localization.Get(1597); }
+            else { c.portrait = w.portraitParts; c.speaker = w.name; }
+            chatterQueue.Enqueue(c);
         }
 
         // ---- step 59's arms convoy (LevelScript::process, LevelScript+0xa9) ------------------------------------------
@@ -422,7 +574,7 @@ namespace GoF2Remake.World
             foreach (var s in Ships)
             {
                 if (!s.Gone) continue;
-                if (s.Spec.group == NpcGroup.Local) { s.Revive(StationPosition); continue; }
+                if (s.Spec.group == NpcGroup.Local && s.Spec.wantedIndex < 0) { s.Revive(StationPosition); continue; }   // not the criminal
                 if (s.Spec.group == NpcGroup.Raider && deadRaiders > 1 && raiderWaves < 2 && Player != null
                     && (s.Race == Standing.Void || Security == 0 || (Security == 1 && raidersRespawned <= 2)))
                 {
@@ -464,11 +616,19 @@ namespace GoF2Remake.World
         public bool NoBattleMusic { get; set; }
 
         /// <summary>Radar::draw music choice: switch (with a short fade) only when the category changes.</summary>
+        /// <summary>Any active hostile Specter (race 10) in the orbit.</summary>
+        bool SpectersHostile => Ships.Exists(s => s.Race == Standing.Specter && !s.Gone && !s.Inactive && s.Target.Alive && s.Target.hostileToPlayer);
+        /// <summary>The supernova system (27) before campaign 0x9e: its own calm music (148).</summary>
+        bool SupernovaCalm => !Session.FreePlay && Session.CampaignMission < 0x9e && (db.Stations.Find(s => s.index == StationIndex)?.system ?? -1) == 27;
+
         void UpdateMusic(float dt)
         {
             if (assets == null || music == null) return;
             if (MusicMuted) { if (music.isPlaying) music.Stop(); musicCategory = pendingCategory = -1; return; }
             int cat = HostileCount <= 0 || NoBattleMusic ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
+            // Radar::draw: an uncovered Most Wanted criminal -> 151; hostile Specters (race 10) -> 149 / 150.
+            if (cat > 0 && WantedUncovered) cat = 4;
+            else if (cat > 0 && SpectersHostile) cat = cat >= 3 ? 6 : 5;
             if (cat != musicCategory && cat != pendingCategory) pendingCategory = cat;
             if (pendingCategory >= 0)
             {
@@ -478,9 +638,14 @@ namespace GoF2Remake.World
                     musicCategory = pendingCategory;
                     pendingCategory = -1;
                     // Globals::playMusicAndFadeOutCurrent: 146 HomeBase_NoCombat in the Kaamo Club's orbit.
+                    var sn = SupernovaAssets.Load();
                     var clip = musicCategory == 0 ? (StationIndex == KaamoClub.Station && assets.homeBaseMusic != null ? assets.homeBaseMusic
+                                                     : SupernovaCalm && sn != null && sn.gammaRayMusic != null ? sn.gammaRayMusic   // 148 the supernova
                                                      : assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null)
-                                                  : (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
+                                 : musicCategory == 4 ? sn?.wantedMusic
+                                 : musicCategory == 5 ? sn?.stealthMusic1
+                                 : musicCategory == 6 ? sn?.stealthMusic2
+                                 : (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
                     // Radar::draw: 145 Space_NoCombat_Void in the alien orbit, 136 Space_Combat_Void there and at an attacked station.
                     var story = StoryAssets.Load();
                     if (story != null && musicCategory == 0 && StationIndex == Session.VoidOrbit && story.voidMusic != null) clip = story.voidMusic;

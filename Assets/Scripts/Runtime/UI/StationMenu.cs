@@ -326,7 +326,44 @@ namespace GoF2Remake.UI
             BuildHints(InputMode.Current);
         }
 
-        bool medalsChecked;
+        bool medalsChecked, wantedChecked;
+
+        /// <summary>ModStation::OnInitialize / checkHints, the Most Wanted boards (wingmen_wanted.md 2.3, 2.8): criminals newly
+        /// active on this board (3230 / 3231), the board hints 601 (the Terran board, from 128) and 613 (all boards, 162),
+        /// and a board boss's ship on sale at Quineros (107, 3232).</summary>
+        bool CheckWanted()
+        {
+            if (wantedChecked || level == null || level.Station == null || Session.FreePlay) return false;
+            wantedChecked = true;
+            var db = level.Database;
+            int station = level.Station.index;
+            int n = WantedBoard.ActivateNew(db, station);
+            if (n == 1) ShowToast(Localization.Get(3230));
+            else if (n > 1) ShowToast(Localization.Get(3231).Replace("#N", n.ToString()));
+            if (station == 107)
+                foreach (int ship in WantedBoard.QuinerosShips(db)) Story.AddDealerShip(107, ship);
+            string note = null;
+            if ((Session.WantedHints & 1) == 0 && Session.CampaignMission >= WantedBoard.StorylineFirst && WantedBoard.Accessible(db, station))
+            { Session.WantedHints |= 1; note = Localization.Get(601); }
+            else if ((Session.WantedHints & 2) == 0 && Session.CampaignMission >= WantedBoard.AllBoards)
+            { Session.WantedHints |= 2; note = Localization.Get(613); }
+            else
+            {
+                int[] bosses = { 6, 12, 18, 24 };
+                for (int k = 0; k < 4 && note == null; k++)
+                {
+                    int bit = 4 << k;
+                    var st = WantedBoard.State(db, bosses[k]);
+                    if ((Session.WantedHints & bit) != 0 || st == null || !st.terminated || bosses[k] >= db.Wanted.Count) continue;
+                    Session.WantedHints |= bit;
+                    note = Localization.Get(3232).Replace("#WANTED_NAME", db.Wanted[bosses[k]].name).Replace("#SHIP_NAME", Localization.Get(913 + 45 + k));
+                }
+            }
+            if (note == null) return false;
+            CloseHangar();
+            storyDialogue.ShowMessage(note, 16, () => Select(launchButton));
+            return true;
+        }
 
         /// <summary>Achievements::checkForNewMedal on docking: "New medal!" (353) with each improved medal.</summary>
         bool CheckMedals()
@@ -501,6 +538,7 @@ namespace GoF2Remake.UI
                 inLounge = level.View == StationView.Lounge && !level.IntroPlaying,
                 station = level.Station.index,
             };
+            if (ctx.inLounge && SpecialLounge(ctx.station)) return true;
             if (!Story.IsComplete(level.Database, ctx)) return false;
             Story.Mission.won = true;
             CloseHangar();
@@ -508,6 +546,38 @@ namespace GoF2Remake.UI
             var step = Story.Step;
             if (step != null && step.success.Count > 0) storyDialogue.Show(step.success, _ => AfterStorySuccess());
             else AfterStorySuccess();
+            return true;
+        }
+
+        /// <summary>ModStation::OnUpdate's lounge searches (campaign_flow.md 3.1 5): at 116 the Pescal Inartu bars other than
+        /// Maissa (90, 91, 92, 94) each play their flavour line once (2716 + slot, bit slot of the mission value); at 148 the
+        /// brokers' bars Kappa (55), Inari Onu (66) and Coppolite (9) each play conversation 148 / 149 / 150 once (bits 1 / 2 /
+        /// 4), and Kalun Amir (96) sets the index to 151 and plays its conversation (closing it advances to 152).</summary>
+        bool SpecialLounge(int station)
+        {
+            var m = Story.Mission;
+            if (Story.Index == 116 && (station == 90 || station == 91 || station == 92 || station == 94))
+            {
+                int slot = station == 94 ? 3 : station - 90;
+                if ((m.value & (1 << slot)) != 0) return false;
+                m.value |= 1 << slot;
+                storyDialogue.Show(new System.Collections.Generic.List<DialoguePage> { new DialoguePage { speaker = 0, text = 2716 + slot, voice = $"MISSION_ALT_116_{slot}" } },
+                                   _ => Select(launchButton));
+                return true;
+            }
+            if (Story.Index != 148) return false;
+            if (station == 96)
+            {
+                Session.CampaignMission = 151;
+                Session.StoryMission = StoryMission.From(StoryTable.Step(151));
+                return false;   // the normal path: 151 (lounge at Kalun Amir) is complete right here
+            }
+            int k = station == 55 ? 0 : station == 66 ? 1 : station == 9 ? 2 : -1;
+            if (k < 0 || (m.value & (1 << k)) != 0) return false;
+            m.value |= 1 << k;
+            var pages = StoryTable.Step(148 + k)?.success;
+            if (pages == null || pages.Count == 0) return false;
+            storyDialogue.Show(pages, _ => Select(launchButton));
             return true;
         }
 
@@ -527,6 +597,7 @@ namespace GoF2Remake.UI
             }
             int n = Story.Advance(db);
             Story.AfterDockedAdvance(n, level.Station.index);                // Khador's ships and rum at Kothar (77, 84)
+            if (n == WantedBoard.StorylineFirst) wantedChecked = false;      // Status::activateNewWanted + hint 601 at step 128
             if (Story.ShipSwapped(n)) level.ReplacePlayerShip(Session.ShipIndex);   // the loaner / the own ship on the turntable
             if (n == 9 || n == 44 || n == 75 || n == 76 || n == 83)
             {
@@ -986,6 +1057,7 @@ namespace GoF2Remake.UI
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckKaamo()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPendingProducts()) return;
             CheckMedals();
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWanted()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
             lounge?.Update();
             UpdateTicker();

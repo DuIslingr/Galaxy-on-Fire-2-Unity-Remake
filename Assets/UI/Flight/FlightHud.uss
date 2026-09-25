@@ -429,6 +429,16 @@
     display: none;
 }
 
+/* The launch / arrival camera (LevelScript's fly-in keeps this[0x11], so MGame::OnRender2D skips Hud::draw and Radar::draw):
+   only the orbit information shows. Visibility, not display: it is inherited, so the orbit block can turn itself back on. */
+.hud-launch .hud-safe {
+    visibility: hidden;
+}
+
+.hud-launch .orbit-info {
+    visibility: visible;
+}
+
 /* ---- mining minigame (full screen, under the touch controls) ------------------------------ */
 
 .mining {
@@ -993,4 +1003,35 @@
 .lens-flare-image {
     position: absolute;
     -unity-background-scale-mode: stretch-to-fill;
+}
+
+/* ---- the hacking game (HackingView) and the docking transfer counter --------------------------------- */
+
+.hacking-layer {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+}
+
+.hacking-abs {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.transfer-counter {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 62%;
+    -unity-text-align: middle-center;
+    font-size: 26px;
+    letter-spacing: 2px;
+    color: #FFFFFF;
+    text-shadow: 0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+.transfer-counter--hidden {
+    display: none;
 }

@@ -19,7 +19,8 @@ Assets/
   Scripts/Runtime/World/  station orbits: OrbitLayout (seeded layout), OrbitBuilder (layout -> scene, shared by
                      the flight level and the menu background), SpaceLevel, Backdrop, SpaceDust,
                      SystemJump (jumpgate / Khador travel), Traffic + NpcShip (NPC ships), Wormhole (the Void's wormhole);
-                     story: StorySpace, CampaignLevel, IntroCutscenes (0 / 1), MainCampaignLevels (14-42);
+                     story: StorySpace, CampaignLevel, IntroCutscenes (0 / 1), MainCampaignLevels (14-42),
+                     ValkyrieLevels (48-81), SupernovaLevels (87-158), GasCloudField, NpcCloak;
                      docked station: StationLevel + StationTables
   Scripts/Editor/    import settings, prefab builder, asset pack installer, menu items
   Models/            1,125 converted .fbx meshes, each with a .gof2mesh.json sidecar (pivots, keyframes)
@@ -128,7 +129,7 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Sun/planets:** quads 1000 m from the camera, drawn at the far plane (`GoF2/Backdrop`); sun swells + streak near the screen centre; planets mirrored so their lit rim faces the sun.
 - **Lights:** LIGHT0 toward the sun (`clamp(15 * sunColour, 0, 2)`), LIGHT1 from the orbit planet (Unity +Z), linear fog in 6 systems. Camera: vertical FOV 1.22 rad, near 1 m, far 15 km, chase offsets (0, 600, -1338) / (0, 600, -650) game units.
 - **Main menu background** (`MenuBackground`): the original's menu backdrop is a normal orbit level (Level type 2), so it builds a curated station's orbit with `OrbitBuilder` too (camera start angle automatic: lit side, planet behind). Menu-only: full-detail station, asteroids kept out of the camera orbit, and traffic of the system's race (fighter pairs, freighter 30% Nivelian, battleship in Terran space) on lanes picked relative to the orbiting camera each pass; some ships start in view (`Flyby.startProgress`), others fly in.
-- **Docking / launch:** within 16000 units of the station (`PlayerEgo::collidesWithStation`), the HUD offers **Dock** (tap, Enter, or controller X). It only appears after the player has left that range once, because the undock spawn is inside it; the original requires the autopilot instead. Docking loads `Station` straight away with no animation, like `MGame::dockEvent`. Launching from the station sets `Session.LaunchedFromStation`: a fixed camera 9000 units ahead watches the ship fly past for 7 s (`LevelScript`), then the chase camera eases in. The player has no control meanwhile (`ShipController.inputLocked`, weapons blocked); any key, button, stick, click or tap except Esc / Tab / Menu / View skips it (`LevelScript::skipSequence`) and snaps the chase camera behind the ship. Same for the arrival fly-in.
+- **Docking / launch:** within 16000 units of the station (`PlayerEgo::collidesWithStation`), the HUD offers **Dock** (tap, Enter, or controller X). It only appears after the player has left that range once, because the undock spawn is inside it; the original requires the autopilot instead. Docking loads `Station` straight away with no animation, like `MGame::dockEvent`. Launching from the station sets `Session.LaunchedFromStation`: a fixed camera 9000 units ahead watches the ship fly past for 7 s (`LevelScript`), then the chase camera eases in. The player has no control meanwhile (`ShipController.inputLocked`, weapons blocked); any key, button, stick, click or tap except Esc / Tab / Menu / View skips it (`LevelScript::skipSequence`) and snaps the chase camera behind the ship. Same for the arrival fly-in. Meanwhile the HUD, the radar and its ship markers are hidden, only the orbit information shows (`MGame::OnRender2D` skips `Hud::draw` / `Radar::draw` while the fly-in holds LevelScript's cutscene flag; `.hud-launch`).
 - The HUD has one action prompt (tap, Enter, controller X): Autopilot / Jump / Autopilot off (see "Navigation"), Mine / Abort / Stop mining (see "Mining"), else Dock.
 - Music: the system race's space track, battle tracks by the number of hostile ships (see "NPCs and combat").
 - **Lens flare** (`LensFlareView` in the flight HUD, under the HUD; `StarSystem::render2D` / `LensFlare::render2D`): 7 images of `gof2_interface.png` (1288-1290 → `GoF2Hud/flare_0..2`) on the line centre → sun at t 0.5 / 0.25 / 0.75 / 0.125 / 1/11 / -0.75 / -0.2, alpha 70 + I (40 + I), plus a full-screen glare of alpha I, tinted by the system's flare colour; I = 64 (80 Ginoya) · (1 − d / (H/2)) (`Backdrop.FlareIntensity`, also the sun swelling); shown while the sun projects in front within −W..2W / −H..2H, no occlusion. Sizes assume a 768-high canvas (64 px images).
@@ -165,7 +166,7 @@ Research: `Reference/research/starmap_travel.md` (+ `Reference/tools/starmap/sta
 - **Khador Drive** (item 85, or ships 37 / 38 / 40): the autopilot menu entry opens the map in jump mode; a jump to another system (instant jump) charges 5000 ms (sound 33, cells removed at the start, "-N t Energy Cells", charge bar in the HUD) once the level is 5 s old, then the `khador_jump` fx (15026, scale 2) 3000 units ahead, camera at fx + R(-2000, 300, -2000) drifting (5, 2, -5), ship hidden at 1700 ms, reload at the fx end (~4 s). Cells = gate jumps on the shortest route through visible systems, 4 without one, x2 on Extreme.
 - **Arrival** from another system: the hidden gate in the gate orbit, else (0, 0, 100000), facing the station, with the 7 s fly-in camera; the orbit information (race logo, station, "<System> System", security level in its colour) shows during it. The programmed station is cleared: no autopilot leg follows a system jump.
 - **Remake-only (free play, no campaign):** the campaign takes the player out of gateless Mido; without it, a ship in a system without a jumpgate counts as having a Khador Drive (it still needs energy cells), and Var Hastra always stocks energy cells.
-- Not yet: mission maps and routes, the lounge's system-info reveal, the Void system jump (422), volatile goods (612), mission blocks (525), the map sounds 102 (Map_Whoosh) and the verified KhadorDrive sound (Jumpgate_4c stands in).
+- Not yet: mission maps and routes, the lounge's system-info reveal, volatile goods (612), mission blocks (525), the map sounds 102 (Map_Whoosh) and the verified KhadorDrive sound (Jumpgate_4c stands in).
 
 ## NPCs and combat
 
@@ -187,7 +188,8 @@ Research: `Reference/research/npc_traffic_ai.md` (+ `Reference/tools/npc/`: `npc
 - **Docking fine** (`StationMenu.CheckDockingFine`, `ModStation::OnInitialize`): an enemy race's station asks |standing| / 100 · 2800 ± 100 (205), a station whose forces the player attacked rank · 150 + 1000 (206), ×10 Extreme; No = straight back into space, not enough credits = 203.
 - **Signatures** (items 189-192, `Standing.SignatureRace`): the race is a friend (+100), its rival an enemy, the others neutral whatever the axes say; friendly fire on that race (33 % / 10 % Extreme of a hull) or any race (50 % / 25 %) removes it (324, delict 100). Mission bonuses use `Standing.RawToward`.
 - EMP-disabled NPCs stop moving and show the lightning of records 17 / 18 (`EmpSparks`, khador_jump bolts); near ships have an EMP bar under the hull bar while EMP < max.
-- Not yet: Wanted targets and bounties (the Most Wanted board, `Reference/research/wingmen_wanted.md` 2; Supernova campaign 128+; NPC missiles only exist for them), static-object volumes (`Level::getBoundingVolume`: pirate outpost, mining plant), stealing cargo from EMP-disabled ships, the tractor beam's auto modes, the generic radio voices (GENERIC_eng).
+- Wanted criminals, NPC cloaking (Specters): see "Supernova add-on".
+- Not yet: NPC missiles (the Wanted criminals' rockets), static-object volumes (`Level::getBoundingVolume`: pirate outpost, mining plant), stealing cargo from EMP-disabled ships, the tractor beam's auto modes, the generic radio voices (GENERIC_eng).
 
 ## Story (campaign, dialogue, radio)
 
@@ -204,7 +206,52 @@ Research: `Reference/research/campaign_flow.md` (the step table 0-162, completio
 - **Ending** (`EndingCredits`, `UI/Ending`; `dialogue_cutscenes.md` 3.4): closing 43's success conversation loads the main menu scene with `Session.EndingPending` (the original's CutScene(2) is that backdrop): the backdrop fades in, 144 OutroSong, Brent's radio 2071-2074 (RADIO_43_0..3) from 4 s, then the logo (0x1b5a, `GoF2Hud/ending_logo`) rises at 30 px/s, holds 4 s and rises on with the staff credits (text 48); fade out from 130 s; at 136 s, or a tap once the last line has shown: `nextCampaignMission` (44) and the station (Keith's epilogue, then 45: +40 000, game won).
 - **Map**: from index 32 the galaxy view shows the early-warning wormhole at the attacked system (moving to the attacked planet in its system view); `Story.TargetStation` points the Missions window, the map and the HUD's story icon there at index 40.
 - **Valkyrie add-on (45-84)** (`campaign_levels_a.md` 3.17-3.19, `campaign_levels_b.md` parts 1-2, `campaign_flow.md` 4): the step side effects (`Story.ApplyStepEffects`, cases 0x2f-0x53): the loaner ships (48 Taret's H'Soc, 49 the stolen K'Suukk, 56 the S'Kanarr) with the own ship parked in `Session.ParkedShip` (Status+0x8c; back at 55 / 58), systems 23 / 22 / 24 revealed, the Liberator blueprint (58, locked again at 59), step 59's target stations (`Session.StoryTargets`, Status+0x90), Cornelius' mines in stock (67), the Void Essence (68 / 69, the core of Void Crystals), the Disruptor blueprint (72), the jump drive unsaleable (77), taken (78) and back with a spare (84); save v6. Station side: launching at 48 goes straight into B'akrram's orbit (`Story.LaunchStation`), menu locks (Hangar 48 / 49 / 56, Lounge 49, Map 48 / 49, at 77 the Map only in the Cronus, 326), no autosave imprisoned (77 at 101), Khador's ships at Kothar (77 the Cronus, 80-84 and after: Cronus / Typhon / Nemesis, 84 + S'kloptorr Rum), the hangar turntable swaps to the loaner. Levels in `ValkyrieLevels` (48 chauffeured on the autopilot, 49-52 the K'Suukk escape and the Vossk turning hostile, 56 the turret test, 63 / 64 / 65 / 67 the Skavac pirates, Khador's rescue and Corny's break-in, 69 / 70 Trot Lykkt with the Disruptor, 73 the EMP convoy, 78 the escape from the battlestation, 79 the misjump, 80 Alice's attack on Kothar (turrets and shield generators, the laser, the explosion variant of the station), 81 Alice stranded in the Void); the in-flight transitions 64 -> Kothar's orbit, 73 -> docked at Kothar, 80 -> the Void (`SpaceLevel.TravelTo`). Step 59's arms convoy is normal traffic at the target stations (`TrafficPlan.AddConvoy`, scripted in `Traffic.UpdateConvoy`: within 50 000 all hostile, the freighter's death kills its turrets and ticks the station off, radio 2185-2189; a Liberator kill (`Target.lastPlayerWeapon` 179) is the 50 000 bonus of step 60). Khador Drive story cases (`Story.ForcedKhadorTarget`): 78 misjumps into the Void and advances, 80 in the Void goes to Kothar; after the main story the drive asks 422 "Jump to the Void's system?" (2 cells in, 1 out, x2 Extreme) and in the Void always returns to `Session.VoidReturnStation` (remake: the story's own jumps take what cells there are). New NPC controls: `shootingEnabled`, `frozen`, `detectRange`, `SetGun`.
-- Not yet: the Supernova levels (85-162), story radio calls (93 / 111 / 143), the Supernova's step side effects, the nag dialogues after an hour (533-536).
+- **Supernova add-on (84-162)**: see "Supernova add-on".
+- Not yet: the nag dialogues after an hour (533-536).
+
+## Supernova add-on (84-162)
+
+Research: `Reference/research/campaign_levels_b.md` (parts 2-3), `campaign_levels_c.md`, `campaign_flow.md` 5, `wingmen_wanted.md` 2.
+Sounds / music / the 89 sky in `Resources/GoF2Story/SupernovaAssets` (**GoF2 > Build Supernova Assets**, DLC2 clips name-matched:
+the FMOD ids above 213 aren't mapped).
+
+- **Story rules** (`Story`): step side effects 89-144 (items given / taken, systems 27-31 revealed, counters reset); empty
+  missions at 45 / 84 / 128 / 130 / 162; a pending blueprint product completes 143's purchase; `RequirementRefusal` (the planet
+  jump / launch checks: cabins 3214, 105 gamma shield II 3217, 135 3213, 139 a Vossk ship + signature 3215, 142 3216 / 3218).
+  `StorySpace`: the after-success teleports (95, 96 / 127, 100, 110, 120, 126, 134, 144, 155, 161, 162), Carla's chapter calls,
+  125's decoy scan. `StationMenu`: the 116 bars (90 / 91 / 92 / 94) and the 148 brokers (55 / 66 / 9).
+- **Levels** (`SupernovaLevels`, run by `CampaignLevel` after the main / Valkyrie levels; the header lists every level and the
+  remake's picks): 87, 89 (the Luur supernova cutscene), 91 / 92 / 94 / 102 (evacuations by docking, shuttles and Rhinos, Specter
+  waves), the "Meanwhile..." cutscenes (95, 99, 109, 119, 126, 133, 160, 161), 97, 100, 105 (the bomb), 106, 114, 120, 123, 125
+  (hack the secure containers), 131, 135 (titanium into the mining plant), 137, 139 (the Vossk battleships), 142 (the plasma
+  tutorial), 144 / 145 (Harval, the array destroyed), 147, 154 (Alice's betrayal, 91 s hack), 157 (the final battle), 158 (the
+  Harval duel). `AsteroidCentre` moves the field for 89 / 114 / 145 / 154. Remake pick: in 105's opening shot the player and the
+  escorts fly 2.5 u/ms, just ahead of the camera's dolly (at the launch speed they slid back at it tail first).
+- **Object docking** (`ObjectDocking` on the player, `SpacePoints` = `docks_hd.json` sets: type 1 approach, 2 docking point):
+  NPC static objects with a `DockingType` (1 drop-off, 2 pickup, 3 hackable) are lockable "DOCK" targets (`Navigation`); the
+  autopilot to the approach point, a 2000 ms ease in, a look-at camera, then transfers 1 unit / 1500 ms (ore 1000; "Loading"
+  3204 / "Unloading" 3205, 3200) of passengers (cabins) or goods, or the hacking game; UNDOCK eases back out. No collision meanwhile.
+- **Hacking** (`HackingGame` plain C#, `HackingView`): the 2x3 tile board, the left / right 2x2 blocks turn clockwise, scrambled
+  2 x kind rounds and never solvable in `kind` moves (kind 1 at 91, else 4); won 1500 ms after solving. Keys A / D (Q / E, arrows),
+  pad LB / RB, taps on the halves. Hidden-blueprint wrecks (`TrafficPlan` table: stations 123 / 129 / 132-134) unlock their
+  blueprint (radio 3156+k, `Session.HiddenBlueprintsFound`).
+- **Gas clouds** (`GasCloudField`; needs a spectral filter, sort 33, not in the Void): clouds by `Galaxy::getPlasmaProbabilities`
+  (items 201-204); an ionizing blast (`Gun.Detonated`) bursts clouds in reach into sparks; the plasma collector turret (sort 35,
+  `PlayerTurret` collector mode, meshes 198-200) pulls sparks in the turret view (attr 49 speed, 51 range) and collects within 800
+  (one sound at a time, messages summed over 600 ms).
+- **Most Wanted** (`WantedBoard` plain C#, `Session.Wanted`, the Missions window's Most Wanted tab; save v7): criminals activate
+  and move between stations (`WantedBoard.Move` on arrivals); in their orbit the criminal and escorts (`TrafficPlan.AddWanted`:
+  hull 15 x min(rank, 20) + hp + 180, speed 4.5, its own gun x4) hide until locked; the storyline criminals surrender below 1/3
+  hull at 128 / 130; a kill pays the bounty (3206). Music `wantedMusic`.
+- **Specters** (race 10): `NpcCloak` (the player cloak's look, 2000 ms fades, off radar from 25 %, no firing; random cloaking 50 %
+  when panicking, else 30 % every 8 s, 9-14 s), raids at 100 < campaign < 0x91, music 149 / 150; the calm supernova system has no
+  traffic before 0x9e and plays `gammaRayMusic`. Static story objects: the mining plant (103), the plasma array (112, stage by
+  campaign), Luur's burning / wrecked station (111).
+- **Animations the original never plays**: `PlayerStation::update` skips the station's animation at 101 and in the alien orbit,
+  and `PlayerFixedObject::update` never advances an idle one, so the battlestation holds frame 0 there and as Valkyrie in 154 / 157
+  (`PartAnimation.Hold` / `HoldAll`). Sky layers follow the camera in `beginCameraRendering` (no frame of lag).
+- Not yet: the story radio calls 93 / 111 / 143, Harval's rocket gun, NPC missiles for the criminals; the level scripts were
+  smoke-tested (every level builds, 89 / 105 run through), not played through.
 
 ## Bar and freelance (agents, chat, missions, blueprints, wingmen, Status)
 
@@ -217,7 +264,8 @@ Research: `Reference/research/freelance_missions.md` (agents, offers, mission ge
 - **Blueprints** (`Blueprints`, the hangar's Blueprints tab 272): 25 products keyed by item (items.json ingredients), per-ingredient progress, production station (first investment; 212), 200 $ per unit shipping from another station (288; volatile 204 / 209 refused, 289), 210 / 223 need gate routes (528), Autocomplete `int(qty*maxPrice*1.25)` (210: 2 000 000 + the rest's value), a finished run to the hold (211) or waiting at the production station (210, collected on docking, 213). Unlocks: lounge sellers, campaign steps 34 / 58 / 72 / 104 / 141 with pre-invested ingredients.
 - **Wingmen** (`Wingmen`, `Traffic.SpawnWingmen`, `NpcShip` wingman mode): spawned next to the player in every orbit (model seeded by the name length, 600 hull, unarmed in a Challenge), formation slots, attack the first hostile ship; the flight menu's Wingmen entry (306) gives the commands 307-311 (fire at will, attack my target, secure next waypoint, laser / EMP blaster); a dead wingman leaves the contract; the 10-minute contract runs while flying, goodbye 313 at the next docking.
 - **Station extras**: the news ticker on the main view (`NewsTicker`: the campaign window's story news + 2 random items, tokens, 50 px/s; not at 101 / 108 / Loma); the Status window (`StatusWindow`: pilot, ship, reputation bars, statistics, 45 medals by grade with hints; `Achievements` checks on docking, "New medal!" 353; with all base medals the wingman fans pay you).
-- Not yet: the Most Wanted board (Supernova, campaign 128+), the medal images (text plates stand in), the booze / alien-remains medal counters, freelance type 15 Ore Mining (unreachable in the original's generator).
+- The Most Wanted board (Missions window tab): see "Supernova add-on".
+- Not yet: the medal images (text plates stand in), the booze / alien-remains medal counters, freelance type 15 Ore Mining (unreachable in the original's generator).
 
 ## Kaamo Club (station 108, Shima)
 
@@ -256,7 +304,7 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
 - **Approach:** player steering off, full throttle, autopilot turn; last 2000 units: exhaust off, landing sound, chase camera frozen, the model pitches ~80 deg nose up; stops at `scale * 2500` units, asteroid spin off.
 - **Minigame:** layers = class (A 7 .. D 4), 6 s each inside the ring; ore rate `yield * ((layer+1)/7*2.35+0.15)` t/s; a 2.5 s off-target energy budget per session (empty = no ore). Drill: stick / WASD / left stick. Perfect runs with IMT Extract 1.3: D 14 t, C 20, B 28, A 37 + 1 core (verified in Play mode).
 - **Payout:** ore capped to free cargo (core first), "12t Pyresium" messages, the asteroid explodes; ores and cores are normal commodities in the shop.
-- **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no campaign; releasing the stick stops the drill's player movement (the original keeps the last input). Not yet: medals/stats, Ultrascan class-A markers, the mining plant (station 103), the drill sound's layer parameter (pitch stands in).
+- **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no campaign; releasing the stick stops the drill's player movement (the original keeps the last input). The mining plant at 103 is a docking target (see "Supernova add-on"). Not yet: medals/stats, Ultrascan class-A markers, the drill sound's layer parameter (pitch stands in).
 
 ## Station scene
 
@@ -296,7 +344,7 @@ Research: `Reference/research/shop.md` (+ `item_icons.json`, reference price cod
 - **New game:** 0 credits, like the original (sell starting gear to get money). `Session.CampaignMission` is a free-play 20 (past the tutorial locks) until there is a campaign. Var Hastra always stocks a drill and energy cells then (remake-only, see "Mining" and "Star map and system travel").
 - Blueprints tab: see "Bar and freelance". Ship mods (Kaamo mechanics): +40 hull, +30 t cargo, +1 equipment slot, handling +0.2, kept with the hull (`Session.ShipMods`).
 - Kaamo Club storage (Store tab, stored hulls, 327 Sell / Keep): see "Kaamo Club".
-- Not yet: DLC-won / supernova dealer extras, the Supernova wrecks' hidden blueprints (hacking minigame).
+- The Supernova wrecks' hidden blueprints (hacking): see "Supernova add-on". Not yet: DLC-won dealer extras.
 
 ## Weapons
 
@@ -320,7 +368,8 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
 - **Repair / transfusion beams** (`RepairBeam`, sorts 37 / 41): automatic; every 2.5 s the attr 55 slots take the most damaged friendly ships (repair: hull +dt·0.03·attr54/100) or hostile ships (transfusion: −dt·0.01·attr54/100 as player damage, the same into the player's shield while it isn't full) within attr 53; beam meshes 19092 / 19093, loop sounds.
 - **Shield injector** (227): an empty shield takes 30 t Blue Plasma (202, "-30t Blue Plasma") and refills at 0.15 per ms; sounds 2258 / 2257 / 2259.
 - **Gamma** (supernova stations 109-113, `PlayerHealth`): a 0..100 pool drains at the station's rate by campaign progress (gamma shields 205 / 206 cut it by attr 52 %), "Warning: Gamma shield low" (3201) below 15, death at 0, carried between those orbits (`Session.PlayerGamma`).
-- Not yet: the spectral filters (Supernova gas clouds), the cloak's exhaust colour and the "not enough cells" window (a HUD message stands in), the end sound 1119, the menu button's ready flash.
+- Spectral filters, gas clouds and plasma collectors: see "Supernova add-on".
+- Not yet: the cloak's exhaust colour and the "not enough cells" window (a HUD message stands in), the end sound 1119, the menu button's ready flash.
 
 ## UI and platforms
 
@@ -369,9 +418,9 @@ Useful field offsets in the decompiled code:
 
 ## Roadmap (suggested order)
 
-0. Story: data, rules, dialogue, radio, docked / in-flight flow and the first levels done (see "Story"); freelance missions, the Missions window done (see "Bar and freelance"). The main story (0-45) with its levels, cutscenes, the Void and the ending done; the Valkyrie add-on (45-84) done. Next: the Supernova levels.
-1. Combat: guns, missiles, special weapons, turrets, sentries, ship damage, lock-on, NPC ships, capital ships, pirate bases and the combat equipment done (see "Weapons", "NPCs and combat", "Combat equipment"). Still: cargo stealing, spectral filters.
-2. NPCs: free-flight traffic, fighter AI, wingmen, freelance mission orbits, capital-ship turrets done. Still: Wanted targets.
+0. Story: data, rules, dialogue, radio, docked / in-flight flow and the first levels done (see "Story"); freelance missions, the Missions window done (see "Bar and freelance"). The main story (0-45) with its levels, cutscenes, the Void and the ending done; the Valkyrie add-on (45-84) done; the Supernova add-on (84-162) built (see "Supernova add-on"), still to be played through.
+1. Combat: guns, missiles, special weapons, turrets, sentries, ship damage, lock-on, NPC ships, capital ships, pirate bases and the combat equipment done (see "Weapons", "NPCs and combat", "Combat equipment"). Still: cargo stealing.
+2. NPCs: free-flight traffic, fighter AI, wingmen, freelance mission orbits, capital-ship turrets, Wanted criminals, Specter cloaking done.
 3. A star system scene: done (see "Space scene"), with the lens flare and the extra sky layers, autopilot, planet jumps, the star map and jumpgate / Khador travel. The Void's wormhole and home orbit done.
-4. Stations and economy: station interior, shop, bar agents, blueprints, Status window done (see "Station scene", "Shop", "Bar and freelance"). Kaamo Club done (see "Kaamo Club"). Still: the Most Wanted board.
+4. Stations and economy: station interior, shop, bar agents, blueprints, Status window done (see "Station scene", "Shop", "Bar and freelance"). Kaamo Club and the Most Wanted board done.
 5. HUD and radar (`Hud`, `Radar`), then missions (`Mission`, `Objective`, `LevelScript`).

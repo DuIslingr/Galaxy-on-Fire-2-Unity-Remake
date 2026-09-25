@@ -54,6 +54,9 @@ namespace GoF2Remake.EditorTools
             { 47, "turret_001_ship_mounted" }, { 48, "turret_002_ship_mounted" }, { 49, "turret_003_ship_mounted" },
             { 180, "v_autoturret_001_anim_ship_mounted" }, { 181, "v_autoturret_002_ship_mounted" },
             { 182, "v_autoturret_003_ship_mounted" }, { 224, "sn_turret_004_ship_mounted" },
+            // The plasma collectors (sort 35): the same pivot / base / gun build, the plasma stream under the gun.
+            { 198, "sn_plasma_collector_001_ship_mounted" }, { 199, "sn_plasma_collector_002_ship_mounted" },
+            { 200, "sn_plasma_collector_003_ship_mounted" },
         };
 
         [MenuItem("GoF2/Build Weapon Fx", priority = 13)]
@@ -68,6 +71,9 @@ namespace GoF2Remake.EditorTools
             int made = 0;
             // Sentry guns aren't in the projectile tables: they deploy an object that fires the look of items 2 / 20 / 14.
             foreach (int s in new[] { 211, 212, 213 })
+                if (!entries.Exists(x => x.item == s)) entries.Add(new Entry { item = s });
+            // Nor are the plasma collectors (no projectile): only their mounted model.
+            foreach (int s in new[] { 198, 199, 200 })
                 if (!entries.Exists(x => x.item == s)) entries.Add(new Entry { item = s });
             foreach (var e in entries)
             {

@@ -2777,5 +2777,112 @@
    "postEffect": "texture index > 15 with post effects: mesh field +0x1c = 0.22 (probably glow/bloom factor)"
   },
   "notes": "Skybox layers are drawn at infinity (camera translation removed). Not a transform hierarchy; layers in draw order: stars, skybox, planet ring, StarSystem (sun/planets), supernova flares, storms, asteroid belt."
+ },
+ {
+  "name": "container_003_terran",
+  "category": "misc",
+  "origin": "Level::createStaticObject 0x4260 (space-point set 2); campaign 89 enemies[0]",
+  "root": 16992,
+  "rootName": "container_003_terran",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Single mesh."
+ },
+ {
+  "name": "sn_secure_container_nivelian",
+  "category": "misc",
+  "origin": "Level::createStaticObject 0x4961 + AEGeometry 0x498f (space-point set 2, docking type 3); campaign 125",
+  "root": 18785,
+  "rootName": "sn_secure_container_nivelian",
+  "children": [
+   {
+    "mesh": 18831,
+    "meshName": "sn_secure_container_nivelian_add",
+    "role": "add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Children at identity."
+ },
+ {
+  "name": "sn_junk_field",
+  "category": "misc",
+  "origin": "Level::createStaticObject 0x4962; campaign 125 enemies[11..14]",
+  "root": 18786,
+  "rootName": "sn_junk_field",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Single mesh, radar-hidden scenery."
+ },
+ {
+  "name": "sn_plasma_array_midorian_explosion_anim",
+  "category": "misc",
+  "origin": "Level::createCampaignMission 0x91 enemies[13] (mesh 0x4a6a), played at 0.3 speed",
+  "root": 19050,
+  "rootName": "sn_plasma_array_midorian_explosion_anim",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Single animated mesh."
+ },
+ {
+  "name": "sn_plasma_gun_valkyrie",
+  "category": "misc",
+  "origin": "PlayerStation::PlayerStation for campaign 0x9d at station 112 (meshes 0x4950 / 0x4952 / 0x4951)",
+  "root": 18768,
+  "rootName": "sn_plasma_gun_valkyrie",
+  "children": [
+   {
+    "mesh": 18770,
+    "meshName": "sn_plasma_gun_valkyrie_alpha",
+    "role": "alpha",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   },
+   {
+    "mesh": 18769,
+    "meshName": "sn_plasma_gun_valkyrie_lights_add",
+    "role": "lights_add",
+    "variant": null,
+    "position": null,
+    "rotation": null,
+    "scale": null
+   }
+  ],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Children at identity; sits on the battlestation."
+ },
+ {
+  "name": "projectile_009_anim_add",
+  "category": "fx",
+  "origin": "LevelScript::LevelScript campaign 0x59 (+0xdc, scaled (1, 1, 500000): a long beam)",
+  "root": 14229,
+  "rootName": "projectile_009_anim_add",
+  "children": [],
+  "lods": [],
+  "lastVisibleDistance": null,
+  "scale": null,
+  "related": {},
+  "notes": "Single fx mesh."
  }
 ]

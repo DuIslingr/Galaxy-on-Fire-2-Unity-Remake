@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 6;
+        public const int CurrentVersion = 7;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -71,6 +71,11 @@ namespace GoF2Remake.Data
         public bool hasParkedShip;
         public ParkedShip parkedShip;
         public List<int> storyTargets;
+        // version 7: the Supernova story (the Most Wanted boards)
+        public List<WantedState> wanted;
+        public int[] collectedBounties;
+        public int wantedHints;
+        public int hiddenBlueprintsFound;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -199,6 +204,8 @@ namespace GoF2Remake.Data
                 pirateBaseDestroyed = Session.PirateBaseDestroyed, hints = new List<int>(Session.Hints),
                 graveRiserKills = Session.GraveRiserKills, cloakMs = Session.CloakMs,
                 hasParkedShip = Session.ParkedShip != null, parkedShip = Session.ParkedShip, storyTargets = new List<int>(Session.StoryTargets),
+                wanted = new List<WantedState>(Session.Wanted), collectedBounties = (int[])Session.CollectedBounties.Clone(),
+                wantedHints = Session.WantedHints, hiddenBlueprintsFound = Session.HiddenBlueprintsFound,
             };
         }
 
@@ -296,6 +303,14 @@ namespace GoF2Remake.Data
                 Session.ParkedShip = s.hasParkedShip ? s.parkedShip : null;   // JsonUtility writes an empty object for null
                 Session.StoryTargets = s.storyTargets ?? new List<int>();
             }
+            if (s.version >= 7)
+            {
+                Session.Wanted = s.wanted ?? new List<WantedState>();
+                Session.CollectedBounties = s.collectedBounties != null && s.collectedBounties.Length == 4 ? s.collectedBounties : new int[4];
+                Session.WantedHints = s.wantedHints;
+                Session.HiddenBlueprintsFound = s.hiddenBlueprintsFound;
+            }
+            else { Session.Wanted = new List<WantedState>(); Session.CollectedBounties = new int[4]; Session.WantedHints = 0; Session.HiddenBlueprintsFound = 0; }
             Story.RepairCheckpoint();
         }
     }

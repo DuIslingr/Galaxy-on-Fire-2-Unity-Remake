@@ -106,6 +106,15 @@ namespace GoF2Remake.Data
         public static ParkedShip ParkedShip;
         /// <summary>Status+0x90: the target stations of a type-0xa3 step (step 59's convoys); -1 = that one is done.</summary>
         public static List<int> StoryTargets = new List<int>();
+        /// <summary>Status+0x00: the Most Wanted criminals' state (WantedBoard), by wanted.json index.</summary>
+        public static List<WantedState> Wanted = new List<WantedState>();
+        /// <summary>Status+0x04: bounties collected per board (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian).</summary>
+        public static int[] CollectedBounties = new int[4];
+        /// <summary>hints[0x2a] (601, the Terran board), hints 613 (the other boards) and 0x33-0x36 (3232, ships 45-48 at
+        /// Quineros) shown, as bits 0 / 1 / 2-5.</summary>
+        public static int WantedHints;
+        /// <summary>Status+0x58 bool[5]: the Supernova wrecks' hidden blueprints found (bit k, TrafficPlan.HiddenBlueprints).</summary>
+        public static int HiddenBlueprintsFound;
         /// <summary>Status+0x7c / +0x80: the Void-invasion system and station (-1 none, -10 never again).</summary>
         public static int VoidInvasionSystem = -1, VoidInvasionStation = -1;
         /// <summary>Status+0x88: departures to other stations since the invasion station was rolled (index 32-44, re-rolled at 10).</summary>
@@ -302,6 +311,10 @@ namespace GoF2Remake.Data
             StoryCounter = 0;
             ParkedShip = null;
             StoryTargets = new List<int>();
+            Wanted = new List<WantedState>();
+            CollectedBounties = new int[4];
+            WantedHints = 0;
+            HiddenBlueprintsFound = 0;
             VoidInvasionSystem = VoidInvasionStation = -1;
             InvasionDepartures = 0;
             VoidReturnStation = 10;

@@ -97,6 +97,17 @@ namespace GoF2Remake.Data
         public int root;
     }
 
+    /// <summary>A Most Wanted criminal (wanted.json = FileRead::loadWanted, Wanted 0x14805c; wingmen_wanted.md 2.1).</summary>
+    [System.Serializable] public class WantedData
+    {
+        public int index;
+        public string name;
+        public int board, race;
+        public bool male;
+        public int ship, weapon, hitpoints, loot, lootAmount, reward, requiredBounties, requiredMission, numWingmen;
+        public int[] portraitParts;
+    }
+
     public class Database
     {
         public List<ShipData> Ships = new List<ShipData>();
@@ -121,6 +132,7 @@ namespace GoF2Remake.Data
             return null;
         }
         public List<WeaponMountSet> WeaponMounts = new List<WeaponMountSet>();
+        public List<WantedData> Wanted = new List<WantedData>();
 
         [System.Serializable] class ItemAttributes { public int index; public int[] keys, values; }
 
@@ -134,6 +146,7 @@ namespace GoF2Remake.Data
                 Stations = Read<List<StationData>>(resourceFolder, "stations"),
                 Assemblies = ReadAssemblies(resourceFolder),
                 WeaponMounts = Read<List<WeaponMountSet>>(resourceFolder, "weapons_hd"),
+                Wanted = Read<List<WantedData>>(resourceFolder, "wanted"),
             };
             // item_attributes.json (Reference/tools/shop/build_item_attributes.py): items.json keeps them in a dictionary.
             foreach (var a in Read<List<ItemAttributes>>(resourceFolder, "item_attributes"))

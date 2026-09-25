@@ -18,7 +18,9 @@
 //                                       while it fires and stand still otherwise.
 // Remake: the turret view key is V / controller D-pad up / the touch turret button; auto-fire toggles with T / D-pad
 // down / the same touch button. The turret camera's offsets were lost in the decompile (a: above and behind the turret).
-// Not ported: the plasma collectors (198-200, they need Supernova gas clouds).
+// Plasma collectors (198-200, sort 35; weapons_special.md 6.5): the same turret on the same mount and view, but no gun: in
+// the turret view the plasma stream (sn_plasma_stream_anim_add under the gun) shows and GasCloudField pulls the sparks in
+// sight toward the turret (attr 49 u/ms, within attr 51 units).
 
 using System;
 using System.Collections.Generic;
@@ -39,6 +41,15 @@ namespace GoF2Remake.Flight
 
         /// <summary>180-182: aims and fires by itself.</summary>
         public bool IsAuto { get; private set; }
+        /// <summary>A plasma collector (sort 35): collects, never fires.</summary>
+        public bool IsCollector { get; private set; }
+        /// <summary>Collectors: attr 49 (pull speed, u/ms) and attr 51 (range, units).</summary>
+        public int PullSpeed { get; private set; }
+        public int CollectRange { get; private set; }
+        /// <summary>PlayerEgo::getTurretPosition: the gun's world position (Unity).</summary>
+        public Vector3 GunPosition => muzzle != null && muzzle.parent != null ? muzzle.parent.position : transform.position;
+        /// <summary>The turret's aim (world), for the collector's scope.</summary>
+        public Vector3 AimForward => aim != null ? aim.BarrelForward : transform.forward;
         public bool AutoEnabled { get; private set; } = true;
         public bool InTurretView { get; private set; }
         public int Item { get; private set; } = -1;
@@ -58,6 +69,7 @@ namespace GoF2Remake.Flight
         bool alternate;
         Vector3 bulletOffset;
         Visuals.PartAnimation[] anims;
+        GameObject stream;
 
         /// <summary>Level::createPlayer: the turret item of the current equipment, if the ship has a turret mount.</summary>
         public static PlayerTurret Attach(GameObject player, Database db, int shipIndex, IList<ItemStack> equipment, ChaseCamera chase)
@@ -67,7 +79,7 @@ namespace GoF2Remake.Flight
             foreach (var e in equipment)
             {
                 var it = db.Item(e.item);
-                if (it == null || it.categoryId != 8) continue;
+                if (it == null || (it.categoryId != 8 && it.categoryId != 35)) continue;
                 var fx = WeaponFx.Load(it.index);
                 if (fx == null || fx.turretMounted == null) continue;
                 var t = player.AddComponent<PlayerTurret>();
@@ -84,6 +96,9 @@ namespace GoF2Remake.Flight
             chase = chaseCamera;
             Item = item.index;
             IsAuto = item.Attr(16) == 1;
+            IsCollector = item.categoryId == 35;
+            PullSpeed = item.Attr(49);
+            CollectRange = item.Attr(51);
             // On the ship's model, so it banks and tumbles (death) with the hull.
             var parent = ship != null && ship.visualModel != null ? ship.visualModel : transform;
             var model = Instantiate(fx.turretMounted, parent, false);
@@ -92,6 +107,9 @@ namespace GoF2Remake.Flight
             GunRig.StripForFx(model);
             anims = model.GetComponentsInChildren<Visuals.PartAnimation>(true);
             foreach (var a in anims) a.speed = 0f;   // still until the first shot
+            if (IsCollector)
+                foreach (Transform t in model.GetComponentsInChildren<Transform>(true))
+                    if (t.name.Contains("plasma_stream")) { stream = t.gameObject; stream.SetActive(false); }
             var pivot = model.transform.Find("pivot");
             Transform gunNode = null;
             if (pivot != null) foreach (Transform c in pivot) if (c.name.Contains("_gun")) gunNode = c;
@@ -173,6 +191,7 @@ namespace GoF2Remake.Flight
                 if (!on) chase.Snap();
             }
             if (!on) StopShooting();
+            if (stream != null) stream.SetActive(on);
         }
 
         void Update()
@@ -196,7 +215,8 @@ namespace GoF2Remake.Flight
                 aim.Drive(ship != null ? ship.SteerInput : Vector2.zero, dtMs);
                 // The camera turns with the turret, at half the gun's pitch.
                 camAnchor.rotation = Quaternion.LookRotation(Vector3.Slerp(Vector3.ProjectOnPlane(aim.BarrelForward, transform.up), aim.BarrelForward, 0.5f), transform.up);
-                fire = weapons != null && weapons.FireHeld;
+                fire = weapons != null && weapons.FireHeld && !IsCollector;   // a collector collects by aiming (GasCloudField)
+                if (IsCollector) foreach (var a in anims) if (a != null) a.speed = 1f;
             }
             else if (!halted && IsAuto && AutoEnabled && GetComponent<Target>() is Target self && self.Alive)
                 fire = AutoAim(dtMs);
@@ -216,7 +236,7 @@ namespace GoF2Remake.Flight
             idleMs += dtMs;
             if (idleMs > IdleStopMs && loop != null && loop.loop && loop.isPlaying) loop.Stop();
             // The animations run only while shots are going out (within one reload of the last shot).
-            float animSpeed = idleMs <= gun.reloadMs + 50f ? 1f : 0f;
+            float animSpeed = idleMs <= gun.reloadMs + 50f || (IsCollector && InTurretView) ? 1f : 0f;
             foreach (var a in anims) if (a != null) a.speed = animSpeed;
             gun.Update(dtMs, Target.All, null);
             rig.UpdateVisuals(dtMs, Camera.main, aim.BarrelForward);
