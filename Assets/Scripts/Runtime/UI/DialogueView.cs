@@ -108,9 +108,9 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>The one-page note from a bar agent (DialogueWindow(mission, level, mode)): name, generated portrait, OK.</summary>
-        public void ShowAgentMessage(string body, string name, int[] portraitParts, Action onClosed)
+        public void ShowAgentMessage(string body, string name, int[] portraitParts, Action onClosed, string voiceLine = null)
         {
-            Show(new List<Page> { new Page { speaker = -1, text = body, agentName = name, agentPortrait = portraitParts } }, _ => onClosed?.Invoke());
+            Show(new List<Page> { new Page { speaker = -1, text = body, agentName = name, agentPortrait = portraitParts, voice = voiceLine } }, _ => onClosed?.Invoke());
             message = true;
             LoadPage();
         }

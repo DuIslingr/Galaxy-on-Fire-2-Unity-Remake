@@ -1,0 +1,5960 @@
+{
+"items": [
+{
+"text": 1795,
+"voice": "MISSION_11_0"
+},
+{
+"text": 1819,
+"voice": "MISSION_14_0"
+},
+{
+"text": 1836,
+"voice": "MISSION_16_0"
+},
+{
+"text": 1837,
+"voice": "MISSION_16_1"
+},
+{
+"text": 1877,
+"voice": "MISSION_21_0"
+},
+{
+"text": 1897,
+"voice": "MISSION_23_0"
+},
+{
+"text": 1913,
+"voice": "MISSION_24_0"
+},
+{
+"text": 1914,
+"voice": "MISSION_24_1"
+},
+{
+"text": 1915,
+"voice": "MISSION_24_2"
+},
+{
+"text": 1916,
+"voice": "MISSION_24_3"
+},
+{
+"text": 1928,
+"voice": "MISSION_26_0"
+},
+{
+"text": 1929,
+"voice": "MISSION_26_1"
+},
+{
+"text": 1930,
+"voice": "MISSION_26_2"
+},
+{
+"text": 1947,
+"voice": "MISSION_29_0"
+},
+{
+"text": 1721,
+"voice": "MISSION_2_0"
+},
+{
+"text": 1722,
+"voice": "MISSION_2_1"
+},
+{
+"text": 1723,
+"voice": "MISSION_2_2"
+},
+{
+"text": 1724,
+"voice": "MISSION_2_3"
+},
+{
+"text": 1970,
+"voice": "MISSION_32_0"
+},
+{
+"text": 2016,
+"voice": "MISSION_36_0"
+},
+{
+"text": 2017,
+"voice": "MISSION_36_1"
+},
+{
+"text": 2028,
+"voice": "MISSION_38_0"
+},
+{
+"text": 2049,
+"voice": "MISSION_41_0"
+},
+{
+"text": 2050,
+"voice": "MISSION_41_1"
+},
+{
+"text": 2051,
+"voice": "MISSION_41_2"
+},
+{
+"text": 1738,
+"voice": "MISSION_4_0"
+},
+{
+"text": 1748,
+"voice": "MISSION_7_0"
+},
+{
+"text": 1783,
+"voice": "MISSION_END_10_0"
+},
+{
+"text": 1784,
+"voice": "MISSION_END_10_1"
+},
+{
+"text": 1793,
+"voice": "MISSION_END_10_10"
+},
+{
+"text": 1794,
+"voice": "MISSION_END_10_11"
+},
+{
+"text": 1785,
+"voice": "MISSION_END_10_2"
+},
+{
+"text": 1786,
+"voice": "MISSION_END_10_3"
+},
+{
+"text": 1787,
+"voice": "MISSION_END_10_4"
+},
+{
+"text": 1788,
+"voice": "MISSION_END_10_5"
+},
+{
+"text": 1789,
+"voice": "MISSION_END_10_6"
+},
+{
+"text": 1790,
+"voice": "MISSION_END_10_7"
+},
+{
+"text": 1791,
+"voice": "MISSION_END_10_8"
+},
+{
+"text": 1792,
+"voice": "MISSION_END_10_9"
+},
+{
+"text": 1796,
+"voice": "MISSION_END_11_0"
+},
+{
+"text": 1797,
+"voice": "MISSION_END_11_1"
+},
+{
+"text": 1806,
+"voice": "MISSION_END_11_10"
+},
+{
+"text": 1807,
+"voice": "MISSION_END_11_11"
+},
+{
+"text": 1808,
+"voice": "MISSION_END_11_12"
+},
+{
+"text": 1798,
+"voice": "MISSION_END_11_2"
+},
+{
+"text": 1799,
+"voice": "MISSION_END_11_3"
+},
+{
+"text": 1800,
+"voice": "MISSION_END_11_4"
+},
+{
+"text": 1801,
+"voice": "MISSION_END_11_5"
+},
+{
+"text": 1802,
+"voice": "MISSION_END_11_6"
+},
+{
+"text": 1803,
+"voice": "MISSION_END_11_7"
+},
+{
+"text": 1804,
+"voice": "MISSION_END_11_8"
+},
+{
+"text": 1805,
+"voice": "MISSION_END_11_9"
+},
+{
+"text": 1809,
+"voice": "MISSION_END_12_0"
+},
+{
+"text": 1810,
+"voice": "MISSION_END_12_1"
+},
+{
+"text": 1811,
+"voice": "MISSION_END_12_2"
+},
+{
+"text": 1812,
+"voice": "MISSION_END_12_3"
+},
+{
+"text": 1813,
+"voice": "MISSION_END_12_4"
+},
+{
+"text": 1814,
+"voice": "MISSION_END_12_5"
+},
+{
+"text": 1815,
+"voice": "MISSION_END_12_6"
+},
+{
+"text": 1817,
+"voice": "MISSION_END_13_0"
+},
+{
+"text": 1818,
+"voice": "MISSION_END_13_1"
+},
+{
+"text": 1825,
+"voice": "MISSION_END_15_0"
+},
+{
+"text": 1826,
+"voice": "MISSION_END_15_1"
+},
+{
+"text": 1835,
+"voice": "MISSION_END_15_10"
+},
+{
+"text": 1827,
+"voice": "MISSION_END_15_2"
+},
+{
+"text": 1828,
+"voice": "MISSION_END_15_3"
+},
+{
+"text": 1829,
+"voice": "MISSION_END_15_4"
+},
+{
+"text": 1830,
+"voice": "MISSION_END_15_5"
+},
+{
+"text": 1831,
+"voice": "MISSION_END_15_6"
+},
+{
+"text": 1832,
+"voice": "MISSION_END_15_7"
+},
+{
+"text": 1833,
+"voice": "MISSION_END_15_8"
+},
+{
+"text": 1834,
+"voice": "MISSION_END_15_9"
+},
+{
+"text": 1843,
+"voice": "MISSION_END_16_0"
+},
+{
+"text": 1844,
+"voice": "MISSION_END_16_1"
+},
+{
+"text": 1845,
+"voice": "MISSION_END_16_2"
+},
+{
+"text": 1846,
+"voice": "MISSION_END_17_0"
+},
+{
+"text": 1847,
+"voice": "MISSION_END_17_1"
+},
+{
+"text": 1856,
+"voice": "MISSION_END_17_10"
+},
+{
+"text": 1857,
+"voice": "MISSION_END_17_11"
+},
+{
+"text": 1858,
+"voice": "MISSION_END_17_12"
+},
+{
+"text": 1859,
+"voice": "MISSION_END_17_13"
+},
+{
+"text": 1860,
+"voice": "MISSION_END_17_14"
+},
+{
+"text": 1861,
+"voice": "MISSION_END_17_15"
+},
+{
+"text": 1848,
+"voice": "MISSION_END_17_2"
+},
+{
+"text": 1849,
+"voice": "MISSION_END_17_3"
+},
+{
+"text": 1850,
+"voice": "MISSION_END_17_4"
+},
+{
+"text": 1851,
+"voice": "MISSION_END_17_5"
+},
+{
+"text": 1852,
+"voice": "MISSION_END_17_6"
+},
+{
+"text": 1853,
+"voice": "MISSION_END_17_7"
+},
+{
+"text": 1854,
+"voice": "MISSION_END_17_8"
+},
+{
+"text": 1855,
+"voice": "MISSION_END_17_9"
+},
+{
+"text": 1863,
+"voice": "MISSION_END_18_0"
+},
+{
+"text": 1864,
+"voice": "MISSION_END_18_1"
+},
+{
+"text": 1865,
+"voice": "MISSION_END_18_2"
+},
+{
+"text": 1866,
+"voice": "MISSION_END_18_3"
+},
+{
+"text": 1867,
+"voice": "MISSION_END_18_4"
+},
+{
+"text": 1868,
+"voice": "MISSION_END_18_5"
+},
+{
+"text": 1869,
+"voice": "MISSION_END_18_6"
+},
+{
+"text": 1870,
+"voice": "MISSION_END_18_7"
+},
+{
+"text": 1871,
+"voice": "MISSION_END_19_0"
+},
+{
+"text": 1872,
+"voice": "MISSION_END_19_1"
+},
+{
+"text": 1873,
+"voice": "MISSION_END_19_2"
+},
+{
+"text": 1874,
+"voice": "MISSION_END_19_3"
+},
+{
+"text": 1875,
+"voice": "MISSION_END_19_4"
+},
+{
+"text": 1700,
+"voice": "MISSION_END_1_0"
+},
+{
+"text": 1701,
+"voice": "MISSION_END_1_1"
+},
+{
+"text": 1710,
+"voice": "MISSION_END_1_10"
+},
+{
+"text": 1711,
+"voice": "MISSION_END_1_11"
+},
+{
+"text": 1712,
+"voice": "MISSION_END_1_12"
+},
+{
+"text": 1713,
+"voice": "MISSION_END_1_13"
+},
+{
+"text": 1714,
+"voice": "MISSION_END_1_14"
+},
+{
+"text": 1715,
+"voice": "MISSION_END_1_15"
+},
+{
+"text": 1716,
+"voice": "MISSION_END_1_16"
+},
+{
+"text": 1717,
+"voice": "MISSION_END_1_17"
+},
+{
+"text": 1702,
+"voice": "MISSION_END_1_2"
+},
+{
+"text": 1703,
+"voice": "MISSION_END_1_3"
+},
+{
+"text": 1704,
+"voice": "MISSION_END_1_4"
+},
+{
+"text": 1705,
+"voice": "MISSION_END_1_5"
+},
+{
+"text": 1706,
+"voice": "MISSION_END_1_6"
+},
+{
+"text": 1707,
+"voice": "MISSION_END_1_7"
+},
+{
+"text": 1708,
+"voice": "MISSION_END_1_8"
+},
+{
+"text": 1709,
+"voice": "MISSION_END_1_9"
+},
+{
+"text": 1876,
+"voice": "MISSION_END_20_0"
+},
+{
+"text": 1886,
+"voice": "MISSION_END_21_0"
+},
+{
+"text": 1887,
+"voice": "MISSION_END_22_0"
+},
+{
+"text": 1888,
+"voice": "MISSION_END_22_1"
+},
+{
+"text": 1889,
+"voice": "MISSION_END_22_2"
+},
+{
+"text": 1890,
+"voice": "MISSION_END_22_3"
+},
+{
+"text": 1891,
+"voice": "MISSION_END_22_4"
+},
+{
+"text": 1892,
+"voice": "MISSION_END_22_5"
+},
+{
+"text": 1893,
+"voice": "MISSION_END_22_6"
+},
+{
+"text": 1894,
+"voice": "MISSION_END_22_7"
+},
+{
+"text": 1895,
+"voice": "MISSION_END_22_8"
+},
+{
+"text": 1898,
+"voice": "MISSION_END_23_0"
+},
+{
+"text": 1899,
+"voice": "MISSION_END_23_1"
+},
+{
+"text": 1908,
+"voice": "MISSION_END_23_10"
+},
+{
+"text": 1909,
+"voice": "MISSION_END_23_11"
+},
+{
+"text": 1910,
+"voice": "MISSION_END_23_12"
+},
+{
+"text": 1911,
+"voice": "MISSION_END_23_13"
+},
+{
+"text": 1900,
+"voice": "MISSION_END_23_2"
+},
+{
+"text": 1901,
+"voice": "MISSION_END_23_3"
+},
+{
+"text": 1902,
+"voice": "MISSION_END_23_4"
+},
+{
+"text": 1903,
+"voice": "MISSION_END_23_5"
+},
+{
+"text": 1904,
+"voice": "MISSION_END_23_6"
+},
+{
+"text": 1905,
+"voice": "MISSION_END_23_7"
+},
+{
+"text": 1906,
+"voice": "MISSION_END_23_8"
+},
+{
+"text": 1907,
+"voice": "MISSION_END_23_9"
+},
+{
+"text": 1922,
+"voice": "MISSION_END_25_0"
+},
+{
+"text": 1923,
+"voice": "MISSION_END_25_1"
+},
+{
+"text": 1924,
+"voice": "MISSION_END_25_2"
+},
+{
+"text": 1931,
+"voice": "MISSION_END_26_0"
+},
+{
+"text": 1932,
+"voice": "MISSION_END_26_1"
+},
+{
+"text": 1933,
+"voice": "MISSION_END_27_0"
+},
+{
+"text": 1934,
+"voice": "MISSION_END_27_1"
+},
+{
+"text": 1943,
+"voice": "MISSION_END_27_10"
+},
+{
+"text": 1935,
+"voice": "MISSION_END_27_2"
+},
+{
+"text": 1936,
+"voice": "MISSION_END_27_3"
+},
+{
+"text": 1937,
+"voice": "MISSION_END_27_4"
+},
+{
+"text": 1938,
+"voice": "MISSION_END_27_5"
+},
+{
+"text": 1939,
+"voice": "MISSION_END_27_6"
+},
+{
+"text": 1940,
+"voice": "MISSION_END_27_7"
+},
+{
+"text": 1941,
+"voice": "MISSION_END_27_8"
+},
+{
+"text": 1942,
+"voice": "MISSION_END_27_9"
+},
+{
+"text": 1954,
+"voice": "MISSION_END_29_0"
+},
+{
+"text": 1728,
+"voice": "MISSION_END_2_0"
+},
+{
+"text": 1729,
+"voice": "MISSION_END_2_1"
+},
+{
+"text": 1955,
+"voice": "MISSION_END_30_0"
+},
+{
+"text": 1956,
+"voice": "MISSION_END_30_1"
+},
+{
+"text": 1957,
+"voice": "MISSION_END_30_2"
+},
+{
+"text": 1958,
+"voice": "MISSION_END_30_3"
+},
+{
+"text": 1959,
+"voice": "MISSION_END_30_4"
+},
+{
+"text": 1960,
+"voice": "MISSION_END_31_0"
+},
+{
+"text": 1961,
+"voice": "MISSION_END_31_1"
+},
+{
+"text": 1962,
+"voice": "MISSION_END_31_2"
+},
+{
+"text": 1963,
+"voice": "MISSION_END_31_3"
+},
+{
+"text": 1964,
+"voice": "MISSION_END_31_4"
+},
+{
+"text": 1965,
+"voice": "MISSION_END_31_5"
+},
+{
+"text": 1966,
+"voice": "MISSION_END_31_6"
+},
+{
+"text": 1967,
+"voice": "MISSION_END_31_7"
+},
+{
+"text": 1968,
+"voice": "MISSION_END_31_8"
+},
+{
+"text": 1969,
+"voice": "MISSION_END_31_9"
+},
+{
+"text": 1971,
+"voice": "MISSION_END_32_0"
+},
+{
+"text": 1972,
+"voice": "MISSION_END_32_1"
+},
+{
+"text": 1981,
+"voice": "MISSION_END_32_10"
+},
+{
+"text": 1973,
+"voice": "MISSION_END_32_2"
+},
+{
+"text": 1974,
+"voice": "MISSION_END_32_3"
+},
+{
+"text": 1975,
+"voice": "MISSION_END_32_4"
+},
+{
+"text": 1976,
+"voice": "MISSION_END_32_5"
+},
+{
+"text": 1977,
+"voice": "MISSION_END_32_6"
+},
+{
+"text": 1978,
+"voice": "MISSION_END_32_7"
+},
+{
+"text": 1979,
+"voice": "MISSION_END_32_8"
+},
+{
+"text": 1980,
+"voice": "MISSION_END_32_9"
+},
+{
+"text": 1982,
+"voice": "MISSION_END_33_0"
+},
+{
+"text": 1983,
+"voice": "MISSION_END_33_1"
+},
+{
+"text": 1984,
+"voice": "MISSION_END_33_2"
+},
+{
+"text": 1985,
+"voice": "MISSION_END_33_3"
+},
+{
+"text": 1986,
+"voice": "MISSION_END_33_4"
+},
+{
+"text": 1987,
+"voice": "MISSION_END_33_5"
+},
+{
+"text": 1988,
+"voice": "MISSION_END_33_6"
+},
+{
+"text": 1989,
+"voice": "MISSION_END_33_7"
+},
+{
+"text": 1990,
+"voice": "MISSION_END_33_8"
+},
+{
+"text": 1991,
+"voice": "MISSION_END_34_0"
+},
+{
+"text": 1992,
+"voice": "MISSION_END_34_1"
+},
+{
+"text": 2001,
+"voice": "MISSION_END_34_10"
+},
+{
+"text": 2002,
+"voice": "MISSION_END_34_11"
+},
+{
+"text": 2003,
+"voice": "MISSION_END_34_12"
+},
+{
+"text": 2004,
+"voice": "MISSION_END_34_13"
+},
+{
+"text": 2005,
+"voice": "MISSION_END_34_14"
+},
+{
+"text": 1993,
+"voice": "MISSION_END_34_2"
+},
+{
+"text": 1994,
+"voice": "MISSION_END_34_3"
+},
+{
+"text": 1995,
+"voice": "MISSION_END_34_4"
+},
+{
+"text": 1996,
+"voice": "MISSION_END_34_5"
+},
+{
+"text": 1997,
+"voice": "MISSION_END_34_6"
+},
+{
+"text": 1998,
+"voice": "MISSION_END_34_7"
+},
+{
+"text": 1999,
+"voice": "MISSION_END_34_8"
+},
+{
+"text": 2000,
+"voice": "MISSION_END_34_9"
+},
+{
+"text": 2006,
+"voice": "MISSION_END_35_0"
+},
+{
+"text": 2007,
+"voice": "MISSION_END_35_1"
+},
+{
+"text": 2008,
+"voice": "MISSION_END_35_2"
+},
+{
+"text": 2009,
+"voice": "MISSION_END_35_3"
+},
+{
+"text": 2010,
+"voice": "MISSION_END_35_4"
+},
+{
+"text": 2011,
+"voice": "MISSION_END_35_5"
+},
+{
+"text": 2012,
+"voice": "MISSION_END_35_6"
+},
+{
+"text": 2013,
+"voice": "MISSION_END_35_7"
+},
+{
+"text": 2014,
+"voice": "MISSION_END_35_8"
+},
+{
+"text": 2015,
+"voice": "MISSION_END_35_9"
+},
+{
+"text": 2018,
+"voice": "MISSION_END_36_0"
+},
+{
+"text": 2019,
+"voice": "MISSION_END_36_1"
+},
+{
+"text": 2020,
+"voice": "MISSION_END_37_0"
+},
+{
+"text": 2021,
+"voice": "MISSION_END_37_1"
+},
+{
+"text": 2022,
+"voice": "MISSION_END_37_2"
+},
+{
+"text": 2023,
+"voice": "MISSION_END_37_3"
+},
+{
+"text": 2024,
+"voice": "MISSION_END_37_4"
+},
+{
+"text": 2025,
+"voice": "MISSION_END_37_5"
+},
+{
+"text": 2026,
+"voice": "MISSION_END_37_6"
+},
+{
+"text": 2027,
+"voice": "MISSION_END_37_7"
+},
+{
+"text": 2030,
+"voice": "MISSION_END_38_0"
+},
+{
+"text": 2031,
+"voice": "MISSION_END_38_1"
+},
+{
+"text": 2032,
+"voice": "MISSION_END_39_0"
+},
+{
+"text": 2033,
+"voice": "MISSION_END_39_1"
+},
+{
+"text": 2034,
+"voice": "MISSION_END_39_2"
+},
+{
+"text": 2035,
+"voice": "MISSION_END_39_3"
+},
+{
+"text": 2036,
+"voice": "MISSION_END_39_4"
+},
+{
+"text": 2037,
+"voice": "MISSION_END_39_5"
+},
+{
+"text": 2038,
+"voice": "MISSION_END_39_6"
+},
+{
+"text": 2039,
+"voice": "MISSION_END_39_7"
+},
+{
+"text": 2040,
+"voice": "MISSION_END_39_8"
+},
+{
+"text": 2041,
+"voice": "MISSION_END_39_9"
+},
+{
+"text": 1733,
+"voice": "MISSION_END_3_0"
+},
+{
+"text": 1734,
+"voice": "MISSION_END_3_1"
+},
+{
+"text": 1735,
+"voice": "MISSION_END_3_2"
+},
+{
+"text": 1736,
+"voice": "MISSION_END_3_3"
+},
+{
+"text": 1737,
+"voice": "MISSION_END_3_4"
+},
+{
+"text": 2058,
+"voice": "MISSION_END_41_0"
+},
+{
+"text": 2059,
+"voice": "MISSION_END_41_1"
+},
+{
+"text": 2060,
+"voice": "MISSION_END_41_2"
+},
+{
+"text": 2061,
+"voice": "MISSION_END_41_3"
+},
+{
+"text": 2062,
+"voice": "MISSION_END_41_4"
+},
+{
+"text": 2065,
+"voice": "MISSION_END_42_0"
+},
+{
+"text": 2066,
+"voice": "MISSION_END_42_1"
+},
+{
+"text": 2067,
+"voice": "MISSION_END_42_2"
+},
+{
+"text": 2068,
+"voice": "MISSION_END_42_3"
+},
+{
+"text": 2069,
+"voice": "MISSION_END_43_0"
+},
+{
+"text": 2070,
+"voice": "MISSION_END_43_1"
+},
+{
+"text": 2075,
+"voice": "MISSION_END_44_0"
+},
+{
+"text": 2076,
+"voice": "MISSION_END_44_1"
+},
+{
+"text": 2078,
+"voice": "MISSION_END_44_3"
+},
+{
+"text": 1739,
+"voice": "MISSION_END_4_0"
+},
+{
+"text": 1740,
+"voice": "MISSION_END_4_1"
+},
+{
+"text": 1741,
+"voice": "MISSION_END_5_0"
+},
+{
+"text": 1742,
+"voice": "MISSION_END_5_1"
+},
+{
+"text": 1743,
+"voice": "MISSION_END_5_2"
+},
+{
+"text": 1744,
+"voice": "MISSION_END_5_3"
+},
+{
+"text": 1745,
+"voice": "MISSION_END_5_4"
+},
+{
+"text": 1747,
+"voice": "MISSION_END_6_0"
+},
+{
+"text": 1758,
+"voice": "MISSION_END_7_0"
+},
+{
+"text": 1759,
+"voice": "MISSION_END_7_1"
+},
+{
+"text": 1760,
+"voice": "MISSION_END_7_2"
+},
+{
+"text": 1761,
+"voice": "MISSION_END_7_3"
+},
+{
+"text": 1762,
+"voice": "MISSION_END_7_4"
+},
+{
+"text": 1763,
+"voice": "MISSION_END_8_0"
+},
+{
+"text": 1764,
+"voice": "MISSION_END_8_1"
+},
+{
+"text": 1765,
+"voice": "MISSION_END_8_2"
+},
+{
+"text": 1766,
+"voice": "MISSION_END_8_3"
+},
+{
+"text": 1767,
+"voice": "MISSION_END_8_4"
+},
+{
+"text": 1768,
+"voice": "MISSION_END_8_5"
+},
+{
+"text": 1769,
+"voice": "MISSION_END_8_6"
+},
+{
+"text": 1770,
+"voice": "MISSION_END_8_7"
+},
+{
+"text": 1771,
+"voice": "MISSION_END_8_8"
+},
+{
+"text": 1772,
+"voice": "MISSION_END_9_0"
+},
+{
+"text": 1773,
+"voice": "MISSION_END_9_1"
+},
+{
+"text": 1774,
+"voice": "MISSION_END_9_2"
+},
+{
+"text": 1775,
+"voice": "MISSION_END_9_3"
+},
+{
+"text": 1776,
+"voice": "MISSION_END_9_4"
+},
+{
+"text": 1777,
+"voice": "MISSION_END_9_5"
+},
+{
+"text": 1778,
+"voice": "MISSION_END_9_6"
+},
+{
+"text": 1779,
+"voice": "MISSION_END_9_7"
+},
+{
+"text": 1780,
+"voice": "MISSION_END_9_8"
+},
+{
+"text": 1781,
+"voice": "MISSION_END_9_9"
+},
+{
+"text": 1912,
+"voice": "MISSION_REMINDER_24"
+},
+{
+"text": 533,
+"voice": "MSG_MISSION_23_REMINDER"
+},
+{
+"text": 534,
+"voice": "MSG_MISSION_23_REMINDER_2"
+},
+{
+"text": 532,
+"voice": "MSG_MISSION_24_NO_EQUIPMENT_INSTALLED"
+},
+{
+"text": 535,
+"voice": "MSG_MISSION_24_REMINDER"
+},
+{
+"text": 536,
+"voice": "MSG_MISSION_24_REMINDER_2"
+},
+{
+"text": 1668,
+"voice": "RADIO_0_0"
+},
+{
+"text": 1669,
+"voice": "RADIO_0_1"
+},
+{
+"text": 1684,
+"voice": "RADIO_0_10"
+},
+{
+"text": 1685,
+"voice": "RADIO_0_11"
+},
+{
+"text": 1686,
+"voice": "RADIO_0_12"
+},
+{
+"text": 1687,
+"voice": "RADIO_0_13"
+},
+{
+"text": 1688,
+"voice": "RADIO_0_14"
+},
+{
+"text": 1689,
+"voice": "RADIO_0_15"
+},
+{
+"text": 1690,
+"voice": "RADIO_0_16"
+},
+{
+"text": 1691,
+"voice": "RADIO_0_17"
+},
+{
+"text": 1692,
+"voice": "RADIO_0_18"
+},
+{
+"text": 1693,
+"voice": "RADIO_0_19"
+},
+{
+"text": 1670,
+"voice": "RADIO_0_2"
+},
+{
+"text": 1694,
+"voice": "RADIO_0_20"
+},
+{
+"text": 1695,
+"voice": "RADIO_0_21"
+},
+{
+"text": 1696,
+"voice": "RADIO_0_22"
+},
+{
+"text": 1671,
+"voice": "RADIO_0_3"
+},
+{
+"text": 1672,
+"voice": "RADIO_0_4"
+},
+{
+"text": 1673,
+"voice": "RADIO_0_5"
+},
+{
+"text": 1674,
+"voice": "RADIO_0_6"
+},
+{
+"text": 1675,
+"voice": "RADIO_0_7"
+},
+{
+"text": 1676,
+"voice": "RADIO_0_8"
+},
+{
+"text": 1683,
+"voice": "RADIO_0_9"
+},
+{
+"text": 1820,
+"voice": "RADIO_14_0"
+},
+{
+"text": 1821,
+"voice": "RADIO_14_1"
+},
+{
+"text": 1822,
+"voice": "RADIO_14_2"
+},
+{
+"text": 1823,
+"voice": "RADIO_14_3"
+},
+{
+"text": 1824,
+"voice": "RADIO_14_4"
+},
+{
+"text": 1839,
+"voice": "RADIO_16_1"
+},
+{
+"text": 1840,
+"voice": "RADIO_16_2"
+},
+{
+"text": 1841,
+"voice": "RADIO_16_3"
+},
+{
+"text": 1842,
+"voice": "RADIO_16_4"
+},
+{
+"text": 1697,
+"voice": "RADIO_1_0"
+},
+{
+"text": 1698,
+"voice": "RADIO_1_1"
+},
+{
+"text": 1699,
+"voice": "RADIO_1_2"
+},
+{
+"text": 1881,
+"voice": "RADIO_21_0"
+},
+{
+"text": 1882,
+"voice": "RADIO_21_1"
+},
+{
+"text": 1883,
+"voice": "RADIO_21_2"
+},
+{
+"text": 1884,
+"voice": "RADIO_21_3"
+},
+{
+"text": 1885,
+"voice": "RADIO_21_4"
+},
+{
+"text": 1918,
+"voice": "RADIO_24_1"
+},
+{
+"text": 1919,
+"voice": "RADIO_24_2"
+},
+{
+"text": 1920,
+"voice": "RADIO_24_3"
+},
+{
+"text": 1921,
+"voice": "RADIO_24_4"
+},
+{
+"text": 1925,
+"voice": "RADIO_25_0"
+},
+{
+"text": 1926,
+"voice": "RADIO_25_1"
+},
+{
+"text": 1927,
+"voice": "RADIO_25_2"
+},
+{
+"text": 1944,
+"voice": "RADIO_28_0"
+},
+{
+"text": 1946,
+"voice": "RADIO_28_2"
+},
+{
+"text": 1948,
+"voice": "RADIO_29_0"
+},
+{
+"text": 1949,
+"voice": "RADIO_29_1"
+},
+{
+"text": 1950,
+"voice": "RADIO_29_2"
+},
+{
+"text": 1951,
+"voice": "RADIO_29_3"
+},
+{
+"text": 1953,
+"voice": "RADIO_29_5"
+},
+{
+"text": 2029,
+"voice": "RADIO_38_0"
+},
+{
+"text": 2042,
+"voice": "RADIO_40_0"
+},
+{
+"text": 2043,
+"voice": "RADIO_40_1"
+},
+{
+"text": 2044,
+"voice": "RADIO_40_2"
+},
+{
+"text": 2045,
+"voice": "RADIO_40_3"
+},
+{
+"text": 2046,
+"voice": "RADIO_40_4"
+},
+{
+"text": 2047,
+"voice": "RADIO_40_5"
+},
+{
+"text": 2048,
+"voice": "RADIO_40_6"
+},
+{
+"text": 2052,
+"voice": "RADIO_41_0"
+},
+{
+"text": 2053,
+"voice": "RADIO_41_1"
+},
+{
+"text": 2054,
+"voice": "RADIO_41_2"
+},
+{
+"text": 2055,
+"voice": "RADIO_41_3"
+},
+{
+"text": 2056,
+"voice": "RADIO_41_4"
+},
+{
+"text": 2057,
+"voice": "RADIO_41_5"
+},
+{
+"text": 2063,
+"voice": "RADIO_41_6"
+},
+{
+"text": 2064,
+"voice": "RADIO_41_7"
+},
+{
+"text": 2071,
+"voice": "RADIO_43_0"
+},
+{
+"text": 2072,
+"voice": "RADIO_43_1"
+},
+{
+"text": 2073,
+"voice": "RADIO_43_2"
+},
+{
+"text": 2074,
+"voice": "RADIO_43_3"
+},
+{
+"text": 1756,
+"voice": "RADIO_7_0"
+},
+{
+"text": 1757,
+"voice": "RADIO_7_1"
+},
+{
+"text": 1952,
+"voice": "RADIO_29_4"
+},
+{
+"text": 1838,
+"voice": "RADIO_16_0"
+},
+{
+"text": 1917,
+"voice": "RADIO_24_0"
+},
+{
+"text": 1945,
+"voice": "RADIO_28_1"
+},
+{
+"text": 443,
+"voice": "MSG_ENTER_NIVELIAN_SYSTEM_0"
+},
+{
+"text": 444,
+"voice": "MSG_ENTER_NIVELIAN_SYSTEM_1"
+},
+{
+"text": 433,
+"voice": "MSG_PIRATE_STATION_NO_LOUNGE"
+},
+{
+"text": 2106,
+"voice": "MISSION_48_1"
+},
+{
+"text": 2108,
+"voice": "MISSION_48_3"
+},
+{
+"text": 2110,
+"voice": "MISSION_48_5"
+},
+{
+"text": 2185,
+"voice": "MISSION_58_SUB_0"
+},
+{
+"text": 2187,
+"voice": "MISSION_58_SUB_2"
+},
+{
+"text": 2189,
+"voice": "MISSION_58_SUB_4"
+},
+{
+"text": 2241,
+"voice": "MISSION_65_1"
+},
+{
+"text": 2243,
+"voice": "MISSION_65_3"
+},
+{
+"text": 2245,
+"voice": "MISSION_65_5"
+},
+{
+"text": 2247,
+"voice": "MISSION_65_7"
+},
+{
+"text": 2249,
+"voice": "MISSION_65_9"
+},
+{
+"text": 2283,
+"voice": "MISSION_67_0"
+},
+{
+"text": 2285,
+"voice": "MISSION_67_2"
+},
+{
+"text": 2079,
+"voice": "MISSION_END_46_0"
+},
+{
+"text": 2081,
+"voice": "MISSION_END_46_2"
+},
+{
+"text": 2083,
+"voice": "MISSION_END_46_4"
+},
+{
+"text": 2085,
+"voice": "MISSION_END_46_6"
+},
+{
+"text": 2087,
+"voice": "MISSION_END_46_8"
+},
+{
+"text": 2089,
+"voice": "MISSION_END_47_0"
+},
+{
+"text": 2091,
+"voice": "MISSION_END_47_2"
+},
+{
+"text": 2093,
+"voice": "MISSION_END_47_4"
+},
+{
+"text": 2095,
+"voice": "MISSION_END_47_6"
+},
+{
+"text": 2097,
+"voice": "MISSION_END_47_8"
+},
+{
+"text": 2099,
+"voice": "MISSION_END_47_10"
+},
+{
+"text": 2101,
+"voice": "MISSION_END_47_12"
+},
+{
+"text": 2103,
+"voice": "MISSION_END_47_14"
+},
+{
+"text": 2112,
+"voice": "MISSION_END_48_0"
+},
+{
+"text": 2114,
+"voice": "MISSION_END_48_2"
+},
+{
+"text": 2116,
+"voice": "MISSION_END_48_4"
+},
+{
+"text": 2118,
+"voice": "MISSION_END_48_6"
+},
+{
+"text": 2130,
+"voice": "MISSION_END_54_0"
+},
+{
+"text": 2132,
+"voice": "MISSION_END_54_2"
+},
+{
+"text": 2134,
+"voice": "MISSION_END_54_4"
+},
+{
+"text": 2136,
+"voice": "MISSION_END_54_6"
+},
+{
+"text": 2140,
+"voice": "MISSION_END_55_0"
+},
+{
+"text": 2142,
+"voice": "MISSION_END_55_2"
+},
+{
+"text": 2144,
+"voice": "MISSION_END_55_4"
+},
+{
+"text": 2146,
+"voice": "MISSION_END_55_6"
+},
+{
+"text": 2148,
+"voice": "MISSION_END_55_8"
+},
+{
+"text": 2150,
+"voice": "MISSION_END_55_10"
+},
+{
+"text": 2152,
+"voice": "MISSION_END_55_12"
+},
+{
+"text": 2160,
+"voice": "MISSION_END_56_0"
+},
+{
+"text": 2162,
+"voice": "MISSION_END_57_0"
+},
+{
+"text": 2164,
+"voice": "MISSION_END_57_2"
+},
+{
+"text": 2166,
+"voice": "MISSION_END_57_4"
+},
+{
+"text": 2168,
+"voice": "MISSION_END_57_6"
+},
+{
+"text": 2170,
+"voice": "MISSION_END_57_8"
+},
+{
+"text": 2174,
+"voice": "MISSION_END_58_1"
+},
+{
+"text": 2176,
+"voice": "MISSION_END_58_3"
+},
+{
+"text": 2178,
+"voice": "MISSION_END_58_5"
+},
+{
+"text": 2180,
+"voice": "MISSION_END_58_7"
+},
+{
+"text": 2192,
+"voice": "MISSION_END_60_1_LIB"
+},
+{
+"text": 2194,
+"voice": "MISSION_END_60_1_NO_LIB"
+},
+{
+"text": 2196,
+"voice": "MISSION_END_60_3"
+},
+{
+"text": 2198,
+"voice": "MISSION_END_60_5"
+},
+{
+"text": 2201,
+"voice": "MISSION_END_61_0"
+},
+{
+"text": 2203,
+"voice": "MISSION_END_61_2"
+},
+{
+"text": 2205,
+"voice": "MISSION_END_61_4"
+},
+{
+"text": 2207,
+"voice": "MISSION_END_61_6"
+},
+{
+"text": 2210,
+"voice": "MISSION_END_62_0"
+},
+{
+"text": 2212,
+"voice": "MISSION_END_62_2"
+},
+{
+"text": 2214,
+"voice": "MISSION_END_62_4"
+},
+{
+"text": 2216,
+"voice": "MISSION_END_62_6"
+},
+{
+"text": 2218,
+"voice": "MISSION_END_62_8"
+},
+{
+"text": 2220,
+"voice": "MISSION_END_62_10"
+},
+{
+"text": 2222,
+"voice": "MISSION_END_62_12"
+},
+{
+"text": 2226,
+"voice": "MISSION_END_63_0"
+},
+{
+"text": 2236,
+"voice": "MISSION_END_64_1"
+},
+{
+"text": 2238,
+"voice": "MISSION_END_64_3"
+},
+{
+"text": 2254,
+"voice": "MISSION_END_65_0"
+},
+{
+"text": 2256,
+"voice": "MISSION_END_65_2"
+},
+{
+"text": 2258,
+"voice": "MISSION_END_65_4"
+},
+{
+"text": 2260,
+"voice": "MISSION_END_65_6"
+},
+{
+"text": 2262,
+"voice": "MISSION_END_65_8"
+},
+{
+"text": 2264,
+"voice": "MISSION_END_65_10"
+},
+{
+"text": 2266,
+"voice": "MISSION_END_65_12"
+},
+{
+"text": 2268,
+"voice": "MISSION_END_65_14"
+},
+{
+"text": 2271,
+"voice": "MISSION_END_66_0"
+},
+{
+"text": 2273,
+"voice": "MISSION_END_66_2"
+},
+{
+"text": 2275,
+"voice": "MISSION_END_66_4"
+},
+{
+"text": 2277,
+"voice": "MISSION_END_66_6"
+},
+{
+"text": 2279,
+"voice": "MISSION_END_66_8"
+},
+{
+"text": 2280,
+"voice": "MISSION_END_66_9"
+},
+{
+"text": 2282,
+"voice": "MISSION_END_66_11"
+},
+{
+"text": 2300,
+"voice": "MISSION_END_67_1"
+},
+{
+"text": 2302,
+"voice": "MISSION_END_67_3"
+},
+{
+"text": 2304,
+"voice": "MISSION_END_67_5"
+},
+{
+"text": 2308,
+"voice": "MISSION_END_68_0"
+},
+{
+"text": 2310,
+"voice": "MISSION_END_68_2"
+},
+{
+"text": 2312,
+"voice": "MISSION_END_68_4"
+},
+{
+"text": 2314,
+"voice": "MISSION_END_68_6"
+},
+{
+"text": 2316,
+"voice": "MISSION_END_68_8"
+},
+{
+"text": 2325,
+"voice": "MISSION_END_71_0"
+},
+{
+"text": 2327,
+"voice": "MISSION_END_71_2"
+},
+{
+"text": 2329,
+"voice": "MISSION_END_71_4"
+},
+{
+"text": 2331,
+"voice": "MISSION_END_71_6"
+},
+{
+"text": 2333,
+"voice": "MISSION_END_72_1"
+},
+{
+"text": 2335,
+"voice": "MISSION_END_72_3"
+},
+{
+"text": 2337,
+"voice": "MISSION_END_72_5"
+},
+{
+"text": 2339,
+"voice": "MISSION_END_72_7"
+},
+{
+"text": 2341,
+"voice": "MISSION_END_72_9"
+},
+{
+"text": 2343,
+"voice": "MISSION_END_72_11"
+},
+{
+"text": 2345,
+"voice": "MISSION_END_72_13"
+},
+{
+"text": 2356,
+"voice": "MISSION_END_73_1"
+},
+{
+"text": 2358,
+"voice": "MISSION_END_73_3"
+},
+{
+"text": 2360,
+"voice": "MISSION_END_73_5"
+},
+{
+"text": 2362,
+"voice": "MISSION_END_73_7"
+},
+{
+"text": 2364,
+"voice": "MISSION_END_74_0"
+},
+{
+"text": 2367,
+"voice": "MISSION_END_75_1"
+},
+{
+"text": 2369,
+"voice": "MISSION_END_75_3"
+},
+{
+"text": 2371,
+"voice": "MISSION_END_75_5"
+},
+{
+"text": 2373,
+"voice": "MISSION_END_75_7"
+},
+{
+"text": 2375,
+"voice": "MISSION_END_75_9"
+},
+{
+"text": 2377,
+"voice": "MISSION_END_75_11"
+},
+{
+"text": 2379,
+"voice": "MISSION_END_76_0"
+},
+{
+"text": 2381,
+"voice": "MISSION_END_76_2"
+},
+{
+"text": 2383,
+"voice": "MISSION_END_76_4"
+},
+{
+"text": 2385,
+"voice": "MISSION_END_76_6"
+},
+{
+"text": 2387,
+"voice": "MISSION_END_76_8"
+},
+{
+"text": 2389,
+"voice": "MISSION_END_77_0"
+},
+{
+"text": 2391,
+"voice": "MISSION_END_77_2"
+},
+{
+"text": 2393,
+"voice": "MISSION_END_77_4"
+},
+{
+"text": 2395,
+"voice": "MISSION_END_77_6"
+},
+{
+"text": 2397,
+"voice": "MISSION_END_77_8"
+},
+{
+"text": 2398,
+"voice": "MISSION_END_77_9"
+},
+{
+"text": 2399,
+"voice": "MISSION_END_77_10"
+},
+{
+"text": 2400,
+"voice": "MISSION_END_77_11"
+},
+{
+"text": 2402,
+"voice": "MISSION_END_77_13"
+},
+{
+"text": 2404,
+"voice": "MISSION_END_77_15"
+},
+{
+"text": 2406,
+"voice": "MISSION_END_77_17"
+},
+{
+"text": 2408,
+"voice": "MISSION_END_77_19"
+},
+{
+"text": 2427,
+"voice": "MISSION_END_80_1"
+},
+{
+"text": 2429,
+"voice": "MISSION_END_80_3"
+},
+{
+"text": 2431,
+"voice": "MISSION_END_80_5"
+},
+{
+"text": 2436,
+"voice": "MISSION_END_82_0"
+},
+{
+"text": 2438,
+"voice": "MISSION_END_82_2"
+},
+{
+"text": 2440,
+"voice": "MISSION_END_82_4"
+},
+{
+"text": 2442,
+"voice": "MISSION_END_82_6"
+},
+{
+"text": 2449,
+"voice": "MISSION_END_83_5"
+},
+{
+"text": 2451,
+"voice": "MISSION_END_83_7"
+},
+{
+"text": 2307,
+"voice": "MISSION_HINT_67"
+},
+{
+"text": 2453,
+"voice": "MISSION_VOID_SYSTEM_DLG_0_0"
+},
+{
+"text": 2455,
+"voice": "MISSION_VOID_SYSTEM_DLG_1_0"
+},
+{
+"text": 2457,
+"voice": "MISSION_VOID_SYSTEM_DLG_2_0"
+},
+{
+"text": 2459,
+"voice": "MISSION_VOID_SYSTEM_DLG_3_0"
+},
+{
+"text": 2461,
+"voice": "MISSION_VOID_SYSTEM_DLG_3_2"
+},
+{
+"text": 2463,
+"voice": "MISSION_VOID_SYSTEM_DLG_4_0"
+},
+{
+"text": 2464,
+"voice": "MISSION_VOID_SYSTEM_DLG_4_1"
+},
+{
+"text": 2465,
+"voice": "MISSION_VOID_SYSTEM_DLG_4_2"
+},
+{
+"text": 2467,
+"voice": "MISSION_VOID_SYSTEM_DLG_5_1"
+},
+{
+"text": 2469,
+"voice": "MISSION_VOID_SYSTEM_DLG_6_0"
+},
+{
+"text": 2471,
+"voice": "MISSION_VOID_SYSTEM_DLG_7_0"
+},
+{
+"text": 2472,
+"voice": "MISSION_VOID_SYSTEM_DLG_7_1"
+},
+{
+"text": 449,
+"voice": "MSG_BLACK_MARKET_0"
+},
+{
+"text": 450,
+"voice": "MSG_BLACK_MARKET_1"
+},
+{
+"text": 455,
+"voice": "MSG_BLACK_MARKET_ATTACK_0"
+},
+{
+"text": 456,
+"voice": "MSG_BLACK_MARKET_ATTACK_1"
+},
+{
+"text": 453,
+"voice": "MSG_BLACK_MARKET_NOT_PAID_0"
+},
+{
+"text": 454,
+"voice": "MSG_BLACK_MARKET_NOT_PAID_1"
+},
+{
+"text": 451,
+"voice": "MSG_BLACK_MARKET_PAID_0"
+},
+{
+"text": 452,
+"voice": "MSG_BLACK_MARKET_PAID_1"
+},
+{
+"text": 459,
+"voice": "MSG_PLAYER_STATION_DLG_0_0"
+},
+{
+"text": 461,
+"voice": "MSG_PLAYER_STATION_DLG_0_2"
+},
+{
+"text": 463,
+"voice": "MSG_PLAYER_STATION_DLG_0_4"
+},
+{
+"text": 465,
+"voice": "MSG_PLAYER_STATION_DLG_0_6"
+},
+{
+"text": 467,
+"voice": "MSG_PLAYER_STATION_DLG_0_8"
+},
+{
+"text": 469,
+"voice": "MSG_PLAYER_STATION_DLG_0_10"
+},
+{
+"text": 471,
+"voice": "MSG_PLAYER_STATION_DLG_0_12"
+},
+{
+"text": 473,
+"voice": "MSG_PLAYER_STATION_DLG_0_14"
+},
+{
+"text": 475,
+"voice": "MSG_PLAYER_STATION_DLG_0_16"
+},
+{
+"text": 479,
+"voice": "MSG_PLAYER_STATION_DLG_1_0"
+},
+{
+"text": 481,
+"voice": "MSG_PLAYER_STATION_DLG_1_2"
+},
+{
+"text": 483,
+"voice": "MSG_PLAYER_STATION_DLG_1_4"
+},
+{
+"text": 458,
+"voice": "MSG_PLAYER_STATION_ENEMIES_DEAD"
+},
+{
+"text": 457,
+"voice": "MSG_PLAYER_STATION_ENTER_ORBIT"
+},
+{
+"text": 2121,
+"voice": "RADIO_50_0"
+},
+{
+"text": 2123,
+"voice": "RADIO_50_2"
+},
+{
+"text": 2125,
+"voice": "RADIO_51_0"
+},
+{
+"text": 2127,
+"voice": "RADIO_52_0"
+},
+{
+"text": 2154,
+"voice": "RADIO_56_0"
+},
+{
+"text": 2156,
+"voice": "RADIO_56_2"
+},
+{
+"text": 2159,
+"voice": "RADIO_56_5"
+},
+{
+"text": 2225,
+"voice": "RADIO_63_2"
+},
+{
+"text": 2229,
+"voice": "RADIO_64_1"
+},
+{
+"text": 2231,
+"voice": "RADIO_64_3"
+},
+{
+"text": 2233,
+"voice": "RADIO_64_5"
+},
+{
+"text": 2252,
+"voice": "RADIO_65_1"
+},
+{
+"text": 2288,
+"voice": "RADIO_67_1"
+},
+{
+"text": 2289,
+"voice": "RADIO_67_2"
+},
+{
+"text": 2291,
+"voice": "RADIO_67_4"
+},
+{
+"text": 2294,
+"voice": "RADIO_67_7"
+},
+{
+"text": 2296,
+"voice": "RADIO_67_9"
+},
+{
+"text": 2298,
+"voice": "RADIO_67_11"
+},
+{
+"text": 2322,
+"voice": "RADIO_70_2"
+},
+{
+"text": 2349,
+"voice": "RADIO_73_2"
+},
+{
+"text": 2352,
+"voice": "RADIO_73_5"
+},
+{
+"text": 2412,
+"voice": "RADIO_78_3"
+},
+{
+"text": 2415,
+"voice": "RADIO_80_1"
+},
+{
+"text": 2416,
+"voice": "RADIO_80_2"
+},
+{
+"text": 2418,
+"voice": "RADIO_80_4"
+},
+{
+"text": 2419,
+"voice": "RADIO_80_5"
+},
+{
+"text": 2420,
+"voice": "RADIO_80_6"
+},
+{
+"text": 2421,
+"voice": "RADIO_80_7"
+},
+{
+"text": 2423,
+"voice": "RADIO_80_9"
+},
+{
+"text": 2424,
+"voice": "RADIO_80_10"
+},
+{
+"text": 2425,
+"voice": "RADIO_80_11"
+},
+{
+"text": 2432,
+"voice": "RADIO_81_0"
+},
+{
+"text": 2433,
+"voice": "RADIO_81_1"
+},
+{
+"text": 2434,
+"voice": "RADIO_81_2"
+},
+{
+"text": 2435,
+"voice": "RADIO_81_3"
+},
+{
+"text": 2115,
+"voice": "MISSION_END_48_3"
+},
+{
+"text": 2113,
+"voice": "MISSION_END_48_1"
+},
+{
+"text": 2098,
+"voice": "MISSION_END_47_9"
+},
+{
+"text": 2096,
+"voice": "MISSION_END_47_7"
+},
+{
+"text": 2094,
+"voice": "MISSION_END_47_5"
+},
+{
+"text": 2092,
+"voice": "MISSION_END_47_3"
+},
+{
+"text": 2104,
+"voice": "MISSION_END_47_15"
+},
+{
+"text": 2102,
+"voice": "MISSION_END_47_13"
+},
+{
+"text": 2100,
+"voice": "MISSION_END_47_11"
+},
+{
+"text": 2090,
+"voice": "MISSION_END_47_1"
+},
+{
+"text": 2430,
+"voice": "MISSION_END_80_4"
+},
+{
+"text": 2428,
+"voice": "MISSION_END_80_2"
+},
+{
+"text": 2426,
+"voice": "MISSION_END_80_0"
+},
+{
+"text": 2363,
+"voice": "MISSION_END_73_8"
+},
+{
+"text": 2361,
+"voice": "MISSION_END_73_6"
+},
+{
+"text": 2359,
+"voice": "MISSION_END_73_4"
+},
+{
+"text": 2357,
+"voice": "MISSION_END_73_2"
+},
+{
+"text": 2355,
+"voice": "MISSION_END_73_0"
+},
+{
+"text": 2340,
+"voice": "MISSION_END_72_8"
+},
+{
+"text": 2346,
+"voice": "MISSION_END_72_14"
+},
+{
+"text": 2344,
+"voice": "MISSION_END_72_12"
+},
+{
+"text": 2342,
+"voice": "MISSION_END_72_10"
+},
+{
+"text": 2338,
+"voice": "MISSION_END_72_6"
+},
+{
+"text": 2336,
+"voice": "MISSION_END_72_4"
+},
+{
+"text": 2334,
+"voice": "MISSION_END_72_2"
+},
+{
+"text": 2332,
+"voice": "MISSION_END_72_0"
+},
+{
+"text": 2324,
+"voice": "MISSION_END_70_0"
+},
+{
+"text": 2305,
+"voice": "MISSION_END_67_6"
+},
+{
+"text": 2303,
+"voice": "MISSION_END_67_4"
+},
+{
+"text": 2301,
+"voice": "MISSION_END_67_2"
+},
+{
+"text": 2299,
+"voice": "MISSION_END_67_0"
+},
+{
+"text": 2239,
+"voice": "MISSION_END_64_4"
+},
+{
+"text": 2237,
+"voice": "MISSION_END_64_2"
+},
+{
+"text": 2235,
+"voice": "MISSION_END_64_0"
+},
+{
+"text": 2227,
+"voice": "MISSION_END_63_1"
+},
+{
+"text": 2208,
+"voice": "MISSION_END_61_7"
+},
+{
+"text": 2206,
+"voice": "MISSION_END_61_5"
+},
+{
+"text": 2204,
+"voice": "MISSION_END_61_3"
+},
+{
+"text": 2202,
+"voice": "MISSION_END_61_1"
+},
+{
+"text": 2190,
+"voice": "MISSION_END_59_0"
+},
+{
+"text": 2161,
+"voice": "MISSION_END_56_1"
+},
+{
+"text": 2088,
+"voice": "MISSION_END_46_9"
+},
+{
+"text": 2086,
+"voice": "MISSION_END_46_7"
+},
+{
+"text": 2084,
+"voice": "MISSION_END_46_5"
+},
+{
+"text": 2082,
+"voice": "MISSION_END_46_3"
+},
+{
+"text": 2080,
+"voice": "MISSION_END_46_1"
+},
+{
+"text": 2286,
+"voice": "MISSION_67_3"
+},
+{
+"text": 2284,
+"voice": "MISSION_67_1"
+},
+{
+"text": 2250,
+"voice": "MISSION_65_10"
+},
+{
+"text": 2248,
+"voice": "MISSION_65_8"
+},
+{
+"text": 2246,
+"voice": "MISSION_65_6"
+},
+{
+"text": 2244,
+"voice": "MISSION_65_4"
+},
+{
+"text": 2242,
+"voice": "MISSION_65_2"
+},
+{
+"text": 2240,
+"voice": "MISSION_65_0"
+},
+{
+"text": 2473,
+"voice": "MISSION_VOID_SYSTEM_DLG_7_2"
+},
+{
+"text": 2470,
+"voice": "MISSION_VOID_SYSTEM_DLG_6_1"
+},
+{
+"text": 2468,
+"voice": "MISSION_VOID_SYSTEM_DLG_5_2"
+},
+{
+"text": 2466,
+"voice": "MISSION_VOID_SYSTEM_DLG_5_0"
+},
+{
+"text": 2462,
+"voice": "MISSION_VOID_SYSTEM_DLG_3_3"
+},
+{
+"text": 2460,
+"voice": "MISSION_VOID_SYSTEM_DLG_3_1"
+},
+{
+"text": 2458,
+"voice": "MISSION_VOID_SYSTEM_DLG_2_1"
+},
+{
+"text": 2456,
+"voice": "MISSION_VOID_SYSTEM_DLG_1_1"
+},
+{
+"text": 2454,
+"voice": "MISSION_VOID_SYSTEM_DLG_0_1"
+},
+{
+"text": 2422,
+"voice": "RADIO_80_8"
+},
+{
+"text": 2417,
+"voice": "RADIO_80_3"
+},
+{
+"text": 2414,
+"voice": "RADIO_80_0"
+},
+{
+"text": 2413,
+"voice": "RADIO_79_0"
+},
+{
+"text": 2411,
+"voice": "RADIO_78_2"
+},
+{
+"text": 2410,
+"voice": "RADIO_78_1"
+},
+{
+"text": 2409,
+"voice": "RADIO_78_0"
+},
+{
+"text": 2354,
+"voice": "RADIO_73_7"
+},
+{
+"text": 2353,
+"voice": "RADIO_73_6"
+},
+{
+"text": 2351,
+"voice": "RADIO_73_4"
+},
+{
+"text": 2350,
+"voice": "RADIO_73_3"
+},
+{
+"text": 2348,
+"voice": "RADIO_73_1"
+},
+{
+"text": 2347,
+"voice": "RADIO_73_0"
+},
+{
+"text": 2323,
+"voice": "RADIO_70_3"
+},
+{
+"text": 2321,
+"voice": "RADIO_70_1"
+},
+{
+"text": 2320,
+"voice": "RADIO_70_0"
+},
+{
+"text": 2319,
+"voice": "RADIO_69_1"
+},
+{
+"text": 2318,
+"voice": "RADIO_69_0"
+},
+{
+"text": 2297,
+"voice": "RADIO_67_10"
+},
+{
+"text": 2295,
+"voice": "RADIO_67_8"
+},
+{
+"text": 2293,
+"voice": "RADIO_67_6"
+},
+{
+"text": 2292,
+"voice": "RADIO_67_5"
+},
+{
+"text": 2290,
+"voice": "RADIO_67_3"
+},
+{
+"text": 2287,
+"voice": "RADIO_67_0"
+},
+{
+"text": 2253,
+"voice": "RADIO_65_2"
+},
+{
+"text": 2251,
+"voice": "RADIO_65_0"
+},
+{
+"text": 2234,
+"voice": "RADIO_64_6"
+},
+{
+"text": 2232,
+"voice": "RADIO_64_4"
+},
+{
+"text": 2230,
+"voice": "RADIO_64_2"
+},
+{
+"text": 2228,
+"voice": "RADIO_64_0"
+},
+{
+"text": 2224,
+"voice": "RADIO_63_1"
+},
+{
+"text": 2223,
+"voice": "RADIO_63_0"
+},
+{
+"text": 2209,
+"voice": "RADIO_62_0"
+},
+{
+"text": 2158,
+"voice": "RADIO_56_4"
+},
+{
+"text": 2157,
+"voice": "RADIO_56_3"
+},
+{
+"text": 2155,
+"voice": "RADIO_56_1"
+},
+{
+"text": 2139,
+"voice": "RADIO_55_1"
+},
+{
+"text": 2138,
+"voice": "RADIO_55_0"
+},
+{
+"text": 2129,
+"voice": "RADIO_53_0"
+},
+{
+"text": 2128,
+"voice": "RADIO_52_1"
+},
+{
+"text": 2126,
+"voice": "RADIO_51_1"
+},
+{
+"text": 2124,
+"voice": "RADIO_50_3"
+},
+{
+"text": 2122,
+"voice": "RADIO_50_1"
+},
+{
+"text": 2120,
+"voice": "RADIO_49_0"
+},
+{
+"text": 2188,
+"voice": "MISSION_58_SUB_3"
+},
+{
+"text": 2186,
+"voice": "MISSION_58_SUB_1"
+},
+{
+"text": 2111,
+"voice": "MISSION_48_6"
+},
+{
+"text": 2109,
+"voice": "MISSION_48_4"
+},
+{
+"text": 2107,
+"voice": "MISSION_48_2"
+},
+{
+"text": 2105,
+"voice": "MISSION_48_0"
+},
+{
+"text": 484,
+"voice": "MSG_PLAYER_STATION_DLG_1_5"
+},
+{
+"text": 482,
+"voice": "MSG_PLAYER_STATION_DLG_1_3"
+},
+{
+"text": 480,
+"voice": "MSG_PLAYER_STATION_DLG_1_1"
+},
+{
+"text": 468,
+"voice": "MSG_PLAYER_STATION_DLG_0_9"
+},
+{
+"text": 466,
+"voice": "MSG_PLAYER_STATION_DLG_0_7"
+},
+{
+"text": 464,
+"voice": "MSG_PLAYER_STATION_DLG_0_5"
+},
+{
+"text": 474,
+"voice": "MSG_PLAYER_STATION_DLG_0_15"
+},
+{
+"text": 472,
+"voice": "MSG_PLAYER_STATION_DLG_0_13"
+},
+{
+"text": 470,
+"voice": "MSG_PLAYER_STATION_DLG_0_11"
+},
+{
+"text": 462,
+"voice": "MSG_PLAYER_STATION_DLG_0_3"
+},
+{
+"text": 460,
+"voice": "MSG_PLAYER_STATION_DLG_0_1"
+},
+{
+"text": 2452,
+"voice": "MISSION_END_83_8"
+},
+{
+"text": 2450,
+"voice": "MISSION_END_83_6"
+},
+{
+"text": 2448,
+"voice": "MISSION_END_83_4"
+},
+{
+"text": 2446,
+"voice": "MISSION_END_83_2"
+},
+{
+"text": 2445,
+"voice": "MISSION_END_83_1"
+},
+{
+"text": 2444,
+"voice": "MISSION_END_83_0"
+},
+{
+"text": 2443,
+"voice": "MISSION_END_82_7"
+},
+{
+"text": 2441,
+"voice": "MISSION_END_82_5"
+},
+{
+"text": 2439,
+"voice": "MISSION_END_82_3"
+},
+{
+"text": 2437,
+"voice": "MISSION_END_82_1"
+},
+{
+"text": 2396,
+"voice": "MISSION_END_77_7"
+},
+{
+"text": 2394,
+"voice": "MISSION_END_77_5"
+},
+{
+"text": 2407,
+"voice": "MISSION_END_77_18"
+},
+{
+"text": 2405,
+"voice": "MISSION_END_77_16"
+},
+{
+"text": 2403,
+"voice": "MISSION_END_77_14"
+},
+{
+"text": 2401,
+"voice": "MISSION_END_77_12"
+},
+{
+"text": 2392,
+"voice": "MISSION_END_77_3"
+},
+{
+"text": 2390,
+"voice": "MISSION_END_77_1"
+},
+{
+"text": 2388,
+"voice": "MISSION_END_76_9"
+},
+{
+"text": 2386,
+"voice": "MISSION_END_76_7"
+},
+{
+"text": 2384,
+"voice": "MISSION_END_76_5"
+},
+{
+"text": 2382,
+"voice": "MISSION_END_76_3"
+},
+{
+"text": 2380,
+"voice": "MISSION_END_76_1"
+},
+{
+"text": 2378,
+"voice": "MISSION_END_75_12"
+},
+{
+"text": 2376,
+"voice": "MISSION_END_75_10"
+},
+{
+"text": 2374,
+"voice": "MISSION_END_75_8"
+},
+{
+"text": 2372,
+"voice": "MISSION_END_75_6"
+},
+{
+"text": 2370,
+"voice": "MISSION_END_75_4"
+},
+{
+"text": 2368,
+"voice": "MISSION_END_75_2"
+},
+{
+"text": 2366,
+"voice": "MISSION_END_75_0"
+},
+{
+"text": 2365,
+"voice": "MISSION_END_74_1"
+},
+{
+"text": 2330,
+"voice": "MISSION_END_71_5"
+},
+{
+"text": 2328,
+"voice": "MISSION_END_71_3"
+},
+{
+"text": 2326,
+"voice": "MISSION_END_71_1"
+},
+{
+"text": 2317,
+"voice": "MISSION_END_68_9"
+},
+{
+"text": 2315,
+"voice": "MISSION_END_68_7"
+},
+{
+"text": 2313,
+"voice": "MISSION_END_68_5"
+},
+{
+"text": 2311,
+"voice": "MISSION_END_68_3"
+},
+{
+"text": 2309,
+"voice": "MISSION_END_68_1"
+},
+{
+"text": 2306,
+"voice": "MISSION_END_67_7"
+},
+{
+"text": 2281,
+"voice": "MISSION_END_66_10"
+},
+{
+"text": 2278,
+"voice": "MISSION_END_66_7"
+},
+{
+"text": 2276,
+"voice": "MISSION_END_66_5"
+},
+{
+"text": 2274,
+"voice": "MISSION_END_66_3"
+},
+{
+"text": 2272,
+"voice": "MISSION_END_66_1"
+},
+{
+"text": 2270,
+"voice": "MISSION_END_65_16"
+},
+{
+"text": 2269,
+"voice": "MISSION_END_65_15"
+},
+{
+"text": 2267,
+"voice": "MISSION_END_65_13"
+},
+{
+"text": 2265,
+"voice": "MISSION_END_65_11"
+},
+{
+"text": 2263,
+"voice": "MISSION_END_65_9"
+},
+{
+"text": 2261,
+"voice": "MISSION_END_65_7"
+},
+{
+"text": 2259,
+"voice": "MISSION_END_65_5"
+},
+{
+"text": 2257,
+"voice": "MISSION_END_65_3"
+},
+{
+"text": 2255,
+"voice": "MISSION_END_65_1"
+},
+{
+"text": 2221,
+"voice": "MISSION_END_62_11"
+},
+{
+"text": 2219,
+"voice": "MISSION_END_62_9"
+},
+{
+"text": 2217,
+"voice": "MISSION_END_62_7"
+},
+{
+"text": 2215,
+"voice": "MISSION_END_62_5"
+},
+{
+"text": 2213,
+"voice": "MISSION_END_62_3"
+},
+{
+"text": 2211,
+"voice": "MISSION_END_62_1"
+},
+{
+"text": 2200,
+"voice": "MISSION_END_60_7"
+},
+{
+"text": 2199,
+"voice": "MISSION_END_60_6"
+},
+{
+"text": 2197,
+"voice": "MISSION_END_60_4"
+},
+{
+"text": 2195,
+"voice": "MISSION_END_60_2"
+},
+{
+"text": 2193,
+"voice": "MISSION_END_60_0_NO_LIB"
+},
+{
+"text": 2191,
+"voice": "MISSION_END_60_0_LIB"
+},
+{
+"text": 2183,
+"voice": "MISSION_END_58_10"
+},
+{
+"text": 2181,
+"voice": "MISSION_END_58_8"
+},
+{
+"text": 2179,
+"voice": "MISSION_END_58_6"
+},
+{
+"text": 2177,
+"voice": "MISSION_END_58_4"
+},
+{
+"text": 2175,
+"voice": "MISSION_END_58_2"
+},
+{
+"text": 2173,
+"voice": "MISSION_END_58_0"
+},
+{
+"text": 2169,
+"voice": "MISSION_END_57_7"
+},
+{
+"text": 2167,
+"voice": "MISSION_END_57_5"
+},
+{
+"text": 2165,
+"voice": "MISSION_END_57_3"
+},
+{
+"text": 2163,
+"voice": "MISSION_END_57_1"
+},
+{
+"text": 2153,
+"voice": "MISSION_END_55_13"
+},
+{
+"text": 2151,
+"voice": "MISSION_END_55_11"
+},
+{
+"text": 2149,
+"voice": "MISSION_END_55_9"
+},
+{
+"text": 2147,
+"voice": "MISSION_END_55_7"
+},
+{
+"text": 2145,
+"voice": "MISSION_END_55_5"
+},
+{
+"text": 2143,
+"voice": "MISSION_END_55_3"
+},
+{
+"text": 2141,
+"voice": "MISSION_END_55_1"
+},
+{
+"text": 2137,
+"voice": "MISSION_END_54_7"
+},
+{
+"text": 2135,
+"voice": "MISSION_END_54_5"
+},
+{
+"text": 2133,
+"voice": "MISSION_END_54_3"
+},
+{
+"text": 2131,
+"voice": "MISSION_END_54_1"
+},
+{
+"text": 2119,
+"voice": "MISSION_END_48_7"
+},
+{
+"text": 2117,
+"voice": "MISSION_END_48_5"
+},
+{
+"text": 3156,
+"voice": "BLUEPRINT_RECOVERED_0"
+},
+{
+"text": 3157,
+"voice": "BLUEPRINT_RECOVERED_1"
+},
+{
+"text": 3158,
+"voice": "BLUEPRINT_RECOVERED_2"
+},
+{
+"text": 3159,
+"voice": "BLUEPRINT_RECOVERED_3"
+},
+{
+"text": 3160,
+"voice": "BLUEPRINT_RECOVERED_4"
+},
+{
+"text": 3168,
+"voice": "CARLA_ANNOYING_CALL_0_0"
+},
+{
+"text": 3169,
+"voice": "CARLA_ANNOYING_CALL_0_1"
+},
+{
+"text": 3170,
+"voice": "CARLA_ANNOYING_CALL_1_0"
+},
+{
+"text": 3171,
+"voice": "CARLA_ANNOYING_CALL_1_1"
+},
+{
+"text": 3172,
+"voice": "CARLA_ANNOYING_CALL_2_0"
+},
+{
+"text": 3173,
+"voice": "CARLA_ANNOYING_CALL_2_1"
+},
+{
+"text": 3162,
+"voice": "KAAMO_CLUB_MSG_0"
+},
+{
+"text": 3163,
+"voice": "KAAMO_CLUB_MSG_1"
+},
+{
+"text": 2716,
+"voice": "MISSION_ALT_116_0"
+},
+{
+"text": 2717,
+"voice": "MISSION_ALT_116_1"
+},
+{
+"text": 2718,
+"voice": "MISSION_ALT_116_2"
+},
+{
+"text": 2719,
+"voice": "MISSION_ALT_116_3"
+},
+{
+"text": 2474,
+"voice": "MISSION_END_85_0"
+},
+{
+"text": 2475,
+"voice": "MISSION_END_85_1"
+},
+{
+"text": 2476,
+"voice": "MISSION_END_86_0"
+},
+{
+"text": 2477,
+"voice": "MISSION_END_86_1"
+},
+{
+"text": 2478,
+"voice": "MISSION_END_86_2"
+},
+{
+"text": 2479,
+"voice": "MISSION_END_86_3"
+},
+{
+"text": 2487,
+"voice": "MISSION_END_88_1"
+},
+{
+"text": 2488,
+"voice": "MISSION_END_88_2"
+},
+{
+"text": 2489,
+"voice": "MISSION_END_88_3"
+},
+{
+"text": 2490,
+"voice": "MISSION_END_88_4"
+},
+{
+"text": 2491,
+"voice": "MISSION_END_88_5"
+},
+{
+"text": 2492,
+"voice": "MISSION_END_88_6"
+},
+{
+"text": 2493,
+"voice": "MISSION_END_88_7"
+},
+{
+"text": 2495,
+"voice": "MISSION_END_90_0"
+},
+{
+"text": 2496,
+"voice": "MISSION_END_90_1"
+},
+{
+"text": 2497,
+"voice": "MISSION_END_90_2"
+},
+{
+"text": 2498,
+"voice": "MISSION_END_90_3"
+},
+{
+"text": 2499,
+"voice": "MISSION_END_90_4"
+},
+{
+"text": 2500,
+"voice": "MISSION_END_90_5"
+},
+{
+"text": 2501,
+"voice": "MISSION_END_90_6"
+},
+{
+"text": 2502,
+"voice": "MISSION_END_90_7"
+},
+{
+"text": 2503,
+"voice": "MISSION_END_90_8"
+},
+{
+"text": 2523,
+"voice": "MISSION_END_92_0"
+},
+{
+"text": 2524,
+"voice": "MISSION_END_92_1"
+},
+{
+"text": 2525,
+"voice": "MISSION_END_92_2"
+},
+{
+"text": 2526,
+"voice": "MISSION_END_92_3"
+},
+{
+"text": 2527,
+"voice": "MISSION_END_92_4"
+},
+{
+"text": 2528,
+"voice": "MISSION_END_92_5"
+},
+{
+"text": 2529,
+"voice": "MISSION_END_92_6"
+},
+{
+"text": 2530,
+"voice": "MISSION_END_93_0"
+},
+{
+"text": 2531,
+"voice": "MISSION_END_93_1"
+},
+{
+"text": 2532,
+"voice": "MISSION_END_93_2"
+},
+{
+"text": 2533,
+"voice": "MISSION_END_93_3"
+},
+{
+"text": 2534,
+"voice": "MISSION_END_93_4"
+},
+{
+"text": 2535,
+"voice": "MISSION_END_93_5"
+},
+{
+"text": 2536,
+"voice": "MISSION_END_93_6"
+},
+{
+"text": 2537,
+"voice": "MISSION_END_93_7"
+},
+{
+"text": 2538,
+"voice": "MISSION_END_93_8"
+},
+{
+"text": 2539,
+"voice": "MISSION_END_93_9"
+},
+{
+"text": 2540,
+"voice": "MISSION_END_93_10"
+},
+{
+"text": 2548,
+"voice": "MISSION_END_94_0"
+},
+{
+"text": 2549,
+"voice": "MISSION_END_94_1"
+},
+{
+"text": 2550,
+"voice": "MISSION_END_94_2"
+},
+{
+"text": 2551,
+"voice": "MISSION_END_94_3"
+},
+{
+"text": 2552,
+"voice": "MISSION_END_94_4"
+},
+{
+"text": 2553,
+"voice": "MISSION_END_94_5"
+},
+{
+"text": 2554,
+"voice": "MISSION_END_94_6"
+},
+{
+"text": 2556,
+"voice": "MISSION_END_95_0"
+},
+{
+"text": 2557,
+"voice": "MISSION_END_95_1"
+},
+{
+"text": 2558,
+"voice": "MISSION_END_95_2"
+},
+{
+"text": 2559,
+"voice": "MISSION_END_95_3"
+},
+{
+"text": 2560,
+"voice": "MISSION_END_95_4"
+},
+{
+"text": 2561,
+"voice": "MISSION_END_95_5"
+},
+{
+"text": 2562,
+"voice": "MISSION_END_95_6"
+},
+{
+"text": 2563,
+"voice": "MISSION_END_95_7"
+},
+{
+"text": 2565,
+"voice": "MISSION_END_95_9"
+},
+{
+"text": 2566,
+"voice": "MISSION_END_95_10"
+},
+{
+"text": 2567,
+"voice": "MISSION_END_95_11"
+},
+{
+"text": 2568,
+"voice": "MISSION_END_95_12"
+},
+{
+"text": 2569,
+"voice": "MISSION_END_95_13"
+},
+{
+"text": 2571,
+"voice": "MISSION_END_95_15"
+},
+{
+"text": 2572,
+"voice": "MISSION_END_96_0"
+},
+{
+"text": 2573,
+"voice": "MISSION_END_96_1"
+},
+{
+"text": 2574,
+"voice": "MISSION_END_96_2"
+},
+{
+"text": 2575,
+"voice": "MISSION_END_96_3"
+},
+{
+"text": 2576,
+"voice": "MISSION_END_96_4"
+},
+{
+"text": 2577,
+"voice": "MISSION_END_96_5"
+},
+{
+"text": 2578,
+"voice": "MISSION_END_96_6"
+},
+{
+"text": 2579,
+"voice": "MISSION_END_96_7"
+},
+{
+"text": 2580,
+"voice": "MISSION_END_96_8"
+},
+{
+"text": 2581,
+"voice": "MISSION_END_96_9"
+},
+{
+"text": 2585,
+"voice": "MISSION_END_97_0"
+},
+{
+"text": 2586,
+"voice": "MISSION_END_97_1"
+},
+{
+"text": 2587,
+"voice": "MISSION_END_97_2"
+},
+{
+"text": 2588,
+"voice": "MISSION_END_98_0"
+},
+{
+"text": 2589,
+"voice": "MISSION_END_98_1"
+},
+{
+"text": 2590,
+"voice": "MISSION_END_98_2"
+},
+{
+"text": 2591,
+"voice": "MISSION_END_98_3"
+},
+{
+"text": 2592,
+"voice": "MISSION_END_98_4"
+},
+{
+"text": 2593,
+"voice": "MISSION_END_98_5"
+},
+{
+"text": 2594,
+"voice": "MISSION_END_98_6"
+},
+{
+"text": 2595,
+"voice": "MISSION_END_98_7"
+},
+{
+"text": 2596,
+"voice": "MISSION_END_98_8"
+},
+{
+"text": 2597,
+"voice": "MISSION_END_98_9"
+},
+{
+"text": 2598,
+"voice": "MISSION_END_98_10"
+},
+{
+"text": 2599,
+"voice": "MISSION_END_98_11"
+},
+{
+"text": 2601,
+"voice": "MISSION_END_99_0"
+},
+{
+"text": 2602,
+"voice": "MISSION_END_99_1"
+},
+{
+"text": 2603,
+"voice": "MISSION_END_99_2"
+},
+{
+"text": 2604,
+"voice": "MISSION_END_99_3"
+},
+{
+"text": 2605,
+"voice": "MISSION_END_99_4"
+},
+{
+"text": 2606,
+"voice": "MISSION_END_99_5"
+},
+{
+"text": 2607,
+"voice": "MISSION_END_99_6"
+},
+{
+"text": 2608,
+"voice": "MISSION_END_99_7"
+},
+{
+"text": 2609,
+"voice": "MISSION_END_99_8"
+},
+{
+"text": 2610,
+"voice": "MISSION_END_99_9"
+},
+{
+"text": 2611,
+"voice": "MISSION_END_99_10"
+},
+{
+"text": 2612,
+"voice": "MISSION_END_99_11"
+},
+{
+"text": 2615,
+"voice": "MISSION_END_101_0"
+},
+{
+"text": 2616,
+"voice": "MISSION_END_101_1"
+},
+{
+"text": 2617,
+"voice": "MISSION_END_101_2"
+},
+{
+"text": 2618,
+"voice": "MISSION_END_101_3"
+},
+{
+"text": 2619,
+"voice": "MISSION_END_101_4"
+},
+{
+"text": 2620,
+"voice": "MISSION_END_101_5"
+},
+{
+"text": 2621,
+"voice": "MISSION_END_101_6"
+},
+{
+"text": 2622,
+"voice": "MISSION_END_101_7"
+},
+{
+"text": 2623,
+"voice": "MISSION_END_101_8"
+},
+{
+"text": 2624,
+"voice": "MISSION_END_101_9"
+},
+{
+"text": 2634,
+"voice": "MISSION_END_102_0"
+},
+{
+"text": 2635,
+"voice": "MISSION_END_102_1"
+},
+{
+"text": 2636,
+"voice": "MISSION_END_102_2"
+},
+{
+"text": 2637,
+"voice": "MISSION_END_102_3"
+},
+{
+"text": 2638,
+"voice": "MISSION_END_102_4"
+},
+{
+"text": 2639,
+"voice": "MISSION_END_102_5"
+},
+{
+"text": 2640,
+"voice": "MISSION_END_103_0"
+},
+{
+"text": 2641,
+"voice": "MISSION_END_103_1"
+},
+{
+"text": 2642,
+"voice": "MISSION_END_103_2"
+},
+{
+"text": 2643,
+"voice": "MISSION_END_103_3"
+},
+{
+"text": 2644,
+"voice": "MISSION_END_103_4"
+},
+{
+"text": 2645,
+"voice": "MISSION_END_103_5"
+},
+{
+"text": 2646,
+"voice": "MISSION_END_103_6"
+},
+{
+"text": 2647,
+"voice": "MISSION_END_103_7"
+},
+{
+"text": 2648,
+"voice": "MISSION_END_103_8"
+},
+{
+"text": 2649,
+"voice": "MISSION_END_103_9"
+},
+{
+"text": 2650,
+"voice": "MISSION_END_104_0"
+},
+{
+"text": 2651,
+"voice": "MISSION_END_104_1"
+},
+{
+"text": 2652,
+"voice": "MISSION_END_104_2"
+},
+{
+"text": 2653,
+"voice": "MISSION_END_104_3"
+},
+{
+"text": 2654,
+"voice": "MISSION_END_104_4"
+},
+{
+"text": 2655,
+"voice": "MISSION_END_104_5"
+},
+{
+"text": 2656,
+"voice": "MISSION_END_104_6"
+},
+{
+"text": 2672,
+"voice": "MISSION_END_108_0"
+},
+{
+"text": 2673,
+"voice": "MISSION_END_108_1"
+},
+{
+"text": 2674,
+"voice": "MISSION_END_108_2"
+},
+{
+"text": 2675,
+"voice": "MISSION_END_108_3"
+},
+{
+"text": 2676,
+"voice": "MISSION_END_108_4"
+},
+{
+"text": 2677,
+"voice": "MISSION_END_108_5"
+},
+{
+"text": 2678,
+"voice": "MISSION_END_108_6"
+},
+{
+"text": 2679,
+"voice": "MISSION_END_108_7"
+},
+{
+"text": 2680,
+"voice": "MISSION_END_108_8"
+},
+{
+"text": 2681,
+"voice": "MISSION_END_108_9"
+},
+{
+"text": 2682,
+"voice": "MISSION_END_108_10"
+},
+{
+"text": 2683,
+"voice": "MISSION_END_108_11"
+},
+{
+"text": 2684,
+"voice": "MISSION_END_108_12"
+},
+{
+"text": 2685,
+"voice": "MISSION_END_108_13"
+},
+{
+"text": 2686,
+"voice": "MISSION_END_108_14"
+},
+{
+"text": 2688,
+"voice": "MISSION_END_109_0"
+},
+{
+"text": 2689,
+"voice": "MISSION_END_109_1"
+},
+{
+"text": 2690,
+"voice": "MISSION_END_109_2"
+},
+{
+"text": 2691,
+"voice": "MISSION_END_109_3"
+},
+{
+"text": 2692,
+"voice": "MISSION_END_110_0"
+},
+{
+"text": 2693,
+"voice": "MISSION_END_110_1"
+},
+{
+"text": 2694,
+"voice": "MISSION_END_110_2"
+},
+{
+"text": 2695,
+"voice": "MISSION_END_111_0"
+},
+{
+"text": 2696,
+"voice": "MISSION_END_111_1"
+},
+{
+"text": 2697,
+"voice": "MISSION_END_111_2"
+},
+{
+"text": 2698,
+"voice": "MISSION_END_111_3"
+},
+{
+"text": 2699,
+"voice": "MISSION_END_111_4"
+},
+{
+"text": 2700,
+"voice": "MISSION_END_112_0"
+},
+{
+"text": 2701,
+"voice": "MISSION_END_112_1"
+},
+{
+"text": 2702,
+"voice": "MISSION_END_112_2"
+},
+{
+"text": 2703,
+"voice": "MISSION_END_113_0"
+},
+{
+"text": 2704,
+"voice": "MISSION_END_113_1"
+},
+{
+"text": 2705,
+"voice": "MISSION_END_113_2"
+},
+{
+"text": 2706,
+"voice": "MISSION_END_113_3"
+},
+{
+"text": 2707,
+"voice": "MISSION_END_113_4"
+},
+{
+"text": 2711,
+"voice": "MISSION_END_114_0"
+},
+{
+"text": 2712,
+"voice": "MISSION_END_115_0"
+},
+{
+"text": 2713,
+"voice": "MISSION_END_115_1"
+},
+{
+"text": 2714,
+"voice": "MISSION_END_115_2"
+},
+{
+"text": 2715,
+"voice": "MISSION_END_115_3"
+},
+{
+"text": 2720,
+"voice": "MISSION_END_116_0"
+},
+{
+"text": 2721,
+"voice": "MISSION_END_116_1"
+},
+{
+"text": 2722,
+"voice": "MISSION_END_116_2"
+},
+{
+"text": 2723,
+"voice": "MISSION_END_116_3"
+},
+{
+"text": 2725,
+"voice": "MISSION_END_116_5"
+},
+{
+"text": 2726,
+"voice": "MISSION_END_116_6"
+},
+{
+"text": 2727,
+"voice": "MISSION_END_116_7"
+},
+{
+"text": 2728,
+"voice": "MISSION_END_116_8"
+},
+{
+"text": 2729,
+"voice": "MISSION_END_116_9"
+},
+{
+"text": 2730,
+"voice": "MISSION_END_116_10"
+},
+{
+"text": 2731,
+"voice": "MISSION_END_116_11"
+},
+{
+"text": 2732,
+"voice": "MISSION_END_116_12"
+},
+{
+"text": 2733,
+"voice": "MISSION_END_116_13"
+},
+{
+"text": 2734,
+"voice": "MISSION_END_116_14"
+},
+{
+"text": 2735,
+"voice": "MISSION_END_116_15"
+},
+{
+"text": 2736,
+"voice": "MISSION_END_116_16"
+},
+{
+"text": 2737,
+"voice": "MISSION_END_116_17"
+},
+{
+"text": 2738,
+"voice": "MISSION_END_117_0"
+},
+{
+"text": 2739,
+"voice": "MISSION_END_117_1"
+},
+{
+"text": 2740,
+"voice": "MISSION_END_117_2"
+},
+{
+"text": 2741,
+"voice": "MISSION_END_117_3"
+},
+{
+"text": 2742,
+"voice": "MISSION_END_117_4"
+},
+{
+"text": 2743,
+"voice": "MISSION_END_117_5"
+},
+{
+"text": 2744,
+"voice": "MISSION_END_118_0"
+},
+{
+"text": 2746,
+"voice": "MISSION_END_119_0"
+},
+{
+"text": 2747,
+"voice": "MISSION_END_119_1"
+},
+{
+"text": 2748,
+"voice": "MISSION_END_119_2"
+},
+{
+"text": 2749,
+"voice": "MISSION_END_119_3"
+},
+{
+"text": 2750,
+"voice": "MISSION_END_119_4"
+},
+{
+"text": 2751,
+"voice": "MISSION_END_119_5"
+},
+{
+"text": 2752,
+"voice": "MISSION_END_119_6"
+},
+{
+"text": 2753,
+"voice": "MISSION_END_119_7"
+},
+{
+"text": 2754,
+"voice": "MISSION_END_119_8"
+},
+{
+"text": 2755,
+"voice": "MISSION_END_119_9"
+},
+{
+"text": 2756,
+"voice": "MISSION_END_119_10"
+},
+{
+"text": 2758,
+"voice": "MISSION_END_121_0"
+},
+{
+"text": 2759,
+"voice": "MISSION_END_121_1"
+},
+{
+"text": 2760,
+"voice": "MISSION_END_121_2"
+},
+{
+"text": 2761,
+"voice": "MISSION_END_121_3"
+},
+{
+"text": 2762,
+"voice": "MISSION_END_121_4"
+},
+{
+"text": 2764,
+"voice": "MISSION_END_121_6"
+},
+{
+"text": 2765,
+"voice": "MISSION_END_121_7"
+},
+{
+"text": 2766,
+"voice": "MISSION_END_121_8"
+},
+{
+"text": 2767,
+"voice": "MISSION_END_122_0"
+},
+{
+"text": 2768,
+"voice": "MISSION_END_122_1"
+},
+{
+"text": 2769,
+"voice": "MISSION_END_122_2"
+},
+{
+"text": 2770,
+"voice": "MISSION_END_122_3"
+},
+{
+"text": 2771,
+"voice": "MISSION_END_122_4"
+},
+{
+"text": 2772,
+"voice": "MISSION_END_122_5"
+},
+{
+"text": 2773,
+"voice": "MISSION_END_122_6"
+},
+{
+"text": 2774,
+"voice": "MISSION_END_122_7"
+},
+{
+"text": 2775,
+"voice": "MISSION_END_122_8"
+},
+{
+"text": 2776,
+"voice": "MISSION_END_122_9"
+},
+{
+"text": 2777,
+"voice": "MISSION_END_122_10"
+},
+{
+"text": 2778,
+"voice": "MISSION_END_122_11"
+},
+{
+"text": 2779,
+"voice": "MISSION_END_122_12"
+},
+{
+"text": 2780,
+"voice": "MISSION_END_122_13"
+},
+{
+"text": 2781,
+"voice": "MISSION_END_122_14"
+},
+{
+"text": 2782,
+"voice": "MISSION_END_122_15"
+},
+{
+"text": 2783,
+"voice": "MISSION_END_122_16"
+},
+{
+"text": 2784,
+"voice": "MISSION_END_122_17"
+},
+{
+"text": 2789,
+"voice": "MISSION_END_124_0"
+},
+{
+"text": 2790,
+"voice": "MISSION_END_124_1"
+},
+{
+"text": 2791,
+"voice": "MISSION_END_124_2"
+},
+{
+"text": 2792,
+"voice": "MISSION_END_124_3"
+},
+{
+"text": 2793,
+"voice": "MISSION_END_124_4"
+},
+{
+"text": 2794,
+"voice": "MISSION_END_124_5"
+},
+{
+"text": 2795,
+"voice": "MISSION_END_124_6"
+},
+{
+"text": 2796,
+"voice": "MISSION_END_124_7"
+},
+{
+"text": 2797,
+"voice": "MISSION_END_124_8"
+},
+{
+"text": 2798,
+"voice": "MISSION_END_124_9"
+},
+{
+"text": 2799,
+"voice": "MISSION_END_124_10"
+},
+{
+"text": 2800,
+"voice": "MISSION_END_124_11"
+},
+{
+"text": 2801,
+"voice": "MISSION_END_124_12"
+},
+{
+"text": 2802,
+"voice": "MISSION_END_124_13"
+},
+{
+"text": 2803,
+"voice": "MISSION_END_124_14"
+},
+{
+"text": 2822,
+"voice": "MISSION_END_125_0"
+},
+{
+"text": 2823,
+"voice": "MISSION_END_125_1"
+},
+{
+"text": 2824,
+"voice": "MISSION_END_125_2"
+},
+{
+"text": 2825,
+"voice": "MISSION_END_125_3"
+},
+{
+"text": 2826,
+"voice": "MISSION_END_125_4"
+},
+{
+"text": 2827,
+"voice": "MISSION_END_125_5"
+},
+{
+"text": 2829,
+"voice": "MISSION_END_126_0"
+},
+{
+"text": 2830,
+"voice": "MISSION_END_126_1"
+},
+{
+"text": 2831,
+"voice": "MISSION_END_126_2"
+},
+{
+"text": 2832,
+"voice": "MISSION_END_126_3"
+},
+{
+"text": 2833,
+"voice": "MISSION_END_126_4"
+},
+{
+"text": 2834,
+"voice": "MISSION_END_126_5"
+},
+{
+"text": 2835,
+"voice": "MISSION_END_127_0"
+},
+{
+"text": 2836,
+"voice": "MISSION_END_127_1"
+},
+{
+"text": 2837,
+"voice": "MISSION_END_127_2"
+},
+{
+"text": 2838,
+"voice": "MISSION_END_127_3"
+},
+{
+"text": 2839,
+"voice": "MISSION_END_127_4"
+},
+{
+"text": 2840,
+"voice": "MISSION_END_127_5"
+},
+{
+"text": 2841,
+"voice": "MISSION_END_127_6"
+},
+{
+"text": 2842,
+"voice": "MISSION_END_127_7"
+},
+{
+"text": 2843,
+"voice": "MISSION_END_127_8"
+},
+{
+"text": 2844,
+"voice": "MISSION_END_127_9"
+},
+{
+"text": 2845,
+"voice": "MISSION_END_127_10"
+},
+{
+"text": 2846,
+"voice": "MISSION_END_128_0"
+},
+{
+"text": 2847,
+"voice": "MISSION_END_128_1"
+},
+{
+"text": 2848,
+"voice": "MISSION_END_128_2"
+},
+{
+"text": 2849,
+"voice": "MISSION_END_128_3"
+},
+{
+"text": 2850,
+"voice": "MISSION_END_130_0"
+},
+{
+"text": 2851,
+"voice": "MISSION_END_130_1"
+},
+{
+"text": 2852,
+"voice": "MISSION_END_130_2"
+},
+{
+"text": 2853,
+"voice": "MISSION_END_130_3"
+},
+{
+"text": 2854,
+"voice": "MISSION_END_130_4"
+},
+{
+"text": 2855,
+"voice": "MISSION_END_130_5"
+},
+{
+"text": 2856,
+"voice": "MISSION_END_130_6"
+},
+{
+"text": 2857,
+"voice": "MISSION_END_130_7"
+},
+{
+"text": 2858,
+"voice": "MISSION_END_130_8"
+},
+{
+"text": 2860,
+"voice": "MISSION_END_132_0"
+},
+{
+"text": 2861,
+"voice": "MISSION_END_132_1"
+},
+{
+"text": 2862,
+"voice": "MISSION_END_132_2"
+},
+{
+"text": 2863,
+"voice": "MISSION_END_132_3"
+},
+{
+"text": 2864,
+"voice": "MISSION_END_132_4"
+},
+{
+"text": 2865,
+"voice": "MISSION_END_132_5"
+},
+{
+"text": 2866,
+"voice": "MISSION_END_132_6"
+},
+{
+"text": 2868,
+"voice": "MISSION_END_133_0"
+},
+{
+"text": 2869,
+"voice": "MISSION_END_133_1"
+},
+{
+"text": 2870,
+"voice": "MISSION_END_133_2"
+},
+{
+"text": 2871,
+"voice": "MISSION_END_134_0"
+},
+{
+"text": 2872,
+"voice": "MISSION_END_134_1"
+},
+{
+"text": 2873,
+"voice": "MISSION_END_134_2"
+},
+{
+"text": 2874,
+"voice": "MISSION_END_134_3"
+},
+{
+"text": 2875,
+"voice": "MISSION_END_134_4"
+},
+{
+"text": 2876,
+"voice": "MISSION_END_134_5"
+},
+{
+"text": 2877,
+"voice": "MISSION_END_134_6"
+},
+{
+"text": 2878,
+"voice": "MISSION_END_134_7"
+},
+{
+"text": 2887,
+"voice": "MISSION_END_135_0"
+},
+{
+"text": 2888,
+"voice": "MISSION_END_135_1"
+},
+{
+"text": 2889,
+"voice": "MISSION_END_136_0"
+},
+{
+"text": 2890,
+"voice": "MISSION_END_136_1"
+},
+{
+"text": 2891,
+"voice": "MISSION_END_136_2"
+},
+{
+"text": 2892,
+"voice": "MISSION_END_136_3"
+},
+{
+"text": 2893,
+"voice": "MISSION_END_136_4"
+},
+{
+"text": 2894,
+"voice": "MISSION_END_136_5"
+},
+{
+"text": 2900,
+"voice": "MISSION_END_138_0"
+},
+{
+"text": 2901,
+"voice": "MISSION_END_138_1"
+},
+{
+"text": 2902,
+"voice": "MISSION_END_138_2"
+},
+{
+"text": 2903,
+"voice": "MISSION_END_138_3"
+},
+{
+"text": 2904,
+"voice": "MISSION_END_138_4"
+},
+{
+"text": 2905,
+"voice": "MISSION_END_138_5"
+},
+{
+"text": 2906,
+"voice": "MISSION_END_138_6"
+},
+{
+"text": 2907,
+"voice": "MISSION_END_138_7"
+},
+{
+"text": 2908,
+"voice": "MISSION_END_138_8"
+},
+{
+"text": 2909,
+"voice": "MISSION_END_138_9"
+},
+{
+"text": 2910,
+"voice": "MISSION_END_138_10"
+},
+{
+"text": 2911,
+"voice": "MISSION_END_138_11"
+},
+{
+"text": 2912,
+"voice": "MISSION_END_138_12"
+},
+{
+"text": 2913,
+"voice": "MISSION_END_138_13"
+},
+{
+"text": 2914,
+"voice": "MISSION_END_138_14"
+},
+{
+"text": 2915,
+"voice": "MISSION_END_138_15"
+},
+{
+"text": 2916,
+"voice": "MISSION_END_138_16"
+},
+{
+"text": 2917,
+"voice": "MISSION_END_138_17"
+},
+{
+"text": 2918,
+"voice": "MISSION_END_138_18"
+},
+{
+"text": 2919,
+"voice": "MISSION_END_138_19"
+},
+{
+"text": 2920,
+"voice": "MISSION_END_138_20"
+},
+{
+"text": 2921,
+"voice": "MISSION_END_138_21"
+},
+{
+"text": 2922,
+"voice": "MISSION_END_138_22"
+},
+{
+"text": 2923,
+"voice": "MISSION_END_138_23"
+},
+{
+"text": 2929,
+"voice": "MISSION_END_139_0"
+},
+{
+"text": 2930,
+"voice": "MISSION_END_140_0"
+},
+{
+"text": 2932,
+"voice": "MISSION_END_140_2"
+},
+{
+"text": 2933,
+"voice": "MISSION_END_140_3"
+},
+{
+"text": 2934,
+"voice": "MISSION_END_140_4"
+},
+{
+"text": 2935,
+"voice": "MISSION_END_140_5"
+},
+{
+"text": 2936,
+"voice": "MISSION_END_140_6"
+},
+{
+"text": 2937,
+"voice": "MISSION_END_140_7"
+},
+{
+"text": 2938,
+"voice": "MISSION_END_140_8"
+},
+{
+"text": 2939,
+"voice": "MISSION_END_140_9"
+},
+{
+"text": 2941,
+"voice": "MISSION_END_140_11"
+},
+{
+"text": 2942,
+"voice": "MISSION_END_141_0"
+},
+{
+"text": 2943,
+"voice": "MISSION_END_141_1"
+},
+{
+"text": 2944,
+"voice": "MISSION_END_141_2"
+},
+{
+"text": 2945,
+"voice": "MISSION_END_141_3"
+},
+{
+"text": 2946,
+"voice": "MISSION_END_141_4"
+},
+{
+"text": 2947,
+"voice": "MISSION_END_141_5"
+},
+{
+"text": 2948,
+"voice": "MISSION_END_141_6"
+},
+{
+"text": 2949,
+"voice": "MISSION_END_141_7"
+},
+{
+"text": 2950,
+"voice": "MISSION_END_141_8"
+},
+{
+"text": 2951,
+"voice": "MISSION_END_141_9"
+},
+{
+"text": 2957,
+"voice": "MISSION_END_142_0"
+},
+{
+"text": 2958,
+"voice": "MISSION_END_142_1"
+},
+{
+"text": 2959,
+"voice": "MISSION_END_142_2"
+},
+{
+"text": 2960,
+"voice": "MISSION_END_142_3"
+},
+{
+"text": 2961,
+"voice": "MISSION_END_142_4"
+},
+{
+"text": 2962,
+"voice": "MISSION_END_143_0"
+},
+{
+"text": 2964,
+"voice": "MISSION_END_143_2"
+},
+{
+"text": 2965,
+"voice": "MISSION_END_143_3"
+},
+{
+"text": 2966,
+"voice": "MISSION_END_143_4"
+},
+{
+"text": 2967,
+"voice": "MISSION_END_143_5"
+},
+{
+"text": 2975,
+"voice": "MISSION_END_145_0"
+},
+{
+"text": 2976,
+"voice": "MISSION_END_146_0"
+},
+{
+"text": 2977,
+"voice": "MISSION_END_146_1"
+},
+{
+"text": 2978,
+"voice": "MISSION_END_146_2"
+},
+{
+"text": 2979,
+"voice": "MISSION_END_146_3"
+},
+{
+"text": 2980,
+"voice": "MISSION_END_146_4"
+},
+{
+"text": 2981,
+"voice": "MISSION_END_146_5"
+},
+{
+"text": 2982,
+"voice": "MISSION_END_146_6"
+},
+{
+"text": 2983,
+"voice": "MISSION_END_146_7"
+},
+{
+"text": 2984,
+"voice": "MISSION_END_146_8"
+},
+{
+"text": 2985,
+"voice": "MISSION_END_146_9"
+},
+{
+"text": 2986,
+"voice": "MISSION_END_146_10"
+},
+{
+"text": 2987,
+"voice": "MISSION_END_146_11"
+},
+{
+"text": 2990,
+"voice": "MISSION_END_147_0"
+},
+{
+"text": 2991,
+"voice": "MISSION_END_147_1"
+},
+{
+"text": 2992,
+"voice": "MISSION_END_147_2"
+},
+{
+"text": 2993,
+"voice": "MISSION_END_147_3"
+},
+{
+"text": 2994,
+"voice": "MISSION_END_147_4"
+},
+{
+"text": 2995,
+"voice": "MISSION_END_147_5"
+},
+{
+"text": 2996,
+"voice": "MISSION_END_147_6"
+},
+{
+"text": 2997,
+"voice": "MISSION_END_147_7"
+},
+{
+"text": 3012,
+"voice": "MISSION_END_151_0"
+},
+{
+"text": 3013,
+"voice": "MISSION_END_151_1"
+},
+{
+"text": 3014,
+"voice": "MISSION_END_151_2"
+},
+{
+"text": 3015,
+"voice": "MISSION_END_151_3"
+},
+{
+"text": 3016,
+"voice": "MISSION_END_151_4"
+},
+{
+"text": 3017,
+"voice": "MISSION_END_151_5"
+},
+{
+"text": 3018,
+"voice": "MISSION_END_151_6"
+},
+{
+"text": 3019,
+"voice": "MISSION_END_151_7"
+},
+{
+"text": 3020,
+"voice": "MISSION_END_152_0"
+},
+{
+"text": 3021,
+"voice": "MISSION_END_152_1"
+},
+{
+"text": 3022,
+"voice": "MISSION_END_152_2"
+},
+{
+"text": 3023,
+"voice": "MISSION_END_152_3"
+},
+{
+"text": 3024,
+"voice": "MISSION_END_152_4"
+},
+{
+"text": 3025,
+"voice": "MISSION_END_152_5"
+},
+{
+"text": 3026,
+"voice": "MISSION_END_152_6"
+},
+{
+"text": 3027,
+"voice": "MISSION_END_152_7"
+},
+{
+"text": 3028,
+"voice": "MISSION_END_153_0"
+},
+{
+"text": 3029,
+"voice": "MISSION_END_153_1"
+},
+{
+"text": 3030,
+"voice": "MISSION_END_153_2"
+},
+{
+"text": 3031,
+"voice": "MISSION_END_153_3"
+},
+{
+"text": 3032,
+"voice": "MISSION_END_153_4"
+},
+{
+"text": 3033,
+"voice": "MISSION_END_153_5"
+},
+{
+"text": 3034,
+"voice": "MISSION_END_153_6"
+},
+{
+"text": 3035,
+"voice": "MISSION_END_153_7"
+},
+{
+"text": 3036,
+"voice": "MISSION_END_153_8"
+},
+{
+"text": 3037,
+"voice": "MISSION_END_153_9"
+},
+{
+"text": 3038,
+"voice": "MISSION_END_153_10"
+},
+{
+"text": 3051,
+"voice": "MISSION_END_154_0"
+},
+{
+"text": 3052,
+"voice": "MISSION_END_154_1"
+},
+{
+"text": 3053,
+"voice": "MISSION_END_154_2"
+},
+{
+"text": 3054,
+"voice": "MISSION_END_154_3"
+},
+{
+"text": 3055,
+"voice": "MISSION_END_154_4"
+},
+{
+"text": 3056,
+"voice": "MISSION_END_154_5"
+},
+{
+"text": 3057,
+"voice": "MISSION_END_154_6"
+},
+{
+"text": 3058,
+"voice": "MISSION_END_154_7"
+},
+{
+"text": 3059,
+"voice": "MISSION_END_154_8"
+},
+{
+"text": 3060,
+"voice": "MISSION_END_154_9"
+},
+{
+"text": 3061,
+"voice": "MISSION_END_154_10"
+},
+{
+"text": 3062,
+"voice": "MISSION_END_154_11"
+},
+{
+"text": 3063,
+"voice": "MISSION_END_154_12"
+},
+{
+"text": 3064,
+"voice": "MISSION_END_154_13"
+},
+{
+"text": 3065,
+"voice": "MISSION_END_154_14"
+},
+{
+"text": 3066,
+"voice": "MISSION_END_154_15"
+},
+{
+"text": 3067,
+"voice": "MISSION_END_155_0"
+},
+{
+"text": 3068,
+"voice": "MISSION_END_155_1"
+},
+{
+"text": 3069,
+"voice": "MISSION_END_155_2"
+},
+{
+"text": 3070,
+"voice": "MISSION_END_155_3"
+},
+{
+"text": 3071,
+"voice": "MISSION_END_156_0"
+},
+{
+"text": 3072,
+"voice": "MISSION_END_156_1"
+},
+{
+"text": 3073,
+"voice": "MISSION_END_156_2"
+},
+{
+"text": 3074,
+"voice": "MISSION_END_156_3"
+},
+{
+"text": 3075,
+"voice": "MISSION_END_156_4"
+},
+{
+"text": 3076,
+"voice": "MISSION_END_156_5"
+},
+{
+"text": 3105,
+"voice": "MISSION_END_158_0"
+},
+{
+"text": 3106,
+"voice": "MISSION_END_158_1"
+},
+{
+"text": 3107,
+"voice": "MISSION_END_158_2"
+},
+{
+"text": 3108,
+"voice": "MISSION_END_158_3"
+},
+{
+"text": 3109,
+"voice": "MISSION_END_158_4"
+},
+{
+"text": 3110,
+"voice": "MISSION_END_159_0"
+},
+{
+"text": 3112,
+"voice": "MISSION_END_159_2"
+},
+{
+"text": 3113,
+"voice": "MISSION_END_159_3"
+},
+{
+"text": 3114,
+"voice": "MISSION_END_159_4"
+},
+{
+"text": 3115,
+"voice": "MISSION_END_159_5"
+},
+{
+"text": 3117,
+"voice": "MISSION_END_159_7"
+},
+{
+"text": 3118,
+"voice": "MISSION_END_159_8"
+},
+{
+"text": 3119,
+"voice": "MISSION_END_159_9"
+},
+{
+"text": 3122,
+"voice": "MISSION_END_160_0"
+},
+{
+"text": 3123,
+"voice": "MISSION_END_160_1"
+},
+{
+"text": 3124,
+"voice": "MISSION_END_160_2"
+},
+{
+"text": 3126,
+"voice": "MISSION_END_161_0"
+},
+{
+"text": 3127,
+"voice": "MISSION_END_161_1"
+},
+{
+"text": 3128,
+"voice": "MISSION_END_161_2"
+},
+{
+"text": 3129,
+"voice": "MISSION_END_161_3"
+},
+{
+"text": 3130,
+"voice": "MISSION_END_161_4"
+},
+{
+"text": 2879,
+"voice": "MISSION_START_135_0"
+},
+{
+"text": 2880,
+"voice": "MISSION_START_135_1"
+},
+{
+"text": 2881,
+"voice": "MISSION_START_135_2"
+},
+{
+"text": 2882,
+"voice": "MISSION_START_135_3"
+},
+{
+"text": 2998,
+"voice": "MISSION_WRONG_148_0_0"
+},
+{
+"text": 2999,
+"voice": "MISSION_WRONG_148_0_1"
+},
+{
+"text": 3000,
+"voice": "MISSION_WRONG_148_0_2"
+},
+{
+"text": 3001,
+"voice": "MISSION_WRONG_148_0_3"
+},
+{
+"text": 3002,
+"voice": "MISSION_WRONG_148_0_4"
+},
+{
+"text": 3003,
+"voice": "MISSION_WRONG_148_0_5"
+},
+{
+"text": 3004,
+"voice": "MISSION_WRONG_148_1_0"
+},
+{
+"text": 3005,
+"voice": "MISSION_WRONG_148_1_1"
+},
+{
+"text": 3006,
+"voice": "MISSION_WRONG_148_1_2"
+},
+{
+"text": 3007,
+"voice": "MISSION_WRONG_148_1_3"
+},
+{
+"text": 3008,
+"voice": "MISSION_WRONG_148_1_4"
+},
+{
+"text": 3009,
+"voice": "MISSION_WRONG_148_2_0"
+},
+{
+"text": 3010,
+"voice": "MISSION_WRONG_148_2_1"
+},
+{
+"text": 3011,
+"voice": "MISSION_WRONG_148_2_2"
+},
+{
+"text": 3164,
+"voice": "MOONSPROCKET_PASSENGER_TALK_0_0"
+},
+{
+"text": 3166,
+"voice": "MOONSPROCKET_PASSENGER_TALK_1_0"
+},
+{
+"text": 3167,
+"voice": "MOONSPROCKET_PASSENGER_TALK_1_1"
+},
+{
+"text": 2480,
+"voice": "RADIO_87_0"
+},
+{
+"text": 2481,
+"voice": "RADIO_87_1"
+},
+{
+"text": 2482,
+"voice": "RADIO_87_2"
+},
+{
+"text": 2483,
+"voice": "RADIO_87_3"
+},
+{
+"text": 2484,
+"voice": "RADIO_87_4"
+},
+{
+"text": 2485,
+"voice": "RADIO_87_5"
+},
+{
+"text": 2504,
+"voice": "RADIO_91_0"
+},
+{
+"text": 2505,
+"voice": "RADIO_91_1"
+},
+{
+"text": 2506,
+"voice": "RADIO_91_2"
+},
+{
+"text": 2507,
+"voice": "RADIO_91_3"
+},
+{
+"text": 2508,
+"voice": "RADIO_91_4"
+},
+{
+"text": 2509,
+"voice": "RADIO_91_5"
+},
+{
+"text": 2510,
+"voice": "RADIO_91_6"
+},
+{
+"text": 2511,
+"voice": "RADIO_91_7"
+},
+{
+"text": 2513,
+"voice": "RADIO_92_0"
+},
+{
+"text": 2512,
+"voice": "RADIO_92_0a"
+},
+{
+"text": 2514,
+"voice": "RADIO_92_1"
+},
+{
+"text": 2515,
+"voice": "RADIO_92_2"
+},
+{
+"text": 2516,
+"voice": "RADIO_92_3"
+},
+{
+"text": 2517,
+"voice": "RADIO_92_4"
+},
+{
+"text": 2518,
+"voice": "RADIO_92_5"
+},
+{
+"text": 2519,
+"voice": "RADIO_92_6"
+},
+{
+"text": 2520,
+"voice": "RADIO_92_7"
+},
+{
+"text": 2521,
+"voice": "RADIO_92_8"
+},
+{
+"text": 2522,
+"voice": "RADIO_92_9"
+},
+{
+"text": 2541,
+"voice": "RADIO_94_0"
+},
+{
+"text": 2542,
+"voice": "RADIO_94_1"
+},
+{
+"text": 2543,
+"voice": "RADIO_94_2"
+},
+{
+"text": 2544,
+"voice": "RADIO_94_3"
+},
+{
+"text": 2545,
+"voice": "RADIO_94_4"
+},
+{
+"text": 2546,
+"voice": "RADIO_94_5"
+},
+{
+"text": 2547,
+"voice": "RADIO_94_6"
+},
+{
+"text": 2582,
+"voice": "RADIO_97_0"
+},
+{
+"text": 2583,
+"voice": "RADIO_97_1"
+},
+{
+"text": 2584,
+"voice": "RADIO_97_2"
+},
+{
+"text": 2613,
+"voice": "RADIO_100_0"
+},
+{
+"text": 2614,
+"voice": "RADIO_100_1"
+},
+{
+"text": 2625,
+"voice": "RADIO_102_0"
+},
+{
+"text": 2626,
+"voice": "RADIO_102_1"
+},
+{
+"text": 2627,
+"voice": "RADIO_102_2"
+},
+{
+"text": 2628,
+"voice": "RADIO_102_3"
+},
+{
+"text": 2629,
+"voice": "RADIO_102_4"
+},
+{
+"text": 2630,
+"voice": "RADIO_102_5"
+},
+{
+"text": 2631,
+"voice": "RADIO_102_6"
+},
+{
+"text": 2632,
+"voice": "RADIO_102_7"
+},
+{
+"text": 2633,
+"voice": "RADIO_102_8"
+},
+{
+"text": 2657,
+"voice": "RADIO_105_0"
+},
+{
+"text": 2658,
+"voice": "RADIO_105_1"
+},
+{
+"text": 2659,
+"voice": "RADIO_105_2"
+},
+{
+"text": 2660,
+"voice": "RADIO_105_3"
+},
+{
+"text": 2661,
+"voice": "RADIO_105_4"
+},
+{
+"text": 2662,
+"voice": "RADIO_105_5"
+},
+{
+"text": 2663,
+"voice": "RADIO_105_6"
+},
+{
+"text": 2664,
+"voice": "RADIO_105_7"
+},
+{
+"text": 2665,
+"voice": "RADIO_105_8"
+},
+{
+"text": 2666,
+"voice": "RADIO_106_0"
+},
+{
+"text": 2667,
+"voice": "RADIO_106_1"
+},
+{
+"text": 2668,
+"voice": "RADIO_106_2"
+},
+{
+"text": 2669,
+"voice": "RADIO_106_3"
+},
+{
+"text": 2670,
+"voice": "RADIO_106_4"
+},
+{
+"text": 2671,
+"voice": "RADIO_106_5"
+},
+{
+"text": 2708,
+"voice": "RADIO_114_0"
+},
+{
+"text": 2709,
+"voice": "RADIO_114_1"
+},
+{
+"text": 2710,
+"voice": "RADIO_114_2"
+},
+{
+"text": 2757,
+"voice": "RADIO_120_0"
+},
+{
+"text": 2785,
+"voice": "RADIO_123_0"
+},
+{
+"text": 2786,
+"voice": "RADIO_123_1"
+},
+{
+"text": 2787,
+"voice": "RADIO_123_2"
+},
+{
+"text": 2788,
+"voice": "RADIO_123_3"
+},
+{
+"text": 2804,
+"voice": "RADIO_125_0a"
+},
+{
+"text": 2805,
+"voice": "RADIO_125_0b"
+},
+{
+"text": 2806,
+"voice": "RADIO_125_0c"
+},
+{
+"text": 2807,
+"voice": "RADIO_125_0d"
+},
+{
+"text": 2808,
+"voice": "RADIO_125_0e"
+},
+{
+"text": 2809,
+"voice": "RADIO_125_1a"
+},
+{
+"text": 2810,
+"voice": "RADIO_125_1b"
+},
+{
+"text": 2811,
+"voice": "RADIO_125_1c"
+},
+{
+"text": 2812,
+"voice": "RADIO_125_1d"
+},
+{
+"text": 2813,
+"voice": "RADIO_125_1e"
+},
+{
+"text": 2814,
+"voice": "RADIO_125_1f"
+},
+{
+"text": 2815,
+"voice": "RADIO_125_2"
+},
+{
+"text": 2816,
+"voice": "RADIO_125_3"
+},
+{
+"text": 2817,
+"voice": "RADIO_125_4"
+},
+{
+"text": 2818,
+"voice": "RADIO_125_5"
+},
+{
+"text": 2819,
+"voice": "RADIO_125_6"
+},
+{
+"text": 2820,
+"voice": "RADIO_125_7"
+},
+{
+"text": 2821,
+"voice": "RADIO_125_8"
+},
+{
+"text": 2859,
+"voice": "RADIO_131_0"
+},
+{
+"text": 2883,
+"voice": "RADIO_135_0"
+},
+{
+"text": 2884,
+"voice": "RADIO_135_1"
+},
+{
+"text": 2885,
+"voice": "RADIO_135_2"
+},
+{
+"text": 2886,
+"voice": "RADIO_135_3"
+},
+{
+"text": 2895,
+"voice": "RADIO_137_0"
+},
+{
+"text": 2896,
+"voice": "RADIO_137_1"
+},
+{
+"text": 2897,
+"voice": "RADIO_137_2"
+},
+{
+"text": 2898,
+"voice": "RADIO_137_3"
+},
+{
+"text": 2899,
+"voice": "RADIO_137_4"
+},
+{
+"text": 2924,
+"voice": "RADIO_139_0"
+},
+{
+"text": 2925,
+"voice": "RADIO_139_1"
+},
+{
+"text": 2926,
+"voice": "RADIO_139_2"
+},
+{
+"text": 2927,
+"voice": "RADIO_139_3"
+},
+{
+"text": 2928,
+"voice": "RADIO_139_4"
+},
+{
+"text": 2952,
+"voice": "RADIO_142_0"
+},
+{
+"text": 2953,
+"voice": "RADIO_142_1"
+},
+{
+"text": 2954,
+"voice": "RADIO_142_2"
+},
+{
+"text": 2955,
+"voice": "RADIO_142_3"
+},
+{
+"text": 2956,
+"voice": "RADIO_142_4"
+},
+{
+"text": 2968,
+"voice": "RADIO_144_0"
+},
+{
+"text": 2969,
+"voice": "RADIO_144_1"
+},
+{
+"text": 2970,
+"voice": "RADIO_144_2"
+},
+{
+"text": 2971,
+"voice": "RADIO_144_3"
+},
+{
+"text": 2972,
+"voice": "RADIO_145_0"
+},
+{
+"text": 2973,
+"voice": "RADIO_145_1"
+},
+{
+"text": 2974,
+"voice": "RADIO_145_2"
+},
+{
+"text": 2988,
+"voice": "RADIO_147_0"
+},
+{
+"text": 2989,
+"voice": "RADIO_147_1"
+},
+{
+"text": 3039,
+"voice": "RADIO_154_0"
+},
+{
+"text": 3040,
+"voice": "RADIO_154_1"
+},
+{
+"text": 3041,
+"voice": "RADIO_154_2"
+},
+{
+"text": 3042,
+"voice": "RADIO_154_3"
+},
+{
+"text": 3043,
+"voice": "RADIO_154_4"
+},
+{
+"text": 3044,
+"voice": "RADIO_154_5"
+},
+{
+"text": 3045,
+"voice": "RADIO_154_6"
+},
+{
+"text": 3046,
+"voice": "RADIO_154_7"
+},
+{
+"text": 3047,
+"voice": "RADIO_154_8"
+},
+{
+"text": 3048,
+"voice": "RADIO_154_9"
+},
+{
+"text": 3049,
+"voice": "RADIO_154_10"
+},
+{
+"text": 3050,
+"voice": "RADIO_154_11"
+},
+{
+"text": 3077,
+"voice": "RADIO_157_0"
+},
+{
+"text": 3078,
+"voice": "RADIO_157_1"
+},
+{
+"text": 3079,
+"voice": "RADIO_157_2"
+},
+{
+"text": 3080,
+"voice": "RADIO_157_3"
+},
+{
+"text": 3081,
+"voice": "RADIO_157_4"
+},
+{
+"text": 3082,
+"voice": "RADIO_157_5"
+},
+{
+"text": 3083,
+"voice": "RADIO_157_6"
+},
+{
+"text": 3084,
+"voice": "RADIO_157_7"
+},
+{
+"text": 3085,
+"voice": "RADIO_157_8"
+},
+{
+"text": 3086,
+"voice": "RADIO_157_9"
+},
+{
+"text": 3087,
+"voice": "RADIO_157_10"
+},
+{
+"text": 3088,
+"voice": "RADIO_157_11"
+},
+{
+"text": 3089,
+"voice": "RADIO_157_12"
+},
+{
+"text": 3090,
+"voice": "RADIO_157_13"
+},
+{
+"text": 3091,
+"voice": "RADIO_157_14"
+},
+{
+"text": 3092,
+"voice": "RADIO_157_15"
+},
+{
+"text": 3093,
+"voice": "RADIO_157_16"
+},
+{
+"text": 3094,
+"voice": "RADIO_158_0"
+},
+{
+"text": 3095,
+"voice": "RADIO_158_1"
+},
+{
+"text": 3096,
+"voice": "RADIO_158_2"
+},
+{
+"text": 3097,
+"voice": "RADIO_158_3"
+},
+{
+"text": 3098,
+"voice": "RADIO_158_4"
+},
+{
+"text": 3099,
+"voice": "RADIO_158_5"
+},
+{
+"text": 3100,
+"voice": "RADIO_158_6"
+},
+{
+"text": 3101,
+"voice": "RADIO_158_7"
+},
+{
+"text": 3102,
+"voice": "RADIO_158_8"
+},
+{
+"text": 3103,
+"voice": "RADIO_158_9"
+},
+{
+"text": 3104,
+"voice": "RADIO_158_10"
+},
+{
+"text": 3161,
+"voice": "RED_PLASMA_COLLECTED"
+},
+{
+"text": 3132,
+"voice": "WANTED_0_ATTACK_0"
+},
+{
+"text": 3133,
+"voice": "WANTED_0_ATTACK_1"
+},
+{
+"text": 3134,
+"voice": "WANTED_0_UNCOVER_0"
+},
+{
+"text": 3135,
+"voice": "WANTED_0_UNCOVER_1"
+},
+{
+"text": 3136,
+"voice": "WANTED_1_ATTACK_0"
+},
+{
+"text": 3137,
+"voice": "WANTED_1_ATTACK_1"
+},
+{
+"text": 3138,
+"voice": "WANTED_1_ATTACK_2"
+},
+{
+"text": 3139,
+"voice": "WANTED_1_UNCOVER_0"
+},
+{
+"text": 3140,
+"voice": "WANTED_1_UNCOVER_1"
+},
+{
+"text": 3146,
+"voice": "WANTED_GEN_ATTACK_0"
+},
+{
+"text": 3147,
+"voice": "WANTED_GEN_ATTACK_1"
+},
+{
+"text": 3148,
+"voice": "WANTED_GEN_ATTACK_2"
+},
+{
+"text": 3149,
+"voice": "WANTED_GEN_ATTACK_3"
+},
+{
+"text": 3150,
+"voice": "WANTED_GEN_ATTACK_4"
+},
+{
+"text": 3151,
+"voice": "WANTED_GEN_KILL_0"
+},
+{
+"text": 3152,
+"voice": "WANTED_GEN_KILL_1"
+},
+{
+"text": 3153,
+"voice": "WANTED_GEN_KILL_2"
+},
+{
+"text": 3154,
+"voice": "WANTED_GEN_KILL_3"
+},
+{
+"text": 3155,
+"voice": "WANTED_GEN_KILL_4"
+},
+{
+"text": 3141,
+"voice": "WANTED_GEN_UNCOVER_0"
+},
+{
+"text": 3142,
+"voice": "WANTED_GEN_UNCOVER_1"
+},
+{
+"text": 3143,
+"voice": "WANTED_GEN_UNCOVER_2"
+},
+{
+"text": 3144,
+"voice": "WANTED_GEN_UNCOVER_3"
+},
+{
+"text": 3145,
+"voice": "WANTED_GEN_UNCOVER_4"
+}
+]
+}

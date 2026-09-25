@@ -650,7 +650,9 @@ namespace GoF2Remake.UI
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             var m = Freelance.Mission;
             bool success = result == Freelance.DockResult.Success;
-            string text = success ? Freelance.SuccessText() : Freelance.FailureText();
+            int textId;
+            string text = success ? Freelance.SuccessText(out textId) : Freelance.FailureText(out textId);
+            string voiceLine = Freelance.Voice(textId);
             storyDialogue.ShowAgentMessage(text, m.clientName, m.clientPortrait, () =>
             {
                 if (success)
@@ -663,7 +665,7 @@ namespace GoF2Remake.UI
                 }
                 else Freelance.Fail();
                 Select(launchButton);
-            });
+            }, voiceLine);
             return true;
         }
 
@@ -768,7 +770,10 @@ namespace GoF2Remake.UI
             wingmenChecked = true;
             Session.WingmanShowEmp = true;   // Status+0xf8 reset on the station visit
             if (!Wingmen.Expired) return false;
-            storyDialogue.ShowAgentMessage(Localization.Get(313), Session.Wingmen[0], Session.WingmanPortrait, Wingmen.Dismiss);
+            // The first wingman's voice (race + portrait; body 10 is the only female face, AgentGenerator.CreatePortrait).
+            var face = Session.WingmanPortrait;
+            string voiceLine = GenericVoice.For(313, Session.WingmanRace, face == null || face.Length == 0 || face[0] != 10, face);
+            storyDialogue.ShowAgentMessage(Localization.Get(313), Session.Wingmen[0], face, Wingmen.Dismiss, voiceLine);
             return true;
         }
 

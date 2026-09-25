@@ -216,13 +216,17 @@ namespace GoF2Remake.World
         /// <summary>The generic line on screen (after the 2000 ms delay), null = none.</summary>
         public Chatter ChatterVisible => chatter != null && chatterMs >= 2000f ? chatter : null;
 
-        /// <summary>Speaker image by race: 0 -> 64, 2 -> 65, 3 -> 21, 8 -> 9 (Pirate Boss), else 63; the name 1597 + image.</summary>
+        /// <summary>Speaker image by race: 0 -> 64, 2 -> 65, 3 -> 21, 8 -> 9 (Pirate Boss), else 63; the name 1597 + image. The
+        /// voice: Globals::getDialogueSoundId(text, Agent(race, male)) (GenericVoice).</summary>
         void Radio(int firstText, int lastText, int race)
         {
             int image = race == 0 ? 64 : race == 2 ? 65 : race == 3 ? 21 : race == 8 ? 9 : 63;
-            var c = new Chatter { text = Localization.Get(UnityEngine.Random.Range(firstText, lastText + 1)), speaker = Localization.Get(1597 + image) };
+            int text = UnityEngine.Random.Range(firstText, lastText + 1);
+            bool male = UnityEngine.Random.value < 0.8f;
+            var c = new Chatter { text = Localization.Get(text), speaker = Localization.Get(1597 + image) };
             if (image == 9) c.speakerId = 9;
-            else c.portrait = AgentGenerator.CreatePortrait(UnityEngine.Random.value < 0.8f, race == 0 || race == 2 || race == 3 ? race : 1);
+            else c.portrait = AgentGenerator.CreatePortrait(male, race == 0 || race == 2 || race == 3 ? race : 1);
+            c.voice = GenericVoice.For(text, race, male, c.portrait);
             chatterQueue.Enqueue(c);
         }
 

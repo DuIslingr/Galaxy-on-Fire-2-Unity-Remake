@@ -505,7 +505,7 @@ namespace GoF2Remake.UI
                 freelance = level.FreelanceOrbit;
                 if (freelance != null)
                 {
-                    freelance.MessageRequested += (text, name, portrait, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowAgentMessage(text, name, portrait, closed); };
+                    freelance.MessageRequested += (text, name, portrait, voice, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowAgentMessage(text, name, portrait, closed, voice); };
                     freelance.RewardMessage += OnMiningMessage;
                 }
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;

@@ -16,7 +16,10 @@
 //               beam lets go when the ship dies (TractorBeam: !Player::isActive)
 //   auto modes  Radar::Radar from the beam's attr 23: 1 (AB-3 Kingfisher) the first crate on screen is salvaged at once, 2
 //               (AB-4 Octopus) any crate, even off screen and on the autopilot; only dead cargo (crates), never ships
-// Not yet: the scanner cargo readout (attr 31).
+//   readout     a scanner with attr 31 = 1 (Ecoscan / Proscan / Ultrascan, Radar+0x1a5): a new ship lock within 24000 units
+//               per axis shows the ship's first cargo entry like a pickup ("<n>t <item>", Hud::catchCargo), or "Nothing to
+//               salvage." (542, HUD event 0x16) when it has no cargo list; nothing when every entry is empty. Remake: the
+//               readout is white (a capture is green).
 
 using System;
 using GoF2Remake.Data;
@@ -54,6 +57,8 @@ namespace GoF2Remake.Flight
         CombatAssets assets;
         AudioSource sfx, beamLoop;
         int lockTimeMs = 8000, tractorItem = -1, tractorLockMs, tractorMode;
+        bool cargoScan;
+        const float ScanRangeUnits = 24000f;
         float timer;
         bool noTractorShown;
         Transform beam;
@@ -73,6 +78,7 @@ namespace GoF2Remake.Flight
             var scanner = Shop.FirstMounted(db, 17);
             HasScanner = scanner != null;
             lockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;
+            cargoScan = scanner != null && scanner.Attr(31) == 1;
             var tractor = Shop.FirstMounted(db, 13);
             if (tractor != null) { tractorItem = tractor.index; tractorLockMs = tractor.Attr(24); tractorMode = tractor.Attr(23); }
             sfx = gameObject.AddComponent<AudioSource>();
@@ -154,6 +160,7 @@ namespace GoF2Remake.Flight
                 {
                     Locked = Candidate;
                     if (assets != null && assets.targetLock != null) sfx.PlayOneShot(assets.targetLock, Settings.SfxVolume);
+                    if (cargoScan) ReadCargo(Locked);
                 }
             }
             else if (CrateCandidate != null || StealCandidate != null)
@@ -174,6 +181,20 @@ namespace GoF2Remake.Flight
                 }
             }
             Publish();
+        }
+
+        /// <summary>Radar::draw on a new lock with Radar+0x1a5: the ship's first cargo entry within 24000 units per axis.</summary>
+        void ReadCargo(Target locked)
+        {
+            if (locked == null || traffic == null) return;
+            var d = (locked.transform.position - transform.position) / M;
+            if (Mathf.Abs(d.x) >= ScanRangeUnits || Mathf.Abs(d.y) >= ScanRangeUnits || Mathf.Abs(d.z) >= ScanRangeUnits) return;
+            var ship = traffic.Ships.Find(s => s != null && s.Target == locked);
+            if (ship == null) return;
+            var cargo = ship.CargoList;
+            if (cargo == null || cargo.Count == 0) { Message?.Invoke(Localization.Get(542), 0); return; }
+            for (int i = 0; i < cargo.Count; i++)
+                if (cargo[i].amount > 0) { Message?.Invoke($"{cargo[i].amount}t {Localization.Get(1274 + cargo[i].item)}", 0); return; }
         }
 
         void StartSalvage(Crate crate)

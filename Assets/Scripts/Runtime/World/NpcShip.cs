@@ -1098,6 +1098,9 @@ namespace GoF2Remake.World
             if (!IsFreighter) DropCrate();
         }
 
+        /// <summary>KIPlayer+0x4c: the cargo list (the scanner's readout).</summary>
+        public IReadOnlyList<ItemStack> CargoList => loot;
+
         /// <summary>KIPlayer::cargoAvailable: something aboard to steal (the Hijacker's mission container drops by itself).</summary>
         public bool HasCargo => Spec.missionCrate < 0 && loot.Exists(s => s.amount > 0);
 

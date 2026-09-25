@@ -45,7 +45,8 @@ namespace GoF2Remake.World
         public const float JunkTimeMs = 121000f;
 
         /// <summary>Show a bar agent's one-page message (text, name, portrait) and call the action when it closes.</summary>
-        public event Action<string, string, int[], Action> MessageRequested;
+        /// <summary>(text, client name, portrait, voice line, closed).</summary>
+        public event Action<string, string, int[], string, Action> MessageRequested;
         public event Action<string> RewardMessage;
         public bool DialogueOpen { get; private set; }
         public Route PlayerRoute { get; private set; }
@@ -293,7 +294,7 @@ namespace GoF2Remake.World
                 if (t != MissionType.Courier && t != MissionType.Purchase && t != MissionType.Passenger)
                 {
                     int text = t == MissionType.Challenge ? 372 : t == MissionType.JunkRemoval ? 378 : 379 + Random.Range(0, 5);
-                    Open(Localization.Get(text), () => missionMs = 0f);
+                    Open(Localization.Get(text), text, () => missionMs = 0f);
                     return;
                 }
             }
@@ -351,14 +352,14 @@ namespace GoF2Remake.World
             if (m.type == MissionType.Recovery || m.type == MissionType.Salvage)
             {
                 // MGame::successCheck: the orbit becomes a plain one; deliver the container to the client.
-                Open(Freelance.ReturnText(level.Database), () =>
+                Open(Freelance.ReturnText(level.Database), 389, () =>
                 {
                     Freelance.ToReturnTrip();
                     level.Navigation?.SetRoute(null);
                 });
                 return;
             }
-            Open(Freelance.SuccessText(playerKills, otherKills), () =>
+            Open(Freelance.SuccessText(out int successText, playerKills, otherKills), successText, () =>
             {
                 int paid = Freelance.Succeed(false);
                 RewardMessage?.Invoke($"{Localization.Get(216)} +{UI.ItemInfo.Credits(paid)}");
@@ -371,17 +372,18 @@ namespace GoF2Remake.World
         void Fail()
         {
             done = true;
+            int textId = 371;
             string text = mission.type == MissionType.Challenge
                 ? Localization.Get(371).Replace("#Q1", playerKills.ToString()).Replace("#Q2", otherKills.ToString())
-                : Freelance.FailureText();
-            Open(text, () => { Freelance.Fail(); level.Navigation?.SetRoute(null); });
+                : Freelance.FailureText(out textId);
+            Open(text, textId, () => { Freelance.Fail(); level.Navigation?.SetRoute(null); });
         }
 
-        void Open(string text, Action after)
+        void Open(string text, int textId, Action after)
         {
             DialogueOpen = true;
             if (level.Navigation != null) level.Navigation.Paused = true;
-            MessageRequested?.Invoke(text, mission.clientName, mission.clientPortrait, () =>
+            MessageRequested?.Invoke(text, mission.clientName, mission.clientPortrait, Freelance.Voice(textId), () =>
             {
                 DialogueOpen = false;
                 if (level.Navigation != null) level.Navigation.Paused = false;

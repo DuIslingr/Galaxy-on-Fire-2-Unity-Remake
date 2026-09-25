@@ -167,17 +167,28 @@ namespace GoF2Remake.Data
         // ---- results ----------------------------------------------------------------------------------------
 
         /// <summary>DialogueWindow::loadContent mode 1 (freelance): 373-377 + 216, Shima 458; Challenge 370 with the score.</summary>
-        public static string SuccessText(int playerKills = 0, int rivalKills = 0)
+        public static string SuccessText(out int textId, int playerKills = 0, int rivalKills = 0)
         {
             var m = Mission;
-            if (m.target == 108) return Localization.Get(458);
+            if (m.target == 108) { textId = 458; return Localization.Get(458); }
             if (m.type == MissionType.Challenge)
+            {
+                textId = 370;
                 return Localization.Get(370).Replace("#Q1", playerKills.ToString()).Replace("#Q2", rivalKills.ToString());
-            return Localization.Get(373 + Random.Range(0, 5)) + "\n\n" + Localization.Get(216);
+            }
+            textId = 373 + Random.Range(0, 5);
+            return Localization.Get(textId) + "\n\n" + Localization.Get(216);
         }
 
         /// <summary>Mode 2: 384-388 + 392.</summary>
-        public static string FailureText() => Localization.Get(384 + Random.Range(0, 5)) + "\n\n" + Localization.Get(392);
+        public static string FailureText(out int textId)
+        {
+            textId = 384 + Random.Range(0, 5);
+            return Localization.Get(textId) + "\n\n" + Localization.Get(392);
+        }
+
+        /// <summary>The client's voice line for 'textId' (Globals::getDialogueSoundId with the mission's agent).</summary>
+        public static string Voice(int textId) => GenericVoice.For(textId, Mission.clientRace, Mission.clientMale, Mission.clientPortrait);
 
         /// <summary>389: Recovery / Salvage won, return to the client's station.</summary>
         public static string ReturnText(Database db) =>
