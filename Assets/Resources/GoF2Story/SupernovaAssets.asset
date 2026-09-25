@@ -16,6 +16,7 @@ MonoBehaviour:
   hackingTurn: {fileID: 8300000, guid: e9bf983af23afab43af8c0dd789a1c56, type: 3}
   hackingSolved: {fileID: 8300000, guid: f9d92dc529a9e344e8b28a78dc69e466, type: 3}
   transferLoop: {fileID: 8300000, guid: 6ded16b864b13c74c957f287e546a261, type: 3}
+  container: {fileID: 8300000, guid: aca6a9485483f8940bbf0f67d33bf638, type: 3}
   extractorLoop: {fileID: 8300000, guid: 7f407334bba16ee4a81914fd8907f22e, type: 3}
   plasmaCollected:
   - {fileID: 8300000, guid: 2afba83113317df4f81fcae9a46f3c94, type: 3}

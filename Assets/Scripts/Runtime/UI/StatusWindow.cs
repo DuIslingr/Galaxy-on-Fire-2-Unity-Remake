@@ -93,14 +93,14 @@ namespace GoF2Remake.UI
             icon.style.backgroundImage = new StyleBackground(ItemInfo.ShipIcon(Session.ShipIndex));
             shipBox.Add(icon);
             Line(shipBox, ItemInfo.ShipName(Session.ShipIndex), true);
-            StatLine(shipBox, T(569), FirePower(db).ToString("0.0"));
-            StatLine(shipBox, T(570), CombinedHp(db).ToString());
+            StatLine(shipBox, T(569), ((int)Shop.FirePower(db)).ToString());
+            StatLine(shipBox, T(570), Shop.CombinedHp(db).ToString());
 
             // Reputation.
             Plate(left, T(576));
             var rep = Row(left);
-            Reputation(Box(rep, false), 0, 1, Session.Standing[0]);
-            Reputation(Box(rep, true), 2, 3, Session.Standing[1]);
+            Reputation(Box(rep, false), 0, 1, StandingShown(0));
+            Reputation(Box(rep, true), 2, 3, StandingShown(1));
 
             // Statistics.
             Plate(left, T(577));
@@ -132,15 +132,7 @@ namespace GoF2Remake.UI
                 if (grade > 0) m.AddToClassList("medal--earned");
                 // TouchButton::draw style 4: the plate by grade, the symbol centred at (114, 41) tinted by grade, the
                 // pressed overlay 2412 on the selected medal, the name 1507 + i in white under the plate.
-                var plate = new VisualElement { pickingMode = PickingMode.Ignore };
-                plate.AddToClassList("medal-plate");
-                plate.style.backgroundImage = Hud(elite ? (grade == 1 ? "medal_plate_elite_gold" : grade == 0 ? "medal_plate_elite_none" : grade == 2 ? "medal_plate_silver" : "medal_plate_bronze")
-                                                        : grade == 1 ? "medal_plate_gold" : grade == 2 ? "medal_plate_silver" : grade == 3 ? "medal_plate_bronze" : "medal_plate_none");
-                var symbol = new VisualElement { pickingMode = PickingMode.Ignore };
-                symbol.AddToClassList("medal-symbol");
-                symbol.style.backgroundImage = Hud($"medal_{i:00}");
-                symbol.style.unityBackgroundImageTintColor = MedalTint(elite, grade);
-                plate.Add(symbol);
+                var plate = MedalPlate(i, grade);
                 var pressed = new VisualElement { pickingMode = PickingMode.Ignore };
                 pressed.AddToClassList("medal-pressed");
                 pressed.style.backgroundImage = Hud("medal_pressed");
@@ -160,6 +152,33 @@ namespace GoF2Remake.UI
             }
             hint.text = T(647);
             menu.Focus(close);
+        }
+
+        /// <summary>TouchButton::draw style 4 / ChoiceWindow::setMedal: the plate by grade with the medal's symbol tinted by
+        /// grade (also the "New medal!" window's picture).</summary>
+        public static VisualElement MedalPlate(int medal, int grade)
+        {
+            bool elite = medal >= Achievements.BaseCount;
+            var plate = new VisualElement { pickingMode = PickingMode.Ignore };
+            plate.AddToClassList("medal-plate");
+            plate.style.backgroundImage = Hud(elite ? (grade == 1 ? "medal_plate_elite_gold" : grade == 0 ? "medal_plate_elite_none" : grade == 2 ? "medal_plate_silver" : "medal_plate_bronze")
+                                                    : grade == 1 ? "medal_plate_gold" : grade == 2 ? "medal_plate_silver" : grade == 3 ? "medal_plate_bronze" : "medal_plate_none");
+            var symbol = new VisualElement { pickingMode = PickingMode.Ignore };
+            symbol.AddToClassList("medal-symbol");
+            symbol.style.backgroundImage = Hud($"medal_{medal:00}");
+            symbol.style.unityBackgroundImageTintColor = MedalTint(elite, grade);
+            plate.Add(symbol);
+            return plate;
+        }
+
+        /// <summary>Status::getStandingRate -> Standing::getStanding 0x14283a: with a signature mounted the axis of its race reads
+        /// +-100 (100 toward the signature's race), the other 70; else the stored value.</summary>
+        static int StandingShown(int axis)
+        {
+            int sig = Standing.SignatureRace;
+            if (sig < 0 || sig > 3) return Session.Standing[axis];
+            if (axis == 0) return sig == 0 ? 100 : sig == 1 ? -100 : 70;
+            return sig == 2 ? 100 : sig == 3 ? -100 : 70;
         }
 
         static readonly System.Collections.Generic.Dictionary<string, Texture2D> hudImages = new System.Collections.Generic.Dictionary<string, Texture2D>();
@@ -186,28 +205,6 @@ namespace GoF2Remake.UI
             hint.text = $"{T(1507 + medal)}\n{Achievements.Hint(medal)}";
         }
 
-        /// <summary>The mounted primaries' damage per second (Ship::getFirePower's formula is lost; an assumption).</summary>
-        static float FirePower(Database db)
-        {
-            float dps = 0f;
-            foreach (var e in Session.Equipment)
-            {
-                var it = db.Item(e.item);
-                if (it == null || it.TypeId != 0) continue;
-                float reload = Mathf.Max(1, it.Stat("loadingTimeMs", 500));
-                dps += it.Stat("damage") * 1000f / reload;
-            }
-            return dps;
-        }
-
-        /// <summary>Ship::getCombinedHP: hull (+ mod) + shield + armor.</summary>
-        static int CombinedHp(Database db)
-        {
-            int hull = (db.Ship(Session.ShipIndex)?.armor ?? 0) + (Session.HasMod(0) ? 40 : 0);
-            var shield = Shop.FirstMounted(db, 9);
-            var armor = Shop.FirstMounted(db, 10);
-            return hull + (shield != null ? shield.Attr(18) : 0) + (armor != null ? armor.Attr(20) : 0);
-        }
 
         // ---- building blocks -----------------------------------------------------------------------------
 

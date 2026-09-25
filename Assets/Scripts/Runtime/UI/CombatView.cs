@@ -136,6 +136,9 @@ namespace GoF2Remake.UI
                         DrawShip(Get(s), s.transform.position, f, s.Target.HullFraction, radar.Locked == s.Target, cam, origin, centre);
                         DrawEmp(Get(s), s.Hp != null ? s.Hp.EmpFraction : 1f);
                     }
+                foreach (var o in Target.RadarObjects)
+                    if (o != null && o.Alive && !o.untargetable)
+                        DrawShip(Get(o), o.transform.position, o.hostileToPlayer ? 0 : 2, 1f, radar.Locked == o, cam, origin, centre, true);
                 foreach (var c in Object.FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
                     DrawCrate(Get(c), c.transform.position, c.race == 9, cam, origin, centre);
 
@@ -149,8 +152,11 @@ namespace GoF2Remake.UI
                 if (plateFree && locked != null)
                 {
                     lockPlate.EnableInClassList("lock-plate--shown", true);
-                    // Radar::drawCurrentLock: a named ship shows its name, the others race + hull.
-                    lockOre.text = string.IsNullOrEmpty(locked.displayName) ? $"{RaceName(locked.race)} {Mathf.RoundToInt(locked.HullFraction * 100f)}%" : locked.displayName;
+                    // Radar::drawCurrentLock 0x158548: "<name or race> NN%"; the Hijacker / the Informer their name alone; a Most
+                    // Wanted criminal in its own colour.
+                    string who = string.IsNullOrEmpty(locked.displayName) ? RaceName(locked.race) : locked.displayName;
+                    lockOre.text = locked.plateNameOnly && !string.IsNullOrEmpty(locked.displayName) ? locked.displayName : $"{who} {Mathf.RoundToInt(locked.HullFraction * 100f)}%";
+                    lockOre.EnableInClassList("lock-ore--wanted", locked.plateWanted);
                     var icon = locked.race >= 0 && locked.race <= 3 || locked.race == 8 || locked.race == 9 ? Tex($"race_{locked.race}") : null;
                     lockClass.style.display = icon != null ? DisplayStyle.Flex : DisplayStyle.None;
                     Image(lockClass, icon);
@@ -209,11 +215,11 @@ namespace GoF2Remake.UI
             return centre + d / k;
         }
 
-        void DrawShip(Marker m, Vector3 world, int faction, float hull, bool locked, Camera cam, Vector2 origin, Vector2 centre)
+        void DrawShip(Marker m, Vector3 world, int faction, float hull, bool locked, Camera cam, Vector2 origin, Vector2 centre, bool dotOnly = false)
         {
             bool onScreen = Project(cam, world, origin, centre, out var p, out bool near);
             string f = Faction[faction];
-            bool bar = onScreen && near;
+            bool bar = onScreen && near && !dotOnly;
             Show(m.bar, bar);
             Show(m.fill, bar);
             Show(m.bracket, bar && locked);

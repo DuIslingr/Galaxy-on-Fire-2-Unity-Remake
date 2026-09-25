@@ -196,12 +196,12 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>MGame::OnTouchEnd auto-turret button: HUD event 0x20 / 0x21.</summary>
-        public void SetAuto(bool on)
+        public void SetAuto(bool on, bool announce = true)
         {
             if (!IsAuto || AutoEnabled == on) return;
             AutoEnabled = on;
             if (!on) StopShooting();
-            Message?.Invoke(Localization.Get(37) + (on ? ": " + Localization.Extra("on", "On") : ": " + Localization.Extra("off", "Off")));
+            if (announce) Message?.Invoke(Localization.Get(37) + (on ? ": " + Localization.Extra("on", "On") : ": " + Localization.Extra("off", "Off")));
         }
 
         /// <summary>PlayerEgo::setTurretMode: refused for auto turrets, while mining or while the guns are blocked.</summary>
@@ -245,7 +245,8 @@ namespace GoF2Remake.Flight
             bool halted = Time.timeScale <= 0f || (weapons != null && weapons.Blocked);
             if (!halted)
             {
-                if (viewAction.WasPressedThisFrame() && !IsAuto) SetTurretView(!InTurretView);
+                // The view key (V / D-pad up) is the camera button now: FreeLookCamera cycles standard / turret / free look.
+                if (viewAction.WasPressedThisFrame() && !IsAuto && GetComponent<FreeLookCamera>() == null) SetTurretView(!InTurretView);
                 if (autoAction.WasPressedThisFrame() && IsAuto) SetAuto(!AutoEnabled);
             }
             bool dead = GetComponent<Target>() is Target me && !me.Alive;

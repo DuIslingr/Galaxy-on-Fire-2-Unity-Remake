@@ -59,6 +59,9 @@ namespace GoF2Remake.Flight
         const float LevelRateFar = 0.00035f;                  // |up.x| > 0.3
         const float LevelRateNear = 0.00025f;
         const int LevelMaxDtMs = 60;
+        const float LevelRateOvershoot = 0.00035f, LevelRateFine = 0.0002f;   // PlayerEgo::roll's fine phase (+0x324)
+        int levelSide;        // PlayerEgo+0x2a9: the sign of up.x last frame (1 negative, 2 positive, 0 none)
+        bool levelFine;       // PlayerEgo+0x324: the lean changed sides once, the last part goes slow
 
         // ---- configuration ------------------------------------------------------------------
         /// <summary>Options-menu steering sensitivity. Must stay well below 3.3/1.45 (~2.27). Default is a guess.</summary>
@@ -147,6 +150,7 @@ namespace GoF2Remake.Flight
         public void Boost()
         {
             if (!BoostReady) return;
+            Throttle = 1f;   // MGame::OnTouchEnd HUD element 2: full throttle first, then the boost
             boostTimerMs = 0;
             CurrentSpeed = boostSpeedValue;
             IsBoosting = true;
@@ -168,7 +172,7 @@ namespace GoF2Remake.Flight
             }
         }
 
-        public void AlignToHorizon() => IsLeveling = true;
+        public void AlignToHorizon() { IsLeveling = true; levelSide = 0; levelFine = false; }
 
         public void AddCollisionPush(float amount) => collisionPush += amount;
 
@@ -277,12 +281,20 @@ namespace GoF2Remake.Flight
             if (Mathf.Abs(lean) < LevelDoneThreshold && upY > 0f)
             {
                 IsLeveling = false;
+                levelSide = 0;
+                levelFine = false;
                 return 0f;
             }
 
+            // PlayerEgo::roll 0xa7c04: once the lean crosses zero (an overshoot) one step of 0.00035, then 0.0002 rad/ms until
+            // level; before that 0.00075 upside down, else 0.00035 beyond 0.3, 0.00025 closer.
+            int side = lean < 0f ? 1 : lean > 0f ? 2 : levelSide;
             float rate;
-            if (upY < 0f) rate = LevelRateUpsideDown;
+            if (levelFine) rate = LevelRateFine;
+            else if ((side == 2 && levelSide == 1) || (side == 1 && levelSide == 2)) { rate = LevelRateOvershoot; levelFine = true; }
+            else if (upY < 0f) rate = LevelRateUpsideDown;
             else rate = Mathf.Abs(lean) > 0.3f ? LevelRateFar : LevelRateNear;
+            levelSide = side;
 
             float dir = lean > 0f ? 1f : -1f; // roll so that the lean shrinks
             return dir * rate * Mathf.Min(dtMs, LevelMaxDtMs);

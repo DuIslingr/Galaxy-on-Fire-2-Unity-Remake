@@ -62,6 +62,8 @@ namespace GoF2Remake.World
 
         /// <summary>The orbit's plasma item (201-204), -1 = no clouds.</summary>
         public int PlasmaItem { get; private set; } = -1;
+        /// <summary>1 t of plasma collected (the item): PlayerGasCloud::update's red plasma hint.</summary>
+        public event System.Action<int> PlasmaCollected;
         /// <summary>Campaign 142's script: any cloud burst into sparks ("ionized").</summary>
         public bool AnyExploded => clouds.Exists(c => c.exploded);
         public int Count => clouds.Count;
@@ -264,6 +266,7 @@ namespace GoF2Remake.World
             fullShown = false;
             Shop.AddToCargo(PlasmaItem, 1);
             pendingTons++;
+            PlasmaCollected?.Invoke(PlasmaItem);
         }
         int pendingTons;
         float pendingMs;

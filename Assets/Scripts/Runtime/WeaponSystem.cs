@@ -62,6 +62,8 @@ namespace GoF2Remake.Flight
         float liberatorBank;
         /// <summary>The Liberator is being steered (PlayerEgo+0x194): the HUD's hints and the ship's steering follow it.</summary>
         public bool SteeringMissile => liberator != null;
+        /// <summary>The steered Liberator's position (Unity world), null when none: it wakes sleepers like the player.</summary>
+        public static Vector3? GuidedRocket { get; private set; }
         Transform fxRoot;
         AudioSource shotSource;
         bool touchPrimary;
@@ -121,6 +123,7 @@ namespace GoF2Remake.Flight
         void OnDestroy()
         {
             if (fxRoot != null) Destroy(fxRoot.gameObject);
+            GuidedRocket = null;
         }
 
         void AddDefaultBindings()
@@ -214,6 +217,7 @@ namespace GoF2Remake.Flight
             gun.Hit += (i, target, point) => OnHit(rig, i, target, point);
             gun.AreaHit += (target, dmg, emp, center) => OnAreaHit(rig, target, dmg, emp, center);
             gun.Ignited += point => OnIgnited(rig, point);
+            gun.Expired += _ => Session.RocketAsteroids = 0;   // Gun::update: a rocket / missile ran out (medal 41)
             return rig;
         }
 
@@ -246,6 +250,7 @@ namespace GoF2Remake.Flight
                 r.stack.amount--;
                 PlayShot(r);
                 r.visuals.OnShot();
+                AfterShot();
                 if (r.gun.Guided) StartLiberator(r);
                 return true;
             }
@@ -283,29 +288,66 @@ namespace GoF2Remake.Flight
 
             if (liberator != null) UpdateLiberator(dtMs);
             var cam = Camera.main;
+            var homing = HomingLock(cam);
+            // Player::calcWeaponSounds 0xb00b0: only the first primary gun makes the shot sound (Player+0x10c).
+            Rig soundRig = rigs.Find(x => !x.gun.isSecondary);
             foreach (var r in rigs)
             {
                 var gun = r.gun;
                 if (!gun.isSecondary && primaryHeld)
                 {
                     int b = gun.TryFire(transform);
-                    if (b >= 0) OnShot(r);
+                    if (b >= 0) OnShot(r, r == soundRig);
                 }
-                gun.Update(dtMs, Target.All, LockTarget);
+                gun.Update(dtMs, Target.All, homing);
                 r.visuals.UpdateVisuals(dtMs, cam, transform.forward);
                 if (r.loop != null)
                 {
-                    bool firing = primaryHeld && !gun.isSecondary;
+                    bool firing = primaryHeld && !gun.isSecondary && r == soundRig;
                     if (firing && !r.loop.isPlaying) { r.loop.volume = shotVolume * Settings.SfxVolume; r.loop.Play(); }
                     else if (!firing && r.loop.isPlaying) r.loop.Stop();
                 }
             }
         }
 
-        void OnShot(Rig r)
+        /// <summary>Player::resetGunDelay(0) (PlayerEgo::dockToAsteroid / approachDockingPoint / dockToDockingPoint /
+        /// dockToPlanet): the primaries start their reload over.</summary>
+        public void ResetGunDelay()
         {
-            if (r.loop == null) PlayShot(r);
+            foreach (var r in rigs) if (!r.gun.isSecondary) r.gun.reloadAcc = 0f;
+        }
+
+        /// <summary>RocketGun::seekEnemy 0x18bd70: missiles steer only toward a lock that is on screen (KIPlayer+0x72), not
+        /// cloaked (+0x70), and not while the camera looks around freely.</summary>
+        Target HomingLock(Camera cam)
+        {
+            var t = LockTarget;
+            if (t == null || !t.Alive || t.cloaked || cam == null) return null;
+            if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
+            if (freeLook != null && freeLook.FreeLookActive) return null;
+            var v = cam.WorldToViewportPoint(t.transform.position);
+            return v.z > 0f && v.x >= 0f && v.x <= 1f && v.y >= 0f && v.y <= 1f ? t : null;
+        }
+        FreeLookCamera freeLook;
+
+        void OnShot(Rig r, bool sound = true)
+        {
+            if (r.loop == null && sound) PlayShot(r);
             r.visuals.OnShot();
+            AfterShot();
+        }
+
+        VolatileCargo volatileCargo;
+        ChaseCamera chaseCam;
+
+        /// <summary>Player::shoot: every shot + 0.008 on the volatile meter; Gun::shootAt: TargetFollowCamera::hitSmall
+        /// (50 ms, +-2 units).</summary>
+        void AfterShot()
+        {
+            if (volatileCargo == null) volatileCargo = GetComponent<VolatileCargo>();
+            volatileCargo?.Add(0.008f);
+            if (chaseCam == null && Camera.main != null) chaseCam = Camera.main.GetComponent<ChaseCamera>();
+            if (chaseCam != null && chaseCam.enabled) chaseCam.Shake(50f, 2f);
         }
 
         void PlayShot(Rig r)
@@ -344,10 +386,20 @@ namespace GoF2Remake.Flight
             bool wasAlive = target.Alive;
             target.lastPlayerWeapon = r.gun.itemIndex;
             target.Damage(missile && target.isAsteroid ? 9999f : r.gun.damage, false, r.gun.bullets[bullet].velocity);
-            if (wasAlive && !target.Alive && target.isAsteroid) Session.AsteroidsDestroyed++;   // Status+0xd8
+            if (wasAlive && !target.Alive && target.isAsteroid) { Session.AsteroidsDestroyed++; CountAsteroidMedals(r.gun); }   // Status+0xd8
             ApplyEmp(target, (int)r.gun.emp);
             r.visuals.ShowImpact(point);
             Hit?.Invoke();
+        }
+
+        /// <summary>Gun::calcCharacterCollision on an asteroid: a rocket / missile / cluster missile / ionizing missile
+        /// (sorts 4, 5, 40, 34) counts toward 41 Asteroid Hazard (Status+0x12c, reset when a rocket runs out), the Liberator
+        /// (0xb3) toward 44 Hot Shot (+0x144, reset when one is fired).</summary>
+        static void CountAsteroidMedals(Gun g)
+        {
+            bool rocket = g.kind == Gun.Kind.Rocket || g.kind == Gun.Kind.Missile || g.kind == Gun.Kind.ClusterMissile || g.kind == Gun.Kind.Ionizing;
+            if (rocket && !Achievements.Has(41)) Achievements.Elite(41, ++Session.RocketAsteroids);
+            else if (g.itemIndex == 179 && !Achievements.Has(44)) Achievements.Elite(44, ++Session.LiberatorAsteroids);
         }
 
         /// <summary>Gun::ignite on one target: hull damage and EMP, the shock blast's push.</summary>
@@ -356,7 +408,12 @@ namespace GoF2Remake.Flight
             bool wasAlive = target.Alive;
             target.lastPlayerWeapon = r.gun.itemIndex;
             if (dmg > 0) target.Damage(dmg, false, (target.transform.position - center).normalized);
-            if (wasAlive && !target.Alive && target.isAsteroid) Session.AsteroidsDestroyed++;
+            if (wasAlive && !target.Alive && target.isAsteroid)
+            {
+                Session.AsteroidsDestroyed++;
+                // Gun::ignite: an asteroid in the Liberator's blast (medal 44 Hot Shot).
+                if (r.gun.itemIndex == 179 && !Achievements.Has(44)) Achievements.Elite(44, ++Session.LiberatorAsteroids);
+            }
             ApplyEmp(target, emp);
             if (r.gun.kind == Gun.Kind.ShockBlast && target.isShip)
                 target.GetComponent<World.NpcShip>()?.InitPush(center, r.gun.magnitude * M);
@@ -364,11 +421,17 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>Player::damageEmp (EMP weapons): disabling a ship of races 0..3 costs standing 2 (applyDelict).</summary>
+        /// <summary>Player::damageEmp 0xaf834 from the player's weapons: the friendly-fire rules first (NpcShip.OnPlayerEmp),
+        /// then the EMP; a disabled ship costs standing (Standing::applyDisable, not for asteroids / Wanted criminals).</summary>
         static void ApplyEmp(Target target, int emp)
         {
-            if (emp > 0 && target.hitpoints != null && target.isShip && target.Alive && target.hitpoints.DamageEmp(emp)
-                && target.race >= 0 && target.race <= 3 && !target.hostileToPlayer)
-                Standing.ApplyDelict(target.race, 2);
+            if (emp <= 0 || target.hitpoints == null || !target.isShip || !target.Alive) return;
+            if (target.hitpoints.emp <= 0 || target.hitpoints.hull <= 0) return;   // already disabled
+            var npc = target.GetComponent<World.NpcShip>();
+            npc?.OnPlayerEmp(emp);
+            if (!target.hitpoints.DamageEmp(emp)) return;
+            if (npc != null) npc.OnPlayerDisabled();
+            else if (target.race >= 0 && target.race <= 3) Standing.ApplyDelict(target.race, 2);
         }
 
         /// <summary>BombGun / MineGun / ObjectGun: the explosion, the counter, hardcore self-damage.</summary>
@@ -397,6 +460,7 @@ namespace GoF2Remake.Flight
         void StartLiberator(Rig r)
         {
             liberator = r;
+            Session.LiberatorAsteroids = 0;   // Gun::shootAt 0xb3: a new Liberator starts medal 44's count
             var ship = GetComponent<ShipController>();
             if (ship != null) ship.steeringLocked = true;
             if (liberatorAnchor == null) liberatorAnchor = new GameObject("Liberator camera target").transform;
@@ -470,14 +534,24 @@ namespace GoF2Remake.Flight
         void PlaceLiberatorAnchor()
         {
             ref var b = ref liberator.gun.bullets[0];
+            GuidedRocket = b.position;
             var dir = b.velocity.sqrMagnitude > 1e-9f ? b.velocity.normalized : transform.forward;
             liberatorAnchor.SetPositionAndRotation(b.position + dir * 350f * M, Quaternion.LookRotation(dir, b.up));
+        }
+
+        /// <summary>LevelScript: isInRocketControl -> setRocketControl(null) + PlayerEgo::killLiberator (a cutscene takes over).</summary>
+        public void KillLiberator()
+        {
+            if (liberator == null) return;
+            liberator.gun.RemoveAll();
+            EndLiberator();
         }
 
         /// <summary>Detonation: LevelScript::resetCamera, setRocketControl(null), the loop stops.</summary>
         void EndLiberator()
         {
             liberator = null;
+            GuidedRocket = null;
             var ship = GetComponent<ShipController>();
             if (ship != null) ship.steeringLocked = false;
             var chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;

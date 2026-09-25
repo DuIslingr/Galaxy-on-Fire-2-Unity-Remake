@@ -62,6 +62,9 @@ namespace GoF2Remake.UI
 
         enum MenuState { Splash, Title, Menu, Leaving }
 
+        /// <summary>A panel to open as soon as the menu loads ("campaignPanel": the station menu's Start new game).</summary>
+        public static string OpenPanelOnStart;
+
         VisualElement root, logo, splash, splashLogo, fade, dialog, mainColumn, mainButtons;
         Label pressAnyKey, versionLabel, hintLabel;
         Button resumeButton, newGameButton, loadButton, optionsButton, aboutButton, exitButton;
@@ -335,6 +338,18 @@ namespace GoF2Remake.UI
             }
             StartCoroutine(FadeMusic(Settings.MusicVolume, 3f));
 
+            // The station menu's Start new game (MenuTouchWindow mode 2, 28): straight to the menu with that panel open.
+            if (OpenPanelOnStart != null && panels.ContainsKey(OpenPanelOnStart))
+            {
+                string name = OpenPanelOnStart;
+                OpenPanelOnStart = null;
+                splash.AddToClassList("splash--gone");
+                splash.AddToClassList("splash--removed");
+                EnterMenu();
+                root.schedule.Execute(() => OpenPanel(name)).ExecuteLater(400);
+                yield break;
+            }
+            OpenPanelOnStart = null;
             WatchAnyKey();
             bool splashLogos = showSplash && Application.isEditor && editorSplashLogos != null;
             if (splashLogos)

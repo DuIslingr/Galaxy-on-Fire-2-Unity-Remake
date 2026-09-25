@@ -22,6 +22,11 @@ namespace GoF2Remake.Flight
         public bool pulled;
         /// <summary>The living ship whose cargo this is (a steal), null for a wreck's crate.</summary>
         public World.NpcShip stolenFrom;
+        /// <summary>Player+0x5d of the ship it came from (a friend: Level::stealFriendCargo) / a mission container (116 / 117).</summary>
+        public bool fromFriend, missionCrate;
+
+        /// <summary>A fixed object's crate: the 60 s start when its wreck animation ends (state 4).</summary>
+        public void DelayExpiry(float ms) => ageMs -= ms;
 
         Vector3 drift;
         float force, ageMs;

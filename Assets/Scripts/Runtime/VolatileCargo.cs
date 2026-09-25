@@ -11,7 +11,8 @@
 // Sound 35 Selfdestruct_Warning plays while the goods are aboard, its parameter SpawnIntensity = the force (the FEV's LGCY
 // data): a 58 ms beep every 1000 ms / intensity, intensity 0 below 0.2 then 0.18 -> 0.66 at 1, pitch x1 -> x1.189 (+3 st)
 // from 0.18 to 1, at most 2 at a time; event volume 0.2. Also: every dodge request + 0.17 (PlayerEgo::initManeuver) and a
-// player bomb's ignition + 3 f (PlayerEgo::addNukeVolatileForce, WeaponSystem.OnIgnited).
+// player bomb's ignition + 3 f (PlayerEgo::addNukeVolatileForce, WeaponSystem.OnIgnited), every shot + 0.008 (Player::shoot),
+// every hit taken + 0.065 (Player::damage); it decays by 0.025 per second (Player::update).
 
 using GoF2Remake.Data;
 using UnityEngine;
@@ -67,6 +68,7 @@ namespace GoF2Remake.Flight
             Force += InputRate * Mathf.Max(Mathf.Abs(stick.x - lastStick.x), Mathf.Abs(stick.y - lastStick.y));
             lastStick = stick;
             if (ship.Model != null && ship.Model.IsBoosting) Force += dtMs * 0.001f * boostRate;
+            Force = Mathf.Max(0f, Force - dtMs * 0.001f * 0.025f);   // Player::update: -0.025 per second
             if (Force >= 1f && health != null && !health.invulnerable) { health.Kill(); return; }
 
             // The warning beeps (spawn intensity and pitch envelopes of event 35).

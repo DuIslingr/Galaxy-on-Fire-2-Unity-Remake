@@ -248,6 +248,19 @@ namespace GoF2Remake.World
                                s => { s.hitpoints = Mathf.Max(1, NpcTables.Hull(1, 15) / 20); s.inactive = true; });
             wreck.RadarHidden = true;
             c.FailObjective = () => c.ShipDead(0);   // Objective(1, 0): the wreck destroyed
+            // PlayerFixedObject::update animates the wreck's +0x14 transform; +0xc (the *_wrecked_anim root) only from the
+            // break-up on (below): held until then.
+            wreckAnims.Clear();
+            foreach (var a in wreck.GetComponentsInChildren<PartAnimation>(true))
+                if (a.gameObject.name.Contains("wrecked_anim")) { a.Hold(); wreckAnims.Add(a); }
+            wreckBroken = false;
+            // FMOD 3D event 0x8e9 LOOP kept at the wreck every frame.
+            wreckLoop = wreck.gameObject.AddComponent<AudioSource>();
+            wreckLoop.clip = sn != null ? sn.transferLoop : null;
+            wreckLoop.loop = true;
+            wreckLoop.spatialBlend = 0f;
+            wreckLoop.volume = 0f;
+            if (wreckLoop.clip != null) wreckLoop.Play();
         }
 
         // 92: Tadram, the first Specter attack.
@@ -462,7 +475,7 @@ namespace GoF2Remake.World
                 s.noLoot = true; s.nameText = plant.nameText; s.dockingType = plant.dockingType; s.spacePoints = plant.spacePoints; s.hitRadius = plant.hitRadius;
                 s.collisionId = plant.collisionId;
             });
-            for (int i = 0; i < 2; i++) c.SpawnShip(Standing.Pirate, NpcTables.RandomFighter(Standing.Pirate), new Vector3(7000000, 7000000, 7000000), false, s => { s.alwaysEnemy = true; s.asleep = true; });
+            for (int i = 0; i < 2; i++) c.SpawnShip(Standing.Pirate, NpcTables.RandomFighter(Standing.Pirate), new Vector3(7000000, 7000000, 7000000), false, s => { s.alwaysEnemy = true; s.asleep = true; s.noLoot = true; });   // cargo list deleted (+0x4c = 0)
             // Every asteroid of the orbit is titanium (ore 155).
             if (level.Asteroids != null)
                 foreach (Transform t in level.Asteroids) { var tg = t.GetComponent<Target>(); if (tg != null) tg.oreItem = 155; }
@@ -550,6 +563,7 @@ namespace GoF2Remake.World
             var harval = c.SpawnShip(2, 49, new Vector3(30000, 0, 80000), false, s => { s.alwaysEnemy = true; s.nameText = 1636; s.noLoot = true; });
             harval.Place(ToUnity(new Vector3(30000, 0, 80000)), Dir(new Vector3(-50000, 0, 50000) - new Vector3(30000, 0, 80000)));
             harval.CloakingPossible = false;
+            harval.SetGun(214, 2f);   // Level::assignGuns 0x91, ship 0x31: the Shesha (0xd6, sort 0x28), damage x2
             for (int i = 1; i <= 12; i++)
             {
                 var p = new Vector3(23000 + 3000 * (i - 1), (R(1000) - 500) * i + R(1000), 70000 + 2000 * i + R(2500));
@@ -620,8 +634,17 @@ namespace GoF2Remake.World
             var vp = new Vector3(-120000, 0, 20000);
             var vrot = OrbitLayout.RotationToUnity(new Vector3(0, Mathf.PI, 0));
             var valkyrie = Scenery("v_station_battlestation_anim_mission_object", vp, vrot, "Valkyrie");
-            Scenery("sn_plasma_gun_valkyrie", vp, vrot, "Valkyrie plasma gun");
+            valkyrieGun = Scenery("sn_plasma_gun_valkyrie", vp, vrot, "Valkyrie plasma gun");
             PartAnimation.HoldAll(valkyrie);
+            valkyrieGo = valkyrie;
+            valkyrieAt = vp;
+            valkyrieRot = vrot;
+            valkyrieSound = false;
+            // The ctor's burning stages 1 (0x4a97 / 0x4a98) and 2 (0x4a99 / 0x4a9a), hidden until state 9.
+            stage1 = Scenery("sn_burning_valkyrie_stage_1", vp, vrot, "Valkyrie burning 1");
+            stage2 = Scenery("sn_burning_valkyrie_stage_2", vp, vrot, "Valkyrie burning 2");
+            if (stage1 != null) stage1.SetActive(false);
+            if (stage2 != null) stage2.SetActive(false);
             MovePlayer(new Vector3(100000, 0, 20000), new Vector3(-1, -0.2f, -0.5f));
         }
 
@@ -635,19 +658,30 @@ namespace GoF2Remake.World
             harval.scriptedSpeed = 0f;
             harval.SetVisible(false);
             ArmHarval(harval);
+            var hpts = harval.Target.hitpoints;
+            hpts.SetEmp(hpts.maxEmp * 3, hpts.empRecoveryMs);   // createCampaignMission 0x9e: EMP points x3
             for (int i = 0; i < 3; i++)
                 c.SpawnShip(Standing.Specter, -1, new Vector3(50000, 50000, 50000), false, s =>
                 {
                     s.group = NpcGroup.Turret; s.turretAssembly = "sn_sentry_gun_003"; s.hitpoints = 100; s.noLoot = true; s.inactive = true; s.alwaysEnemy = true; s.stationary = true;
                 });
             level.EndStartSequence();
+            // Ctor: the camera at (-50000, 0, 15000) + (-28000, 500, 8500); the helper 50 000 toward the sun from it; the
+            // player moved to the helper, turned toward (camera - helper) + (20000, 0, 0), pushed 30 000 forward, drifting
+            // at 0.1 u/ms ("blown off course"). Harval rides the helper (hidden until 25 s).
             var p = new Vector3(-50000, 0, 15000);
-            MovePlayer(p, LightGame);
+            var camAt = p + new Vector3(-28000, 500, 8500);
+            var helperAt = camAt + LightGame * 50000f;
+            var face = (camAt - helperAt + new Vector3(20000, 0, 0)).normalized;
+            MovePlayer(helperAt + face * 30000f, face);
             EnterCutscene(false);
-            cam.LookAt(p + new Vector3(-28000, 500, 8500), Player);
+            helper = new GameObject("Cutscene helper");
+            helper.transform.position = ToUnity(helperAt);
+            cam.LookAt(camAt, harval.transform);
             c.Fade(true, Color.black, 8000f);
             playerSpeed = 0.1f;
             Step = 1;
+            c.WinObjective = () => Over(10);   // Objective(0x16, 0): the last radio line (Keith once Harval is dead) is over
         }
 
         /// <summary>Level::assignGuns at 0x9d / 0x9e: Harval's Scimitar fires item 7 x3, and the Shesha (0xd6) x4 in slot 1.</summary>
@@ -655,6 +689,61 @@ namespace GoF2Remake.World
         {
             harval.SetGun(7, 3f);
             harval.SetSecondaryGun(214, 4f);
+        }
+
+        // ---- the pause menu's Skip (395; LevelScript::canSkipCutsceneNow 0x16f5b8 / skipCutscene 0x16f61c) ---------------
+
+        /// <summary>154 in states 1-9, 157 in states 2-4, 158 in states 0-1 (this+0x1c).</summary>
+        public bool CanSkipCutscene
+        {
+            get
+            {
+                if (Story.Index != built || !c.Cutscene) return false;
+                return built == 154 ? Step >= 1 && Step <= 9 : built == 157 ? Step >= 2 && Step <= 4 : built == 158 && Step <= 1;
+            }
+        }
+
+        /// <summary>154: radio 0-7 done, state 9 with its timer at 2001 ms, Hans back under his AI at the ship; 157: radio 0-3
+        /// done, state 4 at 18 001 ms (the Specters awake); 158: radio 0-2 done, state 2 at 12 001 ms, Harval shown at
+        /// (-2077, 0, 20233).</summary>
+        public void SkipCutscene()
+        {
+            if (!CanSkipCutscene) return;
+            switch (built)
+            {
+                case 154:
+                {
+                    c.Radio?.MarkShown(8);
+                    var hans = S(0);
+                    var valkyrie = S(1);
+                    if (hans != null && valkyrie != null)
+                    {
+                        var at = G(valkyrie) + new Vector3(-10000, 0, 22000).normalized * 3000f;
+                        hans.Place(ToUnity(at), Dir(G(valkyrie) - at));
+                        hans.frozen = false;
+                        hans.scriptedSpeed = 0f;
+                    }
+                    Step = 9;
+                    stepMs = 2001f;
+                    break;
+                }
+                case 157:
+                    c.Radio?.MarkShown(4);
+                    for (int i = 11; i <= 21; i++) { var s = S(i); if (s == null) continue; s.Wake(); s.SetVisible(true); }
+                    Step = 4;
+                    stepMs = 18001f;
+                    break;
+                case 158:
+                {
+                    c.Radio?.MarkShown(3);
+                    var harval = S(0);
+                    if (harval != null) { harval.Place(ToUnity(new Vector3(-2077, 0, 20233)), harval.transform.forward); harval.SetVisible(true); harval.SetExhaust(true); harval.scriptedSpeed = 1f; }
+                    playerSpeed = 0f;
+                    Step = 2;
+                    stepMs = 12001f;
+                    break;
+                }
+            }
         }
 
         // ---- cutscene helpers (LevelScript "cutscene on" / "off") ------------------------------------------------------
@@ -805,16 +894,33 @@ namespace GoF2Remake.World
                 case 4:
                     cam.Rumble = Mathf.Clamp01(1f - stepMs / 7000f) * 0.5f;
                     if (stepMs >= 7000f && stepMs - dtMs < 7000f) c.Fade(false, Color.black, 1000f);
-                    if (stepMs >= 8000f && c.FadeDone) { AdvanceAndDock(10); Step = 5; }
+                    // departStation(10) + Station::setAttackedFriends(false): Thynome forgives any friendly fire.
+                    if (stepMs >= 8000f && c.FadeDone) { Session.AttackedStations.Remove(10); AdvanceAndDock(10); Step = 5; }
                     break;
             }
         }
 
         // 91 (process 9556-9762).
+        readonly List<PartAnimation> wreckAnims = new List<PartAnimation>();
+        AudioSource wreckLoop;
+        bool wreckBroken;
+
         void Tick91(float dtMs)
         {
             var wreck = S(0);
             var dock = level.Docking;
+            if (wreckLoop != null && cam.Camera != null)
+            {
+                float d = Vector3.Distance(cam.Camera.position, wreckLoop.transform.position);
+                wreckLoop.volume = wreck != null && wreck.Target.Alive ? Mathf.Clamp01(1f - d / Sfx.AudibleMeters) * Settings.SfxVolume : 0f;
+            }
+            // 8+ aboard after 180 s: sound 0x8ea once, and the wreck animates its second transform (the break-up, unverified).
+            if (!wreckBroken && Session.StoryCounter >= 8 && T > 179999f)
+            {
+                wreckBroken = true;
+                if (sn != null && wreck != null) Sfx.PlayAt(sn.container, wreck.transform.position);
+                foreach (var a in wreckAnims) if (a != null) { a.loop = false; a.Restart(); }
+            }
             switch (Step)
             {
                 case 0:
@@ -1009,6 +1115,15 @@ namespace GoF2Remake.World
                     break;
                 case 4:
                     if (timerMs >= 60000f) { timerMs = 0f; WakeSpecters102(false); }
+                    // A Specter whose target died takes the first living dropship, else the player.
+                    for (int i = 6; i <= 9; i++)
+                    {
+                        var s = S(i);
+                        if (s == null || !s.Target.Alive || s.ScriptEnemy == null || s.ScriptEnemy.Alive) continue;
+                        Target next = level.Health.Target;
+                        for (int k = 2; k <= 5; k++) if (S(k) != null && S(k).Target.Alive) { next = S(k).Target; break; }
+                        s.SetOnlyEnemy(next);
+                    }
                     if (Story.Mission.value >= 10 || carrier == null) break;
                     Story.Mission.type = StoryType.Level;
                     EnterCutscene(false);
@@ -1045,7 +1160,7 @@ namespace GoF2Remake.World
                            : PlayerGame + new Vector3(Sign() * (35000 + R(10000)), R(10000) - 5000, Sign() * (35000 + R(10000)));
                 if (!first) s.Revive(ToUnity(at));
                 Show(s, at, new Vector3(1, 0, 0));
-                if (i <= 7) s.Cloak(1000f);
+                if (first && i <= 7) s.Cloak(1000f, true);   // cloak(1000, true)
                 var drop = S(2 + R(4));
                 s.SetOnlyEnemy(R(5) == 0 || drop == null || !drop.Target.Alive ? level.Health.Target : drop.Target);
                 if (first) s.scriptedSpeed = 2.2f;
@@ -1289,14 +1404,18 @@ namespace GoF2Remake.World
         void Tick135()
         {
             var dock = level.Docking;
-            void Bring()
+            // The pirates (race 8) at player + (25000 + 1000 * list index, 5000, 25000), targeting the player; onlyDead: the
+            // 75 s wave revives the dead ones only.
+            void Bring(bool onlyDead)
             {
                 for (int k = 1; k <= 2; k++)
                 {
                     var s = S(k);
                     if (s == null) continue;
+                    bool dead = !s.Target.Alive || s.Gone;
+                    if (onlyDead && !dead) continue;
                     var at = PlayerGame + new Vector3(25000 + 1000 * k, 5000, 25000);
-                    if (!s.Target.Alive || s.Gone) s.Revive(ToUnity(at));
+                    if (dead) s.Revive(ToUnity(at));
                     Show(s, at, PlayerGame - at);
                     s.SetOnlyEnemy(level.Health.Target);
                 }
@@ -1304,20 +1423,17 @@ namespace GoF2Remake.World
             switch (Step)
             {
                 case 0:
-                    if ((dock != null && dock.IsDocked) || T > 60000f) { Bring(); timerMs = 0f; Step = 1; }
+                    if ((dock != null && dock.IsDocked) || T > 60000f) { Bring(false); timerMs = 0f; Step = 1; }
                     break;
-                case 1:
-                case 2:
-                    if (Step == 1 && Story.Mission.value >= 70) Step = 2;
-                    if (timerMs >= 75000f)
+                default:
+                    // From state 1 on: half the titanium -> 2; every 75 000 ms the dead pirates come back (2 -> 3 on that tick).
+                    if (Step == 1 && Story.Mission.value >= Story.Mission.goodsAmount / 2) Step = 2;
+                    if (timerMs > 75000f)
                     {
                         timerMs = 0f;
-                        bool dead = (S(1) == null || !S(1).Target.Alive) || (S(2) == null || !S(2).Target.Alive);
-                        if (dead) { Bring(); if (Step == 2) Step = 3; }
+                        if (Step == 2) Step = 3;
+                        Bring(true);
                     }
-                    break;
-                case 3:
-                    if (timerMs >= 75000f) { timerMs = 0f; Bring(); }
                     break;
             }
         }
@@ -1372,6 +1488,7 @@ namespace GoF2Remake.World
         void Tick144(float dtMs)
         {
             if (helper != null) helper.transform.position += ToUnity(new Vector3(1, 0, -1).normalized * 5f * dtMs) - ToUnity(Vector3.zero);
+            cam.SetDolly(new Vector3(0.28f, 0f, 0.28f));   // TargetFollowCamera::translate(0.28 dt, -, 0.28 dt) every frame
             switch (Step)
             {
                 case 1: Step = 2; break;
@@ -1381,7 +1498,7 @@ namespace GoF2Remake.World
                     {
                         var s = S(i);
                         if (s == null) continue;
-                        if (!s.Cloaked && R(100) < 10) { s.CloakingPossible = true; s.Cloak(20000f); }
+                        if (!s.Cloaked && R(100) < 10) { s.CloakingPossible = true; s.Cloak(20000f, true); }   // cloak(20000, true)
                         s.scriptedSpeed = stepMs * 0.05f / 33f;
                     }
                     if (stepMs >= 4000f && S(0) != null) S(0).scriptedSpeed = (stepMs - 4000f) * 0.05f / 33f;
@@ -1390,11 +1507,15 @@ namespace GoF2Remake.World
             }
         }
 
+        WreckBurn arrayBurn;
+
         // 145 (campaign_levels_c.md 3.13).
         void Tick145(float dtMs)
         {
             var harval = S(0);
             var arrayPos = new Vector3(-50000, 0, 50000);
+            // LevelScript::process 0x91: the Specters fire straight ahead from state 2 on (not in state 4 after 1 s).
+            for (int i = 1; i <= 12; i++) { var s = S(i); if (s != null) s.scriptedFire = Step >= 2 && Step != 5 && !(Step == 4 && stepMs > 1000f); }   // 5 = done
             switch (Step)
             {
                 case 0: Step = 1; break;
@@ -1415,6 +1536,8 @@ namespace GoF2Remake.World
                     if (helper != null) helper.transform.position += helper.transform.forward * 8f * dtMs * M;
                     if (stepMs < 5000f) break;
                     Explosion.Spawn(0, ToUnity(arrayPos), Vector3.forward, 6f, CombatAssets.Pick(combat?.explosionBig), true);
+                    // Level+0x54 (record 23 SET_EXPLOSION_BATTLESHIP) on the array's matrix, emitting until the aftermath ends.
+                    if (S(14) != null) { arrayBurn = new WreckBurn(S(14).transform, true); arrayBurn.SetEmitting(true); }
                     Step = 4;
                     break;
                 case 4:
@@ -1438,7 +1561,8 @@ namespace GoF2Remake.World
                         s.scriptedSpeed = 2f + stepMs * 0.001f;
                     }
                     if (stepMs < 10000f) break;
-                    for (int i = 0; i <= 12; i++) Remove(S(i));
+                    arrayBurn?.SetEmitting(false);
+                    for (int i = 0; i <= 12; i++) { if (S(i) != null) S(i).scriptedFire = false; Remove(S(i)); }
                     LeaveCutscene();
                     c.Event = 5;   // radio 2, then the win (Objective(4, 2))
                     break;
@@ -1446,6 +1570,8 @@ namespace GoF2Remake.World
         }
 
         // 154 (campaign_levels_c.md 3.15).
+        bool autoTurretWasOn;
+
         void Tick154()
         {
             var hans = S(0);
@@ -1455,13 +1581,24 @@ namespace GoF2Remake.World
             {
                 case 0:
                     if (!Triggered(0)) break;
+                    // The cut: the Liberator killed, turret view and free look off, no shooting; an enabled auto turret is
+                    // switched off (remembered in this+0xaa, back on with the controls).
+                    level.Weapons?.KillLiberator();
+                    level.FreeLook?.Set(FreeLookCamera.Mode.Standard, false);
+                    level.Turret?.SetTurretView(false);
+                    level.Weapons?.SetPrimaryHeld(false);
+                    autoTurretWasOn = level.Turret != null && level.Turret.IsAuto && level.Turret.AutoEnabled;
+                    if (autoTurretWasOn) level.Turret.SetAuto(false, false);
                     EnterCutscene(false);
                     var f2 = S(2);
                     if (f2 != null) { Show(f2, G(f2), PlayerGame - G(f2)); cam.LookAt(G(f2) + new Vector3(300, 300, 5800), f2.transform); }
                     for (int i = 2; i < 22; i++) if (S(i) != null) { Show(S(i), G(S(i)), PlayerGame - G(S(i))); S(i).scriptedSpeed = 0f; }
                     Step = 1;
                     break;
-                case 1: if (Over(1) && stepMs >= 1500f) { for (int i = 2; i < 22; i++) S(i)?.SetVisible(false); cam.LookAt(PlayerGame + new Vector3(-350, 400, -1500), Player); Step = 2; } break;
+                case 1:
+                    // The Void fighters creep toward the player at 0.5 u/ms while Alice talks.
+                    for (int i = 2; i < 22; i++) if (S(i) != null) S(i).scriptedSpeed = 0.5f;
+                    if (Over(1) && stepMs >= 1500f) { for (int i = 2; i < 22; i++) if (S(i) != null) { S(i).SetVisible(false); S(i).scriptedSpeed = 0f; } cam.LookAt(PlayerGame + new Vector3(-350, 400, -1500), Player); Step = 2; } break;
                 case 2: if (Over(2) && stepMs >= 1000f && valkyrie != null) { cam.LookAt(G(valkyrie) + new Vector3(0, 4000, 26000), valkyrie.transform); Step = 3; } break;
                 case 3: if (Over(3) && stepMs >= 1000f) { cam.LookAt(PlayerGame + new Vector3(-350, 400, -1500), Player); Step = 4; } break;
                 case 4: if (Over(4) && stepMs >= 1000f && valkyrie != null) { cam.LookAt(G(valkyrie) + new Vector3(0, 4000, 42000), valkyrie.transform); Step = 5; } break;
@@ -1502,6 +1639,7 @@ namespace GoF2Remake.World
                         valkyrie.DockingType = ObjectDocking.Hackable;
                     }
                     LeaveCutscene();
+                    if (autoTurretWasOn) level.Turret?.SetAuto(true, false);
                     Step = 10;
                     break;
                 case 10:
@@ -1576,56 +1714,137 @@ namespace GoF2Remake.World
                     for (int i = 11; i <= 21; i++) if (c.ShipDead(i)) dead++;
                     bool done = (dead >= 9 && T > 200000f) || (harval != null && harval.Target.HullFraction < 0.25f);
                     if (!done) break;
+                    level.Weapons?.KillLiberator();   // isInRocketControl -> setRocketControl(null) + killLiberator
                     EnterCutscene(false);
-                    if (harval != null) harval.Target.invulnerable = true;
-                    cam.LookAt(vp + new Vector3(45000, 2000, 11000), null, ToUnity(vp));
-                    if (alice != null) { var at = vp + new Vector3(60000, 1800, 12000); Show(alice, at, vp - at); alice.scriptedSpeed = 3f; }
-                    c.Event = 6;
+                    var camAt = vp + new Vector3(45000, 2000, 11000);
+                    cam.LookAt(camAt, alice != null ? alice.transform : null, ToUnity(vp));
+                    if (alice != null) { var at = camAt + new Vector3(15000, -200, 1000); Show(alice, at, vp - at); alice.scriptedSpeed = 0f; }
+                    if (harval != null) { harval.Target.invulnerable = true; harval.CloakingPossible = false; }   // +0x13c = 0
                     Step = 6;
                     break;
                 }
                 case 6:
+                    // Alice flies at 3 u/ms toward the Valkyrie until she is level with it (x).
+                    if (alice != null) alice.scriptedSpeed = G(alice).x > valkyrieAt.x ? 3f : 0f;
                     if (!Triggered(10)) break;
                     Remove(alice);
-                    c.Event = 7;
+                    if (valkyrieGo != null) cam.SetTarget(valkyrieGo.transform);
                     Step = 7;
                     break;
                 case 7:
-                    if (!Over(10)) break;
-                    if (harval != null) { var at = vp + new Vector3(4000, -600, 38000); harval.Place(ToUnity(at), Dir(vp - at)); harval.scriptedSpeed = 4f; }
-                    cam.LookAt(vp + new Vector3(35000, 0, 70000), null, ToUnity(vp));
-                    c.Event = 8;
+                {
+                    // The Valkyrie backs away, accelerating over 10 s to 10 u/ms (moveForward(-10 dt * t / 10000), facing -z).
+                    if (!Over(10)) { stepMs = 0f; break; }
+                    if (!valkyrieSound && sn != null) { valkyrieSound = true; Sfx.PlayAt(sn.carrierJump, cam.Camera != null ? cam.Camera.position : Player.position); }   // 0x8cb CS_94_ValkyrieJump
+                    MoveValkyrie(10f * dtMs * Mathf.Min(stepMs, 10000f) / 10000f);
+                    if (valkyrieAt.z <= 100000f) break;
+                    var camPos = GameCamera();
+                    if (harval != null)
+                    {
+                        var at = camPos + new Vector3(4000, -600, -2000);
+                        chaseDir = (valkyrieAt + new Vector3(0, 0, 40000) - at).normalized;
+                        harval.Place(ToUnity(at), Dir(chaseDir));
+                        harval.scriptedSpeed = 0f;
+                        harval.SetVisible(true);
+                    }
+                    // The player sits near the camera on the same heading (setComputerControlled; the speed is lost in the
+                    // decompilation, the remake keeps it drifting at the base speed).
+                    var pAt = camPos + new Vector3(5000, 300, -14000);
+                    MovePlayer(pAt, chaseDir);
+                    playerSpeed = 2f;
                     Step = 8;
                     break;
+                }
                 case 8:
-                    if (stepMs < 12000f || !Over(12)) break;
-                    Remove(harval);
-                    c.Event = 9;
+                    MoveValkyrie(10f * dtMs);
+                    if (harval != null) { harval.scriptedSpeed = 4f; harval.scriptedFire = true; }
+                    if (stepMs <= 12000f || !Over(12)) break;
+                    cam.LookAt(valkyrieAt + new Vector3(35000, 0, 70000), valkyrieGo != null ? valkyrieGo.transform : null);
+                    if (harval != null) { harval.Place(harval.transform.position, Dir(Vector3.forward)); harval.SetVisible(false); harval.scriptedFire = false; }
+                    Player.rotation = Quaternion.LookRotation(Dir(Vector3.forward), Vector3.up);
+                    playerSpeed = 0f;
+                    burnMs = -1f;
+                    blastMs = -1f;
                     Step = 9;
                     break;
                 case 9:
-                    if (stepMs >= 6000f && (int)(stepMs / 6000f) != (int)((stepMs - dtMs) / 6000f))
-                        Explosion.Spawn(0, ToUnity(vp + new Vector3(-6000, 2000, -10000)), Vector3.forward, 4f, CombatAssets.Pick(combat?.explosionMid), true);   // 2244 Explosion_Med_2D
+                {
+                    MoveValkyrie(10f * dtMs);
+                    if (harval != null)
+                    {
+                        // Harval comes back after 9000 ms beside the camera and chases the Valkyrie at 2 u/ms, firing.
+                        if (stepMs >= 9000f && stepMs - dtMs < 9000f)
+                        {
+                            harval.Place(ToUnity(GameCamera() + new Vector3(4000, -600, -2000)), harval.transform.forward);
+                            harval.SetVisible(true);
+                        }
+                        harval.scriptedSpeed = 2f;
+                        harval.scriptedFire = stepMs >= 9000f;
+                        harval.transform.rotation = Quaternion.LookRotation(Dir(valkyrieAt - G(harval)), Vector3.up);
+                    }
+                    // After radio 13 the first explosion (0x8c4) at + (-2000, 1000, -8000); 300 ms later burning stage 1;
+                    // then one every 8000 ms at + (-6000, 2000, -10000) (the timer restarts at -2000 after 6000).
+                    if (blastMs < 0f && Over(13))
+                    {
+                        Blast(valkyrieAt + new Vector3(-2000, 1000, -8000), combat?.explosionMid);
+                        blastMs = 0f;
+                        burnMs = 300f;
+                    }
+                    if (burnMs > 0f && (burnMs -= dtMs) <= 0f && stage1 != null)
+                    {
+                        stage1.transform.SetPositionAndRotation(ToUnity(valkyrieAt), valkyrieRot);
+                        stage1.SetActive(true);
+                    }
+                    if (blastMs >= 0f && (blastMs += dtMs) > 6000f)
+                    {
+                        blastMs = -2000f;
+                        Blast(valkyrieAt + new Vector3(-6000, 2000, -10000), combat?.explosionMid);
+                    }
+                    if (stage1 != null && stage1.activeSelf) stage1.transform.position = ToUnity(valkyrieAt);
                     if (!Over(14)) break;
-                    Scenery("sn_burning_valkyrie_stage_2", vp, OrbitLayout.RotationToUnity(new Vector3(0, Mathf.PI, 0)), "Valkyrie burning");
-                    cam.LookAt(vp + new Vector3(50000, 0, 70000), null, ToUnity(vp));
+                    cam.LookAt(valkyrieAt + new Vector3(50000, 0, 70000), valkyrieGo != null ? valkyrieGo.transform : null);
+                    if (harval != null) { harval.SetVisible(false); harval.scriptedFire = false; harval.scriptedSpeed = 0f; }
+                    SetPlayerVisible(false);
+                    if (stage2 != null) { stage2.transform.SetPositionAndRotation(ToUnity(valkyrieAt), valkyrieRot); stage2.SetActive(true); }
+                    if (stage1 != null) stage1.SetActive(false);
+                    timerMs = 0f;
                     Step = 10;
                     break;
+                }
                 case 10:
-                    if (!Over(15) || stepMs < 3000f) break;
-                    cam.Rumble = 0.4f;
-                    beam = Scenery("sn_plasma_gun_fx_valkyrie_beam_anim_add", vp, Quaternion.LookRotation(Dir(LightGame), Vector3.up), "Plasma beam");
-                    if (sn != null) Sfx.PlayAt(sn.valkyrieBeam, cam.Camera != null ? cam.Camera.position : Player.position);
+                    // The Valkyrie stops; the camera creeps (-0.33, -0.66, 0) u/ms; at 9000 ms the big blast (0x8c3), rumble 100.
+                    cam.SetDolly(new Vector3(-0.33f, -0.66f, 0f));
+                    if (timerMs >= 9000f && timerMs - dtMs < 9000f)
+                    {
+                        Blast(valkyrieAt - LightGame * 8000f, combat?.explosionBig);
+                        cam.Rumble = 1f;
+                    }
+                    else if (timerMs > 9500f) cam.Rumble = 0f;
+                    if (!Over(15) || stepMs <= 3000f) break;
+                    beam = Scenery("sn_plasma_gun_fx_valkyrie_beam_anim_add", valkyrieAt, Quaternion.LookRotation(Dir(LightGame), Vector3.up), "Plasma beam");
+                    if (beam != null) beam.SetActive(false);
                     Step = 11;
                     break;
                 case 11:
+                    cam.SetDolly(new Vector3(-0.33f, -1f, 0f));
+                    if (stepMs > 6000f && stepMs - dtMs <= 6000f)
+                    {
+                        if (beam != null) beam.SetActive(true);
+                        if (sn != null) Sfx.PlayAt(sn.valkyrieBeam, cam.Camera != null ? cam.Camera.position : Player.position);   // 0x8c7
+                    }
                     if (beam != null) beam.transform.rotation = Quaternion.LookRotation(Dir(LightGame), Vector3.up);
-                    if (stepMs < 10000f) break;
-                    helper.transform.position = ToUnity(vp);
+                    if (stepMs <= 10000f) break;
+                    helper.transform.SetPositionAndRotation(ToUnity(valkyrieAt), Quaternion.LookRotation(Dir(LightGame), Vector3.up));
                     cam.SetTarget(helper.transform);
+                    cam.SetDolly(Vector3.zero);
+                    Remove(harval);
                     Step = 12;
                     break;
                 case 12:
+                    // The camera pulls back (-20 u/ms for 3 s, then (-3, 0, -10) until 7 s), the rumble grows to 30 % by 6.5 s,
+                    // the helper races to the sun from 5 s.
+                    cam.SetDolly(stepMs < 3000f ? new Vector3(-20f, 0f, 0f) : stepMs < 7000f ? new Vector3(-3f, 0f, -10f) : Vector3.zero);
+                    cam.Rumble = stepMs / 6500f * 0.3f;
                     if (stepMs >= 5000f) helper.transform.position += ToUnity(LightGame * 35f * dtMs) - ToUnity(Vector3.zero);
                     if (stepMs >= 5000f && stepMs - dtMs < 5000f)
                     {
@@ -1633,16 +1852,49 @@ namespace GoF2Remake.World
                         if (level.Backdrop != null) level.Backdrop.sunScaleFactor = 0.6f;
                         foreach (var r in Object.FindObjectsByType<SkyLayers>(FindObjectsInactive.Exclude)) r.gameObject.SetActive(false);
                     }
+                    if (stepMs >= 5500f && stepMs - dtMs < 5500f) Blast(valkyrieAt + new Vector3(0, 0, -12000) - LightGame * 8000f, combat?.explosionBig);
                     if (stepMs >= 5700f && stepMs - dtMs < 5700f)
                     {
                         if (beam != null) beam.SetActive(false);
-                        c.Fade(false, Color.white, 800f);
-                        if (sn != null) Sfx.PlayAt(sn.explosion, Player.position);
+                        if (valkyrieGo != null) valkyrieGo.SetActive(false);
+                        if (valkyrieGun != null) valkyrieGun.SetActive(false);
+                        if (stage2 != null) stage2.SetActive(false);
+                        c.Fade(false, Color.white, 6600f - stepMs);
+                        if (sn != null) Sfx.PlayAt(sn.explosion, Player.position);   // 0x8c8 Supernova_Explosion
                     }
                     if (stepMs >= 6500f) AdvanceAndTravel(1, 111);
                     break;
             }
         }
+
+        // ---- 157's Valkyrie (the PlayerStation of 101 with the plasma gun, and the burning stages of the ctor) ---------
+
+        GameObject valkyrieGo, valkyrieGun, stage1, stage2;
+        Vector3 valkyrieAt, chaseDir;
+        Quaternion valkyrieRot;
+        bool valkyrieSound;
+        float burnMs, blastMs;
+
+        /// <summary>moveForward(-d) on the station mesh (it faces game -z): the Valkyrie and its gun go d units along +z.</summary>
+        void MoveValkyrie(float d)
+        {
+            valkyrieAt.z += d;
+            var p = ToUnity(valkyrieAt);
+            if (valkyrieGo != null) valkyrieGo.transform.position = p;
+            if (valkyrieGun != null) valkyrieGun.transform.position = p;
+            if (stage2 != null && stage2.activeSelf) stage2.transform.position = p;
+        }
+
+        Vector3 GameCamera()
+        {
+            var t = cam.Camera != null ? cam.Camera : Player;
+            var u = t.position / M;
+            return new Vector3(u.x, u.y, -u.z);
+        }
+
+        /// <summary>LevelScript's Explosion (type 0 with fire streaks) at a game position.</summary>
+        void Blast(Vector3 gamePos, AudioClip[] clips) =>
+            Explosion.Spawn(0, ToUnity(gamePos), Vector3.forward, 4f, CombatAssets.Pick(clips), true);
 
         // 158 (campaign_levels_c.md 3.18).
         void Tick158(float dtMs)
@@ -1651,20 +1903,41 @@ namespace GoF2Remake.World
             switch (Step)
             {
                 case 1:
-                    cam.SetDolly(new Vector3(0.2f, 0f, 0.1f));
-                    if (harval != null && T >= 25000f && !harval.gameObject.activeSelf == false && T - dtMs < 25000f)
+                {
+                    // The camera drifts (-0.7 (1 - t / 34000), 0, -0.7) u/ms; the helper faces (9000, 0, -13000) and flies
+                    // 2.5 u/ms until 30 s; Harval rides it (shown from 25 s); the player turns dt / 2000 rad (the axis is
+                    // lost in the decompilation: the remake rolls it); Harval's exhaust is off from 20 s to 34 s.
+                    cam.SetDolly(new Vector3(-0.7f * (1f - T / 34000f), 0f, -0.7f));
+                    if (helper != null)
                     {
-                        harval.SetVisible(true);
-                        cam.SetTarget(harval.transform);
-                        harval.scriptedSpeed = 2.5f;
+                        var hp = ToGame(helper.transform.position);
+                        var to = (new Vector3(9000, 0, -13000) - hp).normalized;
+                        if (T < 30000f) helper.transform.position += ToUnity(to * 2.5f * dtMs) - ToUnity(Vector3.zero);
                     }
-                    if (T >= 30000f) { if (harval != null) harval.scriptedSpeed = 1f; Step = 2; }
+                    if (harval != null)
+                    {
+                        if (T > 25000f && harval.Hidden) harval.SetVisible(true);
+                        if (helper != null) harval.transform.position = helper.transform.position;
+                        harval.scriptedSpeed = 0f;
+                        if (T >= 20000f && T - dtMs < 20000f) harval.SetExhaust(false);
+                    }
+                    Player.Rotate(Vector3.forward, dtMs / 2000f * Mathf.Rad2Deg, Space.Self);
+                    if (T < 34000f) break;
+                    if (harval != null) harval.SetExhaust(true);
+                    Step = 2;
                     break;
+                }
                 case 2:
-                    if (stepMs < 12000f || !Over(2)) break;
+                    // Harval coasts, speeding up to 300 units per 30 fps frame over 3 s (moveForward(min(t, 3000) * 0.1)).
+                    if (harval != null) harval.scriptedSpeed = Mathf.Min(stepMs, 3000f) * 0.1f / 33.3f;
+                    if (stepMs <= 12000f || !Over(2)) break;
                     playerSpeed = 0f;
                     LeaveCutscene();
-                    if (harval != null) { harval.scriptedSpeed = -1f; harval.CloakingPossible = true; harval.SetOnlyEnemy(level.Health.Target); }
+                    if (harval != null)
+                    {
+                        harval.scriptedSpeed = -1f; harval.CloakingPossible = true; harval.SetOnlyEnemy(level.Health.Target);
+                        Player.rotation = Quaternion.LookRotation((harval.transform.position - Player.position).normalized, Vector3.up);   // facing Harval
+                    }
                     timerMs = 0f;
                     cloakMs = 0f;
                     Step = 3;

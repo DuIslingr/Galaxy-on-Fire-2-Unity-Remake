@@ -289,6 +289,7 @@ namespace GoF2Remake.Flight
         /// <summary>PlayerEgo::update hit feedback.</summary>
         void OnHit()
         {
+            GetComponent<VolatileCargo>()?.Add(0.065f);   // Player::damage: the volatile meter + 0.065 per hit
             if (chase != null && chase.enabled) chase.Shake(1000f, 6f);
             if (Hp.shield >= 2f) ShieldHitMs = 500f;
             AudioClip clip = null;

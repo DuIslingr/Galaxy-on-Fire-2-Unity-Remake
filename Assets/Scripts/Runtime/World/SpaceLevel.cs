@@ -79,6 +79,8 @@ namespace GoF2Remake.World
         public CombatRadar Radar { get; private set; }
         public PlayerCollision Collision { get; private set; }
         public StorySpace StorySpace { get; private set; }
+        /// <summary>The one-time tutorial windows (MGame::OnUpdate's Globals::hints).</summary>
+        public FlightHints Hints { get; private set; }
         /// <summary>The campaign level of a story orbit, null in a normal orbit.</summary>
         public CampaignLevel Campaign { get; private set; }
         /// <summary>The freelance mission's orbit (FreelanceOrbit), null = none.</summary>
@@ -87,6 +89,7 @@ namespace GoF2Remake.World
         public KaamoSiege Siege { get; private set; }
         /// <summary>The player's turret (null without a turret item / mount).</summary>
         public PlayerTurret Turret { get; private set; }
+        public FreeLookCamera FreeLook { get; private set; }
         public PlayerCloak Cloak { get; private set; }
         public TimeExtender Extender { get; private set; }
         /// <summary>MGame::dockEvent: 525 while a mission holds the player here (the story's blocks, the Kaamo siege).</summary>
@@ -129,7 +132,11 @@ namespace GoF2Remake.World
         bool leftDockRange, orbitInfo;
 
         void OnEnable() => Settings.Changed += ApplyOptions;
-        void OnDisable() => Settings.Changed -= ApplyOptions;
+        void OnDisable()
+        {
+            Settings.Changed -= ApplyOptions;
+            if (savedMaxDelta > 0f) Time.maximumDeltaTime = savedMaxDelta;
+        }
 
         /// <summary>Options changed in flight (the pause menu) reach the ship and the chase camera at once.</summary>
         void ApplyOptions()
@@ -138,9 +145,14 @@ namespace GoF2Remake.World
             if (chase != null) chase.baseFov = Settings.FieldOfView;
         }
 
+        float savedMaxDelta = -1f;
+
         void Awake()
         {
             db = Database.Load();
+            // MGame::OnUpdate: a frame's dt is capped at 150 ms (a hitch never jumps the game far ahead).
+            savedMaxDelta = Time.maximumDeltaTime;
+            if (Time.maximumDeltaTime > 0.15f) Time.maximumDeltaTime = 0.15f;
             int station = stationOverride >= 0 ? stationOverride : Session.StationIndex;
             ComingFromVoid = Session.ComingFromVoid;
             // Status::departStation: the Void-invasion re-roll counter (index 32-44).
@@ -204,11 +216,19 @@ namespace GoF2Remake.World
             bool freelanceOrbit = !storyOrbit && Freelance.IsMissionOrbit(station);
             // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
             bool siege = !storyOrbit && !freelanceOrbit && KaamoClub.SiegeAt(station);
+            // Level::assignGuns reads the level mission (Status+400): a campaign level or a freelance mission's type.
+            NpcTables.InCampaignLevel = storyOrbit;
+            NpcTables.LevelFreelanceType = freelanceOrbit ? Freelance.Mission.type : -1;
             Traffic = new GameObject("Traffic").AddComponent<Traffic>();
             Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege, Wormhole);
+            Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
             Docking = Player.gameObject.AddComponent<ObjectDocking>();
             Docking.Setup(db, Player, chase, Weapons);
+            if (FreeLook != null)
+                FreeLook.Blocked = () => Cutscene || !LaunchCameraOver || (Mining != null && Mining.State != Mining.Phase.Idle)
+                                         || (Docking != null && Docking.Busy) || (Navigation != null && Navigation.Jumping)
+                                         || (SystemJump != null && SystemJump.Cinematic) || (Health != null && Health.Dead);
             Navigation.Docking = Docking;
             Navigation.Ships = Traffic.Ships;
             Collision.docking = Docking;
@@ -241,6 +261,8 @@ namespace GoF2Remake.World
             Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             StorySpace = gameObject.AddComponent<StorySpace>();
             StorySpace.Setup(this, Campaign);
+            Hints = gameObject.AddComponent<FlightHints>();
+            Hints.Setup(this);
             Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex) || (Siege != null && Siege.Active)
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100)   // escorting Khador (MGame::UseKhadorDrive)
                                             // remake: no Khador Drive out of the Void in the main story (its wormhole is the way back)
@@ -408,16 +430,31 @@ namespace GoF2Remake.World
             if (Session.ArrivedByTravel)
             {
                 var arrival = ArrivalPosition();
-                root.transform.SetPositionAndRotation(arrival, Quaternion.LookRotation(-arrival.normalized, Vector3.up));
+                var facing = Quaternion.LookRotation(-arrival.normalized, Vector3.up);
+                // Level::init: arriving in Loma's black market (system 25) puts the player 40 000 further along game +z.
+                if (Layout.systemIndex == 25) arrival += OrbitLayout.ToUnity(new Vector3(0f, 0f, 40000f));
+                root.transform.SetPositionAndRotation(arrival, facing);
             }
             else
                 root.transform.SetPositionAndRotation(
                     OrbitLayout.ToUnity(OrbitLayout.UndockPosition),
                     OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
+            // LevelScript::LevelScript 0x160380: at Coromesk (103) from campaign 0x55 on (or at 0x87), outside the Void, every
+            // start is at (70000, 0, 100000) facing the station (the mining plant stands at the origin from then on).
+            int cm = Session.CampaignMission;
+            if ((cm > 0x54 || cm == 0x87) && Layout.stationIndex == 103 && Layout.systemIndex >= 0)
+            {
+                var start = OrbitLayout.ToUnity(new Vector3(70000f, 0f, 100000f));
+                root.transform.SetPositionAndRotation(start, Quaternion.LookRotation(-start.normalized, Vector3.up));
+            }
             var ctrl = root.AddComponent<ShipController>();
             var equipment = new System.Collections.Generic.List<ItemData>();
             foreach (var e in Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
             if (ship != null) ctrl.stats = Database.BuildFlightStats(ship, equipment, Session.HasMod(3) ? 1 : 0);   // mod 3: handling +0.2
+            // PlayerEgo ctor: +0x235 = Status::hardCoreMode(), the cargo load then weighs on the handling.
+            ctrl.stats.cargoAffectsHandling = Session.IsExtreme;
+            ctrl.stats.cargoCapacity = Mathf.Max(1, Shop.MaxLoad(db));
+            ctrl.stats.cargoLoad = Shop.CargoLoad();
             ctrl.sensitivity = Settings.Sensitivity;
             ctrl.invertPitch = Settings.InvertPitch;
             ctrl.ApplyStats();
@@ -446,9 +483,14 @@ namespace GoF2Remake.World
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens). Remake: the
             // field of view option (Settings.OriginalFov by default).
             chase.baseFov = Settings.FieldOfView;
+            chase.boostFovAdd = 0.35f * Mathf.Rad2Deg;   // MGame::OnUpdate: + 0.35 rad x the boost percentage
+            chase.positionCoefficient = 0.006f;         // TargetFollowCamera::resetShipHandling: position / look-at
+            chase.rotationCoefficient = 0.005f;
             chase.Snap();
             // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount.
             Turret = PlayerTurret.Attach(root, db, Session.ShipIndex, Session.Equipment, chase);
+            // MGame::switchCamera: the camera button's modes (standard / turret / free look).
+            FreeLook = FreeLookCamera.Attach(root, chase, Turret);
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).
             GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
             Extender = TimeExtender.Attach(root, db);

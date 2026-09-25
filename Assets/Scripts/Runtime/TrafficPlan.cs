@@ -100,25 +100,20 @@ namespace GoF2Remake.Flight
                                              position = new Vector3(Random.Range(0, 120000) - 60000, Random.Range(0, 80000) - 40000, Random.Range(0, 120000) - 60000) });
                 return list;
             }
-            if (system == null || station == 100 || station == 101 || station == 108 || station == 10) return list;
+            if (system == null) return list;
             int sysRace = Mathf.Clamp(system.raceId, 0, 3);
             bool hardcore = Session.IsExtreme;
             int rank = Session.Rank;
+            int cm = Session.CampaignMission;
+            bool story = !Session.FreePlay;
 
-            // Pirate-only orbits.
-            int pirateOnly = station >= 102 && station <= 104 ? Random.Range(0, 5) + 3
-                           : system.index == 25 ? Random.Range(0, 4) + 6
-                           : system.index == 32 || system.index == 33 ? Random.Range(0, 4) + 10 : 0;
-            if (pirateOnly > 0)
-            {
-                AddRaiders(list, pirateOnly, Standing.Pirate, RaiderSpawn());
-                return list;
-            }
-
+            // Mido (system 15) before campaign 0x10: no raiders (except on Extreme), and rnd(2) instead of the security level
+            // in the local fighter count (the tutorial's home system stays quiet).
+            bool mido = story && system.index == 15 && cm < 0x10;
             int r100 = Random.Range(0, 100);
             int sec = system.securityLevel;
             int secEff = sec >= 1 && hardcore ? sec - 1 : sec;
-            bool raidersOn = r100 < NpcTables.RaiderChance(secEff);
+            bool raidersOn = !(mido && !hardcore) && r100 < NpcTables.RaiderChance(secEff);
             var raiderSpawn = RaiderSpawn();
             int raiderRace = Random.Range(0, 100) < 75 ? Standing.Pirate : Standing.EnemyRaceOf(sysRace);
             int raiders = raidersOn ? Random.Range(0, 4) : 0;
@@ -129,59 +124,80 @@ namespace GoF2Remake.Flight
                 raiders += rank / 4;
             }
             if (secEff == 3 && raidersOn && !hardcore) raiders = Random.Range(0, 2) + 1;
-            // A pirate-base system (npc_combat_specials.md 3.2): no raider group; instead pirates near the player.
+
+            int jumpers = 0, freighters = 0, x = 0;
+            if (station != 78) { jumpers = Random.Range(0, 2); freighters = Random.Range(0, 5); x = Random.Range(0, 2); }
+            int local = (mido ? Random.Range(0, 2) : secEff) + x + freighters / 4;
+            // The "big battle" (npc_traffic_ai.md 2.2): raiders on, campaign > 0x1f, 8 %: 9 raiders against 9 locals.
+            if (raidersOn && cm > 0x1f && Random.Range(0, 100) < 8) raiders = local = 9;
+            // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier and Passenger missions (types 0, 0xb).
+            var fm = Session.FreelanceMission;
+            int escorts = fm != null && (fm.type == MissionType.Courier || fm.type == MissionType.Passenger) ? (int)(fm.difficulty / 10f * 5f) : 0;
+            // A pirate-base system (npc_combat_specials.md 3.2): no raider group; instead 2 (Extreme 4-6) pirates near the player.
             bool baseSystem = PirateBases.SystemHasBase(db, system.index);
             int baseEscorts = 0;
-            if (baseSystem) { raidersOn = false; raiders = 0; baseEscorts = hardcore ? Random.Range(0, 3) + 4 : 2; }
-            // Coming out of the Void, or at the station the Void attack (index < 45, not 42): 2-5 Void raiders from the
-            // wormhole and at least 2 freighters for them to hunt (Level::createMission, npc_traffic_ai.md 2.2).
-            int cmIndex = Session.CampaignMission;
-            bool voidRaid = !Session.FreePlay && cmIndex != 42 && cmIndex < 45 && (Session.ComingFromVoid || station == Session.VoidInvasionStation);
+            if (baseSystem) { raidersOn = false; raiders = 0; escorts = 0; baseEscorts = hardcore ? Random.Range(0, 3) + 4 : 2; }
+            // Coming out of the Void, or at the station the Void attack (not at 42): 2-5 Void raiders from the wormhole and at
+            // least 2 freighters for them to hunt (Level::createMission, npc_traffic_ai.md 2.2).
+            bool voidRaid = story && cm != 42 && cm < 45 && (Session.ComingFromVoid || station == Session.VoidInvasionStation);
             if (voidRaid)
             {
                 raidersOn = true;
                 raiders = Random.Range(0, 4) + 2;
                 raiderRace = Standing.Void;
+                freighters = Mathf.Max(freighters, 2);
                 if (wormholeGame.HasValue) raiderSpawn = wormholeGame.Value;
             }
-
-            int jumpers = 0, freighters = 0, x = 0;
-            if (station != 78) { jumpers = Random.Range(0, 2); freighters = Random.Range(0, 5); x = Random.Range(0, 2); }
-            if (voidRaid) freighters = Mathf.Max(freighters, 2);
-            int local = secEff + x + freighters / 4;
-            if (Session.AttackedStations.Contains(station)) local = Mathf.Max(local, 7);
-            // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier and Passenger missions (types 0, 0xb).
-            var fm = Session.FreelanceMission;
-            int escorts = fm != null && (fm.type == MissionType.Courier || fm.type == MissionType.Passenger) ? (int)(fm.difficulty / 10f * 5f) : 0;
-            // An Informer mission at its target station: only 7 local fighters (6 once the informer is dead), the first
-            // named "Informer" (1663); no jumpers, freighters or raiders.
-            bool informer = fm != null && fm.type == MissionType.Informer && fm.target == station;
-            if (informer) { local = Session.InformerKilled ? 6 : 7; jumpers = freighters = raiders = escorts = 0; }
-            // The "big battle" (npc_traffic_ai.md 2.2): raiders on, campaign > 0x1f, 8 %: 9 raiders against 9 locals.
-            if (raidersOn && !informer && Session.CampaignMission > 0x1f && Random.Range(0, 100) < 8) raiders = local = 9;
-            // The capital-ship specials (npc_combat_specials.md 2.1): the first freighter becomes the battleship / carrier
-            // (Terran) or the Vossk battleship.
-            int cm = Session.CampaignMission;
-            bool terran = sysRace == 0 && freighters > 0 && Random.Range(0, 100) < 30;
-            bool vossk = sysRace == 1 && freighters > 0 && Random.Range(0, 100) < 30 && cm > 0x8c;
-            bool carrier = terran && Random.Range(0, 100) < 30 && cm > 0x67;
-            if (terran || vossk) freighters--;
-            // Campaign 0x24 / 0x25 in S'kolptorr: no local fighters, no raiders; 0x2a / 0x2b: no raiders, no pirate escorts.
-            if ((cm == 0x24 || cm == 0x25) && system.index == 5 && !Session.FreePlay) local = raiders = 0;
-            if ((cm == 0x2a || cm == 0x2b) && !Session.FreePlay) raiders = escorts = 0;
             // Status::getWantedInCurrentOrbit: a Most Wanted criminal here caps the police at 2 (it and its escort come first).
             var wanted = WantedBoard.InOrbit(db, station);
             if (wanted != null) local = Mathf.Min(local, 2);
+            // An Informer mission at its target station: only 7 local fighters (6 once the informer is dead), the first
+            // named "Informer" (1663); no jumpers, freighters or raiders. Otherwise an attacked station has at least 7, and an
+            // orbit with nothing at all gets 4 (before the special orbits below empty theirs again).
+            bool informer = fm != null && fm.type == MissionType.Informer && fm.target == station;
+            if (informer) { local = Session.InformerKilled ? 6 : 7; jumpers = freighters = raiders = escorts = baseEscorts = 0; raidersOn = false; }
+            else
+            {
+                if (Session.AttackedStations.Contains(station)) local = Mathf.Max(local, 7);
+                if (jumpers + local + freighters + raiders + escorts + baseEscorts == 0) local = 4;
+            }
+            // The special orbits: 102-104 only 3-7 pirates (escorts stay); 100 / 101 / 108 and Thynome (10) empty.
+            if (station >= 102 && station <= 104) { local = jumpers = freighters = 0; raiders = Random.Range(0, 5) + 3; raidersOn = true; raiderRace = Standing.Pirate; }
+            else if (station == 100 || station == 101 || station == 108 || station == 10) { local = jumpers = freighters = raiders = 0; raidersOn = false; }
+            // Campaign 0x24 / 0x25 in S'kolptorr: no local fighters, no raiders; 0x2a / 0x2b: no raiders, no pirate escorts.
+            if (story && (cm == 0x24 || cm == 0x25) && system.index == 5) local = raiders = 0;
+            if (story && cm > 0x29 && cm < 0x2c) raiders = escorts = baseEscorts = 0;
+            // Loma's black market (system 25): 6-9 pirates (Extreme rnd(3) + 2n), nothing else. The pirate loot orbits
+            // (systems 32 / 33): 10-13 pirates (the same on Extreme) with double hull, speed 3.5, around the player.
+            bool lootOrbit = system.index == 32 || system.index == 33;
+            if (system.index == 25 || lootOrbit)
+            {
+                escorts = baseEscorts = local = jumpers = freighters = 0;
+                raiders = Random.Range(0, 4) + (lootOrbit ? 10 : 6);
+                if (hardcore) raiders = Random.Range(0, 3) + raiders * 2;
+                raidersOn = true;
+                raiderRace = Standing.Pirate;
+            }
             // Late-campaign Specter raids (100 < campaign < 0x91): (campaign / 144 * 15 + 5) % (x2 Extreme), 2-4 (x2).
             int specters = 0;
-            if (!Session.FreePlay && cm > 100 && cm < 0x91)
+            if (story && cm > 100 && cm < 0x91)
             {
                 int p = (int)(cm / 144f * 15f + 5f) << (hardcore ? 1 : 0);
                 if (Random.Range(0, 100) < p) specters = (Random.Range(0, 3) + 2) << (hardcore ? 1 : 0);
             }
-            // The supernova system (27) before campaign 0x9e: no local fighters, jumpers, freighters or raiders.
-            if (!Session.FreePlay && system.index == 27 && cm < 0x9e) local = jumpers = freighters = raiders = 0;
-            if (jumpers + local + freighters + raiders + escorts == 0 && !terran && !vossk && wanted == null) local = 4;
+            // The capital-ship specials (npc_combat_specials.md 2.1): the first freighter becomes the battleship / carrier
+            // (Terran) or the Vossk battleship.
+            bool terran = sysRace == 0 && freighters > 0 && Random.Range(0, 100) < 30;
+            bool vossk = sysRace == 1 && freighters > 0 && Random.Range(0, 100) < 30 && cm > 0x8c;
+            bool carrier = terran && Random.Range(0, 100) < 30 && cm > 0x67;
+            // The supernova system (27) before campaign 0x9e (Status::inSupernovaSystem): nothing but the story's.
+            if (story && system.index == 27 && cm < 0x9e) { local = jumpers = freighters = raiders = 0; raidersOn = terran = vossk = false; }
+            if (terran || vossk) freighters--;
+            // A pirate raid on a traveller (initStreamOutPosition): rnd(100) < rank + 20 (40 Extreme) moves the pirates'
+            // point toward the arriving player (Route::setNewCoords(player position / f); f is lost in the decompile,
+            // the remake takes half the way).
+            if (raidersOn && raiderRace == Standing.Pirate && Session.ArrivedByTravel && !lootOrbit && Random.Range(0, 100) < rank + (hardcore ? 40 : 20))
+                raiderSpawn = playerGame / 2f;
 
             // Campaign step 59 (type 0xa3) at one of its target stations still to do (Status+0x90): the rival arms convoy
             // and the local fighters instead of the rest of the traffic.
@@ -220,8 +236,18 @@ namespace GoF2Remake.Flight
                 });
             }
             if (terran || vossk) AddCapitalShip(list, terran, carrier);
-            // 4 raiders
+            // 4 raiders (the loot orbits': Player::setHitpoints(2 x max), speed 3.5, each at the player + (20000 +- rnd 50000,
+            // 10000 +- rnd 50000, 20000 +- rnd 50000))
+            int raidersFrom = list.Count;
             AddRaiders(list, raiders, raiderRace, raiderSpawn);
+            if (lootOrbit)
+                for (int i = raidersFrom; i < list.Count; i++)
+                {
+                    float S() => Random.Range(0, 2) == 0 ? 1f : -1f;
+                    list[i].hitpoints = 2 * NpcTables.Hull(0, list[i].ship);
+                    list[i].speed = 3.5f;
+                    list[i].position = playerGame + new Vector3(S() * Random.Range(0, 50000) + 20000, S() * Random.Range(0, 50000) + 10000, S() * Random.Range(0, 50000) + 20000);
+                }
             // Pirate-base system: the escorts near the player; the base station's orbit: the outpost and its guards.
             for (int i = 0; i < baseEscorts; i++)
                 list.Add(new SpawnSpec { group = NpcGroup.Escort, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate),
@@ -240,12 +266,13 @@ namespace GoF2Remake.Flight
                     nameText = 3211, dockingType = found ? 0 : 3, spacePoints = 3, hiddenBlueprint = k, hitRadius = 4000f,
                 });
             }
-            // 7 Specters around the player, always enemy.
-            for (int i = 0; i < specters; i++)
+            // 7 Specters, always enemy: one point near the player, each at it + createShip's +-20000 jitter.
+            if (specters > 0)
             {
                 float S() => Random.value < 0.5f ? -1f : 1f;
-                list.Add(new SpawnSpec { group = NpcGroup.Special, race = Standing.Specter, ship = 44, alwaysEnemy = true,
-                                         position = playerGame + new Vector3(S() * (Random.Range(0, 50000) + 20000), S() * (Random.Range(0, 50000) + 10000), S() * (Random.Range(0, 50000) + 20000)) });
+                var sp = playerGame + new Vector3(S() * (Random.Range(0, 50000) + 20000), S() * (Random.Range(0, 50000) + 10000), S() * (Random.Range(0, 50000) + 20000));
+                for (int i = 0; i < specters; i++)
+                    list.Add(new SpawnSpec { group = NpcGroup.Special, race = Standing.Specter, ship = 44, alwaysEnemy = true, position = sp + Jitter() });
             }
             return list;
         }
@@ -348,7 +375,7 @@ namespace GoF2Remake.Flight
             }
             else if (terran)
             {
-                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 10000) - 5000, Random.Range(0, 80000) + 40000);
+                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 80000) + 100000);   // createMission's carrier box
                 list.Add(new SpawnSpec { group = NpcGroup.Special, race = 0, ship = -1, position = host, fixedObject = "sn_carrier_terran_1",
                                          collisionId = 2005, hitRadius = 0f, hitpoints = 9999999, noLoot = true, stationary = true });
                 foreach (var t in CarrierTurrets) list.Add(Turret(0, host + t.pos, t.rot));

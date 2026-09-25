@@ -3,8 +3,9 @@
 // 45 medals, grade 0 none, 1 gold, 2 silver, 3 bronze; a counter against the thresholds [gold, silver, bronze]
 // (0x259860, -1 = grade not used), the best grade is kept. Medal names 1507 + i, hints 1552 + i (# = the threshold of the
 // earned grade). 0 Veteran is preset gold; 35 Champion comes with all other base medals; 36-44 are the Supernova medals.
-// Counters the remake doesn't track yet stay 0 (booze 8 / 9, cloak 19, bombs 20, alien remains 21, the elite medals'
-// special flags). Plain C#.
+// 22 Harum-Scarum: docking from campaign 8 with no weapon (types 0-2) or no equipment item (type 3) mounted
+// (initCheckEquipmentAndWeapons 0x182388). The elite medals 38 / 40 / 41 / 42 / 44 are flags set in flight when their
+// counter reaches the gold threshold (Session.OreStreak etc., Elite()). Plain C#.
 
 using System.Collections.Generic;
 using GoF2Remake.Flight;
@@ -75,9 +76,34 @@ namespace GoF2Remake.Data
                 case 43: return Session.GraveRiserKills;
                 case 37: return Session.KaamoShips.Count;   // Ship Collector: stored hulls (one per type)
                 case 39: return Session.BattleshipsDestroyed;
+                case 22: return NoWeaponOrEquipment(db) ? 1 : 0;
+                case 38: case 40: case 41: case 42: case 44: return Session.EliteFlags.Contains(medal) ? Thresholds[medal, 0] : 0;
             }
             return null;
         }
+
+        /// <summary>initCheckEquipmentAndWeapons: from campaign 8, no mounted weapon (types 0-2) or no equipment item (type 3).</summary>
+        static bool NoWeaponOrEquipment(Database db)
+        {
+            if (!Session.FreePlay && Session.CampaignMission < 8) return false;
+            int weapons = 0, equipment = 0;
+            foreach (var e in Session.Equipment)
+            {
+                int type = db.Item(e.item)?.TypeId ?? 4;
+                if (type == 3) equipment++; else if (type != 4) weapons++;
+            }
+            return weapons == 0 || equipment == 0;
+        }
+
+        /// <summary>An elite medal's in-flight counter (Level::enemyDied, MiningGame::update, Gun::calcCharacterCollision /
+        /// ignite, Player::damageEmp): at the gold threshold its Status flag is set; checkForNewMedal awards it on docking.</summary>
+        public static void Elite(int medal, int count)
+        {
+            if (Grade(medal) == 0 && count >= Thresholds[medal, 0]) Session.EliteFlags.Add(medal);
+        }
+
+        /// <summary>Achievements::hasMedal(i, 1): the counters stop once the medal is earned.</summary>
+        public static bool Has(int medal) => Grade(medal) != 0;
 
         static int SystemsVisited(Database db)
         {

@@ -99,6 +99,15 @@ namespace GoF2Remake.Data
         public static HashSet<int> Hints = new HashSet<int>();
         /// <summary>Status+0x13c best: kills during one emergency-system bubble (medal 43 "Grave Riser").</summary>
         public static int GraveRiserKills;
+        /// <summary>The elite medals' in-flight counters: Status+0x124 mining runs to the last layer in a row (38 Ore Athlete;
+        /// reset by a failed run and on docking), +0x11c kills without a scanner (40 Blindfolded Killer; reset on docking and
+        /// at a level start with a scanner), +0x12c asteroids destroyed by rockets / missiles until one runs out (41 Asteroid
+        /// Hazard), +0x134 ships EMP-disabled at once (42 Jammer), +0x144 asteroids destroyed by one Liberator (44 Hot Shot);
+        /// EliteFlags = the medals whose flag (+0x128 / +0x120 / +0x130 / +0x138 / +0x148) is set.</summary>
+        public static int OreStreak, BlindKills, RocketAsteroids, EmpDisabledNow, LiberatorAsteroids;
+        public static HashSet<int> EliteFlags = new HashSet<int>();
+        /// <summary>Status+0x110 / +0x111: Loma's pirate toll paid / refused (cleared when entering another system).</summary>
+        public static bool LomaTollPaid, LomaTollRefused;
         /// <summary>Status+0xc0: ms spent cloaked (medal 19 "Ninja", minutes).</summary>
         public static long CloakMs;
         /// <summary>Status+0x68: the gamma pool (0..100) carried between the supernova orbits, -1 = full.</summary>
@@ -229,13 +238,17 @@ namespace GoF2Remake.Data
         /// <summary>DAT_00252b0c: XP needed per rank 0..20 (Status::checkForLevelUp).</summary>
         static readonly int[] RankXp = { 0, 7, 21, 42, 70, 105, 147, 196, 252, 315, 385, 462, 546, 637, 735, 840, 952, 1071, 1197, 1330, 1650 };
 
-        /// <summary>Status::getLevel: the player's rank 0..20 from XP. The remake counts kills only (the original adds
-        /// credits / 50, missions and other statistics that don't exist yet).</summary>
+        /// <summary>Status::checkForLevelUp 0xb9978: XP = ore mined / 50 (+0xa0) + kills (+0x1c0) + wingmen hired / 3 (+0xd4)
+        /// + cores mined (+0xa4) + 2 x missions completed (+0x1c4) + the campaign index (+0x1e8) + stations visited (+0x1d0);
+        /// the rank (Status::getLevel) is the highest threshold reached.</summary>
+        public static int Xp => OreMined / 50 + Kills + WingmenHired / 3 + CoresMined + 2 * FreelanceCompleted
+                              + (FreePlay ? 0 : CampaignMission) + VisitedStations.Count;
+
         public static int Rank
         {
             get
             {
-                int xp = Kills, r = 0;
+                int xp = Xp, r = 0;
                 for (int i = 0; i < RankXp.Length; i++) if (xp >= RankXp[i]) r = i;
                 return r;
             }
@@ -311,6 +324,9 @@ namespace GoF2Remake.Data
             PirateBaseRewardPending = false;
             Hints = new HashSet<int>();
             GraveRiserKills = 0;
+            OreStreak = BlindKills = RocketAsteroids = EmpDisabledNow = LiberatorAsteroids = 0;
+            EliteFlags = new HashSet<int>();
+            LomaTollPaid = LomaTollRefused = false;
             CloakMs = 0;
             PlayerGamma = -1f;
             KaamoItems = new List<ItemStack>();

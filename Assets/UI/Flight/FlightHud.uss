@@ -291,6 +291,11 @@
     color: #FFFFFF;
 }
 
+/* Radar::drawCurrentLock: a Most Wanted criminal's plate text in its own colour. */
+.lock-ore--wanted {
+    color: #FF6A4D;
+}
+
 .hud-messages {
     position: absolute;
     top: 196px;
@@ -512,7 +517,7 @@
     display: none;
     position: absolute;
     right: 40px;
-    top: 34px;
+    top: 62px;   /* under the top readout */
     padding: 12px 22px;
     font-size: 20px;
     letter-spacing: 3px;
@@ -1068,4 +1073,62 @@
     min-width: 240px;
     height: 60px;
     font-size: 22px;
+}
+
+/* ---- top readout (Hud::draw, Hud+0x3d4 at the top right): the time limit or the cargo hold, the volatile bar, the
+   mission's second line; plates cut by Build HUD Images (hud_*) --------------------------------------------------- */
+
+.hud-readout {
+    position: absolute;
+    right: 40px;
+    top: 10px;
+    align-items: flex-end;
+}
+
+.hud-readout-plate {
+    width: 191px;
+    height: 40px;
+    justify-content: center;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.hud-readout-plate--second {
+    margin-top: 4px;
+}
+
+.hud-readout-text {
+    padding-left: 22px;
+    padding-right: 12px;
+    font-size: 19px;
+    color: var(--gof-text);
+    -unity-text-align: middle-left;
+}
+
+/* The red bar over the plate from its left edge, cut to the volatile force (DrawRegion2D width x force). */
+.hud-readout-bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 40px;
+    overflow: hidden;
+}
+
+.hud-readout-bar-fill {
+    width: 191px;
+    height: 40px;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+
+/* The mouse steering point (PlayerEgo+0x94): a small dot at the screen centre + the mouse offset, not a second
+   crosshair; hidden near the centre, where it would sit on the ship's crosshair. */
+.mouse-reticle {
+    display: none;
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    margin-top: -4px;
+    border-radius: 4px;
+    background-color: rgba(120, 220, 255, 0.6);
 }

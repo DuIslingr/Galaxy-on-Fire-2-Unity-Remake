@@ -148,11 +148,33 @@ namespace GoF2Remake.Flight
 
         /// <summary>The accelerometer steers (FlightHud): the tilt sensitivity and pitch factors apply.</summary>
         [System.NonSerialized] public bool tiltMode;
+        FreeLookCamera freeLook;
+
+        /// <summary>PlayerEgo::update with Globals::mouseCursorActivated (FlightHud sets it: the option, the keyboard and mouse
+        /// in use, nothing on screen): the mouse moves the crosshair, clamped to +-0.7 of half the screen, and the offset /
+        /// that limit steers like a stick (left / right / up / down); the ramp divisor is a fixed 12 (the sensitivity option
+        /// doesn't apply).</summary>
+        [System.NonSerialized] public bool mouseSteering;
+        /// <summary>The crosshair's offset from the screen centre (screen pixels, x right, y up).</summary>
+        public Vector2 MouseOffset { get; private set; }
+
+        Vector2 ReadMouseSteer()
+        {
+            var mouse = Mouse.current;
+            if (!mouseSteering || mouse == null) { MouseOffset = Vector2.zero; return Vector2.zero; }
+            var lim = new Vector2(Screen.width * 0.5f * 0.7f, Screen.height * 0.5f * 0.7f);
+            var o = MouseOffset + mouse.delta.ReadValue();
+            MouseOffset = new Vector2(Mathf.Clamp(o.x, -lim.x, lim.x), Mathf.Clamp(o.y, -lim.y, lim.y));
+            return new Vector2(MouseOffset.x / Mathf.Max(1f, lim.x), MouseOffset.y / Mathf.Max(1f, lim.y));
+        }
 
         void Update()
         {
             Model.TiltMode = tiltMode;
-            Model.Sensitivity = tiltMode ? Data.Settings.TiltSensitivity : sensitivity;
+            // PlayerEgo::up / right with the mouse cursor: the ramp divisor is 12, i.e. (3.3 - sens) x 20 with sens 2.7.
+            Model.Sensitivity = tiltMode ? Data.Settings.TiltSensitivity : mouseSteering ? 2.7f : sensitivity;
+            // PlayerEgo::left / right / up / down on Extreme (+0x235): the live cargo load against Ship::getMaxLoad.
+            if (stats != null && stats.cargoAffectsHandling) stats.cargoLoad = Data.Shop.CargoLoad();
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
             if (externalControl) { SpeedMetersPerSecond = ExternalSpeedMetersPerSecond; Maneuver.Cancel(); return; }
             if (useBuiltInInput && !inputLocked) ReadDodgeInput();
@@ -175,6 +197,8 @@ namespace GoF2Remake.Flight
             // The launch / arrival camera: no steering, throttle, boost or levelling (the ship flies on).
             Vector2 steer = useBuiltInInput && !inputLocked ? ReadInput() : Vector2.zero;
             if (!inputLocked && externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
+            var mouseSteer = !inputLocked ? ReadMouseSteer() : Vector2.zero;
+            if (mouseSteer.sqrMagnitude > steer.sqrMagnitude) steer = mouseSteer;
             SteerInput = steer;
             if (autopilotTarget != null || steeringLocked) steer = Vector2.zero;
 
@@ -226,6 +250,8 @@ namespace GoF2Remake.Flight
             if (pad != null)
             {
                 float x = pad.rightStick.ReadValue().x;
+                if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
+                if (freeLook != null && freeLook.FreeLookActive) x = 0f;   // the right stick turns the free-look camera
                 if (!stickFlicked && Mathf.Abs(x) > 0.8f) { stickFlicked = true; RequestDodge(x < 0f ? 1 : 2); }
                 else if (Mathf.Abs(x) < 0.3f) stickFlicked = false;
             }

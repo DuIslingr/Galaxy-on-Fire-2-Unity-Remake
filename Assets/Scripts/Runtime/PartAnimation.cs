@@ -117,6 +117,9 @@ namespace GoF2Remake.Visuals
             play = false;
         }
 
+        /// <summary>Stops where it is (the level script no longer calls Transform::Update on it).</summary>
+        public void Pause() => play = false;
+
         /// <summary>Hold() on every part animation under 'root'.</summary>
         public static void HoldAll(GameObject root, float atMs = 0f)
         {

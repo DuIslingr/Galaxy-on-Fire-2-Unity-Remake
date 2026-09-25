@@ -42,6 +42,37 @@ namespace GoF2Remake.Data
         /// <summary>Every unit in cargo weighs 1 t; mounted items weigh nothing.</summary>
         public static int CargoLoad() => Session.Cargo.Sum(s => s.amount);
 
+        /// <summary>Ship::refreshValue 0x1a33f4 (Ship+0x48, getFirePower): over the mounted items of sorts 0-3, 8 and 25,
+        /// attr 9 x (1 + attr 40 / 100) / (attr 11 x (1 - attr 39 / 100)) x 1000; the factors are the sort-28 weapon mod's.</summary>
+        public static float FirePower(Database db)
+        {
+            var mod = FirstMounted(db, 28);
+            float reloadF = mod != null ? 1f - mod.Attr(39) / 100f : 1f, damageF = mod != null ? 1f + mod.Attr(40) / 100f : 1f;
+            float sum = 0f;
+            foreach (var e in Session.Equipment)
+            {
+                var it = db.Item(e.item);
+                if (it == null) continue;
+                int sort = it.categoryId;
+                if (sort > 25 || ((1 << sort) & 0x200010F) == 0) continue;
+                float reload = it.Attr(11);
+                if (reload <= 0f) continue;
+                sum += it.Attr(9) * damageF / (reload * reloadF) * 1000f;
+            }
+            return sum;
+        }
+
+        /// <summary>Ship::getBaseHP: the hull (+40 with mod 0).</summary>
+        public static int BaseHp(Database db) => (db.Ship(Session.ShipIndex)?.armor ?? 0) + (Session.HasMod(0) ? 40 : 0);
+
+        /// <summary>Ship::getCombinedHP: the hull + the shield (attr 18) + the armor (attr 20).</summary>
+        public static int CombinedHp(Database db)
+        {
+            var shield = FirstMounted(db, 9);
+            var armor = FirstMounted(db, 10);
+            return BaseHp(db) + (shield != null ? shield.Attr(18) : 0) + (armor != null ? armor.Attr(20) : 0);
+        }
+
         /// <summary>Base cargo (+30 with mod 1, Ship::refreshValue, before compression) + (int)(base * sum of mounted
         /// compression (attr 22, category 12) % / 100).</summary>
         public static int MaxLoad(Database db)

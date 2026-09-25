@@ -110,8 +110,11 @@ namespace GoF2Remake.Flight
             float dtMs = Time.deltaTime * 1000f;
             if (Locked != null && !Locked.Alive) Locked = null;
             if (weapons != null) weapons.LockTarget = Locked;
+            // PlayerEgo::isInTurretMode: the turret view neither locks ships nor keeps the tractor beam pulling.
+            bool turretView = weapons != null && weapons.TurretView;
+            if (turretView && Salvaging != null) { Salvaging.pulled = false; Salvaging = null; }
             UpdateSalvage(dtMs);
-            if (!HasScanner || health == null || health.Dead || nav == null || nav.Paused || nav.MenuOpen) { Candidate = null; CrateCandidate = null; StealCandidate = null; LockFrame = -1; Publish(); return; }
+            if (!HasScanner || health == null || health.Dead || nav == null || nav.Paused || nav.MenuOpen || turretView) { Candidate = null; CrateCandidate = null; StealCandidate = null; LockFrame = -1; Publish(); return; }
             // Radar+0x1ab (AB-4): any crate, wherever it is, even on the autopilot.
             if (tractorMode == 2 && Salvaging == null && !nav.Jumping) AutoSalvage(Camera.main, false);
 
@@ -136,8 +139,12 @@ namespace GoF2Remake.Flight
                             if (!InBox(cam, c, box, s.transform.position, out float d)) continue;
                             // KIPlayer+0x20: a disabled ship with cargo is salvage (it wins over the ship locks).
                             if (s.Hp.empDisabled && s.HasCargo) { if (d < stealD && (Salvaging == null || Salvaging.stolenFrom != s)) { stealD = d; bestSteal = s; } }
-                            else if (d < bestD) { bestD = d; best = s.Target; }
+                            else if (best == null) best = s.Target;   // Radar::draw: the first ship of the list in the box
                         }
+                    // PlayerJunk objects are in the original's ship list too: lockable after the ships.
+                    if (best == null && bestSteal == null)
+                        foreach (var o in Target.RadarObjects)
+                            if (o != null && o.Alive && !o.untargetable && InBox(cam, c, box, o.transform.position, out float dj)) { best = o; break; }
                     if (bestSteal != null) best = null;
                     if (best == null && bestSteal == null)
                     {
@@ -155,7 +162,8 @@ namespace GoF2Remake.Flight
             if (Candidate != null)
             {
                 timer += dtMs;
-                LockFrame = Mathf.Min(23, (int)(23f * timer / Mathf.Max(1, lockTimeMs)));
+                // Radar::draw: the ring only while the candidate isn't the lock already.
+                if (Candidate != Locked) LockFrame = Mathf.Min(23, (int)(23f * timer / Mathf.Max(1, lockTimeMs)));
                 if (timer > lockTimeMs && Locked != Candidate)
                 {
                     Locked = Candidate;
@@ -268,7 +276,11 @@ namespace GoF2Remake.Flight
             }
         }
 
-        /// <summary>KIPlayer::captureCrate: the first non-empty entry into the cargo hold.</summary>
+        /// <summary>KIPlayer::captureCrate 0xb2a00: the crate is gone once captured (KIPlayer+0x74 = 0) and a dead ship leaves no
+        /// other (+0x48 = 0). Its first non-empty entry: all of it from a wreck, rnd(amount) from a living ship, at least 1,
+        /// capped to the free cargo. Every ship's crate costs standing (Standing::applyStealCargo, delict 2) and a friend's is a
+        /// stolen cargo (Level::stealFriendCargo). No room: the unit is lost ("Cargo hold full"); remake: a mission container
+        /// stays for another try. Missiles of a mounted launcher's type reload it (Item::changeAmount), the rest is cargo.</summary>
         void Capture(Crate crate)
         {
             Salvaging = null;
@@ -278,33 +290,31 @@ namespace GoF2Remake.Flight
             if (entry == null) { Destroy(crate.gameObject); return; }
             int free = Shop.FreeCargo(db);
             var ship = crate.stolenFrom;
-            if (free <= 0)
-            {
-                Message?.Invoke(Localization.Get(322), 1);
-                if (ship != null) Destroy(crate.gameObject); else crate.pulled = false;
-                return;
-            }
-            // captureCrate: all of it from a wreck, rnd(amount) from a living ship; at least 1, capped to the free cargo.
             int want = ship != null ? UnityEngine.Random.Range(0, entry.amount) : entry.amount;
             int n = Mathf.Max(1, Mathf.Min(want, free));
             n = Mathf.Min(n, entry.amount);
-            Shop.AddToCargo(entry.item, n);
-            Session.CratesSalvaged += n;   // Status::getCapturedCrates
-            // KIPlayer::captureCrate: a Void crate counts for Alien Hunter (Status+0xcc), another race's booze for Barkeeper.
-            if (crate.race == Standing.Void) Session.AlienRemainsCollected += n;
-            else if (Session.IsBooze(entry.item)) Session.BoozeTypes.Add(entry.item);
-            entry.amount -= n;
-            Message?.Invoke($"{n}t {Localization.Get(1274 + entry.item)}", 2);
-            if (ship != null)
+            bool friend = ship != null ? ship.Target.friendToPlayer : crate.fromFriend;
+            if (friend && traffic != null) traffic.FriendCargoStolen = true;   // Level::stealFriendCargo
+            Standing.ApplyDelict(crate.race, 2);                               // Standing::applyStealCargo
+            if (free < n)
             {
-                ship.StealFrom(entry.item, n);
-                if (ship.Target.friendToPlayer && traffic != null) traffic.FriendCargoStolen = true;   // Level::stealFriendCargo
-                Standing.ApplyDelict(ship.Race, 2);                                                        // Standing::applyStealCargo
-                Destroy(crate.gameObject);   // the rest stays aboard: a new container on the next lock
+                Message?.Invoke(Localization.Get(322), 1);
+                if (crate.missionCrate && ship == null) { crate.pulled = false; return; }
+                entry.amount -= n;
+                ship?.StealFrom(entry.item, n);
+                Destroy(crate.gameObject);
                 return;
             }
-            if (!crate.HasLoot) Destroy(crate.gameObject);
-            else crate.pulled = false;
+            entry.amount -= n;
+            ship?.StealFrom(entry.item, n);
+            var mounted = db.Item(entry.item)?.TypeId == 1 ? Session.Equipment.Find(e => e.item == entry.item) : null;
+            if (mounted != null) mounted.amount += n; else Shop.AddToCargo(entry.item, n);
+            Session.CratesSalvaged += n;   // Status::crateCaptured
+            // A Void crate counts for Alien Hunter (Status+0xcc), another race's booze for Barkeeper.
+            if (crate.race == Standing.Void) Session.AlienRemainsCollected += n;
+            else if (Session.IsBooze(entry.item)) Session.BoozeTypes.Add(entry.item);
+            Message?.Invoke($"{n}t {Localization.Get(1274 + entry.item)}", 2);
+            Destroy(crate.gameObject);
         }
     }
 }

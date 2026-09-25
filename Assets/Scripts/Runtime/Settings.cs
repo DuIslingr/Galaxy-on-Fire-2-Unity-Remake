@@ -93,6 +93,8 @@ namespace GoF2Remake.Data
         /// <summary>Steering sensitivity (FlightModel.Sensitivity, 0..2.2).</summary>
         public static float Sensitivity { get => Get("sensitivity", 1f); set => Set("sensitivity", Mathf.Clamp(value, 0f, 2.2f)); }
         public static bool InvertPitch { get => GetBool("invertPitch", false); set => SetBool("invertPitch", value); }
+        /// <summary>Globals::mouseCursorActivated (the PC version): the mouse moves the crosshair and steers (desktop only).</summary>
+        public static bool MouseSteering { get => GetBool("mouseSteering", true); set => SetBool("mouseSteering", value); }
         /// <summary>options[0x11] = 0: the accelerometer steers (MGame::handleAccelerometer).</summary>
         public static bool TiltSteering { get => GetBool("tiltSteering", false); set => SetBool("tiltSteering", value); }
         /// <summary>options+0x18: the tilt sensitivity, 0..1 (default 1, the maximum).</summary>

@@ -144,6 +144,7 @@ namespace GoF2Remake.World
         Vector3 spinAxis, deathDir;
         Explosion explosion;
         GameObject wreck;
+        WreckBurn wreckBurn;
         Crate crate;
         Obstacle obstacle;
         ShipSmoke smoke;
@@ -170,11 +171,13 @@ namespace GoF2Remake.World
         /// <summary>setCloakingPossible: may cloak on its own.</summary>
         public bool CloakingPossible { get => cloak != null && cloak.Possible; set { if (cloak != null) cloak.Possible = value; } }
         /// <summary>PlayerFighter::cloak(ms) from a level script; 0 uncloaks.</summary>
-        public void Cloak(float ms) => cloak?.Cloak(ms);
+        public void Cloak(float ms, bool instant = false) => cloak?.Cloak(ms, instant);
 
         /// <summary>A level script flies it (AI off): straight ahead at this speed (u/ms), no targeting, no firing; -1 = off.
         /// The script may also turn it (transform).</summary>
         [System.NonSerialized] public float scriptedSpeed = -1f;
+        /// <summary>LevelScript's Player::shoot on a scripted ship: the primary fires straight ahead whenever it is loaded.</summary>
+        [System.NonSerialized] public bool scriptedFire;
         int wingSlot, wingCommand = 1, scoutStart;
         Target wingTarget;
         Route scout;
@@ -193,9 +196,8 @@ namespace GoF2Remake.World
         static Vector3 ToUnity(Vector3 game) => new Vector3(game.x, game.y, -game.z) * M;
         static Vector3 ToGame(Vector3 unity) => new Vector3(unity.x, unity.y, -unity.z) / M;
         // PlayerFighter::initPush 0xf3b00 / push 0xf3c50 (the shock blast): pushed away from the blast centre for
-        // (1 - min(d / radius, 1)) * 5000 ms at a speed that fades over that time, tumbling. The start speed was lost in the
-        // decompile (a: 4 u/ms).
-        const float PushSpeedUnits = 4f, PushMaxMs = 5000f;
+        // T = (1 - min(d / radius, 1)) * 5000 ms, speeding up as it runs out, tumbling (UpdatePush).
+        const float PushMaxMs = 5000f;
         Vector3 pushDir, pushTumble;
         float pushMs, pushTotalMs;
 
@@ -210,13 +212,17 @@ namespace GoF2Remake.World
             pushTumble = Random.onUnitSphere * 0.2f;
         }
 
+        /// <summary>PlayerFighter::push 0xf3c50 (checked in the disassembly): f = the time left / T; each frame the ship moves
+        /// dir x dt x its speed (+0x1e0) x 3 (2 - f) x T / 5000 (a full push 6 -> 12 u/ms) and turns by f x the tumble
+        /// (a random unit vector x 0.2 rad per 30 fps frame).</summary>
         void UpdatePush(float dtMs)
         {
             if (pushMs <= 0f) return;
-            float k = pushMs / Mathf.Max(1f, pushTotalMs);
-            transform.position += pushDir * PushSpeedUnits * k * dtMs * M;
-            transform.Rotate(pushTumble, k * dtMs * 0.05f, Space.World);
             pushMs -= dtMs;
+            float T = Mathf.Max(1f, pushTotalMs);
+            float f = Mathf.Max(0f, pushMs) / T;
+            transform.position += pushDir * (dtMs * speed * 3f * (2f - f) * (T / PushMaxMs)) * M;
+            transform.Rotate(pushTumble.normalized, f * pushTumble.magnitude * Mathf.Rad2Deg * dtMs / 33.3f, Space.World);
         }
 
         /// <summary>Game rotation identity: facing game +Z = Unity -Z.</summary>
@@ -246,6 +252,9 @@ namespace GoF2Remake.World
             Target.isShip = true;
             Target.race = spec.race;
             Target.customDeath = true;
+            Target.mineProof = spec.fixedObject == "station_pirates";   // KIPlayer+0x3d
+            Target.plateNameOnly = spec.nameText == 1611 || spec.nameText == 1663;
+            Target.plateWanted = spec.wantedIndex >= 0;
             Target.radius = (spec.hitRadius > 0f ? spec.hitRadius : NpcTables.HitRadiusUnits) * M;
             Target.hitpoints = new Hitpoints(spec.hitpoints > 0 ? spec.hitpoints : NpcTables.Hull(kind, spec.ship));
             Target.hitpoints.SetEmp(NpcTables.Emp(kind), NpcTables.EmpRecoveryMs(kind));   // also with a hull override
@@ -278,11 +287,12 @@ namespace GoF2Remake.World
             if (spec.turretAssembly != null) SetupTurret();
             else if (!spec.freighter && spec.fixedObject == null && spec.ship != 51)
             {
-                var item = db.Item(NpcTables.GunItem(spec.race));
+                gunBase = NpcTables.GunDamage(spec, false, false, out gunSpeed);
+                var item = db.Item(NpcTables.GunItemFor(spec.race, false));
                 if (item != null)
                 {
-                    gun = new Gun(item, NpcTables.GunDamage(spec.race), NpcTables.GunReloadMs, NpcTables.GunPool,
-                                      NpcTables.GunLifetimeMs, NpcTables.GunSpeed) { owner = Target };
+                    gun = new Gun(item, gunBase, NpcTables.GunReloadMs, NpcTables.GunPool,
+                                      NpcTables.GunLifetimeMs, gunSpeed) { owner = Target };
                     rig = new GunRig(gun, WeaponFx.Load(item.index), fxRoot, null, 2);
                     gun.Hit += OnGunHit;
                 }
@@ -355,7 +365,8 @@ namespace GoF2Remake.World
             attacking = false;
             targetIdx = -1;
             route = (Spec.route ?? Route.DefaultPatrol(Spec.race)).Clone();
-            loot = Spec.noLoot ? new List<ItemStack>() : RollLoot();
+            // PlayerFighter::revive 0xf3de0: a revived Void ship or Specter carries nothing (the Void's remains come at death).
+            loot = Spec.noLoot || Race == Standing.Void || Race == Standing.Specter ? new List<ItemStack>() : RollLoot();
             crate = null;
             if (engine != null && engine.clip != null) engine.Play();
         }
@@ -378,11 +389,32 @@ namespace GoF2Remake.World
                     // Pitch counter -600 .. +100 ms at 2 pi / 4096 rad per ms: about 52.7 deg up, 8.8 deg down.
                     pitchMax = 600f * TurretAim.RadPerMs, pitchMin = -100f * TurretAim.RadPerMs,
                 };
+            gunBase = NpcTables.GunDamage(Spec, false, true, out gunSpeed);
+            // Level::assignGuns: a sentry gun object (0x49c0 / 0x49c1 / 0x49c2 = sn_sentry_gun_001..003) fires its item's
+            // shot (211 / 212 / 213: attr 9 damage, 11 reload, 12 lifetime, 13 speed); at 0x9e (Harval's, always enemy)
+            // x1.5 damage, x1.2 speed and x5 hull; the LevelScript ctor of 0x9e scales their damage by 0.3.
+            int sentry = Spec.turretAssembly.StartsWith("sn_sentry_gun_00") ? Spec.turretAssembly[16] - '0' : 0;
+            var sentryItem = sentry >= 1 && sentry <= 3 ? db.Item(210 + sentry) : null;
+            if (sentryItem != null)
+            {
+                float dmg = sentryItem.Attr(9), speedU = sentryItem.Attr(13, 22);
+                if (!Session.FreePlay && Session.CampaignMission == 0x9e && sentry == 3 && alwaysEnemy)
+                {
+                    dmg *= 1.5f * 0.3f;
+                    speedU *= 1.2f;
+                    SetHull(Hp.maxHull * 5);
+                }
+                int look = sentry == 1 ? 2 : sentry == 2 ? 20 : 14;   // Gun::setIndex 2 / 0x14 / 0xe
+                gun = new Gun(db.Item(look) ?? sentryItem, (int)dmg, sentryItem.Attr(11, 430), NpcTables.GunPool, sentryItem.Attr(12, 1000), speedU) { owner = Target };
+                rig = new GunRig(gun, WeaponFx.Load(look), fxRootRef, turretBarrel, 2);
+                gun.Hit += OnGunHit;
+                return;
+            }
             var item = db.Item(Spec.race == 1 ? 15 : 20);
             if (item != null)
             {
-                gun = new Gun(item, NpcTables.GunDamage(Spec.race), NpcTables.GunReloadMs, NpcTables.GunPool,
-                                  NpcTables.GunLifetimeMs, NpcTables.GunSpeed) { owner = Target };
+                gun = new Gun(item, gunBase, NpcTables.GunReloadMs, NpcTables.GunPool,
+                                  NpcTables.GunLifetimeMs, gunSpeed) { owner = Target };
                 rig = new GunRig(gun, WeaponFx.Load(item.index), fxRootRef, turretBarrel, 2);
                 gun.Hit += OnGunHit;
             }
@@ -454,12 +486,42 @@ namespace GoF2Remake.World
 
         void OnDestroy() => cloak?.Dispose();
 
+        /// <summary>Player::setHitpoints(0) + KIPlayer::setDead (a level script): gone at once, without the tumble, the
+        /// explosion, a crate or the kill bookkeeping.</summary>
+        public void Vanish()
+        {
+            Hp.hull = 0;
+            Target.hp = 0;
+            if (engine != null) engine.Stop();
+            SetDead();
+        }
+
         // ---- per frame -------------------------------------------------------------------------------------
+
+        /// <summary>Level::createFighterTurrets: the turret on this ship (45 / 51), null = none.</summary>
+        [System.NonSerialized] public NpcShip AttachedTurret;
+
+        /// <summary>The fighter turret shows, hides, sides and dies with its host.</summary>
+        void SyncTurret()
+        {
+            var t = AttachedTurret;
+            if (t == null) return;
+            if (Current != State.Fly || Gone) { t.DestroyAsTurret(); AttachedTurret = null; return; }
+            t.alwaysEnemy = alwaysEnemy;
+            t.alwaysFriend = alwaysFriend;
+            t.turnedEnemy = turnedEnemy;
+            t.SetVisible(modelGo == null || modelGo.activeSelf);
+            if (Asleep && !t.Asleep) { t.Asleep = true; } else if (!Asleep && t.Asleep) t.Wake();
+            t.enemies.Clear();
+            t.enemies.AddRange(enemies);
+            t.Target.untargetable = true;
+        }
 
         void Update()
         {
             float dtMs = Time.deltaTime * 1000f;
             if (dtMs <= 0f) return;
+            SyncTurret();
             if (gun != null)
             {
                 gun.Update(dtMs, enemies, HomingTarget);
@@ -481,7 +543,8 @@ namespace GoF2Remake.World
             if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }
             UpdateRelations();
             Hp.Update(dtMs);
-            cloak?.Update(dtMs, !Asleep && !frozen && !inactive && scriptedSpeed < 0f, panic);
+            // PlayerFighter::handleCloaking: race 10 only (Harval's Scimitar cloaks as a Specter, at 158); scripted ships too.
+            if (Race == Standing.Specter) cloak?.Update(dtMs, !Asleep && !inactive, panic, Hp.empDisabled);
             UpdatePush(dtMs);
             UpdateSmoke();
             UpdateSparks();
@@ -493,6 +556,12 @@ namespace GoF2Remake.World
             {
                 transform.position += transform.forward * scriptedSpeed * dtMs * M;
                 speed = scriptedSpeed;
+                if (scriptedFire && gun != null && gun.TryFire(transform) >= 0)
+                {
+                    int shot = NpcTables.ShotSound(Race);
+                    var clip = assets != null && assets.shots != null && shot < assets.shots.Length ? assets.shots[shot] : null;
+                    if (clip != null) sfx.PlayOneShot(clip, 0.8f * Settings.SfxVolume);
+                }
                 return;
             }
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
@@ -541,6 +610,10 @@ namespace GoF2Remake.World
                 DropCrate();
                 loot = new List<ItemStack>();
             }
+            // Player::damageEmp / Player::update: Status+0x134 counts the ships disabled right now (medal 42 Jammer); a ship
+            // destroyed while disabled stays counted until the next level, like the original.
+            if (disabled && !empWasDisabled && !Achievements.Has(42)) Achievements.Elite(42, ++Session.EmpDisabledNow);
+            else if (!disabled && empWasDisabled) Session.EmpDisabledNow--;
             empWasDisabled = disabled;
         }
 
@@ -554,8 +627,12 @@ namespace GoF2Remake.World
             bool alwaysHostile = r == Standing.Pirate || r == Standing.Void || r == Standing.Specter;
             bool hostile = alwaysHostile || Standing.IsEnemy(r);
             bool friend = !alwaysHostile && Standing.IsFriend(r);
+            // PlayerFighter::update's order: always-enemy, then Loma's paid toll (pirates neither hostile nor friendly), then a
+            // turned ship, and the always-friend flag last (setAlwaysEnemy doesn't clear it: a story ally stays one).
+            if (alwaysEnemy) { hostile = true; friend = false; }
+            if (r == Standing.Pirate && traffic != null && traffic.LomaTollPaid) { hostile = false; friend = false; }
+            if (turnedEnemy) { hostile = true; friend = false; }
             if (alwaysFriend) { hostile = false; friend = true; }
-            if (turnedEnemy || alwaysEnemy) { hostile = true; friend = false; }
             Target.hostileToPlayer = hostile;
             Target.friendToPlayer = friend;
         }
@@ -578,12 +655,18 @@ namespace GoF2Remake.World
             if (modelGo != null && modelGo.activeSelf == hide) modelGo.SetActive(!hide);
             Target.untargetable = true;
             if (inactive) return;
+            // PlayerFighter::update state 5 (0xf2750): KIPlayer+0x124 is the detect range (50 000 by default; 0 = never by
+            // proximity). The player within +-25 000 per axis (or the steered Liberator) wakes it, and so does its target
+            // within the detect range; fixed objects any enemy within it.
+            float dr = detectRange >= 0f ? detectRange : NpcTables.DetectRange;
+            if (dr <= 0f) return;
+            bool Near(Vector3 p, float units) { var d = p - transform.position; float r = units * M; return Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r; }
+            if (!IsFixed && WeaponSystem.GuidedRocket.HasValue && Near(WeaponSystem.GuidedRocket.Value, 25000f)) { Wake(); return; }
             foreach (var e in enemies)
             {
                 if (!Valid(e) || e.cloaked) continue;   // no waking for a cloaked target
-                var d = e.transform.position - transform.position;
-                float r = (e.isPlayer && !IsFixed ? 25000f : 50000f) * M;   // fixed objects: any enemy within +-50000
-                if (Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r) { Wake(); return; }
+                float r = IsFixed || e == target || !e.isPlayer ? dr : 25000f;
+                if (Near(e.transform.position, r)) { Wake(); return; }
             }
         }
 
@@ -647,7 +730,7 @@ namespace GoF2Remake.World
             if (item == null || IsFreighter || IsFixed) return;
             rig?.HideAll();
             if (gun != null) gun.Hit -= OnGunHit;
-            gun = MakeGun(item, NpcTables.GunDamage(Spec.race) * damageFactor);
+            gun = MakeGun(item, gunBase * damageFactor);
             rig = new GunRig(gun, WeaponFx.Load(item.index), fxRootRef, IsTurret ? turretBarrel : null, 2);
             gun.Hit += OnGunHit;
         }
@@ -658,16 +741,13 @@ namespace GoF2Remake.World
             var item = db.Item(itemIndex);
             if (item == null || IsFreighter || IsFixed || IsTurret) return;
             secondRig?.HideAll();
-            secondGun = MakeGun(item, NpcTables.GunDamage(Spec.race) * damageFactor);
+            secondGun = MakeGun(item, gunBase * damageFactor);
             secondRig = new GunRig(secondGun, WeaponFx.Load(item.index), fxRootRef, null, 2);
             var g = secondGun;
             var r = secondRig;
             secondGun.Hit += (b, hit, point) =>
             {
-                float dmg = g.damage;
-                if (hit.isPlayer && !Target.hostileToPlayer) dmg = (int)(dmg * 0.2f);
-                hit.Damage(dmg, true, g.bullets[b].velocity);
-                r.ShowImpact(point);
+                GunHit(g, r, b, hit, point);
             };
             useSecond = false;
             slotMs = 0f;
@@ -679,19 +759,25 @@ namespace GoF2Remake.World
         {
             bool rocket = item.categoryId == (int)Gun.Kind.Rocket || item.categoryId == (int)Gun.Kind.Missile || item.categoryId == (int)Gun.Kind.ClusterMissile;
             if (!rocket)
-                return new Gun(item, damage, NpcTables.GunReloadMs, NpcTables.GunPool, NpcTables.GunLifetimeMs, NpcTables.GunSpeed) { owner = Target };
+                return new Gun(item, damage, NpcTables.GunReloadMs, NpcTables.GunPool, NpcTables.GunLifetimeMs, gunSpeed) { owner = Target, emp = item.Attr(10) };
             int pool = item.categoryId == (int)Gun.Kind.ClusterMissile ? Mathf.Max(1, item.index - 211) : NpcTables.GunPool;
             return new Gun(item, damage, RocketReloadMs, pool, RocketLifetimeMs, RocketSpeed) { owner = Target, homingDelayMs = 1000f };
         }
 
         const float RocketReloadMs = 3000f, RocketLifetimeMs = 10000f, RocketSpeed = 8f;
+        /// <summary>Level::assignGuns' per-ship damage (gun+0x60 before an item's factor) and projectile speed.</summary>
+        float gunBase = 3f, gunSpeed = NpcTables.GunSpeed;
 
         /// <summary>RocketGun::seekEnemy for an NPC: its current target (PlayerFighter+0x34), while it attacks.</summary>
         Target HomingTarget => attacking && target != null && target.Alive && !target.cloaked ? target : null;
 
+        /// <summary>The target SetOnlyEnemy gave (Player::setEnemy), null when none.</summary>
+        public Target ScriptEnemy { get; private set; }
+
         /// <summary>Only this target (the level script aims ships at Errkt's freighter / at the player).</summary>
         public void SetOnlyEnemy(Target t)
         {
+            ScriptEnemy = t;
             enemies.Clear();
             if (t != null) enemies.Add(t);
             attacking = false;
@@ -716,6 +802,11 @@ namespace GoF2Remake.World
             wingSlot = slot;
             wingCommand = 1;
             alwaysFriend = true;
+            // Event 48 Spaceship_Engine_Wingmen: the enemy engine's waves at event volume 0.0437 (46: 0.0759).
+            if (engine != null) engine.volume = 0.043652f * Sfx.EventGain * Settings.SfxVolume;
+            // Level::assignGuns: a wingman's laser skips the other ships' per-mission factors.
+            gunBase = NpcTables.GunDamage(Spec, true, false, out gunSpeed);
+            if (gun != null) gun.damage = gunBase;
             if (!armed)
             {
                 rig?.HideAll();
@@ -821,7 +912,8 @@ namespace GoF2Remake.World
                     if (!attacking) idx = 0;
                 }
                 else idx = 0;
-                if (n > 0 && Valid(enemies[idx])) { if (!InBox(enemies[idx]) && !(turnedEnemy && idx == 0)) idx = -1; }
+                // The 5 s re-roll: a target outside the box is dropped (a turned ship too: it flies its route until the next one).
+                if (n > 0 && Valid(enemies[idx])) { if (!InBox(enemies[idx])) idx = -1; }
                 else { idx = -1; attacking = false; }
             }
             if (!Target.hostileToPlayer && idx == 0) { idx = 1; attacking = false; }
@@ -841,7 +933,9 @@ namespace GoF2Remake.World
             if (idx < 0 || idx >= n)
             {
                 var wp = route.Waypoint;
-                if (wp == null) { target = null; targetPos = traffic.Player != null ? traffic.Player.transform.position : transform.position; }
+                // A finished route: the target is the player (PlayerFighter+0x144), so the break-off circle applies, but it isn't
+                // an attack: no firing.
+                if (wp == null) { target = traffic.Player; attacking = false; targetPos = traffic.Player != null ? traffic.Player.transform.position : transform.position; }
                 else { route.Update(ToGame(transform.position)); wp = route.Waypoint; targetPos = wp.HasValue ? ToUnity(wp.Value) : transform.position; followingWaypoint = true; }
             }
             else { target = enemies[idx]; targetPos = target.transform.position; }
@@ -853,9 +947,12 @@ namespace GoF2Remake.World
         void Steer(float dtMs)
         {
             var dir = targetPos - transform.position;
+            // PlayerFighter::update's fly state: the player docked at an object (PlayerEgo::isDockedToDockingPoint) is circled
+            // at +-12000 instead of +-8000, and not fired at while it is above the ship (0xf2cfa).
+            bool dockedPlayer = target != null && target.isPlayer && ObjectDocking.PlayerDocked;
             if (target != null && !followingWaypoint)
             {
-                float r = NpcTables.BreakOffRange * M;
+                float r = (dockedPlayer ? 12000f : NpcTables.BreakOffRange) * M;
                 if (Mathf.Abs(dir.x) < r && Mathf.Abs(dir.y) < r && Mathf.Abs(dir.z) < r) dir = transform.right;
             }
             if (dir.sqrMagnitude < 1e-8f) dir = transform.forward;
@@ -874,7 +971,8 @@ namespace GoF2Remake.World
                     {
                         var firing = useEmp && empGun != null ? empGun : useSecond && secondGun != null ? secondGun : gun;
                         if (firing == null || !target.Targetable) attacking = false;
-                        else if (shootingEnabled && !RadarHidden && firing.TryFire(transform) >= 0)
+                        else if (shootingEnabled && !RadarHidden && !(dockedPlayer && target.transform.position.y > transform.position.y)
+                                 && firing.TryFire(transform) >= 0)
                         {
                             int shot = NpcTables.ShotSound(Race);
                             var clip = firing == empGun ? WeaponFx.Load(18)?.Shot
@@ -887,7 +985,9 @@ namespace GoF2Remake.World
             }
 
             var fwd = transform.forward;
-            if (!drift && !Hp.empDisabled)
+            // LevelScript::process: during the launch / arrival camera every wingman drifts (KIPlayer+0x129, no steering).
+            bool noSteer = drift || (IsWingman && traffic != null && traffic.LaunchCameraRunning != null && traffic.LaunchCameraRunning());
+            if (!noSteer && !Hp.empDisabled)
             {
                 var delta = dirN - fwd;
                 var h = delta.sqrMagnitude > 1e-10f ? (fwd + delta.normalized * (dtMs * 48f / 65536f)).normalized : dirN;
@@ -991,12 +1091,19 @@ namespace GoF2Remake.World
 
         // ---- combat ----------------------------------------------------------------------------------------
 
-        void OnGunHit(int bullet, Target hit, Vector3 point)
+        void OnGunHit(int bullet, Target hit, Vector3 point) => GunHit(gun, rig, bullet, hit, point);
+
+        /// <summary>Gun::calcCharacterCollision 0x17e154 for an NPC bullet: a non-hostile ship's stray shot at the player does
+        /// 20 %, a hostile one x0.75 while the player is docked at an object (PlayerEgo::isDockedToDockingPoint); the item's
+        /// EMP (attr 10, Gun::setIndex) lands too (NPC against NPC: the player has no EMP pool).</summary>
+        void GunHit(Gun g, GunRig r, int bullet, Target hit, Vector3 point)
         {
-            float dmg = gun.damage;
+            float dmg = g.damage;
             if (hit.isPlayer && !Target.hostileToPlayer) dmg = (int)(dmg * 0.2f);   // stray fire from a non-hostile ship
-            hit.Damage(dmg, true, gun.bullets[bullet].velocity);
-            rig.ShowImpact(point);
+            else if (hit.isPlayer && ObjectDocking.PlayerDocked) dmg = (int)(dmg * 0.75f);
+            hit.Damage(dmg, true, g.bullets[bullet].velocity);
+            if (g.emp > 0f && !hit.isPlayer && hit.hitpoints != null) hit.hitpoints.DamageEmp((int)g.emp);
+            r.ShowImpact(point);
         }
 
         /// <summary>Player::damage friendly-fire bookkeeping (§4.5), hits by the player only.</summary>
@@ -1004,6 +1111,8 @@ namespace GoF2Remake.World
         {
             // Player::damage on a Most Wanted criminal (+0x3e): Level::attackWanted instead of the friendly-fire rules.
             if (!byNpc && Spec.wantedIndex >= 0) { traffic.AttackWanted(this, dmg); return; }
+            // Player::damage 0xafd80: hitting a pirate in Loma arms and alarms them all and revokes the toll.
+            if (!byNpc && Race == Standing.Pirate) traffic.LomaPirateHit();
             if (byNpc || alwaysEnemy || IsWingman || Race == Standing.Void || Race == Standing.Specter) return;
             if (Target.hostileToPlayer && !turnedEnemy) return;
             if (Race != traffic.SystemRace && Race != traffic.AttackRace) return;
@@ -1020,10 +1129,36 @@ namespace GoF2Remake.World
             if (damageByPlayer >= max * (hc ? 0.40f : 0.66f)) traffic.AlarmAllFriends(Race, true);
         }
 
+        int empByPlayer;
+
+        /// <summary>Player::damageEmp by the player, before the EMP lands: a Wanted criminal counts as attacked; a ship of the
+        /// system's race (not a wingman, the Void, a Specter or an always-enemy) past a third of its EMP points turns on the
+        /// player ("Hold your fire!", Level::friendTurnedEnemy).</summary>
+        public void OnPlayerEmp(int emp)
+        {
+            if (alwaysEnemy) return;
+            if (Race != Standing.Void && Race != Standing.Specter && Spec.wantedIndex >= 0) { traffic.AttackWanted(this, 0); return; }
+            if (IsWingman || Race == Standing.Void || Race == Standing.Specter || Race != traffic.SystemRace) return;
+            empByPlayer += emp;
+            if (empByPlayer > Hp.maxEmp / 3) { turnedEnemy = true; traffic.FriendTurnedEnemy(Race); }
+        }
+
+        /// <summary>Player::damageEmp's disable: the system's race all turn hostile (alarmAllFriends(race, false), no radio);
+        /// Standing::applyDisable unless it is a Wanted criminal.</summary>
+        public void OnPlayerDisabled()
+        {
+            if (!alwaysEnemy && Race != Standing.Void && Race != Standing.Specter && Race == traffic.SystemRace)
+                traffic.AlarmAllFriends(Race, false);
+            if (Spec.wantedIndex < 0 && Race >= 0 && Race <= 3) Standing.ApplyDelict(Race, 2);
+        }
+
         /// <summary>Hull &lt; 1: the dying state (§5.10) / the freighter wreck (§6).</summary>
         void OnDied(Target t)
         {
             cloak?.Stop();
+            // PlayerFighter's death: a hostile Void ship leaves 1-3 t Alien Remains (131).
+            if (Race == Standing.Void && !Spec.noLoot && Target.hostileToPlayer && !loot.Exists(s => s.item == 131))
+                loot = new List<ItemStack> { new ItemStack(131, Random.Range(0, 3) + 1) };
             traffic.OnShipDied(this, !Target.killedByNpc);
             if (IsWingman) Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract
             if (Spec.ship == 14 && !Target.killedByNpc) Session.BattleshipsDestroyed++;   // Status+0x118
@@ -1043,6 +1178,14 @@ namespace GoF2Remake.World
             }
             if (Spec.group == NpcGroup.Outpost) traffic.PirateStationAction(false);   // a pirate base's outpost destroyed
             if (Spec.ship == 14) traffic.DestroyTurrets();   // PlayerFixedObject::update: every turret of the level goes too
+            if (IsFixed || IsFreighter)
+            {
+                // PlayerFixedObject::update 0x17f6b4: record 22 (23 for the battleship and the Pirate Outpost) on the wreck,
+                // and an explosion with fire streaks at once; the big one follows when the wreck animation ends.
+                wreckBurn ??= new WreckBurn(transform, Spec.ship == 14 || Spec.fixedObject == "station_pirates");
+                wreckBurn.SetEmitting(true);
+                Explosion.Spawn(0, transform.position, transform.forward, 1f, null, true);
+            }
             if (IsFixed)
             {
                 DropCrate();
@@ -1055,6 +1198,7 @@ namespace GoF2Remake.World
                     if (len > 0f) dyingMs = len;
                     modelGo.SetActive(false);
                 }
+                crate?.DelayExpiry(dyingMs);   // the crate's 60 s run from state 4, the end of the wreck animation
             }
             else if (IsFreighter)
             {
@@ -1087,8 +1231,7 @@ namespace GoF2Remake.World
         {
             float frames = dtMs / 33.3f;
             if (IsTurret) { dyingMs -= dtMs; if (dyingMs <= 0f) SetDead(); return; }
-            if (IsFixed) { }
-            else if (IsFreighter) transform.position += transform.forward * NpcTables.FreighterSpeed * dtMs * M;
+            if (IsFixed || IsFreighter) { }   // PlayerFixedObject: the dying clears the moving flag (0x17f6b4), the wreck stays put
             else
             {
                 transform.Rotate(spinAxis, 0.05f * frames * Mathf.Rad2Deg, Space.World);
@@ -1097,11 +1240,14 @@ namespace GoF2Remake.World
             dyingMs -= dtMs;
             if (dyingMs > 0f) return;
             explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? 6f : 1f);   // the battleship x6 too
+            wreckBurn?.SetEmitting(false);   // state 4: enableSystemEmit(false)
             Current = State.Dead;
             smoke?.SetEmitting(false);   // the end of the tumble: Explosion::start, smoke and fire off
             if (burn != null && burn.Emitting) { burn.SetBurning(false); burn.Burst(); }   // record 11 at the explosion
             deadMs = 0f;
             if (obstacle != null && !IsFixed) obstacle.volumes = CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
+            // A Pirate Outpost's wreck (0x37a3 -> wreck volume 5): in state 4 only the wreck volumes collide.
+            else if (obstacle != null && Spec.fixedObject == "station_pirates") obstacle.volumes = CollisionVolume.ForWreckId(5);
             if (!IsFreighter) DropCrate();
         }
 
@@ -1141,6 +1287,8 @@ namespace GoF2Remake.World
             go.name = "Crate";
             crate = go.AddComponent<Crate>();
             crate.Setup(loot, Race);
+            crate.fromFriend = Target.friendToPlayer;
+            crate.missionCrate = Spec.missionCrate >= 0;
             Target.crate = crate;
         }
 

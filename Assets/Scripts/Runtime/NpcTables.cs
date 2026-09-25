@@ -73,6 +73,7 @@ namespace GoF2Remake.Flight
             int rank = Mathf.Min(Session.Rank, 20);
             float hp = 4 * StatCampaign + 14 * rank + 20;
             if (ship == 51) hp *= 1.7f; else if (ship == 49) hp *= 17f; else if (ship == 44) hp *= 2.25f;
+            if (IsHull270Mission(Session.CampaignMission)) hp = 270;
             if (kind == 1) hp *= ship == 14 ? 25 : 5;
             return (int)(hp * Difficulty);
         }
@@ -81,19 +82,56 @@ namespace GoF2Remake.Flight
         public static float EmpRecoveryMs(int kind) => kind == 1 ? 45000f : 15000f;
         public static float HitRadiusUnits => Session.IsExtreme ? 650f : 1000f;
 
-        /// <summary>Level::assignGuns damage (race 9 x0.8, race 10 x0.7).</summary>
-        public static int GunDamage(int race)
+        /// <summary>Level::assignGuns damage for a plain ship of this race (see the SpawnSpec overload).</summary>
+        public static int GunDamage(int race) => GunDamage(new SpawnSpec { race = race }, false, false, out _);
+
+        /// <summary>The freelance mission whose orbit this is (Status::getMission's type while FreelanceOrbit runs), -1 = none.</summary>
+        public static int LevelFreelanceType = -1;
+        /// <summary>A campaign level runs in this orbit (Mission::isCampaignMission on the level mission).</summary>
+        public static bool InCampaignLevel;
+
+        /// <summary>Level::assignGuns 0xcb638, one NPC gun: b = clamp(int(0.9 (rank - 2)), 0, 20), d = int(b x (1 + difficulty
+        /// - 0.5)) (22 above 21), base = d + 2 (3 for 0); campaign 4 = 1. The Wanted target (freelance type 6, not a friend) and the
+        /// Challenge rival (type 0xc, the always-friend) fire rank + base at 28 u/ms. Void (not a friend): x2 at 0x10, else
+        /// x0.8; campaign 0x31-0x34 / 0x38 = 5 (not the 0x10 Void); 0x50 turrets x1.7; 0x46 x2.5 (not wingmen); race 10 x0.7;
+        /// 7 pirates x0.5; a campaign level failed 3+ times in a row: hostile ships x0.7.</summary>
+        public static int GunDamage(SpawnSpec spec, bool wingman, bool turret, out float speed)
         {
+            int campaign = Session.CampaignMission;
             float f = 0.9f * (Session.Rank - 2);
             int b = f >= 20 ? 20 : f < 0 ? 0 : (int)f;
             int d = (int)(b * Difficulty);
             if (d > 21) d = 22;
-            int dmg = d == 0 ? 3 : d + 2;
-            if (race == 9) dmg = (int)(dmg * 0.8f); else if (race == 10) dmg = (int)(dmg * 0.7f);
-            // Level::assignGuns: the same campaign mission failed 3+ times in a row -> NPC guns x0.7.
-            if (!Session.FreePlay && Session.FailCount >= 3 && Session.LastFailedMission == Session.CampaignMission) dmg = (int)(dmg * 0.7f);
+            int baseDmg = d == 0 ? 3 : d + 2;
+            int dmg = !Session.FreePlay && campaign == 4 ? 1 : baseDmg;
+            speed = GunSpeed;
+            if ((LevelFreelanceType == MissionType.Wanted && !spec.alwaysFriend) || (LevelFreelanceType == MissionType.Challenge && spec.alwaysFriend))
+            {
+                dmg = Session.Rank + baseDmg;
+                speed = 28f;
+            }
+            bool story = !Session.FreePlay;
+            if (!wingman && !spec.alwaysFriend && spec.race == Standing.Void)
+            {
+                if (story && campaign == 0x10) dmg *= 2;
+                else { dmg = (int)(dmg * 0.8f); if (story && IsHull270Mission(campaign)) dmg = 5; }
+            }
+            else if (story && IsHull270Mission(campaign)) dmg = 5;
+            if (story && campaign == 0x50 && turret) dmg = (int)(dmg * 1.7f);
+            if (story && campaign == 0x46 && !wingman) dmg = (int)(dmg * 2.5f);
+            if (spec.race == Standing.Specter) dmg = (int)(dmg * 0.7f);
+            if (story && campaign == 7 && spec.race == Standing.Pirate) dmg = (int)(dmg * 0.5f);
+            // The same campaign mission failed 3+ times in a row -> the hostile ships' guns x0.7.
+            if (story && InCampaignLevel && Session.FailCount >= 3 && Session.LastFailedMission == campaign && !spec.alwaysFriend && !wingman) dmg = (int)(dmg * 0.7f);
             return Mathf.Max(1, dmg);
         }
+
+        /// <summary>Level::createShip / assignGuns' mask 0x8f from 0x31: campaign 0x31-0x34 and 0x38 (the Valkyrie K'Suukk
+        /// escape): every ship's hull is 270 and every gun does 5.</summary>
+        public static bool IsHull270Mission(int campaign) => !Session.FreePlay && campaign >= 0x31 && campaign <= 0x38 && ((0x8f >> (campaign - 0x31)) & 1) != 0;
+
+        /// <summary>Level::assignGuns: at campaign 0x46 every ship but the wingmen fires the Disruptor Laser (0xb7).</summary>
+        public static int GunItemFor(int race, bool wingman) => !Session.FreePlay && Session.CampaignMission == 0x46 && !wingman ? 183 : GunItem(race);
 
         public static float GunReloadMs => 600f - 2f * StatCampaign;
 

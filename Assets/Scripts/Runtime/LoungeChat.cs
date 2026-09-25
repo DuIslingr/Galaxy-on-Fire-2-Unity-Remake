@@ -369,7 +369,13 @@ namespace GoF2Remake.Data
                     if (refusal != null) return Refuse(refusal);
                     int upFront = Freelance.UpFrontCost(m);
                     if (upFront > Session.Credits) return Refuse(T(203).Replace("#C", C(upFront - Session.Credits)));
-                    ConfirmText = T(865).Replace("#M", m.Name).Replace("#C", C(m.Total));
+                    // SpaceLounge::OnTouchEnd 0x1a0360: a generic agent 865 (+ on Extreme "27 Costs: ..."), a story agent 863.
+                    if (a.IsStory) ConfirmText = T(863);
+                    else
+                    {
+                        ConfirmText = T(865).Replace("#M", m.Name).Replace("#C", C(m.Total));
+                        if (Session.IsExtreme && upFront > 0) ConfirmText += $"\n{T(27)}: {C(upFront)}";
+                    }
                     if (Freelance.Active) ConfirmText += " " + T(864);
                     return Outcome.Confirm;
                 }

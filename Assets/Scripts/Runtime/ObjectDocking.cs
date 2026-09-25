@@ -43,6 +43,9 @@ namespace GoF2Remake.Flight
         /// <summary>The object docked at / being docked at.</summary>
         public NpcShip Target { get; private set; }
         public bool IsDocked => State == Phase.Docked;
+        /// <summary>PlayerEgo::isDockedToDockingPoint for the NPC guns (x0.75 damage).</summary>
+        public static bool PlayerDocked { get; private set; }
+        void OnDestroy() => PlayerDocked = false;
         public bool Busy => State != Phase.Idle;
         /// <summary>The hacking game while docked at a type-3 object (PlayerEgo+0x1e8), null otherwise.</summary>
         public HackingGame Hacking { get; private set; }
@@ -97,6 +100,7 @@ namespace GoF2Remake.Flight
             if (!NearestPoints(target, points)) return false;
             Target = target;
             State = Phase.Approach;
+            weapons?.ResetGunDelay();   // PlayerEgo::approachDockingPoint
             phaseMs = 0f;
             ship.SetThrottle(1f);
             ship.autopilotTarget = () => Target != null ? Target.transform.TransformPoint(approachLocal) : ship.transform.position;
@@ -185,6 +189,7 @@ namespace GoF2Remake.Flight
 
         void LateUpdate()
         {
+            PlayerDocked = IsDocked;
             // TargetFollowCamera::setLookAtCam(true): the camera stays where it is and keeps the ship in view.
             if (State != Phase.Entering && State != Phase.Docked && State != Phase.Leaving) return;
             var cam = Camera.main;
@@ -226,6 +231,7 @@ namespace GoF2Remake.Flight
             ship.ExternalSpeedMetersPerSecond = 0f;
             if (phaseMs < EnterMs) return;
             State = Phase.Docked;
+            weapons?.ResetGunDelay();   // PlayerEgo::dockToDockingPoint
             phaseMs = tickMs = 0f;
             noCabinShown = transferDoneShown = hackWonReported = false;
             TransferLabel = null;

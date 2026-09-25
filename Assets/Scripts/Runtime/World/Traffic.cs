@@ -65,6 +65,9 @@ namespace GoF2Remake.World
             Security = sys?.securityLevel ?? 0;
             blackMarket = layout.systemIndex == 25;
             hasScanner = Shop.FirstMounted(db, 17) != null;
+            // MGame::OnInitialize: the elite medal counters that only count within one level.
+            if (hasScanner) Session.BlindKills = 0;
+            Session.EmpDisabledNow = Session.RocketAsteroids = 0;
             if (station != null) StationPosition = station.transform.position;
 
             fxRoot = new GameObject("NPC weapon fx").transform;
@@ -90,15 +93,11 @@ namespace GoF2Remake.World
             music.playOnAwake = false;
             music.spatialBlend = 0f;
 
-            // MGame::OnUpdate hints 0x23 / 0x24 (npc_combat_specials.md 3.5): the first Nivelian system visit, then a later one.
-            if (!storyOrbit && SystemRace == 2)
-            {
-                if (Session.Hints.Add(0x23)) Radio(443, 443, 2);
-                else if (Session.Hints.Add(0x24)) Radio(444, 444, 2);
-            }
             // Level::initParticleSystems: the red static fog around a pirate base's outpost.
             foreach (var s in Ships) if (s.Spec.group == NpcGroup.Outpost) SpawnRedFog(s.transform.position);
 
+            SetupLoma();
+            SetupVoidChatter();
             // Level+0x18a: back at a station whose race the player attacked.
             if (Session.AttackedStations.Contains(StationIndex))
             {
@@ -129,7 +128,34 @@ namespace GoF2Remake.World
             var ship = go.AddComponent<NpcShip>();
             Ships.Add(ship);
             ship.Setup(this, db, spec, prefab, fxRoot);
+            if (spec.turretAssembly == null && spec.fixedObject == null && !spec.freighter && (spec.ship == 45 || spec.ship == 51))
+                AttachFighterTurret(ship);
             return ship;
+        }
+
+        /// <summary>Level::createFighterTurrets 0xcb200: ship 45 (Qyrr Myfft's) and 51 (Hans') carry an invulnerable turret
+        /// object 0x1a74 with the host's max hull at the ship-relative (0, 172.25, -460.7) / (0, 470, -83), race 8 / 0
+        /// (PlayerTurret::setHost); Level::assignGuns gives it item 22 at x0.5. It follows its host (NpcShip.SyncTurret).</summary>
+        void AttachFighterTurret(NpcShip host)
+        {
+            bool myfft = host.Spec.ship == 45;
+            var spec = new SpawnSpec
+            {
+                group = NpcGroup.Turret, race = myfft ? Standing.Pirate : 0, ship = -1, turretAssembly = "turret_002_static",
+                hitpoints = Mathf.Max(1, host.Hp.maxHull), noLoot = true, nameText = 1666, stationary = true,
+                alwaysEnemy = host.Spec.alwaysEnemy, alwaysFriend = host.Spec.alwaysFriend, position = host.Spec.position,
+            };
+            var t = Create(spec);
+            var off = myfft ? new Vector3(0f, 172.25f, -460.7f) : new Vector3(0f, 470f, -83f);
+            t.transform.SetParent(host.transform, false);
+            t.transform.localPosition = new Vector3(-off.x, off.y, off.z) * M;   // ship-relative offsets: (-x, y, z) x 0.05
+            t.transform.localRotation = Quaternion.identity;
+            t.Target.invulnerable = true;
+            // Remake: no hit cube of its own (the +-1000 turret cube would soak up the shots at its host) and no lock.
+            t.Target.radius = 0f;
+            t.Target.untargetable = true;
+            t.SetGun(22, 0.5f);
+            host.AttachedTurret = t;
         }
 
         /// <summary>Level::createWingmen 0xcb338: the hired wingmen next to the player (after every other ship). The model
@@ -178,10 +204,13 @@ namespace GoF2Remake.World
         /// 'playerExempt': ships of these races leave the player out (campaign 16 / 24 / 28: the Void attack the others).</summary>
         public void ConnectPlayers(int playerExemptRace = -99)
         {
+            // Level::connectPlayers 0xcc330: in free flight (Mission::isEmpty) a Specter's only enemy is the player (setEnemy).
+            bool freeFlight = !NpcTables.InCampaignLevel && NpcTables.LevelFreelanceType < 0;
             foreach (var s in Ships)
             {
                 s.enemies.Clear();
                 if (Player != null && s.Race != playerExemptRace) s.enemies.Add(Player);
+                if (freeFlight && s.Race == Standing.Specter) continue;
                 foreach (var o in Ships) if (o != s && o.Race != s.Race) s.enemies.Add(o.Target);
             }
         }
@@ -218,11 +247,15 @@ namespace GoF2Remake.World
 
         /// <summary>Speaker image by race: 0 -> 64, 2 -> 65, 3 -> 21, 8 -> 9 (Pirate Boss), else 63; the name 1597 + image. The
         /// voice: Globals::getDialogueSoundId(text, Agent(race, male)) (GenericVoice).</summary>
+        /// <summary>Level::createRadioMessage replaces the level's radio list (Radio::setMessages): a new line cuts the old.
+        /// ImageFactory::createChar is asked for a male face every time.</summary>
         void Radio(int firstText, int lastText, int race)
         {
+            chatterQueue.Clear();
+            chatter = null;
             int image = race == 0 ? 64 : race == 2 ? 65 : race == 3 ? 21 : race == 8 ? 9 : 63;
             int text = UnityEngine.Random.Range(firstText, lastText + 1);
-            bool male = UnityEngine.Random.value < 0.8f;
+            const bool male = true;
             var c = new Chatter { text = Localization.Get(text), speaker = Localization.Get(1597 + image) };
             if (image == 9) c.speakerId = 9;
             else c.portrait = AgentGenerator.CreatePortrait(male, race == 0 || race == 2 || race == 3 ? race : 1);
@@ -268,6 +301,116 @@ namespace GoF2Remake.World
             Radio(438, 440, Standing.Pirate);
         }
 
+        // ---- Alice in the Void (MGame::OnInitialize -> Level::createRadioMessage(8), tables 0x2541c8 / 0x2543a0) ---------
+
+        /// <summary>Per conversation the number of lines (DAT_002543a0) and the (speaker image, text) pairs (DAT_002541c8):
+        /// 0x1a Alice, 0 Keith, 0x1f the other voice.</summary>
+        static readonly int[] VoidTalkCounts = { 2, 2, 2, 4, 3, 3, 2, 3 };
+        static readonly (int image, int text)[] VoidTalk =
+        {
+            (0x1a, 2453), (0, 2454), (0x1a, 2455), (0, 2456), (0x1a, 2457), (0, 2458), (0x1a, 2459), (0, 2460), (0x1a, 2461),
+            (0x1f, 2462), (0x1a, 2463), (0, 2464), (0x1a, 2465), (0, 2466), (0x1a, 2467), (0x1f, 2468), (0x1a, 2469), (0, 2470),
+            (0x1a, 2471), (0, 2472), (0x1a, 2473),
+        };
+
+        /// <summary>After the Valkyrie add-on (Status::dlc1Won), in the alien orbit before campaign 0x93: one of eight short
+        /// talks between Alice and Keith (the first line after 5000 ms, the rest chained), voiced.</summary>
+        void SetupVoidChatter()
+        {
+            if (Session.FreePlay || StationIndex != Session.VoidOrbit || !Story.Dlc1Won || Session.CampaignMission >= 0x93) return;
+            int c = UnityEngine.Random.Range(0, 8), start = 0;
+            for (int i = 0; i < c; i++) start += VoidTalkCounts[i];
+            for (int i = 0; i < VoidTalkCounts[c] && start + i < VoidTalk.Length; i++)
+            {
+                var (image, text) = VoidTalk[start + i];
+                QueueLine(text, image, GenericVoice.For(text));
+            }
+        }
+
+        // ---- Loma's pirate toll (MGame::OnInitialize / OnUpdate / OnTouchEnd, Player::damage; Status+0x110 / +0x111) --------
+
+        /// <summary>A ChoiceWindow in flight: (text, yes, no, on yes, on no); the game pauses meanwhile.</summary>
+        public event Action<string, string, string, Action, Action> ChoiceRequested;
+        /// <summary>The toll is paid: Loma's pirates are neither hostile nor friendly (PlayerFighter::update).</summary>
+        public bool LomaTollPaid => blackMarket && Session.LomaTollPaid;
+        /// <summary>The launch / arrival camera runs (SpaceLevel): the wingmen drift meanwhile.</summary>
+        public Func<bool> LaunchCameraRunning;
+        bool lomaAskPending;
+        int lomaToll, lomaPercent;
+
+        /// <summary>MGame::OnInitialize: outside system 25 both flags clear. In Loma the pirates hold fire (KIPlayer+0x21 = 0)
+        /// unless the toll was refused; a new visitor hears radio 9 (449 / 450) and is asked afterwards, one who refused
+        /// radio 0xd (455 / 456).</summary>
+        void SetupLoma()
+        {
+            if (!blackMarket) { Session.LomaTollPaid = Session.LomaTollRefused = false; return; }
+            if (Session.LomaTollRefused) { Radio(455, 456, Standing.Pirate); return; }
+            SetPiratesArmed(false);
+            if (Session.LomaTollPaid) return;
+            Radio(449, 450, Standing.Pirate);
+            lomaAskPending = true;
+        }
+
+        void SetPiratesArmed(bool on)
+        {
+            foreach (var s in Ships) if (s.Race == Standing.Pirate) s.shootingEnabled = on;
+        }
+
+        /// <summary>MGame::OnUpdate: once the arrival radio is over, the toll 448: the cargo's value (amount x single price,
+        /// 100 when empty) x 2 / 5 / 10 / 20 % by difficulty (0 / 0.5 / 1.0 / Extreme); #P = the percentage.</summary>
+        void UpdateLomaToll()
+        {
+            if (!lomaAskPending || chatter != null || chatterQueue.Count > 0 || Player == null || !Player.Alive) return;
+            lomaAskPending = false;
+            int value = 0;
+            int priceStation = Session.PreviousStationIndex >= 0 ? Session.PreviousStationIndex : StationIndex;
+            var items = Session.Cargo.ConvertAll(c => c.item);
+            var prices = Shop.PriceList(db, priceStation, items);
+            for (int i = 0; i < items.Count; i++) value += prices[i] * Session.Cargo[i].amount;
+            if (value == 0) value = 100;
+            float d = Session.Difficulty;
+            float f = d <= 0f ? 0.02f : d == 0.5f ? 0.05f : d == 1f ? 0.1f : 0.2f;
+            lomaPercent = Mathf.RoundToInt(f * 100f);
+            lomaToll = (int)(f * value);
+            string text = Localization.Get(448).Replace("#C", GoF2Remake.UI.ItemInfo.Credits(lomaToll)).Replace("#P", lomaPercent.ToString());
+            ChoiceRequested?.Invoke(text, Localization.Get(134), Localization.Get(135), PayLomaToll, RefuseLomaToll);
+        }
+
+        /// <summary>Yes: with the credits, pay (radio 10: 451 / 452), the pirates stay quiet; without, 203 and they attack.</summary>
+        void PayLomaToll()
+        {
+            if (Session.Credits < lomaToll)
+            {
+                ChoiceRequested?.Invoke(Localization.Get(203).Replace("#C", GoF2Remake.UI.ItemInfo.Credits(lomaToll - Session.Credits)), null, null, null, null);
+                RefuseLomaToll();
+                return;
+            }
+            Session.Credits -= lomaToll;
+            Session.LomaTollPaid = true;
+            SetPiratesArmed(false);
+            Radio(451, 452, Standing.Pirate);
+        }
+
+        /// <summary>No (or too poor): the pirates arm, the refusal is remembered (+0x111), radio 0xb (453 / 454).</summary>
+        void RefuseLomaToll()
+        {
+            SetPiratesArmed(true);
+            Session.LomaTollRefused = true;
+            Radio(453, 454, Standing.Pirate);
+        }
+
+        /// <summary>Player::damage on a pirate in Loma: Level::alarmAllFriends(8) (radio 0xc, 453), every pirate armed, the
+        /// toll revoked.</summary>
+        public void LomaPirateHit()
+        {
+            if (!blackMarket) return;
+            lomaAskPending = false;
+            AlarmAllFriends(Standing.Pirate, true);
+            SetPiratesArmed(true);
+            Session.LomaTollRefused = true;
+            Session.LomaTollPaid = false;
+        }
+
         /// <summary>SET_FOG_STATIC (space_props.md 4): 30 sprites of 32768 units within +-40000 of the outpost, colour
         /// 0xE2282880, forever, not tied to the camera.</summary>
         void SpawnRedFog(Vector3 at)
@@ -311,12 +454,15 @@ namespace GoF2Remake.World
             foreach (var s in Ships.ToArray()) s.DestroyAsTurret();
         }
 
+        /// <summary>createRadioMessage kinds 0 / 1 say nothing at one of step 59's target stations (Status+0x90).</summary>
+        bool AtStoryTarget => !Session.FreePlay && Session.StoryTargets != null && Session.StoryTargets.Contains(StationIndex);
+
         /// <summary>Level::friendTurnedEnemy: radio 0 once per level.</summary>
         public void FriendTurnedEnemy(int race)
         {
             if (radioTurned) return;
             radioTurned = true;
-            Radio(426, 428, race);
+            if (!AtStoryTarget) Radio(426, 428, race);
         }
 
         /// <summary>Level::alarmAllFriends: every ship of 'race' turns hostile; radio 1 once; the station remembers it.</summary>
@@ -326,7 +472,8 @@ namespace GoF2Remake.World
             if (radio && !radioAlarm)
             {
                 radioAlarm = true;
-                Radio(429, 431, race);
+                if (blackMarket) Radio(453, 453, race);   // kind 0xc in the black market
+                else if (!AtStoryTarget) Radio(429, 431, race);
                 if (race == SystemRace) Session.AttackedStations.Add(StationIndex);
             }
         }
@@ -345,11 +492,13 @@ namespace GoF2Remake.World
             var fm = Session.FreelanceMission;
             if (fm != null && fm.type == MissionType.Informer && fm.target == StationIndex)
             {
-                if (ship.Spec.nameText == 1663) Session.InformerKilled = true;
-                else if (byPlayer && !Session.InformerKilled) Session.InformerFailed = true;
+                // PlayerFighter::update 0xf1c8c: any other ship dying first (whoever killed it) spoils it (+0xf1), and after
+                // that the spy's death no longer counts.
+                if (ship.Spec.nameText == 1663) { if (!Session.InformerFailed) Session.InformerKilled = true; }
+                else if (!Session.InformerKilled) Session.InformerFailed = true;
             }
             // PlayerFighter::update's death: a Most Wanted criminal pays its bounty whoever killed it; no standing hit.
-            if (ship.Spec.wantedIndex >= 0) { WantedKilled(ship); if (byPlayer && ship.Target.hostileToPlayer) Session.Kills++; return; }
+            if (ship.Spec.wantedIndex >= 0) { WantedKilled(ship); if (byPlayer && ship.Target.hostileToPlayer) CountKill(); return; }
             if (!byPlayer || blackMarket) return;
             // Player::damage: the convoy freighter ("Arms delivery") destroyed by the Liberator (0xb3) -> step 59's bonus.
             if (ship.Spec.convoyRole == SpawnSpec.ConvoyFreighter && ship.Target.lastPlayerWeapon == 179 && Session.StoryMission != null)
@@ -359,9 +508,16 @@ namespace GoF2Remake.World
             {
                 if (PlayerHealth.EmergencyActive) Session.GraveRiserKills = Mathf.Max(Session.GraveRiserKills, ++emergencyKills);
                 else emergencyKills = 0;
-                Session.Kills++;
+                CountKill();
                 if (ship.Race == Standing.Pirate) Session.PirateKills++;
             }
+        }
+
+        /// <summary>Level::enemyDied: Status::incKills; without a scanner also Status+0x11c (medal 40 Blindfolded Killer).</summary>
+        void CountKill()
+        {
+            Session.Kills++;
+            if (!hasScanner && !Achievements.Has(40)) Achievements.Elite(40, ++Session.BlindKills);
         }
 
         void Update()
@@ -370,6 +526,7 @@ namespace GoF2Remake.World
             UpdateOrbit(dtMs);
             UpdateAlienAttackers(dtMs);
             UpdateChatter(dtMs);
+            UpdateLomaToll();
             UpdateConvoy();
             UpdateWanted();
             int hostiles = 0;
@@ -518,7 +675,7 @@ namespace GoF2Remake.World
         /// <summary>Level::createRadioMessage(0x10 / 0x11 / 0x12): Keith (speaker 0) or the criminal (image 10000 + i: its face).</summary>
         void WantedLine(int text, int wantedSpeaker, WantedData w)
         {
-            var c = new Chatter { text = Localization.Get(text) };
+            var c = new Chatter { text = Localization.Get(text), voice = GenericVoice.For(text) };   // voice_table.json (WANTED_*)
             if (wantedSpeaker < 0) { c.speakerId = 0; c.speaker = Localization.Get(1597); }
             else { c.portrait = w.portraitParts; c.speaker = w.name; }
             chatterQueue.Enqueue(c);
@@ -538,7 +695,8 @@ namespace GoF2Remake.World
         void UpdateConvoy()
         {
             if (convoyFreighter == null || convoyStep >= 2 || Player == null) return;
-            if (convoyStep == 0 && (convoyFreighter.transform.position - Player.transform.position).magnitude < 50000f * 0.05f)
+            // A cloaked player (Player+0x5e) doesn't raise the alarm.
+            if (convoyStep == 0 && !Player.cloaked && (convoyFreighter.transform.position - Player.transform.position).magnitude < 50000f * 0.05f)
             {
                 foreach (var s in Ships) if (s.Spec.convoyRole > 0) s.alwaysEnemy = true;
                 ConvoyRadio(0x88f, false);
@@ -549,6 +707,8 @@ namespace GoF2Remake.World
             for (int i = 0; i < Session.StoryTargets.Count; i++) if (Session.StoryTargets[i] == StationIndex) Session.StoryTargets[i] = -1;
             ConvoyRadio(0x88e, true);
             ConvoyRoute = null;
+            // PlayerEgo::setAutoPilot(null) + setRoute(null) + Level::setPlayerRoute(null).
+            Player.GetComponent<Navigation>()?.SetAutopilot(null);
             ConvoyDone?.Invoke();
             convoyStep = 2;
         }
@@ -604,6 +764,9 @@ namespace GoF2Remake.World
         void UpdateAlienAttackers(float dtMs)
         {
             if (!VoidAttack) return;
+            // Level::updateAlienAttackers 0xd5ce0: not during the campaign levels 0x28 / 0x93 / 0x9a (they place their own).
+            int cm = Session.CampaignMission;
+            if (!Session.FreePlay && NpcTables.InCampaignLevel && (cm == 0x28 || cm == 0x93 || cm == 0x9a)) return;
             alienMs += dtMs;
             if (alienMs < (Session.CampaignMission == 41 ? 10000f : 45000f)) return;
             alienMs = 0f;
@@ -613,7 +776,8 @@ namespace GoF2Remake.World
                 Vector3 at;
                 float R(float r) => UnityEngine.Random.Range(-r, r);
                 if (Wormhole != null && Wormhole.Visible) at = Wormhole.transform.position + new Vector3(R(10000f), R(10000f), R(10000f)) * M;
-                else if (Player != null) at = Player.transform.position + new Vector3(R(40000f), R(30000f), -40000f) * M;
+                else if (Player != null)   // the player's x / y +- 40000 / 30000 and a world z of +-40000 (DAT_000d5fbc / c0)
+                    at = new Vector3(Player.transform.position.x + R(40000f) * M, Player.transform.position.y + R(30000f) * M, (UnityEngine.Random.Range(0, 2) == 0 ? 40000f : -40000f) * M);
                 else continue;
                 s.Revive(at);
             }
@@ -654,7 +818,12 @@ namespace GoF2Remake.World
         {
             if (assets == null || music == null) return;
             if (MusicMuted) { if (music.isPlaying) music.Stop(); musicCategory = pendingCategory = -1; return; }
+            // Radar::draw 0x157c6c: while 143 IntroAtmo plays nothing switches.
+            var introAtmo = StoryAssets.Load()?.introAtmo;
+            if (introAtmo != null && music.clip == introAtmo && music.isPlaying) { music.volume = fade * Settings.MusicVolume; return; }
             int cat = HostileCount <= 0 ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
+            // At campaign 0x91 (the plasma array's destruction) a calm orbit never brings the calm track back.
+            if (cat == 0 && musicCategory > 0 && !Session.FreePlay && Session.CampaignMission == 0x91) cat = musicCategory;
             // Radar::draw: an uncovered Most Wanted criminal -> 151; hostile Specters (race 10) -> 149 / 150.
             if (cat > 0 && WantedUncovered) cat = 4;
             else if (cat > 0 && SpectersHostile) cat = cat >= 3 ? 6 : 5;

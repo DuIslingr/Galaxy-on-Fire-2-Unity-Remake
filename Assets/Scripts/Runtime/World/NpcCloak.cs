@@ -18,8 +18,14 @@ namespace GoF2Remake.World
         const float FadeMs = 2000f, RollEveryMs = 8000f;
         static readonly int AnimValueId = Shader.PropertyToID("_AnimValue"), CloakRateId = Shader.PropertyToID("_CloakRate");
 
-        /// <summary>setCloakingPossible: the ship may cloak on its own (handleCloaking).</summary>
-        public bool Possible = true;
+        /// <summary>setCloakingPossible 0xf0ae4: the ship may cloak on its own (handleCloaking); switched off while cloaked,
+        /// the cloak's timer jumps past its end (the ship shows again).</summary>
+        public bool Possible
+        {
+            get => possible;
+            set { possible = value; if (!value && Cloaked) Stop(); }
+        }
+        bool possible = true;
         public bool Cloaked => totalMs > 0f;
         /// <summary>Off the radar / lock: cloaked more than a quarter.</summary>
         public bool Hidden => Cloaked && Percentage >= 25f;
@@ -68,12 +74,13 @@ namespace GoF2Remake.World
             }
         }
 
-        /// <summary>PlayerFighter::cloak(ms): cloaked for 'ms' (including the fades); 0 ends it.</summary>
-        public void Cloak(float ms)
+        /// <summary>PlayerFighter::cloak(ms, instant) 0xf0aa4: cloaked for ms + 4000 (the two fades on top; below 1 ms
+        /// 5000 + rnd(5000)); 'instant' starts fully cloaked (the timer at 2000).</summary>
+        public void Cloak(float ms, bool instant = false)
         {
-            if (ms <= 0f) { Stop(); return; }
-            totalMs = Mathf.Max(ms, 2f * FadeMs);
-            elapsedMs = 0f;
+            if (ms < 1f) ms = 5000f + Random.Range(0, 5000);
+            totalMs = ms + 2f * FadeMs;
+            elapsedMs = instant ? FadeMs : 0f;
         }
 
         public void Stop()
@@ -82,16 +89,18 @@ namespace GoF2Remake.World
             Swap(false);
         }
 
-        /// <summary>Per frame; 'mayRoll' = its AI runs (not asleep, frozen or in a cutscene), 'panicking' = PlayerFighter+0x... .</summary>
-        public void Update(float dtMs, bool mayRoll, bool panicking)
+        /// <summary>Per frame (handleCloaking 0xf0b00: nothing moves while the ship is EMP-disabled); 'mayRoll' = it may cloak on
+        /// its own (awake), 'panicking' = PlayerFighter+0x1d8.</summary>
+        public void Update(float dtMs, bool mayRoll, bool panicking, bool empDisabled = false)
         {
+            if (empDisabled) return;
             if (!Cloaked)
             {
                 if (!Possible || !mayRoll) return;
                 rollMs += dtMs;
                 bool roll = panicking ? Random.Range(0, 100) < 50 : rollMs >= RollEveryMs && Random.Range(0, 100) < 30;
                 if (rollMs >= RollEveryMs) rollMs = 0f;
-                if (roll) Cloak(9000f + Random.Range(0, 5000));
+                if (roll) { totalMs = 9000f + Random.Range(0, 5000); elapsedMs = 0f; }   // +0x2c4 = 9000 + rnd(5000), fades included
                 return;
             }
             elapsedMs += dtMs;

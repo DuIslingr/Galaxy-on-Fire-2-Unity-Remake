@@ -1,9 +1,10 @@
 // PauseMenu.cs
 // The in-flight pause menu (MenuTouchWindow mode 1, Reference/research/mainmenu_notes.md 2.4): header 40 "Pause", then
-// 41 Resume, 129 Missions, 166 Cargo hold, 31 Options, 395 Skip (the original only for a few cutscenes; here the
-// prologue / rescue, IntroCutscenes.Skip) and 522 Back to Main Menu (confirm 523). The game and its sounds pause while it
-// is open. Options holds the main menu's options (OptionsCatalog) but the language. Not built:
-// 59 Action Freeze (photo mode) and the screenshot share buttons (60 / 61).
+// 41 Resume, 129 Missions (from campaign 16, not in the alien orbit), 166 Cargo hold (from 2), 31 Options, 59 Action Freeze
+// (PhotoMode), 395 Skip (LevelScript::canSkipCutsceneNow: the prologue / rescue, 154, 157, 158) and 522 Back to Main Menu
+// (confirm 523). The game and its sounds pause while it is open. Options holds the main menu's options (OptionsCatalog)
+// but the language. Also the ChoiceWindow (Ask: Loma's toll 448, the flight hints). The share buttons (60 / 61) are dead
+// code in the original (the remake's 60 saves the picture).
 // Plain class driven by FlightHud: Esc / controller Menu / the touch Menu button open it; Esc / B step back.
 
 using System;
@@ -19,7 +20,7 @@ namespace GoF2Remake.UI
 {
     public class PauseMenu
     {
-        enum Page { Main, Missions, Cargo, Options, Quit, Photo }
+        enum Page { Main, Missions, Cargo, Options, Quit, Photo, Choice }
 
         readonly VisualElement backdrop, panel, body;
         readonly Label title;
@@ -61,6 +62,22 @@ namespace GoF2Remake.UI
         }
 
         // ---- open / close -----------------------------------------------------------------------------------
+
+        string choiceText, choiceYes, choiceNo;
+        Action choiceOnYes, choiceOnNo;
+
+        /// <summary>A ChoiceWindow in flight (MGame+0x90, e.g. Loma's toll 448): the game and its sounds pause (MGame+0x5d,
+        /// pauseSounds) until it is answered; Back picks the second answer. 'no' null = a message with one button.</summary>
+        public void Ask(SpaceLevel spaceLevel, string text, string yes, string no, Action onYes, Action onNo)
+        {
+            choiceText = text;
+            choiceYes = yes;
+            choiceNo = no;
+            choiceOnYes = onYes;
+            choiceOnNo = onNo;
+            if (!IsOpen) Open(spaceLevel);
+            Show(Page.Choice);
+        }
 
         public void Open(SpaceLevel spaceLevel)
         {
@@ -105,11 +122,13 @@ namespace GoF2Remake.UI
                 case Page.Main:
                     title.text = T(40);
                     Item(T(41), Close);
-                    Item(T(129), () => Show(Page.Missions));
-                    Item(T(166), () => Show(Page.Cargo));
+                    // MenuTouchWindow mode 1: Missions from campaign 16 (not in the alien orbit), the cargo hold from 2.
+                    int cm = Session.FreePlay ? 20 : Session.CampaignMission;
+                    if (cm >= 16 && (level == null || !level.Layout.alienOrbit)) Item(T(129), () => Show(Page.Missions));
+                    if (cm >= 2) Item(T(166), () => Show(Page.Cargo));
                     Item(T(31), () => Show(Page.Options));
-                    var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
-                    if (intro != null && intro.CanSkip) Item(T(395), () => { Close(); intro.Skip(); });
+                    var campaign = level != null ? level.Campaign : null;
+                    if (campaign != null && campaign.CanSkipCutscene) Item(T(395), () => { Close(); campaign.SkipCutscene(); });
                     // MGame::setCinematicMode: not while a cutscene holds the camera.
                     if (Photo != null && level != null && !level.Cutscene) Item(T(59), () => Show(Page.Photo));
                     Item(T(522), () => Show(Page.Quit));
@@ -119,6 +138,13 @@ namespace GoF2Remake.UI
                     Photo.Enter(level);
                     if (!Photo.Active) { backdrop.AddToClassList("pause-backdrop--shown"); Show(Page.Main); }
                     return;
+                case Page.Choice:
+                    title.text = "";
+                    Text(choiceText);
+                    InfoSound?.Invoke();
+                    Item((choiceYes ?? Localization.Extra("ok", "OK")).ToUpperInvariant(), () => { Close(); var a = choiceOnYes; choiceOnYes = choiceOnNo = null; a?.Invoke(); });
+                    if (choiceNo != null) Item(choiceNo.ToUpperInvariant(), () => { Close(); var a = choiceOnNo; choiceOnYes = choiceOnNo = null; a?.Invoke(); });
+                    break;
                 case Page.Quit:
                     title.text = T(522);
                     Text(Localization.Get(523));
@@ -269,7 +295,8 @@ namespace GoF2Remake.UI
                         || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame));
             if (back)
             {
-                if (page == Page.Main) Close(); else Show(Page.Main);
+                if (page == Page.Choice) actions[actions.Count - 1]?.Invoke();   // the second answer (or the only one)
+                else if (page == Page.Main) Close(); else Show(Page.Main);
                 return;
             }
             int move = 0;

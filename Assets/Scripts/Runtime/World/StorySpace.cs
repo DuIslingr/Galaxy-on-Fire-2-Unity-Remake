@@ -79,6 +79,7 @@ namespace GoF2Remake.World
             if (levelMs >= 5000f && !DialogueOpen) CheckAddonEntry();
             if (levelMs >= 5000f && !DialogueOpen && !level.Navigation.Jumping && (level.SystemJump == null || !level.SystemJump.Cinematic))
             {
+                if (CheckReminder()) return;
                 CheckPassengerComplaint();
                 CheckChapterCall();
             }
@@ -87,6 +88,32 @@ namespace GoF2Remake.World
 
         /// <summary>Playing time since the step began (Status::getPlayingTime - Status+0x100), ms.</summary>
         static float StepAgeMs => (Session.PlaySeconds - Session.StoryStepStart) * 1000f;
+
+        /// <summary>MGame::OnUpdate at 0x17 / 0x18 in free flight (no level mission, not mining): an hour of playing time after
+        /// the step began, the passenger's nag (Tommy 533 / 534, Carla 535 / 536, voiced; the step clock restarts); at 0x18
+        /// with a sort-13 item (the tractor beam) aboard, once, Carla's "Okay, let's go to Sahi." (1912, hint 0x25).</summary>
+        bool CheckReminder()
+        {
+            int n = Story.Index;
+            if ((n != 0x17 && n != 0x18) || campaign != null || level.FreelanceOrbit != null) return false;
+            if (level.Mining != null && level.Mining.State != Flight.Mining.Phase.Idle) return false;
+            if (StepAgeMs > 3600000f)
+            {
+                int k = UnityEngine.Random.Range(0, 2);
+                var page = n == 0x17
+                    ? new DialoguePage { speaker = 5, text = 533 + k, voice = k == 0 ? "MSG_MISSION_23_REMINDER" : "MSG_MISSION_23_REMINDER_2" }
+                    : new DialoguePage { speaker = 6, text = 535 + k, voice = k == 0 ? "MSG_MISSION_24_REMINDER" : "MSG_MISSION_24_REMINDER_2" };
+                Session.StoryStepStart = Session.PlaySeconds;
+                Open(new List<DialoguePage> { page }, null);
+                return true;
+            }
+            if (n == 0x18 && Shop.FirstMounted(level.Database, 13) != null && Session.Hints.Add(0x25))
+            {
+                Open(new List<DialoguePage> { new DialoguePage { speaker = 6, text = 1912, voice = "MISSION_REMINDER_24" } }, null);
+                return true;
+            }
+            return false;
+        }
 
         static readonly string[] ComplaintVoices =
             { "MOONSPROCKET_PASSENGER_TALK_0_0", "MOONSPROCKET_PASSENGER_TALK_0_1_Alt2", "MOONSPROCKET_PASSENGER_TALK_1_0", "MOONSPROCKET_PASSENGER_TALK_1_1" };
@@ -128,8 +155,9 @@ namespace GoF2Remake.World
             int bit = System.Array.IndexOf(FreighterStations, level.Layout.stationIndex);
             if (bit < 0 || (Story.Mission.value & (1 << bit)) != 0) return;
             Story.Mission.value |= 1 << bit;
-            level.Traffic.QueueLine(0xaf4 + UnityEngine.Random.Range(0, 4), 0);
-            level.Traffic.QueueLine(0xafa + UnityEngine.Random.Range(0, 4), 0);
+            int a = 0xaf4 + UnityEngine.Random.Range(0, 4), b = 0xafa + UnityEngine.Random.Range(0, 4);
+            level.Traffic.QueueLine(a, 0, GenericVoice.For(a));
+            level.Traffic.QueueLine(b, 0, GenericVoice.For(b));
         }
 
         void CheckSuccess()

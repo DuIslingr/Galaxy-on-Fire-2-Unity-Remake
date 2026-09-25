@@ -155,6 +155,8 @@ namespace GoF2Remake.UI
             list.Add(Slider("sensitivity", OptionPage.Controls, () => Localization.Get(499), 0.2f, 2.2f,
                 () => Settings.Sensitivity, v => Settings.Sensitivity = v, v => v.ToString("0.0")));
             list.Add(Toggle("invert", OptionPage.Controls, () => Localization.Get(500), () => Settings.InvertPitch, v => Settings.InvertPitch = v));
+            if (!Application.isMobilePlatform)
+                list.Add(Toggle("mouseSteering", OptionPage.Controls, () => X("mouseSteering", "Mouse steering"), () => Settings.MouseSteering, v => Settings.MouseSteering = v));
             list.Add(Slider("deadzone", OptionPage.Controls, () => X("deadzone", "Stick dead zone"), 0.05f, 0.4f,
                 () => Settings.StickDeadzone, v => Settings.StickDeadzone = v, Percent));
 

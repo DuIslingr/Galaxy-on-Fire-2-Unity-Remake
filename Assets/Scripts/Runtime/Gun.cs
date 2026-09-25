@@ -84,6 +84,8 @@ namespace GoF2Remake.Flight
         public event Action<int, Target, Vector3> Hit;
         /// <summary>Gun::ignite area damage on one target: (target, hull damage, EMP damage, blast centre).</summary>
         public event Action<Target, int, int, Vector3> AreaHit;
+        /// <summary>A rocket / missile's bullet ran out of life without hitting anything (Gun::update, medal 41's reset).</summary>
+        public event Action<int> Expired;
         /// <summary>A bomb, mine, scatter shell or the shock blast went off at this point (the explosion).</summary>
         public event Action<Vector3> Ignited;
         /// <summary>Any gun's bomb / mine / blast went off (gun, Unity point): the gas clouds listen for the ionizing missiles.</summary>
@@ -144,7 +146,7 @@ namespace GoF2Remake.Flight
             mountLocal = Vector3.zero;
             bullets = new Bullet[pool];
             for (int i = 0; i < pool; i++) bullets[i].timer = -1e9f;
-            reloadAcc = UnityEngine.Random.Range(0f, this.reloadMs);
+            reloadAcc = this.reloadMs + 1f;   // Gun::Gun: the delay starts at the reload time, the first shot is ready
         }
 
         public bool IsActive(int i) => bullets[i].Active(FreeLimit);
@@ -260,6 +262,7 @@ namespace GoF2Remake.Flight
                 }
                 b.timer -= dtMs;
                 b.age += dtMs;
+                if (Coasts && b.timer <= limit) { Expired?.Invoke(i); continue; }   // Gun::update: a rocket ran out
                 if (kind == Kind.ShockBlast) { Ignite(targets); continue; }   // one instant blast at the ship
                 if (kind == Kind.Mine) b.position += b.velocity * dtMs * Mathf.Max(1f - b.age / MineStopMs, 0f);
                 else b.position += b.velocity * dtMs;
@@ -324,7 +327,7 @@ namespace GoF2Remake.Flight
             for (int t = 0; t < targets.Count; t++)
             {
                 var target = targets[t];
-                if (target == null || target == owner || !target.Alive || !target.isShip || !target.hostileToPlayer) continue;
+                if (target == null || target == owner || !target.Alive || !target.isShip || !target.hostileToPlayer || target.mineProof) continue;
                 var d = target.transform.position - b.position;
                 float r = target.radius;
                 if (Mathf.Abs(d.x) >= 5f * r || Mathf.Abs(d.y) >= 5f * r || Mathf.Abs(d.z) >= 5f * r) continue;
@@ -351,6 +354,12 @@ namespace GoF2Remake.Flight
                     * Quaternion.AngleAxis(-stick.y * rateRadPerMs * dtMs * Mathf.Rad2Deg, right);
             b.velocity = rot * fwd * speed;
             b.up = rot * b.up;
+        }
+
+        /// <summary>Every bullet gone without effect (PlayerEgo::killLiberator: the rocket is simply removed).</summary>
+        public void RemoveAll()
+        {
+            for (int i = 0; i < bullets.Length; i++) bullets[i].timer = -1e9f;
         }
 
         /// <summary>Gun::ignite for every bomb in flight (the secondary pressed again).</summary>

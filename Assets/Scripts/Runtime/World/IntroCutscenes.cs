@@ -246,7 +246,7 @@ namespace GoF2Remake.World
                     if (Triggered(14)) Step = 6;
                     break;
                 case 6:
-                    playerSpeed *= Mathf.Pow(0.98f, dtMs / 33.3f);
+                    // (the x0.98 per frame slowdown is state 5's only: the speed holds from here)
                     cam.Rumble = Mathf.Min(1f, stepMs / 4000f);
                     if (Over(15))
                     {

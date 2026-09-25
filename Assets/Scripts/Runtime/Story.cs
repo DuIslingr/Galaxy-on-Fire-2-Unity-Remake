@@ -102,6 +102,7 @@ namespace GoF2Remake.Data
                     RevealSystem(db, 6);
                     RevealSystem(db, 25);
                     Session.Kills = 197;
+                    AddonStartHints(false);
                     break;
                 case Campaign.Supernova:
                     for (int i = 0; i < Dlc1WonIndex; i++) Advance(db);
@@ -112,6 +113,7 @@ namespace GoF2Remake.Data
                     Session.Cargo = new List<ItemStack> { new ItemStack(GalaxyMap.EnergyCellItem, 8) };
                     Session.StationIndex = 70;   // Dis
                     Session.Kills = 386;
+                    AddonStartHints(true);
                     break;
                 default:
                     Session.StationIndex = 78;
@@ -119,6 +121,18 @@ namespace GoF2Remake.Data
                     return "Space";   // module 2: the prologue
             }
             return "Station";
+        }
+
+        /// <summary>startValkyrie / startSupernova: the main game's tutorial hints count as shown (8-0xf, 0x13, 0x15, 0x17,
+        /// 0x1c-0x1e, 0x20-0x24, 0x38; Supernova also 0x26, 0x31, 0x39), medal 23 bronze and 30 (game won) gold.</summary>
+        static void AddonStartHints(bool supernova)
+        {
+            int[] shown = { 0x17, 8, 9, 10, 0x1c, 0x15, 0xd, 0x13, 0xe, 0xf, 0x1d, 0x1e, 0x20, 0x21, 0x22, 0x23, 0x24, 0x38 };
+            foreach (int h in shown) Session.Hints.Add(h);
+            if (supernova) { Session.Hints.Add(0x26); Session.Hints.Add(0x31); Session.Hints.Add(0x39); }
+            if (Session.Medals == null || Session.Medals.Length != Achievements.Count) Session.Medals = new int[Achievements.Count];
+            Session.Medals[23] = 3;
+            Session.Medals[30] = 1;
         }
 
         /// <summary>GameRecord::load 0x180dc4: a save taken inside an in-space chain restarts at the chain's first step
@@ -489,6 +503,8 @@ namespace GoF2Remake.Data
         /// <summary>ModStation::OnInitialize's per-step station tweaks (campaign_flow.md 3.1 6), when docking.</summary>
         public static void OnDocked(Database db, int station, StationStock stock)
         {
+            // ModStation::enterStation: the medal streaks of 38 Ore Athlete / 40 Blindfolded Killer end with the flight.
+            Session.OreStreak = Session.BlindKills = 0;
             // Index 1: the prologue's Phantom becomes Betty with Gunant's Drill and a Telta Quickscan, both unsaleable.
             if (Index == 1 && Session.ShipIndex != 0)
             {

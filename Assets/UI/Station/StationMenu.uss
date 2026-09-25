@@ -314,6 +314,40 @@
     margin-top: 16px;
 }
 
+/* The Menu's Options page (OptionsCatalog rows, OptionControl; like the pause menu). */
+.system-options-heading {
+    margin: 14px 0 4px 0;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--gof-amber);
+}
+
+.system-option {
+    margin: 3px 0;
+    padding: 8px 14px;
+    font-size: 20px;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+}
+
+.system-option Label {
+    font-size: 20px;
+    color: var(--gof-text);
+    min-width: 230px;
+}
+
+.system-option .choice-value {
+    min-width: 0;
+    font-size: 18px;
+    color: var(--gof-cyan);
+}
+
+.system-option .option-description {
+    min-width: 0;
+    font-size: 15px;
+    color: var(--gof-text-dim);
+}
+
 /* Phones: narrower panel. */
 .layout-phone .side-panel {
     width: 380px;

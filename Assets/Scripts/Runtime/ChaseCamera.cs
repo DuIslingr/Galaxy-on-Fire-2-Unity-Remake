@@ -2,14 +2,14 @@
 // Damped third-person chase camera in the spirit of GoF2's TargetFollowCamera.
 //
 // Recovered facts:
-//  * Two damping coefficients (position, rotation). In touch mode they are fixed:
-//    0.005 and 0.006 (TargetFollowCamera::resetShipHandling).
-//  * In mouse/controller mode they depend on handling h (setShipHandling):
-//      a = (1 - 0.01h) * 0.015 + 0.003
-//      b = 0.01h * 0.011 + 0.001
-//    Which coefficient drives position vs rotation is my best reading, and the exact damping curve
-//    (the original fits a polynomial to a damping function) is approximated here with exponentials.
-//  * Boost widens the view (camera gets boost percentage and an 2..8 intensity).
+//  * Two damping coefficients (TargetFollowCamera::update 0x186e40): +0x12c eases the camera position, +0x128 the
+//    look-at point. Fixed 0.006 / 0.005 (TargetFollowCamera::resetShipHandling) except with the mouse cursor (PlayerEgo
+//    ::update, Globals::mouseCursorActivated), where they depend on handling h (setShipHandling):
+//      position  0.01h * 0.011 + 0.001        look-at  (1 - 0.01h) * 0.015 + 0.003
+//    The exact damping curve (aproximateCooefficients..., a polynomial in dt) is approximated with exponentials.
+//  * Boost (MGame::OnUpdate): the vertical FOV grows by 0.35 rad x the boost percentage, and
+//    TargetFollowCamera::setBoostPercentage(pct, clamp(boost speed, 2, 8)) jitters the look-at point by
+//    pct x n units per axis each frame. The radial blur on top (post effect 0x1400002) isn't reproduced.
 
 using UnityEngine;
 
@@ -25,8 +25,8 @@ namespace GoF2Remake.Flight
 
         [Header("Damping (per millisecond coefficients, like the original)")]
         public bool handlingDependent = false; // false = touch-mode constants
-        public float positionCoefficient = 0.005f;
-        public float rotationCoefficient = 0.006f;
+        public float positionCoefficient = 0.006f;
+        public float rotationCoefficient = 0.005f;
 
         [Header("Turn offset: camera slides sideways while turning")]
         public float turnSlideMeters = 1.5f;
@@ -37,7 +37,8 @@ namespace GoF2Remake.Flight
 
         [Header("Boost")]
         public float baseFov = 60f;
-        public float boostFovAdd = 12f;
+        [Tooltip("Degrees added at full boost: MGame::OnUpdate's 0.35 rad x the boost percentage.")]
+        public float boostFovAdd = 20.05f;
 
         Camera cam;
         Vector3 slide;
@@ -94,8 +95,8 @@ namespace GoF2Remake.Flight
             if (handlingDependent)
             {
                 float h = model.Handling;
-                posK = (1f - 0.01f * h) * 0.015f + 0.003f;
-                rotK = 0.01f * h * 0.011f + 0.001f;
+                posK = 0.01f * h * 0.011f + 0.001f;
+                rotK = (1f - 0.01f * h) * 0.015f + 0.003f;
             }
 
             // Slide opposite to the turn, proportional to turn rate (approximation of the target offset).
@@ -124,6 +125,8 @@ namespace GoF2Remake.Flight
                 float a = shakeUnits * target.metersPerUnit * GoF2Remake.Data.Settings.CameraShake;
                 transform.position += new Vector3(Random.Range(-a, a), Random.Range(-a, a), Random.Range(-a, a));
             }
+            if (model.IsBoosting)
+                rumble = Mathf.Max(rumble, model.BoostVisualPercent * Mathf.Clamp(model.CurrentSpeed, 2f, 8f) / 50f * GoF2Remake.Data.Settings.CameraShake);
             if (rumble > 0f)
             {
                 // 50 units at the look-at point (about 690 units away) = about 4 degrees.

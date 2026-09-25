@@ -70,6 +70,13 @@ namespace GoF2Remake.World
         IntroCutscenes intro;
         /// <summary>The prologue / rescue cutscene of this level (indices 0 / 1), null otherwise.</summary>
         public IntroCutscenes Intro => intro != null && Story.Index == BuiltIndex ? intro : null;
+        /// <summary>The pause menu's Skip (395): the prologue / rescue, or a Supernova cutscene (154 / 157 / 158).</summary>
+        public bool CanSkipCutscene => (Intro != null && Intro.CanSkip) || (supernova != null && supernova.CanSkipCutscene);
+        public void SkipCutscene()
+        {
+            if (Intro != null && Intro.CanSkip) Intro.Skip();
+            else supernova?.SkipCutscene();
+        }
         AudioSource music;
         readonly AudioSource[] loops = new AudioSource[3];
         float fadeMs, fadeLength = 1f;
@@ -281,7 +288,8 @@ namespace GoF2Remake.World
         public int RouteIndex => PlayerRoute != null ? PlayerRoute.index : 0;
         public int CrateCargoCaptured => Session.CratesSalvaged - cratesAtStart;
         public bool StationLocked => level.Navigation != null && level.Navigation.Locked != null && level.Navigation.Locked.kind == Navigation.Kind.Station;
-        public bool PlayerArmorGone => level.Health != null && level.Health.HasArmor && level.Health.Hp.armor < 1;
+        /// <summary>Radio type 0x1c: Player::getArmorHP &lt; 1 (no armor mounted counts too).</summary>
+        public bool PlayerArmorGone => level.Health != null && level.Health.Hp.armor < 1;
         public int EnemiesLeft { get { int n = 0; for (int i = 0; i < Ships.Count; i++) if (!ShipDead(i) && ShipHostile(i)) n++; return n; } }
         public int FriendsLeft { get { int n = 0; for (int i = 0; i < Ships.Count; i++) if (!ShipDead(i) && !ShipHostile(i)) n++; return n; } }
     }

@@ -61,6 +61,9 @@ namespace GoF2Remake.World
         readonly List<Target> junk = new List<Target>();
         NpcShip carrier, rival;
         int playerKills, otherKills;
+        /// <summary>Level+0x24 / +0x20: the Challenge's score (the HUD's "player : rival").</summary>
+        public int PlayerKills => playerKills;
+        public int OtherKills => otherKills;
         float levelMs, missionMs, timeCheckMs;
         bool briefed, done;
 
@@ -274,8 +277,31 @@ namespace GoF2Remake.World
             t.explosionPrefab = ex;
             t.explosionScale = 0.5f;
             t.destroyedSound = CombatAssets.Pick(assets?.garbageExplosion);   // PlayerJunk::update: 22 Garbage_Explosion
-            t.Died += _ => Session.JunkDestroyed++;   // Status+0xb0
+            t.displayName = null;
+            t.Died += dead =>
+            {
+                Session.JunkDestroyed++;   // Status+0xb0
+                Target.RadarObjects.Remove(dead);
+                // PlayerJunk::update 0x18afb4: 10 % leave a container (kind 3, mesh 16920) with 1-10 t Space Waste (99).
+                if (Random.Range(0, 100) < 10) DropJunkCrate(dead.transform.position);
+            };
+            Target.RadarObjects.Add(t);
             junk.Add(t);
+        }
+
+        void DropJunkCrate(Vector3 at)
+        {
+            var assets = CombatAssets.Load();
+            var prefab = assets != null ? assets.Crate(Standing.Pirate) : null;
+            var go = prefab != null ? Instantiate(prefab, at, Random.rotation) : new GameObject("Crate");
+            go.name = "Crate";
+            var crate = go.AddComponent<Crate>();
+            crate.Setup(new List<ItemStack> { new ItemStack(99, Random.Range(0, 10) + 1) }, Standing.Pirate);
+        }
+
+        void OnDestroy()
+        {
+            foreach (var j in junk) Target.RadarObjects.Remove(j);
         }
 
         // ---- per frame (MGame::dialogueEvent / successCheck / gameOverCheck) ----------------------------

@@ -166,10 +166,11 @@ namespace GoF2Remake.UI
             saveSlotList.verticalScrollerVisibility = ScrollerVisibility.Hidden;   // drag / wheel / focus scrolling instead
             saveSlotList.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             new DragScroll(saveSlotList);
-            saveGameButton = Bind("saveGameButton", () => ShowSystemPage(true));
+            saveGameButton = Bind("saveGameButton", () => ShowSystemPage(SysPage.Save));
             mainMenuButton = Bind("mainMenuButton", () => ShowDialog(Localization.Get(523), BackToMenu));
             systemClose = Bind("systemMenuClose", CloseSystemMenu);
-            saveBack = Bind("saveBack", () => ShowSystemPage(false));
+            saveBack = Bind("saveBack", () => ShowSystemPage(SysPage.Main));
+            BuildSystemExtras();
 
             var st = level != null ? level.Station : null;
             string T(int id) => Localization.Get(id);
@@ -253,6 +254,7 @@ namespace GoF2Remake.UI
         {
             if (HangarOpen || level == null || !Story.HangarUnlocked) return;
             if (level.View != StationView.Hangar) level.SetView(StationView.Hangar);
+            FirstVisitHint(8, 622);   // before the first row's selection hint
             hangarWindow.Open();
             level.SetHangarWindowOpen(true);
             boozeAtOpen = BoozeInHold();   // ModStation::OnKeyPress: ModStation+0xcc
@@ -260,6 +262,19 @@ namespace GoF2Remake.UI
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             OnViewChanged();
         }
+
+        /// <summary>ModStation::OnKeyPress: a window's first opening shows its help once (Layout::initHelpWindow; the flag
+        /// in Globals::hints): hangar 622 (8), lounge 627 (0xd), map 628 (0xe, campaign &gt; 15) or the system map 631
+        /// (0xf, earlier), missions 635 (0x13), status 640 (0x18, phones only). Keyboard / controller: the +1 variants
+        /// where the original has them.</summary>
+        void FirstVisitHint(int flag, int text, bool keyVariant = false)
+        {
+            if (DialogOpen || !Session.Hints.Add(flag)) return;
+            ShowDialog(HintText(text, keyVariant), null, true);
+        }
+
+        static string HintText(int text, bool keyVariant) =>
+            World.FlightHints.KeyTokens(Localization.Get(keyVariant && InputMode.Current != InputKind.Touch ? text + 1 : text));
 
         public void CloseHangar()
         {
@@ -328,6 +343,7 @@ namespace GoF2Remake.UI
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             missions.Open();
             BuildHints(InputMode.Current);
+            FirstVisitHint(0x13, 635);
         }
 
         /// <summary>The Status window (169).</summary>
@@ -340,6 +356,7 @@ namespace GoF2Remake.UI
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             status.Open();
             BuildHints(InputMode.Current);
+            if (Application.isMobilePlatform) FirstVisitHint(0x18, 640, true);
         }
 
         public void OnStatusClosed()
@@ -394,12 +411,49 @@ namespace GoF2Remake.UI
             if (medalsChecked || level == null) return false;
             medalsChecked = true;
             var improved = Achievements.Check(level.Database);
-            if (improved.Count == 0) return false;
-            var names = new System.Collections.Generic.List<string>();
-            foreach (int m in improved) if (m != 0) names.Add(Localization.Get(1507 + m));
-            if (names.Count == 0) return false;
-            ShowToast($"{Localization.Get(353)} {string.Join(", ", names)}");
-            return false;
+            medalQueue.Clear();
+            foreach (int m in improved) if (m != 0) medalQueue.Enqueue(m);
+            if (medalQueue.Count == 0) return false;
+            ShowNextMedal();
+            return true;
+        }
+
+        /// <summary>ModStation::checkHints 0xee500: once each, one per frame: 0x1a all base medals (649), 0x1b all gold (650),
+        /// all gold + the Supernova medals while blueprint 232 is locked (651, unlocked, autosave), 0x3a after campaign 0xa1
+        /// with all gold + Supernova medals (or on Extreme) the Specter on sale at Katashun (3233, autosave).</summary>
+        bool CheckMedalHints()
+        {
+            if (level == null || Session.FreePlay) return false;
+            string text = null;
+            if (!Session.Hints.Contains(0x1a) && Achievements.GotAllMedals) { Session.Hints.Add(0x1a); text = Localization.Get(649); }
+            else if (!Session.Hints.Contains(0x1b) && Achievements.GotAllGoldMedals) { Session.Hints.Add(0x1b); text = Localization.Get(650); }
+            else if (!Session.UnlockedBlueprints.Contains(232) && Achievements.GotAllGoldMedals && Achievements.GotAllSupernovaMedals)
+            { Blueprints.Unlock(232); Session.Autosave(); text = Localization.Get(651); }
+            else if (!Session.Hints.Contains(0x3a) && Session.CampaignMission > 0xa1 && (Session.IsExtreme || (Achievements.GotAllGoldMedals && Achievements.GotAllSupernovaMedals)))
+            { Session.Hints.Add(0x3a); Session.Autosave(); text = Localization.Get(3233); }
+            if (text == null) return false;
+            ShowDialog(text, null, true);
+            return true;
+        }
+
+        readonly System.Collections.Generic.Queue<int> medalQueue = new System.Collections.Generic.Queue<int>();
+        VisualElement dialogPicture;
+
+        /// <summary>ModStation::checkMedals 0xebe74: one ChoiceWindow per new medal (353, the plate, the hint 1552 + i with the
+        /// grade's threshold), each paying DAT_00251ff0[grade] (5000 gold / 2500 silver / 1000 bronze; nothing on Extreme).</summary>
+        void ShowNextMedal()
+        {
+            if (medalQueue.Count == 0) return;
+            int m = medalQueue.Dequeue();
+            int grade = Achievements.Grade(m);
+            if (!Session.IsExtreme) Session.Credits += grade == 1 ? 5000 : grade == 2 ? 2500 : grade == 3 ? 1000 : 0;
+            ShowDialog($"{Localization.Get(353)}\n\n{Localization.Get(1507 + m)}\n{Achievements.Hint(m)}", ShowNextMedal, true);
+            dialogPicture = StatusWindow.MedalPlate(m, grade);
+            dialogPicture.style.alignSelf = Align.Center;
+            dialogPicture.style.marginBottom = 16;
+            var text = root.Q<Label>("dialogText");
+            text.parent.Insert(text.parent.IndexOf(text), dialogPicture);
+            RefreshCredits();
         }
 
         public void OnMissionsClosed()
@@ -430,6 +484,7 @@ namespace GoF2Remake.UI
             if (level == null || !Story.LoungeUnlocked(level.Station != null ? level.Station.index : -1)) return;
             CloseHangar();
             level?.SetView(StationView.Lounge);
+            FirstVisitHint(0xd, 627);
         }
 
         /// <summary>ModStation::OnKeyPress case 2: the star map (station mode; jump mode with a Khador Drive). Refused while
@@ -444,7 +499,10 @@ namespace GoF2Remake.UI
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             root.AddToClassList("station-map-open");
             var map = StarMap.Open(level.Database, StarMapMode.Station, GalaxyMap.HasJumpDrive(level.Database), OnMapClosed);
-            if (map == null) root.RemoveFromClassList("station-map-open");
+            if (map == null) { root.RemoveFromClassList("station-map-open"); return; }
+            int cm = Session.FreePlay ? 20 : Session.CampaignMission;
+            if (cm > 15 && Session.Hints.Add(0xe)) map.ShowHint(HintText(628, true));
+            else if (cm < 16 && Session.Hints.Add(0xf)) map.ShowHint(HintText(631, true));
         }
 
         void OnMapClosed(StarMapResult result)
@@ -460,10 +518,22 @@ namespace GoF2Remake.UI
 
         /// <summary>ModStation::leaveStation at campaign index 21: "Equip the EMP bombs before leaving." (531) without an EMP
         /// bomb (items 41-43) mounted.</summary>
+        /// <summary>ModStation::leaveStation 0xec1ec: at 6 / 7 a ship with no fire power or no shield / armor (combined HP =
+        /// base HP) stays: 529 (nothing to mount in the hold) or 530 (mount what is in the hold); at 20 / 21 in the target
+        /// station 531 (21: without an EMP bomb 41-43); at 77 anything but the Cronus 326.</summary>
         bool RefuseLaunchForStory()
         {
-            if (Session.FreePlay || Story.Index != 21 || Session.Equipment.Exists(e => e.item >= 41 && e.item <= 43)) return false;
-            ShowDialog(Localization.Get(531), null, true);
+            if (Session.FreePlay) return false;
+            var db = level.Database;
+            int n = Story.Index, station = level.Station != null ? level.Station.index : -1;
+            int text = -1;
+            if ((n == 6 || n == 7) && (Shop.FirePower(db) == 0f || Shop.CombinedHp(db) == Shop.BaseHp(db)))
+                text = Session.Cargo.Exists(c => { int t = db.Item(c.item)?.TypeId ?? 4; return t == 0 || t == 3; }) ? 530 : 529;
+            else if (n == 20 && station == Story.Mission.station) text = 531;
+            else if (n == 21 && station == Story.Mission.station && !Session.Equipment.Exists(e => e.item >= 41 && e.item <= 43)) text = 531;
+            else if (n == 77 && Session.ShipIndex != 37) text = 326;
+            if (text < 0) return false;
+            ShowDialog(Localization.Get(text), null, true);
             return true;
         }
 
@@ -501,6 +571,8 @@ namespace GoF2Remake.UI
 
         void CloseDialog()
         {
+            dialogPicture?.RemoveFromHierarchy();
+            dialogPicture = null;
             dialog.RemoveFromClassList("station-dialog-backdrop--shown");
             dialogAction = null;
             dialogNoAction = null;
@@ -518,6 +590,7 @@ namespace GoF2Remake.UI
         }
 
         bool DialogOpen => dialog != null && dialog.ClassListContains("station-dialog-backdrop--shown");
+        public bool IsDialogOpen => DialogOpen;
 
         /// <summary>A short message at the top ("#N mounted.", "You need an additional #C." ...), 3 s.</summary>
         public void ShowToast(string text)
@@ -573,7 +646,7 @@ namespace GoF2Remake.UI
             else if (status != null && status.IsOpen) { Play(buttonRelease); status.Close(); }
             else if (lounge != null && lounge.ChatOpen) { Play(buttonRelease); lounge.CloseChat(); }
             else if (HangarOpen) { Play(buttonRelease); if (!hangarWindow.Back()) CloseHangar(); }
-            else if (SavePageOpen) { Play(buttonRelease); ShowSystemPage(false); }
+            else if (SystemMenuOpen && sysPage != SysPage.Main) { Play(buttonRelease); ShowSystemPage(SysPage.Main); }
             else if (SystemMenuOpen) { Play(buttonRelease); CloseSystemMenu(); }
             else if (level != null && level.View == StationView.Lounge) { Play(buttonRelease); level.SetView(StationView.Hangar); }
             else { Play(buttonRelease); OpenSystemMenu(); }
@@ -827,7 +900,30 @@ namespace GoF2Remake.UI
             return true;
         }
 
-        bool pendingChecked;
+        bool pendingChecked, rescueChecked;
+
+        /// <summary>ModStation::OnInitialize: stranded in a system without gate routes (campaign &gt; 16, not at 101, no jump
+        /// drive, no Khador Drive in the hold) -> 335, the interstellar shuttle to Dis (Magnetar, station 70) for 25 000;
+        /// without the credits 203 (ModStation::OnTouchEnd 0xea4ec).</summary>
+        bool CheckRescue()
+        {
+            if (rescueChecked || level == null || level.Station == null) return false;
+            rescueChecked = true;
+            var db = level.Database;
+            if (Session.FreePlay || level.Station.index == 101 || Story.Index <= 16) return false;
+            var sys = db.Systems.Find(s => s.index == level.Station.system);
+            if (sys == null || (sys.jumpRoutesTo != null && sys.jumpRoutesTo.Count > 0)) return false;
+            if (GalaxyMap.HasJumpDrive(db) || Session.Cargo.Exists(c => c.item == GalaxyMap.KhadorDriveItem)) return false;
+            ShowDialog(Localization.Get(335), () =>
+            {
+                if (Session.Credits < 25000) { ShowDialog(Localization.Get(203).Replace("#C", ItemInfo.Credits(25000 - Session.Credits)), null, true); return; }
+                Session.Credits -= 25000;
+                Session.PreviousStationIndex = Session.StationIndex;
+                Session.StationIndex = 70;
+                SceneManager.LoadScene(gameObject.scene.name);   // SetCurrentApplicationModule(5): the station module at Dis
+            });
+            return true;
+        }
 
         /// <summary>ModStation::checkPendingProducts 0xee258 (once per docking): blueprint products waiting here move to the
         /// hold, 213 "The following items have been moved to your cargo hold:" + one line each.</summary>
@@ -846,14 +942,85 @@ namespace GoF2Remake.UI
         // ---- system menu (MenuTouchWindow: Save game, Back to Main Menu) -----------------------------------
 
         bool SystemMenuOpen => systemMenu != null && systemMenu.ClassListContains("station-dialog-backdrop--shown");
-        bool SavePageOpen => SystemMenuOpen && systemSave.ClassListContains("system-menu-page--shown");
+        bool SavePageOpen => SystemMenuOpen && (sysPage == SysPage.Save || sysPage == SysPage.Load);
+
+        // MenuTouchWindow mode 2 (the station's Menu): 28 Start new game, 29 Load game, 30 Save game, 31 Options,
+        // 43 About, 522 Back to Main Menu (the language, iPad only, is in Options; the original has no Back button).
+        enum SysPage { Main, Save, Load, Options }
+        SysPage sysPage;
+        Button newGameButton, loadGameButton, optionsButton, aboutButton, optionsBack;
+        VisualElement systemOptions;
+        ScrollView optionsScroll;
+        readonly System.Collections.Generic.List<OptionControl> stationOptions = new System.Collections.Generic.List<OptionControl>();
+
+        Button SystemButton(string text, int index, System.Action action, VisualElement parent)
+        {
+            var b = new Button { text = text.ToUpperInvariant() };
+            b.AddToClassList("station-button");
+            b.AddToClassList("gof-semibold");
+            b.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
+            b.clicked += () => { Play(buttonRelease); action(); };
+            if (index < 0 || index > parent.childCount) parent.Add(b); else parent.Insert(index, b);
+            return b;
+        }
+
+        void BuildSystemExtras()
+        {
+            newGameButton = SystemButton(Localization.Get(28), 0, () => ShowDialog(Localization.Get(523), () =>
+            {
+                MainMenu.OpenPanelOnStart = "campaignPanel";   // MenuTouchWindow: the new game's campaign choice
+                BackToMenu();
+            }), systemMain);
+            loadGameButton = SystemButton(Localization.Get(29), 1, () => ShowSystemPage(SysPage.Load), systemMain);
+            optionsButton = SystemButton(Localization.Get(31), 3, () => ShowSystemPage(SysPage.Options), systemMain);
+            aboutButton = SystemButton(Localization.Get(43), 4, () => ShowDialog(Localization.Get(45), null, true), systemMain);
+            // The options page: every option of the catalog (OptionsCatalog, like the pause menu).
+            systemOptions = new VisualElement();
+            systemOptions.AddToClassList("system-menu-page");
+            optionsScroll = new ScrollView(ScrollViewMode.Vertical) { horizontalScrollerVisibility = ScrollerVisibility.Hidden, verticalScrollerVisibility = ScrollerVisibility.Hidden };
+            optionsScroll.AddToClassList("slot-list");
+            optionsScroll.AddToClassList("system-slot-list");
+            new DragScroll(optionsScroll);
+            systemOptions.Add(optionsScroll);
+            optionsBack = SystemButton(Localization.Extra("hudBack", "BACK"), -1, () => ShowSystemPage(SysPage.Main), systemOptions);
+            optionsBack.AddToClassList("system-menu-back");
+            systemMain.parent.Add(systemOptions);
+        }
+
+        Button optionsReset;
+
+        void BuildStationOptions()
+        {
+            optionsScroll.Clear();
+            stationOptions.Clear();
+            OptionPage? page = null;
+            foreach (var def in OptionsCatalog.All())
+            {
+                if (page != def.page)
+                {
+                    page = def.page;
+                    var h = new Label(OptionsCatalog.PageTitle(def.page).ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                    h.AddToClassList("system-options-heading");
+                    h.AddToClassList("gof-semibold");
+                    optionsScroll.Add(h);
+                }
+                var c = new OptionControl(def);
+                c.Changed += () => { foreach (var o in stationOptions) if (o != c) o.Refresh(); };
+                c.Root.AddToClassList("system-option");
+                var root0 = c.Root;
+                c.Field.RegisterCallback<FocusInEvent>(_ => optionsScroll.ScrollTo(root0));
+                optionsScroll.Add(c.Root);
+                stationOptions.Add(c);
+            }
+            optionsReset = SystemButton(Localization.Get(497), -1, () => { Settings.ResetToDefaults(); foreach (var o in stationOptions) o.Refresh(); }, optionsScroll.contentContainer);
+        }
 
         void OpenSystemMenu()
         {
             if (SystemMenuOpen || level == null) return;
             CloseHangar();
             systemMenu.AddToClassList("station-dialog-backdrop--shown");
-            ShowSystemPage(false);
+            ShowSystemPage(SysPage.Main);
         }
 
         void CloseSystemMenu()
@@ -865,14 +1032,22 @@ namespace GoF2Remake.UI
             BuildHints(InputMode.Current);
         }
 
-        void ShowSystemPage(bool save)
+        void ShowSystemPage(SysPage page)
         {
-            systemMain.EnableInClassList("system-menu-page--shown", !save);
-            systemSave.EnableInClassList("system-menu-page--shown", save);
-            root.Q<Label>("systemMenuTitle").text = Localization.Get(save ? 30 : 172).ToUpperInvariant();   // Save game / Menu
-            if (save) BuildSaveSlots();
+            sysPage = page;
+            bool slots = page == SysPage.Save || page == SysPage.Load;
+            systemMain.EnableInClassList("system-menu-page--shown", page == SysPage.Main);
+            systemSave.EnableInClassList("system-menu-page--shown", slots);
+            systemOptions?.EnableInClassList("system-menu-page--shown", page == SysPage.Options);
+            int title = page == SysPage.Save ? 30 : page == SysPage.Load ? 29 : page == SysPage.Options ? 31 : 172;   // Menu
+            root.Q<Label>("systemMenuTitle").text = Localization.Get(title).ToUpperInvariant();
+            if (slots) BuildSaveSlots();
+            if (page == SysPage.Options) BuildStationOptions();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
-            Select(save ? saveSlotList.contentContainer.ElementAt(1) : saveGameButton);   // slot 1: the first manual slot
+            Select(page == SysPage.Save ? saveSlotList.contentContainer.ElementAt(1)     // slot 1: the first manual slot
+                 : page == SysPage.Load ? saveSlotList.contentContainer.ElementAt(0)
+                 : page == SysPage.Options ? (stationOptions.Count > 0 ? stationOptions[0].Field : optionsBack)
+                 : newGameButton);
             BuildHints(InputMode.Current);
         }
 
@@ -885,10 +1060,18 @@ namespace GoF2Remake.UI
                 var save = SaveGame.Preview(i);
                 var row = SaveSlotRow.Build(level.Database, i, save, Localization.Extra("autosaveHint", "Saved automatically when you dock"));
                 row.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
-                row.clicked += () => { Play(buttonRelease); PickSaveSlot(slot, save != null); };
+                row.clicked += () => { Play(buttonRelease); if (sysPage == SysPage.Load) PickLoadSlot(slot, save != null); else PickSaveSlot(slot, save != null); };
                 row.RegisterCallback<FocusInEvent>(_ => saveSlotList.ScrollTo(row));
                 saveSlotList.Add(row);
             }
+        }
+
+        /// <summary>MenuTouchWindow load mode: a used slot, after 523 (the progress since the last save is lost), is loaded
+        /// (a save is always docked: the station module restarts).</summary>
+        void PickLoadSlot(int slot, bool used)
+        {
+            if (!used) return;
+            ShowDialog(Localization.Get(523), () => { if (SaveGame.Load(slot)) SceneManager.LoadScene(gameObject.scene.name); });
         }
 
         /// <summary>MenuTouchWindow::OnTouchEnd save mode: slot 0 is reserved, a used slot asks before overwriting.</summary>
@@ -912,7 +1095,15 @@ namespace GoF2Remake.UI
         /// <summary>The system menu's focusable items (its buttons, or the slot rows plus Back).</summary>
         VisualElement[] SystemMenuItems()
         {
-            if (!SavePageOpen) return new VisualElement[] { saveGameButton, mainMenuButton, systemClose };
+            if (sysPage == SysPage.Options)
+            {
+                var o = new System.Collections.Generic.List<VisualElement>();
+                foreach (var c in stationOptions) o.Add(c.Field);
+                if (optionsReset != null) o.Add(optionsReset);
+                o.Add(optionsBack);
+                return o.ToArray();
+            }
+            if (!SavePageOpen) return new VisualElement[] { newGameButton, loadGameButton, saveGameButton, optionsButton, aboutButton, mainMenuButton, systemClose };
             var list = new System.Collections.Generic.List<VisualElement>(saveSlotList.contentContainer.Children()) { saveBack };
             return list.ToArray();
         }
@@ -1022,6 +1213,16 @@ namespace GoF2Remake.UI
                 items = l.ToArray();
             }
             else items = stationItems;
+            if (!DialogOpen && SystemMenuOpen && sysPage == SysPage.Options && horizontal)
+            {
+                // Left / right steps the focused option (OptionControl.Step, like the pause menu).
+                var f = root.focusController?.focusedElement as VisualElement;
+                var c = stationOptions.Find(o => o.Field == f);
+                if (c != null) c.Step(e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1);
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+                return;
+            }
             if (DialogOpen ? horizontal : vertical)
             {
                 var focused = root.focusController?.focusedElement as VisualElement;
@@ -1117,7 +1318,9 @@ namespace GoF2Remake.UI
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckFreelance()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckKaamo()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPendingProducts()) return;
-            CheckMedals();
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && !storyDialogue.IsOpen && CheckRescue()) return;
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && !storyDialogue.IsOpen && CheckMedals()) return;
+            if (!DialogOpen && !SystemMenuOpen && !HangarOpen && !storyDialogue.IsOpen && CheckMedalHints()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWanted()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
             lounge?.Update();

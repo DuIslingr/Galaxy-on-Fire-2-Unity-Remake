@@ -24,6 +24,7 @@ namespace GoF2Remake.EditorTools
             a.hackingTurn = Clip("DLC2_SFX/Hacking_Dialling_1.ogg");
             a.hackingSolved = Clip("DLC2_SFX/Hacking_Solved_1.ogg");
             a.transferLoop = Clip("DLC2_SFX/Transport_Loop.ogg");
+            a.container = Clip("DLC2_SFX/Container_01.ogg");
             a.extractorLoop = Clip("DLC2_SFX/Extractor_Loop_01.ogg");
             a.plasmaCollected = new[] { Clip("DLC2_SFX/Mud1.ogg"), Clip("DLC2_SFX/Mud2.ogg"), Clip("DLC2_SFX/Mud3.ogg"), Clip("DLC2_SFX/Mud4.ogg") };
             a.ionizingBlast = Clip("DLC2_SFX/Plasma_Rocket_Explosion.ogg");

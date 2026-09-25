@@ -156,6 +156,12 @@ namespace GoF2Remake.EditorTools
             (Main, "info_floor", 1, 17, 223, 160, 0, false),
             (Main, "compare_worse", 205, 1774, 82, 40, 0, false), (Main, "compare_better", 225, 337, 82, 40, 0, false),
             (Main, "compare_equal", 215, 1424, 82, 40, 0, false),
+            // Hud::draw's top readout: the time limit's clock 0x4c5, the cargo hold 0x520 ("load / max t"), the passengers
+            // 0x1f43 and their remainder 0x1f42, the goods 0x1f61 and their remainder 0x1f60, the volatile goods' red bar 0x1f5c.
+            (Main, "hud_timer", 1497, 855, 133, 40, 0, false), (Ipad, "hud_cargo", 1440, 411, 176, 40, 0, false),
+            (Ipad3, "hud_passengers", 57, 907, 191, 40, 0, false), (Ipad3, "hud_goods", 117, 365, 191, 40, 0, false),
+            (Ipad3, "hud_goods_left", 57, 858, 222, 40, 0, false), (Ipad3, "hud_volatile", 57, 972, 191, 40, 0, false),
+            (Ipad3, "hud_passengers_left", 1477, 1, 222, 40, 0, false),
             (Items,"medal_plate_none",1261,265,228,84,0,false), (Items,"medal_plate_gold",361,353,228,84,0,false),
             (Items,"medal_plate_silver",1081,1055,228,84,0,false), (Items,"medal_plate_bronze",591,353,228,84,0,false),
             (Items,"medal_pressed",901,89,228,84,0,false),

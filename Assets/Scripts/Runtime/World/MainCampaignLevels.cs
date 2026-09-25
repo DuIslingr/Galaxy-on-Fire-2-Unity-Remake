@@ -128,8 +128,8 @@ namespace GoF2Remake.World
         void Build16()
         {
             var w = new Vector3(0, 0, 170000);
-            // [0]-[2] Terran freighters, always-friend, parked, max HP / 3 ([0] / 6), no loot.
-            Freighter(0, 15, w, false, s => { s.alwaysFriend = true; s.noLoot = true; s.hitpoints = FreighterHull(15, 6); });
+            // [0]-[2] Terran freighters, always-friend, parked, max HP / 3 ([0] once more / 6: / 18), no loot.
+            Freighter(0, 15, w, false, s => { s.alwaysFriend = true; s.noLoot = true; s.hitpoints = FreighterHull(15, 18); });
             Freighter(0, 15, w + new Vector3(3000, 2000, -3000), false, s => { s.alwaysFriend = true; s.noLoot = true; s.hitpoints = FreighterHull(15, 3); });
             Freighter(0, 15, w + new Vector3(-9000, -8000, -7000), false, s => { s.alwaysFriend = true; s.noLoot = true; s.hitpoints = FreighterHull(15, 3); });
             // [3]-[6] Void fighters, max HP x 10.
@@ -272,10 +272,11 @@ namespace GoF2Remake.World
 
         // ---- cutscene helpers (the "enter" / "leave" sequences, campaign_levels_a.md 1.5) ------------------------------
 
-        void EnterCutscene(bool keepSpeed = true)
+        /// <summary>'invulnerable' false at 14 / 16: those scripts never call Player::setVulnerable(false).</summary>
+        void EnterCutscene(bool keepSpeed = true, bool invulnerable = true)
         {
             c.Cutscene = true;
-            c.PlayerInvulnerable = true;
+            c.PlayerInvulnerable = invulnerable;
             playerSpeed = keepSpeed ? Ship.SpeedMetersPerSecond / (1000f * M) : 0f;
             Ship.externalControl = true;
             if (level.Weapons != null) level.Weapons.Blocked = true;
@@ -295,11 +296,6 @@ namespace GoF2Remake.World
         void SetPlayerVisible(bool on)
         {
             if (Ship.visualModel != null) Ship.visualModel.gameObject.SetActive(on);
-        }
-
-        static void Kill(NpcShip s)
-        {
-            if (s != null && s.Target.Alive) s.Target.Damage(99999999f, true);
         }
 
         /// <summary>"Hidden and removed": out of the level (kept in the slot list, like the original's dead entries).</summary>
@@ -355,7 +351,7 @@ namespace GoF2Remake.World
                 case 0:
                     if (Triggered(1))   // the first kill
                     {
-                        Kill(S(0));
+                        S(0)?.Vanish();   // setHitpoints(0) + setDead: no explosion, no crate
                         playerSparks = new EmpSparks(Ship.visualModel != null ? Ship.visualModel : Player);
                         playerSparks.SetEmitting(true);
                         Sfx.PlayAt(assets?.empHit, Player.position);
@@ -366,9 +362,9 @@ namespace GoF2Remake.World
                     if (Over(1))
                     {
                         c.Fade(true, Color.white, 600f);   // Level::flashScreen(3)
-                        EnterCutscene(false);
+                        EnterCutscene(false, false);
                         cam.LookAtUnity(Player.position + ToUnity(new Vector3(1000, 700, 1000)), Player);
-                        foreach (var s in c.Ships) if (s != null && s.Race == Standing.Pirate) Kill(s);
+                        foreach (var s in c.Ships) if (s != null && s.Race == Standing.Pirate) s.Vanish();
                         Step = 2;
                     }
                     break;
@@ -413,7 +409,7 @@ namespace GoF2Remake.World
                 case 0:
                     if (Triggered(0) && S(0) != null)
                     {
-                        EnterCutscene();
+                        EnterCutscene(true, false);
                         var f = S(0).transform;
                         cam.LookAtUnity(f.position + ToUnity(new Vector3(6000, 4000, 47500)), f);
                         cam.SetDolly(new Vector3(-1f, 0f, -3f));
@@ -432,7 +428,7 @@ namespace GoF2Remake.World
                         // They flee: the wormhole opens, every Void fighter gets a route through it and drops its targets.
                         Hole.SetVisible(true);
                         Hole.Open();
-                        EnterCutscene();
+                        EnterCutscene(true, false);
                         cam.LookAtUnity(Hole.transform.position + ToUnity(new Vector3(-9000, -4000, -30000)), Hole.transform);
                         cam.SetDolly(new Vector3(0.5f, 0f, 0.2f));
                         var w = Hole.GamePosition;
@@ -641,8 +637,7 @@ namespace GoF2Remake.World
                         f.SetHull(9999999);
                         f.SetMoving(false);
                         f.SetEngineSound(false);
-                        c.MusicOwned = true;
-                        level.Traffic.MusicMuted = true;
+                        // 0x9b Errkt_CutSeq_01 is an FMOD cutscene event: it plays over the orbit's music (not stopped).
                         c.PlayMusic(assets?.errktCutscene, false);
                         Step = 2;
                     }
@@ -650,7 +645,8 @@ namespace GoF2Remake.World
                 case 2:
                     // It drifts (0, -dt, 2dt) and rolls dt * 3e-5 for 15 s.
                     f.transform.position += ToUnity(new Vector3(0f, -1f, 2f)) * dtMs;
-                    f.transform.Rotate(Vector3.forward, dtMs * 3e-5f * Mathf.Rad2Deg, Space.Self);
+                    // AEGeometry::rotate(dt * 3e-5, -, 3e-5): pitch and roll (the middle axis is lost in the decompilation).
+                    f.transform.Rotate(new Vector3(dtMs * 3e-5f, 0f, dtMs * 3e-5f) * Mathf.Rad2Deg, Space.Self);
                     if (stepMs >= 15000f) Step = 3;
                     break;
                 case 3:
@@ -717,8 +713,20 @@ namespace GoF2Remake.World
                 case 7:
                     cam.Rumble = 1f;
                     cam.SetDolly(new Vector3(-18f, 0f, 0f));
+                    // The second and third explosion meshes (+0xb0 / +0xb4) face the camera's direction every frame.
+                    if (explosion != null && cam.Camera != null)
+                        for (int i = 1; i < explosion.Length && i <= 2; i++)
+                            if (explosion[i] != null) explosion[i].transform.rotation = Quaternion.LookRotation(cam.Camera.forward, Vector3.up);
                     if (stepMs >= 4000f && level.Station != null && level.Station.activeSelf) level.Station.SetActive(false);
-                    if (stepMs >= 15000f) { c.Fade(false, Color.black, 4000f); Step = 8; }
+                    if (stepMs >= 15000f)
+                    {
+                        // this+0xa8 cleared: the explosion meshes stop animating (frozen) and the fade starts.
+                        if (explosion != null)
+                            foreach (var e in explosion)
+                                if (e != null) foreach (var a in e.GetComponentsInChildren<PartAnimation>(true)) a.Pause();
+                        c.Fade(false, Color.black, 4000f);
+                        Step = 8;
+                    }
                     break;
                 case 8:
                     if (c.FadeDone || stepMs >= 10000f)

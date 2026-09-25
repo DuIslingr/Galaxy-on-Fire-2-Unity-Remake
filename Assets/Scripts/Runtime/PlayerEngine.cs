@@ -29,11 +29,15 @@ namespace GoF2Remake.Flight
         AudioSource main, extra, boostSource;
         int engine = -1, boost = -1;
         bool wasBoosting;
+        /// <summary>MGame::OnInitialize starts the engine loop only above campaign index 1: the prologue's and the rescue's
+        /// Phantom is silent (index 0 swaps it for the broken engine 156, IntroCutscenes).</summary>
+        bool storySilent;
 
         public static PlayerEngine Attach(GameObject player, Database db, ShipController ship)
         {
             var e = player.AddComponent<PlayerEngine>();
             e.Setup(db, ship);
+            e.storySilent = !Session.FreePlay && Session.CampaignMission <= 1;
             return e;
         }
 
@@ -77,7 +81,7 @@ namespace GoF2Remake.Flight
             if (health == null) health = GetComponent<PlayerHealth>();
             if (mining == null) mining = GetComponent<Mining>();
             bool visible = ship.visualModel == null || ship.visualModel.gameObject.activeInHierarchy;
-            bool on = visible && (health == null || (!health.Dead && !health.GammaLoopActive))
+            bool on = visible && !storySilent && (health == null || (!health.Dead && !health.GammaLoopActive))
                       && (mining == null || (mining.State != Mining.Phase.Docked && mining.State != Mining.Phase.Mining));
             // "Vertical": the stick's larger axis, 0..1.
             var stick = ship.SteerInput;

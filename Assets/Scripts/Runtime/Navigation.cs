@@ -495,6 +495,7 @@ namespace GoF2Remake.Flight
             SetAutopilot(null);
             jumpTarget = planet;
             Jumping = true;
+            weapons?.ResetGunDelay();   // PlayerEgo::dockToPlanet
             jumpMs = 0f;
             ship.externalControl = true;
             if (weapons != null) weapons.Blocked = true;

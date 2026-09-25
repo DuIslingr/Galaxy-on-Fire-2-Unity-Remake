@@ -45,6 +45,14 @@ namespace GoF2Remake.Flight
         public bool hostileToPlayer, friendToPlayer;
         [Tooltip("Player+0x5e: NPCs don't attack it.")]
         public bool untargetable;
+        /// <summary>KIPlayer+0x3d (the pirate outposts): mines neither trigger on nor pull toward it.</summary>
+        public bool mineProof;
+        /// <summary>Radar::drawCurrentLock: the Hijacker (1611) and the Informer (1663) show their name alone; a Most Wanted
+        /// criminal is drawn in its own colour.</summary>
+        public bool plateNameOnly, plateWanted;
+        /// <summary>Targets outside the traffic's ship list that the radar still shows and locks (the Junk removal's space junk,
+        /// PlayerJunk: a far dot always).</summary>
+        public static readonly System.Collections.Generic.List<Target> RadarObjects = new System.Collections.Generic.List<Target>();
         /// <summary>The player's cloak (Player+0x5e set by PlayerEgo::toggleCloaking): NPCs keep it as their target but don't
         /// fire, turrets don't aim at it, sleepers don't wake for it.</summary>
         [NonSerialized] public bool cloaked;

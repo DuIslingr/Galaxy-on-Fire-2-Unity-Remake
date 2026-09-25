@@ -300,14 +300,15 @@ namespace GoF2Remake.World
             // Level case 0x46: the player 120 000 further back along his heading.
             var p = PlayerGame - PlayerDirGame * 120000f;
             level.MovePlayer(ToUnity(p), Player.rotation);
-            var target = Vector3.zero;   // landmarks[0], the station
+            // landmarks[1]: the jumpgate (the visible one, else the hidden arrival gate); Trot flies to it.
+            var target = level.Layout.hasJumpgate ? level.Layout.jumpgate : level.Layout.hiddenJumpgate;
             var at = p + (target - p) / 4f;
             var route = new Route(false);
             route.points.Add(target);
             int hull = Mathf.RoundToInt(NpcTables.Hull(0, 12) * 2.5f);
             var trot = c.SpawnShip(0, 12, at, false, s => { s.alwaysFriend = true; s.nameText = 1631; s.route = route; s.hitpoints = hull; s.noLoot = true; });
             trot.Place(ToUnity(at), Dir((target - at).normalized));
-            trot.SetGun(183, 2.5f);   // Level::assignGuns, mission 0x46: the Disruptor Laser at x2.5
+            // Level::assignGuns, mission 0x46: every ship but the wingmen fires the Disruptor Laser at x2.5 (NpcTables.GunDamage).
             c.WinObjective = () => c.ShipDead(0);   // 1 (0)
         }
 
@@ -382,7 +383,7 @@ namespace GoF2Remake.World
             {
                 var s = BattleTurret(t.shield, Standing.Pirate, host + new Vector3(-t.pos.x, t.pos.y, -t.pos.z), new Vector3(0, 0, -t.rz),
                                      sp => { sp.alwaysEnemy = true; sp.hitpoints = hp; });
-                if (!t.shield) s.SetGun(20, 1.7f);   // Level::assignGuns, mission 0x50: turrets x1.7
+                // Level::assignGuns, mission 0x50: turrets x1.7 (NpcTables.GunDamage).
                 if (t.shield) s.shootingEnabled = false;
             }
             // [13-18] pirates, [19-21] Terran Wards (friendly) on the waypoint (0, 0, 80000).
@@ -626,7 +627,7 @@ namespace GoF2Remake.World
                 case 3:
                     if (Over(6))
                     {
-                        for (int i = 1; i <= 8; i++) if (S(i) != null && S(i).Target.Alive) Remove(S(i));
+                        for (int i = 1; i <= 8; i++) if (S(i) != null && S(i).Target.Alive) S(i).Vanish();   // setDead
                         Step = 4;
                     }
                     break;
@@ -907,6 +908,8 @@ namespace GoF2Remake.World
         }
 
         // 80: Alice attacks Kothar (LevelScript.c 9761-10155).
+        Transform burnA, burnB;
+
         void Tick80(float dtMs)
         {
             var host = battlestation != null ? battlestation.transform.position : ToUnity(new Vector3(0, 0, 160000));
@@ -953,11 +956,21 @@ namespace GoF2Remake.World
                 case 8:
                     if (stepMs >= 800f)
                     {
-                        Explosion.Spawn(0, ToUnity(new Vector3(12487, -11451, 5958)), Vector3.forward, 3f, CombatAssets.Pick(combat?.explosionBig), true);   // sound 18
+                        var hitPoint = new Vector3(12487, -11451, 5958);
+                        Explosion.Spawn(0, ToUnity(hitPoint), Vector3.forward, 3f, CombatAssets.Pick(combat?.explosionBig), true);   // sound 18
+                        // Level+0x58 at the hit point and Level+0x5c at hit + (4500, 0, 1000) (record 24, both emitting for
+                        // the rest of the level; the second point drifts +2 u/ms along x in state 9).
+                        burnA = new GameObject("Deep science burn A").transform;
+                        burnA.position = ToUnity(hitPoint);
+                        new WreckBurn(burnA, WreckBurn.DeepScience).SetEmitting(true);
+                        burnB = new GameObject("Deep science burn B").transform;
+                        burnB.position = ToUnity(hitPoint + new Vector3(4500, 0, 1000));
+                        new WreckBurn(burnB, WreckBurn.DeepScience).SetEmitting(true);
                         Step = 9;
                     }
                     break;
                 case 9:
+                    if (burnB != null) burnB.position += ToUnity(new Vector3(2f * dtMs, 0, 0)) - ToUnity(Vector3.zero);
                     if (stepMs >= 8000f)
                     {
                         LeaveCutscene();
@@ -1017,6 +1030,7 @@ namespace GoF2Remake.World
                         loading = true;
                         Story.Advance(level.Database);
                         Session.StationIndex = 100;
+                        Session.AttackedStations.Remove(100);   // Station::setAttackedFriends(false) on the new station
                         Session.ComingFromVoid = false;
                         level.Dock();
                     }

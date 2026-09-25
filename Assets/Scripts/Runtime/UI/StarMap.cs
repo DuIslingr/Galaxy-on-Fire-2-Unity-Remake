@@ -994,6 +994,9 @@ namespace GoF2Remake.UI
 
         bool DialogOpen => dialog != null && dialog.ClassListContains("map-dialog-backdrop--shown");
 
+        /// <summary>Layout::initHelpWindow over the map (the station's first-visit hints 628 / 631).</summary>
+        public void ShowHint(string text) => ShowDialog(text, null, null, true);
+
         void ShowDialog(string text, Action onYes, Action onNo, bool info = false)
         {
             dialogAction = onYes;

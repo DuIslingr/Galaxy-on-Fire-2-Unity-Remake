@@ -109,11 +109,14 @@ namespace GoF2Remake.UI
         void OnDisable()
         {
             pauseMenu?.Close();   // the scene is going: sounds and time back to normal
+            UnityEngine.Cursor.lockState = CursorLockMode.None;   // the captured mouse (mouse steering) is released
+            UnityEngine.Cursor.visible = true;
             if (mining != null) mining.Message -= OnMiningMessage;
             if (docking != null) docking.Message -= OnMiningMessage;
             if (nav != null) nav.Message -= OnMiningMessage;
             if (jump != null) jump.Message -= OnMiningMessage;
             if (traffic != null) traffic.Message -= OnMiningMessage;
+            if (traffic != null) traffic.ChoiceRequested -= OnChoiceRequested;
             if (radar != null) radar.Message -= OnCombatMessage;
             if (health != null) health.GameOverStarted -= OnGameOver;
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
@@ -158,11 +161,17 @@ namespace GoF2Remake.UI
             HookThrottle();
             HookPress(boostButton, () => ship?.Boost());
             HookPress(levelButton, () => ship?.AlignToHorizon());
-            HookPress(turretButton, () => level?.Turret?.Toggle());
+            HookPress(turretButton, () =>
+            {
+                // A manual turret's button is the camera button (MGame::switchCamera); an auto turret's toggles auto fire.
+                if (level?.Turret != null && !level.Turret.IsAuto && level.FreeLook != null) level.FreeLook.Cycle();
+                else level?.Turret?.Toggle();
+            });
             HookPress(fireButton, () => weapons?.SetPrimaryHeld(true), () => weapons?.SetPrimaryHeld(false));
             HookPress(missileButton, null, () => weapons?.FireSecondary());
             HookPress(dockPrompt, null, Interact);
             miningView = new MiningView(root);
+            readout = new HudReadout(safeArea);
             hackingView = new HackingView(root);
             transferCounter = new Label { pickingMode = PickingMode.Ignore };
             transferCounter.AddToClassList("transfer-counter");
@@ -293,7 +302,8 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-keyboard", kind == InputKind.KeyboardMouse);
             root.EnableInClassList("input-gamepad", kind == InputKind.Gamepad);
             if (kind != InputKind.Touch) { stick?.Release(); weapons?.SetPrimaryHeld(false); }
-            if (chase != null) chase.handlingDependent = kind != InputKind.Touch;
+            // PlayerEgo::update: handling-dependent damping only with the mouse cursor, else resetShipHandling's constants.
+            if (chase != null) chase.handlingDependent = kind == InputKind.KeyboardMouse;
             BuildHints(kind);
             dockGlyph.Clear();
             if (kind == InputKind.KeyboardMouse) dockGlyph.Add(InputGlyph.Key("ENTER", true));
@@ -425,9 +435,45 @@ namespace GoF2Remake.UI
 
         // ---- per frame -----------------------------------------------------------------------------------
 
+        VisualElement mouseReticle;
+
+        /// <summary>Globals::mouseCursorActivated: with the option on, the keyboard and mouse in use and the ship flyable, the
+        /// cursor is captured and the mouse steers (ShipController.mouseSteering); a ring marks the mouse crosshair
+        /// (PlayerEgo+0x94, the centre + the offset), the normal crosshair keeps showing the aim (+0xa0).</summary>
+        void UpdateMouseSteering()
+        {
+            if (ship == null || level == null) return;
+            bool on = Settings.MouseSteering && !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse
+                      && !pauseMenu.IsOpen && !(nav != null && nav.MenuOpen) && !StarMap.IsOpen && !storyDialogue.IsOpen
+                      && !level.Cutscene && level.LaunchCameraOver && Time.timeScale > 0f && (health == null || !health.Dead)
+                      && (mining == null || mining.State == Mining.Phase.Idle) && !(level.FreeLook != null && level.FreeLook.FreeLookActive)
+                      && (weapons == null || !weapons.SteeringMissile) && (level.Docking == null || !level.Docking.Busy);
+            ship.mouseSteering = on;
+            var wantLock = on ? CursorLockMode.Locked : CursorLockMode.None;
+            if (UnityEngine.Cursor.lockState != wantLock) UnityEngine.Cursor.lockState = wantLock;
+            if (UnityEngine.Cursor.visible == on) UnityEngine.Cursor.visible = !on;
+            if (mouseReticle == null && safeArea != null)
+            {
+                mouseReticle = new VisualElement { pickingMode = PickingMode.Ignore };
+                mouseReticle.AddToClassList("mouse-reticle");
+                safeArea.Add(mouseReticle);
+            }
+            if (mouseReticle == null) return;
+            // Only once the mouse steers away from the centre (beyond ~4 % of the half screen height).
+            bool show = on && ship.MouseOffset.magnitude > Screen.height * 0.02f;
+            mouseReticle.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!show || root.panel == null) return;
+            var centre = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) + ship.MouseOffset;
+            var p = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(centre.x, Screen.height - centre.y));
+            var parent = mouseReticle.parent.worldBound;
+            mouseReticle.style.left = p.x - parent.x;
+            mouseReticle.style.top = p.y - parent.y;
+        }
+
         void Update()
         {
             if (root == null) return;
+            UpdateMouseSteering();
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
             lensFlare?.Update(level != null ? level.Backdrop : null, StarMap.IsOpen || !Settings.LensFlare);   // StarSystem::render2D, under the HUD
 
@@ -454,7 +500,8 @@ namespace GoF2Remake.UI
                 return;
             }
 
-            UpdateFreelanceTimer();
+            if (volatileCargo == null && level != null && level.Player != null) volatileCargo = level.Player.GetComponent<VolatileCargo>();
+            readout?.Update(level, true, volatileCargo != null ? volatileCargo.Force : 0f);
             if (nav != null && nav.MenuOpen)
             {
                 UpdateAutopilotMenu();
@@ -493,6 +540,10 @@ namespace GoF2Remake.UI
                 radar = level.Radar;
                 traffic = level.Traffic;
                 if (traffic != null) traffic.Message += OnMiningMessage;
+                if (traffic != null) traffic.ChoiceRequested += OnChoiceRequested;
+                if (level.Hints != null) level.Hints.HintRequested += text => OnChoiceRequested(text, null, null, null, null);
+                if (level.Hints != null) level.Hints.Message += text => OnCombatMessage(text, 1);
+                if (level.FreeLook != null) level.FreeLook.Message += OnMiningMessage;
                 // Layout::showMissionRewardMessage(reward, bounty): "Bounty collected" (3206) and the credits, sound 36.
                 if (traffic != null) traffic.BountyCollected += reward =>
                 {
@@ -651,7 +702,8 @@ namespace GoF2Remake.UI
             navView.Update(nav, Camera.main, InputMode.Current == InputKind.Touch, phase,
                            level.Layout.alienOrbit ? Standing.Void : level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
             bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
-            bool plateFree = (nav == null || nav.Locked == null) && (mining == null || (mining.State == Mining.Phase.Idle && mining.Locked == null));
+            // Radar::drawCurrentLock's order: an asteroid, then a ship lock, then a landmark (the ship's plate goes over it).
+            bool plateFree = mining == null || (mining.State == Mining.Phase.Idle && mining.Locked == null);
             // Radar::draw isn't called while the launch / arrival camera runs: no ship markers (their layer sets its display
             // inline, which the .hud-launch rule can't override).
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree, !level.LaunchCameraOver);
@@ -900,20 +952,14 @@ namespace GoF2Remake.UI
 
         void OnMiningMessage(string text) => miningView?.ShowMessage(text);
 
-        /// <summary>Junk removal's time limit (and a campaign level's, LevelScript+0: index 29's survival) as a HUD message:
-        /// every 10 s, then every second from 10 s.</summary>
-        void UpdateFreelanceTimer()
-        {
-            float left = -1f;
-            if (freelance != null && !freelance.DialogueOpen) left = freelance.TimeLeftMs;
-            else if (freelance == null && level != null && level.Campaign != null && !level.Dialogue && !level.Cutscene) left = level.Campaign.TimeLeftMs;
-            if (left < 0f || left <= 0f && lastTimerSecond == 0) return;
-            int sec = Mathf.CeilToInt(left / 1000f);
-            if (sec == lastTimerSecond) return;
-            lastTimerSecond = sec;
-            if (sec % 10 == 0 || sec <= 10) OnMiningMessage($"{sec / 60}:{sec % 60:00}");
-        }
-        int lastTimerSecond = -1;
+        /// <summary>A ChoiceWindow in flight (MGame+0x90): the pause menu's choice page, the game paused.</summary>
+        void OnChoiceRequested(string text, string yes, string no, System.Action onYes, System.Action onNo)
+            => pauseMenu?.Ask(level, text, yes, no, onYes, onNo);
+
+        /// <summary>Hud::draw's top readout: the time limit (Junk removal, a campaign level's LevelScript+0), else the cargo
+        /// hold, the volatile bar and the mission counters (HudReadout).</summary>
+        HudReadout readout;
+        VolatileCargo volatileCargo;
         void OnCombatMessage(string text, int colour) => miningView?.ShowMessage(text, colour);
 
         // ---- game over (MGame game-over state) ------------------------------------------------------------
@@ -1051,6 +1097,21 @@ namespace GoF2Remake.UI
             if (level != null && level.CanDock) level.Dock();
         }
 
+        /// <summary>MGame::OnSuspend 0x1b1000: the app goes to the background -> the options are saved, the sounds pause and
+        /// the pause menu opens (a running game never continues unseen). Not while the Editor / a desktop build keeps running
+        /// in the background.</summary>
+        void OnApplicationPause(bool paused)
+        {
+            if (!paused) return;
+            PlayerPrefs.Save();
+            if (Application.isMobilePlatform || !Application.runInBackground) OpenPause();
+        }
+
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused && Application.isMobilePlatform) OnApplicationPause(true);
+        }
+
         void OpenPause()
         {
             if (level == null || pauseMenu.IsOpen || (health != null && health.Dead) || StarMap.IsOpen || storyDialogue.IsOpen) return;
@@ -1126,6 +1187,14 @@ namespace GoF2Remake.UI
                 }
                 else if (id == swipeTouch)
                 {
+                    // Free look (MGame::freeCamTouch*): the drag turns the camera instead of dodging.
+                    var fl = level != null ? level.FreeLook : null;
+                    if (fl != null && fl.FreeLookActive)
+                    {
+                        fl.TouchDrag(t.delta.ReadValue(), !t.press.wasReleasedThisFrame);
+                        if (t.press.wasReleasedThisFrame) swipeTouch = -1;
+                        continue;
+                    }
                     if (Mathf.Abs(sp.y - swipeStart.y) > Screen.height / 320f * 90f) { swipeTouch = -1; continue; }
                     if (!t.press.wasReleasedThisFrame) continue;
                     swipeTouch = -1;

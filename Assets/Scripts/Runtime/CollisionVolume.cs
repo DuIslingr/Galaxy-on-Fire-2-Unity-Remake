@@ -147,8 +147,15 @@ namespace GoF2Remake.Flight
         /// <summary>A freighter / battleship wreck's volumes (Globals::getWreckCollision).</summary>
         public static List<CollisionVolume> ForWreck(int ship, int race)
         {
-            wreck ??= Load("wreck_collisions");
             int id = ship == 14 ? 0 : ship == 13 ? 4 : race == 3 ? 1 : race == 2 ? 2 : 3;
+            return ForWreckId(id);
+        }
+
+        /// <summary>Globals::getWreckCollision(id): 0 battleship (x2), 1 Midorian, 2 Nivelian, 3 Terran, 4 Vossk freighter,
+        /// 5 the Pirate Outpost (setWreckedMeshId 0x37a3).</summary>
+        public static List<CollisionVolume> ForWreckId(int id)
+        {
+            wreck ??= Load("wreck_collisions");
             wreck.TryGetValue(id, out var v);
             return Parse(v, 1.1f, 0.6f, id == 0 ? 2f : 1f);
         }

@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 8;
+        public const int CurrentVersion = 9;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -78,6 +78,10 @@ namespace GoF2Remake.Data
         public int[] collectedBounties;
         public int wantedHints;
         public int hiddenBlueprintsFound;
+        // version 9: the elite medals' flags and streaks (Status+0x120 .. +0x148)
+        public List<int> eliteFlags;
+        public int oreStreak, blindKills;
+        public bool lomaTollPaid, lomaTollRefused;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -209,6 +213,8 @@ namespace GoF2Remake.Data
                 hasParkedShip = Session.ParkedShip != null, parkedShip = Session.ParkedShip, storyTargets = new List<int>(Session.StoryTargets),
                 wanted = new List<WantedState>(Session.Wanted), collectedBounties = (int[])Session.CollectedBounties.Clone(),
                 wantedHints = Session.WantedHints, hiddenBlueprintsFound = Session.HiddenBlueprintsFound,
+                eliteFlags = new List<int>(Session.EliteFlags), oreStreak = Session.OreStreak, blindKills = Session.BlindKills,
+                lomaTollPaid = Session.LomaTollPaid, lomaTollRefused = Session.LomaTollRefused,
             };
         }
 
@@ -316,6 +322,11 @@ namespace GoF2Remake.Data
                 Session.HiddenBlueprintsFound = s.hiddenBlueprintsFound;
             }
             else { Session.Wanted = new List<WantedState>(); Session.CollectedBounties = new int[4]; Session.WantedHints = 0; Session.HiddenBlueprintsFound = 0; }
+            Session.EliteFlags = new HashSet<int>(s.eliteFlags ?? new List<int>());
+            Session.OreStreak = s.oreStreak;
+            Session.BlindKills = s.blindKills;
+            Session.LomaTollPaid = s.lomaTollPaid;
+            Session.LomaTollRefused = s.lomaTollRefused;
             Story.RepairCheckpoint();
         }
     }

@@ -13,7 +13,8 @@ namespace GoF2Remake.Data
         public AudioClip docking;          // 0x8de (2270) DLC2_SFX/Docking_Landing_01
         public AudioClip hackingTurn;      // 0x8e2 (2274) Hacking_Dialling_1
         public AudioClip hackingSolved;    // 0x8e1 (2273) Hacking_Solved_1
-        public AudioClip transferLoop;     // Transport_Loop (the loading / unloading, name-matched)
+        public AudioClip transferLoop;     // Transport_Loop (the loading / unloading, name-matched; 0x8e9 (2281) LOOP at 91's wreck)
+        public AudioClip container;        // 0x8ea (2282) CONTAINER: DLC2_SFX/Container_01 (91's wreck breaking up)
 
         [Header("Plasma")]
         public AudioClip extractorLoop;    // 2255 Loop (Extractor_Loop_01): the collector turret view (PlayerEgo::setTurretMode)

@@ -31,6 +31,8 @@ namespace GoF2Remake.Flight
         const float BaseSpeed = 2f;                          // units per ms at full throttle
 
         public Phase State { get; private set; } = Phase.Idle;
+        /// <summary>PlayerEgo::lostMiningGame (+0x39b): the last minigame failed (its energy ran out).</summary>
+        public bool LostGame { get; private set; }
         public Target Candidate { get; private set; }
         public Target Locked { get; private set; }
         public Target Target { get; private set; }
@@ -252,6 +254,7 @@ namespace GoF2Remake.Flight
         void BeginLanding()
         {
             State = Phase.Landing;
+            weapons?.ResetGunDelay();   // PlayerEgo::dockToAsteroid
             SetExhaust(false);
             Play(sounds?.miningLanding);
             if (chase != null) chase.enabled = false;   // TargetFollowCamera::setActive(false): the camera stays put
@@ -261,6 +264,7 @@ namespace GoF2Remake.Flight
         void StartMinigame()
         {
             Game = new MiningGame(Target.quality, Target.oreItem, drill.Attr(32), drill.Attr(33), Session.CampaignMission <= 4);
+            LostGame = false;
             Game.InsideChanged += inside =>
             {
                 if (inside) { if (!drillSound.IsPlaying) drillSound.Start(DrillSpeed); }
@@ -275,11 +279,13 @@ namespace GoF2Remake.Flight
 
         void UpdateMining(float dtMs)
         {
-            if (Target == null || !Target.Alive) { Say(Localization.Get(539)); FinishMining(); return; }   // asteroid gone
+            if (Target == null || !Target.Alive) { Session.OreStreak = 0; Say(Localization.Get(539)); FinishMining(); return; }   // asteroid gone
             Game.SetInput(ReadDrillInput());
             drillSound.Set(DrillSpeed);
             if (Game.Update(dtMs)) return;
-            if (Game.Lost) Say(Localization.Get(539));   // Mining failed.
+            if (Game.Lost) { Session.OreStreak = 0; LostGame = true; Say(Localization.Get(539)); }   // Mining failed.
+            // MiningGame::update: every layer drilled -> Status+0x124 + 1 (medal 38 Ore Athlete).
+            if (Game.Won && !Achievements.Has(38)) Achievements.Elite(38, ++Session.OreStreak);
             FinishMining();
         }
 

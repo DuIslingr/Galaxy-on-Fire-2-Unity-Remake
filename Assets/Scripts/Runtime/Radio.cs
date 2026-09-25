@@ -48,6 +48,9 @@ namespace GoF2Remake.Flight
 
         readonly List<RadioLine> lines;
         readonly bool[] triggered, over;
+        /// <summary>RadioMessage+0x24: the route index this line saw last (types 0 / 0x19 fire on the frame it moves on).</summary>
+        readonly int[] lastRoute;
+        readonly bool[] routeEdge;
         int showing = -1;
         float showMs, durationMs;
 
@@ -56,6 +59,8 @@ namespace GoF2Remake.Flight
             lines = radioLines ?? new List<RadioLine>();
             triggered = new bool[lines.Count];
             over = new bool[lines.Count];
+            lastRoute = new int[lines.Count];
+            routeEdge = new bool[lines.Count];
         }
 
         public int Count => lines.Count;
@@ -77,6 +82,15 @@ namespace GoF2Remake.Flight
 
         public void Update(float dtMs, IRadioWorld w)
         {
+            // Types 0 / 0x19 watch the route every frame (also while another line shows): the edge is remembered.
+            for (int i = 0; i < lines.Count; i++)
+            {
+                int t = lines[i].trigger;
+                if (triggered[i] || (t != 0 && t != 0x19)) continue;
+                int last = lastRoute[i], now = w.RouteIndex;
+                lastRoute[i] = now;
+                if (now > last && last == (t == 0 ? lines[i].param : 0)) routeEdge[i] = true;
+            }
             if (showing >= 0)
             {
                 showMs += dtMs;
@@ -85,7 +99,7 @@ namespace GoF2Remake.Flight
             }
             for (int i = 0; i < lines.Count; i++)
             {
-                if (triggered[i] || !Test(lines[i], w)) continue;
+                if (triggered[i] || !Test(i, lines[i], w)) continue;
                 triggered[i] = true;
                 showing = i;
                 showMs = 0f;
@@ -96,7 +110,8 @@ namespace GoF2Remake.Flight
             }
         }
 
-        bool Test(RadioLine m, IRadioWorld w)
+        /// <summary>RadioMessage::triggered 0x17c5d8.</summary>
+        bool Test(int index, RadioLine m, IRadioWorld w)
         {
             int p = m.param, count = Mathf.Max(1, m.count);
             bool Any(Func<int, bool> f) { for (int k = p; k < p + count; k++) if (k < w.ShipCount && f(k)) return true; return false; }
@@ -104,7 +119,8 @@ namespace GoF2Remake.Flight
             int DeadShips() { int d = 0; for (int k = 0; k < w.ShipCount; k++) if (w.ShipDead(k)) d++; return d; }
             switch (m.trigger)
             {
-                case 0: return w.RouteIndex > p;
+                // Type 0: the frame the player route moves on from waypoint p (a route already past it never fires).
+                case 0: return routeEdge[index];
                 case 1: return Any(w.ShipDead);
                 case 2: return Any(k => w.ShipDead(k) && w.ShipFriendly(k));
                 case 3: return w.EnemiesLeft < 1;
@@ -114,9 +130,10 @@ namespace GoF2Remake.Flight
                 case 8: return Any(w.ShipActive);
                 case 9: return All(w.ShipDead);
                 case 10: return Any(k => w.ShipActive(k) && w.ShipFriendly(k));
-                case 0xc: return Any(k => !w.ShipDead(k) && w.ShipHullFraction(k) < 0.5f);
-                case 0x13: return Any(k => !w.ShipDead(k) && w.ShipHullFraction(k) < 0.25f);
-                case 0x1f: return Any(k => !w.ShipDead(k) && w.ShipHullFraction(k) < 0.75f);
+                // hit points below a half / a quarter / three quarters of the maximum (a dead ship's 0 counts too).
+                case 0xc: return Any(k => w.ShipDead(k) || w.ShipHullFraction(k) < 0.5f);
+                case 0x13: return Any(k => w.ShipDead(k) || w.ShipHullFraction(k) < 0.25f);
+                case 0x1f: return Any(k => w.ShipDead(k) || w.ShipHullFraction(k) < 0.75f);
                 case 0xf: return DeadShips() > 0;
                 case 0x10: for (int k = 0; k < w.ShipCount; k++) if (w.ShipActive(k) && w.ShipHostile(k)) return true; return false;
                 case 0x14: return DeadShips() >= p;
@@ -124,7 +141,13 @@ namespace GoF2Remake.Flight
                 case 0x16: return w.CrateCargoCaptured >= p;
                 case 0x17: return w.StationLocked;
                 case 0x18: return p < w.ShipCount && w.ShipInactive(p) && !w.ShipDead(p) && w.MissionMs > 59999f;
-                case 0x19: { if (w.RouteIndex < 1) return false; int alive = 0; for (int k = 0; k < w.ShipCount; k++) if (!w.ShipDead(k)) alive++; return alive >= p; }
+                // The frame the route moves on from its first waypoint, with at least p ships alive.
+                case 0x19:
+                {
+                    if (!routeEdge[index]) return false;
+                    int alive = 0; for (int k = 0; k < w.ShipCount; k++) if (!w.ShipDead(k)) alive++;
+                    return alive >= p;
+                }
                 case 0x1a: return w.ShipCount > 0 && w.ShipActive(0) && Mathf.Abs(w.ShipGameZ(0) - p) < 5000f;
                 case 0x1b: return w.ScriptEvent == p;
                 case 0x1c: return w.PlayerArmorGone;
