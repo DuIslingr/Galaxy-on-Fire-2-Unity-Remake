@@ -62,14 +62,15 @@ namespace GoF2Remake.World
 
         [Header("Audio")]
         public AudioSource musicSource;
-        public AudioSource ambienceSource;
-        public AudioSource ambienceAddSource;
         [Tooltip("Indexed by StationTables.Music.")]
         public AudioClip[] music = new AudioClip[7];
         public AudioClip mainViewAmbience;
         public AudioClip[] mainViewAdds;
         public AudioClip loungeAmbience;
         public AudioClip[] loungeAdds;
+        [Tooltip("95 Station_Atmo_Hangar, while the hangar window is open (ModStation::OnKeyPress).")]
+        public AudioClip hangarAmbience;
+        public AudioClip[] hangarAdds;
 
         [Header("Tuning (not recovered constants)")]
         [Tooltip("URP intensity of the hangar light (original: diffuse 1.0, half the space sun's 2.0).")]
@@ -77,8 +78,6 @@ namespace GoF2Remake.World
         [Tooltip("Scales the hangar ambient ((race ambient + GL global 0.2) * material ambient 0.7).")]
         public float hangarAmbientScale = 1f;
         public float sunIntensityAt2 = 1.6f;
-        [Tooltip("Seconds between random ambience one-shots (the FMOD events add them; timing not recovered).")]
-        public Vector2 ambienceAddInterval = new Vector2(6f, 16f);
 
         public StationView View { get; private set; } = StationView.Hangar;
         public event Action ViewChanged;
@@ -116,7 +115,8 @@ namespace GoF2Remake.World
         readonly List<Visitor> visitors = new List<Visitor>();
         PartAnimation midorianProp;
         float midorianTimer;
-        float nextAmbienceAdd;
+        CycleSound mainViewAtmo, loungeAtmo, hangarAtmo;
+        bool hangarWindowOpen;
 
         class Visitor { public Transform body, glow; public Vector3 feet; public Agent agent; public float height; }
 
@@ -174,6 +174,8 @@ namespace GoF2Remake.World
             if (musicSource != null)
             {
                 var clip = music != null && music.Length > 0 ? music[(int)StationTables.MusicFor(station, Layout.raceId)] : null;
+                // Globals::playMusicAndFadeOutCurrent(0): station 10 at campaign 0x9f plays 144 OutroSong.
+                if (station == 10 && !Session.FreePlay && Session.CampaignMission == 0x9f && StoryAssets.Load()?.outroSong != null) clip = StoryAssets.Load().outroSong;
                 if (clip == null && music != null && music.Length > 0) clip = music[0];
                 musicSource.clip = clip;
                 musicSource.loop = true;
@@ -194,6 +196,7 @@ namespace GoF2Remake.World
             shipPivot = OrbitLayout.ToUnity(new Vector3(0f, y, 0f));
             var ship = SpawnShip(shipIndex, new Vector3(0f, y, 0f), 0f, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
+            RefreshTurret(true);
             shipYaw = StationTables.StartYaw(HangarIndex);
             ApplyShipYaw();
             SpawnParkedShips();
@@ -211,7 +214,22 @@ namespace GoF2Remake.World
             shipIndex = index;
             var ship = SpawnShip(index, new Vector3(0f, StationTables.ShipY(index), 0f), 0f, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
+            RefreshTurret(true);
             ApplyShipYaw();
+        }
+
+        GameObject turret;
+        int turretItem = -1;
+
+        /// <summary>CutScene::checkForTurret 0xa4594: the mounted turret on the turntable ship, rebuilt whenever the turret
+        /// item changes (the original re-runs it after every equipment change).</summary>
+        void RefreshTurret(bool force)
+        {
+            int item = GoF2Remake.Flight.PlayerTurret.TurretItem(db, Session.Equipment);
+            if (!force && item == turretItem) return;
+            turretItem = item;
+            if (turret != null) Destroy(turret);
+            turret = playerShip != null ? GoF2Remake.Flight.PlayerTurret.BuildStatic(db, shipIndex, Session.Equipment, playerShip) : null;
         }
 
         readonly List<GameObject> parkedShips = new List<GameObject>();
@@ -372,7 +390,7 @@ namespace GoF2Remake.World
                 flingVelocity = 0f;
                 ApplyHangarLighting();
             }
-            PlayAmbience(view == StationView.Hangar ? mainViewAmbience : loungeAmbience);
+            PlayAmbience();
             UpdateCamera(0f);
             ViewChanged?.Invoke();
         }
@@ -470,8 +488,10 @@ namespace GoF2Remake.World
                 if (Random.value < 0.3f) midorianProp.Restart();
             }
 
+            if (View == StationView.Hangar) RefreshTurret(false);
             if (musicSource != null) musicSource.volume = Settings.MusicVolume;
-            UpdateAmbienceAdds();
+            float atmoMs = Time.unscaledDeltaTime * 1000f;
+            mainViewAtmo?.Update(atmoMs); loungeAtmo?.Update(atmoMs); hangarAtmo?.Update(atmoMs);
         }
 
         void LateUpdate()
@@ -568,25 +588,32 @@ namespace GoF2Remake.World
 
         // ---- audio -------------------------------------------------------------------------------------------
 
-        void PlayAmbience(AudioClip clip)
+        /// <summary>The screen's ambience event (the FEV's LGCY data, CycleSound): 122 Station_Atmo_Mainview on the main view,
+        /// 95 Station_Atmo_Hangar while the hangar window is open (ModStation::OnKeyPress stops 122 and plays 95), 108
+        /// Station_Atmo_Lounge in the lounge.</summary>
+        void PlayAmbience()
         {
-            if (ambienceSource == null) return;
-            ambienceSource.Stop();
-            ambienceSource.clip = clip;
-            ambienceSource.loop = true;
-            ambienceSource.volume = Settings.SfxVolume;
-            if (clip != null) ambienceSource.Play();
-            nextAmbienceAdd = Time.time + Random.Range(ambienceAddInterval.x, ambienceAddInterval.y);
+            if (mainViewAtmo == null)
+            {
+                mainViewAtmo = CycleSound.MainView(gameObject, mainViewAmbience, mainViewAdds);
+                hangarAtmo = CycleSound.Hangar(gameObject, hangarAmbience, hangarAdds);
+                // The two lounge add definitions: every Add_* wave but Add_1 (Add_1) / but Add_11 (Add_2).
+                var adds = loungeAdds ?? new AudioClip[0];
+                loungeAtmo = CycleSound.Lounge(gameObject, loungeAmbience,
+                                               System.Array.FindAll(adds, c => c != null && c.name != "Station_Atmo_Lounge_Add_1"),
+                                               System.Array.FindAll(adds, c => c != null && c.name != "Station_Atmo_Lounge_Add_11"));
+            }
+            var want = View == StationView.Lounge ? loungeAtmo : hangarWindowOpen ? hangarAtmo : mainViewAtmo;
+            foreach (var a in new[] { mainViewAtmo, loungeAtmo, hangarAtmo }) if (a != want && a.IsPlaying) a.Stop();
+            if (!want.IsPlaying) want.Play();
         }
 
-        void UpdateAmbienceAdds()
+        /// <summary>The hangar window opened / closed: its own ambience (95) instead of the main view's (122).</summary>
+        public void SetHangarWindowOpen(bool open)
         {
-            if (ambienceAddSource == null || Time.time < nextAmbienceAdd) return;
-            nextAmbienceAdd = Time.time + Random.Range(ambienceAddInterval.x, ambienceAddInterval.y);
-            var adds = View == StationView.Hangar ? mainViewAdds : loungeAdds;
-            if (adds == null || adds.Length == 0) return;
-            var clip = adds[Random.Range(0, adds.Length)];
-            if (clip != null) ambienceAddSource.PlayOneShot(clip, Settings.SfxVolume);
+            if (hangarWindowOpen == open) return;
+            hangarWindowOpen = open;
+            PlayAmbience();
         }
     }
 }

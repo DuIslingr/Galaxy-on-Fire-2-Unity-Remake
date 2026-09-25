@@ -198,6 +198,7 @@ namespace GoF2Remake.World
             Collision = Player.gameObject.AddComponent<PlayerCollision>();
             Collision.Setup(Health, chase, Mining);
             Collision.wormhole = Wormhole;
+            VolatileCargo.Attach(Player.gameObject, db, Player);   // PlayerEgo+0x398: volatile goods, sound 35
             bool storyOrbit = !Session.FreePlay && Story.IsLevelMission(station);
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
             bool freelanceOrbit = !storyOrbit && Freelance.IsMissionOrbit(station);
@@ -455,6 +456,9 @@ namespace GoF2Remake.World
             // Asteroid mining (lock, autopilot approach, minigame): needs a drill (category 19) to lock.
             Mining = root.AddComponent<Mining>();
             Mining.Setup(db, ctrl, Weapons, chase);
+            // MGame::OnInitialize: the engine loop (PlayerEgo+0x1c) and the boost sound (+0xd4).
+            PlayerEngine.Attach(root, db, ctrl);
+            ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);   // Level::initParticleSystems: the exhaust particles
 
             if (Session.LaunchedFromStation || Session.ArrivedByTravel) StartLaunchCamera();
         }

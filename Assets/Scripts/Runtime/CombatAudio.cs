@@ -11,7 +11,16 @@ namespace GoF2Remake.Flight
     {
         public AudioClip asteroidDestroyed;
         public AudioClip targetLock;
-        public AudioClip miningDrill;
+        public AudioClip miningDrill;              // 1 Mining_Drill layer 1: Mining_Drill_Add_1 (DrillSound)
+        public AudioClip miningDrillSlow, miningDrillAdd2, miningDrillSwitch;   // layers 0 / 2 / 3
+        [Tooltip("PlayerEngine: events 42 / 43 / 44 / 45 / 1104 / 1106 / 1107 (their first layer; the extras their second).")]
+        public AudioClip[] playerEngines, playerEngineExtras;
+        [Tooltip("PlayerEngine: boost events 38-41 (boosters 71-74) and 1102 (195).")]
+        public AudioClip[] boosters;
+        [Tooltip("The flight UI's buttons: 124 Button_Push / 123 Button_Release, 126 Message_Info_Screen (ChoiceWindow::set).")]
+        public AudioClip buttonPush, buttonRelease, messageInfo;
+        [Tooltip("97 Button_Info: the hangar's item info window (HangarWindow::OnTouchEnd case 0).")]
+        public AudioClip buttonInfo;
         public AudioClip miningLanding;
         public AudioClip miningDrillBroken;
         public AudioClip autopilotOn;

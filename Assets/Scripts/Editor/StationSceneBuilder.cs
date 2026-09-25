@@ -71,8 +71,6 @@ namespace GoF2Remake.EditorTools
                 .Select((r, i) => AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_{34800 + i}_bar_visitor_glow_{r}.mat")).ToArray();
 
             level.musicSource = Source(levelGo, true);
-            level.ambienceSource = Source(levelGo, true);
-            level.ambienceAddSource = Source(levelGo, false);
             // Indexed by StationTables.Music: Terran, Vossk, Nivelian, Midorian, home base, Valkyrie, Deep Science.
             level.music = new[]
             {
@@ -84,6 +82,8 @@ namespace GoF2Remake.EditorTools
             level.mainViewAdds = Clips("SFX_STATION_MAINVIEW", "Station_Atmo_Mainview_Add_");
             level.loungeAmbience = Clip("SFX_STATION_LOUNGE/Station_Atmo_Lounge_1.ogg");
             level.loungeAdds = Clips("SFX_STATION_LOUNGE", "Station_Atmo_Lounge_Add_");
+            level.hangarAmbience = Clip("SFX_STATION_HANGAR/Station_Atmo_Hangar3.ogg");
+            level.hangarAdds = Clips("SFX_STATION_HANGAR", "Station_Atmo_Hangar_Add_");
             EditorUtility.SetDirty(level);
 
             var uiGo = new GameObject("Station Menu");

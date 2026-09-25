@@ -118,6 +118,7 @@ namespace GoF2Remake.Data
             AddToCargo(item, 1);
             if (price > 0) ChangeCredits(-price);
             Session.SeenItems.Add(item);
+            if (Session.IsBooze(item)) Session.BoozeTypes.Add(item);   // HangarWindow::transaction: Status+0xac
             return Result.Ok;
         }
 
@@ -138,6 +139,7 @@ namespace GoF2Remake.Data
             }
             if (!Storage) ChangeCredits(PriceOf(item));
             Session.SeenItems.Add(item);
+            if (Session.IsBooze(item)) Session.BoozeTypes.Add(item);   // HangarWindow::selectItem: a committed booze trade
             return Result.Ok;
         }
 

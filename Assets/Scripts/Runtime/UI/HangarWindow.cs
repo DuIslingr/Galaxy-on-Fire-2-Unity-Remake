@@ -155,6 +155,18 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>Back inside the window: the ingredient list returns to the blueprint list (after committing).</summary>
+        /// <summary>HangarWindow::OnTouchEnd case 0: the selected row's details in the full-screen window, sound 97.</summary>
+        public void OpenInfo()
+        {
+            if (selected == null || menu.InfoWindow == null) return;
+            var db = level.Database;
+            int item = selected.kind == RowKind.Slot && selected.equipment >= 0 ? Session.Equipment[selected.equipment].item : selected.item;
+            if (item >= 0) menu.InfoWindow.ShowItem(db, item, hangar.SystemIndex, selected.kind == RowKind.ShopItem && !hangar.Storage, hangar.PriceOf(item));
+            else if (selected.ship >= 0) menu.InfoWindow.ShowShip(db, selected.ship, hangar.ShipPrice(selected.ship));
+            else return;
+            menu.PlayClip(Flight.CombatAudio.Load()?.buttonInfo);
+        }
+
         public bool Back()
         {
             if (editing < 0) return false;
@@ -411,6 +423,14 @@ namespace GoF2Remake.UI
             e.Add(icon);
             e.Add(texts);
             if (price.text.Length > 0) e.Add(price);
+            // ListItemWindow's "i" (image 0x470) on the selected row.
+            if (row.kind != RowKind.Header && row.kind != RowKind.Autocomplete && (row.item >= 0 || row.ship >= 0 || row.equipment >= 0))
+            {
+                var info = new Button(() => { Select(row, false); OpenInfo(); }) { text = "i", focusable = false };
+                info.AddToClassList("row-info");
+                info.AddToClassList("gof-semibold");
+                e.Add(info);
+            }
             e.RegisterCallback<ClickEvent>(_ => Select(row, true));
             row.element = e;
             list.Add(e);

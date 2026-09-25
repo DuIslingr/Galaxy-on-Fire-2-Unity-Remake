@@ -167,7 +167,8 @@
     color: #FFFFFF;
 }
 
-/* Medals: three columns; plates coloured by grade (none translucent blue, gold, silver, bronze). */
+/* Medals: three columns of the original's plates (228 x 84), the grade-tinted symbol centred at (114, 41), the name in
+   white under the plate; the pressed overlay shows on the selected medal. */
 .medal-scroll {
     flex-grow: 1;
 }
@@ -178,39 +179,50 @@
 }
 
 .medal {
-    width: 32%;
-    margin: 0 1% 10px 0;
-    padding: 10px 8px;
+    width: 33%;
+    margin: 0 0 12px 0;
+    padding: 0;
     align-items: center;
-    background-color: rgba(33, 152, 255, 0.10);
-    border-width: 1px;
-    border-color: rgba(33, 152, 255, 0.25);
-    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
 }
 
-.medal-grade {
-    font-size: 15px;
-    letter-spacing: 2px;
-    color: rgba(33, 152, 255, 0.6);
+.medal-plate {
+    width: 228px;
+    height: 84px;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.medal-symbol {
+    position: absolute;
+    left: 87px;
+    top: 14px;
+    width: 54px;
+    height: 54px;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.medal-pressed {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 228px;
+    height: 84px;
+    display: none;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.medal--selected .medal-pressed,
+.can-hover .medal--earned:hover .medal-pressed {
+    display: flex;
 }
 
 .medal-name {
+    margin-top: 5px;
     font-size: 18px;
     -unity-text-align: middle-center;
     white-space: normal;
-    color: rgba(150, 200, 255, 0.45);
-}
-
-.medal--gold { border-color: #FAD10E; background-color: rgba(250, 209, 14, 0.12); }
-.medal--gold .medal-name, .medal--gold .medal-grade { color: #FAD10E; }
-.medal--silver { border-color: #E6ECF0; background-color: rgba(230, 236, 240, 0.10); }
-.medal--silver .medal-name, .medal--silver .medal-grade { color: #FFFFFF; }
-.medal--bronze { border-color: #CE8258; background-color: rgba(206, 130, 88, 0.12); }
-.medal--bronze .medal-name, .medal--bronze .medal-grade { color: #CE8258; }
-
-.can-hover .medal--earned:hover,
-.medal--selected {
-    border-width: 2px;
+    color: #FFFFFF;
 }
 
 .medal-hint {

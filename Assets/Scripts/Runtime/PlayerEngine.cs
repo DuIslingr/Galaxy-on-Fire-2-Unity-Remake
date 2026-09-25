@@ -1,0 +1,110 @@
+// PlayerEngine.cs
+// The player ship's engine loop and boost sound (the FEV's LGCY data, fev_lgcy.py --event 42..45 / 1104-1107 / 38-41).
+//   PlayerEgo::PlayerEgo 0xa5940    +0x1c engine event: ship 42 -> 1104 EngineDLC_08, 43 -> 1106 EngineDLC_11, 40 -> 1107
+//                                   EngineDLC_01, else by handling (Ship::getHandling): >= 1.4 45, >= 1.15 44, >= 0.95 43,
+//                                   else 42; +0xd4 boost sound: boosters 71-74 -> 38-41, 195 -> 1102 Polytron_Boost
+//   MGame::OnInitialize             FModSound::play(+0x1c) at the level's start; PlayerEgo::PauseEngineSound while mining
+//   PlayerEgo::handleShip 0xa7df0   parameter 0 "Vertical" = max(|stick x|, |stick y|) (+0x268 / +0x270, PlayerEgo::right /
+//                                   down): the pitch envelope x0.891 -> x1 at 0.5 -> x1.122 (42 / 44 / 45; 43 x0.944 .. x1.059;
+//                                   the DLC engines x0.891 .. x1.122 linear, only their second layer); parameter 1 = x * 0.2 +
+//                                   0.5 (speaker spread, no 2D effect); "load" is never set: its volume envelope's 0.7
+//   PlayerEgo::boost                FModSound::play(+0xd4) when a boost starts
+// In the supernova orbits the gamma shield's loop takes the engine's slot (PlayerHealth plays it), so no engine then.
+// Volumes: the event volume x Sfx.EventGain.
+
+using GoF2Remake.Data;
+using UnityEngine;
+
+namespace GoF2Remake.Flight
+{
+    public class PlayerEngine : MonoBehaviour
+    {
+        const float LoadGain = 0.7f;
+        static readonly float[] EngineVolume = { 0.0977f, 0.0955f, 0.0876f, 0.0876f, 0.0746f, 0.068f, 0.0566f };
+        static readonly float[] BoostVolume = { 0.2018f, 0.195f, 0.1862f, 0.2065f, 0.2526f };
+
+        ShipController ship;
+        PlayerHealth health;
+        Mining mining;
+        AudioSource main, extra, boostSource;
+        int engine = -1, boost = -1;
+        bool wasBoosting;
+
+        public static PlayerEngine Attach(GameObject player, Database db, ShipController ship)
+        {
+            var e = player.AddComponent<PlayerEngine>();
+            e.Setup(db, ship);
+            return e;
+        }
+
+        void Setup(Database db, ShipController shipController)
+        {
+            ship = shipController;
+            health = GetComponent<PlayerHealth>();
+            mining = GetComponent<Mining>();
+            var audio = CombatAudio.Load();
+            int idx = Session.ShipIndex;
+            float handling = (db.Ship(idx)?.handling ?? 100) / 100f;
+            engine = idx == 42 ? 4 : idx == 43 ? 5 : idx == 40 ? 6
+                   : handling >= 1.4f ? 3 : handling >= 1.15f ? 2 : handling >= 0.95f ? 1 : 0;
+            var booster = Shop.FirstMounted(db, 14);
+            boost = booster == null ? -1 : booster.index >= 71 && booster.index <= 74 ? booster.index - 71 : booster.index == 195 ? 4 : -1;
+            if (audio == null) return;
+            main = Loop(Pick(audio.playerEngines, engine));
+            extra = Loop(Pick(audio.playerEngineExtras, engine));
+            boostSource = gameObject.AddComponent<AudioSource>();
+            boostSource.playOnAwake = false;
+            boostSource.spatialBlend = 0f;
+            boostSource.clip = Pick(audio.boosters, boost);
+        }
+
+        static AudioClip Pick(AudioClip[] list, int i) => list != null && i >= 0 && i < list.Length ? list[i] : null;
+
+        AudioSource Loop(AudioClip clip)
+        {
+            if (clip == null) return null;
+            var s = gameObject.AddComponent<AudioSource>();
+            s.playOnAwake = false;
+            s.loop = true;
+            s.spatialBlend = 0f;
+            s.clip = clip;
+            return s;
+        }
+
+        void Update()
+        {
+            if (ship == null) return;
+            if (health == null) health = GetComponent<PlayerHealth>();
+            if (mining == null) mining = GetComponent<Mining>();
+            bool visible = ship.visualModel == null || ship.visualModel.gameObject.activeInHierarchy;
+            bool on = visible && (health == null || (!health.Dead && !health.GammaLoopActive))
+                      && (mining == null || (mining.State != Mining.Phase.Docked && mining.State != Mining.Phase.Mining));
+            // "Vertical": the stick's larger axis, 0..1.
+            var stick = ship.SteerInput;
+            float v = Mathf.Clamp01(Mathf.Max(Mathf.Abs(stick.x), Mathf.Abs(stick.y)));
+            float pitch = engine >= 4 ? Mathf.Pow(2f, 8f * Mathf.Lerp(0.479167f, 0.520833f, v) - 4f)
+                        : engine == 1 ? PitchEnvelope(v, 0.489583f, 0.510417f) : PitchEnvelope(v, 0.479167f, 0.520833f);
+            float volume = (engine >= 0 ? EngineVolume[engine] : 0f) * LoadGain * Sfx.EventGain * Settings.SfxVolume;
+            // 1104: one layer with the pitch; 1106 / 1107: EngineDLC_07 plain + the pitched second layer.
+            Drive(main, on, volume, engine >= 5 ? 1f : pitch);
+            Drive(extra, on, volume, pitch);
+
+            bool boosting = ship.Model != null && ship.Model.IsBoosting;
+            if (boosting && !wasBoosting && boostSource != null && boostSource.clip != null)
+                boostSource.PlayOneShot(boostSource.clip, BoostVolume[boost] * Sfx.EventGain * Settings.SfxVolume);
+            wasBoosting = boosting;
+        }
+
+        static float PitchEnvelope(float v, float low, float high) =>
+            Mathf.Pow(2f, 8f * (v < 0.5f ? Mathf.Lerp(low, 0.5f, v * 2f) : Mathf.Lerp(0.5f, high, v * 2f - 1f)) - 4f);
+
+        static void Drive(AudioSource s, bool on, float volume, float pitch)
+        {
+            if (s == null) return;
+            s.volume = volume;
+            s.pitch = pitch * TimeExtender.SoundPitch;
+            if (on && !s.isPlaying) s.Play();
+            else if (!on && s.isPlaying) s.Stop();
+        }
+    }
+}

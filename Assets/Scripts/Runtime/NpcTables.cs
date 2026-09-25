@@ -38,7 +38,9 @@ namespace GoF2Remake.Flight
         /// <summary>Globals::getRandomEnemyFighter.</summary>
         public static int RandomFighter(int race)
         {
-            if (!Fighters.TryGetValue(race, out var pool)) pool = Fighters[8];
+            // Valkyrie won: the Vossk also fly the K'Suukk (41) and the S'Kanarr (39).
+            if (race == 1 && Story.Dlc1Won) { int r = Random.Range(0, 100); return r < 60 ? 9 : r < 85 ? 41 : 39; }
+            if (!Fighters.TryGetValue(race, out var pool)) pool = Fighters[8];   // the minor races: pirates
             return pool[Random.Range(0, pool.Length)];
         }
 
@@ -99,8 +101,9 @@ namespace GoF2Remake.Flight
         public static int GunItem(int race) => race switch { 0 => 0, 1 => 3, 2 => 7, 3 => 25, 9 => 5, 10 => 229, _ => 19 };
 
         /// <summary>DAT_002526c0 shot sound per race, as an index into CombatAssets.shots: 0 Nirai EX1 (52),
-        /// 1 Shkoom (55), 2 Nirai Charged (54), 3 Nirai EX2 (53), 4 Laser_Enemy (61, also the Void's 62 stand-in).</summary>
-        public static int ShotSound(int race) => race switch { 0 => 0, 1 => 1, 2 => 2, 3 => 3, _ => 4 };
+        /// 1 Shkoom (55), 2 Nirai Charged (54), 3 Nirai EX2 (53), 4 Laser_Enemy (61), 5 the Void's Laser_Void (62,
+        /// Laser_Vossk_V01), 6 the Specters' DarkMatterLaser (2276).</summary>
+        public static int ShotSound(int race) => race switch { 0 => 0, 1 => 1, 2 => 2, 3 => 3, 9 => 5, 10 => 6, _ => 4 };
 
         /// <summary>Level::createMission: raider group chance for the (effective) security level.</summary>
         public static int RaiderChance(int security) => security <= 0 ? 90 : security == 1 ? 65 : security == 2 ? 35 : 10;

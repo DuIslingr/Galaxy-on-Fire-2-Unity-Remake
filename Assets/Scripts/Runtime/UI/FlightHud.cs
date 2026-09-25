@@ -127,6 +127,7 @@ namespace GoF2Remake.UI
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");
             hints = root.Q("hints");
+
             InputGlyph.TrackHintsOption(hints);
             throttleTrack = root.Q("throttleTrack");
             throttleFill = root.Q("throttleFill");
@@ -179,9 +180,12 @@ namespace GoF2Remake.UI
                 voiceSource.spatialBlend = 0f;
                 voiceSource.ignoreListenerPause = true;
             }
-            storyDialogue = new DialogueView(root, voiceSource);
+            storyDialogue = new DialogueView(root, voiceSource) { ButtonSound = PlayButton };
             pauseMenu?.Close();   // a UI reload rebuilds it: don't leave the game paused
             pauseMenu = new PauseMenu(root, BackToMenu);
+            ButtonSounds(root.Q(className: "pause-backdrop"));
+            pauseMenu.InfoSound = () => PlayUi(CombatAudio.Load()?.messageInfo);
+            pauseMenu.Photo = new PhotoMode(root, this);
             // Remake-only: skip the prologue / rescue (the original's unreachable skip branches, IntroCutscenes.Skip).
             introSkip = new Button { focusable = false };
             introSkip.AddToClassList("intro-skip");
@@ -200,11 +204,13 @@ namespace GoF2Remake.UI
             gameOver.RegisterCallback<PointerDownEvent>(_ => LoadLastSave());
             navView.AutopilotButton += OnAutopilotButton;
             autopilotMenu = root.Q("autopilotMenu");
+            ButtonSounds(autopilotMenu);
             autopilotMenuItems = root.Q("autopilotMenuItems");
             root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();   // Autopilot
             var menuIcon = Resources.Load<Texture2D>("GoF2Hud/autopilot_title");
             if (menuIcon != null) root.Q("autopilotMenuIcon").style.backgroundImage = new StyleBackground(menuIcon);
             root.Q<Button>("menuButton").clicked += OpenPause;
+            ButtonSounds(root.Q("menuButton"));
 
             root.Q<Label>("stickCaption").text = Localization.Extra("hudSteer", "STEER");
             root.Q<Label>("boostCaption").text = Localization.Extra("hudBoost", "BOOST");
@@ -593,7 +599,13 @@ namespace GoF2Remake.UI
             nav?.SetFastForwardHeld(ffHeld);
             root.EnableInClassList("hud-docking", phase != Mining.Phase.Idle);
             root.EnableInClassList("hud-mining", phase == Mining.Phase.Mining);
-            var touchStick = InputMode.Current == InputKind.Touch && stick != null ? stick.Value : Vector2.zero;
+            // Touch: the floating stick, its value squared per axis like Hud::getAnalogX / Y; with tilt steering chosen the
+            // accelerometer instead (MGame::handleAccelerometer, not at campaign 48), the stick shown but idle.
+            bool tilt = InputMode.Current == InputKind.Touch && TiltSteering.Active && (Session.FreePlay || Session.CampaignMission != 48);
+            root.EnableInClassList("hud-tilt", tilt);
+            ship.tiltMode = tilt;
+            var raw = InputMode.Current == InputKind.Touch && stick != null ? stick.Value : Vector2.zero;
+            var touchStick = tilt ? TiltSteering.Steer() : new Vector2(Mathf.Sign(raw.x) * raw.x * raw.x, Mathf.Sign(raw.y) * raw.y * raw.y);
             ship.SetSteer(touchStick);
             mining?.SetTouchInput(touchStick);
 
@@ -623,6 +635,7 @@ namespace GoF2Remake.UI
             }
             fireButton.EnableInClassList("touch-button--hidden", weapons == null || !weapons.HasPrimary);
             UpdateCrosshair();
+            UpdateDodgeSwipe();
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == Mining.Phase.Idle);
             miningView.UpdateGame(mining, Time.deltaTime * 1000f);
             hackingView?.Update(docking);
@@ -642,6 +655,9 @@ namespace GoF2Remake.UI
             // Radar::draw isn't called while the launch / arrival camera runs: no ship markers (their layer sets its display
             // inline, which the .hud-launch rule can't override).
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree, !level.LaunchCameraOver);
+            // The Ultrascan's class-A letters: Radar::draw too, so not during the launch camera or a cinematic.
+            miningView.UpdateMarkers(mining, nav != null && nav.AsteroidField != null ? nav.AsteroidField.fixedPosition : (Vector3?)null, Camera.main,
+                                     level.LaunchCameraOver && !cinematic && !(docking != null && docking.Busy), root.Q("navMarkers"));
             UpdateRadio();
             PlaceDockPrompt();
             UpdateFade();
@@ -1048,6 +1064,83 @@ namespace GoF2Remake.UI
         void BackToMenu()
         {
             if (Application.CanStreamedLevelBeLoaded(menuScene)) SceneManager.LoadScene(menuScene);
+        }
+            // ---- button sounds (TouchButton::OnTouchBegin 124 Button_Push / OnTouchEnd 123 Button_Release) -------------
+
+        AudioSource uiSource;
+
+        void PlayButton(bool push)
+        {
+            var audio = CombatAudio.Load();
+            PlayUi(audio == null ? null : push ? audio.buttonPush : audio.buttonRelease);
+        }
+
+        void PlayUi(AudioClip clip)
+        {
+            if (clip == null) return;
+            if (uiSource == null)
+            {
+                uiSource = gameObject.AddComponent<AudioSource>();
+                uiSource.playOnAwake = false;
+                uiSource.spatialBlend = 0f;
+                uiSource.ignoreListenerPause = true;   // the pause menu pauses the listener
+            }
+            uiSource.PlayOneShot(clip, Settings.SfxVolume);
+        }
+
+        /// <summary>Every button inside this container clicks: push on pointer down, release on the click.</summary>
+        void ButtonSounds(VisualElement container)
+        {
+            if (container == null) return;
+            container.RegisterCallback<PointerDownEvent>(e => { if (InButton(e.target)) PlayButton(true); }, TrickleDown.TrickleDown);
+            container.RegisterCallback<ClickEvent>(e => { if (InButton(e.target)) PlayButton(false); });
+        }
+
+        // ---- the dodge swipe (MGame::OnTouchBegin / OnTouchMove / maneuverTouchEnd 0x1a7eac) ------------------------
+
+        int swipeTouch = -1;
+        Vector2 swipeStart;
+        float swipeStartTime;
+
+        /// <summary>A touch on no control (the stick's half, the throttle and the buttons excluded) that ends within 600 ms,
+        /// more than w/480 * 70 px sideways and less than h/320 * 90 px up or down: PlayerEgo::initManeuver(1) to the
+        /// left, (2) to the right. Polled from the Input System: empty HUD space picks nothing.</summary>
+        void UpdateDodgeSwipe()
+        {
+            var ts = UnityEngine.InputSystem.Touchscreen.current;
+            if (ts == null || root == null || root.panel == null) return;
+            var zone = root.Q("stickZone");
+            foreach (var t in ts.touches)
+            {
+                int id = t.touchId.ReadValue();
+                var sp = t.position.ReadValue();
+                if (t.press.wasPressedThisFrame && swipeTouch < 0)
+                {
+                    var picked = root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(sp.x, Screen.height - sp.y)));
+                    bool onControl = false;
+                    for (var v = picked; v != null; v = v.parent) if (v is Button || v == zone || v == throttleTrack) { onControl = true; break; }
+                    if (onControl) continue;
+                    swipeTouch = id;
+                    swipeStart = sp;
+                    swipeStartTime = Time.unscaledTime;
+                }
+                else if (id == swipeTouch)
+                {
+                    if (Mathf.Abs(sp.y - swipeStart.y) > Screen.height / 320f * 90f) { swipeTouch = -1; continue; }
+                    if (!t.press.wasReleasedThisFrame) continue;
+                    swipeTouch = -1;
+                    float dx = sp.x - swipeStart.x;
+                    if (Time.unscaledTime - swipeStartTime > 0.6f || Mathf.Abs(dx) <= Screen.width / 480f * 70f) continue;
+                    if (nav != null && nav.MenuOpen) continue;
+                    ship?.RequestDodge(dx < 0f ? 1 : 2);
+                }
+            }
+        }
+
+        static bool InButton(IEventHandler target)
+        {
+            for (var v = target as VisualElement; v != null; v = v.parent) if (v is Button) return true;
+            return false;
         }
     }
 }

@@ -514,6 +514,17 @@ namespace GoF2Remake.Data
                 if (Index == 77) AddDealerShip(100, 37);
                 if (Dlc1Won || (Index >= 80 && Index <= 84)) { AddDealerShip(100, 37); AddDealerShip(100, 38); AddDealerShip(100, 40); }
             }
+            if (stock == null) return;
+            // ModStation::OnInitialize, every docking: Thynome's VoidX for all gold medals ...
+            if (station == 10 && Achievements.GotAllGoldMedals && (stock.ships == null || !stock.ships.Contains(8))) stock.ships = new List<int> { 8 };
+            // ... after the game is won, Void Crystals (the Khador Drive blueprint's ingredient) when the player has no drive ...
+            if (station == 10 && GameWon && CargoOf(85) == 0 && !Session.Equipment.Exists(e => e.item == 85)
+                && !stock.items.Exists(s => s.item == 85 || s.item == 164))
+                Shop.InsertStock(stock, new ItemStack(164, 50));
+            // ... and energy cells at the deep science stations and the battlestation for a nearly empty hold.
+            if ((station == 10 || station == 100 || station == 101) && !stock.items.Exists(s => s.item == GalaxyMap.EnergyCellItem)
+                && CargoOf(GalaxyMap.EnergyCellItem) < 6)
+                Shop.InsertStock(stock, new ItemStack(GalaxyMap.EnergyCellItem, 10));
         }
 
         /// <summary>ModStation::OnTouchEnd after a docked success conversation, by the new index 'n' (campaign_flow.md 3.1 3):

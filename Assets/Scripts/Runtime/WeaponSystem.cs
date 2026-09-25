@@ -58,7 +58,8 @@ namespace GoF2Remake.Flight
         const float LiberatorTurnRadPerMs = 0.0015f;
         Rig liberator;
         Transform liberatorAnchor;
-        AudioSource liberatorLoop;
+        AudioSource liberatorLoop, liberatorExtra;
+        float liberatorBank;
         /// <summary>The Liberator is being steered (PlayerEgo+0x194): the HUD's hints and the ship's steering follow it.</summary>
         public bool SteeringMissile => liberator != null;
         Transform fxRoot;
@@ -204,7 +205,7 @@ namespace GoF2Remake.Flight
             if (fx != null && fx.shotLoops && fx.shot != null)
             {
                 rig.loop = gameObject.AddComponent<AudioSource>();
-                rig.loop.clip = fx.shot;
+                rig.loop.clip = fx.Shot;
                 rig.loop.loop = true;
                 rig.loop.playOnAwake = false;
                 rig.loop.spatialBlend = 0f;
@@ -309,7 +310,8 @@ namespace GoF2Remake.Flight
 
         void PlayShot(Rig r)
         {
-            if (r.fx != null && r.fx.shot != null) shotSource.PlayOneShot(r.fx.shot, shotVolume * Settings.SfxVolume);
+            var clip = r.fx != null ? r.fx.Shot : null;
+            if (clip != null) shotSource.PlayOneShot(clip, shotVolume * Settings.SfxVolume);
         }
 
         /// <summary>Radar::draw's auto-aim flag (KIPlayer+0x6f) for the beams: the nearest target (to the player) on screen,
@@ -374,15 +376,18 @@ namespace GoF2Remake.Flight
         {
             var gun = r.gun;
             int type = r.fx != null ? r.fx.explosionType : 0;
-            if (type >= 0) Explosion.Spawn(type, point, transform.forward, 1f, r.fx != null ? r.fx.explosionSound : null, false);
+            if (type >= 0) Explosion.Spawn(type, point, transform.forward, 1f, r.fx != null ? r.fx.ExplosionSound : null, false);
             if (gun.kind == Gun.Kind.ScatterGun) return;
             if (gun.kind == Gun.Kind.Nuke) Session.BombsDetonated++;   // Status+200
-            if (Session.IsExtreme && owner != null && (gun.IsBomb || gun.kind == Gun.Kind.ShockBlast))
+            if (owner != null && (gun.IsBomb || gun.kind == Gun.Kind.ShockBlast))
             {
+                // BombGun::update 0x17116c at ignition: f by the player's distance (the shock blast at the ship itself).
                 float half = gun.magnitude * 0.5f;
-                float d = (point - transform.position).magnitude / M;
+                float d = gun.kind == Gun.Kind.ShockBlast ? 0f : (point - transform.position).magnitude / M;
                 float f = Mathf.Clamp01((half - d) / half * 0.5f) * (gun.kind == Gun.Kind.ShockBlast ? 0.2f : 1f);
-                if (f > 0f && gun.damage > 0f) owner.Damage((int)(f * gun.damage), false, (transform.position - point).normalized);
+                if (Session.IsExtreme && f > 0f && gun.damage > 0f) owner.Damage((int)(f * gun.damage), false, (transform.position - point).normalized);
+                // PlayerEgo::addNukeVolatileForce: the volatile goods' meter + 3 f (a nuke at the ship: + 1.5).
+                if (f > 0f) GetComponent<VolatileCargo>()?.Add(3f * f);
             }
             Detonated?.Invoke(point);
         }
@@ -416,8 +421,18 @@ namespace GoF2Remake.Flight
                     liberatorLoop.spatialBlend = 0f;
                 }
                 liberatorLoop.clip = r.fx.engineLoop;
-                liberatorLoop.volume = shotVolume * Settings.SfxVolume;
+                liberatorLoop.volume = LiberatorVolume;
                 liberatorLoop.Play();
+                if (liberatorExtra == null)
+                {
+                    liberatorExtra = gameObject.AddComponent<AudioSource>();
+                    liberatorExtra.loop = true;
+                    liberatorExtra.playOnAwake = false;
+                    liberatorExtra.spatialBlend = 0f;
+                }
+                liberatorExtra.clip = r.fx.engineLoopExtra;
+                liberatorBank = 0f;   // PlayerEgo::setRocketControl: +0x198 = 0
+                UpdateLiberatorSound(0f);
             }
         }
 
@@ -427,6 +442,28 @@ namespace GoF2Remake.Flight
             var ship = GetComponent<ShipController>();
             if (Time.timeScale > 0f && !Blocked) liberator.gun.SteerBullet(0, ship != null ? ship.SteerInput : Vector2.zero, dtMs, LiberatorTurnRadPerMs);
             PlaceLiberatorAnchor();
+            UpdateLiberatorSound(dtMs);
+        }
+
+        // 1116 (the FEV's LGCY data), event volume 0.121, "load" never set (gain 0.7).
+        static float LiberatorVolume => 0.121f * 0.7f * Sfx.EventGain * Settings.SfxVolume;
+
+        /// <summary>BombGun::update 0x17116c: parameter 0 "Vertical" = PlayerEgo::getRocketBanking * 0.2, the banking growing
+        /// by dt * stick x * 0.01 (PlayerEgo::right / left, +0x198), clamped 0..1 by FMOD: it pitches the Liberator engine
+        /// x0.891 -> x1.122 and adds EngineDLC_06 from 0.336.</summary>
+        void UpdateLiberatorSound(float dtMs)
+        {
+            if (liberatorLoop == null) return;
+            var ship = GetComponent<ShipController>();
+            if (ship != null && Time.timeScale > 0f && !Blocked) liberatorBank += dtMs * ship.SteerInput.x * 0.01f;
+            float v = Mathf.Clamp01(liberatorBank * 0.2f);
+            liberatorLoop.pitch = Mathf.Pow(2f, 8f * Mathf.Lerp(0.479167f, 0.520833f, v) - 4f) * TimeExtender.SoundPitch;
+            liberatorLoop.volume = LiberatorVolume;
+            if (liberatorExtra == null || liberatorExtra.clip == null) return;
+            liberatorExtra.volume = LiberatorVolume;
+            bool on = liberatorLoop.isPlaying && v >= 0.336146f && v <= 0.99578f;
+            if (on && !liberatorExtra.isPlaying) liberatorExtra.Play();
+            else if (!on && liberatorExtra.isPlaying) liberatorExtra.Stop();
         }
 
         /// <summary>BombGun+0xe8: a helper at the missile + its direction * 350, carrying the missile's orientation.</summary>
@@ -451,6 +488,7 @@ namespace GoF2Remake.Flight
                 chase.Snap();
             }
             if (liberatorLoop != null) liberatorLoop.Stop();
+            if (liberatorExtra != null) liberatorExtra.Stop();
         }
 
         void StopLoops()

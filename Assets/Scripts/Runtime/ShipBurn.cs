@@ -1,0 +1,56 @@
+// ShipBurn.cs
+// A dying ship's burn (Reference/research/prologue_particles.md B.2 / B.4): sprite_explosion (material 20099, additive).
+//   record 9  SET_EXPLOSION                 PlayerEgo::explode 0xada6c (every frame while dying) / PlayerFighter: 8/s,
+//                                           700 ms, size 100..1100 +500/s, white, jitter +-300 world, along the ship axis
+//                                           -250..+249, k = +1 (inherits the ship's velocity), 4x4 sheet once; on through the
+//                                           death tumble, off at the explosion
+//   record 11 SET_EXPLOSION_MANUALLY_BIG    one emitManual burst at the explosion: 10 particles, 1500 ms, size 2000..3000
+//                                           +500/s, no jitter
+// Plain C#: the owner (PlayerHealth, NpcShip) switches it.
+
+using GoF2Remake.Data;
+using UnityEngine;
+
+namespace GoF2Remake.Flight
+{
+    public class ShipBurn
+    {
+        readonly ParticleSystem burn, burst;
+        public bool Emitting { get; private set; }
+
+        public ShipBurn(Transform ship)
+        {
+            var mat = CombatAssets.Load()?.explosionSpriteMaterial;
+            // record 9: along dir -250..+249 plus +-300 jitter -> a 600 x 600 x 1100 unit box at the ship
+            burn = ShipSmoke.Create(ship, "Burn", mat, 0.7f, 100f, 1100f, 16, 1f, new Vector3(600f, 600f, 1100f), 0f, 500f, 2);
+            var em = burn.emission;
+            em.rateOverTime = 8f;
+            // record 11: a single burst at the ship
+            burst = ShipSmoke.Create(ship, "Burst", mat, 1.5f, 2000f, 3000f, 10, 0f, Vector3.zero, 0f, 500f, 3);
+            var bem = burst.emission;
+            bem.rateOverTime = 0f;
+            var sh = burst.shape;
+            sh.enabled = false;
+            var main = burst.main;
+            main.loop = false;
+        }
+
+        /// <summary>Record 9 on / off (the living particles burn out).</summary>
+        public void SetBurning(bool on)
+        {
+            on &= Settings.QualityEffects;
+            if (on == Emitting) return;
+            Emitting = on;
+            if (on) burn.Play(true); else burn.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+
+        /// <summary>Record 11's emitManual burst at the explosion (it stays where it went off).</summary>
+        public void Burst()
+        {
+            if (!Settings.QualityEffects || burst == null) return;
+            burst.transform.SetParent(null, true);
+            burst.Emit(10);
+            Object.Destroy(burst.gameObject, 2f);
+        }
+    }
+}

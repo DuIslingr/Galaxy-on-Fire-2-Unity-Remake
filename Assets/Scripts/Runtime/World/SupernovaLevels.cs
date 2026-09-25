@@ -904,7 +904,7 @@ namespace GoF2Remake.World
                         cam.LookAt(G(freighter) + GameDir(freighter.transform) * 10000f + GameRight(freighter.transform) * 4800f, freighter.transform);
                         timerMs = 0f;
                         freighterSpeed = 2f;
-                        if (sn != null) Sfx.PlayAt(sn.launch, freighter.transform.position);
+                        if (sn != null) Sfx.PlayAt(sn.carrierJump, freighter.transform.position);   // 0x8c9 CS_92_FreighterJump
                         Step = 9;
                     }
                     break;
@@ -1136,7 +1136,7 @@ namespace GoF2Remake.World
                     {
                         bomb = Scenery("rocket_explosive", PlayerGame, Player.rotation, "Reverse-matter bomb");
                         if (bomb != null) cam.SetTarget(bomb.transform);
-                        if (sn != null) Sfx.PlayAt(sn.launch, Player.position);
+                        Sfx.PlayAt(StoryAssets.Load()?.probeLaunch, Player.position);   // 14 Explosion_Bomb_AMR_Tormentor
                         bombMs = 0f;
                     }
                     if (bomb == null) break;
@@ -1605,7 +1605,7 @@ namespace GoF2Remake.World
                     break;
                 case 9:
                     if (stepMs >= 6000f && (int)(stepMs / 6000f) != (int)((stepMs - dtMs) / 6000f))
-                        Explosion.Spawn(0, ToUnity(vp + new Vector3(-6000, 2000, -10000)), Vector3.forward, 4f, CombatAssets.Pick(combat?.explosionBig), true);
+                        Explosion.Spawn(0, ToUnity(vp + new Vector3(-6000, 2000, -10000)), Vector3.forward, 4f, CombatAssets.Pick(combat?.explosionMid), true);   // 2244 Explosion_Med_2D
                     if (!Over(14)) break;
                     Scenery("sn_burning_valkyrie_stage_2", vp, OrbitLayout.RotationToUnity(new Vector3(0, Mathf.PI, 0)), "Valkyrie burning");
                     cam.LookAt(vp + new Vector3(50000, 0, 70000), null, ToUnity(vp));

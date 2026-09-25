@@ -7,13 +7,14 @@
 //   PlayerEgo::approachAsteroid   steer dir += (to - dir) * dt * min(H + 2.7, 4) / 4096 at full throttle; the last 2000
 //                                 units before scale * 2500: exhaust off, sound 2, the chase camera freezes, the model
 //                                 pitches up (cumulative); then stop, asteroid spin off, a short settle, the minigame
-//   MiningGame (MiningGame)   drill loop sound 1, sound 3 while off target
+//   MiningGame (MiningGame)   drill loop sound 1 (DrillSound: its four layers by drill_speed), sound 3 while off target
 //   PlayerEgo::stopMining 0xade94 ore (capped to free cargo, hardcore halves an unfinished run) and on a full class-A run a
 //                                 core (ore + 11) into the cargo, "12t Gold" messages, then the asteroid explodes (no crate)
 // The HUD shows the lock ring, the ore plate, the minigame and the prompt; it forwards touch input and the action button.
 // Not yet: stats / medals (Geologist, Miner, Ore Athlete), the Ultrascan class-A markers, the mining plant.
 
 using System;
+using System.Collections.Generic;
 using GoF2Remake.Data;
 using GoF2Remake.Visuals;
 using UnityEngine;
@@ -33,6 +34,20 @@ namespace GoF2Remake.Flight
         public Target Candidate { get; private set; }
         public Target Locked { get; private set; }
         public Target Target { get; private set; }
+        /// <summary>A scanner with attr 30 = 1 marks the class-A asteroids (Radar::draw 0x1577de).</summary>
+        public bool Ultrascan { get; private set; }
+        /// <summary>Level::isInAsteroidCenterRange: within 100 000 units of the field's centre.</summary>
+        public const float FieldRangeMeters = 100000f * 0.05f;
+
+        /// <summary>Radar::draw 0x1577de: with the Ultrascan, not in a docking procedure and inside the asteroid field's
+        /// sphere, every living quality-7 (class A) asteroid gets the class letter "A" (0x44e frame 0) on screen.</summary>
+        public void ClassAMarkers(Vector3? fieldCentre, List<Target> into)
+        {
+            into.Clear();
+            if (!Ultrascan || State != Phase.Idle || fieldCentre == null || ship == null) return;
+            if ((ship.transform.position - fieldCentre.Value).sqrMagnitude > FieldRangeMeters * FieldRangeMeters) return;
+            foreach (var t in Target.All) if (t != null && t.isAsteroid && t.Alive && t.quality == 7) into.Add(t);
+        }
         public MiningGame Game { get; private set; }
         /// <summary>Lock ring frame 0..23 (image 0x456), -1 = not shown.</summary>
         public int LockFrame { get; private set; } = -1;
@@ -52,7 +67,8 @@ namespace GoF2Remake.Flight
         WeaponSystem weapons;
         ChaseCamera chase;
         CombatAudio sounds;
-        AudioSource sfx, drillLoop;
+        AudioSource sfx;
+        DrillSound drillSound;
         ItemData drill;
         int lockTimeMs = 8000;
         float lockTimer;
@@ -75,12 +91,12 @@ namespace GoF2Remake.Flight
             drill = Shop.FirstMounted(db, 19);
             var scanner = Shop.FirstMounted(db, 17);
             lockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;   // Radar::Radar
+            Ultrascan = scanner != null && scanner.Attr(30) == 1;                             // Radar+0x1a6 (Hiroto Ultrascan)
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
-            drillLoop = gameObject.AddComponent<AudioSource>();
-            drillLoop.playOnAwake = false;
-            drillLoop.loop = true;
-            drillLoop.clip = sounds != null ? sounds.miningDrill : null;
+            drillSound = new DrillSound(gameObject.AddComponent<AudioSource>(), gameObject.AddComponent<AudioSource>(),
+                                        gameObject.AddComponent<AudioSource>(), gameObject.AddComponent<AudioSource>(),
+                                        sounds?.miningDrillSlow, sounds?.miningDrill, sounds?.miningDrillAdd2, sounds?.miningDrillSwitch);
         }
 
         /// <summary>Touch stick for the drill (+y = up on the stick).</summary>
@@ -247,13 +263,12 @@ namespace GoF2Remake.Flight
             Game = new MiningGame(Target.quality, Target.oreItem, drill.Attr(32), drill.Attr(33), Session.CampaignMission <= 4);
             Game.InsideChanged += inside =>
             {
-                if (inside) { if (!drillLoop.isPlaying) drillLoop.Play(); }
-                else { drillLoop.Stop(); Play(sounds?.miningDrillBroken); }
+                if (inside) { if (!drillSound.IsPlaying) drillSound.Start(DrillSpeed); }
+                else { drillSound.Stop(); Play(sounds?.miningDrillBroken); }
             };
             Target.radius = 0f;   // Player radius 0: can't be hit or collided while mined
             State = Phase.Mining;
-            drillLoop.volume = Settings.SfxVolume;
-            drillLoop.Play();
+            drillSound.Start(DrillSpeed);
         }
 
         // ---- minigame -------------------------------------------------------------------------------------------
@@ -262,8 +277,7 @@ namespace GoF2Remake.Flight
         {
             if (Target == null || !Target.Alive) { Say(Localization.Get(539)); FinishMining(); return; }   // asteroid gone
             Game.SetInput(ReadDrillInput());
-            // FMOD parameter 0 = (LAYER_SPEEDS[layer] - 5) / 33 * 3: the remake raises the pitch (mapping unknown).
-            drillLoop.pitch = 1f + (MiningGame.LayerSpeeds[Game.Layer] - 5f) / 33f * 0.3f;
+            drillSound.Set(DrillSpeed);
             if (Game.Update(dtMs)) return;
             if (Game.Lost) Say(Localization.Get(539));   // Mining failed.
             FinishMining();
@@ -344,8 +358,11 @@ namespace GoF2Remake.Flight
             if (weapons != null) weapons.Blocked = false;
             if (chase != null) chase.enabled = true;   // damped catch-up from where it stopped
             SetExhaust(true);
-            drillLoop.Stop();
+            drillSound.Stop();
         }
+
+        /// <summary>MiningGame::update: FMOD event 1's parameter drill_speed = (LAYER_SPEEDS[layer] - 5) / 33 * 3.</summary>
+        float DrillSpeed => Game != null ? (MiningGame.LayerSpeeds[Game.Layer] - 5f) / 33f * 3f : 0f;
 
         void SetExhaust(bool on)
         {

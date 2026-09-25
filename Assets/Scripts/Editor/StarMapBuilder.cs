@@ -55,9 +55,10 @@ namespace GoF2Remake.EditorTools
             a.buttonPush = Clip("SFX_GENERAL/Button_Push_v06.ogg");
             a.buttonRelease = Clip("SFX_GENERAL/Button_Release_V06.ogg");
             a.infoSound = Clip("SFX_GENERAL/Message_Info_Screen_v04.ogg");
-            a.jumpgate = new[] { Clip("SFX_SPACE/Jumpgate_1b.ogg"), Clip("SFX_SPACE/Jumpgate_2b.ogg"), Clip("SFX_SPACE/Jumpgate_3b.ogg") };
+            a.jumpgate = new[] { Clip("SFX_SPACE/Jumpgate_3b.ogg"), Clip("SFX_SPACE/Jumpgate_4c.ogg"), Clip("SFX_SPACE/Jumpgate_1b.ogg"), Clip("SFX_SPACE/Jumpgate_2b.ogg") };
             a.jumpgateCharge = Clip("SFX_SPACE/Jumpgate_Charge_02.ogg");
-            a.khadorDrive = Clip("SFX_SPACE/Jumpgate_4c.ogg");
+            a.khadorDrive = Clip("SFX_SPACE/Jumpgate_5c.ogg");
+            a.mapClick = Clip("SFX_STATION_MAINVIEW/Map_Click_01.ogg");
 
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();

@@ -87,7 +87,7 @@ namespace GoF2Remake.Data
 
     /// <summary>Weapon mounts of one ship (weapons_hd.json). slotType 0 = primary, 1 = secondary, 2 = turret,
     /// 3 = engine exhaust points (not a turret, see weapons.md). position_engine is game space, ship-relative.</summary>
-    [System.Serializable] public class WeaponMount { public int slotType; public int[] position_engine; }
+    [System.Serializable] public class WeaponMount { public int slotType; public int[] position_engine; public float[] turretAngles; }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
 
     /// <summary>One assembled prefab (assemblies.json): Resources/Assembled/{pack}/{category}/{name}.prefab.</summary>

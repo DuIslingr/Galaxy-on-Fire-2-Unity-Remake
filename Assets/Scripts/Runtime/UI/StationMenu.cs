@@ -129,6 +129,7 @@ namespace GoF2Remake.UI
             safeArea = root.Q("safeArea");
             dragZone = root.Q("dragZone");
             hints = root.Q("hints");
+
             InputGlyph.TrackHintsOption(hints);
             dialog = root.Q("dialog");
             viewTitle = root.Q<Label>("viewTitle");
@@ -142,6 +143,7 @@ namespace GoF2Remake.UI
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", () => { var a = dialogNoAction; CloseDialog(); a?.Invoke(); });
             hangarWindow = new HangarWindow(this, level, root);
+            infoWindow = new ItemInfoWindow(this, root);
             lounge = new LoungePanel(this, level, root);
             SetupTicker();
             missions = new MissionsWindow(this, level, root);
@@ -154,6 +156,7 @@ namespace GoF2Remake.UI
                 voiceSource.spatialBlend = 0f;
             }
             storyDialogue = new DialogueView(root, voiceSource) { ButtonSound = push => Play(push ? buttonPush : buttonRelease) };
+            storyDialogue.PageShown = id => { if (id == 1833) StartVoidAlarm(); };
             Bind("menuButton", OpenSystemMenu);
             systemMenu = root.Q("systemMenu");
             systemMain = root.Q("systemMenuMain");
@@ -251,6 +254,8 @@ namespace GoF2Remake.UI
             if (HangarOpen || level == null || !Story.HangarUnlocked) return;
             if (level.View != StationView.Hangar) level.SetView(StationView.Hangar);
             hangarWindow.Open();
+            level.SetHangarWindowOpen(true);
+            boozeAtOpen = BoozeInHold();   // ModStation::OnKeyPress: ModStation+0xcc
             root.AddToClassList("hangar-open");
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             OnViewChanged();
@@ -261,6 +266,10 @@ namespace GoF2Remake.UI
             if (!HangarOpen) return;
             if (!hangarWindow.ReadyToClose()) return;   // an uncommitted blueprint shipment asks first
             hangarWindow.Close();
+            level?.SetHangarWindowOpen(false);
+            // ModStation::OnTouchEnd: the booze gained during this visit counts for Personal Need (Status+0xa8).
+            int gained = BoozeInHold() - boozeAtOpen;
+            if (gained > 0) Session.BoozeBought += gained;
             root.RemoveFromClassList("hangar-open");
             OnViewChanged();
             Select(hangarButton);
@@ -518,13 +527,48 @@ namespace GoF2Remake.UI
             toastMs = 3000f;
         }
 
+        int boozeAtOpen;
+
+        static int BoozeInHold()
+        {
+            int n = 0;
+            foreach (var s in Session.Cargo) if (Session.IsBooze(s.item)) n += s.amount;
+            return n;
+        }
+
+        AudioSource alarm;
+
+        /// <summary>DialogueWindow::loadContent, text 1833 ("Alert! Void fighters..."): the music stops, 136 Space_Combat_Void
+        /// plays as music and 162 Alert loops (event volume 0.198) until the station is left.</summary>
+        void StartVoidAlarm()
+        {
+            var story = StoryAssets.Load();
+            if (story == null || level == null) return;
+            if (level.musicSource != null)
+            {
+                level.musicSource.Stop();
+                level.musicSource.clip = story.voidBattle;
+                level.musicSource.loop = true;
+                if (story.voidBattle != null) level.musicSource.Play();
+            }
+            if (alarm == null) { alarm = gameObject.AddComponent<AudioSource>(); alarm.playOnAwake = false; alarm.loop = true; alarm.spatialBlend = 0f; }
+            alarm.clip = story.alert;
+            alarm.volume = 0.198f * GoF2Remake.Flight.Sfx.EventGain * Settings.SfxVolume;
+            if (alarm.clip != null) { alarm.Stop(); alarm.Play(); }
+        }
+
         public void PlayPush() => Play(buttonPush);
         public void PlayRelease() => Play(buttonRelease);
         public void PlayClip(AudioClip clip) => Play(clip);
 
+        ItemInfoWindow infoWindow;
+        /// <summary>The full-screen item / ship details (ListItemWindow), shared by the hangar and the lounge.</summary>
+        public ItemInfoWindow InfoWindow => infoWindow;
+
         void Back()
         {
-            if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
+            if (infoWindow != null && infoWindow.IsOpen) { Play(buttonRelease); infoWindow.Close(); }
+            else if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
             else if (missions != null && missions.IsOpen) { Play(buttonRelease); missions.Close(); }
             else if (status != null && status.IsOpen) { Play(buttonRelease); status.Close(); }
             else if (lounge != null && lounge.ChatOpen) { Play(buttonRelease); lounge.CloseChat(); }
@@ -558,7 +602,13 @@ namespace GoF2Remake.UI
             CloseHangar();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             var step = Story.Step;
-            if (step != null && step.success.Count > 0) storyDialogue.Show(step.success, _ => AfterStorySuccess());
+            if (step != null && step.success.Count > 0)
+                storyDialogue.Show(step.success, skipped =>
+                {
+                    // DialogueWindow::OnTouchEnd: skipping step 15's conversation starts the alarm too.
+                    if (skipped && !Session.FreePlay && Session.CampaignMission == 0xf) StartVoidAlarm();
+                    AfterStorySuccess();
+                });
             else AfterStorySuccess();
             return true;
         }
@@ -1075,6 +1125,7 @@ namespace GoF2Remake.UI
             var kb = Keyboard.current;
             var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)) { Back(); return; }
+            if (infoWindow != null && infoWindow.IsOpen) { infoWindow.Tick(); return; }   // it takes all input
             if (pad != null && pad.startButton.wasPressedThisFrame && !DialogOpen)
             {
                 Play(buttonRelease);
@@ -1124,6 +1175,8 @@ namespace GoF2Remake.UI
                     hangarWindow.NextTab();
                 }
                 else if (kb != null && kb.digit2Key.wasPressedThisFrame) OpenLounge();
+                else if ((kb != null && kb.iKey.wasPressedThisFrame) || (pad != null && pad.buttonNorth.wasPressedThisFrame))
+                    hangarWindow.OpenInfo();   // remake keys for the row's info button
                 return;
             }
 

@@ -98,7 +98,7 @@ namespace GoF2Remake.UI
             music = musicSource != null ? musicSource : gameObject.AddComponent<AudioSource>();
             music.Stop();
             music.clip = assets.outroSong;
-            music.loop = false;
+            music.loop = true;   // 144 OutroSong loops (72 s in the 136 s sequence)
             music.volume = Settings.MusicVolume;
             if (music.clip != null) music.Play();
             voice = gameObject.AddComponent<AudioSource>();

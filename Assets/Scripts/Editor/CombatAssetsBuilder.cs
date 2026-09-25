@@ -33,6 +33,8 @@ namespace GoF2Remake.EditorTools
 
             a.smokeMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20101_sprite_smoke.mat");
             a.fireMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27250_sprite_fire.mat");
+            a.explosionSpriteMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20099_sprite_explosion.mat");
+            a.particlesMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20090_particles.mat");
             if (a.smokeMaterial == null || a.fireMaterial == null) Debug.LogWarning("GoF2: missing sprite_smoke / sprite_fire materials");
             a.hitShield = Clips("SFX_SPACE", "Incoming_Fire_Shield");
             a.hitArmor = Clips("SFX_SPACE", "Incoming_Fire_Armor");
@@ -42,7 +44,7 @@ namespace GoF2Remake.EditorTools
             a.explosionMid = Clips("SFX_SPACE", "Destruction_Ship_Med");
             a.shots = new[] { Clip("SFX_SPACE/Laser_Nirai_Impulse_EX1_V01.ogg"), Clip("SFX_SPACE/Laser_Shkoom_v02.ogg"),
                               Clip("SFX_SPACE/Laser_Nirai_Charged_Impulse_v01.ogg"), Clip("SFX_SPACE/Laser_Nirai_Impulse_EX2_V01.ogg"),
-                              Clip("SFX_SPACE/Laser_Enemy_V04b.ogg") };
+                              Clip("SFX_SPACE/Laser_Enemy_V04b.ogg"), Clip("SFX_SPACE/Laser_Vossk_V01.ogg"), Clip("DLC2_SFX/DarkMatterLaser_04.ogg") };
             a.targetLock = Clip("SFX_SPACE/Target_Lock_v08.ogg");
             a.tractorLoop = Clip("SFX_SPACE/Tractor_Beam_v1.ogg");
             a.tractorClose = Clip("SFX_SPACE/Tractor_Beam_Close_Door_01c.ogg");
@@ -54,6 +56,8 @@ namespace GoF2Remake.EditorTools
             a.spaceMusic = new[] { Clip("MUSIC/Space_Terraner.ogg"), Clip("MUSIC/Space_Vossk.ogg"), Clip("MUSIC/Space_Nivelianer.ogg"), Clip("MUSIC/Space_Midorianer.ogg") };
             a.battleMusic = new[] { Clip("MUSIC/Space_Battle_Low.ogg"), Clip("MUSIC/Space_Battle_Medium.ogg"), Clip("MUSIC/Space_Battle_Full.ogg") };
             a.homeBaseMusic = Clip("MUSIC/HomeBase_NoCombat.ogg");
+            a.valkyrieMusic = Clip("MUSIC/Space_NoCombat_Valkyrie.ogg");
+            a.deepScienceMusic = Clip("DLC2_MUSIC/GOF2_DeepScience_Space.ogg");
             a.outpostWreck = Prefab("Prefabs/main/stations/station_pirates_explosion_anim.prefab");
             a.explosionEmp = Prefab("Prefabs/main/fx/explosion_emp_anim_lookat_add.prefab");
             a.explosionScatter = Prefab("Prefabs/valkyrie/fx/v_scattergun_000_explosion_lookat_anim_add.prefab");
@@ -71,7 +75,8 @@ namespace GoF2Remake.EditorTools
             a.gammaShield1 = Clip("DLC2_SFX/Gamma_Shield_01.ogg");
             a.gammaShield2 = Clip("DLC2_SFX/Gamma_Shield_03.ogg");
             a.cloak = Clip("SFX_SPACE/Cloak_02.ogg");
-            a.timeShift = Clip("DLC_SFX/TimeShift_01b.ogg");
+            a.timeShift = Clip("MUSIC/TimeShift_Start.ogg");
+            a.timeShiftEnd = Clip("DLC_SFX/TimeShift_01b.ogg");
             a.cloakShader = Shader.Find("GoF2/Cloak");
             a.cloakMap = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Textures/main/fx/cloak_map.png");
             a.repairBeam = Prefab("Prefabs/supernova/fx/sn_projectile_207_anim_add.prefab");

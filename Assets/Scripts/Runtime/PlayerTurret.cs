@@ -70,6 +70,7 @@ namespace GoF2Remake.Flight
         Vector3 bulletOffset;
         Visuals.PartAnimation[] anims;
         GameObject stream;
+        AudioSource collectLoop;
 
         /// <summary>Level::createPlayer: the turret item of the current equipment, if the ship has a turret mount.</summary>
         public static PlayerTurret Attach(GameObject player, Database db, int shipIndex, IList<ItemStack> equipment, ChaseCamera chase)
@@ -87,6 +88,36 @@ namespace GoF2Remake.Flight
                 return t;
             }
             return null;
+        }
+
+        /// <summary>The turret-slot item (category 8 / 35) of this equipment, or -1.</summary>
+        public static int TurretItem(Database db, IList<ItemStack> equipment)
+        {
+            foreach (var e in equipment)
+            {
+                var it = db.Item(e.item);
+                if (it != null && (it.categoryId == 8 || it.categoryId == 35)) return it.index;
+            }
+            return -1;
+        }
+
+        /// <summary>CutScene::checkForTurret 0xa4594 (the hangar): the item's hangar_turret_item_N assembly (base + gun, the gun
+        /// raised by its per-item offset) on the ship's slot-2 mount, turned (0, pi, 0) against the ship except the plasma
+        /// collectors 198-200; still. Re-run after equipment changes. Null without a mount or turret.</summary>
+        public static GameObject BuildStatic(Database db, int shipIndex, IList<ItemStack> equipment, Transform shipModel)
+        {
+            var mounts = db.MountsOf(shipIndex, 2);
+            int item = TurretItem(db, equipment);
+            if (mounts.Count == 0 || item < 0) return null;
+            var prefab = Visuals.AssembledObject.LoadPrefab(db.AssemblyByName("hangar_turret_item_" + item));
+            if (prefab == null) return null;
+            var model = Instantiate(prefab, shipModel, false);
+            model.name = "Turret";
+            model.transform.localPosition = WeaponSystem.MountToLocal(mounts[0]);
+            // A game-space turn relative to the ship: the import's 180 deg yaw cancels, (0, pi, 0) stays a half turn.
+            model.transform.localRotation = item >= 198 && item <= 200 ? Quaternion.identity : Quaternion.Euler(0f, 180f, 0f);
+            foreach (var a in model.GetComponentsInChildren<Visuals.PartAnimation>(true)) a.speed = 0f;
+            return model;
         }
 
         void Setup(ItemData item, WeaponFx fx, Vector3 mountLocal, ChaseCamera chaseCamera)
@@ -192,6 +223,18 @@ namespace GoF2Remake.Flight
             }
             if (!on) StopShooting();
             if (stream != null) stream.SetActive(on);
+            if (IsCollector)
+            {
+                // PlayerEgo::setTurretMode: 2255 (Extractor_Loop_01, event volume 0.047) loops while collecting.
+                if (collectLoop == null)
+                {
+                    collectLoop = gameObject.AddComponent<AudioSource>();
+                    collectLoop.playOnAwake = false; collectLoop.loop = true; collectLoop.spatialBlend = 0f;
+                    collectLoop.clip = SupernovaAssets.Load()?.extractorLoop;
+                }
+                collectLoop.volume = 0.047f * Sfx.EventGain * Settings.SfxVolume;
+                if (on && collectLoop.clip != null) collectLoop.Play(); else collectLoop.Stop();
+            }
         }
 
         void Update()

@@ -99,6 +99,9 @@ namespace GoF2Remake.Flight
             if (units < GoF2Remake.World.Wormhole.InsideUnits) InWormhole = true;
         }
 
+        /// <summary>PlayerEgo::calcCollision: an asteroid touched (the volatile goods' +0.2).</summary>
+        public event System.Action AsteroidHit;
+
         /// <summary>The asteroid part: the asteroid is destroyed, the player takes 20.</summary>
         void CheckAsteroids()
         {
@@ -111,6 +114,7 @@ namespace GoF2Remake.Flight
                 if (!t.Contains(pos)) continue;
                 t.Damage(9999f);
                 if (!health.invulnerable) health.Target.Damage(20f);
+                AsteroidHit?.Invoke();   // volatile goods: +0.2 (VolatileCargo)
                 Hit();
             }
         }

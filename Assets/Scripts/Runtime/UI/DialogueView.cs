@@ -28,11 +28,13 @@ namespace GoF2Remake.UI
         {
             public int speaker;
             public string text;
+            /// <summary>The text table id of a story page (-1 / 0 for built texts).</summary>
+            public int textId;
             public string voice;
             /// <summary>A bar agent instead of a story speaker (freelance briefings / results): its name and portrait parts.</summary>
             public string agentName;
             public int[] agentPortrait;
-            public static Page From(DialoguePage p) => new Page { speaker = p.speaker, text = Localization.Get(p.text), voice = p.voice };
+            public static Page From(DialoguePage p) => new Page { speaker = p.speaker, text = Localization.Get(p.text), textId = p.text, voice = p.voice };
         }
 
         const float VoicePauseMs = 500f;
@@ -50,6 +52,8 @@ namespace GoF2Remake.UI
 
         /// <summary>Button sounds (true = press, false = release), set by the host.</summary>
         public Action<bool> ButtonSound;
+        /// <summary>A page shows (its text id): DialogueWindow::loadContent's per-text side effects.</summary>
+        public Action<int> PageShown;
         public bool IsOpen => root != null && root.ClassListContains("dialogue-backdrop--shown");
 
         /// <summary>'container' holds the Dialogue.uxml instance; 'voiceSource' plays the lines (2D, not paused with the game).</summary>
@@ -136,6 +140,7 @@ namespace GoF2Remake.UI
             skip.EnableInClassList("dialogue-button--hidden", message || pages.Count <= 1);
             next.text = (message ? Localization.Get(524) : Localization.Get(last ? 181 : 180)).ToUpperInvariant();
             pauseMs = 0f;
+            PageShown?.Invoke(p.textId);
             if (voice != null)
             {
                 voice.Stop();

@@ -179,6 +179,7 @@ namespace GoF2Remake.Data
                 return list;
             }
             if (station == 108) return list;
+            if (InSupernovaSystem(SystemOf(db, station), station)) return list;   // getItemBuyList: nothing to buy there
 
             var st = db.Stations.Find(s => s.index == station);
             int techS = st?.techLevel ?? 1;
@@ -237,6 +238,10 @@ namespace GoF2Remake.Data
             // Remake-only, in free play (no story): the starting station always sells the cheapest drill (IMT Extract 1.3,
             // normally a 70 % chance there) to keep mining reachable, and energy cells, which the free-play Khador jump out of
             // gateless Mido needs (GalaxyMap.HasJumpDrive).
+            // getItemBuyList's story extras: the Luur hazard suit (190) first at 139 in system 25, the volatile Void Essence
+            // (209) at 126 (one at 117).
+            if (!Session.FreePlay && mission == 139 && system == 25 && !list.Exists(s => s.item == 190)) list.Insert(0, new ItemStack(190, 1));
+            if (station == 126 && !list.Exists(s => s.item == 209)) InsertSorted(list, new ItemStack(209, mission == 117 ? 1 : Random.Range(0, 10) + 1));
             if (Session.FreePlay && station == 78 && !list.Any(s => db.Item(s.item)?.categoryId == 19)) InsertSorted(list, new ItemStack(86, 1));
             if (Session.FreePlay && station == 78 && !list.Any(s => s.item == GalaxyMap.EnergyCellItem))
                 InsertSorted(list, new ItemStack(GalaxyMap.EnergyCellItem, Random.Range(0, 15) + 5));
@@ -255,9 +260,23 @@ namespace GoF2Remake.Data
         {
             var ships = new List<int>();
             int system = SystemOf(db, station);
-            if (station == 101 || station == 108 || (system == 15 && Session.CampaignMission < 16)) return ships;
+            int mission = Session.CampaignMission;
+            if (station == 101 || station == 108 || (system == 15 && mission < 16)) return ships;
+            if (InSupernovaSystem(system, station)) return ships;                           // the evacuated supernova system
+            if (station == 100 && Story.Dlc1Won) return new List<int> { 37, 38, 40 };      // Kothar: Khador's jump-drive ships
+            if (station == 107)                                                             // Quineros: the pirate yard
+            {
+                ships.AddRange(new[] { 2, 11, 23, 24, 25, 29, 32 });
+                // ... and a criminal's ship once its Most Wanted entry 6 / 12 / 18 / 24 is terminated.
+                int[] entries = { 6, 12, 18, 24 };
+                for (int k = 0; k < 4; k++)
+                    if (entries[k] < Session.Wanted.Count && Session.Wanted[entries[k]].terminated) ships.Add(45 + k);
+                return ships;
+            }
+            if (station == 10 && Achievements.GotAllGoldMedals) return new List<int> { 8 };   // Thynome: the VoidX
             int race = RaceOfSystem(db, system);
             int n = Random.Range(0, 6) + (station == 41 ? 1 : 0);
+            if (n == 0) return ships;   // getShipBuyList: no rolls, no extras either
             for (int i = 0; i < n; i++)
             {
                 int ship;
@@ -274,20 +293,25 @@ namespace GoF2Remake.Data
             if (race == 0 && Random.Range(0, 7) == 0) ships.Add(62);
             if (race == 1 && Random.Range(0, 5) == 0) ships.Add(63);
             if (race == 2 && Random.Range(0, 8) == 0) ships.Add(61);
+            // Valkyrie won: the Vossk dealers may carry the S'Kanarr and the K'Suukk.
+            if (race == 1 && Story.Dlc1Won) { if (Random.Range(0, 2) == 0) ships.Add(39); if (Random.Range(0, 2) == 0) ships.Add(41); }
             if (race == 1 && Random.Range(0, 4) == 0) ships.Add(54);
+            // Katashán (120) after the Supernova story: the Specter (Extreme or every medal) and the Scimitar.
+            if (station == 120 && mission > 158)
+            {
+                if (Session.IsExtreme || Achievements.GotAllSupernovaMedals) ships.Add(44);
+                ships.Add(49);
+            }
             if (race == 0 && Random.Range(0, 8) == 0) ships.Add(51);
             if (system == 17) foreach (int s in new[] { 42, 43, 52 }) if (Random.Range(0, 3) == 0) ships.Add(s);
             return ships.Distinct().ToList();
         }
 
-        /// <summary>Globals::getRandomEnemyFighter 0xf9034.</summary>
-        public static int RandomFighter(int race)
-        {
-            if (race == 1) return 9;
-            if (race == 9 || (race >= 4 && race <= 7)) return 8;   // void and the minor races: VoidX
-            if (race == 10) return 44;
-            var list = race == 8 ? World.StationTables.PirateFighters : World.StationTables.RaceFighters[Mathf.Clamp(race, 0, 3)];
-            return list[Random.Range(0, list.Length)];
-        }
+        /// <summary>Globals::getRandomEnemyFighter 0xf9034 (NpcTables.RandomFighter).</summary>
+        public static int RandomFighter(int race) => Flight.NpcTables.RandomFighter(race);
+
+        /// <summary>Status::inSupernovaSystem: system 27 before campaign 158, not the Void's orbit.</summary>
+        public static bool InSupernovaSystem(int system, int station) =>
+            system == 27 && Session.CampaignMission < 158 && station != Session.VoidOrbit;
     }
 }

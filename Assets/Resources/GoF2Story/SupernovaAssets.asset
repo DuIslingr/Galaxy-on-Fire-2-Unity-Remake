@@ -16,13 +16,17 @@ MonoBehaviour:
   hackingTurn: {fileID: 8300000, guid: e9bf983af23afab43af8c0dd789a1c56, type: 3}
   hackingSolved: {fileID: 8300000, guid: f9d92dc529a9e344e8b28a78dc69e466, type: 3}
   transferLoop: {fileID: 8300000, guid: 6ded16b864b13c74c957f287e546a261, type: 3}
-  plasmaCollected: {fileID: 8300000, guid: aca6a9485483f8940bbf0f67d33bf638, type: 3}
+  extractorLoop: {fileID: 8300000, guid: 7f407334bba16ee4a81914fd8907f22e, type: 3}
+  plasmaCollected:
+  - {fileID: 8300000, guid: 2afba83113317df4f81fcae9a46f3c94, type: 3}
+  - {fileID: 8300000, guid: fc6656d101471b647b1de30a6e6bfc5f, type: 3}
+  - {fileID: 8300000, guid: 1c78f34826c6d694ea80f9e8ecd100c6, type: 3}
+  - {fileID: 8300000, guid: b90dda45c76dc2346b336bd52ac5ee51, type: 3}
   ionizingBlast: {fileID: 8300000, guid: 3d41849f333313e4fbec7b8063036eee, type: 3}
   carrierJump: {fileID: 8300000, guid: efecd5e7d6ce39d469d7e193ee24e8b6, type: 3}
   valkyrieBeam: {fileID: 8300000, guid: ed1b7712d04d41741860d0fe40b91b42, type: 3}
   selfDestruct: {fileID: 8300000, guid: 0102d6bc1a6833c4b9f2aaf8d8198afd, type: 3}
   explosion: {fileID: 8300000, guid: 4114f4b43ff0a9b408f347f59d03bd29, type: 3}
-  launch: {fileID: 8300000, guid: 8d2f5cd7f20b9f84abc1457686c9617f, type: 3}
   wantedMusic: {fileID: 8300000, guid: dc6406409e76c8a4ab12a31d9a7a84ae, type: 3}
   stealthMusic1: {fileID: 8300000, guid: cacb7624bc883554c946f02fbfea0f8d, type: 3}
   stealthMusic2: {fileID: 8300000, guid: 2f26329ef2cddc04eb1dbffa36c155ff, type: 3}
@@ -31,4 +35,5 @@ MonoBehaviour:
   katashunMusic: {fileID: 8300000, guid: fa54455bf7598b442885f61ec379290e, type: 3}
   mission102: {fileID: 8300000, guid: 973ad118e8c0f3e48904244380a1c9e3, type: 3}
   mission102Loop: {fileID: 8300000, guid: 87eb9ac16298f3347adce5e021a3180c, type: 3}
+  mission102Loop2: {fileID: 8300000, guid: 93921772b9768214691df7e94727af87, type: 3}
   supernovaIntroSky: {fileID: 2100000, guid: 722d643405cba4f42b450528e2ddcccf, type: 2}

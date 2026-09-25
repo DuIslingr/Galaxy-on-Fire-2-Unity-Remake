@@ -33,6 +33,8 @@ MonoBehaviour:
   - {fileID: 3639165770361154041, guid: 01a0f216a91ab484aa22421ddbfe6596, type: 3}
   smokeMaterial: {fileID: 2100000, guid: 8a65392e41da3774cb30a68b139f249e, type: 2}
   fireMaterial: {fileID: 2100000, guid: 3a415f5608dda9e43ab90ac04a20faac, type: 2}
+  explosionSpriteMaterial: {fileID: 2100000, guid: fb8b2a59e03c7a84cb84f60d21334155, type: 2}
+  particlesMaterial: {fileID: 2100000, guid: 3b6ea14715e6ee944a89eecd2e7d25e7, type: 2}
   hitShield:
   - {fileID: 8300000, guid: 2180dc2e028978546a7ff4b4ad55be57, type: 3}
   - {fileID: 8300000, guid: 5f72e4c9b8af0944fbf0d4214f9816be, type: 3}
@@ -63,6 +65,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 5ec4b4e0bd59bf14ea6cfc1fd0981c22, type: 3}
   - {fileID: 8300000, guid: 3d385b75ab7f241448baec4fa5b13d63, type: 3}
   - {fileID: 8300000, guid: 30bbd26f78e4ea44c8d568398bfe85a1, type: 3}
+  - {fileID: 8300000, guid: 20f6c2032a7869a4ba103d1ac2464e6f, type: 3}
+  - {fileID: 8300000, guid: 2d04fef13d2cbf84e9204ac62e8c80a1, type: 3}
   targetLock: {fileID: 8300000, guid: b48c5e8a0fd8ffc4185f3566e1d65f9d, type: 3}
   tractorLoop: {fileID: 8300000, guid: 4c06bea89665def46bde4c530e72b902, type: 3}
   tractorClose: {fileID: 8300000, guid: 78668b3164210fe4aa2b7b6356ff0746, type: 3}
@@ -91,6 +95,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 110d13a82a6c20647921ce2d3daa248e, type: 3}
   - {fileID: 8300000, guid: 7c0e94556116b264a9e6a30b73d6e07d, type: 3}
   homeBaseMusic: {fileID: 8300000, guid: 1ccd10462d8fed2449daebaba2b5ef8f, type: 3}
+  valkyrieMusic: {fileID: 8300000, guid: 454e6f08a454c9a41897b7c65062cc25, type: 3}
+  deepScienceMusic: {fileID: 8300000, guid: fab8051ad83d88a4fbb060e0cd967c8b, type: 3}
   outpostWreck: {fileID: 2553691981631646173, guid: 4ea973f77c7f9e2489e65a5f4fe9d9b5, type: 3}
   explosionEmp: {fileID: 8404218890661094357, guid: 7cd18410a9f2fd64fa8d55e70de2bdf4, type: 3}
   explosionScatter: {fileID: 414524297884949190, guid: ef38d1e79f972014d8beb8c62591324a, type: 3}
@@ -110,7 +116,8 @@ MonoBehaviour:
   gammaShield1: {fileID: 8300000, guid: 5b5376798bf21f24eb7b72bbc6d09e45, type: 3}
   gammaShield2: {fileID: 8300000, guid: 80a0669eae50d034e9d2b5242025d704, type: 3}
   cloak: {fileID: 8300000, guid: a6c599adfbdf0e54da820350519e0241, type: 3}
-  timeShift: {fileID: 8300000, guid: 36f2419d33b9060458b71e6932c69086, type: 3}
+  timeShift: {fileID: 8300000, guid: 3b5e230d40eb88e42a3f8a0bbb7b60ff, type: 3}
+  timeShiftEnd: {fileID: 8300000, guid: 36f2419d33b9060458b71e6932c69086, type: 3}
   cloakShader: {fileID: 4800000, guid: b391bc9259a9bf945b2fd1d19b2feb47, type: 3}
   cloakMap: {fileID: 2800000, guid: 4b9afab36a330bd4dbca7799fb32f91a, type: 3}
   repairBeam: {fileID: 3980035201960181239, guid: da8bff01e55df044183213151ea6e7eb, type: 3}

@@ -63,6 +63,9 @@ namespace GoF2Remake.Flight
         // ---- configuration ------------------------------------------------------------------
         /// <summary>Options-menu steering sensitivity. Must stay well below 3.3/1.45 (~2.27). Default is a guess.</summary>
         public float Sensitivity = 1.0f;
+        /// <summary>Tilt steering (options[0x11] = 0): PlayerEgo::down / up ramp the pitch with 1.45 / 1.25 x the tilt
+        /// sensitivity; the touch stick, keys and pads use the sensitivity as it is.</summary>
+        public bool TiltMode;
 
         /// <summary>
         /// True: turn rates and the cosmetic model tilt follow partial stick input (needed for analog sticks and
@@ -194,7 +197,7 @@ namespace GoF2Remake.Flight
             if (yawInput) YawRate = RampToward(YawRate, steer.x, he, dtMs, 1f);
             if (pitchInput)
                 PitchRate = RampToward(PitchRate, steer.y, he, dtMs,
-                    steer.y > 0 ? PitchDownSensitivityScale : PitchUpSensitivityScale);
+                    !TiltMode ? 1f : steer.y > 0 ? PitchDownSensitivityScale : PitchUpSensitivityScale);
 
             // ---- rotation for this frame --------------------------------------------------------
             float pitchRad = dtMs * PitchRate * RateToRadiansPerMs;
@@ -226,6 +229,19 @@ namespace GoF2Remake.Flight
                 forwardUnits = forward,
                 sidePushUnits = push
             };
+        }
+
+        /// <summary>PlayerEgo::updateManeuver: handleShip is skipped (no steering ramp, no turn from the rates); the yaw rate
+        /// is the maneuver's (it banks the model and decays normally afterwards); the ship flies on at its speed.</summary>
+        public FrameResult StepManeuver(float dtMs, float yawRate)
+        {
+            YawRate = yawRate;
+            // The bank follows the rate: a full-stick rate (750 H / 63) banks like a full stick.
+            VisualYawBank = yawRate / (TargetRateScale / TargetRateDivisor);
+            VisualPitchBank = 0f;
+            float forward = dtMs * Throttle * CurrentSpeed;
+            UpdateBoost(dtMs);
+            return new FrameResult { forwardUnits = forward };
         }
 
         float RampToward(float rate, float input, float he, float dtMs, float sensitivityScale)

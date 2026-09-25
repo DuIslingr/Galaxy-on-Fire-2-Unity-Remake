@@ -76,7 +76,26 @@ def events():
 GAP_START, GAP = 656, 4
 
 
+_LGCY = None
+
+
 def name_of(sid, ev):
+    """The event name of a system id: from the LGCY data (tools/audio/fev_lgcy.py, exact), else the name-order guess below
+    (ids 656-659 missing, drifting from 2255 on)."""
+    global _LGCY
+    if _LGCY is None:
+        try:
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'audio'))
+            import fev_lgcy
+            _LGCY = [n for _, n, _, _ in fev_lgcy.ids_table(fev_lgcy.parse())]
+        except Exception:
+            _LGCY = []
+    if _LGCY:
+        return _LGCY[sid] if 0 <= sid < len(_LGCY) else None
+    return name_of_by_order(sid, ev)
+
+
+def name_of_by_order(sid, ev):
     if sid < GAP_START:
         return ev[sid] if sid < len(ev) else None
     if sid < GAP_START + GAP:

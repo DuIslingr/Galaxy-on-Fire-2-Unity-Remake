@@ -93,6 +93,14 @@ namespace GoF2Remake.Data
         /// <summary>Steering sensitivity (FlightModel.Sensitivity, 0..2.2).</summary>
         public static float Sensitivity { get => Get("sensitivity", 1f); set => Set("sensitivity", Mathf.Clamp(value, 0f, 2.2f)); }
         public static bool InvertPitch { get => GetBool("invertPitch", false); set => SetBool("invertPitch", value); }
+        /// <summary>options[0x11] = 0: the accelerometer steers (MGame::handleAccelerometer).</summary>
+        public static bool TiltSteering { get => GetBool("tiltSteering", false); set => SetBool("tiltSteering", value); }
+        /// <summary>options+0x18: the tilt sensitivity, 0..1 (default 1, the maximum).</summary>
+        public static float TiltSensitivity { get => Get("tiltSensitivity", 1f); set => Set("tiltSensitivity", Mathf.Clamp01(value)); }
+        /// <summary>options+0x1c / +0x20: the calibrated position (Globals::init 0.6 / 0.6).</summary>
+        public static float TiltCalX { get => Get("tiltCalX", 0.6f); set => Set("tiltCalX", value); }
+        public static float TiltCalZ { get => Get("tiltCalZ", 0.6f); set => Set("tiltCalZ", value); }
+        public static bool TiltCalibrated { get => GetBool("tiltCalibrated", false); set => SetBool("tiltCalibrated", value); }
 
         /// <summary>Controller stick dead zone (InputSettings.defaultDeadzoneMin).</summary>
         public static float StickDeadzone { get => Get("stickDeadzone", DefaultDeadzone); set => Set("stickDeadzone", Mathf.Clamp(value, 0.05f, 0.4f)); }

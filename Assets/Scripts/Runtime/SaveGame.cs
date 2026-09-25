@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -56,6 +56,8 @@ namespace GoF2Remake.Data
         public int[] medals;
         public int asteroidsDestroyed, oreMined, coresMined, cratesSalvaged, junkDestroyed, battleshipsDestroyed, highestCredits, lastArrivalHullPercent = 100;
         public List<int> oreTypesMined, coreTypesMined;
+        public int boozeBought, alienRemainsCollected;   // v8
+        public List<int> boozeTypes;
         public int agentsTalkedTo, offersDeclined, offersRepeated, acceptedBlindRisk, acceptedBlindMap, containersDelivered, passengersDelivered;
         // version 4: the Kaamo Club
         public int kaamoState;
@@ -195,6 +197,7 @@ namespace GoF2Remake.Data
                 cratesSalvaged = Session.CratesSalvaged, junkDestroyed = Session.JunkDestroyed, battleshipsDestroyed = Session.BattleshipsDestroyed,
                 highestCredits = Session.HighestCredits, lastArrivalHullPercent = Session.LastArrivalHullPercent,
                 oreTypesMined = new List<int>(Session.OreTypesMined), coreTypesMined = new List<int>(Session.CoreTypesMined),
+                boozeBought = Session.BoozeBought, alienRemainsCollected = Session.AlienRemainsCollected, boozeTypes = new List<int>(Session.BoozeTypes),
                 informerFailed = Session.InformerFailed,
                 agentsTalkedTo = Session.AgentsTalkedTo, offersDeclined = Session.OffersDeclined, offersRepeated = Session.OffersRepeated,
                 acceptedBlindRisk = Session.AcceptedBlindRisk, acceptedBlindMap = Session.AcceptedBlindMap,
@@ -277,6 +280,8 @@ namespace GoF2Remake.Data
                 Session.CratesSalvaged = s.cratesSalvaged; Session.JunkDestroyed = s.junkDestroyed; Session.BattleshipsDestroyed = s.battleshipsDestroyed;
                 Session.HighestCredits = s.highestCredits; Session.LastArrivalHullPercent = s.lastArrivalHullPercent;
                 Session.OreTypesMined = new HashSet<int>(s.oreTypesMined ?? new List<int>());
+                Session.BoozeBought = s.boozeBought; Session.AlienRemainsCollected = s.alienRemainsCollected;
+                Session.BoozeTypes = new HashSet<int>(s.boozeTypes ?? new List<int>());
                 Session.CoreTypesMined = new HashSet<int>(s.coreTypesMined ?? new List<int>());
                 Session.InformerFailed = s.informerFailed;
                 Session.AgentsTalkedTo = s.agentsTalkedTo; Session.OffersDeclined = s.offersDeclined; Session.OffersRepeated = s.offersRepeated;

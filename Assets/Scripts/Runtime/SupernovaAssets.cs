@@ -16,7 +16,8 @@ namespace GoF2Remake.Data
         public AudioClip transferLoop;     // Transport_Loop (the loading / unloading, name-matched)
 
         [Header("Plasma")]
-        public AudioClip plasmaCollected;  // 2256 Container_01
+        public AudioClip extractorLoop;    // 2255 Loop (Extractor_Loop_01): the collector turret view (PlayerEgo::setTurretMode)
+        public AudioClip[] plasmaCollected;  // 2256 Suck: Mud1..4 at random (PlayerGasCloud::update)
         public AudioClip ionizingBlast;    // 2253 Plasma_Rocket_Explosion
 
         [Header("Story sounds")]
@@ -24,7 +25,6 @@ namespace GoF2Remake.Data
         public AudioClip valkyrieBeam;     // 0x8c7 (2247) GOF2_Valkyrie_RayBeam_1
         public AudioClip selfDestruct;     // Selfdestruct_Warning
         public AudioClip explosion;        // 0x8c3 / 0x8c4 (2243 / 2244) DLC2_SFX/Explosion
-        public AudioClip launch;           // Launch (the freighter / carrier leaving, 0x8c9)
 
         [Header("Music")]
         public AudioClip wantedMusic;      // 151 SN_WantedBoardCriminals (20120527_GOF2_Addon_WantedBoardCriminal)
@@ -35,6 +35,7 @@ namespace GoF2Remake.Data
         public AudioClip katashunMusic;    // 0x8bf (2239) GOF2SN_CS_126_Trunt1_02 (Katashun during 126 / 133)
         public AudioClip mission102;       // 0x8c0 (2240) GOF2_Mission_102_CutScene
         public AudioClip mission102Loop;   // 0x8c1 (2241) GOF2_Mission_102_CutScene_Loop
+        public AudioClip mission102Loop2;  // 0x8c2 (2242) GOF2_Mission_102_CutScene_Loop_2: a mission's target orbit from 0x6a
 
         [Header("Sky")]
         public Material supernovaIntroSky;  // Level::createSpace at index 89: skybox_005 instead of the supernova sky

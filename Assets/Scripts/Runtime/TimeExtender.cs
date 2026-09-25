@@ -6,8 +6,8 @@
 //   MGame::OnUpdate 0x1acb60       running: world dt = 0.3 dt (NPCs, bullets, particles, the mission clock and radio),
 //                                  player dt = 0.7 dt (PlayerEgo::update, the chase camera); at the end the cooldown runs,
 //                                  then the icon flashes for 2000 ms (Hud::setTimeExtender)
-// Sounds: 1120 (TimeShift_01b) on start, every sound pitched down (FModSound::setDownPitch) while it runs; the end sound
-// 1119 is unmapped. The remake scales Time.timeScale to 0.3 (Navigation.ApplyTimeScale) and the player's own updates
+// Sounds: 1120 (TimeShift_Start) on start, every sound pitched down (FModSound::setDownPitch) while it runs, 1119
+// (TimeShift_01b) when it ends (MGame::OnTouchBegin tapped again / MGame::OnUpdate the timer running out). The remake scales Time.timeScale to 0.3 (Navigation.ApplyTimeScale) and the player's own updates
 // by PlayerFactor (0.7 / 0.3). Remake keys: the touch button's slot, X, left stick press.
 
 using System;
@@ -26,6 +26,8 @@ namespace GoF2Remake.Flight
         public static bool Active { get; private set; }
         /// <summary>The player's own dt multiplier on top of Time.timeScale (0.7 of real time while running).</summary>
         public static float PlayerFactor => Active ? PlayerScale / WorldScale : 1f;
+        /// <summary>For sources that set their own pitch every frame (engine, drill): FModSound::setDownPitch.</summary>
+        public static float SoundPitch => Active ? DownPitch : 1f;
 
         /// <summary>Set by the level: no extender now (cinematics, jumps, death).</summary>
         public Func<bool> Blocked;
@@ -85,8 +87,10 @@ namespace GoF2Remake.Flight
                 if (assets != null && assets.timeShift != null) sfx.PlayOneShot(assets.timeShift, Settings.SfxVolume);
                 SetPitch(true);
             }
-            else if (Running) Stop(true);
+            else if (Running) { Stop(true); PlayEnd(); }
         }
+
+        void PlayEnd() { if (assets != null && assets.timeShiftEnd != null) sfx.PlayOneShot(assets.timeShiftEnd, Settings.SfxVolume); }
 
         /// <summary>A cinematic (MGame::OnUpdate 0x1af162), a jump or the player's death cancels it.</summary>
         public void Cancel() { if (Running) Stop(true); }
@@ -107,7 +111,7 @@ namespace GoF2Remake.Flight
             if (state > 0f)
             {
                 state -= dt;
-                if (state <= 0f) Stop(true);
+                if (state <= 0f) { Stop(true); PlayEnd(); }
                 else if (pitched.Count > 0) PitchNew();
             }
             else if (state < 0f)

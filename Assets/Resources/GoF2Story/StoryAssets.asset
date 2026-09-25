@@ -8503,16 +8503,34 @@ MonoBehaviour:
   portraitFrame: {fileID: 2800000, guid: ecc0a575a490375438e19ac57e621250, type: 3}
   introAtmo: {fileID: 8300000, guid: d3d9780d060a6ac40afc81c9396d52ce, type: 3}
   battleFull: {fileID: 8300000, guid: 7c0e94556116b264a9e6a30b73d6e07d, type: 3}
-  timeShift: {fileID: 8300000, guid: 3b5e230d40eb88e42a3f8a0bbb7b60ff, type: 3}
+  timeShift: {fileID: 8300000, guid: 110d13a82a6c20647921ce2d3daa248e, type: 3}
   cutsceneExplosion: {fileID: 8300000, guid: e06daa26606ebe643ab37e4b95e5239e, type: 3}
   rumble: {fileID: 8300000, guid: 3279c56819758964197589479b6ebe58, type: 3}
   timeJumpEnd: {fileID: 8300000, guid: 85b472f70f9e02f4ebbdd56d9b87203d, type: 3}
   timeJump: {fileID: 8300000, guid: 85b472f70f9e02f4ebbdd56d9b87203d, type: 3}
   engineBroken: {fileID: 8300000, guid: bd843bc33cc75474b9b29801cebdc53a, type: 3}
   engineBrokenLoop: {fileID: 8300000, guid: 7d9ef170d442fa441a1aba2cb8a0adc0, type: 3}
+  engineBrokenAdds:
+  - {fileID: 8300000, guid: 7d5d64093ca5d1f458653fd84e3b8a58, type: 3}
+  - {fileID: 8300000, guid: dd53e873c854c4645b75e5f7333af879, type: 3}
+  - {fileID: 8300000, guid: 722a74c0ddd820e4b8a3fdc782baaa21, type: 3}
+  - {fileID: 8300000, guid: f06de4e55b73d174b8c56d485d494225, type: 3}
+  - {fileID: 8300000, guid: 0482008bcc61e6542850c4180fa1d636, type: 3}
+  - {fileID: 8300000, guid: fdf4e27e49e590b449db609d3ee30e7c, type: 3}
+  - {fileID: 8300000, guid: f0af2d47d02dda348a0fc45fa3f1efc9, type: 3}
+  - {fileID: 8300000, guid: faab4dc5beb3be847a144092760916e6, type: 3}
+  - {fileID: 8300000, guid: d4287181b44e6e84aa4cce072b62e627, type: 3}
+  - {fileID: 8300000, guid: 0f86da22b023c404fba8a0336aa5ae25, type: 3}
+  - {fileID: 8300000, guid: 536e3d410d6690048b041bd7d759f1c3, type: 3}
+  - {fileID: 8300000, guid: bb463930f78ac634caf34d1cef61675c, type: 3}
+  - {fileID: 8300000, guid: 39acba3bb75babe42a1ee9130d3456b9, type: 3}
+  - {fileID: 8300000, guid: bd818497de995094b8265705f0c3218c, type: 3}
   introSky: {fileID: 2100000, guid: 285128267b6f1ea4bb50a4ea11f2859b, type: 2}
   introSkyAfterJump: {fileID: 2100000, guid: 42928d5d95342ae47b51e5229e6edccd, type: 2}
   hyperDrive: {fileID: 3958461172637767444, guid: 371d1219021d1fd45aec74d0453dcd58, type: 3}
+  menuStatics:
+  - {fileID: 3342792083526261713, guid: e7ff4b3283154364794e55464c227977, type: 3}
+  - {fileID: 4225206361487783834, guid: 419db81cb93faaf458280d498e1883ea, type: 3}
   wormhole: {fileID: 5722040181389032401, guid: 9889eb94cf966c74ca9fe9b91a691ba3, type: 3}
   scannerProbe: {fileID: 4723210594566127378, guid: 5c930e75f1b6cad49bf8f3471b57d3bd, type: 3}
   voidStationExplosion:
@@ -8522,10 +8540,41 @@ MonoBehaviour:
   wormholeSound: {fileID: 8300000, guid: 59ad8c12efa20a042a9c97ff832cf164, type: 3}
   empHit: {fileID: 8300000, guid: 11455cb27cfe6364b819d445782cacdb, type: 3}
   probeLaunch: {fileID: 8300000, guid: 9f968904ebb208843807a791b23db2cc, type: 3}
-  mothershipLoop: {fileID: 8300000, guid: dda1ab447476b2c46b771d56d3b7a096, type: 3}
+  mothershipLoops:
+  - {fileID: 8300000, guid: dda1ab447476b2c46b771d56d3b7a096, type: 3}
+  - {fileID: 8300000, guid: 8db06d1ac9aa76d488de8a49c7fa8142, type: 3}
+  - {fileID: 8300000, guid: d6ac079fd26f78348b5bf4e9405b8064, type: 3}
+  mothershipAdds1:
+  - {fileID: 8300000, guid: 314c575a504d5c44e93d7c2b648877c2, type: 3}
+  - {fileID: 8300000, guid: ac0a3383cd1be9844a20094e98eb9151, type: 3}
+  - {fileID: 8300000, guid: 51bd0f103bcf0ef4a9853f15474282a1, type: 3}
+  - {fileID: 8300000, guid: 18dda35942da99946969769ca6b686a7, type: 3}
+  - {fileID: 8300000, guid: 3ea0cd3de75a62944b35ab86782a6451, type: 3}
+  - {fileID: 8300000, guid: 0adb2bfdf8f27e440a0d722d7b82f8ef, type: 3}
+  - {fileID: 8300000, guid: 29fade01a1c503547bdb0e1ef2673533, type: 3}
+  - {fileID: 8300000, guid: dce02d3b702759b4d8054bf3cd25b8a5, type: 3}
+  - {fileID: 8300000, guid: 2a4a0ddf50400c44f8eb1b2f71f32673, type: 3}
+  - {fileID: 8300000, guid: 6f9871c413369d645a1538dbc98bdf5b, type: 3}
+  - {fileID: 8300000, guid: 677c9e6d752e6624db7176ac84901c1b, type: 3}
+  - {fileID: 8300000, guid: 86527c5ba1a9fca4195f0547e8e5c0ee, type: 3}
+  - {fileID: 8300000, guid: 4fdf9e547430d7d4a93c23896bab96d1, type: 3}
+  - {fileID: 8300000, guid: d6baa8a6e6509e94980010de721b838f, type: 3}
+  mothershipAdds2:
+  - {fileID: 8300000, guid: dce02d3b702759b4d8054bf3cd25b8a5, type: 3}
+  - {fileID: 8300000, guid: 0adb2bfdf8f27e440a0d722d7b82f8ef, type: 3}
+  - {fileID: 8300000, guid: 29fade01a1c503547bdb0e1ef2673533, type: 3}
+  - {fileID: 8300000, guid: 9c70af5d5b72dc0459eec7f56362b9a2, type: 3}
+  - {fileID: 8300000, guid: b51963f5c1114c646aa08aee1b4cc350, type: 3}
+  - {fileID: 8300000, guid: 125b19f43a2a8904c909aaab75f83665, type: 3}
+  - {fileID: 8300000, guid: d7f943e6fdd776347a1d8b2fbad14d98, type: 3}
+  - {fileID: 8300000, guid: 5db6052672dc2e24da75c42aa5dadb3b, type: 3}
+  - {fileID: 8300000, guid: 51bd0f103bcf0ef4a9853f15474282a1, type: 3}
+  - {fileID: 8300000, guid: 18dda35942da99946969769ca6b686a7, type: 3}
+  - {fileID: 8300000, guid: 3ea0cd3de75a62944b35ab86782a6451, type: 3}
   mothershipCutscene: {fileID: 8300000, guid: 3b6b3f2ba733e414fbe7542306adcf27, type: 3}
   errktCutscene: {fileID: 8300000, guid: 968d027cbd790b34cbc0263206914fbc, type: 3}
   outroSong: {fileID: 8300000, guid: d7a6933560ac989439a2eff8b48ad997, type: 3}
+  alert: {fileID: 8300000, guid: 7cd358c632a47f94f8921090fc6b60bb, type: 3}
   voidMusic: {fileID: 8300000, guid: 3064cb1e71b920841a949c19248df5e9, type: 3}
   voidBattle: {fileID: 8300000, guid: f3b023e826917174b8e24d9ba63daf87, type: 3}
   deepScienceAttacked: {fileID: 8300000, guid: 50a9fda00caa3674597341ea3e0023f8, type: 3}

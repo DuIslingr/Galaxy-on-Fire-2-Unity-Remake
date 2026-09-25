@@ -15,7 +15,7 @@ using UnityEngine;
 namespace GoF2Remake.UI
 {
     public enum OptionPage { Sound, Graphics, Controls, Gameplay }
-    public enum OptionKind { Slider, Toggle, Choice }
+    public enum OptionKind { Slider, Toggle, Choice, Button }
 
     public sealed class OptionDef
     {
@@ -40,6 +40,9 @@ namespace GoF2Remake.UI
         public Func<int> getIndex;
         public Action<int> setIndex;
         public bool segmented;
+
+        // Button
+        public Action action;
     }
 
     public static class OptionsCatalog
@@ -129,6 +132,26 @@ namespace GoF2Remake.UI
                 () => Settings.CameraShake, v => Settings.CameraShake = v, Percent));
 
             // ---- controls
+            // MenuTouchWindow state 8: 490 Touch / 491 Accelerometer pictures (options[0x11]), 492 Steering Calibration
+            // (493, then OK stores the device's position), the sensitivity slider per mode (+0x14 / +0x18).
+            if (Flight.TiltSteering.Available)
+            {
+                list.Add(Choice("steering", OptionPage.Controls, () => X("steering", "Steering"), true,
+                    () => new[] { Localization.Get(490), Localization.Get(491) },
+                    () => Settings.TiltSteering ? 1 : 0, i =>
+                    {
+                        bool tilt = i == 1;
+                        if (tilt && !Settings.TiltCalibrated) Flight.TiltSteering.Calibrate();   // remake: calibrate on first use
+                        Settings.TiltSteering = tilt;
+                    }));
+                list.Add(new OptionDef
+                {
+                    id = "calibrate", page = OptionPage.Controls, kind = OptionKind.Button, label = () => Localization.Get(492),
+                    description = () => Localization.Get(493), action = Flight.TiltSteering.Calibrate,
+                });
+                list.Add(Slider("tiltSensitivity", OptionPage.Controls, () => Localization.Get(499) + " (" + Localization.Get(491) + ")", 0f, 1f,
+                    () => Settings.TiltSensitivity, v => Settings.TiltSensitivity = v, v => Mathf.RoundToInt(v * 100f).ToString()));
+            }
             list.Add(Slider("sensitivity", OptionPage.Controls, () => Localization.Get(499), 0.2f, 2.2f,
                 () => Settings.Sensitivity, v => Settings.Sensitivity = v, v => v.ToString("0.0")));
             list.Add(Toggle("invert", OptionPage.Controls, () => Localization.Get(500), () => Settings.InvertPitch, v => Settings.InvertPitch = v));

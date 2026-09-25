@@ -71,6 +71,12 @@ namespace GoF2Remake.Data
         public static int AsteroidsDestroyed, OreMined, CoresMined, CratesSalvaged, JunkDestroyed, BattleshipsDestroyed, HighestCredits;
         public static int LastArrivalHullPercent = 100;
         public static HashSet<int> OreTypesMined = new HashSet<int>(), CoreTypesMined = new HashSet<int>();
+        /// <summary>Status+0xa8 (medal 8 Personal Need): the booze tonnes gained per hangar visit (ModStation::OnKeyPress /
+        /// OnTouchEnd); Status+0xac (medal 9 Barkeeper): the booze types traded (items 132-153); Status+0xcc (medal 21
+        /// Alien Hunter): tonnes captured from Void crates (KIPlayer::captureCrate).</summary>
+        public static int BoozeBought, AlienRemainsCollected;
+        public static HashSet<int> BoozeTypes = new HashSet<int>();
+        public static bool IsBooze(int item) => item >= 132 && item <= 153;
         /// <summary>Ship+0x78 (Ship::addMod, each at most once; Reference/research/blueprints_mods.md 2): the current ship's
         /// mods: 0 +40 hull, 1 +30 t cargo, 2 +1 equipment slot, 3 handling +0.2. They belong to the hull (cleared when
         /// the ship is traded).</summary>
@@ -294,6 +300,8 @@ namespace GoF2Remake.Data
             AsteroidsDestroyed = OreMined = CoresMined = CratesSalvaged = JunkDestroyed = BattleshipsDestroyed = HighestCredits = 0;
             LastArrivalHullPercent = 100;
             OreTypesMined = new HashSet<int>();
+            BoozeBought = AlienRemainsCollected = 0;
+            BoozeTypes = new HashSet<int>();
             CoreTypesMined = new HashSet<int>();
             ShipMods = new List<int>();
             KaamoState = 0;

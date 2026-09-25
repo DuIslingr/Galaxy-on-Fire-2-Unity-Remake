@@ -8,7 +8,7 @@
 //   right  168 Medals: 45 plates in three columns, coloured by grade (Achievements); an earned medal shows its hint
 //          (1552 + i, # = the threshold of its grade)
 // Fire power: the original's Ship::getFirePower formula was not recovered; the remake shows the mounted primaries' damage
-// per second. Medal images aren't cut from the interface atlas yet: text plates stand in. Plain class driven by
+// per second. Medal images: GoF2 > Build HUD Images (GoF2Hud/medal_*). Plain class driven by
 // StationMenu.
 
 using System.Collections.Generic;
@@ -126,26 +126,57 @@ namespace GoF2Remake.UI
             {
                 int medal = i;
                 int grade = Achievements.Grade(i);
+                bool elite = i >= Achievements.BaseCount;
                 var m = new Button();
                 m.AddToClassList("medal");
                 if (grade > 0) m.AddToClassList("medal--earned");
-                m.AddToClassList(grade == 1 ? "medal--gold" : grade == 2 ? "medal--silver" : grade == 3 ? "medal--bronze" : "medal--none");
-                var g = new Label(grade == 1 ? "GOLD" : grade == 2 ? "SILVER" : grade == 3 ? "BRONZE" : "—") { pickingMode = PickingMode.Ignore };
-                g.AddToClassList("medal-grade");
-                g.AddToClassList("gof-semibold");
-                m.Add(g);
+                // TouchButton::draw style 4: the plate by grade, the symbol centred at (114, 41) tinted by grade, the
+                // pressed overlay 2412 on the selected medal, the name 1507 + i in white under the plate.
+                var plate = new VisualElement { pickingMode = PickingMode.Ignore };
+                plate.AddToClassList("medal-plate");
+                plate.style.backgroundImage = Hud(elite ? (grade == 1 ? "medal_plate_elite_gold" : grade == 0 ? "medal_plate_elite_none" : grade == 2 ? "medal_plate_silver" : "medal_plate_bronze")
+                                                        : grade == 1 ? "medal_plate_gold" : grade == 2 ? "medal_plate_silver" : grade == 3 ? "medal_plate_bronze" : "medal_plate_none");
+                var symbol = new VisualElement { pickingMode = PickingMode.Ignore };
+                symbol.AddToClassList("medal-symbol");
+                symbol.style.backgroundImage = Hud($"medal_{i:00}");
+                symbol.style.unityBackgroundImageTintColor = MedalTint(elite, grade);
+                plate.Add(symbol);
+                var pressed = new VisualElement { pickingMode = PickingMode.Ignore };
+                pressed.AddToClassList("medal-pressed");
+                pressed.style.backgroundImage = Hud("medal_pressed");
+                plate.Add(pressed);
+                m.Add(plate);
                 var n = new Label(T(1507 + i)) { pickingMode = PickingMode.Ignore };
                 n.AddToClassList("medal-name");
                 n.AddToClassList("gof-semibold");
                 m.Add(n);
-                // Only earned medals react (TouchButton enabled by level).
-                m.clicked += () => { if (Achievements.Grade(medal) > 0) { menu.PlayRelease(); ShowHint(medal); } };
-                m.RegisterCallback<FocusInEvent>(_ => { if (Achievements.Grade(medal) > 0) ShowHint(medal); });
+                // TouchButton enabled by level: earned medals react, the elite ones (36-44) always (their hint then uses
+                // the grade-1 threshold).
+                bool reacts = grade > 0 || elite;
+                m.clicked += () => { if (reacts) { menu.PlayRelease(); ShowHint(medal); } };
+                m.RegisterCallback<FocusInEvent>(_ => { if (reacts) ShowHint(medal); });
                 grid.Add(m);
                 medalButtons.Add(m);
             }
             hint.text = T(647);
             menu.Focus(close);
+        }
+
+        static readonly System.Collections.Generic.Dictionary<string, Texture2D> hudImages = new System.Collections.Generic.Dictionary<string, Texture2D>();
+
+        static StyleBackground Hud(string name)
+        {
+            if (!hudImages.TryGetValue(name, out var t)) hudImages[name] = t = Resources.Load<Texture2D>("GoF2Hud/" + name);
+            return t != null ? new StyleBackground(t) : new StyleBackground(StyleKeyword.None);
+        }
+
+        /// <summary>DAT_00252060 (base: none 0x2198ff2f, gold 0xfad10eff, silver white, bronze 0xce8258ff) and DAT_00252050
+        /// (elite: none 0xfa792160, gold 0xfa7921ff), RGBA.</summary>
+        static Color MedalTint(bool elite, int grade)
+        {
+            uint c = elite ? (grade == 1 ? 0xfa7921ffu : grade == 0 ? 0xfa792160u : grade == 2 ? 0xffffffffu : 0xce8258ffu)
+                           : grade == 1 ? 0xfad10effu : grade == 2 ? 0xffffffffu : grade == 3 ? 0xce8258ffu : 0x2198ff2fu;
+            return new Color32((byte)(c >> 24), (byte)(c >> 16), (byte)(c >> 8), (byte)c);
         }
 
         void ShowHint(int medal)

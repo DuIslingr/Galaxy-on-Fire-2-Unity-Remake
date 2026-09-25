@@ -526,6 +526,7 @@ namespace GoF2Remake.Data
         /// <summary>Bought items go to the hold; secondaries join a mounted stack of the same item.</summary>
         void GiveItem(int item, int amount)
         {
+            if (Session.IsBooze(item)) Session.BoozeTypes.Add(item);   // SpaceLounge::onKeyPress: Status+0xac
             var it = db.Item(item);
             if (it != null && it.TypeId == 1)
             {

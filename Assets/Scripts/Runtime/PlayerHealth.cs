@@ -40,6 +40,8 @@ namespace GoF2Remake.Flight
         /// <summary>ms left per hit arc: 0 left, 1 right, 2 top, 3 bottom (Hud::draw, 300 ms).</summary>
         public readonly float[] ArcMs = new float[4];
         public bool Dead { get; private set; }
+        /// <summary>The gamma shield's loop plays in the engine's place (PlayerEngine stays silent).</summary>
+        public bool GammaLoopActive { get; private set; }
         public bool GameOver { get; private set; }
         /// <summary>Set by the level each frame: the launch camera / jump scenes (Player::setVulnerable(false)).</summary>
         [NonSerialized] public bool invulnerable;
@@ -60,7 +62,6 @@ namespace GoF2Remake.Flight
         float repairHullMs, repairArmorMs;
         bool hasRepair, exploded;
         float lastCombined, deathMs;
-        Vector3 deathSpin;
         // emergency system
         bool hasEmergency;
         float emergencyMs, emergencyLength = 10000f, bubbleScale;
@@ -130,7 +131,14 @@ namespace GoF2Remake.Flight
             emergencyMs = emergencyLength;
             EmergencyActive = true;
             Session.Equipment.RemoveAll(e => e.item == 185);   // used up for good
-            if (assets != null && assets.invincibility != null) sfx.PlayOneShot(assets.invincibility, Settings.SfxVolume);
+            // 1115 Invincibile is a loop: PlayerEgo::update stops it when the shield ends.
+            if (assets != null && assets.invincibility != null)
+            {
+                if (invincibleLoop == null) { invincibleLoop = gameObject.AddComponent<AudioSource>(); invincibleLoop.loop = true; invincibleLoop.spatialBlend = 0f; invincibleLoop.playOnAwake = false; }
+                invincibleLoop.clip = assets.invincibility;
+                invincibleLoop.volume = Settings.SfxVolume;
+                invincibleLoop.Play();
+            }
             if (assets != null && assets.shieldBubble != null)
             {
                 bubble = Instantiate(assets.shieldBubble, ship.visualModel != null ? ship.visualModel : transform, false);
@@ -168,9 +176,12 @@ namespace GoF2Remake.Flight
             if (emergencyMs <= 0f) EndEmergency();
         }
 
+        AudioSource invincibleLoop;
+
         void EndEmergency()
         {
             EmergencyActive = false;
+            if (invincibleLoop != null) invincibleLoop.Stop();
             if (bubble != null) Destroy(bubble);
             if (bubbleMaterial != null) Destroy(bubbleMaterial);
             OpaqueTexture.Request(this, false);
@@ -220,11 +231,13 @@ namespace GoF2Remake.Flight
             if (rate <= 0f) { Gamma = -1f; Session.PlayerGamma = -1f; return; }
             Gamma = Session.PlayerGamma >= 0f ? Session.PlayerGamma : 100f;
             gammaWarned = Gamma < 15f;
-            var clip = gammaShield == null || assets == null ? null : gammaShield.index == 205 ? assets.gammaShield2 : assets.gammaShield1;
+            var clip = gammaShield == null || assets == null ? null : gammaShield.index == 205 ? assets.gammaShield1 : assets.gammaShield2;   // PlayerEgo::PlayerEgo: 0xcd 2261, else 2260
             if (clip != null)
             {
+                // The gamma shield's loop takes the engine sound's slot (PlayerEgo+0x1c): event volume 0.09.
                 var loop = gameObject.AddComponent<AudioSource>();
-                loop.clip = clip; loop.loop = true; loop.spatialBlend = 0f; loop.volume = 0.6f * Settings.SfxVolume; loop.Play();
+                loop.clip = clip; loop.loop = true; loop.spatialBlend = 0f; loop.volume = 0.09f * Sfx.EventGain * Settings.SfxVolume; loop.Play();
+                GammaLoopActive = true;
             }
         }
 
@@ -320,8 +333,12 @@ namespace GoF2Remake.Flight
             ship.autopilotTarget = null;
             if (weapons != null) weapons.Blocked = true;
             if (chase != null) chase.enabled = false;   // TargetFollowCamera::setActive(false): the camera stays where it is
-            deathSpin = UnityEngine.Random.onUnitSphere;
+            // PlayerEgo::explode 0xada6c: the death burn (record 9) from the first frame until the explosion.
+            burn ??= new ShipBurn(transform);
+            burn.SetBurning(true);
         }
+
+        ShipBurn burn;
 
         void UpdateDeath(float dtMs)
         {
@@ -329,12 +346,16 @@ namespace GoF2Remake.Flight
             if (!exploded)
             {
                 transform.position += transform.forward * ship.ExternalSpeedMetersPerSecond * dtMs / 1000f;
-                if (ship.visualModel != null) ship.visualModel.Rotate(deathSpin, 0.09f * dtMs, Space.World);   // spin rate lost; tuned by eye
+                // PlayerEgo::update 0xab2aa: the model's Euler angles + 0.03 rad per (30 fps) frame on every axis.
+                float step = 0.03f * Mathf.Rad2Deg * (dtMs / (1000f / 30f));
+                if (ship.visualModel != null) ship.visualModel.localRotation *= Quaternion.Euler(step, step, step);
             }
             if (!exploded && deathMs >= 3000f)
             {
                 exploded = true;
                 Explosion.Spawn(transform.position);
+                // At 3000 ms: the burn stops and record 11 bursts once at the ship.
+                if (burn != null) { burn.SetBurning(false); burn.Burst(); }
                 if (ship.visualModel != null) ship.visualModel.gameObject.SetActive(false);
                 ship.ExternalSpeedMetersPerSecond = 0f;
             }

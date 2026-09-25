@@ -95,7 +95,7 @@ namespace GoF2Remake.Flight
 
             // A KIPlayer of the level: the hostile ships may shoot at it.
             if (traffic != null) foreach (var s in traffic.Ships) if (s.Target.hostileToPlayer && !s.enemies.Contains(self)) s.enemies.Add(self);
-            if (fx != null && fx.shot != null) Sfx.PlayAt(fx.shot, transform.position);   // deploy sound 2263 (a: per type)
+            if (fx != null && fx.shot != null) Sfx.PlayAt(fx.Shot, transform.position);   // deploy sound 2263 SentryGun_SG400 (all three)
         }
 
         void Update()
@@ -126,7 +126,7 @@ namespace GoF2Remake.Flight
                 {
                     rig.OnShot();
                     sinceShotMs = 0f;
-                    if (lookFx != null && lookFx.shot != null) Sfx.PlayAt(lookFx.shot, transform.position, 0.6f);
+                    if (lookFx != null && lookFx.shot != null) Sfx.PlayAt(lookFx.Shot, transform.position, 0.6f);
                 }
             }
         }

@@ -168,11 +168,12 @@ namespace GoF2Remake.UI
             return chat.Compose(agent, new List<int> { -1, -1, -1, ids[3], ids[4], -1 });
         }
 
-        void ShowOnMap(int target, Button from)
+        void ShowOnMap(int target, Button from, int routeFromSystem = -1)
         {
             if (target < 0) return;
             root.AddToClassList("station-map-open");
-            var map = StarMap.Open(level.Database, StarMapMode.Mission, false, _ => { root.RemoveFromClassList("station-map-open"); menu.Focus(from); }, -1, target);
+            var map = StarMap.Open(level.Database, StarMapMode.Mission, false, _ => { root.RemoveFromClassList("station-map-open"); menu.Focus(from); },
+                                   -1, target, false, routeFromSystem);
             if (map == null) root.RemoveFromClassList("station-map-open");
         }
 
@@ -266,7 +267,9 @@ namespace GoF2Remake.UI
         {
             var st = WantedBoard.State(level.Database, wantedSelected);
             if (st == null || st.travelsTo < 0) return;
-            ShowOnMap(st.travelsTo, wantedMap);
+            // WantedWindow: a dummy Mission(0, 0, travelsTo) and setStart(system of lastSeen): the route of the criminal's trip.
+            int from = st.lastSeen >= 0 ? level.Database.Stations.Find(s => s.index == st.lastSeen)?.system ?? -1 : -1;
+            ShowOnMap(st.travelsTo, wantedMap, from);
         }
     }
 }

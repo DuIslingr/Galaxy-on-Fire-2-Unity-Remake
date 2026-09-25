@@ -621,8 +621,6 @@ namespace GoF2Remake.World
 
         /// <summary>A cutscene plays its own music (the prologue / rescue): the traffic music stays silent.</summary>
         public bool MusicMuted { get; set; }
-        /// <summary>Radar::draw: no battle music (campaign index 16, the first Void contact).</summary>
-        public bool NoBattleMusic { get; set; }
 
         /// <summary>Radar::draw music choice: switch (with a short fade) only when the category changes.</summary>
         /// <summary>Any active hostile Specter (race 10) in the orbit.</summary>
@@ -630,14 +628,39 @@ namespace GoF2Remake.World
         /// <summary>The supernova system (27) before campaign 0x9e: its own calm music (148).</summary>
         bool SupernovaCalm => !Session.FreePlay && Session.CampaignMission < 0x9e && (db.Stations.Find(s => s.index == StationIndex)?.system ?? -1) == 27;
 
+        /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
+        /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before
+        /// 0x6a) / 2242 or else 148, the deep science orbits (10 / 100) 152, else the system race's (DAT_00252010).</summary>
+        AudioClip CalmClip()
+        {
+            var story = StoryAssets.Load();
+            var sn = SupernovaAssets.Load();
+            bool campaign = !Session.FreePlay;
+            if (VoidAttack) return story?.voidMusic;
+            if (campaign && Session.CampaignMission == 1) return story?.introAtmo;
+            if (StationIndex == KaamoClub.Station) return assets.homeBaseMusic;
+            if (StationIndex == 101) return assets.valkyrieMusic;
+            if (SupernovaCalm)
+            {
+                bool target = Story.TargetStation == StationIndex
+                              || (Session.FreelanceMission != null && Session.FreelanceMission.type != MissionType.Empty && Session.FreelanceMission.target == StationIndex);
+                return target ? (Session.CampaignMission < 0x6a ? sn?.mission102Loop : sn?.mission102Loop2) : sn?.gammaRayMusic;
+            }
+            if (StationIndex == 10 || StationIndex == 100) return assets.deepScienceMusic;
+            return assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null;
+        }
+
         void UpdateMusic(float dt)
         {
             if (assets == null || music == null) return;
             if (MusicMuted) { if (music.isPlaying) music.Stop(); musicCategory = pendingCategory = -1; return; }
-            int cat = HostileCount <= 0 || NoBattleMusic ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
+            int cat = HostileCount <= 0 ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
             // Radar::draw: an uncovered Most Wanted criminal -> 151; hostile Specters (race 10) -> 149 / 150.
             if (cat > 0 && WantedUncovered) cat = 4;
             else if (cat > 0 && SpectersHostile) cat = cat >= 3 ? 6 : 5;
+            // A battle track that plays is kept until the orbit is calm (the 0xe071 set: 136, 140-142, 149-151); only an
+            // uncovered criminal switches to 151.
+            if (cat > 0 && musicCategory > 0 && cat != 4) cat = musicCategory;
             if (cat != musicCategory && cat != pendingCategory) pendingCategory = cat;
             if (pendingCategory >= 0)
             {
@@ -646,19 +669,16 @@ namespace GoF2Remake.World
                 {
                     musicCategory = pendingCategory;
                     pendingCategory = -1;
-                    // Globals::playMusicAndFadeOutCurrent: 146 HomeBase_NoCombat in the Kaamo Club's orbit.
                     var sn = SupernovaAssets.Load();
-                    var clip = musicCategory == 0 ? (StationIndex == KaamoClub.Station && assets.homeBaseMusic != null ? assets.homeBaseMusic
-                                                     : SupernovaCalm && sn != null && sn.gammaRayMusic != null ? sn.gammaRayMusic   // 148 the supernova
-                                                     : assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null)
-                                 : musicCategory == 4 ? sn?.wantedMusic
-                                 : musicCategory == 5 ? sn?.stealthMusic1
-                                 : musicCategory == 6 ? sn?.stealthMusic2
-                                 : (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
-                    // Radar::draw: 145 Space_NoCombat_Void in the alien orbit, 136 Space_Combat_Void there and at an attacked station.
                     var story = StoryAssets.Load();
-                    if (story != null && musicCategory == 0 && StationIndex == Session.VoidOrbit && story.voidMusic != null) clip = story.voidMusic;
-                    if (story != null && musicCategory > 0 && VoidAttack && story.voidBattle != null) clip = story.voidBattle;
+                    // In the alien orbit, at a Void-attacked station and at campaign 0x10 every fight is 136 Space_Combat_Void.
+                    bool voidBattle = VoidAttack || (!Session.FreePlay && Session.CampaignMission == 0x10);
+                    var clip = musicCategory == 0 ? CalmClip()
+                             : musicCategory == 4 ? sn?.wantedMusic
+                             : voidBattle ? story?.voidBattle
+                             : musicCategory == 5 ? sn?.stealthMusic1
+                             : musicCategory == 6 ? sn?.stealthMusic2
+                             : (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
                     music.clip = clip;
                     if (clip != null) music.Play();
                 }

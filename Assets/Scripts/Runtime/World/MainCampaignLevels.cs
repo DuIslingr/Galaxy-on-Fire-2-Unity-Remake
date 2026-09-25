@@ -141,7 +141,7 @@ namespace GoF2Remake.World
                 c.SpawnShip(0, 5, p + new Vector3(R(4000) - 2000, R(3400) - 1700, 2000 + R(4000) - 2000), false, s => { s.alwaysFriend = true; s.hitpoints = 600; });
             if (Hole != null) { Hole.SetPosition(w + new Vector3(0, 0, 40000)); Hole.ResetTimer(false); Hole.SetVisible(true); }
             PlayerExemptRace = Standing.Void;
-            level.Traffic.NoBattleMusic = true;
+            // Radar::draw: a fight at campaign 0x10 plays 136 Space_Combat_Void (Traffic.UpdateMusic), not the race's tracks.
             c.WinObjective = () => c.Radio != null && c.Radio.LastOver;   // Objective 0x16
         }
 
@@ -674,8 +674,11 @@ namespace GoF2Remake.World
         }
 
         // 42 on 41's level: the mother ship's end and the escape (M42).
+        CycleSound mothership;
+
         void Tick42(float dtMs)
         {
+            mothership?.Update(dtMs);
             if (!objectivesRemoved) { objectivesRemoved = true; c.RemoveObjectives(); }   // MGame::OnTouchEnd, new index 0x2a
             var chase = Camera.main != null ? Camera.main.GetComponent<ChaseCamera>() : null;
             switch (Step)
@@ -683,7 +686,9 @@ namespace GoF2Remake.World
                 case 5:
                     if (Over(7) && Hole != null)
                     {
-                        c.PlayLoop(0, assets?.mothershipLoop);   // 153
+                        if (mothership == null && assets != null)
+                            mothership = CycleSound.Mothership(level.gameObject, assets.mothershipLoops, assets.mothershipAdds1, assets.mothershipAdds2);
+                        mothership?.Play();   // 153 (its "time" parameter 0.5: state 6)
                         c.ResetClock();
                         Hole.SetPosition(new Vector3(25000, 20000, -55000));
                         Hole.SetVisible(true);
@@ -719,7 +724,7 @@ namespace GoF2Remake.World
                     if (c.FadeDone || stepMs >= 10000f)
                     {
                         loading = true;
-                        c.StopLoop(0);
+                        mothership?.Stop();
                         level.RideWormhole();   // hull / shield / armor kept, station Status+0x84, comingFromAlienWorld
                     }
                     break;

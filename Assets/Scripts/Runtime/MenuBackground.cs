@@ -80,6 +80,7 @@ namespace GoF2Remake.Visuals
                 }
             }
             OrbitBuilder.SpawnJumpgate(db, Layout, transform);
+            SpawnStatics();
             float keepOut = orbit * asteroidKeepOut;
             OrbitBuilder.SpawnAsteroids(db, Layout, transform, p => (p - centre).sqrMagnitude < keepOut * keepOut);
             SpawnTraffic(db, centre);
@@ -87,6 +88,17 @@ namespace GoF2Remake.Visuals
             var cam = menuCamera != null ? menuCamera.GetComponent<Camera>() : Camera.main;
             OrbitBuilder.SpawnBackdrop(Layout, cam, transform);
             SkyLayers.Spawn(Layout, cam, transform);
+        }
+
+        /// <summary>Level::createScene mode 2 at campaign mission 0x2b (the ending's backdrop): two PlayerStatics at the
+        /// origin, meshes 0x37d0 (beer) and 0x37d1 (bra), unturned (game identity = Unity yaw 180), i.e. inside the station.</summary>
+        void SpawnStatics()
+        {
+            if (Session.CampaignMission != 0x2b || Session.FreePlay) return;
+            var story = StoryAssets.Load();
+            if (story == null || story.menuStatics == null) return;
+            foreach (var prefab in story.menuStatics)
+                if (prefab != null) Instantiate(prefab, Vector3.zero, OrbitLayout.RotationToUnity(Vector3.zero), transform).name = prefab.name;
         }
 
         void SpawnTraffic(Database db, Vector3 centre)

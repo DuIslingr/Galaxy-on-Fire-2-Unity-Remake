@@ -24,6 +24,7 @@
 //   Mk III (item 18) to switch between; unarmed in a Challenge; a dead one leaves the contract; no friendly-fire reaction.
 // Damage smoke (PlayerFighter::update 0xf1b0e): below 33 % of the hull a fighter trails the prologue's smoke and fire
 //   (ShipSmoke), off again when repaired to 33 %; they keep running through the death tumble and stop at the explosion.
+//   The tumble also burns (ShipBurn, record 9) and the explosion bursts record 11.
 // Freighters (PlayerFixedObject): unarmed, fly game +Z at 1 u/ms, never turn, x5 hull; death: their wreck animation
 // (cargo_*_explosion_anim, ~10 s, still moving), then a x6 explosion; the crate appears at once; the wreck then stays
 // where it is (state 4) with its wreck volumes. Their boxes (Obstacle, Level::createShip) are what bullets hit, the
@@ -146,6 +147,7 @@ namespace GoF2Remake.World
         Crate crate;
         Obstacle obstacle;
         ShipSmoke smoke;
+        ShipBurn burn;
         EmpSparks sparks;
         bool smoking;   // PlayerFighter +0x1f4
 
@@ -297,7 +299,7 @@ namespace GoF2Remake.World
             engine.loop = true;
             engine.clip = assets == null || spec.fixedObject != null || spec.turretAssembly != null || spec.ship == 14 ? null
                         : CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines);
-            engine.volume = 0.6f * Settings.SfxVolume;
+            engine.volume = (spec.freighter ? 0.195f : 0.0759f) * Sfx.EventGain * Settings.SfxVolume;   // event volumes 47 / 46
             if (engine.clip != null) engine.Play();
 
             if (spec.startsDead) SetDead();
@@ -344,7 +346,7 @@ namespace GoF2Remake.World
             damageSinceBoost = 0;
             damageByPlayer = 0;
             smoking = false;
-            smoke?.Clear(); sparks?.Clear();
+            smoke?.Clear(); sparks?.Clear(); burn?.SetBurning(false);
             Current = State.Fly;
             speed = baseSpeed;
             boosting = panic = false;
@@ -445,7 +447,7 @@ namespace GoF2Remake.World
             empRig?.HideAll();
             secondRig?.HideAll();
             smoking = false;
-            smoke?.Clear(); sparks?.Clear();
+            smoke?.Clear(); sparks?.Clear(); burn?.SetBurning(false);
             if (wreck != null) Destroy(wreck);
             gameObject.SetActive(false);
         }
@@ -874,9 +876,10 @@ namespace GoF2Remake.World
                         if (firing == null || !target.Targetable) attacking = false;
                         else if (shootingEnabled && !RadarHidden && firing.TryFire(transform) >= 0)
                         {
-                            var clip = firing == empGun ? WeaponFx.Load(18)?.shot
-                                     : firing == secondGun ? WeaponFx.Load(secondGun.itemIndex)?.shot
-                                     : assets != null && assets.shots != null && assets.shots.Length == 5 ? assets.shots[NpcTables.ShotSound(Mathf.Clamp(Race, 0, 9))] : null;
+                            int shot = NpcTables.ShotSound(Race);
+                            var clip = firing == empGun ? WeaponFx.Load(18)?.Shot
+                                     : firing == secondGun ? WeaponFx.Load(secondGun.itemIndex)?.Shot
+                                     : assets != null && assets.shots != null && shot < assets.shots.Length ? assets.shots[shot] : null;
                             if (clip != null) sfx.PlayOneShot(clip, 0.8f * Settings.SfxVolume);
                         }
                     }
@@ -1073,6 +1076,9 @@ namespace GoF2Remake.World
             else
             {
                 dyingMs = 1500f + Random.Range(0, 1500);
+                // PlayerFighter: the death burn (record 9, +0x19c) through the tumble.
+                burn ??= new ShipBurn(transform);
+                burn.SetBurning(true);
                 spinAxis = new Vector3(Random.Range(0, 200) - 100, Random.Range(0, 200) - 100, Random.Range(0, 200) - 100).normalized;
             }
         }
@@ -1093,6 +1099,7 @@ namespace GoF2Remake.World
             explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? 6f : 1f);   // the battleship x6 too
             Current = State.Dead;
             smoke?.SetEmitting(false);   // the end of the tumble: Explosion::start, smoke and fire off
+            if (burn != null && burn.Emitting) { burn.SetBurning(false); burn.Burst(); }   // record 11 at the explosion
             deadMs = 0f;
             if (obstacle != null && !IsFixed) obstacle.volumes = CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
             if (!IsFreighter) DropCrate();

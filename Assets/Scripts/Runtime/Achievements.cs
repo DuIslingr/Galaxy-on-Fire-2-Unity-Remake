@@ -45,6 +45,9 @@ namespace GoF2Remake.Data
                 case 5: return Session.ContainersDelivered;
                 case 6: return Session.OreMined;
                 case 7: return Session.CoresMined;
+                case 8: return Session.BoozeBought;                // Personal Need: Status+0xa8
+                case 9: return Session.BoozeTypes.Count;           // Barkeeper: Status+0xac
+                case 21: return Session.AlienRemainsCollected;     // Alien Hunter: Status+0xcc
                 case 10: return Session.JunkDestroyed;
                 case 11: return Session.VisitedStations.Count;
                 case 12: return SystemsVisited(db);
@@ -62,7 +65,8 @@ namespace GoF2Remake.Data
                 case 28: { int n = 0; for (int r = 0; r < 4; r++) if (Standing.IsEnemy(r)) n++; return n; }
                 case 29: return Session.AsteroidsDestroyed;
                 case 30: return Session.CampaignMission >= Story.GameWonIndex && !Session.FreePlay ? 1 : (int?)null;
-                case 31: case 36: return Shop.FreeCargo(db);
+                case 31: return Shop.FreeCargo(db);
+                case 36: return Shop.MaxLoad(db);   // Ship::getMaxLoad
                 case 32: return Session.OffersDeclined;
                 case 33: return Session.AcceptedBlindRisk;
                 case 34: return Session.AcceptedBlindMap;
@@ -99,7 +103,10 @@ namespace GoF2Remake.Data
                 {
                     int t = Thresholds[i, g - 1];
                     if (t < 0) continue;
-                    bool met = i == 1 ? c.Value <= t : (i == 30 || i == 22 || i == 35 ? c.Value > t - 1 && c.Value > 0 : c.Value >= t && (t > 0 || c.Value > 0));
+                    bool met = i == 1 ? c.Value <= t
+                             : i == 30 || i == 22 || i == 35 ? c.Value > t - 1 && c.Value > 0
+                             : Strict(i) ? c.Value > t
+                             : c.Value >= t && (t > 0 || c.Value > 0);
                     if (met) grade = g;
                 }
                 if (grade != 0 && (Session.Medals[i] == 0 || grade < Session.Medals[i])) { Session.Medals[i] = grade; improved.Add(i); }
@@ -109,6 +116,35 @@ namespace GoF2Remake.Data
             for (int i = 0; i < BaseCount; i++) if (i != 35 && Session.Medals[i] != 0) earned++;
             if (earned == BaseCount - 1 && Session.Medals[35] == 0) { Session.Medals[35] = 1; improved.Add(35); }
             return improved;
+        }
+
+        /// <summary>checkForNewMedal: these medals `break` on counter > threshold ("more than" in their hints).</summary>
+        static bool Strict(int medal) => medal switch
+        {
+            5 or 6 or 7 or 8 or 10 or 16 or 18 or 20 or 21 or 26 or 27 or 29 or 31 or 32 or 33 or 34 or 36 => true,
+            _ => false,
+        };
+
+        /// <summary>gotAllGoldMedals: every base medal gold (the VoidX at Thynome).</summary>
+        public static bool GotAllGoldMedals
+        {
+            get
+            {
+                if (Session.Medals == null) return false;
+                for (int i = 0; i < BaseCount; i++) if (Session.Medals[i] != 1) return false;
+                return true;
+            }
+        }
+
+        /// <summary>gotAllSupernovaMedals: all gold, plus the nine elite medals.</summary>
+        public static bool GotAllSupernovaMedals
+        {
+            get
+            {
+                if (!GotAllGoldMedals) return false;
+                for (int i = BaseCount; i < Count; i++) if (Session.Medals[i] == 0) return false;
+                return true;
+            }
         }
 
         public static bool GotAllMedals
@@ -125,7 +161,14 @@ namespace GoF2Remake.Data
         public static string Hint(int medal)
         {
             int grade = Grade(medal);
-            return Localization.Get(1552 + medal).Replace("#", Threshold(medal, Mathf.Max(1, grade)).ToString("#,0"));
+            string text = Localization.Get(1552 + medal).Replace("#", Threshold(medal, Mathf.Max(1, grade)).ToString("#,0"));
+            // getMedalHintText: the silver Barkeeper lists the drinks still missing (276 + 1406 + j).
+            if (medal == 9 && grade == 2)
+            {
+                text += "\n\n" + Localization.Get(276);
+                for (int j = 0; j < 22; j++) if (!Session.BoozeTypes.Contains(132 + j)) text += "\n- " + Localization.Get(1406 + j);
+            }
+            return text;
         }
     }
 }

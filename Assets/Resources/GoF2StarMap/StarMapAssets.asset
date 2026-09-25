@@ -44,8 +44,10 @@ MonoBehaviour:
   buttonRelease: {fileID: 8300000, guid: f750573b55cc8f94e89d05317bb88edb, type: 3}
   infoSound: {fileID: 8300000, guid: b2ce5b1021312cd4ca8d44159becb0bf, type: 3}
   jumpgate:
+  - {fileID: 8300000, guid: 7726a2d3af6ad654486f941828d77d23, type: 3}
+  - {fileID: 8300000, guid: 89f7c33619082a946add944cb5380af7, type: 3}
   - {fileID: 8300000, guid: 4055bb8cfc825f64ca603f0e5ed4ce64, type: 3}
   - {fileID: 8300000, guid: fec41b7ed63594c4fbd4814d4ee4cc28, type: 3}
-  - {fileID: 8300000, guid: 7726a2d3af6ad654486f941828d77d23, type: 3}
   jumpgateCharge: {fileID: 8300000, guid: daa733b154bf55c4d8c8e8987b738bc2, type: 3}
-  khadorDrive: {fileID: 8300000, guid: 89f7c33619082a946add944cb5380af7, type: 3}
+  khadorDrive: {fileID: 8300000, guid: 860bcff694889ec4d965c60fe2454784, type: 3}
+  mapClick: {fileID: 8300000, guid: 0a8667d4bad84ee45940cfdee160e308, type: 3}

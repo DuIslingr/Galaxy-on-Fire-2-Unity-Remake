@@ -142,8 +142,11 @@ namespace GoF2Remake.World
 
         // ---- per frame ----------------------------------------------------------------------------------------
 
+        CycleSound brokenEngine;
+
         public void Tick(float dtMs)
         {
+            brokenEngine?.Update(dtMs);
             stepMs += dtMs;
             if (fx != null) fxMs += dtMs;
             if (index == 0) TickPrologue(dtMs); else TickRescue(dtMs);
@@ -263,7 +266,7 @@ namespace GoF2Remake.World
                     }
                     if (fx == null || fxMs >= fxLength)
                     {
-                        campaign.PlayMusic(assets?.timeShift, false);   // music stop, 141
+                        campaign.PlayMusic(assets?.timeShift, true);   // LevelScript::process state 7: music 141 Space_Combat_Mid
                         Step = 8;
                     }
                     break;
@@ -303,7 +306,9 @@ namespace GoF2Remake.World
                         // The broken ship drifts out: visible, broken engine, no exhaust, speed 2.
                         SetPlayerVisible(true);
                         SetPlayerExhaust(false);
-                        campaign.PlayLoop(2, assets?.engineBrokenLoop);
+                        if (brokenEngine == null && assets != null)
+                            brokenEngine = CycleSound.BrokenEngine(campaign.gameObject, assets.engineBrokenLoop, assets.engineBrokenAdds);
+                        brokenEngine?.Play();   // 156 with its oneshot layer
                         smoke?.SetEmitting(true);   // PlayerEgo::startSmokeEmission 0xadc20
                         playerSpeed = 2f;
                         cam.Rumble = 0f;

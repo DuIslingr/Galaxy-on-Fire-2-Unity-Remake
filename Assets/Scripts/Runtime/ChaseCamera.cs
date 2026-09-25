@@ -30,6 +30,10 @@ namespace GoF2Remake.Flight
 
         [Header("Turn offset: camera slides sideways while turning")]
         public float turnSlideMeters = 1.5f;
+        [Tooltip("Share of the original's dodge target offset (-3 x the yaw rate) the camera takes; 1 = as decoded (too wide at this scale).")]
+        public float dodgeOffsetScale = 0.25f;
+        [Tooltip("Share of the dodge's sideways move the camera takes back each frame (translateNoUpdate(-0.9 x the slide)).")]
+        public float dodgeLag = 0.9f;
 
         [Header("Boost")]
         public float baseFov = 60f;
@@ -98,6 +102,10 @@ namespace GoF2Remake.Flight
             float maxRate = Mathf.Max(1f, 750f * model.Handling / 63f);
             Vector3 targetSlide = new Vector3(-model.YawRate / maxRate * turnSlideMeters,
                                               model.PitchRate / maxRate * turnSlideMeters * 0.5f, 0f);
+            // PlayerEgo::updateManeuver: during a dodge the target offset's x is -3 x the yaw rate (game units; the game's
+            // +x is the ship's left, the remake's -x), y and z kept. Taken literally that swings the camera ~45 m (about
+            // 30 deg) at the peak here, far more than the dodge looks like: scaled by dodgeOffsetScale (tuned by eye).
+            if (target.Maneuver.Active) targetSlide = new Vector3(3f * dodgeOffsetScale * model.YawRate * target.metersPerUnit, 0f, 0f);
             slide = Vector3.Lerp(slide, targetSlide, 1f - Mathf.Exp(-posK * dtMs));
 
             Vector3 desiredPos = ship.TransformPoint(offset + slide);
@@ -105,6 +113,9 @@ namespace GoF2Remake.Flight
                 ship.TransformPoint(lookOffset) - desiredPos, ship.up);
 
             transform.position = Vector3.Lerp(transform.position, desiredPos, 1f - Mathf.Exp(-posK * dtMs));
+            // ... and translateNoUpdate(-0.9 x the slide) every frame: the camera takes back most of the sideways move,
+            // so the ship visibly slides across the view and the camera catches up afterwards.
+            transform.position -= dodgeLag * target.ManeuverSlide;
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, 1f - Mathf.Exp(-rotK * dtMs));
 
             if (shakeMs > 0f)

@@ -239,7 +239,7 @@ namespace GoF2Remake.UI
                     {
                         // Bought coordinates: the star map opens on the newly visible system (StarMap(false, 0, true, sys)).
                         var sys = Db.Systems.Find(s => s.index == reveal);
-                        if (sys != null && sys.stations.Count > 0) OpenMissionMap(sys.stations[0]);
+                        if (sys != null && sys.stations.Count > 0) OpenMissionMap(sys.stations[0], reveal);
                     }
                     return;
                 }
@@ -261,29 +261,24 @@ namespace GoF2Remake.UI
         void ShowGoods()
         {
             var a = chat.Agent;
-            if (a.offer == AgentOffer.ShipDealer && a.sellShip >= 0)
-            {
-                // Offer 10: the ship's details (ListItemWindow::set(ship)).
-                chatText.text = $"{ItemInfo.ShipName(a.sellShip)}\n{Localization.Get(406 + Mathf.Clamp(Shop.ShipRace[a.sellShip], 0, 3))}\n\n{Localization.Get(977 + a.sellShip)}";
-                chatScroll.scrollOffset = Vector2.zero;
-                return;
-            }
+            // "Let me see it" (776): ListItemWindow::set(..., showPrice = false), the full-screen details.
+            if (a.offer == AgentOffer.ShipDealer && a.sellShip >= 0) { menu.InfoWindow?.ShowShip(Db, a.sellShip, 0, false); return; }
             int item = a.offer == AgentOffer.SellBlueprint ? LoungeChat.BlueprintProduct(a.sellBlueprint) : a.sellItem;
             var it = item >= 0 ? Db.Item(item) : null;
             if (it == null) { chatText.text = chat.Text; return; }
-            chatText.text = $"{ItemInfo.ItemName(item)}\n{ItemInfo.Category(it)}\n\n{Localization.Get(1041 + item)}";
-            chatScroll.scrollOffset = Vector2.zero;
+            menu.InfoWindow?.ShowItem(Db, item, level.Station != null ? level.Station.system : -1, false, 0);
         }
 
-        /// <summary>StarMap(true, mission, ...): view only, centred on the target.</summary>
-        void OpenMissionMap(int station)
+        /// <summary>StarMap(true, mission, ...): view only, centred on the target; with 'reveal' the coordinates' reveal
+        /// animation of that system (StarMap(false, 0, true, sys)).</summary>
+        void OpenMissionMap(int station, int reveal = -1)
         {
             root.AddToClassList("station-map-open");
             var map = StarMap.Open(Db, StarMapMode.Mission, false, _ =>
             {
                 root.RemoveFromClassList("station-map-open");
                 if (chat != null && choiceButtons.Count > 0) menu.Focus(choiceButtons[0]);
-            }, -1, station);
+            }, -1, reveal >= 0 ? -1 : station, false, -1, reveal);
             if (map == null) root.RemoveFromClassList("station-map-open");
         }
 

@@ -129,6 +129,43 @@ namespace GoF2Remake.UI
         // ---- lock --------------------------------------------------------------------------------------------
 
         /// <summary>Ring on the crosshair ('crosshairLeft/Top' = its position in the shared parent) and the ore plate.</summary>
+        // ---- Ultrascan class-A markers (Radar::draw 0x1577de) --------------------------------------------------
+
+        readonly List<VisualElement> markers = new List<VisualElement>();
+        readonly List<Target> markerTargets = new List<Target>();
+        VisualElement markerLayer;
+
+        /// <summary>The sprite's top-left on the asteroid's projected point (no reference pixel), on screen only.</summary>
+        public void UpdateMarkers(Mining mining, Vector3? fieldCentre, Camera cam, bool show, VisualElement layer)
+        {
+            markerLayer ??= layer;
+            if (show && mining != null && cam != null) mining.ClassAMarkers(fieldCentre, markerTargets); else markerTargets.Clear();
+            int used = 0;
+            if (markerLayer != null && markerLayer.panel != null)
+            {
+                var origin = markerLayer.worldBound.position;
+                foreach (var t in markerTargets)
+                {
+                    var sp = cam.WorldToScreenPoint(t.transform.position);
+                    if (sp.z <= 0f || sp.x < 0f || sp.y < 0f || sp.x > Screen.width || sp.y > Screen.height) continue;
+                    var p = RuntimePanelUtils.CameraTransformWorldToPanel(markerLayer.panel, t.transform.position, cam) - origin;
+                    if (used == markers.Count)
+                    {
+                        var e = new VisualElement { pickingMode = PickingMode.Ignore };
+                        e.style.position = Position.Absolute;
+                        SetImage(e, classFrames[0]);
+                        markerLayer.Add(e);
+                        markers.Add(e);
+                    }
+                    var m = markers[used++];
+                    m.style.display = DisplayStyle.Flex;
+                    m.style.left = p.x;
+                    m.style.top = p.y;
+                }
+            }
+            for (int i = used; i < markers.Count; i++) markers[i].style.display = DisplayStyle.None;
+        }
+
         public void UpdateLock(Mining mining, StyleLength crosshairLeft, StyleLength crosshairTop, bool crosshairVisible)
         {
             bool idle = mining == null || mining.State == Mining.Phase.Idle;

@@ -15,6 +15,35 @@ MonoBehaviour:
   asteroidDestroyed: {fileID: 8300000, guid: 75abcec9e6974d1409b3a1331cfd8bfb, type: 3}
   targetLock: {fileID: 8300000, guid: b48c5e8a0fd8ffc4185f3566e1d65f9d, type: 3}
   miningDrill: {fileID: 8300000, guid: 3ebdd78a0ca4a5a42a95df1ad9a6ab09, type: 3}
+  miningDrillSlow: {fileID: 8300000, guid: 0aad1afc78ced72469877934d0ef2a65, type: 3}
+  miningDrillAdd2: {fileID: 8300000, guid: 6b38cd87ecf87944ea6db765d8875f8b, type: 3}
+  miningDrillSwitch: {fileID: 8300000, guid: 4de789e4435d1b24bbfcffd5b40840a5, type: 3}
+  playerEngines:
+  - {fileID: 8300000, guid: 1d01cb27930d0584981a0fbc9493fc13, type: 3}
+  - {fileID: 8300000, guid: 1d01cb27930d0584981a0fbc9493fc13, type: 3}
+  - {fileID: 8300000, guid: f41b6ef0b20bb5f48abbe4653162512b, type: 3}
+  - {fileID: 8300000, guid: 448f1ab6ef267ed4bbdf89158de97a2d, type: 3}
+  - {fileID: 8300000, guid: 1aeafd04479cf3a4a90cd4bbcb35babe, type: 3}
+  - {fileID: 8300000, guid: 3d201a52c368d6640be39b4f1598f316, type: 3}
+  - {fileID: 8300000, guid: 3d201a52c368d6640be39b4f1598f316, type: 3}
+  playerEngineExtras:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 8300000, guid: c4a12bd9439ed244e8a3c0bdff47ce2f, type: 3}
+  - {fileID: 8300000, guid: fac153a1b44efdf4aa19e6d11514dd49, type: 3}
+  boosters:
+  - {fileID: 8300000, guid: 751d996737b28074fb0cbac3bf4a9c3b, type: 3}
+  - {fileID: 8300000, guid: 3ecc263f67624364ab2d01d4dc9eeafd, type: 3}
+  - {fileID: 8300000, guid: b8b810c54bbc34e459b2c098d784126b, type: 3}
+  - {fileID: 8300000, guid: 62e3ab5a347ae114e86a2a3ff4986661, type: 3}
+  - {fileID: 8300000, guid: 564766713b3a7af44963d9dc73b65ad6, type: 3}
+  buttonPush: {fileID: 8300000, guid: 6dc23eae22c6f1d4ca44dd52683a968c, type: 3}
+  buttonRelease: {fileID: 8300000, guid: f750573b55cc8f94e89d05317bb88edb, type: 3}
+  messageInfo: {fileID: 8300000, guid: b2ce5b1021312cd4ca8d44159becb0bf, type: 3}
+  buttonInfo: {fileID: 8300000, guid: 9c8a98dadab77c246afa6c29d470eb23, type: 3}
   miningLanding: {fileID: 8300000, guid: 22f4ba10c63579f4c82835653e3a6e5f, type: 3}
   miningDrillBroken: {fileID: 8300000, guid: 75e4f8840c6d33749b003f40101bed36, type: 3}
   autopilotOn: {fileID: 8300000, guid: fedfb68e425a4e8409dd9dcd7ecf23fa, type: 3}

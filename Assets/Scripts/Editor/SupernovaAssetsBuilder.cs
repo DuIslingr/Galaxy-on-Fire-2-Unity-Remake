@@ -24,13 +24,13 @@ namespace GoF2Remake.EditorTools
             a.hackingTurn = Clip("DLC2_SFX/Hacking_Dialling_1.ogg");
             a.hackingSolved = Clip("DLC2_SFX/Hacking_Solved_1.ogg");
             a.transferLoop = Clip("DLC2_SFX/Transport_Loop.ogg");
-            a.plasmaCollected = Clip("DLC2_SFX/Container_01.ogg");
+            a.extractorLoop = Clip("DLC2_SFX/Extractor_Loop_01.ogg");
+            a.plasmaCollected = new[] { Clip("DLC2_SFX/Mud1.ogg"), Clip("DLC2_SFX/Mud2.ogg"), Clip("DLC2_SFX/Mud3.ogg"), Clip("DLC2_SFX/Mud4.ogg") };
             a.ionizingBlast = Clip("DLC2_SFX/Plasma_Rocket_Explosion.ogg");
             a.carrierJump = Clip("DLC2_SFX/CS102_CarrierJump_2.ogg");
             a.valkyrieBeam = Clip("DLC2_SFX/GOF2_Valkyrie_RayBeam_1.ogg");
             a.selfDestruct = Clip("DLC2_SFX/Selfdestruct_Warning.ogg");
             a.explosion = Clip("DLC2_SFX/Explosion.ogg");
-            a.launch = Clip("DLC2_SFX/Launch.ogg");
             a.wantedMusic = Clip("DLC2_MUSIC/20120527_GOF2_Addon_WantedBoardCriminal.ogg");
             a.stealthMusic1 = Clip("DLC2_MUSIC/20120527_GOF2_Addon_StealthFighter1.ogg");
             a.stealthMusic2 = Clip("DLC2_MUSIC/20120527_GOF2_Addon_StealthFighter2.ogg");
@@ -39,6 +39,7 @@ namespace GoF2Remake.EditorTools
             a.katashunMusic = Clip("DLC2_MUSIC/GOF2SN_CS_126_Trunt1_02.ogg");
             a.mission102 = Clip("DLC2_MUSIC/GOF2_Mission_102_CutScene.ogg");
             a.mission102Loop = Clip("DLC2_MUSIC/GOF2_Mission_102_CutScene_Loop.ogg");
+            a.mission102Loop2 = Clip("DLC2_MUSIC/GOF2_Mission_102_CutScene_Loop_2.ogg");
             a.supernovaIntroSky = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_005.mat");
 
             EditorUtility.SetDirty(a);

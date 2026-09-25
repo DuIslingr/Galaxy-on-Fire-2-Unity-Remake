@@ -28,8 +28,12 @@
 // Reaching the jumpgate (Level::collideStream) is handled by SystemJump (ReachedGate).
 // Docking targets (Level::getDockingTarget, MGame::OnTouchBegin 0x1a838c): the story's dockable objects are locked like a
 // landmark; the action docks (ObjectDocking), and the autopilot menu lists them (Hud::initHudMenu(3)).
-// Remake-only: the autopilot menu also lists "Khador Drive" (1359) when the ship has one; the original has it in the HUD's
-// main menu. Not yet: menu entries for route waypoints, mission restrictions.
+// The menu's order (Hud::initHudMenu(3)): outside the alien orbit 549 Asteroid field, "<name> Station" (not in empty orbits),
+// 547 Jumpgate (gate orbit), 573 Waypoint (a player route whose last waypoint isn't reached: the autopilot follows the
+// route, "Target: Waypoint"), "574 Destination: X"; then every named docking target. Remake-only: then "Khador Drive" (1359)
+// with a drive (the original has it in the HUD's main menu; refused on missions, 525, and with volatile goods, 612), the
+// wingmen and the cloak. The original's only restriction is no menu at all in mission type 0xb7 (the unreachable
+// Supernova challenge).
 
 using System;
 using System.Collections.Generic;
@@ -263,21 +267,27 @@ namespace GoF2Remake.Flight
 
         // ---- autopilot menu (Hud::initHudMenu(3)) ------------------------------------------------------------
 
-        /// <summary>The menu's entries: the programmed destination, then the original's order asteroid field, station,
-        /// jumpgate; then (remake) the Khador Drive.</summary>
+        /// <summary>Hud::initHudMenu(3)'s entries in its order, then the remake's Khador Drive, wingmen and cloak.</summary>
         public List<Target> MenuEntries()
         {
             var list = new List<Target>();
-            int prog = Session.ProgrammedStation;
-            if (prog >= 0 && prog != layout.stationIndex)
-                list.Add(new Target { kind = Kind.Destination, station = prog,
-                                      name = $"{Localization.Get(574)}: {db.Stations.Find(s => s.index == prog)?.name}" });
-            if (AsteroidField != null) list.Add(AsteroidField);
-            var station = Targets.Find(t => t.kind == Kind.Station);
-            if (station != null && !layout.alienOrbit) list.Add(station);
-            var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
-            if (gate != null) list.Add(gate);
-            foreach (var t in Targets) if (t.kind == Kind.DockingTarget && !t.hidden) list.Add(t);
+            if (!layout.alienOrbit)
+            {
+                if (AsteroidField != null) list.Add(AsteroidField);
+                var station = Targets.Find(t => t.kind == Kind.Station);
+                if (station != null) list.Add(station);
+                var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
+                if (gate != null) list.Add(gate);
+                // 573 "Waypoint": the player route's last waypoint isn't reached (Route::getLastWaypoint +300).
+                if (playerRoute != null && playerRoute.Waypoint != null && routeTarget != null)
+                    list.Add(new Target { kind = Kind.Waypoint, name = Localization.Get(573) });
+                int prog = Session.ProgrammedStation;
+                if (prog >= 0 && prog != layout.stationIndex)
+                    list.Add(new Target { kind = Kind.Destination, station = prog,
+                                          name = $"{Localization.Get(574)}: {db.Stations.Find(s => s.index == prog)?.name}" });
+            }
+            // Level::getDockingTarget: every one with a name (PlayerFixedObject::getName), in the alien orbit too.
+            foreach (var t in Targets) if (t.kind == Kind.DockingTarget && !t.hidden && !string.IsNullOrEmpty(t.name)) list.Add(t);
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
             // Hud::initHudMenu(0) 0x18e734: the cloak entry (the item's name), unusable while cloaked / charging / recharging.
@@ -312,9 +322,19 @@ namespace GoF2Remake.Flight
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
             if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
             if (target.kind == Kind.DockingTarget) { Docking?.Dock(target.dockingShip); return; }
+            if (target.kind == Kind.Waypoint)
+            {
+                // MGame::OnTouchEnd key 0x2000000: HUD event 0xd "Target: Waypoint" + 28; the autopilot follows the route.
+                if (routeTarget == null || playerRoute == null || playerRoute.Waypoint == null) return;
+                Say($"{Localization.Get(546)}: {Localization.Get(573)}");
+                Play(sounds?.autopilotOn);
+                SetAutopilot(routeTarget);
+                return;
+            }
             if (target.kind == Kind.KhadorDrive)
             {
                 if (JumpsBlocked != null && JumpsBlocked() && Story.ForcedKhadorTarget(Session.StationIndex) == null) { Say(Localization.Get(525)); return; }
+                if (GalaxyMap.HasVolatileGoods) { Say(Localization.Get(612)); return; }   // MGame::UseKhadorDrive: ChoiceWindow 612
                 KhadorRequested?.Invoke();
                 return;
             }

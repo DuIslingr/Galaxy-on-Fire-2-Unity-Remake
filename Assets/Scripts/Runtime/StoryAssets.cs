@@ -30,15 +30,17 @@ namespace GoF2Remake.Data
         [Header("Cutscenes")]
         public AudioClip introAtmo;           // 143 IntroAtmo
         public AudioClip battleFull;          // 142 Space_Combat_Full
-        public AudioClip timeShift;           // 141 (TimeShift_Start)
+        public AudioClip timeShift;           // 141 Space_Combat_Mid (Space_Battle_Medium, looped): after the time jump
         public AudioClip cutsceneExplosion;   // 157 Cutscenes_Explosion
         public AudioClip rumble;              // 158 Rumble_CutScene_01
         public AudioClip timeJumpEnd;         // 159 TimeSpaceJumpEnd (no file of its own: SpaceTimeJump stands in)
         public AudioClip timeJump;            // 160 SpaceTimeJump
         public AudioClip engineBroken;        // 161 Engine_09_Broken
         public AudioClip engineBrokenLoop;    // 156 Spaceship_Engine_05_Broken
+        public AudioClip[] engineBrokenAdds;  // 156's oneshot layer (Spaceship_Engine_05_Broken_02_Add_01 sound definition, 14 waves)
         public Material introSky, introSkyAfterJump;
         public GameObject hyperDrive;         // mesh 15027 hyper_drive
+        public GameObject[] menuStatics;      // meshes 0x37d0 beer, 0x37d1 bra: the index-43 menu backdrop (Level::createScene)
         [Header("Void campaign (campaign_levels_a.md 3.5-3.16)")]
         public GameObject wormhole;           // mesh 16994 wormhole_anim_add (PlayerWormHole, landmark 3)
         public GameObject scannerProbe;       // mesh 14290 scanner_probe (index 29)
@@ -46,10 +48,12 @@ namespace GoF2Remake.Data
         public AudioClip wormholeSound;       // 34 Wormhole
         public AudioClip empHit;              // 15 Explosion_EMP_GL1 (index 14)
         public AudioClip probeLaunch;         // 14 (index 29)
-        public AudioClip mothershipLoop;      // 153 Mothership_Xplosion_Loop_01
+        public AudioClip[] mothershipLoops;   // 153's three loop layers (MothershipSound)
+        public AudioClip[] mothershipAdds1, mothershipAdds2;   // 153's one-shot layers (Loop_01_Add_01 / _Add_02 sound definitions)
         public AudioClip mothershipCutscene;  // 154 Mothership_Xplosion_CutSeq
         public AudioClip errktCutscene;       // 155 Errkt_CutSeq_01
         public AudioClip outroSong;           // 144 OutroSong (the ending)
+        public AudioClip alert;               // 162 Alert (Alert_03, looped): step 15's Void alarm (DialogueWindow::loadContent)
         public AudioClip voidMusic;           // 145 Space_NoCombat_Void (the alien orbit)
         public AudioClip voidBattle;          // 136 Space_Combat_Void (the alien orbit / an attacked station)
         [Header("Valkyrie campaign (campaign_levels_b.md 78 / 80)")]

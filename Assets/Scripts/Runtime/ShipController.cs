@@ -47,6 +47,12 @@ namespace GoF2Remake.Flight
         public float bankSmoothing = 6f;
 
         public FlightModel Model { get; private set; } = new FlightModel();
+        /// <summary>The dodge (PlayerEgo::updateManeuver).</summary>
+        public Maneuver Maneuver { get; } = new Maneuver();
+        /// <summary>Every dodge request (PlayerEgo::initManeuver), also one ignored while a dodge runs: the volatile goods' +0.17.</summary>
+        public event System.Action DodgeRequested;
+        /// <summary>The dodge's sideways move this frame (world, metres; zero otherwise): the chase camera takes back 90 %.</summary>
+        public Vector3 ManeuverSlide { get; private set; }
 
         /// <summary>An autopilot moves the ship (asteroid docking, PlayerEgo+0x145): no input, no flight model step and
         /// no cosmetic banking; it reports its speed through ExternalSpeedMetersPerSecond.</summary>
@@ -127,15 +133,44 @@ namespace GoF2Remake.Flight
         [System.NonSerialized] public bool inputLocked;
 
         public void SetSteer(Vector2 steer) => externalSteer = Vector2.ClampMagnitude(steer, 1f);
+
+        /// <summary>MGame::maneuverTouchEnd -> PlayerEgo::initManeuver: 1 = dodge left, 2 = right. Refused while the ship
+        /// isn't the player's to fly (launch camera, autopilot docking, turret view, cinematics).</summary>
+        public bool RequestDodge(int type)
+        {
+            if (inputLocked || externalControl || steeringLocked || Time.timeScale <= 0f) return false;
+            DodgeRequested?.Invoke();
+            return Maneuver.Start(type);
+        }
         public void SetThrottle(float t) => Model.SetThrottle(t);
         public void Boost() => Model.Boost();
         public void AlignToHorizon() => Model.AlignToHorizon();
 
+        /// <summary>The accelerometer steers (FlightHud): the tilt sensitivity and pitch factors apply.</summary>
+        [System.NonSerialized] public bool tiltMode;
+
         void Update()
         {
-            Model.Sensitivity = sensitivity;
+            Model.TiltMode = tiltMode;
+            Model.Sensitivity = tiltMode ? Data.Settings.TiltSensitivity : sensitivity;
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
-            if (externalControl) { SpeedMetersPerSecond = ExternalSpeedMetersPerSecond; return; }
+            if (externalControl) { SpeedMetersPerSecond = ExternalSpeedMetersPerSecond; Maneuver.Cancel(); return; }
+            if (useBuiltInInput && !inputLocked) ReadDodgeInput();
+            if (Maneuver.Active && (inputLocked || steeringLocked)) Maneuver.Cancel();
+            ManeuverSlide = Vector3.zero;
+            if (Maneuver.Active)
+            {
+                // PlayerEgo::updateManeuver instead of handleShip (also over the autopilot's steering).
+                Maneuver.Step(dtMs, Model.Handling, out float slide, out float heading, out float yawRate);
+                var mr = Model.StepManeuver(dtMs, yawRate);
+                SteerInput = Vector2.zero;
+                transform.Rotate(0f, heading * Mathf.Rad2Deg, 0f, Space.Self);
+                ManeuverSlide = -transform.right * (slide * metersPerUnit);
+                transform.position += transform.forward * (mr.forwardUnits * metersPerUnit) + ManeuverSlide;
+                SpeedMetersPerSecond = dtMs > 0f ? mr.forwardUnits * metersPerUnit / (dtMs / 1000f) : 0f;
+                UpdateVisualBank();
+                return;
+            }
 
             // The launch / arrival camera: no steering, throttle, boost or levelling (the ship flies on).
             Vector2 steer = useBuiltInInput && !inputLocked ? ReadInput() : Vector2.zero;
@@ -165,6 +200,35 @@ namespace GoF2Remake.Flight
             SpeedMetersPerSecond = dtMs > 0f ? r.forwardUnits * metersPerUnit / (dtMs / 1000f) : 0f;
 
             UpdateVisualBank();
+        }
+
+        // Remake-only dodge bindings (the original: a touch swipe, FlightHud): double-tap left / right (A / D or the
+        // arrows) within 250 ms, or flick the controller's right stick sideways.
+        float lastLeftTap = -1f, lastRightTap = -1f;
+        bool stickFlicked;
+
+        void ReadDodgeInput()
+        {
+            var kb = Keyboard.current;
+            if (kb != null)
+            {
+                float now = Time.unscaledTime;
+                if (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame)
+                {
+                    if (now - lastLeftTap < 0.25f) { RequestDodge(1); lastLeftTap = -1f; } else lastLeftTap = now;
+                }
+                if (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame)
+                {
+                    if (now - lastRightTap < 0.25f) { RequestDodge(2); lastRightTap = -1f; } else lastRightTap = now;
+                }
+            }
+            var pad = Gamepad.current;
+            if (pad != null)
+            {
+                float x = pad.rightStick.ReadValue().x;
+                if (!stickFlicked && Mathf.Abs(x) > 0.8f) { stickFlicked = true; RequestDodge(x < 0f ? 1 : 2); }
+                else if (Mathf.Abs(x) < 0.3f) stickFlicked = false;
+            }
         }
 
         Vector2 ReadInput()

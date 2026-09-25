@@ -19,8 +19,17 @@
 //                else "Destination: X / Travel to this station?" (574 + 421). The result goes to the owner.
 // Input like the other screens: touch / mouse drag and tap; keyboard arrows select, WASD move / turn, Enter zoom in /
 // confirm, K key, Esc back; controller D-pad select, left stick move / turn, A, Y key, B back.
+//   mission map  StarMap(true, mission): view only, centred on the target; the yellow route (StarMap::draw, galaxy view) along
+//                SystemPathFinder::getSystemPath from the current system (the Wanted window: setStart, the criminal's
+//                last-seen system): finished segments opaque 0xFFFF00FF, the one being drawn grows from its start with alpha
+//                255 * t on the pulse's 0.99 s cycle and the next starts when t wraps
+//   reveal       StarMap(false, 0, true, sys) (the lounge's coordinates): the camera on the new system, which stays hidden (no
+//                label, no lines, no input) for 4000 ms while its sun grows, then is selected
+//   volatile     Ship::hasVolatileGoods (209 / 204 in the hold) with a drive: a target outside the gate routes gives 612, one
+//                inside goes by the gate (no instant jump)
 // Remake choices: hidden systems' suns aren't drawn (the original draws all 34, uncertainty 3); the galaxy sun shrinks to
-// the system-view sun size while zooming instead of a second sun with the flight sun texture.
+// the system-view sun size while zooming instead of a second sun with the flight sun texture; the reveal's sun grows to
+// the normal 0.012 (the original's 0.002 literal, uncertainty 10); the reveal map is view only.
 
 using System;
 using System.Collections.Generic;
@@ -130,8 +139,10 @@ namespace GoF2Remake.UI
         /// Travel to this station?": Yes returns that station, No opens the map.</summary>
         /// <param name="askVoid">StarMap::askForJumpIntoAlienWorld: first "Jump to the Void's system?" (422); Yes returns
         /// toVoid, No opens the map.</param>
+        /// <param name="routeFromSystem">Mission map: the route's start system (StarMap::setStart; -1 = the current system).</param>
+        /// <param name="revealSystem">The reveal animation of a newly visible system (-1 = none).</param>
         public static StarMap Open(Database db, StarMapMode mode, bool jumpDrive, Action<StarMapResult> closed, int promptStation = -1,
-                                       int focusStation = -1, bool askVoid = false)
+                                       int focusStation = -1, bool askVoid = false, int routeFromSystem = -1, int revealSystem = -1)
         {
             var assets = StarMapAssets.Load();
             if (assets == null || assets.layout == null || assets.panelSettings == null)
@@ -151,6 +162,8 @@ namespace GoF2Remake.UI
             map.promptStation = promptStation;
             map.focusStation = focusStation;
             map.askVoid = askVoid;
+            map.routeFrom = routeFromSystem;
+            map.revealSystem = revealSystem;
             var pr = go.AddComponent<PanelRenderer>();
             pr.panelSettings = assets.panelSettings;
             pr.visualTreeAsset = assets.layout;
@@ -209,6 +222,7 @@ namespace GoF2Remake.UI
             systemHeader = root.Q("systemHeader");
             keyBox = root.Q("keyBox");
             hints = root.Q("hints");
+
             InputGlyph.TrackHintsOption(hints);
             dialog = root.Q("dialog");
             energyLine = root.Q<Label>("energyLine");
@@ -263,7 +277,24 @@ namespace GoF2Remake.UI
             root.RemoveFromClassList("map-dialog-only");
             BuildWorld();
             BuildSystemItems();
-            if (focusStation >= 0)
+            if (mode == StarMapMode.Mission && focusStation >= 0)
+            {
+                int from = routeFrom >= 0 ? routeFrom : currentSystem, to = SystemOf(focusStation);
+                routePath = to >= 0 && from != to ? GalaxyMap.SystemPath(db, from, to) : null;
+                routeSegment = 0;
+            }
+            if (revealSystem >= 0 && revealSystem < suns.Length && suns[revealSystem] != null)
+            {
+                // StarMap::init with reveal: the camera starts on the system, which grows in over 4000 ms.
+                var p = GalaxyMap.SunPosition(db.Systems.Find(s => s.index == revealSystem));
+                start = new Vector2(p.x, p.y) / 20f;
+                pan = Vector2.zero;
+                UpdateCamera();
+                revealMs = 0f;
+                revealing = true;
+                suns[revealSystem].localScale = Vector3.zero;
+            }
+            else if (focusStation >= 0)
             {
                 // The mission map: the target's system selected and gliding to the centre.
                 Select(SystemOf(focusStation));
@@ -653,7 +684,8 @@ namespace GoF2Remake.UI
                 int i = kv.Key;
                 var it = kv.Value;
                 bool front = Project(suns[i].position, out var p);
-                bool show = front && galaxyAlpha > 0.01f && p.x > -50f && p.y > -50f && p.x < size.x + 50f && p.y < size.y + 50f;
+                bool show = front && galaxyAlpha > 0.01f && p.x > -50f && p.y > -50f && p.x < size.x + 50f && p.y < size.y + 50f
+                            && !(revealing && i == revealSystem);
                 it.root.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
                 if (!show) continue;
                 Place(it.root, p);
@@ -754,11 +786,13 @@ namespace GoF2Remake.UI
                 foreach (int to in s.jumpRoutesTo)
                 {
                     if (to < 0 || to >= suns.Length || suns[to] == null) continue;
+                    if (revealing && (to == revealSystem || s.index == revealSystem)) continue;
                     DrawSegment(p2d, suns[s.index].position, suns[to].position);
                 }
             }
-            if (jumpDrive || current == null || suns[currentSystem] == null) return;
             float t = (101f - (timeMs / 10f) % 99f) / 100f;
+            DrawMissionRoute(p2d, t);
+            if (jumpDrive || current == null || suns[currentSystem] == null) return;
             p2d.strokeColor = new Color(1f, 1f, 1f, Mathf.Min(255f * t, fade) / 255f);
             foreach (int to in current.jumpRoutesTo)
             {
@@ -766,6 +800,29 @@ namespace GoF2Remake.UI
                 var target = suns[to].position;
                 DrawSegment(p2d, suns[currentSystem].position, target + t * (suns[currentSystem].position - target));
             }
+        }
+
+        /// <summary>StarMap::draw, mission mode: the route segment by segment on the pulse's cycle (+0xe8 advances when t wraps).</summary>
+        void DrawMissionRoute(Painter2D p2d, float t)
+        {
+            if (routePath == null || routePath.Count < 2) return;
+            if (t > lastRouteT) routeSegment = (routeSegment + 1) % (routePath.Count - 1);   // t wrapped: the next segment
+            lastRouteT = t;
+            float a = fade / 255f;
+            p2d.lineWidth = 3f;
+            p2d.strokeColor = new Color(1f, 1f, 0f, a);
+            for (int i = 0; i < routeSegment; i++)
+            {
+                var from = suns[routePath[i]]; var to = suns[routePath[i + 1]];
+                if (from != null && to != null) DrawSegment(p2d, from.position, to.position);
+            }
+            var s0 = suns[routePath[routeSegment]]; var s1 = suns[routePath[routeSegment + 1]];
+            if (s0 != null && s1 != null)
+            {
+                p2d.strokeColor = new Color(1f, 1f, 0f, Mathf.Min(t, a));
+                DrawSegment(p2d, s0.position, s1.position + t * (s0.position - s1.position));
+            }
+            p2d.lineWidth = 2f;
         }
 
         void DrawSegment(Painter2D p2d, Vector3 a, Vector3 b)
@@ -859,9 +916,49 @@ namespace GoF2Remake.UI
             BuildHints(InputMode.Current);
         }
 
+        // ---- 102 Map_Whoosh (StarMap::OnTouchBegin / OnTouchMove / update, the FEV's LGCY data) ------------------
+        // The event is a drag odometer: StarMap+0x1c0 (0..100, back to 0 past 100) grows by min(|dx + dy|, 10) per touch
+        // move in the galaxy view and by min(|yaw + pitch velocity| * 0.01, 10) per frame in the system view, and is the
+        // event's parameter Whoosh_Loop_Speed_Param. Its two layers hold oneshot Map_Click_01 regions at 0-8.07 /
+        // 49.8-59.8 and 25-35 / 75-85: entering one plays a click (event volume 0.439). A touch-down restarts the event
+        // (stop + play, the value kept), the back button stops it; a touch-up doesn't.
+        static readonly Vector2[] WhooshRegions = { new Vector2(0f, 8.07f), new Vector2(25f, 35f), new Vector2(49.8f, 59.8f), new Vector2(75f, 85f) };
+        const float WhooshVolume = 0.439f;
+        float whoosh;
+        bool whooshOn;
+
+        static int WhooshRegion(float v)
+        {
+            for (int i = 0; i < WhooshRegions.Length; i++) if (v >= WhooshRegions[i].x && v <= WhooshRegions[i].y) return i;
+            return -1;
+        }
+
+        void StartWhoosh()
+        {
+            whooshOn = true;
+            if (WhooshRegion(whoosh) >= 0) PlayClick();
+        }
+
+        void AddWhoosh(float amount)
+        {
+            if (amount <= 0f) return;
+            int before = WhooshRegion(whoosh);
+            whoosh += amount;
+            bool wrapped = whoosh > 100f;
+            if (wrapped) whoosh = 0f;
+            int now = WhooshRegion(whoosh);
+            if (whooshOn && now >= 0 && (now != before || wrapped)) PlayClick();
+        }
+
+        void PlayClick()
+        {
+            if (assets.mapClick != null) Source().PlayOneShot(assets.mapClick, Settings.SfxVolume * WhooshVolume);
+        }
+
         void Back()
         {
             if (DialogOpen) { AnswerDialog(false); return; }
+            whooshOn = false;   // StarMap::OnTouchEnd: the back button stops 0x66
             if (zoomDir != 0) return;
             if (systemView) ZoomOut();
             else Close(new StarMapResult { station = -1 });
@@ -874,6 +971,13 @@ namespace GoF2Remake.UI
             if (mode == StarMapMode.Mission) { ShowDialog(StationName(station), null, null, true); return; }   // view only
             if (station == currentStation) { ShowDialog(T(419), null, null, true); return; }
             bool otherSystem = SystemOf(station) != currentSystem;
+            if (jumpDrive && otherSystem && GalaxyMap.HasVolatileGoods)
+            {
+                // Ship::hasVolatileGoods: no Khador Drive; a gate neighbour is still reached through the jumpgate.
+                if (!GalaxyMap.IsInRoutes(current, SystemOf(station))) { ShowDialog(T(612), null, null, true); return; }
+                ShowDialog($"{T(574)}: {StationName(station)}\n{T(421)}", () => Choose(station, false), null);
+                return;
+            }
             if (jumpDrive && otherSystem)
             {
                 if (cellsInCargo < cells && cells != 1) { ShowDialog(T(579), null, null, true); return; }
@@ -926,7 +1030,27 @@ namespace GoF2Remake.UI
 
         // ---- pointer input (StarMap::OnTouchBegin / OnTouchMove / OnTouchEnd) -------------------------------
 
-        bool InputBlocked => DialogOpen || zoomDir != 0 || autoRotate || cam == null;
+        bool InputBlocked => DialogOpen || zoomDir != 0 || autoRotate || cam == null || revealing;
+
+        // ---- mission route / reveal / volatile goods ---------------------------------------------------------------
+        int routeFrom = -1, revealSystem = -1, routeSegment;
+        List<int> routePath;
+        float revealMs, lastRouteT = 2f;
+        bool revealing;
+        const float RevealMs = 4000f;
+
+        /// <summary>StarMap::update's reveal: the sun grows, then the system is selected (the simulated centre tap).</summary>
+        void UpdateReveal(float dtMs)
+        {
+            if (!revealing) return;
+            revealMs += dtMs;
+            float k = Mathf.Clamp01(revealMs / RevealMs);
+            if (suns[revealSystem] != null) suns[revealSystem].localScale = Vector3.one * sunScale * k;
+            if (revealMs < RevealMs) return;
+            revealing = false;
+            Select(revealSystem);
+            centred = revealSystem;
+        }
 
         void OnPointerDown(PointerDownEvent e)
         {
@@ -938,6 +1062,7 @@ namespace GoF2Remake.UI
             downPos = lastPos = p;
             dragged = false;
             autoCentre = false;
+            StartWhoosh();
             if (!systemView)
             {
                 vel = Vector2.zero;
@@ -962,6 +1087,7 @@ namespace GoF2Remake.UI
             {
                 pan += d * DragScale;
                 vel = d * DragScale;
+                AddWhoosh(Mathf.Min(Mathf.Abs(vel.x + vel.y), 10f));
                 if (far && !dragged) { selected = centred = -1; cells = 0; }
             }
             else
@@ -1009,8 +1135,9 @@ namespace GoF2Remake.UI
             float dtMs = Time.unscaledDeltaTime * 1000f;
             float f = dtMs / (1000f / 60f);   // the original's per-frame factors, at 60 fps
             timeMs += dtMs;
-            HandleKeys(dtMs);
+            if (!revealing) HandleKeys(dtMs);
             if (world == null || this == null) return;
+            UpdateReveal(dtMs);
 
             if (zoomDir != 0)
             {
@@ -1066,7 +1193,8 @@ namespace GoF2Remake.UI
                     pitch += dp * k;
                     if (Mathf.Abs(dy) < 11f && Mathf.Abs(dp) < 11f) { autoRotate = false; frontPlanet = selectedPlanet; }
                 }
-                else if (pointer < 0 && (Mathf.Abs(yawVel) > 0.5f || Mathf.Abs(pitchVel) > 0.5f))
+                AddWhoosh(Mathf.Min(Mathf.Abs(yawVel + pitchVel) * 0.01f, 10f) * f);
+                if (pointer < 0 && (Mathf.Abs(yawVel) > 0.5f || Mathf.Abs(pitchVel) > 0.5f))
                 {
                     yaw = Mathf.Repeat(yaw + yawVel * f, 65536f);
                     pitch = Mathf.Clamp(pitch + pitchVel * f, -8192f, 8192f);
@@ -1283,9 +1411,14 @@ namespace GoF2Remake.UI
         void Play(AudioClip clip)
         {
             if (clip == null) return;
+            Source().PlayOneShot(clip, Settings.SfxVolume);
+        }
+
+        AudioSource Source()
+        {
             var src = GetComponent<AudioSource>();
             if (src == null) { src = gameObject.AddComponent<AudioSource>(); src.playOnAwake = false; src.spatialBlend = 0f; src.ignoreListenerPause = true; }
-            src.PlayOneShot(clip, Settings.SfxVolume);
+            return src;
         }
 
         /// <summary>A one-shot 2D sound that survives the map closing (used by the owners for the jump sounds).</summary>

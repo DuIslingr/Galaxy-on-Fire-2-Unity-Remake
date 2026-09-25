@@ -43,7 +43,7 @@ namespace GoF2Remake.Flight
             col.color = g;
         }
 
-        static ParticleSystem Create(Transform ship, string name, Material material, float lifeS, float minSize, float maxSize,
+        internal static ParticleSystem Create(Transform ship, string name, Material material, float lifeS, float minSize, float maxSize,
                                      int pool, float inherit, Vector3 boxUnits, float noseUnits, float growthPerS, int order)
         {
             var go = new GameObject(name);

@@ -10,6 +10,9 @@ namespace GoF2Remake.Flight
     public static class Sfx
     {
         public const float AudibleMeters = 3000f;   // silent beyond (60000 game units)
+        /// <summary>An FMOD event's own volume (the FEV's LGCY data: lasers 0.13-0.29, engines 0.06-0.1, boosters 0.2) times
+        /// this is the remake's source volume, matching the levels the remake's other sounds already play at.</summary>
+        public const float EventGain = 4f;
 
         public static void PlayAt(AudioClip clip, Vector3 position, float volume = 1f)
         {

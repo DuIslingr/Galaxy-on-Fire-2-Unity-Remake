@@ -17,6 +17,7 @@ namespace GoF2Remake.UI
         readonly Slider slider;
         readonly Toggle toggle;
         readonly ChoiceRow choice;
+        readonly Button button;
         readonly Label description;
 
         /// <summary>The player changed the value through this row.</summary>
@@ -38,6 +39,11 @@ namespace GoF2Remake.UI
                     toggle = new Toggle();
                     toggle.RegisterValueChangedCallback(e => { d.setBool(e.newValue); Changed?.Invoke(); });
                     Field = toggle;
+                    break;
+                case OptionKind.Button:
+                    button = new Button(() => { d.action?.Invoke(); Changed?.Invoke(); });
+                    button.AddToClassList("option-button");
+                    Field = button;
                     break;
                 default:
                     choice = new ChoiceRow(d.segmented);
@@ -67,6 +73,7 @@ namespace GoF2Remake.UI
                 toggle.label = def.label();
                 toggle.SetValueWithoutNotify(def.getBool());
             }
+            else if (button != null) button.text = def.label();
             else
             {
                 choice.LabelText = def.label();
@@ -89,13 +96,14 @@ namespace GoF2Remake.UI
             if (slider != null)
                 slider.value = Mathf.Clamp(slider.value + dir * (slider.highValue - slider.lowValue) / 20f, slider.lowValue, slider.highValue);
             else if (toggle != null) toggle.value = !toggle.value;
-            else choice.Step(dir);
+            else choice?.Step(dir);
         }
 
         /// <summary>Confirm on the row (Enter / A): a toggle flips, a choice takes the next value.</summary>
         public void Activate()
         {
             if (toggle != null) toggle.value = !toggle.value;
+            else if (button != null) { def.action?.Invoke(); Changed?.Invoke(); }
             else choice?.Cycle();
         }
     }

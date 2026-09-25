@@ -17,9 +17,12 @@ MonoBehaviour:
   muzzleFlash: {fileID: 0}
   impact: {fileID: 0}
   shot: {fileID: 0}
+  shots: []
   shotLoops: 0
   explosionType: -1
   explosionSound: {fileID: 0}
+  explosionSounds: []
   engineLoop: {fileID: 0}
+  engineLoopExtra: {fileID: 0}
   turretMounted: {fileID: 1405006573701625510, guid: 59e027a0128658841bbbfe7f45aa8185, type: 3}
   sentry: {fileID: 0}

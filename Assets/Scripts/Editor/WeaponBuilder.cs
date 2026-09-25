@@ -22,19 +22,41 @@ namespace GoF2Remake.EditorTools
         [System.Serializable] class Entry { public int item; public string projectile, muzzle, impact, sound; public bool beam, soundLoops; public int soundId; }
         [System.Serializable] class Wrapper { public List<Entry> list; }
 
-        /// <summary>Shot sounds the FEV name order doesn't reach (DLC ids above 213 and a few gaps), matched by file name
-        /// (weapons_special.md).</summary>
-        static readonly Dictionary<int, string> ShotSounds = new Dictionary<int, string>
+        /// <summary>The sentry guns' deploy sound: the shot table DAT_00252310 gives 2263 SentryGun_SG400 to all three
+        /// (2262 Berger_SG100 / 2264 TSuum are never played).</summary>
+        const int SentryDeploySound = 2263;
+
+        /// <summary>Reference/research/fmod_event_ids.txt (from the FEV's LGCY data): system id -> the event's wave files.</summary>
+        static Dictionary<int, List<string>> LoadEventTable()
         {
-            { 42, "Launch_Missile_EMP_GL2" }, { 43, "Launch_Missile_EMP_GLDX" }, { 45, "Rocket_Launch_AMR_Oppressor" },
-            { 46, "Rocket_Launch_AMR_Extinction" }, { 60, "AMR_Claymor" }, { 61, "Neetha" }, { 62, "Ksannk" },
-            { 176, "Nirai50" }, { 177, "Berger_Flak" }, { 178, "Icarus_Heavy" }, { 179, "Liberator_Launch" },
-            { 180, "Berger_AGT" }, { 181, "Skuld_AT_XR" }, { 182, "Turret_HH_AT_Archimedes" }, { 183, "Laser_Disruptor" },
-            { 193, "Sunfire" }, { 197, "Launch" }, { 221, "Launch" }, { 214, "Launch_02" }, { 215, "Launch_02" },
-            { 216, "Launch_02" }, { 224, "Turret_Matador_TS" }, { 226, "Shockblast" }, { 228, "M6_A4_RACOON" },
-            { 229, "DarkMatterLaser" }, { 230, "Canon_Massdriver" }, { 231, "Blaster_Mimung" }, { 232, "Fireworks" },
-            { 211, "Berger_SG100" }, { 212, "SentryGun_SG400" }, { 213, "TSuum" },
-        };
+            var table = new Dictionary<int, List<string>>();
+            string path = Path.Combine(Path.GetDirectoryName(Application.dataPath), "Reference/research/fmod_event_ids.txt");
+            if (!File.Exists(path)) { Debug.LogWarning("GoF2: " + path + " missing, run Reference/tools/audio/build_event_table.py"); return table; }
+            foreach (var line in File.ReadAllLines(path))
+            {
+                if (line.StartsWith("#")) continue;
+                var f = line.Split('	');
+                if (f.Length < 5 || !int.TryParse(f[0], out int id)) continue;
+                table[id] = f[4].Split('|').Select(x => x.Trim()).Where(x => x.Length > 0 && !x.StartsWith("?"))
+                               .Select(x => $"{ImportSettings.Root}/Audio/{x}").ToList();
+            }
+            return table;
+        }
+
+        /// <summary>Every wave of an event (a random / sequential sound definition picks among them at runtime).</summary>
+        static AudioClip[] EventClips(Dictionary<int, List<string>> table, int id) =>
+            table.TryGetValue(id, out var files) ? files.Select(AssetDatabase.LoadAssetAtPath<AudioClip>).Where(c => c != null).ToArray()
+                                                 : new AudioClip[0];
+
+        /// <summary>The event holding this clip (its first), all of its waves; the clip alone when none does.</summary>
+        static AudioClip[] EventClipsOf(Dictionary<int, List<string>> table, AudioClip clip)
+        {
+            if (clip == null) return new AudioClip[0];
+            string path = AssetDatabase.GetAssetPath(clip);
+            foreach (var kv in table.OrderBy(k => k.Key))
+                if (kv.Value.Contains(path)) return EventClips(table, kv.Key);
+            return new[] { clip };
+        }
 
         /// <summary>Explosion::playSound by weapon and the BombGun / ObjectGun explosion types (weapons_special.md 3.4).</summary>
         static readonly Dictionary<int, (int type, string sound)> Explosions = new Dictionary<int, (int, string)>
@@ -68,6 +90,7 @@ namespace GoF2Remake.EditorTools
             Directory.CreateDirectory(OutDir);
             var clips = AssetDatabase.FindAssets("t:AudioClip", new[] { ImportSettings.Root + "/Audio" })
                 .Select(AssetDatabase.GUIDToAssetPath).ToList();
+            var events = LoadEventTable();
             int made = 0;
             // Sentry guns aren't in the projectile tables: they deploy an object that fires the look of items 2 / 20 / 14.
             foreach (int s in new[] { 211, 212, 213 })
@@ -84,11 +107,23 @@ namespace GoF2Remake.EditorTools
                 fx.projectile = FindPrefab(e.projectile);
                 fx.muzzleFlash = FindPrefab(e.muzzle);
                 fx.impact = FindPrefab(e.impact);
-                fx.shot = ShotSounds.TryGetValue(e.item, out var shotName) ? FindClip(clips, shotName) : FindClip(clips, e.sound);
+                // Player::playShootSound: the shot table's event id (build_weapon_fx.py), all its waves.
+                int soundId = e.item >= 211 && e.item <= 213 ? SentryDeploySound : e.soundId;
+                fx.shots = soundId > 0 ? EventClips(events, soundId) : new AudioClip[0];
+                if (fx.shots.Length == 0 && !string.IsNullOrEmpty(e.sound)) fx.shots = EventClipsOf(events, FindClip(clips, e.sound));
+                fx.shot = fx.shots.Length > 0 ? fx.shots[0] : null;
                 fx.shotLoops = e.soundLoops;
-                if (Explosions.TryGetValue(e.item, out var ex)) { fx.explosionType = ex.type; fx.explosionSound = FindClip(clips, ex.sound); }
-                else { fx.explosionType = -1; fx.explosionSound = null; }
-                fx.engineLoop = e.item == 179 ? FindClip(clips, "AMR_Liberator_Engine") : null;
+                if (Explosions.TryGetValue(e.item, out var ex))
+                {
+                    fx.explosionType = ex.type;
+                    fx.explosionSounds = EventClipsOf(events, FindClip(clips, ex.sound));
+                    fx.explosionSound = fx.explosionSounds.Length > 0 ? fx.explosionSounds[0] : null;
+                }
+                else { fx.explosionType = -1; fx.explosionSound = null; fx.explosionSounds = new AudioClip[0]; }
+                // 1116 AMR_Liberator_Engine_02: layer 1 (the Liberator engine, pitched) and layer 0 (EngineDLC_06).
+                var liberatorEngine = e.item == 179 ? EventClips(events, 1116) : new AudioClip[0];
+                fx.engineLoop = liberatorEngine.FirstOrDefault(c => c.name.StartsWith("AMR_Liberator_Engine"));
+                fx.engineLoopExtra = liberatorEngine.FirstOrDefault(c => c.name.StartsWith("EngineDLC"));
                 fx.turretMounted = Turrets.TryGetValue(e.item, out var turret) ? FindPrefab(turret) : null;
                 fx.sentry = e.item >= 211 && e.item <= 213 ? FindPrefab($"sn_sentry_gun_00{e.item - 210}") : null;
                 EditorUtility.SetDirty(fx);
@@ -101,6 +136,16 @@ namespace GoF2Remake.EditorTools
             audio.asteroidDestroyed = FindClip(clips, "Destruction_Asteroid");
             audio.targetLock = FindClip(clips, "Target_Lock");
             audio.miningDrill = FindClip(clips, "Mining_Drill_Add_1");
+            audio.miningDrillSlow = FindClip(clips, "Mining_Drill_Slow_1");
+            audio.miningDrillAdd2 = FindClip(clips, "Mining_Drill_Add_2");
+            audio.miningDrillSwitch = FindClip(clips, "Mining_Drill_Switch");
+            audio.playerEngines = new[] { 42, 43, 44, 45, 1104, 1106, 1107 }.Select(id => EventClips(events, id).FirstOrDefault()).ToArray();
+            audio.playerEngineExtras = new[] { 42, 43, 44, 45, 1104, 1106, 1107 }.Select(id => EventClips(events, id).Skip(1).FirstOrDefault()).ToArray();
+            audio.buttonPush = EventClips(events, 124).FirstOrDefault();
+            audio.buttonRelease = EventClips(events, 123).FirstOrDefault();
+            audio.messageInfo = EventClips(events, 126).FirstOrDefault();
+            audio.buttonInfo = EventClips(events, 97).FirstOrDefault();
+            audio.boosters = new[] { 38, 39, 40, 41, 1102 }.Select(id => EventClips(events, id).FirstOrDefault()).ToArray();
             audio.miningLanding = FindClip(clips, "Mining_Landing");
             audio.miningDrillBroken = FindClip(clips, "Mining_Drill_Broken");
             audio.autopilotOn = FindClip(clips, "Autopilot_Activate");

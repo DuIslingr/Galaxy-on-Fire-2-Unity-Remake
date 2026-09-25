@@ -18,7 +18,8 @@
 //                                    units ahead, camera at fx + R(-2000, 300, -2000) drifting (5, 2, -5), sound 32, the ship
 //                                    vanishes at 1700 ms, the level reloads at the fx end (~4000 ms).
 // The programmed station is cleared on arrival: no autopilot leg follows a system jump.
-// Not yet: volatile goods (612), mission blocks (525), the Void.
+// Mission blocks: 525 at the gate (GateBlocked) and on the Khador menu entry (Navigation); volatile goods: 612 on the menu
+// entry and on the map (StarMap).
 
 using System;
 using GoF2Remake.Data;

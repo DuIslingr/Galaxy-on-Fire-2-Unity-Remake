@@ -19,7 +19,7 @@ namespace GoF2Remake.UI
 {
     public class PauseMenu
     {
-        enum Page { Main, Missions, Cargo, Options, Quit }
+        enum Page { Main, Missions, Cargo, Options, Quit, Photo }
 
         readonly VisualElement backdrop, panel, body;
         readonly Label title;
@@ -34,6 +34,10 @@ namespace GoF2Remake.UI
         float previousTimeScale = 1f;
 
         public bool IsOpen { get; private set; }
+        /// <summary>ChoiceWindow::set: sound 126 when the confirmation shows.</summary>
+        public Action InfoSound;
+        /// <summary>59 Action Freeze (MenuTouchWindow button 0x13 -> state 0xd); set by FlightHud.</summary>
+        public PhotoMode Photo;
 
         static string T(int id) => Localization.Get(id).ToUpperInvariant();
 
@@ -77,6 +81,7 @@ namespace GoF2Remake.UI
         public void Close()
         {
             if (!IsOpen) return;
+            if (Photo != null && Photo.Active) Photo.Exit();
             IsOpen = false;
             backdrop.RemoveFromClassList("pause-backdrop--shown");
             AudioListener.pause = audioWasPaused;
@@ -105,11 +110,19 @@ namespace GoF2Remake.UI
                     Item(T(31), () => Show(Page.Options));
                     var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
                     if (intro != null && intro.CanSkip) Item(T(395), () => { Close(); intro.Skip(); });
+                    // MGame::setCinematicMode: not while a cutscene holds the camera.
+                    if (Photo != null && level != null && !level.Cutscene) Item(T(59), () => Show(Page.Photo));
                     Item(T(522), () => Show(Page.Quit));
                     break;
+                case Page.Photo:
+                    backdrop.RemoveFromClassList("pause-backdrop--shown");
+                    Photo.Enter(level);
+                    if (!Photo.Active) { backdrop.AddToClassList("pause-backdrop--shown"); Show(Page.Main); }
+                    return;
                 case Page.Quit:
                     title.text = T(522);
                     Text(Localization.Get(523));
+                    InfoSound?.Invoke();
                     Item(T(134), () => { Close(); backToMenu?.Invoke(); });
                     Item(T(135), () => Show(Page.Main));
                     index = 1;
@@ -244,6 +257,12 @@ namespace GoF2Remake.UI
         public void Tick()
         {
             if (!IsOpen || Time.frameCount - openedFrame < 1) return;   // the key that opened it
+            if (page == Page.Photo)
+            {
+                // Back leaves state 0xd for the pause page; the game stays paused.
+                if (Photo == null || !Photo.Tick()) { backdrop.AddToClassList("pause-backdrop--shown"); Show(Page.Main); openedFrame = Time.frameCount; }
+                return;
+            }
             var kb = Keyboard.current;
             var pad = Gamepad.current;
             bool back = (kb != null && (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame))

@@ -273,6 +273,7 @@ namespace GoF2Remake.World
             var ex = assets != null ? assets.explosion : null;
             t.explosionPrefab = ex;
             t.explosionScale = 0.5f;
+            t.destroyedSound = CombatAssets.Pick(assets?.garbageExplosion);   // PlayerJunk::update: 22 Garbage_Explosion
             t.Died += _ => Session.JunkDestroyed++;   // Status+0xb0
             junk.Add(t);
         }

@@ -116,6 +116,9 @@ namespace GoF2Remake.Data
 
         public static int CellsInCargo() => Session.Cargo.Find(s => s.item == EnergyCellItem)?.amount ?? 0;
 
+        /// <summary>Ship::hasVolatileGoods 0x1a3b90: 209 K'mirkk Toad Mutagen or 204 Red Plasma in the hold (no Khador Drive, 612).</summary>
+        public static bool HasVolatileGoods => Session.Cargo.Exists(s => (s.item == 209 || s.item == 204) && s.amount > 0);
+
         public static void RemoveCells(int n)
         {
             var stack = Session.Cargo.Find(s => s.item == EnergyCellItem);

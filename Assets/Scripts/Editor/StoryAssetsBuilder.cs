@@ -49,16 +49,23 @@ namespace GoF2Remake.EditorTools
 
             a.introAtmo = Clip("MUSIC/IntroAtmo_02.ogg");
             a.battleFull = Clip("MUSIC/Space_Battle_Full.ogg");
-            a.timeShift = Clip("MUSIC/TimeShift_Start.ogg");
+            a.timeShift = Clip("MUSIC/Space_Battle_Medium.ogg");
             a.cutsceneExplosion = Clip("SFX_SPACE/Cutscenes_Explosion_01.ogg");
             a.rumble = Clip("SFX_SPACE/Rumble_CutScene_01.ogg");
             a.timeJump = Clip("CUTSCENES/SpaceTimeJump_01.ogg");
             a.timeJumpEnd = a.timeJump;
             a.engineBroken = Clip("SFX_SPACE/Engine_09_Broken.ogg");
             a.engineBrokenLoop = Clip("SFX_SPACE/Spaceship_Engine_05_Broken_02.ogg");
+            a.engineBrokenAdds = System.Array.ConvertAll(new[] { 1, 5, 2, 3, 4, 6, 7, 8, 9, 10, 11, 13, 14, 12 },
+                n => Clip($"{(n >= 12 ? "CUTSCENES" : "SFX_SPACE")}/Spaceship_Engine_05_Broken_02_Add_{n:00}.ogg"));
             a.introSky = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_003.mat");
             a.introSkyAfterJump = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_009.mat");
             a.hyperDrive = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/fx/hyper_drive.prefab");
+            a.menuStatics = new[]
+            {
+                AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/misc/beer.prefab"),
+                AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/misc/bra.prefab"),
+            };
             a.wormhole = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/misc/wormhole_anim_add.prefab");
             a.scannerProbe = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/main/misc/scanner_probe.prefab");
             a.voidStationExplosion = new[]
@@ -70,7 +77,11 @@ namespace GoF2Remake.EditorTools
             a.wormholeSound = Clip("SFX_SPACE/Wormhole_1b.ogg");
             a.empHit = Clip("SFX_SPACE/Explosion_EMP_GL1_01.ogg");
             a.probeLaunch = Clip("SFX_SPACE/Explosion_Bomb_AMR_Tormentor_01.ogg");
-            a.mothershipLoop = Clip("CUTSCENES/Mothership_Xplosion_Loop_01.ogg");
+            a.alert = Clip("CUTSCENES/Alert_03.ogg");
+            a.mothershipLoops = new[] { Clip("CUTSCENES/Mothership_Xplosion_Loop_01.ogg"), Clip("CUTSCENES/Explosion_Mothership_Loop_01.ogg"),
+                                        Clip("CUTSCENES/Explosion_Mothership_Loop_05.ogg") };
+            a.mothershipAdds1 = System.Array.ConvertAll(new[] { 1, 9, 10, 11, 12, 13, 14, 2, 3, 4, 5, 6, 7, 8 }, n => Clip($"CUTSCENES/Mothership_Xplosion_Loop_01_Add_{n:00}.ogg"));
+            a.mothershipAdds2 = System.Array.ConvertAll(new[] { 2, 13, 14, 15, 16, 17, 18, 19, 10, 11, 12 }, n => Clip($"CUTSCENES/Mothership_Xplosion_Loop_01_Add_{n:00}.ogg"));
             a.mothershipCutscene = Clip("CUTSCENES/Mothership_Xplosion_CutSeq.ogg");
             a.errktCutscene = Clip("MUSIC/Errkt_CutSeq_01.ogg");
             a.outroSong = Clip("MUSIC/OutroSong_02b.ogg");

@@ -15,7 +15,7 @@ namespace GoF2Remake.EditorTools
         public const string OutDir = ImportSettings.Root + "/Resources/GoF2Hud";
         const string AtlasDir = ImportSettings.Root + "/Textures/textures/";
         const string Main = "gof2_interface_iphone4.png", Ipad = "gof2_interface2_ipad_large.png", Low = "gof2_interface.png",
-                     Logos = "gof2_logos_ipad2.png", Ipad3 = "gof2_interface3_ipad_large.png";
+                     Logos = "gof2_logos_ipad2.png", Ipad3 = "gof2_interface3_ipad_large.png", Items = "gof2_items_ipad_large.png";
 
         // atlas, name, x, y, w, h, frames (0 = single image), wrap (marquee strips repeat)
         static readonly (string atlas, string name, int x, int y, int w, int h, int frames, bool repeat)[] Images =
@@ -146,6 +146,35 @@ namespace GoF2Remake.EditorTools
             (Ipad3, "hack_gold_0", 57, 183, 256, 180, 0, false), (Ipad3, "hack_gold_1", 1578, 61, 256, 180, 0, false),
             (Ipad3, "hack_gold_2", 975, 479, 256, 180, 0, false), (Ipad3, "hack_gold_3", 57, 1, 256, 180, 0, false),
             (Ipad3, "hack_gold_4", 717, 479, 256, 180, 0, false), (Ipad3, "hack_gold_5", 975, 843, 256, 180, 0, false),
+            // The Status window's medals (TouchButton::draw style 4): plates by grade DAT_00252040 (0 none 2416, gold 2414,
+            // silver 2415, bronze 2413; elite 36-44 DAT_00252030 8045 / 8035), the pressed overlay 2412, the symbols
+            // DAT_0025c7dc (2376 + i, elite 8036..8044), 54x54 grey (tinted by grade).
+            // MGame::OnRender2D state 0xd (Action Freeze): the "Galaxy on Fire 2 Full HD" logo 0x534.
+            (Main, "photo_logo", 1591, 1595, 281, 97, 0, false),
+            // ListItemWindow: the ship's floor glow 0x50b (the left half, drawn mirrored too), the comparison arrows
+            // 0x512 worse / 0x513 better / 0x514 equal.
+            (Main, "info_floor", 1, 17, 223, 160, 0, false),
+            (Main, "compare_worse", 205, 1774, 82, 40, 0, false), (Main, "compare_better", 225, 337, 82, 40, 0, false),
+            (Main, "compare_equal", 215, 1424, 82, 40, 0, false),
+            (Items,"medal_plate_none",1261,265,228,84,0,false), (Items,"medal_plate_gold",361,353,228,84,0,false),
+            (Items,"medal_plate_silver",1081,1055,228,84,0,false), (Items,"medal_plate_bronze",591,353,228,84,0,false),
+            (Items,"medal_pressed",901,89,228,84,0,false),
+            (Ipad3,"medal_plate_elite_none",1256,588,228,84,0,false), (Ipad3,"medal_plate_elite_gold",315,861,228,84,0,false),
+            (Items,"medal_00",1981,791,54,54,0,false),(Items,"medal_01",1752,353,54,54,0,false),(Items,"medal_02",1137,1,54,54,0,false),
+            (Items,"medal_03",1584,353,54,54,0,false),(Items,"medal_04",1981,703,54,54,0,false),(Items,"medal_05",933,353,54,54,0,false),
+            (Items,"medal_06",1528,353,54,54,0,false),(Items,"medal_07",1976,353,54,54,0,false),(Items,"medal_08",1808,353,54,54,0,false),
+            (Items,"medal_09",1981,177,54,54,0,false),(Items,"medal_10",1981,615,54,54,0,false),(Items,"medal_11",1981,527,54,54,0,false),
+            (Items,"medal_12",1248,353,54,54,0,false),(Items,"medal_13",877,353,54,54,0,false),(Items,"medal_14",1304,353,54,54,0,false),
+            (Items,"medal_15",1,1993,54,54,0,false),(Items,"medal_16",1,441,54,54,0,false),(Items,"medal_17",181,1993,54,54,0,false),
+            (Items,"medal_18",1360,353,54,54,0,false),(Items,"medal_19",1101,353,54,54,0,false),(Items,"medal_20",1045,353,54,54,0,false),
+            (Items,"medal_21",1969,1,54,54,0,false),(Items,"medal_22",57,1993,54,54,0,false),(Items,"medal_23",989,353,54,54,0,false),
+            (Items,"medal_24",1864,353,54,54,0,false),(Items,"medal_25",181,1673,54,54,0,false),(Items,"medal_26",1920,353,54,54,0,false),
+            (Items,"medal_27",1696,353,54,54,0,false),(Items,"medal_28",1472,353,54,54,0,false),(Items,"medal_29",1981,439,54,54,0,false),
+            (Items,"medal_30",181,1,54,54,0,false),(Items,"medal_31",821,353,54,54,0,false),(Items,"medal_32",1640,353,54,54,0,false),
+            (Items,"medal_33",1416,353,54,54,0,false),(Items,"medal_34",113,1993,54,54,0,false),(Items,"medal_35",1913,1,54,54,0,false),
+            (Ipad3,"medal_36",1,423,54,54,0,false),(Ipad3,"medal_37",1,479,54,54,0,false),(Ipad3,"medal_38",1,591,54,54,0,false),
+            (Ipad3,"medal_39",1,367,54,54,0,false),(Ipad3,"medal_40",1,311,54,54,0,false),(Ipad3,"medal_41",1,113,54,54,0,false),
+            (Ipad3,"medal_42",1,535,54,54,0,false),(Ipad3,"medal_43",1,57,54,54,0,false),(Ipad3,"medal_44",1,1,54,54,0,false),
             (Ipad3, "hack_button", 127, 607, 62, 62, 0, false), (Ipad3, "hack_button_on", 1285, 61, 291, 291, 0, false),
             (Ipad3, "hack_blocked", 57, 607, 68, 67, 0, false), (Ipad3, "hack_bar", 315, 1, 770, 58, 0, false),
             (Ipad3, "hack_frame_top", 717, 61, 566, 416, 0, false), (Ipad3, "hack_frame_bottom", 315, 61, 400, 400, 0, false),

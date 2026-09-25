@@ -290,6 +290,9 @@ namespace GoF2Remake.Flight
             n = Mathf.Min(n, entry.amount);
             Shop.AddToCargo(entry.item, n);
             Session.CratesSalvaged += n;   // Status::getCapturedCrates
+            // KIPlayer::captureCrate: a Void crate counts for Alien Hunter (Status+0xcc), another race's booze for Barkeeper.
+            if (crate.race == Standing.Void) Session.AlienRemainsCollected += n;
+            else if (Session.IsBooze(entry.item)) Session.BoozeTypes.Add(entry.item);
             entry.amount -= n;
             Message?.Invoke($"{n}t {Localization.Get(1274 + entry.item)}", 2);
             if (ship != null)

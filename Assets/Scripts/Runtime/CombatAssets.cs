@@ -28,6 +28,10 @@ namespace GoF2Remake.Flight
         [Tooltip("Items 68, 69, 70, 194.")]
         public GameObject[] tractorBeams;
         public Material smokeMaterial, fireMaterial;
+        [Tooltip("Material 20099 sprite_explosion (additive): the dying ships' burn, records 9 / 11 (ShipBurn).")]
+        public Material explosionSpriteMaterial;
+        [Tooltip("Material 20090 particles (additive): the player's exhaust particles (ShipExhaust).")]
+        public Material particlesMaterial;
 
         public AudioClip[] hitShield, hitArmor, hitHull, shipDestroyed, explosionBig, explosionMid, shots;
         public AudioClip targetLock, tractorLoop, tractorClose, gameOver;
@@ -45,6 +49,8 @@ namespace GoF2Remake.Flight
         public AudioClip[] battleMusic;
         [Tooltip("146 HomeBase_NoCombat: the Kaamo Club's orbit.")]
         public AudioClip homeBaseMusic;
+        [Tooltip("147 Valkyrie_NoCombat (station 101) and 152 Space_NoCombat_DeepScience (stations 10 / 100).")]
+        public AudioClip valkyrieMusic, deepScienceMusic;
         [Tooltip("Mesh 14246 station_pirates_explosion_anim: a Pirate Outpost's wreck animation (20 s).")]
         public GameObject outpostWreck;
         [Tooltip("Explosion types 7 (EMP), 8-10 (scatter), 11 (shock blast glow + sphere), 13 (fireworks).")]
@@ -60,8 +66,8 @@ namespace GoF2Remake.Flight
         public AudioClip invincibility;
         [Tooltip("The shield injector (2258 init, 2257 loop, 2259 end) and the gamma shield loops (2260 / 2261).")]
         public AudioClip injectorInit, injectorLoop, injectorEnd, gammaShield1, gammaShield2;
-        [Tooltip("The cloak (sound 30 Cloak_02) and the time extender (1120 TimeShift_01b).")]
-        public AudioClip cloak, timeShift;
+        [Tooltip("The cloak (sound 30 Cloak_02) and the time extender (1120 TimeShift_Start, 1119 TimeShift_01b at the end).")]
+        public AudioClip cloak, timeShift, timeShiftEnd;
         [Tooltip("The cloak's shader (GoF2/Cloak) and dissolve map (Textures/main/fx/cloak_map.png).")]
         public Shader cloakShader;
         public Texture2D cloakMap;

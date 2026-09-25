@@ -58,7 +58,7 @@ namespace GoF2Remake.World
         ShipController ship;
         PlayerTurret turret;
         AudioSource sfx;
-        AudioClip collected;
+        AudioClip[] collected;
 
         /// <summary>The orbit's plasma item (201-204), -1 = no clouds.</summary>
         public int PlasmaItem { get; private set; } = -1;
@@ -259,7 +259,7 @@ namespace GoF2Remake.World
         /// (FModSound::stop + play 0x8d0): one at a time however many sparks arrive together.</summary>
         void Collect()
         {
-            if (collected != null) { sfx.Stop(); sfx.clip = collected; sfx.volume = Settings.SfxVolume; sfx.Play(); }
+            if (collected != null && collected.Length > 0) { sfx.Stop(); sfx.clip = collected[UnityEngine.Random.Range(0, collected.Length)]; sfx.volume = Settings.SfxVolume; sfx.Play(); }
             if (Shop.FreeCargo(db) < 1) { if (!fullShown) Message?.Invoke(Localization.Get(322)); fullShown = true; return; }   // Cargo hold is full.
             fullShown = false;
             Shop.AddToCargo(PlasmaItem, 1);
