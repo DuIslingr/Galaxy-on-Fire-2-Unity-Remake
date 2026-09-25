@@ -111,6 +111,7 @@ namespace GoF2Remake.Data
                 var target = db.Systems.Find(s => s.index == b);
                 noGate = target == null || target.jumpRoutesTo.Count == 0;
             }
+            if (Cheats.FreeJumps) return 0;
             return Session.IsExtreme ? n * 2 : n;
         }
 

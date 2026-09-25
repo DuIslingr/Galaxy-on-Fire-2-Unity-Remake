@@ -98,11 +98,13 @@ namespace GoF2Remake.Flight
         public void Use()
         {
             if (Rules == null || !Rules.Available || !target.Alive) return;
-            if (!Rules.TryStart(Shop.CargoOf(Cloak.EnergyCellItem)))
+            bool free = Cheats.FreeJumps;   // remake: the Admin panel's free jumps cover the cloak's cells too
+            if (!Rules.TryStart(free ? int.MaxValue : Shop.CargoOf(Cloak.EnergyCellItem)))
             {
                 Message?.Invoke($"{Localization.Get(583)} {Rules.cells}.");
                 return;
             }
+            if (free) return;
             Shop.RemoveFromCargo(Cloak.EnergyCellItem, Rules.cells);
             Message?.Invoke($"-{Rules.cells}t {Localization.Get(1274 + Cloak.EnergyCellItem)}");
         }

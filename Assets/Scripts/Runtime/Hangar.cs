@@ -111,7 +111,7 @@ namespace GoF2Remake.Data
             need = 0;
             var row = Stock.items.Find(s => s.item == item && s.amount > 0);
             if (row == null) return Result.NoStock;
-            int price = Storage ? 0 : PriceOf(item);
+            int price = Storage || Cheats.FreeShopping ? 0 : PriceOf(item);
             if (Session.Credits < price) { need = price - Session.Credits; return Result.NoCredits; }
             row.amount--;
             if (row.amount <= 0) Stock.items.Remove(row);
@@ -232,7 +232,7 @@ namespace GoF2Remake.Data
             need = 0;
             if (Session.Passengers > 0) return Result.Passengers;   // 336
             if (ship == Session.ShipIndex) return Result.SameShip;
-            int cost = ShipPrice(ship) - ShipPrice(Session.ShipIndex);
+            int cost = Cheats.FreeShopping ? 0 : ShipPrice(ship) - ShipPrice(Session.ShipIndex);
             if (Session.Credits < cost) { need = cost - Session.Credits; return Result.NoCredits; }
             return Result.Ok;
         }
@@ -243,7 +243,7 @@ namespace GoF2Remake.Data
         {
             if (CanBuyShip(ship, out _) != Result.Ok) return false;
             int old = Session.ShipIndex;
-            ChangeCredits(ShipPrice(old) - ShipPrice(ship));
+            if (!Cheats.FreeShopping) ChangeCredits(ShipPrice(old) - ShipPrice(ship));
             SwitchTo(ship, null);   // mods stay with the old hull (Ship::clone copies them)
             int row = Stock.ships.IndexOf(ship);
             if (row >= 0) Stock.ships[row] = old; else Stock.ships.Add(old);
@@ -273,7 +273,7 @@ namespace GoF2Remake.Data
         {
             need = 0;
             if (KaamoClub.HasShip(Session.ShipIndex)) return Result.AlreadyStored;   // 328 (the old ship's type)
-            int cost = ShipPrice(ship);
+            int cost = Cheats.FreeShopping ? 0 : ShipPrice(ship);
             if (Session.Credits < cost) { need = cost - Session.Credits; return Result.NoCredits; }
             return Result.Ok;
         }
@@ -283,7 +283,7 @@ namespace GoF2Remake.Data
             if (CanKeepAndBuyShip(ship, out _) != Result.Ok) return false;
             int old = Session.ShipIndex;
             var oldMods = Session.ShipMods;
-            ChangeCredits(-ShipPrice(ship));
+            if (!Cheats.FreeShopping) ChangeCredits(-ShipPrice(ship));
             SwitchTo(ship, null);
             Stock.ships.Remove(ship);   // the bought row is gone
             KaamoClub.Store(old, 0, oldMods);   // a bare hull (makeShip(old) + its mods; Ship::clone resets the race to 0)

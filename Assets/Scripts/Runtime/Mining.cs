@@ -93,6 +93,7 @@ namespace GoF2Remake.Flight
             drill = Shop.FirstMounted(db, 19);
             var scanner = Shop.FirstMounted(db, 17);
             lockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;   // Radar::Radar
+            lockTimeMs = Cheats.LockMs(lockTimeMs);
             Ultrascan = scanner != null && scanner.Attr(30) == 1;                             // Radar+0x1a6 (Hiroto Ultrascan)
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;

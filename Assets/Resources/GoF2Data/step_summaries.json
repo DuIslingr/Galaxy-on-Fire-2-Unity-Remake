@@ -1,0 +1,819 @@
+{
+ "steps": [
+  {
+   "index": 0,
+   "title": "prologue \"3598 A.D. – Dareius Asteroid Belt\" (orbit of station 78)",
+   "summary": "Prologue 3598 A.D.: Phantom vs pirates, tutorial (orbit 78). resetGame"
+  },
+  {
+   "index": 1,
+   "title": "rescue at Var Hastra (cutscene)",
+   "summary": "Drifting-ship cinematic, towed into Var Hastra; wake up, Gunant gives Betty. Ship → Betty (in OnInitialize)"
+  },
+  {
+   "index": 2,
+   "title": "",
+   "summary": "Mine 10 t of ore (load ≥ 10), orbit 78; success in space"
+  },
+  {
+   "index": 3,
+   "title": "",
+   "summary": "Dock at Var Hastra with the ore"
+  },
+  {
+   "index": 4,
+   "title": "mining and the pirate ambush (orbit 78)",
+   "summary": "Mine a full 25 t; a pirate shows up (success in space: flee). Cargo cleared first"
+  },
+  {
+   "index": 5,
+   "title": "mining and the pirate ambush (orbit 78)",
+   "summary": "Dock at Var Hastra; the hangar opens (menu button 0 enabled from index 5)"
+  },
+  {
+   "index": 6,
+   "title": "",
+   "summary": "Buy and mount a weapon and a shield. Cargo removed"
+  },
+  {
+   "index": 7,
+   "title": "pirate trap with Gunant Breh (orbit 78)",
+   "summary": "Raid the pirate hideout with Gunant (orbit 78)"
+  },
+  {
+   "index": 8,
+   "title": "",
+   "summary": "Dock at Var Hastra; the year is 3624. All items made saleable"
+  },
+  {
+   "index": 9,
+   "title": "",
+   "summary": "Station reload, story beat \"35 years passed\", Gunant sends you to Norris. Map + Missions buttons enabled"
+  },
+  {
+   "index": 10,
+   "title": "",
+   "summary": "Dock at Kernstal, meet Norris Bernard. Drill → 86 IMT Extract 1.3"
+  },
+  {
+   "index": 11,
+   "title": "",
+   "summary": "Check the silent station (briefing in orbit), dock: Mkkt Bkkt"
+  },
+  {
+   "index": 12,
+   "title": "",
+   "summary": "Report to Norris; Space Lounge opens (button 1 from index 12)"
+  },
+  {
+   "index": 13,
+   "title": "",
+   "summary": "Complete one freelance mission; then Norris' call (convoy arrived)"
+  },
+  {
+   "index": 14,
+   "title": "ambushed and arrested by the Terran navy (orbit 79 Kernstal)",
+   "summary": "Save the Terran convoy from pirates (orbit 79); captured → Alioth"
+  },
+  {
+   "index": 15,
+   "title": "",
+   "summary": "Interrogated at Alioth; Void alarm"
+  },
+  {
+   "index": 16,
+   "title": "Void raid on Terran freighters (orbit 98 Alioth)",
+   "summary": "Defend the freighters against Voids (orbit 98)"
+  },
+  {
+   "index": 17,
+   "title": "",
+   "summary": "Brent's briefing; jumpgate hint"
+  },
+  {
+   "index": 18,
+   "title": "",
+   "summary": "Reach Suttnar orbit (10 s): Boyle kidnapped. Ship race → Terran"
+  },
+  {
+   "index": 19,
+   "title": "",
+   "summary": "Reach Kappa orbit: EMP-bomb plan"
+  },
+  {
+   "index": 20,
+   "title": "",
+   "summary": "Dock at Kappa and mount EMP bombs (10 free in stock)"
+  },
+  {
+   "index": 21,
+   "title": "the hijacker (orbit 55 Kappa)",
+   "summary": "Disable the kidnapper with EMP between two waypoints (orbit 55)"
+  },
+  {
+   "index": 22,
+   "title": "",
+   "summary": "Dock: Boyle rescued, Wolf-Reiser coordinates"
+  },
+  {
+   "index": 23,
+   "title": "",
+   "summary": "Take Boyle to Deep Science (Thynome), meet Carla · 20 000 · system 6 visible; tractor-beam vendor in the lounge"
+  },
+  {
+   "index": 24,
+   "title": "Void samples at Sahi, swallowed by the wormhole (orbit 48)",
+   "summary": "Capture a Void ship with scanner + tractor beam at Sahi (map gate 532); wormhole → 25. Invasion 9/48"
+  },
+  {
+   "index": 25,
+   "title": "the Void home orbit and the pursuers",
+   "summary": "Void home system (first wormhole ride). 131 Alien Remains unsaleable"
+  },
+  {
+   "index": 26,
+   "title": "the Void home orbit and the pursuers",
+   "summary": "Back at Sahi, Voids following: survive (orbit 48). Invasion off"
+  },
+  {
+   "index": 27,
+   "title": "",
+   "summary": "Deliver the Void remains to Thynome (removed on docking); date deal"
+  },
+  {
+   "index": 28,
+   "title": "the wormhole at Dima (orbit 91)",
+   "summary": "Enter the Void wormhole at Dima with the probe; wormhole → 29. Invasion 18/91"
+  },
+  {
+   "index": 29,
+   "title": "the probe (alien orbit), survive 3 minutes",
+   "summary": "Void space: lock the mother ship to launch the probe, fly back"
+  },
+  {
+   "index": 30,
+   "title": "",
+   "summary": "Back in Dima orbit: call Carla"
+  },
+  {
+   "index": 31,
+   "title": "",
+   "summary": "Dock at Alioth, Brent's news · 30 000"
+  },
+  {
+   "index": 32,
+   "title": "",
+   "summary": "Thynome: meet Khador (drive idea)"
+  },
+  {
+   "index": 33,
+   "title": "",
+   "summary": "Bring 50 Void Crystals (164) from the Void to Thynome"
+  },
+  {
+   "index": 34,
+   "title": "",
+   "summary": "Brent's plan at Nähma. Crystals removed; Khador Drive blueprint unlocked"
+  },
+  {
+   "index": 35,
+   "title": "",
+   "summary": "Meet Errkt Uggut in S'kolptorr"
+  },
+  {
+   "index": 36,
+   "title": "pirate-kill contest with Errkt (orbit 27 B'akka, type 0xc)",
+   "summary": "Kill contest against Errkt at a pirate hideout (orbit 27)"
+  },
+  {
+   "index": 37,
+   "title": "",
+   "summary": "Delayed call: Brent furious; convoy hijacked"
+  },
+  {
+   "index": 38,
+   "title": "defend the Nivelian freighters (orbit 22 Dekato)",
+   "summary": "Destroy the Mido escort without hitting the convoy (fail text 527)"
+  },
+  {
+   "index": 39,
+   "title": "",
+   "summary": "Final briefing at Nähma (bomb, scanner + tractor beam for Errkt's pod)"
+  },
+  {
+   "index": 40,
+   "title": "Errkt's freighter to the wormhole (the attacked station, type 0xa1)",
+   "summary": "Escort Errkt's freighter into the Void wormhole (fail 527)"
+  },
+  {
+   "index": 41,
+   "title": "escort to the Void mother ship (alien orbit)",
+   "summary": "Void space: mother ship battle, destroy the freighter yourself (fail 527; entering the wormhole early kills you)"
+  },
+  {
+   "index": 42,
+   "title": "destroy the freighter and escape (41's level, alien orbit)",
+   "summary": "Out of the wormhole: call Carla. Invasion disabled (−10)"
+  },
+  {
+   "index": 43,
+   "title": "",
+   "summary": "The date at Thynome → ending + credits (§9)"
+  },
+  {
+   "index": 44,
+   "title": "",
+   "summary": "Morning after, Carla's note"
+  },
+  {
+   "index": 45,
+   "title": "",
+   "summary": "Free play (gameWon) · +40 000 credited by nextCampaignMission 44→45"
+  },
+  {
+   "index": 46,
+   "title": "",
+   "summary": "Radio call in space (add-on entry, §3.3); transient"
+  },
+  {
+   "index": 47,
+   "title": "",
+   "summary": "Meet Cornelius (Corny) at Kanado"
+  },
+  {
+   "index": 48,
+   "title": "Valkyrie: arrival at B'akrram (orbit 58)",
+   "summary": "Chauffeured to B'akrram in loaner 9 H'Soc (own ship parked); autopilot disabled at 48"
+  },
+  {
+   "index": 49,
+   "title": "K'Suukk launch (orbit 58)",
+   "summary": "Leave in the stolen 41 K'Suukk calmly (3× FlaK 9-9). Docking refused 49-54 except at Kanado"
+  },
+  {
+   "index": 50,
+   "title": "detected at Makke S'ik (orbit 62)",
+   "summary": "Fly the K'Suukk through Makke S'ik orbit"
+  },
+  {
+   "index": 51,
+   "title": "Vossk freighter at the S'inokk jumpgate",
+   "summary": "… through S'inokk orbit"
+  },
+  {
+   "index": 52,
+   "title": "Pursued by two Vossk freighters (flee to the gate)",
+   "summary": "Delayed trigger; next is 54 (53 skipped)"
+  },
+  {
+   "index": 53,
+   "title": "",
+   "summary": ""
+  },
+  {
+   "index": 54,
+   "title": "Arrival at Kanado (radio only)",
+   "summary": "Deliver the ship to Kanado · 200 000; Herjaza coordinates"
+  },
+  {
+   "index": 55,
+   "title": "Arrival at Valkyrie (radio only)",
+   "summary": "Meet Alice on Valkyrie. System 23 visible, own ship back"
+  },
+  {
+   "index": 56,
+   "title": "Turret test with pirate escort (player in Vossk ship 39)",
+   "summary": "Test the turret on loaner 39 S'Kanarr (orbit 102)"
+  },
+  {
+   "index": 57,
+   "title": "",
+   "summary": "Report · 150 000; Liberator talk"
+  },
+  {
+   "index": 58,
+   "title": "",
+   "summary": "Build 10 Liberators (179) from the blueprint, bring them. Own ship back"
+  },
+  {
+   "index": 59,
+   "title": "",
+   "summary": "Destroy the rival freighters at 56 Suttnar, 45 Öhna, 22 Dekato (bonus per Liberator kill)"
+  },
+  {
+   "index": 60,
+   "title": "",
+   "summary": "Report · 50 000 + 50 000·v (v = statusValue of step 59)"
+  },
+  {
+   "index": 61,
+   "title": "",
+   "summary": "10 s in space: Carla's call"
+  },
+  {
+   "index": 62,
+   "title": "Arrival at Kothar (radio only)",
+   "summary": "Visit Carla at Kothar. System 22 visible"
+  },
+  {
+   "index": 63,
+   "title": "Pirate nest at Coromesk",
+   "summary": "Find kidnapped Khador: beat the pirates at Coromesk. System 24 visible"
+  },
+  {
+   "index": 64,
+   "title": "Rescue Khador from his pirate escort (Nosdron)",
+   "summary": "Free Khador at Nosdron"
+  },
+  {
+   "index": 65,
+   "title": "Escort Khador to Kothar",
+   "summary": "Bring Khador back to Kothar"
+  },
+  {
+   "index": 66,
+   "title": "",
+   "summary": "Back to Alice; Cornelius, mines"
+  },
+  {
+   "index": 67,
+   "title": "Corny's break-in at the Nosdron pirate outpost",
+   "summary": "Cover Cornelius vs the Skavac pirates (mines 60/61/62 in stock)"
+  },
+  {
+   "index": 68,
+   "title": "",
+   "summary": "Bring a Void Essence (175, drilled in Void space) to Netor"
+  },
+  {
+   "index": 69,
+   "title": "Trot Lykkt leaves Inari Onu",
+   "summary": "Hunt Trot Lykkt (Disruptor thief) at Inari Onu orbit"
+  },
+  {
+   "index": 70,
+   "title": "stop Trot Lykkt before the jump gate",
+   "summary": "… at Lopat"
+  },
+  {
+   "index": 71,
+   "title": "",
+   "summary": "Report to Netor"
+  },
+  {
+   "index": 72,
+   "title": "",
+   "summary": "Alice's call in space · 150 000 (mission reward). Disruptor Laser blueprint, +1 Void Essence"
+  },
+  {
+   "index": 73,
+   "title": "EMP the weapons convoy (at Teres)",
+   "summary": "Intercept the \"weapons\" convoy"
+  },
+  {
+   "index": 74,
+   "title": "",
+   "summary": "Escort it to Kothar"
+  },
+  {
+   "index": 75,
+   "title": "",
+   "summary": "Carla: Alice is her sister (station reload)"
+  },
+  {
+   "index": 76,
+   "title": "",
+   "summary": "Khador's warning (station reload)"
+  },
+  {
+   "index": 77,
+   "title": "",
+   "summary": "Confront Alice: imprisoned (jump drive unsaleable, no autosave)"
+  },
+  {
+   "index": 78,
+   "title": "escape from the Valkyrie battlestation",
+   "summary": "Escape Valkyrie (auto-launch; jump drive removed)"
+  },
+  {
+   "index": 79,
+   "title": "misjump into the alien orbit",
+   "summary": "Escape continues (level-driven)"
+  },
+  {
+   "index": 80,
+   "title": "defend Kothar (deep science) against Alice's battlestation",
+   "summary": "Defend Kothar against Alice"
+  },
+  {
+   "index": 81,
+   "title": "Alice stranded in the alien orbit (cutscene)",
+   "summary": "Chase Alice (level-driven, uncertain where)"
+  },
+  {
+   "index": 82,
+   "title": "",
+   "summary": "Aftermath with Carla"
+  },
+  {
+   "index": 83,
+   "title": "",
+   "summary": "Khador gives the Cronus; station reload → 84: dealer adds Typhon + Nemesis, +1 S'kloptorr Rum"
+  },
+  {
+   "index": 84,
+   "title": "",
+   "summary": "Free play (dlc1Won); jump drive saleable, +1 Khador Drive"
+  },
+  {
+   "index": 85,
+   "title": "",
+   "summary": "Carla's call (add-on entry); transient"
+  },
+  {
+   "index": 86,
+   "title": "",
+   "summary": "Pick Carla up at Kothar"
+  },
+  {
+   "index": 87,
+   "title": "flight to Thynome with Carla (radio chat)",
+   "summary": "Fly her to Thynome (orbit 10)"
+  },
+  {
+   "index": 88,
+   "title": "",
+   "summary": "\"A few months later…\""
+  },
+  {
+   "index": 89,
+   "title": "Ginoya supernova intro (cutscene, \"Meanwhile in Midorian space\")",
+   "summary": "Auto-launch: the Ginoya supernova (orbit 109). 10 Luxury removed, systems 27/28 visible"
+  },
+  {
+   "index": 90,
+   "title": "",
+   "summary": "Gunant's distress call: bring passenger cabins. Naneroh un-visited"
+  },
+  {
+   "index": 91,
+   "title": "Valpatro: rescue 10 survivors from the damaged freighter",
+   "summary": "Evacuate 10 miners (cabins gate 3214)"
+  },
+  {
+   "index": 92,
+   "title": "Tadram: hand the evacuees to the freighter, first stealth fighter attack",
+   "summary": "Drop them at the transporter"
+  },
+  {
+   "index": 93,
+   "title": "",
+   "summary": "Meet Bargand Surr (story radio flag)"
+  },
+  {
+   "index": 94,
+   "title": "Luur: evacuate the burning station",
+   "summary": "Evacuate Luur (+Gamma Shield I; cabins gate)"
+  },
+  {
+   "index": 95,
+   "title": "\"Meanwhile, back on Thynome station...\" (cinematic, type 0xaa)",
+   "summary": "Cinematic: Carla, Moonsprocket, Lampeter, Khador"
+  },
+  {
+   "index": 96,
+   "title": "",
+   "summary": "Brent at Alioth"
+  },
+  {
+   "index": 97,
+   "title": "Genoh: pirate attack on the Nivelians",
+   "summary": "Pirates at Genoh"
+  },
+  {
+   "index": 98,
+   "title": "",
+   "summary": "Meet Trunt Harval. System 29 visible"
+  },
+  {
+   "index": 99,
+   "title": "\"Meanwhile back on Thynome station...\" (cinematic, type 0xaa)",
+   "summary": "Cinematic (auto-launch): Moonsprocket and Carla"
+  },
+  {
+   "index": 100,
+   "title": "Alioth: stealth fighters ambush",
+   "summary": "Alioth orbit event"
+  },
+  {
+   "index": 101,
+   "title": "",
+   "summary": "Report to Brent (+repair beam next)"
+  },
+  {
+   "index": 102,
+   "title": "Tadram: protect the dropships during the carrier evacuation",
+   "summary": "Protect the dropships at Tadram (+207 repair beam)"
+  },
+  {
+   "index": 103,
+   "title": "",
+   "summary": "Thynome: reversal plan"
+  },
+  {
+   "index": 104,
+   "title": "",
+   "summary": "Build Gamma Shield II (206) from the blueprint and bring it"
+  },
+  {
+   "index": 105,
+   "title": "Naneroh supernova orbit: fire the reverse-matter bomb into the supernova",
+   "summary": "Fire Khador's missile into the supernova (Gamma Shield II gate 3217)"
+  },
+  {
+   "index": 106,
+   "title": "Luur aftermath: the supernova grew; a damaged stealth fighter",
+   "summary": "Check Luur"
+  },
+  {
+   "index": 107,
+   "title": "",
+   "summary": "Follow the stealth fighter (no case 106: level-driven, uncertain)"
+  },
+  {
+   "index": 108,
+   "title": "",
+   "summary": "Back to Thynome"
+  },
+  {
+   "index": 109,
+   "title": "\"Meanwhile in the Midorian sector...\" (cinematic, type 0xaa)",
+   "summary": "Cinematic (auto-launch): Bargand and Brent"
+  },
+  {
+   "index": 110,
+   "title": "",
+   "summary": "Thynome lounge: barkeeper"
+  },
+  {
+   "index": 111,
+   "title": "",
+   "summary": "Nepis lounge: drunk lady (story radio flag)"
+  },
+  {
+   "index": 112,
+   "title": "",
+   "summary": "Bring her a Magnetar Juice (146)"
+  },
+  {
+   "index": 113,
+   "title": "",
+   "summary": "Plural Z lounge"
+  },
+  {
+   "index": 114,
+   "title": "Marktesh: the loan sharks",
+   "summary": "Loan sharks at Marktesh"
+  },
+  {
+   "index": 115,
+   "title": "",
+   "summary": "Back to Plural Z"
+  },
+  {
+   "index": 116,
+   "title": "",
+   "summary": "Search the Pescal Inartu lounges (90-94; flavour 2716-2719)"
+  },
+  {
+   "index": 117,
+   "title": "",
+   "summary": "Go to Bak S'ondorr. System 30 visible"
+  },
+  {
+   "index": 118,
+   "title": "",
+   "summary": "Buy K'mirkk Toad Mutagen (209) there"
+  },
+  {
+   "index": 119,
+   "title": "",
+   "summary": "Cinematic (auto-launch): Carla and Khador"
+  },
+  {
+   "index": 120,
+   "title": "Valadon: Specter ambush",
+   "summary": "Careful transport leg (level, uncertain)"
+  },
+  {
+   "index": 121,
+   "title": "",
+   "summary": "Deliver the mutagen to Moonsprocket"
+  },
+  {
+   "index": 122,
+   "title": "",
+   "summary": "Bring Moonsprocket to Thynome"
+  },
+  {
+   "index": 123,
+   "title": "Navan: security check",
+   "summary": "Nivelian vaults at Növan"
+  },
+  {
+   "index": 124,
+   "title": "",
+   "summary": "Dock at Növan"
+  },
+  {
+   "index": 125,
+   "title": "Kappa: the freighter's black box",
+   "summary": "Search the prism freighter's route (black box)"
+  },
+  {
+   "index": 126,
+   "title": "",
+   "summary": "Cinematic: Trunt Harval"
+  },
+  {
+   "index": 127,
+   "title": "",
+   "summary": "First prism to Brent"
+  },
+  {
+   "index": 128,
+   "title": "",
+   "summary": "Hunt Pal Tyyrt on the wanted boards (activateNewWanted)"
+  },
+  {
+   "index": 129,
+   "title": "",
+   "summary": ""
+  },
+  {
+   "index": 130,
+   "title": "",
+   "summary": "Hunt Kehnor (129 skipped)"
+  },
+  {
+   "index": 131,
+   "title": "Var Lupra: plasma array fly-by",
+   "summary": "Deliver the second prism (orbit 112)"
+  },
+  {
+   "index": 132,
+   "title": "",
+   "summary": "Dock at Var Lupra"
+  },
+  {
+   "index": 133,
+   "title": "",
+   "summary": "Cinematic (auto-launch): Trunt"
+  },
+  {
+   "index": 134,
+   "title": "",
+   "summary": "Mining operation at Dekato"
+  },
+  {
+   "index": 135,
+   "title": "Coromesk: titanium for the mining plant",
+   "summary": "Mine 140 t Titanium (155) at Coromesk (drill gate 3213)"
+  },
+  {
+   "index": 136,
+   "title": "",
+   "summary": "Third prism to Var Lupra"
+  },
+  {
+   "index": 137,
+   "title": "B'akrram: Vossk hail",
+   "summary": "B'akrram orbit"
+  },
+  {
+   "index": 138,
+   "title": "",
+   "summary": "Mekant at B'akrram"
+  },
+  {
+   "index": 139,
+   "title": "Bra'Murr: two Vossk battleships",
+   "summary": "Hack the cargo bay (Vossk ship + signature gate 3215). System 31 visible"
+  },
+  {
+   "index": 140,
+   "title": "",
+   "summary": "Last prism to Var Lupra"
+  },
+  {
+   "index": 141,
+   "title": "",
+   "summary": "Gunant at Var Hastra. Chromo Plasma blueprint"
+  },
+  {
+   "index": 142,
+   "title": "Kernstal: plasma gathering with Gunant",
+   "summary": "Plasma tutorial at Kernstal (+15 ionizing missiles, filter, collector; gate 3216/3218)"
+  },
+  {
+   "index": 143,
+   "title": "",
+   "summary": "Bring Chromo Plasma (210) (story radio flag)"
+  },
+  {
+   "index": 144,
+   "title": "Var Lupra: Harval's ultimatum (cutscene)",
+   "summary": "Array firing cinematic (LevelScript case 0x90 → 145)"
+  },
+  {
+   "index": 145,
+   "title": "Var Lupra: the plasma array is destroyed",
+   "summary": "Trunt attacks the array"
+  },
+  {
+   "index": 146,
+   "title": "",
+   "summary": "Array destroyed: regroup"
+  },
+  {
+   "index": 147,
+   "title": "the Void: hail Alice",
+   "summary": "Void space: Alice and Valkyrie"
+  },
+  {
+   "index": 148,
+   "title": "",
+   "summary": "Find a real-estate broker (flavour at 55/66/9 = dialogues 148/149/150)"
+  },
+  {
+   "index": 149,
+   "title": "",
+   "summary": ""
+  },
+  {
+   "index": 150,
+   "title": "",
+   "summary": ""
+  },
+  {
+   "index": 151,
+   "title": "",
+   "summary": "Broker found at Kalun Amir"
+  },
+  {
+   "index": 152,
+   "title": "",
+   "summary": "Back to Alice"
+  },
+  {
+   "index": 153,
+   "title": "",
+   "summary": "Energy cells from Brent"
+  },
+  {
+   "index": 154,
+   "title": "the Void: Alice's betrayal",
+   "summary": "The deal in Void space"
+  },
+  {
+   "index": 155,
+   "title": "",
+   "summary": "Call after launch"
+  },
+  {
+   "index": 156,
+   "title": "",
+   "summary": "Hand Alice over"
+  },
+  {
+   "index": 157,
+   "title": "Var Lupra: the final battle",
+   "summary": "Defend Var Lupra"
+  },
+  {
+   "index": 158,
+   "title": "Luur: duel with Trunt Harval",
+   "summary": "Take Trunt Harval down at Luur"
+  },
+  {
+   "index": 159,
+   "title": "",
+   "summary": "Celebration at Thynome"
+  },
+  {
+   "index": 160,
+   "title": "",
+   "summary": "Cinematic: Carla finds Keith's letter"
+  },
+  {
+   "index": 161,
+   "title": "",
+   "summary": "Cinematic: the bar at Maissa"
+  },
+  {
+   "index": 162,
+   "title": "",
+   "summary": "End (hint 613 \"wanted boards unlocked\" once)"
+  }
+ ]
+}

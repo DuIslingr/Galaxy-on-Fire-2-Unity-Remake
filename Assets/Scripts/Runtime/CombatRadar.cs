@@ -78,6 +78,7 @@ namespace GoF2Remake.Flight
             var scanner = Shop.FirstMounted(db, 17);
             HasScanner = scanner != null;
             lockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;
+            lockTimeMs = Cheats.LockMs(lockTimeMs);
             cargoScan = scanner != null && scanner.Attr(31) == 1;
             var tractor = Shop.FirstMounted(db, 13);
             if (tractor != null) { tractorItem = tractor.index; tractorLockMs = tractor.Attr(24); tractorMode = tractor.Attr(23); }

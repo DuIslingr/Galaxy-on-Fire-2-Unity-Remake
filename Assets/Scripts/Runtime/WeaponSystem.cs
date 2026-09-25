@@ -247,7 +247,7 @@ namespace GoF2Remake.Flight
                     SentryGun.Deploy(db, r.gun.itemIndex, r.gun.bullets[b].position, transform.rotation, FindAnyObjectByType<World.Traffic>());
                     r.gun.bullets[b].timer = -1e9f;
                 }
-                r.stack.amount--;
+                if (!Cheats.InfiniteAmmo) r.stack.amount--;
                 PlayShot(r);
                 r.visuals.OnShot();
                 AfterShot();
@@ -385,7 +385,9 @@ namespace GoF2Remake.Flight
             bool missile = r.gun.isSecondary;
             bool wasAlive = target.Alive;
             target.lastPlayerWeapon = r.gun.itemIndex;
-            target.Damage(missile && target.isAsteroid ? 9999f : r.gun.damage, false, r.gun.bullets[bullet].velocity);
+            float damage = missile && target.isAsteroid ? 9999f : r.gun.damage;
+            if (Cheats.OneHitKills && !target.isPlayer) damage = 99999999f;
+            target.Damage(damage, false, r.gun.bullets[bullet].velocity);
             if (wasAlive && !target.Alive && target.isAsteroid) { Session.AsteroidsDestroyed++; CountAsteroidMedals(r.gun); }   // Status+0xd8
             ApplyEmp(target, (int)r.gun.emp);
             r.visuals.ShowImpact(point);
@@ -407,6 +409,7 @@ namespace GoF2Remake.Flight
         {
             bool wasAlive = target.Alive;
             target.lastPlayerWeapon = r.gun.itemIndex;
+            if (Cheats.OneHitKills && !target.isPlayer && dmg > 0) dmg = 99999999;
             if (dmg > 0) target.Damage(dmg, false, (target.transform.position - center).normalized);
             if (wasAlive && !target.Alive && target.isAsteroid)
             {

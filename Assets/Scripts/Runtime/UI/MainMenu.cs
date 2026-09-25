@@ -94,6 +94,8 @@ namespace GoF2Remake.UI
             panelRenderer = GetComponent<PanelRenderer>();
             if (!started) touchMode = Application.isMobilePlatform;
             Settings.Changed += ApplySettings;
+            InputMode.Changed -= UpdatePressAnyKey;
+            InputMode.Changed += UpdatePressAnyKey;
             // PanelRenderer hands out the UI root when it (re)loads the UXML, including live reloads.
             // Register first: assigning the panel settings below reloads the UI.
             panelRenderer.RegisterUIReloadCallback(OnUIReload);
@@ -164,6 +166,7 @@ namespace GoF2Remake.UI
             Bind("cardGof2", () => PickCampaign(Campaign.GalaxyOnFire2));
             Bind("cardValkyrie", () => PickCampaign(Campaign.Valkyrie));
             Bind("cardSupernova", () => PickCampaign(Campaign.Supernova));
+            BuildAdminPanel();
             Bind("normalButton", () => StartGame(Session.DifficultyNormal));
             Bind("extremeButton", () => ShowDialog(Localization.Get(25), Localization.Get(26),
                 () => StartGame(Session.DifficultyExtreme)));
@@ -230,6 +233,15 @@ namespace GoF2Remake.UI
         void Update()
         {
             if (root == null) return;
+            // Remake: the admin panel (F10, LB + RB held for a second, or five taps on the version text).
+            if (screen == MenuState.Menu && Keyboard.current != null && Keyboard.current.f10Key.wasPressedThisFrame) OpenAdmin();
+            var pad = Gamepad.current;
+            if (screen == MenuState.Menu && pad != null && pad.leftShoulder.isPressed && pad.rightShoulder.isPressed)
+            {
+                adminHoldTime += Time.unscaledDeltaTime;
+                if (adminHoldTime >= 1f && adminHoldTime - Time.unscaledDeltaTime < 1f) OpenAdmin();
+            }
+            else adminHoldTime = 0f;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
         }
 
@@ -282,7 +294,21 @@ namespace GoF2Remake.UI
         {
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             Settings.Changed -= ApplySettings;
+            InputMode.Changed -= UpdatePressAnyKey;
             anyKey?.Dispose();
+        }
+
+        /// <summary>The title prompt follows the input scheme: any key on the keyboard, any button on a controller, a tap
+        /// on touch.</summary>
+        void UpdatePressAnyKey()
+        {
+            if (pressAnyKey == null) return;
+            pressAnyKey.text = InputMode.Current switch
+            {
+                InputKind.Gamepad => Localization.Extra("pressAnyButton", "PRESS ANY BUTTON"),
+                InputKind.Touch => Localization.Extra("tapToStart", "TAP TO START"),
+                _ => Localization.Extra("pressAnyKey", "PRESS ANY KEY"),
+            };
         }
 
         Button Bind(string name, Action onClick)
@@ -468,13 +494,13 @@ namespace GoF2Remake.UI
             if (dialog.ClassListContains("dialog-backdrop--shown")) { CloseDialog(); return; }
             if (openPanel == null) return;
             Play(buttonRelease);
-            if (openPanel == panels["difficultyPanel"]) { OpenPanel("campaignPanel"); return; }
+            if (openPanel == panels["difficultyPanel"]) { OpenPanel(pendingStartIndex >= 0 && panels.ContainsKey("adminPanel") ? "adminPanel" : "campaignPanel"); return; }
             var closing = openPanel;
             HidePanel(closing);
             openPanel = null;
             mainColumn.RemoveFromClassList("main-column--dimmed");
             SetFocusable(mainButtons, true);
-            var target = closing == panels["campaignPanel"] ? newGameButton
+            var target = closing == panels["campaignPanel"] || panels.TryGetValue("adminPanel", out var ap) && closing == ap ? newGameButton
                 : closing == panels["loadPanel"] ? loadButton
                 : closing == panels["optionsPanel"] ? optionsButton : aboutButton;
             Select(target);
@@ -483,6 +509,7 @@ namespace GoF2Remake.UI
         void PickCampaign(Campaign c)
         {
             pendingCampaign = c;
+            pendingStartIndex = -1;
             OpenPanel("difficultyPanel");
         }
 
@@ -491,8 +518,229 @@ namespace GoF2Remake.UI
             Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
             Session.Campaign = pendingCampaign;
             Session.Difficulty = difficulty;
+            var db = Database.Load();
+            // Remake: the mission select starts a new game at the chosen story step (Story.StartAtMission).
+            if (pendingStartIndex >= 0) { StartCoroutine(Leave(Story.StartAtMission(db, pendingStartIndex))); return; }
             // MenuTouchWindow::startGOF2 / startValkyrie / startSupernova: the story's first step (Story).
-            StartCoroutine(Leave(Story.StartCampaign(Database.Load(), pendingCampaign)));
+            StartCoroutine(Leave(Story.StartCampaign(db, pendingCampaign)));
+        }
+
+        // ---- admin panel (remake-only testing tools: F10 or five taps on the version text) -------
+
+        int pendingStartIndex = -1;
+        ScrollView missionList;
+        TextField missionFilter;
+        /// <summary>The list's rows with their search text, and each campaign heading with its rows.</summary>
+        readonly List<(VisualElement row, string text)> missionRows = new List<(VisualElement, string)>();
+        readonly List<(VisualElement heading, List<VisualElement> rows)> missionSections = new List<(VisualElement, List<VisualElement>)>();
+        int versionTaps;
+        float versionTapTime, adminHoldTime;
+        readonly List<OptionControl> adminControls = new List<OptionControl>();
+
+        /// <summary>A hidden panel next to the others: the mission list (a new game from any story step, no intro) on the
+        /// left, the cheat toggles on the right.</summary>
+        void BuildAdminPanel()
+        {
+            // A UI reload (PanelRenderer) rebuilds the tree: drop the old panel's elements.
+            adminControls.Clear();
+            missionRows.Clear();
+            missionSections.Clear();
+            var host = root.Q("panelHost");
+            if (host == null) return;
+            var panel = new VisualElement { name = "adminPanel" };
+            panel.AddToClassList("panel");
+            panel.AddToClassList("panel--wide");
+            panel.AddToClassList("admin-panel");
+            panel.usageHints = UsageHints.DynamicTransform;
+            var title = new Label { name = "adminTitle" };
+            title.AddToClassList("panel-title");
+            title.AddToClassList("gof-semibold");
+            panel.Add(title);
+            var accent = new VisualElement();
+            accent.AddToClassList("panel-accent");
+            panel.Add(accent);
+            var columns = new VisualElement();
+            columns.AddToClassList("admin-columns");
+            var left = new VisualElement();
+            left.AddToClassList("admin-column");
+            left.AddToClassList("admin-column--missions");
+            var right = new VisualElement();
+            right.AddToClassList("admin-column");
+            right.AddToClassList("admin-column--cheats");
+            columns.Add(left);
+            columns.Add(right);
+            panel.Add(columns);
+            var back = new Button { name = "adminBack" };
+            back.AddToClassList("menu-button");
+            back.AddToClassList("back-button");
+            back.AddToClassList("gof-semibold");
+            back.clicked += Back;
+            HookFocusSound(back);
+            panel.Add(back);
+            host.Add(panel);
+            panels["adminPanel"] = panel;
+            BuildMissionList(left);
+
+            // The cheat toggles (Cheats; the actions are on the pause menu's / station's Admin page, in a running game).
+            var heading = new Label { name = "adminCheatsTitle", pickingMode = PickingMode.Ignore };
+            heading.AddToClassList("admin-heading");
+            heading.AddToClassList("gof-semibold");
+            right.Add(heading);
+            foreach (var def in CheatsCatalog.Toggles())
+            {
+                var c = new OptionControl(def);
+                c.Field.AddToClassList("option-row");
+                c.Root.AddToClassList("admin-option");
+                HookFocusSound(c.Field);
+                c.Changed += () => Play(buttonRelease);
+                right.Add(c.Root);
+                adminControls.Add(c);
+            }
+            var note = new Label { name = "adminNote", pickingMode = PickingMode.Ignore };
+            note.AddToClassList("admin-note");
+            right.Add(note);
+
+            // Touch: five taps on the version text within 2 s.
+            if (versionLabel != null)
+            {
+                versionLabel.pickingMode = PickingMode.Position;
+                versionLabel.RegisterCallback<PointerDownEvent>(_ =>
+                {
+                    if (Time.unscaledTime - versionTapTime > 2f) versionTaps = 0;
+                    versionTapTime = Time.unscaledTime;
+                    if (++versionTaps >= 5) { versionTaps = 0; OpenAdmin(); }
+                });
+            }
+        }
+
+        void OpenAdmin()
+        {
+            if (!panels.ContainsKey("adminPanel") || openPanel == panels["adminPanel"]) return;
+            if (dialog.ClassListContains("dialog-backdrop--shown")) return;
+            Play(buttonRelease);
+            Cheats.Unlocked = true;   // from now on the pause menu and the station's system menu have an Admin page
+            foreach (var c in adminControls) c.Refresh();
+            OpenPanel("adminPanel");
+        }
+
+        /// <summary>A search field and every story step, grouped by campaign: "index  title  station" over a one-line
+        /// summary (StepSummaries, from the research notes). A row starts that step (the difficulty panel first).</summary>
+        void BuildMissionList(VisualElement parent)
+        {
+            var heading = new Label { name = "adminMissionsTitle", pickingMode = PickingMode.Ignore };
+            heading.AddToClassList("admin-heading");
+            heading.AddToClassList("gof-semibold");
+            parent.Add(heading);
+            missionFilter = new TextField { name = "adminFilter" };
+            missionFilter.AddToClassList("admin-filter");
+            missionFilter.textEdition.hidePlaceholderOnFocus = true;
+            missionFilter.RegisterValueChangedCallback(e => FilterMissions(e.newValue));
+            parent.Add(missionFilter);
+            missionList = new ScrollView(ScrollViewMode.Vertical)
+            {
+                horizontalScrollerVisibility = ScrollerVisibility.Hidden,
+                verticalScrollerVisibility = ScrollerVisibility.Hidden,
+            };
+            missionList.AddToClassList("admin-mission-list");
+            new DragScroll(missionList);
+            parent.Add(missionList);
+
+            var db = Database.Load();
+            Campaign? section = null;
+            List<VisualElement> sectionRows = null;
+            for (int i = 0; i <= Story.LastIndex; i++)
+            {
+                if (i == 53 || i == 129) continue;   // nextCampaignMission skips them (52 -> 54, 128 -> 130)
+                var campaign = CampaignOf(i);
+                if (section != campaign)
+                {
+                    section = campaign;
+                    var h = new Label(campaign switch
+                    {
+                        Campaign.Valkyrie => "VALKYRIE  ·  45-83",
+                        Campaign.Supernova => "SUPERNOVA  ·  84-162",
+                        _ => "GALAXY ON FIRE 2  ·  0-44",
+                    }) { pickingMode = PickingMode.Ignore };
+                    h.AddToClassList("admin-mission-section");
+                    h.AddToClassList("gof-semibold");
+                    missionList.Add(h);
+                    sectionRows = new List<VisualElement>();
+                    missionSections.Add((h, sectionRows));
+                }
+                var step = StoryTable.Step(i);
+                var info = StepSummaries.Get(i);
+                string station = step == null ? "" : step.station >= 0 ? db.Stations.Find(s => s.index == step.station)?.name ?? ""
+                               : step.station == Session.VoidOrbit ? "Void" : "";
+                // A step with an in-space level: its name over the summary; else the summary is the title (the objective
+                // texts repeat, e.g. the whole tutorial is "I'm on my way to Var Hastra.").
+                string summary = info?.summary ?? "";
+                string name;
+                if (!string.IsNullOrEmpty(info?.title)) name = char.ToUpperInvariant(info.title[0]) + info.title.Substring(1);
+                else { name = !string.IsNullOrEmpty(summary) ? summary : Story.StepLabel(db, i); summary = ""; }
+                if (string.IsNullOrEmpty(name)) name = station;
+
+                var row = new Button();
+                row.AddToClassList("admin-mission");
+                var top = new VisualElement { pickingMode = PickingMode.Ignore };
+                top.AddToClassList("admin-mission-top");
+                var num = new Label(i.ToString()) { pickingMode = PickingMode.Ignore };
+                num.AddToClassList("admin-mission-index");
+                num.AddToClassList("gof-semibold");
+                top.Add(num);
+                var label = new Label(name) { pickingMode = PickingMode.Ignore };
+                label.AddToClassList("admin-mission-title");
+                label.AddToClassList("gof-semibold");
+                top.Add(label);
+                if (!string.IsNullOrEmpty(station) && station != name)
+                {
+                    var where = new Label(station) { pickingMode = PickingMode.Ignore };
+                    where.AddToClassList("admin-mission-station");
+                    top.Add(where);
+                }
+                row.Add(top);
+                if (!string.IsNullOrEmpty(summary))
+                {
+                    var sum = new Label(summary) { pickingMode = PickingMode.Ignore };
+                    sum.AddToClassList("admin-mission-summary");
+                    row.Add(sum);
+                }
+                int index = i;
+                row.clicked += () => { Play(buttonRelease); StartAtStep(index); };
+                HookFocusSound(row);
+                missionList.Add(row);
+                missionRows.Add((row, $"{i} {name} {station} {summary}".ToLowerInvariant()));
+                sectionRows.Add(row);
+            }
+        }
+
+        static Campaign CampaignOf(int index) =>
+            index >= Story.Dlc1WonIndex ? Campaign.Supernova : index >= Story.GameWonIndex ? Campaign.Valkyrie : Campaign.GalaxyOnFire2;
+
+        void StartAtStep(int index)
+        {
+            pendingStartIndex = index;
+            pendingCampaign = CampaignOf(index);
+            OpenPanel("difficultyPanel");
+        }
+
+        /// <summary>Rows whose index, title, station or summary contain every word typed (a number matches the index
+        /// exactly); a campaign heading hides with all its rows.</summary>
+        void FilterMissions(string query)
+        {
+            var words = (query ?? "").ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var (row, text) in missionRows)
+            {
+                bool match = true;
+                foreach (var w in words)
+                {
+                    if (int.TryParse(w, out _)) { if (!text.StartsWith(w + " ")) { match = false; break; } }
+                    else if (!text.Contains(w)) { match = false; break; }
+                }
+                row.style.display = match ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+            foreach (var (heading, rows) in missionSections)
+                heading.style.display = rows.Exists(r => r.style.display != DisplayStyle.None) ? DisplayStyle.Flex : DisplayStyle.None;
+            missionList.scrollOffset = Vector2.zero;
         }
 
         /// <summary>GameRecord::load: the saved (docked) state, then the station.</summary>
@@ -652,6 +900,13 @@ namespace GoF2Remake.UI
             foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack" }) Set(n, "‹  " + T(170));
 
             Set("campaignTitle", T(103));
+            Set("adminTitle", Localization.Extra("adminTitle", "Admin").ToUpperInvariant());
+            Set("adminBack", "‹  " + T(170));
+            Set("adminCheatsTitle", Localization.Extra("adminCheats", "Cheats").ToUpperInvariant());
+            Set("adminNote", Localization.Extra("adminNote", "Credits, repair, ammo, energy cells, the map and standing: the Admin page of the pause menu (in flight) and of the station's menu."));
+            foreach (var c in adminControls) c.Refresh();
+            Set("adminMissionsTitle", Localization.Extra("missionSelect", "Start at mission").ToUpperInvariant());
+            if (missionFilter != null) missionFilter.textEdition.placeholder = Localization.Extra("missionSearch", "Search: a step number, a station, a word...");
             Set("difficultyTitle", T(517));
             Set("normalLabel", T(519));
             Set("normalDesc", Localization.Extra("normalDesc", "The classic Galaxy on Fire 2 experience."));
@@ -673,7 +928,7 @@ namespace GoF2Remake.UI
             foreach (var b in root.Q("languageList").Query<Button>().ToList())
                 b.EnableInClassList("language-button--active", b.name == "lang_" + Localization.Language);
 
-            pressAnyKey.text = Localization.Extra("pressAnyKey", "PRESS ANY KEY");
+            UpdatePressAnyKey();
             versionLabel.text = versionText;
             hintLabel.text = Localization.Extra("hint", "↑ ↓  NAVIGATE     ENTER  SELECT     ESC  " + T(170));
             root.Q<Label>("aboutText").text = $"{versionText}\n\n{Localization.Get(45).TrimEnd()}\n\n{Localization.Get(48)}";

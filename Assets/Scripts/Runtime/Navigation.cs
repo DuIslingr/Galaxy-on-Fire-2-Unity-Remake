@@ -235,7 +235,7 @@ namespace GoF2Remake.Flight
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
             var scanner = Shop.FirstMounted(database, 17);
-            LockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;
+            LockTimeMs = Cheats.LockMs(scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000);
             gateRadiusUnits = layout.JumpgateRadius;
 
             // Level::getLandmarks: [0] station (none in empty orbits), [1] the visible jumpgate (gate orbit only).

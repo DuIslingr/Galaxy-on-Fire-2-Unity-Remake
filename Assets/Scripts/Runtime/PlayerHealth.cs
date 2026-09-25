@@ -241,9 +241,18 @@ namespace GoF2Remake.Flight
             }
         }
 
+        /// <summary>The Admin panel's repair: the gamma pool back to 100.</summary>
+        public void RefillGamma()
+        {
+            if (Gamma < 0f) return;
+            Gamma = 100f;
+            Session.PlayerGamma = Gamma;
+            gammaWarned = false;
+        }
+
         void UpdateGamma(float dtMs)
         {
-            if (Gamma < 0f || !Hp.vulnerable) return;
+            if (Gamma < 0f || !Hp.vulnerable || Cheats.GodMode) return;
             Gamma = Mathf.Max(0f, Gamma - dtMs * gammaRate / 1000f);
             Session.PlayerGamma = Gamma;
             if (!gammaWarned && Gamma < 15f) { gammaWarned = true; Message?.Invoke(Localization.Get(3201)); }
@@ -315,7 +324,7 @@ namespace GoF2Remake.Flight
         /// <summary>Player::setHitpoints(0) (MGame::OnUpdate: entering the wormhole too early): death at once, no emergency system.</summary>
         public void Kill()
         {
-            if (Dead) return;
+            if (Dead || Cheats.GodMode) return;
             hasEmergency = false;
             Hp.hull = 0;
             Target.hp = 0;

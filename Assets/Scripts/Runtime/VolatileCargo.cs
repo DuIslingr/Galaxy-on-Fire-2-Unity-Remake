@@ -69,7 +69,7 @@ namespace GoF2Remake.Flight
             lastStick = stick;
             if (ship.Model != null && ship.Model.IsBoosting) Force += dtMs * 0.001f * boostRate;
             Force = Mathf.Max(0f, Force - dtMs * 0.001f * 0.025f);   // Player::update: -0.025 per second
-            if (Force >= 1f && health != null && !health.invulnerable) { health.Kill(); return; }
+            if (Force >= 1f && health != null && !health.invulnerable && !Cheats.GodMode) { health.Kill(); return; }
 
             // The warning beeps (spawn intensity and pitch envelopes of event 35).
             float p = Mathf.Clamp01(Force);

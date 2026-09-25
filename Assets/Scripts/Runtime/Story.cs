@@ -123,6 +123,88 @@ namespace GoF2Remake.Data
             return "Station";
         }
 
+        /// <summary>ModStation::OnInitialize at index 1: Betty with Gunant's Drill (90) and a Telta Quickscan (81), both
+        /// unsaleable, fully repaired.</summary>
+        static void GiveBetty()
+        {
+            Session.ShipIndex = 0;
+            Session.Equipment = new List<ItemStack> { new ItemStack(90, 1), new ItemStack(81, 1) };
+            Session.Unsaleable.Add(90);
+            Session.Unsaleable.Add(81);
+            Session.PlayerHull = Session.PlayerArmor = -1;
+            Session.PlayerShield = -1f;
+        }
+
+        /// <summary>Remake-only (the main menu's mission select): a new game that starts at story step 'target'. The step's
+        /// campaign starts as usual (main game, Valkyrie from 45, Supernova from 84), then every step up to the target is run
+        /// through Advance (its side effects: items, ships, revealed systems...) and its reward credited; past the rescue the
+        /// Phantom becomes Betty, past step 6 the tutorial's free Nirai Impulse EX 1 and E2 Exoclad are mounted, past the
+        /// tutorial its hints count as shown. The start: the step's story orbit (with the launch camera; the Void as an
+        /// arrival), else docked where the previous step ended. Returns the scene to load.</summary>
+        public static string StartAtMission(Database db, int target)
+        {
+            target = Mathf.Clamp(target, 0, LastIndex);
+            var campaign = target >= Dlc1WonIndex ? Campaign.Supernova : target >= GameWonIndex ? Campaign.Valkyrie : Campaign.GalaxyOnFire2;
+            Session.Campaign = campaign;
+            string scene = StartCampaign(db, campaign);
+            if (Index >= target) return scene;
+            int lastStation = Session.StationIndex;
+            while (Index < target)
+            {
+                var m = Mission;
+                if (m != null && !m.IsEmpty)
+                {
+                    Session.Credits += Mathf.Max(0, m.reward);   // the success dialogue's reward
+                    if (m.station >= 0) lastStation = m.station;
+                }
+                Advance(db);
+                if (Index == 1 && target > 1) { GiveBetty(); Advance(db); }   // docking after the rescue
+                if (Index > target) break;   // 52 / 128 skip a step
+            }
+            if (campaign == Campaign.GalaxyOnFire2 && Index > 6)
+            {
+                // Step 6 buys and mounts a weapon and armor: the free tutorial gear of Var Hastra.
+                if (!Session.Equipment.Exists(e => db.Item(e.item)?.categoryId == 0)) Session.Equipment.Add(new ItemStack(0, 1));
+                if (!Session.Equipment.Exists(e => db.Item(e.item)?.categoryId == 10)) Session.Equipment.Add(new ItemStack(55, 1));
+            }
+            if (campaign == Campaign.GalaxyOnFire2 && Index > 8)
+                foreach (int h in new[] { 0x17, 8, 9, 10, 0x1c, 0x15, 0xd, 0x13, 0xe, 0xf, 0x1d, 0x1e, 0x20, 0x21, 0x22, 0x23, 0x24, 0x38 })
+                    Session.Hints.Add(h);
+            Session.PlayerHull = Session.PlayerArmor = -1;
+            Session.PlayerShield = -1f;
+            Session.PreviousStationIndex = -1;
+
+            // Where the step plays: its story orbit (Status::departStation), the Void, or docked at the last station.
+            int orbit = Mission != null && Mission.type == StoryType.VoidInvasion ? Session.VoidInvasionStation : Mission != null ? Mission.station : -2;
+            if (Mission != null && !Mission.IsEmpty && orbit >= -1 && IsLevelMission(orbit))
+            {
+                Session.StationIndex = orbit;
+                bool alien = orbit == Session.VoidOrbit;
+                Session.LaunchedFromStation = !alien;
+                Session.ArrivedByTravel = alien;
+                return "Space";
+            }
+            Session.StationIndex = lastStation >= 0 ? lastStation : Session.StationIndex >= 0 ? Session.StationIndex : 78;
+            Session.LaunchedFromStation = Session.ArrivedByTravel = false;
+            return "Station";
+        }
+
+        /// <summary>The mission select's line for step 'index': its objective text (the target's name filled in), else the
+        /// step's mission type.</summary>
+        public static string StepLabel(Database db, int index)
+        {
+            var step = StoryTable.Step(index);
+            if (step == null) return "";
+            if (step.objectiveText >= 0)
+            {
+                var target = db.Stations.Find(s => s.index == step.station);
+                string t = Localization.Get(step.objectiveText).Replace("#", target?.name ?? "");
+                if (!string.IsNullOrEmpty(t)) return t;
+            }
+            var st = db.Stations.Find(s => s.index == step.station);
+            return st != null ? st.name : step.station == Session.VoidOrbit ? "Void" : "";
+        }
+
         /// <summary>startValkyrie / startSupernova: the main game's tutorial hints count as shown (8-0xf, 0x13, 0x15, 0x17,
         /// 0x1c-0x1e, 0x20-0x24, 0x38; Supernova also 0x26, 0x31, 0x39), medal 23 bronze and 30 (game won) gold.</summary>
         static void AddonStartHints(bool supernova)
@@ -506,15 +588,7 @@ namespace GoF2Remake.Data
             // ModStation::enterStation: the medal streaks of 38 Ore Athlete / 40 Blindfolded Killer end with the flight.
             Session.OreStreak = Session.BlindKills = 0;
             // Index 1: the prologue's Phantom becomes Betty with Gunant's Drill and a Telta Quickscan, both unsaleable.
-            if (Index == 1 && Session.ShipIndex != 0)
-            {
-                Session.ShipIndex = 0;
-                Session.Equipment = new List<ItemStack> { new ItemStack(90, 1), new ItemStack(81, 1) };
-                Session.Unsaleable.Add(90);
-                Session.Unsaleable.Add(81);
-                Session.PlayerHull = Session.PlayerArmor = -1;
-                Session.PlayerShield = -1f;
-            }
+            if (Index == 1 && Session.ShipIndex != 0) GiveBetty();
             // Index 20 at Kappa: EMP GL I (41) free and 10 more in stock.
             if (Index == 20 && station == 55 && stock != null)
             {

@@ -240,6 +240,145 @@
     font-size: 20px;
 }
 
+/* ---- admin panel (remake-only testing tools, F10 / five taps on the version text) ------- */
+
+.admin-panel {
+    max-width: 1400px;
+    max-height: 88%;
+}
+
+.admin-columns {
+    flex-direction: row;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.admin-column--missions {
+    width: 62%;
+    flex-shrink: 0;
+    margin-right: 3%;
+}
+
+.admin-column--cheats {
+    width: 35%;
+    flex-grow: 0;
+    flex-shrink: 0;
+    justify-content: flex-start;
+}
+
+.admin-column--cheats .option-item {
+    flex-grow: 0;
+    flex-shrink: 0;
+}
+
+.admin-column--cheats .unity-base-field__label {
+    white-space: nowrap;
+}
+
+.admin-heading {
+    margin-bottom: 8px;
+    font-size: 18px;
+    letter-spacing: 4px;
+    color: var(--gof-cyan);
+}
+
+.admin-filter {
+    margin: 0 0 10px 0;
+}
+
+.admin-filter .unity-base-text-field__input {
+    padding: 8px 12px;
+    font-size: 18px;
+    color: var(--gof-text);
+    background-color: rgba(0, 0, 0, 0.35);
+    border-width: 1px;
+    border-color: rgba(216, 236, 247, 0.2);
+    border-radius: 2px;
+}
+
+.admin-filter:focus .unity-base-text-field__input {
+    border-color: var(--gof-amber);
+}
+
+.admin-mission-list {
+    height: 540px;
+}
+
+.admin-mission-section {
+    margin: 12px 0 4px 0;
+    font-size: 15px;
+    letter-spacing: 3px;
+    color: var(--gof-amber);
+}
+
+.admin-mission {
+    flex-direction: column;
+    align-items: stretch;
+    margin: 0;
+    padding: 7px 12px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-left-width: 3px;
+    border-left-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    -unity-text-align: middle-left;
+}
+
+.admin-mission:focus,
+.can-hover .admin-mission:hover {
+    background-color: rgba(58, 170, 220, 0.14);
+    border-left-color: var(--gof-amber);
+}
+
+.admin-mission-top {
+    flex-direction: row;
+    align-items: center;
+}
+
+.admin-mission-index {
+    min-width: 46px;
+    font-size: 17px;
+    color: var(--gof-amber);
+}
+
+.admin-mission-title {
+    flex-shrink: 1;
+    font-size: 17px;
+    color: var(--gof-text);
+    white-space: normal;
+}
+
+.admin-mission-station {
+    margin-left: auto;
+    padding-left: 12px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 14px;
+    color: var(--gof-text-dim);
+}
+
+.admin-mission-summary {
+    margin-left: 46px;
+    font-size: 14px;
+    color: var(--gof-text-dim);
+    white-space: normal;
+}
+
+.admin-option .unity-base-field__label {
+    min-width: 290px;
+}
+
+.admin-note {
+    margin-top: 10px;
+    font-size: 15px;
+    color: var(--gof-text-dim);
+    white-space: normal;
+}
+
+.layout-phone .admin-mission-list {
+    height: 420px;
+}
+
 /* ---- campaign cards ----------------------------------------------------------------- */
 
 .card-row {

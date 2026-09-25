@@ -20,7 +20,7 @@ namespace GoF2Remake.UI
 {
     public class PauseMenu
     {
-        enum Page { Main, Missions, Cargo, Options, Quit, Photo, Choice }
+        enum Page { Main, Missions, Cargo, Options, Quit, Photo, Choice, Admin }
 
         readonly VisualElement backdrop, panel, body;
         readonly Label title;
@@ -127,6 +127,8 @@ namespace GoF2Remake.UI
                     if (cm >= 16 && (level == null || !level.Layout.alienOrbit)) Item(T(129), () => Show(Page.Missions));
                     if (cm >= 2) Item(T(166), () => Show(Page.Cargo));
                     Item(T(31), () => Show(Page.Options));
+                    // Remake: the Admin page once the main menu's Admin panel has been opened (Cheats).
+                    if (Cheats.Unlocked) Item(Localization.Extra("adminTitle", "Admin").ToUpperInvariant(), () => Show(Page.Admin));
                     var campaign = level != null ? level.Campaign : null;
                     if (campaign != null && campaign.CanSkipCutscene) Item(T(395), () => { Close(); campaign.SkipCutscene(); });
                     // MGame::setCinematicMode: not while a cutscene holds the camera.
@@ -166,6 +168,11 @@ namespace GoF2Remake.UI
                 case Page.Options:
                     title.text = T(31);
                     BuildOptions();
+                    Item("‹  " + T(170), () => Show(Page.Main));
+                    break;
+                case Page.Admin:
+                    title.text = Localization.Extra("adminTitle", "Admin").ToUpperInvariant();
+                    BuildAdmin();
                     Item("‹  " + T(170), () => Show(Page.Main));
                     break;
             }
@@ -270,6 +277,31 @@ namespace GoF2Remake.UI
                 optionRows[c.Root] = c;
             }
             Item(T(497), () => { Settings.ResetToDefaults(); foreach (var c in optionRows.Values) c.Refresh(); });
+        }
+
+        /// <summary>The Admin page (remake-only, CheatsCatalog): the toggles, then the actions; a line reports the last one.</summary>
+        void BuildAdmin()
+        {
+            optionRows.Clear();
+            var status = Text("", "pause-text");
+            Scroll();
+            void Add(List<OptionDef> defs, string heading)
+            {
+                Text(heading.ToUpperInvariant(), "pause-heading");
+                foreach (var def in defs)
+                {
+                    var c = new OptionControl(def);
+                    c.Field.focusable = false;
+                    c.Root.AddToClassList("pause-option");
+                    scroll.Add(c.Root);
+                    items.Add(c.Root);
+                    actions.Add(null);
+                    optionRows[c.Root] = c;
+                }
+            }
+            Add(CheatsCatalog.Toggles(), Localization.Extra("adminCheats", "Cheats"));
+            Add(CheatsCatalog.Actions(level != null ? level.Database : Database.Load(), s => status.text = s),
+                Localization.Extra("adminActions", "Actions"));
         }
 
         void Highlight()

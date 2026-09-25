@@ -533,8 +533,9 @@ namespace GoF2Remake.World
             if (hasScanner)
                 foreach (var s in Ships)
                     // Radar::draw 0x156xxx: only active ships (Player::isActive) count, so a ship held back by its level
-                    // script doesn't start the battle music or block fast-forward before it shows up.
-                    if (!s.Gone && !s.Inactive && s.Current != NpcShip.State.Dying && s.Current != NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer && !s.IsFreighter)
+                    // script doesn't start the battle music or block fast-forward before it shows up. A sleeping ship is
+                    // inactive too (KIPlayer::setToSleep -> Player::setActive(false)): index 7's ambush, sleeping guards.
+                    if (!s.Gone && !s.Inactive && !s.Asleep && s.Current != NpcShip.State.Dying && s.Current != NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer && !s.IsFreighter)
                         hostiles++;
             HostileCount = hostiles;
             UpdateMusic(Time.unscaledDeltaTime);
