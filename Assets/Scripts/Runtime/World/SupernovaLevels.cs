@@ -112,14 +112,29 @@ namespace GoF2Remake.World
         NpcShip Specter(Vector3 at, bool jitter, System.Action<SpawnSpec> setup = null) =>
             c.SpawnShip(Standing.Specter, 44, at, jitter, s => { s.alwaysEnemy = true; setup?.Invoke(s); });
 
-        /// <summary>Level::createStaticObject: a dockable (or plain) story object, friendly, unkillable, never moving.</summary>
+        /// <summary>Level::createStaticObject: a dockable (or plain) story object, friendly, unkillable, never moving; its
+        /// getBoundingVolume id (the player is pushed out of it, fighters steer around it).</summary>
         NpcShip Static(string assembly, Vector3 at, Vector3 rotation, int nameText, int dockingType, int points, System.Action<SpawnSpec> setup = null) =>
             c.SpawnShip(3, -1, at, false, s =>
             {
                 s.group = NpcGroup.Special; s.fixedObject = assembly; s.rotation = rotation; s.nameText = nameText; s.dockingType = dockingType;
                 s.spacePoints = points; s.alwaysFriend = true; s.hitpoints = 9999999; s.noLoot = true; s.stationary = true; s.hitRadius = 6000f;
+                s.collisionId = StaticVolume(assembly);
                 setup?.Invoke(s);
             });
+
+        /// <summary>Level::createStaticObject's getBoundingVolume ids by object: 0x495d the burning Luur platform -> collision.json
+        /// 111, 0x4220 Valkyrie 1003, 0x4961 the secure containers 2003, 0x4974 the carrier 2005, 0x4a6b the Vossk battleship
+        /// 2006; the wrecks (0x4299), the junk field (0x4962) and the freighters' own cargo_001 have none.</summary>
+        static int StaticVolume(string assembly) => assembly switch
+        {
+            "sn_burning_station_mission_object" => 111,
+            "v_station_battlestation_anim_mission_object" => 1003,
+            "sn_secure_container_nivelian" => 2003,
+            "sn_carrier_terran_1" => 2005,
+            "sn_battleship_vossk" => 2006,
+            _ => -1,
+        };
 
         GameObject Scenery(string assembly, Vector3 gamePos, Quaternion rot, string label)
         {
@@ -445,6 +460,7 @@ namespace GoF2Remake.World
                 var plant = Traffic.MiningPlant();
                 s.group = plant.group; s.fixedObject = plant.fixedObject; s.stationary = true; s.alwaysFriend = true; s.hitpoints = 9999999;
                 s.noLoot = true; s.nameText = plant.nameText; s.dockingType = plant.dockingType; s.spacePoints = plant.spacePoints; s.hitRadius = plant.hitRadius;
+                s.collisionId = plant.collisionId;
             });
             for (int i = 0; i < 2; i++) c.SpawnShip(Standing.Pirate, NpcTables.RandomFighter(Standing.Pirate), new Vector3(7000000, 7000000, 7000000), false, s => { s.alwaysEnemy = true; s.asleep = true; });
             // Every asteroid of the orbit is titanium (ore 155).

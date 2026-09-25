@@ -1098,6 +1098,31 @@ namespace GoF2Remake.World
             if (!IsFreighter) DropCrate();
         }
 
+        /// <summary>KIPlayer::cargoAvailable: something aboard to steal (the Hijacker's mission container drops by itself).</summary>
+        public bool HasCargo => Spec.missionCrate < 0 && loot.Exists(s => s.amount > 0);
+
+        /// <summary>KIPlayer::createCrate(0) for a living ship (TractorBeam::update's steal): a container of its cargo at the
+        /// ship; the capture takes from the ship's own list (StealFrom).</summary>
+        public Crate CreateStealCrate()
+        {
+            if (!HasCargo) return null;
+            var prefab = assets != null ? assets.Crate(Race) : null;
+            var go = prefab != null ? Instantiate(prefab, transform.position, Random.rotation) : new GameObject("Crate");
+            go.name = "Stolen cargo";
+            var c = go.AddComponent<Crate>();
+            c.Setup(loot, Race);
+            c.stolenFrom = this;
+            c.pulled = true;
+            return c;
+        }
+
+        /// <summary>KIPlayer::captureCrate on a living ship: 'amount' of 'item' leaves its hold.</summary>
+        public void StealFrom(int item, int amount)
+        {
+            var s = loot.Find(x => x.item == item && x.amount > 0);
+            if (s != null) s.amount = Mathf.Max(0, s.amount - amount);
+        }
+
         void DropCrate()
         {
             if (loot.Count == 0 || assets == null) return;

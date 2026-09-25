@@ -72,6 +72,10 @@ namespace GoF2Remake.Flight
                 var o = all[i];
                 if (o == null || o.landmark != landmarks || !o.Active) continue;
                 if (ignoreGate && o.cubeIsContact) continue;
+                // Remake: the object being docked at doesn't block its own approach (the original's autopilot could pin the
+                // ship on a hull face when it started beside the object; from afar it comes in over the top anyway).
+                if (docking != null && docking.State == ObjectDocking.Phase.Approach && docking.Target != null
+                    && o.gameObject == docking.Target.gameObject) continue;
                 var pos = transform.position;
                 if (!o.Touches(pos, out _)) continue;
                 transform.position = o.PushOut(pos);

@@ -2,7 +2,9 @@
 // A cargo container left by a destroyed ship (KIPlayer::createCrate 0xb2e2c, Reference/research/ship_combat.md 5.4):
 // the race's container mesh at the explosion, drifting along a random direction at bombForce = 50..50.49 units per
 // (30 fps) frame, x0.98 per frame until < 0.05, spinning slowly; gone 60 s after the death. Only a tractor beam collects it
-// (CombatRadar: salvage lock, pull at 10 u/ms, captured within 400 units; the first non-empty entry).
+// (CombatRadar: salvage lock, pull at 10 u/ms, captured within 400 units; the first non-empty entry). A crate stolen from
+// a living (EMP-disabled) ship (KIPlayer::createCrate(0) from TractorBeam::update) carries that ship's cargo and is
+// gone once captured: what is left stays aboard the ship.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -18,6 +20,8 @@ namespace GoF2Remake.Flight
         public int race;
         /// <summary>Being pulled by the tractor beam (no drift).</summary>
         public bool pulled;
+        /// <summary>The living ship whose cargo this is (a steal), null for a wreck's crate.</summary>
+        public World.NpcShip stolenFrom;
 
         Vector3 drift;
         float force, ageMs;

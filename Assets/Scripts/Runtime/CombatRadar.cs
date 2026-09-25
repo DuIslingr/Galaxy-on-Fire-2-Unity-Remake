@@ -9,7 +9,14 @@
 //               without a tractor beam "No tractor beam." (540). The beam (projectile_068..070 / v_194) pulls the crate at
 //               10 u/ms, sound 0 loops; within 400 units it is captured (sound 4): the first non-empty cargo entry, capped
 //               to the free cargo (at least 1) -> "<n>t <item>" or "Cargo hold is full." (322).
-// Not yet: the auto modes of AB-3 / AB-4 (attr 23), stealing cargo from EMP-disabled ships, the scanner cargo readout.
+//   steal       an EMP-disabled ship with cargo (KIPlayer+0x20) in the box is a salvage candidate, not a ship lock: the
+//               same ring and tractor lock time; locked, TractorBeam::update makes a container of its cargo at the ship
+//               (createCrate(0)) and pulls that; captureCrate takes rnd(amount) of its first entry (at least 1, capped to
+//               the free cargo), Standing::applyStealCargo (delict 2), a friend's cargo sets Level::stealFriendCargo; the
+//               beam lets go when the ship dies (TractorBeam: !Player::isActive)
+//   auto modes  Radar::Radar from the beam's attr 23: 1 (AB-3 Kingfisher) the first crate on screen is salvaged at once, 2
+//               (AB-4 Octopus) any crate, even off screen and on the autopilot; only dead cargo (crates), never ships
+// Not yet: the scanner cargo readout (attr 31).
 
 using System;
 using GoF2Remake.Data;
@@ -26,13 +33,15 @@ namespace GoF2Remake.Flight
         /// <summary>The lock candidate: a Target (ship) or null.</summary>
         public Target Candidate { get; private set; }
         public Crate CrateCandidate { get; private set; }
+        /// <summary>An EMP-disabled ship with cargo in the box (the steal).</summary>
+        public NpcShip StealCandidate { get; private set; }
         /// <summary>The sticky ship lock.</summary>
         public Target Locked { get; private set; }
         public Crate Salvaging { get; private set; }
         /// <summary>Lock ring frame 0..23, -1 = none.</summary>
         public int LockFrame { get; private set; } = -1;
         /// <summary>A ship or crate candidate exists (blocks the asteroid lock, Navigation.ShipLockActive).</summary>
-        public bool Busy => Candidate != null || CrateCandidate != null;
+        public bool Busy => Candidate != null || CrateCandidate != null || StealCandidate != null;
         public event Action<string, int> Message;   // text, colour (0 white, 1 red, 2 green)
 
         Database db;
@@ -44,7 +53,7 @@ namespace GoF2Remake.Flight
         Traffic traffic;
         CombatAssets assets;
         AudioSource sfx, beamLoop;
-        int lockTimeMs = 8000, tractorItem = -1, tractorLockMs;
+        int lockTimeMs = 8000, tractorItem = -1, tractorLockMs, tractorMode;
         float timer;
         bool noTractorShown;
         Transform beam;
@@ -65,7 +74,7 @@ namespace GoF2Remake.Flight
             HasScanner = scanner != null;
             lockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;
             var tractor = Shop.FirstMounted(db, 13);
-            if (tractor != null) { tractorItem = tractor.index; tractorLockMs = tractor.Attr(24); }
+            if (tractor != null) { tractorItem = tractor.index; tractorLockMs = tractor.Attr(24); tractorMode = tractor.Attr(23); }
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
             beamLoop = gameObject.AddComponent<AudioSource>();
@@ -96,26 +105,35 @@ namespace GoF2Remake.Flight
             if (Locked != null && !Locked.Alive) Locked = null;
             if (weapons != null) weapons.LockTarget = Locked;
             UpdateSalvage(dtMs);
-            if (!HasScanner || health == null || health.Dead || nav == null || nav.Paused || nav.MenuOpen) { Candidate = null; CrateCandidate = null; LockFrame = -1; Publish(); return; }
+            if (!HasScanner || health == null || health.Dead || nav == null || nav.Paused || nav.MenuOpen) { Candidate = null; CrateCandidate = null; StealCandidate = null; LockFrame = -1; Publish(); return; }
+            // Radar+0x1ab (AB-4): any crate, wherever it is, even on the autopilot.
+            if (tractorMode == 2 && Salvaging == null && !nav.Jumping) AutoSalvage(Camera.main, false);
 
             bool blocked = nav.Autopilot || nav.Jumping || nav.Candidate != null || nav.Locked != null
                            || (mining != null && (mining.State != Mining.Phase.Idle || mining.Candidate != null));
             Target best = null;
             Crate bestCrate = null;
+            NpcShip bestSteal = null;
             var cam = Camera.main;
+            // Radar+0x1aa (AB-3): the first crate on screen, no box and no lock time.
+            if (!blocked && cam != null && tractorMode == 1 && Salvaging == null) AutoSalvage(cam, true);
             if (!blocked && cam != null)
             {
                 var c = cam.WorldToScreenPoint(transform.position + transform.forward * CrosshairDistanceMeters);
-                float box = Screen.width / 16f, bestD = float.MaxValue;
+                float box = Screen.width / 16f, bestD = float.MaxValue, stealD = float.MaxValue;
                 if (c.z > 0f)
                 {
                     if (traffic != null)
                         foreach (var s in traffic.Ships)
                         {
                             if (s.Gone || !s.Target.Alive || s.Hidden || s.RadarHidden || s.DockingType > 0) continue;
-                            if (InBox(cam, c, box, s.transform.position, out float d) && d < bestD) { bestD = d; best = s.Target; }
+                            if (!InBox(cam, c, box, s.transform.position, out float d)) continue;
+                            // KIPlayer+0x20: a disabled ship with cargo is salvage (it wins over the ship locks).
+                            if (s.Hp.empDisabled && s.HasCargo) { if (d < stealD && (Salvaging == null || Salvaging.stolenFrom != s)) { stealD = d; bestSteal = s; } }
+                            else if (d < bestD) { bestD = d; best = s.Target; }
                         }
-                    if (best == null)
+                    if (bestSteal != null) best = null;
+                    if (best == null && bestSteal == null)
                     {
                         bestD = float.MaxValue;
                         foreach (var cr in FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
@@ -123,7 +141,10 @@ namespace GoF2Remake.Flight
                     }
                 }
             }
-            if (best != Candidate || bestCrate != CrateCandidate) { Candidate = best; CrateCandidate = bestCrate; timer = 0f; noTractorShown = false; }
+            if (best != Candidate || bestCrate != CrateCandidate || bestSteal != StealCandidate)
+            {
+                Candidate = best; CrateCandidate = bestCrate; StealCandidate = bestSteal; timer = 0f; noTractorShown = false;
+            }
             LockFrame = -1;
             if (Candidate != null)
             {
@@ -135,7 +156,7 @@ namespace GoF2Remake.Flight
                     if (assets != null && assets.targetLock != null) sfx.PlayOneShot(assets.targetLock, Settings.SfxVolume);
                 }
             }
-            else if (CrateCandidate != null)
+            else if (CrateCandidate != null || StealCandidate != null)
             {
                 timer += dtMs;
                 int lt = Mathf.Max(tractorLockMs, (int)SalvageRingDelay + 1);
@@ -143,10 +164,43 @@ namespace GoF2Remake.Flight
                 if (timer > lt)
                 {
                     if (tractorItem < 0) { if (!noTractorShown) { noTractorShown = true; Message?.Invoke(Localization.Get(540), 0); } }
-                    else if (Salvaging == null) { Salvaging = CrateCandidate; Salvaging.pulled = true; if (beamLoop.clip != null) beamLoop.Play(); CrateCandidate = null; }
+                    else if (Salvaging == null)
+                    {
+                        var crate = CrateCandidate != null ? CrateCandidate : StealCandidate.CreateStealCrate();
+                        if (crate != null) StartSalvage(crate);
+                        CrateCandidate = null;
+                        StealCandidate = null;
+                    }
                 }
             }
             Publish();
+        }
+
+        void StartSalvage(Crate crate)
+        {
+            Salvaging = crate;
+            Salvaging.pulled = true;
+            if (beamLoop.clip != null && !beamLoop.isPlaying) beamLoop.Play();
+        }
+
+        /// <summary>Radar::draw's auto modes: the nearest crate on screen (mode 1) or anywhere (mode 2) is locked at once.</summary>
+        void AutoSalvage(Camera cam, bool onScreenOnly)
+        {
+            Crate pick = null;
+            float best = float.MaxValue;
+            foreach (var cr in FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
+            {
+                if (cr.stolenFrom != null || !cr.HasLoot) continue;
+                if (onScreenOnly)
+                {
+                    if (cam == null) return;
+                    var p = cam.WorldToScreenPoint(cr.transform.position);
+                    if (p.z <= 0f || p.x < 0f || p.y < 0f || p.x > Screen.width || p.y > Screen.height) continue;
+                }
+                float d = (cr.transform.position - transform.position).sqrMagnitude;
+                if (d < best) { best = d; pick = cr; }
+            }
+            if (pick != null) StartSalvage(pick);
         }
 
         void Publish()
@@ -173,6 +227,13 @@ namespace GoF2Remake.Flight
                 if (beamLoop.isPlaying) beamLoop.Stop();
                 return;
             }
+            // TractorBeam::update: a living ship's cargo is let go when the ship dies.
+            if (Salvaging.stolenFrom != null && (!Salvaging.stolenFrom.Target.Alive || Salvaging.stolenFrom.Gone))
+            {
+                Destroy(Salvaging.gameObject);
+                Salvaging = null;
+                return;
+            }
             var to = transform.position - Salvaging.transform.position;
             float dist = to.magnitude;
             if (dist / M < CaptureUnits) { Capture(Salvaging); return; }
@@ -195,12 +256,29 @@ namespace GoF2Remake.Flight
             var entry = crate.loot.Find(s => s.amount > 0);
             if (entry == null) { Destroy(crate.gameObject); return; }
             int free = Shop.FreeCargo(db);
-            if (free <= 0) { Message?.Invoke(Localization.Get(322), 1); crate.pulled = false; return; }
-            int n = Mathf.Max(1, Mathf.Min(entry.amount, free));
+            var ship = crate.stolenFrom;
+            if (free <= 0)
+            {
+                Message?.Invoke(Localization.Get(322), 1);
+                if (ship != null) Destroy(crate.gameObject); else crate.pulled = false;
+                return;
+            }
+            // captureCrate: all of it from a wreck, rnd(amount) from a living ship; at least 1, capped to the free cargo.
+            int want = ship != null ? UnityEngine.Random.Range(0, entry.amount) : entry.amount;
+            int n = Mathf.Max(1, Mathf.Min(want, free));
+            n = Mathf.Min(n, entry.amount);
             Shop.AddToCargo(entry.item, n);
             Session.CratesSalvaged += n;   // Status::getCapturedCrates
             entry.amount -= n;
             Message?.Invoke($"{n}t {Localization.Get(1274 + entry.item)}", 2);
+            if (ship != null)
+            {
+                ship.StealFrom(entry.item, n);
+                if (ship.Target.friendToPlayer && traffic != null) traffic.FriendCargoStolen = true;   // Level::stealFriendCargo
+                Standing.ApplyDelict(ship.Race, 2);                                                        // Standing::applyStealCargo
+                Destroy(crate.gameObject);   // the rest stays aboard: a new container on the next lock
+                return;
+            }
             if (!crate.HasLoot) Destroy(crate.gameObject);
             else crate.pulled = false;
         }

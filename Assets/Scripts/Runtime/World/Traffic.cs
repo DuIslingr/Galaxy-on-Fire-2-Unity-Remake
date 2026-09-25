@@ -330,6 +330,8 @@ namespace GoF2Remake.World
         /// <summary>Level::enemyDied / friendDied bookkeeping and Standing::applyKill.</summary>
         /// <summary>Level::enemyDied / friendDied: a ship died, killed by the player or not (the campaign's kill counters).</summary>
         public event Action<NpcShip, bool> ShipDied;
+        /// <summary>Level::stealFriendCargo (Level+0x13c): cargo was stolen from a friendly ship (Objective 0x13).</summary>
+        public bool FriendCargoStolen { get; set; }
 
         public void OnShipDied(NpcShip ship, bool byPlayer)
         {
@@ -390,14 +392,17 @@ namespace GoF2Remake.World
             if (layout.stationIndex == 112 && cm >= 0x80 && cm <= 0x91) Create(PlasmaArray(layout, cm));
         }
 
-        /// <summary>Level::createStaticObject 0x4a88: the Mining Plant (3210), docking type 1 (the titanium goes in here).</summary>
+        /// <summary>Level::createStaticObject 0x4a88: the Mining Plant (3210), docking type 1 (the titanium goes in here);
+        /// getBoundingVolume 2000.</summary>
         public static SpawnSpec MiningPlant() => new SpawnSpec
         {
             group = NpcGroup.Special, race = 3, ship = -1, position = Vector3.zero, fixedObject = "sn_station_mining_plant", stationary = true,
             alwaysFriend = true, hitpoints = 9999999, noLoot = true, nameText = 3210, dockingType = ObjectDocking.DropOff, spacePoints = 1, hitRadius = 8000f,
+            collisionId = 2000,
         };
 
-        /// <summary>The plasma array (3207) in the build stage of campaign 'cm' (stages 1-5: from 0x80, 0x83, 0x87, 0x8a, 0x8e).</summary>
+        /// <summary>The plasma array (3207) in the build stage of campaign 'cm' (stages 1-5: from 0x80, 0x83, 0x87, 0x8a, 0x8e);
+        /// getBoundingVolume 2001 for every stage (Level::createStaticObject 0x493e + 3k).</summary>
         public static SpawnSpec PlasmaArray(OrbitLayout layout, int cm)
         {
             int stage = cm < 0x83 ? 1 : cm < 0x87 ? 2 : cm < 0x8a ? 3 : cm < 0x8e ? 4 : 5;
@@ -407,7 +412,7 @@ namespace GoF2Remake.World
             {
                 group = NpcGroup.Special, race = 3, ship = -1, position = new Vector3(-50000, 0, 50000), rotation = new Vector3(0, yaw, 0),
                 fixedObject = $"sn_plasma_array_midorian_stage_00{stage}", stationary = true, alwaysFriend = true, hitpoints = 9999999, noLoot = true,
-                nameText = 3207, hitRadius = 8000f,
+                nameText = 3207, hitRadius = 8000f, collisionId = 2001,
             };
         }
 
