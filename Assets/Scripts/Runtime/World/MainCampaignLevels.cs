@@ -749,6 +749,7 @@ namespace GoF2Remake.World
                 if (prefab == null) continue;
                 explosion[i] = Object.Instantiate(prefab, at, Quaternion.identity);
                 GunRig.StripForFx(explosion[i]);
+                GunRig.EnableFades(explosion[i]);   // the parts' `extra` fade-out
                 PartAnimation.PlayOnce(explosion[i]);
             }
         }

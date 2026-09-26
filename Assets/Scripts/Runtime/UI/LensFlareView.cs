@@ -14,6 +14,9 @@
 //   7 img2   -0.2   0.5w   70 + I
 //   glare    full screen   int(I) (only if I > 0)
 // w = 64 px of the original's 768-high HD canvas (scaled to the panel height here; the HD scaling is unverified).
+// The original blends in gamma space; the remake's linear colour space blends the UI in linear, where the glare's 25 %
+// white turned dark space into a 54 % grey. The alphas are raised to 2.2 (GammaAlpha) so over a dark sky they give the
+// original's brightness.
 
 using GoF2Remake.World;
 using UnityEngine;
@@ -88,11 +91,14 @@ namespace GoF2Remake.UI
                 e.style.top = p.y - s * 0.5f;
                 e.style.width = s;
                 e.style.height = s;
-                e.style.unityBackgroundImageTintColor = new Color(colour.r, colour.g, colour.b, Mathf.Min(alpha, 255f) / 255f);
+                e.style.unityBackgroundImageTintColor = new Color(colour.r, colour.g, colour.b, GammaAlpha(Mathf.Min(alpha, 255f) / 255f));
             }
             bool glareOn = I > 0f;
             glare.style.display = glareOn ? DisplayStyle.Flex : DisplayStyle.None;
-            if (glareOn) glare.style.backgroundColor = new Color(colour.r, colour.g, colour.b, (int)I / 255f);
+            if (glareOn) glare.style.backgroundColor = new Color(colour.r, colour.g, colour.b, GammaAlpha((int)I / 255f));
         }
+
+        /// <summary>A gamma-space blend's alpha for the linear-space UI (the same result over black).</summary>
+        static float GammaAlpha(float a) => QualitySettings.activeColorSpace == ColorSpace.Linear ? Mathf.Pow(a, 2.2f) : a;
     }
 }

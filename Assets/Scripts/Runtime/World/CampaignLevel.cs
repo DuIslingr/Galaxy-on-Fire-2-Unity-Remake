@@ -237,18 +237,19 @@ namespace GoF2Remake.World
             if (clip != null) music.Play();
         }
 
-        /// <summary>A looping sound in one of three slots (the rumble, the broken engines).</summary>
-        public void PlayLoop(int slot, AudioClip clip)
+        /// <summary>A held sound in one of three slots (the rumble, the broken engines) at its FMOD event volume (x
+        /// Sfx.EventGain); 'loop' false = a oneshot that can still be stopped early.</summary>
+        public void PlayLoop(int slot, AudioClip clip, float eventVolume = 0.25f, bool loop = true)
         {
             if (loops[slot] == null)
             {
                 loops[slot] = gameObject.AddComponent<AudioSource>();
                 loops[slot].playOnAwake = false;
                 loops[slot].spatialBlend = 0f;
-                loops[slot].loop = true;
             }
+            loops[slot].loop = loop;
             loops[slot].clip = clip;
-            loops[slot].volume = Settings.SfxVolume;
+            loops[slot].volume = Mathf.Min(1f, eventVolume * Sfx.EventGain) * Settings.SfxVolume;
             if (clip != null) loops[slot].Play();
         }
 

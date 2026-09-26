@@ -16,11 +16,14 @@ namespace GoF2Remake.World
     public class CycleSound
     {
         public struct Loop { public AudioClip clip; public float gain; }
-        public struct Add { public float at; public AudioClip[] clips; public float gain; }
+        /// <summary>A oneshot at 'at' of the cycle; the sound definition's randomisation: the volume x [minVolume, 1],
+        /// the pitch by +-pitchOctaves, 'noRepeat' = "random no repeat" (never the same wave twice in a row).</summary>
+        public struct Add { public float at; public AudioClip[] clips; public float gain; public float minVolume, pitchOctaves; public bool noRepeat; }
 
         readonly AudioSource[] loopSources;
         readonly float[] loopGains;
-        readonly AudioSource adds;
+        readonly AudioSource[] adds = new AudioSource[3];   // round robin: each oneshot keeps its own pitch
+        int nextAdd, lastClip = -1;
         readonly Add[] addList;
         readonly float cyclePerMs, eventVolume;
         float cycle;
@@ -41,8 +44,11 @@ namespace GoF2Remake.World
                 loopSources[i] = s;
                 loopGains[i] = loops[i].gain;
             }
-            adds = host.AddComponent<AudioSource>();
-            adds.playOnAwake = false; adds.spatialBlend = 0f;
+            for (int i = 0; i < adds.Length; i++)
+            {
+                adds[i] = host.AddComponent<AudioSource>();
+                adds[i].playOnAwake = false; adds[i].spatialBlend = 0f;
+            }
         }
 
         public bool IsPlaying => playing;
@@ -61,7 +67,7 @@ namespace GoF2Remake.World
         {
             playing = false;
             foreach (var s in loopSources) s.Stop();
-            adds.Stop();
+            foreach (var s in adds) s.Stop();
         }
 
         public void Update(float dtMs)
@@ -79,12 +85,27 @@ namespace GoF2Remake.World
         void PlayAdd(Add a)
         {
             if (a.clips == null || a.clips.Length == 0) return;
-            var clip = a.clips[Random.Range(0, a.clips.Length)];
-            if (clip != null) adds.PlayOneShot(clip, a.gain * Volume);
+            int k = Random.Range(0, a.clips.Length);
+            if (a.noRepeat && a.clips.Length > 1 && k == lastClip) k = (k + 1 + Random.Range(0, a.clips.Length - 1)) % a.clips.Length;
+            lastClip = k;
+            var clip = a.clips[k];
+            if (clip == null) return;
+            var src = adds[nextAdd];
+            nextAdd = (nextAdd + 1) % adds.Length;
+            float vol = a.minVolume > 0f && a.minVolume < 1f ? Random.Range(a.minVolume, 1f) : 1f;
+            src.pitch = a.pitchOctaves > 0f ? Mathf.Pow(2f, Random.Range(-a.pitchOctaves, a.pitchOctaves)) : 1f;
+            src.PlayOneShot(clip, a.gain * vol * Volume);
         }
 
         static Add[] At(AudioClip[] clips, float gain, params float[] at) =>
             System.Array.ConvertAll(at, t => new Add { at = t, clips = clips, gain = gain });
+
+        /// <summary>The sound definition's randomisation on every Add of 'list'.</summary>
+        static Add[] Randomised(Add[] list, float minVolume, float pitchOctaves, bool noRepeat)
+        {
+            for (int i = 0; i < list.Length; i++) { list[i].minVolume = minVolume; list[i].pitchOctaves = pitchOctaves; list[i].noRepeat = noRepeat; }
+            return list;
+        }
 
         static Add[] Join(params Add[][] parts)
         {
@@ -104,10 +125,11 @@ namespace GoF2Remake.World
         }
 
         /// <summary>156 Spaceship_Engine_05_Broken (the prologue's wreck): the broken engine looped, a random Add wave at
-        /// 0.0495 / 0.389 / 0.815 (0.57 / 0.59 / 0.56) of a 3.3 s cycle (0.3/s); event volume 0.268.</summary>
+        /// 0.0495 / 0.389 / 0.815 (0.57 / 0.59 / 0.56) of a 3.3 s cycle (0.3/s); event volume 0.268. Sound definition 1253:
+        /// random no repeat, volume randomisation 0.708 (-3 dB), pitch randomisation 0.025 (taken as octaves).</summary>
         public static CycleSound BrokenEngine(GameObject host, AudioClip loop, AudioClip[] adds) =>
             new CycleSound(host, 0.3f, 0.268f, new[] { new Loop { clip = loop, gain = 1f } },
-                           Join(At(adds, 0.57f, 0.049505f), At(adds, 0.59f, 0.389439f), At(adds, 0.56f, 0.815181f)));
+                           Randomised(Join(At(adds, 0.57f, 0.049505f), At(adds, 0.59f, 0.389439f), At(adds, 0.56f, 0.815181f)), 0.708f, 0.025f, true));
 
         /// <summary>122: Mainview_1 looped, Add_1 at 0.068 / 0.172 / 0.525 / 0.736 / 0.9 (instance 0.09 x layer 0.5195);
         /// event volume 0.569.</summary>

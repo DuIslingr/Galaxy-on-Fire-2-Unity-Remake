@@ -191,6 +191,7 @@ namespace GoF2Remake.World
                 if (jump != null)
                 {
                     jump.SetActive(true);
+                    GunRig.EnableFades(jump);   // the flash's `extra` fades
                     float len = PartAnimation.PlayOnce(jump);
                     if (len > 0f) animLength = len;
                 }
@@ -263,6 +264,7 @@ namespace GoF2Remake.World
             {
                 fx = Instantiate(assets.khadorJump, fxPos, ship.transform.rotation);
                 fx.transform.localScale *= 2f;
+                GunRig.EnableFades(fx);   // the parts' `extra` fade-out
                 float len = PartAnimation.PlayOnce(fx);
                 animLength = len > 0f ? len : 4000f;
             }

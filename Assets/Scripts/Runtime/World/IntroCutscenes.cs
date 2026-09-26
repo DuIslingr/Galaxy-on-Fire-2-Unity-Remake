@@ -238,8 +238,8 @@ namespace GoF2Remake.World
                         // "Activating hyperdrive": the explosion and rumble at the ship, the broken engine, slowing down.
                         soundsPlayed = true;
                         Sfx.PlayAt(assets?.cutsceneExplosion, Player.position);
-                        campaign.PlayLoop(0, assets?.rumble);
-                        campaign.PlayLoop(1, assets?.engineBroken);
+                        campaign.PlayLoop(0, assets?.rumble, 0.624f, false);   // 158 Rumble_CutScene_01: a 17.9 s oneshot
+                        campaign.PlayLoop(1, assets?.engineBroken, 0.115f);    // 161 Engine_09_Broken, looped
                     }
                     if (soundsPlayed) playerSpeed *= Mathf.Pow(0.98f, dtMs / 33.3f);
                     if (Over(13)) cam.SetDolly(new Vector3(-0.2f, 0f, 0.3f));
@@ -385,6 +385,7 @@ namespace GoF2Remake.World
             HideFx();
             if (assets == null || assets.hyperDrive == null) { fxLength = 2000f; fxMs = 0f; return; }
             fx = Object.Instantiate(assets.hyperDrive, at, cam.Camera != null ? cam.Camera.rotation : Quaternion.identity);
+            GunRig.EnableFades(fx);   // its parts fade out by their `extra` channel (0 at 3000 ms); without it the fx froze, then vanished
             float len = PartAnimation.PlayOnce(fx);
             fxLength = len > 0f ? len : 3000f;
             fxMs = 0f;

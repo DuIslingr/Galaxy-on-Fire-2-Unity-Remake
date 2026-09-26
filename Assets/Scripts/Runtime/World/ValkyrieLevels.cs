@@ -485,6 +485,7 @@ namespace GoF2Remake.World
             fx = Object.Instantiate(assets.hyperDrive, ToUnity(gamePos), cam.Camera != null ? cam.Camera.rotation : Quaternion.identity);
             fx.transform.localScale *= scale;
             GunRig.StripForFx(fx);
+            GunRig.EnableFades(fx);   // the parts' `extra` fade-out
             float len = PartAnimation.PlayOnce(fx);
             fxLength = len > 0f ? len : 3000f;
             fxMs = 0f;
