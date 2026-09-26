@@ -86,14 +86,21 @@
     min-height: 40px;
 }
 
+/* The label takes the row's width, so every checkbox lines up at the right edge whatever the label's length. */
 .unity-toggle > .unity-label {
     min-width: 220px;
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 24px;
+    white-space: normal;
     color: var(--gof-text);
 }
 
 .unity-toggle__input {
     flex-direction: row;
     align-items: center;
+    flex-grow: 0;
+    flex-shrink: 0;
 }
 
 .unity-toggle__checkmark {
