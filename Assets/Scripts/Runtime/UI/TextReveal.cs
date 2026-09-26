@@ -8,8 +8,19 @@
 //   shouting   all-caps words ("KEITH!", "MORE!", "BANG!", "KABOOM"; 4+ letters, or 2+ before a "!", not the acronyms)
 //              are bigger and bold and shake for a moment as they appear
 //   actions    *Sigh* / *Yawn* (Russian: <шепотом>): italic, dimmer, the markers dropped, typed slowly
-//   names      people and ships amber, places and races cyan (story speakers, stations, systems, ships, races; whole
-//              words, case-sensitive)
+//   names      people pale gold (with their titles), places / factions light aqua (with "Station" / "System"), ships and
+//              items pink, and each race in its emblem's colour (Terran orange, Vossk green, Nivelian blue, Midorian grey,
+//              pirates bone white, Void violet), also the factions named after it ("Vossk Empire", "Terran Fleet"):
+//              story speakers, stations, systems, races, ships, items and the lore names only the texts use (LoreNames);
+//              whole words, case-sensitive (races in either case), plurals too
+//   icons      inline <sprite>s from Resources/Sprite Assets/gof2_text_icons (GoF2 > Build Text Icons), faded in with
+//              their letter: a coin before every amount ("1,800$", "20,000 credits" and the credit word of each
+//              language); before the first mention on the page: the race emblems (Terran, Vossk, Nivelian, Midorian,
+//              pirates, Void), the jumpgate, wormhole, blueprint and autopilot icons (their text ids 547 / 545 / 271 / 571),
+//              an item's or ship's shop icon before its name (items of two or more words in any case: "energy cells"),
+//              an equipment category's icon (a first item of it) before the category word ("tractor beam", "scanner",
+//              "missiles"; "mine" only as "mines" or "Mine"), the ore core icon before "core" and the container before
+//              "container" (English)
 // Alien-font pages (AlienText) fade their glyph images in the same rhythm; Arabic / Hebrew pages (joined, right to left)
 // fade in whole instead, so the per-letter tags never split the letter joining. Japanese / Chinese punctuation (。！？、)
 // pauses without a following space. All-caps words of item, ship, station and system names ("Micro Gun MKII") never
@@ -33,8 +44,6 @@ namespace GoF2Remake.UI
         const float CommaPauseMs = 90f, StopPauseMs = 220f, EllipsisPauseMs = 420f;
         const float ExclaimPace = 0.75f, ActionPace = 2.2f;
         const float ShoutSize = 130f, ActionDim = 0.65f;
-        static readonly Color PersonTint = new Color32(0xFF, 0xB8, 0x55, 0xFF);
-        static readonly Color PlaceTint = new Color32(0x5C, 0xD2, 0xFF, 0xFF);
         static readonly HashSet<string> Acronyms = new HashSet<string> { "EMP", "PEM", "IEM", "ЭМИ", "HUD", "AMR", "IMT", "OK" };   // EMP in es / fr / ru too
 
         struct Letter
@@ -42,6 +51,7 @@ namespace GoF2Remake.UI
             public char c;
             public Color? tint;
             public bool shout, action;
+            public string sprite;                   // an inline icon (c = U+FFFC) instead of a letter
             public float pace, pauseAfter, start;   // start: ms on the page's clock
         }
 
@@ -161,9 +171,11 @@ namespace GoF2Remake.UI
             var tints = Highlight(text, speakerName);
             var shout = Shouts(text);
             var exclaim = ExclaimedSentences(text);
+            var icons = Icons(text);
             for (int i = 0; i < text.Length; i++)
             {
                 char c = text[i];
+                if (icons[i] != null) letters.Add(new Letter { c = '\uFFFC', sprite = icons[i], pace = 1f });
                 bool endOfWord = i + 1 >= text.Length || char.IsWhiteSpace(text[i + 1]);
                 float pause = 0f;
                 if (c == '.' && i >= 2 && text[i - 1] == '.' && text[i - 2] == '.') pause = EllipsisPauseMs;
@@ -259,6 +271,16 @@ namespace GoF2Remake.UI
                 var l = letters[i];
                 float age = clock - l.start;
                 if (age >= 0f) shown++;
+                if (l.sprite != null)
+                {
+                    // tint=1: the icon takes the run's colour, white with the letter's alpha, so it fades in like one.
+                    if (close != null) sb.Append(close);
+                    open = close = null;
+                    var white = new Color(1f, 1f, 1f, Quantize(Mathf.Clamp01(age / FadeMs)));
+                    sb.Append("<color=#").Append(ColorUtility.ToHtmlStringRGBA(white)).Append("><sprite=\"").Append(IconAsset)
+                      .Append("\" name=\"").Append(l.sprite).Append("\" tint=1></color>");
+                    continue;
+                }
                 var colour = l.tint ?? baseColour;
                 if (l.action) colour = new Color(colour.r * ActionDim, colour.g * ActionDim, colour.b * ActionDim, colour.a);
                 float shake = 0f;
@@ -299,9 +321,173 @@ namespace GoF2Remake.UI
 
         static float Quantize(float v) => Mathf.Round(v * 16f) / 16f;
 
+        // ---- icons ---------------------------------------------------------------------------------------------
+
+        /// <summary>The sprite asset in Resources/Sprite Assets/ (TextIconsBuilder.AssetName).</summary>
+        const string IconAsset = "gof2_text_icons";
+
+        struct IconRule
+        {
+            public string word, sprite;
+            public bool anyCase, pluralOnly;   // anyCase: matched in lower case; pluralOnly: only "...s" (or capitalised)
+        }
+
+        static List<IconRule> iconRules;
+
+        /// <summary>Amounts of money: a number (with , . or space thousands) followed by "$" or a credit word.</summary>
+        static readonly System.Text.RegularExpressions.Regex Amount = new System.Text.RegularExpressions.Regex(
+            @"(?<![\p{L}\p{N}])\d{1,3}(?:[,.\u00A0\u202F ]\d{3})+(?![\p{N}])(?=\s?\$|\s+(?:credits?|crédits?|créditos?|crediti|credito|kredyt\w*|кредит\w*|크레딧|クレジット))|(?<![\p{L}\p{N}])\d+(?=\s?\$|\s+(?:credits?|crédits?|créditos?|crediti|credito|kredyt\w*|кредит\w*|크레딧|クレジット))",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+
+        /// <summary>The icon to put before each letter of 'text' (null = none).</summary>
+        static string[] Icons(string text)
+        {
+            var result = new string[text.Length];
+            if (text.Length == 0) return result;
+            var claimed = new bool[text.Length];
+            foreach (System.Text.RegularExpressions.Match m in Amount.Matches(text))
+            {
+                result[m.Index] = "coin";
+                for (int k = m.Index; k < m.Index + m.Length; k++) claimed[k] = true;
+            }
+            string lower = text.ToLowerInvariant();
+            var used = new HashSet<string>();
+            foreach (var rule in IconRules())
+            {
+                if (rule.sprite != null && used.Contains(rule.sprite)) continue;   // the first mention on the page only
+                string hay = rule.anyCase ? lower : text, word = rule.anyCase ? rule.word.ToLowerInvariant() : rule.word;
+                int from = 0;
+                while (from < hay.Length)
+                {
+                    int at = hay.IndexOf(word, from, System.StringComparison.Ordinal);
+                    if (at < 0) break;
+                    int end = at + word.Length;
+                    from = end;
+                    if (at > 0 && char.IsLetterOrDigit(text[at - 1])) continue;
+                    bool plural = end < text.Length && text[end] == 's' && (end + 1 >= text.Length || !char.IsLetterOrDigit(text[end + 1]));
+                    if (plural) end++;
+                    if (end < text.Length && char.IsLetterOrDigit(text[end])) continue;
+                    if (rule.pluralOnly && !plural && !char.IsUpper(text[at])) continue;
+                    bool free = true;
+                    for (int k = at; k < end; k++) if (claimed[k]) { free = false; break; }
+                    if (!free) continue;
+                    for (int k = at; k < end; k++) claimed[k] = true;
+                    if (rule.sprite == null) continue;   // a phrase that only takes the word ("plasma array"), every time
+                    result[at] = rule.sprite;
+                    used.Add(rule.sprite);
+                    break;
+                }
+            }
+            return result;
+        }
+
+        /// <summary>The word -> icon rules, longest word first; rebuilt when the language changes.</summary>
+        static List<IconRule> IconRules()
+        {
+            if (iconRules != null) return iconRules;
+            Hook();
+            var list = new List<IconRule>();
+            var seen = new HashSet<string>();
+            void Add(string word, string sprite, bool anyCase, bool pluralOnly = false)
+            {
+                word = word?.Trim();
+                if (string.IsNullOrEmpty(word) || word.Length < 3 || word.IndexOf('\uFFFD') >= 0 || word.StartsWith("#")) return;
+                if (!seen.Add((anyCase ? word.ToLowerInvariant() : word) + "|" + (sprite ?? "-"))) return;
+                list.Add(new IconRule { word = word, sprite = sprite, anyCase = anyCase, pluralOnly = pluralOnly });
+            }
+            string[] raceSprites = { "terran", "vossk", "nivelian", "midorian", null, null, null, null, "pirate", "void" };
+            for (int r = 0; r < raceSprites.Length; r++) if (raceSprites[r] != null) Add(Localization.Get(406 + r), raceSprites[r], true);
+            Add(Localization.Get(547), "gate", true);
+            Add(Localization.Get(545), "wormhole", true);
+            Add(Localization.Get(271), "blueprint", true);
+            Add(Localization.Get(571), "autopilot", true);
+            if (Localization.Language == "en")
+            {
+                Add("jump gate", "gate", true);
+                Add("container", "container", true);
+                Add("core", "core", true);
+                // The same words for something else: no icon ("plasma array" is the supernova structure, not plasma).
+                foreach (var phrase in new[] { "plasma array", "core generator", "core of" }) Add(phrase, null, true);
+            }
+            var db = Database.Load();
+            if (db != null)
+            {
+                var lowerWords = LowerCaseWords();
+                for (int i = 0; i < db.Items.Count; i++)
+                {
+                    string item = Localization.Get(1274 + i);
+                    bool single = item.IndexOf(' ') < 0;
+                    if (item.Length < 4 || single && lowerWords.Contains(item.ToLowerInvariant())) continue;
+                    Add(item, $"item_{db.Items[i].index:000}", !single);
+                }
+                for (int i = 0; i < db.Ships.Count && i < 64; i++) Add(Localization.Get(913 + i), $"ship_{i:000}", false);
+                // Equipment categories: the icon of a first item of the category (not the commodities; ore cores = "core").
+                var firstOf = new Dictionary<int, int>();
+                foreach (var it in db.Items) if (!firstOf.ContainsKey(it.categoryId)) firstOf[it.categoryId] = it.index;
+                foreach (var kv in firstOf)
+                {
+                    if (kv.Key == 22) continue;
+                    string sprite = kv.Key == 24 ? "core" : $"item_{kv.Value:000}";
+                    Add(Localization.Get(221 + kv.Key), sprite, true, pluralOnly: kv.Key == 11);   // 11 Mine: not "a friend of mine"
+                }
+            }
+            list.Sort((a, b) => b.word.Length.CompareTo(a.word.Length));
+            iconRules = list;
+            return iconRules;
+        }
+
         // ---- names ---------------------------------------------------------------------------------------------
 
-        static List<(string name, bool person)> names;
+        const int Person = 0, Place = 1, Thing = 2, FirstRace = 3;
+        /// <summary>The races with an emblem (race id -> tint FirstRace + slot): Terran, Vossk, Nivelian, Midorian, pirates, Void.</summary>
+        static readonly int[] RaceIds = { 0, 1, 2, 3, 8, 9 };
+
+        /// <summary>Names that only the story texts use (no data table has them): people who never speak, places, factions and
+        /// species of the lore, story goods. Found by going through every dialogue text (story pages and radio, the lounge
+        /// and freelance lines 370-459 / 700-899); proper nouns, so they read the same in the other languages.</summary>
+        static readonly (string name, int kind)[] LoreNames =
+        {
+            ("Carla Paolini", Person), ("Alice Paolini", Person), ("Paolini", Person), ("Thomas Boyle", Person), ("Boyle", Person),
+            ("Smith", Person), ("Squand", Person), ("Thadellonius", Person), ("Maximilius", Person), ("Keithius Maximus", Person),
+            ("Urrkt", Person), ("Orssk", Person), ("Emperor", Person), ("Queen of Moogaresh", Person), ("Tweezleboks", Person),
+            ("Eden Prime", Place), ("Earth", Place), ("Novaterra", Place), ("Apocce", Place), ("Damarque", Place),
+            ("B'akkram", Place), ("Moogaresh", Place), ("Dareius Asteroid Belt", Place), ("Dareius", Place),
+            ("Deep Science", Place), ("Mido Confederation of Planets", Place), ("Mido Confederation", Place),
+            ("Nivelian Republic", Place), ("Vossk Empire", Place), ("Nivelian Civil War", Place), ("Space Fleet", Place),
+            ("Terran Fleet", Place), ("Fleet Command", Place), ("Interstellar Security Agency", Place),
+            ("Homespace Security", Place), ("Terran Intelligence", Place), ("Trans-Galactic Academy", Place),
+            ("Nivelian Vaults of Névan", Place), ("Névan", Place), ("Janice's Satellites", Place), ("Silky Way", Place),
+            ("Octopod", Place), ("Bobolan", Place), ("Rhinocitroll", Place),
+            ("K'mirrk Toad Mutagen", Thing), ("K'mirrk Frog", Thing), ("K'Sarr", Thing), ("Alice Drive", Thing),
+            ("Multirail", Thing), ("S'kloptorr", Thing), ("Flabbergaster", Thing),
+            ("Mutagen", Thing), ("Empire", Place), ("Berger", Place),
+        };
+
+        /// <summary>Ranks and forms of address in front of a person's name join its tint ("Lieutenant Commander Brent Snocom").</summary>
+        static readonly HashSet<string> Titles = new HashSet<string>
+        {
+            "Lieutenant", "Commander", "Captain", "Admiral", "Doctor", "Dr.", "Professor", "Counsellor", "Curator", "Chief",
+            "Director", "Mr.", "Mrs.", "Ms.",
+        };
+
+        /// <summary>Words that make a place's name longer: "Kappa Station", "Weymire System", "Var Hastra Mining Station".</summary>
+        static readonly string[] PlaceSuffixes = { " Mining Station", " Station", " System" };
+
+        static readonly Color[] Tints =
+        {
+            new Color32(0xFF, 0xD3, 0x7A, 0xFF),   // people: pale gold
+            new Color32(0x7F, 0xE3, 0xF0, 0xFF),   // places, factions: light aqua
+            new Color32(0xF0, 0xA8, 0xDC, 0xFF),   // ships, items, story goods: pink
+            // the races, from their emblems (GoF2Hud/race_N), lightened to read on the dark panels
+            new Color32(0xFF, 0x8C, 0x1A, 0xFF),   // Terran: orange (emblem #E08F02)
+            new Color32(0x45, 0xE0, 0x6A, 0xFF),   // Vossk: green (#00CC3F)
+            new Color32(0x5C, 0x8D, 0xFF, 0xFF),   // Nivelian: blue (#6687A9)
+            new Color32(0x9A, 0xA0, 0xA6, 0xFF),   // Midorian: grey (the black emblem, #292823)
+            new Color32(0xF0, 0xEA, 0xD8, 0xFF),   // pirates: bone white (the skull, #C3C3C3)
+            new Color32(0xA7, 0x7B, 0xFF, 0xFF),   // Void: violet (#4E22AC)
+        };
+
+        static List<(string name, int kind)> names;
         static HashSet<string> nameCaps;
         static bool hooked;
 
@@ -337,73 +523,153 @@ namespace GoF2Remake.UI
         {
             if (hooked) return;
             hooked = true;
-            Localization.Changed += () => { names = null; nameCaps = null; };
+            Localization.Changed += () => { names = null; nameCaps = null; iconRules = null; };
         }
 
-        /// <summary>The tint per letter of the names in 'page' (null = the label's colour).</summary>
+        /// <summary>The tint per letter of the names in 'page' (null = the label's colour). A name matches as a whole word,
+        /// also with a plural "s" ("Midorians"); a person's titles and a place's "Station" / "System" join it.</summary>
         static Color?[] Highlight(string page, string speaker)
         {
             var result = new Color?[page.Length];
-            var list = new List<(string, bool)>();
+            var list = new List<(string, int)>();
             if (!string.IsNullOrWhiteSpace(speaker))
             {
-                list.Add((speaker.Trim(), true));
-                foreach (var part in speaker.Split(' ')) if (part.Length >= 3 && char.IsUpper(part[0])) list.Add((part, true));
+                list.Add((speaker.Trim(), Person));
+                foreach (var part in speaker.Split(' ')) if (part.Length >= 3 && char.IsUpper(part[0])) list.Add((part, Person));
             }
             list.AddRange(Names());
-            foreach (var (name, person) in list)
+            string lowerPage = page.ToLowerInvariant();
+            foreach (var (name, kind) in list)
             {
+                // Things of two or more words match in any case ("Khador drive", "energy cells"), the rest as written.
+                bool anyCase = kind == Thing && name.IndexOf(' ') > 0;
+                string hay = anyCase ? lowerPage : page, needle = anyCase ? name.ToLowerInvariant() : name;
                 int from = 0;
                 while (from < page.Length)
                 {
-                    int at = page.IndexOf(name, from, System.StringComparison.Ordinal);
+                    int at = hay.IndexOf(needle, from, System.StringComparison.Ordinal);
                     if (at < 0) break;
-                    from = at + name.Length;
+                    int end = at + name.Length;
+                    from = end;
                     if (at > 0 && char.IsLetterOrDigit(page[at - 1])) continue;
-                    if (from < page.Length && char.IsLetterOrDigit(page[from])) continue;
-                    bool free = true;
-                    for (int i = at; i < from; i++) if (result[i].HasValue) { free = false; break; }   // longer names first
-                    if (!free) continue;
-                    for (int i = at; i < from; i++) if (!char.IsWhiteSpace(page[i])) result[i] = person ? PersonTint : PlaceTint;
+                    if (end < page.Length && page[end] == 's' && (end + 1 >= page.Length || !char.IsLetterOrDigit(page[end + 1]))) end++;
+                    if (end < page.Length && char.IsLetterOrDigit(page[end])) continue;
+                    if (Taken(result, at, end)) continue;   // longer names first
+                    if (kind == Person) at = WithTitles(page, result, at);
+                    if (kind == Place)
+                        foreach (var suffix in PlaceSuffixes)
+                            if (string.CompareOrdinal(page, end, suffix, 0, suffix.Length) == 0 && !Taken(result, end, end + suffix.Length))
+                            {
+                                end += suffix.Length;
+                                break;
+                            }
+                    for (int i = at; i < end; i++) if (!char.IsWhiteSpace(page[i])) result[i] = Tints[kind];
+                    from = end;
                 }
             }
             return result;
         }
 
-        /// <summary>Story speakers with proper names (and their first / last names), ships, races, stations and systems;
-        /// longest first. Rebuilt when the language changes.</summary>
-        static List<(string, bool)> Names()
+        static bool Taken(Color?[] result, int from, int to)
+        {
+            for (int i = from; i < to && i < result.Length; i++) if (result[i].HasValue) return true;
+            return false;
+        }
+
+        /// <summary>The start of the titles right before 'at' ("Lieutenant Commander " + name).</summary>
+        static int WithTitles(string page, Color?[] result, int at)
+        {
+            while (true)
+            {
+                int end = at;
+                while (end > 0 && page[end - 1] == ' ') end--;
+                if (end == at || end == 0) return at;
+                int start = end;
+                while (start > 0 && !char.IsWhiteSpace(page[start - 1])) start--;
+                string word = page.Substring(start, end - start);
+                if (!Titles.Contains(word) || Taken(result, start, end)) return at;
+                at = start;
+            }
+        }
+
+        /// <summary>Story speakers with proper names (and their first / last names), races, stations and systems (places),
+        /// ships and items (things; a one-word item only when the texts never write it in lower case, so "Gold" and
+        /// "Drugs" stay plain), and the lore names; longest first. Rebuilt when the language changes.</summary>
+        static List<(string, int)> Names()
         {
             if (names != null) return names;
             Hook();
-            var set = new Dictionary<string, bool>();
-            void Add(string n, bool person)
+            var set = new Dictionary<string, int>();
+            void Add(string n, int kind)
             {
                 n = n?.Trim();
                 if (string.IsNullOrEmpty(n) || n.Length < 3 || n.IndexOf('�') >= 0 || set.ContainsKey(n)) return;
-                set[n] = person;
+                set[n] = kind;
             }
             // Speakers with a personal name (not "Pirate", "Computer", "Barkeeper" ...); "T." and "Dr." aren't names.
             int[] people = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 20, 24, 25, 26, 31, 32, 34, 36, 37, 38, 39, 40, 44, 45, 46, 47, 55, 60 };
             foreach (int s in people)
             {
                 string full = StoryTable.SpeakerName(s);
-                Add(full, true);
+                Add(full, Person);
                 foreach (var part in full.Split(' '))
-                    if (part.Length >= 4 && !part.EndsWith(".") && char.IsUpper(part[0])) Add(part, true);
+                    if (part.Length >= 4 && !part.EndsWith(".") && char.IsUpper(part[0])) Add(part, Person);
             }
+            foreach (var (n, kind) in LoreNames) Add(n, kind);
             var db = Database.Load();
             if (db != null)
             {
-                for (int i = 0; i < db.Ships.Count && i < 64; i++) Add(Localization.Get(913 + i), true);   // 977+ = descriptions
-                foreach (var st in db.Stations) Add(st.name, false);
-                foreach (var sy in db.Systems) Add(sy.name, false);
+                foreach (var st in db.Stations) Add(st.name, Place);
+                foreach (var sy in db.Systems) Add(sy.name, Place);
+                for (int i = 0; i < db.Ships.Count && i < 64; i++) Add(Localization.Get(913 + i), Thing);   // 977+ = descriptions
+                var lower = LowerCaseWords();
+                for (int i = 0; i < db.Items.Count; i++)
+                {
+                    string item = Localization.Get(1274 + i);
+                    if (item.Length < 4 || item.IndexOf(' ') < 0 && lower.Contains(item.ToLowerInvariant())) continue;
+                    Add(item, Thing);
+                }
             }
-            for (int r = 0; r <= 9; r++) if (r != 8) Add(Localization.Get(406 + r), false);   // races, not "Pirate"
-            names = new List<(string, bool)>();
+            // The races in their emblem colours, in either case ("pirates"; the Void capitalised only); the other races (Multipod, Bobolian, Grey ...)
+            // are places. A place or faction named after a race takes its colour ("Vossk Empire", "Terran Fleet").
+            var raceWords = new List<(string word, int kind)>();
+            for (int slot = 0; slot < RaceIds.Length; slot++)
+            {
+                string race = Localization.Get(406 + RaceIds[slot]);
+                if (string.IsNullOrEmpty(race)) continue;
+                raceWords.Add((race, FirstRace + slot));
+                set[race] = FirstRace + slot;
+                string lowerFirst = char.ToLowerInvariant(race[0]) + race.Substring(1);
+                if (lowerFirst != race && RaceIds[slot] != 9 && !set.ContainsKey(lowerFirst)) set[lowerFirst] = FirstRace + slot;   // not "the void"
+            }
+            for (int r = 0; r <= 9; r++) if (System.Array.IndexOf(RaceIds, r) < 0) Add(Localization.Get(406 + r), Place);
+            foreach (var key in new List<string>(set.Keys))
+                if (set[key] == Place)
+                    foreach (var (word, kind) in raceWords)
+                        if (key.StartsWith(word + " ", System.StringComparison.Ordinal)) { set[key] = kind; break; }
+            names = new List<(string, int)>();
             foreach (var kv in set) names.Add((kv.Key, kv.Value));
             names.Sort((a, b) => b.Item1.Length.CompareTo(a.Item1.Length));
             return names;
+        }
+
+        /// <summary>Every word the text table writes in lower case (ordinary words, not names).</summary>
+        static HashSet<string> LowerCaseWords()
+        {
+            var set = new HashSet<string>();
+            var word = new StringBuilder();
+            for (int id = 0; id < Localization.Count; id++)
+            {
+                string s = Localization.Get(id);
+                for (int i = 0; i <= s.Length; i++)
+                {
+                    char c = i < s.Length ? s[i] : ' ';
+                    if (char.IsLetter(c) || c == '\'') { word.Append(c); continue; }
+                    if (word.Length > 0 && char.IsLower(word[0])) set.Add(word.ToString());
+                    word.Clear();
+                }
+            }
+            return set;
         }
     }
 }

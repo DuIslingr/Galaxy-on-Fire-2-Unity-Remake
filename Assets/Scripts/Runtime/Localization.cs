@@ -33,6 +33,9 @@ namespace GoF2Remake.Data
         /// <summary>False until a table is loaded (the main menu loads one; otherwise the first Get does).</summary>
         public static bool IsLoaded => texts.Length > 0;
 
+        /// <summary>The number of texts in the loaded table (ids 0 .. Count - 1).</summary>
+        public static int Count { get { if (!IsLoaded) AutoLoad(); return texts.Length; } }
+
         /// <summary>Text by original ID; falls back to "#id" when missing.</summary>
         public static string Get(int id)
         {

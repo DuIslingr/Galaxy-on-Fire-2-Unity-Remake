@@ -4,7 +4,7 @@
 //   the screen buttons Hangar (167: opens the shop window, HangarWindow, over the 3D hangar), Space Lounge (398) and
 //   Map (177: the star map, StarMap; refused with an overloaded hold, 204; picking a station leaves at once with it as
 //   the programmed destination, StarMap::depart),
-//   and the launch button bottom-right with the confirmation "Depart the station?" (397, ChoiceWindow, default = Yes);
+//   and the launch button bottom-right (the original asks "Depart the station?" (397) first; the remake launches at once);
 //   launching with more cargo than the hold takes is refused (204, ModStation::leaveStation 0xec1ec).
 // Dragging over the hangar turns the player's ship (1 rad per 120 px of a 480 px high screen, with a fling);
 // a tap in the lounge skips its camera intro. Adapts to InputMode like the flight HUD:
@@ -537,12 +537,13 @@ namespace GoF2Remake.UI
             return true;
         }
 
-        /// <summary>ModStation::leaveStation: refused while the cargo hold is overloaded (204), else "Depart the station?".</summary>
+        /// <summary>ModStation::leaveStation: refused while the cargo hold is overloaded (204). Remake: launches at once, without
+        /// the original's "Depart the station?" (397).</summary>
         void AskLaunch()
         {
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
             if (RefuseLaunchForStory()) return;
-            ShowDialog(Localization.Get(397), level.Launch);
+            level.Launch();
         }
 
         /// <summary>ChoiceWindow: yes / no, or a message with one button ('info').</summary>
