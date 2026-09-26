@@ -270,6 +270,7 @@ namespace GoF2Remake.UI
                 else RevealMap();
             }
             ApplyInputMode();
+            if (pendingHint != null && dialog != null && !DialogOpen) { var hint = pendingHint; pendingHint = null; ShowHint(hint); }
         }
 
         void RevealMap()
@@ -994,8 +995,16 @@ namespace GoF2Remake.UI
 
         bool DialogOpen => dialog != null && dialog.ClassListContains("map-dialog-backdrop--shown");
 
-        /// <summary>Layout::initHelpWindow over the map (the station's first-visit hints 628 / 631).</summary>
-        public void ShowHint(string text) => ShowDialog(text, null, null, true);
+        /// <summary>Layout::initHelpWindow over the map (the station's first-visit hints 628 / 631). Asked right after Open, the
+        /// overlay isn't built yet (PanelRenderer builds it in its reload callback): the hint waits for it. It threw there,
+        /// and the half-opened map left the station's HUD on.</summary>
+        public void ShowHint(string text)
+        {
+            if (root == null || dialog == null) { pendingHint = text; return; }
+            ShowDialog(text, null, null, true);
+        }
+
+        string pendingHint;
 
         void ShowDialog(string text, Action onYes, Action onNo, bool info = false)
         {

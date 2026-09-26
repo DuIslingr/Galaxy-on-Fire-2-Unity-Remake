@@ -49,11 +49,49 @@ namespace GoF2Remake.Flight
             public Gun gun => visuals.gun;
             public WeaponFx fx => visuals.fx;
             public AudioSource loop;
+            /// <summary>The loop is ending after a release (LoopRelease): ms left of its fade-out, or -1 while it plays out.</summary>
+            public bool releasing;
+            public float fadeLeft, fadeTotal;
             /// <summary>Secondaries: the mounted stack this gun draws its ammo from (Gun+0xf4).</summary>
             public ItemStack stack;
         }
 
         readonly List<Rig> rigs = new List<Rig>();
+
+        /// <summary>How the looping shot events end on Player::stopShooting (the FEV's LGCY data, fev_lgcy.py): "loop and play
+        /// to end" (cannons, thermo guns, Hammerhead turrets: the shot in progress finishes, then the event's fade-out) or
+        /// "loop and cutoff" (the DLC turrets, Sunfire, Matador, MD-12: the fade-out at once). By item: (play to end,
+        /// fade-out ms). Stopping them dead cut a quick tap's shot short.</summary>
+        static readonly Dictionary<int, (bool playToEnd, float fadeMs)> LoopRelease = new Dictionary<int, (bool, float)>
+        {
+            { 22, (true, 100f) }, { 23, (true, 80f) }, { 24, (true, 70f) }, { 25, (true, 60f) }, { 26, (true, 70f) },
+            { 27, (true, 60f) }, { 28, (true, 150f) }, { 29, (true, 100f) }, { 30, (true, 100f) },
+            { 47, (true, 80f) }, { 48, (true, 100f) }, { 49, (true, 100f) },
+            { 180, (false, 100f) }, { 181, (false, 100f) }, { 182, (false, 100f) }, { 193, (false, 100f) },
+            { 224, (false, 50f) }, { 230, (false, 0f) },
+        };
+
+        /// <summary>The shot loop after a release: plays its current shot to the end and / or fades out, then stops.</summary>
+        void UpdateLoopRelease(Rig r, float dtMs)
+        {
+            var src = r.loop;
+            if (!src.isPlaying) { r.releasing = false; src.loop = true; return; }
+            if (!r.releasing)
+            {
+                r.releasing = true;
+                var (playToEnd, fadeMs) = LoopRelease.TryGetValue(r.gun.itemIndex, out var rule) ? rule : (true, 100f);
+                src.loop = !playToEnd;   // play to end: this pass is the last one
+                r.fadeLeft = playToEnd ? -1f : fadeMs;
+                r.fadeTotal = Mathf.Max(1f, fadeMs);
+                if (!playToEnd && fadeMs <= 0f) { src.Stop(); r.releasing = false; src.loop = true; }
+                return;
+            }
+            if (r.fadeLeft < 0f) return;   // playing out; the fade-out itself is the clip's own tail
+            r.fadeLeft -= dtMs;
+            src.volume = shotVolume * Settings.SfxVolume * Mathf.Clamp01(r.fadeLeft / r.fadeTotal);
+            if (r.fadeLeft <= 0f) { src.Stop(); src.loop = true; r.releasing = false; }
+        }
+
         Database db;
         const float LiberatorTurnRadPerMs = 0.0015f;
         Rig liberator;
@@ -333,8 +371,15 @@ namespace GoF2Remake.Flight
                 if (r.loop != null)
                 {
                     bool firing = primaryHeld && !gun.isSecondary && r == soundRig;
-                    if (firing && !r.loop.isPlaying) { r.loop.volume = shotVolume * Settings.SfxVolume; r.loop.Play(); }
-                    else if (!firing && r.loop.isPlaying) r.loop.Stop();
+                    if (firing)
+                    {
+                        // Held again while ending: it just carries on.
+                        r.releasing = false;
+                        r.loop.loop = true;
+                        r.loop.volume = shotVolume * Settings.SfxVolume;
+                        if (!r.loop.isPlaying) r.loop.Play();
+                    }
+                    else if (r.loop.isPlaying || r.releasing) UpdateLoopRelease(r, Time.unscaledDeltaTime * 1000f);
                 }
             }
         }

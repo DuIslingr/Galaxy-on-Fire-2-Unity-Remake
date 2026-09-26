@@ -392,7 +392,9 @@ namespace GoF2Remake.World
         void Finish()
         {
             Done = true;
-            ship.localScale = baseScale;
+            // A departure stays gone: back at full size it showed for the frame before the next scene loaded.
+            if (arriving) ship.localScale = baseScale;
+            else ship.gameObject.SetActive(false);
             if (arriving) ship.SetPositionAndRotation(pad, Quaternion.Euler(0f, padYaw, 0f));
             if (engine != null) engine.Stop();
             if (arriving && asm != null) asm.SetExhaust(false, false);   // parked: exhaust off (createShip / setExhaustVisible)

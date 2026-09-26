@@ -65,6 +65,7 @@ namespace GoF2Remake.UI
         Button hangarButton, loungeButton, mapButton, missionsButton, statusButton, launchButton, dialogYes, dialogNo;
         StatusWindow status;
         LoungePanel lounge;
+        bool safeAreaHidden;
         MissionsWindow missions;
         Label tickerText;
         float tickerX, tickerUnitWidth;
@@ -1351,8 +1352,13 @@ namespace GoF2Remake.UI
             // Remake hangar flights: the menu hides while the ship flies in or out; the conversations, windows and hints
             // wait until it has landed. Any key / tap / button skips the flight.
             bool flying = level.PlayerFlying;
-            var display = flying ? DisplayStyle.None : DisplayStyle.Flex;
-            if (safeArea != null && safeArea.style.display != display) safeArea.style.display = display;
+            // Not flying: no inline value at all, so the stylesheet's own rules (.station-map-open hides the menu under the
+            // star map) apply again; an inline Flex here kept the station HUD over the map.
+            if (safeArea != null && flying != safeAreaHidden)
+            {
+                safeAreaHidden = flying;
+                safeArea.style.display = flying ? DisplayStyle.None : StyleKeyword.Null;
+            }
             if (flying)
             {
                 if (World.SpaceLevel.PlayerTriedToFly()) level.SkipPlayerFlight();

@@ -93,8 +93,10 @@ namespace GoF2Remake.Flight
         /// <summary>The turret-slot item (category 8 / 35) of this equipment, or -1.</summary>
         public static int TurretItem(Database db, IList<ItemStack> equipment)
         {
+            if (db == null || equipment == null) return -1;
             foreach (var e in equipment)
             {
+                if (e == null) continue;
                 var it = db.Item(e.item);
                 if (it != null && (it.categoryId == 8 || it.categoryId == 35)) return it.index;
             }
