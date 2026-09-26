@@ -14,6 +14,11 @@
 // Both show the current system's sky behind the room (Level::createSpace builds the StarSystem for these levels).
 // Music per station/race, ambience per screen (Station_Atmo_Mainview / _Lounge).
 // Arrival also rolls or refreshes the station's shop stock (Shop.EnterStation); the shop itself is HangarWindow.
+// Remake-only hangar flights (Settings.HangarFlights): docking from space flies the player's ship in through the
+// forcefield onto the turntable (the station menu, its conversations and windows wait until it has landed),
+// launching lifts it off and flies it out before the flight level loads (HangarFlight); the other ships come and go
+// on the parked slots meanwhile (HangarTraffic). The camera keeps the original framing (the rooms are only modelled
+// where it looks).
 // Not yet: turret on the player ship (CutScene::checkForTurret),
 // home-base stored ships.
 
@@ -128,6 +133,13 @@ namespace GoF2Remake.World
         public Vector3 VisitorFeet(int i) => visitors[i].feet;
         public Camera MainCamera => mainCamera;
 
+        HangarFlight playerFlight;
+        HangarTraffic traffic;
+        Action afterDeparture;
+        bool departed;
+        /// <summary>The player's ship is flying in or out (the station menu hides and waits).</summary>
+        public bool PlayerFlying => playerFlight != null || departed;
+
         /// <summary>AEEngine EaseInOut (0x7aa34): a + (b - a) * (sin(phi) * 0.5 + 0.5), phi 3pi/2 -> 5pi/2, Increase(d) adds
         /// d / 65536 * 2pi, so a whole leg takes 32768 units of d.</summary>
         class EaseInOut
@@ -183,14 +195,40 @@ namespace GoF2Remake.World
                 if (clip != null) musicSource.Play();
             }
             SetView(StationView.Hangar, true);
+
+            // Remake: docked from space = fly in through the forcefield (not after loading a save, a new game, a reload).
+            bool flyIn = Session.DockedFromSpace && Settings.HangarFlights;
+            Session.DockedFromSpace = false;
+            var lane = Lane;
+            if (flyIn && lane != null && playerShip != null)
+            {
+                var engine = HangarFlight.AddEngine(playerShip.gameObject, true, db, shipIndex, out float volume);
+                playerFlight = HangarFlight.Arrival(playerShip, lane, playerShip.position, playerShip.rotation, engine, volume);
+                playerFlightStart = Time.unscaledTime;
+            }
         }
+
+        StationTables.HangarLane Lane => HangarIndex >= 0 && HangarIndex < StationTables.HangarLanes.Length ? StationTables.HangarLanes[HangarIndex] : null;
 
         void BuildHangar()
         {
             hangarRoot = new GameObject("Hangar").transform;
             string room = StationTables.HangarRoom[HangarIndex];
             // Level::createScene: PlayerStatic + setRotation(0, pi, 0) = Unity identity.
-            Spawn(room, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), hangarRoot, "Room");
+            var roomGo = Spawn(room, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), hangarRoot, "Room");
+            // CutScene::process updates every geometry of the scene each frame, so the room's animated layers all run,
+            // not only the *_anim meshes (the Terran hangar_terran_add lights run along the side gutters; at frame 0 they
+            // sat on the player's pad). The loops skip their one-off first key (every part at the origin for 33 / 50 ms,
+            // a jump on every wrap), the rotations swing back and forth (the Vossk ring lights' 57 deg sweep, clear of the
+            // portal, instead of snapping back), and the Vossk portal's light fades out as it moves (its `extra` channel).
+            if (roomGo != null)
+                foreach (var a in roomGo.GetComponentsInChildren<PartAnimation>(true))
+                {
+                    a.play = true;
+                    a.loopStartMs = a.OneOffStartMs;
+                    a.pingPongRotation = true;
+                    if (a.gameObject.name.Contains("_anim")) a.applyMaterialChannels = true;
+                }
 
             float y = StationTables.ShipY(shipIndex);
             shipPivot = OrbitLayout.ToUnity(new Vector3(0f, y, 0f));
@@ -200,6 +238,12 @@ namespace GoF2Remake.World
             shipYaw = StationTables.StartYaw(HangarIndex);
             ApplyShipYaw();
             SpawnParkedShips();
+            // The others come and go (remake), except the club's stored hulls.
+            if (Settings.HangarFlights && Lane != null && StationTables.ParkedSlots[HangarIndex] != null && StationTables.ParkedMax[HangarIndex] > 0
+                && !KaamoClub.StorageAt(Layout.stationIndex))
+                traffic = new HangarTraffic(Lane, StationTables.ParkedSlots[HangarIndex].Length, StationTables.ParkedMax[HangarIndex],
+                                            parkedShips, db, NewParkedShip, ParkedPosition,
+                                            (ship, pos, rot) => SpawnShip(ship, pos, rot, hangarRoot, "Visiting ship"));
 
             // Camera: ModStation::OnInitialize state 0x14 (phone table), rotation order 2 with roll -0.03.
             hangarCamBase = StationTables.HangarCameraPos[HangarIndex];
@@ -232,13 +276,13 @@ namespace GoF2Remake.World
             turret = playerShip != null ? GoF2Remake.Flight.PlayerTurret.BuildStatic(db, shipIndex, Session.Equipment, playerShip) : null;
         }
 
-        readonly List<GameObject> parkedShips = new List<GameObject>();
+        readonly List<HangarTraffic.Parked> parkedShips = new List<HangarTraffic.Parked>();
 
         /// <summary>The club's parked hulls changed (Use / Sell in the storage): park them again.</summary>
         public void RefreshParkedShips()
         {
             if (!KaamoClub.StorageAt(Layout.stationIndex)) return;
-            foreach (var go in parkedShips) if (go != null) Destroy(go);
+            foreach (var p in parkedShips) if (p.go != null) Destroy(p.go);
             parkedShips.Clear();
             SpawnParkedShips();
         }
@@ -256,17 +300,22 @@ namespace GoF2Remake.World
             var taken = new bool[slots.Length];
             for (int n = 0; n < count; n++)
             {
-                int ship = club ? Session.KaamoShips[n].ship
-                         : Layout.stationIndex == 100 ? StationTables.DeepScienceShips[Random.Range(0, 3)] : RandomParkedShip();
+                int ship = club ? Session.KaamoShips[n].ship : NewParkedShip();
                 int slot = Random.Range(0, slots.Length), tries = 0;
                 while (taken[slot] && ++tries < 100) slot = Random.Range(0, slots.Length);
                 if (taken[slot]) break;
                 taken[slot] = true;
                 var pos = slots[slot] + new Vector3(0f, StationTables.ShipY(ship), 0f);
                 var parked = SpawnShip(ship, pos, Random.Range(0, 300) / 100f, hangarRoot, $"Parked ship {n}");
-                if (parked != null) parkedShips.Add(parked);
+                if (parked != null) parkedShips.Add(new HangarTraffic.Parked { go = parked, slot = slot, ship = ship });
             }
         }
+
+        int NewParkedShip() => Layout.stationIndex == 100 ? StationTables.DeepScienceShips[Random.Range(0, 3)] : RandomParkedShip();
+
+        /// <summary>The Unity pivot of 'ship' parked on 'slot' (the slot plus the ship's height).</summary>
+        Vector3 ParkedPosition(int slot, int ship) =>
+            OrbitLayout.ToUnity(StationTables.ParkedSlots[HangarIndex][slot] + new Vector3(0f, StationTables.ShipY(ship), 0f));
 
         int RandomParkedShip()
         {
@@ -366,6 +415,13 @@ namespace GoF2Remake.World
             return go;
         }
 
+        GameObject SpawnShip(int index, Vector3 unityPos, Quaternion unityRot, Transform parent, string label)
+        {
+            var go = SpawnShip(index, Vector3.zero, 0f, parent, label);
+            if (go != null) go.transform.SetPositionAndRotation(unityPos, unityRot);
+            return go;
+        }
+
         /// <summary>Game camera rotation, order 2 (Ry * Rx * Rz, looking down local -Z) -> Unity (looking down +Z).</summary>
         static Quaternion CameraRotation(float x, float y, float z) =>
             Quaternion.Euler(-x * Mathf.Rad2Deg, -y * Mathf.Rad2Deg, z * Mathf.Rad2Deg);
@@ -389,6 +445,7 @@ namespace GoF2Remake.World
             {
                 flingVelocity = 0f;
                 ApplyHangarLighting();
+                traffic?.ResumeAudio();
             }
             PlayAmbience();
             UpdateCamera(0f);
@@ -432,17 +489,18 @@ namespace GoF2Remake.World
         /// <summary>Turns the player's ship by 'gameRadians' (the original: +0xe0 += dx px, yaw = +0xe0 / 120).</summary>
         public void RotateShip(float gameRadians)
         {
+            if (PlayerFlying) return;
             flingVelocity = 0f;
             shipYaw += gameRadians;
             ApplyShipYaw();
         }
 
         /// <summary>Lets the ship keep turning after a drag; slows by x0.9 per 20 ms frame (normalised).</summary>
-        public void FlingShip(float gameRadiansPerSecond) => flingVelocity = gameRadiansPerSecond;
+        public void FlingShip(float gameRadiansPerSecond) => flingVelocity = PlayerFlying ? 0f : gameRadiansPerSecond;
 
         void ApplyShipYaw()
         {
-            if (playerShip != null) playerShip.rotation = OrbitLayout.RotationToUnity(new Vector3(0f, shipYaw, 0f));
+            if (playerShip != null && !PlayerFlying) playerShip.rotation = OrbitLayout.RotationToUnity(new Vector3(0f, shipYaw, 0f));
         }
 
         public void SkipIntro()
@@ -450,8 +508,37 @@ namespace GoF2Remake.World
             if (IntroPlaying) introT = 1.25f;
         }
 
-        /// <summary>ModStation::leaveStation 0xec1ec after the "Depart the station?" confirmation: straight into space.</summary>
-        public void Launch()
+        /// <summary>ModStation::leaveStation 0xec1ec after the "Depart the station?" confirmation: into space (after the
+        /// remake's take-off).</summary>
+        public void Launch() => Depart(LaunchNow);
+
+        /// <summary>Remake: the player's ship takes off and flies out through the forcefield, then 'then' runs (loads the
+        /// next scene); straight away with the flights off. It lifts off at once and holds over its pad while another
+        /// ship flies (HangarTraffic: one flight at a time).</summary>
+        public void Depart(Action then)
+        {
+            if (PlayerFlying) return;
+            var lane = Lane;
+            if (!Settings.HangarFlights || lane == null || playerShip == null) { then?.Invoke(); return; }
+            SetView(StationView.Hangar);
+            flingVelocity = 0f;
+            afterDeparture = then;
+            var engine = HangarFlight.AddEngine(playerShip.gameObject, true, db, shipIndex, out float volume);
+            playerFlight = HangarFlight.Departure(playerShip, lane, engine, volume);
+            playerFlightStart = Time.unscaledTime;
+            playerFlight.Hold = traffic != null && traffic.Busy;
+        }
+
+        /// <summary>A tap / key during the player's flight: landed at once, or gone. Not in its first 0.4 s (the key that
+        /// confirmed the launch).</summary>
+        public void SkipPlayerFlight()
+        {
+            if (playerFlight != null && Time.unscaledTime - playerFlightStart > 0.4f) playerFlight.Skip();
+        }
+
+        float playerFlightStart;
+
+        void LaunchNow()
         {
             Session.LastDepartureTime = Time.realtimeSinceStartup;   // Status+0x70, for computerTradeGoods
             Session.ArrivedByTravel = false;
@@ -473,6 +560,25 @@ namespace GoF2Remake.World
         void Update()
         {
             float dtMs = Time.deltaTime * 1000f;
+            if (playerFlight != null)
+            {
+                playerFlight.Hold = traffic != null && traffic.Busy;
+                playerFlight.Update(Time.deltaTime);
+                if (playerFlight.Done)
+                {
+                    bool arrived = playerFlight.arriving;
+                    playerFlight = null;
+                    if (arrived) ApplyShipYaw();
+                    else
+                    {
+                        departed = true;   // keeps the menu hidden until the scene changes
+                        var then = afterDeparture;
+                        afterDeparture = null;
+                        then?.Invoke();
+                    }
+                }
+            }
+            traffic?.Update(dtMs, playerFlight != null || departed);
             if (View == StationView.Hangar && flingVelocity != 0f)
             {
                 shipYaw += flingVelocity * Time.deltaTime;

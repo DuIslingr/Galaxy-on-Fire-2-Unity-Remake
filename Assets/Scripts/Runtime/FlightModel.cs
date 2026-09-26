@@ -173,6 +173,8 @@ namespace GoF2Remake.Flight
         }
 
         public void AlignToHorizon() { IsLeveling = true; levelSide = 0; levelFine = false; }
+        /// <summary>A manual roll (remake) cancels the auto-level.</summary>
+        public void StopLeveling() => IsLeveling = false;
 
         public void AddCollisionPush(float amount) => collisionPush += amount;
 

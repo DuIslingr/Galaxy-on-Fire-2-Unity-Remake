@@ -393,26 +393,7 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see Obstacle).</summary>
-        void AddObstacles()
-        {
-            if (Station != null)
-            {
-                var o = Station.AddComponent<Obstacle>();
-                o.landmark = o.isStation = true;
-                o.volumes = CollisionVolume.ForStation(Layout.stationIndex, Layout.systemIndex < 0);
-                // PlayerStation+0x150: the transform's bounding radius + 5000 units.
-                var b = new Bounds(Station.transform.position, Vector3.zero);
-                foreach (var r in Station.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
-                o.cubeHalf = Mathf.Max(b.extents.x, b.extents.y, b.extents.z) + 5000f * M;
-            }
-            if (Jumpgate != null)
-            {
-                var o = Jumpgate.AddComponent<Obstacle>();
-                o.landmark = o.cubeIsContact = true;
-                o.cubeHalf = Layout.JumpgateRadius * M;
-                o.volumes.Add(CollisionVolume.Sphere(Vector3.zero, Layout.JumpgateRadius * M));
-            }
-        }
+        void AddObstacles() => OrbitBuilder.AddObstacles(Layout, Station, Jumpgate);
 
         void SetupCamera()
         {
@@ -574,10 +555,12 @@ namespace GoF2Remake.World
 
         /// <summary>MGame::OnTouchEnd -> LevelScript::skipSequence: the player tried to fly (steer, throttle, boost, fire, a
         /// tap, any key or button except the pause and autopilot-menu ones) during the start sequence.</summary>
-        static bool PlayerTriedToFly()
+        /// <summary>Any key but Esc / Q / E (the pause and autopilot / action menus), a click, a tap, a stick or a controller button but Menu / View this frame (also
+        /// the station's skip for the hangar flights).</summary>
+        public static bool PlayerTriedToFly()
         {
             var kb = Keyboard.current;
-            if (kb != null && kb.anyKey.wasPressedThisFrame && !kb.escapeKey.wasPressedThisFrame && !kb.tabKey.wasPressedThisFrame) return true;
+            if (kb != null && kb.anyKey.wasPressedThisFrame && !kb.escapeKey.wasPressedThisFrame && !kb.qKey.wasPressedThisFrame && !kb.eKey.wasPressedThisFrame) return true;
             var mouse = Mouse.current;
             if (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)) return true;
             var touch = Touchscreen.current;
@@ -602,7 +585,7 @@ namespace GoF2Remake.World
             if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation)
             {
                 if (DockingBlocked) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
-                Dock();
+                Dock(true);
                 return;
             }
             if (launchCameraMs <= 0f) return;
@@ -621,11 +604,14 @@ namespace GoF2Remake.World
             else SceneManager.LoadScene(0);
         }
 
-        /// <summary>MGame::dockEvent: straight to the station module (SetCurrentApplicationModule(5)).</summary>
-        public void Dock()
+        /// <summary>MGame::dockEvent: straight to the station module (SetCurrentApplicationModule(5)). 'flyIn': the player
+        /// docked (the autopilot, touching the station, the Dock prompt), so the station opens with the remake's hangar
+        /// fly-in; the story's own moves into a station (the rescue, arrests, "docked at ...") pass false.</summary>
+        public void Dock(bool flyIn = false)
         {
             Leaving = true;
             Session.LaunchedFromStation = false;
+            Session.DockedFromSpace = flyIn;
             Weapons?.StoreAmmo();   // MGame::dockEvent saves the ship state to Status
             if (Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);
         }

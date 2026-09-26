@@ -467,10 +467,22 @@
     -unity-text-align: middle-center;
 }
 
-/* Autopilot to an asteroid and mining: no crosshair or weapon / flight buttons; the stick stays for the drill. */
+/* Autopilot to an asteroid and mining: no crosshair or flight buttons; the stick stays for the drill. The fire button
+   stays: it aborts the approach and stops mining (MGame::OnTouchBegin, Mining). */
 .hud-docking .crosshair,
-.hud-docking .touch-buttons,
 .hud-docking .throttle-track {
+    display: none;
+}
+
+.hud-docking .touch-buttons .touch-button {
+    display: none;
+}
+
+.hud-docking .touch-buttons .touch-button--fire {
+    display: flex;
+}
+
+.hud-docking .touch-buttons .touch-button--fire.touch-button--hidden {
     display: none;
 }
 

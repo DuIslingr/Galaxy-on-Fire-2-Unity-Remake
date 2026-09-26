@@ -70,7 +70,11 @@ namespace GoF2Remake.Flight
         ChaseCamera chase;
         CombatAudio sounds;
         AudioSource sfx;
+        /// <summary>Event 3 Mining_Drill_Broken: a loop (Mining_Drill_Broken.wav, 10 s, loop and cutoff), event volume 0.245.</summary>
+        AudioSource brokenLoop;
         DrillSound drillSound;
+        // The FEV's event volumes (fev_lgcy.py): 2 Mining_Landing, 3 Mining_Drill_Broken (the drill's own, 0.244, in DrillSound).
+        const float LandingVolume = 0.183f, BrokenVolume = 0.2455f;
         ItemData drill;
         int lockTimeMs = 8000;
         float lockTimer;
@@ -97,6 +101,10 @@ namespace GoF2Remake.Flight
             Ultrascan = scanner != null && scanner.Attr(30) == 1;                             // Radar+0x1a6 (Hiroto Ultrascan)
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
+            brokenLoop = gameObject.AddComponent<AudioSource>();
+            brokenLoop.playOnAwake = false;
+            brokenLoop.loop = true;
+            brokenLoop.clip = sounds?.miningDrillBroken;
             drillSound = new DrillSound(gameObject.AddComponent<AudioSource>(), gameObject.AddComponent<AudioSource>(),
                                         gameObject.AddComponent<AudioSource>(), gameObject.AddComponent<AudioSource>(),
                                         sounds?.miningDrillSlow, sounds?.miningDrill, sounds?.miningDrillAdd2, sounds?.miningDrillSwitch);
@@ -111,6 +119,16 @@ namespace GoF2Remake.Flight
         {
             if (db == null) return;
             float dtMs = Time.deltaTime * 1000f;
+            // MGame::OnTouchBegin 0x1a838c: the fire button is the mining button too. During the approach, the landing and
+            // the settle it turns the autopilot off (hudEvent 6, dockToAsteroid(null), Hud::releaseAllKeys: that press
+            // fires nothing); in the minigame it stops mining with the ore so far (PlayerEgo::stopMining) and the button
+            // stays down, so the guns fire at once.
+            if (State != Phase.Idle && weapons != null && Time.timeScale > 0f && weapons.PrimaryPressedThisFrame)
+            {
+                if (State == Phase.Mining) { FinishMining(); weapons.ReleasePrimaryLatch(); }
+                else { weapons.SwallowPrimaryPress(); Interact(); }
+                return;
+            }
             switch (State)
             {
                 case Phase.Idle:
@@ -205,7 +223,7 @@ namespace GoF2Remake.Flight
             ready = false;
             ship.externalControl = true;   // player steering off
             ship.SetThrottle(1f);          // MGame::OnUpdate forces full throttle while docking
-            if (weapons != null) weapons.Blocked = true;
+            if (weapons != null) weapons.PrimaryBlocked = true;   // the fire button aborts; missiles still go (MGame::OnTouchEnd)
         }
 
         void Approach(float dtMs)
@@ -257,7 +275,7 @@ namespace GoF2Remake.Flight
             State = Phase.Landing;
             weapons?.ResetGunDelay();   // PlayerEgo::dockToAsteroid
             SetExhaust(false);
-            Play(sounds?.miningLanding);
+            Play(sounds?.miningLanding, LandingVolume);
             if (chase != null) chase.enabled = false;   // TargetFollowCamera::setActive(false): the camera stays put
             capturedUp = ship.visualModel != null ? ship.visualModel.up : ship.transform.up;
         }
@@ -268,11 +286,13 @@ namespace GoF2Remake.Flight
             LostGame = false;
             Game.InsideChanged += inside =>
             {
-                if (inside) { if (!drillSound.IsPlaying) drillSound.Start(DrillSpeed); }
-                else { drillSound.Stop(); Play(sounds?.miningDrillBroken); }
+                // MiningGame::update: off target stop(1) + play(3), back on play(1) + stop(3): one loop at a time.
+                if (inside) { StopBroken(); if (!drillSound.IsPlaying) drillSound.Start(DrillSpeed); }
+                else { drillSound.Stop(); StartBroken(); }
             };
             Target.radius = 0f;   // Player radius 0: can't be hit or collided while mined
             State = Phase.Mining;
+            if (weapons != null) weapons.Blocked = true;   // PlayerEgo::isMining: no guns, no missiles, no boost
             drillSound.Start(DrillSpeed);
         }
 
@@ -362,10 +382,23 @@ namespace GoF2Remake.Flight
             ship.externalControl = false;
             ship.ExternalSpeedMetersPerSecond = 0f;
             if (ship.visualModel != null) ship.visualModel.localRotation = Quaternion.identity;
-            if (weapons != null) weapons.Blocked = false;
+            if (weapons != null) weapons.Blocked = weapons.PrimaryBlocked = false;
             if (chase != null) chase.enabled = true;   // damped catch-up from where it stopped
             SetExhaust(true);
             drillSound.Stop();
+            StopBroken();
+        }
+
+        void StartBroken()
+        {
+            if (brokenLoop == null || brokenLoop.clip == null) return;
+            brokenLoop.volume = BrokenVolume * Settings.SfxVolume;
+            if (!brokenLoop.isPlaying) brokenLoop.Play();
+        }
+
+        void StopBroken()
+        {
+            if (brokenLoop != null && brokenLoop.isPlaying) brokenLoop.Stop();
         }
 
         /// <summary>MiningGame::update: FMOD event 1's parameter drill_speed = (LAYER_SPEEDS[layer] - 5) / 33 * 3.</summary>
@@ -379,9 +412,9 @@ namespace GoF2Remake.Flight
 
         void Say(string text) => Message?.Invoke(text);
 
-        void Play(AudioClip clip)
+        void Play(AudioClip clip, float volume = 1f)
         {
-            if (clip != null) sfx.PlayOneShot(clip, Settings.SfxVolume);
+            if (clip != null) sfx.PlayOneShot(clip, volume * Settings.SfxVolume);
         }
     }
 }

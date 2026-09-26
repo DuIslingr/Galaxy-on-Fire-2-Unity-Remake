@@ -1347,6 +1347,16 @@ namespace GoF2Remake.UI
             if (root == null || level == null) return;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
             UpdateTicker();   // scrolls on under dialogs and windows (it used to wait, then fly in again)
+            // Remake hangar flights: the menu hides while the ship flies in or out; the conversations, windows and hints
+            // wait until it has landed. Any key / tap / button skips the flight.
+            bool flying = level.PlayerFlying;
+            var display = flying ? DisplayStyle.None : DisplayStyle.Flex;
+            if (safeArea != null && safeArea.style.display != display) safeArea.style.display = display;
+            if (flying)
+            {
+                if (World.SpaceLevel.PlayerTriedToFly()) level.SkipPlayerFlight();
+                return;
+            }
             if (lounge != null && lounge.Active != root.ClassListContains("lounge-open")) lounge.OnViewChanged();   // also under a dialog
             if (StarMap.IsOpen) return;   // the map has its own input
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }

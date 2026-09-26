@@ -31,19 +31,6 @@ namespace GoF2Remake.EditorTools
         const string ImageDir = MenuDir + "/Images";
         const string ScenePath = "Assets/Scenes/MainMenu.unity";
 
-        // Background set: station indices whose orbits frame well behind the menu (the original picks any of 0..99).
-        static readonly (int station, string label, float cameraStartAngle)[] Stations =   // angle -1 = automatic
-        {
-            (0, "Nehebru, Suteo (jumpgate orbit)", -1f),
-            (7, "Binon, Pan", -1f),
-            (21, "Euclades, Eanya", -1f),
-            (49, "Siameh, Weymire", -1f),
-            (56, "Suttnar, Union", -1f),
-            (70, "Dis, Magnetar", -1f),
-            (77, "Heinsten, Mido", -1f),
-            (25, "S'inokk, S'kolptorr (Vossk)", -1f),
-        };
-
         // Short, neutral Terran radio lines (1.6-2.8 s) for the voice volume preview.
         public static readonly string[] VoicePreviewLines =
         {
@@ -358,24 +345,14 @@ namespace GoF2Remake.EditorTools
             camData.renderPostProcessing = true;
             camData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
             camGo.AddComponent<AudioListener>();
-            var menuCam = camGo.AddComponent<MenuCamera>();
-            menuCam.orbitSpeed = 1.2f;
-            menuCam.driftDegrees = 0.5f;
-            menuCam.framingYaw = 14f;
-            menuCam.verticalFov16x9 = 50f;
+            var menuCam = camGo.AddComponent<MenuCamera>();   // CutScene(2)'s fixed camera and yaw pan (MenuBackground places it)
 
             // Station backdrop.
             var bgGo = new GameObject("Background");
             var bg = bgGo.AddComponent<MenuBackground>();
             bg.menuCamera = menuCam;
             bg.sunLight = sun;
-            bg.planetLight = planetLight;
-            bg.setups = Stations.Select(s => new MenuBackground.Setup
-            {
-                label = s.label,
-                station = s.station,
-                cameraStartAngle = s.cameraStartAngle,
-            }).ToArray();
+            bg.planetLight = planetLight;   // the station: random 0..99 at run time, like the original
 
 
             var volGo = new GameObject("Post Processing");

@@ -163,6 +163,8 @@ namespace GoF2Remake.UI
             // ---- gameplay
             list.Add(Toggle("launchCamera", OptionPage.Gameplay, () => X("launchCamera", "Launch and arrival camera"),
                 () => Settings.LaunchCamera, v => Settings.LaunchCamera = v));
+            list.Add(Toggle("hangarFlights", OptionPage.Gameplay, () => X("hangarFlights", "Hangar arrival and take-off"),
+                () => Settings.HangarFlights, v => Settings.HangarFlights = v));
             list.Add(Toggle("autoAdvance", OptionPage.Gameplay, () => X("autoAdvance", "Turn voiced dialogue pages automatically"),
                 () => Settings.AutoAdvanceDialogue, v => Settings.AutoAdvanceDialogue = v));
             list.Add(Toggle("inputHints", OptionPage.Gameplay, () => X("inputHints", "Button hints"),

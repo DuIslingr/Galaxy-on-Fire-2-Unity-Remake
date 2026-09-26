@@ -538,8 +538,11 @@ namespace GoF2Remake.World
                     if (!s.Gone && !s.Inactive && !s.Asleep && s.Current != NpcShip.State.Dying && s.Current != NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer && !s.IsFreighter)
                         hostiles++;
             HostileCount = hostiles;
-            UpdateMusic(Time.unscaledDeltaTime);
+            if (!MenuBackdrop) UpdateMusic(Time.unscaledDeltaTime);   // the menu plays its own theme
         }
+
+        /// <summary>The main menu's backdrop (CutScene(2)): the orbit's traffic without the level's music.</summary>
+        [NonSerialized] public bool MenuBackdrop;
 
         // ---- Level::createStaticObjects 0xcadb0 (campaign_levels_c.md 4, space_props.md 3) ------------------------------
 

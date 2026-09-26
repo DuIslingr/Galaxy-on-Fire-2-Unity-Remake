@@ -48,7 +48,7 @@ namespace GoF2Remake.Flight
 
         void Awake()
         {
-            if (cycleAction.bindings.Count == 0) { cycleAction.AddBinding("<Keyboard>/v"); cycleAction.AddBinding("<Gamepad>/dpad/up"); }
+            if (cycleAction.bindings.Count == 0) { cycleAction.AddBinding("<Keyboard>/t"); cycleAction.AddBinding("<Gamepad>/dpad/up"); }
             cycleAction.Enable();
             anchor = new GameObject("Free look anchor").transform;
             anchor.SetParent(transform, false);

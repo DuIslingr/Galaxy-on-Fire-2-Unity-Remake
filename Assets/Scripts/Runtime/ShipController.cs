@@ -38,6 +38,14 @@ namespace GoF2Remake.Flight
         public InputAction throttleAction = new InputAction("Throttle", InputActionType.Value, expectedControlType: "Axis");
         public InputAction boostAction = new InputAction("Boost", InputActionType.Button);
         public InputAction alignAction = new InputAction("AlignHorizon", InputActionType.Button);
+        /// <summary>Remake: manual roll (the PC version's "Turn left / right", 1 / 3; the phone original only auto-levels).</summary>
+        public InputAction rollAction = new InputAction("Roll", InputActionType.Value, expectedControlType: "Axis");
+        [Tooltip("Manual roll at full input (remake, not a recovered constant).")]
+        public float rollDegreesPerSecond = 90f;
+        float touchRoll;
+
+        /// <summary>The touch HUD's roll (the Level button slid sideways): -1 left .. 1 right.</summary>
+        public void SetRoll(float roll) => touchRoll = Mathf.Clamp(roll, -1f, 1f);
 
         [Header("Visual banking (cosmetic only)")]
         public Transform visualModel;
@@ -82,22 +90,21 @@ namespace GoF2Remake.Flight
 
         void OnEnable()
         {
-            steerAction.Enable(); throttleAction.Enable(); boostAction.Enable(); alignAction.Enable();
+            steerAction.Enable(); throttleAction.Enable(); boostAction.Enable(); alignAction.Enable(); rollAction.Enable();
         }
 
         void OnDisable()
         {
-            steerAction.Disable(); throttleAction.Disable(); boostAction.Disable(); alignAction.Disable();
+            steerAction.Disable(); throttleAction.Disable(); boostAction.Disable(); alignAction.Disable(); rollAction.Disable();
         }
 
-        /// <summary>Fills in the default keyboard + gamepad bindings for any action that has none.</summary>
+        /// <summary>Fills in the default keyboard + gamepad bindings for any action that has none. Keyboard: the PC version's
+        /// defaults (Galaxy on Fire 2 Full HD): arrows steer, ] / "/" thrust (S brakes, the wheel too), W booster, 1 / 3
+        /// roll ("Turn left / right"), A / D the dodge ("Move left / right", ReadDodgeInput); 2 levels out (remake pick).</summary>
         void AddDefaultBindings()
         {
             if (steerAction.bindings.Count == 0)
             {
-                steerAction.AddCompositeBinding("2DVector")
-                    .With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s")
-                    .With("Left", "<Keyboard>/a").With("Right", "<Keyboard>/d");
                 steerAction.AddCompositeBinding("2DVector")
                     .With("Up", "<Keyboard>/upArrow").With("Down", "<Keyboard>/downArrow")
                     .With("Left", "<Keyboard>/leftArrow").With("Right", "<Keyboard>/rightArrow");
@@ -106,20 +113,22 @@ namespace GoF2Remake.Flight
             if (throttleAction.bindings.Count == 0)
             {
                 throttleAction.AddCompositeBinding("1DAxis")
-                    .With("Positive", "<Keyboard>/e").With("Negative", "<Keyboard>/q");
+                    .With("Positive", "<Keyboard>/rightBracket").With("Negative", "<Keyboard>/slash");
                 throttleAction.AddCompositeBinding("1DAxis")
                     .With("Positive", "<Gamepad>/rightShoulder").With("Negative", "<Gamepad>/leftShoulder");
             }
             if (boostAction.bindings.Count == 0)
             {
-                boostAction.AddBinding("<Keyboard>/space");
+                boostAction.AddBinding("<Keyboard>/w");
                 boostAction.AddBinding("<Gamepad>/buttonSouth");
             }
             if (alignAction.bindings.Count == 0)
             {
-                alignAction.AddBinding("<Keyboard>/r");
+                alignAction.AddBinding("<Keyboard>/2");
                 alignAction.AddBinding("<Gamepad>/buttonNorth");
             }
+            if (rollAction.bindings.Count == 0)
+                rollAction.AddCompositeBinding("1DAxis").With("Negative", "<Keyboard>/1").With("Positive", "<Keyboard>/3");
         }
 
         /// <summary>Call after changing 'stats' at runtime (new ship, new equipment, cargo change).</summary>
@@ -217,7 +226,17 @@ namespace GoF2Remake.Flight
                 if (dir.sqrMagnitude > 0f) transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
             }
             // Original: yaw positive = left. Unity yaw positive = right, so negate.
-            else transform.Rotate(r.pitchDeg, -r.yawDeg, r.rollDeg, Space.Self);
+            else
+            {
+                transform.Rotate(r.pitchDeg, -r.yawDeg, r.rollDeg, Space.Self);
+                // Remake: manual roll (keys 1 / 3, the touch Level button slid sideways); rolling ends an auto-level.
+                float roll = inputLocked || steeringLocked ? 0f : Mathf.Clamp((useBuiltInInput ? rollAction.ReadValue<float>() : 0f) + touchRoll, -1f, 1f);
+                if (Mathf.Abs(roll) > 0.01f)
+                {
+                    Model.StopLeveling();
+                    transform.Rotate(0f, 0f, -roll * rollDegreesPerSecond * dtMs / 1000f, Space.Self);
+                }
+            }
             transform.position += transform.forward * (r.forwardUnits * metersPerUnit)
                                 + transform.right * (r.sidePushUnits * metersPerUnit);
 
@@ -226,9 +245,8 @@ namespace GoF2Remake.Flight
             UpdateVisualBank();
         }
 
-        // Remake-only dodge bindings (the original: a touch swipe, FlightHud): double-tap left / right (A / D or the
-        // arrows) within 250 ms, or flick the controller's right stick sideways.
-        float lastLeftTap = -1f, lastRightTap = -1f;
+        // The dodge bindings (the original: a touch swipe, FlightHud): A / D (the PC version's "Move left / right"), or
+        // (remake) a sideways flick of the controller's right stick.
         bool stickFlicked;
 
         void ReadDodgeInput()
@@ -236,15 +254,8 @@ namespace GoF2Remake.Flight
             var kb = Keyboard.current;
             if (kb != null)
             {
-                float now = Time.unscaledTime;
-                if (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame)
-                {
-                    if (now - lastLeftTap < 0.25f) { RequestDodge(1); lastLeftTap = -1f; } else lastLeftTap = now;
-                }
-                if (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame)
-                {
-                    if (now - lastRightTap < 0.25f) { RequestDodge(2); lastRightTap = -1f; } else lastRightTap = now;
-                }
+                if (kb.aKey.wasPressedThisFrame) RequestDodge(1);
+                if (kb.dKey.wasPressedThisFrame) RequestDodge(2);
             }
             var pad = Gamepad.current;
             if (pad != null)
@@ -260,7 +271,17 @@ namespace GoF2Remake.Flight
         Vector2 ReadInput()
         {
             float throttle = throttleAction.ReadValue<float>();
+            var kb = Keyboard.current;
+            if (kb != null && kb.sKey.isPressed) throttle -= 2f;   // Brake (S): down twice as fast as "/"
             if (Mathf.Abs(throttle) > 0.01f) Model.ChangeThrottle(throttle * throttleChangePerSecond * Time.deltaTime);
+            // The wheel: +- thrust, 10 % a notch (not while it zooms the free-look camera).
+            var mouse = Mouse.current;
+            if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
+            if (mouse != null && (freeLook == null || !freeLook.FreeLookActive))
+            {
+                float wheel = mouse.scroll.ReadValue().y;
+                if (Mathf.Abs(wheel) > 0.01f) Model.ChangeThrottle(Mathf.Sign(wheel) * 0.1f);
+            }
             if (boostAction.WasPressedThisFrame()) Model.Boost();
             if (alignAction.WasPressedThisFrame()) Model.AlignToHorizon();
             return Vector2.ClampMagnitude(steerAction.ReadValue<Vector2>(), 1f);

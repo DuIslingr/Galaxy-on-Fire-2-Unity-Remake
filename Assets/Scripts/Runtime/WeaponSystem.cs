@@ -87,8 +87,11 @@ namespace GoF2Remake.Flight
         public string SecondaryName => SelectedSecondary >= 0 ? UI.ItemInfo.ItemName(SelectedSecondary) : "";
         /// <summary>More than one secondary item is mounted (the HUD offers the switch).</summary>
         public bool CanCycleSecondary { get { int n = 0, last = -1; foreach (var r in rigs) if (r.gun.isSecondary && r.gun.itemIndex != last) { last = r.gun.itemIndex; n++; } return n > 1; } }
-        /// <summary>No firing (asteroid docking and mining block the guns, MGame::OnTouchBegin).</summary>
+        /// <summary>No firing (the mining minigame blocks the guns, MGame::OnTouchBegin / OnTouchEnd).</summary>
         public bool Blocked { get; set; }
+        /// <summary>The primary guns stay silent, the secondaries fire (the approach to an asteroid and the landing: the fire
+        /// button aborts instead, Mining; missiles still go, MGame::OnTouchEnd).</summary>
+        public bool PrimaryBlocked { get; set; }
         /// <summary>Raised when a player bullet hits something (the crosshair turns orange for 200 ms).</summary>
         public event Action Hit;
         /// <summary>A bomb, mine or blast went off (the explosion's world position).</summary>
@@ -126,17 +129,19 @@ namespace GoF2Remake.Flight
             GuidedRocket = null;
         }
 
+        /// <summary>Keyboard: the PC version's defaults (Galaxy on Fire 2 Full HD): Space primary fire, R secondary fire; G
+        /// switches the secondary (remake).</summary>
         void AddDefaultBindings()
         {
             if (firePrimaryAction.bindings.Count == 0)
             {
-                firePrimaryAction.AddBinding("<Keyboard>/leftCtrl");
+                firePrimaryAction.AddBinding("<Keyboard>/space");
                 firePrimaryAction.AddBinding("<Mouse>/leftButton");
                 firePrimaryAction.AddBinding("<Gamepad>/rightTrigger");
             }
             if (fireSecondaryAction.bindings.Count == 0)
             {
-                fireSecondaryAction.AddBinding("<Keyboard>/f");
+                fireSecondaryAction.AddBinding("<Keyboard>/r");
                 fireSecondaryAction.AddBinding("<Mouse>/rightButton");
                 fireSecondaryAction.AddBinding("<Gamepad>/leftTrigger");
             }
@@ -224,7 +229,30 @@ namespace GoF2Remake.Flight
         // ---- input ------------------------------------------------------------------------------------------
 
         /// <summary>Touch: hold to fire the primary guns.</summary>
-        public void SetPrimaryHeld(bool held) => touchPrimary = held;
+        public void SetPrimaryHeld(bool held)
+        {
+            if (held && !touchPrimary) touchPressedFrame = Time.frameCount;
+            touchPrimary = held;
+        }
+
+        int touchPressedFrame = -1;
+
+        /// <summary>The fire button went down this frame (keys, mouse, controller or touch), whether or not the guns may
+        /// fire: the original's fire button is also the mining one (MGame::OnTouchBegin, Mining). A touch counts for two
+        /// frames (the UI event may come after the reader's Update).</summary>
+        public bool PrimaryPressedThisFrame =>
+            (useBuiltInInput && firePrimaryAction.WasPressedThisFrame()) || Time.frameCount - touchPressedFrame <= 1;
+
+        /// <summary>The press that stopped something (the asteroid approach) doesn't also fire: ignored until released
+        /// (Hud::releaseAllKeys).</summary>
+        public void SwallowPrimaryPress()
+        {
+            primaryLatched = true;
+            touchPrimary = false;
+        }
+
+        /// <summary>A held fire button fires at once (stopping the mining minigame keeps the fire key down: the guns shoot).</summary>
+        public void ReleasePrimaryLatch() => primaryLatched = false;
 
         /// <summary>Touch / release of the missile button (MGame::OnTouchEnd -> Player::shoot(1)): detonate the bombs in
         /// flight, else fire the selected secondary.</summary>
@@ -278,8 +306,9 @@ namespace GoF2Remake.Flight
             bool primaryPressed = useBuiltInInput && firePrimaryAction.IsPressed();
             bool secondaryPressed = useBuiltInInput && fireSecondaryAction.IsPressed();
             if (halted) { primaryLatched |= primaryPressed; secondaryLatched |= secondaryPressed; }
+            if (PrimaryBlocked) primaryLatched |= primaryPressed;
             if (!primaryPressed) primaryLatched = false;
-            bool primaryHeld = !halted && (touchPrimary || (primaryPressed && !primaryLatched));
+            bool primaryHeld = !halted && !PrimaryBlocked && (touchPrimary || (primaryPressed && !primaryLatched));
             FireHeld = primaryHeld;
             if (TurretView) primaryHeld = false;
             if (!halted && !TurretView && useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame() && !secondaryLatched) FireSecondary();

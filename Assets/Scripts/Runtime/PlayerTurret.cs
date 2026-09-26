@@ -175,8 +175,8 @@ namespace GoF2Remake.Flight
             camAnchor = new GameObject("Turret camera").transform;
             camAnchor.SetParent(pivot, false);
             camAnchor.localPosition = gunNode.localPosition;
-            if (viewAction.bindings.Count == 0) { viewAction.AddBinding("<Keyboard>/v"); viewAction.AddBinding("<Gamepad>/dpad/up"); }
-            if (autoAction.bindings.Count == 0) { autoAction.AddBinding("<Keyboard>/t"); autoAction.AddBinding("<Gamepad>/dpad/down"); }
+            if (viewAction.bindings.Count == 0) { viewAction.AddBinding("<Keyboard>/t"); viewAction.AddBinding("<Gamepad>/dpad/up"); }
+            if (autoAction.bindings.Count == 0) { autoAction.AddBinding("<Keyboard>/y"); autoAction.AddBinding("<Gamepad>/dpad/down"); }
             viewAction.Enable();
             autoAction.Enable();
         }

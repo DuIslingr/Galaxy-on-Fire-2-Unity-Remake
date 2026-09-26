@@ -133,6 +133,31 @@ namespace GoF2Remake.World
             return go;
         }
 
+        /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (Obstacle): the player slides
+        /// along them (PlayerEgo::calcCollision) and NPC fighters turn away from them (PlayerFighter::update, the first
+        /// landmark's volumes). The flight level and the menu backdrop.</summary>
+        public static void AddObstacles(OrbitLayout layout, GameObject station, GameObject jumpgate)
+        {
+            const float M = OrbitLayout.MetersPerUnit;
+            if (station != null)
+            {
+                var o = station.AddComponent<GoF2Remake.Flight.Obstacle>();
+                o.landmark = o.isStation = true;
+                o.volumes = GoF2Remake.Flight.CollisionVolume.ForStation(layout.stationIndex, layout.systemIndex < 0);
+                // PlayerStation+0x150: the transform's bounding radius + 5000 units.
+                var b = new Bounds(station.transform.position, Vector3.zero);
+                foreach (var r in station.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
+                o.cubeHalf = Mathf.Max(b.extents.x, b.extents.y, b.extents.z) + 5000f * M;
+            }
+            if (jumpgate != null)
+            {
+                var o = jumpgate.AddComponent<GoF2Remake.Flight.Obstacle>();
+                o.landmark = o.cubeIsContact = true;
+                o.cubeHalf = layout.JumpgateRadius * M;
+                o.volumes.Add(GoF2Remake.Flight.CollisionVolume.Sphere(Vector3.zero, layout.JumpgateRadius * M));
+            }
+        }
+
         public static GameObject SpawnJumpgate(Database db, OrbitLayout layout, Transform parent = null)
         {
             if (!layout.hasJumpgate) return null;

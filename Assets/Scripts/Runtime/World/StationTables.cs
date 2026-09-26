@@ -58,6 +58,36 @@ namespace GoF2Remake.World
             new[] { new Vector3(4096, 0, 0) },
         };
 
+        /// <summary>Remake-only hangar flights (HangarFlight): the way in and out of each hangar, in UNITY metres (hangar
+        /// root space), measured on the room meshes. 'gate' = the forcefield's centre (the hangar_*_alpha / Vossk
+        /// anim_add portal / battlestation alpha plane), 'outward' = toward space; the ships pass it level, at a height
+        /// inside 'gateSpan' (the field's height with a margin). Vertical pads (hub unused): the ships cross the room at
+        /// 'cruise' height, above the parked ships, and land straight down. Vossk: its bays have roofs and face the
+        /// ring's centre ('hub'), so the ships swing through the centre and fly into the bay from 'approach' metres in front of
+        /// it, 'hover' metres up, then land straight down. The rooms are only modelled where the 16:9 hangar camera
+        /// looks, so the lanes stay inside the room.</summary>
+        public sealed class HangarLane
+        {
+            public Vector3 gate, outward;
+            public Vector2 gateSpan;
+            public float cruise;
+            public bool bays;
+            public Vector3 hub;
+            public float approach, hover;
+        }
+
+        public static readonly HangarLane[] HangarLanes =
+        {
+            new HangarLane { gate = new Vector3(0f, 55f, -549f), outward = Vector3.back, gateSpan = new Vector2(30f, 115f), cruise = 45f },     // Terran
+            new HangarLane { gate = new Vector3(-625f, 5f, -543f), outward = Vector3.left, gateSpan = new Vector2(-250f, 120f), bays = true,   // Vossk
+                             hub = new Vector3(0f, 0f, -543f), approach = 70f, hover = 5f },
+            new HangarLane { gate = new Vector3(357f, 70f, -565f), outward = Vector3.back, gateSpan = new Vector2(25f, 130f), cruise = 50f },   // Nivelian
+            new HangarLane { gate = new Vector3(-203f, 50f, -407f), outward = Vector3.back, gateSpan = new Vector2(20f, 80f), cruise = 45f },   // Midorian
+            null, null, null,
+            new HangarLane { gate = new Vector3(177f, 80f, -633f), outward = Vector3.back, gateSpan = new Vector2(10f, 180f), cruise = 50f },   // Deep Science
+            new HangarLane { gate = new Vector3(-226f, 50f, 12f), outward = Vector3.left, gateSpan = new Vector2(25f, 85f), cruise = 40f },     // Battlestation
+        };
+
         /// <summary>Phone camera table DAT_002546c4, relative to the ship pivot (0, ShipY, 0).</summary>
         public static readonly Vector3[] HangarCameraPos =
         {

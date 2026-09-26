@@ -50,6 +50,10 @@ namespace GoF2Remake.Visuals
         /// first key is a one-off flash (the supernova flares 100 -> 50 over the first second, the storm parts all at 100
         /// for 33 ms) that looped from 0 blinked the whole sky.</summary>
         public float loopStartMs;
+        /// <summary>A looping rotation swings back on every other loop instead of snapping back to its start (the Vossk
+        /// hangar's ring lights sweep ~57 deg per 2.5 s loop, clear of the portal: looped as keyed they jumped back;
+        /// carried on they swept through the portal).</summary>
+        public bool pingPongRotation;
         public float speed = 1f;
         [Tooltip("Must match the model import scale (ImportSettings.ModelScale).")]
         public float metersPerUnit = 0.05f;
@@ -89,6 +93,7 @@ namespace GoF2Remake.Visuals
                     else if (c.target.StartsWith("rot")) tk.rot[axis] = c.keys;
                     else if (c.target.StartsWith("scl")) tk.scl[axis] = c.keys;
                     lengthMs = Mathf.Max(lengthMs, c.keys[c.keys.Length - 1].t);
+                    if (c.keys.Length > 1) secondKeyMs = Mathf.Min(secondKeyMs, c.keys[1].t);
                 }
                 tracks.Add(tk);
             }
@@ -97,6 +102,12 @@ namespace GoF2Remake.Visuals
 
         /// <summary>How often the looping animation has wrapped (the storm sky re-rolls its rotation on each).</summary>
         public int Loops { get; private set; }
+
+        float secondKeyMs = float.MaxValue;
+
+        /// <summary>The loop's real start when the file opens with a one-off key within 100 ms (the room layers: every
+        /// part at the origin at t 0, the loop from the second key at 33 / 50 ms), else 0. For loopStartMs.</summary>
+        public float OneOffStartMs => secondKeyMs <= 100f ? secondKeyMs : 0f;
 
         /// <summary>Length of the animation in ms (0 if it has no keyframes).</summary>
         public float LengthMs => lengthMs;
@@ -184,7 +195,9 @@ namespace GoF2Remake.Visuals
                 }
                 if (tk.rot[0] != null || tk.rot[1] != null || tk.rot[2] != null)
                 {
-                    var r = new[] { Eval(tk.rot[0], timeMs, 0), Eval(tk.rot[1], timeMs, 0), Eval(tk.rot[2], timeMs, 0) };
+                    float rt = pingPongRotation && loop && (Loops & 1) == 1
+                        ? Mathf.Clamp(loopStartMs, 0f, lengthMs - 1f) + lengthMs - timeMs : timeMs;
+                    var r = new[] { Eval(tk.rot[0], rt, 0), Eval(tk.rot[1], rt, 0), Eval(tk.rot[2], rt, 0) };
                     var e = Map(r, rotationMap) * (rotationInRadians ? Mathf.Rad2Deg : 1f);
                     tk.tr.localRotation = tk.baseRot * Quaternion.Euler(e);
                 }

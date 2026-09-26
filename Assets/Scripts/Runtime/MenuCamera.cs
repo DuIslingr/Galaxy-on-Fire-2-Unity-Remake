@@ -1,7 +1,9 @@
 // MenuCamera.cs
-// Slow cinematic camera for the main menu background: orbits a target at a fixed distance with a gentle
-// vertical bob and a subtle handheld-style drift. The original menu (mode-2 space level) just looks at a
-// station; this keeps that idea but adds motion so the scene feels alive.
+// The main menu backdrop's camera, like the original's CutScene(2) (CutScene::initialize 0xa4074 / process 0xa49f4,
+// mode 2): CameraSetPerspective(0.92, 200, 200000); a fixed position (rnd(20000) - 20000, 0, rnd(60000) + 40000) in
+// game units; rotation (0, yaw, 0) with yaw starting at -pi/4 and growing by dt * 5e-5 per ms (CutScene+0x24), a
+// full turn every ~126 s. No look-at, orbit or bob: the station is in view for part of each turn. MenuBackground
+// places it (Place) after building the orbit.
 
 using UnityEngine;
 
@@ -10,65 +12,43 @@ namespace GoF2Remake.Visuals
     [DisallowMultipleComponent]
     public class MenuCamera : MonoBehaviour
     {
-        public Transform target;
-        [Tooltip("Offset from the target the camera looks at (metres, target space).")]
-        public Vector3 lookOffset;
-        public float distance = 250f;
-        public float height = 40f;
-        [Tooltip("Orbit speed in degrees per second.")]
-        public float orbitSpeed = 1.5f;
-        public float startAngle = 30f;
-        [Tooltip("Vertical bob amplitude (metres) and period (seconds).")]
-        public float bobAmplitude = 12f;
-        public float bobPeriod = 40f;
-        [Tooltip("Handheld drift: rotation noise in degrees.")]
-        public float driftDegrees = 0.6f;
-        public float driftSpeed = 0.08f;
-        [Tooltip("Turns the view left so the target sits right of centre, clear of the menu column.")]
-        public float framingYaw = 12f;
-        [Tooltip("Vertical FOV at 16:9; adapted to other aspect ratios by Aspect.")]
-        public float verticalFov16x9 = 50f;
+        const float M = GoF2Remake.World.OrbitLayout.MetersPerUnit;
 
-        float angle;
+        [Tooltip("CutScene+0x24: yaw per ms (radians).")]
+        public float yawPerMs = 5e-5f;
+        [Tooltip("CameraSetPerspective: the vertical field of view (radians), near and far (game units).")]
+        public float fovRadians = 0.92f, near = 200f, far = 200000f;
+
+        float gameYaw = -Mathf.PI / 4f;
         Camera cam;
 
-        void OnEnable()
-        {
-            angle = startAngle;
-            cam = GetComponent<Camera>();
-        }
+        void OnEnable() => cam = GetComponent<Camera>();
 
-        /// <summary>Restarts the orbit at startAngle and moves the camera there now (spawners read its position).</summary>
-        public void ResetOrbit()
+        /// <summary>The camera at 'gamePosition' (game units), yaw -pi/4.</summary>
+        public void Place(Vector3 gamePosition)
         {
-            angle = startAngle;
-            if (cam == null) cam = GetComponent<Camera>();
-            Place();
+            gameYaw = -Mathf.PI / 4f;
+            transform.position = GoF2Remake.World.OrbitLayout.ToUnity(gamePosition);
+            Apply();
         }
 
         void LateUpdate()
         {
-            angle += orbitSpeed * Time.deltaTime;
-            Place();
+            gameYaw += Time.deltaTime * 1000f * yawPerMs;
+            Apply();
         }
 
-        void Place()
+        void Apply()
         {
-            float aspect = cam != null ? cam.aspect : Aspect.Reference;
-            if (cam != null) cam.fieldOfView = Aspect.VerticalFov(verticalFov16x9, aspect);
-            if (target == null) return;
-            float t = Time.time;
-            float y = height + Mathf.Sin(t * 2f * Mathf.PI / Mathf.Max(1f, bobPeriod)) * bobAmplitude;
-            var offset = Quaternion.Euler(0f, angle, 0f) * new Vector3(0f, 0f, -distance);
-            var focus = target.TransformPoint(lookOffset);
-            transform.position = target.position + offset + Vector3.up * y;
-
-            var look = Quaternion.LookRotation(focus - transform.position, Vector3.up);
-            var drift = Quaternion.Euler(
-                (Mathf.PerlinNoise(t * driftSpeed, 0.1f) - 0.5f) * 2f * driftDegrees,
-                (Mathf.PerlinNoise(0.3f, t * driftSpeed) - 0.5f) * 2f * driftDegrees,
-                (Mathf.PerlinNoise(t * driftSpeed, 0.7f) - 0.5f) * driftDegrees);
-            transform.rotation = look * Quaternion.Euler(0f, -framingYaw, 0f) * drift;
+            if (cam == null) cam = GetComponent<Camera>();
+            if (cam != null)
+            {
+                cam.fieldOfView = Aspect.VerticalFov(fovRadians * Mathf.Rad2Deg, cam.aspect);
+                cam.nearClipPlane = near * M;
+                cam.farClipPlane = far * M;
+            }
+            // A game camera rotation Ry(yaw) looking down its -Z = Unity Euler(0, -yaw, 0) looking down +Z.
+            transform.rotation = Quaternion.Euler(0f, -gameYaw * Mathf.Rad2Deg, 0f);
         }
     }
 }

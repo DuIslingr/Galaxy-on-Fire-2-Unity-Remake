@@ -124,16 +124,22 @@ namespace GoF2Remake.World
             level.Traffic.QueueLine(3161, 0, GenericVoice.For(3161));
         }
 
-        /// <summary>Globals::replaceKeyBindingTokens: the remake's keys (keyboard) or Xbox buttons (a controller).</summary>
+        /// <summary>Globals::replaceKeyBindingTokens: the PC version's default keys (keyboard) or Xbox buttons (a controller).</summary>
         public static string KeyTokens(string s)
         {
             if (string.IsNullOrEmpty(s) || s.IndexOf("#KEY_", StringComparison.Ordinal) < 0) return s;
             bool pad = InputMode.Current == InputKind.Gamepad;
-            return s.Replace("#KEY_DOCK", pad ? "X" : "Enter")
-                    .Replace("#KEY_ACTION_MENU", pad ? "View" : "Tab")
-                    .Replace("#KEY_KHADOR_DRIVE", pad ? "View" : "Tab")
+            return s.Replace("#KEY_DOCK", pad ? "X" : "F")
+                    .Replace("#KEY_ACTION_MENU", pad ? "View" : "E")
+                    .Replace("#KEY_AUTOPILOT", pad ? "View" : "Q")
+                    .Replace("#KEY_KHADOR_DRIVE", pad ? "View" : "K")
+                    .Replace("#KEY_WINGMEN", pad ? "View" : "V")
                     .Replace("#KEY_CLOAK", pad ? "RS" : "C")
-                    .Replace("#KEY_BOOST", pad ? "A" : Localization.Extra("keySpace", "Space"));
+                    .Replace("#KEY_FAST_FORWARD", pad ? "Y" : "Tab")
+                    .Replace("#KEY_PRIMARY", pad ? "RT" : Localization.Extra("keySpace", "Space"))
+                    .Replace("#KEY_SECONDARY_WEAPONS", pad ? "D-pad" : "G")
+                    .Replace("#KEY_SECONDARY", pad ? "LT" : "R")
+                    .Replace("#KEY_BOOST", pad ? "A" : "W");
         }
     }
 }

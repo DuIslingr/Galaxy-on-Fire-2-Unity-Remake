@@ -197,6 +197,9 @@ namespace GoF2Remake.Data
         /// (LevelScript: a fixed camera 9000 units ahead watches the ship fly past for 7 s).</summary>
         public static bool LaunchedFromStation;
 
+        /// <summary>Remake: the player docked from space (SpaceLevel.Dock), so the station opens with the hangar fly-in.</summary>
+        public static bool DockedFromSpace;
+
         /// <summary>Arrived through a jumpgate or the Khador Drive: the arrival camera shows the orbit information
         /// (Hud::drawOrbitInformation, not after a planet jump).</summary>
         public static bool ArrivedBySystemJump;
@@ -354,6 +357,7 @@ namespace GoF2Remake.Data
             HighestKnownPrice = new Dictionary<int, (int, int)>();
             ArrivedByTravel = false;
             LaunchedFromStation = false;
+            DockedFromSpace = false;
             ArrivedBySystemJump = false;
             SystemVisible = null;
             VisitedStations = new HashSet<int> { 78 };

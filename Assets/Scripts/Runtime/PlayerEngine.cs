@@ -47,10 +47,7 @@ namespace GoF2Remake.Flight
             health = GetComponent<PlayerHealth>();
             mining = GetComponent<Mining>();
             var audio = CombatAudio.Load();
-            int idx = Session.ShipIndex;
-            float handling = (db.Ship(idx)?.handling ?? 100) / 100f;
-            engine = idx == 42 ? 4 : idx == 43 ? 5 : idx == 40 ? 6
-                   : handling >= 1.4f ? 3 : handling >= 1.15f ? 2 : handling >= 0.95f ? 1 : 0;
+            engine = EngineIndex(db, Session.ShipIndex);
             var booster = Shop.FirstMounted(db, 14);
             boost = booster == null ? -1 : booster.index >= 71 && booster.index <= 74 ? booster.index - 71 : booster.index == 195 ? 4 : -1;
             if (audio == null) return;
@@ -60,6 +57,23 @@ namespace GoF2Remake.Flight
             boostSource.playOnAwake = false;
             boostSource.spatialBlend = 0f;
             boostSource.clip = Pick(audio.boosters, boost);
+        }
+
+        /// <summary>PlayerEgo::PlayerEgo 0xa5940: ships 42 / 43 / 40 their DLC engines, else by handling.</summary>
+        static int EngineIndex(Database db, int ship)
+        {
+            float handling = (db.Ship(ship)?.handling ?? 100) / 100f;
+            return ship == 42 ? 4 : ship == 43 ? 5 : ship == 40 ? 6
+                 : handling >= 1.4f ? 3 : handling >= 1.15f ? 2 : handling >= 0.95f ? 1 : 0;
+        }
+
+        /// <summary>The ship's engine loop and its volume (event volume x load x EventGain, without the FX volume): the
+        /// hangar flights (HangarFlight).</summary>
+        public static AudioClip EngineClip(Database db, int ship, out float volume)
+        {
+            int e = EngineIndex(db, ship);
+            volume = EngineVolume[e] * LoadGain * Sfx.EventGain;
+            return Pick(CombatAudio.Load()?.playerEngines, e);
         }
 
         static AudioClip Pick(AudioClip[] list, int i) => list != null && i >= 0 && i < list.Length ? list[i] : null;

@@ -112,6 +112,9 @@ namespace GoF2Remake.Data
         /// <summary>The launch / arrival camera (LevelScript's start sequence); off = straight to the chase camera.</summary>
         public static bool LaunchCamera { get => GetBool("launchCamera", true); set => SetBool("launchCamera", value); }
 
+        /// <summary>Remake: the ship flies into the hangar after docking and out of it when launching (HangarFlight).</summary>
+        public static bool HangarFlights { get => GetBool("hangarFlights", true); set => SetBool("hangarFlights", value); }
+
         /// <summary>DialogueWindow::update: with voice, turn the page once the line has ended.</summary>
         public static bool AutoAdvanceDialogue { get => GetBool("autoAdvanceDialogue", true); set => SetBool("autoAdvanceDialogue", value); }
 

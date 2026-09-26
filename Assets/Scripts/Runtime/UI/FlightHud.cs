@@ -160,7 +160,7 @@ namespace GoF2Remake.UI
             stick = new TouchStick(root.Q("stickZone"), root.Q("stickBase"), root.Q("stickKnob"), root.Q("stickGhost"), stickRadius);
             HookThrottle();
             HookPress(boostButton, () => ship?.Boost());
-            HookPress(levelButton, () => ship?.AlignToHorizon());
+            HookLevelButton();
             HookPress(turretButton, () =>
             {
                 // A manual turret's button is the camera button (MGame::switchCamera); an auto turret's toggles auto fire.
@@ -268,6 +268,44 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>'down' runs on press, 'up' on release; shows a pressed state while the finger stays down.</summary>
+        /// <summary>The Level button: a tap levels out (PlayerEgo::alignToHorizon); pressed and slid sideways it rolls that
+        /// way (remake: the touch counterpart of the keys 1 / 3), full roll at 60 px.</summary>
+        void HookLevelButton()
+        {
+            int pointer = -1;
+            float startX = 0f;
+            bool rolling = false;
+            levelButton.RegisterCallback<PointerDownEvent>(e =>
+            {
+                if (pointer >= 0) return;
+                pointer = e.pointerId;
+                startX = e.position.x;
+                rolling = false;
+                levelButton.CapturePointer(pointer);
+                levelButton.AddToClassList("touch-button--pressed");
+                e.StopPropagation();
+            });
+            levelButton.RegisterCallback<PointerMoveEvent>(e =>
+            {
+                if (e.pointerId != pointer) return;
+                float dx = e.position.x - startX;
+                if (!rolling && Mathf.Abs(dx) > 12f) rolling = true;
+                if (rolling) ship?.SetRoll(Mathf.Clamp((dx - Mathf.Sign(dx) * 12f) / 48f, -1f, 1f));
+            });
+            void Up(int id)
+            {
+                if (id != pointer) return;
+                if (levelButton.HasPointerCapture(pointer)) levelButton.ReleasePointer(pointer);
+                pointer = -1;
+                levelButton.RemoveFromClassList("touch-button--pressed");
+                if (!rolling) ship?.AlignToHorizon();
+                ship?.SetRoll(0f);
+                rolling = false;
+            }
+            levelButton.RegisterCallback<PointerUpEvent>(e => Up(e.pointerId));
+            levelButton.RegisterCallback<PointerCancelEvent>(e => Up(e.pointerId));
+        }
+
         static void HookPress(VisualElement button, System.Action down, System.Action up = null)
         {
             int pointer = -1;
@@ -305,9 +343,32 @@ namespace GoF2Remake.UI
             // PlayerEgo::update: handling-dependent damping only with the mouse cursor, else resetShipHandling's constants.
             if (chase != null) chase.handlingDependent = kind == InputKind.KeyboardMouse;
             BuildHints(kind);
+            SetPromptGlyph(kind);
+        }
+
+        /// <summary>The action prompt's key: F (the PC version's Dock key: dock, the autopilot to a locked station, the planet
+        /// jump, texts 587 / 1731; Enter too), controller X.</summary>
+        void SetPromptGlyph(InputKind kind)
+        {
             dockGlyph.Clear();
-            if (kind == InputKind.KeyboardMouse) dockGlyph.Add(InputGlyph.Key("ENTER", true));
+            if (kind == InputKind.KeyboardMouse) dockGlyph.Add(InputGlyph.Key("F"));
             else if (kind == InputKind.Gamepad) dockGlyph.Add(InputGlyph.Pad(PadButton.X));
+        }
+
+        /// <summary>A menu entry straight from its key (V Wingmen, K Khador Drive): the autopilot menu opens on it; nothing
+        /// when the entry isn't offered.</summary>
+        void OpenMenuEntry(Navigation.Kind kind)
+        {
+            if (nav == null || nav.MenuOpen || !nav.CanOpenMenu) return;
+            var entry = nav.MenuEntries().Find(t => t.kind == kind && !t.disabled);
+            if (entry == null) return;
+            OpenAutopilotMenu();
+            if (!nav.MenuOpen) return;
+            int i = menuButtons.FindIndex(b => b.target != null && b.target.kind == kind);
+            if (i < 0) return;
+            menuIndex = i;
+            HighlightMenu();
+            ChooseMenuTarget(menuButtons[i].target);
         }
 
         void BuildHints(InputKind kind)
@@ -318,9 +379,9 @@ namespace GoF2Remake.UI
             {
                 if (kind == InputKind.KeyboardMouse)
                 {
-                    Hint(T("hudSelect", "SELECT"), InputGlyph.Key("W"), InputGlyph.Key("S"));
-                    Hint(T("hudConfirm", "CONFIRM"), InputGlyph.Key("ENTER", true));
-                    Hint(T("hudBack", "BACK"), InputGlyph.Key("ESC"));
+                    Hint(T("hudSelect", "SELECT"), InputGlyph.Key("↑"), InputGlyph.Key("↓"));
+                    Hint(T("hudConfirm", "CONFIRM"), InputGlyph.Key("ENTER", true), InputGlyph.Key("1-8", true));
+                    Hint(T("hudBack", "BACK"), InputGlyph.Key("ESC"), InputGlyph.Key("Q"));
                 }
                 else if (kind == InputKind.Gamepad)
                 {
@@ -337,10 +398,10 @@ namespace GoF2Remake.UI
                 string aimLabel = T("hudAimTurret", "AIM TURRET"), fire = T("hudFire", "FIRE"), exit = T("hudTurretExit", "CHASE VIEW");
                 if (kind == InputKind.KeyboardMouse)
                 {
-                    Hint(aimLabel, InputGlyph.Key("W"), InputGlyph.Key("A"), InputGlyph.Key("S"), InputGlyph.Key("D"));
-                    Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("Q"), InputGlyph.Key("E"));
-                    Hint(fire, InputGlyph.Key("CTRL"));
-                    Hint(exit, InputGlyph.Key("V"));
+                    Hint(aimLabel, InputGlyph.Key("←"), InputGlyph.Key("↑"), InputGlyph.Key("↓"), InputGlyph.Key("→"));
+                    Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("/"), InputGlyph.Key("]"));
+                    Hint(fire, InputGlyph.Key("SPACE", true));
+                    Hint(exit, InputGlyph.Key("T"));
                 }
                 else if (kind == InputKind.Gamepad)
                 {
@@ -356,10 +417,10 @@ namespace GoF2Remake.UI
                 string ff = T("hudFastForward", "FAST FORWARD"), off = T("hudAutopilotOff", "AUTOPILOT OFF");
                 if (kind == InputKind.KeyboardMouse)
                 {
-                    Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("Q"), InputGlyph.Key("E"));
-                    Hint(ff + " (" + T("hudHold", "HOLD") + ")", InputGlyph.Key("R"));
-                    Hint(off, InputGlyph.Key("ENTER", true));
-                    Hint(T("hudFire", "FIRE"), InputGlyph.Key("CTRL"));
+                    Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("/"), InputGlyph.Key("]"));
+                    Hint(ff + " (" + T("hudHold", "HOLD") + ")", InputGlyph.Key("TAB"));
+                    Hint(off, InputGlyph.Key("Q"));
+                    Hint(T("hudFire", "FIRE"), InputGlyph.Key("SPACE", true));
                     Hint(T("hudMenu", "MENU"), InputGlyph.Key("ESC"));
                 }
                 else if (kind == InputKind.Gamepad)
@@ -379,30 +440,34 @@ namespace GoF2Remake.UI
                 string action = drilling ? T("hudMiningStop", "STOP MINING") : T("hudMiningAbort", "ABORT");
                 if (kind == InputKind.KeyboardMouse)
                 {
-                    if (drilling) Hint(T("hudDrill", "DRILL"), InputGlyph.Key("W"), InputGlyph.Key("A"), InputGlyph.Key("S"), InputGlyph.Key("D"));
-                    if (lastPhase == Mining.Phase.Approaching) Hint(T("hudFastForward", "FAST FORWARD") + " (" + T("hudHold", "HOLD") + ")", InputGlyph.Key("R"));
-                    Hint(action, InputGlyph.Key("ENTER", true));
+                    if (drilling) Hint(T("hudDrill", "DRILL"), InputGlyph.Key("←"), InputGlyph.Key("↑"), InputGlyph.Key("↓"), InputGlyph.Key("→"));
+                    if (lastPhase == Mining.Phase.Approaching) Hint(T("hudFastForward", "FAST FORWARD") + " (" + T("hudHold", "HOLD") + ")", InputGlyph.Key("TAB"));
+                    Hint(action, InputGlyph.Key("SPACE", true), InputGlyph.Key("F"));
                 }
                 else if (kind == InputKind.Gamepad)
                 {
                     if (drilling) Hint(T("hudDrill", "DRILL"), InputGlyph.Pad(PadButton.LeftStick));
                     if (lastPhase == Mining.Phase.Approaching) Hint(T("hudFastForward", "FAST FORWARD") + " (" + T("hudHold", "HOLD") + ")", InputGlyph.Pad(PadButton.Y));
-                    Hint(action, InputGlyph.Pad(PadButton.X));
+                    Hint(action, InputGlyph.Pad(PadButton.RightTrigger), InputGlyph.Pad(PadButton.X));
                 }
                 return;
             }
             if (kind == InputKind.KeyboardMouse)
             {
-                Hint(T("hudSteer", "STEER"), InputGlyph.Key("W"), InputGlyph.Key("A"), InputGlyph.Key("S"), InputGlyph.Key("D"));
-                Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("Q"), InputGlyph.Key("E"));
-                Hint(T("hudFire", "FIRE"), InputGlyph.Key("CTRL"));
-                Hint(T("hudMissile", "MISSILE"), InputGlyph.Key("F"));
+                // The PC version's defaults (Galaxy on Fire 2 Full HD).
+                Hint(T("hudSteer", "STEER"), InputGlyph.Key("←"), InputGlyph.Key("↑"), InputGlyph.Key("↓"), InputGlyph.Key("→"));
+                Hint(T("hudThrottle", "THROTTLE"), InputGlyph.Key("/"), InputGlyph.Key("]"));
+                Hint(T("hudBrake", "BRAKE"), InputGlyph.Key("S"));
+                Hint(T("hudBoost", "BOOST"), InputGlyph.Key("W"));
+                Hint(T("hudFire", "FIRE"), InputGlyph.Key("SPACE", true));
+                Hint(T("hudMissile", "MISSILE"), InputGlyph.Key("R"));
                 if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), InputGlyph.Key("G"));
+                Hint(T("hudDodge", "DODGE"), InputGlyph.Key("A"), InputGlyph.Key("D"));
+                Hint(T("hudRoll", "ROLL"), InputGlyph.Key("1"), InputGlyph.Key("3"));
+                Hint(T("hudLevel", "LEVEL"), InputGlyph.Key("2"));
                 if (level != null && level.Turret != null)
-                    Hint(level.Turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : T("hudTurretView", "TURRET VIEW"), InputGlyph.Key(level.Turret.IsAuto ? "T" : "V"));
-                Hint(T("hudBoost", "BOOST"), InputGlyph.Key("SPACE", true));
-                Hint(T("hudLevel", "LEVEL"), InputGlyph.Key("R"));
-                Hint(Localization.Get(571).ToUpperInvariant(), InputGlyph.Key("TAB"));
+                    Hint(level.Turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : T("hudTurretView", "TURRET VIEW"), InputGlyph.Key(level.Turret.IsAuto ? "Y" : "T"));
+                Hint(Localization.Get(571).ToUpperInvariant(), InputGlyph.Key("Q"));
                 Hint(T("hudMenu", "MENU"), InputGlyph.Key("ESC"));
             }
             else if (kind == InputKind.Gamepad)
@@ -517,9 +582,24 @@ namespace GoF2Remake.UI
                 return;
             }
             if (UpdateIntroSkip()) return;
-            if (nav != null && ((Keyboard.current != null && Keyboard.current.tabKey.wasPressedThisFrame)
+            // The PC version's keys (its help texts 1731 / 1732, 638, 18 and the default list): Q Autopilot (the target
+            // list, again = off) and E Actions (the action menu; the remake has one menu for both), V Wingmen, K Khador
+            // Drive, M or the middle mouse button: mouse control.
+            var keys = Keyboard.current;
+            if (nav != null && ((keys != null && (keys.qKey.wasPressedThisFrame || keys.eKey.wasPressedThisFrame))
                                 || (Gamepad.current != null && Gamepad.current.selectButton.wasPressedThisFrame)))
                 OnAutopilotButton();
+            else if (nav != null && keys != null && keys.vKey.wasPressedThisFrame) OpenMenuEntry(Navigation.Kind.Wingmen);
+            else if (nav != null && keys != null && keys.kKey.wasPressedThisFrame) OpenMenuEntry(Navigation.Kind.KhadorDrive);
+            var mouseNow = Mouse.current;
+            bool freeLookNow = level != null && level.FreeLook != null && level.FreeLook.FreeLookActive;
+            if (!Application.isMobilePlatform && ((keys != null && keys.mKey.wasPressedThisFrame)
+                                                  || (mouseNow != null && mouseNow.middleButton.wasPressedThisFrame && !freeLookNow)))
+            {
+                Settings.MouseSteering = !Settings.MouseSteering;
+                miningView?.ShowMessage(Localization.Extra("mouseSteering", "Mouse steering") + ": "
+                                        + (Settings.MouseSteering ? Localization.Extra("on", "On") : Localization.Extra("off", "Off")));
+            }
 
             if (ship == null)
             {
@@ -605,7 +685,8 @@ namespace GoF2Remake.UI
             if (prompt == null && level.CanDock) prompt = Localization.Extra("hudDock", "DOCK");
             dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null);
             if (prompt != null) dockLabel.text = prompt;
-            if (prompt != null && ((Keyboard.current != null && (Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame))
+            var kbp = Keyboard.current;
+            if (prompt != null && ((kbp != null && (kbp.fKey.wasPressedThisFrame || kbp.enterKey.wasPressedThisFrame || kbp.numpadEnterKey.wasPressedThisFrame))
                                    || (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)))
             {
                 Interact();
@@ -643,9 +724,10 @@ namespace GoF2Remake.UI
             // The time extender: the fast-forward slot's clock (touch) while it isn't fast-forward.
             if (navView.ConsumeExtenderTap()) level?.Extender?.Toggle();
             UpdateOrbitInfo();
-            // Fast-forward: the touch button, or hold R / controller Y (MGame key 0x100, hold-to-use).
+            // Fast-forward: the touch button, or hold Tab (the PC version's "Speed up") / controller Y (MGame key 0x100,
+            // hold-to-use).
             bool ffHeld = navView.FastForwardPressed
-                          || (Keyboard.current != null && Keyboard.current.rKey.isPressed)
+                          || (Keyboard.current != null && Keyboard.current.tabKey.isPressed)
                           || (Gamepad.current != null && Gamepad.current.buttonNorth.isPressed);
             nav?.SetFastForwardHeld(ffHeld);
             root.EnableInClassList("hud-docking", phase != Mining.Phase.Idle);
@@ -870,7 +952,8 @@ namespace GoF2Remake.UI
             for (int i = 0; i < menuButtons.Count; i++) menuButtons[i].button.EnableInClassList("autopilot-menu-item--selected", keys && i == menuIndex);
         }
 
-        /// <summary>While the menu is open (game paused): keys / D-pad pick, Esc / B / Tab / View close.</summary>
+        /// <summary>While the menu is open (game paused): keys / D-pad pick, 1-8 choose an entry (the PC version's menu
+        /// select), Esc / Q / E / B / View close.</summary>
         void UpdateAutopilotMenu()
         {
             var kb = Keyboard.current;
@@ -878,7 +961,7 @@ namespace GoF2Remake.UI
             // The press that opened the menu can still read as "pressed this frame" on the next frame (editor input
             // updates): ignore the toggle keys for two frames.
             if (Time.frameCount - menuOpenedFrame < 2) return;
-            if ((kb != null && (kb.escapeKey.wasPressedThisFrame || kb.tabKey.wasPressedThisFrame))
+            if ((kb != null && (kb.escapeKey.wasPressedThisFrame || kb.qKey.wasPressedThisFrame || kb.eKey.wasPressedThisFrame))
                 || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.selectButton.wasPressedThisFrame || pad.startButton.wasPressedThisFrame)))
             {
                 CloseAutopilotMenu();
@@ -901,6 +984,12 @@ namespace GoF2Remake.UI
             }
             bool confirm = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame))
                            || (pad != null && (pad.buttonSouth.wasPressedThisFrame || pad.buttonWest.wasPressedThisFrame));
+            if (kb != null)
+            {
+                var digits = new[] { kb.digit1Key, kb.digit2Key, kb.digit3Key, kb.digit4Key, kb.digit5Key, kb.digit6Key, kb.digit7Key, kb.digit8Key };
+                for (int d = 0; d < digits.Length; d++)
+                    if (digits[d].wasPressedThisFrame && d < menuButtons.Count) { menuIndex = d; HighlightMenu(); confirm = true; break; }
+            }
             if (confirm && menuIndex < menuButtons.Count)
             {
                 if (menuIndex < menuActions.Count && menuActions[menuIndex] != null) menuActions[menuIndex]();
@@ -1094,7 +1183,7 @@ namespace GoF2Remake.UI
 
         void Dock()
         {
-            if (level != null && level.CanDock) level.Dock();
+            if (level != null && level.CanDock) level.Dock(true);
         }
 
         /// <summary>MGame::OnSuspend 0x1b1000: the app goes to the background -> the options are saved, the sounds pause and
@@ -1179,7 +1268,8 @@ namespace GoF2Remake.UI
                 {
                     var picked = root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(sp.x, Screen.height - sp.y)));
                     bool onControl = false;
-                    for (var v = picked; v != null; v = v.parent) if (v is Button || v == zone || v == throttleTrack) { onControl = true; break; }
+                    for (var v = picked; v != null; v = v.parent)
+                        if (v is Button || v == zone || v == throttleTrack || v.ClassListContains("touch-button")) { onControl = true; break; }
                     if (onControl) continue;
                     swipeTouch = id;
                     swipeStart = sp;
