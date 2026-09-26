@@ -162,7 +162,8 @@ namespace GoF2Remake.UI
             Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
             radioReveal ??= new TextReveal(radioText);
-            radioReveal.Begin(lineText, alien, clip);
+            if (StoryTable.IsNarration(line.speaker)) radioReveal.Clear();
+            else radioReveal.Begin(lineText, alien, clip);
             if (clip != null) { voice.clip = clip; voice.volume = Settings.VoiceVolume; voice.Play(); }
         }
 

@@ -109,6 +109,16 @@ namespace GoF2Remake.UI
             Render();
         }
 
+        /// <summary>No effects for the label's current text (a page that isn't dialogue: the info / narrator pages).</summary>
+        public void Clear()
+        {
+            running = false;
+            whole = false;
+            glyphs.Clear();
+            letters.Clear();
+            if (label != null) label.style.opacity = StyleKeyword.Null;
+        }
+
         /// <summary>Shows the whole page now (Next during the reveal).</summary>
         public void Finish()
         {

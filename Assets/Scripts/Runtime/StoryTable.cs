@@ -129,5 +129,9 @@ namespace GoF2Remake.Data
         /// <summary>Speakers 19 (Void) and 56 (Corny) talk in the alien font (Globals::fontAlien) in the dialogue window
         /// and the radio (dialogue_cutscenes.md 1.2 / 2.3).</summary>
         public static bool UsesAlienFont(int speaker) => speaker == 19 || speaker == 56;
+
+        /// <summary>Not a character talking: 16 "Info" (the tutorial pages) and 17 "Story" (the narrator's captions). The
+        /// animated dialogue option leaves them plain (TextReveal).</summary>
+        public static bool IsNarration(int speaker) => speaker == 16 || speaker == 17;
     }
 }

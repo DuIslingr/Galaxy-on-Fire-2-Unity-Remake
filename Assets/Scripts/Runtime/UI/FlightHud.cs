@@ -901,7 +901,8 @@ namespace GoF2Remake.UI
                 if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
                 else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
                 var voiceClip = StoryAssets.Load()?.Voice(chatter.voice);
-                radioReveal.Begin(chatter.text, chatterAlien, voiceClip);
+                if (chatter.portrait == null && StoryTable.IsNarration(chatter.speakerId)) radioReveal.Clear();
+                else radioReveal.Begin(chatter.text, chatterAlien, voiceClip);
                 if (voiceClip != null && voiceSource != null) { voiceSource.clip = voiceClip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
                 return;
             }
@@ -915,7 +916,8 @@ namespace GoF2Remake.UI
             AlienText.Set(radioText, lineText, lineAlien);
             Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
-            radioReveal.Begin(lineText, lineAlien, clip);
+            if (StoryTable.IsNarration(line.speaker)) radioReveal.Clear();
+            else radioReveal.Begin(lineText, lineAlien, clip);
             if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
         }
 

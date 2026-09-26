@@ -53,6 +53,7 @@ namespace GoF2Remake.UI
         bool message;
         float pauseMs;
         readonly TextReveal reveal;
+        bool narration;
         int seenUpTo = -1;
         string shownSpeaker;
         float portraitMs = float.MaxValue, pulseMs;
@@ -148,10 +149,13 @@ namespace GoF2Remake.UI
             AlienText.Set(text, p.text, alien);
             scroll.scrollOffset = Vector2.zero;
             var clip = voice != null ? StoryAssets.Load()?.Voice(p.voice) : null;
-            reveal.Begin(p.text, alien, clip, instant: page <= seenUpTo, speaker: p.agentName);
+            // Only characters talking get the effects; the info / narrator pages stay plain.
+            narration = p.agentName == null && StoryTable.IsNarration(p.speaker);
+            if (narration) reveal.Clear();
+            else reveal.Begin(p.text, alien, clip, instant: page <= seenUpTo, speaker: p.agentName);
             seenUpTo = Mathf.Max(seenUpTo, page);
             // A new speaker's portrait and name fade in (animated dialogue only).
-            bool fade = Settings.AnimatedDialogue && who != shownSpeaker;
+            bool fade = Settings.AnimatedDialogue && !narration && who != shownSpeaker;
             shownSpeaker = who;
             portraitMs = fade ? 0f : float.MaxValue;
             portrait.style.opacity = fade ? 0f : 1f;
@@ -234,7 +238,7 @@ namespace GoF2Remake.UI
                 }
                 return;
             }
-            if (!Settings.AnimatedDialogue) return;
+            if (!Settings.AnimatedDialogue || narration) return;
             pulseMs += dtMs;
             if (pulseMs >= PulseMs) { pulseMs = 0f; next.ToggleInClassList("dialogue-button--ready"); }
         }
