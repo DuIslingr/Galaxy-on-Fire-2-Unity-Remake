@@ -23,6 +23,7 @@ namespace GoF2Remake.UI
         readonly StationLevel level;
         readonly VisualElement root, tags, list, chatWindow, portrait, choices;
         readonly Label chatName, chatSub, chatText;
+        readonly TextReveal chatReveal;   // the animated dialogue option
         readonly ScrollView chatScroll;
         readonly Button chatClose;
         readonly List<VisualElement> tagItems = new List<VisualElement>();
@@ -48,7 +49,9 @@ namespace GoF2Remake.UI
             chatName = root.Q<Label>("chatName");
             chatSub = root.Q<Label>("chatSub");
             chatText = root.Q<Label>("chatText");
+            chatReveal = new TextReveal(chatText);
             chatScroll = root.Q<ScrollView>("chatScroll");
+            chatScroll.RegisterCallback<PointerDownEvent>(_ => chatReveal?.Finish());   // a tap shows the whole line
             chatScroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
             chatScroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             chatClose = root.Q<Button>("chatClose");
@@ -140,6 +143,7 @@ namespace GoF2Remake.UI
         /// <summary>Per frame: the tags follow the visitors' heads on screen.</summary>
         public void Update()
         {
+            chatReveal.Tick(Time.unscaledDeltaTime * 1000f);
             bool on = Active;
             if (on != root.ClassListContains("lounge-open")) OnViewChanged();
             if (!on || tags.panel == null) return;
@@ -191,6 +195,7 @@ namespace GoF2Remake.UI
         {
             chatText.text = chat.Text;
             chatScroll.scrollOffset = Vector2.zero;
+            chatReveal.Begin(chat.Text, false, speaker: chat.Agent?.name);
             choices.Clear();
             choiceButtons.Clear();
             foreach (var c in chat.Choices)

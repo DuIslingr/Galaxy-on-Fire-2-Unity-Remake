@@ -167,6 +167,8 @@ namespace GoF2Remake.UI
                 () => Settings.HangarFlights, v => Settings.HangarFlights = v));
             list.Add(Toggle("autoAdvance", OptionPage.Gameplay, () => X("autoAdvance", "Turn voiced dialogue pages automatically"),
                 () => Settings.AutoAdvanceDialogue, v => Settings.AutoAdvanceDialogue = v));
+            list.Add(Toggle("animatedDialogue", OptionPage.Gameplay, () => X("animatedDialogue", "Animated dialogue"),
+                () => Settings.AnimatedDialogue, v => Settings.AnimatedDialogue = v));
             list.Add(Toggle("inputHints", OptionPage.Gameplay, () => X("inputHints", "Button hints"),
                 () => Settings.InputHints, v => Settings.InputHints = v));
             return list;

@@ -9,6 +9,7 @@
 // Remake guesses, since the .aei glyph table with the advances wasn't converted: 2 px between glyphs, 12 px spaces,
 // 4 px between lines, the glyphs at their HD pixel size.
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -71,6 +72,16 @@ namespace GoF2Remake.UI
                 g.style.marginRight = GlyphGap;
                 word.Add(g);
             }
+        }
+
+        /// <summary>The glyph images Set made for 'label', in reading order (TextReveal); false when it shows plain text.</summary>
+        public static bool CollectGlyphs(Label label, List<VisualElement> into)
+        {
+            var box = BoxOf(label);
+            if (box == null) return false;   // Set removes the box for plain text
+            foreach (var word in box.Children())
+                foreach (var g in word.Children()) into.Add(g);
+            return into.Count > 0;
         }
 
         /// <summary>The glyph box Set put right after the label, if any.</summary>

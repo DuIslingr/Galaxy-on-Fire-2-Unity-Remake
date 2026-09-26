@@ -12,6 +12,9 @@
 // Input: keyboard Enter / Space / right = next, Backspace / left = back, Esc = skip; controller A = next, B = back,
 // Y / Menu = skip; the confirmation takes Enter / A = yes, Esc / B = no. The box is a little larger than the original's
 // 694x486 so the remake's font reads well.
+// Remake option "Animated dialogue" (TextReveal): the page types in with pacing, shouting and tinted names; Next during
+// it shows the page at once, pages read before show at once, the portrait fades in when the speaker changes, the text
+// scrolls along with a long page, and the Next button breathes once the page is complete.
 
 using System;
 using System.Collections.Generic;
@@ -49,6 +52,11 @@ namespace GoF2Remake.UI
         int page;
         bool message;
         float pauseMs;
+        readonly TextReveal reveal;
+        int seenUpTo = -1;
+        string shownSpeaker;
+        float portraitMs = float.MaxValue, pulseMs;
+        const float PortraitFadeMs = 250f, PulseMs = 700f;
 
         /// <summary>Button sounds (true = press, false = release), set by the host.</summary>
         public Action<bool> ButtonSound;
@@ -80,6 +88,8 @@ namespace GoF2Remake.UI
             confirmText.text = Localization.Get(396);
             confirmYes.text = Localization.Get(134).ToUpperInvariant();
             confirmNo.text = Localization.Get(135).ToUpperInvariant();
+            reveal = new TextReveal(text);
+            scroll.RegisterCallback<PointerDownEvent>(_ => reveal.Finish());   // a tap on the text shows it all
         }
 
         Button Bind(string name, Action action)
@@ -106,6 +116,8 @@ namespace GoF2Remake.UI
             closed = onClosed;
             message = false;
             page = 0;
+            seenUpTo = -1;
+            shownSpeaker = null;
             root.AddToClassList("dialogue-backdrop--shown");
             HideConfirm();
             LoadPage();
@@ -130,9 +142,22 @@ namespace GoF2Remake.UI
         void LoadPage()
         {
             var p = pages[page];
-            speaker.text = (p.agentName ?? StoryTable.SpeakerName(p.speaker)).ToUpperInvariant();
-            AlienText.Set(text, p.text, p.agentName == null && StoryTable.UsesAlienFont(p.speaker));
+            string who = (p.agentName ?? StoryTable.SpeakerName(p.speaker)).ToUpperInvariant();
+            speaker.text = who;
+            bool alien = p.agentName == null && StoryTable.UsesAlienFont(p.speaker);
+            AlienText.Set(text, p.text, alien);
             scroll.scrollOffset = Vector2.zero;
+            var clip = voice != null ? StoryAssets.Load()?.Voice(p.voice) : null;
+            reveal.Begin(p.text, alien, clip, instant: page <= seenUpTo, speaker: p.agentName);
+            seenUpTo = Mathf.Max(seenUpTo, page);
+            // A new speaker's portrait and name fade in (animated dialogue only).
+            bool fade = Settings.AnimatedDialogue && who != shownSpeaker;
+            shownSpeaker = who;
+            portraitMs = fade ? 0f : float.MaxValue;
+            portrait.style.opacity = fade ? 0f : 1f;
+            speaker.style.opacity = fade ? 0f : 1f;
+            next.RemoveFromClassList("dialogue-button--ready");
+            pulseMs = 0f;
             if (p.agentPortrait != null) Portrait.Show(portrait, p.agentPortrait, false);
             else Portrait.ShowSpeaker(portrait, p.speaker, p.speaker == 0);
             bool last = page == pages.Count - 1;
@@ -144,7 +169,6 @@ namespace GoF2Remake.UI
             if (voice != null)
             {
                 voice.Stop();
-                var clip = StoryAssets.Load()?.Voice(p.voice);
                 if (clip != null)
                 {
                     voice.clip = clip;
@@ -158,6 +182,7 @@ namespace GoF2Remake.UI
         void Next()
         {
             if (!IsOpen) return;
+            if (reveal.Running) { reveal.Finish(); return; }   // first the rest of the page
             if (page >= pages.Count - 1) { Close(false); return; }
             page++;
             LoadPage();
@@ -188,10 +213,37 @@ namespace GoF2Remake.UI
             c?.Invoke(skipped);
         }
 
+        void TickAnimation(float dtMs)
+        {
+            reveal.Tick(dtMs);
+            if (portraitMs < PortraitFadeMs)
+            {
+                portraitMs += dtMs;
+                float a = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(portraitMs / PortraitFadeMs));
+                portrait.style.opacity = a;
+                speaker.style.opacity = a;
+            }
+            if (reveal.Running)
+            {
+                // A long page scrolls along with the typing (only ever down, so a reader scrolling back isn't fought).
+                float content = scroll.contentContainer.layout.height, view = scroll.contentViewport.layout.height;
+                if (content > view && !float.IsNaN(content) && !float.IsNaN(view))
+                {
+                    float y = (content - view) * Mathf.Clamp01(reveal.Progress * 1.1f - 0.1f);
+                    if (y > scroll.scrollOffset.y) scroll.scrollOffset = new Vector2(0f, y);
+                }
+                return;
+            }
+            if (!Settings.AnimatedDialogue) return;
+            pulseMs += dtMs;
+            if (pulseMs >= PulseMs) { pulseMs = 0f; next.ToggleInClassList("dialogue-button--ready"); }
+        }
+
         /// <summary>Keyboard / controller input and the voice auto-advance; call every frame (unscaled time).</summary>
         public void Tick(float unscaledDtMs)
         {
             if (!IsOpen) return;
+            TickAnimation(unscaledDtMs);
             var kb = Keyboard.current;
             var pad = Gamepad.current;
             bool Pressed(Func<Keyboard, bool> k, Func<Gamepad, bool> g) => (kb != null && k(kb)) || (pad != null && g(pad));

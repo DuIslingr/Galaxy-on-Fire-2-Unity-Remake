@@ -93,6 +93,13 @@
 .dialogue-button--primary {
     border-color: var(--gof-cyan);
     color: #FFFFFF;
+    transition-property: background-color;
+    transition-duration: 0.6s;
+}
+
+/* Animated dialogue (TextReveal): the Next button breathes once the page has typed in. */
+.dialogue-button--ready {
+    background-color: rgba(62, 200, 255, 0.22);
 }
 
 .dialogue-button--hidden {

@@ -72,6 +72,7 @@ namespace GoF2Remake.UI
         AudioSource voiceSource;
         VisualElement radioBox, radioPortrait, screenFade;
         Label radioSpeaker, radioText;
+        TextReveal radioReveal;
         int radioShown = -1;
         Traffic.Chatter shownChatter;
         VisualElement gameOver;
@@ -208,6 +209,7 @@ namespace GoF2Remake.UI
             radioPortrait = root.Q("radioPortrait");
             radioSpeaker = root.Q<Label>("radioSpeaker");
             radioText = root.Q<Label>("radioText");
+            radioReveal = new TextReveal(radioText);
             radioShown = -1;
             gameOver = root.Q("gameOver");
             gameOverText = root.Q<Label>("gameOverText");
@@ -881,6 +883,7 @@ namespace GoF2Remake.UI
         /// <summary>Radio::draw: the campaign level's current radio line (portrait, name, text; its voice once).</summary>
         void UpdateRadio()
         {
+            radioReveal.Tick(Time.unscaledDeltaTime * 1000f);   // the animated dialogue option
             var radio = level != null && level.Campaign != null ? level.Campaign.Radio : null;
             var line = radio?.Visible;
             int index = radio != null ? radio.VisibleIndex : -1;
@@ -893,10 +896,12 @@ namespace GoF2Remake.UI
                 shownChatter = chatter;
                 radioShown = -1;
                 radioSpeaker.text = chatter.speaker.ToUpperInvariant();
-                AlienText.Set(radioText, chatter.text, chatter.portrait == null && StoryTable.UsesAlienFont(chatter.speakerId));
+                bool chatterAlien = chatter.portrait == null && StoryTable.UsesAlienFont(chatter.speakerId);
+                AlienText.Set(radioText, chatter.text, chatterAlien);
                 if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
                 else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
                 var voiceClip = StoryAssets.Load()?.Voice(chatter.voice);
+                radioReveal.Begin(chatter.text, chatterAlien, voiceClip);
                 if (voiceClip != null && voiceSource != null) { voiceSource.clip = voiceClip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
                 return;
             }
@@ -905,9 +910,12 @@ namespace GoF2Remake.UI
             if (line == null || index == radioShown) { if (line == null) radioShown = -1; return; }
             radioShown = index;
             radioSpeaker.text = StoryTable.SpeakerName(line.speaker).ToUpperInvariant();
-            AlienText.Set(radioText, Localization.Get(line.text), StoryTable.UsesAlienFont(line.speaker));
+            string lineText = Localization.Get(line.text);
+            bool lineAlien = StoryTable.UsesAlienFont(line.speaker);
+            AlienText.Set(radioText, lineText, lineAlien);
             Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
+            radioReveal.Begin(lineText, lineAlien, clip);
             if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
         }
 

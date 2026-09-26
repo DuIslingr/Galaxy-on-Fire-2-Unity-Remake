@@ -53,6 +53,7 @@ namespace GoF2Remake.UI
         Radio radio;
         VisualElement layer, column, logo, fade, radioBox, radioPortrait;
         Label radioSpeaker, radioText, credits;
+        TextReveal radioReveal;
         AudioSource music, voice;
         int radioShown = -1;
         float logoY = float.NaN, holdMs;
@@ -114,6 +115,7 @@ namespace GoF2Remake.UI
             float t = world.ms;
             if (t >= 0f) radio.Update(dt, world);
             UpdateRadio();
+            radioReveal?.Tick(dt);   // the animated dialogue option
 
             // Fades: the backdrop in until 0, out from 130 001 ms.
             float a = t < 0f ? Mathf.Clamp01(-t / -FadeInFrom) : t > FadeOutFrom ? Mathf.Clamp01((t - FadeOutFrom) / (EndAt - FadeOutFrom)) : 0f;
@@ -154,9 +156,13 @@ namespace GoF2Remake.UI
             if (line == null || index == radioShown) return;
             radioShown = index;
             radioSpeaker.text = StoryTable.SpeakerName(line.speaker).ToUpperInvariant();
-            AlienText.Set(radioText, Localization.Get(line.text), StoryTable.UsesAlienFont(line.speaker));
+            string lineText = Localization.Get(line.text);
+            bool alien = StoryTable.UsesAlienFont(line.speaker);
+            AlienText.Set(radioText, lineText, alien);
             Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
+            radioReveal ??= new TextReveal(radioText);
+            radioReveal.Begin(lineText, alien, clip);
             if (clip != null) { voice.clip = clip; voice.volume = Settings.VoiceVolume; voice.Play(); }
         }
 

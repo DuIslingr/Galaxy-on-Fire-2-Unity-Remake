@@ -118,6 +118,10 @@ namespace GoF2Remake.Data
         /// <summary>DialogueWindow::update: with voice, turn the page once the line has ended.</summary>
         public static bool AutoAdvanceDialogue { get => GetBool("autoAdvanceDialogue", true); set => SetBool("autoAdvanceDialogue", value); }
 
+        /// <summary>Remake: the dialogue and radio text types in with pacing, shouting, actions and tinted names
+        /// (TextReveal); off = the original's plain page at once.</summary>
+        public static bool AnimatedDialogue { get => GetBool("animatedDialogue", true); set => SetBool("animatedDialogue", value); }
+
         /// <summary>The keyboard / controller hint rows of the HUDs (the touch controls always show).</summary>
         public static bool InputHints { get => GetBool("inputHints", true); set => SetBool("inputHints", value); }
 
