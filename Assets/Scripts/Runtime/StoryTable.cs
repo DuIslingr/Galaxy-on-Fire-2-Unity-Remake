@@ -130,8 +130,8 @@ namespace GoF2Remake.Data
         /// and the radio (dialogue_cutscenes.md 1.2 / 2.3).</summary>
         public static bool UsesAlienFont(int speaker) => speaker == 19 || speaker == 56;
 
-        /// <summary>Not a character talking: 16 "Info" (the tutorial pages) and 17 "Story" (the narrator's captions). The
-        /// animated dialogue option leaves them plain (TextReveal).</summary>
-        public static bool IsNarration(int speaker) => speaker == 16 || speaker == 17;
+        /// <summary>Not a character talking: 16 "Info" (the tutorial pages). The animated dialogue option leaves them plain
+        /// (TextReveal); 17 "Story" (the narrator) types in like the characters.</summary>
+        public static bool IsNarration(int speaker) => speaker == 16;
     }
 }
