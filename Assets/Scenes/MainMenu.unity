@@ -151,18 +151,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 072fed025bbd55c47bdb51e8dd8505c8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Visuals.GoF2MenuCamera
-  target: {fileID: 0}
-  lookOffset: {x: 0, y: 0, z: 0}
-  distance: 250
-  height: 40
-  orbitSpeed: 1.2
-  startAngle: 30
-  bobAmplitude: 12
-  bobPeriod: 40
-  driftDegrees: 0.5
-  driftSpeed: 0.08
-  framingYaw: 14
-  verticalFov16x9: 50
+  yawPerMs: 0.00005
+  fovRadians: 0.92
+  near: 200
+  far: 200000
 --- !u!81 &74201324
 AudioListener:
   m_ObjectHideFlags: 0
@@ -596,12 +588,8 @@ MonoBehaviour:
   menuCamera: {fileID: 74201323}
   sunLight: {fileID: 1771613238}
   planetLight: {fileID: 942818226}
-  forceSetup: -1
-  asteroidKeepOut: 1.35
-  fighterPairs: 2
-  fighterSpeed: 100
-  freighterSpeed: 45
-  battleshipSpeed: 25
+  forceStation: -1
+  cameraKeepOut: 150
 --- !u!4 &1696960707
 Transform:
   m_ObjectHideFlags: 0
@@ -779,7 +767,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.UI.GoF2MainMenu
   showSplash: 1
   gameScene: Space
-  versionText: "Galaxy on Fire 2 Remake  \xB7  pre-alpha"
+  versionText: "Galaxy on Fire 2 Remake by JoppieToppie  \xB7  pre-alpha"
   editorSplashLogos:
   - {fileID: 2800000, guid: 1ba66f91f9abdef4cbba601a3946b9bb, type: 3}
   musicSource: {fileID: 2078859603}

@@ -12,8 +12,9 @@
 //                               station's volumes (PlayerFighter::update, Obstacle) like in flight
 //   the player                  exists but inactive (Player::setActive(false)) at the origin: the NPCs never target it
 //   CutScene::process mode 2    the camera: a fixed spot, a slow yaw pan (MenuCamera)
-// Remake-only: the station keeps full detail at every distance (this build of the game always draws LOD 0 anyway), no
-// asteroid right at the camera, and the traffic's own music stays off under the menu theme.
+// Remake-only: the station keeps full detail at every distance (this build of the game always draws LOD 0 anyway), the
+// camera backs out of a big station's hull, no asteroid right at the camera, and the traffic's own music stays off under
+// the menu theme.
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -66,8 +67,18 @@ namespace GoF2Remake.Visuals
             OrbitBuilder.AddObstacles(Layout, Station, gate);
             SpawnStatics();
 
-            // CutScene::initialize mode 2: (rnd(20000) - 20000, 0, rnd(60000) + 40000).
+            // CutScene::initialize mode 2: (rnd(20000) - 20000, 0, rnd(60000) + 40000). Remake: the big stations reach
+            // kilometres out in front (Tornard 57: 3.4 km), so a spot inside or against the hull backs straight out until
+            // it is clear by a third of the station's size (at least 800 m).
             var camGame = new Vector3(Random.Range(0, 20000) - 20000f, 0f, Random.Range(0, 60000) + 40000f);
+            if (Station != null)
+            {
+                var b = StationBounds(Station);
+                float clear = Mathf.Max(800f, Mathf.Max(b.size.x, b.size.y, b.size.z) / 3f);
+                b.Expand(clear * 2f);
+                var at = OrbitLayout.ToUnity(camGame);
+                if (b.Contains(at)) camGame.z = -(b.min.z - 1f) / OrbitLayout.MetersPerUnit;   // Unity -z = game +z
+            }
             if (menuCamera != null) menuCamera.Place(camGame);
             var camPos = OrbitLayout.ToUnity(camGame);
             OrbitBuilder.SpawnAsteroids(db, Layout, transform, p => (p - camPos).sqrMagnitude < cameraKeepOut * cameraKeepOut);
@@ -77,6 +88,15 @@ namespace GoF2Remake.Visuals
             var cam = menuCamera != null ? menuCamera.GetComponent<Camera>() : Camera.main;
             OrbitBuilder.SpawnBackdrop(Layout, cam, transform);
             SkyLayers.Spawn(Layout, cam, transform);
+        }
+
+        static Bounds StationBounds(GameObject go)
+        {
+            var rs = go.GetComponentsInChildren<Renderer>();
+            if (rs.Length == 0) return new Bounds(go.transform.position, Vector3.one * 100f);
+            var b = rs[0].bounds;
+            foreach (var r in rs) b.Encapsulate(r.bounds);
+            return b;
         }
 
         /// <summary>Level::createScene mode 2 at campaign mission 0x2b (the ending's backdrop): two PlayerStatics at the

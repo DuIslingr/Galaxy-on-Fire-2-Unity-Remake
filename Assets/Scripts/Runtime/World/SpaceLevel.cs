@@ -446,6 +446,9 @@ namespace GoF2Remake.World
             {
                 var model = Instantiate(prefab, root.transform, false);
                 model.GetComponent<AssembledObject>()?.SetPlayerVariant(true);
+                // AEGeometry::updateLod always picks LOD 0 in this binary: the player's ship keeps full detail, or its
+                // lights (LOD 0 only) popped in as a cutscene camera closed in.
+                foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
                 ctrl.visualModel = model.transform;
             }
             Player = ctrl;

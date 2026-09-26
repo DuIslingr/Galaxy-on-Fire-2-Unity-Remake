@@ -66,6 +66,8 @@ namespace GoF2Remake.UI
         PauseMenu pauseMenu;
         Button introSkip;
         InputKind introSkipKind;
+        float introSkipAwakeUntil;
+        const float IntroSkipShowSeconds = 3f;
         GoF2Remake.World.FreelanceOrbit freelance;
         AudioSource voiceSource;
         VisualElement radioBox, radioPortrait, screenFade;
@@ -797,15 +799,27 @@ namespace GoF2Remake.UI
             UpdateFade();
         }
 
-        /// <summary>Layout::drawFade: the campaign level's full-screen fade.</summary>
         /// <summary>The Skip button during the prologue / rescue (tap, Backspace, controller B); hidden while a dialogue is
-        /// open. True when the skip was used this frame.</summary>
+        /// open. Remake: it only appears after an input (a key, a click, mouse movement, a tap, a pad button or stick) and
+        /// fades out after IntroSkipShowSeconds without one; Backspace / B skip even while it is faded out, a tap first
+        /// brings it up. True when the skip was used this frame.</summary>
         bool UpdateIntroSkip()
         {
             var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
             bool shown = intro != null && intro.CanSkip && !storyDialogue.IsOpen && (health == null || !health.Dead);
             introSkip.EnableInClassList("intro-skip--shown", shown);
-            if (!shown) return false;
+            if (!shown)
+            {
+                introSkipAwakeUntil = 0f;
+                introSkip.RemoveFromClassList("intro-skip--awake");
+                return false;
+            }
+            bool wasAwake = Time.unscaledTime < introSkipAwakeUntil;
+            if (AnyInputThisFrame()) introSkipAwakeUntil = Time.unscaledTime + IntroSkipShowSeconds;
+            bool awake = Time.unscaledTime < introSkipAwakeUntil;
+            introSkip.EnableInClassList("intro-skip--awake", awake);
+            // A faded-out button isn't tappable, so the tap that wakes it doesn't skip as well.
+            introSkip.pickingMode = wasAwake ? PickingMode.Position : PickingMode.Ignore;
             var kind = InputMode.Current;
             if (kind != introSkipKind)
             {
@@ -827,6 +841,26 @@ namespace GoF2Remake.UI
             return false;
         }
 
+        /// <summary>Any key, click, mouse movement, tap, pad button or stick this frame (what wakes the Skip button).</summary>
+        static bool AnyInputThisFrame()
+        {
+            var kb = Keyboard.current;
+            if (kb != null && kb.anyKey.wasPressedThisFrame) return true;
+            var mouse = Mouse.current;
+            if (mouse != null && (mouse.delta.ReadValue().sqrMagnitude > 4f || mouse.leftButton.wasPressedThisFrame
+                                  || mouse.rightButton.wasPressedThisFrame || mouse.middleButton.wasPressedThisFrame)) return true;
+            var touch = Touchscreen.current;
+            if (touch != null && touch.primaryTouch.press.wasPressedThisFrame) return true;
+            var pad = Gamepad.current;
+            if (pad != null)
+            {
+                if (pad.leftStick.ReadValue().sqrMagnitude > 0.25f || pad.rightStick.ReadValue().sqrMagnitude > 0.25f) return true;
+                foreach (var c in pad.allControls)
+                    if (c is UnityEngine.InputSystem.Controls.ButtonControl b && b.wasPressedThisFrame) return true;
+            }
+            return false;
+        }
+
         void SkipIntro()
         {
             var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
@@ -835,6 +869,7 @@ namespace GoF2Remake.UI
             intro.Skip();
         }
 
+        /// <summary>Layout::drawFade: the campaign level's full-screen fade.</summary>
         void UpdateFade()
         {
             var c = level != null ? level.Campaign : null;

@@ -821,10 +821,18 @@
     border-width: 1px;
     border-color: var(--gof-cyan-faint);
     border-radius: 2px;
+    opacity: 0;
+    transition-property: opacity;
+    transition-duration: 0.4s;
 }
 
 .intro-skip--shown {
     display: flex;
+}
+
+/* Only after an input, faded out again when idle (FlightHud.IntroSkipShowSeconds). */
+.intro-skip--awake {
+    opacity: 1;
 }
 
 .intro-skip-label {

@@ -32,7 +32,7 @@ namespace GoF2Remake.UI
         public bool showSplash = true;
         [Tooltip("Fallback scene for Leave() without a scene name.")]
         public string gameScene = "Space";
-        public string versionText = "Galaxy on Fire 2 Remake  ·  pre-alpha";
+        public string versionText = "Galaxy on Fire 2 Remake by JoppieToppie  ·  pre-alpha";
 
         [Header("Editor splash (players use Unity's splash screen with the same logos)")]
         [Tooltip("MTitle image 7001 (FISHLABS). Each logo: 1 s fade in, 2 s hold, 1 s fade out.")]
