@@ -54,6 +54,7 @@ namespace GoF2Remake.UI
         public bool toVoid;        // 422 answered Yes: the Khador jump into the Void (station is -1 then)
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class StarMap : MonoBehaviour
     {
         const float M = 0.05f;
@@ -1227,7 +1228,7 @@ namespace GoF2Remake.UI
 
         void HandleKeys(float dtMs)
         {
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
             var pad = Gamepad.current;
             bool Pressed(Func<Keyboard, bool> k, Func<Gamepad, bool> g) => (kb != null && k(kb)) || (pad != null && g(pad));
 

@@ -78,6 +78,7 @@ namespace GoF2Remake.Data
         public List<RadioLine> radio = new List<RadioLine>();
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class StoryTable
     {
         [Serializable]

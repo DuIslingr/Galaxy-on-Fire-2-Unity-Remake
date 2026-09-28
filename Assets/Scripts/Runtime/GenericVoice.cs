@@ -20,6 +20,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class GenericVoice
     {
         [Serializable] class Row { public int text; public string voice; }

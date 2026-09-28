@@ -217,6 +217,10 @@ namespace GoF2Remake.World
         /// <summary>Level::createShip for a campaign level: one ship; call ConnectPlayers once all are spawned.</summary>
         public NpcShip SpawnShip(SpawnSpec spec) => Create(spec);
 
+        /// <summary>Multiplayer: this player now runs the orbit (took it over): its relaunches and raider waves run
+        /// (Traffic.Setup had it passive), unless the level itself keeps it passive (a story, mission or siege orbit).</summary>
+        public void SetPassive(bool passive) => IsStoryOrbit = passive;
+
         /// <summary>Level::connectPlayers: each ship's enemy list is the player first, then every ship of another race.
         /// 'playerExempt': ships of these races leave the player out (campaign 16 / 24 / 28: the Void attack the others).</summary>
         public void ConnectPlayers(int playerExemptRace = -99)
@@ -511,8 +515,12 @@ namespace GoF2Remake.World
             {
                 // PlayerFighter::update 0xf1c8c: any other ship dying first (whoever killed it) spoils it (+0xf1), and after
                 // that the spy's death no longer counts.
+                bool killed = Session.InformerKilled, failed = Session.InformerFailed;
                 if (ship.Spec.nameText == 1663) { if (!Session.InformerFailed) Session.InformerKilled = true; }
                 else if (!Session.InformerKilled) Session.InformerFailed = true;
+                // Multiplayer: the squad's mission (NetMissions.OnStatus: 1 = the spy dead, 1000 = spoiled).
+                if (Session.InformerKilled && !killed) GoF2Remake.Multiplayer.NetMissions.AddStatus(fm, 1);
+                if (Session.InformerFailed && !failed) GoF2Remake.Multiplayer.NetMissions.AddStatus(fm, 1000);
             }
             // PlayerFighter::update's death: a Most Wanted criminal pays its bounty whoever killed it; no standing hit.
             if (ship.Spec.wantedIndex >= 0) { WantedKilled(ship); if (byPlayer && ship.Target.hostileToPlayer) CountKill(); return; }
@@ -554,6 +562,10 @@ namespace GoF2Remake.World
                     // inactive too (KIPlayer::setToSleep -> Player::setActive(false)): index 7's ambush, sleeping guards.
                     if (!s.Gone && !s.Inactive && !s.Asleep && s.Current != NpcShip.State.Dying && s.Current != NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer && !s.IsFreighter)
                         hostiles++;
+            // Multiplayer: the other players' ships here (NetProxy targets, shown only in this orbit) count too.
+            if (hasScanner && GoF2Remake.Multiplayer.NetGame.Active)
+                foreach (var t in Target.NetShips)
+                    if (t != null && t.enabled && !t.untargetable && !t.isPlayer && t.Alive && t.hostileToPlayer) hostiles++;
             HostileCount = hostiles;
             if (!MenuBackdrop) UpdateMusic(Time.unscaledDeltaTime);   // the menu plays its own theme
         }

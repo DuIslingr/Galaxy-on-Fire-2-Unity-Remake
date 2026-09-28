@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class SpacePoints
     {
         public const int Approach = 1, Dock = 2;

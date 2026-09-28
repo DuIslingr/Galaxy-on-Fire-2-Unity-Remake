@@ -53,6 +53,7 @@ using UnityEngine;
 
 namespace GoF2Remake.World
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class NpcShip : MonoBehaviour
     {
         const float M = 0.05f;
@@ -152,16 +153,26 @@ namespace GoF2Remake.World
             Hp.DamageEmp(emp);
         }
 
+        /// <summary>Multiplayer: another game's ship shown here (NetProxy), hostile to the local player: a wingman's target.</summary>
+        static bool HostileOther(Target t) => t != null && t.enabled && !t.untargetable && !t.isPlayer && t.isShip && t.Alive && t.hostileToPlayer
+                                              && t.GetComponent<GoF2Remake.Multiplayer.NetPlayer>() == null;
+
+        /// <summary>Multiplayer (NetOrbit): another player's ship is docked at an object (their hits x0.75), null = none.</summary>
+        public static System.Func<Target, bool> RemoteDockedAtObject;
+
         /// <summary>What its guns can hit: its enemies, plus the other players here (every player ship blocks its shots).</summary>
         List<Target> HitTargets
         {
             get
             {
                 var remote = RemotePlayers;
-                if (remote == null || remote.Count == 0 || HostileToRemote == null) return enemies;
+                bool others = IsWingman && GoF2Remake.Multiplayer.NetGame.Active && Target.NetShips.Count > 0;
+                if ((remote == null || remote.Count == 0 || HostileToRemote == null) && !others) return enemies;
                 hitList.Clear();
                 hitList.AddRange(enemies);
-                foreach (var r in remote) if (r != null) hitList.Add(r);   // in the line of fire like the local player
+                if (remote != null) foreach (var r in remote) if (r != null) hitList.Add(r);   // in the line of fire like the local player
+                // Multiplayer: a wingman's shots also hit the other players' hostile ships here (their game applies it).
+                if (others) foreach (var t in Target.NetShips) if (HostileOther(t)) hitList.Add(t);
                 return hitList;
             }
         }
@@ -188,6 +199,11 @@ namespace GoF2Remake.World
         public Transform Model => model != null ? model : transform;
         /// <summary>Resources path of the assembled prefab it was built from (Traffic), for multiplayer proxies.</summary>
         public string ModelPath { get; set; }
+        /// <summary>A freelance mission's ship (FreelanceOrbit): multiplayer never takes it over from its player.</summary>
+        public bool MissionShip { get; set; }
+        /// <summary>Multiplayer: this player's own stand-in, never shown to the others (a follower's copy of the mission's
+        /// mining plant, FreelanceOrbit).</summary>
+        public bool LocalOnly { get; set; }
         Route route;
         Gun gun;
         GunRig rig;
@@ -944,6 +960,10 @@ namespace GoF2Remake.World
                     if (s == this || s.Gone || s.IsWingman || s.Current != State.Fly || s.Hidden) continue;
                     if (s.Target.Alive && s.Target.hostileToPlayer) { target = s.Target; attacking = true; break; }
                 }
+            // Multiplayer: another game's hostile ship here (the orbit's authority runs them).
+            if (!attacking && wingCommand != 3 && gun != null && GoF2Remake.Multiplayer.NetGame.Active)
+                foreach (var t in Target.NetShips)
+                    if (HostileOther(t) && InBox(t)) { target = t; attacking = true; break; }
             if (target != null) { targetPos = target.transform.position; return; }
             if (player == null) { targetPos = transform.position + transform.forward; return; }
             // Formation point (per frame a one-point route).
@@ -1211,6 +1231,7 @@ namespace GoF2Remake.World
             else if (!hit.isPlayer && RemotePlayers != null && HostileToRemote != null && Contains(RemotePlayers, hit) && !HostileToRemote(this, hit))
                 dmg = (int)(dmg * 0.2f);   // multiplayer: the same for another player it isn't after
             else if (hit.isPlayer && ObjectDocking.PlayerDocked) dmg = (int)(dmg * 0.75f);
+            else if (!hit.isPlayer && RemoteDockedAtObject != null && RemoteDockedAtObject(hit)) dmg = (int)(dmg * 0.75f);   // multiplayer
             hit.Damage(dmg, true, g.bullets[bullet].velocity);
             if (g.emp > 0f && !hit.isPlayer && hit.hitpoints != null) hit.hitpoints.DamageEmp((int)g.emp);
             r.ShowImpact(point);
@@ -1399,6 +1420,7 @@ namespace GoF2Remake.World
             crate.Setup(loot, Race);
             crate.fromFriend = Target.friendToPlayer;
             crate.missionCrate = Spec.missionCrate >= 0;
+            crate.missionLoot = MissionShip;   // multiplayer: only the mission's team takes it
             Target.crate = crate;
         }
 

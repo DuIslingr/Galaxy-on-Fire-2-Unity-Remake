@@ -33,6 +33,7 @@ using UnityEngine.SceneManagement;
 
 namespace GoF2Remake.Multiplayer
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class NetPlayer : NetworkBehaviour
     {
         public enum Place : byte { None = 0, Space = 1, Hangar = 2, Departing = 3 }
@@ -61,6 +62,19 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> standing0 = new NetworkVariable<int>(0, Read, Write);    // Session.Standing, the signature
         readonly NetworkVariable<int> standing1 = new NetworkVariable<int>(0, Read, Write);
         readonly NetworkVariable<int> signature = new NetworkVariable<int>(-1, Read, Write);
+        readonly NetworkVariable<long> missionRun = new NetworkVariable<long>(0, Read, Write);   // NetMissions: the mission its level runs
+        readonly NetworkVariable<long> missionHeld = new NetworkVariable<long>(0, Read, Write);  // the mission this player holds (netId)
+        readonly NetworkVariable<int> missionCargo = new NetworkVariable<int>(0, Read, Write);   // containers 116 | 117 << 10 | passengers << 20
+        // The mission orbit's runner: its route ("x,y,z;..."), clock (ms) and Challenge score (player << 16 | others), for the
+        // squadmates there (FreelanceOrbit's follower mode).
+        readonly NetworkVariable<FixedString512Bytes> missionRoute = new NetworkVariable<FixedString512Bytes>(default, Read, Write);
+        readonly NetworkVariable<float> missionClock = new NetworkVariable<float>(0f, Read, Write);
+        readonly NetworkVariable<int> missionScore = new NetworkVariable<int>(0, Read, Write);
+        readonly NetworkVariable<bool> siegeRun = new NetworkVariable<bool>(false, Read, Write);   // KaamoSiege: builds the siege here
+        readonly NetworkVariable<bool> atObject = new NetworkVariable<bool>(false, Read, Write);   // docked at an object (ObjectDocking)
+        readonly NetworkVariable<int> turretItem = new NetworkVariable<int>(-1, Read, Write);   // the mounted turret (PlayerTurret.TurretItem)
+        readonly NetworkVariable<bool> hangarRun = new NetworkVariable<bool>(false, Read, Write);   // runs its hangar's NPC ships (NetHangar)
+        readonly NetworkVariable<bool> arrivedFlying = new NetworkVariable<bool>(false, Read, Write);   // docked by flying in (StationLevel)
 
         /// <summary>Every player in the session, the local one included.</summary>
         public static readonly List<NetPlayer> All = new List<NetPlayer>();
@@ -80,6 +94,25 @@ namespace GoF2Remake.Multiplayer
         public int Standing1 => standing1.Value;
         public int Signature => signature.Value;
         public float CloakPercent => cloak.Value;
+        /// <summary>The squad mission (FreelanceMission.netId) this player's level runs here, 0 = none.</summary>
+        public long MissionRun => missionRun.Value;
+        /// <summary>The squad mission (netId) this player holds, 0 = none (the reward split, NetMissions).</summary>
+        public long MissionHeld => missionHeld.Value;
+        /// <summary>What this player carries for the mission (NetMissions.PackCargo), handed over if they disconnect.</summary>
+        public int MissionCargo => missionCargo.Value;
+        public string MissionRoute => missionRoute.Value.ToString();
+        public float MissionClock => missionClock.Value;
+        public int MissionScore => missionScore.Value;
+        /// <summary>This player's level runs the Kaamo siege in its orbit (KaamoSiege's one-per-orbit rule).</summary>
+        public bool SiegeRun => siegeRun.Value;
+        /// <summary>Docked at an object in space (ObjectDocking.PlayerDocked): NPC hits x0.75, like the local player's.</summary>
+        public bool DockedAtObject => atObject.Value;
+        /// <summary>The turret item on the ship (-1 = none): shown on its model in space and in the hangar (NetHangar).</summary>
+        public int TurretItem => turretItem.Value;
+        /// <summary>Docked and running the hangar's NPC ships for everyone docked there (NetHangar).</summary>
+        public bool HangarRun => hangarRun.Value;
+        /// <summary>Docked by flying in from the orbit (not a session start, a respawn, a load): the others see it land.</summary>
+        public bool ArrivedFlying => arrivedFlying.Value;
         public float Hull => hull.Value;
         /// <summary>Shield / armor fractions, -1 = the ship has none.</summary>
         public float Shield => shield.Value;
@@ -136,6 +169,7 @@ namespace GoF2Remake.Multiplayer
             }
             position.OnValueChanged += (_, p) => smoothing.Push(p);
             ship.OnValueChanged += (_, s) => BuildModel(s);
+            turretItem.OnValueChanged += (_, _) => BuildTurret();
             smoothing.Push(position.Value);
 
             target = gameObject.AddComponent<Target>();
@@ -159,6 +193,9 @@ namespace GoF2Remake.Multiplayer
 
         public override void OnNetworkDespawn()
         {
+            // Host: a player going (disconnected: Netcode despawns the player object before OnClientDisconnectCallback) hands
+            // what they carried for the squad's mission to a squadmate (not when the whole session closes).
+            if (IsServer && !IsOwner && NetState.Instance != null && !NetworkManager.ShutdownInProgress) NetState.Instance.HandOverMission(this);
             All.Remove(this);
             if (Local == this) Local = null;
             else if (!IsOwner && NetGame.Active) NetChat.Notice(NetChat.LeftText(DisplayName));
@@ -169,6 +206,18 @@ namespace GoF2Remake.Multiplayer
             cloakLook?.Dispose();
             sparks?.Clear();
             ownSparks?.Clear();
+        }
+
+        GameObject turretModel;
+        static bool testDocked;
+
+        /// <summary>The mounted turret on the model (CutScene::checkForTurret's static turret: the shots are mirrored).</summary>
+        void BuildTurret()
+        {
+            if (turretModel != null) Destroy(turretModel);
+            turretModel = null;
+            if (model == null || turretItem.Value < 0) return;
+            turretModel = PlayerTurret.BuildStatic(NetGame.Db, ship.Value, new[] { new ItemStack(turretItem.Value, 1) }, model.transform);
         }
 
         /// <summary>This player's shots pass through their squadmates (the local player's ship included).</summary>
@@ -228,6 +277,7 @@ namespace GoF2Remake.Multiplayer
                 obstacle.volumes.Add(CollisionVolume.Sphere(Vector3.zero, size * CollisionScale));
             }
             model.SetActive(shown);
+            BuildTurret();
             // Its look and sound: the exhaust, the cloak, the engine loop (3D, at space distances).
             asm = model.GetComponent<AssembledObject>();
             if (exhaust != null) Destroy(exhaust);
@@ -342,6 +392,32 @@ namespace GoF2Remake.Multiplayer
             if (station.Value != at) station.Value = at;
             bool runs = level != null && level.NetAuthority;
             if (authority.Value != runs) authority.Value = runs;
+            var run = level != null && level.FreelanceOrbit != null && level.FreelanceOrbit.Running && Freelance.Active ? level.FreelanceOrbit : null;
+            long mission = run != null ? Freelance.Mission.netId : 0;
+            if (missionRun.Value != mission) missionRun.Value = mission;
+            if (run != null)
+            {
+                string route = run.RouteText;
+                if (missionRoute.Value.ToString() != route) missionRoute.Value = route;
+                if (Mathf.Abs(missionClock.Value - run.ClockMs) > 500f) missionClock.Value = run.ClockMs;
+                int score = run.PlayerKills << 16 | run.OtherKills;
+                if (missionScore.Value != score) missionScore.Value = score;
+            }
+            long held = Freelance.Active ? Freelance.Mission.netId : 0;
+            if (missionHeld.Value != held) missionHeld.Value = held;
+            int turretNow = PlayerTurret.TurretItem(NetGame.Db, Session.Equipment);   // also changed in the hangar
+            if (turretItem.Value != turretNow) turretItem.Value = turretNow;
+            bool runsHangar = dock != null && NetHangar.Running;
+            if (hangarRun.Value != runsHangar) hangarRun.Value = runsHangar;
+            bool flew = dock != null && dock.ArrivedFlying;
+            if (arrivedFlying.Value != flew) arrivedFlying.Value = flew;
+            bool siege = level != null && level.Siege != null && level.Siege.Running && level.Siege.Active;
+            if (siegeRun.Value != siege) siegeRun.Value = siege;
+            int carried = held != 0 ? NetMissions.PackCargo() : 0;
+            if (missionCargo.Value != carried) missionCargo.Value = carried;
+            // Testing (development builds): -mpdock / -mpaccept (NetGame).
+            if (NetGame.TestDock && !testDocked && level != null && level.LaunchCameraOver && Time.timeSinceLevelLoad > 8f) { testDocked = true; level.Dock(true); }
+            if (NetGame.TestAccept && now == Place.Hangar && NetSquad.Invites.Count > 0) NetSquad.Accept(NetSquad.Invites[NetSquad.Invites.Count - 1]);
             if (level == null)
             {
                 // Docked: repaired (the pools' presence stays as last seen in space).
@@ -355,6 +431,8 @@ namespace GoF2Remake.Multiplayer
             }
             if (level.Weapons != null) sender?.Hook(level.Weapons.Guns);
             if (level.Turret != null && level.Turret.Gun != null) sender?.Hook(new[] { level.Turret.Gun });
+            foreach (var sentry in SentryGun.All) if (sentry != null && sentry.Gun != null) sender?.Hook(new[] { sentry.Gun });
+            if (atObject.Value != ObjectDocking.PlayerDocked) atObject.Value = ObjectDocking.PlayerDocked;
             transform.SetPositionAndRotation(localShip.position, localShip.rotation);
             if ((position.Value - localShip.position).sqrMagnitude > 0.0001f) position.Value = localShip.position;
             if (Quaternion.Angle(rotation.Value, localShip.rotation) > 0.05f) rotation.Value = localShip.rotation;

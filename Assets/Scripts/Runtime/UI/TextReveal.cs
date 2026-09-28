@@ -35,6 +35,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class TextReveal
     {
         /// <summary>Letters per second without a voice line.</summary>

@@ -497,7 +497,8 @@ namespace GoF2Remake.UI
                       && !pauseMenu.IsOpen && !(nav != null && nav.MenuOpen) && !StarMap.IsOpen && !storyDialogue.IsOpen
                       && !level.Cutscene && level.LaunchCameraOver && Time.timeScale > 0f && (health == null || !health.Dead)
                       && (mining == null || mining.State == Mining.Phase.Idle) && !(level.FreeLook != null && level.FreeLook.FreeLookActive)
-                      && (weapons == null || !weapons.SteeringMissile) && (level.Docking == null || !level.Docking.Busy);
+                      && (weapons == null || !weapons.SteeringMissile) && (level.Docking == null || !level.Docking.Busy)
+                      && !GoF2Remake.Multiplayer.NetChat.Typing;   // multiplayer: the cursor free for the chat
             ship.mouseSteering = on;
             var wantLock = on ? CursorLockMode.Locked : CursorLockMode.None;
             if (UnityEngine.Cursor.lockState != wantLock) UnityEngine.Cursor.lockState = wantLock;

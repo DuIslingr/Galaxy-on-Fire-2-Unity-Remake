@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Multiplayer
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetSquad
     {
         public const float InviteSeconds = 45f;
@@ -32,7 +33,8 @@ namespace GoF2Remake.Multiplayer
         {
             get
             {
-                invites.RemoveAll(i => Time.unscaledTime - i.time > InviteSeconds || Find(i.from) == null);
+                // Expired, gone, or from a squadmate already (an old invitation: accepting it would drop the squad's mission).
+                invites.RemoveAll(i => Time.unscaledTime - i.time > InviteSeconds || Find(i.from) == null || Same(Find(i.from), NetPlayer.Local));
                 return invites;
             }
         }

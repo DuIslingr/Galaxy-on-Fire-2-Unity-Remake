@@ -26,6 +26,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class PlayerHealth : MonoBehaviour
     {
         const float M = 0.05f;

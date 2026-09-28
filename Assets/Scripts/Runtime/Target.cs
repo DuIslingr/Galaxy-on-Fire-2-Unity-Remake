@@ -16,6 +16,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Target : MonoBehaviour
     {
         public static readonly List<Target> All = new List<Target>();
@@ -61,6 +62,9 @@ namespace GoF2Remake.Flight
         [NonSerialized] public Action<float, Vector3, bool> RemoteDamage;
         /// <summary>Multiplayer: EMP (points) passed on to the game that owns the ship (NetProxy, NetPlayer).</summary>
         [NonSerialized] public Action<int> RemoteEmp;
+        /// <summary>Multiplayer: the killing hit came from another player (NetProxy): counts as the player's for a freelance
+        /// mission (FreelanceOrbit), though the game takes it as an NPC's hit (killedByNpc: no standing change here).</summary>
+        [NonSerialized] public bool killedByRemote;
         /// <summary>Multiplayer: a squadmate's ship: the players' weapons don't affect it (NPCs still do).</summary>
         [NonSerialized] public bool playerProof;
         /// <summary>The player's cloak (Player+0x5e set by PlayerEgo::toggleCloaking): NPCs keep it as their target but don't

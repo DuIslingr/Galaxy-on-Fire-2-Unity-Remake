@@ -118,7 +118,7 @@ namespace GoF2Remake.UI
             if (!Active) return false;
             if (target == null || cam == null) { Exit(); return false; }
             float frames = Time.unscaledDeltaTime * 1000f / FrameMs;
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
             var pad = Gamepad.current;
             if ((kb != null && (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame)) || (pad != null && pad.buttonEast.wasPressedThisFrame))
             { Exit(); return false; }

@@ -90,9 +90,15 @@ namespace GoF2Remake.UI
             if (level != null && level.Navigation != null) level.Navigation.PauseMenuOpen = true;
             if (level != null && level.Weapons != null) level.Weapons.SetPrimaryHeld(false);
             audioWasPaused = AudioListener.pause;
-            AudioListener.pause = true;
+            if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = true;   // multiplayer: the world (and its sound) goes on
             backdrop.AddToClassList("pause-backdrop--shown");
             Show(Page.Main);
+        }
+
+        /// <summary>A scene change with the menu open (a multiplayer session ending): the sound comes back.</summary>
+        void OnDestroy()
+        {
+            if (IsOpen) AudioListener.pause = audioWasPaused;
         }
 
         public void Close()

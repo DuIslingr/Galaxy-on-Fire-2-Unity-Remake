@@ -16,6 +16,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class CombatAssets : ScriptableObject
     {
         public const string ResourcePath = "GoF2Combat/CombatAssets";

@@ -17,6 +17,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Shop
     {
         public const int RecentStationCount = 3;
@@ -184,7 +185,7 @@ namespace GoF2Remake.Data
                 while (recent.Count > RecentStationCount) recent.RemoveAt(0);
             }
             else if (Session.LastDepartureTime >= 0f && Time.realtimeSinceStartup - Session.LastDepartureTime > TradeGoodsDelaySeconds
-                     && station != 108)
+                     && station != 108 && !GoF2Remake.Multiplayer.NetStock.Shared(station))   // multiplayer: the host's stock resets instead
             {
                 foreach (var row in stock.items)
                 {
@@ -196,6 +197,7 @@ namespace GoF2Remake.Data
             // Status::departStation: at the owned club the storage is the station's stock (one shared list here).
             if (KaamoClub.StorageAt(station)) stock.items = Session.KaamoItems;
             Freelance.OnEnterStation(stock);
+            GoF2Remake.Multiplayer.NetStock.OnEnterStation(stock);   // multiplayer: the stock everyone shares replaces it
             return stock;
         }
 

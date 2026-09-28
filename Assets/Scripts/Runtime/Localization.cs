@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Localization
     {
         [Serializable] class Wrapper { public string[] items; }

@@ -310,6 +310,7 @@ namespace GoF2Remake.Flight
                 if (crate.missionCrate && ship == null) { crate.pulled = false; return; }
                 entry.amount -= n;
                 ship?.StealFrom(entry.item, n);
+                crate.CapturedHere?.Invoke();
                 Destroy(crate.gameObject);
                 return;
             }
@@ -318,10 +319,16 @@ namespace GoF2Remake.Flight
             var mounted = db.Item(entry.item)?.TypeId == 1 ? Session.Equipment.Find(e => e.item == entry.item) : null;
             if (mounted != null) mounted.amount += n; else Shop.AddToCargo(entry.item, n);
             Session.CratesSalvaged += n;   // Status::crateCaptured
+            if (crate.missionCrate && Freelance.Active)
+            {
+                Session.Unsaleable.Add(entry.item);   // the client's container (also a squadmate's capture, multiplayer)
+                GoF2Remake.Multiplayer.NetMissions.AddStatus(Freelance.Mission, 1);   // multiplayer: the squad has it
+            }
             // A Void crate counts for Alien Hunter (Status+0xcc), another race's booze for Barkeeper.
             if (crate.race == Standing.Void) Session.AlienRemainsCollected += n;
             else if (Session.IsBooze(entry.item)) Session.BoozeTypes.Add(entry.item);
             Message?.Invoke($"{n}t {Localization.Get(1274 + entry.item)}", 2);
+            crate.CapturedHere?.Invoke();   // multiplayer: the capture reaches the crate's owner (NetCrate)
             Destroy(crate.gameObject);
         }
     }

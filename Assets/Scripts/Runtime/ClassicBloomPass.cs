@@ -19,6 +19,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace GoF2Remake.Visuals
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class ClassicBloomPass : ScriptableRenderPass
     {
         const int Size = 256, Iterations = 6;

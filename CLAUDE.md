@@ -81,6 +81,10 @@ Menu items (from `Scripts/Editor`):
 - **One MonoBehaviour/ScriptableObject per file, and the file name must equal the class name.** Otherwise prefabs save it as a missing script.
 - Gameplay logic is a clean C# reimplementation of the behaviour in the decompiled code, not a line-by-line transliteration. Comment the original function names and constants you based it on.
 - Keep game-logic classes plain C# where possible (like `FlightModel`) so they can be unit-tested. MonoBehaviours adapt them to Unity.
+- A type with static fields, auto-properties or events carries `[Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]`
+  (Unity 6.7's UAL0010 / UAL0013 analyzer): Play mode runs without a domain reload and the code resets what it needs itself
+  (`RuntimeInitializeOnLoadMethod(SubsystemRegistration)`). Use `FindObjectsByType<T>()` / `(FindObjectsInactive)`, never the
+  obsolete `FindObjectsSortMode` overloads.
 - Game time is in **milliseconds**. Convert with `Time.deltaTime * 1000f`.
 
 ## Coordinates and scale
@@ -303,7 +307,7 @@ Research: `Reference/research/freelance_missions.md` (agents, offers, mission ge
 - **Station extras**: the news ticker on the main view (`NewsTicker`: the campaign window's story news + 2 random items, tokens, 50 px/s; remake: the full width of the UI along its bottom edge, repeated so it is never empty, and it keeps scrolling under dialogs; not at 101 / 108 / Loma); the Status window (`StatusWindow`: pilot, ship, reputation bars, statistics, 45 medals by grade with hints; `Achievements` checks on docking, "New medal!" 353; with all base medals the wingman fans pay you).
 - The Most Wanted board (Missions window tab): see "Supernova add-on".
 - **Medals** (`StatusWindow`, `TouchButton::draw` style 4, images from **Build HUD Images**: `GoF2Hud/medal_plate_*`, `medal_00..44`, `medal_pressed`): the plate by grade (elite 36-44 their own), the 54 px symbol at (114, 41) tinted by grade (DAT_00252060 / 50), the pressed overlay on the selected medal, the name in white under it; the elite medals react at grade 0 too. Counters: 8 Personal Need = the booze tonnes gained per hangar visit (`Session.BoozeBought`, `ModStation::OnKeyPress` / `OnTouchEnd`), 9 Barkeeper = the booze types (132-153) bought / sold / from the lounge / from non-Void crates (`BoozeTypes`; its silver hint lists the missing drinks), 21 Alien Hunter = tonnes from Void crates (`AlienRemainsCollected`); save v8. `checkForNewMedal`'s strict medals (5-8, 10, 16, 18, 20, 21, 26, 27, 29, 31-34, 36) need more than the threshold; 36 counts `Ship::getMaxLoad`. 22 = no weapon or equipment from campaign 8; the elite medals 38 / 40 / 41 / 42 / 44 (`Session.EliteFlags`, `Achievements.Elite`): the Ore Athlete streak (`Session.OreStreak`, reset on docking and a lost mining game), 40 kills without a scanner (`BlindKills`), 41 asteroids by rockets in one flight, 44 asteroids by the Liberator; save v9 (also the Loma flags).
-- Not yet: freelance type 15 Ore Mining (unreachable in the original's generator).
+- Type 15 Ore Mining (unreachable in the original's generator) is only rolled in multiplayer sessions (see "Multiplayer").
 
 ## Kaamo Club (station 108, Shima)
 
@@ -461,9 +465,9 @@ NetworkObject; it re-saves them so each gets its own GlobalObjectIdHash, and swi
 Single player is untouched: every multiplayer path runs only while `NetGame.Active`.
 
 - **One shared world, no scene synchronisation** (`EnableSceneManagement = false`): every player starts a fresh free-play
-  game (`Session.FreePlay`, index 20) at Var Hastra (78) and plays it like single player, their own scenes, economy, map,
+  game (`Session.FreePlay`, index 20) docked at Var Hastra (78) and plays it like single player, their own scenes, economy, map,
   jumps and docking. The network objects live in DontDestroyOnLoad and each player shows only what is where they are.
-  The host spawns NetState and its own NetPlayer and loads `Space`; a client connects (10 x 1 s) and loads `Space` when
+  The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
   (`SaveGame.Save` refuses), so it never touches the single-player saves.
 - **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel: the pilot name
@@ -480,8 +484,11 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`NetState.DestroyedByRpc`). A destroyed player's game over says "Tap to respawn at the station." and docks them at the
   orbit's station, repaired (no save is loaded).
 - **Squads** (`NetSquad`, the host's `NetPlayer.SquadId`, NetState's RPCs): the station's pilot list (players docked
-  there) has Invite; the invited player gets an Accept / Decline popup (45 s); accepting joins the inviter's squad (a new
-  one if needed, leaving the old one); Leave in the squad window; a squad of one dissolves (also after a disconnect).
+  there, the local player first as "(you)") has Invite; the invited player gets an Accept / Decline popup (45 s); accepting joins the inviter's squad (a new
+  one if needed, leaving the old one); squads form only in a hangar (the popup shows only while docked, and the host
+  refuses an acceptance unless both are docked at the same station); joining abandons the joiner's own bar mission (the
+  popup warns, `NetMissions.AbandonWarning`) and the squad's active one (the inviter's, else a member's,
+  `NetPlayer.MissionHeld`) is sent to them; Leave in the squad window; a squad of one dissolves (also after a disconnect).
   Squadmates are green markers; the players' weapons don't affect a squadmate (`Target.playerProof`: no damage, and their
   bullets pass through, `Gun.Ignores`; a squadmate's replayed shots pass through the squad too). UI: `SquadView`
   (`Resources/GoF2Net/Squad.uss`) in the flight HUD and the station menu: the collapsible squad window (right side, only in
@@ -503,27 +510,57 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   NetCrate objects it owns (spawned by the host on request, by index in `Traffic.Ships`). When the authority leaves the
   orbit (docks, jumps, disconnects: proxies survive their owner, `DontDestroyWithOwner`), the player still there with the
   lowest client id takes over its flying ships where they are (`Traffic.Adopt`: model, race, group, hull; not fixed
-  objects, turrets or story ships); NetState keeps the old proxies 5 s for that, then sweeps them.
+  objects, turrets or story ships; only ships whose creator has left the orbit, `NetProxy.Creator`), connects them
+  (`Traffic.ConnectPlayers`) and runs the orbit from then on (`SpaceLevel.TakeOverNetAuthority`: relaunches and raider
+  waves, `Traffic.SetPassive`); the old copies go for everyone at once (`NetState.AdoptedRpc`), else NetState sweeps them
+  after 5 s. Two players arriving at the same moment can both find the orbit empty: in the first 15 s the higher client
+  id stands down (`SpaceLevel.DropNetAuthority`: its traffic vanishes, the other's is shown). A player's own proxies left
+  from an earlier visit, or spawned after their ship went, are dropped by their owner. The Kaamo siege: one per orbit
+  (`KaamoSiege.Running`, `NetPlayer.SiegeRun`): another player with the siege to fight gets the follower view (the call,
+  docking refused, the win with the runner's, `NetState.SiegeWonRpc`), builds it anew when alone there; two runners at
+  once: the higher client id stands down. The other players' hostile ships count for the battle music and block
+  fast-forward (`Traffic.HostileCount`).
 - **NetProxy**: the ship's model by its Resources path (`NpcShip.ModelPath`), pose, race, standing, hull, hit cube, hidden,
   life (dying: no marker / lock; dead: the explosion at the ship's scale, the model hidden unless it leaves a wreck;
   flying again after a relaunch), marked and locked like traffic ships (`Target.NetShips`, `CombatRadar`, `CombatView`);
   another player's hit is applied to the owner's ship (`Target.RemoteDamage`, an RPC to the owner) as its player's hit.
+  Dying / dead copies are not alive (shots pass them, like on the owner's side); junk is known from its id
+  (`NetOrbit.JunkBase`); a jump (the spawn's default pose, a respawn) is no velocity (`NetSmoothing`). The host holding a
+  disconnected player's proxies shows them like any other (viewer mode, `OnGainedOwnership`). Other players' wingmen are
+  proxies too: the authority's NPCs attack them like their player (`NetOrbit.HostileToRemote`), and a player's wingmen
+  attack the other games' hostile ships (their hits applied by that game).
 - **Shots** (every gun, the turret, rockets / missiles / bombs / mines / beams): `Gun.Fired` / `Gun.Ignited` ->
   `NetShotSender` (a NetProxy's owner, the owner's NetPlayer) -> an RPC to the others (shots unreliable, blasts reliable)
   -> `NetShotMirror` (only where the shooter is shown): a Gun per weapon item with its GunRig and shot sound, the bullet
   injected at the sender's pose and life left (`Gun.Inject`), beams through the gun's beam path at the same target,
   homing toward the sender's lock (ids: `NetShots`), blasts as the fx's explosion. The mirrors stop on what they hit here
-  and show the impact, but deal no damage (no handler on their Hit): the shooter's own game applies the hits.
+  and show the impact, but deal no damage (no handler on their Hit): the shooter's own game applies the hits. Their pools
+  live in the scene: after a scene change the mirrors start over (`NetShotMirror.Refresh`). Deployed sentry guns' shots
+  are mirrored too; a beam's auto-aim never picks a squadmate.
 - **Crates** (`NetCrate`): the authority's crates are real `Crate`s for the others in that orbit (`remote`: no drift or
   expiry of their own; the race's model, the same loot), so their radar, markers and tractor work. One player gets it:
   the host keeps the claim (the first beam to start pulling, `Crate.PullStarted`), the others' copies are
   `claimedByOther` (the radar leaves them, a beam on one lets go), the claimant's capture waits for the confirmation
-  (`captureBlocked`); another player's capture has the owner remove its crate; a claimant who leaves loses the claim.
+  (`captureBlocked`; the owner's own capture only waits for another player's claim); another player's capture
+  (`Crate.CapturedHere`) has the owner remove its crate; the claim goes back when the claimant's beam lets go or they
+  leave the orbit (`ReleaseRpc`, the host's check); an owner's beam that grabbed it before the spawn claims it then.
+  Mission loot (`Crate.missionLoot`: dropped by mission ships and junk, the Hijacker's container) is out of reach for
+  players outside the mission's team (the host refuses their claims). Cargo-steal crates aren't shared. The Hijacker's
+  container never expires (also single player: Recovery / Salvage were stuck after 60 s).
 - **Hangars** (`NetHangar`, HangarTraffic's guests by client id): the other players docked at the local player's station
-  park on the NPC slots (a full hangar makes room by removing a parked NPC ship). Docking here from this orbit flies in,
+  park on the NPC slots. Docking here from this orbit flies in (only when that player flew in themselves,
+  `NetPlayer.ArrivedFlying`; a session start or a respawn at the station just appears on a pad),
   their take-off flies out (queued with the other flights: one in the air at a time, the local player's included); one
   already docked on arrival, or with the flights off, is simply parked; gone another way = gone at once; a new ship is
-  swapped in place. In multiplayer the hangar keeps a HangarTraffic for the guests even without the NPC traffic.
+  swapped in place; the mounted turret shows on it (`NetPlayer.TurretItem`, `PlayerTurret.BuildStatic`, also on the ship
+  in space). The hangar's NPC ships are the same for everyone docked there: the first player there runs them
+  (`HangarTraffic.RunsNpcs`, `NetPlayer.HangarRun`) and sends each landing / take-off (`NetState.HangarNpcRpc`, NPC ids
+  `Parked.key`: the slot, or (client id + 1) * 1000 + n for new ones); a player docking later starts with none and takes
+  the runner's (a snapshot, `HangarTraffic.ApplyNpcSnapshot`); when the runner leaves, the lowest client id there runs them
+  on (the others take a new snapshot); two runners at once: the higher id stops. The NPC ships keep one pad free
+  (`KeepOneFree`: they never land on the last one, and when a docking player takes it one takes off; a guest's landing
+  waits for a pad instead of an NPC ship vanishing). With only players on the pads a new guest waits for a free one
+  (still in the pilot list). In multiplayer the hangar keeps a HangarTraffic for the guests even without the NPC traffic.
 - **Chat** (`NetChat`, `ChatView` in the flight HUD and the station menu; styles `Resources/GoF2Net/Chat.uss`): global
   (everyone) and local (the same orbit, or docked at the same station); the host stamps each line with the sender's name
   and location. B or the "Chat" tab opens the input, Enter sends, Tab switches Local / Global, Esc closes; lines fade 12 s
@@ -536,7 +573,13 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   closing the window waits for it through `Application.wantsToQuit`, then quits). A session ending while playing takes a
   client back to the main menu's Multiplayer panel with the reason in a popup (`NetGame.PopupPending`, taken when the
   menu opens, `MainMenu.ShowNotice`); Netcode's own "[Disconnect Event] ..." texts become "The connection to the host was
-  lost." / "No host found at that address."; `-mpjoin` clients then keep trying to rejoin. The flight HUD's and the station menu's Back to Main Menu end the session.
+  lost." / "No host found at that address." ("The host ended the session." when the host answered first); `-mpjoin`
+  clients then keep trying to rejoin. The flight HUD's and the station menu's Back to Main Menu end the session. Netcode
+  stopping a session by itself (`OnClientStopped`, a transport failure) is handled like a lost host. While the host
+  closes, `NetGame.Active` is false and new connections are turned away with the reason. `NetGame.SessionGame`: a
+  session's game (from PrepareSession until the menu opens after it) is never saved, even once the connection went, and
+  a Space / Station scene loaded after the session ended goes to the menu (`NetGame.SessionLost`). The main menu always
+  unmutes the listener (a pause menu open when a session ended). Every session plays on Normal difficulty.
 - **Other players' ships look and sound like theirs**: the owner writes its engine state (the glow part showing: off
   while mining, docking at an object, dead), boost (`BoostVisualPercent`) and cloak percentage; the others' copy drives
   the glow parts (`AssembledObject.SetExhaust`), the exhaust particles (`ShipExhaust.AttachRemote`), a 3D engine loop
@@ -551,17 +594,89 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   use their own standing. Another player's hits turn a ship on their squad by the single-player friendly-fire rule (half
   its hull, a quarter on Extreme; `NpcShip.OnRemoteHit`), and whoever destroys another game's NPC gets the kill in their
   own session (`KillCreditRpc`: `Standing.ApplyKill`, the kill counted when it was after them, pirate kills).
+- **Bar missions** (the freelance missions, `NetMissions`): a squad has **one mission**, the same for every member
+  (one squad id, `FreelanceMission.netId`), with shared goals. It can only be accepted with the whole squad docked at the
+  agent's station (`NetMissions.AcceptRefusal`, in `Freelance.AcceptRefusal`); every member gets it (their own mission
+  replaced); the return trip of Recovery / Salvage updates it for all. Progress is shared: anyone's kills count
+  (`Target.killedByRemote`, the Challenge score too) and the mission's `status` is synced (`NetMissions.AddStatus`: ore a
+  member unloads at the plant, the Hijacker's container captured by any member). Containers and passengers stay with the
+  member who carries them, so only they deliver Courier / Passenger / a Recovery return trip (`NetMissions.CanDeliver`);
+  Purchase / Stolen goods anyone with the goods. The mission orbit is built once: by the first squad member there
+  (`NetMissions.ShouldRun`, `NetPlayer.MissionRun`), whose game runs it, and shows its ships and junk to everyone there
+  (NetOrbit proxies every player's own NPCs; junk as `NetProxy` junk kind in `Target.RadarObjects`); mission ships are
+  never taken over (`NpcShip.MissionShip`); the orbit stops when its runner loses the mission. A squadmate arriving
+  there gets `FreelanceOrbit`'s follower mode (`SetupFollower`, `Running` false): nothing built, but the briefing, the
+  runner's waypoint route, Junk removal timer and Challenge score (`NetPlayer.MissionRoute` / `MissionClock` /
+  `MissionScore`), the return trip's message and the result as the mission's dialog (`NetMissions.ResultView`); when
+  the runner leaves (docks, jumps, respawns, leaves the squad), the member there with the lowest client id takes over
+  (`Promote`): the runner's mission ships go on as its own with their role and hull (`NetProxy.RoleFlags`, `specHull`),
+  so do the junk, the mining plant and a loose container; with none left they count as done (inherited), with no orbit
+  ever seen it is built anew; the score and the clock go on; the runner's own copies go (`NetProxy.TakenOverRpc`). Two
+  runners at once: the higher client id stands down (`Demote`). A follower's Ore Mining unloads at a hidden local
+  stand-in of the runner's plant (`NpcShip.LocalOnly`), the ore counted for the squad. Loot from mission ships and junk (`Crate.missionLoot`, the Hijacker's container too) is
+  out of reach for players outside the mission's team (`NetCrate`: claimed by another for them). They spawn out of the
+  other players' view (`NetOrbit.OutOfSight`: a point in a player's 65 deg cone within 60 km, or within 1.5 km, mirrored
+  to behind them). Only the mission's team gets anything from the mission: players outside it never get the mission
+  (briefing, waypoint, timer, reward, notices), see its ships as ordinary ships (no mission name on the lock plate,
+  `NetProxy.missionShip`) and only get the normal kill credit. A success anywhere (in space or docked) pays every squad
+  member an equal share (`Freelance.Succeed` -> `SplitReward`: standing +5 and missions completed for each; solo = all
+  of it) and ends the mission for all; so does a failure, and a member's Discard (the Missions window warns: it ends it
+  for the whole squad, `NetMissions.Abandon`). Joining a squad abandons the joiner's own mission and sends them the
+  squad's (NetState.AcceptInviteRpc: the inviter's, else a member's, `NetPlayer.MissionHeld`); leaving a squad removes its
+  mission for that player (`NetState.LeftSquadRpc` -> `NetMissions.OnLeftSquad`), and a member leaving with the
+  containers / passengers aboard ends it for the squad. A member who disconnects doesn't end it: what they carried
+  (`NetPlayer.MissionCargo`, a captured Recovery container too) goes to a squadmate holding the mission
+  (`NetState.HandOverMission` from `NetPlayer.OnNetworkDespawn`: Netcode despawns the player object before the disconnect
+  callback, `NetMissions.TakeCargo`). The host checks a new squad mission too (the squad all docked at the sender's
+  station, no other member's in the last 3 s: else `MissionRefusedRpc`), ends each mission once (`endedMissions`: two
+  members delivering at once), and a success pays a member who never got the mission their share as well; a lost
+  Challenge's wager is shared like the reward. Mission dialogs act only on the mission they were about (a squadmate may
+  have ended it meanwhile). A runner dying keeps running it (a result without its dialog). Informer: the spy is spawned
+  by the team member when another player built the orbit's traffic (`SpaceLevel.SpawnInformerSpy`, not with a squadmate
+  here, `NetMissions.TeamHere`), and its death (or a spoiling kill) reaches the squad (status 1 / 1000). An old
+  invitation from a squadmate is dropped (accepting it would drop the squad's mission).
+  Stolen goods: the documents are only in the team's shop (not the shared stock); one member buying them takes them for
+  the squad (the status). The host relays the results to the squad and anyone holding
+  that mission (`NetState.MissionTeam`). In sessions the generator also rolls **15 Ore Mining** (never rolled by the
+  original's generator, freelance_missions.md 2.3 / 4.1; offer text 801): one of the offering station's top 3 asteroid
+  ores, 30-119 t; the orbit has int((int(0.2d)+1)hc) enemies of the client's enemy race on a route, the mining plant
+  (`Traffic.MiningPlant`, docking type 1) at the asteroid field and 2 client-race haulers looping 30 km that never
+  fire; docking at the plant unloads the ore (`ObjectDocking`, 1 t per second, counted in the mission's `status`); won at
+  the amount.
+- **Shared shop stock** (`NetStock`): every station's items and dealer ships are one list for all players, kept by the
+  host: made with the single-player rules (`Shop.GenerateItems` / `GenerateShips`) the first time anyone docks there and
+  made again every 15 minutes (`NetStock.ResetSeconds`; no 3-station re-roll or re-docking nibble in sessions); a docking
+  player's own list is replaced by it (items and ships in place, the bar's agents stay theirs); a trade (a unit bought /
+  sold, a dealer row swapped, `Hangar`) goes to the host, which sends the list to everyone docked there (the open hangar
+  window rebuilds, `HangarWindow.StockChanged`; during the blueprint view it waits, and an item new to the window gets its
+  price on demand, `Hangar.PriceOf`). The host decides: a bought unit it no longer has is taken back and paid back
+  (`NetStock.ItemRefused`), a dealer ship is reserved first (`NetStock.ReserveShip`); the docked list is empty until the
+  host's arrives; lists are applied between frames (`NetStock.Flush`). The host's lists carry the stations' docking extras
+  that aren't one player's (`NetStock.HostExtras`: Kappa's EMP GL I at free play, energy cells at 10 / 100 / 101). Not
+  shared: the owned Kaamo Club's storage.
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.
-- **Off while a session runs**: the game pausing (the pause menu, dialogs and fast-forward keep `Time.timeScale` at 1).
+- **Medals** are off in sessions (`Achievements.Check` / `Elite` award nothing, the Status window hides the medal column).
+- **Off while a session runs**: the game pausing (the pause menu, dialogs and fast-forward keep `Time.timeScale` at 1;
+  the flight controls stop instead while a menu, conversation or map is open, `Navigation.InputHalted`; the pause menu
+  doesn't mute the sound), the Time Extender (the world can't slow for one player), saving and loading (the station's
+  Save / Load entries are hidden, `SaveGame`).
+- **Chat typing** ends when the field loses the focus (a click elsewhere, the keyboard closed; the draft stays); actions a
+  component enables meanwhile go off too (`NetChat.KeepGameKeysOff`), a scene change drops the list (`DropTyping`); the
+  windows' own key reads (dialogue, hacking, star map, item info, photo mode) go through `NetChat.Keys`; no mouse
+  steering while typing.
 - Testing: the Editor as host (set `Application.runInBackground = true` during Play, or Play mode stalls unfocused; an
   edited script recompiles and ends the session) and a Windows development build (the Windows build profile, into
   `Build/Windows`) as client: `GoF2Remake.exe -screen-fullscreen 0 -screen-width 1280 -screen-height 720 -mpjoin 127.0.0.1
-  -mpname Wingman` (`-mpjoin`: the menu skips its intro and joins, again every 2 s until a host answers; `-mpname`: this
+  -mpname Wingman` (`-mpjoin`: the menu skips its intro and joins, again every 2 s until a host answers; development
+  builds also take `-mpdock` (docks once, a few seconds into the first flight after launching) and `-mpaccept` (accepts squad invitations
+  while docked), so the real hangar / squad flows run without a hand on the client; `-mpname`: this
   process's pilot name, not saved; explicit `-screen-*` options win over the window-mode option). The player has its own
   PlayerPrefs. Or the phone's development build joining the PC's LAN address. Multiplayer Play Mode (Editor clones)
   doesn't work in 6000.7.0b2: the clones fail to load URP's package shaders ("Host type is not matching any asset type"),
   so the package isn't installed.
+- Play mode without a domain reload doubled Netcode's static message-type list on the second Play ("Allowed types is not
+  equal to the number of message type indices"): `NetPlayModeReset` (Editor only) clears it at SubsystemRegistration.
 - Netcode for Entities' automatic bootstrap is replaced (`NoEntitiesBootstrap`): only an empty default world, no client /
   server worlds, nothing in the player loop, so single player runs as without the package.
 

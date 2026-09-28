@@ -13,6 +13,7 @@ namespace GoF2Remake.UI
 {
     public enum InputKind { Touch, KeyboardMouse, Gamepad }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class InputMode
     {
         const float StickThreshold = 0.35f;   // sticks drift; only count a deliberate push

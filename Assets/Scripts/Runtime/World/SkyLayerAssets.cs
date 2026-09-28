@@ -8,6 +8,7 @@ using UnityEngine;
 namespace GoF2Remake.World
 {
     [CreateAssetMenu(menuName = "GoF2/Sky Layer Assets")]
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class SkyLayerAssets : ScriptableObject
     {
         public const string ResourcePath = Backdrop.MaterialFolder + "/SkyLayerAssets";

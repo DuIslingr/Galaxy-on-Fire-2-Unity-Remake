@@ -99,6 +99,7 @@ namespace GoF2Remake.Data
         /// ignite, Player::damageEmp): at the gold threshold its Status flag is set; checkForNewMedal awards it on docking.</summary>
         public static void Elite(int medal, int count)
         {
+            if (GoF2Remake.Multiplayer.NetGame.Active) return;   // no medals in multiplayer
             if (Grade(medal) == 0 && count >= Thresholds[medal, 0]) Session.EliteFlags.Add(medal);
         }
 
@@ -118,6 +119,7 @@ namespace GoF2Remake.Data
         {
             if (Session.Medals == null || Session.Medals.Length != Count) Session.Medals = new int[Count];
             var improved = new List<int>();
+            if (GoF2Remake.Multiplayer.NetGame.Active) return improved;   // multiplayer: no medals (nor their rewards)
             if (Session.Medals[0] == 0) Session.Medals[0] = 1;   // Veteran: preset gold (Achievements::init)
             for (int i = 1; i < Count; i++)
             {

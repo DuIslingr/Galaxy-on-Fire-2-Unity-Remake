@@ -14,6 +14,7 @@ using UnityEngine;
 
 namespace GoF2Remake.EditorTools
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class WeaponBuilder
     {
         const string OutDir = ImportSettings.Root + "/Resources/" + WeaponFx.ResourcesFolder;

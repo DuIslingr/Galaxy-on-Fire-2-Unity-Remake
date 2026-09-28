@@ -21,6 +21,10 @@
 //                    attackers dead / fail: all freighters dead
 //   10 Intercept     race E (pirates -> Terran): nextInt(2)+2 convoy freighters asleep and parked around a route point,
 //                    hull x0.7 (x1.4 Extreme) + int((int(d/10*5)+3)*hc) escorts asleep; win: the convoy dead
+//   15 Ore Mining    (multiplayer sessions only: the original's generator never rolls it) int((int(0.2d)+1)*hc) race-E
+//                    enemies on a 1-waypoint route (+-70000, 0, 70000); the mining plant (docking type 1) at the asteroid
+//                    field; 2 client-race haulers looping plant <-> plant - 30000 z, never attacking; win: the ore delivered
+//                    to the plant (ObjectDocking) >= amount (Objective 0x1c)
 //   12 Challenge     the agent's ship (its race, 9 999 999 hull, speed 3.0, named, friend) flies a createRoute(3..4) past
 //                    an odd number of sleeping pirates (i = int(d/10*4): i+3 if odd else i+4); win: all dead with more
 //                    kills than the rival (0x14) / fail: all dead, the rival as good or better (0x15)
@@ -28,6 +32,19 @@
 // Checks from 5000 ms of level time. Success: 3 / 5 turn into the return trip (389), the others pay (reward message +
 // sound 36, standing +5). Failure: 384-388 + 392 (Challenge 371 with the score). The remake marks the pirates' location
 // with a waypoint for the hunting-type missions (the original's HUD shows no freelance marker).
+// Multiplayer: the mission's ships and junk are shown to every player in the orbit (NetOrbit) and spawn out of their view
+// (NetOrbit.OutOfSight); other players' kills count like the player's (Target.killedByRemote), so a squad plays it
+// together; a squadmate's delivered ore and captured container count too (the shared status, NetMissions.AddStatus);
+// the ships aren't taken over when this player leaves (NpcShip.MissionShip); the orbit stops when the mission is gone.
+// A squadmate arriving where another member runs it gets the follower mode (SetupFollower): nothing built, but the
+// mission's briefing, the runner's route (waypoint), timer and Challenge score (NetPlayer.MissionRoute / Clock / Score),
+// the return trip's message and the result as the mission's dialog (NetMissions.ResultView); when the runner leaves (docks,
+// jumps, respawns, leaves the squad), the member there with the lowest client id takes it over (Promote): the runner's
+// mission ships go on as its own (their role from NetProxy.RoleFlags, their hull), the junk, the mining plant and a loose
+// container too, so no progress is lost; with none left it counts as done (inherited), with none ever seen it is built
+// anew. A follower's Ore Mining gets a local stand-in of the runner's plant to unload at (hidden: the runner's shows).
+// Two runners at once (both arrived in the same moment): the higher client id stands down (its ships go). The runner
+// dying in a session doesn't stop the mission: a result then comes without its dialog.
 
 using System;
 using System.Collections.Generic;
@@ -51,19 +68,60 @@ namespace GoF2Remake.World
         public bool DialogueOpen { get; private set; }
         public Route PlayerRoute { get; private set; }
         public int Type => mission.type;
+
+        // A mission ship's part (NetProxy.RoleFlags), for a squadmate's takeover.
+        public const int RoleEnemy = 1, RoleFriend = 2, RoleStationary = 4, RoleNoLoot = 8, RoleCarrier = 16, RolePlant = 32,
+                         RoleRival = 64, RoleConvoy = 128, RoleNoFire = 256, RoleFast = 512, RoleAlwaysEnemy = 1024, RoleAlwaysFriend = 2048;
+
+        /// <summary>'s' part in this mission (0 = none of its ships).</summary>
+        public int RoleFlags(NpcShip s)
+        {
+            if (s == null || !Running) return 0;
+            int f = 0;
+            int ei = enemies.IndexOf(s);
+            if (ei >= 0) f |= RoleEnemy;
+            if (friends.Contains(s)) f |= RoleFriend;
+            if (s == plant) f |= RolePlant;
+            if (s == rival) f |= RoleRival;
+            if (s == carrier && !s.MissionCrateTaken) f |= RoleCarrier;
+            if (mission.type == MissionType.Intercept && ei >= 0 && ei < convoyCount) f |= RoleConvoy;
+            var spec = s.Spec;
+            if (spec.stationary) f |= RoleStationary;
+            if (spec.noLoot) f |= RoleNoLoot;
+            if (spec.speed > 0f) f |= RoleFast;
+            if (spec.alwaysEnemy) f |= RoleAlwaysEnemy;
+            if (spec.alwaysFriend) f |= RoleAlwaysFriend;
+            if (!s.shootingEnabled) f |= RoleNoFire;
+            return f;
+        }
         /// <summary>Junk removal: time left (ms), -1 = no limit.</summary>
         public float TimeLeftMs => mission.type == MissionType.JunkRemoval ? Mathf.Max(0f, JunkTimeMs - missionMs) : -1f;
+        /// <summary>Multiplayer: this game builds and runs the orbit (false = a squadmate's view of theirs).</summary>
+        public bool Running { get; private set; }
+        /// <summary>Multiplayer: the route for the squadmates ("x,y,z;..." game units) and the mission clock (ms).</summary>
+        public string RouteText { get; private set; } = "";
+        public float ClockMs => missionMs;
 
         SpaceLevel level;
         Traffic traffic;
         FreelanceMission mission;
         readonly List<NpcShip> enemies = new List<NpcShip>(), friends = new List<NpcShip>();
         readonly List<Target> junk = new List<Target>();
+        readonly List<int> junkKinds = new List<int>();
+        /// <summary>Junk removal's space junk and each one's prefab (CombatAssets.junk), for multiplayer's proxies.</summary>
+        public IReadOnlyList<Target> Junk => junk;
+        public int JunkKind(int i) => i >= 0 && i < junkKinds.Count ? junkKinds[i] : 0;
         NpcShip carrier, rival;
         int playerKills, otherKills;
         /// <summary>Level+0x24 / +0x20: the Challenge's score (the HUD's "player : rival").</summary>
-        public int PlayerKills => playerKills;
-        public int OtherKills => otherKills;
+        public int PlayerKills => Running ? playerKills : runnerScore >> 16;
+        public int OtherKills => Running ? otherKills : runnerScore & 0xffff;
+        int runnerScore;
+        bool returnShown;
+        // Follower: what the runner's orbit had (seen on its proxies), so a takeover with none left counts them as done.
+        bool seenEnemies, seenFriends, seenJunk, inheritedEnemies, inheritedFriends;
+        float scanMs;
+        NpcShip localPlant;   // a follower's stand-in of the runner's mining plant (Ore Mining unloading)
         float levelMs, missionMs, timeCheckMs;
         bool briefed, done;
 
@@ -77,10 +135,282 @@ namespace GoF2Remake.World
             level = spaceLevel;
             traffic = npcTraffic;
             mission = Freelance.Mission;
+            Running = true;
             Build();
             traffic.ConnectPlayers();
+            RouteText = EncodeRoute(PlayerRoute);
             Debug.Log($"FreelanceOrbit: {mission.Name} (type {mission.type}, difficulty {mission.difficulty}), {enemies.Count} enemies, " +
                       $"{friends.Count} friends, {junk.Count} junk");
+        }
+
+        /// <summary>Multiplayer: a squadmate here runs this mission: show it, build nothing (see the header).</summary>
+        public void SetupFollower(SpaceLevel spaceLevel, Traffic npcTraffic)
+        {
+            level = spaceLevel;
+            traffic = npcTraffic;
+            mission = Freelance.Mission;
+            Running = false;
+            Multiplayer.NetMissions.ResultView = ShowResult;
+            Debug.Log($"FreelanceOrbit: {mission.Name} run by a squadmate here");
+        }
+
+        Multiplayer.NetPlayer Runner()
+        {
+            int station = level.Layout.stationIndex;
+            foreach (var p in Multiplayer.NetPlayer.All)
+                if (p != null && !p.IsOwner && p.IsSpawned && p.InSpace && p.Station == station && p.MissionRun == mission.netId) return p;
+            return null;
+        }
+
+        /// <summary>No other member here with a lower client id holds the mission (the one who takes it over).</summary>
+        bool FirstHere()
+        {
+            var me = Multiplayer.NetPlayer.Local;
+            if (me == null) return false;
+            int station = level.Layout.stationIndex;
+            foreach (var p in Multiplayer.NetPlayer.All)
+                if (p != null && !p.IsOwner && p.IsSpawned && p.InSpace && p.Station == station && p.MissionHeld == mission.netId
+                    && p.OwnerClientId < me.OwnerClientId) return false;
+            return true;
+        }
+
+        /// <summary>What the runner's orbit has (its mission proxies), for a later takeover.</summary>
+        void ScanRunner(ulong runner)
+        {
+            int station = level.Layout.stationIndex;
+            foreach (var p in FindObjectsByType<Multiplayer.NetProxy>())
+            {
+                if (!p.IsSpawned || p.Station != station || p.Creator != runner) continue;
+                if (p.IsJunk) { seenJunk = true; continue; }
+                if ((p.RoleFlags & RoleEnemy) != 0) seenEnemies = true;
+                if ((p.RoleFlags & RoleFriend) != 0) seenFriends = true;
+            }
+        }
+
+        static Vector3 GamePos(Vector3 unity) => new Vector3(unity.x, unity.y, -unity.z) / M;
+
+        /// <summary>Promote: the old runner's mission ships, junk, plant and loose container as this game's own; true = there was
+        /// an orbit to take over (even with nothing left alive).</summary>
+        bool AdoptOldOrbit()
+        {
+            var state = Multiplayer.NetState.Instance;
+            ulong me = Multiplayer.NetGame.LocalId;
+            int station = level.Layout.stationIndex;
+            bool any = seenEnemies || seenFriends || seenJunk;
+            int crateItem = mission.type == MissionType.Recovery ? Freelance.SecureCabin : Freelance.SecureContainer;
+            var convoy = new List<NpcShip>();
+            foreach (var p in FindObjectsByType<Multiplayer.NetProxy>())
+            {
+                if (!p.IsSpawned || p.Station != station || !p.MissionAdoptable) continue;
+                var at = GamePos(p.WorldPosition);
+                int role = p.RoleFlags;
+                if (p.IsJunk)
+                {
+                    if (mission.type != MissionType.JunkRemoval) continue;
+                    SpawnJunk(at, p.JunkKind, p.WorldRotation);
+                }
+                else if ((role & RolePlant) != 0)
+                {
+                    if (localPlant != null) { plant = localPlant; localPlant = null; ShowPlant(); }
+                    else
+                    {
+                        var spec = Traffic.MiningPlant();
+                        spec.position = at;
+                        plant = traffic.SpawnShip(spec);
+                        plant.MissionShip = true;
+                    }
+                }
+                else
+                {
+                    if (p.AdoptSpec(at).ship < 0) continue;
+                    var spec = p.AdoptSpec(at);
+                    if ((role & RoleFast) != 0) spec.speed = 3f;
+                    if ((role & (RoleRival | RoleCarrier)) != 0 || mission.type == MissionType.Wanted) spec.name = p.Label.Length > 0 ? p.Label : null;
+                    if ((role & RoleCarrier) != 0 && mission.status == 0) { spec.missionCrate = crateItem; spec.nameText = 1611; spec.name = null; }
+                    if ((role & RoleRival) != 0 && PlayerRoute != null) spec.route = PlayerRoute.Clone();
+                    var s = traffic.Adopt(spec, p.WorldRotation, p.HullFraction);
+                    s.MissionShip = true;
+                    foreach (var id in p.Aggressors) s.aggressors.Add(id);
+                    if ((role & RoleNoFire) != 0) s.shootingEnabled = false;
+                    bool enemy = (role & RoleEnemy) != 0;
+                    if ((role & RoleConvoy) != 0) convoy.Add(s);
+                    else (enemy ? enemies : friends).Add(s);
+                    if (enemy || (role & RoleConvoy) != 0) s.Target.Died += OnEnemyDied;
+                    if ((role & RoleCarrier) != 0) carrier = s;
+                    if ((role & RoleRival) != 0) rival = s;
+                }
+                p.MarkAdopted();
+                state?.AdoptedRpc(p.NetworkObjectId);
+                any = true;
+            }
+            if (convoy.Count > 0) { enemies.InsertRange(0, convoy); convoyCount = convoy.Count; }
+            // Recovery / Salvage: the container already out of the Hijacker, still floating.
+            if ((mission.type == MissionType.Recovery || mission.type == MissionType.Salvage) && mission.status == 0)
+                foreach (var c in FindObjectsByType<Multiplayer.NetCrate>())
+                {
+                    if (!c.IsSpawned || c.IsOwner || c.Station != station || !c.IsMissionCrate) continue;
+                    var assets = CombatAssets.Load();
+                    var prefab = assets != null ? assets.Crate(Standing.Pirate) : null;
+                    var go = prefab != null ? Instantiate(prefab, c.WorldPosition, Random.rotation) : new GameObject("Crate");
+                    go.name = "Crate";
+                    var crate = go.AddComponent<Crate>();
+                    crate.Setup(new List<ItemStack> { new ItemStack(crateItem, 1) }, Standing.Pirate);
+                    crate.missionCrate = crate.missionLoot = true;
+                    c.MarkAdopted();
+                    state?.AdoptedRpc(c.NetworkObjectId);
+                    any = true;
+                }
+            inheritedEnemies = seenEnemies;
+            inheritedFriends = seenFriends;
+            return any;
+        }
+
+        void ShowPlant()
+        {
+            plant.LocalOnly = false;
+            foreach (var r in plant.GetComponentsInChildren<Renderer>(true)) r.enabled = true;
+        }
+
+        /// <summary>This game's mission ships, junk and plant go (a second runner standing down).</summary>
+        void ClearOwn()
+        {
+            foreach (var s in enemies) if (s != null && !s.Gone) s.Vanish();
+            foreach (var s in friends) if (s != null && !s.Gone) s.Vanish();
+            if (plant != null && !plant.Gone) plant.Vanish();
+            foreach (var j in junk) if (j != null) { Target.RadarObjects.Remove(j); j.gameObject.SetActive(false); }
+            enemies.Clear(); friends.Clear(); junk.Clear(); junkKinds.Clear();
+            plant = carrier = rival = null;
+            convoyCount = 0;
+        }
+
+        /// <summary>Another member runs it here with a lower client id (both built it at once).</summary>
+        bool LowerRunnerHere()
+        {
+            var me = Multiplayer.NetPlayer.Local;
+            if (me == null) return false;
+            int station = level.Layout.stationIndex;
+            foreach (var p in Multiplayer.NetPlayer.All)
+                if (p != null && p != me && p.IsSpawned && p.InSpace && p.Station == station && p.MissionRun == mission.netId && p.OwnerClientId < me.OwnerClientId)
+                    return true;
+            return false;
+        }
+
+        /// <summary>A second runner stands down: its ships go, it follows the other's orbit.</summary>
+        void Demote()
+        {
+            ClearOwn();
+            Running = false;
+            RouteText = "";
+            Multiplayer.NetMissions.ResultView = ShowResult;
+            Debug.Log($"FreelanceOrbit: {mission.Name} also built by a squadmate here, standing down");
+        }
+
+        /// <summary>The runner left: this game runs the orbit, taking over what is left of theirs (the score and the clock go
+        /// on), or building it anew when there never was one to see.</summary>
+        void Promote()
+        {
+            int keepPlayer = PlayerKills, keepOther = OtherKills;
+            if (Multiplayer.NetMissions.ResultView == (Func<int, int, string, bool>)ShowResult) Multiplayer.NetMissions.ResultView = null;
+            Running = true;
+            NpcTables.LevelFreelanceType = mission.type;
+            if (!AdoptOldOrbit())
+            {
+                if (localPlant != null) { localPlant.Vanish(); localPlant = null; }
+                Build();
+            }
+            else if (localPlant != null) { localPlant.Vanish(); localPlant = null; }
+            traffic.ConnectPlayers();
+            playerKills = keepPlayer;
+            otherKills = keepOther;
+            levelMs = 0f;
+            RouteText = EncodeRoute(PlayerRoute);
+            level.Navigation?.SetRoute(PlayerRoute);
+            Debug.Log($"FreelanceOrbit: {mission.Name} taken over, {enemies.Count} enemies, {friends.Count} friends, {junk.Count} junk" +
+                      $"{(inheritedEnemies || inheritedFriends ? " (inherited)" : "")}");
+        }
+
+        static string EncodeRoute(Route r)
+        {
+            if (r == null) return "";
+            var sb = new System.Text.StringBuilder();
+            foreach (var p in r.points) sb.Append((int)p.x).Append(',').Append((int)p.y).Append(',').Append((int)p.z).Append(';');
+            return sb.ToString();
+        }
+
+        static Route DecodeRoute(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+            var r = new Route(false);
+            foreach (var one in text.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var c = one.Split(',');
+                if (c.Length == 3 && int.TryParse(c[0], out int x) && int.TryParse(c[1], out int y) && int.TryParse(c[2], out int z))
+                    r.points.Add(new Vector3(x, y, z));
+            }
+            return r.points.Count > 0 ? r : null;
+        }
+
+        /// <summary>A squadmate's view: the runner's route, clock and score, the briefing, the return trip.</summary>
+        void UpdateFollower(float dt)
+        {
+            var runner = Runner();
+            if (runner == null)
+            {
+                if (level.StartSequenceOver && FirstHere()) Promote();
+                return;
+            }
+            runnerScore = runner.MissionScore;
+            missionMs = Mathf.Abs(missionMs + dt - runner.MissionClock) > 1000f ? runner.MissionClock : missionMs + dt;
+            if ((scanMs -= dt) <= 0f) { scanMs = 1000f; ScanRunner(runner.OwnerClientId); }
+            string route = runner.MissionRoute;
+            if (route != RouteText)
+            {
+                RouteText = route;
+                PlayerRoute = DecodeRoute(route);
+                level.Navigation?.SetRoute(PlayerRoute);
+            }
+            // Ore Mining: a stand-in of the runner's plant at its route point, to unload at here (ObjectDocking).
+            if (mission.type == MissionType.OreMining && localPlant == null && PlayerRoute != null && PlayerRoute.points.Count > 0)
+            {
+                var spec = Traffic.MiningPlant();
+                spec.position = PlayerRoute.points[0];
+                localPlant = traffic.SpawnShip(spec);
+                localPlant.MissionShip = true;
+                localPlant.LocalOnly = true;   // not shown to the others (the runner's plant is)
+                foreach (var r in localPlant.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
+            }
+            if (!level.StartSequenceOver) return;
+            if (!briefed) { Brief(); return; }
+            if (mission.status == -1 && !returnShown)
+            {
+                // The runner's Recovery / Salvage turned into the return trip (NetMissions.Receive).
+                returnShown = done = true;
+                Open(Freelance.ReturnText(level.Database), 389, () => level.Navigation?.SetRoute(null));
+            }
+        }
+
+        /// <summary>NetMissions.ResultView: the runner's result as this squadmate's dialog.</summary>
+        bool ShowResult(int result, int share, string from)
+        {
+            if (done || DialogueOpen || Running || result == Multiplayer.NetMissions.Abandoned) return false;
+            done = true;
+            if (result == Multiplayer.NetMissions.Success)
+            {
+                Open(Freelance.SuccessText(out int successText, PlayerKills, OtherKills), successText, () =>
+                {
+                    RewardMessage?.Invoke($"{Localization.Get(216)} +{UI.ItemInfo.Credits(share)}");
+                    var assets = CombatAssets.Load();
+                    Sfx.PlayAt(assets != null ? assets.missionAccomplished : null, level.Player.transform.position);
+                    level.Navigation?.SetRoute(null);
+                });
+                return true;
+            }
+            int textId = 371;
+            string text = mission.type == MissionType.Challenge
+                ? Localization.Get(371).Replace("#Q1", PlayerKills.ToString()).Replace("#Q2", OtherKills.ToString())
+                : Freelance.FailureText(out textId);
+            Open(text, textId, () => level.Navigation?.SetRoute(null));
+            return true;
         }
 
         // ---- building (Level::createMission) ------------------------------------------------------------
@@ -89,7 +419,9 @@ namespace GoF2Remake.World
         {
             var spec = new SpawnSpec { group = NpcGroup.Raider, race = race, ship = NpcTables.RandomFighter(race), position = gamePos };
             setup?.Invoke(spec);
+            spec.position = Multiplayer.NetOrbit.OutOfSight(spec.position);   // multiplayer: not where another player looks
             var s = traffic.SpawnShip(spec);
+            s.MissionShip = true;
             (enemy ? enemies : friends).Add(s);
             s.Target.Died += OnEnemyDied;
             return s;
@@ -98,7 +430,8 @@ namespace GoF2Remake.World
         void OnEnemyDied(Target t)
         {
             if (!enemies.Exists(e => e.Target == t)) return;
-            if (t.killedByNpc) otherKills++; else playerKills++;   // Level+0x24 player kills / +0x20 kills by others
+            // Level+0x24 player kills / +0x20 kills by others; multiplayer: another player's kill counts as the player's.
+            if (t.killedByNpc && !t.killedByRemote) otherKills++; else playerKills++;
         }
 
         /// <summary>Level::createRoute(n) 0xd0464: x +-(50000 + rnd 30000), y +-10000, z advancing 50000 + rnd 30000.</summary>
@@ -175,7 +508,7 @@ namespace GoF2Remake.World
                 }
                 case MissionType.PirateHunting:
                 {
-                    var at = level.Asteroids != null ? ToGame(level.Asteroids.position) : CreateRoute(Random.Range(2, 4)).points[0];
+                    var at = HasField ? level.Layout.asteroidCentre : CreateRoute(Random.Range(2, 4)).points[0];
                     int n = (int)(((int)(df * 5f) + 2) * hc);
                     for (int i = 0; i < n; i++) Spawn(Standing.Pirate, at + Jitter(), s => s.asleep = true);
                     MarkRoute(at);
@@ -234,6 +567,30 @@ namespace GoF2Remake.World
                     MarkRoute(route.points[0]);
                     break;
                 }
+                case MissionType.OreMining:
+                {
+                    int n = (int)(((int)(0.2f * d) + 1) * hc);
+                    var route = new Route(false);
+                    route.points.Add(new Vector3(Sign() * 70000f, 0, 70000f));
+                    for (int i = 0; i < n; i++) Spawn(clientEnemy, route.points[0] + Jitter(), s => s.route = route.Clone());
+                    var plantAt = HasField ? level.Layout.asteroidCentre : new Vector3(0, 0, 60000);
+                    var spec = Traffic.MiningPlant();
+                    spec.position = Multiplayer.NetOrbit.OutOfSight(plantAt);
+                    plant = traffic.SpawnShip(spec);
+                    plant.MissionShip = true;
+                    plantAt = spec.position;
+                    int race = Mathf.Clamp(mission.clientRace, 0, 3);
+                    for (int i = 0; i < 2; i++)
+                    {
+                        var loop = new Route(true);
+                        loop.points.Add(plantAt + new Vector3(3000f * (i == 0 ? 1 : -1), 0, 0));
+                        loop.points.Add(plantAt + new Vector3(3000f * (i == 0 ? 1 : -1), 0, -30000f));
+                        var hauler = Spawn(race, loop.points[i], s => { s.alwaysFriend = true; s.noLoot = true; s.route = loop; }, false);
+                        hauler.shootingEnabled = false;   // they never attack
+                    }
+                    MarkRoute(plantAt);
+                    break;
+                }
                 case MissionType.Challenge:
                 {
                     var route = CreateRoute(Random.Range(3, 5));
@@ -254,6 +611,11 @@ namespace GoF2Remake.World
         }
 
         int convoyCount;
+        NpcShip plant;
+
+        /// <summary>The orbit has an asteroid field: its centre is OrbitLayout.asteroidCentre (game units). The "Asteroids"
+        /// root sits at the origin with the asteroids placed around the centre, so its own position is the station's.</summary>
+        bool HasField => level.Asteroids != null && level.Asteroids.childCount > 0;
 
         void MarkRoute(Vector3 gamePoint)
         {
@@ -262,11 +624,16 @@ namespace GoF2Remake.World
             PlayerRoute = r;
         }
 
-        void SpawnJunk(Vector3 gamePos)
+        /// <param name="takenKind">A takeover (Promote): the old runner's junk, its kind and pose (else a random one, out of sight).</param>
+        void SpawnJunk(Vector3 gamePos, int takenKind = -1, Quaternion takenRotation = default)
         {
             var assets = CombatAssets.Load();
-            var prefab = assets != null && assets.junk != null && assets.junk.Length > 0 ? assets.junk[Random.Range(0, assets.junk.Length)] : null;
-            var go = prefab != null ? Instantiate(prefab, ToUnity(gamePos), Random.rotation, transform) : new GameObject("Junk");
+            bool taken = takenKind >= 0;
+            int kind = taken ? takenKind : assets != null && assets.junk != null && assets.junk.Length > 0 ? Random.Range(0, assets.junk.Length) : -1;
+            var prefab = kind >= 0 && assets != null && assets.junk != null && kind < assets.junk.Length ? assets.junk[kind] : null;
+            if (!taken) gamePos = Multiplayer.NetOrbit.OutOfSight(gamePos);   // multiplayer: not where another player looks
+            var go = prefab != null ? Instantiate(prefab, ToUnity(gamePos), taken ? takenRotation : Random.rotation, transform) : new GameObject("Junk");
+            junkKinds.Add(Mathf.Max(0, kind));
             go.name = "Space junk";
             var t = go.AddComponent<Target>();
             t.hp = t.maxHp = 1f;                 // Player(1000, 1, ...): one hit
@@ -297,11 +664,13 @@ namespace GoF2Remake.World
             go.name = "Crate";
             var crate = go.AddComponent<Crate>();
             crate.Setup(new List<ItemStack> { new ItemStack(99, Random.Range(0, 10) + 1) }, Standing.Pirate);
+            crate.missionLoot = true;   // multiplayer: only the mission's team takes it
         }
 
         void OnDestroy()
         {
             foreach (var j in junk) Target.RadarObjects.Remove(j);
+            if (Multiplayer.NetMissions.ResultView == (Func<int, int, string, bool>)ShowResult) Multiplayer.NetMissions.ResultView = null;
         }
 
         // ---- per frame (MGame::dialogueEvent / successCheck / gameOverCheck) ----------------------------
@@ -309,30 +678,46 @@ namespace GoF2Remake.World
         void Update()
         {
             if (done || level == null || DialogueOpen || MessageRequested == null) return;
+            if (Multiplayer.NetGame.Active && Freelance.Mission != mission) { done = true; return; }   // left the squad / ended by it
             float dt = Time.deltaTime * 1000f;
+            if (!Running) { UpdateFollower(dt); return; }
             levelMs += dt;
             missionMs += dt;
-            if (level.Health != null && level.Health.Dead) return;
+            // Multiplayer: the squad plays on while this runner is dead (a result then comes without its dialog).
+            bool dead = level.Health != null && level.Health.Dead;
+            if (dead && !Multiplayer.NetGame.Active) return;
+            if (Multiplayer.NetGame.Active && levelMs < 15000f && LowerRunnerHere()) { Demote(); return; }
             if (!level.StartSequenceOver) return;
-            if (!briefed)
-            {
-                briefed = true;
-                int t = mission.type;
-                if (t != MissionType.Courier && t != MissionType.Purchase && t != MissionType.Passenger)
-                {
-                    int text = t == MissionType.Challenge ? 372 : t == MissionType.JunkRemoval ? 378 : 379 + Random.Range(0, 5);
-                    Open(Localization.Get(text), text, () => missionMs = 0f);
-                    return;
-                }
-            }
-            if (Failed()) { Fail(); return; }
+            if (!briefed && !dead && Brief()) return;
+            if (Failed()) { if (dead) Resolve(false); else Fail(); return; }
             // Level+0x130: the time limit, checked every 5000 ms.
             if (mission.type == MissionType.JunkRemoval && (timeCheckMs += dt) >= 5000f)
             {
                 timeCheckMs = 0f;
-                if (missionMs >= JunkTimeMs && !Won()) { Fail(); return; }
+                if (missionMs >= JunkTimeMs && !Won()) { if (dead) Resolve(false); else Fail(); return; }
             }
-            if (levelMs >= 5000f && Won()) Succeed();
+            if (levelMs >= 5000f && Won()) { if (dead) Resolve(true); else Succeed(); }
+        }
+
+        /// <summary>Multiplayer, the runner dead: the result without its dialog (a chat line instead).</summary>
+        void Resolve(bool success)
+        {
+            done = true;
+            if (!success) { Freelance.Fail(); Multiplayer.NetChat.Notice(Localization.Get(392)); return; }
+            if (mission.type == MissionType.Recovery || mission.type == MissionType.Salvage) { Freelance.ToReturnTrip(); return; }
+            int paid = Freelance.Succeed(false);
+            Multiplayer.NetChat.Notice($"{Localization.Get(216)} +{UI.ItemInfo.Credits(paid)}");
+        }
+
+        /// <summary>The briefing after the launch / arrival camera (not for 0 / 8 / 11); true = its dialog opened.</summary>
+        bool Brief()
+        {
+            briefed = true;
+            int t = mission.type;
+            if (t == MissionType.Courier || t == MissionType.Purchase || t == MissionType.Passenger) return false;
+            int text = t == MissionType.Challenge ? 372 : t == MissionType.JunkRemoval ? 378 : 379 + Random.Range(0, 5);
+            Open(Localization.Get(text), text, () => { if (Running) missionMs = 0f; });
+            return true;
         }
 
         static bool AllDead(List<NpcShip> ships) => ships.TrueForAll(s => !s.Target.Alive || s.Current == NpcShip.State.Dying || s.Current == NpcShip.State.Dead);
@@ -345,16 +730,18 @@ namespace GoF2Remake.World
                 case MissionType.Salvage:
                 {
                     int item = mission.type == MissionType.Recovery ? Freelance.SecureCabin : Freelance.SecureContainer;
-                    return Session.Cargo.Exists(c => c.item == item && c.amount > 0);
+                    // Multiplayer: status > 0 = a squadmate captured it.
+                    return Session.Cargo.Exists(c => c.item == item && c.amount > 0) || (Multiplayer.NetGame.Active && mission.status > 0);
                 }
                 case MissionType.JunkRemoval: return junk.TrueForAll(j => j == null || !j.Alive);
                 case MissionType.Protection:
                 case MissionType.Escort:
                 case MissionType.Defense:
                 case MissionType.PirateHunting:
-                case MissionType.Wanted: return enemies.Count > 0 && AllDead(enemies);
+                case MissionType.Wanted: return (enemies.Count > 0 || inheritedEnemies) && AllDead(enemies);   // inherited: all dead before
                 case MissionType.Intercept: return AllDead(enemies.GetRange(0, Mathf.Min(convoyCount, enemies.Count)));
                 case MissionType.Challenge: return AllDead(enemies) && playerKills > otherKills;
+                case MissionType.OreMining: return mission.status >= mission.amount;   // Objective 0x1c: delivered ore
             }
             return false;
         }
@@ -366,7 +753,7 @@ namespace GoF2Remake.World
                 case MissionType.Recovery:
                 case MissionType.Salvage: return carrier != null && !carrier.MissionCrateTaken && (!carrier.Target.Alive || carrier.Current != NpcShip.State.Fly);
                 case MissionType.Protection:
-                case MissionType.Escort: return friends.Count > 0 && AllDead(friends);
+                case MissionType.Escort: return (friends.Count > 0 || inheritedFriends) && AllDead(friends);
                 case MissionType.Challenge: return AllDead(enemies) && playerKills <= otherKills;
             }
             return false;
@@ -381,13 +768,14 @@ namespace GoF2Remake.World
                 // MGame::successCheck: the orbit becomes a plain one; deliver the container to the client.
                 Open(Freelance.ReturnText(level.Database), 389, () =>
                 {
-                    Freelance.ToReturnTrip();
+                    if (Freelance.Mission == m) Freelance.ToReturnTrip();   // multiplayer: unless the squad ended it meanwhile
                     level.Navigation?.SetRoute(null);
                 });
                 return;
             }
             Open(Freelance.SuccessText(out int successText, playerKills, otherKills), successText, () =>
             {
+                if (Freelance.Mission != m) { level.Navigation?.SetRoute(null); return; }   // multiplayer: ended meanwhile
                 int paid = Freelance.Succeed(false);
                 RewardMessage?.Invoke($"{Localization.Get(216)} +{UI.ItemInfo.Credits(paid)}");
                 var assets = CombatAssets.Load();
@@ -403,7 +791,7 @@ namespace GoF2Remake.World
             string text = mission.type == MissionType.Challenge
                 ? Localization.Get(371).Replace("#Q1", playerKills.ToString()).Replace("#Q2", otherKills.ToString())
                 : Freelance.FailureText(out textId);
-            Open(text, textId, () => { Freelance.Fail(); level.Navigation?.SetRoute(null); });
+            Open(text, textId, () => { if (Freelance.Mission == mission) Freelance.Fail(); level.Navigation?.SetRoute(null); });
         }
 
         void Open(string text, int textId, Action after)

@@ -16,6 +16,7 @@ using GoF2Remake.Flight;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class AgentGenerator
     {
         /// <summary>DAT_00251e70: stations never used as mission targets.</summary>
@@ -250,9 +251,13 @@ namespace GoF2Remake.Data
         {
             var used = Session.UsedMissionTypes;
             int t = 0;
+            // Multiplayer sessions also roll 15 Ore Mining (the original's generator stops at 14, freelance_missions.md 2.3;
+            // Level::createMission supports it); outside the used-types rotation.
+            bool session = GoF2Remake.Multiplayer.NetGame.Active;
             for (int i = 0; i < 1000; i++)
             {
-                t = R(15);
+                t = R(session ? 16 : 15);
+                if (t == MissionType.OreMining) break;
                 if (t == MissionType.Purchase || (t == MissionType.Intercept && agentRace > 3)) continue;
                 if (!used[t]) { used[t] = true; break; }
                 int n = 0; foreach (bool u in used) if (u) n++;
@@ -311,6 +316,11 @@ namespace GoF2Remake.Data
                     case MissionType.Salvage: m.good = 117; m.amount = (int)(d * 8f) + 2; break;
                     case MissionType.Passenger: m.amount = (int)(d * 18f) + 2; break;
                     case MissionType.Wanted: m.targetName = RandomName(0, true); break;   // name args lost: Terran assumed
+                    case MissionType.OreMining:
+                        // One of this station's 3 asteroid ores (Galaxy::getAsteroidProbabilities, nextInt(3)), nextInt(90)+30 t.
+                        m.good = World.OrbitBuilder.OreProbabilities(db, World.OrbitLayout.Build(db, currentStation))[R(3)].item;
+                        m.amount = R(90) + 30;
+                        break;
                 }
             }
             diff = Math.Min(diff, 10);

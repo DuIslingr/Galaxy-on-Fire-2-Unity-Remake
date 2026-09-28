@@ -180,7 +180,8 @@ namespace GoF2Remake.UI
         /// <summary>423 Discard -> 418 "Are you sure?" -> the same clean-up as a discarded mission.</summary>
         void AskDiscard()
         {
-            menu.ShowDialog(T(418), () => { Freelance.Discard(); Fill(); menu.RefreshCredits(); });
+            string warning = GoF2Remake.Multiplayer.NetMissions.DiscardWarning();   // multiplayer: ends it for the squad
+            menu.ShowDialog(T(418) + warning, () => { GoF2Remake.Multiplayer.NetMissions.Abandon(); Freelance.Discard(); Fill(); menu.RefreshCredits(); });
         }
 
         public VisualElement[] NavItems()

@@ -11,6 +11,10 @@
 //   MGame::successCheck 0x1b0620    the win: 458 (voice ..._ENEMIES_DEAD), missions completed +1, no reward
 //   MGame::dockEvent / UseKhadorDrive  while the siege runs: docking, the gate and the Khador Drive give 525
 // Remake: the siege keeps the player's freelance mission (the original overwrites the freelance slot with it).
+// Multiplayer: one siege per orbit: the first player there with the siege to fight builds it (Running, NetPlayer.SiegeRun)
+// and everyone sees its outposts and pirates; another such player gets the follower view (SetupFollower: the call, docking
+// refused until it is won, the win when the runner's game wins it, NetState.SiegeWonRpc); a follower left alone builds it
+// anew; two runners at once: the higher client id stands down.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -19,6 +23,7 @@ using UnityEngine;
 
 namespace GoF2Remake.World
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class KaamoSiege : MonoBehaviour
     {
         const float M = 0.05f;
@@ -43,11 +48,46 @@ namespace GoF2Remake.World
 
         /// <summary>The siege still runs: docking, the gate and the Khador Drive are refused (525).</summary>
         public bool Active => !won;
+        /// <summary>This game builds and runs the siege (multiplayer: false = another player's siege seen here).</summary>
+        public bool Running { get; private set; }
+        /// <summary>The level's siege (multiplayer: another game's win reaches it), null = none.</summary>
+        public static KaamoSiege Current { get; private set; }
+        bool remoteWin;
+
+        /// <summary>One of this siege's own ships (SpaceLevel.DropNetAuthority keeps them).</summary>
+        public bool Owns(NpcShip s) => outposts.Contains(s) || pirates.Contains(s);
+
+        /// <summary>Multiplayer: another player in 'station's orbit runs the siege there.</summary>
+        public static bool OtherRunsHere(int station)
+        {
+            foreach (var p in Multiplayer.NetPlayer.All)
+                if (p != null && !p.IsOwner && p.IsSpawned && p.InSpace && p.Station == station && p.SiegeRun) return true;
+            return false;
+        }
+
+        void OnDestroy() { if (Current == this) Current = null; }
+
+        /// <summary>Multiplayer: another player here runs the siege: its call and its lock, nothing built.</summary>
+        public void SetupFollower(SpaceLevel spaceLevel, Traffic orbitTraffic)
+        {
+            level = spaceLevel;
+            traffic = orbitTraffic;
+            Current = this;
+            Running = false;
+        }
+
+        /// <summary>NetState: the runner's game won it (every outpost and pirate dead).</summary>
+        public void OnRemoteWin()
+        {
+            if (!Running) remoteWin = true;
+        }
 
         public void Setup(SpaceLevel spaceLevel, Traffic orbitTraffic)
         {
             level = spaceLevel;
             traffic = orbitTraffic;
+            Current = this;
+            Running = true;
             var assets = CombatAssets.Load();
             int hull = KaamoClub.OutpostHull();
             foreach (var p in OutpostPositions)
@@ -87,8 +127,36 @@ namespace GoF2Remake.World
                 Session.KaamoState = 1;   // set on the call, not on the win (the siege must be won before docking anyway)
                 level.StorySpace.ShowPages(KaamoClub.SiegeCall(), null);
             }
+            if (!Running)
+            {
+                // A squadmate's (or anyone's) siege: won with theirs; alone here, this game builds it (anew).
+                if (remoteWin) { Win(); return; }
+                if (levelMs >= 3000f && !OtherRunsHere(level.Layout.stationIndex)) Setup(level, traffic);
+                return;
+            }
+            if (Multiplayer.NetGame.Active && levelMs < 15000f && LowerRunnerHere()) { StandDown(); return; }
             UpdateRespawn(dtMs);
             if (levelMs >= 5000f && AllDead()) Win();
+        }
+
+        bool LowerRunnerHere()
+        {
+            var me = Multiplayer.NetPlayer.Local;
+            if (me == null) return false;
+            foreach (var p in Multiplayer.NetPlayer.All)
+                if (p != null && p != me && p.IsSpawned && p.InSpace && p.Station == level.Layout.stationIndex && p.SiegeRun && p.OwnerClientId < me.OwnerClientId)
+                    return true;
+            return false;
+        }
+
+        /// <summary>Two players built the siege at once: this one's ships go, the other's is the siege.</summary>
+        void StandDown()
+        {
+            foreach (var s in outposts) if (s != null && !s.Gone) s.Vanish();
+            foreach (var s in pirates) if (s != null && !s.Gone) s.Vanish();
+            outposts.Clear();
+            pirates.Clear();
+            Running = false;
         }
 
         bool Dead(NpcShip s) => s == null || s.Gone || s.Current == NpcShip.State.Dying || s.Current == NpcShip.State.Dead;
@@ -114,6 +182,8 @@ namespace GoF2Remake.World
         {
             if (level.StorySpace == null || level.StorySpace.DialogueOpen) return;
             won = true;
+            if (Running && Multiplayer.NetGame.Active && Multiplayer.NetState.Instance != null && Multiplayer.NetState.Instance.IsSpawned)
+                Multiplayer.NetState.Instance.SiegeWonRpc(level.Layout.stationIndex);   // the others here win it too
             Session.FreelanceCompleted++;   // Status::incMissionCount
             var assets = CombatAssets.Load();
             if (level.Player != null) Sfx.PlayAt(assets != null ? assets.missionAccomplished : null, level.Player.transform.position);

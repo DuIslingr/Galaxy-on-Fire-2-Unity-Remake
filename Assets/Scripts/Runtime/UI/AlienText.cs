@@ -15,6 +15,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class AlienText
     {
         const string BoxClass = "alien-text";

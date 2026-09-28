@@ -9,6 +9,9 @@
 //     the host and owned by this player; despawned when the ship is gone or the crate taken / expired. Leaving the orbit
 //     takes them away: the player still there with the lowest client id takes the orbit over, rebuilding each flying ship
 //     where it was (Traffic.Adopt, same model, race and hull); NetState keeps the old proxies a few seconds for that.
+//   A freelance mission's orbit (FreelanceOrbit) is this player's own NPCs whether or not they run the orbit: its ships and
+//     junk are shown to everyone here the same way (never taken over), and they spawn out of the others' view
+//     (OutOfSight).
 
 using System.Collections.Generic;
 using GoF2Remake.Flight;
@@ -17,9 +20,13 @@ using UnityEngine;
 
 namespace GoF2Remake.Multiplayer
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class NetOrbit : MonoBehaviour
     {
         const float ScanSeconds = 0.25f;
+        /// <summary>Proxy ids from here on are a freelance mission's space junk (FreelanceOrbit.Junk), below it ships.</summary>
+        public const int JunkBase = 100000;
+        const float SightCos = 0.42f, SightRange = 60000f * OrbitLayout.MetersPerUnit, NearRange = 1500f * OrbitLayout.MetersPerUnit;
 
         /// <summary>The local player's orbit, null outside a multiplayer Space level.</summary>
         public static NetOrbit Current { get; private set; }
@@ -31,6 +38,9 @@ namespace GoF2Remake.Multiplayer
         readonly Dictionary<int, Crate> crates = new Dictionary<int, Crate>();
         readonly Dictionary<Crate, NetCrate> netCrates = new Dictionary<Crate, NetCrate>();
         readonly Dictionary<Crate, int> crateIds = new Dictionary<Crate, int>();
+        readonly HashSet<int> requestedJunk = new HashSet<int>();
+        readonly Dictionary<Target, NetProxy> junkProxies = new Dictionary<Target, NetProxy>();
+        readonly Dictionary<Target, float> junkDeadSince = new Dictionary<Target, float>();
         int nextCrateId;
         bool applyingRemote, requestedList;
         float scanTimer;
@@ -39,6 +49,16 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The orbit's system race (a remote kill's standing, Standing.ApplyKill).</summary>
         public int SystemRace => level != null && level.Traffic != null ? level.Traffic.SystemRace : -1;
         bool Authority => level != null && level.NetAuthority;
+
+        /// <summary>NetProxy: a mission ship's role in this player's freelance mission (FreelanceOrbit.RoleFlags).</summary>
+        public int MissionRole(NpcShip ship) => level != null && level.FreelanceOrbit != null ? level.FreelanceOrbit.RoleFlags(ship) : 0;
+
+        /// <summary>Another player's game still runs 'client's ships here (they are in this orbit).</summary>
+        public static bool InOrbit(ulong client, int station)
+        {
+            var p = NetSquad.Find(client);
+            return p != null && p.InSpace && p.Station == station;
+        }
 
         public void Setup(SpaceLevel spaceLevel)
         {
@@ -69,9 +89,14 @@ namespace GoF2Remake.Multiplayer
             remotePlayers.Clear();
             foreach (var p in NetPlayer.All)
                 if (p != null && p.SharesOrbit && p.LocalTarget != null && p.LocalTarget.Alive) remotePlayers.Add(p.LocalTarget);
+            // The other players' wingmen here: in the line of fire and attacked like their players.
+            foreach (var w in FindObjectsByType<NetProxy>())
+                if (w.IsSpawned && w.IsWingman && w.Station == Station && w.LocalTarget != null && w.LocalTarget.Alive && w.LocalTarget.enabled && !w.IsOwner)
+                    remotePlayers.Add(w.LocalTarget);
             NpcShip.RemotePlayers = remotePlayers;
             NpcShip.HostileToRemote = HostileToRemote;
             NpcShip.HostileToLocalBySquad = HostileToLocalBySquad;
+            NpcShip.RemoteDockedAtObject = t => t != null && t.GetComponent<NetPlayer>() is NetPlayer p && p.DockedAtObject;
         }
 
         static void ClearNpcHooks()
@@ -79,6 +104,7 @@ namespace GoF2Remake.Multiplayer
             NpcShip.RemotePlayers = null;
             NpcShip.HostileToRemote = null;
             NpcShip.HostileToLocalBySquad = null;
+            NpcShip.RemoteDockedAtObject = null;
         }
 
         /// <summary>An always-hostile race (pirates, the Void, Specters), a race their own standing makes an enemy, a ship their
@@ -86,7 +112,13 @@ namespace GoF2Remake.Multiplayer
         static bool HostileToRemote(NpcShip ship, Target t)
         {
             var p = t != null ? t.GetComponent<NetPlayer>() : null;
-            if (p == null) return false;
+            if (p == null)
+            {
+                // Another player's wingman: hostile when the ship is hostile to that player.
+                var w = t != null ? t.GetComponent<NetProxy>() : null;
+                var owner = w != null && w.IsWingman ? NetSquad.Find(w.Creator) : null;
+                return owner != null && owner.LocalTarget != null && HostileToRemote(ship, owner.LocalTarget);
+            }
             int r = ship.Race;
             if (r == Standing.Pirate || r == Standing.Void || r == Standing.Specter) return true;
             if (Standing.IsEnemyWith(r, p.Standing0, p.Standing1, p.Signature)) return true;   // their own standing toward the race
@@ -141,6 +173,50 @@ namespace GoF2Remake.Multiplayer
 
         public Crate Crate(int localId) => crates.TryGetValue(localId, out var c) ? c : null;
 
+        /// <summary>Junk 'localId' (JunkBase + its index in the freelance mission's list), null = none.</summary>
+        public Target Junk(int localId)
+        {
+            var junk = level != null && level.FreelanceOrbit != null ? level.FreelanceOrbit.Junk : null;
+            int i = localId - JunkBase;
+            return junk != null && i >= 0 && i < junk.Count ? junk[i] : null;
+        }
+
+        public int JunkKind(int localId) => level != null && level.FreelanceOrbit != null ? level.FreelanceOrbit.JunkKind(localId - JunkBase) : 0;
+
+        public void Register(NetProxy proxy, Target junk) => junkProxies[junk] = proxy;
+
+        // ---- out of sight -----------------------------------------------------------------------------------
+
+        /// <summary>A spawn point (game units) out of the other players' view here: one inside a player's view (a 65 deg cone
+        /// along their ship within 60 km, or closer than 1.5 km) is mirrored to behind them, a few passes over everyone.
+        /// Outside a session (or alone) the point itself.</summary>
+        public static Vector3 OutOfSight(Vector3 gamePos)
+        {
+            if (!NetGame.Active) return gamePos;
+            var u = OrbitLayout.ToUnity(gamePos);
+            for (int pass = 0; pass < 4; pass++)
+            {
+                bool moved = false;
+                foreach (var p in NetPlayer.All)
+                {
+                    if (p == null || !p.SharesOrbit) continue;
+                    var eye = p.transform.position;
+                    var f = p.transform.forward;
+                    var v = u - eye;
+                    float dist = v.magnitude;
+                    bool seen = dist < NearRange || (dist < SightRange && Vector3.Dot(v / Mathf.Max(dist, 0.001f), f) > SightCos);
+                    if (!seen) continue;
+                    // Behind them (the mirror image across the plane at their ship), and not right on top of them.
+                    var back = v - 2f * Vector3.Dot(v, f) * f;
+                    if (Vector3.Dot(back, f) > -NearRange) back -= f * (NearRange * 2f);
+                    u = eye + back;
+                    moved = true;
+                }
+                if (!moved) break;
+            }
+            return new Vector3(u.x, u.y, -u.z) / OrbitLayout.MetersPerUnit;
+        }
+
         public void Register(NetProxy proxy, NpcShip ship) => proxies[ship] = proxy;
         public void Register(NetCrate net, Crate crate) => netCrates[crate] = net;
 
@@ -152,12 +228,30 @@ namespace GoF2Remake.Multiplayer
             var state = NetState.Instance;
             if (state == null || !state.IsSpawned) return;
             if (!requestedList) { requestedList = true; state.RequestDestroyedRpc(Station); }
-            if (!Authority) { ClearNpcHooks(); TryTakeOver(); return; }
-            UpdateNpcHooks();
+            // Two players arriving at once both found the orbit empty and built its traffic: the higher client id stands
+            // down (its ships go, the other's stay), early in the visit only.
+            if (Authority && Time.timeSinceLevelLoad < 15f && OtherAuthorityFirst()) level.DropNetAuthority();
+            if (!Authority) TryTakeOver();
+            // This player's own NPCs: the orbit's traffic (the authority) or a freelance mission's (anyone).
+            bool ownNpcs = Authority || (level.Traffic != null && level.Traffic.Ships.Count > 0) || level.FreelanceOrbit != null;
+            if (ownNpcs) UpdateNpcHooks(); else ClearNpcHooks();
+            if (!ownNpcs) return;
             if ((scanTimer -= Time.unscaledDeltaTime) > 0f) return;
             scanTimer = ScanSeconds;
+            DropOwnStale(state);
             ScanShips(state);
+            ScanJunk(state);
             ScanCrates(state);
+        }
+
+        bool OtherAuthorityFirst()
+        {
+            var me = NetPlayer.Local;
+            if (me == null) return false;
+            foreach (var p in NetPlayer.All)
+                if (p != null && p != me && p.IsSpawned && p.InSpace && p.Station == Station && p.OrbitAuthority && p.OwnerClientId < me.OwnerClientId)
+                    return true;
+            return false;
         }
 
         /// <summary>Nobody runs this orbit any more (its authority left): the player here with the lowest id takes over
@@ -168,21 +262,34 @@ namespace GoF2Remake.Multiplayer
             if (me == null || !me.InSpace || me.Station != Station || !NetState.IsOrbitAuthority(Station)) return;
             foreach (var p in NetPlayer.All)
                 if (p != null && p != me && p.IsSpawned && p.InSpace && p.Station == Station && p.OwnerClientId < me.OwnerClientId) return;
-            var proxies = FindObjectsByType<NetProxy>(FindObjectsSortMode.None);
+            var proxies = FindObjectsByType<NetProxy>();
             bool any = false;
             foreach (var proxy in proxies)
                 if (proxy.IsSpawned && (!proxy.IsOwner || proxy.Orphan) && proxy.Station == Station) { any = true; break; }
             if (!any && level.Traffic != null && level.Traffic.Ships.Count == 0 && Time.timeSinceLevelLoad < 3f) return;   // wait for them to arrive
             level.TakeOverNetAuthority();
             if (level.Traffic == null) return;
+            bool adopted = false;
             foreach (var proxy in proxies)
             {
-                if (!proxy.IsSpawned || proxy.Station != Station || !proxy.Adoptable) continue;
+                // Only ships whose game is gone from here (not a player still flying them: a siege, a mission of theirs).
+                if (!proxy.IsSpawned || proxy.Station != Station || !proxy.Adoptable || InOrbit(proxy.Creator, Station)) continue;
                 var u = proxy.WorldPosition;
                 var ship = level.Traffic.Adopt(proxy.AdoptSpec(new Vector3(u.x, u.y, -u.z) / OrbitLayout.MetersPerUnit), proxy.WorldRotation, proxy.HullFraction);
                 foreach (var id in proxy.Aggressors) ship.aggressors.Add(id);   // still hostile to whom it was
                 proxy.MarkAdopted();
+                NetState.Instance.AdoptedRpc(proxy.NetworkObjectId);   // gone for the others at once (they get this player's)
+                adopted = true;
             }
+            if (adopted) level.Traffic.ConnectPlayers();   // Level::connectPlayers: the adopted ships' enemy lists
+        }
+
+        /// <summary>This player's own proxies left from an earlier visit (or spawned after their ship went): they go.</summary>
+        void DropOwnStale(NetState state)
+        {
+            ulong me = NetGame.LocalId;
+            foreach (var proxy in FindObjectsByType<NetProxy>())
+                if (proxy.IsSpawned && proxy.IsOwner && proxy.Creator == me && proxy.Orphan && !proxy.Adopted) state.DespawnRpc(proxy.NetworkObjectId);
         }
 
         void ScanShips(NetState state)
@@ -192,7 +299,7 @@ namespace GoF2Remake.Multiplayer
             for (int i = 0; i < ships.Count; i++)
             {
                 var ship = ships[i];
-                bool alive = ship != null && !ship.Gone && !string.IsNullOrEmpty(ship.ModelPath);
+                bool alive = ship != null && !ship.Gone && !ship.LocalOnly && !string.IsNullOrEmpty(ship.ModelPath);
                 if (alive && requestedShips.Add(i)) state.SpawnProxyRpc(Station, i);
                 if (alive || !requestedShips.Contains(i)) continue;
                 // Gone (dead after its explosion, jumped out): its proxy goes; a relaunch asks for a new one.
@@ -205,11 +312,30 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
+        void ScanJunk(NetState state)
+        {
+            var junk = level.FreelanceOrbit != null ? level.FreelanceOrbit.Junk : null;
+            if (junk == null) return;
+            for (int i = 0; i < junk.Count; i++)
+            {
+                var t = junk[i];
+                if (t != null && t.Alive && requestedJunk.Add(i)) state.SpawnProxyRpc(Station, JunkBase + i);
+                if (t != null && t.Alive) continue;
+                // Destroyed: its proxy goes a moment later (the others see the explosion first).
+                if (t == null || !junkProxies.TryGetValue(t, out var proxy)) continue;
+                if (!junkDeadSince.TryGetValue(t, out float since)) { junkDeadSince[t] = Time.unscaledTime; continue; }
+                if (Time.unscaledTime - since < 1.5f) continue;
+                if (proxy != null && proxy.IsSpawned) state.DespawnRpc(proxy.NetworkObjectId);
+                junkProxies.Remove(t);
+            }
+        }
+
         void ScanCrates(NetState state)
         {
             foreach (var crate in FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
             {
-                if (crate.remote || crateIds.ContainsKey(crate)) continue;
+                // A crate made by a cargo steal is the stealer's already (pulled at once, the ship keeps the rest): not shared.
+                if (crate.remote || crate.stolenFrom != null || crateIds.ContainsKey(crate)) continue;
                 int id = nextCrateId++;
                 crateIds[crate] = id;
                 crates[id] = crate;

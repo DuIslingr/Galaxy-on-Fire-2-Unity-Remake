@@ -14,6 +14,7 @@ using UnityEngine.InputSystem;
 
 namespace GoF2Remake.Multiplayer
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetChat
     {
         public const int MaxLength = 160, Keep = 60;
@@ -30,6 +31,14 @@ namespace GoF2Remake.Multiplayer
 
         static readonly List<Message> messages = new List<Message>();
         static readonly List<InputAction> paused = new List<InputAction>();
+
+        // Play mode without a domain reload keeps statics.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            paused.Clear();
+            Typing = false;
+        }
 
         public static IReadOnlyList<Message> Messages => messages;
         public static event Action<Message> Added;
@@ -60,6 +69,22 @@ namespace GoF2Remake.Multiplayer
                 foreach (var a in paused) if (a != null) a.Enable();
                 paused.Clear();
             }
+        }
+
+        /// <summary>While typing (ChatView, every frame): an action a component enabled meanwhile goes off too.</summary>
+        public static void KeepGameKeysOff()
+        {
+            if (!Typing) return;
+            foreach (var a in InputSystem.ListEnabledActions())
+                if (a.actionMap == null && !paused.Contains(a)) { paused.Add(a); a.Disable(); }
+        }
+
+        /// <summary>The scene the typing started in is going (ChatView.OnDestroy): typing ends, and its actions stay off
+        /// (every code-made game action belongs to a flight-scene component, gone with it).</summary>
+        public static void DropTyping()
+        {
+            paused.Clear();
+            Typing = false;
         }
 
         /// <summary>Trimmed, at most MaxLength characters, no rich-text tags (the log is rich text).</summary>

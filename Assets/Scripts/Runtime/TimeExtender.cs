@@ -18,6 +18,7 @@ using UnityEngine.InputSystem;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class TimeExtender : MonoBehaviour
     {
         public const float WorldScale = 0.3f, PlayerScale = 0.7f, DownPitch = 0.7f;
@@ -50,7 +51,8 @@ namespace GoF2Remake.Flight
         public static TimeExtender Attach(GameObject player, Database db)
         {
             var item = Shop.FirstMounted(db, 26);
-            if (item == null) return null;
+            // Multiplayer: the shared world can't slow down for one player (it would only slow their own ship).
+            if (item == null || GoF2Remake.Multiplayer.NetGame.Active) return null;
             var t = player.AddComponent<TimeExtender>();
             t.durationMs = item.Attr(42, 15000);
             t.cooldownMs = item.Attr(43, 30000);
@@ -125,7 +127,7 @@ namespace GoF2Remake.Flight
         {
             if (down)
             {
-                foreach (var s in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
+                foreach (var s in FindObjectsByType<AudioSource>())
                     if (s != sfx && !pitched.ContainsKey(s)) { pitched[s] = s.pitch; s.pitch *= DownPitch; }
                 if (pitched.Count == 0) pitched[sfx] = sfx.pitch;
                 return;
@@ -142,7 +144,7 @@ namespace GoF2Remake.Flight
             scanMs += Time.unscaledDeltaTime * 1000f;
             if (scanMs < 500f) return;
             scanMs = 0f;
-            foreach (var s in FindObjectsByType<AudioSource>(FindObjectsSortMode.None))
+            foreach (var s in FindObjectsByType<AudioSource>())
                 if (s != sfx && !pitched.ContainsKey(s)) { pitched[s] = s.pitch; s.pitch *= DownPitch; }
         }
     }

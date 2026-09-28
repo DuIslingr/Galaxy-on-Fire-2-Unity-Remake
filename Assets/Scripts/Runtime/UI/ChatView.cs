@@ -57,8 +57,15 @@ namespace GoF2Remake.UI
             field.RegisterCallback<KeyDownEvent>(OnKey, TrickleDown.TrickleDown);
             field.RegisterCallback<NavigationCancelEvent>(e => { Close(); e.StopPropagation(); }, TrickleDown.TrickleDown);
             field.RegisterCallback<NavigationMoveEvent>(e => e.StopPropagation(), TrickleDown.TrickleDown);
+            // Focus going anywhere but the row's own buttons (a click on the game, Android closing the keyboard): the
+            // typing ends, the draft stays; otherwise the game's keys would stay off.
+            field.RegisterCallback<FocusOutEvent>(e =>
+            {
+                if (e.relatedTarget is VisualElement to && (to == channel || to.name == "chatSend")) return;
+                Suspend();
+            });
             row.Add(field);
-            var send = new Button(SendLine) { text = "›" };
+            var send = new Button(SendLine) { text = "›", name = "chatSend" };
             send.AddToClassList("chat-send");
             row.Add(send);
             box.Add(row);
@@ -73,7 +80,7 @@ namespace GoF2Remake.UI
         void OnDestroy()
         {
             if (hooked) NetChat.Added -= OnAdded;
-            if (open) NetChat.SetTyping(false);
+            if (open) NetChat.DropTyping();   // the scene's actions go with it (not enabled again)
         }
 
         void OnKey(KeyDownEvent e)
@@ -106,7 +113,18 @@ namespace GoF2Remake.UI
         void SendLine()
         {
             NetChat.Send(field.value);
+            open = true;   // also after the field lost the focus to this button (Suspend)
             Close();
+        }
+
+        /// <summary>The field lost the focus: no more typing (the game's keys back), the draft kept for the next Open.</summary>
+        void Suspend()
+        {
+            if (!open) return;
+            open = false;
+            box.EnableInClassList("chat--open", false);
+            NetChat.SetTyping(false);
+            Rebuild();
         }
 
         void ToggleChannel()
@@ -152,6 +170,7 @@ namespace GoF2Remake.UI
 
         void Update()
         {
+            NetChat.KeepGameKeysOff();
             if (box == null) return;
             bool session = NetGame.Active;
             box.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;

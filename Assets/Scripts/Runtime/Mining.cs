@@ -123,7 +123,7 @@ namespace GoF2Remake.Flight
             // the settle it turns the autopilot off (hudEvent 6, dockToAsteroid(null), Hud::releaseAllKeys: that press
             // fires nothing); in the minigame it stops mining with the ore so far (PlayerEgo::stopMining) and the button
             // stays down, so the guns fire at once.
-            if (State != Phase.Idle && weapons != null && Time.timeScale > 0f && weapons.PrimaryPressedThisFrame)
+            if (State != Phase.Idle && weapons != null && !Navigation.InputHalted && weapons.PrimaryPressedThisFrame)
             {
                 if (State == Phase.Mining) { FinishMining(); weapons.ReleasePrimaryLatch(); }
                 else { weapons.SwallowPrimaryPress(); Interact(); }

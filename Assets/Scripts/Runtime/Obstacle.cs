@@ -17,6 +17,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Obstacle : MonoBehaviour
     {
         public static readonly List<Obstacle> All = new List<Obstacle>();

@@ -25,6 +25,7 @@ using Random = UnityEngine.Random;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class LoungeChat
     {
         public enum Choice { Okay, NoThanks, Repeat, Map, Risk }

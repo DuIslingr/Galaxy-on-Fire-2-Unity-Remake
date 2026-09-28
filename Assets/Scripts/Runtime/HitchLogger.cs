@@ -17,6 +17,7 @@ using UnityEngine.SceneManagement;
 
 namespace GoF2Remake
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class HitchLogger : MonoBehaviour
     {
         const float ThresholdMs = 33f;

@@ -143,6 +143,8 @@ namespace GoF2Remake.World
         public bool PlayerDeparting => (playerFlight != null && !playerFlight.arriving) || departed;
         /// <summary>The hangar's ship traffic (multiplayer: the other players' ships too, NetHangar), null = none.</summary>
         public HangarTraffic Traffic => traffic;
+        /// <summary>This docking flew in from the orbit (multiplayer: the others see it land; else the ship just appears).</summary>
+        public bool ArrivedFlying { get; private set; }
 
         /// <summary>AEEngine EaseInOut (0x7aa34): a + (b - a) * (sin(phi) * 0.5 + 0.5), phi 3pi/2 -> 5pi/2, Increase(d) adds
         /// d / 65536 * 2pi, so a whole leg takes 32768 units of d.</summary>
@@ -159,6 +161,9 @@ namespace GoF2Remake.World
 
         void Awake()
         {
+            // Multiplayer: loaded after its session ended (a docking queued behind the menu): on to the menu (nothing is
+            // saved, SaveGame.SessionGame).
+            if (GoF2Remake.Multiplayer.NetGame.SessionLost) SceneManager.LoadScene("MainMenu");
             db = Database.Load();
             int station = stationOverride >= 0 ? stationOverride : Session.StationIndex;
             Stock = Shop.EnterStation(db, station);
@@ -203,6 +208,7 @@ namespace GoF2Remake.World
             // Remake: docked from space = fly in through the forcefield (not after loading a save, a new game, a reload).
             bool flyIn = Session.DockedFromSpace && Settings.HangarFlights;
             Session.DockedFromSpace = false;
+            ArrivedFlying = flyIn;
             var lane = Lane;
             if (flyIn && lane != null && playerShip != null)
             {
@@ -241,7 +247,9 @@ namespace GoF2Remake.World
             RefreshTurret(true);
             shipYaw = StationTables.StartYaw(HangarIndex);
             ApplyShipYaw();
-            SpawnParkedShips();
+            // Multiplayer: another player docked here runs the hangar's NPC ships: theirs come with its snapshot (NetHangar).
+            bool hangarFollower = GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetHangar.OtherDockedHere(Layout.stationIndex);
+            if (!hangarFollower) SpawnParkedShips();
             // The others come and go (remake), except the club's stored hulls. Multiplayer: the other players docked here park
             // on the slots too (NetHangar), with or without the NPC traffic and the flights.
             bool slots = StationTables.ParkedSlots[HangarIndex] != null && StationTables.ParkedMax[HangarIndex] > 0;
@@ -251,6 +259,11 @@ namespace GoF2Remake.World
                                             parkedShips, db, NewParkedShip, ParkedPosition,
                                             (ship, pos, rot) => SpawnShip(ship, pos, rot, hangarRoot, "Visiting ship"),
                                             npcTraffic, Settings.HangarFlights);
+            if (traffic != null && GoF2Remake.Multiplayer.NetGame.Active)
+            {
+                traffic.KeepOneFree = true;          // a pad for another player docking
+                traffic.RunsNpcs = !hangarFollower;
+            }
             if (GoF2Remake.Multiplayer.NetGame.Active) gameObject.AddComponent<GoF2Remake.Multiplayer.NetHangar>().Setup(this);
 
             // Camera: ModStation::OnInitialize state 0x14 (phone table), rotation order 2 with roll -0.03.
@@ -305,6 +318,7 @@ namespace GoF2Remake.World
             if (slots == null || max <= 0) return;
             bool club = KaamoClub.StorageAt(Layout.stationIndex);
             int count = Mathf.Min(club ? Mathf.Min(Session.KaamoShips.Count, max) : Random.Range(0, max + 1), slots.Length);
+            if (GoF2Remake.Multiplayer.NetGame.Active && !club) count = Mathf.Min(count, slots.Length - 1);   // a pad for another player
             var taken = new bool[slots.Length];
             for (int n = 0; n < count; n++)
             {
@@ -314,8 +328,9 @@ namespace GoF2Remake.World
                 if (taken[slot]) break;
                 taken[slot] = true;
                 var pos = slots[slot] + new Vector3(0f, StationTables.ShipY(ship), 0f);
-                var parked = SpawnShip(ship, pos, Random.Range(0, 300) / 100f, hangarRoot, $"Parked ship {n}");
-                if (parked != null) parkedShips.Add(new HangarTraffic.Parked { go = parked, slot = slot, ship = ship });
+                float yaw = Random.Range(0, 300) / 100f;
+                var parked = SpawnShip(ship, pos, yaw, hangarRoot, $"Parked ship {n}");
+                if (parked != null) parkedShips.Add(new HangarTraffic.Parked { go = parked, slot = slot, ship = ship, yaw = yaw });
             }
         }
 

@@ -12,6 +12,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class StarMapAssets : ScriptableObject
     {
         public const string ResourcePath = "GoF2StarMap/StarMapAssets";

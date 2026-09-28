@@ -10,6 +10,7 @@ using UnityEngine.InputSystem;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class ScreenshotKey : MonoBehaviour
     {
         static ScreenshotKey instance;

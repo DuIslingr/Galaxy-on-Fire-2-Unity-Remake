@@ -14,9 +14,14 @@ using UnityEngine;
 
 namespace GoF2Remake.Multiplayer
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class NetShotMirror
     {
+        // The mirrors' projectile / impact pools sit under one scene object (gone with the scene); the mirrors themselves
+        // live in NetPlayer / NetProxy for the whole session, so after a scene change they start over (Refresh).
         static Transform fxRoot;
+        static int rootGeneration;
+        int generation = -1;
 
         sealed class Mirror
         {
@@ -41,12 +46,20 @@ namespace GoF2Remake.Multiplayer
             this.ignores = ignores;
         }
 
+        /// <summary>The pools went with the last scene: the mirrors are made again on their next shot.</summary>
+        void Refresh()
+        {
+            if (fxRoot == null) { if (mirrors.Count > 0) mirrors.Clear(); return; }
+            if (generation != rootGeneration) { mirrors.Clear(); generation = rootGeneration; }
+        }
+
         Mirror Get(int item)
         {
+            Refresh();
+            if (fxRoot == null) { fxRoot = new GameObject("NetShots").transform; rootGeneration++; generation = rootGeneration; }
             if (mirrors.TryGetValue(item, out var m)) return m;
             var data = Database.Load().Item(item);
             if (data == null) return null;
-            if (fxRoot == null) fxRoot = new GameObject("NetShots").transform;
             var gun = new Gun(data, Vector3.zero, false) { Ignores = ignores };
             var fx = WeaponFx.Load(item);
             m = new Mirror { gun = gun, fx = fx, rig = new GunRig(gun, fx, fxRoot, muzzleParent, 2) };
@@ -95,6 +108,7 @@ namespace GoF2Remake.Multiplayer
 
         public void Update(float dtMs)
         {
+            Refresh();
             if (mirrors.Count == 0) return;
             var cam = Camera.main;
             var forward = muzzleParent != null ? muzzleParent.forward : Vector3.forward;
@@ -108,6 +122,7 @@ namespace GoF2Remake.Multiplayer
 
         public void Clear()
         {
+            Refresh();
             foreach (var m in mirrors.Values) { m.gun.RemoveAll(); m.rig.HideAll(); }
         }
     }

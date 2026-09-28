@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace GoF2Remake.World
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class StationTables
     {
         public static int HangarIndex(int station, int systemRace) =>

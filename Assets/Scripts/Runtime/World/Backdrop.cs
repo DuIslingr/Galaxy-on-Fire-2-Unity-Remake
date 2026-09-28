@@ -16,6 +16,7 @@ using UnityEngine;
 
 namespace GoF2Remake.World
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Backdrop : MonoBehaviour
     {
         public const string MaterialFolder = "GoF2Backdrop";

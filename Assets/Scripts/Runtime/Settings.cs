@@ -15,6 +15,7 @@ namespace GoF2Remake.Data
     /// <summary>Window mode option (desktop only).</summary>
     public enum DisplayMode { Borderless, Fullscreen, Windowed }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Settings
     {
         const string Prefix = "gof2.";

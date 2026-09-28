@@ -127,7 +127,7 @@ namespace GoF2Remake.UI
 
         void ReadKeys()
         {
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
             var pad = Gamepad.current;
             bool left = kb != null && (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame || kb.qKey.wasPressedThisFrame)
                         || pad != null && (pad.leftShoulder.wasPressedThisFrame || pad.dpad.left.wasPressedThisFrame);

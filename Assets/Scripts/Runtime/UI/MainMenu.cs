@@ -26,6 +26,7 @@ namespace GoF2Remake.UI
 {
     [RequireComponent(typeof(PanelRenderer))]
     [DefaultExecutionOrder(-1000)]   // register for the UI load before PanelRenderer loads the UXML
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class MainMenu : MonoBehaviour
     {
         [Header("Flow")]
@@ -373,6 +374,10 @@ namespace GoF2Remake.UI
 
         IEnumerator Run()
         {
+            // Whatever the last scene left: never a muted listener here (a pause menu open when a multiplayer session
+            // ended loads the menu without closing it), and a finished session's game is gone.
+            AudioListener.pause = false;
+            GoF2Remake.Multiplayer.NetGame.OnMainMenu();
             if (musicSource != null && menuMusic != null)
             {
                 musicSource.clip = menuMusic;
@@ -1040,10 +1045,17 @@ namespace GoF2Remake.UI
             string mp = Localization.Extra("multiplayer", "Multiplayer").ToUpperInvariant();
             Set("multiplayerButton", mp);
             Set("multiplayerTitle", mp);
-            Set("mpIntro", Localization.Extra("mpIntro", "Fly together in Var Hastra's orbit. One player hosts, the others join with the host's address (same network, port 7777)."));
-            Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());
+            Set("mpBadge", Localization.Extra("mpExperimental", "Experimental").ToUpperInvariant());
+            Set("mpIntro", Localization.Extra("mpIntro", "One shared universe: meet other pilots in orbits and hangars, form squads and fly bar missions together for a shared reward."));
+            Set("mpNameLabel", Localization.Extra("mpNameLabel", "Pilot name").ToUpperInvariant());
             if (mpName != null) mpName.textEdition.placeholder = Localization.Extra("mpNamePlaceholder", "Your pilot name");
-            Set("mpHostAddress", string.Format(Localization.Extra("mpYourAddress", "Your address: {0}"), GoF2Remake.Multiplayer.NetGame.LocalAddress()));
+            Set("mpHostTitle", Localization.Extra("mpHostTitle", "Host a game").ToUpperInvariant());
+            Set("mpHostText", Localization.Extra("mpHostText", "Start a session on this device. Players on your network join with your address:"));
+            Set("mpHostAddress", GoF2Remake.Multiplayer.NetGame.LocalAddress());
+            Set("mpHostPort", string.Format(Localization.Extra("mpPort", "port {0}"), GoF2Remake.Multiplayer.NetGame.Port));
+            Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());
+            Set("mpJoinTitle", Localization.Extra("mpJoinTitle", "Join a game").ToUpperInvariant());
+            Set("mpJoinText", Localization.Extra("mpJoinText", "Connect to a host on your network. Enter the address shown on their screen:"));
             Set("mpJoin", Localization.Extra("mpJoin", "Join").ToUpperInvariant());
 
             Set("campaignTitle", T(103));

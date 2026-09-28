@@ -309,7 +309,7 @@ namespace GoF2Remake.UI
                 flingPx *= Mathf.Pow(0.9f, frames);
                 if (Mathf.Abs(flingPx) <= 1f) flingPx = 0f;
             }
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
             var pad = Gamepad.current;
             float turn = 0f;
             if (kb != null) turn += (kb.dKey.isPressed || kb.rightArrowKey.isPressed ? 1f : 0f) - (kb.aKey.isPressed || kb.leftArrowKey.isPressed ? 1f : 0f);

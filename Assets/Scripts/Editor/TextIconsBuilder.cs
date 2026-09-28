@@ -18,6 +18,7 @@ using UnityEngine.TextCore.Text;
 
 namespace GoF2Remake.EditorTools
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class TextIconsBuilder
     {
         public const string AssetName = "gof2_text_icons";

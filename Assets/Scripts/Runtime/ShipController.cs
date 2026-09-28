@@ -147,7 +147,7 @@ namespace GoF2Remake.Flight
         /// isn't the player's to fly (launch camera, autopilot docking, turret view, cinematics).</summary>
         public bool RequestDodge(int type)
         {
-            if (inputLocked || externalControl || steeringLocked || Time.timeScale <= 0f) return false;
+            if (inputLocked || externalControl || steeringLocked || Navigation.InputHalted) return false;
             DodgeRequested?.Invoke();
             return Maneuver.Start(type);
         }

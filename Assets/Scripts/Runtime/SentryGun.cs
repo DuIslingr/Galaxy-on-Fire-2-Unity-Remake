@@ -19,6 +19,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class SentryGun : MonoBehaviour
     {
         const float M = Gun.MetersPerUnit;
@@ -39,6 +40,9 @@ namespace GoF2Remake.Flight
         Visuals.PartAnimation[] anims = new Visuals.PartAnimation[0];
 
         public static bool CanDeploy => ActiveCount < MaxActive;
+        /// <summary>The deployed sentries (multiplayer: their shots are shown to the others, NetPlayer).</summary>
+        public static readonly List<SentryGun> All = new List<SentryGun>();
+        public Gun Gun => gun;
 
         /// <summary>Deploys a sentry of 'item' at 'position' (world), facing 'forward'.</summary>
         public static SentryGun Deploy(Database db, int item, Vector3 position, Quaternion rotation, Traffic traffic)
@@ -51,6 +55,7 @@ namespace GoF2Remake.Flight
             var s = go.AddComponent<SentryGun>();
             s.Setup(db, it, fx, traffic);
             ActiveCount++;
+            All.Add(s);
             return s;
         }
 
@@ -155,12 +160,13 @@ namespace GoF2Remake.Flight
 
         void OnDestroy()
         {
+            All.Remove(this);
             ActiveCount = Mathf.Max(0, ActiveCount - 1);
             if (fxRoot != null) Destroy(fxRoot.gameObject);
         }
 
         /// <summary>A new level: nothing deployed (no domain reload between Play sessions).</summary>
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetCount() => ActiveCount = 0;
+        static void ResetCount() { ActiveCount = 0; All.Clear(); }
     }
 }

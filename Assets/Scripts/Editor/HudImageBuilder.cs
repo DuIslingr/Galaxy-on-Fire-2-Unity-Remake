@@ -10,6 +10,7 @@ using UnityEngine;
 
 namespace GoF2Remake.EditorTools
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class HudImageBuilder
     {
         public const string OutDir = ImportSettings.Root + "/Resources/GoF2Hud";

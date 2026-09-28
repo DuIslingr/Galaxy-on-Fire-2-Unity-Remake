@@ -137,6 +137,26 @@ namespace GoF2Remake.UI
             Rebuild();
         }
 
+        /// <summary>Multiplayer: the shared stock changed (another player's trade, the reset): the list again.</summary>
+        public void StockChanged()
+        {
+            if (!IsOpen) return;
+            if (editing >= 0 || HasPending) { stockDirty = true; return; }   // after the blueprint view (Back / SetTab)
+            stockDirty = false;
+            hangar = new Hangar(level.Database, level.Stock);
+            Rebuild();
+        }
+
+        bool stockDirty;
+
+        /// <summary>A change that waited (StockChanged during the blueprint view): the list with its prices again.</summary>
+        void CatchUpStock()
+        {
+            if (!stockDirty || !IsOpen) return;
+            stockDirty = false;
+            hangar = new Hangar(level.Database, level.Stock);
+        }
+
         public void Close()
         {
             if (!IsOpen) return;
@@ -170,7 +190,7 @@ namespace GoF2Remake.UI
         public bool Back()
         {
             if (editing < 0) return false;
-            Commit(() => { editing = -1; selected = null; Rebuild(); });
+            Commit(() => { editing = -1; selected = null; CatchUpStock(); Rebuild(); });
             return true;
         }
 
@@ -182,6 +202,7 @@ namespace GoF2Remake.UI
             tab = t;
             editing = -1;
             selected = null;
+            CatchUpStock();
             Rebuild();
         }
 
@@ -905,7 +926,19 @@ namespace GoF2Remake.UI
                         selected = null;
                         Rebuild();
                     }
-                    void TradeIn() { if (hangar.BuyShip(ship)) Bought(); }
+                    // Multiplayer: the dealer's ship is reserved with the host first (another pilot may be buying it).
+                    void SoldOut()
+                    {
+                        menu.ShowToast(Localization.Extra("mpShipSoldOut", "Sold: another pilot bought this ship."));
+                        selected = null;
+                        Rebuild();
+                    }
+                    void Reserved(System.Func<bool> trade) => GoF2Remake.Multiplayer.NetStock.ReserveShip(hangar.Station, ship, () =>
+                    {
+                        if (trade()) Bought();
+                        else GoF2Remake.Multiplayer.NetStock.ShipChanged(hangar.Station, -1, ship);   // not bought after all: back
+                    }, SoldOut);
+                    void TradeIn() => Reserved(() => hangar.BuyShip(ship));
                     if (!KaamoClub.Owned) { menu.ShowDialog(Localization.Get(304), TradeIn); break; }
                     // 304, then 327 "sell your old ship or keep it and have it brought to your station?" (330 / 331).
                     menu.ShowDialog(Localization.Get(304), () => menu.ShowChoice(Localization.Get(327), Localization.Get(330), Localization.Get(331), TradeIn, () =>
@@ -913,7 +946,7 @@ namespace GoF2Remake.UI
                         var k = hangar.CanKeepAndBuyShip(ship, out int missing);
                         if (k == Hangar.Result.AlreadyStored) { menu.ShowDialog(Localization.Get(328), null, true); return; }
                         if (k == Hangar.Result.NoCredits) { menu.ShowToast(Localization.Get(203).Replace("#C", ItemInfo.Credits(missing))); return; }
-                        if (hangar.KeepAndBuyShip(ship)) Bought();
+                        Reserved(() => hangar.KeepAndBuyShip(ship));
                     }));
                     break;
                 }

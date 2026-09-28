@@ -56,6 +56,9 @@ namespace GoF2Remake.Data
         public int status;
         /// <summary>The offer text as the agent said it (text ids, rebuilt with the current values by LoungeChat).</summary>
         public List<int> textIds = new List<int>();
+        /// <summary>Multiplayer (NetMissions): the squad's id for this mission, the same for every member (0 = single player /
+        /// not shared).</summary>
+        public long netId;
 
         public bool IsEmpty => type < 0;
         public string Name => MissionType.Name(type);
@@ -118,6 +121,7 @@ namespace GoF2Remake.Data
         public int[] portraitParts = new int[5];
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class AgentData
     {
         static Dictionary<string, List<string>> names;

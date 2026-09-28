@@ -59,6 +59,7 @@ namespace GoF2Remake.Data
         public int station;           // the current station / orbit
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Story
     {
         public const int GameWonIndex = 45, Dlc1WonIndex = 84, LastIndex = 162;

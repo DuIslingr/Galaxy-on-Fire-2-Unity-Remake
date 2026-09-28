@@ -248,7 +248,7 @@ namespace GoF2Remake.UI
         {
             if (!IsOpen) return;
             TickAnimation(unscaledDtMs);
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
             var pad = Gamepad.current;
             bool Pressed(Func<Keyboard, bool> k, Func<Gamepad, bool> g) => (kb != null && k(kb)) || (pad != null && g(pad));
             if (ConfirmOpen)

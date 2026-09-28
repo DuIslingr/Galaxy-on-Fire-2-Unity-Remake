@@ -5,7 +5,8 @@
 //     ship lacks: not shown), and Leave;
 //   in the station, the pilot list (collapsible too, only with other players docked here): each with Invite (or "In your
 //     squad" / "Invited");
-//   an invitation popup (any scene): "<name> invites you to their squad" with Accept / Decline (expires after 45 s).
+//   an invitation popup (only while docked: squads form in a hangar): "<name> invites you to their squad", and when this
+//     player has a mission that accepting abandons it (NetMissions.AbandonWarning), with Accept / Decline (45 s).
 // The rows are rebuilt only when their content changes (a rebuilt button would lose a press); the bars update live.
 // Styles: Resources/GoF2Net/Squad.uss.
 
@@ -18,6 +19,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class SquadView : MonoBehaviour
     {
         const float RefreshSeconds = 0.25f;
@@ -197,8 +199,11 @@ namespace GoF2Remake.UI
             var me = NetPlayer.Local;
             var pilots = new List<NetPlayer>();
             if (hangar && me != null)
+            {
+                pilots.Add(me);   // the local player first, marked "(you)"
                 foreach (var p in NetPlayer.All)
                     if (p != null && p.IsSpawned && !p.IsOwner && p.InHangar && p.Station == hereStation) pilots.Add(p);
+            }
             pilotsPanel.style.display = pilots.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             if (pilots.Count == 0) { pilotsKey = ""; return; }
             var sb = new StringBuilder(pilotsCollapsed ? "c" : "o");
@@ -213,10 +218,11 @@ namespace GoF2Remake.UI
             {
                 var row = new VisualElement();
                 row.AddToClassList("squad-pilot");
-                var name = new Label(p.DisplayName);
+                var name = new Label(p.DisplayName + (p == me ? $"  ({Localization.Extra("mpYou", "you")})" : ""));
                 name.AddToClassList("squad-name");
                 row.Add(name);
-                if (NetSquad.Same(p, me))
+                if (p == me) { }   // no invitation to oneself
+                else if (NetSquad.Same(p, me))
                 {
                     var tag = new Label(Localization.Extra("mpInYourSquad", "In your squad"));
                     tag.AddToClassList("squad-tag");
@@ -241,10 +247,13 @@ namespace GoF2Remake.UI
         {
             var invites = NetSquad.Invites;
             var latest = invites.Count > 0 ? invites[invites.Count - 1] : null;
-            if (latest != shownInvite)
+            if (NetPlayer.Local == null || !NetPlayer.Local.InHangar) latest = null;   // squads form only in a hangar
+            shownInvite = latest;
+            if (latest != null)
             {
-                shownInvite = latest;
-                if (latest != null) inviteText.text = string.Format(Localization.Extra("mpSquadInvited", "{0} invites you to their squad."), latest.name);
+                string warning = NetMissions.AbandonWarning();
+                inviteText.text = string.Format(Localization.Extra("mpSquadInvited", "{0} invites you to their squad."), latest.name)
+                                  + (warning.Length > 0 ? "\n" + warning : "");
             }
             invitePopup.style.display = shownInvite != null ? DisplayStyle.Flex : DisplayStyle.None;
         }

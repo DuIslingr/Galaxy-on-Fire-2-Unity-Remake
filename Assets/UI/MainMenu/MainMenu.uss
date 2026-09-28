@@ -369,30 +369,128 @@
     min-width: 290px;
 }
 
-.mp-text {
-    margin: 4px 0 14px 0;
-    font-size: 17px;
+/* ---- multiplayer --------------------------------------------------------------------- */
+
+.mp-title-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.mp-badge {
+    margin-left: 18px;
+    padding: 3px 10px;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--gof-amber);
+    border-width: 1px;
+    border-color: var(--gof-amber-soft);
+    border-radius: 2px;
+    background-color: rgba(255, 166, 48, 0.08);
+}
+
+.mp-intro {
+    margin-bottom: 24px;
+    font-size: 18px;
     color: var(--gof-text);
     white-space: normal;
 }
 
-.mp-text--dim {
-    margin: -4px 0 18px 0;
+.mp-label {
+    margin-bottom: 6px;
+    font-size: 14px;
+    letter-spacing: 3px;
+    color: var(--gof-text-dim);
+}
+
+.mp-name {
+    max-width: 420px;
+    margin-bottom: 26px;
+}
+
+.mp-cards {
+    flex-direction: row;
+}
+
+.mp-card {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-right: 18px;
+    padding: 20px 22px;
+    background-color: rgba(62, 200, 255, 0.05);
+    border-width: 1px;
+    border-color: var(--gof-line);
+    border-radius: 2px;
+}
+
+.mp-card--last {
+    margin-right: 0;
+}
+
+.mp-card-title {
+    font-size: 21px;
+    letter-spacing: 4px;
+    color: var(--gof-cyan);
+}
+
+.mp-card-text {
+    margin: 8px 0 16px 0;
     font-size: 15px;
+    color: var(--gof-text-dim);
+    white-space: normal;
+}
+
+/* the address row: same height in both cards, so the buttons line up */
+.mp-card-fill {
+    flex-grow: 1;
+    justify-content: center;
+    min-height: 58px;
+    margin-bottom: 16px;
+}
+
+.mp-address-value {
+    font-size: 24px;
+    letter-spacing: 1px;
+    color: var(--gof-text);
+}
+
+.mp-address-note {
+    margin-top: 2px;
+    font-size: 14px;
     color: var(--gof-text-dim);
 }
 
 .mp-address {
-    margin-top: 6px;
+    margin: 0;
 }
 
-.mp-name {
-    margin-bottom: 16px;
+.mp-action {
+    margin: 0;
+    padding: 12px 18px;
+    font-size: 20px;
+    letter-spacing: 4px;
+    -unity-text-align: middle-center;
+    color: var(--gof-text);
+    background-color: var(--gof-cyan-faint);
+    border-width: 1px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 2px;
+    transition-duration: 0.18s;
+}
+
+.can-hover .mp-action:hover,
+.mp-action:focus {
+    color: #FFFFFF;
+    border-color: var(--gof-amber);
+    background-color: var(--gof-cyan-soft);
+}
+
+.menu-root .mp-action:active {
+    background-color: var(--gof-amber-soft);
 }
 
 .mp-status {
     min-height: 22px;
-    margin: 8px 0 4px 0;
+    margin: 18px 0 0 0;
     font-size: 16px;
     color: var(--gof-amber);
     white-space: normal;
@@ -790,6 +888,18 @@
 
 .layout-phone .back-button {
     margin-top: 14px;
+}
+
+.layout-phone .mp-intro {
+    margin-bottom: 14px;
+}
+
+.layout-phone .mp-name {
+    margin-bottom: 14px;
+}
+
+.layout-phone .mp-card {
+    padding: 14px 16px;
 }
 
 .layout-phone .campaign-card {

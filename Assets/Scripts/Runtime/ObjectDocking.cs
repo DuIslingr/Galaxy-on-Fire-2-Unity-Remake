@@ -28,6 +28,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class ObjectDocking : MonoBehaviour
     {
         public enum Phase { Idle, Approach, Entering, Docked, Leaving }
@@ -297,6 +298,20 @@ namespace GoF2Remake.Flight
                 {
                     Shop.RemoveFromCargo(campaign.goodsItem, 1);
                     campaign.value++;
+                });
+            }
+            else if (Freelance.Active && Freelance.Mission.type == MissionType.OreMining && type == DropOff && Target.Spec.fixedObject != null
+                     && Session.StationIndex == Freelance.Mission.target)
+            {
+                // Freelance 15 Ore Mining (Objective 0x1c: delivered ore >= amount): 1 t per 1000 ms, counted in the mission's
+                // status.
+                var m = Freelance.Mission;
+                int left = Mathf.Min(Story.CargoOf(m.good), m.amount - m.status);
+                Tick(dtMs, OreMs, left, Localization.Get(3205), () =>
+                {
+                    Shop.RemoveFromCargo(m.good, 1);
+                    m.status++;
+                    GoF2Remake.Multiplayer.NetMissions.AddStatus(m, 1);   // multiplayer: the squad's delivered ore
                 });
             }
             else TransferLabel = null;

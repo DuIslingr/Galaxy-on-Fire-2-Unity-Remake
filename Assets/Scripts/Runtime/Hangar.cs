@@ -66,7 +66,12 @@ namespace GoF2Remake.Data
         public ShipData Ship => db.Ship(Session.ShipIndex);
         /// <summary>HangarWindow+0x11d: the owned Kaamo Club's storage (free transfers, no prices).</summary>
         public bool Storage => KaamoClub.StorageAt(Station);
-        public int PriceOf(int item) => Story.AdjustPrice(Station, item, prices.TryGetValue(item, out int p) ? p : 0);
+        public int PriceOf(int item)
+        {
+            // An item that joined the list after this opening (multiplayer: another player's sale) gets its price now.
+            if (!prices.ContainsKey(item)) AddPrices(new List<int> { item });
+            return Story.AdjustPrice(Station, item, prices.TryGetValue(item, out int p) ? p : 0);
+        }
         /// <summary>Item::isSaleable: story items (Gunant's Drill, the Alien Remains...) can't be sold or demounted (323).</summary>
         public static bool IsSaleable(int item) => !Session.Unsaleable.Contains(item);
         public int StockOf(int item) => Stock.items.Where(s => s.item == item).Sum(s => s.amount);
@@ -115,6 +120,7 @@ namespace GoF2Remake.Data
             if (Session.Credits < price) { need = price - Session.Credits; return Result.NoCredits; }
             row.amount--;
             if (row.amount <= 0) Stock.items.Remove(row);
+            if (!Storage) GoF2Remake.Multiplayer.NetStock.ItemChanged(Station, item, -1, price);   // multiplayer: the shared stock
             AddToCargo(item, 1);
             if (price > 0) ChangeCredits(-price);
             Session.SeenItems.Add(item);
@@ -137,6 +143,7 @@ namespace GoF2Remake.Data
                 int at = Stock.items.FindIndex(s => s.item > item);
                 Stock.items.Insert(at < 0 ? Stock.items.Count : at, new ItemStack(item, 1));   // the stock stays in index order
             }
+            if (!Storage) GoF2Remake.Multiplayer.NetStock.ItemChanged(Station, item, 1);   // multiplayer: the shared stock
             if (!Storage) ChangeCredits(PriceOf(item));
             Session.SeenItems.Add(item);
             if (Session.IsBooze(item)) Session.BoozeTypes.Add(item);   // HangarWindow::selectItem: a committed booze trade
@@ -247,6 +254,7 @@ namespace GoF2Remake.Data
             SwitchTo(ship, null);   // mods stay with the old hull (Ship::clone copies them)
             int row = Stock.ships.IndexOf(ship);
             if (row >= 0) Stock.ships[row] = old; else Stock.ships.Add(old);
+            GoF2Remake.Multiplayer.NetStock.ShipChanged(Station, ship, old);   // multiplayer: the shared dealer list
             return true;
         }
 
@@ -286,6 +294,7 @@ namespace GoF2Remake.Data
             if (!Cheats.FreeShopping) ChangeCredits(-ShipPrice(ship));
             SwitchTo(ship, null);
             Stock.ships.Remove(ship);   // the bought row is gone
+            GoF2Remake.Multiplayer.NetStock.ShipChanged(Station, ship, -1);
             KaamoClub.Store(old, 0, oldMods);   // a bare hull (makeShip(old) + its mods; Ship::clone resets the race to 0)
             return true;
         }

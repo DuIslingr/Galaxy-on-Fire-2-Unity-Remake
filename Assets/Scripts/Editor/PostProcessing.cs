@@ -87,7 +87,7 @@ namespace GoF2Remake.EditorTools
         public static void AddToScene()
         {
             var profile = GetOrCreateProfile();
-            var volume = Object.FindObjectsByType<Volume>(FindObjectsSortMode.None).FirstOrDefault(v => v.sharedProfile == profile);
+            var volume = Object.FindObjectsByType<Volume>().FirstOrDefault(v => v.sharedProfile == profile);
             if (volume == null)
             {
                 var go = new GameObject("GoF2 Post Processing");

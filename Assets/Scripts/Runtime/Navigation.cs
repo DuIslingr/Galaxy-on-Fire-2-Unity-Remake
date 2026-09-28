@@ -44,6 +44,7 @@ using UnityEngine.SceneManagement;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Navigation : MonoBehaviour
     {
         public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget }
@@ -530,8 +531,19 @@ namespace GoF2Remake.Flight
             ApplyTimeScale();
         }
 
+        /// <summary>A menu, conversation or map holds the game (single player: Time.timeScale 0). Multiplayer keeps the time
+        /// running, so the player's controls ask this instead (InputHalted).</summary>
+        static bool halted;
+
+        /// <summary>The player's flight controls (steering, dodge, guns, mining) are off: the game is paused, or in multiplayer
+        /// a menu, conversation or map is open (the world goes on there).</summary>
+        public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active);
+
+        void OnDestroy() => halted = false;
+
         void ApplyTimeScale()
         {
+            halted = MenuOpen || paused || pauseMenuOpen;
             float scale = MenuOpen || paused || pauseMenuOpen ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
             if (GoF2Remake.Multiplayer.NetGame.Active) scale = 1f;   // multiplayer: one player's pause doesn't stop the shared world
             if (Time.timeScale != scale) Time.timeScale = scale;

@@ -32,6 +32,7 @@ using UnityEngine.InputSystem;
 namespace GoF2Remake.Flight
 {
     [RequireComponent(typeof(ShipController))]
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class WeaponSystem : MonoBehaviour
     {
         const float M = Gun.MetersPerUnit;
@@ -343,7 +344,7 @@ namespace GoF2Remake.Flight
         {
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;
             // The game is paused (Time.timeScale 0: dialogues, the autopilot menu, the star map): no firing at all.
-            bool halted = Blocked || Time.timeScale <= 0f;
+            bool halted = Blocked || Navigation.InputHalted;
             bool primaryPressed = useBuiltInInput && firePrimaryAction.IsPressed();
             bool secondaryPressed = useBuiltInInput && fireSecondaryAction.IsPressed();
             if (halted) { primaryLatched |= primaryPressed; secondaryLatched |= secondaryPressed; }
@@ -444,7 +445,7 @@ namespace GoF2Remake.Flight
             Target found = null;
             foreach (var t in Target.All)
             {
-                if (t == null || t == owner || !t.Alive || t.untargetable || !t.isActiveAndEnabled) continue;
+                if (t == null || t == owner || !t.Alive || t.untargetable || !t.isActiveAndEnabled || t.playerProof) continue;   // multiplayer: squadmates
                 var d = t.transform.position - transform.position;
                 if (t.isShip ? d.magnitude >= BeamRangeUnits * M
                              : Mathf.Abs(d.x) >= BeamObjectCubeUnits * M || Mathf.Abs(d.y) >= BeamObjectCubeUnits * M || Mathf.Abs(d.z) >= BeamObjectCubeUnits * M) continue;
@@ -586,7 +587,7 @@ namespace GoF2Remake.Flight
         {
             if (!liberator.gun.BombInFlight || (owner != null && !owner.Alive)) { EndLiberator(); return; }
             var ship = GetComponent<ShipController>();
-            if (Time.timeScale > 0f && !Blocked) liberator.gun.SteerBullet(0, ship != null ? ship.SteerInput : Vector2.zero, dtMs, LiberatorTurnRadPerMs);
+            if (!Navigation.InputHalted && !Blocked) liberator.gun.SteerBullet(0, ship != null ? ship.SteerInput : Vector2.zero, dtMs, LiberatorTurnRadPerMs);
             PlaceLiberatorAnchor();
             UpdateLiberatorSound(dtMs);
         }
@@ -601,7 +602,7 @@ namespace GoF2Remake.Flight
         {
             if (liberatorLoop == null) return;
             var ship = GetComponent<ShipController>();
-            if (ship != null && Time.timeScale > 0f && !Blocked) liberatorBank += dtMs * ship.SteerInput.x * 0.01f;
+            if (ship != null && !Navigation.InputHalted && !Blocked) liberatorBank += dtMs * ship.SteerInput.x * 0.01f;
             float v = Mathf.Clamp01(liberatorBank * 0.2f);
             liberatorLoop.pitch = Mathf.Pow(2f, 8f * Mathf.Lerp(0.479167f, 0.520833f, v) - 4f) * TimeExtender.SoundPitch;
             liberatorLoop.volume = LiberatorVolume;

@@ -149,6 +149,8 @@ namespace GoF2Remake.UI
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", () => { var a = dialogNoAction; CloseDialog(); a?.Invoke(); });
             hangarWindow = new HangarWindow(this, level, root);
+            GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
+            GoF2Remake.Multiplayer.NetStock.Changed += OnSharedStock;
             infoWindow = new ItemInfoWindow(this, root);
             lounge = new LoungePanel(this, level, root);
             SetupTicker();
@@ -620,6 +622,14 @@ namespace GoF2Remake.UI
 
         /// <summary>DialogueWindow::loadContent, text 1833 ("Alert! Void fighters..."): the music stops, 136 Space_Combat_Void
         /// plays as music and 162 Alert loops (event volume 0.198) until the station is left.</summary>
+        /// <summary>Multiplayer: the station's shared stock changed.</summary>
+        void OnSharedStock(int station)
+        {
+            if (level != null && level.Stock != null && level.Stock.station == station) hangarWindow?.StockChanged();
+        }
+
+        void OnDestroy() => GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
+
         void StartVoidAlarm()
         {
             var story = StoryAssets.Load();
@@ -791,6 +801,8 @@ namespace GoF2Remake.UI
             string voiceLine = Freelance.Voice(textId);
             storyDialogue.ShowAgentMessage(text, m.clientName, m.clientPortrait, () =>
             {
+                // Multiplayer: a squadmate may have ended it meanwhile (their result already paid this player's share).
+                if (Freelance.Mission != m) { Select(launchButton); return; }
                 if (success)
                 {
                     // Layout::showMissionRewardMessage + Mission_accomplished (36), changeCredits(reward + bonus).
@@ -991,6 +1003,9 @@ namespace GoF2Remake.UI
             aboutButton = SystemButton(Localization.Get(43), 4, () => ShowDialog(Localization.Get(45), null, true), systemMain);
             // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats).
             if (Cheats.Unlocked) debugButton = SystemButton(Localization.Extra("debugTitle", "Debug"), 5, () => ShowSystemPage(SysPage.Debug), systemMain);
+            // Multiplayer: a session's game is never saved, and no single-player save is loaded into it.
+            if (GoF2Remake.Multiplayer.NetGame.Active)
+                foreach (var b in new[] { loadGameButton, saveGameButton }) if (b != null) b.style.display = DisplayStyle.None;
             // The options page: every option of the catalog (OptionsCatalog, like the pause menu).
             systemOptions = new VisualElement();
             systemOptions.AddToClassList("system-menu-page");
@@ -1152,9 +1167,12 @@ namespace GoF2Remake.UI
                 return o.ToArray();
             }
             if (!SavePageOpen)
-                return debugButton != null
+            {
+                var items = debugButton != null
                     ? new VisualElement[] { newGameButton, loadGameButton, saveGameButton, optionsButton, aboutButton, debugButton, mainMenuButton, systemClose }
                     : new VisualElement[] { newGameButton, loadGameButton, saveGameButton, optionsButton, aboutButton, mainMenuButton, systemClose };
+                return System.Array.FindAll(items, e => e != null && e.resolvedStyle.display != DisplayStyle.None);
+            }
             var list = new System.Collections.Generic.List<VisualElement>(saveSlotList.contentContainer.Children()) { saveBack };
             return list.ToArray();
         }

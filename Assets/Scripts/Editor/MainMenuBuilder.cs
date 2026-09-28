@@ -24,6 +24,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.EditorTools
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class MainMenuBuilder
     {
         const string UiDir = ImportSettings.Root + "/UI";

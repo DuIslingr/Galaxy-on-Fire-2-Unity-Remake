@@ -20,6 +20,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class StatusWindow
     {
         readonly StationMenu menu;
@@ -119,9 +120,13 @@ namespace GoF2Remake.UI
             StatLine(b, T(561), Session.CoresMined.ToString());
             StatLine(b, T(567), Session.WingmenHired.ToString());
 
-            // Medals.
+            // Medals (none in multiplayer: the column is hidden).
             grid.Clear();
             medalButtons.Clear();
+            bool medals = !GoF2Remake.Multiplayer.NetGame.Active;
+            var column = root.Q(className: "status-right");
+            if (column != null) column.style.display = medals ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!medals) { hint.text = ""; menu.Focus(close); return; }
             for (int i = 0; i < Achievements.Count; i++)
             {
                 int medal = i;

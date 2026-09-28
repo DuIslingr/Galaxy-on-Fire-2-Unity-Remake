@@ -29,6 +29,7 @@ namespace GoF2Remake.Data
         public int param1, param2;
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NewsTicker
     {
         public const float ScrollPxPerSecond = 50f;

@@ -30,6 +30,7 @@ using UnityEngine;
 namespace GoF2Remake.Flight
 {
     [Serializable]
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class CollisionVolume
     {
         const float M = 0.05f;

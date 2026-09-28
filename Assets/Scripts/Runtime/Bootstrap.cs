@@ -20,6 +20,7 @@ using UnityEngine.SceneManagement;
 
 namespace GoF2Remake
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Bootstrap
     {
         // The project's own values, the "default" of the render scale / MSAA options and the base of the LOD bias.

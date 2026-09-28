@@ -1,6 +1,6 @@
 // NetGame.cs
 // Remake-only multiplayer (Netcode for GameObjects over Unity Transport, direct IP, port 7777): one shared game world.
-// The main menu's Multiplayer panel hosts or joins; every player starts a fresh free-play game at Var Hastra (78) and then
+// The main menu's Multiplayer panel hosts or joins; every player starts a fresh free-play game docked at Var Hastra (78) and then
 // plays it like single player: their own scenes (Space for their orbit, Station for their hangar), economy, jumps and
 // docking. No scene synchronisation: the network objects live in DontDestroyOnLoad and each player shows only what is
 // where they are.
@@ -31,24 +31,52 @@ using UnityEngine.SceneManagement;
 
 namespace GoF2Remake.Multiplayer
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetGame
     {
         public const ushort Port = 7777;
         public const int Station = 78;
         public const string PrefabFolder = "GoF2Net";
         public static readonly string[] PrefabNames = { "NetPlayer", "NetProxy", "NetState", "NetCrate" };
-        const string SpaceScene = "Space", MenuScene = "MainMenu";
+        const string StationScene = "Station", MenuScene = "MainMenu";
 
         static NetworkManager manager;
         static readonly HashSet<ulong> playersSpawned = new HashSet<ulong>();
-        static bool worldEntered;
+        static bool worldEntered, transportConnected, sessionGame;
 
-        /// <summary>A session runs (hosting, or a client connecting / connected).</summary>
-        public static bool Active => manager != null && manager.IsListening;
+        /// <summary>A session runs (hosting, or a client connecting / connected); not while the host is closing it.</summary>
+        public static bool Active => manager != null && manager.IsListening && !closing;
+
+        /// <summary>The game in memory is a session's (from PrepareSession until the main menu opens after it), even once the
+        /// connection is gone: SaveGame never saves it, and a level loaded after the session ended goes to the menu.</summary>
+        public static bool SessionGame => sessionGame || Active;
+
+        /// <summary>The session is gone but its game is still loaded (SpaceLevel / StationLevel then go to the main menu).</summary>
+        public static bool SessionLost => sessionGame && !Active;
+
+        /// <summary>The main menu opened: a session that has ended leaves nothing behind.</summary>
+        public static void OnMainMenu()
+        {
+            if (!Active) sessionGame = false;
+        }
+
+        // Play mode without a domain reload keeps statics: a fresh start (also builds, where it changes nothing).
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics()
+        {
+            manager = null;
+            closing = quitAfter = worldEntered = transportConnected = sessionGame = lostHandled = false;
+            hostEndReason = null;
+            playersSpawned.Clear();
+        }
         public static bool IsServer => Active && manager.IsServer;
         public static ulong LocalId => Active ? manager.LocalClientId : 0;
         /// <summary>Connected to the host (or hosting).</summary>
         public static bool Connected => Active && (manager.IsServer || manager.IsConnectedClient);
+        static Database db;
+        /// <summary>The game data, loaded once for the multiplayer code's look-ups (turrets, models).</summary>
+        internal static Database Db => db ??= Database.Load();
+
         /// <summary>The world's seed (the host picks it, NetState carries it to the clients).</summary>
         public static int Seed { get; private set; }
 
@@ -69,6 +97,13 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>-mpjoin &lt;address&gt; on the command line (testing): the main menu skips its intro and joins, null = none.</summary>
         public static readonly string AutoJoinAddress = CommandLineValue("-mpjoin");
+
+        /// <summary>Testing, development builds only: -mpdock docks this player once, a few seconds into their first flight;
+        /// -mpaccept accepts squad invitations while docked (NetPlayer), so the real squad flow runs without a hand on it.</summary>
+        public static readonly bool TestDock = TestFlag("-mpdock"), TestAccept = TestFlag("-mpaccept");
+
+        static bool TestFlag(string flag) =>
+            Debug.isDebugBuild && Array.Exists(Environment.GetCommandLineArgs(), a => string.Equals(a, flag, StringComparison.OrdinalIgnoreCase));
 
         static string CommandLineValue(string flag)
         {
@@ -136,16 +171,17 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The world's state is here (the host at once, a client when NetState spawns): the seed, then the game
-        /// starts in Var Hastra's orbit like a new free-play game.</summary>
+        /// starts docked at Var Hastra (no fly-in: the others see the ship appear on a pad), a new free-play game.</summary>
         internal static void EnterWorld(int seed = -1)
         {
             if (worldEntered) return;
             worldEntered = true;
             if (seed >= 0) Seed = seed;
-            SceneManager.LoadScene(SpaceScene);
+            Session.DockedFromSpace = false;
+            SceneManager.LoadScene(StationScene);
         }
 
-        static bool closing, quitAfter;
+        static bool closing, quitAfter, lostHandled;
         static string hostEndReason;
 
         /// <summary>Ends the session (leaving to the main menu, a failed connection). The host with players connected tells
@@ -187,12 +223,16 @@ namespace GoF2Remake.Multiplayer
             if (manager == null) return;
             manager.OnClientConnectedCallback -= OnClientConnected;
             manager.OnClientDisconnectCallback -= OnClientDisconnect;
+            manager.OnClientStopped -= OnStopped;
             if (manager.IsListening) manager.Shutdown();
-            UnityEngine.Object.Destroy(manager.gameObject);
+            // A moment later: Netcode finishes its shutdown at the end of the frame (destroyed at once, its OnDestroy shut the
+            // transport down a second time: "DisconnectRemoteClient should only be called on a listening server!").
+            UnityEngine.Object.Destroy(manager.gameObject, 0.25f);
             manager = null;
-            // The session's objects live in DontDestroyOnLoad: gone with it.
-            foreach (var n in UnityEngine.Object.FindObjectsByType<NetworkObject>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                if (n != null) UnityEngine.Object.Destroy(n.gameObject);
+            if (SceneManager.GetActiveScene().name == MenuScene) sessionGame = false;   // already back in the menu
+            // The session's objects live in DontDestroyOnLoad: gone with it (after Netcode's own shutdown, like the manager).
+            foreach (var n in UnityEngine.Object.FindObjectsByType<NetworkObject>(FindObjectsInactive.Include))
+                if (n != null) UnityEngine.Object.Destroy(n.gameObject, 0.3f);
         }
 
         /// <summary>This device's LAN address, for the host to tell the others.</summary>
@@ -224,12 +264,16 @@ namespace GoF2Remake.Multiplayer
         {
             Status = "";
             playersSpawned.Clear();   // statics outlive a session (and, with domain reload off, Play mode)
-            worldEntered = false;
+            worldEntered = transportConnected = lostHandled = false;
+            closing = quitAfter = false;
+            sessionGame = true;
+            NetStock.Reset();
             Session.ResetNewGame();
+            Session.Difficulty = Session.DifficultyNormal;   // every session plays on Normal (the shared stock, NPCs, rewards)
             Session.FreePlay = true;
             Session.CampaignMission = Session.FreePlayMission;
             Session.StationIndex = Station;
-            Session.LaunchedFromStation = true;
+            Session.LaunchedFromStation = false;   // the session starts docked (EnterWorld)
         }
 
         static NetworkManager EnsureManager()
@@ -252,6 +296,7 @@ namespace GoF2Remake.Multiplayer
             }
             manager.OnClientConnectedCallback += OnClientConnected;
             manager.OnClientDisconnectCallback += OnClientDisconnect;
+            manager.OnClientStopped += OnStopped;   // Netcode ending the session by itself (a transport failure)
             Application.quitting -= Shutdown;
             Application.quitting += Shutdown;   // closing the game leaves the session (the others see it at once)
             Application.wantsToQuit -= WantsToQuit;
@@ -261,7 +306,31 @@ namespace GoF2Remake.Multiplayer
 
         static void OnClientConnected(ulong clientId)
         {
-            if (manager != null && manager.IsServer) SpawnPlayer(clientId);
+            if (manager == null) return;
+            if (!manager.IsServer) { if (clientId == manager.LocalClientId) transportConnected = true; return; }
+            // The host is closing (its goodbye is out): a player connecting now is turned away with the reason.
+            if (closing) { if (clientId != NetworkManager.ServerClientId) manager.DisconnectClient(clientId, Localization.Extra("mpHostLeft", "The host ended the session.")); return; }
+            SpawnPlayer(clientId);
+        }
+
+        /// <summary>Netcode stopped this session by itself (not ShutdownNow, which unsubscribes first): like a lost host.</summary>
+        static void OnStopped(bool wasHost)
+        {
+            if (manager == null) return;
+            if (wasHost) { SessionEnded(Localization.Extra("mpStopped", "The session stopped (network error).")); return; }
+            OnClientDisconnect(manager.LocalClientId);
+        }
+
+        /// <summary>The session is over while playing: out of it, back to the Multiplayer panel with the reason.</summary>
+        static void SessionEnded(string reason)
+        {
+            if (lostHandled) return;
+            lostHandled = true;
+            Status = reason;
+            Shutdown();
+            PopupPending = true;
+            UI.MainMenu.OpenPanelOnStart = "multiplayerPanel";
+            SceneManager.LoadScene(MenuScene);
         }
 
         static void SpawnPlayer(ulong clientId)
@@ -279,24 +348,32 @@ namespace GoF2Remake.Multiplayer
                 // That player's ship goes at once (NGO removes a player object with its owner; this also covers a late one),
                 // and so does what they showed of their orbit (NGO destroys the objects a leaving client owns).
                 playersSpawned.Remove(clientId);
-                foreach (var p in UnityEngine.Object.FindObjectsByType<NetPlayer>(FindObjectsSortMode.None))
+                // (Netcode has usually despawned the player object already: its mission cargo is handed over in
+                // NetPlayer.OnNetworkDespawn.)
+                foreach (var p in UnityEngine.Object.FindObjectsByType<NetPlayer>())
                     if (p.OwnerClientId == clientId && p.IsSpawned) p.NetworkObject.Despawn();
                 return;
             }
             // This client lost the host (or never reached it): the host's own reason, else a plain one (not Netcode's
             // "[Disconnect Event] ... ProtocolTimeout" text).
+            if (lostHandled) return;
             string reason = hostEndReason ?? manager.DisconnectReason;
             hostEndReason = null;
             bool wasConnected = worldEntered;
             if (string.IsNullOrEmpty(reason) || reason.StartsWith("[")) reason = null;
+            // A host that answered but ended the session before this player was in: not "no host".
             Status = reason ?? (wasConnected ? Localization.Extra("mpLost", "The connection to the host was lost.")
-                                             : Localization.Extra("mpNoHost", "No host found at that address."));
-            Shutdown();
-            if (!wasConnected && SceneManager.GetActiveScene().name == MenuScene) return;   // a failed join: the panel shows it
-            // Out of a session: back to the Multiplayer panel with the reason in a popup.
-            PopupPending = true;
-            UI.MainMenu.OpenPanelOnStart = "multiplayerPanel";
-            SceneManager.LoadScene(MenuScene);
+                                : transportConnected ? Localization.Extra("mpHostLeft", "The host ended the session.")
+                                : Localization.Extra("mpNoHost", "No host found at that address."));
+            if (!wasConnected && SceneManager.GetActiveScene().name == MenuScene)
+            {
+                // A failed join: the panel shows it.
+                lostHandled = true;
+                Shutdown();
+                sessionGame = false;
+                return;
+            }
+            SessionEnded(Status);
         }
     }
 }

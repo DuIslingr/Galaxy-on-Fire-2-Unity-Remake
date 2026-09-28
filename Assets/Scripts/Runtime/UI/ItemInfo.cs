@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class ItemInfo
     {
         static readonly Dictionary<string, Texture2D> icons = new Dictionary<string, Texture2D>();

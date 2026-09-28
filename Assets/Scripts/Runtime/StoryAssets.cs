@@ -15,6 +15,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class StoryAssets : ScriptableObject
     {
         public List<string> voiceNamesEng = new List<string>();

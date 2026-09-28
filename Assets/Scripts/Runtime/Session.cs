@@ -11,6 +11,7 @@ namespace GoF2Remake.Data
 {
     public enum Campaign { GalaxyOnFire2, Valkyrie, Supernova }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Session
     {
         public const float DifficultyNormal = 0.5f;

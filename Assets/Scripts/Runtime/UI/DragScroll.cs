@@ -12,6 +12,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class DragScroll : PointerManipulator
     {
         const float StartThreshold = 12f;     // panel units before a press becomes a drag

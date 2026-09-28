@@ -35,10 +35,31 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<FixedString512Bytes> loot = new NetworkVariable<FixedString512Bytes>(default, Read, Owner);   // "item:amount,..."
         readonly NetworkVariable<bool> fromFriend = new NetworkVariable<bool>(false, Read, Owner);
         readonly NetworkVariable<bool> missionCrate = new NetworkVariable<bool>(false, Read, Owner);
+        readonly NetworkVariable<bool> missionLoot = new NetworkVariable<bool>(false, Read, Owner);   // only the owner's squad takes it
 
         readonly NetSmoothing smoothing = new NetSmoothing();
         Crate crate;          // the owner: the real crate; the others: the copy (while in the orbit)
-        bool reported;
+        bool reported, wasPulling, adopted;
+
+        /// <summary>A Recovery / Salvage container (a squadmate's takeover of the mission builds its own, FreelanceOrbit).</summary>
+        public bool IsMissionCrate => missionCrate.Value;
+        /// <summary>Its pose (Unity) as the owner last wrote it.</summary>
+        public Vector3 WorldPosition => position.Value;
+
+        /// <summary>Taken over by this player (their own crate now stands in for it): no copy here any more.</summary>
+        public void MarkAdopted()
+        {
+            adopted = true;
+            if (crate != null && !IsOwner) Destroy(crate.gameObject);
+            crate = null;
+        }
+
+        /// <summary>NetState: a squadmate took the mission over and built its own container: the owner's goes.</summary>
+        [Rpc(SendTo.Owner)]
+        public void TakenOverRpc()
+        {
+            if (crate != null) Destroy(crate.gameObject);
+        }
         int pendingStation = -1, pendingId = -1;
 
         public int Station => station.Value;
@@ -63,7 +84,13 @@ namespace GoF2Remake.Multiplayer
             }
             if (!IsOwner) return;
             crate = NetOrbit.Current != null && NetOrbit.Current.Station == station.Value ? NetOrbit.Current.Crate(localId.Value) : null;
-            if (crate == null) return;
+            if (crate == null)
+            {
+                // Captured or gone before this spawned (NetOrbit had dropped its id already): nothing to show.
+                var state = NetState.Instance;
+                if (state != null && state.IsSpawned) state.DespawnRpc(NetworkObjectId);
+                return;
+            }
             NetOrbit.Current.Register(this, crate);
             position.Value = crate.transform.position;
             rotation.Value = crate.transform.rotation;
@@ -71,7 +98,9 @@ namespace GoF2Remake.Multiplayer
             loot.Value = Encode(crate.loot);
             fromFriend.Value = crate.fromFriend;
             missionCrate.Value = crate.missionCrate;
+            missionLoot.Value = crate.missionLoot;
             crate.PullStarted = () => ClaimRpc();
+            if (crate.pulled) ClaimRpc();   // the owner's beam (an auto tractor) had it before the spawn
         }
 
         public override void OnNetworkDespawn()
@@ -83,7 +112,17 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Server)]
         void ClaimRpc(RpcParams rpc = default)
         {
-            if (claimant.Value == NoClaim) claimant.Value = rpc.Receive.SenderClientId;
+            ulong who = rpc.Receive.SenderClientId;
+            // Another player's mission loot: only the mission's team (the owner's squad) may claim it.
+            if (missionLoot.Value && !NetSquad.SameClient(who, NetSquad.Find(OwnerClientId))) return;
+            if (claimant.Value == NoClaim) claimant.Value = who;
+        }
+
+        /// <summary>The claimant's beam let go (or they left the orbit): anyone may take it again.</summary>
+        [Rpc(SendTo.Server)]
+        void ReleaseRpc(RpcParams rpc = default)
+        {
+            if (claimant.Value == rpc.Receive.SenderClientId) claimant.Value = NoClaim;
         }
 
         /// <summary>The claimant's capture: the owner's crate is gone (and with it everyone's).</summary>
@@ -112,50 +151,54 @@ namespace GoF2Remake.Multiplayer
             crate.race = race.Value;
             crate.fromFriend = fromFriend.Value;
             crate.missionCrate = missionCrate.Value;
+            crate.missionLoot = missionLoot.Value;
             foreach (var s in Decode(loot.Value.ToString())) crate.loot.Add(s);
             crate.PullStarted = () => ClaimRpc();
+            crate.CapturedHere = () =>
+            {
+                // Captured here (CombatRadar): the owner removes its crate, once.
+                if (reported || claimant.Value != NetworkManager.LocalClientId) return;
+                reported = true;
+                CapturedRpc();
+            };
             smoothing.Push(position.Value);
             smoothing.Snap();
+            ApplyClaim(NetworkManager.LocalClientId);   // the claim rules from the first frame (an auto tractor grabs at once)
         }
 
         void Update()
         {
             if (!IsSpawned) return;
             ulong me = NetworkManager.LocalClientId;
-            // A claimant who left loses the claim.
-            if (IsServer && claimant.Value != NoClaim && !NetworkManager.ConnectedClientsIds.Contains(claimant.Value)) claimant.Value = NoClaim;
+            // A claimant who left (the session or the crate's orbit: docked, jumped, dead) loses the claim.
+            if (IsServer && claimant.Value != NoClaim && !NetOrbit.InOrbit(claimant.Value, station.Value)) claimant.Value = NoClaim;
             if (IsOwner)
             {
                 if (crate == null) return;   // NetOrbit asks for the despawn
                 ApplyClaim(me);
+                TrackPull(me);
                 if ((position.Value - crate.transform.position).sqrMagnitude > 0.0001f) position.Value = crate.transform.position;
                 if (Quaternion.Angle(rotation.Value, crate.transform.rotation) > 0.5f) rotation.Value = crate.transform.rotation;
                 return;
             }
             var local = NetPlayer.Local;
             bool here = local != null && local.InSpace && local.Station == station.Value;
-            if (!here)
+            if (!here || adopted)
             {
-                // Not in its orbit (any more): no copy (built again on coming back while it still exists).
+                // Not in its orbit (any more): no copy (built again on coming back while it still exists), no claim.
                 if (crate != null) Destroy(crate.gameObject);
                 crate = null;
-                copyAlive = false;
+                if (wasPulling || claimant.Value == me) { wasPulling = false; if (claimant.Value == me) ReleaseRpc(); }
                 return;
             }
             if (crate == null)
             {
-                if (copyAlive)
-                {
-                    // The copy went while here: this player captured it; the owner removes its crate, once.
-                    copyAlive = false;
-                    if (!reported && claimant.Value == me) { reported = true; CapturedRpc(); }
-                    return;
-                }
+                // The copy is gone (a capture reported itself, CapturedHere) or never built.
                 if (!reported) BuildCopy();
                 return;
             }
-            copyAlive = true;
             ApplyClaim(me);
+            TrackPull(me);
             if (!crate.pulled)
             {
                 if (position.Value != lastPosition) { smoothing.Push(position.Value); lastPosition = position.Value; }
@@ -163,13 +206,24 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
-        bool copyAlive;
         Vector3 lastPosition;
 
         void ApplyClaim(ulong me)
         {
-            crate.claimedByOther = claimant.Value != NoClaim && claimant.Value != me;
-            crate.captureBlocked = claimant.Value != me;
+            // Another player's mission loot is out of reach: only the owner's squad (the mission's team) takes it.
+            bool outsider = crate.missionLoot && !NetSquad.SameClient(OwnerClientId, NetPlayer.Local);
+            bool otherClaims = claimant.Value != NoClaim && claimant.Value != me;
+            crate.claimedByOther = outsider || otherClaims;
+            // The owner's own crate: only another player's claim holds it back (its capture needs no confirmation).
+            crate.captureBlocked = outsider || (IsOwner ? otherClaims : claimant.Value != me);
+        }
+
+        /// <summary>This player's beam let go of it without capturing it: the claim goes back.</summary>
+        void TrackPull(ulong me)
+        {
+            bool pulling = crate.pulled;
+            if (wasPulling && !pulling && claimant.Value == me) ReleaseRpc();
+            wasPulling = pulling;
         }
 
         static string Encode(List<ItemStack> stacks)

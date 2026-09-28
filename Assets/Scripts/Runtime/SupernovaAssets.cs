@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class SupernovaAssets : ScriptableObject
     {
         [Header("Docking and hacking")]

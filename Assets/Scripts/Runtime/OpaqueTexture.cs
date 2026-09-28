@@ -9,6 +9,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class OpaqueTexture
     {
         static readonly HashSet<object> users = new HashSet<object>();

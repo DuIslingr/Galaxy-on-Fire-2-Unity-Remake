@@ -16,6 +16,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NpcTables
     {
         public const float BaseSpeed = 2f, BoostSpeed = 5.5f, FreighterSpeed = 1f;   // u/ms

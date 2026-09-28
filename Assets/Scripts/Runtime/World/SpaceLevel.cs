@@ -150,6 +150,9 @@ namespace GoF2Remake.World
 
         void Awake()
         {
+            // Multiplayer: loaded after its session ended (a docking queued behind the menu): on to the menu (nothing is
+            // saved, SaveGame.SessionGame).
+            if (GoF2Remake.Multiplayer.NetGame.SessionLost) SceneManager.LoadScene("MainMenu");
             db = Database.Load();
             // MGame::OnUpdate: a frame's dt is capped at 150 ms (a hitch never jumps the game far ahead).
             savedMaxDelta = Time.maximumDeltaTime;
@@ -216,9 +219,12 @@ namespace GoF2Remake.World
             VolatileCargo.Attach(Player.gameObject, db, Player);   // PlayerEgo+0x398: volatile goods, sound 35
             bool storyOrbit = !Session.FreePlay && Story.IsLevelMission(station);
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
-            bool freelanceOrbit = !storyOrbit && Freelance.IsMissionOrbit(station);
+            // Multiplayer: not when a squadmate here already runs this mission (their ships are shown here, NetMissions).
+            bool missionHere = !storyOrbit && Freelance.IsMissionOrbit(station);
+            bool freelanceOrbit = missionHere && NetMissions.ShouldRun(station);
+            bool missionFollower = missionHere && !freelanceOrbit;   // a squadmate here runs it: its briefing, route, timer, score
             // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
-            bool siege = !storyOrbit && !freelanceOrbit && KaamoClub.SiegeAt(station);
+            bool siege = !storyOrbit && !missionHere && KaamoClub.SiegeAt(station);
             // Level::assignGuns reads the level mission (Status+400): a campaign level or a freelance mission's type.
             NpcTables.InCampaignLevel = storyOrbit;
             NpcTables.LevelFreelanceType = freelanceOrbit ? Freelance.Mission.type : -1;
@@ -226,7 +232,8 @@ namespace GoF2Remake.World
             // Multiplayer: only the first player in an empty orbit builds its traffic and runs it; the others show that player's
             // ships (NetOrbit) and take them over if it leaves, never building new ones.
             NetAuthority = NetGame.Active && NetState.OrbitEmpty(station);
-            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege || (NetGame.Active && !NetAuthority), Wormhole);
+            ownPassive = storyOrbit || freelanceOrbit || siege;
+            Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
             Docking = Player.gameObject.AddComponent<ObjectDocking>();
@@ -251,11 +258,22 @@ namespace GoF2Remake.World
                 FreelanceOrbit.Setup(this, Traffic);
                 Navigation.SetRoute(FreelanceOrbit.PlayerRoute);
             }
+            else if (missionFollower)
+            {
+                FreelanceOrbit = new GameObject("FreelanceOrbit mission (squad)").AddComponent<FreelanceOrbit>();
+                FreelanceOrbit.SetupFollower(this, Traffic);
+            }
             else if (siege)
             {
                 Siege = new GameObject("Kaamo siege").AddComponent<KaamoSiege>();
-                Siege.Setup(this, Traffic);
+                if (NetGame.Active && KaamoSiege.OtherRunsHere(station)) Siege.SetupFollower(this, Traffic);   // one siege per orbit
+                else Siege.Setup(this, Traffic);
             }
+            // Multiplayer: an Informer mission's spy is this player's when another player built the orbit's traffic (theirs
+            // has it only for their own mission) and no squadmate here has one already.
+            if (NetGame.Active && !NetAuthority && !storyOrbit && Freelance.Active && Freelance.Mission.type == MissionType.Informer
+                && Freelance.Mission.target == station && !Session.InformerKilled && !Session.InformerFailed && !NetMissions.TeamHere(station))
+                SpawnInformerSpy();
             // Step 59's arms convoy: its point is the player's route until the freighter is gone.
             if (Traffic.ConvoyRoute != null)
             {
@@ -293,7 +311,39 @@ namespace GoF2Remake.World
         public bool NetAuthority { get; private set; }
 
         /// <summary>Multiplayer: the orbit's authority left, this player takes its ships over (NetOrbit).</summary>
-        public void TakeOverNetAuthority() => NetAuthority = true;
+        /// <summary>Multiplayer: the orbit's traffic is this player's now (taken over): its relaunches and waves run, unless the
+        /// level keeps it passive itself (a story, mission or siege orbit).</summary>
+        public void TakeOverNetAuthority()
+        {
+            NetAuthority = true;
+            Traffic?.SetPassive(ownPassive);
+        }
+
+        /// <summary>Multiplayer: another player built this orbit's traffic at the same moment (NetOrbit): this player's goes
+        /// (not its mission ships or wingmen) and theirs is shown instead.</summary>
+        public void DropNetAuthority()
+        {
+            NetAuthority = false;
+            if (Traffic == null) return;
+            foreach (var s in Traffic.Ships)
+                if (s != null && !s.Gone && !s.MissionShip && !s.IsWingman && (Siege == null || !Siege.Owns(s))) s.Vanish();
+            Traffic.SetPassive(true);
+        }
+
+        bool ownPassive;
+
+        /// <summary>TrafficPlan's Informer: a local fighter named 1663 in front of the station (out of the others' view).</summary>
+        void SpawnInformerSpy()
+        {
+            int race = Traffic.SystemRace;
+            var at = new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 30000) + 20000);
+            var spy = Traffic.SpawnShip(new SpawnSpec
+            {
+                group = NpcGroup.Local, race = race, ship = NpcTables.RandomFighter(race), position = NetOrbit.OutOfSight(at), nameText = 1663,
+            });
+            spy.MissionShip = true;   // this player's mission: never taken over by the orbit's authority
+            Traffic.ConnectPlayers();
+        }
 
         /// <summary>Multiplayer (NetGame): the asteroid field from the session's seed, the same on every player's level.</summary>
         public void SpawnNetworkAsteroids(int seed)

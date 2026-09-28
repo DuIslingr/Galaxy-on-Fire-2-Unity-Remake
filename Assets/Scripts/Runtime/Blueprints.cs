@@ -37,6 +37,7 @@ namespace GoF2Remake.Data
         public int item, quantity, station;
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Blueprints
     {
         public const int ShippingPerUnit = 200;

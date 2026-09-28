@@ -25,6 +25,10 @@ namespace GoF2Remake.Flight
         /// <summary>Player+0x5d of the ship it came from (a friend: Level::stealFriendCargo) / a mission container (116 / 117).</summary>
         public bool fromFriend, missionCrate;
 
+        /// <summary>Multiplayer (NetCrate): this player's beam captured it (CombatRadar, just before it is destroyed).</summary>
+        [System.NonSerialized] public System.Action CapturedHere;
+        /// <summary>Multiplayer: dropped by a freelance mission's ship or junk: only the mission's team can take it (NetCrate).</summary>
+        [System.NonSerialized] public bool missionLoot;
         /// <summary>Multiplayer (NetCrate): another player's tractor beam has it; the radar leaves it alone.</summary>
         [System.NonSerialized] public bool claimedByOther;
         /// <summary>Multiplayer: pulled in, but the host hasn't confirmed this player's claim yet: it waits at the ship.</summary>
@@ -55,7 +59,9 @@ namespace GoF2Remake.Flight
             float dtMs = Time.deltaTime * 1000f, frames = dtMs / 33.3f;
             if (remote) return;   // the host's crate moves it and ends it (NetCrate)
             ageMs += dtMs;
-            if (ageMs > LifetimeMs || !HasLoot) { Destroy(gameObject); return; }
+            // The Hijacker's mission container stays (the original tractors it straight out of the ship; the remake's crate
+            // expiring left Recovery / Salvage neither won nor failed).
+            if ((ageMs > LifetimeMs && !missionCrate) || !HasLoot) { Destroy(gameObject); return; }
             if (!pulled && force > 0.05f)
             {
                 transform.position += drift * force * frames * M;

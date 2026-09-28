@@ -12,6 +12,9 @@
 //   ToReturnTrip         MGame::successCheck, Recovery / Salvage: the container is aboard, bring it to the client's station
 //                        (the mission becomes a Passenger-like type 11 with status -1)
 // Texts: success 373-377 + 216 (Shima 108: 458), failure 384-388 + 392, return trip 389.
+// Multiplayer (NetMissions): a squad has one mission, the same for every member, accepted with the whole squad docked at
+// the agent's station; its progress is shared, a success anywhere pays everyone in it an equal share and ends it for all,
+// so does a failure; the member carrying the containers / passengers delivers them.
 
 using System.Collections.Generic;
 using GoF2Remake.Flight;
@@ -47,6 +50,8 @@ namespace GoF2Remake.Data
         /// <summary>The checks before the confirmation: free cargo for Courier (337), cabins for Passenger (338); null = ok.</summary>
         public static string AcceptRefusal(Database db, FreelanceMission m)
         {
+            string squad = GoF2Remake.Multiplayer.NetMissions.AcceptRefusal();   // multiplayer: the whole squad docked here
+            if (squad != null) return squad;
             if (m.type == MissionType.Courier)
             {
                 int free = Shop.FreeCargo(db) + (Active ? ContainersAboard() : 0);
@@ -60,7 +65,7 @@ namespace GoF2Remake.Data
         /// <summary>Extreme: a tenth of reward + bonus up front (203 when short).</summary>
         public static int UpFrontCost(FreelanceMission m) => Session.IsExtreme ? m.Total / 10 : 0;
 
-        static int ContainersAboard()
+        public static int ContainersAboard()
         {
             int n = 0;
             foreach (var s in Session.Cargo) if (s.item == SecureContainer || s.item == SecureCabin) n += s.amount;
@@ -83,6 +88,7 @@ namespace GoF2Remake.Data
             Session.FreelanceMission = m;
             Session.InformerKilled = Session.InformerFailed = false;
             agent.accepted = true;
+            GoF2Remake.Multiplayer.NetMissions.OnAccepted(m);   // multiplayer: the squad gets it too
         }
 
         /// <summary>A discarded or failed mission: containers out of the hold, passengers home, no mission.</summary>
@@ -125,6 +131,7 @@ namespace GoF2Remake.Data
             m.status = -1;
             m.won = false;
             m.textIds = new List<int> { 803 };
+            GoF2Remake.Multiplayer.NetMissions.Share(m, false);   // the squad's copies become the return trip too
         }
 
         // ---- docking ----------------------------------------------------------------------------------------
@@ -138,7 +145,8 @@ namespace GoF2Remake.Data
             {
                 case MissionType.Courier:
                 case MissionType.Passenger:
-                    return station == m.target ? DockResult.Success : DockResult.None;
+                    // Multiplayer: only the squad member carrying the containers / passengers delivers them.
+                    return station == m.target && GoF2Remake.Multiplayer.NetMissions.CanDeliver(m) ? DockResult.Success : DockResult.None;
                 case MissionType.Purchase:
                     return station == m.target && CargoCount(m.good) >= m.amount ? DockResult.Success : DockResult.None;
                 case MissionType.Informer:
@@ -161,6 +169,7 @@ namespace GoF2Remake.Data
         public static void OnEnterStation(StationStock stock)
         {
             if (!Active || Mission.type != MissionType.StolenGoods || stock == null || stock.station != Mission.target) return;
+            if (GoF2Remake.Multiplayer.NetGame.Active && Mission.status > 0) return;   // multiplayer: a squadmate has them
             if (stock.items.Find(r => r.item == Documents) == null) Shop.InsertStock(stock, new ItemStack(Documents, 1));
         }
 
@@ -208,6 +217,7 @@ namespace GoF2Remake.Data
             }
             int pay = m.Total;
             if (docked && pay >= 1000001) pay = 6666;
+            pay = GoF2Remake.Multiplayer.NetMissions.SplitReward(m, pay);   // multiplayer: an equal share for everyone in the squad
             Standing.ApplyDelict(m.clientRace, -5);
             Session.FreelanceCompleted++;
             Session.Credits += pay;
@@ -218,7 +228,9 @@ namespace GoF2Remake.Data
         /// <summary>Failure after the dialog: a lost Challenge costs the wager; the mission is gone.</summary>
         public static void Fail()
         {
-            if (Mission.type == MissionType.Challenge) Session.Credits -= Mission.reward;
+            // Multiplayer: failed for the squad too (a lost Challenge's wager shared).
+            int wager = GoF2Remake.Multiplayer.NetMissions.Failed(Mission, Mission.type == MissionType.Challenge ? Mission.reward : 0);
+            Session.Credits -= wager;
             Discard();
         }
     }
