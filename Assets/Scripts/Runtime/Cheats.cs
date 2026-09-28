@@ -1,6 +1,6 @@
 // Cheats.cs
-// Remake-only testing tools behind the main menu's Admin panel (F10 / LB + RB held / five taps on the version text) and, once that
-// has been opened, the in-flight pause menu's Admin page. Toggles live in PlayerPrefs (they stay on across scenes and
+// Remake-only testing tools behind the main menu's Debug panel (F10 / LB + RB held / five taps on the version text) and, once that
+// has been opened, the in-flight pause menu's Debug page. Toggles live in PlayerPrefs (they stay on across scenes and
 // restarts); actions change the running game's Session (and the live ship in flight). Nothing here is in the original.
 //   God mode         the player takes no damage, the gamma pool doesn't drain, volatile goods don't blow up
 //   Infinite ammo    secondaries (missiles, mines, bombs...) aren't used up
@@ -18,7 +18,7 @@ namespace GoF2Remake.Data
 {
     public static class Cheats
     {
-        /// <summary>The Admin panel has been opened once: the pause menu shows its Admin page from then on.</summary>
+        /// <summary>The Debug panel has been opened once: the pause menu shows its Debug page from then on.</summary>
         public static bool Unlocked { get => Get("unlocked"); set => Set("unlocked", value); }
 
         public static bool GodMode { get => Get("godMode"); set => Set("godMode", value); }

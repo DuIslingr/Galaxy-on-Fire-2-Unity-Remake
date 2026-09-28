@@ -98,7 +98,7 @@ namespace GoF2Remake.Flight
         public void Use()
         {
             if (Rules == null || !Rules.Available || !target.Alive) return;
-            bool free = Cheats.FreeJumps;   // remake: the Admin panel's free jumps cover the cloak's cells too
+            bool free = Cheats.FreeJumps;   // remake: the Debug panel's free jumps cover the cloak's cells too
             if (!Rules.TryStart(free ? int.MaxValue : Shop.CargoOf(Cloak.EnergyCellItem)))
             {
                 Message?.Invoke($"{Localization.Get(583)} {Rules.cells}.");

@@ -30,7 +30,7 @@ namespace GoF2Remake.UI
             public Label name, tech, distance;
         }
 
-        readonly VisualElement layer, lockRing, lockPlate, lockClass, navButtons, fastForward, autopilotButton;
+        readonly VisualElement layer, lockRing, lockPlate, lockClass, navButtons, fastForward, autopilotButton, pill;
         readonly Label lockOre;
         readonly Texture2D[] lockFrames = new Texture2D[24];
         readonly Texture2D autopilotOff, autopilotOn, fastForwardOff, fastForwardOn, clockOff, clockOn;
@@ -68,7 +68,8 @@ namespace GoF2Remake.UI
             fastForwardOn = Tex("fastforward_on");
             clockOff = Tex("time_extender");
             clockOn = Tex("time_extender_on");
-            Image(root.Q("navButtonPill"), Tex("button_pill"));
+            pill = root.Q("navButtonPill");
+            Image(pill, Tex("button_pill"));
             Image(fastForward, fastForwardOff);
             Image(autopilotButton, autopilotOn);
 
@@ -261,12 +262,15 @@ namespace GoF2Remake.UI
         {
             bool approach = miningPhase == Mining.Phase.Approaching;
             bool active = nav != null && (nav.Autopilot || approach) && !nav.Jumping;
-            bool visible = touch && nav != null && !nav.Jumping && (miningPhase == Mining.Phase.Idle || approach);
+            // Hud::draw 10: not at campaign 0 / 1 (the prologue and the rescue).
+            bool visible = touch && nav != null && !nav.Jumping && (miningPhase == Mining.Phase.Idle || approach)
+                           && (Session.FreePlay || Session.CampaignMission > 1);
             navButtons.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
             bool canFf = active && nav.CanFastForward;
             var ext = nav != null ? nav.Extender : null;
             clockMode = !canFf && ext != null && !nav.Autopilot && !approach && !nav.Jumping;
             fastForward.style.visibility = canFf || clockMode ? Visibility.Visible : Visibility.Hidden;
+            pill.style.visibility = fastForward.style.visibility;   // Hud::draw 11: the pill only behind the FF / clock icon
             if (!canFf) fastForwardPressed = false;
             if (clockMode)
             {

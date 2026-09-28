@@ -46,7 +46,7 @@ namespace GoF2Remake.UI
         public AudioClip buttonRelease;  // event 123
         public AudioClip infoSound;      // event 126
         // Voice volume preview (remake: the original only previewed FX). Same lines in both voice banks;
-        // German voices play when the language is German, like the original's voice bank switch.
+        // German voices play with the German voice language (by default the German text, like the original's voice bank switch).
         public AudioSource voiceSource;
         public AudioClip[] voicePreviewEnglish;
         public AudioClip[] voicePreviewGerman;
@@ -166,7 +166,7 @@ namespace GoF2Remake.UI
             Bind("cardGof2", () => PickCampaign(Campaign.GalaxyOnFire2));
             Bind("cardValkyrie", () => PickCampaign(Campaign.Valkyrie));
             Bind("cardSupernova", () => PickCampaign(Campaign.Supernova));
-            BuildAdminPanel();
+            BuildDebugPanel();
             Bind("normalButton", () => StartGame(Session.DifficultyNormal));
             Bind("extremeButton", () => ShowDialog(Localization.Get(25), Localization.Get(26),
                 () => StartGame(Session.DifficultyExtreme)));
@@ -233,16 +233,25 @@ namespace GoF2Remake.UI
         void Update()
         {
             if (root == null) return;
-            // Remake: the admin panel (F10, LB + RB held for a second, or five taps on the version text).
-            if (screen == MenuState.Menu && Keyboard.current != null && Keyboard.current.f10Key.wasPressedThisFrame) OpenAdmin();
+            // Remake: the debug panel (F10, LB + RB or three fingers held for a second, or five taps on the version text).
+            if (screen == MenuState.Menu && Keyboard.current != null && Keyboard.current.f10Key.wasPressedThisFrame) OpenDebug();
             var pad = Gamepad.current;
-            if (screen == MenuState.Menu && pad != null && pad.leftShoulder.isPressed && pad.rightShoulder.isPressed)
+            if (screen == MenuState.Menu && ((pad != null && pad.leftShoulder.isPressed && pad.rightShoulder.isPressed) || FingersDown() >= 3))
             {
-                adminHoldTime += Time.unscaledDeltaTime;
-                if (adminHoldTime >= 1f && adminHoldTime - Time.unscaledDeltaTime < 1f) OpenAdmin();
+                debugHoldTime += Time.unscaledDeltaTime;
+                if (debugHoldTime >= 1f && debugHoldTime - Time.unscaledDeltaTime < 1f) OpenDebug();
             }
-            else adminHoldTime = 0f;
+            else debugHoldTime = 0f;
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
+        }
+
+        static int FingersDown()
+        {
+            var ts = Touchscreen.current;
+            if (ts == null) return 0;
+            int n = 0;
+            foreach (var t in ts.touches) if (t.press.isPressed) n++;
+            return n;
         }
 
         // ---- aspect ratios ---------------------------------------------------------------------
@@ -494,13 +503,13 @@ namespace GoF2Remake.UI
             if (dialog.ClassListContains("dialog-backdrop--shown")) { CloseDialog(); return; }
             if (openPanel == null) return;
             Play(buttonRelease);
-            if (openPanel == panels["difficultyPanel"]) { OpenPanel(pendingStartIndex >= 0 && panels.ContainsKey("adminPanel") ? "adminPanel" : "campaignPanel"); return; }
+            if (openPanel == panels["difficultyPanel"]) { OpenPanel(pendingStartIndex >= 0 && panels.ContainsKey("debugPanel") ? "debugPanel" : "campaignPanel"); return; }
             var closing = openPanel;
             HidePanel(closing);
             openPanel = null;
             mainColumn.RemoveFromClassList("main-column--dimmed");
             SetFocusable(mainButtons, true);
-            var target = closing == panels["campaignPanel"] || panels.TryGetValue("adminPanel", out var ap) && closing == ap ? newGameButton
+            var target = closing == panels["campaignPanel"] || panels.TryGetValue("debugPanel", out var ap) && closing == ap ? newGameButton
                 : closing == panels["loadPanel"] ? loadButton
                 : closing == panels["optionsPanel"] ? optionsButton : aboutButton;
             Select(target);
@@ -525,7 +534,7 @@ namespace GoF2Remake.UI
             StartCoroutine(Leave(Story.StartCampaign(db, pendingCampaign)));
         }
 
-        // ---- admin panel (remake-only testing tools: F10 or five taps on the version text) -------
+        // ---- debug panel (remake-only testing tools: F10 or five taps on the version text) -------
 
         int pendingStartIndex = -1;
         ScrollView missionList;
@@ -534,25 +543,25 @@ namespace GoF2Remake.UI
         readonly List<(VisualElement row, string text)> missionRows = new List<(VisualElement, string)>();
         readonly List<(VisualElement heading, List<VisualElement> rows)> missionSections = new List<(VisualElement, List<VisualElement>)>();
         int versionTaps;
-        float versionTapTime, adminHoldTime;
-        readonly List<OptionControl> adminControls = new List<OptionControl>();
+        float versionTapTime, debugHoldTime;
+        readonly List<OptionControl> debugControls = new List<OptionControl>();
 
         /// <summary>A hidden panel next to the others: the mission list (a new game from any story step, no intro) on the
         /// left, the cheat toggles on the right.</summary>
-        void BuildAdminPanel()
+        void BuildDebugPanel()
         {
             // A UI reload (PanelRenderer) rebuilds the tree: drop the old panel's elements.
-            adminControls.Clear();
+            debugControls.Clear();
             missionRows.Clear();
             missionSections.Clear();
             var host = root.Q("panelHost");
             if (host == null) return;
-            var panel = new VisualElement { name = "adminPanel" };
+            var panel = new VisualElement { name = "debugPanel" };
             panel.AddToClassList("panel");
             panel.AddToClassList("panel--wide");
-            panel.AddToClassList("admin-panel");
+            panel.AddToClassList("debug-panel");
             panel.usageHints = UsageHints.DynamicTransform;
-            var title = new Label { name = "adminTitle" };
+            var title = new Label { name = "debugTitle" };
             title.AddToClassList("panel-title");
             title.AddToClassList("gof-semibold");
             panel.Add(title);
@@ -560,17 +569,17 @@ namespace GoF2Remake.UI
             accent.AddToClassList("panel-accent");
             panel.Add(accent);
             var columns = new VisualElement();
-            columns.AddToClassList("admin-columns");
+            columns.AddToClassList("debug-columns");
             var left = new VisualElement();
-            left.AddToClassList("admin-column");
-            left.AddToClassList("admin-column--missions");
+            left.AddToClassList("debug-column");
+            left.AddToClassList("debug-column--missions");
             var right = new VisualElement();
-            right.AddToClassList("admin-column");
-            right.AddToClassList("admin-column--cheats");
+            right.AddToClassList("debug-column");
+            right.AddToClassList("debug-column--cheats");
             columns.Add(left);
             columns.Add(right);
             panel.Add(columns);
-            var back = new Button { name = "adminBack" };
+            var back = new Button { name = "debugBack" };
             back.AddToClassList("menu-button");
             back.AddToClassList("back-button");
             back.AddToClassList("gof-semibold");
@@ -578,61 +587,63 @@ namespace GoF2Remake.UI
             HookFocusSound(back);
             panel.Add(back);
             host.Add(panel);
-            panels["adminPanel"] = panel;
+            panels["debugPanel"] = panel;
             BuildMissionList(left);
 
-            // The cheat toggles (Cheats; the actions are on the pause menu's / station's Admin page, in a running game).
-            var heading = new Label { name = "adminCheatsTitle", pickingMode = PickingMode.Ignore };
-            heading.AddToClassList("admin-heading");
+            // The cheat toggles (Cheats; the actions are on the pause menu's / station's Debug page, in a running game).
+            var heading = new Label { name = "debugCheatsTitle", pickingMode = PickingMode.Ignore };
+            heading.AddToClassList("debug-heading");
             heading.AddToClassList("gof-semibold");
             right.Add(heading);
             foreach (var def in CheatsCatalog.Toggles())
             {
                 var c = new OptionControl(def);
                 c.Field.AddToClassList("option-row");
-                c.Root.AddToClassList("admin-option");
+                c.Root.AddToClassList("debug-option");
                 HookFocusSound(c.Field);
                 c.Changed += () => Play(buttonRelease);
                 right.Add(c.Root);
-                adminControls.Add(c);
+                debugControls.Add(c);
             }
-            var note = new Label { name = "adminNote", pickingMode = PickingMode.Ignore };
-            note.AddToClassList("admin-note");
+            var note = new Label { name = "debugNote", pickingMode = PickingMode.Ignore };
+            note.AddToClassList("debug-note");
             right.Add(note);
 
-            // Touch: five taps on the version text within 2 s.
+            // Touch: five taps on the version text, each within 1 s of the last (its tap zone reaches well past the
+            // small text, .footer-version).
             if (versionLabel != null)
             {
                 versionLabel.pickingMode = PickingMode.Position;
+                versionLabel.AddToClassList("footer-version");
                 versionLabel.RegisterCallback<PointerDownEvent>(_ =>
                 {
-                    if (Time.unscaledTime - versionTapTime > 2f) versionTaps = 0;
+                    if (Time.unscaledTime - versionTapTime > 1f) versionTaps = 0;
                     versionTapTime = Time.unscaledTime;
-                    if (++versionTaps >= 5) { versionTaps = 0; OpenAdmin(); }
+                    if (++versionTaps >= 5) { versionTaps = 0; OpenDebug(); }
                 });
             }
         }
 
-        void OpenAdmin()
+        void OpenDebug()
         {
-            if (!panels.ContainsKey("adminPanel") || openPanel == panels["adminPanel"]) return;
+            if (!panels.ContainsKey("debugPanel") || openPanel == panels["debugPanel"]) return;
             if (dialog.ClassListContains("dialog-backdrop--shown")) return;
             Play(buttonRelease);
-            Cheats.Unlocked = true;   // from now on the pause menu and the station's system menu have an Admin page
-            foreach (var c in adminControls) c.Refresh();
-            OpenPanel("adminPanel");
+            Cheats.Unlocked = true;   // from now on the pause menu and the station's system menu have a Debug page
+            foreach (var c in debugControls) c.Refresh();
+            OpenPanel("debugPanel");
         }
 
         /// <summary>A search field and every story step, grouped by campaign: "index  title  station" over a one-line
         /// summary (StepSummaries, from the research notes). A row starts that step (the difficulty panel first).</summary>
         void BuildMissionList(VisualElement parent)
         {
-            var heading = new Label { name = "adminMissionsTitle", pickingMode = PickingMode.Ignore };
-            heading.AddToClassList("admin-heading");
+            var heading = new Label { name = "debugMissionsTitle", pickingMode = PickingMode.Ignore };
+            heading.AddToClassList("debug-heading");
             heading.AddToClassList("gof-semibold");
             parent.Add(heading);
-            missionFilter = new TextField { name = "adminFilter" };
-            missionFilter.AddToClassList("admin-filter");
+            missionFilter = new TextField { name = "debugFilter" };
+            missionFilter.AddToClassList("debug-filter");
             missionFilter.textEdition.hidePlaceholderOnFocus = true;
             missionFilter.RegisterValueChangedCallback(e => FilterMissions(e.newValue));
             parent.Add(missionFilter);
@@ -641,7 +652,7 @@ namespace GoF2Remake.UI
                 horizontalScrollerVisibility = ScrollerVisibility.Hidden,
                 verticalScrollerVisibility = ScrollerVisibility.Hidden,
             };
-            missionList.AddToClassList("admin-mission-list");
+            missionList.AddToClassList("debug-mission-list");
             new DragScroll(missionList);
             parent.Add(missionList);
 
@@ -661,7 +672,7 @@ namespace GoF2Remake.UI
                         Campaign.Supernova => "SUPERNOVA  ·  84-162",
                         _ => "GALAXY ON FIRE 2  ·  0-44",
                     }) { pickingMode = PickingMode.Ignore };
-                    h.AddToClassList("admin-mission-section");
+                    h.AddToClassList("debug-mission-section");
                     h.AddToClassList("gof-semibold");
                     missionList.Add(h);
                     sectionRows = new List<VisualElement>();
@@ -680,28 +691,28 @@ namespace GoF2Remake.UI
                 if (string.IsNullOrEmpty(name)) name = station;
 
                 var row = new Button();
-                row.AddToClassList("admin-mission");
+                row.AddToClassList("debug-mission");
                 var top = new VisualElement { pickingMode = PickingMode.Ignore };
-                top.AddToClassList("admin-mission-top");
+                top.AddToClassList("debug-mission-top");
                 var num = new Label(i.ToString()) { pickingMode = PickingMode.Ignore };
-                num.AddToClassList("admin-mission-index");
+                num.AddToClassList("debug-mission-index");
                 num.AddToClassList("gof-semibold");
                 top.Add(num);
                 var label = new Label(name) { pickingMode = PickingMode.Ignore };
-                label.AddToClassList("admin-mission-title");
+                label.AddToClassList("debug-mission-title");
                 label.AddToClassList("gof-semibold");
                 top.Add(label);
                 if (!string.IsNullOrEmpty(station) && station != name)
                 {
                     var where = new Label(station) { pickingMode = PickingMode.Ignore };
-                    where.AddToClassList("admin-mission-station");
+                    where.AddToClassList("debug-mission-station");
                     top.Add(where);
                 }
                 row.Add(top);
                 if (!string.IsNullOrEmpty(summary))
                 {
                     var sum = new Label(summary) { pickingMode = PickingMode.Ignore };
-                    sum.AddToClassList("admin-mission-summary");
+                    sum.AddToClassList("debug-mission-summary");
                     row.Add(sum);
                 }
                 int index = i;
@@ -826,6 +837,7 @@ namespace GoF2Remake.UI
             OptionPage.Sound => "soundPage",
             OptionPage.Graphics => "graphicsPage",
             OptionPage.Controls => "controlsPage",
+            OptionPage.Language => "languagePage",   // under the language buttons
             _ => "gameplayPage",
         };
 
@@ -844,6 +856,7 @@ namespace GoF2Remake.UI
                 // Original: the FX volume plays a sample on release; remake: the voice volume a voice line.
                 if (def.id == "sfx") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => Play(infoSound));
                 if (def.id == "voice") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => PlayVoicePreview());
+                if (def.page == OptionPage.Language) c.Root.AddToClassList("language-voice-row");
                 root.Q(PageName(def.page)).Add(c.Root);
                 optionControls.Add(c);
             }
@@ -900,12 +913,12 @@ namespace GoF2Remake.UI
             foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack" }) Set(n, "‹  " + T(170));
 
             Set("campaignTitle", T(103));
-            Set("adminTitle", Localization.Extra("adminTitle", "Admin").ToUpperInvariant());
-            Set("adminBack", "‹  " + T(170));
-            Set("adminCheatsTitle", Localization.Extra("adminCheats", "Cheats").ToUpperInvariant());
-            Set("adminNote", Localization.Extra("adminNote", "Credits, repair, ammo, energy cells, the map and standing: the Admin page of the pause menu (in flight) and of the station's menu."));
-            foreach (var c in adminControls) c.Refresh();
-            Set("adminMissionsTitle", Localization.Extra("missionSelect", "Start at mission").ToUpperInvariant());
+            Set("debugTitle", Localization.Extra("debugTitle", "Debug").ToUpperInvariant());
+            Set("debugBack", "‹  " + T(170));
+            Set("debugCheatsTitle", Localization.Extra("debugCheats", "Cheats").ToUpperInvariant());
+            Set("debugNote", Localization.Extra("debugNote", "Credits, repair, ammo, energy cells, the map and standing: the Debug page of the pause menu (in flight) and of the station's menu."));
+            foreach (var c in debugControls) c.Refresh();
+            Set("debugMissionsTitle", Localization.Extra("missionSelect", "Start at mission").ToUpperInvariant());
             if (missionFilter != null) missionFilter.textEdition.placeholder = Localization.Extra("missionSearch", "Search: a step number, a station, a word...");
             Set("difficultyTitle", T(517));
             Set("normalLabel", T(519));
@@ -1021,7 +1034,7 @@ namespace GoF2Remake.UI
 
         void PlayVoicePreview()
         {
-            var clips = Localization.Language == "de" && voicePreviewGerman != null && voicePreviewGerman.Length > 0
+            var clips = Settings.GermanVoices && voicePreviewGerman != null && voicePreviewGerman.Length > 0
                 ? voicePreviewGerman : voicePreviewEnglish;
             if (voiceSource == null || clips == null || clips.Length == 0) return;
             voiceSource.Stop();   // one line at a time, a new release restarts it

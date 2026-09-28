@@ -59,7 +59,7 @@ namespace GoF2Remake.Flight
         bool TurretMode => turret != null && !turret.IsAuto;
 
         /// <summary>MGame::nextCamId: the mode the camera button leads to.</summary>
-        Mode Next => Current == Mode.Standard ? (TurretMode ? Mode.Turret : Mode.FreeLook) : Current == Mode.Turret ? Mode.FreeLook : Mode.Standard;
+        public Mode Next => Current == Mode.Standard ? (TurretMode ? Mode.Turret : Mode.FreeLook) : Current == Mode.Turret ? Mode.FreeLook : Mode.Standard;
 
         /// <summary>The camera button (touch, V, D-pad up).</summary>
         public void Cycle()

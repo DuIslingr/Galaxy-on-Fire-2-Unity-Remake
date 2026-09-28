@@ -98,7 +98,7 @@ namespace GoF2Remake.Flight
         public void Damage(float amount, bool byNpc = false, Vector3 hitVector = default)
         {
             if (!Alive || invulnerable) return;
-            if (isPlayer && Data.Cheats.GodMode) return;   // remake: the Admin panel's god mode
+            if (isPlayer && Data.Cheats.GodMode) return;   // remake: the Debug panel's god mode
             int dmg = Mathf.Max(0, (int)amount);
             lastHitVector = hitVector;
             bool dead;

@@ -14,7 +14,7 @@
     bottom: 0;
 }
 
-/* ---- touch controls ------------------------------------------------------------------ */
+/* ---- touch controls (TouchControls: the original's images, placed in code by Globals::setCoordsSteer / setCoordsFire) ---- */
 
 .touch-layer {
     display: none;
@@ -23,175 +23,50 @@
     right: 0;
     top: 0;
     bottom: 0;
-    flex-direction: row;
+    overflow: hidden;
 }
 
 .input-touch .touch-layer {
     display: flex;
 }
 
-.stick-zone {
-    width: 50%;
-    height: 100%;
-}
-
-.stick-ghost {
+.touch-abs {
     position: absolute;
-    left: 90px;
-    bottom: 90px;
-    width: 220px;
-    height: 220px;
-    border-radius: 110px;
-    border-width: 2px;
-    border-color: var(--gof-cyan-soft);
-    background-color: rgba(62, 200, 255, 0.05);
-    align-items: center;
-    justify-content: center;
-    transition-duration: 0.2s;
 }
 
-.stick-ghost--hidden {
-    opacity: 0;
-}
-
-.stick-base {
+/* The empty screen behind the controls: the throttle drag, the dodge, the free-look orbit. */
+.touch-gesture-zone {
     position: absolute;
-    width: 220px;
-    height: 220px;
-    border-radius: 110px;
-    border-width: 3px;
-    border-color: var(--gof-cyan-soft);
-    background-color: rgba(4, 10, 18, 0.35);
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
 }
 
-.stick-base--active {
-    opacity: 1;
-}
-
-.stick-knob {
-    width: 96px;
-    height: 96px;
-    border-radius: 48px;
-    background-color: var(--gof-cyan-soft);
-    border-width: 3px;
-    border-color: var(--gof-cyan);
-}
-
-.touch-right {
-    flex-grow: 1;
-    flex-direction: row;
-    justify-content: flex-end;
-    align-items: flex-end;
-    padding: 0 40px 70px 0;
-}
-
-.touch-buttons {
-    align-items: center;
-    margin-right: 36px;
-}
-
-.touch-button {
-    width: 170px;
-    height: 170px;
-    border-radius: 85px;
-    border-width: 3px;
-    border-color: var(--gof-cyan-soft);
-    background-color: rgba(4, 10, 18, 0.45);
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    transition-duration: 0.1s;
-}
-
-.touch-button--small {
-    width: 120px;
-    height: 120px;
-    border-radius: 60px;
-    margin-bottom: 28px;
-}
-
-.touch-button--fire {
-    width: 210px;
-    height: 210px;
-    border-radius: 105px;
-    border-color: rgba(255, 166, 48, 0.55);
-}
-
-.touch-button--hidden {
-    display: none;
-}
-
-.touch-button-label--small {
-    font-size: 17px;
-}
-
-.touch-button-count {
-    font-size: 26px;
+/* Hud::updateSecondaryWeaponString on the plate 0x4c2: "<name> (<n>)" centred, its top at h - 32. */
+.touch-plate-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 3px;
+    font-size: 20px;
     color: #FFFFFF;
+    -unity-text-align: upper-center;
+    white-space: nowrap;
 }
 
-.touch-button--pressed {
-    background-color: var(--gof-amber-soft);
-    border-color: var(--gof-amber);
-    scale: 0.94 0.94;
-}
-
-.touch-button--disabled {
-    opacity: 0.4;
-}
-
-.boost-charge {
+/* PlayerEgo::drawThrottle: the thrust number under the crosshair. */
+.touch-gauge-text {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 0;
-    background-color: rgba(62, 200, 255, 0.18);
-}
-
-.touch-button-label {
+    width: 120px;
     font-size: 22px;
-    letter-spacing: 2px;
-    color: var(--gof-text);
+    color: #FFFFFF;
+    -unity-text-align: upper-center;
 }
 
-.touch-caption {
-    font-size: 18px;
-    letter-spacing: 3px;
-    color: var(--gof-text-dim);
-}
-
-.throttle-track {
-    width: 78px;
-    height: 420px;
-    border-radius: 12px;
-    border-width: 2px;
-    border-color: var(--gof-cyan-soft);
-    background-color: rgba(4, 10, 18, 0.45);
-    overflow: hidden;
-}
-
-.throttle-fill {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 100%;
-    background-color: rgba(62, 200, 255, 0.22);
-}
-
-.throttle-handle {
-    position: absolute;
-    left: 6px;
-    right: 6px;
-    bottom: 100%;
-    height: 10px;
-    margin-bottom: -5px;
-    border-radius: 5px;
-    background-color: var(--gof-cyan);
+/* Touch has the bottom plate instead of the label under the bars. */
+.input-touch .secondary-label--shown {
+    display: none;
 }
 
 /* ---- crosshair (screen projection of ship + forward * 22000 units) ---------------------------- */
@@ -467,31 +342,9 @@
     -unity-text-align: middle-center;
 }
 
-/* Autopilot to an asteroid and mining: no crosshair or flight buttons; the stick stays for the drill. The fire button
-   stays: it aborts the approach and stops mining (MGame::OnTouchBegin, Mining). */
-.hud-docking .crosshair,
-.hud-docking .throttle-track {
+/* Autopilot to an asteroid and mining: no crosshair. */
+.hud-docking .crosshair {
     display: none;
-}
-
-.hud-docking .touch-buttons .touch-button {
-    display: none;
-}
-
-.hud-docking .touch-buttons .touch-button--fire {
-    display: flex;
-}
-
-.hud-docking .touch-buttons .touch-button--fire.touch-button--hidden {
-    display: none;
-}
-
-.hud-docking .stick-zone {
-    visibility: hidden;
-}
-
-.hud-mining .stick-zone {
-    visibility: visible;
 }
 
 /* ---- the selected secondary under the status bars (remake: no speed / throttle / boost readout) ----------- */
@@ -521,27 +374,6 @@
 
 .secondary-label--empty {
     color: var(--gof-text-dim);
-}
-
-/* ---- menu button (touch) --------------------------------------------------------------- */
-
-.hud-menu-button {
-    display: none;
-    position: absolute;
-    right: 40px;
-    top: 62px;   /* under the top readout */
-    padding: 12px 22px;
-    font-size: 20px;
-    letter-spacing: 3px;
-    color: var(--gof-text);
-    background-color: rgba(4, 10, 18, 0.55);
-    border-width: 2px;
-    border-color: var(--gof-cyan-soft);
-    border-radius: 4px;
-}
-
-.input-touch .hud-menu-button {
-    display: flex;
 }
 
 /* ---- keyboard / controller hints -------------------------------------------------------- */
@@ -1028,11 +860,6 @@
     display: none;
 }
 
-/* Tilt steering (options: Accelerometer): the stick stays drawn but idle (Hud::draw's tilt branch), dimmed. */
-.hud-tilt .stick-zone {
-    opacity: 0.35;
-}
-
 /* Action Freeze (PhotoMode): the HUD hidden, the logo 0x534 at the top-right, the footer with Back and Save (remake). */
 .hud-photo #hud {
     display: none;
@@ -1103,6 +930,11 @@
     right: 40px;
     top: 10px;
     align-items: flex-end;
+}
+
+/* Touch: left of the pause button (0x4b8 at w - 121, 24). */
+.input-touch .hud-readout {
+    right: 140px;
 }
 
 .hud-readout-plate {

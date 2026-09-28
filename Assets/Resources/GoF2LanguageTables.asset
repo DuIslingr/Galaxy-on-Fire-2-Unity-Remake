@@ -21,6 +21,7 @@ MonoBehaviour:
   - it
   - ja
   - ko
+  - nl
   - pl
   - pt
   - ru
@@ -33,6 +34,7 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 57dbd40bb861b1c449355f7e7bf06327, type: 3}
   - {fileID: 4900000, guid: b60990eaf82338d47940b006a84a6e26, type: 3}
   - {fileID: 4900000, guid: b8eea4469f3d1374d90016a4ca780bb9, type: 3}
+  - {fileID: 4900000, guid: 1d9ff22d337485046b0829c89e4a081c, type: 3}
   - {fileID: 4900000, guid: 653bf6aa4e99b224f8d1bbba5629a1c9, type: 3}
   - {fileID: 4900000, guid: d1bf3a28caa9b3b409b7f5c59505a30c, type: 3}
   - {fileID: 4900000, guid: 23fbd248578a31947850551131cd654d, type: 3}

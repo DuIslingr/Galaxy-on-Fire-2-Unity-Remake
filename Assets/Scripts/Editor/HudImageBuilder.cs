@@ -55,6 +55,35 @@ namespace GoF2Remake.EditorTools
             (Low, "flare_0", 71, 934, 64, 64, 0, false),     // 1288 lens flare: big hexagon (space_backdrop.md)
             (Low, "flare_1", 160, 902, 64, 64, 0, false),    // 1289 small hexagon
             (Low, "flare_2", 285, 601, 64, 64, 0, false),    // 1290 glow
+            // Touch flight controls (touch_hud.md 1): stick, fire (+ the action arrow), the right cluster's background (secondary
+            // socket bottom / left), boost, pause, quick menu, secondary, the camera button's next-mode icons, the auto-turret
+            // toggle, the secondary name plate and the throttle gauge.
+            (Ipad, "touch_stick_base", 1097, 489, 291, 291, 0, false),  // 0x4c1
+            (Ipad, "touch_stick_knob", 112, 1470, 181, 181, 0, false),  // 0x4b6
+            (Ipad, "touch_stick_knob_on", 1122, 1080, 181, 181, 0, false), // 0x4b7
+            (Ipad, "touch_fire", 1440, 211, 198, 198, 0, false),        // 0x4b4
+            (Ipad, "touch_fire_on", 1316, 1169, 198, 198, 0, false),    // 0x4b5
+            (Ipad, "touch_action", 112, 1890, 134, 128, 0, false),      // 0x536 the action arrow on the fire button
+            (Ipad, "touch_cluster_left", 1501, 489, 401, 396, 0, false),   // 0x4c6 (secondary socket on the left)
+            (Ipad, "touch_cluster_bottom", 1636, 1033, 397, 406, 0, false), // 0x6aa (secondary socket at the bottom)
+            (Ipad, "touch_boost", 1390, 600, 109, 109, 0, false),       // 0x4b2
+            (Ipad, "touch_boost_on", 893, 1547, 109, 109, 0, false),    // 0x4b3
+            (Ipad, "touch_pause", 248, 1890, 109, 109, 0, false),       // 0x4b8
+            (Ipad, "touch_pause_on", 1, 1325, 109, 109, 0, false),      // 0x4b9
+            (Ipad, "touch_menu", 239, 1214, 125, 78, 0, false),         // 0x4ba quick menu
+            (Ipad, "touch_menu_on", 112, 1214, 125, 78, 0, false),      // 0x4bb
+            (Ipad, "touch_secondary", 1, 236, 109, 109, 0, false),      // 0x4bc
+            (Main, "touch_secondary_on", 1, 887, 77, 77, 0, false),     // 0x4bd (only in the phone atlas: 77 px, touch_hud.md 12.1)
+            (Ipad, "touch_cam_0", 1, 1923, 109, 122, 0, false),         // 0x528 next mode: standard
+            (Ipad, "touch_cam_0_on", 1904, 819, 109, 122, 0, false),    // 0x527
+            (Ipad, "touch_cam_1", 1, 928, 109, 122, 0, false),          // 0x4e9 next mode: turret
+            (Ipad, "touch_cam_1_on", 1, 1624, 109, 122, 0, false),      // 0x4ea
+            (Ipad, "touch_cam_3", 888, 1382, 109, 122, 0, false),       // 0x52a next mode: free look
+            (Ipad, "touch_cam_3_on", 1, 1160, 109, 122, 0, false),      // 0x529
+            (Ipad, "touch_turret", 1, 1, 109, 109, 0, false),           // 0x547 auto turret off
+            (Ipad, "touch_turret_on", 1904, 708, 109, 109, 0, false),   // 0x546 auto turret on / pressed
+            (Main, "touch_secondary_plate", 1253, 533, 374, 37, 0, false), // 0x4c2 bottom-centre name plate
+            (Main, "throttle_gauge", 1337, 1105, 162, 83, 0, false),    // 0x548 half ring under the crosshair
             (Ipad, "time_extender", 1904, 489, 109, 109, 0, false),     // 0x543 idle clock (combat_equipment.md 3.1)
             (Ipad, "time_extender_on", 1390, 489, 109, 109, 0, false),  // 0x542 active / pressed / flashing
             (Ipad, "emp_bar", 112, 2020, 114, 10, 0, false),            // 0x4d8 EMP bar frame under a near ship (4.1)

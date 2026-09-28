@@ -240,53 +240,53 @@
     font-size: 20px;
 }
 
-/* ---- admin panel (remake-only testing tools, F10 / five taps on the version text) ------- */
+/* ---- debug panel (remake-only testing tools, F10 / five taps on the version text) ------- */
 
-.admin-panel {
+.debug-panel {
     max-width: 1400px;
     max-height: 88%;
 }
 
-.admin-columns {
+.debug-columns {
     flex-direction: row;
     flex-shrink: 1;
     min-height: 0;
 }
 
-.admin-column--missions {
+.debug-column--missions {
     width: 62%;
     flex-shrink: 0;
     margin-right: 3%;
 }
 
-.admin-column--cheats {
+.debug-column--cheats {
     width: 35%;
     flex-grow: 0;
     flex-shrink: 0;
     justify-content: flex-start;
 }
 
-.admin-column--cheats .option-item {
+.debug-column--cheats .option-item {
     flex-grow: 0;
     flex-shrink: 0;
 }
 
-.admin-column--cheats .unity-base-field__label {
+.debug-column--cheats .unity-base-field__label {
     white-space: nowrap;
 }
 
-.admin-heading {
+.debug-heading {
     margin-bottom: 8px;
     font-size: 18px;
     letter-spacing: 4px;
     color: var(--gof-cyan);
 }
 
-.admin-filter {
+.debug-filter {
     margin: 0 0 10px 0;
 }
 
-.admin-filter .unity-base-text-field__input {
+.debug-filter .unity-base-text-field__input {
     padding: 8px 12px;
     font-size: 18px;
     color: var(--gof-text);
@@ -296,22 +296,22 @@
     border-radius: 2px;
 }
 
-.admin-filter:focus .unity-base-text-field__input {
+.debug-filter:focus .unity-base-text-field__input {
     border-color: var(--gof-amber);
 }
 
-.admin-mission-list {
+.debug-mission-list {
     height: 540px;
 }
 
-.admin-mission-section {
+.debug-mission-section {
     margin: 12px 0 4px 0;
     font-size: 15px;
     letter-spacing: 3px;
     color: var(--gof-amber);
 }
 
-.admin-mission {
+.debug-mission {
     flex-direction: column;
     align-items: stretch;
     margin: 0;
@@ -324,31 +324,31 @@
     -unity-text-align: middle-left;
 }
 
-.admin-mission:focus,
-.can-hover .admin-mission:hover {
+.debug-mission:focus,
+.can-hover .debug-mission:hover {
     background-color: rgba(58, 170, 220, 0.14);
     border-left-color: var(--gof-amber);
 }
 
-.admin-mission-top {
+.debug-mission-top {
     flex-direction: row;
     align-items: center;
 }
 
-.admin-mission-index {
+.debug-mission-index {
     min-width: 46px;
     font-size: 17px;
     color: var(--gof-amber);
 }
 
-.admin-mission-title {
+.debug-mission-title {
     flex-shrink: 1;
     font-size: 17px;
     color: var(--gof-text);
     white-space: normal;
 }
 
-.admin-mission-station {
+.debug-mission-station {
     margin-left: auto;
     padding-left: 12px;
     flex-shrink: 0;
@@ -357,25 +357,25 @@
     color: var(--gof-text-dim);
 }
 
-.admin-mission-summary {
+.debug-mission-summary {
     margin-left: 46px;
     font-size: 14px;
     color: var(--gof-text-dim);
     white-space: normal;
 }
 
-.admin-option .unity-base-field__label {
+.debug-option .unity-base-field__label {
     min-width: 290px;
 }
 
-.admin-note {
+.debug-note {
     margin-top: 10px;
     font-size: 15px;
     color: var(--gof-text-dim);
     white-space: normal;
 }
 
-.layout-phone .admin-mission-list {
+.layout-phone .debug-mission-list {
     height: 420px;
 }
 
@@ -561,6 +561,11 @@
     flex-wrap: wrap;
 }
 
+/* The voice language row under the text language buttons. */
+.language-voice-row {
+    margin-top: 28px;
+}
+
 .language-button {
     width: 46%;
     margin: 4px 8px 4px 0;
@@ -610,6 +615,12 @@
     font-size: 15px;
     letter-spacing: 2px;
     color: var(--gof-text-dim);
+}
+
+/* The debug panel's tap target: padding widens the hit zone, the negative margin keeps the text where it was. */
+.footer-version {
+    padding: 40px 60px 40px 40px;
+    margin: -40px -60px -40px -40px;
 }
 
 /* ---- dialog ------------------------------------------------------------------------- */

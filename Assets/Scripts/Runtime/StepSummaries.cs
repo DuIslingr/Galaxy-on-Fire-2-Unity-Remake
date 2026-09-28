@@ -1,5 +1,5 @@
 // StepSummaries.cs
-// The Admin mission list's texts (remake-only): per story step a short title (the level's name where the step has an
+// The Debug mission list's texts (remake-only): per story step a short title (the level's name where the step has an
 // in-space level) and a one-line summary, from Resources/GoF2Data/step_summaries.json, which
 // Reference/tools/campaign/build_step_summaries.py writes from the research notes (campaign_flow.md's step table and
 // the campaign_levels_a/b/c.md headings).

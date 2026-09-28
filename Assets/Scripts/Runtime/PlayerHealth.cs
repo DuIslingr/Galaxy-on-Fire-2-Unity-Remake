@@ -241,7 +241,7 @@ namespace GoF2Remake.Flight
             }
         }
 
-        /// <summary>The Admin panel's repair: the gamma pool back to 100.</summary>
+        /// <summary>The Debug panel's repair: the gamma pool back to 100.</summary>
         public void RefillGamma()
         {
             if (Gamma < 0f) return;

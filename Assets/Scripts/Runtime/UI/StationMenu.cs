@@ -740,8 +740,13 @@ namespace GoF2Remake.UI
             if (Story.ShipSwapped(n)) level.ReplacePlayerShip(Session.ShipIndex);   // the loaner / the own ship on the turntable
             if (n == 9 || n == 44 || n == 75 || n == 76 || n == 83)
             {
-                Session.Autosave();
-                SceneManager.LoadScene(gameObject.scene.name);   // a fresh station module; the next conversation follows
+                // ModStation restarts the station module here so that OnInitialize runs again and the next conversation
+                // (the new step is "docked here") follows. The remake stays in the scene instead: the per-docking story
+                // tweaks, the autosave and the menu locks again; the next frame's CheckStory opens the conversation.
+                int station = level.Station.index;
+                Story.OnDocked(db, station, level.Stock);
+                if (Story.AutosaveAllowed(station)) Session.Autosave();
+                ApplyStoryLocks();
                 return;
             }
             int launchTo = n switch { 89 => 109, 99 => 10, 109 => 114, 119 => 10, 133 => 120, 144 => 112, 160 => 10, _ => -1 };
@@ -948,11 +953,11 @@ namespace GoF2Remake.UI
 
         // MenuTouchWindow mode 2 (the station's Menu): 28 Start new game, 29 Load game, 30 Save game, 31 Options,
         // 43 About, 522 Back to Main Menu (the language, iPad only, is in Options; the original has no Back button).
-        enum SysPage { Main, Save, Load, Options, Admin }
+        enum SysPage { Main, Save, Load, Options, Debug }
         SysPage sysPage;
-        Button newGameButton, loadGameButton, optionsButton, aboutButton, optionsBack, adminButton;
-        /// <summary>The Options page's scroll list also shows the Admin page (remake-only cheats, CheatsCatalog).</summary>
-        bool OptionsLikePage => sysPage == SysPage.Options || sysPage == SysPage.Admin;
+        Button newGameButton, loadGameButton, optionsButton, aboutButton, optionsBack, debugButton;
+        /// <summary>The Options page's scroll list also shows the Debug page (remake-only cheats, CheatsCatalog).</summary>
+        bool OptionsLikePage => sysPage == SysPage.Options || sysPage == SysPage.Debug;
         VisualElement systemOptions;
         ScrollView optionsScroll;
         readonly System.Collections.Generic.List<OptionControl> stationOptions = new System.Collections.Generic.List<OptionControl>();
@@ -978,8 +983,8 @@ namespace GoF2Remake.UI
             loadGameButton = SystemButton(Localization.Get(29), 1, () => ShowSystemPage(SysPage.Load), systemMain);
             optionsButton = SystemButton(Localization.Get(31), 3, () => ShowSystemPage(SysPage.Options), systemMain);
             aboutButton = SystemButton(Localization.Get(43), 4, () => ShowDialog(Localization.Get(45), null, true), systemMain);
-            // Remake: the Admin page once the main menu's Admin panel has been opened (Cheats).
-            if (Cheats.Unlocked) adminButton = SystemButton(Localization.Extra("adminTitle", "Admin"), 5, () => ShowSystemPage(SysPage.Admin), systemMain);
+            // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats).
+            if (Cheats.Unlocked) debugButton = SystemButton(Localization.Extra("debugTitle", "Debug"), 5, () => ShowSystemPage(SysPage.Debug), systemMain);
             // The options page: every option of the catalog (OptionsCatalog, like the pause menu).
             systemOptions = new VisualElement();
             systemOptions.AddToClassList("system-menu-page");
@@ -999,7 +1004,7 @@ namespace GoF2Remake.UI
         {
             optionsScroll.Clear();
             stationOptions.Clear();
-            if (sysPage == SysPage.Admin) { BuildStationAdmin(); return; }
+            if (sysPage == SysPage.Debug) { BuildStationDebug(); return; }
             OptionPage? page = null;
             foreach (var def in OptionsCatalog.All())
             {
@@ -1022,8 +1027,8 @@ namespace GoF2Remake.UI
             optionsReset = SystemButton(Localization.Get(497), -1, () => { Settings.ResetToDefaults(); foreach (var o in stationOptions) o.Refresh(); }, optionsScroll.contentContainer);
         }
 
-        /// <summary>The Admin page: the cheat toggles and actions (CheatsCatalog); an action reports in a toast.</summary>
-        void BuildStationAdmin()
+        /// <summary>The Debug page: the cheat toggles and actions (CheatsCatalog); an action reports in a toast.</summary>
+        void BuildStationDebug()
         {
             optionsReset = null;
             void Heading(string text)
@@ -1045,9 +1050,9 @@ namespace GoF2Remake.UI
                     stationOptions.Add(c);
                 }
             }
-            Heading(Localization.Extra("adminCheats", "Cheats"));
+            Heading(Localization.Extra("debugCheats", "Cheats"));
             Add(CheatsCatalog.Toggles());
-            Heading(Localization.Extra("adminActions", "Actions"));
+            Heading(Localization.Extra("debugActions", "Actions"));
             Add(CheatsCatalog.Actions(level.Database, s => { ShowToast(s); RefreshCredits(); }));
         }
 
@@ -1074,16 +1079,16 @@ namespace GoF2Remake.UI
             bool slots = page == SysPage.Save || page == SysPage.Load;
             systemMain.EnableInClassList("system-menu-page--shown", page == SysPage.Main);
             systemSave.EnableInClassList("system-menu-page--shown", slots);
-            systemOptions?.EnableInClassList("system-menu-page--shown", page == SysPage.Options || page == SysPage.Admin);
+            systemOptions?.EnableInClassList("system-menu-page--shown", page == SysPage.Options || page == SysPage.Debug);
             int title = page == SysPage.Save ? 30 : page == SysPage.Load ? 29 : page == SysPage.Options ? 31 : 172;   // Menu
-            root.Q<Label>("systemMenuTitle").text = page == SysPage.Admin ? Localization.Extra("adminTitle", "Admin").ToUpperInvariant()
+            root.Q<Label>("systemMenuTitle").text = page == SysPage.Debug ? Localization.Extra("debugTitle", "Debug").ToUpperInvariant()
                                                                           : Localization.Get(title).ToUpperInvariant();
             if (slots) BuildSaveSlots();
-            if (page == SysPage.Options || page == SysPage.Admin) BuildStationOptions();
+            if (page == SysPage.Options || page == SysPage.Debug) BuildStationOptions();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             Select(page == SysPage.Save ? saveSlotList.contentContainer.ElementAt(1)     // slot 1: the first manual slot
                  : page == SysPage.Load ? saveSlotList.contentContainer.ElementAt(0)
-                 : page == SysPage.Options || page == SysPage.Admin ? (stationOptions.Count > 0 ? stationOptions[0].Field : optionsBack)
+                 : page == SysPage.Options || page == SysPage.Debug ? (stationOptions.Count > 0 ? stationOptions[0].Field : optionsBack)
                  : newGameButton);
             BuildHints(InputMode.Current);
         }
@@ -1141,8 +1146,8 @@ namespace GoF2Remake.UI
                 return o.ToArray();
             }
             if (!SavePageOpen)
-                return adminButton != null
-                    ? new VisualElement[] { newGameButton, loadGameButton, saveGameButton, optionsButton, aboutButton, adminButton, mainMenuButton, systemClose }
+                return debugButton != null
+                    ? new VisualElement[] { newGameButton, loadGameButton, saveGameButton, optionsButton, aboutButton, debugButton, mainMenuButton, systemClose }
                     : new VisualElement[] { newGameButton, loadGameButton, saveGameButton, optionsButton, aboutButton, mainMenuButton, systemClose };
             var list = new System.Collections.Generic.List<VisualElement>(saveSlotList.contentContainer.Children()) { saveBack };
             return list.ToArray();

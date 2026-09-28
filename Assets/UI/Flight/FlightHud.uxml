@@ -36,43 +36,8 @@
             <ui:VisualElement name="crosshair" class="crosshair" picking-mode="Ignore" />
             <ui:VisualElement name="lockRing" class="lock-ring" picking-mode="Ignore" />
 
-            <ui:VisualElement name="touchLayer" class="touch-layer" picking-mode="Ignore">
-                <ui:VisualElement name="stickZone" class="stick-zone">
-                    <ui:VisualElement name="stickGhost" class="stick-ghost" picking-mode="Ignore">
-                        <ui:Label name="stickCaption" class="touch-caption gof-semibold" picking-mode="Ignore" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="stickBase" class="stick-base" picking-mode="Ignore">
-                        <ui:VisualElement name="stickKnob" class="stick-knob" picking-mode="Ignore" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-                <ui:VisualElement name="touchRight" class="touch-right" picking-mode="Ignore">
-                    <ui:VisualElement class="touch-buttons" picking-mode="Ignore">
-                        <ui:VisualElement name="missileButton" class="touch-button touch-button--small">
-                            <ui:Label name="missileCaption" class="touch-button-label touch-button-label--small gof-semibold" picking-mode="Ignore" />
-                            <ui:Label name="missileAmmo" class="touch-button-count gof-semibold" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                        <ui:VisualElement name="fireButton" class="touch-button touch-button--fire">
-                            <ui:Label name="fireCaption" class="touch-button-label gof-semibold" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement class="touch-buttons" picking-mode="Ignore">
-                        <ui:VisualElement name="turretButton" class="touch-button touch-button--small touch-button--hidden">
-                            <ui:Label name="turretCaption" class="touch-button-label touch-button-label--small gof-semibold" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                        <ui:VisualElement name="levelButton" class="touch-button touch-button--small">
-                            <ui:Label name="levelCaption" class="touch-button-label gof-semibold" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                        <ui:VisualElement name="boostButton" class="touch-button">
-                            <ui:VisualElement name="boostCharge" class="boost-charge" picking-mode="Ignore" />
-                            <ui:Label name="boostCaption" class="touch-button-label gof-semibold" picking-mode="Ignore" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="throttleTrack" class="throttle-track">
-                        <ui:VisualElement name="throttleFill" class="throttle-fill" picking-mode="Ignore" />
-                        <ui:VisualElement name="throttleHandle" class="throttle-handle" picking-mode="Ignore" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
-            </ui:VisualElement>
+            <!-- The touch controls (TouchControls builds them from the original images). -->
+            <ui:VisualElement name="touchLayer" class="touch-layer" picking-mode="Ignore" />
 
             <ui:VisualElement name="dockPrompt" class="dock-prompt dock-prompt--hidden">
                 <ui:VisualElement name="dockGlyph" class="dock-glyph" picking-mode="Ignore" />
@@ -117,7 +82,6 @@
                 <ui:Label name="secondaryLabel" class="secondary-label gof-semibold" />
             </ui:VisualElement>
 
-            <ui:Button name="menuButton" class="hud-menu-button gof-semibold" />
             <ui:VisualElement name="hints" class="hints" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="gameOver" class="game-over">

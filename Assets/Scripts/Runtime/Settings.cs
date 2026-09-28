@@ -132,6 +132,17 @@ namespace GoF2Remake.Data
             set { PlayerPrefs.SetString(Prefix + "language", value); PlayerPrefs.Save(); Changed?.Invoke(); }
         }
 
+        /// <summary>Remake: the voice language apart from the text: "auto" = German voices with the German text (the
+        /// original's voice bank switch), else English; "en" / "de" fixed. Only English and German were recorded.</summary>
+        public static string VoiceLanguage
+        {
+            get => PlayerPrefs.GetString(Prefix + "voiceLanguage", "auto");
+            set { PlayerPrefs.SetString(Prefix + "voiceLanguage", value); PlayerPrefs.Save(); Changed?.Invoke(); }
+        }
+
+        /// <summary>Whether the German voice lines play (VoiceLanguage, "auto" follows the text language).</summary>
+        public static bool GermanVoices => VoiceLanguage switch { "de" => true, "en" => false, _ => Language == "de" };
+
         /// <summary>"Default settings" (497): every option back to its default, the language kept.</summary>
         public static void ResetToDefaults()
         {

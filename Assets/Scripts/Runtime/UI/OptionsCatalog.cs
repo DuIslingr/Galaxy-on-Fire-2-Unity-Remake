@@ -4,7 +4,7 @@
 // Original options (Reference/research/mainmenu_notes.md 2.3 / 2.6): Music 34, FX 35, Voice 36, Brightness 503
 // (513-515), Quality 504 (507-509, descriptions 510-512), Sensitivity 499, Invert controls 500, Default settings 497.
 // The rest are remake options (Localization.Extra texts). Not here: touch / accelerometer steering and its
-// calibration (490-494; tilt isn't built), the language (its own tab).
+// calibration (490-494; tilt isn't built), the text language (the Language tab's buttons, with the voice language row under them).
 
 using System;
 using System.Collections.Generic;
@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace GoF2Remake.UI
 {
-    public enum OptionPage { Sound, Graphics, Controls, Gameplay }
+    public enum OptionPage { Sound, Graphics, Controls, Gameplay, Language }
     public enum OptionKind { Slider, Toggle, Choice, Button }
 
     public sealed class OptionDef
@@ -55,9 +55,11 @@ namespace GoF2Remake.UI
             OptionPage.Sound => X("tabSound", "Sound"),
             OptionPage.Graphics => Localization.Get(502),
             OptionPage.Controls => Localization.Get(498),
+            OptionPage.Language => Localization.Get(0),
             _ => X("tabGameplay", "Gameplay"),
         };
 
+        static readonly string[] VoiceCodes = { "auto", "en", "de" };
         static readonly float[] RenderScales = { 0.5f, 0.67f, 0.75f, 0.8f, 0.9f, 1f, 1.25f, 1.5f, 2f };
         static readonly int[] MsaaSamples = { 1, 2, 4, 8 };
 
@@ -71,6 +73,11 @@ namespace GoF2Remake.UI
                 Slider("music", OptionPage.Sound, () => Localization.Get(34), 0f, 1f, () => Settings.MusicVolume, v => Settings.MusicVolume = v, Percent),
                 Slider("sfx", OptionPage.Sound, () => Localization.Get(35), 0f, 1f, () => Settings.SfxVolume, v => Settings.SfxVolume = v, Percent),
                 Slider("voice", OptionPage.Sound, () => Localization.Get(36), 0f, 1f, () => Settings.VoiceVolume, v => Settings.VoiceVolume = v, Percent),
+                // Remake: the voices apart from the text language (only English and German were recorded); on the Language tab.
+                Choice("voiceLanguage", OptionPage.Language, () => X("voiceLanguage", "Voice language"), true,
+                    () => new[] { X("voiceAuto", "As text"), "English", "Deutsch" },
+                    () => Array.IndexOf(VoiceCodes, Settings.VoiceLanguage) is var i && i >= 0 ? i : 0,
+                    i => Settings.VoiceLanguage = VoiceCodes[i]),
             };
 
             // ---- graphics

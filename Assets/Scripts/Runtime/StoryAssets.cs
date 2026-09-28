@@ -68,14 +68,14 @@ namespace GoF2Remake.Data
         static StoryAssets instance;
         public static StoryAssets Load() => instance != null ? instance : instance = Resources.Load<StoryAssets>("GoF2Story/StoryAssets");
 
-        /// <summary>A voice line by its event name; German when the language is German and the line was recorded, else
-        /// English (FMOD's language banks).</summary>
+        /// <summary>A voice line by its event name; German when the voices are German (Settings.GermanVoices: the voice
+        /// language option, by default the text language) and the line was recorded, else English (FMOD's language banks).</summary>
         public AudioClip Voice(string name)
         {
             if (string.IsNullOrEmpty(name)) return null;
             eng ??= Map(voiceNamesEng, voiceClipsEng);
             deu ??= Map(voiceNamesDeu, voiceClipsDeu);
-            if (Settings.Language == "de" && deu.TryGetValue(name, out var d)) return d;
+            if (Settings.GermanVoices && deu.TryGetValue(name, out var d)) return d;
             return eng.TryGetValue(name, out var e) ? e : null;
         }
 

@@ -1,8 +1,7 @@
 // FlightHud.cs
 // In-flight HUD (UI Toolkit) that adapts to the input in use (InputMode):
-//   Touch:      floating stick on the left half (steer), throttle slider on the right edge (the original's touch
-//               throttle is a vertical drag too, MGame::OnTouchMove), Fire (hold), Missile (fires on release, like
-//               MGame::OnTouchEnd), Boost and Level buttons, a Menu button.
+//   Touch:      the original's controls (TouchControls: the fixed stick, the right cluster with fire / secondary / quick
+//               menu / camera, boost, pause, the throttle drag and the dodge on the empty screen); fire is the action button.
 //   Keyboard:   keycap hints (WASD, Q/E, Ctrl, F, Space, R, Esc).
 //   Controller: Xbox button hints (LS, LB/RB, RT, LT, A, Y, Menu).
 // Always: speed, throttle and boost readout, and the crosshair: the screen projection of ship + forward * 22000
@@ -35,16 +34,12 @@ namespace GoF2Remake.UI
     public class FlightHud : MonoBehaviour
     {
         public string menuScene = "MainMenu";
-        [Tooltip("Stick travel in panel units (the base is twice this wide in the USS).")]
-        public float stickRadius = 110f;
 
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
-        VisualElement turretButton;
-        Label turretCaption;
         bool lastTurretView, lastTurretAuto;
-        VisualElement root, safeArea, hints, throttleTrack, throttleFill, throttleHandle, boostButton, boostCharge, levelButton;
-        VisualElement fireButton, missileButton, crosshair, dockPrompt, dockGlyph;
+        VisualElement root, safeArea, hints;
+        VisualElement crosshair, dockPrompt, dockGlyph;
         Label dockLabel;
         SpaceLevel level;
         Mining mining;
@@ -86,16 +81,17 @@ namespace GoF2Remake.UI
         VisualElement autopilotMenu, autopilotMenuItems;
         readonly System.Collections.Generic.List<(Button button, Navigation.Target target)> menuButtons = new System.Collections.Generic.List<(Button, Navigation.Target)>();
         int menuIndex, lastMenuMove, menuOpenedFrame;
-        Label missileAmmo, secondaryLabel;
+        Label secondaryLabel;
         WeaponSystem weapons;
         float hitFlashMs;
         const float CrosshairDistanceMeters = 22000f * 0.05f;   // 0x46abe000
-        TouchStick stick;
+        TouchControls touch;
+        float quickMenuCheck;
+        bool quickMenuEntries;
         ShipController ship;
         ChaseCamera chase;
         Vector2Int lastScreen;
         Rect lastSafeArea;
-        int throttlePointer = -1;
 
         void OnEnable()
         {
@@ -135,17 +131,6 @@ namespace GoF2Remake.UI
             hints = root.Q("hints");
 
             InputGlyph.TrackHintsOption(hints);
-            throttleTrack = root.Q("throttleTrack");
-            throttleFill = root.Q("throttleFill");
-            throttleHandle = root.Q("throttleHandle");
-            boostButton = root.Q("boostButton");
-            boostCharge = root.Q("boostCharge");
-            levelButton = root.Q("levelButton");
-            turretButton = root.Q("turretButton");
-            turretCaption = root.Q<Label>("turretCaption");
-            fireButton = root.Q("fireButton");
-            missileButton = root.Q("missileButton");
-            missileAmmo = root.Q<Label>("missileAmmo");
             secondaryLabel = root.Q<Label>("secondaryLabel");
             // Remake: a tap on the secondary's name switches to the next mounted one (the original's HUD quick menu).
             secondaryLabel?.RegisterCallback<PointerDownEvent>(e => { weapons?.CycleSecondary(); e.StopPropagation(); });
@@ -160,18 +145,6 @@ namespace GoF2Remake.UI
             jumpChargeLabel.text = Localization.Get(1359).ToUpperInvariant();   // Khador Drive
             orbitInfoFilled = false;
 
-            stick = new TouchStick(root.Q("stickZone"), root.Q("stickBase"), root.Q("stickKnob"), root.Q("stickGhost"), stickRadius);
-            HookThrottle();
-            HookPress(boostButton, () => ship?.Boost());
-            HookLevelButton();
-            HookPress(turretButton, () =>
-            {
-                // A manual turret's button is the camera button (MGame::switchCamera); an auto turret's toggles auto fire.
-                if (level?.Turret != null && !level.Turret.IsAuto && level.FreeLook != null) level.FreeLook.Cycle();
-                else level?.Turret?.Toggle();
-            });
-            HookPress(fireButton, () => weapons?.SetPrimaryHeld(true), () => weapons?.SetPrimaryHeld(false));
-            HookPress(missileButton, null, () => weapons?.FireSecondary());
             HookPress(dockPrompt, null, Interact);
             miningView = new MiningView(root);
             readout = new HudReadout(safeArea);
@@ -222,93 +195,106 @@ namespace GoF2Remake.UI
             root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();   // Autopilot
             var menuIcon = Resources.Load<Texture2D>("GoF2Hud/autopilot_title");
             if (menuIcon != null) root.Q("autopilotMenuIcon").style.backgroundImage = new StyleBackground(menuIcon);
-            root.Q<Button>("menuButton").clicked += OpenPause;
-            ButtonSounds(root.Q("menuButton"));
+            BuildTouchControls();
 
-            root.Q<Label>("stickCaption").text = Localization.Extra("hudSteer", "STEER");
-            root.Q<Label>("boostCaption").text = Localization.Extra("hudBoost", "BOOST");
-            root.Q<Label>("levelCaption").text = Localization.Extra("hudLevel", "LEVEL");
-            root.Q<Label>("fireCaption").text = Localization.Extra("hudFire", "FIRE");
-            root.Q<Label>("missileCaption").text = Localization.Extra("hudMissile", "MISSILE");
-            root.Q<Button>("menuButton").text = Localization.Extra("hudMenu", "MENU");
             root.Q<Label>("dockLabel").text = Localization.Extra("hudDock", "DOCK");
 
             ApplyInputMode();
             UpdateLayout();
         }
 
-        // ---- touch controls ------------------------------------------------------------------------------
+        // ---- touch controls (TouchControls, touch_hud.md) ----------------------------------------------------------
 
-        void HookThrottle()
+        void BuildTouchControls()
         {
-            throttleTrack.RegisterCallback<PointerDownEvent>(e =>
+            touch = new TouchControls(root.Q("touchLayer"), root, root.Q("navButtons"))
             {
-                if (throttlePointer >= 0) return;
-                throttlePointer = e.pointerId;
-                throttleTrack.CapturePointer(e.pointerId);
-                SetThrottleFrom(e.localPosition.y);
-                e.StopPropagation();
-            });
-            throttleTrack.RegisterCallback<PointerMoveEvent>(e =>
-            {
-                if (e.pointerId != throttlePointer) return;
-                SetThrottleFrom(e.localPosition.y);
-                e.StopPropagation();
-            });
-            EventCallback<IPointerEvent> end = e =>
-            {
-                if (e.pointerId != throttlePointer) return;
-                if (throttleTrack.HasPointerCapture(throttlePointer)) throttleTrack.ReleasePointer(throttlePointer);
-                throttlePointer = -1;
+                FirePressed = OnTouchFire,
+                // MGame::OnTouchEnd: the secondary, boost and camera don't act while mining or docked at a point.
+                SecondaryReleased = () => { if (!MiningOrDocked) weapons?.FireSecondary(); },
+                BoostReleased = () => { if (!MiningOrDocked) ship?.Boost(); },
+                CameraReleased = () => { if (mining == null || mining.State == Mining.Phase.Idle) level?.FreeLook?.Cycle(); },
+                MenuReleased = () =>
+                {
+                    if (nav == null) return;
+                    if (nav.MenuOpen) CloseAutopilotMenu();
+                    else if (nav.CanOpenMenu) OpenAutopilotMenu();
+                },
+                TurretReleased = () => level?.Turret?.Toggle(),
+                PausePressed = () => PlayButton(true),
+                PauseReleased = () => { PlayButton(false); OpenPause(); },
+                LevelOut = () => ship?.AlignToHorizon(),
+                CycleSecondary = () => weapons?.CycleSecondary(),
+                Dodge = side => { if (nav == null || !nav.MenuOpen) ship?.RequestDodge(side); },
+                GetThrust = () => ship != null ? ship.Model.Throttle : 0f,
+                SetThrust = t => ship?.SetThrottle(t),
+                FreeLookDrag = (delta, held) => level?.FreeLook?.TouchDrag(delta, held),
             };
-            throttleTrack.RegisterCallback<PointerUpEvent>(e => end(e));
-            throttleTrack.RegisterCallback<PointerCancelEvent>(e => end(e));
         }
 
-        void SetThrottleFrom(float localY)
+        bool MiningOrDocked => (mining != null && mining.State != Mining.Phase.Idle) || (docking != null && docking.Busy);
+
+        /// <summary>MGame::OnTouchBegin on the fire button: with a landmark, planet or docking target locked the autopilot /
+        /// planet jump / docking (a running autopilot turns off), with an asteroid locked the approach, docked at a point
+        /// the undocking; the press is used up. During the approach and mining, Mining reacts to the press itself.</summary>
+        bool OnTouchFire()
         {
-            float h = throttleTrack.contentRect.height;
-            if (h > 0f) ship?.SetThrottle(1f - Mathf.Clamp01(localY / h));
+            if (mining != null && mining.State != Mining.Phase.Idle) return false;
+            if (docking != null && docking.PromptText != null) { docking.Interact(); return true; }
+            if (nav != null && nav.Locked != null && nav.PromptText != null) { nav.Interact(); return true; }
+            if (mining != null && mining.Locked != null && mining.PromptText != null) { mining.Interact(); return true; }
+            return false;
         }
 
-        /// <summary>'down' runs on press, 'up' on release; shows a pressed state while the finger stays down.</summary>
-        /// <summary>The Level button: a tap levels out (PlayerEgo::alignToHorizon); pressed and slid sideways it rolls that
-        /// way (remake: the touch counterpart of the keys 1 / 3), full roll at 60 px.</summary>
-        void HookLevelButton()
+        /// <summary>The touch controls' state for this frame (Hud::draw's conditions, MGame::OnRender2D's hiding).</summary>
+        void UpdateTouch()
         {
-            int pointer = -1;
-            float startX = 0f;
-            bool rolling = false;
-            levelButton.RegisterCallback<PointerDownEvent>(e =>
+            if (touch == null) return;
+            var f = new TouchControls.Frame { mode = TouchControls.Mode.Off, nextCamera = -1 };
+            bool touchMode = InputMode.Current == InputKind.Touch;
+            if (touchMode && ship != null && level != null && !StarMap.IsOpen && !pauseMenu.IsOpen && !storyDialogue.IsOpen
+                && (health == null || !health.Dead))
             {
-                if (pointer >= 0) return;
-                pointer = e.pointerId;
-                startX = e.position.x;
-                rolling = false;
-                levelButton.CapturePointer(pointer);
-                levelButton.AddToClassList("touch-button--pressed");
-                e.StopPropagation();
-            });
-            levelButton.RegisterCallback<PointerMoveEvent>(e =>
-            {
-                if (e.pointerId != pointer) return;
-                float dx = e.position.x - startX;
-                if (!rolling && Mathf.Abs(dx) > 12f) rolling = true;
-                if (rolling) ship?.SetRoll(Mathf.Clamp((dx - Mathf.Sign(dx) * 12f) / 48f, -1f, 1f));
-            });
-            void Up(int id)
-            {
-                if (id != pointer) return;
-                if (levelButton.HasPointerCapture(pointer)) levelButton.ReleasePointer(pointer);
-                pointer = -1;
-                levelButton.RemoveFromClassList("touch-button--pressed");
-                if (!rolling) ship?.AlignToHorizon();
-                ship?.SetRoll(0f);
-                rolling = false;
+                bool cinematic = level.Cutscene || !level.LaunchCameraOver || (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
+                f.mode = cinematic ? TouchControls.Mode.PauseOnly : nav != null && nav.MenuOpen ? TouchControls.Mode.MenuOpen : TouchControls.Mode.Full;
+                var phase = mining != null ? mining.State : Mining.Phase.Idle;
+                bool dockBusy = docking != null && docking.Busy;
+                var turret = level.Turret;
+                bool turretView = turret != null && turret.InTurretView;
+                var model = ship.Model;
+                f.hasBooster = model.HasBooster;
+                f.boosting = model.IsBoosting;
+                f.boostReady = model.BoostReady;
+                f.boostRate = Mathf.Clamp01(model.BoostRechargePercent);
+                int ammo = weapons != null ? weapons.SecondaryAmmo : -1;
+                f.secondary = weapons != null && weapons.SelectedSecondary >= 0 && ammo > 0 && !turretView;
+                f.secondaryText = f.secondary ? $"{weapons.SecondaryName} ({ammo})" : null;
+                // Hud::checkIfQuickMenuIsEmpty: the quick menu's entries (the remake's one menu: Khador Drive, wingmen, cloak).
+                if (Time.unscaledTime >= quickMenuCheck && nav != null)
+                {
+                    quickMenuCheck = Time.unscaledTime + 0.5f;
+                    quickMenuEntries = nav.MenuEntries().Exists(t => t.kind == Navigation.Kind.KhadorDrive || t.kind == Navigation.Kind.Wingmen || t.kind == Navigation.Kind.Cloak);
+                }
+                f.menu = quickMenuEntries;
+                var fl = level.FreeLook;
+                f.nextCamera = fl != null ? (int)fl.Next : -1;
+                f.freeLook = fl != null && fl.FreeLookActive;
+                f.standardCamera = fl == null || fl.Current == FreeLookCamera.Mode.Standard;
+                f.turret = turret != null && turret.IsAuto;
+                f.turretOn = f.turret && turret.AutoEnabled;
+                f.actionArrow = phase == Mining.Phase.Idle && !dockBusy && !turretView
+                                && ((nav != null && nav.Locked != null && nav.PromptText != null) || (mining != null && mining.Locked != null));
+                bool tilt = TiltSteering.Active && (Session.FreePlay || Session.CampaignMission != 48);
+                f.dimStick = tilt || (nav != null && nav.Autopilot) || phase == Mining.Phase.Approaching || dockBusy;
+                f.dimNav = phase != Mining.Phase.Idle || dockBusy;
+                f.mining = phase != Mining.Phase.Idle || dockBusy;
+                f.steeringMissile = weapons != null && weapons.SteeringMissile;
+                f.crosshairVisible = crosshair != null && !crosshair.ClassListContains("crosshair--hidden");
+                if (f.crosshairVisible) f.crosshair = new Vector2(crosshair.style.left.value.value, crosshair.style.top.value.value);
             }
-            levelButton.RegisterCallback<PointerUpEvent>(e => Up(e.pointerId));
-            levelButton.RegisterCallback<PointerCancelEvent>(e => Up(e.pointerId));
+            touch.Update(f, Time.unscaledDeltaTime * 1000f);
         }
+
 
         static void HookPress(VisualElement button, System.Action down, System.Action up = null)
         {
@@ -343,7 +329,7 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-touch", kind == InputKind.Touch);
             root.EnableInClassList("input-keyboard", kind == InputKind.KeyboardMouse);
             root.EnableInClassList("input-gamepad", kind == InputKind.Gamepad);
-            if (kind != InputKind.Touch) { stick?.Release(); weapons?.SetPrimaryHeld(false); }
+            if (kind != InputKind.Touch) { touch?.Reset(); weapons?.SetPrimaryHeld(false); }
             // PlayerEgo::update: handling-dependent damping only with the mouse cursor, else resetShipHandling's constants.
             if (chase != null) chase.handlingDependent = kind == InputKind.KeyboardMouse;
             BuildHints(kind);
@@ -542,6 +528,7 @@ namespace GoF2Remake.UI
         void Update()
         {
             if (root == null) return;
+            UpdateTouch();   // every frame: the controls hide and let go under menus, dialogues and cutscenes
             UpdateMouseSteering();
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
             lensFlare?.Update(level != null ? level.Backdrop : null, StarMap.IsOpen || !Settings.LensFlare);   // StarSystem::render2D, under the HUD
@@ -640,13 +627,13 @@ namespace GoF2Remake.UI
                 story = level.StorySpace;
                 if (story != null)
                 {
-                    story.DialogueRequested += (pages, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.Show(pages, closed); };
-                    story.MessageRequested += (text, speaker, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowMessage(text, speaker, closed); };
+                    story.DialogueRequested += (pages, closed) => { touch?.ReleaseAll(); weapons?.SetPrimaryHeld(false); storyDialogue.Show(pages, closed); };
+                    story.MessageRequested += (text, speaker, closed) => { touch?.ReleaseAll(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowMessage(text, speaker, closed); };
                 }
                 freelance = level.FreelanceOrbit;
                 if (freelance != null)
                 {
-                    freelance.MessageRequested += (text, name, portrait, voice, closed) => { stick?.Release(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowAgentMessage(text, name, portrait, closed, voice); };
+                    freelance.MessageRequested += (text, name, portrait, voice, closed) => { touch?.ReleaseAll(); weapons?.SetPrimaryHeld(false); storyDialogue.ShowAgentMessage(text, name, portrait, closed, voice); };
                     freelance.RewardMessage += OnMiningMessage;
                 }
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
@@ -687,7 +674,8 @@ namespace GoF2Remake.UI
             if (prompt == null && nav != null) prompt = nav.PromptText;
             if (prompt == null && mining != null) prompt = mining.PromptText;
             if (prompt == null && level.CanDock) prompt = Localization.Extra("hudDock", "DOCK");
-            dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null);
+            // Touch: no prompt, the fire button is the action button (its arrow shows when fire acts).
+            dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null || InputMode.Current == InputKind.Touch);
             if (prompt != null) dockLabel.text = prompt;
             var kbp = Keyboard.current;
             if (prompt != null && ((kbp != null && (kbp.fKey.wasPressedThisFrame || kbp.enterKey.wasPressedThisFrame || kbp.numpadEnterKey.wasPressedThisFrame))
@@ -702,15 +690,6 @@ namespace GoF2Remake.UI
             if (phase != lastPhase || autopilot != lastAutopilot) { lastPhase = phase; lastAutopilot = autopilot; BuildHints(InputMode.Current); }
             // The turret: the touch button (turret view / auto-fire) and the hints of the turret view.
             var turret = level != null ? level.Turret : null;
-            if (turretButton != null)
-            {
-                turretButton.EnableInClassList("touch-button--hidden", turret == null);
-                if (turret != null)
-                {
-                    turretCaption.text = turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : Localization.Extra("hudTurret", "TURRET");
-                    turretButton.EnableInClassList("touch-button--pressed", turret.InTurretView || (turret.IsAuto && turret.AutoEnabled));
-                }
-            }
             bool tv = turret != null && turret.InTurretView, ta = turret != null && turret.AutoEnabled;
             if (tv != lastTurretView || ta != lastTurretAuto) { lastTurretView = tv; lastTurretAuto = ta; BuildHints(InputMode.Current); }
             root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic));   // jumps: no HUD
@@ -736,32 +715,21 @@ namespace GoF2Remake.UI
             nav?.SetFastForwardHeld(ffHeld);
             root.EnableInClassList("hud-docking", phase != Mining.Phase.Idle);
             root.EnableInClassList("hud-mining", phase == Mining.Phase.Mining);
-            // Touch: the floating stick, its value squared per axis like Hud::getAnalogX / Y; with tilt steering chosen the
+            // Touch: the stick, its value squared per axis like Hud::getAnalogX / Y; with tilt steering chosen the
             // accelerometer instead (MGame::handleAccelerometer, not at campaign 48), the stick shown but idle.
             bool tilt = InputMode.Current == InputKind.Touch && TiltSteering.Active && (Session.FreePlay || Session.CampaignMission != 48);
             root.EnableInClassList("hud-tilt", tilt);
             ship.tiltMode = tilt;
-            var raw = InputMode.Current == InputKind.Touch && stick != null ? stick.Value : Vector2.zero;
+            bool touchMode = InputMode.Current == InputKind.Touch;
+            var raw = touchMode && touch != null ? touch.Stick : Vector2.zero;
             var touchStick = tilt ? TiltSteering.Steer() : new Vector2(Mathf.Sign(raw.x) * raw.x * raw.x, Mathf.Sign(raw.y) * raw.y * raw.y);
             ship.SetSteer(touchStick);
             mining?.SetTouchInput(touchStick);
 
-            var model = ship.Model;
-            float throttle = model.Throttle;
-            throttleFill.style.height = Length.Percent(throttle * 100f);
-            throttleHandle.style.bottom = Length.Percent(throttle * 100f);
+            if (touchMode && touch != null) weapons?.SetPrimaryHeld(touch.FireHeld);   // fire held or autofire latched
 
-            // Recharge 0..1; empty while boosting, and when there is no booster at all (never ready, nothing recharging).
-            float boost = model.IsBoosting ? 0f : Mathf.Clamp01(model.BoostRechargePercent);
-            if (!model.BoostReady && !model.IsBoosting && boost >= 1f) boost = 0f;
-            boostCharge.style.height = Length.Percent(boost * 100f);
-            boostButton.EnableInClassList("touch-button--disabled", !model.BoostReady && !model.IsBoosting);
-
-            // Weapons: missile button with its ammo (hidden without a secondary), crosshair and hit flash.
+            // Weapons: the selected secondary's label (keyboard / controller; touch has the plate), crosshair and hit flash.
             int ammo = weapons != null ? weapons.SecondaryAmmo : -1;
-            missileButton.EnableInClassList("touch-button--hidden", ammo < 0);
-            missileButton.EnableInClassList("touch-button--disabled", ammo == 0);
-            missileAmmo.text = ammo >= 0 ? ammo.ToString() : "";
             if (secondaryLabel != null)
             {
                 bool any = weapons != null && weapons.SelectedSecondary >= 0;
@@ -770,9 +738,7 @@ namespace GoF2Remake.UI
                 string text = any ? $"{weapons.SecondaryName} ({ammo})" : "";
                 if (secondaryLabel.text != text) secondaryLabel.text = text;
             }
-            fireButton.EnableInClassList("touch-button--hidden", weapons == null || !weapons.HasPrimary);
             UpdateCrosshair();
-            UpdateDodgeSwipe();
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == Mining.Phase.Idle);
             miningView.UpdateGame(mining, Time.deltaTime * 1000f);
             hackingView?.Update(docking);
@@ -953,7 +919,7 @@ namespace GoF2Remake.UI
         {
             nav.OpenMenu();
             if (!nav.MenuOpen) return;
-            stick?.Release();
+            touch?.ReleaseAll();
             weapons?.SetPrimaryHeld(false);
             autopilotMenuItems.Clear();
             menuButtons.Clear();
@@ -1250,7 +1216,7 @@ namespace GoF2Remake.UI
         {
             if (level == null || pauseMenu.IsOpen || (health != null && health.Dead) || StarMap.IsOpen || storyDialogue.IsOpen) return;
             if (nav != null && nav.MenuOpen) CloseAutopilotMenu();
-            stick?.Release();
+            touch?.ReleaseAll();
             ship?.SetSteer(Vector2.zero);
             weapons?.SetPrimaryHeld(false);
             pauseMenu.Open(level);
@@ -1289,56 +1255,6 @@ namespace GoF2Remake.UI
             if (container == null) return;
             container.RegisterCallback<PointerDownEvent>(e => { if (InButton(e.target)) PlayButton(true); }, TrickleDown.TrickleDown);
             container.RegisterCallback<ClickEvent>(e => { if (InButton(e.target)) PlayButton(false); });
-        }
-
-        // ---- the dodge swipe (MGame::OnTouchBegin / OnTouchMove / maneuverTouchEnd 0x1a7eac) ------------------------
-
-        int swipeTouch = -1;
-        Vector2 swipeStart;
-        float swipeStartTime;
-
-        /// <summary>A touch on no control (the stick's half, the throttle and the buttons excluded) that ends within 600 ms,
-        /// more than w/480 * 70 px sideways and less than h/320 * 90 px up or down: PlayerEgo::initManeuver(1) to the
-        /// left, (2) to the right. Polled from the Input System: empty HUD space picks nothing.</summary>
-        void UpdateDodgeSwipe()
-        {
-            var ts = UnityEngine.InputSystem.Touchscreen.current;
-            if (ts == null || root == null || root.panel == null) return;
-            var zone = root.Q("stickZone");
-            foreach (var t in ts.touches)
-            {
-                int id = t.touchId.ReadValue();
-                var sp = t.position.ReadValue();
-                if (t.press.wasPressedThisFrame && swipeTouch < 0)
-                {
-                    var picked = root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(sp.x, Screen.height - sp.y)));
-                    bool onControl = false;
-                    for (var v = picked; v != null; v = v.parent)
-                        if (v is Button || v == zone || v == throttleTrack || v.ClassListContains("touch-button")) { onControl = true; break; }
-                    if (onControl) continue;
-                    swipeTouch = id;
-                    swipeStart = sp;
-                    swipeStartTime = Time.unscaledTime;
-                }
-                else if (id == swipeTouch)
-                {
-                    // Free look (MGame::freeCamTouch*): the drag turns the camera instead of dodging.
-                    var fl = level != null ? level.FreeLook : null;
-                    if (fl != null && fl.FreeLookActive)
-                    {
-                        fl.TouchDrag(t.delta.ReadValue(), !t.press.wasReleasedThisFrame);
-                        if (t.press.wasReleasedThisFrame) swipeTouch = -1;
-                        continue;
-                    }
-                    if (Mathf.Abs(sp.y - swipeStart.y) > Screen.height / 320f * 90f) { swipeTouch = -1; continue; }
-                    if (!t.press.wasReleasedThisFrame) continue;
-                    swipeTouch = -1;
-                    float dx = sp.x - swipeStart.x;
-                    if (Time.unscaledTime - swipeStartTime > 0.6f || Mathf.Abs(dx) <= Screen.width / 480f * 70f) continue;
-                    if (nav != null && nav.MenuOpen) continue;
-                    ship?.RequestDodge(dx < 0f ? 1 : 2);
-                }
-            }
         }
 
         static bool InButton(IEventHandler target)

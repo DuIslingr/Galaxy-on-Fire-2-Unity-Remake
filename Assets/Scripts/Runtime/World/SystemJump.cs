@@ -239,7 +239,7 @@ namespace GoF2Remake.World
         {
             Session.InstantJump = false;
             int cells = storyTarget.HasValue ? jumpCells : Session.EnergyCellsForNextJump;
-            if (Cheats.FreeJumps) cells = 0;   // remake: the Admin panel's free jumps
+            if (Cheats.FreeJumps) cells = 0;   // remake: the Debug panel's free jumps
             if (GalaxyMap.CellsInCargo() < cells)
             {
                 // Remake: the story's own jumps (78 into the Void, 80 out of it) take what there is instead of stranding the player.

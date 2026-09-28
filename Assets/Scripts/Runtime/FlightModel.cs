@@ -141,6 +141,7 @@ namespace GoF2Remake.Flight
         public void ChangeThrottle(float delta) => Throttle = Mathf.Clamp01(Throttle + delta);
         public void SetThrottle(float value) => Throttle = Mathf.Clamp01(value);
 
+        public bool HasBooster => hasBooster;
         public bool BoostReady => !IsBoosting && hasBooster && boostTimerMs >= 0;
 
         /// <summary>0 at recharge start, 1 when ready.</summary>

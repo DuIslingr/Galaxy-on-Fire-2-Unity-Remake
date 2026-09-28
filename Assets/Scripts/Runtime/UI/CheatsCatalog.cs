@@ -1,6 +1,6 @@
 // CheatsCatalog.cs
-// The Admin rows (remake-only, see Cheats) as OptionDefs, so the main menu's Admin panel, the pause menu's and the
-// station system menu's Admin pages build them with OptionControl like the options. Toggles everywhere; the actions
+// The Debug rows (remake-only, see Cheats) as OptionDefs, so the main menu's Debug panel, the pause menu's and the
+// station system menu's Debug pages build them with OptionControl like the options. Toggles everywhere; the actions
 // only where a game runs (the pause menu and the station), 'notify' reports what they did.
 
 using System;
