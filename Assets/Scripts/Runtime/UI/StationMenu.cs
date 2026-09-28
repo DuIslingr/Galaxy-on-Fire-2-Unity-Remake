@@ -1020,7 +1020,7 @@ namespace GoF2Remake.UI
                 c.Changed += () => { foreach (var o in stationOptions) if (o != c) o.Refresh(); };
                 c.Root.AddToClassList("system-option");
                 var root0 = c.Root;
-                c.Field.RegisterCallback<FocusInEvent>(_ => optionsScroll.ScrollTo(root0));
+                c.Field.RegisterCallback<FocusInEvent>(_ => { if (!DragScroll.PointerActive) optionsScroll.ScrollTo(root0); });
                 optionsScroll.Add(c.Root);
                 stationOptions.Add(c);
             }
@@ -1045,7 +1045,7 @@ namespace GoF2Remake.UI
                     var c = new OptionControl(def);
                     c.Root.AddToClassList("system-option");
                     var root0 = c.Root;
-                    c.Field.RegisterCallback<FocusInEvent>(_ => optionsScroll.ScrollTo(root0));
+                    c.Field.RegisterCallback<FocusInEvent>(_ => { if (!DragScroll.PointerActive) optionsScroll.ScrollTo(root0); });
                     optionsScroll.Add(c.Root);
                     stationOptions.Add(c);
                 }
@@ -1103,7 +1103,7 @@ namespace GoF2Remake.UI
                 var row = SaveSlotRow.Build(level.Database, i, save, Localization.Extra("autosaveHint", "Saved automatically when you dock"));
                 row.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
                 row.clicked += () => { Play(buttonRelease); if (sysPage == SysPage.Load) PickLoadSlot(slot, save != null); else PickSaveSlot(slot, save != null); };
-                row.RegisterCallback<FocusInEvent>(_ => saveSlotList.ScrollTo(row));
+                row.RegisterCallback<FocusInEvent>(_ => { if (!DragScroll.PointerActive) saveSlotList.ScrollTo(row); });
                 saveSlotList.Add(row);
             }
         }

@@ -59,10 +59,6 @@ namespace GoF2Remake.UI
         DialogueView storyDialogue;
         LensFlareView lensFlare;
         PauseMenu pauseMenu;
-        Button introSkip;
-        InputKind introSkipKind;
-        float introSkipAwakeUntil;
-        const float IntroSkipShowSeconds = 3f;
         GoF2Remake.World.FreelanceOrbit freelance;
         AudioSource voiceSource;
         VisualElement radioBox, radioPortrait, screenFade;
@@ -171,12 +167,6 @@ namespace GoF2Remake.UI
             ButtonSounds(root.Q(className: "pause-backdrop"));
             pauseMenu.InfoSound = () => PlayUi(CombatAudio.Load()?.messageInfo);
             pauseMenu.Photo = new PhotoMode(root, this);
-            // Remake-only: skip the prologue / rescue (the original's unreachable skip branches, IntroCutscenes.Skip).
-            introSkip = new Button { focusable = false };
-            introSkip.AddToClassList("intro-skip");
-            introSkip.clicked += SkipIntro;
-            root.Add(introSkip);
-            introSkipKind = (InputKind)(-1);
             radioBox = root.Q("radio");
             screenFade = root.Q("screenFade");
             radioPortrait = root.Q("radioPortrait");
@@ -572,7 +562,6 @@ namespace GoF2Remake.UI
                 if (health != null && health.Dead) BackToMenu(); else OpenPause();
                 return;
             }
-            if (UpdateIntroSkip()) return;
             // The PC version's keys (its help texts 1731 / 1732, 638, 18 and the default list): Q Autopilot (the target
             // list, again = off) and E Actions (the action menu; the remake has one menu for both), V Wingmen, K Khador
             // Drive, M or the middle mouse button: mouse control.
@@ -765,76 +754,6 @@ namespace GoF2Remake.UI
             UpdateRadio();
             PlaceDockPrompt();
             UpdateFade();
-        }
-
-        /// <summary>The Skip button during the prologue / rescue (tap, Backspace, controller B); hidden while a dialogue is
-        /// open. Remake: it only appears after an input (a key, a click, mouse movement, a tap, a pad button or stick) and
-        /// fades out after IntroSkipShowSeconds without one; Backspace / B skip even while it is faded out, a tap first
-        /// brings it up. True when the skip was used this frame.</summary>
-        bool UpdateIntroSkip()
-        {
-            var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
-            bool shown = intro != null && intro.CanSkip && !storyDialogue.IsOpen && (health == null || !health.Dead);
-            introSkip.EnableInClassList("intro-skip--shown", shown);
-            if (!shown)
-            {
-                introSkipAwakeUntil = 0f;
-                introSkip.RemoveFromClassList("intro-skip--awake");
-                return false;
-            }
-            bool wasAwake = Time.unscaledTime < introSkipAwakeUntil;
-            if (AnyInputThisFrame()) introSkipAwakeUntil = Time.unscaledTime + IntroSkipShowSeconds;
-            bool awake = Time.unscaledTime < introSkipAwakeUntil;
-            introSkip.EnableInClassList("intro-skip--awake", awake);
-            // A faded-out button isn't tappable, so the tap that wakes it doesn't skip as well.
-            introSkip.pickingMode = wasAwake ? PickingMode.Position : PickingMode.Ignore;
-            var kind = InputMode.Current;
-            if (kind != introSkipKind)
-            {
-                introSkipKind = kind;
-                introSkip.Clear();
-                if (kind == InputKind.KeyboardMouse) introSkip.Add(InputGlyph.Key("BACKSPACE", true));
-                else if (kind == InputKind.Gamepad) introSkip.Add(InputGlyph.Pad(PadButton.B));
-                var l = new Label(Localization.Get(395).ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
-                l.AddToClassList("intro-skip-label");
-                l.AddToClassList("gof-semibold");
-                introSkip.Add(l);
-            }
-            if ((Keyboard.current != null && Keyboard.current.backspaceKey.wasPressedThisFrame)
-                || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame))
-            {
-                SkipIntro();
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>Any key, click, mouse movement, tap, pad button or stick this frame (what wakes the Skip button).</summary>
-        static bool AnyInputThisFrame()
-        {
-            var kb = Keyboard.current;
-            if (kb != null && kb.anyKey.wasPressedThisFrame) return true;
-            var mouse = Mouse.current;
-            if (mouse != null && (mouse.delta.ReadValue().sqrMagnitude > 4f || mouse.leftButton.wasPressedThisFrame
-                                  || mouse.rightButton.wasPressedThisFrame || mouse.middleButton.wasPressedThisFrame)) return true;
-            var touch = Touchscreen.current;
-            if (touch != null && touch.primaryTouch.press.wasPressedThisFrame) return true;
-            var pad = Gamepad.current;
-            if (pad != null)
-            {
-                if (pad.leftStick.ReadValue().sqrMagnitude > 0.25f || pad.rightStick.ReadValue().sqrMagnitude > 0.25f) return true;
-                foreach (var c in pad.allControls)
-                    if (c is UnityEngine.InputSystem.Controls.ButtonControl b && b.wasPressedThisFrame) return true;
-            }
-            return false;
-        }
-
-        void SkipIntro()
-        {
-            var intro = level != null && level.Campaign != null ? level.Campaign.Intro : null;
-            if (intro == null || !intro.CanSkip || storyDialogue.IsOpen) return;
-            storyDialogue.ButtonSound?.Invoke(false);
-            intro.Skip();
         }
 
         /// <summary>Layout::drawFade: the campaign level's full-screen fade.</summary>

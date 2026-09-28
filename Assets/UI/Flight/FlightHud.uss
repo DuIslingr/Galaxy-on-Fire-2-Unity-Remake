@@ -640,39 +640,6 @@
     opacity: 0.6;
 }
 
-/* Remake-only: skip the prologue / rescue (IntroCutscenes.Skip). */
-.intro-skip {
-    display: none;
-    position: absolute;
-    right: 40px;
-    top: 110px;   /* under the Menu button, clear of the touch controls */
-    flex-direction: row;
-    align-items: center;
-    padding: 8px 18px;
-    background-color: rgba(4, 12, 20, 0.6);
-    border-width: 1px;
-    border-color: var(--gof-cyan-faint);
-    border-radius: 2px;
-    opacity: 0;
-    transition-property: opacity;
-    transition-duration: 0.4s;
-}
-
-.intro-skip--shown {
-    display: flex;
-}
-
-/* Only after an input, faded out again when idle (FlightHud.IntroSkipShowSeconds). */
-.intro-skip--awake {
-    opacity: 1;
-}
-
-.intro-skip-label {
-    color: #FFFFFF;
-    font-size: 26px;
-    margin-left: 10px;
-}
-
 /* ---- pause menu (MenuTouchWindow mode 1, PauseMenu) ------------------------------------------ */
 
 .pause-backdrop {

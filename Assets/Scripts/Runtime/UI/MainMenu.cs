@@ -184,8 +184,10 @@ namespace GoF2Remake.UI
                 if (screen == MenuState.Menu && root.focusController?.focusedElement is ChoiceRow row) { row.Cycle(); e.StopPropagation(); }
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
-            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) SetTouchMode(false); }, TrickleDown.TrickleDown);
-            root.RegisterCallback<FocusInEvent>(e => { if (e.target is VisualElement v) EnsureVisible(v); });
+            root.RegisterCallback<PointerMoveEvent>(e => { DragScroll.NotePointer(); if (e.pointerType == PointerType.mouse) SetTouchMode(false); }, TrickleDown.TrickleDown);
+            root.RegisterCallback<WheelEvent>(_ => DragScroll.NotePointer(), TrickleDown.TrickleDown);
+            // Keys / controller: the focused row scrolls into view (not for the pointer's own focus: DragScroll.PointerActive).
+            root.RegisterCallback<FocusInEvent>(e => { if (e.target is VisualElement v && !DragScroll.PointerActive) EnsureVisible(v); });
 
             ApplySettings();
 
@@ -350,6 +352,7 @@ namespace GoF2Remake.UI
 
         void OnPointerDown(PointerDownEvent e)
         {
+            DragScroll.NotePointer();
             if (e.pointerType == PointerType.mouse) { SetTouchMode(false); return; }
             SetTouchMode(true);
             root.focusController?.IgnoreEvent(e);   // don't focus what the finger presses

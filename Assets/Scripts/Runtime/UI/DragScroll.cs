@@ -1,7 +1,11 @@
 // DragScroll.cs
-// Drag-to-scroll for ScrollViews with any pointer (finger, mouse, pen), with momentum after release, like
-// the original's inertial list scrolling (MenuTouchWindow: damping 0.9 per frame). Scrolling only starts
-// after a small threshold, so taps on buttons inside the list still count as clicks.
+// Drag-to-scroll for ScrollViews with the mouse or a pen, with momentum after release, like the original's inertial
+// list scrolling (MenuTouchWindow: damping 0.9 per frame). Scrolling only starts after a small threshold, so clicks on
+// buttons inside the list still count. Fingers are left to the ScrollView's own touch scrolling (two handlers moving
+// the same list fought after the release: the list jumped back).
+// PointerActive: a pointer pressed, moved or wheeled over a list in this or the last frame. Focus changes then come
+// from the pointer (a tap, the hover focus), and the menus don't scroll the focused row into view for them
+// (ScrollTo against the layout of a list that is moving snapped it back).
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -20,10 +24,19 @@ namespace GoF2Remake.UI
         bool dragging;
         IVisualElementScheduledItem inertia;
 
+        static int lastPointerFrame = -10;
+
+        /// <summary>A pointer acted on a list this frame or the last: the focus follows the pointer, don't ScrollTo.</summary>
+        public static bool PointerActive => Time.frameCount - lastPointerFrame <= 1;
+
+        /// <summary>A pointer event outside a DragScroll list (a menu's root) counts too.</summary>
+        public static void NotePointer() => lastPointerFrame = Time.frameCount;
+
         public DragScroll(ScrollView scrollView)
         {
             scroll = scrollView;
             target = scrollView;
+            scroll.touchScrollBehavior = ScrollView.TouchScrollBehavior.Clamped;
         }
 
         protected override void RegisterCallbacksOnTarget()
@@ -32,7 +45,7 @@ namespace GoF2Remake.UI
             target.RegisterCallback<PointerMoveEvent>(OnMove, TrickleDown.TrickleDown);
             target.RegisterCallback<PointerUpEvent>(OnUp, TrickleDown.TrickleDown);
             target.RegisterCallback<PointerCancelEvent>(OnCancel);
-            target.RegisterCallback<WheelEvent>(_ => inertia?.Pause());
+            target.RegisterCallback<WheelEvent>(_ => { lastPointerFrame = Time.frameCount; inertia?.Pause(); }, TrickleDown.TrickleDown);
         }
 
         protected override void UnregisterCallbacksFromTarget()
@@ -47,7 +60,8 @@ namespace GoF2Remake.UI
 
         void OnDown(PointerDownEvent e)
         {
-            if (pointerId >= 0) return;
+            lastPointerFrame = Time.frameCount;
+            if (pointerId >= 0 || e.pointerType == UnityEngine.UIElements.PointerType.touch) return;
             inertia?.Pause();
             pointerId = e.pointerId;
             startPos = lastPos = e.position;
@@ -58,6 +72,7 @@ namespace GoF2Remake.UI
 
         void OnMove(PointerMoveEvent e)
         {
+            lastPointerFrame = Time.frameCount;
             if (e.pointerId != pointerId) return;
             Vector2 p = e.position;
             if (!dragging)
