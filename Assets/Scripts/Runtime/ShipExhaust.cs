@@ -10,6 +10,7 @@
 //   PlayerEgo::setExhaustVisible 0xa637c   off with the engine glow (mining, object docking, cutscenes, death)
 //   Level::setPlayerEngineColor            the start colour grey clamp(221 - 2.01 x cloak %)
 
+using System;
 using System.Collections.Generic;
 using GoF2Remake.Data;
 using UnityEngine;
@@ -36,17 +37,32 @@ namespace GoF2Remake.Flight
         public static ShipExhaust Attach(GameObject player, Database db, ShipController ship, int shipIndex)
         {
             var e = player.AddComponent<ShipExhaust>();
-            e.Setup(db, ship, shipIndex);
+            e.ship = ship;
+            e.Setup(db, ship.visualModel != null ? ship.visualModel : player.transform, shipIndex);
             return e;
         }
 
-        void Setup(Database db, ShipController controller, int shipIndex)
+        // Multiplayer: another player's ship (NetPlayer), its state from their game.
+        Func<bool> remoteOn;
+        Func<float> remoteBoost, remoteCloak;
+
+        /// <summary>Multiplayer (NetPlayer): the exhaust of another player's ship 'model', driven by their game's engine state
+        /// (on: the engine glow shows), boost (0..1) and cloak (0..100).</summary>
+        public static ShipExhaust AttachRemote(GameObject host, Database db, Transform model, int shipIndex, Func<bool> on, Func<float> boost, Func<float> cloak)
         {
-            ship = controller;
+            var e = host.AddComponent<ShipExhaust>();
+            e.remoteOn = on;
+            e.remoteBoost = boost;
+            e.remoteCloak = cloak;
+            e.Setup(db, model, shipIndex);
+            return e;
+        }
+
+        void Setup(Database db, Transform parent, int shipIndex)
+        {
             var mat = CombatAssets.Load()?.particlesMaterial;
             int value = shipIndex >= 0 && shipIndex < ShipCell.Length ? ShipCell[shipIndex] : 0;
             int cell = value switch { 3 => 0, 2 => 1, 1 => 3, 8 => 4, 9 => 5, _ => 2 };
-            var parent = ship.visualModel != null ? ship.visualModel : transform;
             var asm = parent.GetComponent<Visuals.AssembledObject>();
             if (asm != null && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0) glow = asm.playerVariantParts[0];
             foreach (var m in db.MountsOf(shipIndex, 3))
@@ -116,19 +132,25 @@ namespace GoF2Remake.Flight
 
         void Update()
         {
-            if (ship == null) return;
-            if (health == null) health = GetComponent<PlayerHealth>();
-            if (cloak == null) cloak = GetComponent<PlayerCloak>();
-            bool want = (glow == null || glow.activeInHierarchy) && (health == null || !health.Dead)
-                        && (ship.visualModel == null || ship.visualModel.gameObject.activeInHierarchy);
+            if (ship == null && remoteOn == null) return;
+            bool want;
+            if (remoteOn != null) want = remoteOn();
+            else
+            {
+                if (health == null) health = GetComponent<PlayerHealth>();
+                if (cloak == null) cloak = GetComponent<PlayerCloak>();
+                want = (glow == null || glow.activeInHierarchy) && (health == null || !health.Dead)
+                       && (ship.visualModel == null || ship.visualModel.gameObject.activeInHierarchy);
+            }
             if (want != on)
             {
                 on = want;
                 foreach (var ps in systems) if (on) ps.Play(true); else ps.Stop(true, ParticleSystemStopBehavior.StopEmitting);
             }
             if (!on) return;
-            float boost = ship.Model != null ? ship.Model.BoostVisualPercent : 0f;
-            float grey = Mathf.Clamp(221f - 2.01f * (cloak != null && cloak.Rules != null ? cloak.Rules.Percentage : 0f), 0f, 255f) / 255f;
+            float boost = remoteBoost != null ? remoteBoost() : ship.Model != null ? ship.Model.BoostVisualPercent : 0f;
+            float cloakPct = remoteCloak != null ? remoteCloak() : cloak != null && cloak.Rules != null ? cloak.Rules.Percentage : 0f;
+            float grey = Mathf.Clamp(221f - 2.01f * cloakPct, 0f, 255f) / 255f;
             for (int i = 0; i < systems.Count; i++)
             {
                 var main = systems[i].main;

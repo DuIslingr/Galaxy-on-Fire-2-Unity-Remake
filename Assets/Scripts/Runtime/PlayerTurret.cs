@@ -60,6 +60,8 @@ namespace GoF2Remake.Flight
         WeaponSystem weapons;
         ChaseCamera chase;
         Gun gun;
+        /// <summary>The turret's gun (multiplayer's shot mirrors), null before it is set up.</summary>
+        public Gun Gun => gun;
         GunRig rig;
         TurretAim aim;
         Transform muzzle, camAnchor;
@@ -162,7 +164,7 @@ namespace GoF2Remake.Flight
             muzzle.SetParent(gunNode, false);
             muzzle.localPosition = new Vector3(0f, 0f, muzzleZ) * M;
             bulletOffset = item.index == 48 ? new Vector3(80f, 0f, 300f) : item.index == 181 ? new Vector3(0f, 0f, -300f) : new Vector3(0f, 0f, 300f);
-            gun = new Gun(item, Vector3.zero, false) { owner = GetComponent<Target>() };
+            gun = new Gun(item, Vector3.zero, false) { owner = GetComponent<Target>(), Ignores = t => t.playerProof };   // multiplayer: through squadmates
             var fxRoot = new GameObject("Turret fx").transform;
             rig = new GunRig(gun, fx, fxRoot, muzzle);
             gun.Hit += OnHit;

@@ -86,7 +86,7 @@ namespace GoF2Remake.UI
             IsOpen = true;
             openedFrame = Time.frameCount;
             previousTimeScale = Time.timeScale;
-            Time.timeScale = 0f;
+            if (!GoF2Remake.Multiplayer.NetGame.Active) Time.timeScale = 0f;   // multiplayer: the world keeps running
             if (level != null && level.Navigation != null) level.Navigation.PauseMenuOpen = true;
             if (level != null && level.Weapons != null) level.Weapons.SetPrimaryHeld(false);
             audioWasPaused = AudioListener.pause;
@@ -321,7 +321,7 @@ namespace GoF2Remake.UI
                 if (Photo == null || !Photo.Tick()) { backdrop.AddToClassList("pause-backdrop--shown"); Show(Page.Main); openedFrame = Time.frameCount; }
                 return;
             }
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             var pad = Gamepad.current;
             bool back = (kb != null && (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame))
                         || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame));

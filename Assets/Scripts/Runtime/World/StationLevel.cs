@@ -139,6 +139,10 @@ namespace GoF2Remake.World
         bool departed;
         /// <summary>The player's ship is flying in or out (the station menu hides and waits).</summary>
         public bool PlayerFlying => playerFlight != null || departed;
+        /// <summary>The player's ship is taking off or gone (multiplayer: the others in this hangar see it leave).</summary>
+        public bool PlayerDeparting => (playerFlight != null && !playerFlight.arriving) || departed;
+        /// <summary>The hangar's ship traffic (multiplayer: the other players' ships too, NetHangar), null = none.</summary>
+        public HangarTraffic Traffic => traffic;
 
         /// <summary>AEEngine EaseInOut (0x7aa34): a + (b - a) * (sin(phi) * 0.5 + 0.5), phi 3pi/2 -> 5pi/2, Increase(d) adds
         /// d / 65536 * 2pi, so a whole leg takes 32768 units of d.</summary>
@@ -238,12 +242,16 @@ namespace GoF2Remake.World
             shipYaw = StationTables.StartYaw(HangarIndex);
             ApplyShipYaw();
             SpawnParkedShips();
-            // The others come and go (remake), except the club's stored hulls.
-            if (Settings.HangarFlights && Lane != null && StationTables.ParkedSlots[HangarIndex] != null && StationTables.ParkedMax[HangarIndex] > 0
-                && !KaamoClub.StorageAt(Layout.stationIndex))
+            // The others come and go (remake), except the club's stored hulls. Multiplayer: the other players docked here park
+            // on the slots too (NetHangar), with or without the NPC traffic and the flights.
+            bool slots = StationTables.ParkedSlots[HangarIndex] != null && StationTables.ParkedMax[HangarIndex] > 0;
+            bool npcTraffic = Settings.HangarFlights && Lane != null && slots && !KaamoClub.StorageAt(Layout.stationIndex);
+            if (npcTraffic || (slots && GoF2Remake.Multiplayer.NetGame.Active))
                 traffic = new HangarTraffic(Lane, StationTables.ParkedSlots[HangarIndex].Length, StationTables.ParkedMax[HangarIndex],
                                             parkedShips, db, NewParkedShip, ParkedPosition,
-                                            (ship, pos, rot) => SpawnShip(ship, pos, rot, hangarRoot, "Visiting ship"));
+                                            (ship, pos, rot) => SpawnShip(ship, pos, rot, hangarRoot, "Visiting ship"),
+                                            npcTraffic, Settings.HangarFlights);
+            if (GoF2Remake.Multiplayer.NetGame.Active) gameObject.AddComponent<GoF2Remake.Multiplayer.NetHangar>().Setup(this);
 
             // Camera: ModStation::OnInitialize state 0x14 (phone table), rotation order 2 with roll -0.03.
             hangarCamBase = StationTables.HangarCameraPos[HangarIndex];

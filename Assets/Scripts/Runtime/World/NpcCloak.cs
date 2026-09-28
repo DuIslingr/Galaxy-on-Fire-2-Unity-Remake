@@ -105,10 +105,24 @@ namespace GoF2Remake.World
             }
             elapsedMs += dtMs;
             if (elapsedMs >= totalMs) { Stop(); return; }
+            Look(Percentage, elapsedMs);
+        }
+
+        float shownMs;
+
+        /// <summary>Multiplayer (NetPlayer): another player's cloak at 'pct' (0..100, their game's PlayerCloak), 0 = off.</summary>
+        public void Show(float pct, float dtMs)
+        {
+            if (pct <= 0f) { if (swapped) Swap(false); shownMs = 0f; return; }
+            shownMs += dtMs;
+            Look(pct, shownMs);
+        }
+
+        void Look(float pct, float ms)
+        {
             Swap(true);
-            float pct = Percentage;
             foreach (var h in hull)
-                foreach (var m in h.cloak) { m.SetFloat(AnimValueId, pct / 100f); m.SetFloat(CloakRateId, elapsedMs * 0.001f); }
+                foreach (var m in h.cloak) { m.SetFloat(AnimValueId, pct / 100f); m.SetFloat(CloakRateId, ms * 0.001f); }
             bool hide = pct >= 25f;
             if (hide != glowHidden)
             {

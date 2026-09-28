@@ -533,6 +533,7 @@ namespace GoF2Remake.Flight
         void ApplyTimeScale()
         {
             float scale = MenuOpen || paused || pauseMenuOpen ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
+            if (GoF2Remake.Multiplayer.NetGame.Active) scale = 1f;   // multiplayer: one player's pause doesn't stop the shared world
             if (Time.timeScale != scale) Time.timeScale = scale;
         }
 

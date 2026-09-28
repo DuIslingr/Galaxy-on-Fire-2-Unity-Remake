@@ -1,0 +1,141 @@
+.squad {
+    position: absolute;
+    right: 24px;
+    top: 26%;
+    width: 320px;
+}
+
+.squad-panel {
+    margin-bottom: 10px;
+    background-color: rgba(0, 0, 0, 0.45);
+    border-width: 1px;
+    border-color: rgba(216, 236, 247, 0.2);
+    border-radius: 2px;
+}
+
+.squad-header {
+    margin: 0;
+    padding: 6px 10px;
+    font-size: 14px;
+    letter-spacing: 1px;
+    -unity-text-align: middle-left;
+    color: rgb(143, 216, 255);
+    background-color: rgba(0, 0, 0, 0.35);
+    border-width: 0;
+    border-radius: 0;
+}
+
+.squad-body {
+    padding: 6px 10px 8px 10px;
+}
+
+.squad-member {
+    margin-bottom: 8px;
+}
+
+.squad-pilot {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.squad-name {
+    font-size: 16px;
+    color: rgb(120, 230, 140);
+}
+
+.squad-pilot .squad-name {
+    color: rgb(240, 214, 110);
+}
+
+.squad-where {
+    font-size: 13px;
+    color: rgba(216, 236, 247, 0.65);
+}
+
+.squad-bar {
+    height: 4px;
+    margin-top: 3px;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.squad-bar-fill {
+    height: 100%;
+    width: 100%;
+}
+
+.squad-bar--shield .squad-bar-fill {
+    background-color: rgb(90, 170, 255);
+}
+
+.squad-bar--hull .squad-bar-fill {
+    background-color: rgb(120, 230, 140);
+}
+
+.squad-bar--hull .squad-bar-armor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: rgb(240, 170, 70);
+}
+
+.squad-tag {
+    font-size: 13px;
+    color: rgba(216, 236, 247, 0.6);
+}
+
+.squad-button {
+    margin: 0;
+    padding: 4px 12px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: rgb(255, 255, 255);
+    background-color: rgba(0, 0, 0, 0.6);
+    border-width: 1px;
+    border-color: rgba(216, 236, 247, 0.35);
+    border-radius: 2px;
+}
+
+.squad-button--accept {
+    color: rgb(120, 230, 140);
+    border-color: rgba(120, 230, 140, 0.6);
+}
+
+.squad-button--leave {
+    align-self: flex-start;
+    margin-top: 4px;
+    color: rgb(255, 140, 120);
+    border-color: rgba(255, 140, 120, 0.5);
+}
+
+.squad-invite {
+    position: absolute;
+    top: 12%;
+    left: 50%;
+    width: 440px;
+    translate: -50% 0;
+    padding: 14px 18px;
+    background-color: rgba(0, 0, 0, 0.75);
+    border-width: 1px;
+    border-color: rgba(143, 216, 255, 0.5);
+    border-radius: 2px;
+}
+
+.squad-invite-text {
+    font-size: 17px;
+    color: rgb(255, 255, 255);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin-bottom: 12px;
+}
+
+.squad-invite-buttons {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.squad-invite-buttons .squad-button {
+    margin: 0 8px;
+    min-width: 120px;
+}

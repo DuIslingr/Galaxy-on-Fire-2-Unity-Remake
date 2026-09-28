@@ -25,6 +25,15 @@ namespace GoF2Remake.Flight
         /// <summary>Player+0x5d of the ship it came from (a friend: Level::stealFriendCargo) / a mission container (116 / 117).</summary>
         public bool fromFriend, missionCrate;
 
+        /// <summary>Multiplayer (NetCrate): another player's tractor beam has it; the radar leaves it alone.</summary>
+        [System.NonSerialized] public bool claimedByOther;
+        /// <summary>Multiplayer: pulled in, but the host hasn't confirmed this player's claim yet: it waits at the ship.</summary>
+        [System.NonSerialized] public bool captureBlocked;
+        /// <summary>Multiplayer: the local tractor beam started pulling it (the claim goes to the host).</summary>
+        [System.NonSerialized] public System.Action PullStarted;
+        /// <summary>A mirror of another game's crate (NetCrate): it neither drifts nor expires by itself.</summary>
+        [System.NonSerialized] public bool remote;
+
         /// <summary>A fixed object's crate: the 60 s start when its wreck animation ends (state 4).</summary>
         public void DelayExpiry(float ms) => ageMs -= ms;
 
@@ -44,6 +53,7 @@ namespace GoF2Remake.Flight
         void Update()
         {
             float dtMs = Time.deltaTime * 1000f, frames = dtMs / 33.3f;
+            if (remote) return;   // the host's crate moves it and ends it (NetCrate)
             ageMs += dtMs;
             if (ageMs > LifetimeMs || !HasLoot) { Destroy(gameObject); return; }
             if (!pulled && force > 0.05f)

@@ -67,7 +67,7 @@ namespace GoF2Remake.UI
 
         VisualElement root, logo, splash, splashLogo, fade, dialog, mainColumn, mainButtons;
         Label pressAnyKey, versionLabel, hintLabel;
-        Button resumeButton, newGameButton, loadButton, optionsButton, aboutButton, exitButton;
+        Button resumeButton, newGameButton, multiplayerButton, loadButton, optionsButton, aboutButton, exitButton;
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
         VisualElement openPanel;
         readonly List<OptionControl> optionControls = new List<OptionControl>();
@@ -129,13 +129,14 @@ namespace GoF2Remake.UI
 
             resumeButton = Bind("resumeButton", () => LoadSlot(SaveGame.MostRecentSlot()));
             newGameButton = Bind("newGameButton", () => OpenPanel("campaignPanel"));
+            multiplayerButton = Bind("multiplayerButton", OpenMultiplayer);
             loadButton = Bind("loadButton", () => { BuildSlots(); OpenPanel("loadPanel"); });
             optionsButton = Bind("optionsButton", () => { OpenPanel("optionsPanel"); SelectTab(OptionPages[0].page); });
             aboutButton = Bind("aboutButton", () => OpenPanel("aboutPanel"));
             exitButton = Bind("exitButton", () => ShowDialog(Localization.Get(390), Localization.Get(53), Quit));
             resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);   // only with a save
 
-            foreach (var n in new[] { "campaignPanel", "difficultyPanel", "loadPanel", "optionsPanel", "aboutPanel" })
+            foreach (var n in new[] { "campaignPanel", "difficultyPanel", "loadPanel", "optionsPanel", "aboutPanel", "multiplayerPanel" })
             {
                 panels[n] = root.Q(n);
                 panels[n].usageHints = UsageHints.DynamicTransform;
@@ -156,7 +157,7 @@ namespace GoF2Remake.UI
                 sv.verticalScrollerVisibility = ScrollerVisibility.Hidden;
                 sv.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             }
-            foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack" })
+            foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" })
             {
                 var b = root.Q<Button>(n);
                 b.clicked += Back;   // Back() plays the release sound itself (also used by Esc)
@@ -167,6 +168,7 @@ namespace GoF2Remake.UI
             Bind("cardValkyrie", () => PickCampaign(Campaign.Valkyrie));
             Bind("cardSupernova", () => PickCampaign(Campaign.Supernova));
             BuildDebugPanel();
+            SetupMultiplayerPanel();
             Bind("normalButton", () => StartGame(Session.DifficultyNormal));
             Bind("extremeButton", () => ShowDialog(Localization.Get(25), Localization.Get(26),
                 () => StartGame(Session.DifficultyExtreme)));
@@ -355,7 +357,11 @@ namespace GoF2Remake.UI
             DragScroll.NotePointer();
             if (e.pointerType == PointerType.mouse) { SetTouchMode(false); return; }
             SetTouchMode(true);
-            root.focusController?.IgnoreEvent(e);   // don't focus what the finger presses
+            // Don't focus what the finger presses, except a text field (the address, the debug search): it needs the focus
+            // for the on-screen keyboard.
+            for (var v = e.target as VisualElement; v != null; v = v.parent)
+                if (v is TextField) return;
+            root.focusController?.IgnoreEvent(e);
         }
 
         void Select(VisualElement e)
@@ -384,10 +390,30 @@ namespace GoF2Remake.UI
                 splash.AddToClassList("splash--gone");
                 splash.AddToClassList("splash--removed");
                 EnterMenu();
-                root.schedule.Execute(() => OpenPanel(name)).ExecuteLater(400);
+                // Out of a multiplayer session (the host left, the connection dropped): the reason, taken now (a -mpjoin
+                // client's next try starts a new session at once, which clears the status).
+                string reason = null;
+                bool popup = name == "multiplayerPanel" && GoF2Remake.Multiplayer.NetGame.TakePopup(out reason);
+                root.schedule.Execute(() =>
+                {
+                    OpenPanel(name);
+                    if (popup) ShowNotice(Localization.Extra("multiplayer", "Multiplayer"), reason);
+                }).ExecuteLater(400);
+                if (GoF2Remake.Multiplayer.NetGame.AutoJoinAddress != null) StartCoroutine(AutoJoin(GoF2Remake.Multiplayer.NetGame.AutoJoinAddress));
                 yield break;
             }
             OpenPanelOnStart = null;
+            // Multiplayer testing (-mpjoin <address>, e.g. a second Windows player next to the Editor's host): straight to the
+            // menu, then join.
+            if (GoF2Remake.Multiplayer.NetGame.AutoJoinAddress != null)
+            {
+                splash.AddToClassList("splash--gone");
+                splash.AddToClassList("splash--removed");
+                EnterMenu();
+                root.schedule.Execute(() => OpenPanel("multiplayerPanel")).ExecuteLater(400);   // its status shows the tries
+                StartCoroutine(AutoJoin(GoF2Remake.Multiplayer.NetGame.AutoJoinAddress));
+                yield break;
+            }
             WatchAnyKey();
             bool splashLogos = showSplash && Application.isEditor && editorSplashLogos != null;
             if (splashLogos)
@@ -514,7 +540,8 @@ namespace GoF2Remake.UI
             SetFocusable(mainButtons, true);
             var target = closing == panels["campaignPanel"] || panels.TryGetValue("debugPanel", out var ap) && closing == ap ? newGameButton
                 : closing == panels["loadPanel"] ? loadButton
-                : closing == panels["optionsPanel"] ? optionsButton : aboutButton;
+                : closing == panels["optionsPanel"] ? optionsButton
+                : closing == panels["multiplayerPanel"] ? multiplayerButton : aboutButton;
             Select(target);
         }
 
@@ -535,6 +562,84 @@ namespace GoF2Remake.UI
             if (pendingStartIndex >= 0) { StartCoroutine(Leave(Story.StartAtMission(db, pendingStartIndex))); return; }
             // MenuTouchWindow::startGOF2 / startValkyrie / startSupernova: the story's first step (Story).
             StartCoroutine(Leave(Story.StartCampaign(db, pendingCampaign)));
+        }
+
+        // ---- multiplayer (remake-only MVP, NetGame: host or join by address, one shared orbit) ----
+
+        TextField mpAddress, mpName;
+        Label mpStatus;
+
+        void SetupMultiplayerPanel()
+        {
+            mpAddress = root.Q<TextField>("mpAddress");
+            mpStatus = root.Q<Label>("mpStatus");
+            if (mpAddress != null) mpAddress.value = PlayerPrefs.GetString("mp_address", "127.0.0.1");
+            mpName = root.Q<TextField>("mpName");
+            if (mpName != null)
+            {
+                mpName.maxLength = GoF2Remake.Multiplayer.NetGame.MaxNameLength;
+                mpName.value = GoF2Remake.Multiplayer.NetGame.PlayerName;
+                mpName.RegisterValueChangedCallback(e => GoF2Remake.Multiplayer.NetGame.PlayerName = e.newValue);
+            }
+            Bind("mpHost", () => StartCoroutine(LeaveForMultiplayer(null)));
+            Bind("mpJoin", () =>
+            {
+                string address = mpAddress != null ? mpAddress.value.Trim() : "";
+                if (address.Length == 0) return;
+                PlayerPrefs.SetString("mp_address", address);
+                StartCoroutine(LeaveForMultiplayer(address));
+            });
+        }
+
+        /// <summary>-mpjoin: joins that address, again every 2 s until a host answers (and after a session ends).</summary>
+        IEnumerator AutoJoin(string address)
+        {
+            while (true)
+            {
+                while (screen != MenuState.Menu) yield return null;
+                yield return LeaveForMultiplayer(address);   // returns only when the connection failed
+                yield return new WaitForSeconds(2f);
+            }
+        }
+
+        void OpenMultiplayer()
+        {
+            if (mpStatus != null) mpStatus.text = GoF2Remake.Multiplayer.NetGame.Status;   // why the last session ended
+            OpenPanel("multiplayerPanel");
+        }
+
+        /// <summary>Fades out, then hosts (address null: NetGame loads Space for everyone) or joins (the host's scene loads
+        /// once connected). A failed start or connection fades the menu back in with the reason.</summary>
+        IEnumerator LeaveForMultiplayer(string address)
+        {
+            if (screen != MenuState.Menu) yield break;
+            screen = MenuState.Leaving;
+            bool started;
+            if (address == null)
+            {
+                if (mpStatus != null) mpStatus.text = "";
+                fade.AddToClassList("fade--on");
+                StartCoroutine(FadeMusic(0f, 1.2f));
+                yield return new WaitForSeconds(1.3f);
+                started = GoF2Remake.Multiplayer.NetGame.StartHost();
+            }
+            else
+            {
+                // Joining: the menu stays while it connects (a missing host would be a long black screen); the fade once connected.
+                if (mpStatus != null) mpStatus.text = string.Format(Localization.Extra("mpConnecting", "Connecting to {0}..."), address);
+                started = GoF2Remake.Multiplayer.NetGame.StartClient(address);
+                while (started && GoF2Remake.Multiplayer.NetGame.Active && !GoF2Remake.Multiplayer.NetGame.Connected) yield return null;
+                if (started && GoF2Remake.Multiplayer.NetGame.Active)
+                {
+                    fade.AddToClassList("fade--on");
+                    StartCoroutine(FadeMusic(0f, 1.2f));
+                }
+            }
+            while (started && GoF2Remake.Multiplayer.NetGame.Active) yield return null;   // the scene change ends this
+            if (mpStatus != null) mpStatus.text = GoF2Remake.Multiplayer.NetGame.Status;
+            fade.RemoveFromClassList("fade--on");
+            screen = MenuState.Menu;
+            StartCoroutine(FadeMusic(Settings.MusicVolume, 1f));
         }
 
         // ---- debug panel (remake-only testing tools: F10 or five taps on the version text) -------
@@ -802,8 +907,26 @@ namespace GoF2Remake.UI
             Select(root.Q<Button>("dialogNo"));
         }
 
+        /// <summary>The dialog as a notice: one button (the Yes button as OK), no question.</summary>
+        void ShowNotice(string title, string text)
+        {
+            Debug.Log($"MainMenu: notice '{text}'");
+            ShowDialog(title, text, null);
+            var no = root.Q<Button>("dialogNo");
+            var yes = root.Q<Button>("dialogYes");
+            no.style.display = DisplayStyle.None;
+            yes.text = "OK";
+            Select(yes);
+        }
+
         void CloseDialog()
         {
+            var no = root.Q<Button>("dialogNo");
+            if (no.style.display == DisplayStyle.None)
+            {
+                no.style.display = StyleKeyword.Null;
+                root.Q<Button>("dialogYes").text = Localization.Get(134).ToUpperInvariant();
+            }
             dialog.RemoveFromClassList("dialog-backdrop--shown");
             dialogYes = null;
             if (openPanel != null) FocusFirst(openPanel); else Select(exitButton);
@@ -913,7 +1036,15 @@ namespace GoF2Remake.UI
             Set("optionsButton", T(31));
             Set("aboutButton", T(43));
             Set("exitButton", T(33));
-            foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack" }) Set(n, "‹  " + T(170));
+            foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" }) Set(n, "‹  " + T(170));
+            string mp = Localization.Extra("multiplayer", "Multiplayer").ToUpperInvariant();
+            Set("multiplayerButton", mp);
+            Set("multiplayerTitle", mp);
+            Set("mpIntro", Localization.Extra("mpIntro", "Fly together in Var Hastra's orbit. One player hosts, the others join with the host's address (same network, port 7777)."));
+            Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());
+            if (mpName != null) mpName.textEdition.placeholder = Localization.Extra("mpNamePlaceholder", "Your pilot name");
+            Set("mpHostAddress", string.Format(Localization.Extra("mpYourAddress", "Your address: {0}"), GoF2Remake.Multiplayer.NetGame.LocalAddress()));
+            Set("mpJoin", Localization.Extra("mpJoin", "Join").ToUpperInvariant());
 
             Set("campaignTitle", T(103));
             Set("debugTitle", Localization.Extra("debugTitle", "Debug").ToUpperInvariant());

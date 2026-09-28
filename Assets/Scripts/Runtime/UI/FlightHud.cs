@@ -125,6 +125,11 @@ namespace GoF2Remake.UI
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");
             hints = root.Q("hints");
+            if (GoF2Remake.Multiplayer.NetGame.Active)
+            {
+                ChatView.Attach(gameObject, safeArea ?? root);    // multiplayer chat
+                SquadView.Attach(gameObject, safeArea ?? root);   // the squad window, invitations
+            }
 
             InputGlyph.TrackHintsOption(hints);
             secondaryLabel = root.Q<Label>("secondaryLabel");
@@ -555,7 +560,7 @@ namespace GoF2Remake.UI
             }
 
             if (pauseMenu.IsOpen) { pauseMenu.Tick(); return; }
-            if ((Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            if ((GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame))
             {
                 // MenuTouchWindow(1): the pause menu; after the player's death straight back to the main menu.
@@ -565,7 +570,7 @@ namespace GoF2Remake.UI
             // The PC version's keys (its help texts 1731 / 1732, 638, 18 and the default list): Q Autopilot (the target
             // list, again = off) and E Actions (the action menu; the remake has one menu for both), V Wingmen, K Khador
             // Drive, M or the middle mouse button: mouse control.
-            var keys = Keyboard.current;
+            var keys = GoF2Remake.Multiplayer.NetChat.Keys;
             if (nav != null && ((keys != null && (keys.qKey.wasPressedThisFrame || keys.eKey.wasPressedThisFrame))
                                 || (Gamepad.current != null && Gamepad.current.selectButton.wasPressedThisFrame)))
                 OnAutopilotButton();
@@ -666,7 +671,7 @@ namespace GoF2Remake.UI
             // Touch: no prompt, the fire button is the action button (its arrow shows when fire acts).
             dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null || InputMode.Current == InputKind.Touch);
             if (prompt != null) dockLabel.text = prompt;
-            var kbp = Keyboard.current;
+            var kbp = GoF2Remake.Multiplayer.NetChat.Keys;
             if (prompt != null && ((kbp != null && (kbp.fKey.wasPressedThisFrame || kbp.enterKey.wasPressedThisFrame || kbp.numpadEnterKey.wasPressedThisFrame))
                                    || (Gamepad.current != null && Gamepad.current.buttonWest.wasPressedThisFrame)))
             {
@@ -699,7 +704,7 @@ namespace GoF2Remake.UI
             // Fast-forward: the touch button, or hold Tab (the PC version's "Speed up") / controller Y (MGame key 0x100,
             // hold-to-use).
             bool ffHeld = navView.FastForwardPressed
-                          || (Keyboard.current != null && Keyboard.current.tabKey.isPressed)
+                          || (GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.tabKey.isPressed)
                           || (Gamepad.current != null && Gamepad.current.buttonNorth.isPressed);
             nav?.SetFastForwardHeld(ffHeld);
             root.EnableInClassList("hud-docking", phase != Mining.Phase.Idle);
@@ -886,7 +891,7 @@ namespace GoF2Remake.UI
         /// select), Esc / Q / E / B / View close.</summary>
         void UpdateAutopilotMenu()
         {
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             var pad = Gamepad.current;
             // The press that opened the menu can still read as "pressed this frame" on the next frame (editor input
             // updates): ignore the toggle keys for two frames.
@@ -987,7 +992,9 @@ namespace GoF2Remake.UI
         {
             gameOverMs = 0f;
             gameOver.AddToClassList("game-over--shown");
-            gameOverText.text = Localization.Get(Session.HasAutosave ? 196 : 199);
+            gameOverText.text = GoF2Remake.Multiplayer.NetGame.Active
+                ? Localization.Extra("mpRespawn", "Tap to respawn at the station.")   // multiplayer: no saves, docked again
+                : Localization.Get(Session.HasAutosave ? 196 : 199);
         }
 
         /// <summary>Overlay fades in after 3000 ms over 4000 ms, then the blinking "Tap to load last savegame.".</summary>
@@ -999,7 +1006,7 @@ namespace GoF2Remake.UI
             bool ready = gameOverMs > 7000f;
             // The original blinks "Tap to load last savegame." every 500 ms; the remake keeps it on (it fades in once).
             gameOverText.EnableInClassList("game-over-text--shown", ready);
-            if (ready && ((Keyboard.current != null && Keyboard.current.anyKey.wasPressedThisFrame)
+            if (ready && ((GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.anyKey.wasPressedThisFrame)
                           || (Gamepad.current != null && (Gamepad.current.buttonSouth.wasPressedThisFrame || Gamepad.current.startButton.wasPressedThisFrame))))
                 LoadLastSave();
         }
@@ -1009,6 +1016,8 @@ namespace GoF2Remake.UI
         {
             if (gameOverMs < 7000f) return;
             gameOverMs = -1f;
+            // Multiplayer: back in this orbit's station, repaired (docking repairs), everything else kept.
+            if (GoF2Remake.Multiplayer.NetGame.Active) { Session.DockedFromSpace = false; SceneManager.LoadScene("Station"); return; }
             if (Session.LoadAutosave() && Application.CanStreamedLevelBeLoaded("Station")) SceneManager.LoadScene("Station");
             else BackToMenu();
         }
@@ -1143,6 +1152,7 @@ namespace GoF2Remake.UI
 
         void BackToMenu()
         {
+            GoF2Remake.Multiplayer.NetGame.Shutdown();   // leaving a multiplayer session
             if (Application.CanStreamedLevelBeLoaded(menuScene)) SceneManager.LoadScene(menuScene);
         }
             // ---- button sounds (TouchButton::OnTouchBegin 124 Button_Push / OnTouchEnd 123 Button_Release) -------------

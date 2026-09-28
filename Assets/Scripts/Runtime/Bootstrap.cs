@@ -44,6 +44,9 @@ namespace GoF2Remake
 
             ApplyAll();
             ApplyDisplay();
+            Visuals.ClassicBloomPass.Install();   // the "Original" bloom option
+            HitchLogger.Install();                // development builds: frame hitches to hitches.log
+            UI.ScreenshotKey.Install();           // F12: a screenshot to the pictures library
             Settings.Changed -= ApplyAll;
             Settings.Changed += ApplyAll;
             SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -193,9 +196,15 @@ namespace GoF2Remake
             get { var d = Screen.mainWindowDisplayInfo; return d.width > 0 ? new Vector2Int(d.width, d.height) : new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height); }
         }
 
+        /// <summary>Launched with Unity's own window options (-screen-fullscreen / -screen-width / -screen-height /
+        /// -window-mode / -popupwindow, e.g. the multiplayer test client in a small window): those win over the window mode
+        /// and resolution options for this run.</summary>
+        static readonly bool displayFromCommandLine = System.Array.Exists(System.Environment.GetCommandLineArgs(),
+            a => a == "-screen-fullscreen" || a == "-screen-width" || a == "-screen-height" || a == "-window-mode" || a == "-popupwindow");
+
         static void ApplyDisplay()
         {
-            if (!HasDisplayOptions) return;
+            if (!HasDisplayOptions || displayFromCommandLine) return;
             var mode = Settings.DisplayMode switch
             {
                 DisplayMode.Fullscreen => FullScreenMode.ExclusiveFullScreen,

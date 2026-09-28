@@ -36,6 +36,7 @@
 
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
+using GoF2Remake.Multiplayer;
 using GoF2Remake.Visuals;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -182,7 +183,9 @@ namespace GoF2Remake.World
             Jumpgate = OrbitBuilder.SpawnJumpgate(db, Layout);
             SpawnWormhole();
             AddObstacles();
-            Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
+            // Multiplayer (NetGame): the orbit's field from the world seed, the same for every player here (NetOrbit).
+            if (!NetGame.Active) Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
+            else SpawnNetworkAsteroids(NetGame.OrbitSeed(station));
             if (prologue && Story.Index == 0)
             {
                 var story = StoryAssets.Load();
@@ -220,7 +223,10 @@ namespace GoF2Remake.World
             NpcTables.InCampaignLevel = storyOrbit;
             NpcTables.LevelFreelanceType = freelanceOrbit ? Freelance.Mission.type : -1;
             Traffic = new GameObject("Traffic").AddComponent<Traffic>();
-            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege, Wormhole);
+            // Multiplayer: only the first player in an empty orbit builds its traffic and runs it; the others show that player's
+            // ships (NetOrbit) and take them over if it leaves, never building new ones.
+            NetAuthority = NetGame.Active && NetState.OrbitEmpty(station);
+            Traffic.Setup(db, Layout, Health.Target, Station, storyOrbit || freelanceOrbit || siege || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
             Docking = Player.gameObject.AddComponent<ObjectDocking>();
@@ -280,6 +286,23 @@ namespace GoF2Remake.World
             if (Extender != null) Extender.Blocked = () => ExtenderBlocked;
             RepairBeam.AttachAll(Player.gameObject, db, Health.Target, Traffic);
             Session.ComingFromVoid = false;   // Level::init / LevelScript have used it (the Void raid, the closing wormhole)
+            if (NetGame.Active) gameObject.AddComponent<NetOrbit>().Setup(this);   // multiplayer: the shared orbit
+        }
+
+        /// <summary>Multiplayer: this player runs the orbit's NPC traffic (the first one here), see NetOrbit.</summary>
+        public bool NetAuthority { get; private set; }
+
+        /// <summary>Multiplayer: the orbit's authority left, this player takes its ships over (NetOrbit).</summary>
+        public void TakeOverNetAuthority() => NetAuthority = true;
+
+        /// <summary>Multiplayer (NetGame): the asteroid field from the session's seed, the same on every player's level.</summary>
+        public void SpawnNetworkAsteroids(int seed)
+        {
+            if (Asteroids != null) return;
+            var saved = Random.state;
+            Random.InitState(seed);
+            Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
+            Random.state = saved;
         }
 
         /// <summary>Level::comingFromAlienWorld for this level (the session flag is cleared once the level is built).</summary>
@@ -420,6 +443,8 @@ namespace GoF2Remake.World
                 root.transform.SetPositionAndRotation(
                     OrbitLayout.ToUnity(OrbitLayout.UndockPosition),
                     OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
+            // Multiplayer: players launching together sit side by side, 80 m apart by client id.
+            if (NetGame.Active) root.transform.position += root.transform.right * (NetGame.LocalId * 80f);
             // LevelScript::LevelScript 0x160380: at Coromesk (103) from campaign 0x55 on (or at 0x87), outside the Void, every
             // start is at (70000, 0, 100000) facing the station (the mining plant stands at the origin from then on).
             int cm = Session.CampaignMission;
@@ -562,7 +587,7 @@ namespace GoF2Remake.World
         /// the station's skip for the hangar flights).</summary>
         public static bool PlayerTriedToFly()
         {
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             if (kb != null && kb.anyKey.wasPressedThisFrame && !kb.escapeKey.wasPressedThisFrame && !kb.qKey.wasPressedThisFrame && !kb.eKey.wasPressedThisFrame) return true;
             var mouse = Mouse.current;
             if (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)) return true;

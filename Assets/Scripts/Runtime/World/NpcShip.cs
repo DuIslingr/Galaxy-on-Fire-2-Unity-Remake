@@ -113,11 +113,81 @@ namespace GoF2Remake.World
         public bool Inactive => inactive;
         [System.NonSerialized] public List<Target> enemies = new List<Target>();
 
+        // ---- multiplayer (NetOrbit sets the hooks on the orbit's authority; all null in single player) ----------
+        /// <summary>The other players whose shots turned this ship on them (client ids): hostile to their squads.</summary>
+        [System.NonSerialized] public readonly HashSet<ulong> aggressors = new HashSet<ulong>();
+        /// <summary>The other players' ships in this orbit (their NetPlayer Targets).</summary>
+        public static IReadOnlyList<Target> RemotePlayers;
+        /// <summary>This ship is hostile to that other player (an always-hostile race, their squad shot it, or it is hostile to
+        /// the local player and they are in its squad).</summary>
+        public static System.Func<NpcShip, Target, bool> HostileToRemote;
+        /// <summary>Another member of the local player's squad shot this ship: hostile to the local player too.</summary>
+        public static System.Func<NpcShip, bool> HostileToLocalBySquad;
+        Target remoteTarget;
+        readonly List<Target> hitList = new List<Target>();
+        readonly Dictionary<ulong, int> remoteHullDamage = new Dictionary<ulong, int>(), remoteEmp = new Dictionary<ulong, int>();
+
+        /// <summary>Multiplayer: another player's hit (NetProxy). Like the player's friendly fire (OnDamaged), it turns on
+        /// that player's squad once they took half its hull (a quarter on Extreme); a race that is always hostile needs none.
+        /// The hull damage itself comes in as an NPC's hit (no standing or kill credit for this game's player).</summary>
+        public void OnRemoteHit(ulong client, int dmg)
+        {
+            if (alwaysEnemy || IsWingman || Race == Standing.Pirate || Race == Standing.Void || Race == Standing.Specter) return;
+            int total = (remoteHullDamage.TryGetValue(client, out int d) ? d : 0) + dmg;
+            remoteHullDamage[client] = total;
+            if (total >= Hp.maxHull * (Session.IsExtreme ? 0.25f : 0.50f)) aggressors.Add(client);
+        }
+
+        /// <summary>Multiplayer: another player's EMP (NetProxy): past a third of its EMP points it turns on them
+        /// (OnPlayerEmp), then the EMP lands.</summary>
+        public void OnRemoteEmp(ulong client, int emp)
+        {
+            if (Hp == null || !Target.Alive || Hp.emp <= 0) return;
+            if (!alwaysEnemy && !IsWingman && Race != Standing.Void && Race != Standing.Specter)
+            {
+                int total = (remoteEmp.TryGetValue(client, out int e) ? e : 0) + emp;
+                remoteEmp[client] = total;
+                if (total > Hp.maxEmp / 3) aggressors.Add(client);
+            }
+            Hp.DamageEmp(emp);
+        }
+
+        /// <summary>What its guns can hit: its enemies, plus the other players here (every player ship blocks its shots).</summary>
+        List<Target> HitTargets
+        {
+            get
+            {
+                var remote = RemotePlayers;
+                if (remote == null || remote.Count == 0 || HostileToRemote == null) return enemies;
+                hitList.Clear();
+                hitList.AddRange(enemies);
+                foreach (var r in remote) if (r != null) hitList.Add(r);   // in the line of fire like the local player
+                return hitList;
+            }
+        }
+
         Traffic traffic;
         Database db;
         CombatAssets assets;
         Transform model;
         GameObject modelGo;
+
+        /// <summary>The ship it attacks (its rockets home on it), null = none.</summary>
+        public Target CurrentTarget => target;
+        /// <summary>Its guns (the main gun, the second slot, the wingmen's EMP gun), for multiplayer's shot mirrors.</summary>
+        public IEnumerable<Gun> Guns
+        {
+            get
+            {
+                if (gun != null) yield return gun;
+                if (secondGun != null) yield return secondGun;
+                if (empGun != null) yield return empGun;
+            }
+        }
+        /// <summary>The ship's model (its pose is what a multiplayer proxy follows), else the ship itself.</summary>
+        public Transform Model => model != null ? model : transform;
+        /// <summary>Resources path of the assembled prefab it was built from (Traffic), for multiplayer proxies.</summary>
+        public string ModelPath { get; set; }
         Route route;
         Gun gun;
         GunRig rig;
@@ -524,19 +594,19 @@ namespace GoF2Remake.World
             SyncTurret();
             if (gun != null)
             {
-                gun.Update(dtMs, enemies, HomingTarget);
+                gun.Update(dtMs, HitTargets, HomingTarget);
                 rig.UpdateVisuals(dtMs, Camera.main, transform.forward);
             }
             if (secondGun != null)
             {
-                secondGun.Update(dtMs, enemies, HomingTarget);
+                secondGun.Update(dtMs, HitTargets, HomingTarget);
                 secondRig.UpdateVisuals(dtMs, Camera.main, transform.forward);
                 slotMs += dtMs;
                 if (slotMs >= SlotToggleMs) { slotMs = 0f; useSecond = !useSecond; }
             }
             if (empGun != null)
             {
-                empGun.Update(dtMs, enemies, null);
+                empGun.Update(dtMs, HitTargets, null);
                 empRig.UpdateVisuals(dtMs, Camera.main, transform.forward);
             }
             if (Current == State.Dead) { UpdateDead(dtMs); return; }
@@ -632,6 +702,7 @@ namespace GoF2Remake.World
             if (alwaysEnemy) { hostile = true; friend = false; }
             if (r == Standing.Pirate && traffic != null && traffic.LomaTollPaid) { hostile = false; friend = false; }
             if (turnedEnemy) { hostile = true; friend = false; }
+            if (HostileToLocalBySquad != null && HostileToLocalBySquad(this)) { hostile = true; friend = false; }   // multiplayer
             if (alwaysFriend) { hostile = false; friend = true; }
             Target.hostileToPlayer = hostile;
             Target.friendToPlayer = friend;
@@ -885,6 +956,37 @@ namespace GoF2Remake.World
         /// <summary>§5.3 target selection.</summary>
         void UpdateTargeting()
         {
+            // Multiplayer: another player it is hostile to, kept while valid, hostile and in the box.
+            if (remoteTarget != null)
+            {
+                if (Valid(remoteTarget) && HostileToRemote != null && HostileToRemote(this, remoteTarget) && InBox(remoteTarget))
+                {
+                    target = remoteTarget;
+                    targetPos = target.transform.position;
+                    attacking = true;
+                    followingWaypoint = false;
+                    return;
+                }
+                remoteTarget = null;
+            }
+            UpdateTargetingLocal();
+            if (attacking && target != null) return;
+            var remote = RemotePlayers;
+            if (remote == null || HostileToRemote == null) return;
+            foreach (var r in remote)
+            {
+                if (!Valid(r) || !HostileToRemote(this, r) || !InBox(r)) continue;
+                remoteTarget = r;
+                target = r;
+                targetPos = r.transform.position;
+                attacking = true;
+                followingWaypoint = false;
+                return;
+            }
+        }
+
+        void UpdateTargetingLocal()
+        {
             int n = enemies.Count;
             int idx = targetIdx;
             if (idx >= n) idx = -1;
@@ -1093,6 +1195,12 @@ namespace GoF2Remake.World
 
         void OnGunHit(int bullet, Target hit, Vector3 point) => GunHit(gun, rig, bullet, hit, point);
 
+        static bool Contains(IReadOnlyList<Target> list, Target t)
+        {
+            for (int i = 0; i < list.Count; i++) if (list[i] == t) return true;
+            return false;
+        }
+
         /// <summary>Gun::calcCharacterCollision 0x17e154 for an NPC bullet: a non-hostile ship's stray shot at the player does
         /// 20 %, a hostile one x0.75 while the player is docked at an object (PlayerEgo::isDockedToDockingPoint); the item's
         /// EMP (attr 10, Gun::setIndex) lands too (NPC against NPC: the player has no EMP pool).</summary>
@@ -1100,6 +1208,8 @@ namespace GoF2Remake.World
         {
             float dmg = g.damage;
             if (hit.isPlayer && !Target.hostileToPlayer) dmg = (int)(dmg * 0.2f);   // stray fire from a non-hostile ship
+            else if (!hit.isPlayer && RemotePlayers != null && HostileToRemote != null && Contains(RemotePlayers, hit) && !HostileToRemote(this, hit))
+                dmg = (int)(dmg * 0.2f);   // multiplayer: the same for another player it isn't after
             else if (hit.isPlayer && ObjectDocking.PlayerDocked) dmg = (int)(dmg * 0.75f);
             hit.Damage(dmg, true, g.bullets[bullet].velocity);
             if (g.emp > 0f && !hit.isPlayer && hit.hitpoints != null) hit.hitpoints.DamageEmp((int)g.emp);

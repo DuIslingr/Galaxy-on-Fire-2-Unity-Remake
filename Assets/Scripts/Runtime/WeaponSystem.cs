@@ -57,6 +57,8 @@ namespace GoF2Remake.Flight
         }
 
         readonly List<Rig> rigs = new List<Rig>();
+        /// <summary>Every mounted gun (primaries and secondaries), for multiplayer's shot mirrors.</summary>
+        public IEnumerable<Gun> Guns { get { foreach (var r in rigs) yield return r.gun; } }
 
         /// <summary>How the looping shot events end on Player::stopShooting (the FEV's LGCY data, fev_lgcy.py): "loop and play
         /// to end" (cannons, thermo guns, Hammerhead turrets: the shot in progress finishes, then the event's fade-out) or
@@ -215,6 +217,7 @@ namespace GoF2Remake.Flight
                 int slot = secondary ? s++ : p++;
                 if (slot >= mounts.Count) { Debug.LogWarning($"WeaponSystem: no free {(secondary ? "secondary" : "primary")} mount for {item.name}"); continue; }
                 var gun = new Gun(item, MountToLocal(mounts[slot]), secondary);
+                gun.Ignores = t => t.playerProof;   // multiplayer: through squadmates
                 if (!secondary)
                 {
                     // Level::createPlayer: damage = int(attr9 * damageFactor), reload = int(attr11 * fireRate), type-0 items only.
@@ -502,7 +505,9 @@ namespace GoF2Remake.Flight
         /// then the EMP; a disabled ship costs standing (Standing::applyDisable, not for asteroids / Wanted criminals).</summary>
         static void ApplyEmp(Target target, int emp)
         {
-            if (emp <= 0 || target.hitpoints == null || !target.isShip || !target.Alive) return;
+            if (emp <= 0 || target.playerProof) return;
+            if (target.RemoteEmp != null) { if (target.Alive) target.RemoteEmp(emp); return; }   // multiplayer: its owner's game
+            if (target.hitpoints == null || !target.isShip || !target.Alive) return;
             if (target.hitpoints.emp <= 0 || target.hitpoints.hull <= 0) return;   // already disabled
             var npc = target.GetComponent<World.NpcShip>();
             npc?.OnPlayerEmp(emp);

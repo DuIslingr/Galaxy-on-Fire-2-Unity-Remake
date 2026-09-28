@@ -14,10 +14,13 @@ namespace GoF2Remake.Visuals
         public const string ResourcesFolder = "Assembled";
 
         /// <summary>Loads an assembled prefab by its assemblies.json entry (only what a level needs gets loaded).</summary>
+        /// <summary>The entry's prefab path under Resources (null without an entry).</summary>
+        public static string PrefabPath(GoF2Remake.Data.AssemblyData entry) => entry == null ? null : $"{ResourcesFolder}/{entry.pack}/{entry.category}/{entry.name}";
+
         public static GameObject LoadPrefab(GoF2Remake.Data.AssemblyData entry)
         {
             if (entry == null) return null;
-            var prefab = Resources.Load<GameObject>($"{ResourcesFolder}/{entry.pack}/{entry.category}/{entry.name}");
+            var prefab = Resources.Load<GameObject>(PrefabPath(entry));
             if (prefab == null) Debug.LogWarning($"AssembledObject: no prefab for '{entry.name}' ({entry.pack}/{entry.category})");
             return prefab;
         }

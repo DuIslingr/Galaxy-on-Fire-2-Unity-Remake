@@ -77,7 +77,17 @@ namespace GoF2Remake.Data
         public static float BrightnessExposure => (Brightness - 1) * 0.35f;
 
         /// <summary>Post-processing bloom on/off.</summary>
-        public static bool Bloom { get => GetBool("bloom", true); set => SetBool("bloom", value); }
+        /// <summary>Bloom: 0 off, 1 the remake's (URP Bloom on the HDR glow of lights, engines and effects), 2 the
+        /// original's (ClassicBloomPass: every bright pixel, a soft 256 x 256 glow). Old saves: the "bloom" toggle.</summary>
+        public static int BloomStyle
+        {
+            get => Mathf.RoundToInt(Get("bloomStyle", GetBool("bloom", true) ? BloomRemake : BloomOff));
+            set => Set("bloomStyle", value);
+        }
+        public const int BloomOff = 0, BloomRemake = 1, BloomOriginal = 2;
+
+        /// <summary>URP's Bloom on the global volumes (the "Remake" bloom).</summary>
+        public static bool Bloom => BloomStyle == BloomRemake;
 
         /// <summary>The sun's lens flare in flight (LensFlareView).</summary>
         public static bool LensFlare { get => GetBool("lensFlare", true); set => SetBool("lensFlare", value); }
@@ -149,7 +159,7 @@ namespace GoF2Remake.Data
             foreach (var key in new[]
                      {
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
-                         "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "lensFlare", "fov", "cameraShake",
+                         "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);

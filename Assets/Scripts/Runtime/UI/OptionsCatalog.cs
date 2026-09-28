@@ -131,7 +131,10 @@ namespace GoF2Remake.UI
             list.Add(Choice("brightness", OptionPage.Graphics, () => Localization.Get(503), true,
                 () => new[] { Localization.Get(513), Localization.Get(514), Localization.Get(515) },
                 () => Settings.Brightness, i => Settings.Brightness = i));
-            list.Add(Toggle("bloom", OptionPage.Graphics, () => X("bloom", "Bloom"), () => Settings.Bloom, v => Settings.Bloom = v));
+            // Remake: the remake's bloom (the HDR glow of lights and effects) or the original's (every bright pixel, ClassicBloomPass).
+            list.Add(Choice("bloom", OptionPage.Graphics, () => X("bloom", "Bloom"), true,
+                () => new[] { X("off", "Off"), X("bloomRemake", "Remake"), X("bloomOriginal", "Original") },
+                () => Mathf.Clamp(Settings.BloomStyle, 0, 2), i => Settings.BloomStyle = i));
             list.Add(Toggle("lensFlare", OptionPage.Graphics, () => X("lensFlare", "Lens flare"), () => Settings.LensFlare, v => Settings.LensFlare = v));
             list.Add(Slider("fov", OptionPage.Graphics, () => X("fov", "Field of view"), 55f, 95f,
                 () => Settings.FieldOfView, v => Settings.FieldOfView = Mathf.Round(v), v => $"{Mathf.RoundToInt(v)}°"));

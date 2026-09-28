@@ -53,6 +53,16 @@ namespace GoF2Remake.Flight
         /// <summary>Targets outside the traffic's ship list that the radar still shows and locks (the Junk removal's space junk,
         /// PlayerJunk: a far dot always).</summary>
         public static readonly System.Collections.Generic.List<Target> RadarObjects = new System.Collections.Generic.List<Target>();
+        /// <summary>Multiplayer: the other players' ships (NetPlayer) and, on a client, the host's NPC ships (NetProxy): the
+        /// radar locks them and the HUD marks them like the traffic's ships.</summary>
+        public static readonly System.Collections.Generic.List<Target> NetShips = new System.Collections.Generic.List<Target>();
+        /// <summary>Multiplayer: a hit (amount, hit vector, by an NPC) is passed on to the game that owns the ship (NetProxy,
+        /// NetPlayer) instead of applied here.</summary>
+        [NonSerialized] public Action<float, Vector3, bool> RemoteDamage;
+        /// <summary>Multiplayer: EMP (points) passed on to the game that owns the ship (NetProxy, NetPlayer).</summary>
+        [NonSerialized] public Action<int> RemoteEmp;
+        /// <summary>Multiplayer: a squadmate's ship: the players' weapons don't affect it (NPCs still do).</summary>
+        [NonSerialized] public bool playerProof;
         /// <summary>The player's cloak (Player+0x5e set by PlayerEgo::toggleCloaking): NPCs keep it as their target but don't
         /// fire, turrets don't aim at it, sleepers don't wake for it.</summary>
         [NonSerialized] public bool cloaked;
@@ -99,6 +109,8 @@ namespace GoF2Remake.Flight
         {
             if (!Alive || invulnerable) return;
             if (isPlayer && Data.Cheats.GodMode) return;   // remake: the Debug panel's god mode
+            if (playerProof && !byNpc) return;
+            if (RemoteDamage != null) { RemoteDamage(amount, hitVector, byNpc); return; }
             int dmg = Mathf.Max(0, (int)amount);
             lastHitVector = hitVector;
             bool dead;

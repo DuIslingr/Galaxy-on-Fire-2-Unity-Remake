@@ -235,7 +235,8 @@ namespace GoF2Remake.UI
             capturing = false;
         }
 
-        static bool Store(byte[] png, string name)
+        /// <summary>Saves a PNG to the pictures library (also the F12 screenshots, ScreenshotKey).</summary>
+        public static bool Store(byte[] png, string name)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             try

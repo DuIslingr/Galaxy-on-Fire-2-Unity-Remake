@@ -136,6 +136,9 @@ namespace GoF2Remake.UI
                         DrawShip(Get(s), s.transform.position, f, s.Target.HullFraction, radar.Locked == s.Target, cam, origin, centre);
                         DrawEmp(Get(s), s.Hp != null ? s.Hp.EmpFraction : 1f);
                     }
+                foreach (var o in Target.NetShips)   // multiplayer: the other players, the host's ships on a client
+                    if (o != null && o.Alive && !o.untargetable)
+                        DrawShip(Get(o), o.transform.position, o.hostileToPlayer ? 0 : o.friendToPlayer ? 1 : 2, o.HullFraction, radar.Locked == o, cam, origin, centre);
                 foreach (var o in Target.RadarObjects)
                     if (o != null && o.Alive && !o.untargetable)
                         DrawShip(Get(o), o.transform.position, o.hostileToPlayer ? 0 : 2, 1f, radar.Locked == o, cam, origin, centre, true);

@@ -142,6 +142,10 @@ namespace GoF2Remake.Flight
                             if (s.Hp.empDisabled && s.HasCargo) { if (d < stealD && (Salvaging == null || Salvaging.stolenFrom != s)) { stealD = d; bestSteal = s; } }
                             else if (best == null) best = s.Target;   // Radar::draw: the first ship of the list in the box
                         }
+                    // Multiplayer: the other players and the host's ships (on a client), after the traffic's.
+                    if (best == null && bestSteal == null)
+                        foreach (var o in Target.NetShips)
+                            if (o != null && o.Alive && !o.untargetable && InBox(cam, c, box, o.transform.position, out float dn)) { best = o; break; }
                     // PlayerJunk objects are in the original's ship list too: lockable after the ships.
                     if (best == null && bestSteal == null)
                         foreach (var o in Target.RadarObjects)
@@ -151,7 +155,7 @@ namespace GoF2Remake.Flight
                     {
                         bestD = float.MaxValue;
                         foreach (var cr in FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
-                            if (cr != Salvaging && InBox(cam, c, box, cr.transform.position, out float d) && d < bestD) { bestD = d; bestCrate = cr; }
+                            if (cr != Salvaging && !cr.claimedByOther && InBox(cam, c, box, cr.transform.position, out float d) && d < bestD) { bestD = d; bestCrate = cr; }
                     }
                 }
             }
@@ -208,6 +212,7 @@ namespace GoF2Remake.Flight
 
         void StartSalvage(Crate crate)
         {
+            crate.PullStarted?.Invoke();   // multiplayer: the claim
             Salvaging = crate;
             Salvaging.pulled = true;
             if (beamLoop.clip != null && !beamLoop.isPlaying) beamLoop.Play();
@@ -220,7 +225,7 @@ namespace GoF2Remake.Flight
             float best = float.MaxValue;
             foreach (var cr in FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
             {
-                if (cr.stolenFrom != null || !cr.HasLoot) continue;
+                if (cr.stolenFrom != null || !cr.HasLoot || cr.claimedByOther) continue;
                 if (onScreenOnly)
                 {
                     if (cam == null) return;
@@ -264,9 +269,11 @@ namespace GoF2Remake.Flight
                 Salvaging = null;
                 return;
             }
+            // Multiplayer: another player got it first (NetCrate's claim).
+            if (Salvaging.claimedByOther) { Salvaging.pulled = false; Salvaging = null; return; }
             var to = transform.position - Salvaging.transform.position;
             float dist = to.magnitude;
-            if (dist / M < CaptureUnits) { Capture(Salvaging); return; }
+            if (dist / M < CaptureUnits) { if (!Salvaging.captureBlocked) Capture(Salvaging); return; }   // blocked: waits for the claim
             Salvaging.transform.position += to / dist * Mathf.Min(dist, PullSpeed * dtMs * M);
             if (beam != null)
             {

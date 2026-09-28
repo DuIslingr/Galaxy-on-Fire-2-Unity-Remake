@@ -119,6 +119,8 @@ namespace GoF2Remake.Data
 
         public static bool Save(int slot)
         {
+            // Multiplayer: a session is a separate free-play game; it never overwrites the single-player saves.
+            if (GoF2Remake.Multiplayer.NetGame.Active) return false;
             var s = Capture();
             try
             {

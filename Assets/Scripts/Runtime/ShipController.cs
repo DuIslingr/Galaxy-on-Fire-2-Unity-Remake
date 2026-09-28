@@ -251,7 +251,7 @@ namespace GoF2Remake.Flight
 
         void ReadDodgeInput()
         {
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             if (kb != null)
             {
                 if (kb.aKey.wasPressedThisFrame) RequestDodge(1);
@@ -271,7 +271,7 @@ namespace GoF2Remake.Flight
         Vector2 ReadInput()
         {
             float throttle = throttleAction.ReadValue<float>();
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             if (kb != null && kb.sKey.isPressed) throttle -= 2f;   // Brake (S): down twice as fast as "/"
             if (Mathf.Abs(throttle) > 0.01f) Model.ChangeThrottle(throttle * throttleChangePerSecond * Time.deltaTime);
             // The wheel: +- thrust, 10 % a notch (not while it zooms the free-look camera).

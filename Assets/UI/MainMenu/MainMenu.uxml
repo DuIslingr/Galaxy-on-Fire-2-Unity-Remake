@@ -10,10 +10,11 @@
                 <ui:VisualElement name="mainButtons" class="main-buttons">
                     <ui:Button name="resumeButton" class="menu-button gof-semibold delay-1" />
                     <ui:Button name="newGameButton" class="menu-button gof-semibold delay-2" />
-                    <ui:Button name="loadButton" class="menu-button gof-semibold delay-3" />
-                    <ui:Button name="optionsButton" class="menu-button gof-semibold delay-4" />
-                    <ui:Button name="aboutButton" class="menu-button gof-semibold delay-5" />
-                    <ui:Button name="exitButton" class="menu-button gof-semibold delay-6" />
+                    <ui:Button name="multiplayerButton" class="menu-button gof-semibold delay-3" />
+                    <ui:Button name="loadButton" class="menu-button gof-semibold delay-4" />
+                    <ui:Button name="optionsButton" class="menu-button gof-semibold delay-5" />
+                    <ui:Button name="aboutButton" class="menu-button gof-semibold delay-6" />
+                    <ui:Button name="exitButton" class="menu-button gof-semibold delay-7" />
                 </ui:VisualElement>
             </ui:VisualElement>
 
@@ -90,6 +91,18 @@
                         <ui:Label name="aboutText" class="about-text" />
                     </ui:ScrollView>
                     <ui:Button name="aboutBack" class="menu-button back-button gof-semibold" />
+                </ui:VisualElement>
+                <ui:VisualElement name="multiplayerPanel" class="panel">
+                    <ui:Label name="multiplayerTitle" class="panel-title gof-semibold" />
+                    <ui:VisualElement class="panel-accent" />
+                    <ui:Label name="mpIntro" class="mp-text" />
+                    <ui:TextField name="mpName" class="debug-filter mp-name" />
+                    <ui:Button name="mpHost" class="menu-button gof-semibold" />
+                    <ui:Label name="mpHostAddress" class="mp-text mp-text--dim" />
+                    <ui:TextField name="mpAddress" class="debug-filter mp-address" />
+                    <ui:Button name="mpJoin" class="menu-button gof-semibold" />
+                    <ui:Label name="mpStatus" class="mp-status" />
+                    <ui:Button name="multiplayerBack" class="menu-button back-button gof-semibold" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

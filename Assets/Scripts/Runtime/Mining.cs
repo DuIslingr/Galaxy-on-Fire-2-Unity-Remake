@@ -314,7 +314,7 @@ namespace GoF2Remake.Flight
         Vector2 ReadDrillInput()
         {
             var v = new Vector2(touchInput.x, -touchInput.y);
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             if (kb != null)
             {
                 var k = new Vector2((kb.dKey.isPressed || kb.rightArrowKey.isPressed ? 1 : 0) - (kb.aKey.isPressed || kb.leftArrowKey.isPressed ? 1 : 0),

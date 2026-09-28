@@ -74,6 +74,9 @@ namespace GoF2Remake.Flight
         /// <summary>RocketGun::update: homing only once the bullet is this old (NPC rockets 1000 ms, the player's at once).</summary>
         public float homingDelayMs;
 
+        /// <summary>Multiplayer: targets this gun's bullets pass straight through (a squadmate of the shooter), null = none.</summary>
+        public Func<Target, bool> Ignores;
+
         /// <summary>Beams: picks the nearest auto-aim target (on screen, &lt; 60000 units, in the crosshair box), or null.</summary>
         public Func<Target> AutoAim;
         /// <summary>The last beam's world direction and length (units), set when it fires.</summary>
@@ -88,6 +91,9 @@ namespace GoF2Remake.Flight
         public event Action<int> Expired;
         /// <summary>A bomb, mine, scatter shell or the shock blast went off at this point (the explosion).</summary>
         public event Action<Vector3> Ignited;
+        /// <summary>A shot left the gun (gun, bullet index; a cluster salvo: its first bullet). Multiplayer sends it to the
+        /// other players (NetProxy, NetPlayer).</summary>
+        public event Action<Gun, int> Fired;
         /// <summary>Any gun's bomb / mine / blast went off (gun, Unity point): the gas clouds listen for the ionizing missiles.</summary>
         public static event Action<Gun, Vector3> Detonated;
 
@@ -202,6 +208,7 @@ namespace GoF2Remake.Flight
                 bb.timer = lifetimeMs;
                 bb.age = 0f;
                 reloadAcc = 0f;
+                Fired?.Invoke(this, 0);
                 return 0;
             }
 
@@ -219,6 +226,7 @@ namespace GoF2Remake.Flight
                     c.age = 0f;
                 }
                 reloadAcc = 0f;
+                Fired?.Invoke(this, free);
                 return free;
             }
 
@@ -238,7 +246,26 @@ namespace GoF2Remake.Flight
             b.timer = lifetimeMs;
             b.age = 0f;
             reloadAcc = 0f;
+            Fired?.Invoke(this, free);
             return free;
+        }
+
+        /// <summary>Multiplayer: another player's shot drawn by this (visual-only) gun (NetShotMirror): a free bullet at
+        /// that pose with the sender's life left; false when the pool is full.</summary>
+        public bool Inject(Vector3 position, Vector3 velocity, Vector3 up, float lifeMs)
+        {
+            for (int i = 0; i < bullets.Length; i++)
+            {
+                if (bullets[i].timer > FreeLimit) continue;
+                ref var b = ref bullets[i];
+                b.position = position;
+                b.velocity = velocity;
+                b.up = up;
+                b.timer = lifeMs;
+                b.age = 0f;
+                return true;
+            }
+            return false;
         }
 
         /// <summary>Gun::update: move bullets, home missiles, test hits. 'lockTarget' may be null.</summary>
@@ -294,6 +321,7 @@ namespace GoF2Remake.Flight
             {
                 var target = targets[t];
                 if (target == null || target == owner || !target.Alive) continue;
+                if (Ignores != null && Ignores(target)) continue;
                 if (kind == Kind.ScatterGun ? !InScatterCube(target, b.position - b.velocity) : !target.Contains(b.position - b.velocity)) continue;
                 var point = b.position;
                 if (target.isAsteroid && KillsAsteroids)

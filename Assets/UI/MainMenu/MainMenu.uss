@@ -173,6 +173,7 @@
 .main-buttons--revealing > .delay-4 { transition-delay: 0.2s; }
 .main-buttons--revealing > .delay-5 { transition-delay: 0.25s; }
 .main-buttons--revealing > .delay-6 { transition-delay: 0.3s; }
+.main-buttons--revealing > .delay-7 { transition-delay: 0.35s; }
 
 .main-column--dimmed .menu-button {
     opacity: 0.35;
@@ -366,6 +367,35 @@
 
 .debug-option .unity-base-field__label {
     min-width: 290px;
+}
+
+.mp-text {
+    margin: 4px 0 14px 0;
+    font-size: 17px;
+    color: var(--gof-text);
+    white-space: normal;
+}
+
+.mp-text--dim {
+    margin: -4px 0 18px 0;
+    font-size: 15px;
+    color: var(--gof-text-dim);
+}
+
+.mp-address {
+    margin-top: 6px;
+}
+
+.mp-name {
+    margin-bottom: 16px;
+}
+
+.mp-status {
+    min-height: 22px;
+    margin: 8px 0 4px 0;
+    font-size: 16px;
+    color: var(--gof-amber);
+    white-space: normal;
 }
 
 .debug-note {

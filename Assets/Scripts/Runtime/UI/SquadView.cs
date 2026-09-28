@@ -1,0 +1,252 @@
+// SquadView.cs
+// Multiplayer squad UI (NetSquad) in the flight HUD and the station menu, while a session runs:
+//   the squad window (right side, only while in a squad; the header collapses it): every member with where they are
+//     (an orbit or docked, by station name), a shield bar and a hull bar with the armor over it (like the HUD's; a pool the
+//     ship lacks: not shown), and Leave;
+//   in the station, the pilot list (collapsible too, only with other players docked here): each with Invite (or "In your
+//     squad" / "Invited");
+//   an invitation popup (any scene): "<name> invites you to their squad" with Accept / Decline (expires after 45 s).
+// The rows are rebuilt only when their content changes (a rebuilt button would lose a press); the bars update live.
+// Styles: Resources/GoF2Net/Squad.uss.
+
+using System.Collections.Generic;
+using System.Text;
+using GoF2Remake.Data;
+using GoF2Remake.Multiplayer;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace GoF2Remake.UI
+{
+    public sealed class SquadView : MonoBehaviour
+    {
+        const float RefreshSeconds = 0.25f;
+
+        static bool squadCollapsed, pilotsCollapsed;
+
+        VisualElement box, squadPanel, squadBody, pilotsPanel, pilotsBody, invitePopup;
+        Button squadHeader, pilotsHeader;
+        Label inviteText;
+        bool hangar;
+        int hereStation = -1;
+        string squadKey = "", pilotsKey = "";
+        NetSquad.Invite shownInvite;
+        readonly Dictionary<ulong, (VisualElement shield, VisualElement armor, VisualElement hull)> bars = new Dictionary<ulong, (VisualElement, VisualElement, VisualElement)>();
+        float refresh;
+        Database db;
+
+        /// <summary>The squad UI on 'parent' (again after a UI reload); 'hangarStation' &gt;= 0 in the station: its pilot list.</summary>
+        public static void Attach(GameObject host, VisualElement parent, int hangarStation = -1)
+        {
+            if (parent == null) return;
+            var view = host.GetComponent<SquadView>();
+            if (view == null) view = host.AddComponent<SquadView>();
+            view.Build(parent, hangarStation);
+        }
+
+        void Build(VisualElement parent, int hangarStation)
+        {
+            db = Database.Load();
+            hangar = hangarStation >= 0;
+            hereStation = hangarStation;
+            box?.RemoveFromHierarchy();
+            invitePopup?.RemoveFromHierarchy();
+            squadKey = pilotsKey = "";
+            shownInvite = null;
+            var sheet = Resources.Load<StyleSheet>("GoF2Net/Squad");
+
+            box = new VisualElement { name = "squad", pickingMode = PickingMode.Ignore };
+            box.AddToClassList("squad");
+            if (sheet != null) box.styleSheets.Add(sheet);
+            squadPanel = Panel(out squadHeader, out squadBody, () => { squadCollapsed = !squadCollapsed; squadKey = ""; });
+            box.Add(squadPanel);
+            pilotsPanel = Panel(out pilotsHeader, out pilotsBody, () => { pilotsCollapsed = !pilotsCollapsed; pilotsKey = ""; });
+            box.Add(pilotsPanel);
+            parent.Add(box);
+
+            invitePopup = new VisualElement();
+            invitePopup.AddToClassList("squad-invite");
+            if (sheet != null) invitePopup.styleSheets.Add(sheet);
+            inviteText = new Label();
+            inviteText.AddToClassList("squad-invite-text");
+            invitePopup.Add(inviteText);
+            var row = new VisualElement();
+            row.AddToClassList("squad-invite-buttons");
+            row.Add(MakeButton(Localization.Extra("mpAccept", "Accept"), () => { if (shownInvite != null) NetSquad.Accept(shownInvite); shownInvite = null; }, "squad-button--accept"));
+            row.Add(MakeButton(Localization.Extra("mpDecline", "Decline"), () => { if (shownInvite != null) NetSquad.Decline(shownInvite); shownInvite = null; }, null));
+            invitePopup.Add(row);
+            parent.Add(invitePopup);
+            Refresh();
+        }
+
+        static VisualElement Panel(out Button header, out VisualElement body, System.Action toggle)
+        {
+            var panel = new VisualElement();
+            panel.AddToClassList("squad-panel");
+            header = new Button(toggle);
+            header.AddToClassList("squad-header");
+            panel.Add(header);
+            body = new VisualElement();
+            body.AddToClassList("squad-body");
+            panel.Add(body);
+            return panel;
+        }
+
+        static Button MakeButton(string text, System.Action onClick, string cls)
+        {
+            var b = new Button(onClick) { text = text.ToUpperInvariant() };
+            b.AddToClassList("squad-button");
+            if (cls != null) b.AddToClassList(cls);
+            return b;
+        }
+
+        void Update()
+        {
+            if (box == null) return;
+            bool session = NetGame.Active;
+            box.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!session) { invitePopup.style.display = DisplayStyle.None; return; }
+            if ((refresh -= Time.unscaledDeltaTime) > 0f) return;
+            refresh = RefreshSeconds;
+            Refresh();
+        }
+
+        void Refresh()
+        {
+            RefreshSquad();
+            RefreshPilots();
+            RefreshInvite();
+        }
+
+        string Where(NetPlayer p)
+        {
+            string station = db?.Stations.Find(s => s.index == p.Station)?.name ?? "?";
+            return p.InHangar ? string.Format(Localization.Extra("mpDocked", "Docked at {0}"), station)
+                 : p.InSpace ? string.Format(Localization.Extra("mpInOrbit", "{0} orbit"), station)
+                 : Localization.Extra("mpTravelling", "Travelling");
+        }
+
+        void RefreshSquad()
+        {
+            var members = NetSquad.Members();
+            squadPanel.style.display = members.Count > 1 ? DisplayStyle.Flex : DisplayStyle.None;
+            if (members.Count <= 1) { squadKey = ""; return; }
+            var sb = new StringBuilder(squadCollapsed ? "c" : "o");
+            foreach (var m in members) sb.Append('|').Append(m.OwnerClientId).Append(m.DisplayName).Append(Where(m));
+            string key = sb.ToString();
+            if (key != squadKey)
+            {
+                squadKey = key;
+                squadHeader.text = $"{Localization.Extra("mpSquad", "Squad").ToUpperInvariant()} ({members.Count})  {(squadCollapsed ? "▸" : "▾")}";
+                squadBody.Clear();
+                bars.Clear();
+                squadBody.style.display = squadCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+                foreach (var m in members)
+                {
+                    var row = new VisualElement();
+                    row.AddToClassList("squad-member");
+                    var name = new Label(m.DisplayName + (m.IsOwner ? $"  ({Localization.Extra("mpYou", "you")})" : ""));
+                    name.AddToClassList("squad-name");
+                    row.Add(name);
+                    var where = new Label(Where(m));
+                    where.AddToClassList("squad-where");
+                    row.Add(where);
+                    var shieldFill = Bar(row, "squad-bar--shield");
+                    var hullFill = Bar(row, "squad-bar--hull");
+                    var armorFill = new VisualElement();   // CombatView: the armor fill over the hull in one bar
+                    armorFill.AddToClassList("squad-bar-fill");
+                    armorFill.AddToClassList("squad-bar-armor");
+                    hullFill.parent.Add(armorFill);
+                    bars[m.OwnerClientId] = (shieldFill, armorFill, hullFill);
+                    squadBody.Add(row);
+                }
+                squadBody.Add(MakeButton(Localization.Extra("mpLeaveSquad", "Leave squad"), NetSquad.Leave, "squad-button--leave"));
+            }
+            foreach (var m in members)
+                if (bars.TryGetValue(m.OwnerClientId, out var b))
+                {
+                    SetBar(b.shield, m.Shield);
+                    SetBar(b.hull, m.Hull);
+                    b.armor.style.display = m.Armor < 0f ? DisplayStyle.None : DisplayStyle.Flex;
+                    b.armor.style.width = Length.Percent(Mathf.Clamp01(m.Armor) * 100f);
+                }
+        }
+
+        /// <summary>A thin bar (shield / armor / hull) under a member's name; returns its fill.</summary>
+        static VisualElement Bar(VisualElement row, string cls)
+        {
+            var bar = new VisualElement();
+            bar.AddToClassList("squad-bar");
+            bar.AddToClassList(cls);
+            var fill = new VisualElement();
+            fill.AddToClassList("squad-bar-fill");
+            bar.Add(fill);
+            row.Add(bar);
+            return fill;
+        }
+
+        /// <summary>The fraction's width; a pool the ship doesn't have (-1): no bar.</summary>
+        static void SetBar(VisualElement fill, float fraction)
+        {
+            fill.parent.style.display = fraction < 0f ? DisplayStyle.None : DisplayStyle.Flex;
+            fill.style.width = Length.Percent(Mathf.Clamp01(fraction) * 100f);
+        }
+
+        void RefreshPilots()
+        {
+            var me = NetPlayer.Local;
+            var pilots = new List<NetPlayer>();
+            if (hangar && me != null)
+                foreach (var p in NetPlayer.All)
+                    if (p != null && p.IsSpawned && !p.IsOwner && p.InHangar && p.Station == hereStation) pilots.Add(p);
+            pilotsPanel.style.display = pilots.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            if (pilots.Count == 0) { pilotsKey = ""; return; }
+            var sb = new StringBuilder(pilotsCollapsed ? "c" : "o");
+            foreach (var p in pilots) sb.Append('|').Append(p.OwnerClientId).Append(p.DisplayName).Append(NetSquad.Same(p, me)).Append(NetSquad.WasInvited(p));
+            string key = sb.ToString();
+            if (key == pilotsKey) return;
+            pilotsKey = key;
+            pilotsHeader.text = $"{Localization.Extra("mpPilotsHere", "Pilots in this hangar").ToUpperInvariant()} ({pilots.Count})  {(pilotsCollapsed ? "▸" : "▾")}";
+            pilotsBody.Clear();
+            pilotsBody.style.display = pilotsCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+            foreach (var p in pilots)
+            {
+                var row = new VisualElement();
+                row.AddToClassList("squad-pilot");
+                var name = new Label(p.DisplayName);
+                name.AddToClassList("squad-name");
+                row.Add(name);
+                if (NetSquad.Same(p, me))
+                {
+                    var tag = new Label(Localization.Extra("mpInYourSquad", "In your squad"));
+                    tag.AddToClassList("squad-tag");
+                    row.Add(tag);
+                }
+                else if (NetSquad.WasInvited(p))
+                {
+                    var tag = new Label(Localization.Extra("mpInvitedTag", "Invited"));
+                    tag.AddToClassList("squad-tag");
+                    row.Add(tag);
+                }
+                else
+                {
+                    var target = p;
+                    row.Add(MakeButton(Localization.Extra("mpInvite", "Invite"), () => { NetSquad.InviteTo(target); pilotsKey = ""; }, null));
+                }
+                pilotsBody.Add(row);
+            }
+        }
+
+        void RefreshInvite()
+        {
+            var invites = NetSquad.Invites;
+            var latest = invites.Count > 0 ? invites[invites.Count - 1] : null;
+            if (latest != shownInvite)
+            {
+                shownInvite = latest;
+                if (latest != null) inviteText.text = string.Format(Localization.Extra("mpSquadInvited", "{0} invites you to their squad."), latest.name);
+            }
+            invitePopup.style.display = shownInvite != null ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+    }
+}

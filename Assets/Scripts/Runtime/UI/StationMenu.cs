@@ -130,6 +130,11 @@ namespace GoF2Remake.UI
             safeArea = root.Q("safeArea");
             dragZone = root.Q("dragZone");
             hints = root.Q("hints");
+            if (GoF2Remake.Multiplayer.NetGame.Active)
+            {
+                ChatView.Attach(gameObject, safeArea ?? root);   // multiplayer chat
+                SquadView.Attach(gameObject, safeArea ?? root, level != null && level.Layout != null ? level.Layout.stationIndex : -1);   // squad, pilots here
+            }
 
             InputGlyph.TrackHintsOption(hints);
             dialog = root.Q("dialog");
@@ -203,7 +208,7 @@ namespace GoF2Remake.UI
             // The hangar window keeps its own selection; Enter / A are read in Update, so no button may also take them.
             root.RegisterCallback<NavigationSubmitEvent>(e =>
             {
-                if (!HangarOpen || DialogOpen) return;
+                if (!HangarOpen || DialogOpen || GoF2Remake.Multiplayer.NetChat.Typing) return;
                 e.StopPropagation();
                 root.focusController?.IgnoreEvent(e);
             }, TrickleDown.TrickleDown);
@@ -656,6 +661,7 @@ namespace GoF2Remake.UI
 
         void BackToMenu()
         {
+            GoF2Remake.Multiplayer.NetGame.Shutdown();   // leaving a multiplayer session
             if (Application.CanStreamedLevelBeLoaded(menuScene)) SceneManager.LoadScene(menuScene);
         }
 
@@ -1234,6 +1240,7 @@ namespace GoF2Remake.UI
         /// stay free for turning the ship.</summary>
         void OnNavigate(NavigationMoveEvent e)
         {
+            if (GoF2Remake.Multiplayer.NetChat.Typing) return;   // the arrows move the chat line's cursor
             SetTouchMode(false);
             bool vertical = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Down;
             bool horizontal = e.direction == NavigationMoveEvent.Direction.Left || e.direction == NavigationMoveEvent.Direction.Right;
@@ -1385,7 +1392,7 @@ namespace GoF2Remake.UI
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckWingmenContract()) return;
             lounge?.Update();
 
-            var kb = Keyboard.current;
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)) { Back(); return; }
             if (infoWindow != null && infoWindow.IsOpen) { infoWindow.Tick(); return; }   // it takes all input

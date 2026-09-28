@@ -116,17 +116,34 @@ namespace GoF2Remake.World
         public bool VoidAttack { get; private set; }
         float alienMs;
 
+        /// <summary>Multiplayer (NetOrbit): a ship another player ran in this orbit, taken over where it is (spec.position)
+        /// with its heading and hull.</summary>
+        public NpcShip Adopt(SpawnSpec spec, Quaternion rotation, float hullFraction)
+        {
+            var ship = Create(spec);
+            ship.transform.rotation = rotation;
+            var hp = ship.Hp;
+            if (hp != null && hp.maxHull > 0)
+            {
+                hp.hull = Mathf.Clamp(Mathf.RoundToInt(hp.maxHull * hullFraction), 1, hp.maxHull);
+                ship.Target.hp = hp.hull;
+            }
+            return ship;
+        }
+
         NpcShip Create(SpawnSpec spec)
         {
-            var prefab = spec.turretAssembly != null ? AssembledObject.LoadPrefab(db.AssemblyByName(spec.turretAssembly))
-                       : spec.ship == 14 ? AssembledObject.LoadPrefab(db.AssemblyByName("battleship_terran"))
-                       : spec.fixedObject != null ? AssembledObject.LoadPrefab(db.AssemblyByName(spec.fixedObject))
-                       : spec.freighter ? AssembledObject.LoadPrefab(db.AssemblyByName(NpcTables.FreighterAssembly(spec.race)))
-                                        : AssembledObject.LoadPrefab(ShipAssembly(spec.ship, spec.race));
+            var entry = spec.turretAssembly != null ? db.AssemblyByName(spec.turretAssembly)
+                      : spec.ship == 14 ? db.AssemblyByName("battleship_terran")
+                      : spec.fixedObject != null ? db.AssemblyByName(spec.fixedObject)
+                      : spec.freighter ? db.AssemblyByName(NpcTables.FreighterAssembly(spec.race))
+                                       : ShipAssembly(spec.ship, spec.race);
+            var prefab = AssembledObject.LoadPrefab(entry);
             var go = new GameObject($"NPC {spec.group} {spec.race}/{spec.ship}");
             go.transform.SetParent(transform, false);
             var ship = go.AddComponent<NpcShip>();
             Ships.Add(ship);
+            ship.ModelPath = AssembledObject.PrefabPath(entry);   // multiplayer: the clients' proxies load the same prefab
             ship.Setup(this, db, spec, prefab, fxRoot);
             if (spec.turretAssembly == null && spec.fixedObject == null && !spec.freighter && (spec.ship == 45 || spec.ship == 51))
                 AttachFighterTurret(ship);

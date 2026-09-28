@@ -42,12 +42,20 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>The value toward 'race' (positive = liked), races 0..3; a signature overrides it (Standing::getStanding).</summary>
-        public static int Toward(int race)
+        public static int Toward(int race) => TowardWith(race, Session.Standing[0], Session.Standing[1], SignatureRace);
+
+        /// <summary>Toward with given axes and signature (multiplayer: another player's, NetPlayer).</summary>
+        public static int TowardWith(int race, int axis0, int axis1, int signature)
         {
-            int sig = SignatureRace;
-            if (sig >= 0 && race >= 0 && race <= 3) return race == sig ? 100 : race == EnemyRace[sig] ? -100 : 70;
-            return RawToward(race);
+            if (signature >= 0 && race >= 0 && race <= 3) return race == signature ? 100 : race == EnemyRace[signature] ? -100 : 70;
+            return race switch { 0 => axis0, 1 => -axis0, 2 => axis1, 3 => -axis1, _ => 0 };
         }
+
+        /// <summary>IsEnemy / IsFriend with given axes and signature (multiplayer: another player's).</summary>
+        public static bool IsEnemyWith(int race, int axis0, int axis1, int signature) =>
+            race == Pirate || race == Void || (race >= 0 && race <= 3 && TowardWith(race, axis0, axis1, signature) <= -71);
+        public static bool IsFriendWith(int race, int axis0, int axis1, int signature) =>
+            race >= 0 && race <= 3 && TowardWith(race, axis0, axis1, signature) >= 71;
 
         /// <summary>The standing axes themselves (the Status window, mission bonuses).</summary>
         public static int RawToward(int race) => race switch

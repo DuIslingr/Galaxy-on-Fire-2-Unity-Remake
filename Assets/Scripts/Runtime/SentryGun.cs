@@ -85,7 +85,7 @@ namespace GoF2Remake.Flight
             int look = item.index == 211 ? 2 : item.index == 212 ? 20 : 14;
             var lookItem = db.Item(look);
             lookFx = WeaponFx.Load(look);
-            gun = new Gun(lookItem, item.Attr(9), item.Attr(11, 430), 4, item.Attr(12, 1000), item.Attr(13, 22)) { owner = self };
+            gun = new Gun(lookItem, item.Attr(9), item.Attr(11, 430), 4, item.Attr(12, 1000), item.Attr(13, 22)) { owner = self, Ignores = t => t.playerProof };
             muzzle = new GameObject("muzzle").transform;
             muzzle.SetParent(pitchNode, false);
             muzzle.localPosition = new Vector3(0f, 0f, item.index == 213 ? 300f : 250f) * M;
