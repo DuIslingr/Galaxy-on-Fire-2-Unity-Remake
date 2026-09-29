@@ -21,7 +21,12 @@ namespace GoF2Remake.EditorTools
             string stamp = System.DateTime.Now.ToString(GoF2Remake.UI.BuildVersion.Format, System.Globalization.CultureInfo.InvariantCulture);
             PlayerSettings.bundleVersion = stamp;
             UnityEngine.Debug.Log($"GoF2: build version {stamp}");
-            EditorApplication.delayCall += () => PlayerSettings.bundleVersion = saved;
+            // The build saves the project settings with the stamp in them: put the value back and save them again.
+            EditorApplication.delayCall += () =>
+            {
+                PlayerSettings.bundleVersion = saved;
+                AssetDatabase.SaveAssets();
+            };
         }
     }
 }
