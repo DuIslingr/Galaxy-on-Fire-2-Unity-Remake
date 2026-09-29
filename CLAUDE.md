@@ -1,8 +1,6 @@
 # Galaxy on Fire 2 remake (Unity)
 
-A private, personal remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in Unity. The goal is a faithful port of the original gameplay (flight, combat, trading, stations, missions), built on the original assets and on logic ported from the decompiled game code.
-
-**Legal: keep everything private.** The game assets under `Assets/` (models, textures, audio, data, text and everything generated from them) and everything in `Reference/` are Deep Silver's copyrighted material. Never publish them, push them to a public repo, or upload them anywhere public.
+A remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in Unity. The goal is a faithful port of the original gameplay (flight, combat, trading, stations, missions), built on the original assets and on logic ported from the decompiled game code.
 
 ## Environment
 

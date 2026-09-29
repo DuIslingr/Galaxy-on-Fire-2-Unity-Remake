@@ -1000,7 +1000,7 @@ namespace GoF2Remake.UI
             }), systemMain);
             loadGameButton = SystemButton(Localization.Get(29), 1, () => ShowSystemPage(SysPage.Load), systemMain);
             optionsButton = SystemButton(Localization.Get(31), 3, () => ShowSystemPage(SysPage.Options), systemMain);
-            aboutButton = SystemButton(Localization.Get(43), 4, () => ShowDialog(Localization.Get(45), null, true), systemMain);
+            aboutButton = SystemButton(Localization.Get(43), 4, () => { ShowDialog(AboutText.Get(), null, true); AboutText.Hook(root.Q<Label>("dialogText")); }, systemMain);
             // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats).
             if (Cheats.Unlocked) debugButton = SystemButton(Localization.Extra("debugTitle", "Debug"), 5, () => ShowSystemPage(SysPage.Debug), systemMain);
             // Multiplayer: a session's game is never saved, and no single-player save is loaded into it.

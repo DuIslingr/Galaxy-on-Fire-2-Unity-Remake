@@ -1166,7 +1166,9 @@ namespace GoF2Remake.UI
             UpdatePressAnyKey();
             versionLabel.text = versionText;
             hintLabel.text = Localization.Extra("hint", "↑ ↓  NAVIGATE     ENTER  SELECT     ESC  " + T(170));
-            root.Q<Label>("aboutText").text = $"{versionText}\n\n{Localization.Get(45).TrimEnd()}\n\n{Localization.Get(48)}";
+            var aboutText = root.Q<Label>("aboutText");
+            aboutText.text = $"{versionText}\n\n{AboutText.Get()}\n\n{Localization.Get(48)}";
+            AboutText.Hook(aboutText);
         }
 
         // ---- navigation ------------------------------------------------------------------------
