@@ -2,8 +2,6 @@
 
 Source material for the remake. Nothing in here is used by Unity; it's for reading and searching.
 
-**Private.** This folder contains decompiled Fishlabs/Deep Silver code and the original binaries. Never publish it.
-
 | Path | What |
 |---|---|
 | `decompiled/native/game/*.c` | Game logic, one file per C++ class (`Level`, `PlayerEgo`, `PlayerFighter`, `Status`, `Generator`, `Ship`, `Item`, …). This is the part to port. |
