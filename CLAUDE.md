@@ -689,10 +689,11 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   builds also take `-mpdock` (docks once, a few seconds into the first flight after launching) and `-mpaccept` (accepts squad invitations
   while docked) and `-mphost` (hosts from the menu), so the real hangar / squad flows run without a hand on the client
   (a phone: `adb shell "am start -n com.joppietoppie.gof2remake/com.unity3d.player.UnityPlayerGameActivity -e unity
-  '-mphost -mpname Phone'"`). **After Windows builds, restore the three URP assets from git
-  (`Mobile_RPAsset`, `PC_RPAsset`, `UniversalRenderPipelineGlobalSettings`, then reimport) before an Android build**: the
-  Windows builds rewrite their shader-stripping state and the next APK stripped URP's post-processing shaders (UberPost)
-  and rendered lit geometry black (only emissive / additive parts showed). `-mpname`: this
+  '-mphost -mpname Phone'"`). **Switch the active build profile before building another platform**: URP picks the shader
+  variants to keep from the *active* build target's quality levels (`ShaderBuildPreprocessor`), so an Android APK built
+  while Windows was active stripped URP's post-processing shaders (UberPost) and rendered lit geometry black;
+  `BuildTargetGuard` (Editor) now fails such a build with that message. (The URP assets' prefiltering fields change
+  with every build: harmless, URP rewrites them.) `-mpname`: this
   process's pilot name, not saved; explicit `-screen-*` options win over the window-mode option). The player has its own
   PlayerPrefs. Or the phone's development build joining the PC's LAN address. Multiplayer Play Mode (Editor clones)
   doesn't work in 6000.7.0b2: the clones fail to load URP's package shaders ("Host type is not matching any asset type"),
