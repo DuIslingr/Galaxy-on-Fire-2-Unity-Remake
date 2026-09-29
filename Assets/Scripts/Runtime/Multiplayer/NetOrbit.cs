@@ -140,18 +140,80 @@ namespace GoF2Remake.Multiplayer
         void OnLocalAsteroidDied(int index)
         {
             if (applyingRemote || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
-            NetState.Instance.AsteroidDestroyedRpc(Station, index);
+            NetState.Instance.AsteroidDestroyedRpc(Station, index, Mining.MiningOut);
         }
 
-        /// <summary>An asteroid of 'station' was destroyed by someone: gone here too (with its explosion).</summary>
-        public void OnAsteroidGone(int station, int index)
+        /// <summary>An asteroid of 'station' was destroyed by someone ('by': their pilot name; 'mined': they drilled it out,
+        /// else shot / rammed / a blast): gone here too (with its explosion).</summary>
+        public void OnAsteroidGone(int station, int index, string by, bool mined)
         {
             if (station != Station || index < 0 || index >= asteroids.Count) return;
             var t = asteroids[index];
             if (t == null || !t.Alive || !t.isActiveAndEnabled) return;
+            goneBy[t] = (by ?? "", mined);
             applyingRemote = true;
             t.Explode();
             applyingRemote = false;
+        }
+
+        readonly Dictionary<Target, (string by, bool mined)> goneBy = new Dictionary<Target, (string, bool)>();
+
+        /// <summary>Mining: another player's game destroyed this asteroid: their pilot name and whether they mined it out
+        /// (else shot or rammed it); false = not another player.</summary>
+        public bool DestroyedBy(Target asteroid, out string by, out bool mined)
+        {
+            by = null;
+            mined = false;
+            if (asteroid == null || !goneBy.TryGetValue(asteroid, out var g)) return false;
+            by = g.by;
+            mined = g.mined;
+            return true;
+        }
+
+        /// <summary>This orbit's index of an asteroid (the same for every player: the seeded field), -1 = none.</summary>
+        public int IndexOf(Target asteroid) => asteroid != null ? asteroids.IndexOf(asteroid) : -1;
+
+        readonly HashSet<int> held = new HashSet<int>(), heldNow = new HashSet<int>();
+
+        /// <summary>The asteroids another player here lands on or drills stop spinning here too (the miner's own game stops
+        /// its spin, Mining.BeginLanding / Docked); they spin on once nobody is on them (not while this player mines one).</summary>
+        void UpdateHeldAsteroids()
+        {
+            heldNow.Clear();
+            foreach (var p in NetPlayer.All)
+                if (p != null && !p.IsOwner && p.IsSpawned && p.InSpace && p.Station == Station && p.LandedAsteroid >= 0) heldNow.Add(p.LandedAsteroid);
+            var mining = level != null ? level.Mining : null;
+            var mine = mining != null && mining.State != Mining.Phase.Idle ? mining.Target : null;
+            foreach (int i in heldNow)
+                if (!held.Contains(i)) SetSpin(i, false);
+            foreach (int i in held)
+                if (!heldNow.Contains(i) && (mine == null || IndexOf(mine) != i)) SetSpin(i, true);
+            held.Clear();
+            held.UnionWith(heldNow);
+        }
+
+        void SetSpin(int index, bool on)
+        {
+            if (index < 0 || index >= asteroids.Count || asteroids[index] == null) return;
+            var spin = asteroids[index].GetComponent<GoF2Remake.Visuals.Spin>();
+            if (spin != null) spin.enabled = on;
+        }
+
+        /// <summary>Mining: another player here is landing on, sits on or drills this asteroid.</summary>
+        public bool OthersOn(Target asteroid)
+        {
+            int index = IndexOf(asteroid);
+            return index >= 0 && held.Contains(index);
+        }
+
+        /// <summary>Mining: how many other players here are drilling this asteroid right now (NetPlayer.MiningAsteroid).</summary>
+        public int OtherMiners(Target asteroid)
+        {
+            int index = IndexOf(asteroid), n = 0;
+            if (index < 0) return 0;
+            foreach (var p in NetPlayer.All)
+                if (p != null && !p.IsOwner && p.IsSpawned && p.InSpace && p.Station == Station && p.MiningAsteroid == index) n++;
+            return n;
         }
 
         /// <summary>Arriving: the asteroids destroyed here before, removed without a trace.</summary>
@@ -228,6 +290,7 @@ namespace GoF2Remake.Multiplayer
             var state = NetState.Instance;
             if (state == null || !state.IsSpawned) return;
             if (!requestedList) { requestedList = true; state.RequestDestroyedRpc(Station); }
+            UpdateHeldAsteroids();
             // Two players arriving at once both found the orbit empty and built its traffic: the higher client id stands
             // down (its ships go, the other's stay), early in the visit only.
             if (Authority && Time.timeSinceLevelLoad < 15f && OtherAuthorityFirst()) level.DropNetAuthority();

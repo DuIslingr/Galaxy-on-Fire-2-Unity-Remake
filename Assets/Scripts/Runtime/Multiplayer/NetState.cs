@@ -77,14 +77,16 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>A player destroyed asteroid 'index' of 'station' (shot, mined, rammed).</summary>
         [Rpc(SendTo.Server)]
-        public void AsteroidDestroyedRpc(int station, int index)
+        public void AsteroidDestroyedRpc(int station, int index, bool mined, RpcParams rpc = default)
         {
             if (!destroyed.TryGetValue(station, out var set)) destroyed[station] = set = new HashSet<int>();
-            if (set.Add(index)) AsteroidGoneRpc(station, index);
+            var by = NetSquad.Find(rpc.Receive.SenderClientId);
+            if (set.Add(index)) AsteroidGoneRpc(station, index, by != null ? by.DisplayName : "", mined);
         }
 
+        /// <summary>'by': the pilot who destroyed it, 'mined': drilled out (else shot / rammed): a miner's message (Mining).</summary>
         [Rpc(SendTo.Everyone)]
-        void AsteroidGoneRpc(int station, int index) => NetOrbit.Current?.OnAsteroidGone(station, index);
+        void AsteroidGoneRpc(int station, int index, string by, bool mined) => NetOrbit.Current?.OnAsteroidGone(station, index, by, mined);
 
         /// <summary>A player arrived in 'station': the asteroids already gone there.</summary>
         [Rpc(SendTo.Server)]

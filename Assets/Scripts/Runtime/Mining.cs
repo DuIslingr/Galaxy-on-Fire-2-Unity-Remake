@@ -57,6 +57,8 @@ namespace GoF2Remake.Flight
         public int FreeCargo => Shop.FreeCargo(db);
         /// <summary>A HUD message (text id 546, 541, 322, "12t Gold" ...).</summary>
         public event Action<string> Message;
+        /// <summary>Multiplayer (NetOrbit): the asteroid exploding now was mined out here (not shot or rammed).</summary>
+        public static bool MiningOut { get; private set; }
 
         /// <summary>What the action button does right now (null = nothing to do with mining).</summary>
         public string PromptText =>
@@ -138,7 +140,13 @@ namespace GoF2Remake.Flight
                 case Phase.Approaching:
                 case Phase.Landing:
                 case Phase.Docked:
-                    if (Target == null || !Target.Alive) { Say(Localization.Get(571) + " " + Localization.Get(39)); Undock(); break; }
+                    if (Target == null || !Target.Alive)
+                    {
+                        // Multiplayer: another player mined it out before this one landed.
+                        Say(GoneMessage() ?? Localization.Get(571) + " " + Localization.Get(39));
+                        Undock();
+                        break;
+                    }
                     Approach(dtMs);
                     break;
                 case Phase.Mining: UpdateMining(dtMs); break;
@@ -292,15 +300,41 @@ namespace GoF2Remake.Flight
             };
             Target.radius = 0f;   // Player radius 0: can't be hit or collided while mined
             State = Phase.Mining;
+            miners = 1;
             if (weapons != null) weapons.Blocked = true;   // PlayerEgo::isMining: no guns, no missiles, no boost
             drillSound.Start(DrillSpeed);
         }
 
         // ---- minigame -------------------------------------------------------------------------------------------
 
+        /// <summary>Multiplayer: another player's game destroyed the asteroid: "Mined out by X." (they finished drilling it) or
+        /// "X destroyed the asteroid." (shot, rammed, a blast); null = not another player.</summary>
+        string GoneMessage()
+        {
+            var orbit = GoF2Remake.Multiplayer.NetGame.Active ? GoF2Remake.Multiplayer.NetOrbit.Current : null;
+            if (orbit == null || !orbit.DestroyedBy(Target, out string by, out bool mined)) return null;
+            if (by.Length == 0) by = Localization.Extra("mpAnotherPilot", "another pilot");
+            return mined ? string.Format(Localization.Extra("mpMinedOutBy", "Mined out by {0}."), by)
+                         : string.Format(Localization.Extra("mpAsteroidDestroyedBy", "{0} destroyed the asteroid."), by);
+        }
+
+        /// <summary>Multiplayer: the most players drilling this asteroid at once during this session (the ore is split
+        /// between them); 1 in single player.</summary>
+        int miners = 1;
+
         void UpdateMining(float dtMs)
         {
-            if (Target == null || !Target.Alive) { Session.OreStreak = 0; Say(Localization.Get(539)); FinishMining(); return; }   // asteroid gone
+            if (Target == null || !Target.Alive)
+            {
+                // Multiplayer: another player mined it out (or shot it): the drilled ore is still this player's share.
+                string gone = GoneMessage();
+                if (gone != null) Say(gone);
+                else { Session.OreStreak = 0; Say(Localization.Get(539)); }
+                FinishMining();
+                return;
+            }
+            if (GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetOrbit.Current != null)
+                miners = Mathf.Max(miners, 1 + GoF2Remake.Multiplayer.NetOrbit.Current.OtherMiners(Target));
             Game.SetInput(ReadDrillInput());
             drillSound.Set(DrillSpeed);
             if (Game.Update(dtMs)) return;
@@ -339,6 +373,8 @@ namespace GoF2Remake.Flight
                 int free = Shop.FreeCargo(db);
                 int n = Game.Lost ? 0 : Game.OreAmount;
                 if (Session.IsExtreme && !Game.Won) n /= 2;
+                // Multiplayer: one asteroid's ore split between everyone who drilled it at once (at least 1 t for some ore).
+                if (miners > 1 && n > 0) n = Mathf.Max(1, n / miners);
                 n = Mathf.Min(n, free);
                 if (free < 1) Say(Localization.Get(322));
                 else
@@ -360,7 +396,8 @@ namespace GoF2Remake.Flight
                     }
                     if (Shop.FreeCargo(db) <= 0) Say(Localization.Get(322));
                 }
-                Target.Explode();   // HP -1: the asteroid's explosion and sound 21, no crate
+                // HP -1: the asteroid's explosion and sound 21, no crate (not twice: mined out by someone else).
+                if (Target.Alive) { MiningOut = true; Target.Explode(); MiningOut = false; }
             }
             Undock();
         }
@@ -371,7 +408,10 @@ namespace GoF2Remake.Flight
             if (Target != null && Target.Alive)
             {
                 var spin = Target.GetComponent<Spin>();
-                if (spin != null) spin.enabled = true;
+                // Multiplayer: not while another player is still on it (NetOrbit starts it once they have left).
+                bool othersOn = GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetOrbit.Current != null
+                                && GoF2Remake.Multiplayer.NetOrbit.Current.OthersOn(Target);
+                if (spin != null && !othersOn) spin.enabled = true;
             }
             State = Phase.Idle;
             Target = null;

@@ -528,6 +528,15 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   docking refused, the win with the runner's, `NetState.SiegeWonRpc`), builds it anew when alone there; two runners at
   once: the higher client id stands down. The other players' hostile ships count for the battle music and block
   fast-forward (`Traffic.HostileCount`).
+- **Mining** (the asteroids are the shared seeded field, destruction synced): several players may drill the same asteroid
+  at once; each drills their own minigame, and the ore is split between them (`NetPlayer.MiningAsteroid`, the field index;
+  `Mining` divides the payout by the most players drilling it at once during the session, at least 1 t for some ore).
+  The first to finish (or anyone shooting it) destroys it for all (`NetState.AsteroidGoneRpc` with the pilot's name): the
+  others' drilling ends with "Mined out by X." (drilled out: `Mining.MiningOut` during its explosion) or "X destroyed the
+  asteroid." (shot, rammed, a blast) and pays their share of what they drilled (`NetOrbit.DestroyedBy`); one still
+  approaching or landing gets the same message and undocks. An asteroid a player lands on, sits on or drills stops
+  spinning for everyone there (`NetPlayer.LandedAsteroid`, `NetOrbit.UpdateHeldAsteroids`), and spins on once nobody is
+  on it (a miner's own undock leaves it still while another player is on it, `NetOrbit.OthersOn`).
 - **NetProxy**: the ship's model by its Resources path (`NpcShip.ModelPath`), pose, race, standing, hull, hit cube, hidden,
   life (dying: no marker / lock; dead: the explosion at the ship's scale, the model hidden unless it leaves a wreck;
   flying again after a relaunch), marked and locked like traffic ships (`Target.NetShips`, `CombatRadar`, `CombatView`);
@@ -676,7 +685,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
 - Testing: the Editor as host (set `Application.runInBackground = true` during Play, or Play mode stalls unfocused; an
   edited script recompiles and ends the session) and a Windows development build (the Windows build profile, into
   `Build/Windows`) as client: `GoF2Remake.exe -screen-fullscreen 0 -screen-width 1280 -screen-height 720 -mpjoin 127.0.0.1
-  -mpname Wingman` (`-mpjoin`: the menu skips its intro and joins, again every 2 s until a host answers; development
+  -mpname Pilot2` (`-mpjoin`: the menu skips its intro and joins, again every 2 s until a host answers; development
   builds also take `-mpdock` (docks once, a few seconds into the first flight after launching) and `-mpaccept` (accepts squad invitations
   while docked) and `-mphost` (hosts from the menu), so the real hangar / squad flows run without a hand on the client
   (a phone: `adb shell "am start -n com.joppietoppie.gof2remake/com.unity3d.player.UnityPlayerGameActivity -e unity

@@ -75,6 +75,8 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> turretItem = new NetworkVariable<int>(-1, Read, Write);   // the mounted turret (PlayerTurret.TurretItem)
         readonly NetworkVariable<bool> hangarRun = new NetworkVariable<bool>(false, Read, Write);   // runs its hangar's NPC ships (NetHangar)
         readonly NetworkVariable<bool> arrivedFlying = new NetworkVariable<bool>(false, Read, Write);   // docked by flying in (StationLevel)
+        readonly NetworkVariable<int> miningAsteroid = new NetworkVariable<int>(-1, Read, Write);   // drilling this asteroid (NetOrbit index)
+        readonly NetworkVariable<int> landedAsteroid = new NetworkVariable<int>(-1, Read, Write);   // landing on / docked at / drilling it
 
         /// <summary>Every player in the session, the local one included.</summary>
         public static readonly List<NetPlayer> All = new List<NetPlayer>();
@@ -113,6 +115,12 @@ namespace GoF2Remake.Multiplayer
         public bool HangarRun => hangarRun.Value;
         /// <summary>Docked by flying in from the orbit (not a session start, a respawn, a load): the others see it land.</summary>
         public bool ArrivedFlying => arrivedFlying.Value;
+        /// <summary>The asteroid this player is drilling (its index in the orbit's seeded field), -1 = none: the ore is split
+        /// between everyone drilling the same one (Mining).</summary>
+        public int MiningAsteroid => miningAsteroid.Value;
+        /// <summary>The asteroid this player's ship is landing on, sits on or drills (-1 = none): its spin stops for everyone
+        /// (NetOrbit), like it does for the miner (Mining).</summary>
+        public int LandedAsteroid => landedAsteroid.Value;
         public float Hull => hull.Value;
         /// <summary>Shield / armor fractions, -1 = the ship has none.</summary>
         public float Shield => shield.Value;
@@ -411,6 +419,12 @@ namespace GoF2Remake.Multiplayer
             if (hangarRun.Value != runsHangar) hangarRun.Value = runsHangar;
             bool flew = dock != null && dock.ArrivedFlying;
             if (arrivedFlying.Value != flew) arrivedFlying.Value = flew;
+            var mining = level != null ? level.Mining : null;
+            int drilling = mining != null && mining.State == Mining.Phase.Mining && NetOrbit.Current != null ? NetOrbit.Current.IndexOf(mining.Target) : -1;
+            if (miningAsteroid.Value != drilling) miningAsteroid.Value = drilling;
+            bool onRock = mining != null && (mining.State == Mining.Phase.Landing || mining.State == Mining.Phase.Docked || mining.State == Mining.Phase.Mining);
+            int landed = onRock && NetOrbit.Current != null ? NetOrbit.Current.IndexOf(mining.Target) : -1;
+            if (landedAsteroid.Value != landed) landedAsteroid.Value = landed;
             bool siege = level != null && level.Siege != null && level.Siege.Running && level.Siege.Active;
             if (siegeRun.Value != siege) siegeRun.Value = siege;
             int carried = held != 0 ? NetMissions.PackCargo() : 0;
