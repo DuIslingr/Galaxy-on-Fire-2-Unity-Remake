@@ -33,7 +33,10 @@ namespace GoF2Remake.UI
         public bool showSplash = true;
         [Tooltip("Fallback scene for Leave() without a scene name.")]
         public string gameScene = "Space";
-        public string versionText = "Galaxy on Fire 2 Remake by JoppieToppie  ·  alpha";
+        /// <summary>The credit line under the menu and on the About page (the heart is the text icons' sprite, the version
+        /// the build's date and time, BuildVersion).</summary>
+        static string VersionText =>
+            "Galaxy on Fire 2 Unity Remake created with <sprite=\"gof2_text_icons\" name=\"heart\"> by JoppieToppie  ·  " + BuildVersion.Text;
 
         [Header("Editor splash (players use Unity's splash screen with the same logos)")]
         [Tooltip("MTitle image 7001 (FISHLABS). Each logo: 1 s fade in, 2 s hold, 1 s fade out.")]
@@ -1164,10 +1167,10 @@ namespace GoF2Remake.UI
                 b.EnableInClassList("language-button--active", b.name == "lang_" + Localization.Language);
 
             UpdatePressAnyKey();
-            versionLabel.text = versionText;
+            versionLabel.text = VersionText;
             hintLabel.text = Localization.Extra("hint", "↑ ↓  NAVIGATE     ENTER  SELECT     ESC  " + T(170));
             var aboutText = root.Q<Label>("aboutText");
-            aboutText.text = $"{versionText}\n\n{AboutText.Get()}\n\n{Localization.Get(48)}";
+            aboutText.text = $"{VersionText}\n\n{AboutText.Get()}\n\n{Localization.Get(48)}";
             AboutText.Hook(aboutText);
         }
 

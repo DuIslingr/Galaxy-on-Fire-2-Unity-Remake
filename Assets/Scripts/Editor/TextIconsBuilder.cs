@@ -8,6 +8,7 @@
 //   map_products, core, crate_off, autopilot   blueprint (the map's production icon), ore core, container, autopilot
 //   item_NNN, ship_NNN           the shop icons (GoF2Icons, Build Item Icons), the centre square of their 180x88 plate
 //   coin                         remake-made (the original writes amounts with a "$" only): a gold coin drawn here
+//   heart                        remake-made: a red heart for the main menu's credit line (Inter has no emoji)
 // All in 64 px cells, 32 to a row.
 
 using System.IO;
@@ -45,6 +46,7 @@ namespace GoF2Remake.EditorTools
                     string path = $"{IconFolder}/{prefix}_{i:000}.png";
                     if (File.Exists(path)) list.Add(($"{prefix}_{i:000}", path, true));
                 }
+            list.Add(("heart", null, false));   // last, so the other icons keep their places
             return list;
         }
 
@@ -60,7 +62,8 @@ namespace GoF2Remake.EditorTools
             {
                 var (name, path, plate) = icons[i];
                 int x0 = i % Columns * Cell, y0 = atlas.height - Cell - i / Columns * Cell;   // row 0 at the top
-                if (path == null) DrawCoin(atlas, x0, y0);
+                if (name == "heart") DrawHeart(atlas, x0, y0);
+                else if (path == null) DrawCoin(atlas, x0, y0);
                 else Blit(atlas, x0, y0, LoadPng(path), name, plate);
             }
             atlas.Apply();
@@ -158,6 +161,34 @@ namespace GoF2Remake.EditorTools
             int size = Mathf.Max(maxX - minX + 1, maxY - minY + 1);
             int cx = (minX + maxX + 1) / 2, cy = (minY + maxY + 1) / 2;
             return new RectInt(cx - size / 2, cy - size / 2, size, size);
+        }
+
+        /// <summary>A red heart (the implicit curve (x² + y² − 1)³ − x²y³ ≤ 0), shaded from the top left, with a highlight,
+        /// antialiased by 4x4 supersampling.</summary>
+        static void DrawHeart(Texture2D atlas, int x0, int y0)
+        {
+            var light = new Color(1f, 0.38f, 0.42f);
+            var dark = new Color(0.78f, 0.06f, 0.16f);
+            const float size = 21f, c = Cell / 2f;   // curve units -> pixels (the heart spans about x ±1.14, y -1..1.2)
+            for (int y = 0; y < Cell; y++)
+                for (int x = 0; x < Cell; x++)
+                {
+                    int inside = 0;
+                    for (int sy = 0; sy < 4; sy++)
+                        for (int sx = 0; sx < 4; sx++)
+                        {
+                            float hx = (x + (sx + 0.5f) / 4f - c) / size, hy = (y + (sy + 0.5f) / 4f - c + 2f) / size;
+                            float a = hx * hx + hy * hy - 1f;
+                            if (a * a * a - hx * hx * hy * hy * hy <= 0f) inside++;
+                        }
+                    if (inside == 0) continue;
+                    float ux = (x + 0.5f - c) / size, uy = (y + 0.5f - c + 2f) / size;
+                    var col = Color.Lerp(dark, light, Mathf.Clamp01(0.45f + (uy - ux) * 0.35f));
+                    float gx = ux + 0.5f, gy = uy - 0.55f;
+                    col = Color.Lerp(col, Color.white, Mathf.Clamp01(1f - Mathf.Sqrt(gx * gx + gy * gy) / 0.28f) * 0.6f);
+                    col.a = inside / 16f;
+                    atlas.SetPixel(x0 + x, y0 + y, col);
+                }
         }
 
         /// <summary>A gold coin: a shaded disc, a dark rim, an inner ring and a highlight, antialiased.</summary>

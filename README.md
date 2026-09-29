@@ -4,8 +4,9 @@ A remake of the 2010 space game *Galaxy on Fire 2* by FISHLABS in Unity 6, for W
 faithful port of the original gameplay, including flight, combat, trading, mining, stations, the bar and the whole
 story. It is built on the original assets and on game logic ported from the decompiled game code.
 
-**Status: alpha.** The main campaign, the Valkyrie add-on and the Supernova add-on can be played from start to end.
-Supernova is built but has not been fully played through yet. Multiplayer is experimental.
+**Status:** the main campaign, the Valkyrie add-on and the Supernova add-on can be played from start to end. Supernova
+is built but has not been fully played through yet. Multiplayer is experimental. Each build's version is the date and
+time it was built (for example `2026.09.29.2315`), shown in the main menu.
 
 > **Private repository.** The game assets under `Assets/` (models, textures, audio, data, text and everything generated
 > from them) and everything in `Reference/` are the copyrighted material of FISHLABS / Deep Silver. Don't publish them,
@@ -48,7 +49,8 @@ Editor holds the asset build tools. The generated assets are already in the repo
 
 Always **switch the active build profile** (File > Build Profiles > Switch Profile) before building another platform.
 URP chooses which shader variants to keep from the active platform. An Android build made while Windows was active
-renders black, so the editor script `BuildTargetGuard` refuses such builds.
+renders black, so the editor script `BuildTargetGuard` refuses such builds. `BuildVersionStamp` gives every build its
+date and time as its version.
 
 ### Multiplayer
 
