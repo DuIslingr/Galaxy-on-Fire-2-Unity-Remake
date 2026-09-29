@@ -8,10 +8,6 @@ story. It is built on the original assets and on game logic ported from the deco
 is built but has not been fully played through yet. Multiplayer is experimental. Each build's version is the date and
 time it was built (for example `2026.09.29.2315`), shown in the main menu.
 
-> **Private repository.** The game assets under `Assets/` (models, textures, audio, data, text and everything generated
-> from them) and everything in `Reference/` are the copyrighted material of FISHLABS / Deep Silver. Don't publish them,
-> make this repository public, or upload them anywhere public.
-
 ## Features
 
 - **Story:** the full main campaign with the prologue, the Void and the ending, plus the Valkyrie and Supernova add-ons.

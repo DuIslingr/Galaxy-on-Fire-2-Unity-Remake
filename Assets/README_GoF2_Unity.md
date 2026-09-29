@@ -2,8 +2,6 @@
 
 Everything from the Galaxy on Fire 2 Full HD mod (game version 2.0.16, release `GOF2FHD09142026`), converted into formats Unity imports natively.
 
-**Keep this private.** It's Deep Silver's copyrighted art, audio and text. It's fine for a personal build; don't publish it.
-
 ## Import it
 
 1. Create a Unity project (Unity 2021 LTS or newer; Built-in or URP both work).
