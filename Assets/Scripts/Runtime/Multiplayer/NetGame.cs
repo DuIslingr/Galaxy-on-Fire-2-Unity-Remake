@@ -34,7 +34,14 @@ namespace GoF2Remake.Multiplayer
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetGame
     {
-        public const ushort Port = 7777;
+        public const ushort DefaultPort = 7777;
+
+        /// <summary>The port this device hosts on (the menu's port field, PlayerPrefs "mp_port").</summary>
+        public static ushort HostPort
+        {
+            get { int p = PlayerPrefs.GetInt("mp_port", DefaultPort); return p >= 1024 && p <= 65535 ? (ushort)p : DefaultPort; }
+            set => PlayerPrefs.SetInt("mp_port", value);
+        }
         public const int Station = 78;
         public const string PrefabFolder = "GoF2Net";
         public static readonly string[] PrefabNames = { "NetPlayer", "NetProxy", "NetState", "NetCrate" };
@@ -99,8 +106,9 @@ namespace GoF2Remake.Multiplayer
         public static readonly string AutoJoinAddress = CommandLineValue("-mpjoin");
 
         /// <summary>Testing, development builds only: -mpdock docks this player once, a few seconds into their first flight;
-        /// -mpaccept accepts squad invitations while docked (NetPlayer), so the real squad flow runs without a hand on it.</summary>
-        public static readonly bool TestDock = TestFlag("-mpdock"), TestAccept = TestFlag("-mpaccept");
+        /// -mpaccept accepts squad invitations while docked (NetPlayer), so the real squad flow runs without a hand on it;
+        /// -mphost hosts from the main menu (a phone: adb shell am start ... -e unity "-mphost").</summary>
+        public static readonly bool TestDock = TestFlag("-mpdock"), TestAccept = TestFlag("-mpaccept"), TestHost = TestFlag("-mphost");
 
         static bool TestFlag(string flag) =>
             Debug.isDebugBuild && Array.Exists(Environment.GetCommandLineArgs(), a => string.Equals(a, flag, StringComparison.OrdinalIgnoreCase));
@@ -139,11 +147,13 @@ namespace GoF2Remake.Multiplayer
         {
             PrepareSession();
             Seed = Environment.TickCount & 0x7fffffff;
+            ushort port = HostPort;
+            // Listening on every adapter (LAN, Wi-Fi, a VPN like Hamachi): any address of this device reaches it.
             var m = EnsureManager();
-            Transport.SetConnectionData("127.0.0.1", Port, "0.0.0.0");
-            if (!m.StartHost())
+            Transport.SetConnectionData("127.0.0.1", port, "0.0.0.0");
+            if (!CanHost() || !m.StartHost())
             {
-                Status = Localization.Extra("mpHostFailed", "Could not start hosting (is port 7777 in use?).");
+                if (Status.Length == 0) Status = string.Format(Localization.Extra("mpHostFailed", "Could not start hosting on port {0}."), port);
                 Shutdown();
                 return false;
             }
@@ -159,8 +169,14 @@ namespace GoF2Remake.Multiplayer
         {
             PrepareSession();
             hostEndReason = null;
+            if (!ParseAddress(address, out string ip, out ushort port))
+            {
+                Status = string.Format(Localization.Extra("mpBadAddress", "\"{0}\" is not an address (like 192.168.1.20 or 192.168.1.20:7778)."), address.Trim());
+                sessionGame = false;   // no session started
+                return false;
+            }
             var m = EnsureManager();
-            Transport.SetConnectionData(address.Trim(), Port);
+            Transport.SetConnectionData(ip, port);
             if (!m.StartClient())
             {
                 Status = Localization.Extra("mpJoinFailed", "Could not connect.");
@@ -233,6 +249,140 @@ namespace GoF2Remake.Multiplayer
             // The session's objects live in DontDestroyOnLoad: gone with it (after Netcode's own shutdown, like the manager).
             foreach (var n in UnityEngine.Object.FindObjectsByType<NetworkObject>(FindObjectsInactive.Include))
                 if (n != null) UnityEngine.Object.Destroy(n.gameObject, 0.3f);
+        }
+
+        /// <summary>The host port is free (the menu asks before its fade); else Status says so and SuggestedPort is the next
+        /// free one.</summary>
+        public static bool CanHost()
+        {
+            ushort port = HostPort;
+            SuggestedPort = 0;
+            if (PortFree(port)) return true;
+            int free = FreePortFrom(port + 1);
+            Status = free > 0
+                ? string.Format(Localization.Extra("mpPortInUse", "Port {0} is in use (another program, or the game hosting already). Try port {1}."), port, free)
+                : string.Format(Localization.Extra("mpPortInUseNone", "Port {0} is in use (another program, or the game hosting already)."), port);
+            SuggestedPort = free;
+            return false;
+        }
+
+        /// <summary>A port the last host attempt found free after the one in use (the menu fills it in), 0 = none.</summary>
+        public static int SuggestedPort { get; private set; }
+
+        /// <summary>No other program holds 'port' (UDP, what Unity Transport uses).</summary>
+        public static bool PortFree(int port)
+        {
+            try { using (new UdpClient(port)) return true; }
+            catch (Exception) { return false; }
+        }
+
+        /// <summary>The first free port from 'port' on (20 tried), 0 = none.</summary>
+        public static int FreePortFrom(int port)
+        {
+            for (int p = port; p < port + 20 && p <= 65535; p++) if (PortFree(p)) return p;
+            return 0;
+        }
+
+        /// <summary>"host", "host:port" (a name is looked up; an IPv6 address has no port part here) -> the IPv4 address and
+        /// port to connect to (DefaultPort without one).</summary>
+        public static bool ParseAddress(string text, out string ip, out ushort port)
+        {
+            ip = null;
+            port = DefaultPort;
+            text = (text ?? "").Trim();
+            if (text.Length == 0) return false;
+            int colon = text.LastIndexOf(':');
+            if (colon > 0 && text.IndexOf(':') == colon)
+            {
+                if (!ushort.TryParse(text.Substring(colon + 1), out port) || port == 0) return false;
+                text = text.Substring(0, colon).Trim();
+            }
+            if (IPAddress.TryParse(text, out var parsed)) { ip = parsed.ToString(); return true; }
+            try
+            {
+                foreach (var a in Dns.GetHostAddresses(text))
+                    if (a.AddressFamily == AddressFamily.InterNetwork) { ip = a.ToString(); return true; }
+            }
+            catch (Exception) { }
+            return false;
+        }
+
+        /// <summary>Every address of this device the others could join on, named by its adapter: the network cards (Ethernet,
+        /// Wi-Fi, a hotspot this device runs, USB tethering) first, then VPNs meant for playing together (Hamachi, ZeroTier,
+        /// Radmin, Tailscale...). Left out: adapters that are down, loopback, link-local (169.254), the virtual ones of
+        /// virtual machines (Hyper-V, WSL, VirtualBox, VMware) and a phone's mobile data (the carrier's shared addresses
+        /// can't be reached). Android names its adapters the Linux way (wlan0, swlan0 / ap0, rndis0, tun0, rmnet*): named
+        /// here like the desktop ones. Empty = no network (never 127.0.0.1: nobody else could join on it).</summary>
+        public static List<(string name, string address)> LocalAddresses()
+        {
+            var cards = new List<(string, string)>();
+            var vpns = new List<(string, string)>();
+            try
+            {
+                foreach (var nic in NetworkInterface.GetAllNetworkInterfaces())
+                {
+                    // Android often reports Unknown for a working adapter: only the ones known to be down are left out.
+                    var status = nic.OperationalStatus;
+                    if (status == OperationalStatus.Down || status == OperationalStatus.NotPresent || status == OperationalStatus.LowerLayerDown
+                        || nic.NetworkInterfaceType == NetworkInterfaceType.Loopback) continue;
+                    string desc = (nic.Description ?? "") + " " + (nic.Name ?? "");
+                    string vpn = VpnName(desc);
+                    string name = vpn ?? AdapterName(nic);
+                    if (name == null || (vpn == null && IsVirtual(desc))) continue;
+                    foreach (var a in nic.GetIPProperties().UnicastAddresses)
+                    {
+                        var ip = a.Address;
+                        if (ip.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(ip)) continue;
+                        var b = ip.GetAddressBytes();
+                        if (b[0] == 169 && b[1] == 254) continue;   // no network behind it
+                        (vpn != null || name == "VPN" ? vpns : cards).Add((name, ip.ToString()));
+                    }
+                }
+            }
+            catch (Exception) { }
+            cards.AddRange(vpns);
+            return cards;
+        }
+
+        static string VpnName(string desc)
+        {
+            foreach (var n in new[] { "Hamachi", "ZeroTier", "Radmin", "Tailscale", "WireGuard", "OpenVPN", "NordLynx" })
+                if (desc.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0) return n;
+            return null;
+        }
+
+        static bool IsVirtual(string desc)
+        {
+            // (Windows' own mobile hotspot runs on a "Wi-Fi Direct Virtual Adapter": that one is named Hotspot, not left out.)
+            if (desc.IndexOf("Wi-Fi Direct", StringComparison.OrdinalIgnoreCase) >= 0) return false;
+            foreach (var n in new[] { "Hyper-V", "vEthernet", "WSL", "VirtualBox", "VMware", "Virtual Adapter", "Loopback", "Bluetooth", "Npcap", "TAP-Windows" })
+                if (desc.IndexOf(n, StringComparison.OrdinalIgnoreCase) >= 0) return true;
+            return false;
+        }
+
+        /// <summary>An adapter's name for the list; null = one nobody can join on (mobile data, Android's internal ones).</summary>
+        static string AdapterName(NetworkInterface nic)
+        {
+            string n = (nic.Name ?? "").ToLowerInvariant();
+            string d = nic.Description ?? "";
+            var platform = Application.platform;
+            if (platform == RuntimePlatform.Android || platform == RuntimePlatform.LinuxPlayer || platform == RuntimePlatform.LinuxEditor)
+            {
+                // Android / Linux names.
+                if (n == "lo") return null;
+                foreach (var skip in new[] { "rmnet", "ccmni", "clat", "v4-", "pdp", "seth", "wwan", "dummy", "p2p", "ifb", "sit", "ip6" })
+                    if (n.StartsWith(skip)) return null;
+                if (n.StartsWith("swlan") || n.StartsWith("ap") || n.StartsWith("softap") || n == "wlan1") return "Hotspot";
+                if (n.StartsWith("wlan")) return "Wi-Fi";
+                if (n.StartsWith("rndis") || n.StartsWith("usb") || n.StartsWith("ncm")) return "USB";
+                if (n.StartsWith("tun") || n.StartsWith("ppp") || n.StartsWith("ipsec")) return "VPN";
+                if (n.StartsWith("eth") || n.StartsWith("en")) return "Ethernet";
+            }
+            // Windows / macOS.
+            if (d.IndexOf("Wi-Fi Direct", StringComparison.OrdinalIgnoreCase) >= 0) return "Hotspot";
+            if (nic.NetworkInterfaceType == NetworkInterfaceType.Wireless80211) return "Wi-Fi";
+            if (nic.NetworkInterfaceType == NetworkInterfaceType.Ethernet || nic.NetworkInterfaceType == NetworkInterfaceType.GigabitEthernet) return "Ethernet";
+            return string.IsNullOrEmpty(nic.Name) ? "Network" : nic.Name;
         }
 
         /// <summary>This device's LAN address, for the host to tell the others.</summary>

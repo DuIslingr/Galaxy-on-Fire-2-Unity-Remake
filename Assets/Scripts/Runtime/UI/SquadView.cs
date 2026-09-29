@@ -139,7 +139,7 @@ namespace GoF2Remake.UI
             if (key != squadKey)
             {
                 squadKey = key;
-                squadHeader.text = $"{Localization.Extra("mpSquad", "Squad").ToUpperInvariant()} ({members.Count})  {(squadCollapsed ? "▸" : "▾")}";
+                squadHeader.text = $"{Localization.Extra("mpSquad", "Squad").ToUpperInvariant()} ({members.Count})  {(squadCollapsed ? "+" : "-")}";
                 squadBody.Clear();
                 bars.Clear();
                 squadBody.style.display = squadCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
@@ -211,7 +211,7 @@ namespace GoF2Remake.UI
             string key = sb.ToString();
             if (key == pilotsKey) return;
             pilotsKey = key;
-            pilotsHeader.text = $"{Localization.Extra("mpPilotsHere", "Pilots in this hangar").ToUpperInvariant()} ({pilots.Count})  {(pilotsCollapsed ? "▸" : "▾")}";
+            pilotsHeader.text = $"{Localization.Extra("mpPilotsHere", "Pilots in this hangar").ToUpperInvariant()} ({pilots.Count})  {(pilotsCollapsed ? "+" : "-")}";
             pilotsBody.Clear();
             pilotsBody.style.display = pilotsCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
             foreach (var p in pilots)

@@ -447,16 +447,64 @@
     margin-bottom: 16px;
 }
 
+.mp-address-list {
+    margin-bottom: 10px;
+}
+
+/* one address: the adapter's name, the address, "copied" after a tap */
+.mp-address-row {
+    flex-direction: row;
+    align-items: center;
+    -unity-text-align: middle-left;
+    margin: 0 0 4px 0;
+    padding: 6px 10px;
+    background-color: rgba(0, 0, 0, 0.25);
+    border-width: 1px;
+    border-color: rgba(216, 236, 247, 0.12);
+    border-radius: 2px;
+    transition-duration: 0.15s;
+}
+
+.can-hover .mp-address-row:hover,
+.mp-address-row:focus {
+    border-color: var(--gof-amber);
+    background-color: var(--gof-cyan-faint);
+}
+
+.mp-address-name {
+    width: 96px;
+    font-size: 14px;
+    color: var(--gof-text-dim);
+}
+
 .mp-address-value {
-    font-size: 24px;
+    flex-grow: 1;
+    font-size: 20px;
     letter-spacing: 1px;
     color: var(--gof-text);
 }
 
-.mp-address-note {
-    margin-top: 2px;
-    font-size: 14px;
+.mp-address-copy {
+    font-size: 13px;
     color: var(--gof-text-dim);
+}
+
+.mp-address-row--copied .mp-address-copy {
+    color: var(--gof-amber);
+}
+
+.mp-port-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.mp-port-label {
+    margin: 0 12px 0 0;
+}
+
+.mp-port {
+    width: 120px;
+    margin: 0;
 }
 
 .mp-address {

@@ -144,7 +144,7 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Wormhole** (`Wormhole`, landmark 3, `PlayerWormHole::update` / `PlayerEgo::calcCollision`, decoded this time, not in the research files): exists until the game is won; visible when coming out of the Void, at the station the Void attack (`Session.VoidInvasionStation`) or in the alien orbit, index < 43; random spot (rand(80000) − 40000, rand(40000) − 20000, rand(40000) + 40000), radius 40000, turned to the camera. Timer: grows 3 s, open 60 s, shrinks 3 s, then gone or (alien orbit / attacked station) reopens elsewhere (alien orbit x ±(30000..90000), y 20000..60000, z −60000..−100000; else ±(20000..60000) per axis; index 29 / 41: that × 2.7 from the player); the mission lock keeps it open at index 40 (not alien) and 42 (alien). Pull (`PlayerCollision`): visible, not shrinking, within 40000: loop sound 34, the ship moves toward it by (40000 − d) / 256 units per 30 fps frame, camera hit; within 1000 = inside. The ride (`SpaceLevel`, `MGame::OnUpdate`): an active campaign mission advances first (index < 41, not 29 / 40; 40 only after Errkt's freighter went through, its hull carried into 41), entering early at 29 / 40 / 41 kills the player, 42 in the alien orbit is the level script's; then into the alien orbit (this station remembered as `Session.VoidReturnStation`, Status+0x84) or back out to it, arrival as a stream-out with the wormhole 10000 behind the player closing after a second (`LevelScript` ctor 0x16056c). HUD: 545 "Wormhole" near the centre, icon 0x450 (`GoF2Hud/wormhole_icon`) elsewhere, never locked.
 - **Alien orbit** (`Session.VoidOrbit` = station −1, the Void's home, `OrbitLayout.alienOrbit`): the Void station (`station_void`, collision 1001; battlestation after the Valkyrie add-on; none at index 43-83 / ≥ 154), sky `nebula_010` + `stars_002`, the orbit planet `planet_void_big`, Void asteroids around (−30000, 0, 30000) (Void Crystals), fog tint 0x9274d4, arrival at (0, rand(20000) − 10000, rand(50000) + 170000) facing the station; the station is lockable as 415 "Void" (distance only, no autopilot, not in the menu), no docking, no Khador Drive (remake: the wormhole is the way back); traffic 2+ Void fighters (`TrafficPlan`); music 145 / 136 (`StoryAssets.voidMusic` / `voidBattle`).
 - **Void invasion** (Status+0x7c / +0x80): at the attacked station (and coming out of the Void, not at index 42) 2-5 Void raiders from the wormhole and ≥ 2 freighters; every 45 s (10 s at index 41) dead Void ships come back at the wormhole (`Traffic.UpdateAlienAttackers`); from index 32 to 44 every 10th departure elsewhere re-rolls the attacked station (`Story.OnDepart`, a random visible system, not 10 / 15); −10 from 42 / 45. Void ships drop 1-3 t Alien Remains.
-- The index-43 menu backdrop (the ending's) adds the beer / bra statics 0x37d0 / 0x37d1 at the origin, inside the station like the original (`MenuBackground.SpawnStatics`, `StoryAssets.menuStatics`). The only prologue sky exception is index 0 in a story level (`Level::createSpace`), already built.
+- The index-43 menu backdrop (the ending's) adds the beer / bra statics 0x37d0 / 0x37d1 (`MenuBackground.SpawnStatics`, `StoryAssets.menuStatics`). The original puts them at the origin (`Level::createScene`: the PlayerStatic position args are 0 in the machine code; `PlayerStatic::update` moves nothing), inside the station and too small to see (the beer ~11 m, the bra ~26 m, the camera km away); remake pick (`EndingDrift`): they tumble across the camera's view on a camera-relative path, 45-70 m out, 22 s per crossing, the beer from 6 s, the bra 11 s later, again and again. The only prologue sky exception is index 0 in a story level (`Level::createSpace`), already built.
 
 ## Navigation (locks, autopilot, planet jump, fast-forward)
 
@@ -470,9 +470,17 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
   (`SaveGame.Save` refuses), so it never touches the single-player saves.
-- **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel: the pilot name
-  (`mp_name`), Host, "Your address" (the LAN IPv4), the address field (`mp_address`), Join, the last session's end reason.
-  Touch presses don't take the focus in the menu, except in a text field (the on-screen keyboard needs it).
+- **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (an
+  "Experimental" badge, the pilot name `mp_name`, then two cards): **Host a game** lists every address of this device
+  others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
+  ZeroTier, Radmin, Tailscale; not down, loopback, link-local or virtual-machine adapters; Android's Linux names
+  mapped: wlan = Wi-Fi, swlan / ap = Hotspot, rndis / usb = USB, tun = VPN, mobile data (rmnet, ccmni) left out; Windows'
+  mobile hotspot = Hotspot; none = a "connect to Wi-Fi" line, never 127.0.0.1), a tap copies it (with
+  ":port" when not 7777), and the port field (`mp_port`, `NetGame.HostPort`, default 7777); the host listens on all
+  adapters (0.0.0.0). A port in use is caught before the fade (`NetGame.CanHost`: UDP bind test), the panel says so and
+  puts the next free port in the field. **Join a game**: the address field (`mp_address`; "host" or "host:port", a name
+  is looked up, `NetGame.ParseAddress`), Join; below them the last session's end reason. Touch presses don't take the
+  focus in the menu, except in a text field (the on-screen keyboard needs it).
 - **NetPlayer** (one per player): the owner writes where they are (station; `Place` Space / Hangar / Departing, from the
   scene it is in and `StationLevel.PlayerDeparting`), ship, name, hull, and in space the pose. The others in the same
   orbit (`SharesOrbit`) see the ship model with the pilot name, lockable, a sphere `Obstacle` (1.6 x the model's bounding
@@ -670,7 +678,12 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `Build/Windows`) as client: `GoF2Remake.exe -screen-fullscreen 0 -screen-width 1280 -screen-height 720 -mpjoin 127.0.0.1
   -mpname Wingman` (`-mpjoin`: the menu skips its intro and joins, again every 2 s until a host answers; development
   builds also take `-mpdock` (docks once, a few seconds into the first flight after launching) and `-mpaccept` (accepts squad invitations
-  while docked), so the real hangar / squad flows run without a hand on the client; `-mpname`: this
+  while docked) and `-mphost` (hosts from the menu), so the real hangar / squad flows run without a hand on the client
+  (a phone: `adb shell "am start -n com.joppietoppie.gof2remake/com.unity3d.player.UnityPlayerGameActivity -e unity
+  '-mphost -mpname Phone'"`). **After Windows builds, restore the three URP assets from git
+  (`Mobile_RPAsset`, `PC_RPAsset`, `UniversalRenderPipelineGlobalSettings`, then reimport) before an Android build**: the
+  Windows builds rewrite their shader-stripping state and the next APK stripped URP's post-processing shaders (UberPost)
+  and rendered lit geometry black (only emissive / additive parts showed). `-mpname`: this
   process's pilot name, not saved; explicit `-screen-*` options win over the window-mode option). The player has its own
   PlayerPrefs. Or the phone's development build joining the PC's LAN address. Multiplayer Play Mode (Editor clones)
   doesn't work in 6000.7.0b2: the clones fail to load URP's package shaders ("Host type is not matching any asset type"),

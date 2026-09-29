@@ -99,15 +99,24 @@ namespace GoF2Remake.Visuals
             return b;
         }
 
-        /// <summary>Level::createScene mode 2 at campaign mission 0x2b (the ending's backdrop): two PlayerStatics at the
-        /// origin, meshes 0x37d0 (beer) and 0x37d1 (bra), unturned (game identity = Unity yaw 180), i.e. inside the station.</summary>
+        /// <summary>Level::createScene mode 2 at campaign mission 0x2b (the ending's backdrop): meshes 0x37d0 (beer) and 0x37d1
+        /// (bra). The original leaves them at the origin, inside the station and too small to see; remake pick: they drift
+        /// across the camera's view (EndingDrift), the bra half a crossing after the beer.</summary>
         void SpawnStatics()
         {
             if (Session.CampaignMission != 0x2b || Session.FreePlay) return;
             var story = StoryAssets.Load();
             if (story == null || story.menuStatics == null) return;
+            var cam = menuCamera != null ? menuCamera.transform : Camera.main != null ? Camera.main.transform : null;
+            float delay = 6f;
             foreach (var prefab in story.menuStatics)
-                if (prefab != null) Instantiate(prefab, Vector3.zero, OrbitLayout.RotationToUnity(Vector3.zero), transform).name = prefab.name;
+            {
+                if (prefab == null) continue;
+                var go = Instantiate(prefab, Vector3.zero, OrbitLayout.RotationToUnity(Vector3.zero), transform);
+                go.name = prefab.name;
+                if (cam != null) go.AddComponent<EndingDrift>().Setup(cam, delay);
+                delay += 11f;
+            }
         }
 
         /// <summary>Level::createMission on the empty mission, as in flight (TrafficPlan), with the inactive player at the

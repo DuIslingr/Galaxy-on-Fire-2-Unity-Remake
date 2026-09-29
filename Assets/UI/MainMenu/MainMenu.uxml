@@ -106,8 +106,11 @@
                             <ui:Label name="mpHostTitle" class="mp-card-title gof-semibold" />
                             <ui:Label name="mpHostText" class="mp-card-text" />
                             <ui:VisualElement class="mp-card-fill">
-                                <ui:Label name="mpHostAddress" class="mp-address-value gof-semibold" />
-                                <ui:Label name="mpHostPort" class="mp-address-note" />
+                                <ui:VisualElement name="mpAddressList" class="mp-address-list" />
+                                <ui:VisualElement class="mp-port-row">
+                                    <ui:Label name="mpPortLabel" class="mp-label mp-port-label gof-semibold" />
+                                    <ui:TextField name="mpPort" class="debug-filter mp-port" />
+                                </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:Button name="mpHost" class="mp-action gof-semibold" />
                         </ui:VisualElement>

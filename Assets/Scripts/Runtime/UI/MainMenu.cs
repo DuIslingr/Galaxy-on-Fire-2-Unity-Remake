@@ -410,13 +410,14 @@ namespace GoF2Remake.UI
             OpenPanelOnStart = null;
             // Multiplayer testing (-mpjoin <address>, e.g. a second Windows player next to the Editor's host): straight to the
             // menu, then join.
-            if (GoF2Remake.Multiplayer.NetGame.AutoJoinAddress != null)
+            if (GoF2Remake.Multiplayer.NetGame.AutoJoinAddress != null || GoF2Remake.Multiplayer.NetGame.TestHost)
             {
                 splash.AddToClassList("splash--gone");
                 splash.AddToClassList("splash--removed");
                 EnterMenu();
                 root.schedule.Execute(() => OpenPanel("multiplayerPanel")).ExecuteLater(400);   // its status shows the tries
-                StartCoroutine(AutoJoin(GoF2Remake.Multiplayer.NetGame.AutoJoinAddress));
+                if (GoF2Remake.Multiplayer.NetGame.AutoJoinAddress != null) StartCoroutine(AutoJoin(GoF2Remake.Multiplayer.NetGame.AutoJoinAddress));
+                else StartCoroutine(TestHostSoon());   // -mphost (development builds)
                 yield break;
             }
             WatchAnyKey();
@@ -523,6 +524,7 @@ namespace GoF2Remake.UI
             mainColumn.AddToClassList("main-column--dimmed");
             SetFocusable(mainButtons, false);
             p.schedule.Execute(() => FocusFirst(p)).ExecuteLater(30);
+            if (name == "multiplayerPanel") RefreshAddresses();   // the adapters may have changed
         }
 
         void HidePanel(VisualElement p)
@@ -571,8 +573,9 @@ namespace GoF2Remake.UI
 
         // ---- multiplayer (remake-only MVP, NetGame: host or join by address, one shared orbit) ----
 
-        TextField mpAddress, mpName;
+        TextField mpAddress, mpName, mpPort;
         Label mpStatus;
+        VisualElement mpAddressList;
 
         void SetupMultiplayerPanel()
         {
@@ -586,6 +589,19 @@ namespace GoF2Remake.UI
                 mpName.value = GoF2Remake.Multiplayer.NetGame.PlayerName;
                 mpName.RegisterValueChangedCallback(e => GoF2Remake.Multiplayer.NetGame.PlayerName = e.newValue);
             }
+            mpAddressList = root.Q("mpAddressList");
+            mpPort = root.Q<TextField>("mpPort");
+            if (mpPort != null)
+            {
+                mpPort.maxLength = 5;
+                mpPort.keyboardType = TouchScreenKeyboardType.NumberPad;   // the on-screen keyboard's number pad
+                mpPort.value = GoF2Remake.Multiplayer.NetGame.HostPort.ToString();
+                mpPort.RegisterValueChangedCallback(e =>
+                {
+                    if (ushort.TryParse(e.newValue, out ushort p) && p >= 1024) GoF2Remake.Multiplayer.NetGame.HostPort = p;
+                    RefreshAddresses();
+                });
+            }
             Bind("mpHost", () => StartCoroutine(LeaveForMultiplayer(null)));
             Bind("mpJoin", () =>
             {
@@ -594,6 +610,14 @@ namespace GoF2Remake.UI
                 PlayerPrefs.SetString("mp_address", address);
                 StartCoroutine(LeaveForMultiplayer(address));
             });
+        }
+
+        /// <summary>-mphost: hosts once the menu is up (the panel has listed the addresses).</summary>
+        IEnumerator TestHostSoon()
+        {
+            yield return new WaitForSeconds(2f);
+            while (screen != MenuState.Menu) yield return null;
+            yield return LeaveForMultiplayer(null);
         }
 
         /// <summary>-mpjoin: joins that address, again every 2 s until a host answers (and after a session ends).</summary>
@@ -613,6 +637,47 @@ namespace GoF2Remake.UI
             OpenPanel("multiplayerPanel");
         }
 
+        /// <summary>The host card's addresses: one row per adapter (NetGame.LocalAddresses) with the port when it isn't the
+        /// default; a tap copies it (what a friend types into Join).</summary>
+        void RefreshAddresses()
+        {
+            if (mpAddressList == null) return;
+            mpAddressList.Clear();
+            ushort port = GoF2Remake.Multiplayer.NetGame.HostPort;
+            var addresses = GoF2Remake.Multiplayer.NetGame.LocalAddresses();
+            if (Debug.isDebugBuild) Debug.Log("Multiplayer addresses: " + string.Join(", ", addresses));
+            if (addresses.Count == 0)
+            {
+                // No network: hosting still works on this device, but nobody else could join yet.
+                var none = new Label(Localization.Extra("mpNoNetwork", "No network: connect to Wi-Fi (or turn on a hotspot) so others can join."));
+                none.AddToClassList("mp-card-text");
+                mpAddressList.Add(none);
+            }
+            foreach (var (name, address) in addresses)
+            {
+                string join = port == GoF2Remake.Multiplayer.NetGame.DefaultPort ? address : $"{address}:{port}";
+                var row = new Button { focusable = true };
+                row.AddToClassList("mp-address-row");
+                var n = new Label(name) { pickingMode = PickingMode.Ignore };
+                n.AddToClassList("mp-address-name");
+                var v = new Label(join) { pickingMode = PickingMode.Ignore };
+                v.AddToClassList("mp-address-value");
+                v.AddToClassList("gof-semibold");
+                var c = new Label(Localization.Extra("mpCopy", "copy")) { pickingMode = PickingMode.Ignore };
+                c.AddToClassList("mp-address-copy");
+                row.Add(n); row.Add(v); row.Add(c);
+                row.clicked += () =>
+                {
+                    GUIUtility.systemCopyBuffer = join;
+                    foreach (var other in mpAddressList.Children()) other.RemoveFromClassList("mp-address-row--copied");
+                    foreach (var other in mpAddressList.Query<Label>(className: "mp-address-copy").ToList()) other.text = Localization.Extra("mpCopy", "copy");
+                    row.AddToClassList("mp-address-row--copied");
+                    c.text = Localization.Extra("mpCopied", "copied");
+                };
+                mpAddressList.Add(row);
+            }
+        }
+
         /// <summary>Fades out, then hosts (address null: NetGame loads Space for everyone) or joins (the host's scene loads
         /// once connected). A failed start or connection fades the menu back in with the reason.</summary>
         IEnumerator LeaveForMultiplayer(string address)
@@ -622,6 +687,14 @@ namespace GoF2Remake.UI
             bool started;
             if (address == null)
             {
+                // Only fade out when it can start: a port in use says so at once (with a free one in the port field).
+                if (!GoF2Remake.Multiplayer.NetGame.CanHost())
+                {
+                    if (mpStatus != null) mpStatus.text = GoF2Remake.Multiplayer.NetGame.Status;
+                    if (GoF2Remake.Multiplayer.NetGame.SuggestedPort > 0 && mpPort != null) mpPort.value = GoF2Remake.Multiplayer.NetGame.SuggestedPort.ToString();
+                    screen = MenuState.Menu;
+                    yield break;
+                }
                 if (mpStatus != null) mpStatus.text = "";
                 fade.AddToClassList("fade--on");
                 StartCoroutine(FadeMusic(0f, 1.2f));
@@ -642,6 +715,9 @@ namespace GoF2Remake.UI
             }
             while (started && GoF2Remake.Multiplayer.NetGame.Active) yield return null;   // the scene change ends this
             if (mpStatus != null) mpStatus.text = GoF2Remake.Multiplayer.NetGame.Status;
+            // The port was in use: the free one it found goes into the port field (hosting again uses it).
+            if (address == null && GoF2Remake.Multiplayer.NetGame.SuggestedPort > 0 && mpPort != null)
+                mpPort.value = GoF2Remake.Multiplayer.NetGame.SuggestedPort.ToString();
             fade.RemoveFromClassList("fade--on");
             screen = MenuState.Menu;
             StartCoroutine(FadeMusic(Settings.MusicVolume, 1f));
@@ -1050,12 +1126,12 @@ namespace GoF2Remake.UI
             Set("mpNameLabel", Localization.Extra("mpNameLabel", "Pilot name").ToUpperInvariant());
             if (mpName != null) mpName.textEdition.placeholder = Localization.Extra("mpNamePlaceholder", "Your pilot name");
             Set("mpHostTitle", Localization.Extra("mpHostTitle", "Host a game").ToUpperInvariant());
-            Set("mpHostText", Localization.Extra("mpHostText", "Start a session on this device. Players on your network join with your address:"));
-            Set("mpHostAddress", GoF2Remake.Multiplayer.NetGame.LocalAddress());
-            Set("mpHostPort", string.Format(Localization.Extra("mpPort", "port {0}"), GoF2Remake.Multiplayer.NetGame.Port));
+            Set("mpHostText", Localization.Extra("mpHostText", "Start a session on this device. Players join with one of your addresses (tap to copy):"));
+            Set("mpPortLabel", Localization.Extra("mpPortLabel", "Port").ToUpperInvariant());
             Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());
             Set("mpJoinTitle", Localization.Extra("mpJoinTitle", "Join a game").ToUpperInvariant());
-            Set("mpJoinText", Localization.Extra("mpJoinText", "Connect to a host on your network. Enter the address shown on their screen:"));
+            Set("mpJoinText", Localization.Extra("mpJoinText", "Enter the address shown on the host's screen (with :port if it isn't 7777):"));
+            if (mpAddress != null) mpAddress.textEdition.placeholder = "192.168.1.20  /  192.168.1.20:7778";
             Set("mpJoin", Localization.Extra("mpJoin", "Join").ToUpperInvariant());
 
             Set("campaignTitle", T(103));
