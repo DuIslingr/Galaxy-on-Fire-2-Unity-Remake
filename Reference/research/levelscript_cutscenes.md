@@ -42,7 +42,7 @@ invulnerable, no collision; HUD / radar off; pirates (enemies 0-2) asleep and hi
 
 | Step | Trigger | Action |
 |---|---|---|
-| 0→1 | msg[2] ends | player to (18000, -3000, -40000); camera to (-3000, 2000, -500); pirates at (-10000, 500, 0), (-10000, -300, -1700), (-10000, -200, 2000) facing +X, visible; while step < 3 they bob by `getPulseValue(0.0005) - 0.5` |
+| 0→1 | msg[2] ends | player to (18000, -12000, -40000); camera to (-12000, 2000, -500), still looking at the player (no setTarget: the pirates talk in the foreground; rechecked at 0x160f0e, the first pass read 0xc63b8000 as -3000); pirates at (-10000, 500, 0), (-10000, -300, -1700), (-10000, -200, 2000) facing +X, visible; while step < 3 they drift `translate(0, getPulseValue(0.0005) - 0.5, 0)` per frame (the pulse = |sin(playing time ms · 0.0005)|) |
 | 1→2 | msg[6] ends | camera targets pirate 0 from (-5000, 300, -5000) |
 | 2 | – | music stop, sound 142 (0x8e); camera dolly (0.2dt, 0, 2.2dt) |
 | 2→3 | msg[7] "attack" ends | pirates: exhaust, visible, active (`+0x124 = 50000`) |

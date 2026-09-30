@@ -37,7 +37,6 @@ namespace GoF2Remake.World
         bool soundsPlayed, loading;
         GameObject fx;
         ShipSmoke smoke;
-        readonly Vector3[] bobBase = new Vector3[3];
 
         ShipController Ship => level.Player;
         Transform Player => level.Player.transform;
@@ -172,23 +171,30 @@ namespace GoF2Remake.World
                 case 0:
                     if (Over(2))
                     {
-                        Player.position = ToUnity(new Vector3(18000, -3000, -40000));
-                        cam.LookAt(new Vector3(-3000, 2000, -500), Player);
+                        // 0x160f0e: the player to (18000, -12000, -40000), the camera to (-12000, 2000, -500), still looking at
+                        // the player (no setTarget): just behind the pirates, who talk in the foreground while Keith's ship
+                        // passes in the distance (levelscript_cutscenes.md had -3000 for both -12000s, which put them behind
+                        // the camera).
+                        Player.position = ToUnity(new Vector3(18000, -12000, -40000));
+                        cam.LookAt(new Vector3(-12000, 2000, -500), Player);
                         Vector3[] at = { new Vector3(-10000, 500, 0), new Vector3(-10000, -300, -1700), new Vector3(-10000, -200, 2000) };
                         for (int i = 0; i < 3 && i < pirates.Count; i++)
                         {
                             pirates[i].Place(ToUnity(at[i]), Vector3.right);   // facing +X
                             pirates[i].SetVisible(true);
-                            bobBase[i] = ToUnity(at[i]);
                         }
                         Step = 1;
                     }
                     break;
                 case 1:
                 case 2:
-                    // While step < 3 the pirates bob (getPulseValue(0.0005) - 0.5).
-                    for (int i = 0; i < 3 && i < pirates.Count; i++)
-                        pirates[i].transform.position = bobBase[i] + Vector3.up * (Mathf.Sin(Time.time * Mathf.PI * 2f * 0.5f + i) * 0.5f) * 200f * M;
+                    // While step < 3 the pirates drift: every (30 fps) frame translate(0, getPulseValue(0.0005) - 0.5, 0), the
+                    // pulse |sin(playing time ms * 0.0005)| (Layout::getPulseValue 0xe74fc; 0x1614ac).
+                    {
+                        float pulse = Mathf.Abs(Mathf.Sin(Session.PlaySeconds * 1000f * 0.0005f));
+                        float dy = (pulse - 0.5f) * dtMs / (1000f / 30f) * M;
+                        for (int i = 0; i < 3 && i < pirates.Count; i++) pirates[i].transform.position += Vector3.up * dy;
+                    }
                     if (Step == 1 && Over(6))
                     {
                         if (pirates.Count > 0) cam.LookAt(new Vector3(-5000, 300, -5000), pirates[0].transform);
