@@ -7,6 +7,7 @@
 // at fire time, following the mount, its animation restarted per shot and hidden when it ends. Mines are drawn at x0.7
 // and tumble (MineGun). Scatter shells have no impact mesh (their burst explosion replaces it).
 // The guided Liberator (BombGun, attr 15): its deploy animation plays once per launch, starting 500 ms after it.
+// The player's rockets, missiles and thermo shots trail smoke (RocketTrail, EnableTrails; NPC guns have none).
 // Projectiles, muzzle flashes and impacts fade by their `extra` (opacity) channel: without it an impact's big glow part
 // (radius ~3600 units, meant at 20 % and gone after 267 ms) stayed at full brightness and the impact looked far too big.
 
@@ -33,6 +34,8 @@ namespace GoF2Remake.Flight
         readonly float[] impactMs;
         readonly float impactLength;
         int nextImpact;
+        readonly Transform fxRoot;
+        RocketTrail[] trails;
 
         /// <param name="fxRoot">Parent of the projectiles and impacts (world space).</param>
         /// <param name="muzzleParent">The ship (null = no muzzle flash).</param>
@@ -40,6 +43,7 @@ namespace GoF2Remake.Flight
         {
             this.gun = gun;
             this.fx = fx;
+            this.fxRoot = fxRoot;
             ship = muzzleParent;
             billboard = gun.kind == Gun.Kind.Blaster || gun.kind == Gun.Kind.Thermo;
             projectiles = new Transform[gun.bullets.Length];
@@ -87,6 +91,18 @@ namespace GoF2Remake.Flight
                 }
                 impactLength = Mathf.Max(200f, MaxLength(impacts[0]));
             }
+        }
+
+        /// <summary>RocketGun::setRadar (the player's guns, and other players' mirrored shots): one smoke trail per bullet
+        /// for rockets, missiles, cluster missiles and thermo guns; nothing for the other kinds.</summary>
+        public void EnableTrails()
+        {
+            var rec = RocketTrail.For(gun);
+            if (rec == null || trails != null) return;
+            var mat = CombatAssets.Load()?.particlesMaterial;
+            if (mat == null) return;
+            trails = new RocketTrail[gun.bullets.Length];
+            for (int i = 0; i < trails.Length; i++) trails[i] = new RocketTrail(rec, fxRoot, mat);
         }
 
         public static float MaxLength(GameObject go)
@@ -155,8 +171,13 @@ namespace GoF2Remake.Flight
                 bool active = gun.IsActive(i);
                 if (t.gameObject.activeSelf != active) t.gameObject.SetActive(active);
                 bool launched = active && !wasActive[i];
+                if (trails != null)
+                {
+                    if (launched) trails[i].Restart(gun.bullets[i].position);
+                    else if (!active && wasActive[i]) trails[i].Stop();
+                }
                 wasActive[i] = active;
-                if (!active) continue;
+                if (!active) { trails?[i].Tick(dtMs, false, default, cam); continue; }
                 ref var b = ref gun.bullets[i];
                 if (gun.Guided)
                 {
@@ -171,6 +192,7 @@ namespace GoF2Remake.Flight
                 if (spin != null) rot = Quaternion.Euler(spin[i] * (b.age * 0.001f * Mathf.Rad2Deg));
                 t.SetPositionAndRotation(b.position, rot);
                 t.localScale = Vector3.one * gun.VisualScale(i) * (spin != null ? 0.7f : 1f);
+                trails?[i].Tick(dtMs, true, b.position, cam);
             }
             projectilesDone(dtMs, cam);
         }
@@ -211,6 +233,7 @@ namespace GoF2Remake.Flight
         {
             foreach (var t in projectiles) if (t != null) t.gameObject.SetActive(false);
             for (int i = 0; i < gun.bullets.Length; i++) gun.bullets[i].timer = -1e9f;
+            if (trails != null) foreach (var tr in trails) tr.Clear();
         }
     }
 }

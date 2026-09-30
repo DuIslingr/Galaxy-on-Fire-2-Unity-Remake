@@ -227,6 +227,7 @@ namespace GoF2Remake.Flight
         Rig BuildRig(Gun gun)
         {
             var rig = new Rig { visuals = new GunRig(gun, WeaponFx.Load(gun.itemIndex), fxRoot, transform) };
+            rig.visuals.EnableTrails();   // RocketGun::setRadar: the player's rockets / missiles / thermo shots trail smoke
             var fx = rig.fx;
             if (fx != null && fx.shotLoops && fx.shot != null)
             {

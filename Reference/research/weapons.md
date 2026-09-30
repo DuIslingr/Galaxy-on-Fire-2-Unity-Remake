@@ -409,6 +409,12 @@ No dedicated "bullet hits hull" sound exists in the gun code for NPC targets; on
 - **Cluster missiles**: fire N (3/4/5) at once; each gets a corkscrew offset `pos += side * 2·sin((age + phase)·0.003)·k + up * 2·cos((age + phase)·0.003)·k` with `age = lifetime − timer`, `phase = lifetime·i/N`, `side = normalize(cross(dir, up))` (the scalar `k` was lost by the decompiler, probably dt).
 - Mesh: `rocket_explosive` (14247) for rockets/cluster/ionizing, `rocket_emp` (14249) for missiles, each with its `_add` flame child (14248 / 14250). Oriented along velocity.
 - Trails: particle set **39** per rocket (flags 0x12b012, 29 particles, size 100 + 125·?, lifetime 3000 ms, white → transparent, sprite UV (0.752, 0.498)–(0.998, 0.002)); thermo per-bullet sets **25–28** (items 28, 29, 30, 193; 25 particles, size 50/100/150/70, lifetime 1000 ms, white → transparent, different sprite cells). Trail rendering stops 2000 ms after the rocket dies.
+  Decoded further (remake `RocketTrail`): flag 2 = a **mesh** system (`ParticleSystemManager::addSystem`), 0x10 = one
+  new section per +0x28 units flown (125 for set 39, 50 for 25-28), the sections a ring of +0xc (29 / 25), flags
+  0x1000 | 0x2000 two quad strips, 0x20000 turned 45 deg (edges at ±size·0.707·(up ± right) = ±size), 0x100000 UV
+  scrolling (set 39 only; record 2's flags, which 25-28 copy, are 0x2b012). The UV rects are particles.png's vertical
+  strips (white smoke, gold / red / purple), so the trail is a ribbon along the flight. Cluster missiles (sort 40) take
+  set 25 (`setRadar`), SunFire 193 set 28 on Level+0x98; other RocketGun sorts one set-12 SET_MISSILE_TRAIL system.
 
 ### Impact
 

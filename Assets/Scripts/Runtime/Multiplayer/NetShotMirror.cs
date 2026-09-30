@@ -63,6 +63,7 @@ namespace GoF2Remake.Multiplayer
             var gun = new Gun(data, Vector3.zero, false) { Ignores = ignores };
             var fx = WeaponFx.Load(item);
             m = new Mirror { gun = gun, fx = fx, rig = new GunRig(gun, fx, fxRoot, muzzleParent, 2) };
+            m.rig.EnableTrails();   // another player's rockets trail smoke like one's own
             var rig = m.rig;
             gun.Hit += (i, t, point) => rig.ShowImpact(point);   // the impact only: no damage handler
             mirrors[item] = m;
