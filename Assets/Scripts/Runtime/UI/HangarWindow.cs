@@ -336,7 +336,8 @@ namespace GoF2Remake.UI
                     name.text = ItemInfo.ItemName(row.item);
                     if (!Session.SeenItems.Contains(row.item)) sub.Add(Badge(Localization.Extra("shopNew", "NEW"), "row-badge--new"));
                     else if (hangar.IsMounted(row.item)) sub.Add(Badge(Localization.Extra("shopMounted", "MOUNTED"), "row-badge--mounted"));
-                    subText.text = $"{ItemInfo.Category(it)}   {hangar.StockOf(row.item)} t  |  {hangar.CargoOf(row.item)} t";
+                    // The trade mode's two amounts with their labels (136 "Station", 183 "Ship"), on every row.
+                    subText.text = $"{ItemInfo.Category(it)}  ·  {Localization.Get(136)} {hangar.StockOf(row.item)} t  |  {Localization.Get(183)} {hangar.CargoOf(row.item)} t";
                     int mountedUnits = hangar.MountedOf(row.item);
                     if (mountedUnits > 0) subText.text += "  " + MountedNote(mountedUnits);
                     if (hangar.Storage) break;   // the storage draws no prices
