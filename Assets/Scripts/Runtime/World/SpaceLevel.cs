@@ -233,6 +233,7 @@ namespace GoF2Remake.World
             // ships (NetOrbit) and take them over if it leaves, never building new ones.
             NetAuthority = NetGame.Active && NetState.OrbitEmpty(station);
             ownPassive = storyOrbit || freelanceOrbit || siege;
+            Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             if (PlayerBattleship.Active) PlayerBattleship.AttachTurrets(this);   // remake debug: its 7 turrets on the player's hull

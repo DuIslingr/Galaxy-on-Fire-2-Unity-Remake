@@ -253,9 +253,17 @@ namespace GoF2Remake.World
             public string voice;        // Globals::getDialogueSoundId (the story's radio calls)
         }
 
+        /// <summary>Status::getMission (Status+400) is not empty: the orbit is a story level's or the freelance mission's
+        /// target (set by Status::departStation, cleared when the mission ends). Level::createRadioMessage returns at once
+        /// then, so no generic line plays in a mission orbit (the level's own radio is separate). Null = never.</summary>
+        public Func<bool> LevelMissionActive;
+
+        bool RadioBlocked => LevelMissionActive != null && LevelMissionActive();
+
         /// <summary>A story speaker's line in the radio box (Level::createRadioMessage 0x13 / 0x1b), with its voice.</summary>
         public void QueueLine(int text, int speakerId, string voice = null)
         {
+            if (RadioBlocked) return;
             chatterQueue.Enqueue(new Chatter { text = Localization.Get(text), speaker = StoryTable.SpeakerName(speakerId), speakerId = speakerId, voice = voice });
         }
 
@@ -272,6 +280,7 @@ namespace GoF2Remake.World
         /// ImageFactory::createChar is asked for a male face every time.</summary>
         void Radio(int firstText, int lastText, int race)
         {
+            if (RadioBlocked) return;
             chatterQueue.Clear();
             chatter = null;
             int image = race == 0 ? 64 : race == 2 ? 65 : race == 3 ? 21 : race == 8 ? 9 : 63;
