@@ -54,7 +54,7 @@ namespace GoF2Remake.UI
         readonly StationLevel level;
         readonly VisualElement window, details, detailIcon, detailStats, tradeBox, sellButton, buyButton;
         readonly ScrollView list, detailScroll;
-        readonly Label detailName, detailSub, detailText, tradeStock, tradeCargo, tradePrice, cargoLabel, creditsLabel, tradeStockLabel, tradeCargoLabel, sellLabel, buyLabel;
+        readonly Label detailName, detailSub, detailText, tradeStock, tradeCargo, tradeMounted, tradePrice, cargoLabel, creditsLabel, tradeStockLabel, tradeCargoLabel, sellLabel, buyLabel;
         readonly Button tabShip, tabShop, tabBlueprints, actionButton, actionButton2;
         /// <summary>Tab 4: the blueprint whose ingredients are listed (-1 = the blueprint list).</summary>
         int editing = -1;
@@ -95,6 +95,7 @@ namespace GoF2Remake.UI
             buyButton = root.Q("buyButton");
             tradeStock = root.Q<Label>("tradeStock");
             tradeCargo = root.Q<Label>("tradeCargo");
+            tradeMounted = root.Q<Label>("tradeMounted");
             tradePrice = root.Q<Label>("tradePrice");
             cargoLabel = root.Q<Label>("cargoLabel");
             creditsLabel = root.Q<Label>("creditsLabel");
@@ -303,6 +304,9 @@ namespace GoF2Remake.UI
             rows.Add(new Row { kind = RowKind.Header, element = l });
         }
 
+        /// <summary>Remake: "+N mounted" (a secondary's N is its remaining ammo).</summary>
+        static string MountedNote(int units) => string.Format(Localization.Extra("shopMountedCount", "+{0} mounted"), units);
+
         void AddRow(Row row)
         {
             var db = level.Database;
@@ -333,6 +337,8 @@ namespace GoF2Remake.UI
                     if (!Session.SeenItems.Contains(row.item)) sub.Add(Badge(Localization.Extra("shopNew", "NEW"), "row-badge--new"));
                     else if (hangar.IsMounted(row.item)) sub.Add(Badge(Localization.Extra("shopMounted", "MOUNTED"), "row-badge--mounted"));
                     subText.text = $"{ItemInfo.Category(it)}   {hangar.StockOf(row.item)} t  |  {hangar.CargoOf(row.item)} t";
+                    int mountedUnits = hangar.MountedOf(row.item);
+                    if (mountedUnits > 0) subText.text += "  " + MountedNote(mountedUnits);
                     if (hangar.Storage) break;   // the storage draws no prices
                     int p = hangar.PriceOf(row.item);
                     price.text = ItemInfo.Credits(p);
@@ -558,6 +564,9 @@ namespace GoF2Remake.UI
                     int stock = hangar.StockOf(item), cargo = hangar.CargoOf(item), price = hangar.PriceOf(item);
                     tradeStock.text = $"{stock} t";
                     tradeCargo.text = $"{cargo} t";
+                    // Remake: the hold's amount leaves out what is mounted (a launcher's remaining missiles): shown under it.
+                    int mounted = hangar.MountedOf(item);
+                    if (tradeMounted != null) tradeMounted.text = mounted > 0 ? MountedNote(mounted) : "";
                     tradePrice.text = store ? "" : ItemInfo.Credits(price);
                     tradePrice.EnableInClassList("trade-price--expensive", !store && price > Session.Credits);
                     sellButton.EnableInClassList("trade-arrow--disabled", cargo <= 0);

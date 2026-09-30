@@ -273,6 +273,12 @@
     color: #FFFFFF;
 }
 
+/* remake: what of the item is mounted (a missile launcher's remaining ammo), under the hold's amount */
+.trade-side-note {
+    font-size: 15px;
+    color: var(--gof-text-dim);
+}
+
 .trade-arrow {
     width: 116px;
     height: 64px;

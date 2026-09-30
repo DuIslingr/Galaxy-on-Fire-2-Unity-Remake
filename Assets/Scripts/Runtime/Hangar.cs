@@ -79,6 +79,8 @@ namespace GoF2Remake.Data
         public int StockOf(int item) => Stock.items.Where(s => s.item == item).Sum(s => s.amount);
         public int CargoOf(int item) => Session.Cargo.Where(s => s.item == item).Sum(s => s.amount);
         public bool IsMounted(int item) => Session.Equipment.Any(e => e.item == item);
+        /// <summary>Units of 'item' mounted: a secondary's stack is its remaining ammo.</summary>
+        public int MountedOf(int item) => Session.Equipment.Where(e => e.item == item).Sum(e => Mathf.Max(1, e.amount));
 
         /// <summary>Ship::getCurrentLoad: every unit in cargo weighs 1 t; mounted items weigh nothing.</summary>
         public int Load => Shop.CargoLoad();

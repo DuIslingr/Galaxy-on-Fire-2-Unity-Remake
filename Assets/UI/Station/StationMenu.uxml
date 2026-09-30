@@ -68,6 +68,7 @@
                             <ui:VisualElement class="trade-side trade-side--right" picking-mode="Ignore">
                                 <ui:Label name="tradeCargoLabel" class="trade-side-label" picking-mode="Ignore" />
                                 <ui:Label name="tradeCargo" class="trade-side-value gof-semibold" picking-mode="Ignore" />
+                                <ui:Label name="tradeMounted" class="trade-side-note" picking-mode="Ignore" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:Button name="actionButton" class="detail-action gof-semibold" />
