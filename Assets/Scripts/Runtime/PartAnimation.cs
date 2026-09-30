@@ -65,7 +65,7 @@ namespace GoF2Remake.Visuals
         [Tooltip("Apply the `extra` (opacity) and `v5_0` (UV scroll) channels to the part renderers (_Fade / _UVOffset).")]
         public bool applyMaterialChannels;
 
-        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; }
+        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; }
         readonly List<Track> tracks = new List<Track>();
         float timeMs, lengthMs;
 
@@ -95,6 +95,10 @@ namespace GoF2Remake.Visuals
                     lengthMs = Mathf.Max(lengthMs, c.keys[c.keys.Length - 1].t);
                     if (c.keys.Length > 1) secondKeyMs = Mathf.Min(secondKeyMs, c.keys[1].t);
                 }
+                // The rotation keys' times (all three channels), for the per-key quaternions (RotationAt).
+                var times = new SortedSet<float>();
+                foreach (var k in tk.rot) if (k != null) foreach (var key in k) times.Add(key.t);
+                if (times.Count > 0) { tk.rotTimes = new float[times.Count]; times.CopyTo(tk.rotTimes); }
                 tracks.Add(tk);
             }
             enabled = tracks.Count > 0 && lengthMs > 0f;
@@ -173,6 +177,34 @@ namespace GoF2Remake.Visuals
             return k[k.Length - 1].v;
         }
 
+        Quaternion KeyRotation(Track tk, float t)
+        {
+            var r = new[] { Eval(tk.rot[0], t, 0), Eval(tk.rot[1], t, 0), Eval(tk.rot[2], t, 0) };
+            return Quaternion.Euler(Map(r, rotationMap) * (rotationInRadians ? Mathf.Rad2Deg : 1f));
+        }
+
+        /// <summary>Transform::InternUpdate 0x7e720: each key's rotation becomes a quaternion (Quaternion(x, y, z)) and
+        /// between keys AbyssEngine::Quaternion::Lerp(const&amp;, const&amp;, float) 0x8bbd8 blends them: a plain normalized
+        /// lerp without the shortest-path flip. So a key more than a turn away wraps: a wreck part keyed 0 -> -12.04 rad
+        /// over 10 s turns +0.53 rad, where lerping the angles spun it almost twice (the freighter wrecks looked fast).</summary>
+        Quaternion RotationAt(Track tk, float t)
+        {
+            var times = tk.rotTimes;
+            if (times.Length == 1 || t <= times[0]) return KeyRotation(tk, times[0]);
+            if (t >= times[times.Length - 1]) return KeyRotation(tk, times[times.Length - 1]);
+            int i = 1;
+            while (t > times[i]) i++;
+            float t0 = times[i - 1], t1 = times[i];
+            var q0 = KeyRotation(tk, t0);
+            var q1 = KeyRotation(tk, t1);
+            float f = t1 > t0 ? (t - t0) / (t1 - t0) : 1f;
+            var q = new Vector4(q0.x + (q1.x - q0.x) * f, q0.y + (q1.y - q0.y) * f, q0.z + (q1.z - q0.z) * f, q0.w + (q1.w - q0.w) * f);
+            float len = q.magnitude;
+            if (len < 1e-5f) return q0;   // a key exactly a full turn away (q1 = -q0): the same orientation
+            q /= len;
+            return new Quaternion(q.x, q.y, q.z, q.w);
+        }
+
         /// <summary>ModelOrientationPostprocessor turned the vertices (-x, y, -z): offsets in the part's frame turn with them.</summary>
         static Vector3 ImportFlip(Vector3 v) => new Vector3(-v.x, v.y, -v.z);
 
@@ -206,9 +238,7 @@ namespace GoF2Remake.Visuals
                 {
                     float rt = pingPongRotation && loop && (Loops & 1) == 1
                         ? Mathf.Clamp(loopStartMs, 0f, lengthMs - 1f) + lengthMs - timeMs : timeMs;
-                    var r = new[] { Eval(tk.rot[0], rt, 0), Eval(tk.rot[1], rt, 0), Eval(tk.rot[2], rt, 0) };
-                    var e = Map(r, rotationMap) * (rotationInRadians ? Mathf.Rad2Deg : 1f);
-                    tk.tr.localRotation = tk.baseRot * Quaternion.Euler(e);
+                    tk.tr.localRotation = tk.baseRot * RotationAt(tk, rt);
                 }
                 if (tk.scl[0] != null || tk.scl[1] != null || tk.scl[2] != null)
                 {
