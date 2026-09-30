@@ -284,6 +284,9 @@ namespace GoF2Remake.UI
                     AddHeader(T(typeHeaders[type]));
                     foreach (int e in mounted) AddRow(new Row { kind = RowKind.Slot, equipment = e, item = Session.Equipment[e].item, type = type });
                     for (int n = mounted.Count; n < slots; n++) AddRow(new Row { kind = RowKind.Slot, type = type, equipment = -1 - n });
+                    // Remake: the hold's candidates under their own sub-header (284 "Available in cargo"), styled apart from
+                    // the mounted slots.
+                    if (cargo.Count > 0) AddHeader(Localization.Get(284), true);
                     foreach (int i in cargo) AddRow(new Row { kind = RowKind.CargoItem, item = i, type = type });
                 }
             }
@@ -295,10 +298,11 @@ namespace GoF2Remake.UI
             UpdateFooter();
         }
 
-        void AddHeader(string text)
+        void AddHeader(string text, bool sub = false)
         {
             var l = new Label(text) { pickingMode = PickingMode.Ignore };
             l.AddToClassList("list-header");
+            if (sub) l.AddToClassList("list-header--sub");
             l.AddToClassList("gof-semibold");
             list.Add(l);
             rows.Add(new Row { kind = RowKind.Header, element = l });
@@ -312,6 +316,7 @@ namespace GoF2Remake.UI
             var db = level.Database;
             var e = new VisualElement();
             e.AddToClassList("list-row");
+            if (row.kind == RowKind.CargoItem) e.AddToClassList("list-row--cargo");
             var icon = new VisualElement { pickingMode = PickingMode.Ignore };
             icon.AddToClassList("row-icon");
             var texts = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -393,7 +398,7 @@ namespace GoF2Remake.UI
                     tex = ItemInfo.ItemIcon(row.item);
                     int n = hangar.CargoOf(row.item);
                     name.text = ItemInfo.ItemName(row.item) + (n > 1 ? $" ({n})" : "");
-                    subText.text = Localization.Get(284);   // Available in cargo
+                    subText.text = ItemInfo.Category(db.Item(row.item));   // the sub-header says "Available in cargo"
                     break;
                 }
                 case RowKind.Blueprint:
