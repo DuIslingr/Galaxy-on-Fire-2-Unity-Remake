@@ -435,6 +435,16 @@ namespace GoF2Remake.UI
                     int invested = Blueprints.Invested(db, st, row.type) + Pending(row.item);
                     subText.text = $"{Localization.Get(183)} {hangar.CargoOf(row.item)} t   |   {Localization.Get(271)} {invested} / {total} t";
                     if (invested >= total) sub.Insert(0, Badge("✓", "row-badge--mounted"));
+                    else
+                    {
+                        // Remake: this station sells it (buy it in the shop, then add it here).
+                        int stock = hangar.StockOf(row.item);
+                        if (stock > 0)
+                        {
+                            sub.Insert(0, Badge(Localization.Extra("bpSoldHere", "SOLD HERE"), "row-badge--stock"));
+                            subText.text += $"   |   {Localization.Get(136)} {stock} t";
+                        }
+                    }
                     break;
                 }
                 case RowKind.Autocomplete:

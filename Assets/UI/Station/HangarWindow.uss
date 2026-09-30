@@ -192,6 +192,11 @@
     background-color: var(--gof-cyan);
 }
 
+/* remake: a blueprint ingredient this station sells */
+.row-badge--stock {
+    background-color: #7FD86A;
+}
+
 .row-price {
     min-width: 170px;
     font-size: 24px;
