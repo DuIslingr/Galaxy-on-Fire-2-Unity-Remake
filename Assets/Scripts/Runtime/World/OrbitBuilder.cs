@@ -128,8 +128,11 @@ namespace GoF2Remake.World
             if (name == null) { Debug.LogWarning($"OrbitBuilder: no station assembly for {layout.stationIndex}"); return null; }
             var go = Spawn(db, name, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Station", parent);
             // PlayerStation::update advances the station's animation every frame except at 101 and in the alien orbit: the
-            // battlestation's arms (and the Void station) hold their first frame there.
-            if (layout.stationIndex == 101 || layout.alienOrbit) PartAnimation.HoldAll(go);
+            // battlestation's arms hold their first frame there. The Void station holds the pose after its one-off first
+            // key: at t 0 every part is at scale 1, from 50 ms the hull is x10.065 (about 10 km across), the size its
+            // collision volumes (1001: spheres out to +-100 000 units) and the arrival 170 000-220 000 units out are made for.
+            if (name == "station_void") PartAnimation.HoldAllAfterOneOff(go);
+            else if (layout.stationIndex == 101 || layout.alienOrbit) PartAnimation.HoldAll(go);
             return go;
         }
 

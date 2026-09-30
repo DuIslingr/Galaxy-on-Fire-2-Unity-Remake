@@ -138,6 +138,15 @@ namespace GoF2Remake.Visuals
             foreach (var a in root.GetComponentsInChildren<PartAnimation>(true)) a.Hold(atMs);
         }
 
+        /// <summary>Hold() on every part animation under 'root' at its pose after a one-off first key (OneOffStartMs; t 0
+        /// without one): a model whose rest pose only exists for the first 50 ms (the Void station: scale 1 at t 0, its
+        /// real x10.065 from 50 ms).</summary>
+        public static void HoldAllAfterOneOff(GameObject root)
+        {
+            if (root == null) return;
+            foreach (var a in root.GetComponentsInChildren<PartAnimation>(true)) a.Hold(a.OneOffStartMs);
+        }
+
         /// <summary>Plays every part animation under 'root' once from the start; returns the longest length in ms.</summary>
         public static float PlayOnce(GameObject root)
         {
