@@ -305,9 +305,10 @@ namespace GoF2Remake.UI
             ApplyInputMode();
         }
 
-        /// <summary>StarMap::draw: the story / freelance icons on the mission targets (the offered mission in mission mode).</summary>
+        /// <summary>StarMap::drawOnScreenInfo: the story / freelance icons on the player's own missions' targets
+        /// (Status::getCampaignMission / getFreelanceMission), in mission mode too: the map's mission only gets the route.</summary>
         int StoryTarget => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay ? Story.TargetStation : -1;
-        int FreelanceTarget => mode == StarMapMode.Mission && focusStation >= 0 ? focusStation : Freelance.Active ? Freelance.Mission.target : -1;
+        int FreelanceTarget => Freelance.Active ? Freelance.Mission.target : -1;
 
         // ---- 3D --------------------------------------------------------------------------------------------
 
