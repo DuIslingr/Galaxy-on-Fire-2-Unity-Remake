@@ -231,7 +231,7 @@ namespace GoF2Remake.Data
 
                 // Owned add-ons give items without an occurrence one (Valkyrie for idx < 196, Supernova above).
                 if (occ == 0 && !exclusive && type != 4 && idx != 85 && it.blueprint.Count == 0 && !(idx == 181 && mission < 59)
-                    && !((sort >= 33 && sort <= 35 || sort == 43) && mission < 142) && sort != 36 && sort != 29
+                    && !((sort >= 33 && sort <= 35 || sort == 43) && mission < 142) && sort != 36 && (sort != 29 || system == 25)   // signatures: only the black market
                     && idx != 209 && idx != 210 && idx != 217 && idx != 218 && !(idx == 205 && mission < 94) && !KaamoSpecials.Contains(idx))
                     occ = Random.Range(0, 30) + (int)((1f - techI / 10f) * 30f);
 

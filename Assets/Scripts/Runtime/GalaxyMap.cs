@@ -34,7 +34,9 @@ namespace GoF2Remake.Data
             public bool ring, gate;
         }
 
-        /// <summary>Status::getSystemVisibilities, set up from systems.json initiallyVisible on first use.</summary>
+        /// <summary>Status::getSystemVisibilities, set up from systems.json initiallyVisible on first use, plus Loma (25):
+        /// Status::resetGame shows it whenever the Valkyrie add-on is owned (options[0x35]), and both add-ons are owned in
+        /// the remake, so the black market is on the map from a new game's start.</summary>
         public static bool[] Visibility(Database db)
         {
             int n = 0;
@@ -43,10 +45,13 @@ namespace GoF2Remake.Data
             {
                 var v = new bool[n];
                 foreach (var s in db.Systems) v[s.index] = s.initiallyVisible;
+                if (LomaSystem < n) v[LomaSystem] = true;
                 Session.SystemVisible = v;
             }
             return Session.SystemVisible;
         }
+
+        public const int LomaSystem = 25, ShimaSystem = 26;
 
         public static bool IsVisible(Database db, int system)
         {

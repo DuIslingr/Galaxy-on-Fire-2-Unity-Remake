@@ -288,7 +288,7 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams)]
         void KillCreditRpc(int race, int systemRace, bool wasHostile, RpcParams rpc = default)
         {
-            Standing.ApplyKill(race, systemRace);
+            if (Shop.SystemOf(NetGame.Db, Session.StationIndex) != 25) Standing.ApplyKill(race, systemRace);   // not in Loma
             if (!wasHostile) return;
             Session.Kills++;
             if (race == Standing.Pirate) Session.PirateKills++;

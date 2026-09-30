@@ -49,9 +49,11 @@ namespace GoF2Remake.Data
             for (int i = 0; i < items.Count; i++) prices[items[i]] = p[i];
         }
 
-        /// <summary>Status+0x3c..0x48: the lowest and highest price seen per item (shown in the item details).</summary>
+        /// <summary>Status+0x3c..0x48: the lowest and highest price seen per item (shown in the item details); not in the
+        /// black market (HangarWindow::initialize: Loma's maximum prices aren't recorded).</summary>
         void RecordKnownPrices()
         {
+            if (SystemIndex == 25) return;
             foreach (var kv in prices)
             {
                 if (!Session.LowestKnownPrice.TryGetValue(kv.Key, out var lo) || kv.Value < lo.price)

@@ -464,6 +464,9 @@ Tables: `DAT_00254930` multi-install per sort (43 bytes), `DAT_00258730` hidden 
 3. Colours passed to `PaintCanvas::SetColor` (affordable vs unaffordable price, overloaded footer) were lost by the decompiler.
 4. **Loma max-price rule**: `Status+0x78` is a Station object created in the Status ctor whose meaning (it is compared by index
    with the current station) was not traced; in practice every station in system 25 probably sells at maxPrice.
+   Resolved: it is a bare `Station()` placeholder (the Status ctor's `new Station`), the current station only outside a real
+   orbit, so every real Loma station sells at maxPrice. `HangarWindow::initialize` skips the lowest / highest seen-price
+   records there, and `Generator::getItemBuyList` rolls the signatures (sort 0x1d) only in the black-market system.
 5. `globalPriceRaise`, `energyCellsProbChange`, `secondaryWeaponsProbChange` live in .bss and are never written by native code
    (possibly meant for remote config) → treated as 0.
 6. Trade-in at full price follows from `Ship::adjustPrice` overwriting the price of the player's ship each time the hangar opens

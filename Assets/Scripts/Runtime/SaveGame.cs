@@ -255,6 +255,9 @@ namespace GoF2Remake.Data
             Session.LowestKnownPrice = Prices(s.lowestPrices);
             Session.HighestKnownPrice = Prices(s.highestPrices);
             Session.SystemVisible = s.systemVisible != null && s.systemVisible.Length > 0 ? s.systemVisible : null;
+            // GameRecord::load: Loma (the Valkyrie add-on owned) and Shima always visible after loading.
+            if (Session.SystemVisible != null && Session.SystemVisible.Length > GalaxyMap.ShimaSystem)
+                Session.SystemVisible[GalaxyMap.LomaSystem] = Session.SystemVisible[GalaxyMap.ShimaSystem] = true;
             Session.JumpgatesUsed = s.jumpgatesUsed;
             Session.Kills = s.kills;
             Session.PirateKills = s.pirateKills;
