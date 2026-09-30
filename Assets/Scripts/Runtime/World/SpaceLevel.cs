@@ -94,7 +94,9 @@ namespace GoF2Remake.World
         public PlayerCloak Cloak { get; private set; }
         public TimeExtender Extender { get; private set; }
         /// <summary>MGame::dockEvent: 525 while a mission holds the player here (the story's blocks, the Kaamo siege).</summary>
-        public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex) || (Siege != null && Siege.Active);
+        public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active);
+        /// <summary>The orbit was built as the story's (Status::departStation put the campaign mission in Status+400).</summary>
+        public bool IsStoryOrbit { get; private set; }
         /// <summary>A story conversation is open (the game is paused).</summary>
         public bool Dialogue => StorySpace != null && StorySpace.DialogueOpen;
         /// <summary>LevelScript startSequenceOver: the launch / arrival camera has ended (in the prologue / rescue the
@@ -218,6 +220,7 @@ namespace GoF2Remake.World
             Collision.wormhole = Wormhole;
             VolatileCargo.Attach(Player.gameObject, db, Player);   // PlayerEgo+0x398: volatile goods, sound 35
             bool storyOrbit = !Session.FreePlay && Story.IsLevelMission(station);
+            IsStoryOrbit = storyOrbit;
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
             // Multiplayer: not when a squadmate here already runs this mission (their ships are shown here, NetMissions).
             bool missionHere = !storyOrbit && Freelance.IsMissionOrbit(station);
@@ -289,7 +292,7 @@ namespace GoF2Remake.World
             StorySpace.Setup(this, Campaign);
             Hints = gameObject.AddComponent<FlightHints>();
             Hints.Setup(this);
-            Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex) || (Siege != null && Siege.Active)
+            Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100)   // escorting Khador (MGame::UseKhadorDrive)
                                             // remake: no Khador Drive out of the Void in the main story (its wormhole is the way back)
                                             || (Layout.alienOrbit && !Story.GameWon && Story.ForcedKhadorTarget(Layout.stationIndex) == null);

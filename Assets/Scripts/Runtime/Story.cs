@@ -343,17 +343,21 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>"On a mission" (campaign_flow.md 7): the level mission is not a docking / lounge type, so docking,
-        /// planet jumps and the Khador Drive are refused with 525. Indices 49-54 also refuse docking except at Kanado.</summary>
-        public static bool BlocksDocking(int station)
+        /// planet jumps and the Khador Drive are refused with 525. Indices 49-54 also refuse docking except at Kanado.
+        /// MGame::dockEvent reads Status::getMission (Status+400), the level mission Status::departStation picked on
+        /// arrival: 'storyOrbit' = this orbit was built as the story's (SpaceLevel.IsStoryOrbit). A step that becomes a
+        /// level mission here mid-flight (nextCampaignMission leaves Status+400 alone) doesn't lock the orbit: step 13
+        /// won by a Challenge at Kernstal turns into step 14's level at Kernstal.</summary>
+        public static bool BlocksDocking(int station, bool storyOrbit)
         {
             if (station == Session.VoidOrbit) return true;   // Level::collideStation: no docking at the Void station
             if (Index >= 49 && Index <= 54 && station != 74) return true;
-            return BlocksJumps(station);
+            return BlocksJumps(station, storyOrbit);
         }
 
-        public static bool BlocksJumps(int station)
+        public static bool BlocksJumps(int station, bool storyOrbit)
         {
-            if (!IsLevelMission(station)) return false;
+            if (!storyOrbit || !IsLevelMission(station)) return false;
             int t = Mission.type;
             return t != 0x00 && t != 0x0b && t != 0x0d && t != 0xab && t != 0xac && t != 0xbd;
         }
