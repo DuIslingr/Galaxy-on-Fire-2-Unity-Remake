@@ -4,7 +4,8 @@
 //                                           700 ms, size 100..1100 +500/s, white, jitter +-300 world, along the ship axis
 //                                           -250..+249, k = +1 (inherits the ship's velocity), 4x4 sheet once; on through the
 //                                           death tumble, off at the explosion
-//   record 11 SET_EXPLOSION_MANUALLY_BIG    one emitManual burst at the explosion: 10 particles, 1500 ms, size 2000..3000
+//   record 11 SET_EXPLOSION_MANUALLY_BIG    one emitManual at the explosion: one particle (IParticleSystem::emitManual
+//                                           0x1b3174 writes a single slot), 1500 ms, size 2000..3000
 //                                           +500/s, no jitter
 // Plain C#: the owner (PlayerHealth, NpcShip) switches it.
 
@@ -26,7 +27,7 @@ namespace GoF2Remake.Flight
             var em = burn.emission;
             em.rateOverTime = 8f;
             // record 11: a single burst at the ship
-            burst = ShipSmoke.Create(ship, "Burst", mat, 1.5f, 2000f, 3000f, 10, 0f, Vector3.zero, 0f, 500f, 3);
+            burst = ShipSmoke.Create(ship, "Burst", mat, 1.5f, 2000f, 3000f, 1, 0f, Vector3.zero, 0f, 500f, 3);
             var bem = burst.emission;
             bem.rateOverTime = 0f;
             var sh = burst.shape;
@@ -68,7 +69,7 @@ namespace GoF2Remake.Flight
         {
             if (!Settings.QualityEffects || burst == null) return;
             burst.transform.SetParent(null, true);
-            burst.Emit(10);
+            burst.Emit(1);
             Object.Destroy(burst.gameObject, 2f);
         }
     }
