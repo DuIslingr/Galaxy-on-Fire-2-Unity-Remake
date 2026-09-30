@@ -29,6 +29,8 @@ namespace GoF2Remake.Flight
         [Tooltip("Items 68, 69, 70, 194.")]
         public GameObject[] tractorBeams;
         public Material smokeMaterial, fireMaterial;
+        [Tooltip("Material 20095 fog.png (additive): the fog manager Level+0x7c, e.g. the pirate base's SET_FOG_STATIC.")]
+        public Material fogMaterial;
         [Tooltip("Material 20099 sprite_explosion (additive): the dying ships' burn, records 9 / 11 (ShipBurn).")]
         public Material explosionSpriteMaterial;
         [Tooltip("Material 20090 particles (additive): the player's exhaust particles (ShipExhaust).")]

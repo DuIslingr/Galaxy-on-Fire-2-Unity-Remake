@@ -33,6 +33,7 @@ namespace GoF2Remake.EditorTools
             a.tractorBeams = new[] { Find("projectile_068_anim_add"), Find("projectile_069_anim_add"), Find("projectile_070_anim_add"), Find("v_projectile_194_anim_add") };
 
             a.smokeMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20101_sprite_smoke.mat");
+            a.fogMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20095_fog.mat");
             a.fireMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27250_sprite_fire.mat");
             a.explosionSpriteMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20099_sprite_explosion.mat");
             a.particlesMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20090_particles.mat");

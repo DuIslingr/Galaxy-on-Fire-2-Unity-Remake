@@ -442,7 +442,8 @@ namespace GoF2Remake.World
         }
 
         /// <summary>SET_FOG_STATIC (space_props.md 4): 30 sprites of 32768 units within +-40000 of the outpost, colour
-        /// 0xE2282880, forever, not tied to the camera.</summary>
+        /// 0xE2282880, forever, not tied to the camera. Level::initParticleSystems adds it to the fog manager (Level+0x7c):
+        /// material 20095 fog.png, additive, like the ambient fog; no HDR glow (the original blends in LDR).</summary>
         void SpawnRedFog(Vector3 at)
         {
             var go = new GameObject("Pirate base fog");
@@ -468,7 +469,12 @@ namespace GoF2Remake.World
             r.renderMode = ParticleSystemRenderMode.Billboard;
             r.maxParticleSize = 10f;
             r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            if (assets != null && assets.smokeMaterial != null) r.sharedMaterial = assets.smokeMaterial;
+            if (assets != null && assets.fogMaterial != null)
+            {
+                var fog = new Material(assets.fogMaterial) { name = "Pirate base fog" };
+                if (fog.HasProperty("_Glow")) fog.SetFloat("_Glow", 1f);
+                r.sharedMaterial = fog;
+            }
             var p = new ParticleSystem.EmitParams { applyShapeToPosition = false };
             for (int i = 0; i < 30; i++)
             {
