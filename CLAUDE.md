@@ -6,8 +6,9 @@ A remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in 
 
 - Unity **6.7**, **URP 17.7**, Windows.
 - **Input System package only.** Active Input Handling is set to the new system. Never use `UnityEngine.Input` or the legacy Input Manager.
-- Packages include `com.unity.pipeline` (Unity CLI bridge) and `com.unity.ai.assistant`.
-- Driving the Editor: if the `unity` CLI / Unity MCP is available, use it to read the Console, run menu items, enter Play mode and inspect the scene. Check with `unity status` first. When an Editor is connected, don't hand-edit `.unity` / `.prefab` / `.asset` YAML.
+- Packages include `com.unity.pipeline` (Unity CLI bridge). `com.unity.ai.assistant` was removed (its AI Generators logged
+  "NoSubscription" errors), so there is no Unity MCP server.
+- Driving the Editor: if the `unity` CLI is available, use it to read the Console, run menu items, enter Play mode and inspect the scene. Check with `unity status` first. When an Editor is connected, don't hand-edit `.unity` / `.prefab` / `.asset` YAML.
 
 ## Layout
 

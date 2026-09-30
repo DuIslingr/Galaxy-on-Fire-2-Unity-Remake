@@ -20,6 +20,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Multiplayer
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class NetHangar : MonoBehaviour
     {
         sealed class Seen
