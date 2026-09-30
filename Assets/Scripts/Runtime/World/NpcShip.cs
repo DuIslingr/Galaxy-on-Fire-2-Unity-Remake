@@ -458,10 +458,10 @@ namespace GoF2Remake.World
             if (engine != null && engine.clip != null) engine.Play();
         }
 
-        /// <summary>Level::enemyDied / Generator::getLootList: a Void ship carries 1-3 t Alien Remains (131), the others the
-        /// usual loot.</summary>
-        List<ItemStack> RollLoot() => Spec.race == Standing.Void ? new List<ItemStack> { new ItemStack(131, Random.Range(0, 3) + 1) }
-                                                                 : NpcTables.RollLoot(db, Spec.freighter);
+        /// <summary>PlayerFighter::PlayerFighter: race 9 (the Void) gets no cargo list (KIPlayer+0x4c = 0), so the scanner
+        /// reads "Nothing to salvage." and there is nothing to steal; its 1-3 t Alien Remains are made at death (OnDied).
+        /// The others: Generator::getLootList.</summary>
+        List<ItemStack> RollLoot() => Spec.race == Standing.Void ? new List<ItemStack>() : NpcTables.RollLoot(db, Spec.freighter);
 
         // ---- turrets (PlayerTurret::handleTurret / pickEnemy / handleRotation) ---------------------------------------
 
