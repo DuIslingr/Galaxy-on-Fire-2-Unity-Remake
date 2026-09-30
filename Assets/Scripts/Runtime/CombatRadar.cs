@@ -62,7 +62,7 @@ namespace GoF2Remake.Flight
         float timer;
         bool noTractorShown;
         Transform beam;
-        float beamLength = 1f;
+        float beamLength = M;
 
         public void Setup(Database database, ShipController controller, Navigation navigation, Mining miningSystem,
                           WeaponSystem weaponSystem, PlayerHealth playerHealth, Traffic trafficManager)
@@ -94,8 +94,11 @@ namespace GoF2Remake.Flight
                 var go = Instantiate(beamPrefab);
                 go.name = "Tractor beam";
                 GunRig.StripForFx(go);
-                beamLength = 1f;
+                GunRig.EnableFades(go);   // its keys pulse the width 1..1.5 and the `extra` opacity 25..50 %
+                // The mesh is +-250 units wide and 1 unit (0.05 m) long.
+                beamLength = 0f;
                 foreach (var mf in go.GetComponentsInChildren<MeshFilter>()) if (mf.sharedMesh != null) beamLength = Mathf.Max(beamLength, mf.sharedMesh.bounds.size.z);
+                if (beamLength <= 0f) beamLength = M;
                 beam = go.transform;
                 go.SetActive(false);
             }
@@ -280,7 +283,8 @@ namespace GoF2Remake.Flight
                 beam.gameObject.SetActive(true);
                 beam.position = transform.position;
                 beam.rotation = Quaternion.LookRotation(-to, transform.up);
-                beam.localScale = new Vector3(1f, 1f, dist / beamLength);
+                // TractorBeam::update 0x17c16c: setScaling(beam, 0.5, 0.5, distance): 250 units wide, exactly as long as the distance.
+                beam.localScale = new Vector3(0.5f, 0.5f, dist / beamLength);
             }
         }
 
