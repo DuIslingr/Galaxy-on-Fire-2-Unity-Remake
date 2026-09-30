@@ -344,7 +344,7 @@ namespace GoF2Remake.Flight
         // ---- capital ships (npc_combat_specials.md 2.2 - 2.4) ---------------------------------------------------
 
         /// <summary>Table 0x253604 / 0x253544 / 0x2536ac: the turrets' offsets from their host (game units) and rotations.</summary>
-        static readonly (Vector3 pos, Vector3 rot)[] BattleshipTurrets =
+        public static readonly (Vector3 pos, Vector3 rot)[] BattleshipTurrets =
         {
             (new Vector3(5322, 1893, -15571), new Vector3(0, 0, -Mathf.PI / 2)), (new Vector3(2356, 1115, 7324), new Vector3(0, 0, -Mathf.PI / 2)),
             (new Vector3(0, -4261, 4876), new Vector3(0, 0, Mathf.PI)), (new Vector3(-5322, 1893, -15571), new Vector3(0, 0, Mathf.PI / 2)),

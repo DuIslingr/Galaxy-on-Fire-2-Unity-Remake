@@ -279,6 +279,7 @@ namespace GoF2Remake.World
             shipIndex = index;
             var ship = SpawnShip(index, new Vector3(0f, StationTables.ShipY(index), 0f), 0f, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
+            if (playerShip != null && index == PlayerBattleship.Ship) PlayerBattleship.FitHangar(playerShip);   // remake debug
             RefreshTurret(true);
             ApplyShipYaw();
         }

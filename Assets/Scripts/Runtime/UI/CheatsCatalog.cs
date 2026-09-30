@@ -9,6 +9,7 @@ using GoF2Remake.Data;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class CheatsCatalog
     {
         static string X(string key, string english) => Localization.Extra(key, english);
@@ -23,7 +24,7 @@ namespace GoF2Remake.UI
             Toggle("cheatJumps", () => X("cheatFreeJumps", "Free jumps (no energy cells)"), () => Cheats.FreeJumps, v => Cheats.FreeJumps = v),
         };
 
-        public static List<OptionDef> Actions(Database db, Action<string> notify) => new List<OptionDef>
+        public static List<OptionDef> Actions(Database db, Action<string> notify, World.SpaceLevel flight = null) => new List<OptionDef>
         {
             Button("cheat100k", () => X("cheatCredits100k", "+100 000 credits"), () => { Cheats.AddCredits(100000); notify?.Invoke(Credits()); }),
             Button("cheat1m", () => X("cheatCredits1m", "+1 000 000 credits"), () => { Cheats.AddCredits(1000000); notify?.Invoke(Credits()); }),
@@ -32,9 +33,146 @@ namespace GoF2Remake.UI
             Button("cheatCells", () => X("cheatEnergyCells", "+20 energy cells"), () => { Cheats.AddEnergyCells(20); notify?.Invoke(X("cheatCellsAdded", "20 energy cells added to the hold.")); }),
             Button("cheatReveal", () => X("cheatRevealMap", "Reveal all systems"), () => { Cheats.RevealAllSystems(); notify?.Invoke(X("cheatRevealed", "Every system is on the star map.")); }),
             Button("cheatPeace", () => X("cheatMakePeace", "Make peace with all races"), () => { Cheats.MakePeace(); notify?.Invoke(X("cheatPeaceMade", "Standing neutral with every race.")); }),
+            // Remake debug toy (World.PlayerBattleship): the Terran battleship with its 7 turrets; reloads the level.
+            Button("cheatBattleship", () => World.PlayerBattleship.Active ? X("cheatLeaveBattleship", "Back to your own ship")
+                                                                          : X("cheatBattleship", "Fly the Terran battleship"),
+                   () => notify?.Invoke(World.PlayerBattleship.Toggle(flight))),
         };
 
         static string Credits() => $"{X("cheatCreditsNow", "Credits")}: {Session.Credits:N0}";
+
+        // ---- any item (the pause menu and the station) -----------------------------------------------------------
+
+        static int itemCategory, itemPick, amountPick;
+        static readonly int[] Amounts = { 1, 5, 10, 50, 100, 1000 };
+
+        static string ItemName(ItemData it)
+        {
+            string n = Localization.Get(1274 + it.index);
+            return string.IsNullOrEmpty(n) ? it.name : n;
+        }
+
+        static string CategoryName(int id)
+        {
+            string n = Localization.Get(221 + id);
+            return string.IsNullOrEmpty(n) ? "#" + id : n;
+        }
+
+        static List<int> ItemCategories(Database db)
+        {
+            var list = new List<int>();
+            foreach (var it in db.Items) if (!list.Contains(it.categoryId)) list.Add(it.categoryId);
+            list.Sort();
+            return list;
+        }
+
+        static List<ItemData> ItemsOf(Database db, int category)
+        {
+            var list = db.Items.FindAll(it => it.categoryId == category);
+            list.Sort((a, b) => a.index.CompareTo(b.index));
+            return list;
+        }
+
+        /// <summary>Category, item, amount, then "Add to hold" (and "Add and mount" when 'dockedStock' is the station's).</summary>
+        public static List<OptionDef> Items(Database db, StationStock dockedStock, Action<string> notify)
+        {
+            var categories = ItemCategories(db);
+            List<ItemData> Current() => ItemsOf(db, categories[Math.Clamp(itemCategory, 0, categories.Count - 1)]);
+            ItemData Picked()
+            {
+                var items = Current();
+                return items.Count > 0 ? items[Math.Clamp(itemPick, 0, items.Count - 1)] : null;
+            }
+            var list = new List<OptionDef>
+            {
+                Choice("debugItemCategory", () => X("debugItemCategory", "Item type"), false,
+                    () => categories.ConvertAll(CategoryName).ToArray(), () => itemCategory, i => { itemCategory = i; itemPick = 0; }),
+                Choice("debugItem", () => X("debugItem", "Item"), false,
+                    () => Current().ConvertAll(it => $"{it.index} · {ItemName(it)}").ToArray(), () => itemPick, i => itemPick = i),
+                Choice("debugAmount", () => X("debugAmount", "Amount"), true,
+                    () => Array.ConvertAll(Amounts, a => a.ToString()), () => amountPick, i => amountPick = i),
+                Button("debugGiveItem", () => X("debugGiveItem", "Add to cargo hold"), () =>
+                {
+                    var it = Picked();
+                    if (it == null) return;
+                    Cheats.GiveItem(it.index, Amounts[amountPick]);
+                    notify?.Invoke($"+{Amounts[amountPick]} {ItemName(it)}");
+                }),
+            };
+            if (dockedStock != null)
+                list.Add(Button("debugMountItem", () => X("debugMountItem", "Add and mount"), () =>
+                {
+                    var it = Picked();
+                    if (it == null) return;
+                    notify?.Invoke($"{ItemName(it)}: {Cheats.GiveAndMount(db, dockedStock, it.index, Amounts[amountPick])}");
+                }));
+            return list;
+        }
+
+        // ---- spawn any ship or object (the pause menu, in flight) ---------------------------------------------------
+
+        static int shipRace, shipPick, behaviourPick, objectCategory, objectPick;
+        static readonly int[] Races = { 0, 1, 2, 3, Flight.Standing.Pirate, Flight.Standing.Void, Flight.Standing.Specter };
+
+        static string RaceName(int race)
+        {
+            string n = Localization.Get(406 + race);
+            return string.IsNullOrEmpty(n) ? "#" + race : n;
+        }
+
+        static List<string> ObjectCategories(Database db)
+        {
+            var list = new List<string>();
+            foreach (var a in db.Assemblies) if (!list.Contains(a.category)) list.Add(a.category);
+            list.Sort(StringComparer.Ordinal);
+            return list;
+        }
+
+        static List<AssemblyData> ObjectsOf(Database db, string category)
+        {
+            var list = db.Assemblies.FindAll(a => a.category == category);
+            list.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
+            return list;
+        }
+
+        /// <summary>Race, ship, behaviour, "Spawn ship"; object type, object, "Spawn object" (World.DebugSpawner).</summary>
+        public static List<OptionDef> Spawns(Database db, World.SpaceLevel level, Action<string> notify)
+        {
+            var ships = db.Ships.ConvertAll(sh => sh.index);
+            ships.Sort();
+            var categories = ObjectCategories(db);
+            List<AssemblyData> Objects() => ObjectsOf(db, categories[Math.Clamp(objectCategory, 0, categories.Count - 1)]);
+            return new List<OptionDef>
+            {
+                Choice("debugShipRace", () => X("debugShipRace", "Ship race"), false,
+                    () => Array.ConvertAll(Races, RaceName), () => shipRace, i => shipRace = i),
+                Choice("debugShip", () => X("debugShip", "Ship"), false,
+                    () => ships.ConvertAll(i => $"{i} · {World.DebugSpawner.ShipName(db, i)}").ToArray(), () => shipPick, i => shipPick = i),
+                Choice("debugBehaviour", () => X("debugBehaviour", "Behaviour"), true,
+                    () => new[] { X("debugHostile", "Hostile"), X("debugNormal", "By standing"), X("debugFriendly", "Friendly") },
+                    () => behaviourPick, i => behaviourPick = i),
+                Button("debugSpawnShip", () => X("debugSpawnShip", "Spawn ship"), () =>
+                    notify?.Invoke(World.DebugSpawner.SpawnShip(level, Races[shipRace], ships[Math.Clamp(shipPick, 0, ships.Count - 1)],
+                                                                (World.DebugSpawner.Behaviour)behaviourPick))),
+                Choice("debugObjectCategory", () => X("debugObjectCategory", "Object type"), false,
+                    () => categories.ToArray(), () => objectCategory, i => { objectCategory = i; objectPick = 0; }),
+                Choice("debugObject", () => X("debugObject", "Object"), false,
+                    () => Objects().ConvertAll(a => a.name).ToArray(), () => objectPick, i => objectPick = i),
+                Button("debugSpawnObject", () => X("debugSpawnObject", "Spawn object"), () =>
+                {
+                    var objects = Objects();
+                    if (objects.Count == 0) return;
+                    notify?.Invoke(World.DebugSpawner.SpawnObject(level, objects[Math.Clamp(objectPick, 0, objects.Count - 1)].name));
+                }),
+            };
+        }
+
+        static OptionDef Choice(string id, Func<string> label, bool segmented, Func<string[]> choices, Func<int> get, Action<int> set) =>
+            new OptionDef
+            {
+                id = id, page = OptionPage.Gameplay, kind = OptionKind.Choice, label = label, segmented = segmented,
+                choices = choices, getIndex = get, setIndex = set,
+            };
 
         static OptionDef Toggle(string id, Func<string> label, Func<bool> get, Action<bool> set) =>
             new OptionDef { id = id, page = OptionPage.Gameplay, kind = OptionKind.Toggle, label = label, getBool = get, setBool = set };

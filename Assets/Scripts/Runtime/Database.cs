@@ -129,7 +129,8 @@ namespace GoF2Remake.Data
                 var any = Assemblies.Find(a => Match(a, main));
                 if (any != null) return any;
             }
-            return null;
+            // Ship 14, the Terran battleship, has no ship_014_* group: Level::createShip builds battleship_terran (NpcShip).
+            return ship == 14 ? AssemblyByName("battleship_terran") : null;
         }
         public List<WeaponMountSet> WeaponMounts = new List<WeaponMountSet>();
         public List<WantedData> Wanted = new List<WantedData>();

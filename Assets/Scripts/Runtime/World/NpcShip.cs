@@ -530,6 +530,21 @@ namespace GoF2Remake.World
             }
         }
 
+        /// <summary>Remake debug (PlayerBattleship): one of the player's own battleship turrets.</summary>
+        public bool PlayerOwned { get; private set; }
+
+        /// <summary>A turret on the player's hull (PlayerBattleship): it aims at whatever is hostile to the player and its
+        /// shots pass through the player.</summary>
+        public void MakePlayerTurret()
+        {
+            PlayerOwned = true;
+            alwaysFriend = true;
+            turretTarget = null;
+            if (gun == null) return;
+            var before = gun.Ignores;
+            gun.Ignores = t => (t != null && t.isPlayer) || (before != null && before(t));
+        }
+
         /// <summary>pickEnemy 0x182e90: the nearest (Euclidean) active target within 50000 that is hostile to this turret's race;
         /// the player only when the turret is hostile to it; the last unreachable one only when nothing else is there.</summary>
         Target PickTurretTarget()
@@ -539,7 +554,8 @@ namespace GoF2Remake.World
             foreach (var e in enemies)
             {
                 if (!Valid(e) || e.cloaked) continue;   // PlayerTurret::handleTurret: no aiming at a cloaked target
-                bool candidate = e.isPlayer ? Target.hostileToPlayer : e.isShip && e.race >= 0 && Standing.RacesHostile(e.race, Race);
+                bool candidate = PlayerOwned ? !e.isPlayer && e.isShip && e.hostileToPlayer
+                               : e.isPlayer ? Target.hostileToPlayer : e.isShip && e.race >= 0 && Standing.RacesHostile(e.race, Race);
                 if (!candidate) continue;
                 float d = (e.transform.position - transform.position).magnitude;
                 if (d >= bestD) continue;

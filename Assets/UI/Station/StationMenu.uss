@@ -396,3 +396,12 @@
 .ticker-off .station-ticker {
     display: none;
 }
+
+/* The Debug page (StationMenu.BuildStationDebug): wider, the tabs over its rows. */
+.system-menu--wide {
+    max-width: 1100px;
+}
+
+.system-menu--wide .system-option Label {
+    min-width: 150px;
+}

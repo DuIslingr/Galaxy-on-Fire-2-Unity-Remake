@@ -118,6 +118,7 @@ namespace GoF2Remake.UI
         void Show(Page p)
         {
             page = p;
+            panel.RemoveFromClassList("pause-panel--wide");   // the Debug page's
             body.Clear();
             items.Clear();
             actions.Clear();
@@ -285,29 +286,132 @@ namespace GoF2Remake.UI
             Item(T(497), () => { Settings.ResetToDefaults(); foreach (var c in optionRows.Values) c.Refresh(); });
         }
 
-        /// <summary>The Debug page (remake-only, CheatsCatalog): the toggles, then the actions; a line reports the last one.</summary>
+        // ---- the Debug page ----------------------------------------------------------------------------------
+
+        int debugTab, debugTabCount;
+        string debugStatus = "";
+
+        /// <summary>The Debug page (remake-only, CheatsCatalog) on a wide panel: tabs (Cheats, Actions, Give items and, in
+        /// flight, Spawn; click, Q / E or LB / RB), a line with the last action's result, then the tab's rows: the toggles
+        /// and actions in two columns, the item pickers with their buttons, the ship and object spawners side by side.</summary>
         void BuildDebug()
         {
             optionRows.Clear();
-            var status = Text("", "pause-text");
-            Scroll();
-            void Add(List<OptionDef> defs, string heading)
+            panel.AddToClassList("pause-panel--wide");
+            var db = level != null ? level.Database : Database.Load();
+            string X(string key, string english) => Localization.Extra(key, english);
+
+            var names = new List<string> { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items") };
+            if (level != null) names.Add(X("debugSpawn", "Spawn"));
+            debugTabCount = names.Count;
+            debugTab = Mathf.Clamp(debugTab, 0, debugTabCount - 1);
+            var tabs = new VisualElement();
+            tabs.AddToClassList("debug-tabs");
+            for (int i = 0; i < names.Count; i++)
             {
-                Text(heading.ToUpperInvariant(), "pause-heading");
-                foreach (var def in defs)
+                int tab = i;
+                var b = new Button { text = names[i].ToUpperInvariant(), focusable = false };
+                b.AddToClassList("debug-tab");
+                b.AddToClassList("gof-semibold");
+                b.EnableInClassList("debug-tab--active", i == debugTab);
+                b.clicked += () => { debugTab = tab; Show(Page.Debug); };
+                tabs.Add(b);
+            }
+            var hint = new Label(InputMode.Current == InputKind.Gamepad ? "LB  ◂  ▸  RB" : InputMode.Current == InputKind.Touch ? "" : "Q  ◂  ▸  E")
+                { pickingMode = PickingMode.Ignore };
+            hint.AddToClassList("debug-tab-hint");
+            tabs.Add(hint);
+            body.Add(tabs);
+
+            var status = new Label(debugStatus) { pickingMode = PickingMode.Ignore };
+            status.AddToClassList("debug-status");
+            status.EnableInClassList("debug-status--empty", string.IsNullOrEmpty(debugStatus));
+            body.Add(status);
+            void Notify(string text)
+            {
+                debugStatus = text ?? "";
+                status.text = debugStatus;
+                status.EnableInClassList("debug-status--empty", debugStatus.Length == 0);
+            }
+
+            var content = new VisualElement();
+            content.AddToClassList("debug-content");
+            body.Add(content);
+            void Row(OptionDef def, VisualElement parent, string cls = null)
+            {
+                var c = new OptionControl(def);
+                c.Field.focusable = false;
+                c.Changed += () => { foreach (var o in optionRows.Values) o.Refresh(); };   // the item follows its type, labels change
+                c.Root.AddToClassList("pause-option");
+                if (cls != null) c.Root.AddToClassList(cls);
+                parent.Add(c.Root);
+                items.Add(c.Root);
+                actions.Add(null);
+                optionRows[c.Root] = c;
+            }
+            VisualElement Grid(VisualElement parent)
+            {
+                var g = new VisualElement();
+                g.AddToClassList("debug-grid");
+                parent.Add(g);
+                return g;
+            }
+            VisualElement Card(VisualElement parent, string heading)
+            {
+                var card = new VisualElement();
+                card.AddToClassList("debug-card");
+                var h = new Label(heading.ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                h.AddToClassList("debug-card-title");
+                h.AddToClassList("gof-semibold");
+                card.Add(h);
+                parent.Add(card);
+                return card;
+            }
+
+            switch (debugTab)
+            {
+                case 0:
                 {
-                    var c = new OptionControl(def);
-                    c.Field.focusable = false;
-                    c.Root.AddToClassList("pause-option");
-                    scroll.Add(c.Root);
-                    items.Add(c.Root);
-                    actions.Add(null);
-                    optionRows[c.Root] = c;
+                    var grid = Grid(content);
+                    foreach (var def in CheatsCatalog.Toggles()) Row(def, grid, "debug-grid-cell");
+                    break;
+                }
+                case 1:
+                {
+                    var grid = Grid(content);
+                    foreach (var def in CheatsCatalog.Actions(db, Notify, level)) Row(def, grid, "debug-grid-cell");
+                    break;
+                }
+                case 2:
+                {
+                    var defs = CheatsCatalog.Items(db, null, Notify);
+                    var card = Card(content, X("debugItems", "Give items"));
+                    foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
+                    var buttons = new VisualElement();
+                    buttons.AddToClassList("debug-buttons");
+                    card.Add(buttons);
+                    foreach (var def in defs) if (def.kind == OptionKind.Button) Row(def, buttons, "debug-action");
+                    break;
+                }
+                default:
+                {
+                    // CheatsCatalog.Spawns: the ship rows up to "Spawn ship", then the object rows.
+                    var defs = CheatsCatalog.Spawns(db, level, Notify);
+                    var columns = new VisualElement();
+                    columns.AddToClassList("debug-columns");
+                    content.Add(columns);
+                    var ship = Card(columns, X("debugSpawnShips", "Ship"));
+                    var obj = Card(columns, X("debugSpawnObjects", "Object"));
+                    obj.AddToClassList("debug-card--last");
+                    bool shipDone = false;
+                    foreach (var def in defs)
+                    {
+                        Row(def, shipDone ? obj : ship, def.kind == OptionKind.Button ? "debug-action" : null);
+                        if (def.id == "debugSpawnShip") shipDone = true;
+                    }
+                    break;
                 }
             }
-            Add(CheatsCatalog.Toggles(), Localization.Extra("debugCheats", "Cheats"));
-            Add(CheatsCatalog.Actions(level != null ? level.Database : Database.Load(), s => status.text = s),
-                Localization.Extra("debugActions", "Actions"));
         }
 
         void Highlight()
@@ -337,6 +441,14 @@ namespace GoF2Remake.UI
                 if (page == Page.Choice) actions[actions.Count - 1]?.Invoke();   // the second answer (or the only one)
                 else if (page == Page.Main) Close(); else Show(Page.Main);
                 return;
+            }
+            // The Debug page's tabs: Q / E, LB / RB.
+            if (page == Page.Debug && debugTabCount > 1)
+            {
+                int tab = 0;
+                if ((kb != null && kb.qKey.wasPressedThisFrame) || (pad != null && pad.leftShoulder.wasPressedThisFrame)) tab = -1;
+                if ((kb != null && kb.eKey.wasPressedThisFrame) || (pad != null && pad.rightShoulder.wasPressedThisFrame)) tab = 1;
+                if (tab != 0) { debugTab = (debugTab + tab + debugTabCount) % debugTabCount; Show(Page.Debug); return; }
             }
             int move = 0;
             if (kb != null && (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame)) move = -1;

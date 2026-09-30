@@ -407,3 +407,138 @@
 .can-hover .slot-row--empty:hover .slot-name {
     color: var(--gof-text);
 }
+
+/* ---- the in-game Debug pages (PauseMenu.BuildDebug, StationMenu.BuildStationDebug): tabs, a result line, two-column
+   grids, cards and button-like actions ------------------------------------------------------------------------------ */
+
+.debug-tabs {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-bottom: 12px;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--gof-line);
+}
+
+.debug-tab {
+    margin: 0 4px 0 0;
+    padding: 10px 20px;
+    font-size: 20px;
+    letter-spacing: 3px;
+    color: var(--gof-text-dim);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 3px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.can-hover .debug-tab:hover {
+    color: #FFFFFF;
+}
+
+.debug-tab--active {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+    border-bottom-color: var(--gof-amber);
+}
+
+.debug-tab-hint {
+    margin-left: auto;
+    align-self: center;
+    font-size: 16px;
+    letter-spacing: 2px;
+    color: var(--gof-text-dim);
+}
+
+.debug-status {
+    margin: 0 0 10px 0;
+    padding: 8px 14px;
+    font-size: 19px;
+    white-space: normal;
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+    border-left-width: 3px;
+    border-left-color: var(--gof-cyan);
+}
+
+.debug-status--empty {
+    display: none;
+}
+
+.debug-content {
+    margin-bottom: 10px;
+}
+
+.debug-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.debug-grid-cell {
+    width: 49%;
+    margin-right: 1%;
+}
+
+.debug-columns {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.debug-columns > .debug-card {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-right: 12px;
+}
+
+.debug-card {
+    padding: 10px 6px 6px 6px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-width: 1px;
+    border-color: var(--gof-line);
+}
+
+.debug-columns > .debug-card--last {
+    margin-right: 0;
+}
+
+.debug-card-title {
+    margin: 0 0 6px 12px;
+    font-size: 18px;
+    letter-spacing: 3px;
+    color: var(--gof-amber);
+}
+
+.debug-card .choice-label {
+    min-width: 150px;
+}
+
+.debug-action {
+    margin-top: 8px;
+}
+
+.debug-buttons {
+    flex-direction: row;
+}
+
+.debug-buttons > .debug-action {
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+/* The spawn / give buttons look like buttons, not rows. */
+.debug-action .option-button {
+    padding: 8px 12px;
+    -unity-text-align: middle-center;
+    letter-spacing: 2px;
+    color: #FFFFFF;
+    background-color: var(--gof-amber-soft);
+    border-width: 1px;
+    border-color: var(--gof-amber);
+    border-radius: 0;
+}
+
+.debug-action .option-button:focus {
+    background-color: var(--gof-amber);
+    color: #0B1016;
+}

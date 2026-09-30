@@ -68,6 +68,25 @@ namespace GoF2Remake.Data
             Session.AttackedStations.Clear();
         }
 
+        /// <summary>'amount' units of any item into the hold (a secondary's amount is its ammo once mounted).</summary>
+        public static void GiveItem(int item, int amount) => Shop.AddToCargo(item, amount);
+
+        /// <summary>Docked: 'amount' of the item into the hold, then mounted like the hangar does (a one-per-ship item swaps
+        /// the mounted one into the hold); the result text.</summary>
+        public static string GiveAndMount(Database db, StationStock stock, int item, int amount)
+        {
+            GiveItem(item, amount);
+            if (stock == null) return Localization.Extra("cheatMountDocked", "Mounting works while docked; it is in the hold.");
+            var hangar = new Hangar(db, stock);
+            switch (hangar.CanMount(item, out int swapWith))
+            {
+                case Hangar.Result.Ok: hangar.Mount(item); return Localization.Extra("cheatMounted", "Mounted.");
+                case Hangar.Result.Swap: hangar.Swap(swapWith, item); return Localization.Extra("cheatMountedSwap", "Mounted; the old one is in the hold.");
+                case Hangar.Result.NoFreeSlot: return Localization.Extra("cheatNoSlot", "No free slot: it is in the hold.");
+                default: return Localization.Extra("cheatNotMountable", "Not mountable: it is in the hold.");
+            }
+        }
+
         /// <summary>'amount' more Energy Cells (122) in the hold.</summary>
         public static void AddEnergyCells(int amount) => Shop.AddToCargo(GalaxyMap.EnergyCellItem, amount);
 

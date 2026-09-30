@@ -1049,32 +1049,91 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>The Debug page: the cheat toggles and actions (CheatsCatalog); an action reports in a toast.</summary>
+        int stationDebugTab;
+
+        /// <summary>The Debug page like the pause menu's (remake-only, CheatsCatalog): tabs Cheats / Actions / Give items (click,
+        /// Q / E or LB / RB), the toggles and actions in two columns, the item pickers with "Add to hold" / "Add and mount";
+        /// results as toasts.</summary>
         void BuildStationDebug()
         {
             optionsReset = null;
-            void Heading(string text)
+            string X(string key, string english) => Localization.Extra(key, english);
+            var names = new[] { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items") };
+            stationDebugTab = Mathf.Clamp(stationDebugTab, 0, names.Length - 1);
+            var tabs = new VisualElement();
+            tabs.AddToClassList("debug-tabs");
+            for (int i = 0; i < names.Length; i++)
             {
-                var h = new Label(text.ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
-                h.AddToClassList("system-options-heading");
-                h.AddToClassList("gof-semibold");
-                optionsScroll.Add(h);
+                int tab = i;
+                var b = new Button { text = names[i].ToUpperInvariant(), focusable = false };
+                b.AddToClassList("debug-tab");
+                b.AddToClassList("gof-semibold");
+                b.EnableInClassList("debug-tab--active", i == stationDebugTab);
+                b.clicked += () => SwitchDebugTab(tab - stationDebugTab);
+                tabs.Add(b);
             }
-            void Add(System.Collections.Generic.List<OptionDef> defs)
+            var hint = new Label(InputMode.Current == InputKind.Gamepad ? "LB  ◂  ▸  RB" : InputMode.Current == InputKind.Touch ? "" : "Q  ◂  ▸  E")
+                { pickingMode = PickingMode.Ignore };
+            hint.AddToClassList("debug-tab-hint");
+            tabs.Add(hint);
+            optionsScroll.Add(tabs);
+
+            void Row(OptionDef def, VisualElement parent, string cls = null)
             {
-                foreach (var def in defs)
+                var c = new OptionControl(def);
+                c.Changed += () => { foreach (var o in stationOptions) if (o != c) o.Refresh(); };   // the item follows its type
+                c.Root.AddToClassList("system-option");
+                if (cls != null) c.Root.AddToClassList(cls);
+                var root0 = c.Root;
+                c.Field.RegisterCallback<FocusInEvent>(_ => { if (!DragScroll.PointerActive) optionsScroll.ScrollTo(root0); });
+                parent.Add(c.Root);
+                stationOptions.Add(c);
+            }
+            VisualElement Box(VisualElement parent, string cls)
+            {
+                var v = new VisualElement();
+                v.AddToClassList(cls);
+                parent.Add(v);
+                return v;
+            }
+            var db = level.Database;
+            void Notify(string text) { ShowToast(text); RefreshCredits(); }
+            switch (stationDebugTab)
+            {
+                case 0:
                 {
-                    var c = new OptionControl(def);
-                    c.Root.AddToClassList("system-option");
-                    var root0 = c.Root;
-                    c.Field.RegisterCallback<FocusInEvent>(_ => { if (!DragScroll.PointerActive) optionsScroll.ScrollTo(root0); });
-                    optionsScroll.Add(c.Root);
-                    stationOptions.Add(c);
+                    var grid = Box(optionsScroll.contentContainer, "debug-grid");
+                    foreach (var def in CheatsCatalog.Toggles()) Row(def, grid, "debug-grid-cell");
+                    break;
+                }
+                case 1:
+                {
+                    var grid = Box(optionsScroll.contentContainer, "debug-grid");
+                    foreach (var def in CheatsCatalog.Actions(db, Notify)) Row(def, grid, "debug-grid-cell");
+                    break;
+                }
+                default:
+                {
+                    var defs = CheatsCatalog.Items(db, level.Stock, Notify);
+                    var card = Box(optionsScroll.contentContainer, "debug-card");
+                    var title = new Label(names[2].ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                    title.AddToClassList("debug-card-title");
+                    title.AddToClassList("gof-semibold");
+                    card.Add(title);
+                    foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
+                    var buttons = Box(card, "debug-buttons");
+                    foreach (var def in defs) if (def.kind == OptionKind.Button) Row(def, buttons, "debug-action");
+                    break;
                 }
             }
-            Heading(Localization.Extra("debugCheats", "Cheats"));
-            Add(CheatsCatalog.Toggles());
-            Heading(Localization.Extra("debugActions", "Actions"));
-            Add(CheatsCatalog.Actions(level.Database, s => { ShowToast(s); RefreshCredits(); }));
+        }
+
+        /// <summary>The Debug page's tab 'step' tabs on (wrapping), rebuilt with the first row selected.</summary>
+        void SwitchDebugTab(int step)
+        {
+            if (step == 0) return;
+            stationDebugTab = ((stationDebugTab + step) % 3 + 3) % 3;
+            ShowSystemPage(SysPage.Debug);
         }
 
         void OpenSystemMenu()
@@ -1101,6 +1160,7 @@ namespace GoF2Remake.UI
             systemMain.EnableInClassList("system-menu-page--shown", page == SysPage.Main);
             systemSave.EnableInClassList("system-menu-page--shown", slots);
             systemOptions?.EnableInClassList("system-menu-page--shown", page == SysPage.Options || page == SysPage.Debug);
+            root.Q(className: "system-menu")?.EnableInClassList("system-menu--wide", page == SysPage.Debug);
             int title = page == SysPage.Save ? 30 : page == SysPage.Load ? 29 : page == SysPage.Options ? 31 : 172;   // Menu
             root.Q<Label>("systemMenuTitle").text = page == SysPage.Debug ? Localization.Extra("debugTitle", "Debug").ToUpperInvariant()
                                                                           : Localization.Get(title).ToUpperInvariant();
@@ -1427,6 +1487,14 @@ namespace GoF2Remake.UI
                 return;
             }
             if (Flight.GameControls.BlocksMenus) return;   // a key binding is being captured (Options): its key isn't a menu key
+            // The Debug page's tabs: Q / E, LB / RB.
+            if (SystemMenuOpen && sysPage == SysPage.Debug && !DialogOpen)
+            {
+                var dkb = GoF2Remake.Multiplayer.NetChat.Keys;
+                var dpad = Gamepad.current;
+                if ((dkb != null && dkb.qKey.wasPressedThisFrame) || (dpad != null && dpad.leftShoulder.wasPressedThisFrame)) { SwitchDebugTab(-1); return; }
+                if ((dkb != null && dkb.eKey.wasPressedThisFrame) || (dpad != null && dpad.rightShoulder.wasPressedThisFrame)) { SwitchDebugTab(1); return; }
+            }
             if (lounge != null && lounge.Active != root.ClassListContains("lounge-open")) lounge.OnViewChanged();   // also under a dialog
             if (StarMap.IsOpen) return;   // the map has its own input
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }

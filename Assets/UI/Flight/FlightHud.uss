@@ -743,6 +743,17 @@
     border-left-color: rgba(0, 0, 0, 0);
 }
 
+/* The Debug page (PauseMenu.BuildDebug): a wide panel, tabs, a result line, two-column grids and side-by-side cards. */
+.pause-panel--wide {
+    width: 1100px;
+    max-width: 96%;
+}
+
+.debug-action.autopilot-menu-item--selected .option-button {
+    background-color: var(--gof-amber);
+    color: #0B1016;
+}
+
 .pause-option.autopilot-menu-item--selected {
     background-color: var(--gof-cyan-faint);
     border-left-color: var(--gof-amber);

@@ -235,6 +235,7 @@ namespace GoF2Remake.World
             ownPassive = storyOrbit || freelanceOrbit || siege;
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
+            if (PlayerBattleship.Active) PlayerBattleship.AttachTurrets(this);   // remake debug: its 7 turrets on the player's hull
             // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
             Docking = Player.gameObject.AddComponent<ObjectDocking>();
             Docking.Setup(db, Player, chase, Weapons);
@@ -477,6 +478,46 @@ namespace GoF2Remake.World
         }
 
         // Level::createPlayer + the undock branch of Level::init.
+        /// <summary>Remake debug (the Debug page's battleship toggle, PlayerBattleship): the player's hull replaced in flight
+        /// where it is: the new model, its flight stats, the chase camera's distance and the model-bound parts (exhaust
+        /// particles, cloak, mounted turret) rebuilt; the battleship gets its 7 turrets, any other ship drops them.</summary>
+        public void SwapPlayerShip(int shipIndex)
+        {
+            var ctrl = Player;
+            if (ctrl == null) return;
+            var prefab = AssembledObject.LoadPrefab(db.ShipAssembly(shipIndex));
+            if (prefab == null) return;
+            var root = ctrl.gameObject;
+            Session.ShipIndex = shipIndex;
+            if (ctrl.visualModel != null) Destroy(ctrl.visualModel.gameObject);
+            var model = Instantiate(prefab, root.transform, false);
+            model.GetComponent<AssembledObject>()?.SetPlayerVariant(true);
+            foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
+            ctrl.visualModel = model.transform;
+
+            var ship = db.Ship(shipIndex);
+            var equipment = new System.Collections.Generic.List<ItemData>();
+            foreach (var e in Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
+            if (ship != null) ctrl.stats = Database.BuildFlightStats(ship, equipment, Session.HasMod(3) ? 1 : 0);
+            ctrl.stats.cargoAffectsHandling = Session.IsExtreme;
+            ctrl.stats.cargoCapacity = Mathf.Max(1, Shop.MaxLoad(db));
+            ctrl.stats.cargoLoad = Shop.CargoLoad();
+            ctrl.ApplyStats();
+
+            PlayerBattleship.FitCamera(root.transform, model.transform, chase);
+
+            foreach (var ex in root.GetComponents<ShipExhaust>()) Destroy(ex);
+            ShipExhaust.Attach(root, db, ctrl, shipIndex);
+            if (Cloak != null) Destroy(Cloak);
+            Cloak = PlayerCloak.Attach(root, db, shipIndex, Health.Target, model.transform);
+            if (Navigation != null) Navigation.Cloak = Cloak;
+            if (Turret != null) Destroy(Turret);
+            Turret = PlayerTurret.Attach(root, db, shipIndex, Session.Equipment, chase);
+
+            if (PlayerBattleship.Active) PlayerBattleship.AttachTurrets(this);
+            else PlayerBattleship.RemoveTurrets(this);
+        }
+
         void SpawnPlayer()
         {
             var ship = db.Ships.Find(s => s.index == Session.ShipIndex);
@@ -538,6 +579,8 @@ namespace GoF2Remake.World
             // TargetFollowCamera offsets (game local) -> Unity local (-x, y, z) * 0.05.
             chase.offset = new Vector3(0f, 600f, -1338f) * M;
             chase.lookOffset = new Vector3(0f, 600f, -650f) * M;
+            // Remake debug: the battleship's hull is far bigger than any ship the camera was made for.
+            if (PlayerBattleship.Active) PlayerBattleship.FitCamera(root.transform, ctrl.visualModel, chase);
             // CameraSetPerspective(1.22 rad) is the vertical FOV: with the level look offset the ship then sits in the
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens). Remake: the
             // field of view option (Settings.OriginalFov by default).
