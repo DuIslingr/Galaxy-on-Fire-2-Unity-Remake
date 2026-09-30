@@ -643,13 +643,13 @@ namespace GoF2Remake.World
             t.radius = 600f * M;
             t.race = Standing.Pirate;
             t.hostileToPlayer = true;
-            var ex = assets != null ? assets.explosion : null;
-            t.explosionPrefab = ex;
-            t.explosionScale = 0.5f;
             t.destroyedSound = CombatAssets.Pick(assets?.garbageExplosion);   // PlayerJunk::update: 22 Garbage_Explosion
             t.displayName = null;
             t.Died += dead =>
             {
+                // PlayerJunk::update 0x18afb4: no Explosion, one emitManual of record 0x15 SET_EXPLOSION_MANUALLY_JUNK
+                // (Level+0x34): a camera-facing sprite_explosion, 1600 + rnd(200) units, +500/s, 1000 ms.
+                ShipBurn.ManualBurst(dead.transform.position, 1f, 1600f, 1800f, 500f);
                 Session.JunkDestroyed++;   // Status+0xb0
                 Target.RadarObjects.Remove(dead);
                 // PlayerJunk::update 0x18afb4: 10 % leave a container (kind 3, mesh 16920) with 1-10 t Space Waste (99).
@@ -662,7 +662,7 @@ namespace GoF2Remake.World
         void DropJunkCrate(Vector3 at)
         {
             var assets = CombatAssets.Load();
-            var prefab = assets != null ? assets.Crate(Standing.Pirate) : null;
+            var prefab = assets != null ? assets.junkCrate : null;   // KIPlayer::createCrate(3): mesh 0x4218 space_junk_004
             var go = prefab != null ? Instantiate(prefab, at, Random.rotation) : new GameObject("Crate");
             go.name = "Crate";
             var crate = go.AddComponent<Crate>();

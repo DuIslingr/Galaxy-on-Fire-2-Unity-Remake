@@ -44,6 +44,25 @@ namespace GoF2Remake.Flight
             if (on) burn.Play(true); else burn.Stop(true, ParticleSystemStopBehavior.StopEmitting);
         }
 
+        /// <summary>IParticleSystem::emitManual 0x1b3174: one sprite_explosion particle (the 4x4 sheet once, additive) at
+        /// 'at', size minSize..maxSize units growing growthPerS, for lifeS; e.g. record 0x15 SET_EXPLOSION_MANUALLY_JUNK
+        /// (PlayerJunk::update: 1000 ms, 1600 + rnd(200), +500/s).</summary>
+        public static void ManualBurst(Vector3 at, float lifeS, float minSize, float maxSize, float growthPerS)
+        {
+            var mat = CombatAssets.Load()?.explosionSpriteMaterial;
+            var holder = new GameObject("Burst");
+            holder.transform.position = at;
+            var ps = ShipSmoke.Create(holder.transform, "Burst", mat, lifeS, minSize, maxSize, 1, 0f, Vector3.zero, 0f, growthPerS, 3);
+            var em = ps.emission;
+            em.rateOverTime = 0f;
+            var sh = ps.shape;
+            sh.enabled = false;
+            var main = ps.main;
+            main.loop = false;
+            ps.Emit(1);
+            Object.Destroy(holder, lifeS + 0.5f);
+        }
+
         /// <summary>Record 11's emitManual burst at the explosion (it stays where it went off).</summary>
         public void Burst()
         {

@@ -40,6 +40,8 @@ namespace GoF2Remake.Flight
         public AudioClip missionAccomplished;
         [Tooltip("Space junk 0x4215-0x4217 (freelance Junk removal).")]
         public GameObject[] junk;
+        [Tooltip("KIPlayer::createCrate(3): the destroyed junk's container, mesh 0x4218 space_junk_004.")]
+        public GameObject junkCrate;
         [Tooltip("Sound 46: one picked per ship.")]
         public AudioClip[] enemyEngines;
         [Tooltip("Sound 47: one picked per ship.")]
