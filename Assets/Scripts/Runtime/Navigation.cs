@@ -390,6 +390,15 @@ namespace GoF2Remake.Flight
             UpdateDockingTargets();
             if (Docking != null && Docking.Busy) { Candidate = Locked = null; LockTimer = 0f; wasLocked = false; return; }
             if (wormholeTarget != null) wormholeTarget.hidden = !wormhole.Visible;
+            // Radar::draw's planet block runs only above campaign mission 1 and outside the alien orbit: no planet locks,
+            // names or icons in the prologue and the rescue (autopilot_travel.md 1.4).
+            bool planets = Session.CampaignMission > 1 && !(layout != null && layout.alienOrbit);
+            foreach (var t in Targets)
+                if (t.kind == Kind.Planet)
+                {
+                    t.hidden = !planets;
+                    if (t.hidden && (Locked == t || Candidate == t)) { Locked = Candidate = null; LockTimer = 0f; }
+                }
             var cam = Camera.main;
             Target best = null;
             bool miningBusy = mining != null && (mining.State != Mining.Phase.Idle || mining.Locked != null);
@@ -412,7 +421,7 @@ namespace GoF2Remake.Flight
                     if (best == null)
                         foreach (var t in Targets)
                         {
-                            if (t.kind != Kind.Planet) continue;
+                            if (t.kind != Kind.Planet || t.hidden) continue;
                             var p = cam.WorldToScreenPoint(t.Position);
                             if (p.z <= 0f || p.x < 0f || p.y < 0f || p.x > w || p.y > h) continue;
                             if (Mathf.Abs(p.x - c.x) < planetBox && Mathf.Abs(p.y - c.y) < planetBox) { best = t; break; }
