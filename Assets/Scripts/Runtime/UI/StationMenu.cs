@@ -1254,8 +1254,26 @@ namespace GoF2Remake.UI
             if (!touchMode) e?.Focus();
         }
 
-        /// <summary>Up/down walks the screen buttons and launch (left/right: yes/no in the dialog); left/right otherwise
-        /// stay free for turning the ship.</summary>
+        /// <summary>A button the keys / controller can move to: enabled (the story locks grey some out) and shown.</summary>
+        static bool Navigable(VisualElement v) => v != null && v.enabledInHierarchy && v.canGrabFocus && v.resolvedStyle.display != DisplayStyle.None;
+
+        /// <summary>The next navigable item from index i in the step's direction (disabled ones are jumped over); from nothing
+        /// focused the first navigable one. Null = none that way (the selection stays).</summary>
+        static VisualElement NextNavigable(VisualElement[] items, int i, int step)
+        {
+            if (i < 0) step = 1;
+            for (int k = i < 0 ? 0 : i + step; k >= 0 && k < items.Length; k += step)
+                if (Navigable(items[k])) return items[k];
+            return null;
+        }
+
+        /// <summary>The main view's last selected button before Launch: left goes back to it.</summary>
+        VisualElement lastSideItem;
+
+        /// <summary>Up/down walks the screen buttons and launch, jumping over the locked ones (left/right: yes/no in the
+        /// dialog). On the main view (and with the lounge's visitors) a controller's right goes to Launch and left from
+        /// Launch back to the button selected before (the ship turns with the right stick); on the keyboard left / right
+        /// stay the ship's turning keys (A / D and the arrows).</summary>
         void OnNavigate(NavigationMoveEvent e)
         {
             if (GoF2Remake.Multiplayer.NetChat.Typing) return;   // the arrows move the chat line's cursor
@@ -1293,12 +1311,26 @@ namespace GoF2Remake.UI
                 root.focusController?.IgnoreEvent(e);
                 return;
             }
-            if (DialogOpen ? horizontal : vertical)
+            var focusedNow = root.focusController?.focusedElement as VisualElement;
+            int index = System.Array.IndexOf(items, focusedNow);
+            bool mainView = !DialogOpen && !SystemMenuOpen && !(missions != null && missions.IsOpen) && !(status != null && status.IsOpen)
+                            && !(lounge != null && lounge.ChatOpen);
+            if (mainView && index >= 0 && focusedNow != launchButton) lastSideItem = focusedNow;
+            if (mainView && horizontal && InputMode.Current == InputKind.Gamepad)
             {
-                var focused = root.focusController?.focusedElement as VisualElement;
-                int i = System.Array.IndexOf(items, focused);
+                if (e.direction == NavigationMoveEvent.Direction.Right) { if (Navigable(launchButton)) launchButton.Focus(); }
+                else if (focusedNow == launchButton)
+                {
+                    // Back to the button selected before Launch, or (locked meanwhile) the nearest one above it.
+                    var back = Navigable(lastSideItem) && System.Array.IndexOf(items, lastSideItem) >= 0 ? lastSideItem
+                                                                                                         : NextNavigable(items, index, -1);
+                    back?.Focus();
+                }
+            }
+            else if (DialogOpen ? horizontal : vertical)
+            {
                 int step = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1;
-                items[i < 0 ? 0 : Mathf.Clamp(i + step, 0, items.Length - 1)].Focus();
+                NextNavigable(items, index, step)?.Focus();
             }
             e.StopPropagation();
             root.focusController?.IgnoreEvent(e);
