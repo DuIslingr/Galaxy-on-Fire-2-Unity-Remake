@@ -1497,7 +1497,12 @@ namespace GoF2Remake.UI
             }
             if (lounge != null && lounge.Active != root.ClassListContains("lounge-open")) lounge.OnViewChanged();   // also under a dialog
             if (StarMap.IsOpen) return;   // the map has its own input
-            if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
+            if (storyDialogue != null && storyDialogue.IsOpen)
+            {
+                // The Menu button over a conversation: it waits (voice, typing, auto-advance) and the menu takes the keys.
+                storyDialogue.Paused = SystemMenuOpen;
+                if (!SystemMenuOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }
+            }
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckPirateBase()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckDockingFine()) return;
             if (!DialogOpen && !SystemMenuOpen && !HangarOpen && CheckStory()) return;

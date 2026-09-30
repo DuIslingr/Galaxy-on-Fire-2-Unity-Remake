@@ -65,6 +65,21 @@ namespace GoF2Remake.UI
         public Action<int> PageShown;
         public bool IsOpen => root != null && root.ClassListContains("dialogue-backdrop--shown");
 
+        bool paused;
+        /// <summary>A menu over the conversation (the station's system menu): the voice pauses where it is, and the typing,
+        /// the input and the voice auto-advance wait (a paused source reads as not playing, which would turn the page).</summary>
+        public bool Paused
+        {
+            get => paused;
+            set
+            {
+                if (paused == value) return;
+                paused = value;
+                if (voice == null) return;
+                if (value) voice.Pause(); else voice.UnPause();
+            }
+        }
+
         /// <summary>'container' holds the Dialogue.uxml instance; 'voiceSource' plays the lines (2D, not paused with the game).</summary>
         public DialogueView(VisualElement container, AudioSource voiceSource)
         {
@@ -210,6 +225,7 @@ namespace GoF2Remake.UI
 
         void Close(bool skipped)
         {
+            paused = false;
             voice?.Stop();
             root.RemoveFromClassList("dialogue-backdrop--shown");
             var c = closed;
@@ -246,7 +262,7 @@ namespace GoF2Remake.UI
         /// <summary>Keyboard / controller input and the voice auto-advance; call every frame (unscaled time).</summary>
         public void Tick(float unscaledDtMs)
         {
-            if (!IsOpen) return;
+            if (!IsOpen || paused) return;
             TickAnimation(unscaledDtMs);
             var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
             var pad = Gamepad.current;

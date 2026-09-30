@@ -52,7 +52,7 @@
     border-radius: 0;
     margin: 0 6px 0 0;
     padding: 12px 28px;
-    font-size: 22px;
+    font-size: 24px;
     letter-spacing: 4px;
     color: var(--gof-text-dim);
 }
@@ -74,7 +74,7 @@
     display: none;
     padding: 10px 20px;
     margin-bottom: 6px;
-    font-size: 18px;
+    font-size: 20px;
     letter-spacing: 3px;
     color: var(--gof-text);
     background-color: rgba(4, 10, 18, 0.55);
@@ -111,7 +111,7 @@
 }
 
 .list-header {
-    font-size: 16px;
+    font-size: 20px;
     letter-spacing: 3px;
     color: var(--gof-cyan);
     padding: 16px 20px 6px 20px;
@@ -120,7 +120,7 @@
 .list-row {
     flex-direction: row;
     align-items: center;
-    height: 84px;
+    height: 96px;
     margin: 2px 10px;
     padding: 0 16px 0 10px;
     border-left-width: 3px;
@@ -153,7 +153,7 @@
 }
 
 .row-name {
-    font-size: 20px;
+    font-size: 24px;
     color: var(--gof-text);
     white-space: nowrap;
     overflow: hidden;
@@ -171,12 +171,12 @@
 }
 
 .row-sub-text {
-    font-size: 15px;
+    font-size: 19px;
     color: var(--gof-text-dim);
 }
 
 .row-badge {
-    font-size: 12px;
+    font-size: 15px;
     letter-spacing: 2px;
     padding: 1px 7px;
     margin-right: 8px;
@@ -193,8 +193,8 @@
 }
 
 .row-price {
-    min-width: 150px;
-    font-size: 20px;
+    min-width: 170px;
+    font-size: 24px;
     color: #FFFFFF;
     -unity-text-align: middle-right;
 }
@@ -229,14 +229,14 @@
 }
 
 .detail-name {
-    font-size: 26px;
+    font-size: 30px;
     color: #FFFFFF;
     white-space: normal;
 }
 
 .detail-sub {
     margin-top: 4px;
-    font-size: 17px;
+    font-size: 21px;
     color: var(--gof-text-dim);
     white-space: normal;
 }
@@ -255,7 +255,7 @@
 }
 
 .trade-side {
-    width: 96px;
+    width: 110px;
 }
 
 .trade-side--right {
@@ -263,13 +263,13 @@
 }
 
 .trade-side-label {
-    font-size: 13px;
+    font-size: 16px;
     letter-spacing: 2px;
     color: var(--gof-text-dim);
 }
 
 .trade-side-value {
-    font-size: 24px;
+    font-size: 28px;
     color: #FFFFFF;
 }
 
@@ -305,14 +305,14 @@
 }
 
 .trade-arrow-label {
-    font-size: 18px;
+    font-size: 21px;
     letter-spacing: 3px;
     color: #FFFFFF;
 }
 
 .trade-price {
     flex-grow: 1;
-    font-size: 24px;
+    font-size: 28px;
     color: #FFFFFF;
     -unity-text-align: middle-center;
 }
@@ -324,7 +324,7 @@
 .detail-action {
     margin: 14px 0 0 0;
     padding: 14px;
-    font-size: 22px;
+    font-size: 24px;
     letter-spacing: 4px;
     color: #FFFFFF;
     background-color: rgba(255, 166, 48, 0.16);
@@ -373,24 +373,24 @@
 .stat-row {
     flex-direction: row;
     justify-content: space-between;
-    padding: 6px 0;
+    padding: 8px 0;
     border-bottom-width: 1px;
     border-bottom-color: rgba(255, 255, 255, 0.06);
 }
 
 .stat-label {
-    font-size: 17px;
+    font-size: 21px;
     color: var(--gof-text-dim);
 }
 
 .stat-value {
-    font-size: 17px;
+    font-size: 21px;
     color: var(--gof-text);
 }
 
 .detail-text {
     margin-top: 14px;
-    font-size: 17px;
+    font-size: 20px;
     color: var(--gof-text);
     white-space: normal;
 }
@@ -407,7 +407,7 @@
 }
 
 .footer-cargo {
-    font-size: 20px;
+    font-size: 23px;
     letter-spacing: 1px;
     color: var(--gof-text);
 }
@@ -417,7 +417,7 @@
 }
 
 .footer-credits {
-    font-size: 22px;
+    font-size: 25px;
     color: var(--gof-amber);
 }
 
@@ -430,7 +430,7 @@
     translate: -50% 0;
     max-width: 900px;
     padding: 14px 26px;
-    font-size: 20px;
+    font-size: 22px;
     color: #FFFFFF;
     white-space: normal;
     background-color: var(--gof-panel);
@@ -451,7 +451,7 @@
 }
 
 .layout-phone .list-row {
-    height: 72px;
+    height: 86px;
 }
 
 /* ---- blueprints (HangarList::initBlueprintTab: progress bar, highlight while the hold helps) ---------------- */
@@ -531,7 +531,7 @@
 
 .info-help {
     margin-bottom: 14px;
-    font-size: 18px;
+    font-size: 20px;
     white-space: normal;
     color: rgba(150, 200, 255, 0.7);
 }
@@ -568,13 +568,13 @@
 }
 
 .info-name {
-    font-size: 26px;
+    font-size: 30px;
     color: #FFFFFF;
     white-space: normal;
 }
 
 .info-sub {
-    font-size: 18px;
+    font-size: 21px;
     color: rgba(150, 200, 255, 0.8);
 }
 
@@ -585,7 +585,7 @@
 .info-row {
     flex-direction: row;
     align-items: center;
-    height: 40px;
+    height: 46px;
     margin-bottom: 6px;
     padding: 0 10px;
     background-color: rgba(33, 152, 255, 0.07);
@@ -593,18 +593,18 @@
 
 .info-row-label {
     flex-grow: 1;
-    font-size: 19px;
+    font-size: 22px;
     color: rgba(200, 225, 255, 0.85);
 }
 
 .info-row-value {
-    font-size: 19px;
+    font-size: 22px;
     color: #FFFFFF;
 }
 
 .info-row-arrow {
     width: 82px;
-    height: 40px;
+    height: 46px;
     margin-left: 8px;
     -unity-background-scale-mode: stretch-to-fill;
 }
@@ -641,7 +641,7 @@
 }
 
 .info-desc-title {
-    font-size: 20px;
+    font-size: 22px;
     letter-spacing: 2px;
     padding: 6px 10px;
     color: #FFFFFF;
@@ -654,7 +654,7 @@
 }
 
 .info-text {
-    font-size: 19px;
+    font-size: 21px;
     white-space: normal;
     color: rgba(220, 235, 255, 0.9);
 }
@@ -669,5 +669,5 @@
 .info-back {
     min-width: 220px;
     height: 54px;
-    font-size: 22px;
+    font-size: 24px;
 }

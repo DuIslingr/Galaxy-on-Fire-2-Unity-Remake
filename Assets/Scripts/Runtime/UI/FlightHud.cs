@@ -60,6 +60,7 @@ namespace GoF2Remake.UI
         DialogueView storyDialogue;
         LensFlareView lensFlare;
         PauseMenu pauseMenu;
+        bool voicePausedByMenu;
         GoF2Remake.World.FreelanceOrbit freelance;
         AudioSource voiceSource;
         VisualElement radioBox, radioPortrait, screenFade;
@@ -128,6 +129,7 @@ namespace GoF2Remake.UI
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");
             hints = root.Q("hints");
+            InputGlyph.TrackHintsOption(hints);   // Options > Gameplay: "Button hints in flight"
             if (GoF2Remake.Multiplayer.NetGame.Active)
             {
                 ChatView.Attach(gameObject, safeArea ?? root);    // multiplayer chat
@@ -498,6 +500,14 @@ namespace GoF2Remake.UI
         void Update()
         {
             if (root == null) return;
+            // The pause menu pauses the voice too: the shared voice source ignores the listener pause (it has to play while
+            // a conversation pauses the game), so the radio's line kept talking over the menu. Multiplayer doesn't pause.
+            bool menuPause = pauseMenu != null && pauseMenu.IsOpen && !GoF2Remake.Multiplayer.NetGame.Active;
+            if (menuPause != voicePausedByMenu && voiceSource != null)
+            {
+                voicePausedByMenu = menuPause;
+                if (menuPause) voiceSource.Pause(); else voiceSource.UnPause();
+            }
             UpdateTouch();   // every frame: the controls hide and let go under menus, dialogues and cutscenes
             UpdateMouseSteering();
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
