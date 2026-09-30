@@ -571,7 +571,8 @@ namespace GoF2Remake.World
                     // Radar::draw 0x156xxx: only active ships (Player::isActive) count, so a ship held back by its level
                     // script doesn't start the battle music or block fast-forward before it shows up. A sleeping ship is
                     // inactive too (KIPlayer::setToSleep -> Player::setActive(false)): index 7's ambush, sleeping guards.
-                    if (!s.Gone && !s.Inactive && !s.Asleep && s.Current != NpcShip.State.Dying && s.Current != NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer && !s.IsFreighter)
+                    // Level::getEnemies holds the freighters (PlayerFixedObject) too: a hostile one counts (Intercept's convoy).
+                    if (!s.Gone && !s.Inactive && !s.Asleep && s.Current != NpcShip.State.Dying && s.Current != NpcShip.State.Dead && s.Target.Alive && s.Target.hostileToPlayer)
                         hostiles++;
             // Multiplayer: the other players' ships here (NetProxy targets, shown only in this orbit) count too.
             if (hasScanner && GoF2Remake.Multiplayer.NetGame.Active)

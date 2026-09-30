@@ -88,8 +88,8 @@ namespace GoF2Remake.World
         /// <summary>setToSleep / setInitActive(false): no flying or shooting until woken (Wake, or the player close by).</summary>
         public bool Asleep { get; private set; }
         /// <summary>PlayerFighter: a sleeping hostile ship is invisible after the tutorial (index &gt; 1): no model, no marker,
-        /// no lock.</summary>
-        public bool Hidden => forcedHidden || (Asleep && !IsFixed && Target.hostileToPlayer && Session.CampaignMission > 1);
+        /// no lock. Freighters are PlayerFixedObjects like the fixed objects, whose sleepers stay visible.</summary>
+        public bool Hidden => forcedHidden || (Asleep && !IsFixed && !IsFreighter && Target.hostileToPlayer && Session.CampaignMission > 1);
         bool forcedHidden;
 
         /// <summary>KIPlayer::setVisible (cutscenes): hidden ships have no model, marker or lock.</summary>
@@ -770,11 +770,13 @@ namespace GoF2Remake.World
             float dr = detectRange >= 0f ? detectRange : NpcTables.DetectRange;
             if (dr <= 0f) return;
             bool Near(Vector3 p, float units) { var d = p - transform.position; float r = units * M; return Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r; }
-            if (!IsFixed && WeaponSystem.GuidedRocket.HasValue && Near(WeaponSystem.GuidedRocket.Value, 25000f)) { Wake(); return; }
+            // Freighters are PlayerFixedObjects: PlayerFixedObject::update wakes them on any enemy within the box too.
+            bool fixedObject = IsFixed || IsFreighter;
+            if (!fixedObject && WeaponSystem.GuidedRocket.HasValue && Near(WeaponSystem.GuidedRocket.Value, 25000f)) { Wake(); return; }
             foreach (var e in enemies)
             {
                 if (!Valid(e) || e.cloaked) continue;   // no waking for a cloaked target
-                float r = IsFixed || e == target || !e.isPlayer ? dr : 25000f;
+                float r = fixedObject || e == target || !e.isPlayer ? dr : 25000f;
                 if (Near(e.transform.position, r)) { Wake(); return; }
             }
         }

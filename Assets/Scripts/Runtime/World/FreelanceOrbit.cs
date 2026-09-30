@@ -548,23 +548,26 @@ namespace GoF2Remake.World
                 }
                 case MissionType.Intercept:
                 {
+                    // Level::createMission case 10: a two-point route (x / y rnd(5000) - 2500 each, z 80000 + rnd(30000) and
+                    // 120000 + rnd(30000)); the freighters sleep around its second waypoint (+-10000, setToSleep,
+                    // setAlwaysEnemy, setMoving(false)), the escorts sleep at a random waypoint.
                     int race = clientEnemy == Standing.Pirate ? 0 : clientEnemy;
-                    var x = Sign() * 2500f; var y = Sign() * 2500f;
                     var route = new Route(false);
-                    route.points.Add(new Vector3(x, y, 80000 + Random.Range(0, 30000)));
-                    route.points.Add(new Vector3(x, y, 120000 + Random.Range(0, 30000)));
+                    route.points.Add(new Vector3(Random.Range(0, 5000) - 2500, Random.Range(0, 5000) - 2500, 80000 + Random.Range(0, 30000)));
+                    route.points.Add(new Vector3(Random.Range(0, 5000) - 2500, Random.Range(0, 5000) - 2500, 120000 + Random.Range(0, 30000)));
                     int convoy = Random.Range(0, 2) + 2;
                     for (int i = 0; i < convoy; i++)
                     {
-                        var at = route.points[0] + new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000);
-                        var f = Spawn(race, at, s => { s.freighter = true; s.ship = race == 1 ? 13 : 15; s.stationary = true; s.alwaysEnemy = true; });
+                        var at = route.points[1] + new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000);
+                        var f = Spawn(race, at, s => { s.freighter = true; s.ship = race == 1 ? 13 : 15; s.stationary = true; s.alwaysEnemy = true; s.asleep = true; });
                         f.Target.hitpoints.hull = f.Target.hitpoints.maxHull = (int)(f.Target.hitpoints.maxHull * 0.7f * (Session.Difficulty > 0.7f ? 1.4f : 1f));
                         f.Target.hp = f.Target.maxHp = f.Target.hitpoints.maxHull;
                     }
                     int escorts = (int)(((int)(df * 5f) + 3) * hc);
-                    for (int i = 0; i < escorts; i++) Spawn(race, route.points[0] + Jitter(), s => { s.asleep = true; s.route = route.Clone(); s.alwaysEnemy = true; });
+                    for (int i = 0; i < escorts; i++)
+                        Spawn(race, route.points[Random.Range(0, route.points.Count)] + Jitter(), s => { s.asleep = true; s.route = route.Clone(); s.alwaysEnemy = true; });
                     convoyCount = convoy;
-                    MarkRoute(route.points[0]);
+                    MarkRoute(route.points[1]);
                     break;
                 }
                 case MissionType.OreMining:
