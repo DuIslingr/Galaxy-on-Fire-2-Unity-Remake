@@ -391,11 +391,12 @@ namespace GoF2Remake.World
             sfx = gameObject.AddComponent<AudioSource>();
             Setup3D(sfx);
             engine = gameObject.AddComponent<AudioSource>();
-            Setup3D(engine);
+            engine.playOnAwake = false;
+            EngineVoices.Setup3D(engine);   // the engine events' rolloff (0.05 .. 500 m), at most 3 of each event at once
             engine.loop = true;
             engine.clip = assets == null || spec.fixedObject != null || spec.turretAssembly != null || spec.ship == 14 ? null
                         : CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines);
-            engine.volume = (spec.freighter ? 0.195f : 0.0759f) * Sfx.EventGain * Settings.SfxVolume;   // event volumes 47 / 46
+            EngineVoices.Register(engine, spec.freighter ? 47 : 46, (spec.freighter ? 0.195f : 0.0759f) * Sfx.EventGain);   // event volumes 47 / 46
             if (engine.clip != null) engine.Play();
 
             if (spec.startsDead) SetDead();
@@ -570,7 +571,11 @@ namespace GoF2Remake.World
             gameObject.SetActive(false);
         }
 
-        void OnDestroy() => cloak?.Dispose();
+        void OnDestroy()
+        {
+            cloak?.Dispose();
+            EngineVoices.Unregister(engine);
+        }
 
         /// <summary>Player::setHitpoints(0) + KIPlayer::setDead (a level script): gone at once, without the tumble, the
         /// explosion, a crate or the kill bookkeeping.</summary>
@@ -605,6 +610,7 @@ namespace GoF2Remake.World
 
         void Update()
         {
+            EngineVoices.Tick();   // once a frame for all ships: the three loudest loops of each engine event
             float dtMs = Time.deltaTime * 1000f;
             if (dtMs <= 0f) return;
             SyncTurret();
@@ -890,7 +896,7 @@ namespace GoF2Remake.World
             wingCommand = 1;
             alwaysFriend = true;
             // Event 48 Spaceship_Engine_Wingmen: the enemy engine's waves at event volume 0.0437 (46: 0.0759).
-            if (engine != null) engine.volume = 0.043652f * Sfx.EventGain * Settings.SfxVolume;
+            if (engine != null) EngineVoices.Register(engine, 48, 0.043652f * Sfx.EventGain);
             // Level::assignGuns: a wingman's laser skips the other ships' per-mission factors.
             gunBase = NpcTables.GunDamage(Spec, true, false, out gunSpeed);
             if (gun != null) gun.damage = gunBase;

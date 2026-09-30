@@ -295,7 +295,7 @@ namespace GoF2Remake.Multiplayer
             cloakLook = new World.NpcCloak(model.transform);
             if (engineLoop != null) Destroy(engineLoop);
             engineLoop = World.HangarFlight.AddEngine(model, true, Database.Load(), index, out engineVolume);
-            if (engineLoop != null) { engineLoop.minDistance = 100f; engineLoop.maxDistance = 4000f; }
+            if (engineLoop != null) EngineVoices.Setup3D(engineLoop);   // the engine events' rolloff (0.05 .. 500 m) in space
         }
 
         /// <summary>Remote: the ship, its marker, lock and collision only in the local player's orbit.</summary>

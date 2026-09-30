@@ -401,7 +401,8 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The engine loop for a ship in the hangar: the player's own (PlayerEngine's pick) or a random NPC engine
-        /// (sound 46), 3D, at their event volumes.</summary>
+        /// (sound 46), 3D, at their event volumes (hangar distances; another player's ship in space takes
+        /// EngineVoices.Setup3D, NetPlayer).</summary>
         public static AudioSource AddEngine(GameObject ship, bool player, Database db, int shipIndex, out float volume)
         {
             volume = 0f;

@@ -10,7 +10,8 @@
 //                                   0.5 (speaker spread, no 2D effect); "load" is never set: its volume envelope's 0.7
 //   PlayerEgo::boost                FModSound::play(+0xd4) when a boost starts
 // In the supernova orbits the gamma shield's loop takes the engine's slot (PlayerHealth plays it), so no engine then.
-// Volumes: the event volume x Sfx.EventGain.
+// Volumes: the event volume x Sfx.EventGain, x the events' linear rolloff from the camera (EngineVoices; the sound stays
+// 2D, only its volume follows the distance).
 
 using GoF2Remake.Data;
 using UnityEngine;
@@ -103,6 +104,10 @@ namespace GoF2Remake.Flight
             float pitch = engine >= 4 ? Mathf.Pow(2f, 8f * Mathf.Lerp(0.479167f, 0.520833f, v) - 4f)
                         : engine == 1 ? PitchEnvelope(v, 0.489583f, 0.510417f) : PitchEnvelope(v, 0.479167f, 0.520833f);
             float volume = (engine >= 0 ? EngineVolume[engine] : 0f) * LoadGain * Sfx.EventGain * Settings.SfxVolume;
+            // A 3D event at the ship heard from the camera (EngineVoices): about 85 % from the chase camera, quiet from the
+            // launch camera's fly-by.
+            var ear = EngineVoices.Listener();
+            if (ear != null) volume *= EngineVoices.Rolloff(Vector3.Distance(ear.position, transform.position));
             // 1104: one layer with the pitch; 1106 / 1107: EngineDLC_07 plain + the pitched second layer.
             Drive(main, on, volume, engine >= 5 ? 1f : pitch);
             Drive(extra, on, volume, pitch);
