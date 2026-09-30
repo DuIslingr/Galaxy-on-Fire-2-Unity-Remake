@@ -120,10 +120,10 @@ namespace GoF2Remake.Flight
             if (raiders > 0)
             {
                 if (hardcore) raiders = Random.Range(0, 6) + 2;
-                raiders = (int)(raiders * (hardcore ? 2f : 1f));
+                raiders = (int)(raiders * Session.DifficultyFactor);
                 raiders += rank / 4;
             }
-            if (secEff == 3 && raidersOn && !hardcore) raiders = Random.Range(0, 2) + 1;
+            if (secEff == 3 && raidersOn && Session.Difficulty < 1f) raiders = Random.Range(0, 2) + 1;   // Easy / Normal
 
             int jumpers = 0, freighters = 0, x = 0;
             if (station != 78) { jumpers = Random.Range(0, 2); freighters = Random.Range(0, 5); x = Random.Range(0, 2); }
@@ -286,7 +286,7 @@ namespace GoF2Remake.Flight
         {
             int race = w.race < 4 ? w.race : Standing.Pirate;
             int h = 15 * Mathf.Min(Session.Rank, 20) + w.hitpoints + 4 * 45;
-            int hull = Session.IsExtreme ? h * 2 : h;
+            int hull = (int)(h * Session.DifficultyFactor);
             list.Add(new SpawnSpec
             {
                 group = NpcGroup.Local, race = race, ship = w.ship, position = wpLocal + Jitter(), hitpoints = hull, name = w.name,
@@ -411,7 +411,7 @@ namespace GoF2Remake.Flight
                 wreckPrefab = assets != null ? assets.outpostWreck : null, explosionScale = 8f, stationary = true, asleep = true,
                 nameText = 441, lootItem = loot.item, lootAmount = loot.amount, alwaysEnemy = true,
             });
-            int guards = hardcore ? 10 : 5;
+            int guards = (int)((Session.Difficulty - 0.5f) * 5f + 5f);   // 2 / 5 / 7 / 10
             for (int g = 0; g < guards; g++)
             {
                 float S() => Random.value < 0.5f ? -1f : 1f;

@@ -42,15 +42,37 @@
                 <ui:VisualElement name="difficultyPanel" class="panel">
                     <ui:Label name="difficultyTitle" class="panel-title gof-semibold" />
                     <ui:VisualElement class="panel-accent" />
+                    <ui:Button name="easyButton" class="choice-button">
+                        <ui:Label name="easyLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="easyDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
                     <ui:Button name="normalButton" class="choice-button">
                         <ui:Label name="normalLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
                         <ui:Label name="normalDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="hardButton" class="choice-button">
+                        <ui:Label name="hardLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="hardDesc" class="choice-desc" picking-mode="Ignore" />
                     </ui:Button>
                     <ui:Button name="extremeButton" class="choice-button choice-button--danger">
                         <ui:Label name="extremeLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
                         <ui:Label name="extremeDesc" class="choice-desc" picking-mode="Ignore" />
                     </ui:Button>
                     <ui:Button name="difficultyBack" class="menu-button back-button gof-semibold" />
+                </ui:VisualElement>
+
+                <ui:VisualElement name="economyPanel" class="panel">
+                    <ui:Label name="economyTitle" class="panel-title gof-semibold" />
+                    <ui:VisualElement class="panel-accent" />
+                    <ui:Button name="economyDefaultButton" class="choice-button">
+                        <ui:Label name="economyDefaultLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="economyDefaultDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="economyAndroidButton" class="choice-button">
+                        <ui:Label name="economyAndroidLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="economyAndroidDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
+                    <ui:Button name="economyBack" class="menu-button back-button gof-semibold" />
                 </ui:VisualElement>
 
                 <ui:VisualElement name="loadPanel" class="panel">

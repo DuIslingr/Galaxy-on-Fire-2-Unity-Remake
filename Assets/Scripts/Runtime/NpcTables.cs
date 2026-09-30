@@ -62,7 +62,7 @@ namespace GoF2Remake.Flight
             _ => "cargo_003_terran",
         };
 
-        static float Difficulty => Session.IsExtreme ? 2f : 1f;   // x + x * (options[0x2c] - 0.5)
+        static float Difficulty => Session.DifficultyFactor;   // x + x * (options[0x2c] - 0.5)
 
         /// <summary>The campaign index the NPC formulas use: capped at 45 once the main story is won (Level::createShip's
         /// "gameWon ? 180 : 4 * campaign", assignGuns' 600 - 2 * 45).</summary>

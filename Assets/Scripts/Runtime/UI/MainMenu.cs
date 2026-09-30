@@ -3,7 +3,7 @@
 //   1. Splash: FISHLABS then (instead of ABYSS ENGINE) "Made with Unity". In players this is Unity's own
 //      splash screen (Player Settings); in the editor the menu shows the FISHLABS logo itself.
 //   2. Title: the GoF2 logo fades in over the live 3D scene (3.9 s), "press any key" pulses under it.
-//   3. Menu: Resume (only with a save), Start new game -> Select Campaign -> difficulty (Normal / Extreme),
+//   3. Menu: Resume (only with a save), Start new game -> Select Campaign -> difficulty (Easy / Normal / Hard / Extreme: the PC version's four),
 //      Load game (save slots, slot 0 = Auto-save), Options (Sound & Graphics, Controls, Language), About, Exit.
 // Text comes from the original table (Localization, text IDs in comments). Sounds: Button_Push on focus
 // changes, Button_Release on confirm, Message_Info_Screen for dialogs (FMOD events 124 / 123 / 126).
@@ -140,7 +140,7 @@ namespace GoF2Remake.UI
             exitButton = Bind("exitButton", () => ShowDialog(Localization.Get(390), Localization.Get(53), Quit));
             resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);   // only with a save
 
-            foreach (var n in new[] { "campaignPanel", "difficultyPanel", "loadPanel", "optionsPanel", "aboutPanel", "multiplayerPanel" })
+            foreach (var n in new[] { "campaignPanel", "difficultyPanel", "economyPanel", "loadPanel", "optionsPanel", "aboutPanel", "multiplayerPanel" })
             {
                 panels[n] = root.Q(n);
                 panels[n].usageHints = UsageHints.DynamicTransform;
@@ -161,7 +161,7 @@ namespace GoF2Remake.UI
                 sv.verticalScrollerVisibility = ScrollerVisibility.Hidden;
                 sv.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             }
-            foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" })
+            foreach (var n in new[] { "campaignBack", "difficultyBack", "economyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" })
             {
                 var b = root.Q<Button>(n);
                 b.clicked += Back;   // Back() plays the release sound itself (also used by Esc)
@@ -173,9 +173,13 @@ namespace GoF2Remake.UI
             Bind("cardSupernova", () => PickCampaign(Campaign.Supernova));
             BuildDebugPanel();
             SetupMultiplayerPanel();
-            Bind("normalButton", () => StartGame(Session.DifficultyNormal));
+            Bind("easyButton", () => PickDifficulty(Session.DifficultyEasy));
+            Bind("normalButton", () => PickDifficulty(Session.DifficultyNormal));
+            Bind("hardButton", () => PickDifficulty(Session.DifficultyHard));
             Bind("extremeButton", () => ShowDialog(Localization.Get(25), Localization.Get(26),
-                () => StartGame(Session.DifficultyExtreme)));
+                () => PickDifficulty(Session.DifficultyExtreme)));
+            Bind("economyDefaultButton", () => StartGame(Economy.Default));
+            Bind("economyAndroidButton", () => StartGame(Economy.Android));
             Bind("dialogYes", () => { var a = dialogYes; CloseDialog(); a?.Invoke(); });
             Bind("dialogNo", CloseDialog);
 
@@ -542,6 +546,7 @@ namespace GoF2Remake.UI
             if (dialog.ClassListContains("dialog-backdrop--shown")) { CloseDialog(); return; }
             if (openPanel == null) return;
             Play(buttonRelease);
+            if (openPanel == panels["economyPanel"]) { OpenPanel("difficultyPanel"); return; }
             if (openPanel == panels["difficultyPanel"]) { OpenPanel(pendingStartIndex >= 0 && panels.ContainsKey("debugPanel") ? "debugPanel" : "campaignPanel"); return; }
             var closing = openPanel;
             HidePanel(closing);
@@ -562,11 +567,20 @@ namespace GoF2Remake.UI
             OpenPanel("difficultyPanel");
         }
 
-        void StartGame(float difficulty)
+        float pendingDifficulty = Session.DifficultyNormal;
+
+        void PickDifficulty(float difficulty)
+        {
+            pendingDifficulty = difficulty;
+            OpenPanel("economyPanel");
+        }
+
+        void StartGame(Economy economy)
         {
             Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
             Session.Campaign = pendingCampaign;
-            Session.Difficulty = difficulty;
+            Session.Difficulty = pendingDifficulty;
+            Session.Economy = economy;   // before the Database: it loads that economy's tables
             var db = Database.Load();
             // Remake: the mission select starts a new game at the chosen story step (Story.StartAtMission).
             if (pendingStartIndex >= 0) { StartCoroutine(Leave(Story.StartAtMission(db, pendingStartIndex))); return; }
@@ -1120,7 +1134,7 @@ namespace GoF2Remake.UI
             Set("optionsButton", T(31));
             Set("aboutButton", T(43));
             Set("exitButton", T(33));
-            foreach (var n in new[] { "campaignBack", "difficultyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" }) Set(n, "‹  " + T(170));
+            foreach (var n in new[] { "campaignBack", "difficultyBack", "economyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" }) Set(n, "‹  " + T(170));
             string mp = Localization.Extra("multiplayer", "Multiplayer").ToUpperInvariant();
             Set("multiplayerButton", mp);
             Set("multiplayerTitle", mp);
@@ -1146,8 +1160,19 @@ namespace GoF2Remake.UI
             Set("debugMissionsTitle", Localization.Extra("missionSelect", "Start at mission").ToUpperInvariant());
             if (missionFilter != null) missionFilter.textEdition.placeholder = Localization.Extra("missionSearch", "Search: a step number, a station, a word...");
             Set("difficultyTitle", T(517));
+            Set("easyLabel", T(518));
+            Set("easyDesc", Localization.Extra("easyDesc", "Weaker enemies in smaller groups, a shorter cloak cooldown and a smaller toll."));
             Set("normalLabel", T(519));
             Set("normalDesc", Localization.Extra("normalDesc", "The classic Galaxy on Fire 2 experience."));
+            Set("hardLabel", T(520));
+            Set("hardDesc", Localization.Extra("hardDesc", "Tougher, harder-hitting enemies in bigger groups; the economy stays as on Normal."));
+            Set("economyTitle", Localization.Extra("economyTitle", "Select the economy").ToUpperInvariant());
+            Set("economyDefaultLabel", Session.EconomyName(Economy.Default).ToUpperInvariant());
+            Set("economyDefaultDesc", Localization.Extra("economyDefaultDesc",
+                "The original prices of the PC, Mac and iPhone versions: cheap commodities, tractor beams and signatures, smaller blueprint recipes, dearer ships."));
+            Set("economyAndroidLabel", Session.EconomyName(Economy.Android).ToUpperInvariant());
+            Set("economyAndroidDesc", Localization.Extra("economyAndroidDesc",
+                "The Android version's prices: commodities, tractor beams, shields and armor far dearer, blueprints need many more ingredients, ships cheaper."));
             Set("extremeLabel", T(25));
             Set("extremeDesc", Localization.Extra("extremeDesc", "For veterans who finished the game: tougher enemies and a harsher economy."));
             Set("loadTitle", T(29));
@@ -1234,7 +1259,11 @@ namespace GoF2Remake.UI
         void FocusFirst(VisualElement scope)
         {
             var items = Focusables(scope);
-            if (items.Count > 0) Select(items[0]);
+            // The difficulty list starts on Normal (the original's first entry), Easy above it; the economy on the last one picked.
+            var normal = scope.name == "difficultyPanel" ? scope.Q<Button>("normalButton")
+                : scope.name == "economyPanel" ? scope.Q<Button>(Session.Economy == Economy.Android ? "economyAndroidButton" : "economyDefaultButton") : null;
+            if (normal != null && items.Contains(normal)) Select(normal);
+            else if (items.Count > 0) Select(items[0]);
         }
 
         static void SetFocusable(VisualElement scope, bool on)

@@ -1,7 +1,7 @@
 // SaveSlotRow.cs
 // One save slot row (MenuTouchWindow::drawLoadSaveMenu 0x14bfbc), shared by the main menu's Load list and the station
 // menu's Save game list: index, "Auto-save" (486) / "Slot N", the preview (RecordHandler::recordStoreWritePreview:
-// station, system, ship, credits, playing time) or "-BLANK-" (174). Styles: .slot-* in GoF2Common.uss.
+// station, system, ship, difficulty and economy, credits, playing time) or "-BLANK-" (174). Styles: .slot-* in GoF2Common.uss.
 
 using GoF2Remake.Data;
 using UnityEngine.UIElements;
@@ -30,7 +30,7 @@ namespace GoF2Remake.UI
             {
                 var st = db.Stations.Find(x => x.index == save.station);
                 var ship = db.Ship(save.ship);
-                subText = $"{st?.name} · {st?.systemName}  ·  {ship?.name}";
+                subText = $"{st?.name} · {st?.systemName}  ·  {ship?.name}  ·  {Session.DifficultyName(save.difficulty)}, {Session.EconomyName(SaveGame.SaveEconomy(save))}";
             }
             else if (slot == SaveGame.AutoSaveSlot) subText = emptyAutoSaveHint;
             if (subText != null)

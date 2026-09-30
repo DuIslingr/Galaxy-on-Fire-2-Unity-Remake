@@ -44,7 +44,7 @@ namespace GoF2Remake.Flight
             var item = Shop.FirstMounted(db, 21) ?? (ship == 44 || ship == 49 ? db.Item(IntegratedCloakItem) : null);
             if (item == null) return null;
             var c = player.AddComponent<PlayerCloak>();
-            c.Rules = new Cloak(item.index, item.Attr(35, 10000), item.Attr(36, 2000), item.Attr(38, 1), Session.IsExtreme);
+            c.Rules = new Cloak(item.index, item.Attr(35, 10000), item.Attr(36, 2000), item.Attr(38, 1), Session.Difficulty);
             c.ItemName = Localization.Get(1274 + item.index);
             c.target = target;
             c.Setup(model);

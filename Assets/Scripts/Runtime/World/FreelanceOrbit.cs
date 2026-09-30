@@ -541,7 +541,7 @@ namespace GoF2Remake.World
                     for (int i = 0; i < n; i++) Spawn(clientEnemy, route.points[0] + Jitter(), s => { s.asleep = true; s.route = route.Clone(); });
                     Vector3[] points = { new Vector3(-2500, -300, 27000), new Vector3(6500, 3000, 24000), new Vector3(-4000, -2000, 19000), new Vector3(9000, -6000, 17000), new Vector3(3000, 7000, 15000) };
                     int race = Mathf.Clamp(mission.clientRace, 0, 3);
-                    int hull = (int)((2 * Mathf.Min(Session.Rank, 20) + 150 + 2 * Session.CampaignMission) * (Session.IsExtreme ? 1.4f : 1f));
+                    int hull = (int)((2 * Mathf.Min(Session.Rank, 20) + 150 + 2 * Session.CampaignMission) * (Session.Difficulty > 0.7f ? 1.4f : 1f));
                     foreach (var p in points)
                         Spawn(race, p, s => { s.freighter = true; s.ship = race == 1 ? 13 : 15; s.alwaysFriend = true; s.hitpoints = hull; s.noLoot = true; }, false);
                     break;
@@ -558,7 +558,7 @@ namespace GoF2Remake.World
                     {
                         var at = route.points[0] + new Vector3(Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000, Random.Range(0, 20000) - 10000);
                         var f = Spawn(race, at, s => { s.freighter = true; s.ship = race == 1 ? 13 : 15; s.stationary = true; s.alwaysEnemy = true; });
-                        f.Target.hitpoints.hull = f.Target.hitpoints.maxHull = (int)(f.Target.hitpoints.maxHull * (Session.IsExtreme ? 1.4f : 0.7f));
+                        f.Target.hitpoints.hull = f.Target.hitpoints.maxHull = (int)(f.Target.hitpoints.maxHull * 0.7f * (Session.Difficulty > 0.7f ? 1.4f : 1f));
                         f.Target.hp = f.Target.maxHp = f.Target.hitpoints.maxHull;
                     }
                     int escorts = (int)(((int)(df * 5f) + 3) * hc);

@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 9;
+        public const int CurrentVersion = 10;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -82,6 +82,8 @@ namespace GoF2Remake.Data
         public List<int> eliteFlags;
         public int oreStreak, blindKills;
         public bool lomaTollPaid, lomaTollRefused;
+        // version 10: the economy (Session.Economy; older saves played the Android tables)
+        public int economy;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -165,6 +167,7 @@ namespace GoF2Remake.Data
                 playSeconds = Session.PlaySeconds,
                 campaign = (int)Session.Campaign,
                 difficulty = Session.Difficulty,
+                economy = (int)Session.Economy,
                 campaignMission = Session.CampaignMission,
                 station = Session.StationIndex,
                 previousStation = Session.PreviousStationIndex,
@@ -222,6 +225,9 @@ namespace GoF2Remake.Data
             };
         }
 
+        /// <summary>The save's economy: before version 10 every game used the Android tables.</summary>
+        public static Economy SaveEconomy(SaveData s) => s.version >= 10 ? (Economy)s.economy : Economy.Android;
+
         static void Apply(SaveData s)
         {
             static Dictionary<int, (int, int)> Prices(List<SaveData.KnownPrice> l)
@@ -234,6 +240,7 @@ namespace GoF2Remake.Data
             Session.PlaySeconds = s.playSeconds;
             Session.Campaign = (Campaign)s.campaign;
             Session.Difficulty = s.difficulty;
+            Session.Economy = SaveEconomy(s);
             Session.CampaignMission = s.campaignMission;
             Session.StationIndex = s.station;
             Session.PreviousStationIndex = s.previousStation;

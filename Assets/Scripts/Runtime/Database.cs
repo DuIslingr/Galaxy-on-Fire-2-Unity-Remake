@@ -137,6 +137,48 @@ namespace GoF2Remake.Data
 
         [System.Serializable] class ItemAttributes { public int index; public int[] keys, values; }
 
+        /// <summary>economy_default.json: the Default Economy's complete values of every item / ship that differs.</summary>
+        [System.Serializable] class EconomyItem
+        {
+            public int index, techLevel, occurrence, minPrice, maxPrice, lowestPriceSystem, highestPriceSystem;
+            public int[] keys, values;
+            public List<StatEntry> statList;
+            public List<BlueprintPart> blueprint;
+        }
+        [System.Serializable] class EconomyShip { public int index, armor, cargo, price, primary, secondary, turret, equipment, handling; }
+        [System.Serializable] class EconomyFile { public List<EconomyItem> items; public List<EconomyShip> ships; }
+
+        /// <summary>The item and ship tables this instance holds (Session.Economy when it was loaded).</summary>
+        public Economy Economy { get; private set; } = Economy.Android;
+
+        /// <summary>The macOS / Windows / iPhone tables (KiritoJPK's Default Economy items.bin / ships.bin) over the Android
+        /// ones: prices, tech levels, occurrences, attributes (and so the stats) and blueprint recipes; ship prices and slots.</summary>
+        void ApplyDefaultEconomy(string folder)
+        {
+            var file = Read<EconomyFile>(folder, "economy_default");
+            if (file == null || file.items == null) return;
+            foreach (var e in file.items)
+            {
+                var it = Item(e.index);
+                if (it == null) continue;
+                it.techLevel = e.techLevel; it.occurrence = e.occurrence; it.minPrice = e.minPrice; it.maxPrice = e.maxPrice;
+                it.lowestPriceSystem = e.lowestPriceSystem; it.highestPriceSystem = e.highestPriceSystem;
+                it.attrKeys = e.keys ?? new int[0]; it.attrValues = e.values ?? new int[0];
+                it.statList = e.statList ?? new List<StatEntry>();
+                it.blueprint = e.blueprint ?? new List<BlueprintPart>();
+            }
+            if (file.ships != null)
+                foreach (var e in file.ships)
+                {
+                    var sh = Ship(e.index);
+                    if (sh == null) continue;
+                    sh.armor = e.armor; sh.cargo = e.cargo; sh.price = e.price;
+                    sh.slots = new ShipSlots { primary = e.primary, secondary = e.secondary, turret = e.turret, equipment = e.equipment };
+                    sh.handling = e.handling; sh.handlingMultiplier = e.handling / 100f;
+                }
+            Economy = Economy.Default;
+        }
+
         public static Database Load(string resourceFolder = "GoF2Data")
         {
             var db = new Database
@@ -155,6 +197,7 @@ namespace GoF2Remake.Data
                 var item = db.Items.Find(i => i.index == a.index);
                 if (item != null && a.keys != null) { item.attrKeys = a.keys; item.attrValues = a.values; }
             }
+            if (Session.Economy == Economy.Default) db.ApplyDefaultEconomy(resourceFolder);
             return db;
         }
 

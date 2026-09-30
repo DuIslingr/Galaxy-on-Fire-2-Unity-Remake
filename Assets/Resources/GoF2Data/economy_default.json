@@ -1,0 +1,11433 @@
+{
+ "items": [
+  {
+   "index": 0,
+   "techLevel": 1,
+   "occurrence": 90,
+   "minPrice": 2000,
+   "maxPrice": 2381,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 7,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    0,
+    0,
+    0,
+    1,
+    8,
+    7,
+    90,
+    2000,
+    2381,
+    3,
+    400,
+    2000,
+    20,
+    0,
+    52
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 3
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 400
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 20
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 52
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 2,
+   "techLevel": 3,
+   "occurrence": 60,
+   "minPrice": 9510,
+   "maxPrice": 10959,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 7,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    2,
+    0,
+    0,
+    3,
+    8,
+    7,
+    60,
+    9510,
+    10959,
+    6,
+    380,
+    2000,
+    20,
+    0,
+    52
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 6
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 380
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 20
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 52
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 3,
+   "techLevel": 6,
+   "occurrence": 50,
+   "minPrice": 8000,
+   "maxPrice": 9291,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 7,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    3,
+    0,
+    0,
+    6,
+    8,
+    7,
+    50,
+    8000,
+    9291,
+    7,
+    500,
+    2000,
+    20,
+    1,
+    52
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 7
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 500
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 20
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 52
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 5,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 19100,
+   "maxPrice": 21900,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 7,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    5,
+    0,
+    0,
+    5,
+    8,
+    7,
+    40,
+    19100,
+    21900,
+    16,
+    900,
+    2200,
+    22,
+    0,
+    52
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 16
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 900
+    },
+    {
+     "key": "range",
+     "value": 2200
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 22
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 52
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 11,
+   "techLevel": 9,
+   "occurrence": 10,
+   "minPrice": 63000,
+   "maxPrice": 65500,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 7,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    11,
+    0,
+    0,
+    9,
+    8,
+    7,
+    10,
+    63000,
+    65500,
+    51,
+    1500,
+    2600,
+    20,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 51
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 1500
+    },
+    {
+     "key": "range",
+     "value": 2600
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 20
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 9,
+     "name": "M6 A1 \"Wolf\"",
+     "amount": 1
+    },
+    {
+     "item": 155,
+     "name": "Titanium",
+     "amount": 10
+    },
+    {
+     "item": 120,
+     "name": "Plastics",
+     "amount": 14
+    },
+    {
+     "item": 126,
+     "name": "Noble Gas",
+     "amount": 10
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 5
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 5
+    }
+   ]
+  },
+  {
+   "index": 12,
+   "techLevel": 1,
+   "occurrence": 60,
+   "minPrice": 10580,
+   "maxPrice": 12580,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    12,
+    0,
+    1,
+    1,
+    20,
+    4,
+    60,
+    10580,
+    12580,
+    8,
+    600,
+    1500,
+    14,
+    1,
+    53
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 8
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 600
+    },
+    {
+     "key": "range",
+     "value": 1500
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 14
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 53
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 13,
+   "techLevel": 2,
+   "occurrence": 50,
+   "minPrice": 14500,
+   "maxPrice": 16305,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    13,
+    0,
+    1,
+    2,
+    20,
+    4,
+    50,
+    14500,
+    16305,
+    8,
+    530,
+    1500,
+    14,
+    1,
+    53
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 8
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 530
+    },
+    {
+     "key": "range",
+     "value": 1500
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 14
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 53
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 15,
+   "techLevel": 5,
+   "occurrence": 30,
+   "minPrice": 42675,
+   "maxPrice": 47037,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    15,
+    0,
+    1,
+    5,
+    20,
+    4,
+    30,
+    42675,
+    47037,
+    9,
+    330,
+    1500,
+    16,
+    1
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 9
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 330
+    },
+    {
+     "key": "range",
+     "value": 1500
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 16
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 12,
+     "name": "N'saan",
+     "amount": 1
+    },
+    {
+     "item": 130,
+     "name": "Hydraulics",
+     "amount": 14
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 9
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 8
+    },
+    {
+     "item": 166,
+     "name": "Titanium Core",
+     "amount": 1
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 9
+    }
+   ]
+  },
+  {
+   "index": 16,
+   "techLevel": 4,
+   "occurrence": 50,
+   "minPrice": 4800,
+   "maxPrice": 5700,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    16,
+    0,
+    1,
+    4,
+    20,
+    4,
+    50,
+    4800,
+    5700,
+    0,
+    3,
+    350,
+    1200,
+    17,
+    0,
+    53
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 0
+    },
+    {
+     "key": "empDamage",
+     "value": 3
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 350
+    },
+    {
+     "key": "range",
+     "value": 1200
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 17
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 53
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 17,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 10500,
+   "maxPrice": 12000,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    17,
+    0,
+    1,
+    5,
+    20,
+    4,
+    40,
+    10500,
+    12000,
+    0,
+    5,
+    450,
+    2000,
+    15,
+    0,
+    53
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 0
+    },
+    {
+     "key": "empDamage",
+     "value": 5
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 450
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 15
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 53
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 18,
+   "techLevel": 6,
+   "occurrence": 30,
+   "minPrice": 34120,
+   "maxPrice": 39549,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    18,
+    0,
+    1,
+    6,
+    20,
+    4,
+    30,
+    34120,
+    39549,
+    0,
+    8,
+    450,
+    2000,
+    17,
+    0,
+    53
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 0
+    },
+    {
+     "key": "empDamage",
+     "value": 8
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 450
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 17
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 53
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 22,
+   "techLevel": 1,
+   "occurrence": 70,
+   "minPrice": 2200,
+   "maxPrice": 2458,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    22,
+    0,
+    2,
+    1,
+    16,
+    1,
+    70,
+    2200,
+    2458,
+    2,
+    220,
+    1000,
+    18,
+    0,
+    54
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 2
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 220
+    },
+    {
+     "key": "range",
+     "value": 1000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 18
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 54
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 24,
+   "techLevel": 3,
+   "occurrence": 50,
+   "minPrice": 12300,
+   "maxPrice": 15000,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    24,
+    0,
+    2,
+    3,
+    16,
+    1,
+    50,
+    12300,
+    15000,
+    2,
+    140,
+    1200,
+    22,
+    0,
+    54
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 2
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 140
+    },
+    {
+     "key": "range",
+     "value": 1200
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 22
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 54
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 25,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 23500,
+   "maxPrice": 24500,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    25,
+    0,
+    2,
+    5,
+    16,
+    1,
+    40,
+    23500,
+    24500,
+    3,
+    120,
+    1400,
+    26,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 3
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 120
+    },
+    {
+     "key": "range",
+     "value": 1400
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 26
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 5
+    },
+    {
+     "item": 121,
+     "name": "Nanotech",
+     "amount": 8
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 11
+    },
+    {
+     "item": 120,
+     "name": "Plastics",
+     "amount": 8
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 15
+    }
+   ]
+  },
+  {
+   "index": 26,
+   "techLevel": 6,
+   "occurrence": 30,
+   "minPrice": 42400,
+   "maxPrice": 45000,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    26,
+    0,
+    2,
+    6,
+    16,
+    1,
+    30,
+    42400,
+    45000,
+    2,
+    100,
+    1400,
+    28,
+    0,
+    54
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 2
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 100
+    },
+    {
+     "key": "range",
+     "value": 1400
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 28
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 54
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 27,
+   "techLevel": 8,
+   "occurrence": 30,
+   "minPrice": 92000,
+   "maxPrice": 110000,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    27,
+    0,
+    2,
+    8,
+    16,
+    1,
+    30,
+    92000,
+    110000,
+    4,
+    90,
+    1400,
+    30,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 4
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 90
+    },
+    {
+     "key": "range",
+     "value": 1400
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 30
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 154,
+     "name": "Gold",
+     "amount": 55
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 31
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 16
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 20
+    },
+    {
+     "item": 130,
+     "name": "Hydraulics",
+     "amount": 27
+    }
+   ]
+  },
+  {
+   "index": 28,
+   "techLevel": 7,
+   "occurrence": 30,
+   "minPrice": 8000,
+   "maxPrice": 9517,
+   "lowestPriceSystem": 2,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    28,
+    0,
+    3,
+    7,
+    2,
+    21,
+    30,
+    8000,
+    9517,
+    3,
+    300,
+    2000,
+    12,
+    0,
+    54
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 3
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 300
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 12
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 54
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 33,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 50,
+   "maxPrice": 59,
+   "lowestPriceSystem": 15,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    33,
+    1,
+    4,
+    5,
+    15,
+    21,
+    40,
+    50,
+    59,
+    72,
+    34,
+    2000,
+    1000,
+    16,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 72
+    },
+    {
+     "key": "empDamage",
+     "value": 34
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 2000
+    },
+    {
+     "key": "range",
+     "value": 1000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 16
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 3
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 1
+    },
+    {
+     "item": 120,
+     "name": "Plastics",
+     "amount": 2
+    }
+   ]
+  },
+  {
+   "index": 34,
+   "techLevel": 6,
+   "occurrence": 20,
+   "minPrice": 50,
+   "maxPrice": 59,
+   "lowestPriceSystem": 15,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    34,
+    1,
+    4,
+    6,
+    15,
+    21,
+    20,
+    50,
+    59,
+    10,
+    45,
+    1000,
+    1000,
+    18,
+    0,
+    34
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 10
+    },
+    {
+     "key": "empDamage",
+     "value": 45
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 1000
+    },
+    {
+     "key": "range",
+     "value": 1000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 18
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 34
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 37,
+   "techLevel": 5,
+   "occurrence": 50,
+   "minPrice": 130,
+   "maxPrice": 151,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 18,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    37,
+    1,
+    5,
+    5,
+    14,
+    18,
+    50,
+    130,
+    151,
+    100,
+    50,
+    3000,
+    8000,
+    18,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 100
+    },
+    {
+     "key": "empDamage",
+     "value": 50
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 3000
+    },
+    {
+     "key": "range",
+     "value": 8000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 18
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 128,
+     "name": "Com. Devices",
+     "amount": 2
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 2
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 2
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 1
+    }
+   ]
+  },
+  {
+   "index": 38,
+   "techLevel": 3,
+   "occurrence": 50,
+   "minPrice": 170,
+   "maxPrice": 191,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 18,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60,
+    61
+   ],
+   "values": [
+    38,
+    1,
+    5,
+    3,
+    14,
+    18,
+    50,
+    170,
+    191,
+    140,
+    3000,
+    8000,
+    10,
+    1,
+    34
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 140
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 3000
+    },
+    {
+     "key": "range",
+     "value": 8000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 10
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 34
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 42,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 180,
+   "maxPrice": 211,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    60,
+    61
+   ],
+   "values": [
+    42,
+    1,
+    6,
+    5,
+    9,
+    21,
+    40,
+    180,
+    211,
+    2,
+    150,
+    6500,
+    6500,
+    8,
+    30000,
+    0,
+    0,
+    11
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 2
+    },
+    {
+     "key": "empDamage",
+     "value": 150
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 6500
+    },
+    {
+     "key": "range",
+     "value": 6500
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 8
+    },
+    {
+     "key": "magnitude",
+     "value": 30000
+    },
+    {
+     "key": "steerable",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 11
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 44,
+   "techLevel": 4,
+   "occurrence": 60,
+   "minPrice": 500,
+   "maxPrice": 555,
+   "lowestPriceSystem": 11,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    15,
+    60,
+    61
+   ],
+   "values": [
+    44,
+    1,
+    7,
+    4,
+    11,
+    1,
+    60,
+    500,
+    555,
+    150,
+    6000,
+    6000,
+    6,
+    20000,
+    0,
+    0,
+    11
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 150
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 6000
+    },
+    {
+     "key": "range",
+     "value": 6000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 6
+    },
+    {
+     "key": "magnitude",
+     "value": 20000
+    },
+    {
+     "key": "steerable",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 11
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 46,
+   "techLevel": 9,
+   "occurrence": 20,
+   "minPrice": 3000,
+   "maxPrice": 3124,
+   "lowestPriceSystem": 11,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    15,
+    60
+   ],
+   "values": [
+    46,
+    1,
+    7,
+    9,
+    11,
+    1,
+    20,
+    3000,
+    3124,
+    700,
+    7000,
+    7000,
+    9,
+    40000,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 700
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 7000
+    },
+    {
+     "key": "range",
+     "value": 7000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 9
+    },
+    {
+     "key": "magnitude",
+     "value": 40000
+    },
+    {
+     "key": "steerable",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 124,
+     "name": "Radioactive Goods",
+     "amount": 40
+    },
+    {
+     "item": 114,
+     "name": "Explosives",
+     "amount": 20
+    },
+    {
+     "item": 128,
+     "name": "Com. Devices",
+     "amount": 7
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 5
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 5
+    },
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 10
+    }
+   ]
+  },
+  {
+   "index": 47,
+   "techLevel": 5,
+   "occurrence": 60,
+   "minPrice": 20000,
+   "maxPrice": 23075,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 13,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    16,
+    17,
+    60,
+    61
+   ],
+   "values": [
+    47,
+    2,
+    8,
+    5,
+    0,
+    13,
+    60,
+    20000,
+    23075,
+    6,
+    300,
+    2000,
+    28,
+    0,
+    40,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 6
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 300
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 28
+    },
+    {
+     "key": "automatic",
+     "value": 0
+    },
+    {
+     "key": "handling",
+     "value": 40
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 50,
+   "techLevel": 1,
+   "occurrence": 80,
+   "minPrice": 1500,
+   "maxPrice": 1561,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    18,
+    19,
+    52,
+    60,
+    61
+   ],
+   "values": [
+    50,
+    3,
+    9,
+    1,
+    19,
+    21,
+    80,
+    1500,
+    1561,
+    50,
+    20000,
+    0,
+    0,
+    2
+   ],
+   "statList": [
+    {
+     "key": "shieldCapacity",
+     "value": 50
+    },
+    {
+     "key": "shieldRegenTime",
+     "value": 20000
+    },
+    {
+     "key": "gammaShielding",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 2
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 51,
+   "techLevel": 3,
+   "occurrence": 60,
+   "minPrice": 4600,
+   "maxPrice": 5081,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    18,
+    19,
+    52,
+    60,
+    61
+   ],
+   "values": [
+    51,
+    3,
+    9,
+    3,
+    19,
+    21,
+    60,
+    4600,
+    5081,
+    80,
+    46000,
+    0,
+    0,
+    2
+   ],
+   "statList": [
+    {
+     "key": "shieldCapacity",
+     "value": 80
+    },
+    {
+     "key": "shieldRegenTime",
+     "value": 46000
+    },
+    {
+     "key": "gammaShielding",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 2
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 52,
+   "techLevel": 5,
+   "occurrence": 30,
+   "minPrice": 12300,
+   "maxPrice": 12491,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    18,
+    19,
+    52,
+    60,
+    61
+   ],
+   "values": [
+    52,
+    3,
+    9,
+    5,
+    19,
+    21,
+    30,
+    12300,
+    12491,
+    120,
+    58000,
+    0,
+    1,
+    2
+   ],
+   "statList": [
+    {
+     "key": "shieldCapacity",
+     "value": 120
+    },
+    {
+     "key": "shieldRegenTime",
+     "value": 58000
+    },
+    {
+     "key": "gammaShielding",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 2
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 53,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 35800,
+   "maxPrice": 37532,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    18,
+    19,
+    52,
+    60,
+    61
+   ],
+   "values": [
+    53,
+    3,
+    9,
+    7,
+    19,
+    21,
+    20,
+    35800,
+    37532,
+    150,
+    45000,
+    0,
+    0,
+    2
+   ],
+   "statList": [
+    {
+     "key": "shieldCapacity",
+     "value": 150
+    },
+    {
+     "key": "shieldRegenTime",
+     "value": 45000
+    },
+    {
+     "key": "gammaShielding",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 2
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 54,
+   "techLevel": 10,
+   "occurrence": 5,
+   "minPrice": 88000,
+   "maxPrice": 97069,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    18,
+    19,
+    52,
+    60
+   ],
+   "values": [
+    54,
+    3,
+    9,
+    10,
+    19,
+    21,
+    5,
+    88000,
+    97069,
+    220,
+    60000,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "shieldCapacity",
+     "value": 220
+    },
+    {
+     "key": "shieldRegenTime",
+     "value": 60000
+    },
+    {
+     "key": "gammaShielding",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 163,
+     "name": "Hypanium",
+     "amount": 80
+    },
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 75
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 20
+    },
+    {
+     "item": 121,
+     "name": "Nanotech",
+     "amount": 65
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 80
+    }
+   ]
+  },
+  {
+   "index": 55,
+   "techLevel": 1,
+   "occurrence": 80,
+   "minPrice": 900,
+   "maxPrice": 1025,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    20,
+    60,
+    61
+   ],
+   "values": [
+    55,
+    3,
+    10,
+    1,
+    21,
+    4,
+    80,
+    900,
+    1025,
+    40,
+    0,
+    4
+   ],
+   "statList": [
+    {
+     "key": "armor",
+     "value": 40
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 4
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 56,
+   "techLevel": 3,
+   "occurrence": 60,
+   "minPrice": 3800,
+   "maxPrice": 4559,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    20,
+    60,
+    61
+   ],
+   "values": [
+    56,
+    3,
+    10,
+    3,
+    21,
+    4,
+    60,
+    3800,
+    4559,
+    80,
+    0,
+    4
+   ],
+   "statList": [
+    {
+     "key": "armor",
+     "value": 80
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 4
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 57,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 16400,
+   "maxPrice": 19265,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    20,
+    60,
+    61
+   ],
+   "values": [
+    57,
+    3,
+    10,
+    5,
+    21,
+    4,
+    40,
+    16400,
+    19265,
+    110,
+    0,
+    4
+   ],
+   "statList": [
+    {
+     "key": "armor",
+     "value": 110
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 4
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 58,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 43000,
+   "maxPrice": 49613,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    20,
+    60,
+    61
+   ],
+   "values": [
+    58,
+    3,
+    10,
+    7,
+    21,
+    4,
+    20,
+    43000,
+    49613,
+    160,
+    1,
+    4
+   ],
+   "statList": [
+    {
+     "key": "armor",
+     "value": 160
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 4
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 59,
+   "techLevel": 10,
+   "occurrence": 10,
+   "minPrice": 107000,
+   "maxPrice": 112435,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    20,
+    60
+   ],
+   "values": [
+    59,
+    3,
+    10,
+    10,
+    21,
+    4,
+    10,
+    107000,
+    112435,
+    250,
+    1
+   ],
+   "statList": [
+    {
+     "key": "armor",
+     "value": 250
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 157,
+     "name": "Orichalzine",
+     "amount": 40
+    },
+    {
+     "item": 168,
+     "name": "Orichalzin Core",
+     "amount": 15
+    },
+    {
+     "item": 156,
+     "name": "Iron",
+     "amount": 35
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 40
+    },
+    {
+     "item": 120,
+     "name": "Plastics",
+     "amount": 30
+    }
+   ]
+  },
+  {
+   "index": 60,
+   "techLevel": 3,
+   "occurrence": 0,
+   "minPrice": 190,
+   "maxPrice": 300,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    14,
+    60
+   ],
+   "values": [
+    60,
+    1,
+    11,
+    3,
+    0,
+    0,
+    0,
+    190,
+    300,
+    350,
+    1000,
+    40000,
+    1000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 350
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 1000
+    },
+    {
+     "key": "range",
+     "value": 40000
+    },
+    {
+     "key": "magnitude",
+     "value": 1000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 61,
+   "techLevel": 3,
+   "occurrence": 0,
+   "minPrice": 340,
+   "maxPrice": 500,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    11,
+    12,
+    14,
+    60
+   ],
+   "values": [
+    61,
+    1,
+    11,
+    3,
+    0,
+    0,
+    0,
+    340,
+    500,
+    500,
+    3000,
+    50000,
+    2200,
+    0
+   ],
+   "statList": [
+    {
+     "key": "empDamage",
+     "value": 500
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 3000
+    },
+    {
+     "key": "range",
+     "value": 50000
+    },
+    {
+     "key": "magnitude",
+     "value": 2200
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 63,
+   "techLevel": 1,
+   "occurrence": 80,
+   "minPrice": 2100,
+   "maxPrice": 2463,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    22,
+    60,
+    61
+   ],
+   "values": [
+    63,
+    3,
+    12,
+    1,
+    16,
+    1,
+    80,
+    2100,
+    2463,
+    15,
+    0,
+    6
+   ],
+   "statList": [
+    {
+     "key": "cargoBonus",
+     "value": 15
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 6
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 64,
+   "techLevel": 3,
+   "occurrence": 60,
+   "minPrice": 4700,
+   "maxPrice": 5488,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    22,
+    60,
+    61
+   ],
+   "values": [
+    64,
+    3,
+    12,
+    3,
+    16,
+    1,
+    60,
+    4700,
+    5488,
+    25,
+    0,
+    6
+   ],
+   "statList": [
+    {
+     "key": "cargoBonus",
+     "value": 25
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 6
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 65,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 13000,
+   "maxPrice": 14350,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    22,
+    60,
+    61
+   ],
+   "values": [
+    65,
+    3,
+    12,
+    5,
+    16,
+    1,
+    40,
+    13000,
+    14350,
+    40,
+    0,
+    6
+   ],
+   "statList": [
+    {
+     "key": "cargoBonus",
+     "value": 40
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 6
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 66,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 24800,
+   "maxPrice": 27281,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    22,
+    60,
+    61
+   ],
+   "values": [
+    66,
+    3,
+    12,
+    7,
+    16,
+    1,
+    20,
+    24800,
+    27281,
+    75,
+    0,
+    6
+   ],
+   "statList": [
+    {
+     "key": "cargoBonus",
+     "value": 75
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 6
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 67,
+   "techLevel": 9,
+   "occurrence": 20,
+   "minPrice": 55900,
+   "maxPrice": 63203,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    22,
+    60
+   ],
+   "values": [
+    67,
+    3,
+    12,
+    9,
+    16,
+    1,
+    20,
+    55900,
+    63203,
+    100,
+    0
+   ],
+   "statList": [
+    {
+     "key": "cargoBonus",
+     "value": 100
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 45
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 17
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 50
+    },
+    {
+     "item": 130,
+     "name": "Hydraulics",
+     "amount": 60
+    }
+   ]
+  },
+  {
+   "index": 68,
+   "techLevel": 4,
+   "occurrence": 80,
+   "minPrice": 8400,
+   "maxPrice": 8567,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    23,
+    24,
+    60,
+    61
+   ],
+   "values": [
+    68,
+    3,
+    13,
+    4,
+    7,
+    0,
+    80,
+    8400,
+    8567,
+    0,
+    4000,
+    0,
+    8
+   ],
+   "statList": [
+    {
+     "key": "automatic_2",
+     "value": 0
+    },
+    {
+     "key": "timeToLock",
+     "value": 4000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 8
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 69,
+   "techLevel": 5,
+   "occurrence": 50,
+   "minPrice": 24500,
+   "maxPrice": 26179,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    23,
+    24,
+    60,
+    61
+   ],
+   "values": [
+    69,
+    3,
+    13,
+    5,
+    7,
+    0,
+    50,
+    24500,
+    26179,
+    0,
+    1800,
+    0,
+    8
+   ],
+   "statList": [
+    {
+     "key": "automatic_2",
+     "value": 0
+    },
+    {
+     "key": "timeToLock",
+     "value": 1800
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 8
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 70,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 52700,
+   "maxPrice": 58544,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    23,
+    24,
+    60,
+    61
+   ],
+   "values": [
+    70,
+    3,
+    13,
+    7,
+    7,
+    0,
+    20,
+    52700,
+    58544,
+    1,
+    0,
+    0,
+    8
+   ],
+   "statList": [
+    {
+     "key": "automatic_2",
+     "value": 1
+    },
+    {
+     "key": "timeToLock",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 8
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 71,
+   "techLevel": 4,
+   "occurrence": 60,
+   "minPrice": 4800,
+   "maxPrice": 5455,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    25,
+    26,
+    27,
+    60,
+    61
+   ],
+   "values": [
+    71,
+    3,
+    14,
+    4,
+    9,
+    21,
+    60,
+    4800,
+    5455,
+    60,
+    8000,
+    3000,
+    0,
+    13
+   ],
+   "statList": [
+    {
+     "key": "boostSpeed",
+     "value": 60
+    },
+    {
+     "key": "boostRechargeMs",
+     "value": 8000
+    },
+    {
+     "key": "boostDurationMs",
+     "value": 3000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 13
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 72,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 10400,
+   "maxPrice": 11158,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    25,
+    26,
+    27,
+    60,
+    61
+   ],
+   "values": [
+    72,
+    3,
+    14,
+    5,
+    9,
+    21,
+    40,
+    10400,
+    11158,
+    80,
+    10000,
+    4400,
+    0,
+    13
+   ],
+   "statList": [
+    {
+     "key": "boostSpeed",
+     "value": 80
+    },
+    {
+     "key": "boostRechargeMs",
+     "value": 10000
+    },
+    {
+     "key": "boostDurationMs",
+     "value": 4400
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 13
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 74,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 38700,
+   "maxPrice": 44869,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    25,
+    26,
+    27,
+    60,
+    61
+   ],
+   "values": [
+    74,
+    3,
+    14,
+    7,
+    9,
+    21,
+    20,
+    38700,
+    44869,
+    200,
+    16000,
+    6000,
+    1,
+    13
+   ],
+   "statList": [
+    {
+     "key": "boostSpeed",
+     "value": 200
+    },
+    {
+     "key": "boostRechargeMs",
+     "value": 16000
+    },
+    {
+     "key": "boostDurationMs",
+     "value": 6000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 13
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 75,
+   "techLevel": 4,
+   "occurrence": 80,
+   "minPrice": 14500,
+   "maxPrice": 14575,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    75,
+    3,
+    15,
+    4,
+    8,
+    6,
+    80,
+    14500,
+    14575,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 76,
+   "techLevel": 1,
+   "occurrence": 80,
+   "minPrice": 1200,
+   "maxPrice": 1336,
+   "lowestPriceSystem": 10,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    28,
+    60,
+    61
+   ],
+   "values": [
+    76,
+    3,
+    16,
+    1,
+    10,
+    4,
+    80,
+    1200,
+    1336,
+    20,
+    0,
+    13
+   ],
+   "statList": [
+    {
+     "key": "agility",
+     "value": 20
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 13
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 78,
+   "techLevel": 5,
+   "occurrence": 40,
+   "minPrice": 4700,
+   "maxPrice": 5552,
+   "lowestPriceSystem": 10,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    28,
+    60,
+    61
+   ],
+   "values": [
+    78,
+    3,
+    16,
+    5,
+    10,
+    4,
+    40,
+    4700,
+    5552,
+    70,
+    1,
+    13
+   ],
+   "statList": [
+    {
+     "key": "agility",
+     "value": 70
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 13
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 81,
+   "techLevel": 2,
+   "occurrence": 60,
+   "minPrice": 2300,
+   "maxPrice": 2326,
+   "lowestPriceSystem": 12,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    29,
+    30,
+    31,
+    60,
+    61
+   ],
+   "values": [
+    81,
+    3,
+    17,
+    2,
+    12,
+    4,
+    60,
+    2300,
+    2326,
+    4000,
+    0,
+    0,
+    0,
+    11
+   ],
+   "statList": [
+    {
+     "key": "timeToLock_2",
+     "value": 4000
+    },
+    {
+     "key": "showClassAAsteroids",
+     "value": 0
+    },
+    {
+     "key": "radarShowsCargo",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 11
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 83,
+   "techLevel": 6,
+   "occurrence": 20,
+   "minPrice": 33500,
+   "maxPrice": 37165,
+   "lowestPriceSystem": 12,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    29,
+    30,
+    31,
+    60,
+    61
+   ],
+   "values": [
+    83,
+    3,
+    17,
+    6,
+    12,
+    4,
+    20,
+    33500,
+    37165,
+    1800,
+    0,
+    1,
+    0,
+    11
+   ],
+   "statList": [
+    {
+     "key": "timeToLock_2",
+     "value": 1800
+    },
+    {
+     "key": "showClassAAsteroids",
+     "value": 0
+    },
+    {
+     "key": "radarShowsCargo",
+     "value": 1
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 11
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 84,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 87600,
+   "maxPrice": 91604,
+   "lowestPriceSystem": 12,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    29,
+    30,
+    31,
+    60,
+    61
+   ],
+   "values": [
+    84,
+    3,
+    17,
+    7,
+    12,
+    4,
+    20,
+    87600,
+    91604,
+    1800,
+    1,
+    1,
+    0,
+    11
+   ],
+   "statList": [
+    {
+     "key": "timeToLock_2",
+     "value": 1800
+    },
+    {
+     "key": "showClassAAsteroids",
+     "value": 1
+    },
+    {
+     "key": "radarShowsCargo",
+     "value": 1
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 11
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 85,
+   "techLevel": 10,
+   "occurrence": 0,
+   "minPrice": 270300,
+   "maxPrice": 296082,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    37,
+    38,
+    60
+   ],
+   "values": [
+    85,
+    3,
+    18,
+    10,
+    4,
+    21,
+    0,
+    270300,
+    296082,
+    5000,
+    1,
+    0
+   ],
+   "statList": [
+    {
+     "key": "loadingSpeed_37",
+     "value": 5000
+    },
+    {
+     "key": "energyConsumption",
+     "value": 1
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 164,
+     "name": "Void Crystals",
+     "amount": 50
+    },
+    {
+     "item": 158,
+     "name": "Pyresium",
+     "amount": 10
+    },
+    {
+     "item": 160,
+     "name": "Doxtrite",
+     "amount": 10
+    },
+    {
+     "item": 163,
+     "name": "Hypanium",
+     "amount": 10
+    },
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 40
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 70
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 75
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 40
+    }
+   ]
+  },
+  {
+   "index": 86,
+   "techLevel": 2,
+   "occurrence": 70,
+   "minPrice": 3700,
+   "maxPrice": 4234,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    32,
+    33,
+    60,
+    61
+   ],
+   "values": [
+    86,
+    3,
+    19,
+    2,
+    4,
+    21,
+    70,
+    3700,
+    4234,
+    30,
+    60,
+    0,
+    8
+   ],
+   "statList": [
+    {
+     "key": "handling_2",
+     "value": 30
+    },
+    {
+     "key": "miningYield",
+     "value": 60
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 8
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 87,
+   "techLevel": 4,
+   "occurrence": 50,
+   "minPrice": 15600,
+   "maxPrice": 16654,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    32,
+    33,
+    60,
+    61
+   ],
+   "values": [
+    87,
+    3,
+    19,
+    4,
+    4,
+    21,
+    50,
+    15600,
+    16654,
+    50,
+    50,
+    0,
+    8
+   ],
+   "statList": [
+    {
+     "key": "handling_2",
+     "value": 50
+    },
+    {
+     "key": "miningYield",
+     "value": 50
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 8
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 88,
+   "techLevel": 5,
+   "occurrence": 30,
+   "minPrice": 31400,
+   "maxPrice": 36157,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    32,
+    33,
+    60,
+    61
+   ],
+   "values": [
+    88,
+    3,
+    19,
+    5,
+    4,
+    21,
+    30,
+    31400,
+    36157,
+    80,
+    40,
+    1,
+    8
+   ],
+   "statList": [
+    {
+     "key": "handling_2",
+     "value": 80
+    },
+    {
+     "key": "miningYield",
+     "value": 40
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 8
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 89,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 65400,
+   "maxPrice": 70570,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    32,
+    33,
+    60,
+    61
+   ],
+   "values": [
+    89,
+    3,
+    19,
+    7,
+    4,
+    21,
+    20,
+    65400,
+    70570,
+    70,
+    80,
+    0,
+    8
+   ],
+   "statList": [
+    {
+     "key": "handling_2",
+     "value": 70
+    },
+    {
+     "key": "miningYield",
+     "value": 80
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 8
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 90,
+   "techLevel": 10,
+   "occurrence": 5,
+   "minPrice": 168000,
+   "maxPrice": 201116,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    32,
+    33,
+    60
+   ],
+   "values": [
+    90,
+    3,
+    19,
+    10,
+    4,
+    21,
+    5,
+    168000,
+    201116,
+    100,
+    100,
+    0
+   ],
+   "statList": [
+    {
+     "key": "handling_2",
+     "value": 100
+    },
+    {
+     "key": "miningYield",
+     "value": 100
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 121,
+     "name": "Nanotech",
+     "amount": 90
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 80
+    },
+    {
+     "item": 130,
+     "name": "Hydraulics",
+     "amount": 90
+    },
+    {
+     "item": 166,
+     "name": "Titanium Core",
+     "amount": 10
+    },
+    {
+     "item": 155,
+     "name": "Titanium",
+     "amount": 40
+    }
+   ]
+  },
+  {
+   "index": 91,
+   "techLevel": 3,
+   "occurrence": 70,
+   "minPrice": 2600,
+   "maxPrice": 3043,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    34,
+    60,
+    61
+   ],
+   "values": [
+    91,
+    3,
+    20,
+    3,
+    14,
+    1,
+    70,
+    2600,
+    3043,
+    3,
+    0,
+    14
+   ],
+   "statList": [
+    {
+     "key": "cabinSize",
+     "value": 3
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 14
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 92,
+   "techLevel": 6,
+   "occurrence": 50,
+   "minPrice": 5900,
+   "maxPrice": 6053,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    34,
+    60,
+    61
+   ],
+   "values": [
+    92,
+    3,
+    20,
+    6,
+    14,
+    1,
+    50,
+    5900,
+    6053,
+    5,
+    0,
+    14
+   ],
+   "statList": [
+    {
+     "key": "cabinSize",
+     "value": 5
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 14
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 93,
+   "techLevel": 7,
+   "occurrence": 30,
+   "minPrice": 12800,
+   "maxPrice": 13593,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    34,
+    60,
+    61
+   ],
+   "values": [
+    93,
+    3,
+    20,
+    7,
+    14,
+    1,
+    30,
+    12800,
+    13593,
+    10,
+    0,
+    14
+   ],
+   "statList": [
+    {
+     "key": "cabinSize",
+     "value": 10
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 14
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 94,
+   "techLevel": 4,
+   "occurrence": 30,
+   "minPrice": 24700,
+   "maxPrice": 28402,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    35,
+    36,
+    38,
+    60,
+    61
+   ],
+   "values": [
+    94,
+    3,
+    21,
+    4,
+    18,
+    15,
+    30,
+    24700,
+    28402,
+    20000,
+    6500,
+    2,
+    0,
+    14
+   ],
+   "statList": [
+    {
+     "key": "effect_35",
+     "value": 20000
+    },
+    {
+     "key": "loadingSpeed_36",
+     "value": 6500
+    },
+    {
+     "key": "energyConsumption",
+     "value": 2
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 14
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 95,
+   "techLevel": 6,
+   "occurrence": 20,
+   "minPrice": 38000,
+   "maxPrice": 45424,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    35,
+    36,
+    38,
+    60,
+    61
+   ],
+   "values": [
+    95,
+    3,
+    21,
+    6,
+    18,
+    15,
+    20,
+    38000,
+    45424,
+    10000,
+    2000,
+    1,
+    1,
+    14
+   ],
+   "statList": [
+    {
+     "key": "effect_35",
+     "value": 10000
+    },
+    {
+     "key": "loadingSpeed_36",
+     "value": 2000
+    },
+    {
+     "key": "energyConsumption",
+     "value": 1
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 1
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 14
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 96,
+   "techLevel": 10,
+   "occurrence": 10,
+   "minPrice": 59800,
+   "maxPrice": 66060,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    35,
+    36,
+    38,
+    60
+   ],
+   "values": [
+    96,
+    3,
+    21,
+    10,
+    18,
+    15,
+    10,
+    59800,
+    66060,
+    40000,
+    3500,
+    5,
+    0
+   ],
+   "statList": [
+    {
+     "key": "effect_35",
+     "value": 40000
+    },
+    {
+     "key": "loadingSpeed_36",
+     "value": 3500
+    },
+    {
+     "key": "energyConsumption",
+     "value": 5
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 126,
+     "name": "Noble Gas",
+     "amount": 40
+    },
+    {
+     "item": 119,
+     "name": "Chemicals",
+     "amount": 15
+    },
+    {
+     "item": 130,
+     "name": "Hydraulics",
+     "amount": 20
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 40
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 10
+    },
+    {
+     "item": 124,
+     "name": "Radioactive Goods",
+     "amount": 40
+    }
+   ]
+  },
+  {
+   "index": 97,
+   "techLevel": 1,
+   "occurrence": 60,
+   "minPrice": 10,
+   "maxPrice": 60,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    97,
+    4,
+    22,
+    1,
+    14,
+    21,
+    60,
+    10,
+    60,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 98,
+   "techLevel": 2,
+   "occurrence": 50,
+   "minPrice": 50,
+   "maxPrice": 240,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    98,
+    4,
+    22,
+    2,
+    0,
+    21,
+    50,
+    50,
+    240,
+    0,
+    100
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 100
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 99,
+   "techLevel": 1,
+   "occurrence": 70,
+   "minPrice": 5,
+   "maxPrice": 7,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    99,
+    4,
+    22,
+    1,
+    9,
+    21,
+    70,
+    5,
+    7,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 100,
+   "techLevel": 5,
+   "occurrence": 10,
+   "minPrice": 1200,
+   "maxPrice": 2000,
+   "lowestPriceSystem": 10,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    100,
+    4,
+    22,
+    5,
+    10,
+    4,
+    10,
+    1200,
+    2000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 101,
+   "techLevel": 5,
+   "occurrence": 10,
+   "minPrice": 2700,
+   "maxPrice": 3400,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    101,
+    4,
+    22,
+    5,
+    16,
+    1,
+    10,
+    2700,
+    3400,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 102,
+   "techLevel": 5,
+   "occurrence": 15,
+   "minPrice": 3800,
+   "maxPrice": 5000,
+   "lowestPriceSystem": 11,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    102,
+    4,
+    22,
+    5,
+    11,
+    21,
+    15,
+    3800,
+    5000,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 103,
+   "techLevel": 1,
+   "occurrence": 20,
+   "minPrice": 20,
+   "maxPrice": 400,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    103,
+    4,
+    22,
+    1,
+    19,
+    21,
+    20,
+    20,
+    400,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 104,
+   "techLevel": 7,
+   "occurrence": 20,
+   "minPrice": 1070,
+   "maxPrice": 1500,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 7,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    104,
+    4,
+    22,
+    7,
+    8,
+    7,
+    20,
+    1070,
+    1500,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 105,
+   "techLevel": 8,
+   "occurrence": 20,
+   "minPrice": 30,
+   "maxPrice": 260,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    105,
+    4,
+    22,
+    8,
+    14,
+    21,
+    20,
+    30,
+    260,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 106,
+   "techLevel": 1,
+   "occurrence": 60,
+   "minPrice": 3,
+   "maxPrice": 20,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    106,
+    4,
+    22,
+    1,
+    19,
+    21,
+    60,
+    3,
+    20,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 107,
+   "techLevel": 5,
+   "occurrence": 30,
+   "minPrice": 4200,
+   "maxPrice": 6000,
+   "lowestPriceSystem": 1,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    107,
+    4,
+    22,
+    5,
+    1,
+    6,
+    30,
+    4200,
+    6000,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 108,
+   "techLevel": 7,
+   "occurrence": 7,
+   "minPrice": 22000,
+   "maxPrice": 26000,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    108,
+    4,
+    22,
+    7,
+    18,
+    15,
+    7,
+    22000,
+    26000,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 109,
+   "techLevel": 4,
+   "occurrence": 6,
+   "minPrice": 9000,
+   "maxPrice": 12000,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    109,
+    4,
+    22,
+    4,
+    20,
+    4,
+    6,
+    9000,
+    12000,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 110,
+   "techLevel": 5,
+   "occurrence": 2,
+   "minPrice": 10,
+   "maxPrice": 10000,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    110,
+    4,
+    22,
+    5,
+    21,
+    4,
+    2,
+    10,
+    10000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 111,
+   "techLevel": 2,
+   "occurrence": 30,
+   "minPrice": 5,
+   "maxPrice": 100,
+   "lowestPriceSystem": 13,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    111,
+    4,
+    22,
+    2,
+    13,
+    4,
+    30,
+    5,
+    100,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 112,
+   "techLevel": 2,
+   "occurrence": 25,
+   "minPrice": 5,
+   "maxPrice": 200,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    112,
+    4,
+    22,
+    2,
+    7,
+    1,
+    25,
+    5,
+    200,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 113,
+   "techLevel": 8,
+   "occurrence": 25,
+   "minPrice": 6450,
+   "maxPrice": 9000,
+   "lowestPriceSystem": 6,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    113,
+    4,
+    22,
+    8,
+    6,
+    1,
+    25,
+    6450,
+    9000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 114,
+   "techLevel": 3,
+   "occurrence": 50,
+   "minPrice": 150,
+   "maxPrice": 400,
+   "lowestPriceSystem": 15,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    114,
+    4,
+    22,
+    3,
+    15,
+    21,
+    50,
+    150,
+    400,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 115,
+   "techLevel": 2,
+   "occurrence": 0,
+   "minPrice": 1200,
+   "maxPrice": 1600,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 19,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    115,
+    4,
+    22,
+    2,
+    19,
+    19,
+    0,
+    1200,
+    1600,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 118,
+   "techLevel": 2,
+   "occurrence": 60,
+   "minPrice": 50,
+   "maxPrice": 180,
+   "lowestPriceSystem": 5,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    118,
+    4,
+    22,
+    2,
+    5,
+    4,
+    60,
+    50,
+    180,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 119,
+   "techLevel": 7,
+   "occurrence": 65,
+   "minPrice": 30,
+   "maxPrice": 200,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    119,
+    4,
+    22,
+    7,
+    9,
+    21,
+    65,
+    30,
+    200,
+    0,
+    100
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 100
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 120,
+   "techLevel": 5,
+   "occurrence": 50,
+   "minPrice": 15,
+   "maxPrice": 180,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    120,
+    4,
+    22,
+    5,
+    16,
+    1,
+    50,
+    15,
+    180,
+    0,
+    100
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 100
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 121,
+   "techLevel": 7,
+   "occurrence": 50,
+   "minPrice": 150,
+   "maxPrice": 400,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    121,
+    4,
+    22,
+    7,
+    0,
+    21,
+    50,
+    150,
+    400,
+    0,
+    100
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 100
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 122,
+   "techLevel": 2,
+   "occurrence": 50,
+   "minPrice": 560,
+   "maxPrice": 700,
+   "lowestPriceSystem": 2,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    122,
+    4,
+    22,
+    2,
+    2,
+    21,
+    50,
+    560,
+    700,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 123,
+   "techLevel": 1,
+   "occurrence": 50,
+   "minPrice": 4,
+   "maxPrice": 16,
+   "lowestPriceSystem": 3,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    123,
+    4,
+    22,
+    1,
+    3,
+    4,
+    50,
+    4,
+    16,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 124,
+   "techLevel": 3,
+   "occurrence": 30,
+   "minPrice": 90,
+   "maxPrice": 300,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    124,
+    4,
+    22,
+    3,
+    7,
+    1,
+    30,
+    90,
+    300,
+    0,
+    106
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 106
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 125,
+   "techLevel": 4,
+   "occurrence": 70,
+   "minPrice": 60,
+   "maxPrice": 200,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    125,
+    4,
+    22,
+    4,
+    20,
+    4,
+    70,
+    60,
+    200,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 126,
+   "techLevel": 2,
+   "occurrence": 50,
+   "minPrice": 180,
+   "maxPrice": 200,
+   "lowestPriceSystem": 13,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    126,
+    4,
+    22,
+    2,
+    13,
+    4,
+    50,
+    180,
+    200,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 127,
+   "techLevel": 7,
+   "occurrence": 50,
+   "minPrice": 15,
+   "maxPrice": 80,
+   "lowestPriceSystem": 17,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    127,
+    4,
+    22,
+    7,
+    17,
+    21,
+    50,
+    15,
+    80,
+    0,
+    100
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 100
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 128,
+   "techLevel": 5,
+   "occurrence": 50,
+   "minPrice": 75,
+   "maxPrice": 230,
+   "lowestPriceSystem": 17,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    128,
+    4,
+    22,
+    5,
+    17,
+    21,
+    50,
+    75,
+    230,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 129,
+   "techLevel": 7,
+   "occurrence": 50,
+   "minPrice": 50,
+   "maxPrice": 180,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    129,
+    4,
+    22,
+    7,
+    14,
+    21,
+    50,
+    50,
+    180,
+    0,
+    100
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 100
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 130,
+   "techLevel": 2,
+   "occurrence": 70,
+   "minPrice": 56,
+   "maxPrice": 120,
+   "lowestPriceSystem": 1,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    130,
+    4,
+    22,
+    2,
+    1,
+    6,
+    70,
+    56,
+    120,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 131,
+   "techLevel": 10,
+   "occurrence": 0,
+   "minPrice": 199,
+   "maxPrice": 199,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 19,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    131,
+    4,
+    22,
+    10,
+    19,
+    19,
+    0,
+    199,
+    199,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 132,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 139,
+   "maxPrice": 195,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    132,
+    4,
+    22,
+    1,
+    0,
+    6,
+    30,
+    139,
+    195,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 133,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 489,
+   "maxPrice": 636,
+   "lowestPriceSystem": 1,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    133,
+    4,
+    22,
+    1,
+    1,
+    6,
+    30,
+    489,
+    636,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 134,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 789,
+   "maxPrice": 1624,
+   "lowestPriceSystem": 2,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    134,
+    4,
+    22,
+    1,
+    2,
+    21,
+    30,
+    789,
+    1624,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 135,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 237,
+   "maxPrice": 322,
+   "lowestPriceSystem": 3,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    135,
+    4,
+    22,
+    1,
+    3,
+    15,
+    30,
+    237,
+    322,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 136,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 211,
+   "maxPrice": 388,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    136,
+    4,
+    22,
+    1,
+    4,
+    21,
+    30,
+    211,
+    388,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 137,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 245,
+   "maxPrice": 480,
+   "lowestPriceSystem": 5,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    137,
+    4,
+    22,
+    1,
+    5,
+    15,
+    30,
+    245,
+    480,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 138,
+   "techLevel": 1,
+   "occurrence": 50,
+   "minPrice": 99,
+   "maxPrice": 202,
+   "lowestPriceSystem": 6,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    138,
+    4,
+    22,
+    1,
+    6,
+    1,
+    50,
+    99,
+    202,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 139,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 320,
+   "maxPrice": 648,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    139,
+    4,
+    22,
+    1,
+    7,
+    1,
+    30,
+    320,
+    648,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 140,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 259,
+   "maxPrice": 314,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    140,
+    4,
+    22,
+    1,
+    8,
+    6,
+    30,
+    259,
+    314,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 141,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 1073,
+   "maxPrice": 1679,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    141,
+    4,
+    22,
+    1,
+    9,
+    21,
+    30,
+    1073,
+    1679,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 142,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 89,
+   "maxPrice": 205,
+   "lowestPriceSystem": 10,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    142,
+    4,
+    22,
+    1,
+    10,
+    4,
+    30,
+    89,
+    205,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 143,
+   "techLevel": 1,
+   "occurrence": 50,
+   "minPrice": 105,
+   "maxPrice": 178,
+   "lowestPriceSystem": 11,
+   "highestPriceSystem": 18,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    143,
+    4,
+    22,
+    1,
+    11,
+    18,
+    50,
+    105,
+    178,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 144,
+   "techLevel": 1,
+   "occurrence": 50,
+   "minPrice": 113,
+   "maxPrice": 208,
+   "lowestPriceSystem": 12,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    144,
+    4,
+    22,
+    1,
+    12,
+    4,
+    50,
+    113,
+    208,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 145,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 398,
+   "maxPrice": 537,
+   "lowestPriceSystem": 13,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    145,
+    4,
+    22,
+    1,
+    13,
+    0,
+    30,
+    398,
+    537,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 146,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 264,
+   "maxPrice": 487,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    146,
+    4,
+    22,
+    1,
+    14,
+    21,
+    30,
+    264,
+    487,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 147,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 453,
+   "maxPrice": 668,
+   "lowestPriceSystem": 15,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    147,
+    4,
+    22,
+    1,
+    15,
+    21,
+    30,
+    453,
+    668,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 148,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 262,
+   "maxPrice": 374,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    148,
+    4,
+    22,
+    1,
+    16,
+    1,
+    30,
+    262,
+    374,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 149,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 258,
+   "maxPrice": 337,
+   "lowestPriceSystem": 17,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    149,
+    4,
+    22,
+    1,
+    17,
+    21,
+    30,
+    258,
+    337,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 150,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 829,
+   "maxPrice": 1319,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    150,
+    4,
+    22,
+    1,
+    18,
+    6,
+    30,
+    829,
+    1319,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 151,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 1125,
+   "maxPrice": 1759,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    151,
+    4,
+    22,
+    1,
+    19,
+    21,
+    30,
+    1125,
+    1759,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 152,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 578,
+   "maxPrice": 931,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    152,
+    4,
+    22,
+    1,
+    20,
+    4,
+    30,
+    578,
+    931,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 153,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 510,
+   "maxPrice": 835,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    153,
+    4,
+    22,
+    1,
+    21,
+    15,
+    30,
+    510,
+    835,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 154,
+   "techLevel": 1,
+   "occurrence": 20,
+   "minPrice": 80,
+   "maxPrice": 100,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    154,
+    4,
+    23,
+    1,
+    9,
+    21,
+    20,
+    80,
+    100,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 155,
+   "techLevel": 1,
+   "occurrence": 30,
+   "minPrice": 150,
+   "maxPrice": 200,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    155,
+    4,
+    23,
+    1,
+    21,
+    4,
+    30,
+    150,
+    200,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 157,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 120,
+   "maxPrice": 170,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    157,
+    4,
+    23,
+    1,
+    7,
+    1,
+    40,
+    120,
+    170,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 158,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 80,
+   "maxPrice": 120,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    158,
+    4,
+    23,
+    1,
+    4,
+    21,
+    40,
+    80,
+    120,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 159,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 70,
+   "maxPrice": 110,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    159,
+    4,
+    23,
+    1,
+    18,
+    15,
+    40,
+    70,
+    110,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 160,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 35,
+   "maxPrice": 60,
+   "lowestPriceSystem": 13,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    160,
+    4,
+    23,
+    1,
+    13,
+    4,
+    40,
+    35,
+    60,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 161,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 44,
+   "maxPrice": 80,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    161,
+    4,
+    23,
+    1,
+    19,
+    21,
+    40,
+    44,
+    80,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 162,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 38,
+   "maxPrice": 74,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    162,
+    4,
+    23,
+    1,
+    14,
+    21,
+    40,
+    38,
+    74,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 163,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 80,
+   "maxPrice": 90,
+   "lowestPriceSystem": 5,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    163,
+    4,
+    23,
+    1,
+    5,
+    4,
+    40,
+    80,
+    90,
+    0,
+    51
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 51
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 164,
+   "techLevel": 1,
+   "occurrence": 40,
+   "minPrice": 400,
+   "maxPrice": 400,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 19,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    164,
+    4,
+    23,
+    1,
+    19,
+    19,
+    40,
+    400,
+    400,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 165,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 414,
+   "maxPrice": 621,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    165,
+    4,
+    24,
+    3,
+    9,
+    21,
+    15,
+    414,
+    621,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 166,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 805,
+   "maxPrice": 1207,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    166,
+    4,
+    24,
+    3,
+    21,
+    4,
+    15,
+    805,
+    1207,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 167,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 115,
+   "maxPrice": 172,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    167,
+    4,
+    24,
+    3,
+    0,
+    21,
+    15,
+    115,
+    172,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 168,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 667,
+   "maxPrice": 1000,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    168,
+    4,
+    24,
+    3,
+    7,
+    1,
+    15,
+    667,
+    1000,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 169,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 460,
+   "maxPrice": 690,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    169,
+    4,
+    24,
+    3,
+    4,
+    21,
+    15,
+    460,
+    690,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 170,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 414,
+   "maxPrice": 621,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    170,
+    4,
+    24,
+    3,
+    18,
+    15,
+    15,
+    414,
+    621,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 171,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 218,
+   "maxPrice": 327,
+   "lowestPriceSystem": 13,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    171,
+    4,
+    24,
+    3,
+    13,
+    4,
+    15,
+    218,
+    327,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 172,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 285,
+   "maxPrice": 427,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    172,
+    4,
+    24,
+    3,
+    19,
+    21,
+    15,
+    285,
+    427,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 173,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 257,
+   "maxPrice": 385,
+   "lowestPriceSystem": 14,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    173,
+    4,
+    24,
+    3,
+    14,
+    21,
+    15,
+    257,
+    385,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 174,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 380,
+   "maxPrice": 480,
+   "lowestPriceSystem": 5,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    174,
+    4,
+    24,
+    3,
+    5,
+    4,
+    15,
+    380,
+    480,
+    0,
+    50
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 50
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 175,
+   "techLevel": 3,
+   "occurrence": 15,
+   "minPrice": 5000,
+   "maxPrice": 5000,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 19,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    175,
+    4,
+    24,
+    3,
+    19,
+    19,
+    15,
+    5000,
+    5000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 176,
+   "techLevel": 5,
+   "occurrence": 0,
+   "minPrice": 37000,
+   "maxPrice": 42600,
+   "lowestPriceSystem": 18,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    60,
+    61
+   ],
+   "values": [
+    176,
+    0,
+    25,
+    5,
+    18,
+    15,
+    0,
+    37000,
+    42600,
+    13,
+    700,
+    2000,
+    22,
+    2800,
+    0,
+    105
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 13
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 700
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 22
+    },
+    {
+     "key": "magnitude",
+     "value": 2800
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 105
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 177,
+   "techLevel": 7,
+   "occurrence": 0,
+   "minPrice": 113100,
+   "maxPrice": 130100,
+   "lowestPriceSystem": 13,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    60,
+    61
+   ],
+   "values": [
+    177,
+    0,
+    25,
+    7,
+    13,
+    4,
+    0,
+    113100,
+    130100,
+    19,
+    750,
+    2100,
+    25,
+    4400,
+    0,
+    105
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 19
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 750
+    },
+    {
+     "key": "range",
+     "value": 2100
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 25
+    },
+    {
+     "key": "magnitude",
+     "value": 4400
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 105
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 178,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 303700,
+   "maxPrice": 349300,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    60
+   ],
+   "values": [
+    178,
+    0,
+    25,
+    9,
+    19,
+    21,
+    0,
+    303700,
+    349300,
+    30,
+    900,
+    2600,
+    28,
+    6300,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 30
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 900
+    },
+    {
+     "key": "range",
+     "value": 2600
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 28
+    },
+    {
+     "key": "magnitude",
+     "value": 6300
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 27,
+     "name": "Mass Driver MD 10",
+     "amount": 1
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 15
+    },
+    {
+     "item": 121,
+     "name": "Nanotech",
+     "amount": 7
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 20
+    },
+    {
+     "item": 171,
+     "name": "Doxtrit Core",
+     "amount": 1
+    },
+    {
+     "item": 186,
+     "name": "Nirai Overdrive",
+     "amount": 1
+    }
+   ]
+  },
+  {
+   "index": 179,
+   "techLevel": 4,
+   "occurrence": 0,
+   "minPrice": 6100,
+   "maxPrice": 7100,
+   "lowestPriceSystem": 11,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    15,
+    60
+   ],
+   "values": [
+    179,
+    1,
+    7,
+    4,
+    11,
+    1,
+    0,
+    6100,
+    7100,
+    850,
+    10000,
+    20000,
+    10,
+    25000,
+    1,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 850
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 10000
+    },
+    {
+     "key": "range",
+     "value": 20000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 10
+    },
+    {
+     "key": "magnitude",
+     "value": 25000
+    },
+    {
+     "key": "steerable",
+     "value": 1
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 44,
+     "name": "AMR Tormentor",
+     "amount": 10
+    },
+    {
+     "item": 124,
+     "name": "Radioactive Goods",
+     "amount": 15
+    },
+    {
+     "item": 114,
+     "name": "Explosives",
+     "amount": 25
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 5
+    },
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 10
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 8
+    },
+    {
+     "item": 157,
+     "name": "Orichalzine",
+     "amount": 12
+    },
+    {
+     "item": 166,
+     "name": "Titanium Core",
+     "amount": 2
+    }
+   ]
+  },
+  {
+   "index": 180,
+   "techLevel": 5,
+   "occurrence": 0,
+   "minPrice": 193500,
+   "maxPrice": 222600,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 13,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    16,
+    17,
+    60,
+    61
+   ],
+   "values": [
+    180,
+    2,
+    8,
+    5,
+    0,
+    13,
+    0,
+    193500,
+    222600,
+    4,
+    100,
+    2000,
+    32,
+    1,
+    100,
+    0,
+    105
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 4
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 100
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 32
+    },
+    {
+     "key": "automatic",
+     "value": 1
+    },
+    {
+     "key": "handling",
+     "value": 100
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 105
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 181,
+   "techLevel": 6,
+   "occurrence": 0,
+   "minPrice": 338100,
+   "maxPrice": 388900,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 13,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    16,
+    17,
+    60,
+    61
+   ],
+   "values": [
+    181,
+    2,
+    8,
+    6,
+    0,
+    13,
+    0,
+    338100,
+    388900,
+    9,
+    190,
+    2500,
+    32,
+    1,
+    125,
+    0,
+    105
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 9
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 190
+    },
+    {
+     "key": "range",
+     "value": 2500
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 32
+    },
+    {
+     "key": "automatic",
+     "value": 1
+    },
+    {
+     "key": "handling",
+     "value": 125
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 105
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 182,
+   "techLevel": 6,
+   "occurrence": 0,
+   "minPrice": 500100,
+   "maxPrice": 575200,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 13,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    16,
+    17,
+    60
+   ],
+   "values": [
+    182,
+    2,
+    8,
+    6,
+    0,
+    13,
+    0,
+    500100,
+    575200,
+    8,
+    150,
+    3000,
+    32,
+    1,
+    150,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 8
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 150
+    },
+    {
+     "key": "range",
+     "value": 3000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 32
+    },
+    {
+     "key": "automatic",
+     "value": 1
+    },
+    {
+     "key": "handling",
+     "value": 150
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 47,
+     "name": "Hammerhead D1",
+     "amount": 1
+    },
+    {
+     "item": 15,
+     "name": "H'nookk",
+     "amount": 1
+    },
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 35
+    },
+    {
+     "item": 125,
+     "name": "Mechanical Supplies",
+     "amount": 22
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 25
+    },
+    {
+     "item": 128,
+     "name": "Com. Devices",
+     "amount": 5
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 18
+    },
+    {
+     "item": 168,
+     "name": "Orichalzin Core",
+     "amount": 40
+    }
+   ]
+  },
+  {
+   "index": 183,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 325200,
+   "maxPrice": 374000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 13,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    183,
+    0,
+    0,
+    9,
+    0,
+    13,
+    0,
+    325200,
+    374000,
+    18,
+    300,
+    2000,
+    28,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 18
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 300
+    },
+    {
+     "key": "range",
+     "value": 2000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 28
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 30
+    },
+    {
+     "item": 121,
+     "name": "Nanotech",
+     "amount": 25
+    },
+    {
+     "item": 155,
+     "name": "Titanium",
+     "amount": 8
+    },
+    {
+     "item": 168,
+     "name": "Orichalzin Core",
+     "amount": 5
+    },
+    {
+     "item": 172,
+     "name": "Cesogen Core",
+     "amount": 5
+    },
+    {
+     "item": 120,
+     "name": "Plastics",
+     "amount": 30
+    },
+    {
+     "item": 126,
+     "name": "Noble Gas",
+     "amount": 28
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 45
+    },
+    {
+     "item": 175,
+     "name": "Void Essence",
+     "amount": 1
+    }
+   ]
+  },
+  {
+   "index": 184,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 312000,
+   "maxPrice": 358800,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 19,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    42,
+    43,
+    60,
+    61
+   ],
+   "values": [
+    184,
+    3,
+    26,
+    9,
+    19,
+    19,
+    0,
+    312000,
+    358800,
+    15000,
+    30000,
+    0,
+    107
+   ],
+   "statList": [
+    {
+     "key": "effect_42",
+     "value": 15000
+    },
+    {
+     "key": "loadingSpeed_43",
+     "value": 30000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 107
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 185,
+   "techLevel": 6,
+   "occurrence": 0,
+   "minPrice": 7000,
+   "maxPrice": 8000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    41,
+    60,
+    61
+   ],
+   "values": [
+    185,
+    3,
+    27,
+    6,
+    0,
+    6,
+    0,
+    7000,
+    8000,
+    10000,
+    0,
+    107
+   ],
+   "statList": [
+    {
+     "key": "effect_41",
+     "value": 10000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 107
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 186,
+   "techLevel": 5,
+   "occurrence": 0,
+   "minPrice": 25000,
+   "maxPrice": 28750,
+   "lowestPriceSystem": 1,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    39,
+    40,
+    60,
+    61
+   ],
+   "values": [
+    186,
+    3,
+    28,
+    5,
+    1,
+    6,
+    0,
+    25000,
+    28750,
+    20,
+    -10,
+    0,
+    107
+   ],
+   "statList": [
+    {
+     "key": "fireRateFactor",
+     "value": 20
+    },
+    {
+     "key": "damageFactor",
+     "value": -10
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 107
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 187,
+   "techLevel": 5,
+   "occurrence": 0,
+   "minPrice": 25000,
+   "maxPrice": 28750,
+   "lowestPriceSystem": 2,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    39,
+    40,
+    60,
+    61
+   ],
+   "values": [
+    187,
+    3,
+    28,
+    5,
+    2,
+    21,
+    0,
+    25000,
+    28750,
+    -10,
+    20,
+    0,
+    107
+   ],
+   "statList": [
+    {
+     "key": "fireRateFactor",
+     "value": -10
+    },
+    {
+     "key": "damageFactor",
+     "value": 20
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 107
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 188,
+   "techLevel": 7,
+   "occurrence": 0,
+   "minPrice": 118000,
+   "maxPrice": 135700,
+   "lowestPriceSystem": 3,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60,
+    61
+   ],
+   "values": [
+    188,
+    3,
+    15,
+    7,
+    3,
+    15,
+    0,
+    118000,
+    135700,
+    0,
+    107
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 107
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 189,
+   "techLevel": 1,
+   "occurrence": 0,
+   "minPrice": 7500,
+   "maxPrice": 7500,
+   "lowestPriceSystem": 4,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    189,
+    3,
+    29,
+    1,
+    4,
+    21,
+    0,
+    7500,
+    7500,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 190,
+   "techLevel": 1,
+   "occurrence": 0,
+   "minPrice": 7500,
+   "maxPrice": 7500,
+   "lowestPriceSystem": 5,
+   "highestPriceSystem": 15,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    190,
+    3,
+    29,
+    1,
+    5,
+    15,
+    0,
+    7500,
+    7500,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 191,
+   "techLevel": 1,
+   "occurrence": 0,
+   "minPrice": 7500,
+   "maxPrice": 7500,
+   "lowestPriceSystem": 6,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    191,
+    3,
+    29,
+    1,
+    6,
+    1,
+    0,
+    7500,
+    7500,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 192,
+   "techLevel": 1,
+   "occurrence": 0,
+   "minPrice": 7500,
+   "maxPrice": 7500,
+   "lowestPriceSystem": 7,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    192,
+    3,
+    29,
+    1,
+    7,
+    1,
+    0,
+    7500,
+    7500,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 193,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 152500,
+   "maxPrice": 175375,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 6,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    193,
+    0,
+    3,
+    9,
+    8,
+    6,
+    0,
+    152500,
+    175375,
+    5,
+    120,
+    2200,
+    17,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 5
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 120
+    },
+    {
+     "key": "range",
+     "value": 2200
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 17
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 194,
+   "techLevel": 8,
+   "occurrence": 0,
+   "minPrice": 165000,
+   "maxPrice": 189750,
+   "lowestPriceSystem": 9,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    23,
+    24,
+    60,
+    61
+   ],
+   "values": [
+    194,
+    3,
+    13,
+    8,
+    9,
+    21,
+    0,
+    165000,
+    189750,
+    2,
+    0,
+    0,
+    107
+   ],
+   "statList": [
+    {
+     "key": "automatic_2",
+     "value": 2
+    },
+    {
+     "key": "timeToLock",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 107
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 195,
+   "techLevel": 8,
+   "occurrence": 0,
+   "minPrice": 72500,
+   "maxPrice": 83375,
+   "lowestPriceSystem": 10,
+   "highestPriceSystem": 4,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    25,
+    26,
+    27,
+    60,
+    61
+   ],
+   "values": [
+    195,
+    3,
+    14,
+    8,
+    10,
+    4,
+    0,
+    72500,
+    83375,
+    300,
+    16000,
+    6000,
+    0,
+    107
+   ],
+   "statList": [
+    {
+     "key": "boostSpeed",
+     "value": 300
+    },
+    {
+     "key": "boostRechargeMs",
+     "value": 16000
+    },
+    {
+     "key": "boostDurationMs",
+     "value": 6000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    },
+    {
+     "key": "iconIndex_guess",
+     "value": 107
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 196,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 23000,
+   "maxPrice": 25000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    57,
+    58,
+    60
+   ],
+   "values": [
+    196,
+    3,
+    33,
+    9,
+    0,
+    0,
+    0,
+    23000,
+    25000,
+    0,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "showInfo",
+     "value": 0
+    },
+    {
+     "key": "showOnRadar_58",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 197,
+   "techLevel": 4,
+   "occurrence": 0,
+   "minPrice": 850,
+   "maxPrice": 1050,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    56,
+    60
+   ],
+   "values": [
+    197,
+    1,
+    34,
+    4,
+    0,
+    0,
+    0,
+    850,
+    1050,
+    5,
+    0,
+    6000,
+    6000,
+    6,
+    10000,
+    0,
+    50,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 5
+    },
+    {
+     "key": "empDamage",
+     "value": 0
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 6000
+    },
+    {
+     "key": "range",
+     "value": 6000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 6
+    },
+    {
+     "key": "magnitude",
+     "value": 10000
+    },
+    {
+     "key": "steerable",
+     "value": 0
+    },
+    {
+     "key": "effect_56",
+     "value": 50
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 198,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 41000,
+   "maxPrice": 43000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    17,
+    49,
+    50,
+    51,
+    60
+   ],
+   "values": [
+    198,
+    2,
+    35,
+    9,
+    0,
+    0,
+    0,
+    41000,
+    43000,
+    0,
+    125,
+    26,
+    80,
+    40000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 0
+    },
+    {
+     "key": "handling",
+     "value": 125
+    },
+    {
+     "key": "speed_49",
+     "value": 26
+    },
+    {
+     "key": "magnitude_50",
+     "value": 80
+    },
+    {
+     "key": "range_51",
+     "value": 40000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 199,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 110000,
+   "maxPrice": 113000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    17,
+    49,
+    50,
+    51,
+    60
+   ],
+   "values": [
+    199,
+    2,
+    35,
+    9,
+    0,
+    0,
+    0,
+    110000,
+    113000,
+    0,
+    150,
+    28,
+    80,
+    50000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 0
+    },
+    {
+     "key": "handling",
+     "value": 150
+    },
+    {
+     "key": "speed_49",
+     "value": 28
+    },
+    {
+     "key": "magnitude_50",
+     "value": 80
+    },
+    {
+     "key": "range_51",
+     "value": 50000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 200,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 580000,
+   "maxPrice": 620000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    17,
+    49,
+    50,
+    51,
+    60
+   ],
+   "values": [
+    200,
+    2,
+    35,
+    9,
+    0,
+    0,
+    0,
+    580000,
+    620000,
+    0,
+    200,
+    32,
+    100,
+    60000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 0
+    },
+    {
+     "key": "handling",
+     "value": 200
+    },
+    {
+     "key": "speed_49",
+     "value": 32
+    },
+    {
+     "key": "magnitude_50",
+     "value": 100
+    },
+    {
+     "key": "range_51",
+     "value": 60000
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 201,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 35,
+   "maxPrice": 60,
+   "lowestPriceSystem": 17,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    201,
+    4,
+    36,
+    9,
+    17,
+    0,
+    0,
+    35,
+    60,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 202,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 40,
+   "maxPrice": 45,
+   "lowestPriceSystem": 16,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    202,
+    4,
+    36,
+    9,
+    16,
+    0,
+    0,
+    40,
+    45,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 203,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 50,
+   "maxPrice": 80,
+   "lowestPriceSystem": 8,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    203,
+    4,
+    36,
+    9,
+    8,
+    0,
+    0,
+    50,
+    80,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 204,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 80,
+   "maxPrice": 400,
+   "lowestPriceSystem": 20,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    204,
+    4,
+    36,
+    9,
+    20,
+    0,
+    0,
+    80,
+    400,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 206,
+   "techLevel": 8,
+   "occurrence": 0,
+   "minPrice": 41500,
+   "maxPrice": 43000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    52,
+    60
+   ],
+   "values": [
+    206,
+    3,
+    38,
+    8,
+    0,
+    0,
+    0,
+    41500,
+    43000,
+    60,
+    0
+   ],
+   "statList": [
+    {
+     "key": "gammaShielding",
+     "value": 60
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 205,
+     "name": "Gamma Shield I",
+     "amount": 1
+    },
+    {
+     "item": 119,
+     "name": "Chemicals",
+     "amount": 5
+    },
+    {
+     "item": 121,
+     "name": "Nanotech",
+     "amount": 7
+    },
+    {
+     "item": 163,
+     "name": "Hypanium",
+     "amount": 20
+    },
+    {
+     "item": 172,
+     "name": "Cesogen Core",
+     "amount": 12
+    }
+   ]
+  },
+  {
+   "index": 207,
+   "techLevel": 8,
+   "occurrence": 0,
+   "minPrice": 62000,
+   "maxPrice": 67000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    53,
+    54,
+    55,
+    60
+   ],
+   "values": [
+    207,
+    3,
+    37,
+    8,
+    0,
+    0,
+    0,
+    62000,
+    67000,
+    15000,
+    60,
+    1,
+    0
+   ],
+   "statList": [
+    {
+     "key": "range_53",
+     "value": 15000
+    },
+    {
+     "key": "effect_54",
+     "value": 60
+    },
+    {
+     "key": "count",
+     "value": 1
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 209,
+   "techLevel": 10,
+   "occurrence": 0,
+   "minPrice": 40000,
+   "maxPrice": 60000,
+   "lowestPriceSystem": 21,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    209,
+    4,
+    22,
+    10,
+    21,
+    21,
+    0,
+    40000,
+    60000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 210,
+   "techLevel": 10,
+   "occurrence": 0,
+   "minPrice": 470500,
+   "maxPrice": 472000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    60
+   ],
+   "values": [
+    210,
+    4,
+    22,
+    10,
+    0,
+    0,
+    0,
+    470500,
+    472000,
+    0
+   ],
+   "statList": [
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 201,
+     "name": "Green Plasma",
+     "amount": 917
+    },
+    {
+     "item": 202,
+     "name": "Blue Plasma",
+     "amount": 917
+    },
+    {
+     "item": 203,
+     "name": "Purple Plasma",
+     "amount": 917
+    },
+    {
+     "item": 204,
+     "name": "Red Plasma",
+     "amount": 917
+    }
+   ]
+  },
+  {
+   "index": 211,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 640,
+   "maxPrice": 750,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    211,
+    1,
+    39,
+    9,
+    0,
+    0,
+    0,
+    640,
+    750,
+    9,
+    430,
+    1000,
+    22,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 9
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 430
+    },
+    {
+     "key": "range",
+     "value": 1000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 22
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 212,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 1200,
+   "maxPrice": 1600,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    212,
+    1,
+    39,
+    9,
+    0,
+    0,
+    0,
+    1200,
+    1600,
+    11,
+    300,
+    1000,
+    25,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 11
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 300
+    },
+    {
+     "key": "range",
+     "value": 1000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 25
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 214,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 310,
+   "maxPrice": 350,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    214,
+    1,
+    40,
+    9,
+    0,
+    0,
+    0,
+    310,
+    350,
+    60,
+    3000,
+    8000,
+    8,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 60
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 3000
+    },
+    {
+     "key": "range",
+     "value": 8000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 8
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 215,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 670,
+   "maxPrice": 780,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    215,
+    1,
+    40,
+    9,
+    0,
+    0,
+    0,
+    670,
+    780,
+    75,
+    3000,
+    10000,
+    9,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 75
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 3000
+    },
+    {
+     "key": "range",
+     "value": 10000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 9
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 216,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 1300,
+   "maxPrice": 1600,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    60
+   ],
+   "values": [
+    216,
+    1,
+    40,
+    9,
+    0,
+    0,
+    0,
+    1300,
+    1600,
+    90,
+    3000,
+    10000,
+    10,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 90
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 3000
+    },
+    {
+     "key": "range",
+     "value": 10000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 10
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 219,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 148000,
+   "maxPrice": 152000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    57,
+    58,
+    60
+   ],
+   "values": [
+    219,
+    3,
+    33,
+    9,
+    0,
+    0,
+    0,
+    148000,
+    152000,
+    1,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "showInfo",
+     "value": 1
+    },
+    {
+     "key": "showOnRadar_58",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 220,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 470500,
+   "maxPrice": 476000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    57,
+    58,
+    60
+   ],
+   "values": [
+    220,
+    3,
+    33,
+    9,
+    0,
+    0,
+    0,
+    470500,
+    476000,
+    1,
+    1,
+    0
+   ],
+   "statList": [
+    {
+     "key": "showInfo",
+     "value": 1
+    },
+    {
+     "key": "showOnRadar_58",
+     "value": 1
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": []
+  },
+  {
+   "index": 221,
+   "techLevel": 6,
+   "occurrence": 0,
+   "minPrice": 1800,
+   "maxPrice": 1950,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    56,
+    60
+   ],
+   "values": [
+    221,
+    1,
+    34,
+    6,
+    0,
+    0,
+    0,
+    1800,
+    1950,
+    5,
+    0,
+    6000,
+    6000,
+    6,
+    15000,
+    0,
+    100,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 5
+    },
+    {
+     "key": "empDamage",
+     "value": 0
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 6000
+    },
+    {
+     "key": "range",
+     "value": 6000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 6
+    },
+    {
+     "key": "magnitude",
+     "value": 15000
+    },
+    {
+     "key": "steerable",
+     "value": 0
+    },
+    {
+     "key": "effect_56",
+     "value": 100
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 197,
+     "name": "Ion Lambda Mk1",
+     "amount": 10
+    },
+    {
+     "item": 173,
+     "name": "Perrius Core",
+     "amount": 2
+    },
+    {
+     "item": 114,
+     "name": "Explosives",
+     "amount": 20
+    },
+    {
+     "item": 124,
+     "name": "Radioactive Goods",
+     "amount": 10
+    }
+   ]
+  },
+  {
+   "index": 223,
+   "techLevel": 8,
+   "occurrence": 0,
+   "minPrice": 77000,
+   "maxPrice": 79000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    53,
+    54,
+    55,
+    60
+   ],
+   "values": [
+    223,
+    3,
+    41,
+    8,
+    0,
+    0,
+    0,
+    77000,
+    79000,
+    10000,
+    100,
+    3,
+    0
+   ],
+   "statList": [
+    {
+     "key": "range_53",
+     "value": 10000
+    },
+    {
+     "key": "effect_54",
+     "value": 100
+    },
+    {
+     "key": "count",
+     "value": 3
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 40
+    },
+    {
+     "item": 129,
+     "name": "Optics",
+     "amount": 68
+    },
+    {
+     "item": 222,
+     "name": "Crimson Drain",
+     "amount": 1
+    },
+    {
+     "item": 204,
+     "name": "Red Plasma",
+     "amount": 25
+    },
+    {
+     "item": 218,
+     "name": "Novanium Core",
+     "amount": 5
+    }
+   ]
+  },
+  {
+   "index": 225,
+   "techLevel": 10,
+   "occurrence": 5,
+   "minPrice": 147000,
+   "maxPrice": 155000,
+   "lowestPriceSystem": 19,
+   "highestPriceSystem": 21,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    18,
+    19,
+    52,
+    60
+   ],
+   "values": [
+    225,
+    3,
+    9,
+    10,
+    19,
+    21,
+    5,
+    147000,
+    155000,
+    380,
+    55000,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "shieldCapacity",
+     "value": 380
+    },
+    {
+     "key": "shieldRegenTime",
+     "value": 55000
+    },
+    {
+     "key": "gammaShielding",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 163,
+     "name": "Hypanium",
+     "amount": 80
+    },
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 75
+    },
+    {
+     "item": 120,
+     "name": "Plastics",
+     "amount": 12
+    },
+    {
+     "item": 121,
+     "name": "Nanotech",
+     "amount": 65
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 80
+    },
+    {
+     "item": 127,
+     "name": "Microchips",
+     "amount": 80
+    },
+    {
+     "item": 201,
+     "name": "Green Plasma",
+     "amount": 35
+    },
+    {
+     "item": 202,
+     "name": "Blue Plasma",
+     "amount": 35
+    },
+    {
+     "item": 218,
+     "name": "Novanium Core",
+     "amount": 5
+    }
+   ]
+  },
+  {
+   "index": 226,
+   "techLevel": 9,
+   "occurrence": 20,
+   "minPrice": 9000,
+   "maxPrice": 9500,
+   "lowestPriceSystem": 11,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    60
+   ],
+   "values": [
+    226,
+    1,
+    42,
+    9,
+    11,
+    1,
+    20,
+    9000,
+    9500,
+    140,
+    80,
+    7000,
+    7000,
+    0,
+    80000,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 140
+    },
+    {
+     "key": "empDamage",
+     "value": 80
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 7000
+    },
+    {
+     "key": "range",
+     "value": 7000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 0
+    },
+    {
+     "key": "magnitude",
+     "value": 80000
+    },
+    {
+     "key": "steerable",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 114,
+     "name": "Explosives",
+     "amount": 25
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 60
+    },
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 10
+    },
+    {
+     "item": 126,
+     "name": "Noble Gas",
+     "amount": 8
+    },
+    {
+     "item": 203,
+     "name": "Purple Plasma",
+     "amount": 30
+    }
+   ]
+  },
+  {
+   "index": 227,
+   "techLevel": 9,
+   "occurrence": 0,
+   "minPrice": 520000,
+   "maxPrice": 540000,
+   "lowestPriceSystem": 11,
+   "highestPriceSystem": 1,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    59,
+    60
+   ],
+   "values": [
+    227,
+    3,
+    43,
+    9,
+    11,
+    1,
+    0,
+    520000,
+    540000,
+    30,
+    0
+   ],
+   "statList": [
+    {
+     "key": "plasmaConsumption",
+     "value": 30
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 118,
+     "name": "Electronics",
+     "amount": 5
+    },
+    {
+     "item": 119,
+     "name": "Chemicals",
+     "amount": 5
+    },
+    {
+     "item": 122,
+     "name": "Energy Cells",
+     "amount": 25
+    },
+    {
+     "item": 210,
+     "name": "Chromo Plasma",
+     "amount": 1
+    }
+   ]
+  },
+  {
+   "index": 232,
+   "techLevel": 1,
+   "occurrence": 0,
+   "minPrice": 20000,
+   "maxPrice": 22000,
+   "lowestPriceSystem": 0,
+   "highestPriceSystem": 0,
+   "keys": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    12,
+    13,
+    14,
+    15,
+    60
+   ],
+   "values": [
+    232,
+    1,
+    7,
+    1,
+    0,
+    0,
+    0,
+    20000,
+    22000,
+    1,
+    8000,
+    8000,
+    12,
+    20000,
+    0,
+    0
+   ],
+   "statList": [
+    {
+     "key": "damage",
+     "value": 1
+    },
+    {
+     "key": "loadingTimeMs",
+     "value": 8000
+    },
+    {
+     "key": "range",
+     "value": 8000
+    },
+    {
+     "key": "projectileSpeed",
+     "value": 12
+    },
+    {
+     "key": "magnitude",
+     "value": 20000
+    },
+    {
+     "key": "steerable",
+     "value": 0
+    },
+    {
+     "key": "raceSpecific_guess",
+     "value": 0
+    }
+   ],
+   "blueprint": [
+    {
+     "item": 114,
+     "name": "Explosives",
+     "amount": 10
+    },
+    {
+     "item": 210,
+     "name": "Chromo Plasma",
+     "amount": 1
+    }
+   ]
+  }
+ ],
+ "ships": [
+  {
+   "index": 0,
+   "armor": 95,
+   "cargo": 25,
+   "price": 16038,
+   "primary": 1,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 3,
+   "handling": 120
+  },
+  {
+   "index": 1,
+   "armor": 192,
+   "cargo": 65,
+   "price": 125400,
+   "primary": 2,
+   "secondary": 4,
+   "turret": 1,
+   "equipment": 7,
+   "handling": 106
+  },
+  {
+   "index": 3,
+   "armor": 135,
+   "cargo": 55,
+   "price": 38709,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 5,
+   "handling": 112
+  },
+  {
+   "index": 4,
+   "armor": 170,
+   "cargo": 38,
+   "price": 235600,
+   "primary": 4,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 5,
+   "handling": 162
+  },
+  {
+   "index": 6,
+   "armor": 105,
+   "cargo": 42,
+   "price": 38016,
+   "primary": 2,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 5,
+   "handling": 148
+  },
+  {
+   "index": 7,
+   "armor": 220,
+   "cargo": 240,
+   "price": 176900,
+   "primary": 2,
+   "secondary": 1,
+   "turret": 1,
+   "equipment": 7,
+   "handling": 65
+  },
+  {
+   "index": 8,
+   "armor": 450,
+   "cargo": 30,
+   "price": 8115900,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 15,
+   "handling": 155
+  },
+  {
+   "index": 9,
+   "armor": 210,
+   "cargo": 45,
+   "price": 150000,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 7,
+   "handling": 140
+  },
+  {
+   "index": 10,
+   "armor": 200,
+   "cargo": 52,
+   "price": 1450000,
+   "primary": 2,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 9,
+   "handling": 150
+  },
+  {
+   "index": 11,
+   "armor": 210,
+   "cargo": 180,
+   "price": 327800,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 1,
+   "equipment": 8,
+   "handling": 75
+  },
+  {
+   "index": 12,
+   "armor": 175,
+   "cargo": 30,
+   "price": 72500,
+   "primary": 2,
+   "secondary": 3,
+   "turret": 0,
+   "equipment": 6,
+   "handling": 132
+  },
+  {
+   "index": 16,
+   "armor": 180,
+   "cargo": 45,
+   "price": 2128100,
+   "primary": 2,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 10,
+   "handling": 120
+  },
+  {
+   "index": 17,
+   "armor": 145,
+   "cargo": 65,
+   "price": 1654800,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 10,
+   "handling": 95
+  },
+  {
+   "index": 18,
+   "armor": 115,
+   "cargo": 28,
+   "price": 171900,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 8,
+   "handling": 145
+  },
+  {
+   "index": 19,
+   "armor": 225,
+   "cargo": 105,
+   "price": 930303,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 9,
+   "handling": 90
+  },
+  {
+   "index": 20,
+   "armor": 125,
+   "cargo": 25,
+   "price": 51975,
+   "primary": 2,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 6,
+   "handling": 155
+  },
+  {
+   "index": 21,
+   "armor": 190,
+   "cargo": 70,
+   "price": 2712900,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 11,
+   "handling": 100
+  },
+  {
+   "index": 22,
+   "armor": 160,
+   "cargo": 130,
+   "price": 251600,
+   "primary": 3,
+   "secondary": 3,
+   "turret": 0,
+   "equipment": 8,
+   "handling": 118
+  },
+  {
+   "index": 23,
+   "armor": 150,
+   "cargo": 55,
+   "price": 61900,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 1,
+   "equipment": 5,
+   "handling": 128
+  },
+  {
+   "index": 24,
+   "armor": 170,
+   "cargo": 95,
+   "price": 684300,
+   "primary": 3,
+   "secondary": 2,
+   "turret": 1,
+   "equipment": 8,
+   "handling": 125
+  },
+  {
+   "index": 25,
+   "armor": 155,
+   "cargo": 52,
+   "price": 316400,
+   "primary": 1,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 9,
+   "handling": 145
+  },
+  {
+   "index": 26,
+   "armor": 152,
+   "cargo": 64,
+   "price": 107000,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 7,
+   "handling": 108
+  },
+  {
+   "index": 27,
+   "armor": 176,
+   "cargo": 50,
+   "price": 100100,
+   "primary": 3,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 5,
+   "handling": 113
+  },
+  {
+   "index": 28,
+   "armor": 200,
+   "cargo": 110,
+   "price": 2488400,
+   "primary": 3,
+   "secondary": 4,
+   "turret": 1,
+   "equipment": 12,
+   "handling": 92
+  },
+  {
+   "index": 29,
+   "armor": 240,
+   "cargo": 75,
+   "price": 4136800,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 12,
+   "handling": 118
+  },
+  {
+   "index": 30,
+   "armor": 165,
+   "cargo": 45,
+   "price": 87318,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 6,
+   "handling": 128
+  },
+  {
+   "index": 31,
+   "armor": 156,
+   "cargo": 110,
+   "price": 94500,
+   "primary": 2,
+   "secondary": 1,
+   "turret": 1,
+   "equipment": 6,
+   "handling": 102
+  },
+  {
+   "index": 33,
+   "armor": 176,
+   "cargo": 108,
+   "price": 75800,
+   "primary": 1,
+   "secondary": 2,
+   "turret": 1,
+   "equipment": 6,
+   "handling": 112
+  },
+  {
+   "index": 34,
+   "armor": 135,
+   "cargo": 60,
+   "price": 294900,
+   "primary": 4,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 6,
+   "handling": 130
+  },
+  {
+   "index": 35,
+   "armor": 125,
+   "cargo": 40,
+   "price": 26500,
+   "primary": 1,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 4,
+   "handling": 150
+  },
+  {
+   "index": 36,
+   "armor": 200,
+   "cargo": 350,
+   "price": 168900,
+   "primary": 0,
+   "secondary": 4,
+   "turret": 1,
+   "equipment": 8,
+   "handling": 45
+  },
+  {
+   "index": 37,
+   "armor": 190,
+   "cargo": 95,
+   "price": 1200000,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 7,
+   "handling": 120
+  },
+  {
+   "index": 38,
+   "armor": 175,
+   "cargo": 40,
+   "price": 2500000,
+   "primary": 4,
+   "secondary": 0,
+   "turret": 0,
+   "equipment": 12,
+   "handling": 145
+  },
+  {
+   "index": 40,
+   "armor": 235,
+   "cargo": 105,
+   "price": 6800000,
+   "primary": 4,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 14,
+   "handling": 95
+  },
+  {
+   "index": 41,
+   "armor": 255,
+   "cargo": 55,
+   "price": 1950000,
+   "primary": 3,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 12,
+   "handling": 125
+  },
+  {
+   "index": 42,
+   "armor": 165,
+   "cargo": 75,
+   "price": 105000,
+   "primary": 2,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 7,
+   "handling": 110
+  },
+  {
+   "index": 43,
+   "armor": 180,
+   "cargo": 65,
+   "price": 1750000,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 9,
+   "handling": 140
+  },
+  {
+   "index": 44,
+   "armor": 800,
+   "cargo": 65,
+   "price": 30000000,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 16,
+   "handling": 138
+  },
+  {
+   "index": 45,
+   "armor": 460,
+   "cargo": 180,
+   "price": 13365000,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 1,
+   "equipment": 14,
+   "handling": 88
+  },
+  {
+   "index": 46,
+   "armor": 270,
+   "cargo": 125,
+   "price": 4455000,
+   "primary": 3,
+   "secondary": 3,
+   "turret": 0,
+   "equipment": 13,
+   "handling": 116
+  },
+  {
+   "index": 47,
+   "armor": 335,
+   "cargo": 320,
+   "price": 5148000,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 12,
+   "handling": 95
+  },
+  {
+   "index": 48,
+   "armor": 305,
+   "cargo": 80,
+   "price": 6732000,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 14,
+   "handling": 110
+  },
+  {
+   "index": 49,
+   "armor": 400,
+   "cargo": 40,
+   "price": 5800000,
+   "primary": 3,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 15,
+   "handling": 105
+  },
+  {
+   "index": 51,
+   "armor": 1200,
+   "cargo": 480,
+   "price": 700000,
+   "primary": 0,
+   "secondary": 2,
+   "turret": 1,
+   "equipment": 9,
+   "handling": 30
+  },
+  {
+   "index": 52,
+   "armor": 220,
+   "cargo": 90,
+   "price": 2100000,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 10,
+   "handling": 130
+  },
+  {
+   "index": 54,
+   "armor": 280,
+   "cargo": 70,
+   "price": 5400000,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 12,
+   "handling": 145
+  },
+  {
+   "index": 55,
+   "armor": 450,
+   "cargo": 90,
+   "price": 7130000,
+   "primary": 5,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 11,
+   "handling": 122
+  },
+  {
+   "index": 56,
+   "armor": 410,
+   "cargo": 55,
+   "price": 7355900,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 14,
+   "handling": 130
+  },
+  {
+   "index": 57,
+   "armor": 420,
+   "cargo": 65,
+   "price": 8930000,
+   "primary": 4,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 15,
+   "handling": 125
+  },
+  {
+   "index": 58,
+   "armor": 425,
+   "cargo": 60,
+   "price": 7430000,
+   "primary": 4,
+   "secondary": 1,
+   "turret": 0,
+   "equipment": 14,
+   "handling": 150
+  },
+  {
+   "index": 59,
+   "armor": 545,
+   "cargo": 70,
+   "price": 7610000,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 1,
+   "equipment": 13,
+   "handling": 118
+  },
+  {
+   "index": 60,
+   "armor": 420,
+   "cargo": 70,
+   "price": 7236000,
+   "primary": 4,
+   "secondary": 1,
+   "turret": 1,
+   "equipment": 14,
+   "handling": 130
+  },
+  {
+   "index": 61,
+   "armor": 530,
+   "cargo": 50,
+   "price": 6000000,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 0,
+   "equipment": 14,
+   "handling": 135
+  },
+  {
+   "index": 62,
+   "armor": 350,
+   "cargo": 85,
+   "price": 7277000,
+   "primary": 4,
+   "secondary": 2,
+   "turret": 1,
+   "equipment": 14,
+   "handling": 125
+  },
+  {
+   "index": 63,
+   "armor": 280,
+   "cargo": 80,
+   "price": 250000,
+   "primary": 2,
+   "secondary": 4,
+   "turret": 0,
+   "equipment": 8,
+   "handling": 128
+  }
+ ]
+}

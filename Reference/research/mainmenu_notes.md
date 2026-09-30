@@ -95,7 +95,10 @@ In-flight pause menu (mode 1, for reference): header 40 "Pause", Options, 129 Mi
 - `startSupernova` @0x00153e14: resetGame, 84x `nextCampaignMission`, ship 30 (race 3) + loadout, station 70, kills 386, module 5.
 - **Resume** = `loadGame(Globals::lastRecordWritten)` @0x0014bde8: `RecordHandler::readRecord`, refuses DLC saves without the DLC, `Status::resetGame` + `GameRecord::load`, `ModStation::setGameLoaded`, `switch_to_target_setting = 0` (station music), module 5. A loaded game always resumes docked.
 - Save detection: `RecordHandler::readAllPreviewRecords` (per slot `GameRecord` preview); `lastRecordWritten` is set in `RecordHandler::recordStoreWrite` and persisted with the options file (`saveOptions`/`loadOptions`). Slot 0 = autosave.
-- Difficulty is only Normal (0.5) / Extreme (1.5). No separate hardcore/permadeath option.
+- Difficulty is only Normal (0.5) / Extreme (1.5) in this menu. No separate hardcore/permadeath option. The PC / Mac Full HD
+  version also has Easy (0) and Hard (1.0), and the phone code still handles them: `PlayerEgo::PlayerEgo` cloak cooldown
+  (<= 0: 5000, <= 0.6: 7000, <= 1.1: 9000, else 12000), `MGame::OnUpdate` Loma toll (== 0: 2 %, == 0.5: 5 %, == 1.0: 10 %,
+  else 20 %), `Level::createMission` (`< 1.0` secure-system raiders, `> 0.7` hull x1.4) and every `x + x·(d − 0.5)`.
 
 ### 2.6 Option defaults (`Globals::init`)
 Music/FX/Voice volume `options+0/4/8` = 0.5; `+0x24` brightness 0.5; `+0x28` quality 1.0 (High); `+0x14/+0x18` sensitivity 1.0; `+0x1c/+0x20` 0.6 (tilt calibration); flags `0x10` (invert) = 1, `0x11` (touch mode) = 1, `0xf` = 1, `0x30` = 1. Enable flags: `0xd` music, `0xc` FX, `0xe` voice. Difficulty `+0x2c`.

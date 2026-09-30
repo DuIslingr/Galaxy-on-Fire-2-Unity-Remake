@@ -83,7 +83,7 @@ namespace GoF2Remake.World
 
         /// <summary>Level::createShip's hull, forced to 270 for campaign 0x31-0x34 and 0x38 (then x5 for freighters, x2 on
         /// Extreme).</summary>
-        static int Hull270(bool freighter) => 270 * (freighter ? 5 : 1) * (Session.IsExtreme ? 2 : 1);
+        static int Hull270(bool freighter) => (int)(270 * (freighter ? 5 : 1) * Session.DifficultyFactor);
 
         /// <summary>Landmark 1, the visible jumpgate (game units), or (0, 0, 40000) without one (Level+0x18c).</summary>
         Vector3 Gate => level.Layout.hasJumpgate ? level.Layout.jumpgate : new Vector3(0, 0, 40000);

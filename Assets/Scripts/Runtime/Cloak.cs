@@ -3,7 +3,8 @@
 // integrated cloak of ships 44 Specter / 49 Scimitar (items[95]'s stats).
 //   PlayerEgo::toggleCloaking 0xa65a4   ready + enough energy cells (item 122, attr 38) -> pay, charge for attr 36 ms
 //   PlayerEgo::update 0xa941a..0xa98e0  charge done -> cloaked for attr 35 ms (Player+0x5e untargetable); 2000 ms fade in
-//                                       and out; the end starts the cooldown (7000 ms, 12000 Extreme: PlayerEgo+0x368);
+//                                       and out; the end starts the cooldown (PlayerEgo+0x368: Easy 5000 ms, Normal 7000,
+//                                       Hard 9000, Extreme 12000);
 //                                       cooldown over -> "Cloak ready" (316)
 //   getCloakingPercentage 0xa81a0       0..100 over the first / last 2000 ms, 100 between
 // Nothing ends the cloak early (firing, hits, boosting and locks don't touch it). Every level starts ready.
@@ -27,13 +28,13 @@ namespace GoF2Remake.Flight
         /// <summary>PlayerEgo+0x20c: cooldown left (ms).</summary>
         public float CooldownLeft { get; private set; }
 
-        public Cloak(int item, int durationMs, int chargeMs, int cells, bool extreme)
+        public Cloak(int item, int durationMs, int chargeMs, int cells, float difficulty)
         {
             this.item = item;
             this.durationMs = Mathf.Max(durationMs, 2 * FadeMs);
             this.chargeMs = chargeMs;
             this.cells = cells;
-            cooldownMs = extreme ? 12000f : 7000f;
+            cooldownMs = difficulty <= 0f ? 5000f : difficulty <= 0.6f ? 7000f : difficulty <= 1.1f ? 9000f : 12000f;
         }
 
         public bool Cloaked => State == Phase.Cloaked;

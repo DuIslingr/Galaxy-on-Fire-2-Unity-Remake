@@ -1,6 +1,6 @@
 // Session.cs
 // Choices made in the main menu that the game scenes read (MenuTouchWindow: startGOF2 / startValkyrie /
-// startSupernova, difficulty stored at options+0x2c: Normal 0.5, Extreme 1.5), and the player's state (the
+// startSupernova, difficulty stored at options+0x2c: Easy 0, Normal 0.5, Hard 1, Extreme 1.5), and the player's state (the
 // original's Status). A new game starts like Status::resetGame 0xba78c: 0 credits, ship 10 "Phantom" at station 78
 // "Var Hastra" (system 15 Mido) with the starting equipment, empty cargo. Saving and loading: SaveGame.
 
@@ -11,15 +11,41 @@ namespace GoF2Remake.Data
 {
     public enum Campaign { GalaxyOnFire2, Valkyrie, Supernova }
 
+    /// <summary>The item and ship tables a game uses (Database.Load): Android = the Android OBB's (the remake's data files),
+    /// Default = the macOS / Windows / iPhone ones (economy_default.json, Reference/tools/shop/build_default_economy.py).</summary>
+    public enum Economy { Android, Default }
+
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Session
     {
+        // options+0x2c. The phone menu offers only Normal and Extreme (MenuTouchWindow::OnTouchEnd); Easy and Hard are the
+        // PC / Mac Full HD version's other two levels (texts 518 / 520), still handled by the phone code: the cloak cooldown
+        // (PlayerEgo ctor: <= 0 / <= 0.6 / <= 1.1 / else), Loma's toll (MGame::OnUpdate: == 0 / 0.5 / 1.0 / else), every
+        // "x + x * (difficulty - 0.5)" formula and the "difficulty < 1.0" / "> 0.7" tests.
+        public const float DifficultyEasy = 0f;
         public const float DifficultyNormal = 0.5f;
+        public const float DifficultyHard = 1f;
         public const float DifficultyExtreme = 1.5f;
 
         public static Campaign Campaign = Campaign.GalaxyOnFire2;
         public static float Difficulty = DifficultyNormal;
-        public static bool IsExtreme => Difficulty > 1f;
+        /// <summary>Chosen with the difficulty when a game starts and kept with the save; every Database.Load reads it.</summary>
+        public static Economy Economy = Economy.Default;
+
+        /// <summary>The economy's short name for the menus and the save slots.</summary>
+        public static string EconomyName(Economy e) => e == Economy.Android
+            ? Localization.Extra("economyAndroid", "Android economy")
+            : Localization.Extra("economyDefault", "PC economy");
+        /// <summary>Status::hardCoreMode 0xb9148: difficulty == 1.5. The economy, mining, standing and shop rules of Extreme
+        /// only; the level-scaled formulas use DifficultyFactor.</summary>
+        public static bool IsExtreme => Difficulty > 1.25f;
+        /// <summary>The original's "x + x * (difficulty - 0.5)": x0.5 Easy, x1 Normal, x1.5 Hard, x2 Extreme (NPC hulls and
+        /// guns, raider and mission enemy counts, static objects, the Wanted and the Kaamo outposts).</summary>
+        public static float DifficultyFactor => 1f + (Difficulty - 0.5f);
+
+        /// <summary>The difficulty's name (518 Easy / 519 Normal / 520 Hard / 25 Extreme).</summary>
+        public static string DifficultyName(float d) =>
+            Localization.Get(d > 1.25f ? 25 : d > 0.75f ? 520 : d > 0.25f ? 519 : 518);
 
         /// <summary>
         /// Status+0x1e8, the campaign index (Story): one value per story step, 0..162. Shop stock, ship dealers, NPC
