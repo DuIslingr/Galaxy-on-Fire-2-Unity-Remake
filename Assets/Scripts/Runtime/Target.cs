@@ -165,9 +165,16 @@ namespace GoF2Remake.Flight
                 if (spin != null) spin.enabled = false;
                 if (explosionPrefab != null)
                 {
+                    // Explosion types 2-5 (the asteroids; PlayerAsteroid -> Explosion::start(Matrix) 0xb5620 / render
+                    // 0xb5a60): both meshes take the asteroid's matrix, then the alpha billboard (the first part) is turned
+                    // to the camera's direction every frame; its `extra` channel fades it out as it grows. setScaling(s)
+                    // 0xb4ee0: below scale 1 the animations run (1 - s) * 3 + 1 times as fast (a small asteroid's is quick).
                     var fx = Instantiate(explosionPrefab, transform.position, transform.rotation);
                     fx.transform.localScale = explosionPrefab.transform.localScale * explosionScale;
-                    float length = PartAnimation.PlayOnce(fx);
+                    float speed = isAsteroid && explosionScale < 1f ? (1f - explosionScale) * 3f + 1f : 1f;
+                    foreach (var a in fx.GetComponentsInChildren<PartAnimation>(true)) { a.applyMaterialChannels = true; a.speed = speed; }
+                    if (isAsteroid && fx.transform.childCount > 0) CameraFacing.Wrap(fx.transform.GetChild(0));
+                    float length = PartAnimation.PlayOnce(fx) / speed;
                     Destroy(fx, Mathf.Max(1f, length / 1000f + 0.2f));
                 }
                 Sfx.PlayAt(destroyedSound, transform.position);
