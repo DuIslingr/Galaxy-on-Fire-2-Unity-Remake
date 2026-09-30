@@ -240,7 +240,7 @@ namespace GoF2Remake.World
                     if (a.gameObject.name.Contains("_anim")) a.applyMaterialChannels = true;
                 }
 
-            float y = StationTables.ShipY(shipIndex);
+            float y = StationTables.PadPivotY(HangarIndex, -1, shipIndex, Quaternion.identity) / M;   // clear of the pad (remake)
             shipPivot = OrbitLayout.ToUnity(new Vector3(0f, y, 0f));
             var ship = SpawnShip(shipIndex, new Vector3(0f, y, 0f), 0f, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
@@ -277,7 +277,7 @@ namespace GoF2Remake.World
         {
             if (playerShip != null) Destroy(playerShip.gameObject);
             shipIndex = index;
-            var ship = SpawnShip(index, new Vector3(0f, StationTables.ShipY(index), 0f), 0f, hangarRoot, "Player ship");
+            var ship = SpawnShip(index, new Vector3(0f, StationTables.PadPivotY(HangarIndex, -1, index, Quaternion.identity) / M, 0f), 0f, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
             if (playerShip != null && index == PlayerBattleship.Ship) PlayerBattleship.FitHangar(playerShip);   // remake debug
             RefreshTurret(true);
@@ -328,8 +328,9 @@ namespace GoF2Remake.World
                 while (taken[slot] && ++tries < 100) slot = Random.Range(0, slots.Length);
                 if (taken[slot]) break;
                 taken[slot] = true;
-                var pos = slots[slot] + new Vector3(0f, StationTables.ShipY(ship), 0f);
                 float yaw = Random.Range(0, 300) / 100f;
+                var pos = new Vector3(slots[slot].x,
+                    StationTables.PadPivotY(HangarIndex, slot, ship, OrbitLayout.RotationToUnity(new Vector3(0f, yaw, 0f))) / M, slots[slot].z);
                 var parked = SpawnShip(ship, pos, yaw, hangarRoot, $"Parked ship {n}");
                 if (parked != null) parkedShips.Add(new HangarTraffic.Parked { go = parked, slot = slot, ship = ship, yaw = yaw });
             }
@@ -337,9 +338,11 @@ namespace GoF2Remake.World
 
         int NewParkedShip() => Layout.stationIndex == 100 ? StationTables.DeepScienceShips[Random.Range(0, 3)] : RandomParkedShip();
 
-        /// <summary>The Unity pivot of 'ship' parked on 'slot' (the slot plus the ship's height).</summary>
-        Vector3 ParkedPosition(int slot, int ship) =>
-            OrbitLayout.ToUnity(StationTables.ParkedSlots[HangarIndex][slot] + new Vector3(0f, StationTables.ShipY(ship), 0f));
+        /// <summary>The Unity pivot of 'ship' parked on 'slot' at 'rotation' (the slot plus the ship's height, lifted where the
+        /// hull would cut into the pad: StationTables.PadPivotY).</summary>
+        Vector3 ParkedPosition(int slot, int ship, Quaternion rotation) =>
+            new Vector3(0f, StationTables.PadPivotY(HangarIndex, slot, ship, rotation), 0f)
+            + Vector3.Scale(OrbitLayout.ToUnity(StationTables.ParkedSlots[HangarIndex][slot]), new Vector3(1f, 0f, 1f));
 
         int RandomParkedShip()
         {

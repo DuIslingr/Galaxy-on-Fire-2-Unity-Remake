@@ -12,6 +12,9 @@
 //              shrinking away beyond it. While another ship flies ('Hold') it waits at the top after the turn.
 //              Landings and take-offs are always vertical.
 // The whole flight is one sampled path (lane + corner + vertical); the speed runs along it, stopping for the turn.
+// Floor clearance: the bank and pitch are scaled down wherever they would dip the hull (its renderers' corners) below the
+// height its bottom has parked plus FloorMargin (the Vossk bays are flown into 5 m up: the H'Soc's banked wing went ~3 m
+// into the floor, the flare and the hover turn's bank a little).
 // The engine exhaust (the NPC variant parts, the hangar's ships use them) and the engine loop run while it flies.
 // Plain C#: StationLevel ticks it (the player) and HangarTraffic (the other ships).
 
@@ -34,6 +37,7 @@ namespace GoF2Remake.World
         const float MaxBank = 0.6f, BankPerYawRate = 0.45f, MaxPitch = 0.6f, FlarePitch = 0.12f;
         const float TurnSpeed = 65f, MinTurnSeconds = 0.6f, HoverBank = 0.2f;   // the hover turn: deg/s, s, rad
         const int LaneSamples = 800, CornerSamples = 24, VerticalSamples = 8, FilletSamples = 12;
+        const float FloorMargin = 0.4f;   // m above the parked bottom that a banked / pitched hull keeps
 
         public readonly Transform ship;
         public readonly bool arriving;
@@ -48,6 +52,8 @@ namespace GoF2Remake.World
         readonly Vector3 pad, gate, outward, baseScale;
         readonly float padYaw, laneYaw;
         readonly AssembledObject asm;
+        readonly Vector3[] hull;   // the renderers' bounds corners in the ship's unscaled local space
+        readonly float floorY;     // the hull's lowest point when parked level on the pad (world y)
         readonly AudioSource engine;
         readonly float engineVolume;
         float s, v, holdT;
@@ -74,6 +80,10 @@ namespace GoF2Remake.World
             this.engineVolume = engineVolume;
             pad = padPosition;
             asm = ship.GetComponent<AssembledObject>();
+            hull = HullCorners(ship);
+            float restMin = 0f;
+            for (int i = 0; i < hull.Length; i++) restMin = Mathf.Min(restMin, hull[i].y * ship.localScale.y);
+            floorY = pad.y + restMin;
 
             // The lane's control points, from space to the point over the pad ('over'), level through the forcefield.
             var outward = lane.outward.normalized;
@@ -165,6 +175,47 @@ namespace GoF2Remake.World
         }
 
         static Vector3 At(Vector3 p, float y) => new Vector3(p.x, y, p.z);
+
+        /// <summary>The 8 corners of every mesh renderer's local bounds, in the ship's own (unscaled) space.</summary>
+        static Vector3[] HullCorners(Transform ship)
+        {
+            var list = new List<Vector3>();
+            var toShip = ship.worldToLocalMatrix;
+            foreach (var r in ship.GetComponentsInChildren<MeshRenderer>())
+            {
+                var lb = r.localBounds;
+                var m = toShip * r.transform.localToWorldMatrix;
+                for (int i = 0; i < 8; i++)
+                    list.Add(m.MultiplyPoint3x4(lb.center + Vector3.Scale(lb.extents,
+                        new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1))));
+            }
+            return list.ToArray();
+        }
+
+        /// <summary>The rotation for 'pos' with the pitch and bank scaled down (never the yaw) just enough that the hull
+        /// stays FloorMargin above the parked floor level; level (the vertical parts) it can't dip, so that is left.</summary>
+        Quaternion Clear(Vector3 pos, float pitchRad, float yawDeg, float bankRad)
+        {
+            Quaternion Rot(float k) => Quaternion.Euler(pitchRad * k * Mathf.Rad2Deg, yawDeg, bankRad * k * Mathf.Rad2Deg);
+            var q = Rot(1f);
+            if (hull.Length == 0 || (pitchRad == 0f && bankRad == 0f) || Lowest(pos, q) >= floorY + FloorMargin) return q;
+            if (Lowest(pos, Rot(0f)) < floorY + FloorMargin) return Rot(0f);
+            float lo = 0f, hi = 1f;
+            for (int i = 0; i < 10; i++)
+            {
+                float mid = (lo + hi) * 0.5f;
+                if (Lowest(pos, Rot(mid)) >= floorY + FloorMargin) lo = mid; else hi = mid;
+            }
+            return Rot(lo);
+        }
+
+        float Lowest(Vector3 pos, Quaternion q)
+        {
+            var sc = ship.localScale;
+            float min = float.MaxValue;
+            for (int i = 0; i < hull.Length; i++) min = Mathf.Min(min, (q * Vector3.Scale(hull[i], sc)).y);
+            return pos.y + min;
+        }
 
         /// <summary>Rounds every bend of the control polyline with a wide quadratic curve (the bend's point as its control
         /// point) that starts and ends up to 90 % of the way along the neighbouring straights (45 % where the neighbour
@@ -311,8 +362,8 @@ namespace GoF2Remake.World
             bank = Mathf.Clamp(-yawRate * BankPerYawRate, -HoverBank, HoverBank);
             pitch = 0f;
             var pos = PointAt(s) + Vector3.up * (Mathf.Sin(Mathf.PI * u) * 0.3f);   // a slight lift, back at the end
-            ship.SetPositionAndRotation(pos, Quaternion.Euler(0f, yaw, bank * Mathf.Rad2Deg));
             ApplyScale(pos);
+            ship.SetPositionAndRotation(pos, Clear(pos, 0f, yaw, bank));
             if (u < 1f) return;
             turning = false;
             turned = true;
@@ -370,8 +421,9 @@ namespace GoF2Remake.World
                 bank = 0f;
                 if (engine != null) engine.volume = engineVolume * Mathf.Lerp(0.5f, 1f, corner);
             }
-            ship.SetPositionAndRotation(pos + Vector3.up * holdBob, Quaternion.Euler(pitch * Mathf.Rad2Deg, yaw, bank * Mathf.Rad2Deg));
             ApplyScale(pos);
+            pos += Vector3.up * holdBob;
+            ship.SetPositionAndRotation(pos, Clear(pos, pitch, yaw, bank));
         }
 
         /// <summary>Full size at the forcefield, nothing at the far end outside.</summary>

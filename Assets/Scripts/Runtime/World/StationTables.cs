@@ -6,6 +6,7 @@
 // Hangar index h (Level::createScene 0xc2910): station 101 -> 8 (battlestation), 100 -> 7 (deep science), else the
 // system race 0..3. Tables are indexed by h (rows 4..6 unused).
 
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace GoF2Remake.World
@@ -34,6 +35,40 @@ namespace GoF2Remake.World
         };
 
         public static float ShipY(int ship) => ship >= 0 && ship < ShipHeight.Length ? ShipHeight[ship] : 250f;
+
+        // ---- remake: lifted off the pad where the hull would cut into it (hangar_heights.json, GoF2 > Build Hangar Heights) ----
+
+        public const int LiftBins = 24;   // headings, 15 deg apart (Unity yaw)
+        [System.Serializable] public class HangarLift { public int hangar, slot, ship; public float[] lift; }
+        [System.Serializable] public class HangarLiftFile { public List<HangarLift> entries; }
+
+        static Dictionary<(int, int, int), float[]> lifts;
+
+        /// <summary>After rebuilding hangar_heights.json (the Editor tool).</summary>
+        public static void ClearHangarLifts() => lifts = null;
+
+        /// <summary>The Unity pivot height of 'ship' on 'slot' (-1 = the player's turntable, which turns: its largest lift) of
+        /// hangar 'hangar' at 'rotation': the original's floor y + ShipY, raised only where the hull would otherwise cut into
+        /// the pad (remake: the wide hulls into the Midorian pads' raised rims, any ship into the raised pedestals of
+        /// Midorian / deep science slot 2), never lowered.</summary>
+        public static float PadPivotY(int hangar, int slot, int ship, Quaternion rotation)
+        {
+            var slots = hangar >= 0 && hangar < ParkedSlots.Length ? ParkedSlots[hangar] : null;
+            float floor = slot >= 0 && slots != null && slot < slots.Length ? slots[slot].y : 0f;
+            float y = (floor + ShipY(ship)) * OrbitLayout.MetersPerUnit;
+            if (lifts == null)
+            {
+                lifts = new Dictionary<(int, int, int), float[]>();
+                var ta = Resources.Load<TextAsset>("GoF2Data/hangar_heights");
+                var file = ta != null ? JsonUtility.FromJson<HangarLiftFile>(ta.text) : null;
+                if (file?.entries != null) foreach (var e in file.entries) lifts[(e.hangar, e.slot, e.ship)] = e.lift;
+            }
+            if (!lifts.TryGetValue((hangar, slot, ship), out var l) || l == null || l.Length == 0) return y;
+            if (slot < 0) return y + Mathf.Max(l);
+            float bin = Mathf.Repeat(rotation.eulerAngles.y, 360f) / 360f * l.Length;   // the two bins around the heading
+            int a = Mathf.FloorToInt(bin) % l.Length, b = (a + 1) % l.Length;
+            return y + Mathf.Max(l[a], l[b]);
+        }
 
         /// <summary>ModStation::OnInitialize state 0x3c: turntable start, +0xe0 = 270 px (Nivelian -200) / 120 px per rad.</summary>
         public static float StartYaw(int hangar) => (hangar == 2 ? -200f : 270f) / TurntablePixelsPerRadian;

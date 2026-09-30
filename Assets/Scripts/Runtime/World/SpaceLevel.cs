@@ -122,7 +122,7 @@ namespace GoF2Remake.World
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
         public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
-                               && !DockingBlocked
+                               && !DockingBlocked && !PlayerBattleship.Active   // remake debug: the battleship doesn't fit
                                && (Mining == null || Mining.State == Mining.Phase.Idle);
         bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
 
@@ -708,6 +708,11 @@ namespace GoF2Remake.World
             if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation)
             {
                 if (DockingBlocked) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
+                if (PlayerBattleship.Active)   // remake debug: no hangar takes it
+                {
+                    Navigation.Refuse(Localization.Extra("battleshipNoDock", "The battleship doesn't fit in the hangar."));
+                    return;
+                }
                 Dock(true);
                 return;
             }

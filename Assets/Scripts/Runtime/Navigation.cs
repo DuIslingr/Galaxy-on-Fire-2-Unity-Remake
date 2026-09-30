@@ -180,9 +180,12 @@ namespace GoF2Remake.Flight
         public Func<int, bool> PlanetJumpRefused;
 
         /// <summary>HUD event 0x15: "Not possible on a mission." (525); the autopilot stops.</summary>
-        public void Refuse()
+        public void Refuse() => Refuse(Localization.Get(525));
+
+        /// <summary>The autopilot off with 'text' as the HUD message.</summary>
+        public void Refuse(string text)
         {
-            Say(Localization.Get(525));
+            Say(text);
             SetAutopilot(null);
         }
         public bool Jumping { get; private set; }
