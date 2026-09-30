@@ -459,6 +459,8 @@ namespace GoF2Remake.Data
                     a.accepted = true;
                     break;
             }
+            if (a.IsStory && a.accepted && a.offer != AgentOffer.KaamoSpecial && a.offer != AgentOffer.ShipDealer)
+                Session.StoryAgentsAccepted.Add(a.storyIndex);
             Text = thanks;
             closing = true;
             SetChoices();

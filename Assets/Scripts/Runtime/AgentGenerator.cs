@@ -169,6 +169,9 @@ namespace GoF2Remake.Data
             a.offer = s.sellBlueprint >= 0 ? AgentOffer.SellBlueprint : s.sellItemSystem >= 0 ? AgentOffer.SellSystem
                     : s.sellMod >= 0 ? AgentOffer.SellMod : s.index == 25 ? AgentOffer.KaamoSpecial
                     : s.index == 26 ? AgentOffer.ShipDealer : AgentOffer.SmallTalk;
+            // A taken offer stays taken (Agent+0x74 persists in Status); known too, so the chat opens with 858.
+            if (a.offer != AgentOffer.KaamoSpecial && a.offer != AgentOffer.ShipDealer && Session.StoryAgentsAccepted.Contains(s.index))
+                a.accepted = a.known = true;
             if (a.offer == AgentOffer.KaamoSpecial)
             {
                 int k = Session.CampaignMission < 0x8e ? R(7) + 2 : R(9);

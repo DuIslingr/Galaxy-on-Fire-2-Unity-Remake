@@ -84,6 +84,10 @@ namespace GoF2Remake.Data
         public static bool WingmanShowEmp = true;
         /// <summary>Blueprints the player owns (BluePrint::unlock), by product item index.</summary>
         public static HashSet<int> UnlockedBlueprints = new HashSet<int>();
+        /// <summary>Story agents (agents.json index) whose one-time offer was taken: the original keeps its story agents
+        /// in Status (Status::getAgents, saved by RecordHandler::writeAgent) with Agent+0x74 set, so a blueprint or
+        /// coordinate seller never offers again (Generator::createAgents only resets offers 9 and 10).</summary>
+        public static HashSet<int> StoryAgentsAccepted = new HashSet<int>();
         /// <summary>Status+0x18: each touched blueprint's progress (Blueprints); +0x1c products waiting at a station;
         /// +0x1d4 goods produced (completed runs).</summary>
         public static List<BlueprintState> Blueprints = new List<BlueprintState>();
@@ -336,6 +340,7 @@ namespace GoF2Remake.Data
             WingmenHired = 0;
             WingmanShowEmp = true;
             UnlockedBlueprints = new HashSet<int>();
+            StoryAgentsAccepted = new HashSet<int>();
             Blueprints = new List<BlueprintState>();
             PendingProducts = new List<PendingProduct>();
             GoodsProduced = 0;

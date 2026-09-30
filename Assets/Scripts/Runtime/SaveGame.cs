@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 10;
+        public const int CurrentVersion = 11;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -84,6 +84,8 @@ namespace GoF2Remake.Data
         public bool lomaTollPaid, lomaTollRefused;
         // version 10: the economy (Session.Economy; older saves played the Android tables)
         public int economy;
+        // version 11: the story agents whose offer was taken (Agent+0x74)
+        public List<int> storyAgentsAccepted;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -168,6 +170,7 @@ namespace GoF2Remake.Data
                 campaign = (int)Session.Campaign,
                 difficulty = Session.Difficulty,
                 economy = (int)Session.Economy,
+                storyAgentsAccepted = new List<int>(Session.StoryAgentsAccepted),
                 campaignMission = Session.CampaignMission,
                 station = Session.StationIndex,
                 previousStation = Session.PreviousStationIndex,
@@ -291,6 +294,10 @@ namespace GoF2Remake.Data
                 if (s.wingmanPortrait != null && s.wingmanPortrait.Length == 5) Session.WingmanPortrait = s.wingmanPortrait;
                 Session.WingmenHired = s.wingmenHired;
                 Session.UnlockedBlueprints = new HashSet<int>(s.unlockedBlueprints ?? new List<int>());
+                Session.StoryAgentsAccepted = new HashSet<int>(s.storyAgentsAccepted ?? new List<int>());
+                if (s.version < 11)   // older saves: a blueprint seller whose blueprint is owned was bought from
+                    foreach (var sa in AgentData.StoryAgents)
+                        if (sa.sellBlueprint >= 0 && Session.UnlockedBlueprints.Contains(sa.sellBlueprint)) Session.StoryAgentsAccepted.Add(sa.index);
                 Session.ShipMods = s.shipMods ?? new List<int>();
                 Session.Blueprints = s.blueprints ?? new List<BlueprintState>();
                 Session.PendingProducts = s.pendingProducts ?? new List<PendingProduct>();
