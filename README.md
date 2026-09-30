@@ -1,3 +1,5 @@
+![Galaxy on Fire 2 Remake main menu](.github/header.webp)
+
 # Galaxy on Fire 2 Remake (Unity)
 
 A remake of the 2010 space game *Galaxy on Fire 2* by FISHLABS in Unity 6, for Windows and Android. It aims to be a
