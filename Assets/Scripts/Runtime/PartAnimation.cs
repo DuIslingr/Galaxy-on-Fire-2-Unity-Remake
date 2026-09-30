@@ -85,6 +85,7 @@ namespace GoF2Remake.Visuals
                 foreach (var c in p.channels)
                 {
                     if (c.keys == null || c.keys.Length == 0 || string.IsNullOrEmpty(c.target) || c.target.Length < 4) continue;
+                    foreach (var key in c.keys) if (key.t > 0f) loadPoseMs = Mathf.Min(loadPoseMs, key.t);
                     if (c.target == "extra") { tk.extra = c.keys; continue; }   // not in the length: the transform channels set it
                     if (c.target == "v5_0") { tk.uv = c.keys; continue; }
                     int axis = "XYZ".IndexOf(c.target[3]);
@@ -107,7 +108,12 @@ namespace GoF2Remake.Visuals
         /// <summary>How often the looping animation has wrapped (the storm sky re-rolls its rotation on each).</summary>
         public int Loops { get; private set; }
 
-        float secondKeyMs = float.MaxValue;
+        float secondKeyMs = float.MaxValue, loadPoseMs = float.MaxValue;
+
+        /// <summary>MeshCreateFromFile 0x75c60: SetAnimationRangeInTime starts the animation at timeBetweenFrames, the
+        /// smallest positive key time (MeshReadData), then Update(0): a mesh never shows its t 0 keys, it is posed at its
+        /// first positive key from the moment it loads. 0 without keys.</summary>
+        public float LoadPoseMs => loadPoseMs < float.MaxValue ? loadPoseMs : 0f;
 
         /// <summary>The loop's real start when the file opens with a one-off key within 100 ms (the room layers: every
         /// part at the origin at t 0, the loop from the second key at 33 / 50 ms), else 0. For loopStartMs.</summary>
@@ -124,9 +130,11 @@ namespace GoF2Remake.Visuals
             if (enabled) Update();
         }
 
-        /// <summary>Shows the pose at 'atMs' and stops there (an object whose animation the original never advances).</summary>
-        public void Hold(float atMs = 0f)
+        /// <summary>Shows the pose at 'atMs' and stops there (an object whose animation the original never advances);
+        /// without a time the load pose (LoadPoseMs), where the original holds a mesh it never updates.</summary>
+        public void Hold(float atMs = -1f)
         {
+            if (atMs < 0f) atMs = LoadPoseMs;
             timeMs = Mathf.Clamp(atMs, 0f, lengthMs);
             if (tracks != null) Apply();
             play = false;
@@ -135,8 +143,8 @@ namespace GoF2Remake.Visuals
         /// <summary>Stops where it is (the level script no longer calls Transform::Update on it).</summary>
         public void Pause() => play = false;
 
-        /// <summary>Hold() on every part animation under 'root'.</summary>
-        public static void HoldAll(GameObject root, float atMs = 0f)
+        /// <summary>Hold() on every part animation under 'root' (without a time: each one's load pose).</summary>
+        public static void HoldAll(GameObject root, float atMs = -1f)
         {
             if (root == null) return;
             foreach (var a in root.GetComponentsInChildren<PartAnimation>(true)) a.Hold(atMs);
