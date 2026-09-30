@@ -1,74 +1,191 @@
 """build_step_summaries.py
-Writes Assets/Resources/GoF2Data/step_summaries.json for the main menu's Admin mission list (remake-only): per story
-step 0-162 a short title and a one-line summary, taken from the research notes:
-  - summary: the description column of the step table in Reference/research/campaign_flow.md;
-  - title:   the level heading in campaign_levels_a/b/c.md when the step has an in-space level ("Index 40 - ...",
-             "Mission 102 (0x66) - ...", "3.17 0x9d (157) ..."), else empty (the menu then shows the target station).
-Markdown emphasis and code quotes are stripped. Run from the repo root:  python Reference/tools/campaign/build_step_summaries.py
+Writes Assets/Resources/GoF2Data/step_summaries.json for the main menu's Debug mission list (remake-only): per story
+step 0-162 a short one-line title (what the step is about) and an optional subtitle with extra info. The texts are
+written by hand from the research notes (the step table in Reference/research/campaign_flow.md, the level headings in
+campaign_levels_a/b/c.md); edit STEPS below and run from the repo root:
+    python Reference/tools/campaign/build_step_summaries.py
 """
 import json
 import os
-import re
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..'))
-RESEARCH = os.path.join(ROOT, 'Reference', 'research')
 OUT = os.path.join(ROOT, 'Assets', 'Resources', 'GoF2Data', 'step_summaries.json')
 
-
-def clean(s):
-    s = s.replace('**', '').replace('`', '').replace('\\|', '|')
-    s = re.sub(r'\s+', ' ', s).strip()
-    return s.rstrip('.').strip()
-
-
-def summaries():
-    rows = {}
-    pat = re.compile(r'^\| (\d+) \| [^|]* \| [^|]* \| [^|]* \| [^|]* \| [^|]* \| (.*) \|\s*$')
-    with open(os.path.join(RESEARCH, 'campaign_flow.md'), encoding='utf-8') as f:
-        for line in f:
-            m = pat.match(line)
-            if m:
-                i = int(m.group(1))
-                if 0 <= i <= 162 and i not in rows:
-                    rows[i] = clean(m.group(2))
-    return rows
-
-
-def titles():
-    out = {}
-    heads = [
-        re.compile(r'^### [\d.]+ Indices (\d+) and (\d+) [—-] (.+)$'),
-        re.compile(r'^### [\d.]+ Index (\d+) [—-] (.+)$'),
-        re.compile(r'^### Missions? (\d+) \(0x[0-9a-f]+\) - (.+)$'),
-        re.compile(r'^### [\d.]+ 0x[0-9a-f]+ \((\d+)\) (.+)$'),
-    ]
-    for name in ('campaign_levels_a.md', 'campaign_levels_b.md', 'campaign_levels_c.md'):
-        with open(os.path.join(RESEARCH, name), encoding='utf-8') as f:
-            for line in f:
-                line = line.rstrip()
-                m = heads[0].match(line)
-                if m:
-                    for g in (1, 2):
-                        out.setdefault(int(m.group(g)), clean(m.group(3)))
-                    continue
-                for p in heads[1:]:
-                    m = p.match(line)
-                    if m:
-                        text = clean(m.group(2))
-                        if 'station-side only' in text or text.startswith('no content'):
-                            break
-                        out.setdefault(int(m.group(1)), text)
-                        break
-    return out
+# index: (title, subtitle). 53 and 129 are never reached (nextCampaignMission skips them).
+STEPS = {
+    # Galaxy on Fire 2
+    0: ("Prologue: the pirate ambush", "3598 A.D., the Phantom against three pirates; flight tutorial"),
+    1: ("Rescued by Gunant", "Cutscene: towed into Var Hastra, the Phantom becomes Betty"),
+    2: ("Mine 10 t of ore", "Mining tutorial in Var Hastra's orbit"),
+    3: ("Bring the ore to Var Hastra", ""),
+    4: ("Mine a full hold, then flee", "25 t of ore; a pirate shows up"),
+    5: ("Report the pirate to Gunant", "The hangar unlocks"),
+    6: ("Buy a weapon and a shield", "Shop tutorial: buy and mount both"),
+    7: ("Raid the pirate hideout with Gunant", "Follow the waypoints; three pirates lie in wait"),
+    8: ("Back to Var Hastra", "The time jump: it is 3624"),
+    9: ("Gunant sends you to Norris", "The map and Missions unlock"),
+    10: ("Meet Norris Bernard at Kernstal", ""),
+    11: ("Check the silent station", "Meet Mkkt Bkkt"),
+    12: ("Report back to Norris", "The Space Lounge unlocks"),
+    13: ("Complete a freelance mission", "Then Norris calls: the convoy has arrived"),
+    14: ("Save the Terran convoy", "Pirates at Kernstal; ends with your arrest by the navy"),
+    15: ("Interrogated at Alioth", "The Void alarm sounds"),
+    16: ("First contact: the Void raid", "Defend the Terran freighters at Alioth"),
+    17: ("Brent's briefing", "Hint: the jumpgates"),
+    18: ("Fly to Suttnar", "Professor Boyle has been kidnapped"),
+    19: ("Fly to Kappa", "The EMP bomb plan"),
+    20: ("Get EMP bombs at Kappa", "Dock and mount them (10 free in stock)"),
+    21: ("Stop the hijacker", "Disable Boyle's kidnapper with EMP; killing him fails"),
+    22: ("Boyle rescued", "He has the Wolf-Reiser coordinates"),
+    23: ("Take Boyle to Deep Science", "Meet Carla at Thynome"),
+    24: ("Collect Void samples at Sahi", "Needs a scanner and a tractor beam; ends in the wormhole"),
+    25: ("Stranded in the Void", "The first wormhole ride"),
+    26: ("Escape the Void pursuers", "Back at Sahi: survive the Void ships"),
+    27: ("Deliver the Void remains to Thynome", "Carla asks you out"),
+    28: ("Enter the wormhole at Dima", "With Carla's probe aboard"),
+    29: ("Launch the probe in the Void", "Lock the Void station, then survive 3 minutes"),
+    30: ("Call Carla", "Back in Dima's orbit"),
+    31: ("Brent's news at Alioth", ""),
+    32: ("Meet Khador at Thynome", "The idea of the Khador Drive"),
+    33: ("Bring 50 Void Crystals", "Mine them in the Void, deliver them to Thynome"),
+    34: ("Brent's plan at Nähma", "Unlocks the Khador Drive blueprint"),
+    35: ("Meet Errkt Uggut in S'kolptorr", ""),
+    36: ("Kill contest with Errkt", "Outscore him at the B'akka pirate hideout"),
+    37: ("Brent is furious", "A convoy has been hijacked"),
+    38: ("Defend the Nivelian freighters", "Destroy the Midorian escort without hitting the convoy"),
+    39: ("Final briefing at Nähma", "The bomb; a scanner and tractor beam for Errkt's pod"),
+    40: ("Escort Errkt into the wormhole", "Guard his freighter at the attacked station"),
+    41: ("Battle at the Void mother ship", "The escort in the Void; entering the wormhole early kills you"),
+    42: ("Destroy the freighter and escape", "The mother ship explodes; the ride back out"),
+    43: ("The date with Carla", "Thynome; then the ending and the credits"),
+    44: ("The morning after", "Carla's note"),
+    # Valkyrie
+    45: ("Free play: the main game won", "+40 000 credits"),
+    46: ("Valkyrie: the call in space", "The add-on's opening radio call"),
+    47: ("Meet Cornelius at Kanado", ""),
+    48: ("Chauffeured to B'akrram", "In the loaner H'Soc, on autopilot"),
+    49: ("Steal the K'Suukk", "Leave calmly in the stolen Vossk ship"),
+    50: ("Detected at Makke S'ik", "Fly the K'Suukk through the orbit"),
+    51: ("The Vossk freighter at S'inokk", "Keep going toward the jumpgate"),
+    52: ("Chased by Vossk freighters", "Flee to the jumpgate"),
+    54: ("Deliver the K'Suukk to Kanado", "200 000 credits; the Herjaza coordinates"),
+    55: ("Meet Alice on the Valkyrie", "Your own ship is back"),
+    56: ("The turret test", "In the loaner S'Kanarr, with a pirate escort"),
+    57: ("Report to Alice", "150 000 credits; talk of the Liberator"),
+    58: ("Build 10 Liberators", "From the blueprint, then bring them to Alice"),
+    59: ("Destroy the rival arms convoys", "At Suttnar, Öhna and Dekato; a bonus per Liberator kill"),
+    60: ("Report to Alice", "50 000 credits plus the Liberator bonus"),
+    61: ("Carla calls", "10 s after the launch"),
+    62: ("Visit Carla at Kothar", ""),
+    63: ("Khador has been kidnapped", "Beat the pirates at Coromesk"),
+    64: ("Free Khador at Nosdron", ""),
+    65: ("Escort Khador to Kothar", ""),
+    66: ("Back to Alice", "Cornelius and the mines"),
+    67: ("Cover Corny's break-in", "The Skavac pirates at the Nosdron outpost"),
+    68: ("Bring a Void Essence to Netor", "Drilled from Void Crystals in the Void"),
+    69: ("Hunt Trot Lykkt at Inari Onu", "The Disruptor thief"),
+    70: ("Stop Trot Lykkt before the gate", "At Lopat"),
+    71: ("Report to Netor", ""),
+    72: ("Alice calls", "150 000 credits; the Disruptor blueprint"),
+    73: ("EMP the weapons convoy", "At Teres"),
+    74: ("Escort the convoy to Kothar", ""),
+    75: ("Alice is Carla's sister", ""),
+    76: ("Khador's warning", ""),
+    77: ("Confront Alice", "Imprisoned on the Valkyrie"),
+    78: ("Escape from the Valkyrie", "Launches straight away"),
+    79: ("The misjump into the Void", ""),
+    80: ("Defend Kothar", "Against Alice's battlestation"),
+    81: ("Alice stranded in the Void", "Cutscene"),
+    82: ("Aftermath with Carla", ""),
+    83: ("Khador's gift: the Cronus", ""),
+    # Supernova
+    84: ("Free play: Valkyrie won", "+1 Khador Drive"),
+    85: ("Supernova: Carla calls", "The add-on's opening radio call"),
+    86: ("Pick up Carla at Kothar", ""),
+    87: ("Fly Carla to Thynome", "Radio chat on the way"),
+    88: ("A few months later...", ""),
+    89: ("The Ginoya supernova", "Cutscene: meanwhile in Midorian space"),
+    90: ("Gunant's distress call", "Bring passenger cabins"),
+    91: ("Rescue the Valpatro miners", "Evacuate 10 survivors from the damaged freighter"),
+    92: ("Hand over the evacuees at Tadram", "The first stealth fighter attack"),
+    93: ("Meet Bargand Surr", ""),
+    94: ("Evacuate the burning Luur station", "Gamma Shield I given"),
+    95: ("Meanwhile on Thynome...", "Cutscene: Carla, Moonsprocket, Lampeter and Khador"),
+    96: ("See Brent at Alioth", ""),
+    97: ("Pirates attack the Nivelians", "At Genoh"),
+    98: ("Meet Trunt Harval", ""),
+    99: ("Meanwhile on Thynome...", "Cutscene: Moonsprocket and Carla"),
+    100: ("Stealth fighter ambush at Alioth", ""),
+    101: ("Report to Brent", ""),
+    102: ("Protect the dropships", "The carrier evacuation at Tadram; a repair beam given"),
+    103: ("The reversal plan", "At Thynome"),
+    104: ("Build a Gamma Shield II", "From the blueprint"),
+    105: ("Bomb the supernova", "Fire the reverse-matter missile at Naneroh"),
+    106: ("Check on Luur", "The supernova grew; a damaged stealth fighter"),
+    107: ("Follow the stealth fighter", ""),
+    108: ("Back to Thynome", ""),
+    109: ("Meanwhile in the Midorian sector...", "Cutscene: Bargand and Brent"),
+    110: ("Ask the barkeeper at Thynome", ""),
+    111: ("The drunk lady at Nepis", ""),
+    112: ("Bring her a Magnetar Juice", ""),
+    113: ("Search the lounge at Plural Z", ""),
+    114: ("The loan sharks at Marktesh", ""),
+    115: ("Back to Plural Z", ""),
+    116: ("Search the Pescal Inartu lounges", ""),
+    117: ("Go to Bak S'ondorr", ""),
+    118: ("Buy K'mirkk Toad Mutagen", ""),
+    119: ("Meanwhile...", "Cutscene: Carla and Khador"),
+    120: ("Specter ambush at Valadon", "Carrying the volatile mutagen"),
+    121: ("Deliver the mutagen to Moonsprocket", ""),
+    122: ("Bring Moonsprocket to Thynome", ""),
+    123: ("Security check at Növan", "The Nivelian vaults"),
+    124: ("Dock at Növan", ""),
+    125: ("Find the freighter's black box", "Hack the secure containers at Kappa"),
+    126: ("Meanwhile...", "Cutscene: Trunt Harval"),
+    127: ("The first prism to Brent", ""),
+    128: ("Hunt Pal Tyyrt", "On the Most Wanted board"),
+    130: ("Hunt Kehnor", "On the Most Wanted board"),
+    131: ("Deliver the second prism", "Past the plasma array at Var Lupra"),
+    132: ("Dock at Var Lupra", ""),
+    133: ("Meanwhile...", "Cutscene: Trunt Harval"),
+    134: ("The mining operation at Dekato", ""),
+    135: ("Mine titanium for the plant", "140 t at Coromesk"),
+    136: ("The third prism to Var Lupra", ""),
+    137: ("The Vossk hail at B'akrram", ""),
+    138: ("Meet Mekant at B'akrram", ""),
+    139: ("Raid the Vossk battleships", "Hack the cargo bay at Bra'Murr; needs a Vossk ship and signature"),
+    140: ("The last prism to Var Lupra", ""),
+    141: ("Gunant at Var Hastra", "The Chromo Plasma blueprint"),
+    142: ("Gather plasma with Gunant", "The plasma tutorial at Kernstal"),
+    143: ("Bring Chromo Plasma", ""),
+    144: ("Harval's ultimatum", "Cutscene: the plasma array fires"),
+    145: ("Harval destroys the plasma array", ""),
+    146: ("Regroup", ""),
+    147: ("Hail Alice in the Void", ""),
+    148: ("Find a real-estate broker", ""),
+    149: ("The broker dialogue at Inari Onu", "Dialogue only, not normally reached"),
+    150: ("The broker dialogue at Coppolite", "Dialogue only, not normally reached"),
+    151: ("The broker at Kalun Amir", ""),
+    152: ("Back to Alice", ""),
+    153: ("Energy cells from Brent", ""),
+    154: ("Alice's betrayal", "The deal in the Void; a hack against the clock"),
+    155: ("A call after the launch", ""),
+    156: ("Hand Alice over", ""),
+    157: ("The final battle at Var Lupra", ""),
+    158: ("Duel with Trunt Harval at Luur", ""),
+    159: ("Celebration at Thynome", ""),
+    160: ("Carla finds Keith's letter", "Cutscene"),
+    161: ("The bar at Maissa", "Cutscene"),
+    162: ("The end", "Free play; the Most Wanted boards unlock"),
+}
 
 
 def main():
-    s, t = summaries(), titles()
-    steps = [{'index': i, 'title': t.get(i, ''), 'summary': s.get(i, '')} for i in range(163)]
+    steps = [{'index': i, 'title': STEPS.get(i, ('', ''))[0], 'summary': STEPS.get(i, ('', ''))[1]} for i in range(163)]
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         json.dump({'steps': steps}, f, ensure_ascii=False, indent=1)
-    print(f'{OUT}: {sum(1 for x in steps if x["summary"])} summaries, {sum(1 for x in steps if x["title"])} titles')
+    print(f'{OUT}: {sum(1 for x in steps if x["title"])} titles, {sum(1 for x in steps if x["summary"])} subtitles')
 
 
 if __name__ == '__main__':

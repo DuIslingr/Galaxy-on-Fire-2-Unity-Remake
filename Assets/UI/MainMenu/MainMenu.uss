@@ -346,7 +346,9 @@
     flex-shrink: 1;
     font-size: 17px;
     color: var(--gof-text);
-    white-space: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .debug-mission-station {
@@ -362,7 +364,9 @@
     margin-left: 46px;
     font-size: 14px;
     color: var(--gof-text-dim);
-    white-space: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .debug-option .unity-base-field__label {

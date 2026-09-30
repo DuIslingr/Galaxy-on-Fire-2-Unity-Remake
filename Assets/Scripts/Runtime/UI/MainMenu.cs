@@ -840,8 +840,8 @@ namespace GoF2Remake.UI
             OpenPanel("debugPanel");
         }
 
-        /// <summary>A search field and every story step, grouped by campaign: "index  title  station" over a one-line
-        /// summary (StepSummaries, from the research notes). A row starts that step (the difficulty panel first).</summary>
+        /// <summary>A search field and every story step, grouped by campaign: "index  title  station" over an optional
+        /// subtitle (StepSummaries). A row starts that step (the difficulty panel first).</summary>
         void BuildMissionList(VisualElement parent)
         {
             var heading = new Label { name = "debugMissionsTitle", pickingMode = PickingMode.Ignore };
@@ -888,12 +888,10 @@ namespace GoF2Remake.UI
                 var info = StepSummaries.Get(i);
                 string station = step == null ? "" : step.station >= 0 ? db.Stations.Find(s => s.index == step.station)?.name ?? ""
                                : step.station == Session.VoidOrbit ? "Void" : "";
-                // A step with an in-space level: its name over the summary; else the summary is the title (the objective
-                // texts repeat, e.g. the whole tutorial is "I'm on my way to Var Hastra.").
+                // A one-line title over an optional subtitle (the objective texts repeat, e.g. the whole tutorial is
+                // "I'm on my way to Var Hastra.", so they only stand in when a step has no title).
                 string summary = info?.summary ?? "";
-                string name;
-                if (!string.IsNullOrEmpty(info?.title)) name = char.ToUpperInvariant(info.title[0]) + info.title.Substring(1);
-                else { name = !string.IsNullOrEmpty(summary) ? summary : Story.StepLabel(db, i); summary = ""; }
+                string name = !string.IsNullOrEmpty(info?.title) ? info.title : Story.StepLabel(db, i);
                 if (string.IsNullOrEmpty(name)) name = station;
 
                 var row = new Button();
