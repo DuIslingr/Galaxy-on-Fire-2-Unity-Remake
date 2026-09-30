@@ -370,6 +370,14 @@ namespace GoF2Remake.Flight
         {
             if (ship == null) return;
             float dtMs = Time.deltaTime * 1000f;
+            // PlayerEgo::update: whatever set the player route (a campaign level, a freelance mission's waypoints, a
+            // Challenge's course, step 59's convoy point), Route::update advances it from the ship's position every frame;
+            // UpdateRoute says 543 / 544 (HUD events 0x17 / 0x18).
+            if (playerRoute != null)
+            {
+                var p = ship.transform.position;
+                playerRoute.Update(new Vector3(p.x, p.y, -p.z) / M);
+            }
             if (Jumping) { UpdateJump(dtMs); return; }
             if (paused || pauseMenuOpen) return;
             if (Autopilot) AboutToReach = (AutopilotTarget.Position - ship.transform.position).magnitude / M < AboutToReachUnits;

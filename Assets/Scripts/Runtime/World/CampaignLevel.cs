@@ -108,8 +108,13 @@ namespace GoF2Remake.World
             Debug.Log($"CampaignLevel: index {BuiltIndex}, {Ships.Count} ships, {Radio.Count} radio lines");
         }
 
-        /// <summary>Level+0x108 set by a level (the HUD waypoints).</summary>
-        public void SetPlayerRoute(Route route) => PlayerRoute = route;
+        /// <summary>Level+0x108 set by a level (the HUD waypoints); PlayerEgo::setRoute hands it to the ship, whose update
+        /// advances it (Navigation).</summary>
+        public void SetPlayerRoute(Route route)
+        {
+            PlayerRoute = route;
+            if (level != null && level.Navigation != null) level.Navigation.SetRoute(route);
+        }
 
         /// <summary>MGame::dialogueEvent: the briefing restarts the mission clock.</summary>
         public void ResetClock() => MissionMs = 0f;
@@ -190,7 +195,6 @@ namespace GoF2Remake.World
             float dtMs = Time.deltaTime * 1000f;
             if (dtMs <= 0f) return;
             MissionMs += dtMs;
-            if (PlayerRoute != null && level.Player != null) PlayerRoute.Update(ToGame(level.Player.transform.position));
             if (fading)
             {
                 fadeMs += dtMs;
