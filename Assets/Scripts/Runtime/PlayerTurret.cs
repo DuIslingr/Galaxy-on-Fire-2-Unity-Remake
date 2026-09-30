@@ -36,8 +36,9 @@ namespace GoF2Remake.Flight
         const float PickMs = 3000f, IdleStopMs = 500f, AutoRangeUnits = 60000f, LeadUnits = 1500f;
         const float PitchUpUnits = 70f, PitchDownUnits = -500f;
 
-        public InputAction viewAction = new InputAction("TurretView", InputActionType.Button);
-        public InputAction autoAction = new InputAction("AutoTurret", InputActionType.Button);
+        // The controls are GameControls' (rebindable): Camera (the turret view, T / D-pad up), AutoTurret (Y / D-pad down).
+        static InputAction viewAction => GameControls.Camera;
+        static InputAction autoAction => GameControls.AutoTurret;
 
         /// <summary>180-182: aims and fires by itself.</summary>
         public bool IsAuto { get; private set; }
@@ -179,16 +180,10 @@ namespace GoF2Remake.Flight
             camAnchor = new GameObject("Turret camera").transform;
             camAnchor.SetParent(pivot, false);
             camAnchor.localPosition = gunNode.localPosition;
-            if (viewAction.bindings.Count == 0) { viewAction.AddBinding("<Keyboard>/t"); viewAction.AddBinding("<Gamepad>/dpad/up"); }
-            if (autoAction.bindings.Count == 0) { autoAction.AddBinding("<Keyboard>/y"); autoAction.AddBinding("<Gamepad>/dpad/down"); }
-            viewAction.Enable();
-            autoAction.Enable();
         }
 
         void OnDestroy()
         {
-            viewAction.Disable();
-            autoAction.Disable();
             if (InTurretView) SetTurretView(false);
         }
 

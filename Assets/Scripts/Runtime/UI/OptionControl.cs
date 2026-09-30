@@ -18,6 +18,7 @@ namespace GoF2Remake.UI
         readonly Toggle toggle;
         readonly ChoiceRow choice;
         readonly Button button;
+        readonly BindingRow binding;
         readonly Label description;
 
         /// <summary>The player changed the value through this row.</summary>
@@ -40,6 +41,10 @@ namespace GoF2Remake.UI
                     toggle.RegisterValueChangedCallback(e => { d.setBool(e.newValue); Changed?.Invoke(); });
                     Field = toggle;
                     break;
+                case OptionKind.Binding:
+                    binding = new BindingRow(d.control);
+                    Field = binding;
+                    break;
                 case OptionKind.Button:
                     button = new Button(() => { d.action?.Invoke(); Changed?.Invoke(); });
                     button.AddToClassList("option-button");
@@ -58,6 +63,7 @@ namespace GoF2Remake.UI
                 description.AddToClassList("option-description");
                 Root.Add(description);
             }
+            if (d.extra != null) Root.Add(d.extra());
             Refresh();
         }
 
@@ -74,6 +80,7 @@ namespace GoF2Remake.UI
                 toggle.SetValueWithoutNotify(def.getBool());
             }
             else if (button != null) button.text = def.label();
+            else if (binding != null) binding.Refresh();
             else
             {
                 choice.LabelText = def.label();
@@ -96,6 +103,7 @@ namespace GoF2Remake.UI
             if (slider != null)
                 slider.value = Mathf.Clamp(slider.value + dir * (slider.highValue - slider.lowValue) / 20f, slider.lowValue, slider.highValue);
             else if (toggle != null) toggle.value = !toggle.value;
+            else if (binding != null) binding.Step(dir);
             else choice?.Step(dir);
         }
 
@@ -104,6 +112,7 @@ namespace GoF2Remake.UI
         {
             if (toggle != null) toggle.value = !toggle.value;
             else if (button != null) { def.action?.Invoke(); Changed?.Invoke(); }
+            else if (binding != null) binding.Activate();
             else choice?.Cycle();
         }
     }

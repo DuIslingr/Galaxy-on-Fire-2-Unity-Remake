@@ -124,22 +124,34 @@ namespace GoF2Remake.World
             level.Traffic.QueueLine(3161, 0, GenericVoice.For(3161));
         }
 
-        /// <summary>Globals::replaceKeyBindingTokens: the PC version's default keys (keyboard) or Xbox buttons (a controller).</summary>
+        /// <summary>Globals::replaceKeyBindingTokens: the keys the controls are bound to (GameControls; the PC version's
+        /// defaults unless rebound) on the keyboard, or the controller's buttons. A control without a controller button
+        /// names the autopilot menu's (its entry is in that menu).</summary>
         public static string KeyTokens(string s)
         {
             if (string.IsNullOrEmpty(s) || s.IndexOf("#KEY_", StringComparison.Ordinal) < 0) return s;
             bool pad = InputMode.Current == InputKind.Gamepad;
-            return s.Replace("#KEY_DOCK", pad ? "X" : "F")
-                    .Replace("#KEY_ACTION_MENU", pad ? "View" : "E")
-                    .Replace("#KEY_AUTOPILOT", pad ? "View" : "Q")
-                    .Replace("#KEY_KHADOR_DRIVE", pad ? "View" : "K")
-                    .Replace("#KEY_WINGMEN", pad ? "View" : "V")
-                    .Replace("#KEY_CLOAK", pad ? "RS" : "C")
-                    .Replace("#KEY_FAST_FORWARD", pad ? "Y" : "Tab")
-                    .Replace("#KEY_PRIMARY", pad ? "RT" : Localization.Extra("keySpace", "Space"))
-                    .Replace("#KEY_SECONDARY_WEAPONS", pad ? "D-pad" : "G")
-                    .Replace("#KEY_SECONDARY", pad ? "LT" : "R")
-                    .Replace("#KEY_BOOST", pad ? "A" : "W");
+            string K(UnityEngine.InputSystem.InputAction a)
+            {
+                string t = GameControls.KeyText(a, pad);
+                if (t.Length == 0 && pad) t = GameControls.KeyText(GameControls.AutopilotMenu, true);
+                return t.Length > 0 ? t : "–";
+            }
+            // E, the PC version's action menu key, is the autopilot menu's second key in the remake (one menu for both).
+            var menuRow = GameControls.RowOf(GameControls.AutopilotMenu);
+            string actionMenu = !pad && GameControls.IsBound(menuRow, BindSlot.Key2) ? GameControls.SlotText(menuRow, BindSlot.Key2)
+                                                                                     : K(GameControls.AutopilotMenu);
+            return s.Replace("#KEY_DOCK", K(GameControls.Action))
+                    .Replace("#KEY_ACTION_MENU", actionMenu)
+                    .Replace("#KEY_AUTOPILOT", K(GameControls.AutopilotMenu))
+                    .Replace("#KEY_KHADOR_DRIVE", K(GameControls.KhadorDrive))
+                    .Replace("#KEY_WINGMEN", K(GameControls.Wingmen))
+                    .Replace("#KEY_CLOAK", K(GameControls.Cloak))
+                    .Replace("#KEY_FAST_FORWARD", K(GameControls.FastForward))
+                    .Replace("#KEY_PRIMARY", K(GameControls.FirePrimary))
+                    .Replace("#KEY_SECONDARY_WEAPONS", K(GameControls.SwitchSecondary))
+                    .Replace("#KEY_SECONDARY", K(GameControls.FireSecondary))
+                    .Replace("#KEY_BOOST", K(GameControls.Boost));
         }
     }
 }

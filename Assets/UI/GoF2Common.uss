@@ -209,6 +209,87 @@
     color: var(--gof-amber);
 }
 
+/* ---- BindingRow (Options > Controls: a control, its two keys and its controller button) --------------- */
+
+.binding-row {
+    flex-direction: row;
+    align-items: center;
+    min-height: 40px;
+}
+
+.binding-label {
+    width: 34%;
+    flex-shrink: 0;
+    padding-right: 8px;
+    color: var(--gof-text);
+    white-space: normal;
+}
+
+.binding-cell {
+    flex-grow: 1;
+    flex-basis: 0;
+    max-width: 190px;
+    min-height: 34px;
+    margin: 0 0 0 4px;
+    padding: 0 6px;
+    font-size: 15px;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--gof-text);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-width: 0;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+    transition-duration: 0.15s;
+}
+
+.binding-header {
+    min-height: 26px;
+    margin-top: 6px;
+}
+
+.binding-header-cell {
+    min-height: 0;
+    font-size: 13px;
+    letter-spacing: 1px;
+    color: var(--gof-text-dim);
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.binding-cell--pad {
+    color: var(--gof-cyan);
+}
+
+.can-hover .binding-cell:hover {
+    color: #FFFFFF;
+    background-color: var(--gof-cyan-faint);
+}
+
+.binding-cell--unbound {
+    color: var(--gof-text-disabled);
+}
+
+.binding-cell--none {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.binding-row:focus .binding-cell--selected,
+.autopilot-menu-item--selected .binding-cell--selected {
+    color: var(--gof-amber);
+    border-bottom-color: var(--gof-amber);
+}
+
+.binding-cell--listening,
+.binding-row:focus .binding-cell--listening,
+.autopilot-menu-item--selected .binding-cell--listening {
+    color: #000000;
+    background-color: var(--gof-amber);
+    border-bottom-color: var(--gof-amber);
+}
+
 .option-description {
     margin: 0 0 6px 13px;
     font-size: 15px;

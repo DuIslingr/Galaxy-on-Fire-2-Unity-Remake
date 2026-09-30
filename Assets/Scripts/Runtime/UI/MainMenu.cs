@@ -240,7 +240,7 @@ namespace GoF2Remake.UI
 
         void Update()
         {
-            if (root == null) return;
+            if (root == null || GoF2Remake.Flight.GameControls.BlocksMenus) return;
             // Remake: the debug panel (F10, LB + RB or three fingers held for a second, or five taps on the version text).
             if (screen == MenuState.Menu && Keyboard.current != null && Keyboard.current.f10Key.wasPressedThisFrame) OpenDebug();
             var pad = Gamepad.current;
@@ -1188,6 +1188,13 @@ namespace GoF2Remake.UI
             if (horizontal && focused is ChoiceRow choiceRow)
             {
                 choiceRow.Step(e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1);
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+                return;
+            }
+            if (horizontal && focused is BindingRow bindingRow)
+            {
+                bindingRow.Step(e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1);
                 e.StopPropagation();
                 root.focusController?.IgnoreEvent(e);
                 return;

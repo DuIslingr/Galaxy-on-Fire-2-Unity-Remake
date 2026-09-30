@@ -15,7 +15,7 @@ using UnityEngine;
 namespace GoF2Remake.UI
 {
     public enum OptionPage { Sound, Graphics, Controls, Gameplay, Language }
-    public enum OptionKind { Slider, Toggle, Choice, Button }
+    public enum OptionKind { Slider, Toggle, Choice, Button, Binding }
 
     public sealed class OptionDef
     {
@@ -24,6 +24,7 @@ namespace GoF2Remake.UI
         public OptionKind kind;
         public Func<string> label;
         public Func<string> description;   // optional line under the row
+        public Func<UnityEngine.UIElements.VisualElement> extra;   // optional element under the row (not focusable)
 
         // Slider
         public float min, max;
@@ -43,6 +44,9 @@ namespace GoF2Remake.UI
 
         // Button
         public Action action;
+
+        // Binding (a key bindings row, BindingRow)
+        public Flight.ControlRow control;
     }
 
     public static class OptionsCatalog
@@ -169,6 +173,17 @@ namespace GoF2Remake.UI
                 list.Add(Toggle("mouseSteering", OptionPage.Controls, () => X("mouseSteering", "Mouse steering"), () => Settings.MouseSteering, v => Settings.MouseSteering = v));
             list.Add(Slider("deadzone", OptionPage.Controls, () => X("deadzone", "Stick dead zone"), 0.05f, 0.4f,
                 () => Settings.StickDeadzone, v => Settings.StickDeadzone = v, Percent));
+            // Remake: every flight control rebindable (GameControls): two keyboard / mouse keys and a controller button each.
+            list.Add(new OptionDef
+            {
+                id = "resetBindings", page = OptionPage.Controls, kind = OptionKind.Button,
+                label = () => X("resetBindings", "Reset key bindings"),
+                description = () => X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc cancels, Backspace clears. The menu keys stay fixed."),
+                action = Flight.GameControls.ResetToDefaults,
+                extra = BindingRow.Header,
+            });
+            foreach (var row in Flight.GameControls.Rows)
+                list.Add(new OptionDef { id = "bind_" + row.id, page = OptionPage.Controls, kind = OptionKind.Binding, label = row.label, control = row });
 
             // ---- gameplay
             list.Add(Toggle("launchCamera", OptionPage.Gameplay, () => X("launchCamera", "Launch and arrival camera"),

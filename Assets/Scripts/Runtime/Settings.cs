@@ -166,6 +166,7 @@ namespace GoF2Remake.Data
                 PlayerPrefs.DeleteKey(Prefix + key);
             PlayerPrefs.Save();
             cache.Clear();
+            GoF2Remake.Flight.GameControls.ResetToDefaults();   // the key bindings too
             Changed?.Invoke();
         }
 

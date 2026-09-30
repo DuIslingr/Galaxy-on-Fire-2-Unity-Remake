@@ -56,9 +56,11 @@ namespace GoF2Remake.Multiplayer
         {
             if (Typing == on) return;
             Typing = on;
+            // The game's controls (GameControls' map) go off; the UI's (text input, clicks) keep running.
+            GoF2Remake.Flight.GameControls.Suspend(on);
             if (on)
             {
-                // The game's actions are made in code (no action map); the UI's (text input, clicks) keep running.
+                // Any other action made in code (no map) goes off too.
                 paused.Clear();
                 foreach (var a in InputSystem.ListEnabledActions())
                     if (a.actionMap == null) paused.Add(a);
@@ -84,6 +86,7 @@ namespace GoF2Remake.Multiplayer
         public static void DropTyping()
         {
             paused.Clear();
+            if (Typing) GoF2Remake.Flight.GameControls.Suspend(false);
             Typing = false;
         }
 

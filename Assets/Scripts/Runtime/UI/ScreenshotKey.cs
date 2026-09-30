@@ -26,8 +26,7 @@ namespace GoF2Remake.UI
 
         void Update()
         {
-            var keyboard = Keyboard.current;
-            if (!capturing && keyboard != null && keyboard.f12Key.wasPressedThisFrame) StartCoroutine(Capture());
+            if (!capturing && GoF2Remake.Flight.GameControls.Screenshot.WasPressedThisFrame()) StartCoroutine(Capture());   // rebindable (F12)
         }
 
         IEnumerator Capture()

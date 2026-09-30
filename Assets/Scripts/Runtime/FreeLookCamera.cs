@@ -21,7 +21,7 @@ namespace GoF2Remake.Flight
         const float M = 0.05f, FrameMs = 1000f / 30f, MinDistance = 1500f, MaxDistance = 20000f;
         public enum Mode { Standard = 0, Turret = 1, FreeLook = 3 }
 
-        public InputAction cycleAction = new InputAction("CameraMode", InputActionType.Button);
+        static InputAction cycleAction => GameControls.Camera;   // rebindable (T / D-pad up)
         public Mode Current { get; private set; } = Mode.Standard;
         public bool FreeLookActive => Current == Mode.FreeLook;
         /// <summary>The mode's name as a HUD message (4000 ms).</summary>
@@ -48,13 +48,9 @@ namespace GoF2Remake.Flight
 
         void Awake()
         {
-            if (cycleAction.bindings.Count == 0) { cycleAction.AddBinding("<Keyboard>/t"); cycleAction.AddBinding("<Gamepad>/dpad/up"); }
-            cycleAction.Enable();
             anchor = new GameObject("Free look anchor").transform;
             anchor.SetParent(transform, false);
         }
-
-        void OnDestroy() => cycleAction.Disable();
 
         bool TurretMode => turret != null && !turret.IsAuto;
 

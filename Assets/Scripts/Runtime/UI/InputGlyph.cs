@@ -2,7 +2,10 @@
 // Small UI Toolkit elements that show an input: a keyboard keycap or an Xbox-style controller button (the game
 // always uses Xbox labels, whatever pad is connected). Styled by UI/GoF2InputGlyphs.uss (.keycap, .pad-*).
 
+using System.Collections.Generic;
 using GoF2Remake.Data;
+using GoF2Remake.Flight;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
@@ -44,6 +47,41 @@ namespace GoF2Remake.UI
             PadButton.View => Text("VIEW", "pad-menu"),
             _ => Text("MENU", "pad-menu"),
         };
+
+        /// <summary>What an action is bound to right now (GameControls, rebindable) for this input kind: the keyboard's first
+        /// slot (the second too with 'both', or when the first is unbound), a composite part by part; the controller's slot.
+        /// Empty when nothing is bound (the hint is left out).</summary>
+        public static List<VisualElement> For(InputAction action, InputKind kind, bool both = false)
+        {
+            var list = new List<VisualElement>();
+            var row = GameControls.RowOf(action);
+            if (row == null || kind == InputKind.Touch) return list;
+            if (kind == InputKind.Gamepad)
+            {
+                if (row.HasSlot(BindSlot.Pad)) foreach (var p in GameControls.Paths(row, BindSlot.Pad)) AddPath(list, p, true);
+                return list;
+            }
+            bool first = GameControls.IsBound(row, BindSlot.Key1);
+            if (first) foreach (var p in GameControls.Paths(row, BindSlot.Key1)) AddPath(list, p, false);
+            if (!first || both) foreach (var p in GameControls.Paths(row, BindSlot.Key2)) AddPath(list, p, false);
+            return list;
+        }
+
+        static void AddPath(List<VisualElement> list, string path, bool pad)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            string name = GameControls.ShortName(path);
+            if (!pad) { list.Add(Key(name, name.Length > 3)); return; }
+            list.Add(name switch
+            {
+                "A" => Pad(PadButton.A), "B" => Pad(PadButton.B), "X" => Pad(PadButton.X), "Y" => Pad(PadButton.Y),
+                "LT" => Pad(PadButton.LeftTrigger), "RT" => Pad(PadButton.RightTrigger),
+                "LB" => Pad(PadButton.LeftBumper), "RB" => Pad(PadButton.RightBumper),
+                "LS" => Pad(PadButton.LeftStick), "RS" => Pad(PadButton.RightStick),
+                "MENU" => Pad(PadButton.Menu), "VIEW" => Pad(PadButton.View),
+                _ => Text(name, name.StartsWith("D-PAD") ? "pad-menu" : "pad-stick"),
+            });
+        }
 
         static VisualElement Face(string letter, string colour)
         {

@@ -39,9 +39,10 @@ namespace GoF2Remake.Flight
         const float BeamRangeUnits = 60000f, BeamObjectCubeUnits = 24000f;
 
         public bool useBuiltInInput = true;
-        public InputAction firePrimaryAction = new InputAction("FirePrimary", InputActionType.Button);
-        public InputAction fireSecondaryAction = new InputAction("FireSecondary", InputActionType.Button);
-        public InputAction cycleSecondaryAction = new InputAction("CycleSecondary", InputActionType.Button);
+        // The controls are GameControls' (rebindable): FirePrimary, FireSecondary, SwitchSecondary.
+        static InputAction firePrimaryAction => GameControls.FirePrimary;
+        static InputAction fireSecondaryAction => GameControls.FireSecondary;
+        static InputAction cycleSecondaryAction => GameControls.SwitchSecondary;
         [Range(0f, 1f)] public float shotVolume = 0.7f;
 
         class Rig
@@ -155,42 +156,17 @@ namespace GoF2Remake.Flight
 
         void Awake()
         {
-            AddDefaultBindings();
             shotSource = gameObject.AddComponent<AudioSource>();
             shotSource.playOnAwake = false;
             shotSource.spatialBlend = 0f;
         }
 
-        void OnEnable() { firePrimaryAction.Enable(); fireSecondaryAction.Enable(); cycleSecondaryAction.Enable(); }
-        void OnDisable() { firePrimaryAction.Disable(); fireSecondaryAction.Disable(); cycleSecondaryAction.Disable(); StopLoops(); }
+        void OnDisable() => StopLoops();
 
         void OnDestroy()
         {
             if (fxRoot != null) Destroy(fxRoot.gameObject);
             GuidedRocket = null;
-        }
-
-        /// <summary>Keyboard: the PC version's defaults (Galaxy on Fire 2 Full HD): Space primary fire, R secondary fire; G
-        /// switches the secondary (remake).</summary>
-        void AddDefaultBindings()
-        {
-            if (firePrimaryAction.bindings.Count == 0)
-            {
-                firePrimaryAction.AddBinding("<Keyboard>/space");
-                firePrimaryAction.AddBinding("<Mouse>/leftButton");
-                firePrimaryAction.AddBinding("<Gamepad>/rightTrigger");
-            }
-            if (fireSecondaryAction.bindings.Count == 0)
-            {
-                fireSecondaryAction.AddBinding("<Keyboard>/r");
-                fireSecondaryAction.AddBinding("<Mouse>/rightButton");
-                fireSecondaryAction.AddBinding("<Gamepad>/leftTrigger");
-            }
-            if (cycleSecondaryAction.bindings.Count == 0)
-            {
-                cycleSecondaryAction.AddBinding("<Keyboard>/g");
-                cycleSecondaryAction.AddBinding("<Gamepad>/dpad/right");
-            }
         }
 
         /// <summary>Level::createPlayer: one gun per equipped primary/secondary item on the ship's mounts.</summary>

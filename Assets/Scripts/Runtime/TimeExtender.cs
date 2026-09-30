@@ -37,7 +37,7 @@ namespace GoF2Remake.Flight
         /// <summary>MGame+0x164: 0 ready, &gt; 0 running (ms left), &lt; 0 cooldown (counting toward -attr43).</summary>
         float state;
         float flashMs;
-        InputAction action;
+        static InputAction action => GameControls.TimeExtender;   // rebindable (X / left stick press)
         AudioSource sfx;
         CombatAssets assets;
         readonly Dictionary<AudioSource, float> pitched = new Dictionary<AudioSource, float>();
@@ -66,15 +66,10 @@ namespace GoF2Remake.Flight
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
             sfx.spatialBlend = 0f;
-            action = new InputAction("TimeExtender", InputActionType.Button);
-            action.AddBinding("<Keyboard>/x");
-            action.AddBinding("<Gamepad>/leftStickPress");
-            action.Enable();
         }
 
         void OnDestroy()
         {
-            action?.Dispose();
             if (Active) Stop(false);
         }
 

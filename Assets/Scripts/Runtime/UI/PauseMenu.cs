@@ -321,6 +321,7 @@ namespace GoF2Remake.UI
         public void Tick()
         {
             if (!IsOpen || Time.frameCount - openedFrame < 1) return;   // the key that opened it
+            if (Flight.GameControls.BlocksMenus) return;   // a key binding is being captured (Options)
             if (page == Page.Photo)
             {
                 // Back leaves state 0xd for the pause page; the game stays paused.

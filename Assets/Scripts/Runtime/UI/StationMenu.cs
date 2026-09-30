@@ -1394,6 +1394,7 @@ namespace GoF2Remake.UI
                 if (World.SpaceLevel.PlayerTriedToFly()) level.SkipPlayerFlight();
                 return;
             }
+            if (Flight.GameControls.BlocksMenus) return;   // a key binding is being captured (Options): its key isn't a menu key
             if (lounge != null && lounge.Active != root.ClassListContains("lounge-open")) lounge.OnViewChanged();   // also under a dialog
             if (StarMap.IsOpen) return;   // the map has its own input
             if (storyDialogue != null && storyDialogue.IsOpen) { storyDialogue.Tick(Time.unscaledDeltaTime * 1000f); return; }

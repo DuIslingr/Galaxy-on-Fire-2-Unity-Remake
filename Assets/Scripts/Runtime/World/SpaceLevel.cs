@@ -633,12 +633,14 @@ namespace GoF2Remake.World
 
         /// <summary>MGame::OnTouchEnd -> LevelScript::skipSequence: the player tried to fly (steer, throttle, boost, fire, a
         /// tap, any key or button except the pause and autopilot-menu ones) during the start sequence.</summary>
-        /// <summary>Any key but Esc / Q / E (the pause and autopilot / action menus), a click, a tap, a stick or a controller button but Menu / View this frame (also
-        /// the station's skip for the hangar flights).</summary>
+        /// <summary>Any key but Esc and the autopilot menu's (Q / E by default, GameControls), a click, a tap, a stick or a
+        /// controller button but Menu and the autopilot menu's (View) this frame (also the station's skip for the hangar
+        /// flights).</summary>
         public static bool PlayerTriedToFly()
         {
             var kb = GoF2Remake.Multiplayer.NetChat.Keys;
-            if (kb != null && kb.anyKey.wasPressedThisFrame && !kb.escapeKey.wasPressedThisFrame && !kb.qKey.wasPressedThisFrame && !kb.eKey.wasPressedThisFrame) return true;
+            bool menuKey = GameControls.AutopilotMenu.WasPressedThisFrame();
+            if (kb != null && kb.anyKey.wasPressedThisFrame && !kb.escapeKey.wasPressedThisFrame && !menuKey) return true;
             var mouse = Mouse.current;
             if (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)) return true;
             var touch = Touchscreen.current;
@@ -649,7 +651,7 @@ namespace GoF2Remake.World
                 if (pad.leftStick.ReadValue().sqrMagnitude > 0.25f || pad.rightStick.ReadValue().sqrMagnitude > 0.25f) return true;
                 if (pad.rightTrigger.wasPressedThisFrame || pad.leftTrigger.wasPressedThisFrame) return true;
                 foreach (var c in pad.allControls)
-                    if (c is ButtonControl b && b.wasPressedThisFrame && b != pad.startButton && b != pad.selectButton) return true;
+                    if (c is ButtonControl b && b.wasPressedThisFrame && b != pad.startButton && !menuKey) return true;
             }
             return false;
         }

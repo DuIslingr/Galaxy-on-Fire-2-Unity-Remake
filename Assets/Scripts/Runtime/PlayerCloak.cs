@@ -30,7 +30,7 @@ namespace GoF2Remake.Flight
         Target target;
         CombatAssets assets;
         AudioSource sfx;
-        InputAction action;
+        static InputAction action => GameControls.Cloak;   // rebindable (C / right stick press)
         readonly List<(Renderer r, Material[] original, Material[] cloak)> hull = new List<(Renderer, Material[], Material[])>();
         readonly List<Renderer> glow = new List<Renderer>();
         bool swapped, glowHidden;
@@ -57,10 +57,6 @@ namespace GoF2Remake.Flight
             sfx = gameObject.AddComponent<AudioSource>();
             sfx.playOnAwake = false;
             sfx.spatialBlend = 0f;
-            action = new InputAction("Cloak", InputActionType.Button);
-            action.AddBinding("<Keyboard>/c");
-            action.AddBinding("<Gamepad>/rightStickPress");
-            action.Enable();
             if (model == null) return;
             var shader = assets != null ? assets.cloakShader : null;
             foreach (var r in model.GetComponentsInChildren<Renderer>(true))
@@ -88,7 +84,6 @@ namespace GoF2Remake.Flight
 
         void OnDestroy()
         {
-            action?.Dispose();
             if (target != null) target.cloaked = false;
             OpaqueTexture.Request(this, false);
             foreach (var h in hull) foreach (var m in h.cloak) Destroy(m);

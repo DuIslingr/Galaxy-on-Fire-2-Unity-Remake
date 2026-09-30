@@ -175,8 +175,7 @@ namespace GoF2Remake.UI
             bool session = NetGame.Active;
             box.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
             if (!session) { if (open) Close(); return; }
-            var keys = NetChat.Keys;
-            if (!open && keys != null && keys.bKey.wasPressedThisFrame) Open();
+            if (!open && !NetChat.Typing && GoF2Remake.Flight.GameControls.Chat.WasPressedThisFrame()) Open();   // rebindable (B)
             // Lines fade out a while after they came in (all shown while typing).
             float now = Time.unscaledTime;
             foreach (var child in log.Children())

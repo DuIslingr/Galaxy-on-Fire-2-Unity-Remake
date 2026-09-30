@@ -22,6 +22,7 @@ using UnityEngine.InputSystem;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Mining : MonoBehaviour
     {
         public enum Phase { Idle, Approaching, Landing, Docked, Mining }
@@ -344,23 +345,13 @@ namespace GoF2Remake.Flight
             FinishMining();
         }
 
-        /// <summary>Stick, WASD / arrows or the controller's left stick; +y = down on screen for the minigame.</summary>
+        /// <summary>The touch stick or the Steer controls (GameControls: the arrows / the left stick by default); +y = down on
+        /// screen for the minigame.</summary>
         Vector2 ReadDrillInput()
         {
             var v = new Vector2(touchInput.x, -touchInput.y);
-            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
-            if (kb != null)
-            {
-                var k = new Vector2((kb.dKey.isPressed || kb.rightArrowKey.isPressed ? 1 : 0) - (kb.aKey.isPressed || kb.leftArrowKey.isPressed ? 1 : 0),
-                                    (kb.sKey.isPressed || kb.downArrowKey.isPressed ? 1 : 0) - (kb.wKey.isPressed || kb.upArrowKey.isPressed ? 1 : 0));
-                if (k.sqrMagnitude > v.sqrMagnitude) v = k;
-            }
-            var pad = Gamepad.current;
-            if (pad != null)
-            {
-                var s = pad.leftStick.ReadValue();
-                if (s.sqrMagnitude > 0.02f && s.sqrMagnitude > v.sqrMagnitude) v = new Vector2(s.x, -s.y);
-            }
+            var s = GameControls.Steer.ReadValue<Vector2>();
+            if (s.sqrMagnitude > 0.02f && s.sqrMagnitude > v.sqrMagnitude) v = new Vector2(s.x, -s.y);
             return Vector2.ClampMagnitude(v, 1f);
         }
 
