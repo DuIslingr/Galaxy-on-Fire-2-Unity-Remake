@@ -723,7 +723,9 @@ namespace GoF2Remake.World
             return true;
         }
 
-        static bool AllDead(List<NpcShip> ships) => ships.TrueForAll(s => !s.Target.Alive || s.Current == NpcShip.State.Dying || s.Current == NpcShip.State.Dead);
+        /// <summary>Objective::achieved counts KIPlayer::isDead (state 4): a fighter after its tumble (the explosion), a
+        /// freighter after its wreck animation, not on the killing hit (isDying, state 3). Gone = removed from the orbit.</summary>
+        static bool AllDead(List<NpcShip> ships) => ships.TrueForAll(s => s == null || s.Gone || s.Current == NpcShip.State.Dead);
 
         bool Won()
         {
