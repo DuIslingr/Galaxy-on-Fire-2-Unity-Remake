@@ -131,7 +131,9 @@ namespace GoF2Remake.UI
                 if (traffic != null)
                     foreach (var s in traffic.Ships)
                     {
-                        if (s.Gone || !s.Target.Alive || s.Hidden || s.RadarHidden || s.DockingType > 0) continue;
+                        // Radar::draw skips inactive players: a sleeping ship (KIPlayer::setToSleep) has no marker until it
+                        // wakes, e.g. a pirate outpost until an enemy comes within its +-50 000 box.
+                        if (s.Gone || !s.Target.Alive || s.Hidden || s.Asleep || s.RadarHidden || s.DockingType > 0) continue;
                         int f = s.Target.hostileToPlayer ? 0 : s.Target.friendToPlayer ? 1 : 2;
                         DrawShip(Get(s), s.transform.position, f, s.Target.HullFraction, radar.Locked == s.Target, cam, origin, centre);
                         DrawEmp(Get(s), s.Hp != null ? s.Hp.EmpFraction : 1f);
