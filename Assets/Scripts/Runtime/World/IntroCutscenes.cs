@@ -35,6 +35,7 @@ namespace GoF2Remake.World
         float stepMs, playerSpeed = 2f;   // u/ms
         float fxMs, fxLength;
         bool soundsPlayed, loading, battleOver;
+        float rescueTurn;
         GameObject fx;
         ShipSmoke smoke;
 
@@ -363,10 +364,13 @@ namespace GoF2Remake.World
 
         void TickRescue(float dtMs)
         {
-            // The Phantom turns slowly (rotate(0, a, a), a = (2dt & ~15) / 65536 * 2pi), the camera drifts (0.1dt, 0, 0), the
+            // The Phantom turns slowly: rotate(0, a, a), a = (2dt & ~15) / 65536 * 2pi. PlayerEgo::rotate 0xad980 adds to
+            // the stored Euler angles (+0x2e8..+0x2f0) and rebuilds the matrix (setRotation, Rx*Ry*Rz), so the pose is
+            // (0.462, 0.462 + t, 1.5339 + t); t grows at the 30 fps rate (64 per 33.3 ms frame), so it also turns at
+            // high frame rates (below 8 ms a frame the quantised step is 0). The camera drifts (0.1dt, 0, 0), the
             // salvager slows as it arrives (0.2dt * min(z / -5000, 1)).
-            float a = ((int)(2f * dtMs) & ~15) / 65536f * 360f;
-            Player.Rotate(0f, a, a, Space.Self);
+            rescueTurn += dtMs * (64f / (1000f / 30f)) / 65536f * 2f * Mathf.PI;
+            Player.rotation = OrbitLayout.RotationToUnity(new Vector3(0.462f, 0.462f + rescueTurn, 1.5339f + rescueTurn));
             cam.SetDolly(new Vector3(0.1f, 0f, 0f));
             if (campaign.Ships.Count > 0)
             {
