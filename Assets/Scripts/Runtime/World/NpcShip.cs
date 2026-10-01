@@ -1363,9 +1363,11 @@ namespace GoF2Remake.World
                 if (wreckPrefab != null && model != null)
                 {
                     wreck = Instantiate(wreckPrefab, transform, false);
-                    // The wreck meshes face the other way (the original turns them (0, pi, 0), which its wreck collision
-                    // data has baked in, like the stations').
-                    wreck.transform.localRotation = model.localRotation * Quaternion.Euler(0f, 180f, 0f);
+                    // PlayerFixedObject::update state 3: the wreck takes the hull's matrix as it is (AEGeometry::setMatrix),
+                    // so it faces the same way and keeps the battleship's x2. Its collision boxes are another matter
+                    // (CollisionVolume.ForWreck).
+                    wreck.transform.localRotation = model.localRotation;
+                    wreck.transform.localScale = model.localScale;
                     float len = PartAnimation.PlayOnce(wreck);
                     if (len > 0f) dyingMs = len;
                     modelGo.SetActive(false);
