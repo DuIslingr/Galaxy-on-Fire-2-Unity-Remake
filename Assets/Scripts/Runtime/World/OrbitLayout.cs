@@ -51,6 +51,8 @@ namespace GoF2Remake.World
         public Vector3 lightDirection;   // unit vector toward the sun (game space)
         public string sunTexture;
         public float sunScale = 0.2288818359375f;   // 15000 / 65536
+        /// <summary>Status::inSupernovaSystem (system 27): the sun's own sizes and the sn_sun_011 streak (StarSystem+0xc).</summary>
+        public bool supernovaSun;
         public int flareColor;
         public readonly List<Planet> planets = new List<Planet>();
 
@@ -182,6 +184,16 @@ namespace GoF2Remake.World
         {
             sunTexture = SunTextures[Mathf.Clamp(systemTexture, 0, SunTextures.Length - 1)];
             flareColor = systemIndex >= 0 && systemIndex < FlareColors.Length ? FlareColors[systemIndex] : 3;
+            // StarSystem::StarSystem in the supernova system: the sun billboard at 0.99182 (1.37329 from campaign 0x6a), its
+            // streak layer (1.98364, 0.19836, 0.99182) drawn with sn_sun_011 (0x2dde); at 0x59 (before the explosion) and past
+            // 0x9d the sun itself is sn_sun_011 too, flare colour 3.
+            if (systemIndex == 27)
+            {
+                int mission = Session.FreePlay ? 20 : Session.CampaignMission;
+                sunScale = mission < 0x6a ? 0.9918212890625f : 1.373291015625f;
+                supernovaSun = true;
+                if (mission == 0x59 || mission > 0x9d) { sunTexture = "sn_sun_011"; flareColor = 3; }
+            }
             var rnd = new JavaRandom(300L * stationIndex);
             var occupied = new bool[24];
 
@@ -262,7 +274,8 @@ namespace GoF2Remake.World
             {
                 case 11: fog = true; fogColor = new Color32(0xdb, 0x69, 0x23, 255); fogEnd = 50000f; break;
                 case 12: fog = true; fogColor = new Color32(0x16, 0x3e, 0x7c, 255); fogEnd = 50000f; break;
-                case 15: fog = true; fogColor = new Color32(0x82, 0x44, 0x1f, 255); fogEnd = 100000f; break;
+                // StarSystem::initLight case 0xf returns before the fog at campaign 0x59 (89's supernova cutscene: no haze).
+                case 15: fog = (Session.FreePlay ? 20 : Session.CampaignMission) != 89; fogColor = new Color32(0x82, 0x44, 0x1f, 255); fogEnd = 100000f; break;
                 case 16: fog = true; fogColor = new Color32(0x47, 0x66, 0x5e, 255); fogEnd = 150000f; break;
                 case 17: fog = true; fogColor = new Color32(0x73, 0x8d, 0x95, 255); fogEnd = 150000f; break;
                 case 18: fog = true; fogColor = new Color32(0xab, 0xa0, 0x75, 255); fogEnd = 150000f; break;

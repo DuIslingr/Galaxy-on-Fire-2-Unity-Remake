@@ -213,16 +213,18 @@ namespace GoF2Remake.World
             var friend = new Route(true); friend.points.Add(new Vector3(-63000, 0, 75000)); friend.points.Add(new Vector3(-60000, 0, 110000));
             var enemy = new Route(true); enemy.points.Add(new Vector3(-63000, -5000, 75000)); enemy.points.Add(new Vector3(-60000, -5000, 110000));
             // [0] the container that becomes the "beam" target, [1] intact Luur, [2] burning Luur (hidden).
-            Static("container_003_terran", new Vector3(-25000, 800, 120000), Vector3.zero, -1, 0, -1);
+            // The container: (-25000, 800, 120000) + L * 1000 facing L (up (0, 1, 0)), then translate(3000, 0, 3000).
+            var box0 = Static("container_003_terran", new Vector3(-25000, 800, 120000) + LightGame * 1000f + new Vector3(3000, 0, 3000), Vector3.zero, -1, 0, -1);
+            if (box0 != null) box0.Place(box0.transform.position, Dir(LightGame));
             var luurRot = new Vector3(0, Mathf.PI / 2f, 0);
             Static("station_111_luur_intact_mission_89", new Vector3(-77000, -3000, 90000), luurRot, -1, 0, -1);
             var burning = Static("sn_burning_station_fire_intro", new Vector3(-77000, -3000, 90000), luurRot, -1, 0, -1);
             burning.SetVisible(false);
-            // [3-10] Midorian fighters on the two loops (no hostility), [11] a freighter flying on.
+            // [3-10] Midorian fighters on the two loops (no hostility), [11] a freighter flying on. Level::createCampaignMission:
+            // 0 / 1 at the friend loop's first point, 2 / 3 at its second, 4-6 at the enemy loop's second, 7 at its first.
             for (int i = 0; i < 8; i++)
             {
-                var r = i < 4 ? friend : enemy;
-                var at = r.points[i % 2 == 0 ? 0 : 1];
+                var at = i < 2 ? friend.points[0] : i < 4 ? friend.points[1] : i < 7 ? enemy.points[1] : enemy.points[0];
                 c.SpawnShip(3, NpcTables.RandomFighter(3), at, true, s => { s.alwaysFriend = true; s.route = friend.Clone(); s.noLoot = true; });
             }
             var f = c.SpawnShip(3, 15, new Vector3(-63000, -3000, 65000), false, s => { s.freighter = true; s.group = NpcGroup.Special; s.alwaysFriend = true; s.noLoot = true; });
@@ -232,8 +234,12 @@ namespace GoF2Remake.World
             SetPlayerVisible(false);
             var luur = S(1);
             var luurPos = G(luur);
+            // The look-at helper (+0xcc): at Luur facing -L (up (0, 1, 0)), moveForward(-100000) and translate(right * 200000):
+            // 100 000 units sunward of Luur, 200 000 to its own right; it drifts back along its right, so the view swings onto
+            // the sun just as it explodes.
             helper = new GameObject("Cutscene helper");
-            helper.transform.position = ToUnity(luurPos - LightGame * 100000f + GameRight(Player) * 200000f);
+            helper.transform.rotation = Quaternion.LookRotation(Dir(-LightGame), Vector3.up);
+            helper.transform.position = ToUnity(luurPos + LightGame * 100000f) + helper.transform.right * 200000f * M;
             cam.LookAt(luurPos + new Vector3(10000, 1500, -20000), helper.transform);
             c.MusicOwned = true;
             c.PlayMusic(sn?.supernovaIntro, false);
@@ -817,8 +823,6 @@ namespace GoF2Remake.World
         public void LateTick(float dtMs)
         {
             cam.LateTick(dtMs);
-            var camT = Camera.main;
-            if (camT != null && beam != null) beam.transform.rotation = camT.transform.rotation;
         }
 
         /// <summary>A save of hull / shield / armour / gamma, nextCampaignMission, and the next orbit (the scripts' jumps).</summary>
@@ -843,9 +847,10 @@ namespace GoF2Remake.World
             var luur = S(1);
             if (Step < 3 && helper != null)
             {
-                float k = Mathf.Max(0f, 1f - T / 35000f);
+                // k isn't clamped: from 35 s the dolly runs back.
+                float k = 1f - T / 35000f;
                 cam.SetDolly(new Vector3(k, 0, 2f * k));
-                helper.transform.position -= Player.right * 7f * dtMs * Mathf.Max(0f, 1f - T / 50000f) * M;
+                helper.transform.position -= helper.transform.right * 7f * dtMs * (1f - T / 50000f) * M;
             }
             var freighter = S(11);
             if (freighter != null) freighter.transform.position += freighter.transform.forward * dtMs * M;
@@ -854,11 +859,19 @@ namespace GoF2Remake.World
                 case 1:
                     if (T >= 30001f)
                     {
-                        // The container rushes past as the blast front (the "beam", projectile_009 stretched).
+                        // The container rushes past as the blast front: camera + (0, 500, 0), moveForward(-10000) (behind the camera,
+                        // facing the sun). Its trail (+0xdc, projectile_009) points back along -its direction, scale (1, 1, 500000),
+                        // its animation once at half speed.
                         var box = S(0);
                         if (box != null && cam.Camera != null) { box.transform.position = cam.Camera.position + Vector3.up * 500f * M; box.transform.position -= box.transform.forward * 10000f * M; }
-                        beam = Scenery("projectile_009_anim_add", ToGame(box != null ? box.transform.position : Player.position), Quaternion.identity, "Supernova front");
-                        if (beam != null) beam.transform.localScale = new Vector3(1f, 1f, 5000f);
+                        var back = box != null ? -box.transform.forward : Vector3.back;
+                        beam = Scenery("projectile_009_anim_add", ToGame(box != null ? box.transform.position : Player.position), Quaternion.LookRotation(back, Vector3.up), "Supernova front");
+                        if (beam != null)
+                        {
+                            beam.transform.localScale = new Vector3(1f, 1f, 500000f);
+                            foreach (var a in beam.GetComponentsInChildren<PartAnimation>(true)) { a.applyMaterialChannels = true; a.speed = 0.5f; }
+                            PartAnimation.PlayOnce(beam);
+                        }
                         Step = 2;
                     }
                     break;
@@ -868,23 +881,34 @@ namespace GoF2Remake.World
                     if (box != null && cam.Camera != null)
                     {
                         float d = (cam.Camera.position - box.transform.position).magnitude / M;
-                        cam.Rumble = 1f - Mathf.Min(d / 7000f, 1f);
+                        cam.Rumble = (1f - Mathf.Min(d / 7000f, 1f)) * 100f;   // setRumblePercentage(p * 100, 30)
+                        cam.RumbleAmplitude = 30;
                         if (d < 200000f) box.transform.position += box.transform.forward * (10f * dtMs + 0.1f * d) * M;
                         if (beam != null) beam.transform.position = box.transform.position;
                     }
-                    if (T >= 38000f && T - dtMs < 38000f && sn != null) Sfx.PlayAt(sn.explosion, Player.position);   // 0x8c8
+                    // 0x8c8, 2D (FModSound::play without a position).
+                    if (T >= 38000f && T - dtMs < 38000f && sn != null && cam.Camera != null) Sfx.PlayAt(sn.explosion, cam.Camera.position);
                     if (T >= 38001f && level.Backdrop != null) level.Backdrop.sunScaleFactor *= Mathf.Pow(0.95f, dtMs / 33f);
                     if (T >= 39001f) { c.Fade(false, Color.white, 500f); Step = 3; }
                     break;
                 }
                 case 3:
-                    if (level.Backdrop != null && level.Backdrop.sunScaleFactor < 10f) level.Backdrop.sunScaleFactor *= Mathf.Pow(4f, dtMs / 33f);
-                    cam.Rumble = 0.6f;
+                    // The sun x4 a frame until its scale reaches 10; the rumble (1, 100) holds to the end.
+                    if (level.Backdrop != null && level.Backdrop.sunScaleFactor * level.Layout.sunScale < 10f) level.Backdrop.sunScaleFactor *= Mathf.Pow(4f, dtMs / 33f);
+                    cam.Rumble = 1f;
+                    cam.RumbleAmplitude = 100;
                     if (c.FadeDone)
                     {
-                        level.Backdrop?.SwitchSun("sn_supernova");
+                        // switchSunForSupernovaIntro: the explosion's ring and core take the sun's place.
+                        if (level.Backdrop != null && sn != null)
+                        {
+                            level.Backdrop.sunScaleFactor = 1f;
+                            level.Backdrop.StartSupernovaExplosion(sn.sunExplosionRing, sn.sunExplosionCoreTexture, sn.sunExplosionCore, sn.sunExplosionRingTexture,
+                                                                   SkyLayerAssets.Load()?.flaresMaterial);
+                        }
                         c.Fade(true, Color.white, 10000f);
-                        if (beam != null) { Object.Destroy(beam); beam = null; }
+                        // The trail stays where it was, no longer animated.
+                        if (beam != null) foreach (var a in beam.GetComponentsInChildren<PartAnimation>(true)) a.speed = 0f;
                         if (S(2) != null) S(2).SetVisible(true);
                         if (luur != null) luur.SetVisible(false);
                         for (int i = 3; i < c.Ships.Count; i++) if (S(i) != null && S(i).Target.Alive) S(i).Target.Damage(9999999, true, Vector3.zero);
@@ -892,7 +916,7 @@ namespace GoF2Remake.World
                     }
                     break;
                 case 4:
-                    cam.Rumble = Mathf.Clamp01(1f - stepMs / 7000f) * 0.5f;
+                    level.Backdrop?.GrowSupernova(dtMs);   // scaleSunDuringSupernovaIntro
                     if (stepMs >= 7000f && stepMs - dtMs < 7000f) c.Fade(false, Color.black, 1000f);
                     // departStation(10) + Station::setAttackedFriends(false): Thynome forgives any friendly fire.
                     if (stepMs >= 8000f && c.FadeDone) { Session.AttackedStations.Remove(10); AdvanceAndDock(10); Step = 5; }

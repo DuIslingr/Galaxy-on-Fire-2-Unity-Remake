@@ -22,8 +22,10 @@ namespace GoF2Remake.World
         Vector3 lookPoint, dolly;
 
         public bool Active { get; private set; }
-        /// <summary>setRumblePercentage: 0..1.</summary>
+        /// <summary>setRumblePercentage(p, A): the look point jitters by p * (rnd(2A) - A) units per axis
+        /// (TargetFollowCamera::update); A is 50 unless a level sets RumbleAmplitude.</summary>
         public float Rumble { get; set; }
+        public int RumbleAmplitude { get; set; } = 50;
         public Transform Camera => cam != null ? cam.transform : null;
 
         public CutsceneCamera(Camera camera)
@@ -61,6 +63,7 @@ namespace GoF2Remake.World
         {
             Active = false;
             Rumble = 0f;
+            RumbleAmplitude = 50;
             dolly = Vector3.zero;
             if (chase != null) { chase.scriptCamera = false; chase.enabled = true; chase.Snap(); }
         }
@@ -76,7 +79,10 @@ namespace GoF2Remake.World
         {
             var look = target != null ? target.position : lookPoint;
             if (Rumble > 0f && dtMs > 0f)   // paused (dt 0): no jitter, like TargetFollowCamera::update
-                look += new Vector3(Random.Range(0, 100) - 50, Random.Range(0, 100) - 50, Random.Range(0, 100) - 50) * (Rumble * M * Settings.CameraShake);
+            {
+                int a = Mathf.Max(1, RumbleAmplitude);
+                look += new Vector3(Random.Range(0, 2 * a) - a, Random.Range(0, 2 * a) - a, Random.Range(0, 2 * a) - a) * (Rumble * M * Settings.CameraShake);
+            }
             var d = look - cam.transform.position;
             if (d.sqrMagnitude > 1e-6f) cam.transform.rotation = Quaternion.LookRotation(d, Vector3.up);
         }

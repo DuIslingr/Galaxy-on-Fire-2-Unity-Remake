@@ -41,6 +41,9 @@ namespace GoF2Remake.Data
 
         [Header("Sky")]
         public Material supernovaIntroSky;  // Level::createSpace at index 89: skybox_005 instead of the supernova sky
+        // StarSystem::switchSunForSupernovaIntro (89): the ring mesh 0x2df1 with texture 0x2df3, the core mesh 0x2df2 with 0x2df4.
+        public GameObject sunExplosionRing, sunExplosionCore;
+        public Texture2D sunExplosionCoreTexture, sunExplosionRingTexture;
 
         static SupernovaAssets instance;
         public static SupernovaAssets Load() => instance != null ? instance : instance = Resources.Load<SupernovaAssets>("GoF2Story/SupernovaAssets");

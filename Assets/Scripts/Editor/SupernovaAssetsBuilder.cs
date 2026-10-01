@@ -42,6 +42,10 @@ namespace GoF2Remake.EditorTools
             a.mission102Loop = Clip("DLC2_MUSIC/GOF2_Mission_102_CutScene_Loop.ogg");
             a.mission102Loop2 = Clip("DLC2_MUSIC/GOF2_Mission_102_CutScene_Loop_2.ogg");
             a.supernovaIntroSky = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Skyboxes/skybox_005.mat");
+            a.sunExplosionRing = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/supernova/fx/sn_sun_explosion_ring_anim_add.prefab");
+            a.sunExplosionCore = AssetDatabase.LoadAssetAtPath<GameObject>($"{Root}/Prefabs/supernova/fx/sn_sun_explosion_core_anim_add.prefab");
+            a.sunExplosionCoreTexture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Textures/supernova/fx/sn_sun_explosion_core.png");
+            a.sunExplosionRingTexture = AssetDatabase.LoadAssetAtPath<Texture2D>($"{Root}/Textures/supernova/fx/sn_sun_explosion_ring.png");
 
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();

@@ -64,7 +64,8 @@ namespace GoF2Remake.World
             var sunDir = OrbitLayout.DirToUnity(orbit.lightDirection).normalized;
             var sunMat = Load(orbit.sunTexture);
             sun = Make("Sun", sunMat, 2900, sunDir, Quaternion.identity, orbit.sunScale);
-            streak = Make("SunStreak", sunMat, 2903, sunDir, Quaternion.identity, 0f);
+            // StarSystem::renderSunStreak: the supernova system draws its streak with sn_sun_011 (StarSystem+0x10, 0x2dde).
+            streak = Make("SunStreak", orbit.supernovaSun ? Load("sn_sun_011") ?? sunMat : sunMat, 2903, sunDir, Quaternion.identity, 0f);
             foreach (var r in new[] { sun.t, streak.t })
             {
                 var block = new MaterialPropertyBlock();
@@ -107,6 +108,56 @@ namespace GoF2Remake.World
             if (mat == null || sun == null) return;
             foreach (var b in new[] { sun, streak }) b.t.GetComponent<MeshRenderer>().sharedMaterial = mat;
         }
+
+        // ---- the supernova explosion (StarSystem::switchSunForSupernovaIntro 0x15d904, scaleSunDuringSupernovaIntro, updateSupernova)
+
+        readonly List<(Transform t, float scale)> supernova = new List<(Transform, float)>();
+        float supernovaRing;
+
+        /// <summary>The sun becomes the explosion: planets[0] the ring mesh 0x2df1 at a uniform 0.68665 with texture 0x2df3
+        /// (sn_sun_explosion_core), the streak layer the core mesh 0x2df2 with 0x2df4 (sn_sun_explosion_ring), both animations
+        /// restarted. Remake: the converted meshes are ~4 m across where the plane quad is 3250 m, so they are scaled by that
+        /// ratio to keep the original's proportions; far-plane additive like the sky layers.</summary>
+        public void StartSupernovaExplosion(GameObject ringPrefab, Texture ringTexture, GameObject corePrefab, Texture coreTexture, Material template)
+        {
+            if (template == null) return;
+            if (sun != null) sun.t.gameObject.SetActive(false);
+            if (streak != null) streak.t.gameObject.SetActive(false);
+            supernovaRing = 0.6866455078125f;
+            Add(ringPrefab, ringTexture, 2900, supernovaRing);
+            Add(corePrefab, coreTexture, 2901, layout.sunScale);
+
+            void Add(GameObject prefab, Texture tex, int queue, float scale)
+            {
+                if (prefab == null) return;
+                var go = Instantiate(prefab, transform, false);
+                var size = new Bounds(); bool first = true;
+                foreach (var mf in go.GetComponentsInChildren<MeshFilter>(true))
+                    if (mf.sharedMesh != null) { if (first) { size = mf.sharedMesh.bounds; first = false; } else size.Encapsulate(mf.sharedMesh.bounds); }
+                float norm = QuadMeters / Mathf.Max(0.01f, Mathf.Max(size.size.x, size.size.y));
+                foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+                {
+                    var m = new Material(template) { renderQueue = queue };
+                    m.SetTexture("_MainTex", tex);
+                    m.SetFloat("_UseVertexColor", 0f);
+                    r.sharedMaterial = m;
+                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                }
+                foreach (var a in go.GetComponentsInChildren<Visuals.PartAnimation>(true)) a.applyMaterialChannels = true;
+                Visuals.PartAnimation.PlayOnce(go);
+                supernova.Add((go.transform, scale * norm));
+            }
+        }
+
+        /// <summary>scaleSunDuringSupernovaIntro: the ring grows by 4e-5 per ms.</summary>
+        public void GrowSupernova(float dtMs)
+        {
+            if (supernova.Count == 0) return;
+            supernovaRing += 4e-5f * dtMs;
+            ringGrowth = supernovaRing / 0.6866455078125f;
+        }
+
+        float ringGrowth = 1f;
 
         /// <summary>StarSystem::switchPlanetForIntro 0x15d820 (the prologue's time jump): the orbit planet gets planet_000_big
         /// and twice its size.</summary>
@@ -208,6 +259,14 @@ namespace GoF2Remake.World
                 Place(p, c, p.rot, Vector3.one * k);
             }
             foreach (var r in rings) Place(r, c, r.rot, Vector3.one * r.scale);
+            // The explosion parts sit where the sun was, turned to the camera like it.
+            for (int i = 0; i < supernova.Count; i++)
+            {
+                var (part, partScale) = supernova[i];
+                if (part == null) continue;
+                part.SetPositionAndRotation(c + sun.dir * Distance, sunRot);
+                part.localScale = Vector3.one * partScale * (i == 0 ? ringGrowth : 1f);
+            }
         }
 
         static void Place(Body b, Vector3 camPos, Quaternion rot, Vector3 scale)

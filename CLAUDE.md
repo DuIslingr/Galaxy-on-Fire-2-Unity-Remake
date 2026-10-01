@@ -258,6 +258,7 @@ against the FEV's LGCY data, see "Sound").
   tutorial), 144 / 145 (Harval, the array destroyed), 147, 154 (Alice's betrayal, 91 s hack), 157 (the final battle), 158 (the
   Harval duel). `AsteroidCentre` moves the field for 89 / 114 / 145 / 154. Remake pick: in 105's opening shot the player and the
   escorts fly 2.5 u/ms, just ahead of the camera's dolly (at the launch speed they slid back at it tail first).
+- **89, Luur's supernova** (`StarSystem::switchSunForSupernovaIntro` and LevelScript states 1-4): the look-at helper starts 100 000 units sunward of Luur and 200 000 to its own right, drifting back so the view reaches the sun as it explodes; the sun is sn_sun_011 before the blast (system 27's sun is 0.99182, 1.37329 from 0x6a, its streak sn_sun_011); the container shoots from behind the camera toward the sun with a 500 000-long trail at half speed; no fog at 89; rumble p · (rnd(2A) − A) (`CutsceneCamera.RumbleAmplitude`: 100 · falloff / 30, then 1 / 100); the explosion = the ring mesh 0x2df1 (texture 0x2df3, from 0.68665, +4e-5 per ms) and the core mesh 0x2df2 (0x2df4) at the sun (`Backdrop.StartSupernovaExplosion`; the converted meshes are ~4 m, scaled to the plane quad's 3250 m).
 - **Level details from the decompiled scripts**: 157's finale (states 5-12: the Liberator killed, Alice to the Valkyrie, the
   Valkyrie backing away with 0x8cb accelerating to 10 u/ms until z 100 000, Harval chasing at 4 then 2 u/ms firing
   (`NpcShip.scriptedFire`), the explosions 0x8c4 at +(-2000, 1000, -8000) then every 8 s, burning stage 1 after 300 ms, stage 2,
