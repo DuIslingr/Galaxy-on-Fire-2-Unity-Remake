@@ -1490,6 +1490,7 @@ namespace GoF2Remake.UI
                 return;
             }
             if (Flight.GameControls.BlocksMenus) return;   // a key binding is being captured (Options): its key isn't a menu key
+            DpadTapNavigation.Pump(root);   // D-pad taps the panel's own navigation drops (the Steam controller)
             // The Debug page's tabs: Q / E, LB / RB.
             if (SystemMenuOpen && sysPage == SysPage.Debug && !DialogOpen)
             {
