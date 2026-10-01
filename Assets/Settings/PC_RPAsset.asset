@@ -21,13 +21,31 @@ MonoBehaviour:
   m_DefaultRendererIndex: 0
   m_RequireDepthTexture: 1
   m_RequireOpaqueTexture: 1
-  m_OpaqueDownsampling: 1
+  m_OpaqueDownsampling: 0
   m_SupportsTerrainHoles: 1
   m_SupportsHDR: 1
   m_HDRColorBufferPrecision: 0
   m_MSAA: 1
   m_RenderScale: 1
   m_UpscalingFilter: 4
+  m_ScalingMode: 0
+  m_SelectedUpscalerName: 
+  m_UpscalerPriority:
+  - upscalerId: unity.stp
+    upscalerName: Spatial-Temporal Post-Processing
+  - upscalerId: nvidia.dlss4
+    upscalerName: Deep Learning Super Sampling 4
+  - upscalerId: amd.fsr4
+    upscalerName: FidelityFX Super Resolution 4
+  - upscalerId: amd.fsr3
+    upscalerName: FidelityFX Super Resolution 3
+  - upscalerId: amd.fsr2
+    upscalerName: FidelityFX Super Resolution 2
+  - upscalerId: amd.fsr1
+    upscalerName: FidelityFX Super Resolution 1.0
+  - upscalerId: unity.auto
+    upscalerName: Auto (Bilinear or Nearest-Neighbor)
+  m_UpscalerOptions: []
   m_FsrOverrideSharpness: 0
   m_FsrSharpness: 0.92
   m_EnableLODCrossFade: 1

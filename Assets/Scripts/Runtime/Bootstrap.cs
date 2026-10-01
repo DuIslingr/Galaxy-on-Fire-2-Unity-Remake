@@ -26,7 +26,9 @@ namespace GoF2Remake
         // The project's own values, the "default" of the render scale / MSAA options and the base of the LOD bias.
         static float defaultRenderScale = 1f, defaultLodBias = 1f, defaultDeadzone = Settings.DefaultDeadzone;
         static int defaultMsaa = 1;
+#if !ENABLE_UPSCALER_FRAMEWORK
         static UpscalingFilterSelection defaultUpscaling = UpscalingFilterSelection.Auto;
+#endif
         static UniversalRenderPipelineAsset urp;
 
         /// <summary>The platform's render scale and MSAA samples (what the options' 0 = default stands for).</summary>
@@ -39,7 +41,14 @@ namespace GoF2Remake
             int editorVSync = QualitySettings.vSyncCount;
             if (Application.isMobilePlatform) Screen.sleepTimeout = SleepTimeout.NeverSleep;   // no screen dimming while playing
             urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
-            if (urp != null) { defaultRenderScale = urp.renderScale; defaultMsaa = urp.msaaSampleCount; defaultUpscaling = urp.upscalingFilter; }
+            if (urp != null)
+            {
+                defaultRenderScale = urp.renderScale;
+                defaultMsaa = urp.msaaSampleCount;
+#if !ENABLE_UPSCALER_FRAMEWORK
+                defaultUpscaling = urp.upscalingFilter;
+#endif
+            }
             defaultLodBias = QualitySettings.lodBias;
             defaultDeadzone = InputSystem.settings.defaultDeadzoneMin;
 
@@ -54,6 +63,9 @@ namespace GoF2Remake
             Settings.Changed += ApplyAll;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
+            // URP resolves the framework's upscaler once per pipeline instance (UpscalerFramework): again for each new one.
+            RenderPipelineManager.activeRenderPipelineCreated -= ApplyUpscaling;
+            RenderPipelineManager.activeRenderPipelineCreated += ApplyUpscaling;
 #if UNITY_EDITOR
             // Leaving Play mode (Application.quitting in the Editor): restore the Editor's values, or the Play-mode ones would
             // stick to QualitySettings.asset and the URP asset, and unhook, because with domain reload off the subscriptions
@@ -63,9 +75,17 @@ namespace GoF2Remake
             {
                 Settings.Changed -= ApplyAll;
                 SceneManager.sceneLoaded -= OnSceneLoaded;
+                RenderPipelineManager.activeRenderPipelineCreated -= ApplyUpscaling;
                 QualitySettings.vSyncCount = editorVSync;
                 QualitySettings.lodBias = defaultLodBias;
-                if (urp != null) { urp.renderScale = defaultRenderScale; urp.msaaSampleCount = defaultMsaa; urp.upscalingFilter = defaultUpscaling; }
+                if (urp != null)
+                {
+                    urp.renderScale = defaultRenderScale;
+                    urp.msaaSampleCount = defaultMsaa;
+#if !ENABLE_UPSCALER_FRAMEWORK
+                    urp.upscalingFilter = defaultUpscaling;
+#endif
+                }
                 InputSystem.settings.defaultDeadzoneMin = defaultDeadzone;
                 AudioListener.volume = 1f;
                 Application.quitting -= restore;
@@ -81,15 +101,8 @@ namespace GoF2Remake
             if (!Application.isPlaying) return;
             ApplyFrameRate();
             AudioListener.volume = Settings.MasterVolume;
-            if (urp != null)
-            {
-                int upscaler = ActiveUpscaler;
-                urp.renderScale = Settings.RenderScale > 0f ? Settings.RenderScale : defaultRenderScale;
-                urp.upscalingFilter = upscaler == Settings.UpscalerFsr ? UpscalingFilterSelection.FSR
-                    : upscaler == Settings.UpscalerStp ? UpscalingFilterSelection.STP : UpscalingFilterSelection.Auto;
-                // STP runs on URP's temporal anti-aliasing, which needs MSAA off (UniversalCameraData.IsTemporalAAEnabled).
-                urp.msaaSampleCount = upscaler == Settings.UpscalerStp ? 1 : Settings.Msaa > 0 ? Settings.Msaa : defaultMsaa;
-            }
+            if (urp != null) urp.renderScale = Settings.RenderScale > 0f ? Settings.RenderScale : defaultRenderScale;
+            ApplyUpscaling();
             QualitySettings.lodBias = defaultLodBias * (Settings.Quality >= 2 ? 1f : Settings.Quality == 1 ? 0.6f : 0.35f);
             if (!Mathf.Approximately(InputSystem.settings.defaultDeadzoneMin, Settings.StickDeadzone))
                 InputSystem.settings.defaultDeadzoneMin = Settings.StickDeadzone;
@@ -99,6 +112,46 @@ namespace GoF2Remake
         }
 
         // ---- upscaler ----------------------------------------------------------------------------------------
+
+        /// <summary>The upscaler option and the MSAA it allows: with the upscaler framework (desktop) the framework's active
+        /// upscaler (UpscalerFramework, also called for every new pipeline), else the asset's upscaling filter.</summary>
+        static void ApplyUpscaling()
+        {
+            if (!Application.isPlaying || urp == null) return;
+            int upscaler = ActiveUpscaler;
+#if ENABLE_UPSCALER_FRAMEWORK
+            UpscalerFramework.Apply(UpscalerId(upscaler), Settings.UpscalerQuality);
+#else
+            urp.upscalingFilter = upscaler == Settings.UpscalerFsr ? UpscalingFilterSelection.FSR
+                : upscaler == Settings.UpscalerStp ? UpscalingFilterSelection.STP : UpscalingFilterSelection.Auto;
+#endif
+            // STP, DLSS and FSR 2+ are temporal: URP's temporal anti-aliasing path, which needs MSAA off
+            // (UniversalCameraData.IsTemporalAAEnabled). Only set when it changes (a change can rebuild render targets).
+            int msaa = IsTemporal(upscaler) ? 1 : Settings.Msaa > 0 ? Settings.Msaa : defaultMsaa;
+            if (urp.msaaSampleCount != msaa) urp.msaaSampleCount = msaa;
+        }
+
+        /// <summary>The framework's id for an upscaler option (UpscalerFramework).</summary>
+        static string UpscalerId(int upscaler) => upscaler switch
+        {
+            Settings.UpscalerFsr => UpscalerFramework.Fsr1,
+            Settings.UpscalerStp => UpscalerFramework.Stp,
+            Settings.UpscalerDlss => UpscalerFramework.Dlss,
+            Settings.UpscalerFsrTemporal => UpscalerFramework.BestFsr ?? UpscalerFramework.Auto,
+            _ => UpscalerFramework.Auto,
+        };
+
+        /// <summary>STP, DLSS and FSR 2+: temporal (anti-aliasing included, MSAA off, the quality mode picks the resolution of
+        /// DLSS / FSR).</summary>
+        public static bool IsTemporal(int upscaler) =>
+            upscaler == Settings.UpscalerStp || upscaler == Settings.UpscalerDlss || upscaler == Settings.UpscalerFsrTemporal;
+
+        /// <summary>NVIDIA DLSS on this device (desktop builds with the upscaler framework, an RTX GPU, Direct3D 11 / 12 or
+        /// Vulkan; known once URP has made its pipeline).</summary>
+        public static bool DlssSupported => UpscalerFramework.DlssSupported;
+
+        /// <summary>AMD FSR 2 / 3 / 4 on this device (the newest it runs, UpscalerFramework.BestFsr).</summary>
+        public static bool FsrTemporalSupported => UpscalerFramework.BestFsr != null;
 
         /// <summary>FSR 1 needs shader model 4.5 (FSRUtils); STP compute shaders and no OpenGL ES (STP.IsSupported), so on
         /// Android it runs on Vulkan only, and its compute shaders in the build (StpResourcesPresent).</summary>
@@ -139,6 +192,8 @@ namespace GoF2Remake
         {
             Settings.UpscalerFsr when FsrSupported => Settings.UpscalerFsr,
             Settings.UpscalerStp when StpSupported => Settings.UpscalerStp,
+            Settings.UpscalerDlss when DlssSupported => Settings.UpscalerDlss,
+            Settings.UpscalerFsrTemporal when FsrTemporalSupported => Settings.UpscalerFsrTemporal,
             _ => Settings.UpscalerOff,
         };
 

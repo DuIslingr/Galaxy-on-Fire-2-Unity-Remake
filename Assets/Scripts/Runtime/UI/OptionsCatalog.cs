@@ -108,29 +108,53 @@ namespace GoF2Remake.UI
                 () => RenderScales.Select(Percent).ToArray(),
                 () => Nearest(RenderScales, Settings.RenderScale > 0f ? Settings.RenderScale : Bootstrap.DefaultRenderScale),
                 i => Settings.RenderScale = RenderScales[i]));
-            // Only the upscalers this device runs (Android: FSR 1 needs GLES 3.1 / Vulkan, STP Vulkan).
+            // Only the upscalers this device runs (Android: FSR 1 needs GLES 3.1 / Vulkan, STP Vulkan; DLSS / FSR 2+: Windows
+            // builds with the upscaler framework, the GPU and graphics API they need, UpscalerFramework).
             var upscalers = new List<int> { Settings.UpscalerOff };
             if (Bootstrap.FsrSupported) upscalers.Add(Settings.UpscalerFsr);
             if (Bootstrap.StpSupported) upscalers.Add(Settings.UpscalerStp);
+            if (Bootstrap.DlssSupported) upscalers.Add(Settings.UpscalerDlss);
+            if (Bootstrap.FsrTemporalSupported) upscalers.Add(Settings.UpscalerFsrTemporal);
+            string UpscalerName(int u) => u switch
+            {
+                Settings.UpscalerFsr => "FSR 1",
+                Settings.UpscalerStp => "STP",
+                Settings.UpscalerDlss => "DLSS",
+                Settings.UpscalerFsrTemporal => UpscalerFramework.BestFsrLabel ?? "FSR",
+                _ => X("off", "Off"),
+            };
             if (upscalers.Count > 1)
                 list.Add(Choice("upscaler", OptionPage.Graphics, () => X("upscaler", "Upscaler"), true,
-                    () => upscalers.Select(u => u == Settings.UpscalerFsr ? "FSR 1" : u == Settings.UpscalerStp ? "STP" : X("off", "Off")).ToArray(),
+                    () => upscalers.Select(UpscalerName).ToArray(),
                     () => Math.Max(0, upscalers.IndexOf(Bootstrap.ActiveUpscaler)),
                     i => Settings.Upscaler = upscalers[i],
                     () => Bootstrap.ActiveUpscaler switch
                     {
                         Settings.UpscalerFsr => X("upscalerFsr", "AMD FidelityFX Super Resolution 1: sharp upscaling from the render scale"),
                         Settings.UpscalerStp => X("upscalerStp", "Unity Spatial-Temporal Post-processing: temporal anti-aliasing and upscaling, replaces MSAA"),
+                        Settings.UpscalerDlss => X("upscalerDlss", "NVIDIA DLSS: AI upscaling and anti-aliasing (DLAA at Native), replaces MSAA; the quality sets its resolution"),
+                        Settings.UpscalerFsrTemporal => string.Format(X("upscalerFsrTemporal", "AMD {0}: temporal upscaling and anti-aliasing, replaces MSAA; the quality sets its resolution"),
+                            UpscalerFramework.BestFsrLabel ?? "FSR"),
                         _ => X("upscalerOff", "Plain scaling from the render scale"),
                     }));
-            // MSAA with STP on: STP's temporal anti-aliasing takes its place (shown as off); picking MSAA turns STP off.
+            // DLSS / FSR 2+: the render resolution by quality mode (the render scale doesn't apply to them).
+            if (Bootstrap.DlssSupported || Bootstrap.FsrTemporalSupported)
+                list.Add(Choice("upscalerQuality", OptionPage.Graphics, () => X("upscalerQuality", "Upscaler quality"), false,
+                    () => new[] { X("upscalerNative", "Native (DLAA / native AA)"), X("upscalerQ", "Quality"), X("upscalerB", "Balanced"),
+                                  X("upscalerP", "Performance"), X("upscalerUP", "Ultra performance") },
+                    () => Settings.UpscalerQuality, i => Settings.UpscalerQuality = i,
+                    () => Bootstrap.ActiveUpscaler == Settings.UpscalerDlss || Bootstrap.ActiveUpscaler == Settings.UpscalerFsrTemporal
+                        ? X("upscalerQualityHelp", "DLSS / FSR: the resolution they render at, from native down to a third; the render scale doesn't apply")
+                        : X("upscalerQualityOff", "Only used by DLSS and FSR 2 / 3 / 4")));
+            // MSAA with a temporal upscaler on (STP, DLSS, FSR 2+): its anti-aliasing takes the place (shown as off); picking MSAA
+            // turns the upscaler off.
             list.Add(Choice("msaa", OptionPage.Graphics, () => X("antiAliasing", "Anti-aliasing"), true,
                 () => new[] { X("off", "Off"), "MSAA 2×", "MSAA 4×", "MSAA 8×" },
-                () => Bootstrap.ActiveUpscaler == Settings.UpscalerStp ? 0
+                () => Bootstrap.IsTemporal(Bootstrap.ActiveUpscaler) ? 0
                     : Math.Max(0, Array.IndexOf(MsaaSamples, Settings.Msaa > 0 ? Settings.Msaa : Bootstrap.DefaultMsaa)),
                 i =>
                 {
-                    if (i > 0 && Bootstrap.ActiveUpscaler == Settings.UpscalerStp) Settings.Upscaler = Settings.UpscalerOff;
+                    if (i > 0 && Bootstrap.IsTemporal(Bootstrap.ActiveUpscaler)) Settings.Upscaler = Settings.UpscalerOff;
                     Settings.Msaa = MsaaSamples[i];
                 }));
             list.Add(Choice("brightness", OptionPage.Graphics, () => Localization.Get(503), true,

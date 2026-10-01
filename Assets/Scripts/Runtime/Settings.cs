@@ -58,10 +58,15 @@ namespace GoF2Remake.Data
         /// <summary>URP render scale; 0 = the platform's render pipeline asset (1 on PC, 0.8 on mobile).</summary>
         public static float RenderScale { get => Get("renderScale", 0f); set => Set("renderScale", value <= 0f ? 0f : Mathf.Clamp(value, 0.5f, 2f)); }
 
-        /// <summary>Upscaler (the URP asset's upscaling filter): 0 off (URP's automatic bilinear / point), 1 AMD FSR 1
-        /// (sharpening, also at 100 %), 2 Unity STP (temporal: anti-aliasing and upscaling, replaces MSAA).</summary>
-        public static int Upscaler { get => Mathf.RoundToInt(Get("upscaler", 0f)); set => Set("upscaler", Mathf.Clamp(value, 0, 2)); }
-        public const int UpscalerOff = 0, UpscalerFsr = 1, UpscalerStp = 2;
+        /// <summary>Upscaler: 0 off (URP's automatic bilinear / point), 1 AMD FSR 1 (sharpening, also at 100 %), 2 Unity STP
+        /// (temporal: anti-aliasing and upscaling, replaces MSAA), 3 NVIDIA DLSS and 4 AMD FSR 2 / 3 / 4 (temporal, the render
+        /// resolution by UpscalerQuality; desktop builds with the upscaler framework only, UpscalerFramework).</summary>
+        public static int Upscaler { get => Mathf.RoundToInt(Get("upscaler", 0f)); set => Set("upscaler", Mathf.Clamp(value, 0, 4)); }
+        public const int UpscalerOff = 0, UpscalerFsr = 1, UpscalerStp = 2, UpscalerDlss = 3, UpscalerFsrTemporal = 4;
+
+        /// <summary>DLSS / FSR 2+ quality mode (UpscalerFramework.Quality*): 0 native (DLAA / native AA), 1 quality (default),
+        /// 2 balanced, 3 performance, 4 ultra performance.</summary>
+        public static int UpscalerQuality { get => Mathf.RoundToInt(Get("upscalerQuality", 1f)); set => Set("upscalerQuality", Mathf.Clamp(value, 0, 4)); }
 
         /// <summary>MSAA samples (1 = off, 2, 4, 8); 0 = the platform's render pipeline asset.</summary>
         public static int Msaa { get => Mathf.RoundToInt(Get("msaa", 0f)); set => Set("msaa", value); }
@@ -181,7 +186,7 @@ namespace GoF2Remake.Data
             foreach (var key in new[]
                      {
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
-                         "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
+                         "frameRate", "renderScale", "upscaler", "upscalerQuality", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "gyroSteering", "gyroSensitivity", "haptics", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);
