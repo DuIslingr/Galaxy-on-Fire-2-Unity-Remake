@@ -186,16 +186,18 @@ namespace GoF2Remake.EditorTools
             return path != null ? AssetDatabase.LoadAssetAtPath<AudioClip>(path) : null;
         }
 
-        /// <summary>Crosshair 0x4c0 (339, 814, 40x40) and the orange "hit" one 0x4ce (339, 856) (weapons.md section 9).</summary>
+        /// <summary>Crosshair 0x4c0 and the orange "hit" one 0x4ce. The HD build draws them from gof2_interface_iphone4.png,
+        /// 81x81 at (392, 78) and (1835, 1231) (ship_combat.md 7); weapons.md 9's 40x40 rects (339, 814 / 856) are the
+        /// low-resolution gof2_interface.png's.</summary>
         static void BuildCrosshair()
         {
-            string src = $"{ImportSettings.Root}/Textures/textures/gof2_interface.png";
+            string src = $"{ImportSettings.Root}/Textures/textures/gof2_interface_iphone4.png";
             if (!File.Exists(src)) return;
             var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
             tex.LoadImage(File.ReadAllBytes(src));
             Directory.CreateDirectory(HudImageDir);
-            Cut(tex, 339, 814, 40, 40, $"{HudImageDir}/crosshair.png");
-            Cut(tex, 339, 856, 40, 40, $"{HudImageDir}/crosshair_hit.png");
+            Cut(tex, 392, 78, 81, 81, $"{HudImageDir}/crosshair.png");
+            Cut(tex, 1835, 1231, 81, 81, $"{HudImageDir}/crosshair_hit.png");
             Object.DestroyImmediate(tex);
         }
 
@@ -210,8 +212,11 @@ namespace GoF2Remake.EditorTools
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
             var ti = (TextureImporter)AssetImporter.GetAtPath(path);
             ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;   // one sprite over the whole image (an old 'Multiple' rect clipped it)
             ti.mipmapEnabled = false;
             ti.alphaIsTransparency = true;
+            ti.npotScale = TextureImporterNPOTScale.None;
+            ti.textureCompression = TextureImporterCompression.Uncompressed;   // block compression smeared the thin rings
             ti.SaveAndReimport();
         }
     }

@@ -71,12 +71,13 @@
 
 /* ---- crosshair (screen projection of ship + forward * 22000 units) ---------------------------- */
 
+/* 0x4c0 at its native HD size (81 px, gof2_interface_iphone4.png): the HUD images are drawn 1:1 in panel pixels. */
 .crosshair {
     position: absolute;
-    width: 64px;
-    height: 64px;
-    margin-left: -32px;
-    margin-top: -32px;
+    width: 81px;
+    height: 81px;
+    margin-left: -40.5px;
+    margin-top: -40.5px;
     background-image: url("project://database/Assets/UI/Flight/Images/crosshair.png");
     -unity-background-scale-mode: scale-to-fit;
     opacity: 0.9;
