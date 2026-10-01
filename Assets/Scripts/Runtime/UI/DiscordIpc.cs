@@ -51,6 +51,7 @@ namespace GoF2Remake.UI
                 {
                     Write(pipe, 0, "{\"v\":1,\"client_id\":\"" + clientId + "\"}");
                     Read(pipe);   // READY
+                    UnityEngine.Debug.Log("DiscordIpc: connected to Discord");
                     lastSent = null;
                     while (running)
                     {
@@ -60,7 +61,8 @@ namespace GoF2Remake.UI
                         {
                             string nonce = Guid.NewGuid().ToString("N");
                             Write(pipe, 1, "{\"cmd\":\"SET_ACTIVITY\",\"args\":{\"pid\":" + pid + ",\"activity\":" + activity + "},\"nonce\":\"" + nonce + "\"}");
-                            Read(pipe);
+                            string reply = Read(pipe);
+                            if (reply.Contains("\"evt\":\"ERROR\"")) UnityEngine.Debug.LogWarning("DiscordIpc: " + reply);
                             lastSent = activity;
                             Sleep(4000);
                         }
