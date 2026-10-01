@@ -81,6 +81,7 @@ namespace GoF2Remake.World
             if (Rumble > 0f && dtMs > 0f)   // paused (dt 0): no jitter, like TargetFollowCamera::update
             {
                 int a = Mathf.Max(1, RumbleAmplitude);
+                Haptics.Rumble(Rumble * a / 50f);   // remake: on the controller / phone too (1 = the default amplitude's full rumble)
                 look += new Vector3(Random.Range(0, 2 * a) - a, Random.Range(0, 2 * a) - a, Random.Range(0, 2 * a) - a) * (Rumble * M * Settings.CameraShake);
             }
             var d = look - cam.transform.position;

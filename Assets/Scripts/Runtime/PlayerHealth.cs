@@ -306,6 +306,8 @@ namespace GoF2Remake.Flight
             if (Hp.hullHit) clip = CombatAssets.Pick(assets?.hitHull);
             else if (Hp.armorHit) clip = CombatAssets.Pick(assets?.hitArmor);
             else if (Hp.shieldHit) clip = CombatAssets.Pick(assets?.hitShield);
+            // Remake: haptics by the deepest layer hit, like the sound.
+            Haptics.Play(Hp.hullHit ? Haptics.HitHull : Hp.armorHit ? Haptics.HitArmor : Haptics.HitShield);
             Hp.shieldHit = Hp.armorHit = Hp.hullHit = false;
             if (clip != null) sfx.PlayOneShot(clip, Settings.SfxVolume);
 
@@ -345,6 +347,7 @@ namespace GoF2Remake.Flight
             ship.autopilotTarget = null;
             if (weapons != null) weapons.Blocked = true;
             if (chase != null) chase.enabled = false;   // TargetFollowCamera::setActive(false): the camera stays where it is
+            Haptics.Play(Haptics.Crippled);   // remake
             // PlayerEgo::explode 0xada6c: the death burn (record 9) from the first frame until the explosion.
             burn ??= new ShipBurn(transform);
             burn.SetBurning(true);
@@ -366,6 +369,7 @@ namespace GoF2Remake.Flight
             {
                 exploded = true;
                 Explosion.Spawn(transform.position);
+                Haptics.Play(Haptics.Death);   // remake (the frozen camera takes no explosion rumble)
                 // At 3000 ms: the burn stops and record 11 bursts once at the ship.
                 if (burn != null) { burn.SetBurning(false); burn.Burst(); }
                 if (ship.visualModel != null) ship.visualModel.gameObject.SetActive(false);

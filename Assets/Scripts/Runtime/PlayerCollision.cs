@@ -14,6 +14,8 @@
 // mining (PlayerEgo+0x356 with a mining phase 1-3) and once dead.
 // The 1000 ms jitter of the ship model after a hit (PlayerEgo+0x328 / +0x32c, +-0.006 units) is too small to see and
 // isn't reproduced.
+// Remake haptics: running into a landmark is a knock, then a scraping rumble while the ship slides along it; an asteroid a
+// knock; the wormhole's pull a rumble that grows toward it.
 
 using System;
 using UnityEngine;
@@ -37,6 +39,8 @@ namespace GoF2Remake.Flight
         PlayerHealth health;
         ChaseCamera chase;
         Mining mining;
+        bool scraping, scrapedLastFrame;   // haptics: touching a landmark this frame / the frame before
+        const float ScrapeRumble = 0.35f;
         /// <summary>Docking at a story object: no collision while easing in, docked or leaving (set by the level).</summary>
         [System.NonSerialized] public ObjectDocking docking;
 
@@ -50,13 +54,20 @@ namespace GoF2Remake.Flight
         void Update()
         {
             TouchingStation = false;
-            if (off || health == null || health.Dead) { wormhole?.SetSound(false); return; }
-            if (mining != null && mining.State != Mining.Phase.Idle) return;
-            if (docking != null && docking.Busy && docking.State != ObjectDocking.Phase.Approach) return;   // easing onto a docking point
+            scraping = false;
+            if (off || health == null || health.Dead) { wormhole?.SetSound(false); scrapedLastFrame = false; return; }
+            if (mining != null && mining.State != Mining.Phase.Idle) { scrapedLastFrame = false; return; }
+            if (docking != null && docking.Busy && docking.State != ObjectDocking.Phase.Approach) { scrapedLastFrame = false; return; }   // easing onto a docking point
             CheckWormhole();
             CheckObstacles(true);
             CheckObstacles(false);
             CheckAsteroids();
+            if (scraping)
+            {
+                if (!scrapedLastFrame) Haptics.Play(Haptics.Impact);
+                Haptics.Rumble(ScrapeRumble);
+            }
+            scrapedLastFrame = scraping;
         }
 
         void Hit()
@@ -80,6 +91,7 @@ namespace GoF2Remake.Flight
                 if (!o.Touches(pos, out _)) continue;
                 transform.position = o.PushOut(pos);
                 if (o.isStation) TouchingStation = true;
+                scraping = true;
                 Hit();
             }
         }
@@ -96,6 +108,7 @@ namespace GoF2Remake.Flight
             w.SetSound(true);
             transform.position += d.normalized * ((int)pull >> 8) * (Time.deltaTime * 1000f / 33.3f) * GoF2Remake.World.OrbitLayout.MetersPerUnit;
             Hit();
+            Haptics.Rumble(0.1f + 0.6f * pull / GoF2Remake.World.Wormhole.RadiusUnits);   // remake: stronger closer in
             if (units < GoF2Remake.World.Wormhole.InsideUnits) InWormhole = true;
         }
 
@@ -116,6 +129,7 @@ namespace GoF2Remake.Flight
                 if (!health.invulnerable) health.Target.Damage(20f);
                 AsteroidHit?.Invoke();   // volatile goods: +0.2 (VolatileCargo)
                 Hit();
+                Haptics.Play(Haptics.Impact);   // remake
             }
         }
     }

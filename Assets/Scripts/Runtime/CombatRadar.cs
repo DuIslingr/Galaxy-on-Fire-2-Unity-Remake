@@ -176,6 +176,7 @@ namespace GoF2Remake.Flight
                 {
                     Locked = Candidate;
                     if (assets != null && assets.targetLock != null) sfx.PlayOneShot(assets.targetLock, Settings.SfxVolume);
+                    Haptics.Play(Haptics.TargetLock);   // remake
                     if (cargoScan) ReadCargo(Locked);
                 }
             }

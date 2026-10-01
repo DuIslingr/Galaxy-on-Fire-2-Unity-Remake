@@ -539,6 +539,7 @@ namespace GoF2Remake.Flight
             if (weapons != null) weapons.Blocked = true;
             if (chase != null) chase.enabled = false;
             Play(sounds?.jumpToPlanet);
+            Haptics.Play(Haptics.Jump);   // remake
         }
 
         void UpdateJump(float dtMs)

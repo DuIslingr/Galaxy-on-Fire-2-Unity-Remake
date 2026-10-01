@@ -36,8 +36,9 @@ through yet. Multiplayer is experimental. A build's version is the date and time
   - A Dutch translation, and a choice between German and English voices.
   - Debug tools (Options > Gameplay): jump to any story step, cheats, give items, spawn ships and objects.
 - **Controls and screens:** touch, tilt, keyboard and mouse, and controllers (shown with Xbox buttons), all rebindable.
-  Gyro steering with a DualSense, DualShock 4 or Switch Pro Controller on Windows. Landscape screens from 4:3 up to
-  32:9, phones included.
+  Gyro steering with a DualSense, DualShock 4 or Switch Pro Controller on Windows. Haptic feedback on controllers and
+  Android phones (hits, collisions, explosions, weapons, boost, jumps and mining) with an intensity setting. Landscape
+  screens from 4:3 up to 32:9, phones included.
 
 ## Getting started
 

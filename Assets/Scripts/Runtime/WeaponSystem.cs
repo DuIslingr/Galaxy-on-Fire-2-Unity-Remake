@@ -319,6 +319,7 @@ namespace GoF2Remake.Flight
                 PlayShot(r);
                 r.visuals.OnShot();
                 AfterShot();
+                Haptics.Play(Haptics.SecondaryFire);   // remake
                 if (r.gun.Guided) StartLiberator(r);
                 return true;
             }
@@ -411,6 +412,7 @@ namespace GoF2Remake.Flight
             if (r.loop == null && sound) PlayShot(r);
             r.visuals.OnShot();
             AfterShot();
+            Haptics.Play(Haptics.PrimaryShot);   // remake: a light tick on the controller
         }
 
         VolatileCargo volatileCargo;

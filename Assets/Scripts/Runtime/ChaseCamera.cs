@@ -43,6 +43,7 @@ namespace GoF2Remake.Flight
         Camera cam;
         Vector3 slide;
         float shakeMs, shakeUnits, rumble;
+        bool wasBoosting;
 
         /// <summary>TargetFollowCamera::hit / hitSmall: the camera position jitters rnd(2a) - a units per axis per frame
         /// ('ms' 1000 / a 6 when the player is hit, 50 / 2 per own shot).</summary>
@@ -79,6 +80,13 @@ namespace GoF2Remake.Flight
             // shakes nor rumbles (the shake timer would never run out, the jitter piled up every frame).
             if (dtMs <= 0f) { rumble = 0f; return; }
             if (constantRumble > 0f) rumble = Mathf.Max(rumble, constantRumble);
+            // Remake: the same rumble on the controller / phone (Haptics; its own option, not the camera shake's): explosions,
+            // the Liberator, the boost below; the boost's start as a pulse.
+            bool boosting = model.IsBoosting;
+            if (boosting && !wasBoosting) Haptics.Play(Haptics.Boost);
+            wasBoosting = boosting;
+            float boostRumble = boosting ? model.BoostVisualPercent * Mathf.Clamp(model.CurrentSpeed, 2f, 8f) / 50f : 0f;
+            Haptics.Rumble(Mathf.Max(rumble, boostRumble));
             rumble *= GoF2Remake.Data.Settings.CameraShake;   // the camera shake option
             if (follow != null)
             {
@@ -132,8 +140,8 @@ namespace GoF2Remake.Flight
                 float a = shakeUnits * target.metersPerUnit * GoF2Remake.Data.Settings.CameraShake;
                 transform.position += new Vector3(Random.Range(-a, a), Random.Range(-a, a), Random.Range(-a, a));
             }
-            if (model.IsBoosting)
-                rumble = Mathf.Max(rumble, model.BoostVisualPercent * Mathf.Clamp(model.CurrentSpeed, 2f, 8f) / 50f * GoF2Remake.Data.Settings.CameraShake);
+            if (boosting)
+                rumble = Mathf.Max(rumble, boostRumble * GoF2Remake.Data.Settings.CameraShake);
             if (rumble > 0f)
             {
                 // 50 units at the look-at point (about 690 units away) = about 4 degrees.

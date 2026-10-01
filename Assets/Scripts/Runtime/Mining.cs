@@ -286,6 +286,7 @@ namespace GoF2Remake.Flight
             SetExhaust(false);
             Play(sounds?.miningLanding, LandingVolume);
             if (chase != null) chase.enabled = false;   // TargetFollowCamera::setActive(false): the camera stays put
+            Haptics.Play(Haptics.MiningLanding);   // remake
             capturedUp = ship.visualModel != null ? ship.visualModel.up : ship.transform.up;
         }
 
@@ -299,6 +300,8 @@ namespace GoF2Remake.Flight
                 if (inside) { StopBroken(); if (!drillSound.IsPlaying) drillSound.Start(DrillSpeed); }
                 else { drillSound.Stop(); StartBroken(); }
             };
+            Game.NewTon += () => Haptics.Play(Haptics.DrillTon);   // remake
+            stutterMs = 0f;
             Target.radius = 0f;   // Player radius 0: can't be hit or collided while mined
             State = Phase.Mining;
             miners = 1;
@@ -338,11 +341,34 @@ namespace GoF2Remake.Flight
                 miners = Mathf.Max(miners, 1 + GoF2Remake.Multiplayer.NetOrbit.Current.OtherMiners(Target));
             Game.SetInput(ReadDrillInput());
             drillSound.Set(DrillSpeed);
-            if (Game.Update(dtMs)) return;
+            int layer = Game.Layer;
+            bool running = Game.Update(dtMs);
+            DrillHaptics(dtMs, layer);
+            if (running) return;
             if (Game.Lost) { Session.OreStreak = 0; LostGame = true; Say(Localization.Get(539)); }   // Mining failed.
+            Haptics.Play(Game.Won ? Haptics.MiningWon : Haptics.MiningLost);   // remake
             // MiningGame::update: every layer drilled -> Status+0x124 + 1 (medal 38 Ore Athlete).
             if (Game.Won && !Achievements.Has(38)) Achievements.Elite(38, ++Session.OreStreak);
             FinishMining();
+        }
+
+        float stutterMs;
+
+        /// <summary>Remake haptics while drilling: a light rumble on target that grows with the depth (the drill sound's
+        /// speed), a knock per layer drilled; off target the broken drill's stutter, every 180 ms.</summary>
+        void DrillHaptics(float dtMs, int layerBefore)
+        {
+            if (Game.Layer != layerBefore && !Game.Won) Haptics.Play(Haptics.DrillLayer);
+            if (Game.Inside)
+            {
+                stutterMs = 0f;
+                Haptics.Rumble(0.06f + 0.02f * Game.Layer);
+            }
+            else if ((stutterMs -= dtMs) <= 0f)
+            {
+                stutterMs = 180f;
+                Haptics.Play(Haptics.DrillStutter);
+            }
         }
 
         /// <summary>The touch stick or the Steer controls (GameControls: the arrows / the left stick by default); +y = down on

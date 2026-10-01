@@ -185,6 +185,14 @@ namespace GoF2Remake.UI
             }
             if (!Application.isMobilePlatform)
                 list.Add(Toggle("mouseSteering", OptionPage.Controls, () => X("mouseSteering", "Mouse steering"), () => Settings.MouseSteering, v => Settings.MouseSteering = v));
+            // Remake: haptic feedback (Haptics), the controller's rumble and the phone's vibration; moving it plays a sample.
+            var haptics = Slider("haptics", OptionPage.Controls, () => X("haptics", "Vibration"), 0f, 1f,
+                () => Settings.HapticsIntensity, v => { Settings.HapticsIntensity = v; Flight.Haptics.Preview(); },
+                v => v <= 0f ? X("off", "Off") : Percent(v));
+            haptics.description = () => Application.isMobilePlatform
+                ? X("hapticsHelpMobile", "Phone vibration (touch controls) and controller rumble: hits, collisions, explosions, missiles, boost, jumps and mining.")
+                : X("hapticsHelp", "Controller rumble: hits, collisions, explosions, shots, boost, jumps and mining.");
+            list.Add(haptics);
             list.Add(Slider("deadzone", OptionPage.Controls, () => X("deadzone", "Stick dead zone"), 0.05f, 0.4f,
                 () => Settings.StickDeadzone, v => Settings.StickDeadzone = v, Percent));
             // Remake: every flight control rebindable (GameControls): two keyboard / mouse keys and a controller button each.

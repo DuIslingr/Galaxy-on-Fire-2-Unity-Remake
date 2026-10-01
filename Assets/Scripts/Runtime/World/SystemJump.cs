@@ -113,6 +113,7 @@ namespace GoF2Remake.World
                     break;
                 case State.Charging:
                     chargeMs += dtMs;
+                    Haptics.Rumble(0.1f + 0.35f * ChargeRate);   // remake: the drive winding up
                     if (chargeMs >= GalaxyMap.ChargeMs) StartKhadorScene();
                     break;
                 case State.GateScene:
@@ -198,6 +199,7 @@ namespace GoF2Remake.World
             }
             if (assets != null && assets.jumpgate != null && assets.jumpgate.Length > 0)
                 Play(assets.jumpgate[UnityEngine.Random.Range(0, assets.jumpgate.Length)]);
+            Haptics.Play(Haptics.Jump);   // remake
         }
 
         // ---- the Khador Drive ------------------------------------------------------------------------------
@@ -282,6 +284,7 @@ namespace GoF2Remake.World
             var cam = Camera.main;
             if (cam != null) cam.transform.position = fxPos + ship.transform.rotation * (new Vector3(2000f, 300f, -2000f) * M);   // game (-2000, 300, -2000)
             Play(assets != null ? assets.khadorDrive : null);
+            Haptics.Play(Haptics.Jump);   // remake
         }
 
         // ---- the jump scene --------------------------------------------------------------------------------

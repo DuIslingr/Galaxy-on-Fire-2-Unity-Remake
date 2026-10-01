@@ -49,6 +49,7 @@ namespace GoF2Remake
             HitchLogger.Install();                // development builds: frame hitches to hitches.log
             UI.ScreenshotKey.Install();           // F12: a screenshot to the pictures library
             UI.DiscordPresence.Install();         // desktop: Discord Rich Presence
+            Flight.Haptics.Install();             // controller rumble and phone vibration
             Settings.Changed -= ApplyAll;
             Settings.Changed += ApplyAll;
             SceneManager.sceneLoaded -= OnSceneLoaded;
