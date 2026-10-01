@@ -141,6 +141,7 @@ namespace GoF2Remake.UI
             UpdateDebugButton();
             exitButton = Bind("exitButton", () => ShowDialog(Localization.Get(390), Localization.Get(53), Quit));
             resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);   // only with a save
+            UpdateColumnFit();
 
             foreach (var n in new[] { "campaignPanel", "difficultyPanel", "economyPanel", "loadPanel", "optionsPanel", "aboutPanel", "multiplayerPanel" })
             {
@@ -835,7 +836,21 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>The main menu's Debug button: only with the debug tools on (Options > Gameplay, or opened once).</summary>
-        void UpdateDebugButton() => debugButton?.EnableInClassList("menu-button--gone", !Cheats.Unlocked || !panels.ContainsKey("debugPanel"));
+        void UpdateDebugButton()
+        {
+            debugButton?.EnableInClassList("menu-button--gone", !Cheats.Unlocked || !panels.ContainsKey("debugPanel"));
+            UpdateColumnFit();
+        }
+
+        /// <summary>Resume and Debug both shown (every row, eight): the column moves up so Exit stays clear of the version
+        /// text and its tap zone at the bottom left (.main-column--full).</summary>
+        void UpdateColumnFit()
+        {
+            if (mainColumn == null) return;
+            bool resume = resumeButton != null && !resumeButton.ClassListContains("menu-button--gone");
+            bool debug = debugButton != null && !debugButton.ClassListContains("menu-button--gone");
+            mainColumn.EnableInClassList("main-column--full", resume && debug);
+        }
 
         void OpenDebug()
         {

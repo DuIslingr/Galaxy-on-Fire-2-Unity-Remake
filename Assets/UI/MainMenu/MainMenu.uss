@@ -123,6 +123,18 @@
     margin-top: 48px;
 }
 
+/* Every row shown (Resume with a save and Debug with the debug tools on: eight rows): centred like the shorter list,
+   Exit ended up over the version text at the bottom left (and its tap zone, .footer-version) and couldn't be pressed.
+   The column starts higher and keeps the bottom 110 units free, the logo still clear above it. */
+.main-column--full {
+    padding-top: 10%;
+    padding-bottom: 110px;
+}
+
+.main-column--full .main-buttons {
+    margin-top: 16px;
+}
+
 .menu-button {
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
