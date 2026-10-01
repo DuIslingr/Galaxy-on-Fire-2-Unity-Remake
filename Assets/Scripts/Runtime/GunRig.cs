@@ -179,6 +179,10 @@ namespace GoF2Remake.Flight
                 wasActive[i] = active;
                 if (!active) { trails?[i].Tick(dtMs, false, default, cam); continue; }
                 ref var b = ref gun.bullets[i];
+                // BombGun::BombGun 0x170e74: the EMP bomb (mesh 0x395c) loops its glow child 0x395d (SetAnimationState 2):
+                // the core strobes and the cyan sparks pulse while it flies.
+                if (launched && gun.kind == Gun.Kind.EmpBomb)
+                    foreach (var a in projAnims[i]) { a.loop = true; a.Restart(); }
                 if (gun.Guided)
                 {
                     // BombGun::update: restarted on launch (state 3 -> 1), advancing only after the first 500 ms, once.
