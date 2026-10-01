@@ -38,6 +38,9 @@ namespace GoF2Remake.World
         const float TurnSpeed = 65f, MinTurnSeconds = 0.6f, HoverBank = 0.2f;   // the hover turn: deg/s, s, rad
         const int LaneSamples = 800, CornerSamples = 24, VerticalSamples = 8, FilletSamples = 12;
         const float FloorMargin = 0.4f;   // m above the parked bottom that a banked / pitched hull keeps
+        // The ships also shrink away (grow in) where they leave (enter) the hangar camera's view: over the last (first)
+        // ViewFade metres in view, so they scale down instead of crossing the screen edge at full size.
+        const float ViewFade = 70f, ViewMargin = 0.05f;
 
         public readonly Transform ship;
         public readonly bool arriving;
@@ -57,6 +60,9 @@ namespace GoF2Remake.World
         readonly AudioSource engine;
         readonly float engineVolume;
         float s, v, holdT;
+        /// <summary>Arc length where the path leaves the camera's view (departure) / enters it (arrival); -1 = never.</summary>
+        float sViewEdge = -1f;
+        float scaleK = 1f;
         float yaw, pitch, bank, startYaw, cornerPitch, cornerBank;
         float turnT, turnSeconds, turnFrom, turnTo, holdBob;
         bool inLane, turning, turned;
@@ -157,6 +163,7 @@ namespace GoF2Remake.World
             sLane = length[laneEnd];
             sVertical = length[verticalStart];
 
+            sViewEdge = ViewEdge(Camera.main);
             laneYaw = Heading(arriving ? d : -d);
             padYaw = finalRotation.HasValue ? finalRotation.Value.eulerAngles.y : laneYaw;
             startYaw = ship.eulerAngles.y;
@@ -175,6 +182,27 @@ namespace GoF2Remake.World
         }
 
         static Vector3 At(Vector3 p, float y) => new Vector3(p.x, y, p.z);
+
+        /// <summary>Where the sampled path crosses the edge of 'cam''s view: a departure's first point out of it (after
+        /// the climb), an arrival's first point of the stretch that stays in it; -1 when it never leaves / is never out.</summary>
+        float ViewEdge(Camera cam)
+        {
+            if (cam == null) return -1f;
+            bool InView(Vector3 p)
+            {
+                var q = cam.WorldToViewportPoint(p);
+                return q.z > 0f && q.x > -ViewMargin && q.x < 1f + ViewMargin && q.y > -ViewMargin && q.y < 1f + ViewMargin;
+            }
+            if (arriving)
+            {
+                for (int i = point.Count - 1; i >= 0; i--)
+                    if (!InView(point[i])) return i + 1 < point.Count ? length[i + 1] : -1f;
+                return -1f;
+            }
+            for (int i = 0; i < point.Count; i++)
+                if (length[i] > sVertical && !InView(point[i])) return length[i];
+            return -1f;
+        }
 
         /// <summary>The 8 corners of every mesh renderer's local bounds, in the ship's own (unscaled) space.</summary>
         static Vector3[] HullCorners(Transform ship)
@@ -375,6 +403,7 @@ namespace GoF2Remake.World
         {
             var pos = PointAt(s);
             bool lane = arriving ? s < sLane : s > sLane;
+            float vol = engineVolume;   // the lane: full; the corner and the vertical parts below set less
             if (lane)
             {
                 var dir = Tangent(s);
@@ -395,7 +424,7 @@ namespace GoF2Remake.World
                 yaw = laneYaw;
                 pitch = Mathf.Lerp(cornerPitch, 0f, corner) - FlarePitch * Mathf.Sin(Mathf.PI * corner);
                 bank = Mathf.Lerp(cornerBank, 0f, corner);
-                if (engine != null) engine.volume = engineVolume * Mathf.Lerp(1f, 0.5f, corner);
+                vol = engineVolume * Mathf.Lerp(1f, 0.5f, corner);
             }
             else if (arriving)
             {
@@ -403,14 +432,14 @@ namespace GoF2Remake.World
                 yaw = padYaw;
                 pitch = bank = 0f;
                 float down = Mathf.Clamp01((s - sVertical) / Mathf.Max(total - sVertical, 1e-3f));
-                if (engine != null) engine.volume = engineVolume * Mathf.Lerp(0.5f, 0.25f, down);
+                vol = engineVolume * Mathf.Lerp(0.5f, 0.25f, down);
             }
             else if (!turned)
             {
                 // Straight up at the parked yaw.
                 yaw = startYaw;
                 pitch = bank = 0f;
-                if (engine != null) engine.volume = engineVolume * Mathf.Lerp(0.25f, 0.5f, Mathf.Clamp01(s / Mathf.Max(sVertical, 1e-3f)));
+                vol = engineVolume * Mathf.Lerp(0.25f, 0.5f, Mathf.Clamp01(s / Mathf.Max(sVertical, 1e-3f)));
             }
             else
             {
@@ -419,18 +448,25 @@ namespace GoF2Remake.World
                 yaw = laneYaw;
                 pitch = FlarePitch * Mathf.Sin(Mathf.PI * corner);
                 bank = 0f;
-                if (engine != null) engine.volume = engineVolume * Mathf.Lerp(0.5f, 1f, corner);
+                vol = engineVolume * Mathf.Lerp(0.5f, 1f, corner);
             }
             ApplyScale(pos);
+            if (engine != null) engine.volume = vol * scaleK;   // fading out (in) with the ship's size
             pos += Vector3.up * holdBob;
             ship.SetPositionAndRotation(pos, Clear(pos, pitch, yaw, bank));
         }
 
-        /// <summary>Full size at the forcefield, nothing at the far end outside.</summary>
+        /// <summary>Full size at the forcefield, nothing at the far end outside; and nothing where the path leaves (enters)
+        /// the camera's view, from full size ViewFade metres before (after) it.</summary>
         void ApplyScale(Vector3 pos)
         {
             float beyond = Vector3.Dot(pos - gate, outward);
-            ship.localScale = baseScale * Mathf.Max(0.001f, 1f - Mathf.SmoothStep(0f, 1f, beyond / OutsideDistance));
+            float k = 1f - Mathf.SmoothStep(0f, 1f, beyond / OutsideDistance);
+            if (sViewEdge >= 0f)
+                k = Mathf.Min(k, arriving ? Mathf.SmoothStep(0f, 1f, (s - sViewEdge) / ViewFade)
+                                          : 1f - Mathf.SmoothStep(0f, 1f, (s - (sViewEdge - ViewFade)) / ViewFade));
+            scaleK = Mathf.Max(0.001f, k);
+            ship.localScale = baseScale * scaleK;
         }
 
         /// <summary>Arrival: straight onto the pad. Departure: gone.</summary>
@@ -453,8 +489,7 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The engine loop for a ship in the hangar: the player's own (PlayerEngine's pick) or a random NPC engine
-        /// (sound 46), 3D, at their event volumes (hangar distances; another player's ship in space takes
-        /// EngineVoices.Setup3D, NetPlayer).</summary>
+        /// (sound 46), 3D, at their event volumes with the space engines' rolloff (EngineVoices.Setup3D).</summary>
         public static AudioSource AddEngine(GameObject ship, bool player, Database db, int shipIndex, out float volume)
         {
             volume = 0f;
@@ -471,11 +506,9 @@ namespace GoF2Remake.World
             src.playOnAwake = false;
             src.loop = true;
             src.clip = clip;
-            src.spatialBlend = 1f;
-            src.rolloffMode = AudioRolloffMode.Linear;
-            src.minDistance = 40f;
-            src.maxDistance = 1500f;
-            src.dopplerLevel = 0f;
+            // As the engines in space (EngineVoices: the events' linear rolloff to 500 m from the listener), not 40-1500 m:
+            // a ship leaving the room fades with the distance instead of staying loud until it is cut off.
+            GoF2Remake.Flight.EngineVoices.Setup3D(src);
             volume *= Settings.SfxVolume;
             return src;
         }
