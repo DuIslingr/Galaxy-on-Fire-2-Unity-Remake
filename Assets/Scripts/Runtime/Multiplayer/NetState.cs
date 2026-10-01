@@ -25,17 +25,23 @@ namespace GoF2Remake.Multiplayer
         const float SweepSeconds = 0.5f;
 
         readonly NetworkVariable<int> seed = new NetworkVariable<int>();
+        readonly NetworkVariable<bool> dedicated = new NetworkVariable<bool>();
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
         int pendingSeed;
+        bool pendingDedicated;
         float sweepTimer;
         readonly Dictionary<ulong, float> staleSince = new Dictionary<ulong, float>();
 
         /// <summary>The session's world, null outside one.</summary>
         public static NetState Instance { get; private set; }
 
-        /// <summary>Host, before spawning (written in OnNetworkSpawn, so it is in the clients' spawn data).</summary>
-        public void SetSeed(int value) => pendingSeed = value;
+        /// <summary>Host, before spawning (written in OnNetworkSpawn, so it is in the clients' spawn data); 'server' = a
+        /// dedicated server, no player of its own.</summary>
+        public void SetSeed(int value, bool server = false) { pendingSeed = value; pendingDedicated = server; }
+
+        /// <summary>The session runs on a dedicated server: the players' client ids start at 1.</summary>
+        public bool Dedicated => dedicated.Value;
 
         public override void OnNetworkSpawn()
         {
@@ -45,6 +51,7 @@ namespace GoF2Remake.Multiplayer
             if (IsServer)
             {
                 seed.Value = pendingSeed;
+                dedicated.Value = pendingDedicated;
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
             }
@@ -111,6 +118,13 @@ namespace GoF2Remake.Multiplayer
             foreach (var p in NetPlayer.All) if (p != null && p.OwnerClientId == rpc.Receive.SenderClientId) { sender = p; break; }
             if (sender == null) return;
             ChatRpc(sender.OwnerClientId, sender.DisplayName, text, global, sender.Station, sender.InSpace, sender.InHangar);
+        }
+
+        /// <summary>Server: a global chat line from the server itself (the dedicated server's say command).</summary>
+        public void ServerChat(string from, string text)
+        {
+            text = NetChat.Clean(text);
+            if (IsServer && text.Length > 0) ChatRpc(NetworkManager.ServerClientId, from, text, true, -1, false, false);
         }
 
         [Rpc(SendTo.Everyone)]

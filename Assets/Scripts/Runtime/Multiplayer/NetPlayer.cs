@@ -132,7 +132,8 @@ namespace GoF2Remake.Multiplayer
             get
             {
                 string n = NetGame.Clean(pilot.Value.ToString());
-                return n.Length > 0 ? n : string.Format(Localization.Extra("mpPlayerName", "Player {0}"), OwnerClientId + 1);
+                return n.Length > 0 ? n : string.Format(Localization.Extra("mpPlayerName", "Player {0}"),
+                    OwnerClientId + (NetState.Instance != null && NetState.Instance.Dedicated ? 0ul : 1ul));   // a server's players start at 1
             }
         }
         /// <summary>A remote player in the local player's orbit: their ship is shown here.</summary>
@@ -206,7 +207,7 @@ namespace GoF2Remake.Multiplayer
             if (IsServer && !IsOwner && NetState.Instance != null && !NetworkManager.ShutdownInProgress) NetState.Instance.HandOverMission(this);
             All.Remove(this);
             if (Local == this) Local = null;
-            else if (!IsOwner && NetGame.Active) NetChat.Notice(NetChat.LeftText(DisplayName));
+            else if (!IsOwner && NetGame.Active && !NetGame.Dedicated) NetChat.Notice(NetChat.LeftText(DisplayName));
             SceneManager.sceneLoaded -= OnSceneLoaded;
             if (target != null) Target.NetShips.Remove(target);
             sender?.Unhook();
@@ -269,7 +270,7 @@ namespace GoF2Remake.Multiplayer
         void BuildModel(int index)
         {
             if (model != null) Destroy(model);
-            if (index < 0) return;
+            if (index < 0 || NetGame.Dedicated) return;   // a dedicated server shows nobody
             var prefab = AssembledObject.LoadPrefab(Database.Load().ShipAssembly(index));
             if (prefab == null) return;
             model = Instantiate(prefab, transform, false);

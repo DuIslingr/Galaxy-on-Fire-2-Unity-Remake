@@ -73,6 +73,7 @@ namespace GoF2Remake.Multiplayer
         {
             manager = null;
             closing = quitAfter = worldEntered = transportConnected = sessionGame = lostHandled = false;
+            Dedicated = false;
             hostEndReason = null;
             playersSpawned.Clear();
         }
@@ -165,6 +166,53 @@ namespace GoF2Remake.Multiplayer
             return true;
         }
 
+        /// <summary>A dedicated server (DedicatedServer, the -server command line): the session's world without a player of
+        /// its own: no NetPlayer, no scene, listening on every adapter. The host's bookkeeping (NetState, the shared stock,
+        /// squads, missions, crate claims, the chat relay) runs as with a host; the orbits are run by the players in them.</summary>
+        public static bool StartServer(ushort port)
+        {
+            PrepareSession();
+            Dedicated = true;
+            Seed = Environment.TickCount & 0x7fffffff;
+            var m = EnsureManager();
+            Transport.SetConnectionData("0.0.0.0", port, "0.0.0.0");
+            if (!CanHost(port) || !m.StartServer())
+            {
+                if (Status.Length == 0) Status = string.Format(Localization.Extra("mpHostFailed", "Could not start hosting on port {0}."), port);
+                Shutdown();
+                return false;
+            }
+            var state = UnityEngine.Object.Instantiate(Resources.Load<GameObject>($"{PrefabFolder}/NetState"));
+            state.GetComponent<NetState>().SetSeed(Seed, true);
+            state.GetComponent<NetworkObject>().Spawn(false);
+            return true;
+        }
+
+        /// <summary>This process is a dedicated server (StartServer): no player, no scenes, no visuals of the others.</summary>
+        public static bool Dedicated { get; private set; }
+
+        /// <summary>The players connected to this server, not counting a host's own.</summary>
+        static int OthersConnected => manager == null ? 0 : manager.ConnectedClientsIds.Count - (manager.IsHost ? 1 : 0);
+
+        /// <summary>The dedicated server: players connected (the host's own isn't one).</summary>
+        public static IReadOnlyList<ulong> ClientIds => manager != null && manager.IsServer ? manager.ConnectedClientsIds : Array.Empty<ulong>();
+
+        /// <summary>Server: drops a player with a reason (their game shows it, like the host ending the session).</summary>
+        public static bool Kick(ulong clientId, string reason)
+        {
+            if (manager == null || !manager.IsServer || clientId == NetworkManager.ServerClientId || !manager.ConnectedClients.ContainsKey(clientId)) return false;
+            manager.DisconnectClient(clientId, reason);
+            return true;
+        }
+
+        /// <summary>The dedicated server stops: the players hear why first (Shutdown), then the process quits.</summary>
+        public static void StopServer()
+        {
+            quitAfter = true;
+            Shutdown();
+            if (!closing) Application.Quit();
+        }
+
         public static bool StartClient(string address)
         {
             PrepareSession();
@@ -208,7 +256,7 @@ namespace GoF2Remake.Multiplayer
             NetSquad.Clear();
             worldEntered = false;
             if (manager == null || closing) return;
-            if (manager.IsServer && manager.IsListening && manager.ConnectedClientsIds.Count > 1 && NetState.Instance != null && NetState.Instance.IsSpawned)
+            if (manager.IsServer && manager.IsListening && OthersConnected > 0 && NetState.Instance != null && NetState.Instance.IsSpawned)
             {
                 closing = true;
                 NetState.Instance.SessionEndingRpc(Localization.Extra("mpHostLeft", "The host ended the session."));
@@ -221,7 +269,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Closing the game while hosting others: the quit waits for their goodbye (Shutdown), then goes on.</summary>
         static bool WantsToQuit()
         {
-            if (manager == null || closing || !manager.IsServer || !manager.IsListening || manager.ConnectedClientsIds.Count <= 1) return true;
+            if (manager == null || closing || !manager.IsServer || !manager.IsListening || OthersConnected == 0) return true;
             quitAfter = true;
             Shutdown();
             return !closing;
@@ -240,6 +288,7 @@ namespace GoF2Remake.Multiplayer
             manager.OnClientConnectedCallback -= OnClientConnected;
             manager.OnClientDisconnectCallback -= OnClientDisconnect;
             manager.OnClientStopped -= OnStopped;
+            manager.OnServerStopped -= OnServerStopped;
             if (manager.IsListening) manager.Shutdown();
             // A moment later: Netcode finishes its shutdown at the end of the frame (destroyed at once, its OnDestroy shut the
             // transport down a second time: "DisconnectRemoteClient should only be called on a listening server!").
@@ -253,9 +302,10 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>The host port is free (the menu asks before its fade); else Status says so and SuggestedPort is the next
         /// free one.</summary>
-        public static bool CanHost()
+        public static bool CanHost() => CanHost(HostPort);
+
+        static bool CanHost(ushort port)
         {
-            ushort port = HostPort;
             SuggestedPort = 0;
             if (PortFree(port)) return true;
             int free = FreePortFrom(port + 1);
@@ -417,6 +467,7 @@ namespace GoF2Remake.Multiplayer
             worldEntered = transportConnected = lostHandled = false;
             closing = quitAfter = false;
             sessionGame = true;
+            Dedicated = false;
             NetStock.Reset();
             Session.ResetNewGame();
             Session.Difficulty = Session.DifficultyNormal;   // every session plays on Normal (the shared stock, NPCs, rewards)
@@ -448,6 +499,7 @@ namespace GoF2Remake.Multiplayer
             manager.OnClientConnectedCallback += OnClientConnected;
             manager.OnClientDisconnectCallback += OnClientDisconnect;
             manager.OnClientStopped += OnStopped;   // Netcode ending the session by itself (a transport failure)
+            manager.OnServerStopped += OnServerStopped;   // the same for a dedicated server (no client part)
             Application.quitting -= Shutdown;
             Application.quitting += Shutdown;   // closing the game leaves the session (the others see it at once)
             Application.wantsToQuit -= WantsToQuit;
@@ -470,6 +522,15 @@ namespace GoF2Remake.Multiplayer
             if (manager == null) return;
             if (wasHost) { SessionEnded(Localization.Extra("mpStopped", "The session stopped (network error).")); return; }
             OnClientDisconnect(manager.LocalClientId);
+        }
+
+        /// <summary>A dedicated server stopped by itself (a host's own stop comes through OnStopped): nothing to go back to.</summary>
+        static void OnServerStopped(bool wasHost)
+        {
+            if (manager == null || wasHost || !Dedicated) return;
+            Debug.LogError("NetGame: the server stopped (network error).");
+            ShutdownNow();
+            Application.Quit(1);
         }
 
         /// <summary>The session is over while playing: out of it, back to the Multiplayer panel with the reason.</summary>

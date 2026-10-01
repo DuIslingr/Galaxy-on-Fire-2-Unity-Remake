@@ -793,6 +793,20 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   host's arrives; lists are applied between frames (`NetStock.Flush`). The host's lists carry the stations' docking extras
   that aren't one player's (`NetStock.HostExtras`: Kappa's EMP GL I at free play, energy cells at 10 / 100 / 101). Not
   shared: the owned Kaamo Club's storage.
+- **Dedicated server** (`DedicatedServer`, `NetGame.StartServer`): the normal Windows / Linux player started with `-server`
+  (with `-batchmode -nographics`; `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment variable does
+  the same in the Editor's Play mode, commands through `DedicatedServer.Run`). `Bootstrap` hands over before the first
+  scene wakes: the main menu's root objects are switched off before their Awake and the scene is swapped for an empty
+  one; none of the Bootstrap extras (options, Discord, haptics, bloom, the screenshot key); vsync off at the frame cap.
+  `NetGame.StartServer` = StartHost's world without a player of its own (no NetPlayer, no EnterWorld); clients ids start
+  at 1 (`NetState.Dedicated`: "Player N" counts from 1); the session-ending checks count the others, not the host
+  (`OthersConnected`); `OnServerStopped` quits; the others' NetPlayers build no model there. The console (Windows: its
+  own window through `WinConsole` unless stdout is redirected, `-logFile` given or `-noconsole`; the log is mirrored only
+  into that window, Unity prints it to a stdout it starts with; Linux: the terminal): joins / leaves with the client ids,
+  each player's moves, chat; commands help, status, list, say (a global chat line from "Server", `NetState.ServerChat`),
+  kick (`NetGame.Kick`: the reason is the player's popup), stop (`NetGame.StopServer`: the goodbye, then quit; Ctrl+C
+  and closing the window too). Verified: the Windows build headless with the Editor as the client (join, chat, say,
+  kick, stop).
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.
 - **Medals** are off in sessions (`Achievements.Check` / `Elite` award nothing, the Status window hides the medal column).

@@ -38,6 +38,8 @@ namespace GoF2Remake
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Init()
         {
+            // A dedicated server (-server): no menu, rendering options, sound or desktop extras, only the server.
+            if (Multiplayer.DedicatedServer.Enabled) { Multiplayer.DedicatedServer.Boot(); return; }
             int editorVSync = QualitySettings.vSyncCount;
             if (Application.isMobilePlatform) Screen.sleepTimeout = SleepTimeout.NeverSleep;   // no screen dimming while playing
             urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;

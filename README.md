@@ -64,6 +64,28 @@ platforms get the same one.
 In the main menu, open **Multiplayer**. One player hosts a game: the panel lists this device's addresses and the port,
 which is 7777 by default. The others join with the host's address, optionally with `address:port`.
 
+**Dedicated server.** The Windows and Linux builds can run a session without anyone playing on that machine:
+
+```
+GoF2Remake.exe -batchmode -nographics -server -port 7777
+./GoF2Remake.x86_64 -batchmode -nographics -server -port 7777 -logFile -
+```
+
+`-batchmode -nographics` gives no window and no rendering. `-port` defaults to 7777, and `-fps` sets the server's frame
+rate (default 60). Players join with the server machine's address. On Windows the server opens its own console window.
+On Linux it uses the terminal, where `-logFile -` prints the log. The console shows joins, leaves, where each player is,
+and the chat. It takes these commands:
+
+- `help`
+- `status`
+- `list`
+- `say <text>` (a chat line from "Server")
+- `kick <id|name> [reason]`
+- `stop` (or Ctrl+C): the players are told why first.
+
+The server only keeps the shared world: the shop stock, squads, missions and chat. Each orbit's NPCs are run by the
+first player in it, as with a player host.
+
 ## Controls (keyboard)
 
 | Key | Action |
