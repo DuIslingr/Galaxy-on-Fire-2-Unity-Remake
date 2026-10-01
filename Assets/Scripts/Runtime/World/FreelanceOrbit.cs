@@ -379,7 +379,7 @@ namespace GoF2Remake.World
                 localPlant.LocalOnly = true;   // not shown to the others (the runner's plant is)
                 foreach (var r in localPlant.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
             }
-            if (!level.StartSequenceOver) return;
+            if (!level.StartSequenceOver || levelMs <= 5000f) return;
             if (!briefed) { Brief(); return; }
             if (mission.status == -1 && !returnShown)
             {
@@ -684,15 +684,16 @@ namespace GoF2Remake.World
             if (done || level == null || DialogueOpen || MessageRequested == null) return;
             if (Multiplayer.NetGame.Active && Freelance.Mission != mission) { done = true; return; }   // left the squad / ended by it
             float dt = Time.deltaTime * 1000f;
-            if (!Running) { UpdateFollower(dt); return; }
             levelMs += dt;
+            if (!Running) { UpdateFollower(dt); return; }
             missionMs += dt;
             // Multiplayer: the squad plays on while this runner is dead (a result then comes without its dialog).
             bool dead = level.Health != null && level.Health.Dead;
             if (dead && !Multiplayer.NetGame.Active) return;
             if (Multiplayer.NetGame.Active && levelMs < 15000f && LowerRunnerHere()) { Demote(); return; }
             if (!level.StartSequenceOver) return;
-            if (!briefed && !dead && Brief()) return;
+            // MGame::OnUpdate: dialogueEvent only once the level clock (MGame+0x48) is past 5000 ms.
+            if (!briefed && !dead && levelMs > 5000f && Brief()) return;
             if (Failed()) { if (dead) Resolve(false); else Fail(); return; }
             // Level+0x130: the time limit, checked every 5000 ms.
             if (mission.type == MissionType.JunkRemoval && (timeCheckMs += dt) >= 5000f)
@@ -713,7 +714,7 @@ namespace GoF2Remake.World
             Multiplayer.NetChat.Notice($"{Localization.Get(216)} +{UI.ItemInfo.Credits(paid)}");
         }
 
-        /// <summary>The briefing after the launch / arrival camera (not for 0 / 8 / 11); true = its dialog opened.</summary>
+        /// <summary>The briefing after the launch / arrival camera and 5 s of level time (not for 0 / 8 / 11); true = its dialog opened.</summary>
         bool Brief()
         {
             briefed = true;

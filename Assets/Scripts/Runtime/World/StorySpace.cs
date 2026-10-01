@@ -1,7 +1,8 @@
 // StorySpace.cs
 // The story in a flight level (MGame, Reference/research/campaign_flow.md 3.2 / 3.3, campaign_levels_a.md 1.3):
-//   MGame::dialogueEvent 0x1b0498   after the launch / arrival camera, the briefing of the level mission (when it has
-//                                   briefing pages and is visible); it restarts the mission clock
+//   MGame::dialogueEvent 0x1b0498   after the launch / arrival camera and once the level clock (MGame+0x48, paused with
+//                                   the game) is past 5000 ms, the briefing of the level mission (when it has briefing
+//                                   pages and is visible); it restarts the mission clock
 //   MGame::successCheck 0x1b0620    from 5000 ms of level time: the campaign mission complete (Story.IsComplete in
 //                                   space) or the campaign level's win objective -> the success conversation; closing it
 //                                   credits the reward and advances the story (index &gt; 45 without pages: advance at
@@ -64,7 +65,7 @@ namespace GoF2Remake.World
                 return;
             }
             if (!level.StartSequenceOver) return;
-            if (!briefingChecked)
+            if (!briefingChecked && levelMs > 5000f)
             {
                 briefingChecked = true;
                 var step = Story.Step;
@@ -75,7 +76,7 @@ namespace GoF2Remake.World
                 }
             }
             if (campaign != null && !failed && campaign.Failed && Story.Index == campaign.BuiltIndex) { Fail(); return; }
-            if (levelMs >= 5000f) CheckSuccess();
+            if (briefingChecked) CheckSuccess();   // successCheck: the same > 5000 ms, after dialogueEvent
             if (levelMs >= 5000f && !DialogueOpen) CheckAddonEntry();
             if (levelMs >= 5000f && !DialogueOpen && !level.Navigation.Jumping && (level.SystemJump == null || !level.SystemJump.Cinematic))
             {
