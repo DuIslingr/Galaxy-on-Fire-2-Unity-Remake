@@ -176,6 +176,31 @@ namespace GoF2Remake.World
             if (fx != null && cam.Camera != null) fx.transform.rotation = cam.Camera.rotation;   // billboarded to the camera
         }
 
+        /// <summary>Remake: the room the pirates' hiding place keeps clear of asteroids, past the farthest pirate (150 m; the
+        /// cutscene camera beside them is inside it too).</summary>
+        const float PirateBubbleClearUnits = 3000f;
+
+        /// <summary>Remake: the belt is random (OrbitBuilder.SpawnAsteroids), so an asteroid could sit right where the pirates
+        /// appear, the ships inside it: every asteroid reaching into a bubble around the three spots goes before they show.</summary>
+        void ClearPirateBubble(Vector3[] gameSpots)
+        {
+            if (level.Asteroids == null || gameSpots.Length == 0) return;
+            var centre = Vector3.zero;
+            foreach (var p in gameSpots) centre += ToUnity(p);
+            centre /= gameSpots.Length;
+            float reach = 0f;
+            foreach (var p in gameSpots) reach = Mathf.Max(reach, Vector3.Distance(centre, ToUnity(p)));
+            float bubble = reach + PirateBubbleClearUnits * M;
+            var doomed = new System.Collections.Generic.List<GameObject>();
+            foreach (Transform a in level.Asteroids)
+            {
+                var t = a.GetComponent<Target>();
+                float size = t != null ? t.radius / 0.7f : 0f;   // the hit radius is 0.7 x the mesh radius
+                if (Vector3.Distance(a.position, centre) - size < bubble) doomed.Add(a.gameObject);
+            }
+            foreach (var go in doomed) Object.Destroy(go);
+        }
+
         void TickPrologue(float dtMs)
         {
             var pirates = campaign.Ships;
@@ -191,6 +216,7 @@ namespace GoF2Remake.World
                         Player.position = ToUnity(new Vector3(18000, -12000, -40000));
                         cam.LookAt(new Vector3(-12000, 2000, -500), Player);
                         Vector3[] at = { new Vector3(-10000, 500, 0), new Vector3(-10000, -300, -1700), new Vector3(-10000, -200, 2000) };
+                        ClearPirateBubble(at);
                         for (int i = 0; i < 3 && i < pirates.Count; i++)
                         {
                             pirates[i].Place(ToUnity(at[i]), Vector3.right);   // facing +X
