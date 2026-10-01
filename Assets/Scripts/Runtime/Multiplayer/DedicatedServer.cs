@@ -66,13 +66,7 @@ namespace GoF2Remake.Multiplayer
         static bool HasFlag(string flag) =>
             Array.Exists(Environment.GetCommandLineArgs(), a => string.Equals(a, flag, StringComparison.OrdinalIgnoreCase));
 
-        static string Value(string flag)
-        {
-            var args = Environment.GetCommandLineArgs();
-            for (int i = 0; i < args.Length - 1; i++)
-                if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase)) return args[i + 1];
-            return null;
-        }
+        static string Value(string flag) => NetGame.CommandLineValue(flag);
 
         /// <summary>Bootstrap (BeforeSceneLoad): the first scene's objects are loaded but not awake yet. They are switched off
         /// and replaced by an empty scene, and the server starts.</summary>

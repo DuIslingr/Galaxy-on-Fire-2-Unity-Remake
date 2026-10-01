@@ -42,7 +42,10 @@ namespace GoF2Remake.EditorTools
             "rem At most 100.\n" +
             "set MAXPLAYERS=16\n" +
             "rem Add -unlisted to keep it out of the server browser (players then join with the join code from the console).\n" +
-            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" -password \"%PASSWORD%\" -maxplayers %MAXPLAYERS%\n";
+            // Only a set password goes on the command line (Unity drops an empty "" argument).
+            "set PASSWORDARG=\n" +
+            "if defined PASSWORD set PASSWORDARG=-password \"%PASSWORD%\"\n" +
+            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS%\n";
 
         static string LinuxLauncher(string exe) =>
             "#!/bin/sh\n" +
@@ -55,6 +58,7 @@ namespace GoF2Remake.EditorTools
             "# Add -unlisted to keep it out of the server browser (players then join with the join code shown here).\n" +
             "cd \"$(dirname \"$0\")\"\n" +
             $"chmod +x ./{exe} 2>/dev/null\n" +
-            $"exec ./{exe} -batchmode -nographics -server -relay -name \"$NAME\" -password \"$PASSWORD\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
+            "if [ -n \"$PASSWORD\" ]; then set -- -password \"$PASSWORD\"; else set --; fi\n" +
+            $"exec ./{exe} -batchmode -nographics -server -relay -name \"$NAME\" \"$@\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
     }
 }

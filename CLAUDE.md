@@ -825,7 +825,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `-password`; `-maxplayers` (Relay, default 16); `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment
   variable does the same in the Editor's Play mode ("relay" = -relay), commands through `DedicatedServer.Run`). Every
   Windows / Linux build gets a launcher next to the game (`DedicatedServerLaunchers`: `Start Dedicated Server.bat` /
-  `start-server.sh`, the name, password and player limit at the top, online and listed). `Bootstrap` hands over before
+  `start-server.sh`, the name, password and player limit at the top, online and listed; `-password` only when one is
+set: Unity drops an empty "" argument, so `-password ""` read the next option as the password; `NetGame.CommandLineValue`
+now takes an option right after another (a dash and a letter) as no value). `Bootstrap` hands over before
   the first scene wakes and swaps in an empty scene; the main menu scene never runs: in the Editor it is loaded already
   and switched off at once, in a player it is still loading then, so `MainMenu.OnEnable` / `MenuBackground.Awake` call
   `DedicatedServer.ShutOff` (the whole scene off before the rest wakes) and it is unloaded once loaded (before this, a

@@ -125,11 +125,18 @@ namespace GoF2Remake.Multiplayer
         static bool TestFlag(string flag) =>
             Debug.isDebugBuild && Array.Exists(Environment.GetCommandLineArgs(), a => string.Equals(a, flag, StringComparison.OrdinalIgnoreCase));
 
-        static string CommandLineValue(string flag)
+        /// <summary>The value after 'flag' on the command line, null = none. Unity drops empty arguments (a launcher's
+        /// -password "" arrives as -password -maxplayers ...), so another option right after it (a dash and a letter) means
+        /// no value; a lone "-" (-logFile -) is a value.</summary>
+        internal static string CommandLineValue(string flag)
         {
             var args = Environment.GetCommandLineArgs();
             for (int i = 0; i < args.Length - 1; i++)
-                if (string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase)) return args[i + 1];
+            {
+                if (!string.Equals(args[i], flag, StringComparison.OrdinalIgnoreCase)) continue;
+                string next = args[i + 1];
+                return next.Length > 1 && next[0] == '-' && char.IsLetter(next[1]) ? null : next;
+            }
             return null;
         }
 
