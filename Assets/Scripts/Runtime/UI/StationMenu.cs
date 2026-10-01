@@ -146,6 +146,8 @@ namespace GoF2Remake.UI
             missionsButton = Bind("missionsButton", OpenMissions);
             statusButton = Bind("statusButton", OpenStatus);
             launchButton = Bind("launchButton", AskLaunch);
+            // The lounge's footer Back (lounge_ui.md 1.2): back to the main view, like Esc / B.
+            Bind("loungeBack", () => { if (level != null && level.View == StationView.Lounge) level.SetView(StationView.Hangar); });
             dialogYes = Bind("dialogYes", () => { var a = dialogAction; CloseDialog(); a?.Invoke(); });
             dialogNo = Bind("dialogNo", () => { var a = dialogNoAction; CloseDialog(); a?.Invoke(); });
             hangarWindow = new HangarWindow(this, level, root);
@@ -196,6 +198,7 @@ namespace GoF2Remake.UI
             missionsButton.text = T(129).ToUpperInvariant();
             statusButton.text = T(169).ToUpperInvariant();
             launchButton.text = Localization.Extra("stationLaunch", "LAUNCH");
+            root.Q<Button>("loungeBack").text = Localization.Extra("hudBack", "BACK");
             dialogNo.text = T(135).ToUpperInvariant();
             root.Q<Button>("menuButton").text = Localization.Extra("hudMenu", "MENU");
             root.Q<Label>("systemMenuTitle").text = T(172).ToUpperInvariant();       // Menu

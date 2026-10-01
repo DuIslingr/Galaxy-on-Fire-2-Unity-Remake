@@ -365,3 +365,42 @@
 .layout-phone .missions-window {
     left: 450px;
 }
+
+/* lounge_ui.md 1.2: the lounge shows only its header and a footer with Back, not the main view's side panel, buttons
+   and Launch (they covered visitors). Back = the main view (Esc / B too); none while talking or in Missions. */
+.lounge-open .side-panel,
+.lounge-open .launch-button,
+.lounge-open .side-shade {
+    display: none;
+}
+
+.lounge-back {
+    display: none;
+    position: absolute;
+    left: 40px;
+    bottom: 40px;
+    min-width: 200px;
+    padding: 18px 30px;
+    font-size: 26px;
+    letter-spacing: 5px;
+    -unity-text-align: middle-center;
+    color: #FFFFFF;
+    background-color: rgba(62, 200, 255, 0.12);
+    border-width: 2px;
+    border-color: var(--gof-cyan);
+    border-radius: 4px;
+}
+
+.lounge-back:focus,
+.can-hover .lounge-back:hover {
+    background-color: rgba(62, 200, 255, 0.28);
+}
+
+.lounge-open .lounge-back {
+    display: flex;
+}
+
+.chat-open .lounge-back,
+.missions-open .lounge-back {
+    display: none;
+}

@@ -34,6 +34,7 @@
             </ui:VisualElement>
 
             <ui:Button name="launchButton" class="launch-button gof-semibold" />
+            <ui:Button name="loungeBack" class="lounge-back gof-semibold" />
 
             <ui:VisualElement name="hangarWindow" class="hangar-window">
                 <ui:VisualElement class="hangar-top">
