@@ -6,7 +6,8 @@
 //   in the station, the pilot list (collapsible too, only with other players docked here): each with Invite (or "In your
 //     squad" / "Invited");
 //   an invitation popup (only while docked: squads form in a hangar): "<name> invites you to their squad", and when this
-//     player has a mission that accepting abandons it (NetMissions.AbandonWarning), with Accept / Decline (45 s).
+//     player has a mission that accepting abandons it (NetMissions.AbandonWarning), with Accept / Decline (45 s);
+//   in the station, an online session's join code with Copy, on its own plate under the system information.
 // The rows are rebuilt only when their content changes (a rebuilt button would lose a press); the bars update live.
 // Styles: Resources/GoF2Net/Squad.uss.
 
@@ -25,7 +26,9 @@ namespace GoF2Remake.UI
         const float RefreshSeconds = 0.25f;
 
         static bool squadCollapsed, pilotsCollapsed;
-        bool codeCopied;
+        VisualElement codePlate;
+        Label codeLabel;
+        Button copyButton;
 
         VisualElement box, squadPanel, squadBody, pilotsPanel, pilotsBody, invitePopup;
         Button squadHeader, pilotsHeader;
@@ -79,7 +82,54 @@ namespace GoF2Remake.UI
             row.Add(MakeButton(Localization.Extra("mpDecline", "Decline"), () => { if (shownInvite != null) NetSquad.Decline(shownInvite); shownInvite = null; }, null));
             invitePopup.Add(row);
             parent.Add(invitePopup);
+            BuildCodePlate(parent, sheet);
             Refresh();
+        }
+
+        /// <summary>The station: an online session's join code (for asking friends in; a tap on Copy copies it) on its own
+        /// plate under the system information.</summary>
+        void BuildCodePlate(VisualElement parent, StyleSheet sheet)
+        {
+            codePlate?.RemoveFromHierarchy();
+            codePlate = null;
+            var info = hangar ? parent.Q(className: "station-info") : null;
+            if (info == null || info.parent == null) return;
+            codePlate = new VisualElement { name = "joinCodePlate" };
+            codePlate.AddToClassList("station-info");
+            codePlate.AddToClassList("squad-code");
+            if (sheet != null) codePlate.styleSheets.Add(sheet);
+            var title = new Label(Localization.Extra("mpJoinCode", "Join code").ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+            title.AddToClassList("info-line");
+            title.AddToClassList("squad-code-title");
+            codePlate.Add(title);
+            var row = new VisualElement();
+            row.AddToClassList("squad-code-row");
+            codeLabel = new Label { pickingMode = PickingMode.Ignore };
+            codeLabel.AddToClassList("info-system");
+            codeLabel.AddToClassList("gof-semibold");
+            codeLabel.AddToClassList("squad-code-value");
+            row.Add(codeLabel);
+            copyButton = MakeButton(Localization.Extra("mpCopy", "copy"), () =>
+            {
+                if (NetGame.JoinCode == null) return;
+                GUIUtility.systemCopyBuffer = NetGame.JoinCode;
+                copyButton.text = Localization.Extra("mpCopied", "copied").ToUpperInvariant();
+            }, null);
+            row.Add(copyButton);
+            codePlate.Add(row);
+            info.parent.Insert(info.parent.IndexOf(info) + 1, codePlate);
+        }
+
+        void RefreshCodePlate()
+        {
+            if (codePlate == null) return;
+            string code = NetGame.Active ? NetGame.JoinCode : null;
+            codePlate.style.display = code != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (code != null && codeLabel.text != code)
+            {
+                codeLabel.text = code;
+                copyButton.text = Localization.Extra("mpCopy", "copy").ToUpperInvariant();
+            }
         }
 
         static VisualElement Panel(out Button header, out VisualElement body, System.Action toggle)
@@ -108,6 +158,7 @@ namespace GoF2Remake.UI
             if (box == null) return;
             bool session = NetGame.Active;
             box.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
+            RefreshCodePlate();
             if (!session) { invitePopup.style.display = DisplayStyle.None; return; }
             if ((refresh -= Time.unscaledDeltaTime) > 0f) return;
             refresh = RefreshSeconds;
@@ -207,7 +258,7 @@ namespace GoF2Remake.UI
             }
             pilotsPanel.style.display = pilots.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             if (pilots.Count == 0) { pilotsKey = ""; return; }
-            var sb = new StringBuilder(pilotsCollapsed ? "c" : "o").Append(NetGame.JoinCode).Append(codeCopied);
+            var sb = new StringBuilder(pilotsCollapsed ? "c" : "o");
             foreach (var p in pilots) sb.Append('|').Append(p.OwnerClientId).Append(p.DisplayName).Append(NetSquad.Same(p, me)).Append(NetSquad.WasInvited(p));
             string key = sb.ToString();
             if (key == pilotsKey) return;
@@ -215,19 +266,6 @@ namespace GoF2Remake.UI
             pilotsHeader.text = $"{Localization.Extra("mpPilotsHere", "Pilots in this hangar").ToUpperInvariant()} ({pilots.Count})  {(pilotsCollapsed ? "+" : "-")}";
             pilotsBody.Clear();
             pilotsBody.style.display = pilotsCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
-            if (NetGame.JoinCode != null)
-            {
-                // An online session: its join code, for asking friends in (a tap copies it).
-                var row = new VisualElement();
-                row.AddToClassList("squad-pilot");
-                var label = new Label($"{Localization.Extra("mpJoinCode", "Join code")}  {NetGame.JoinCode}");
-                label.AddToClassList("squad-name");
-                row.Add(label);
-                string code = NetGame.JoinCode;
-                row.Add(MakeButton(codeCopied ? Localization.Extra("mpCopied", "copied") : Localization.Extra("mpCopy", "copy"),
-                    () => { GUIUtility.systemCopyBuffer = code; codeCopied = true; pilotsKey = ""; }, null));
-                pilotsBody.Add(row);
-            }
             foreach (var p in pilots)
             {
                 var row = new VisualElement();

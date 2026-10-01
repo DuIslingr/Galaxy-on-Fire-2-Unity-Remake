@@ -617,8 +617,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
 - **Online (Relay / Lobby)** (`NetGame.PrepareOnlineHost` / `StartClientOnline`, `NetLobby`): hosting online signs in
   (anonymous; a profile per `-mpname`, so two games on one machine are two players), reserves a Relay allocation (16
   players + the host; a dedicated server's `-maxplayers`, at most 100) and its join code before the fade, then StartHost
-  / StartServer connect through it (`RelayServerData`, "dtls"); the code goes to the clipboard and shows at the top of
-  the station's pilot list (Copy; `SquadView`); a client joins the allocation by its code and connects. A listed game
+  / StartServer connect through it (`RelayServerData`, "dtls"); the code goes to the clipboard and shows on its own plate
+  under the station's system information (Copy; `SquadView`); a client joins the allocation by its code and connects. A listed game
   is a public lobby (`NetLobby.Publish`: name, host, players (N1), dedicated, password, version (S1), the join code;
   nobody joins the lobby, it is only the listing): a heartbeat every 15 s, the player count updated as it changes,
   deleted with the session (a game that died drops out after Lobby's 30 s). Errors in plain words (`OnlineError`: no

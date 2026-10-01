@@ -139,3 +139,25 @@
     margin: 0 8px;
     min-width: 120px;
 }
+
+/* the station's join code plate (an online session), under the system information */
+.squad-code {
+    margin-top: 10px;
+}
+
+.squad-code-title {
+    margin-bottom: 2px;
+    font-size: 13px;
+    letter-spacing: 3px;
+}
+
+.squad-code-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.squad-code-value {
+    margin: 0 14px 0 0;
+    letter-spacing: 5px;
+}
