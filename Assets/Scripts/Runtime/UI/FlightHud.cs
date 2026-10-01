@@ -783,7 +783,11 @@ namespace GoF2Remake.UI
             string lineText = Localization.Get(line.text);
             bool lineAlien = StoryTable.UsesAlienFont(line.speaker);
             AlienText.Set(radioText, lineText, lineAlien);
-            Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
+            // Radio::update: images 21 and 63+ are no story face but a random one of a race (ImageFactory::createChar(male,
+            // race): 0x40 Terran, 0x41 Nivelian, 0x15 Midorian, else Vossk), named 1597 + image ("Vossk", ...).
+            if (line.speaker == 0x15 || (line.speaker >= 0x3f && line.speaker < 10000))
+                Portrait.Show(radioPortrait, AgentGenerator.CreatePortrait(true, line.speaker == 0x40 ? 0 : line.speaker == 0x41 ? 2 : line.speaker == 0x15 ? 3 : 1), false);
+            else Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
             if (StoryTable.IsNarration(line.speaker)) radioReveal.Clear();
             else radioReveal.Begin(lineText, lineAlien, clip);

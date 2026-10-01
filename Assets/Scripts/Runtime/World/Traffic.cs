@@ -337,13 +337,13 @@ namespace GoF2Remake.World
         // ---- Alice in the Void (MGame::OnInitialize -> Level::createRadioMessage(8), tables 0x2541c8 / 0x2543a0) ---------
 
         /// <summary>Per conversation the number of lines (DAT_002543a0) and the (speaker image, text) pairs (DAT_002541c8):
-        /// 0x1a Alice, 0 Keith, 0x1f the other voice.</summary>
+        /// 0x1a Alice, 0 Keith, 0x1f Cornelius Tenner.</summary>
         static readonly int[] VoidTalkCounts = { 2, 2, 2, 4, 3, 3, 2, 3 };
         static readonly (int image, int text)[] VoidTalk =
         {
             (0x1a, 2453), (0, 2454), (0x1a, 2455), (0, 2456), (0x1a, 2457), (0, 2458), (0x1a, 2459), (0, 2460), (0x1a, 2461),
-            (0x1f, 2462), (0x1a, 2463), (0, 2464), (0x1a, 2465), (0, 2466), (0x1a, 2467), (0x1f, 2468), (0x1a, 2469), (0, 2470),
-            (0x1a, 2471), (0, 2472), (0x1a, 2473),
+            (0, 2462), (0x1a, 2463), (0x1f, 2464), (0x1a, 2465), (0, 2466), (0x1a, 2467), (0, 2468), (0x1a, 2469), (0, 2470),
+            (0x1f, 2471), (0x1a, 2472), (0, 2473),
         };
 
         /// <summary>After the Valkyrie add-on (Status::dlc1Won), in the alien orbit before campaign 0x93: one of eight short
