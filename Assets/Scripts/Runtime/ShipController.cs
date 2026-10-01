@@ -170,6 +170,10 @@ namespace GoF2Remake.Flight
             if (!inputLocked && externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
             var mouseSteer = !inputLocked ? ReadMouseSteer() : Vector2.zero;
             if (mouseSteer.sqrMagnitude > steer.sqrMagnitude) steer = mouseSteer;
+            // Remake: a motion controller's gyro (ControllerGyro); Level out re-centres it.
+            if (useBuiltInInput && !inputLocked && GameControls.LevelOut.WasPressedThisFrame()) ControllerGyro.Recenter();
+            var gyroSteer = useBuiltInInput && !inputLocked && autopilotTarget == null ? ControllerGyro.Steer(Time.timeScale > 0f ? Time.unscaledDeltaTime : 0f) : Vector2.zero;
+            if (gyroSteer.sqrMagnitude > steer.sqrMagnitude) steer = gyroSteer;
             SteerInput = steer;
             if (autopilotTarget != null || steeringLocked) steer = Vector2.zero;
 

@@ -14,8 +14,18 @@ namespace GoF2Remake.UI
         public const string SourceUrl = "https://github.com/KiritoJPK/Galaxy-on-Fire-2-FULL-HD-Android";
         const string LinkColour = "#8FD3FF";
 
-        /// <summary>Text 45 with the source link after the paragraph that names KiritoJPK (unchanged without one).</summary>
-        public static string Get()
+        const string JoyShockUrl = "https://github.com/JibbSmart/JoyShockLibrary";
+
+        /// <summary>Text 45 with the source link after the paragraph that names KiritoJPK (unchanged without one), then the
+        /// remake's third-party notices.</summary>
+        public static string Get() => WithSourceLink() + ThirdParty;
+
+        /// <summary>The remake's third-party code that asks for its notice in copies (the controller gyro's library).</summary>
+        static string ThirdParty =>
+            "\n\nJoyShockLibrary (controller gyro): Copyright 2018-2023 Julian Smart, MIT License\n" +
+            $"<link=\"{JoyShockUrl}\"><color={LinkColour}><u>{JoyShockUrl}</u></color></link>";
+
+        static string WithSourceLink()
         {
             string text = Localization.Get(45).TrimEnd();
             int at = text.IndexOf("KiritoJPK", System.StringComparison.Ordinal);

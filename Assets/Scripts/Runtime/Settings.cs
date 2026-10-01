@@ -123,6 +123,10 @@ namespace GoF2Remake.Data
         public static bool TiltSteering { get => GetBool("tiltSteering", false); set => SetBool("tiltSteering", value); }
         /// <summary>options+0x18: the tilt sensitivity, 0..1 (default 1, the maximum).</summary>
         public static float TiltSensitivity { get => Get("tiltSensitivity", 1f); set => Set("tiltSensitivity", Mathf.Clamp01(value)); }
+        /// <summary>Remake (Windows): a motion controller's gyro steers (ControllerGyro, JoyShockLibrary).</summary>
+        public static bool GyroSteering { get => GetBool("gyroSteering", false); set => SetBool("gyroSteering", value); }
+        /// <summary>Remake: the gyro's speed; 1 = a full steering offset for 20 degrees of controller rotation.</summary>
+        public static float GyroSensitivity { get => Get("gyroSensitivity", 1f); set => Set("gyroSensitivity", Mathf.Clamp(value, 0.25f, 3f)); }
         /// <summary>options+0x1c / +0x20: the calibrated position (Globals::init 0.6 / 0.6).</summary>
         public static float TiltCalX { get => Get("tiltCalX", 0.6f); set => Set("tiltCalX", value); }
         public static float TiltCalZ { get => Get("tiltCalZ", 0.6f); set => Set("tiltCalZ", value); }
@@ -174,7 +178,7 @@ namespace GoF2Remake.Data
                      {
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
                          "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
-                         "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
+                         "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "gyroSteering", "gyroSensitivity", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);
             PlayerPrefs.Save();
