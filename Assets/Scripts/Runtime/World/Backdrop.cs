@@ -28,8 +28,9 @@ namespace GoF2Remake.World
         const float Distance = OrbitLayout.BackdropDistance * OrbitLayout.MetersPerUnit;   // 1000 m
         const float QuadMeters = OrbitLayout.PlaneSize * OrbitLayout.MetersPerUnit;        // 3250 m at scale 1
 
-        [Tooltip("HDR multiplier on the sun so it blooms.")]
+        [Tooltip("HDR multiplier on the sun's near-white core so it blooms under the remake's bloom (the original bloom and no bloom draw it at 1).")]
         public float sunGlow = 1.6f;
+        int sunGlowStyle = -1;
 
         class Body
         {
@@ -74,12 +75,8 @@ namespace GoF2Remake.World
             // The supernova system's glow (StarSystem::render: renderSunStreak right after the sun). Additive like the sun,
             // so the shared queue doesn't matter.
             if (orbit.supernovaSun) glow = Make("SunGlow", streakMat, 2900, sunDir, Quaternion.identity, 0f);
-            foreach (var r in glow != null ? new[] { sun.t, streak.t, glow.t } : new[] { sun.t, streak.t })
-            {
-                var block = new MaterialPropertyBlock();
-                block.SetColor("_Color", Color.white * sunGlow);
-                r.GetComponent<MeshRenderer>().SetPropertyBlock(block);
-            }
+            sunGlowStyle = -1;
+            ApplySunGlow();
 
             Color tint = orbit.fog ? (orbit.systemTexture == 15 ? orbit.fogColor : orbit.fogColor * 0.7f) : Color.clear;
             var ringMat = orbit.planets.Exists(p => p.ring) ? Load("sn_planet_ring") : null;
@@ -224,9 +221,29 @@ namespace GoF2Remake.World
             if (camera == cam) LateUpdate();
         }
 
+        /// <summary>The sun layers' HDR core for the bloom option in force (the remake's bloom: sunGlow on the near-white
+        /// texels; the original bloom and none: the texture as it is, like the original's additive sun). The whole quad at
+        /// x1.6 had made the bright suns' halos (Mido's sun_009) far brighter and larger than the original's.</summary>
+        void ApplySunGlow()
+        {
+            int style = Data.Settings.BloomStyle;
+            if (style == sunGlowStyle) return;
+            sunGlowStyle = style;
+            float core = style == Data.Settings.BloomRemake ? sunGlow : 1f;
+            foreach (var b in new[] { sun, streak, glow })
+            {
+                if (b == null) continue;
+                var block = new MaterialPropertyBlock();
+                block.SetColor("_Color", Color.white);
+                block.SetFloat("_CoreGlow", core);
+                b.t.GetComponent<MeshRenderer>().SetPropertyBlock(block);
+            }
+        }
+
         void LateUpdate()
         {
             if (cam == null || sun == null) return;
+            ApplySunGlow();
             var c = cam.transform.position;
 
             // Lens flare intensity (StarSystem::render2D): from the sun's screen position, used for the swelling.
