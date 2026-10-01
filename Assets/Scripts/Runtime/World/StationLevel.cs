@@ -465,6 +465,7 @@ namespace GoF2Remake.World
             if (view == StationView.Lounge)
             {
                 introT = loungeVisited ? 1.25f : 0.75f;   // SpaceLounge::init starts at B
+                introSkip = false;
                 loungeVisited = true;
                 ApplyLoungeLighting();
             }
@@ -530,10 +531,14 @@ namespace GoF2Remake.World
             if (playerShip != null && !PlayerFlying) playerShip.rotation = OrbitLayout.RotationToUnity(new Vector3(0f, shipYaw, 0f));
         }
 
+        /// <summary>SpaceLounge::OnTouchEnd case 0 jumps to B; remake: the rest of the ease runs at a 0.7 s pace instead, so the
+        /// camera doesn't snap.</summary>
         public void SkipIntro()
         {
-            if (IntroPlaying) introT = 1.25f;
+            if (IntroPlaying) introSkip = true;
         }
+
+        bool introSkip;
 
         /// <summary>ModStation::leaveStation 0xec1ec after the "Depart the station?" confirmation: into space (after the
         /// remake's take-off).</summary>
@@ -658,7 +663,9 @@ namespace GoF2Remake.World
                 if (introT < 1.25f)
                 {
                     // EaseInOutMatrix(A, B, 3000): t 0.75 -> 1.25, blend sin(2 pi t) * 0.5 + 0.5; Increase(min(dt, 50)).
-                    introT = Mathf.Min(1.25f, introT + Mathf.Min(dtMs, 50f) * 0.5f / StationTables.BarIntroMs);
+                    float introMs = introSkip ? 700f : StationTables.BarIntroMs;
+                    introT = Mathf.Min(1.25f, introT + Mathf.Min(dtMs, 50f) * 0.5f / introMs);
+                    if (introT >= 1.25f) introSkip = false;
                     float b = Mathf.Sin(TwoPi * introT) * 0.5f + 0.5f;
                     pos = Vector3.Lerp(barPosA, barPosB, b);
                     rot = Quaternion.Slerp(barRotA, barRotB, b);
