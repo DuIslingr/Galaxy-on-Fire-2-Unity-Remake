@@ -51,6 +51,10 @@ namespace GoF2Remake.EditorTools
                 shading.TryGetValue(id, out var sh);
                 float glow = 1f;
                 if (sh == "additive" || sh == "additive_anim") glow = AdditiveGlow;   // all additive layers are light
+                // A lit alpha-test layer is lit geometry, not a light, whatever its mesh is called (the wrecked station's
+                // *_alpha_emissive girders: the original's shader cuts at alpha 0.5 and lights it; glowing, the red its
+                // transparent texels carry bloomed around every girder).
+                else if (sh == "lit_alpha_test") glow = 1f;
                 else if (glowMats.Contains(id)) glow = EmissiveGlow;
                 if (!Mathf.Approximately(mat.GetFloat("_Glow"), glow))
                 {

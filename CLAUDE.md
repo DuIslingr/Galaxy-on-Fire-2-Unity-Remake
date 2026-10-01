@@ -68,7 +68,7 @@ Menu items (from `Scripts/Editor`):
 - **GoF2 > Bake Skyboxes**: the old combined sky bakes (`Skyboxes/`, stars layer not matched to the system); only the Flight Test scene uses them.
 - **GoF2 > Bake Space Skies**: stars (3) and nebula (19, incl. Valkyrie/Supernova) layers as separate cubemaps for the flight levels.
 - **GoF2 > Add Post Processing To Scene**: global Volume with `Assets/Settings/GoF2_VolumeProfile.asset` (Bloom, threshold 1) + camera post-processing on.
-- **GoF2 > Apply Emissive Glow To Materials**: `_Glow` = 4 on emissive/lights materials, 2.5 on additive ones, 1 elsewhere (skyboxes never bloom). Constants in `PostProcessing.cs`.
+- **GoF2 > Apply Emissive Glow To Materials**: `_Glow` = 4 on emissive/lights materials, 2.5 on additive ones, 1 elsewhere (skyboxes never bloom; lit alpha-test layers neither, whatever the mesh is called: the wrecked station's `*_alpha_emissive` girders bloomed the red of their cut-away texels). Constants in `PostProcessing.cs`.
 - **GoF2 > Build Hangar Heights**: `Resources/GoF2Data/hangar_heights.json`, how far each ship is lifted off each hangar pad (see "Station scene"). Run it again after changing a hangar room or a ship model.
 - **GoF2 > Reimport Models Only**
 - **GoF2 > Reapply Import Settings**

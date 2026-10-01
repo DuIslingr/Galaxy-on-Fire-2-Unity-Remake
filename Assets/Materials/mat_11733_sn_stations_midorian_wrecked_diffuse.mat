@@ -44,7 +44,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _Cull: 0
-    - _Glow: 4
+    - _Glow: 1
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ScreenSpaceReflectionsContributeTransparent: 1
