@@ -30,6 +30,16 @@
     display: flex;
 }
 
+/* The throttle gauge (TouchControls): the touch layer's box, in every input mode. */
+.touch-gauge-layer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    overflow: hidden;
+}
+
 .touch-abs {
     position: absolute;
 }

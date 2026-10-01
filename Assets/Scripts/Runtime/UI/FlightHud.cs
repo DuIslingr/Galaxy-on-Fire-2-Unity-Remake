@@ -241,6 +241,8 @@ namespace GoF2Remake.UI
             return false;
         }
 
+        float lastThrust = -1f;
+
         /// <summary>The touch controls' state for this frame (Hud::draw's conditions, MGame::OnRender2D's hiding).</summary>
         void UpdateTouch()
         {
@@ -287,6 +289,19 @@ namespace GoF2Remake.UI
                 f.crosshairVisible = crosshair != null && !crosshair.ClassListContains("crosshair--hidden");
                 if (f.crosshairVisible) f.crosshair = new Vector2(crosshair.style.left.value.value, crosshair.style.top.value.value);
             }
+            else if (!touchMode && ship != null && level != null && !StarMap.IsOpen && !pauseMenu.IsOpen && !storyDialogue.IsOpen
+                     && (health == null || !health.Dead) && !level.Cutscene && level.LaunchCameraOver && (nav == null || !nav.Jumping))
+            {
+                // Remake: keyboard / controller flight gets the touch throttle gauge whenever the throttle moves (keys, wheel,
+                // shoulder buttons, a boost), as the iPhone / PC versions show it.
+                f.gauge = true;
+                f.crosshairVisible = crosshair != null && !crosshair.ClassListContains("crosshair--hidden");
+                if (f.crosshairVisible) f.crosshair = new Vector2(crosshair.style.left.value.value, crosshair.style.top.value.value);
+                float thrust = ship.Model.Throttle;
+                if (lastThrust >= 0f && !Mathf.Approximately(thrust, lastThrust)) touch.NotifyThrottle();
+                lastThrust = thrust;
+            }
+            if (f.mode != TouchControls.Mode.Off || !f.gauge) lastThrust = -1f;
             touch.Update(f, Time.unscaledDeltaTime * 1000f);
         }
 

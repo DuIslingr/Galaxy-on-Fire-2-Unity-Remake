@@ -54,6 +54,7 @@ namespace GoF2Remake.UI
             public bool steeringMissile;         // Liberator: only the stick and the secondary
             public Vector2 crosshair;            // safe-area units
             public bool crosshairVisible;
+            public bool gauge;                   // keyboard / controller flight: the throttle gauge without the touch controls
         }
 
         // Actions (FlightHud).
@@ -151,16 +152,21 @@ namespace GoF2Remake.UI
             plate.Add(plateText);
 
             // PlayerEgo::drawThrottle: the half ring 0x548 filling from the bottom, the number under the crosshair.
+            // Its own layer beside the touch controls' (the same box), shown in every input mode: the keyboard / controller
+            // throttle shows it too (the iPhone version's gauge; the remake's PC readout).
+            var gaugeLayer = new VisualElement { pickingMode = PickingMode.Ignore };
+            gaugeLayer.AddToClassList("touch-gauge-layer");
+            if (layer.parent != null) layer.parent.Insert(layer.parent.IndexOf(layer) + 1, gaugeLayer); else layer.Add(gaugeLayer);
             gauge = new VisualElement { pickingMode = PickingMode.Ignore };
             gauge.AddToClassList("touch-abs");
             gauge.style.overflow = Overflow.Hidden;
             gauge.style.width = 162;
             gaugeFill = Image(gauge, Tex("throttle_gauge"), false);
-            layer.Add(gauge);
+            gaugeLayer.Add(gauge);
             gaugeText = new Label { pickingMode = PickingMode.Ignore };
             gaugeText.AddToClassList("touch-gauge-text");
             gaugeText.AddToClassList("gof-semibold");
-            layer.Add(gaugeText);
+            gaugeLayer.Add(gaugeText);
 
             pause = Button(Image(pauseHost, pauseOff), () => PausePressed?.Invoke(), () => PauseReleased?.Invoke());
             pause.AddToClassList("touch-pause");
@@ -387,6 +393,9 @@ namespace GoF2Remake.UI
 
         /// <summary>PlayerEgo::throttleChanged 0xae874: the gauge's 2 s timer restarts (0 while hidden, into the hold when
         /// showing, mirrored while fading out).</summary>
+        /// <summary>The throttle changed by keys, the wheel or a controller (FlightHud): the gauge shows as on touch.</summary>
+        public void NotifyThrottle() => ThrottleChanged();
+
         void ThrottleChanged()
         {
             if (gaugeMs < 0f) gaugeMs = 0f;
@@ -507,7 +516,7 @@ namespace GoF2Remake.UI
                 gaugeMs += dtMs;
                 if (gaugeMs > 2000f) gaugeMs = -1f;
             }
-            bool gaugeShown = gaugeMs >= 0f && full && f.crosshairVisible && GetThrust != null;
+            bool gaugeShown = gaugeMs >= 0f && (full || f.gauge) && f.crosshairVisible && GetThrust != null;
             Show(gauge, gaugeShown);
             Show(gaugeText, gaugeShown);
             if (!gaugeShown) return;
