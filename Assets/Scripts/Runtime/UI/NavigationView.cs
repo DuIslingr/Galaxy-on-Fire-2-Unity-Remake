@@ -26,7 +26,7 @@ namespace GoF2Remake.UI
         class Marker
         {
             public Navigation.Target target;
-            public VisualElement bracket, icon, story;
+            public VisualElement bracket, icon, story, freelance;
             public Label name, tech, distance;
         }
 
@@ -140,6 +140,15 @@ namespace GoF2Remake.UI
                     Image(m.story, Tex("map_story"));
                     layer.Add(m.story);
                 }
+                // Radar::draw: the white freelance icon 0x455 on the freelance mission's target planet (type 0xe: the
+                // client's station), drawn after the story icon at the same spot.
+                if (t.kind == Navigation.Kind.Planet)
+                {
+                    m.freelance = new VisualElement { pickingMode = PickingMode.Ignore };
+                    m.freelance.AddToClassList("nav-abs");
+                    Image(m.freelance, Tex("map_freelance"));
+                    layer.Add(m.freelance);
+                }
                 m.name = Text(layer, null);
                 m.name.text = t.name;
                 // Radar::draw: the Void station and the gate get the distance only, the wormhole its name only.
@@ -147,6 +156,14 @@ namespace GoF2Remake.UI
                 if (t.kind != Navigation.Kind.Planet && !wormhole) m.distance = Text(layer, "nav-label--dim");
                 markers.Add(m);
             }
+        }
+
+        /// <summary>Status::getFreelanceMission's target (Mission::getTargetStation; type 0xe Stolen goods: the agent's station).</summary>
+        static bool IsFreelanceTarget(int station)
+        {
+            if (!Freelance.Active) return false;
+            var f = Freelance.Mission;
+            return station == (f.type == MissionType.StolenGoods ? f.clientStation : f.target);
         }
 
         /// <param name="race">The system's race (plate icon for landmarks).</param>
@@ -168,6 +185,8 @@ namespace GoF2Remake.UI
                 {
                     if (m.bracket != null) m.bracket.style.display = DisplayStyle.None;
                     if (m.icon != null) m.icon.style.display = DisplayStyle.None;
+                    if (m.story != null) m.story.style.display = DisplayStyle.None;
+                    if (m.freelance != null) m.freelance.style.display = DisplayStyle.None;
                     m.name.style.display = DisplayStyle.None;
                     if (m.distance != null) m.distance.style.display = DisplayStyle.None;
                     continue;
@@ -187,9 +206,14 @@ namespace GoF2Remake.UI
                 {
                     bool inBox = nav.Candidate == t;   // the name shows only while the planet is in the lock box
                     if (m.icon != null) { m.icon.style.display = onScreen ? DisplayStyle.Flex : DisplayStyle.None; Place(m.icon, p.x + 10f, p.y - 10f); }
-                    if (m.story != null) { m.story.style.display = onScreen ? DisplayStyle.Flex : DisplayStyle.None; Place(m.story, p.x - 36f, p.y - 10f); }
+                    // Radar::draw: the mission icons at x + 10 (+ 24 past the gate icon), y - 10; the name moves 14 px on (phone
+                    // pixels: the HD icons are 26 px wide, so 28 here, or the name covers the icon).
+                    float ix = p.x + (m.icon != null ? 24f : 10f);
+                    bool freelanceHere = m.freelance != null && IsFreelanceTarget(t.station);
+                    if (m.story != null) { m.story.style.display = onScreen ? DisplayStyle.Flex : DisplayStyle.None; Place(m.story, ix, p.y - 10f); }
+                    if (m.freelance != null) { m.freelance.style.display = onScreen && freelanceHere ? DisplayStyle.Flex : DisplayStyle.None; Place(m.freelance, ix, p.y - 10f); }
                     m.name.style.display = onScreen && inBox ? DisplayStyle.Flex : DisplayStyle.None;
-                    Place(m.name, p.x + (m.icon != null ? 24f : 10f), p.y - 10f);
+                    Place(m.name, ix + (m.story != null || freelanceHere ? 28f : 0f), p.y - 10f);
                     continue;
                 }
 
