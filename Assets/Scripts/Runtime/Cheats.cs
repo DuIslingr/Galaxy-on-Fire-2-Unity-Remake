@@ -4,6 +4,7 @@
 // restarts); actions change the running game's Session (and the live ship in flight). Nothing here is in the original.
 //   God mode         the player takes no damage, the gamma pool doesn't drain, volatile goods don't blow up
 //   Infinite ammo    secondaries (missiles, mines, bombs...) aren't used up
+//   No secondary cooldown  a secondary fires again at once (its reload time skipped; the ones still in flight count)
 //   One-hit kills    the player's shots destroy whatever they hit (story ships the script keeps invulnerable excepted)
 //   Instant locks    scanner / station / planet / asteroid locks complete at once
 //   Free shopping    items and ships cost nothing
@@ -23,6 +24,7 @@ namespace GoF2Remake.Data
 
         public static bool GodMode { get => Get("godMode"); set => Set("godMode", value); }
         public static bool InfiniteAmmo { get => Get("infiniteAmmo"); set => Set("infiniteAmmo", value); }
+        public static bool NoSecondaryCooldown { get => Get("noSecondaryCooldown"); set => Set("noSecondaryCooldown", value); }
         public static bool OneHitKills { get => Get("oneHitKills"); set => Set("oneHitKills", value); }
         public static bool InstantLocks { get => Get("instantLocks"); set => Set("instantLocks", value); }
         public static bool FreeShopping { get => Get("freeShopping"); set => Set("freeShopping", value); }

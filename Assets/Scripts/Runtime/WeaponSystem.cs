@@ -307,6 +307,7 @@ namespace GoF2Remake.Flight
             {
                 if (!r.gun.isSecondary || r.gun.itemIndex != SelectedSecondary || r.stack == null || r.stack.amount <= 0) continue;
                 if (r.gun.kind == Gun.Kind.Sentry && !SentryGun.CanDeploy) return false;   // Level+0x6c > 2: refused, no cost
+                if (Cheats.NoSecondaryCooldown) r.gun.reloadAcc = r.gun.reloadMs + 1f;   // remake debug: reloaded at once
                 int b = r.gun.TryFire(transform);
                 if (b < 0) continue;
                 if (r.gun.kind == Gun.Kind.Sentry)
