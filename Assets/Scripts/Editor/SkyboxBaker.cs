@@ -25,7 +25,10 @@ namespace GoF2Remake.EditorTools
     {
         public const string OutDir = ImportSettings.Root + "/Skyboxes";
         public const int SkyboxCount = 11;
-        const int FaceSize = 1024;   // the nebula texture gives each face a 1024x1024 quadrant
+        // The sky textures are 2048 x 2048 on meshes around the camera: 1024 px faces (about 11 texels per degree) were
+        // magnified on a 1080p screen (15 px per degree at the 1.22 rad FOV) after the bake's own filtering, so the sky
+        // looked blurry next to the original's directly drawn meshes. 2048 px faces keep the source detail.
+        const int FaceSize = 2048;
 
         // Unity's horizontal-strip cubemap layout: +X, -X, +Y, -Y, +Z, -Z, each face as seen from the centre.
         static readonly Vector3[] FaceForward = { Vector3.right, Vector3.left, Vector3.up, Vector3.down, Vector3.forward, Vector3.back };
@@ -168,8 +171,13 @@ namespace GoF2Remake.EditorTools
             ti.textureShape = TextureImporterShape.TextureCube;
             ti.generateCubemap = TextureImporterGenerateCubemap.AutoCubemap;
             ti.mipmapEnabled = true;
-            ti.maxTextureSize = FaceSize * 8;
+            ti.maxTextureSize = 16384;   // the 6-face strip's width
             ti.textureCompression = TextureImporterCompression.CompressedHQ;
+            // Phones: the strip at 8192 (faces of 1365 px), two of them in memory per orbit.
+            var android = ti.GetPlatformTextureSettings("Android");
+            android.overridden = true;
+            android.maxTextureSize = 8192;
+            ti.SetPlatformTextureSettings(android);
             ti.SaveAndReimport();
             return AssetDatabase.LoadAssetAtPath<Cubemap>(pngPath);
         }
