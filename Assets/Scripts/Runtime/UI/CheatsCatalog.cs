@@ -35,10 +35,6 @@ namespace GoF2Remake.UI
             Button("cheatCells", () => X("cheatEnergyCells", "+20 energy cells"), () => { Cheats.AddEnergyCells(20); notify?.Invoke(X("cheatCellsAdded", "20 energy cells added to the hold.")); }),
             Button("cheatReveal", () => X("cheatRevealMap", "Reveal all systems"), () => { Cheats.RevealAllSystems(); notify?.Invoke(X("cheatRevealed", "Every system is on the star map.")); }),
             Button("cheatPeace", () => X("cheatMakePeace", "Make peace with all races"), () => { Cheats.MakePeace(); notify?.Invoke(X("cheatPeaceMade", "Standing neutral with every race.")); }),
-            // Remake debug toy (World.PlayerBattleship): the Terran battleship with its 7 turrets; reloads the level.
-            Button("cheatBattleship", () => World.PlayerBattleship.Active ? X("cheatLeaveBattleship", "Back to your own ship")
-                                                                          : X("cheatBattleship", "Fly the Terran battleship"),
-                   () => notify?.Invoke(World.PlayerBattleship.Toggle(flight))),
         };
 
         static string Credits() => $"{X("cheatCreditsNow", "Credits")}: {Session.Credits:N0}";
@@ -109,6 +105,44 @@ namespace GoF2Remake.UI
                     notify?.Invoke($"{ItemName(it)}: {Cheats.GiveAndMount(db, dockedStock, it.index, Amounts[amountPick])}");
                 }));
             return list;
+        }
+
+        // ---- fly any ship (World.PlayerHull; the pause menu and the station) ----------------------------------------
+
+        static int hullCategory = -1, hullPick;
+
+        /// <summary>The Ships tab, like Give items: the ship type (the races, Other, Not normally flyable), the ship, then
+        /// "Fly this ship" and "Back to your own ship". In flight the hull swaps where the player is ('flight'); docked
+        /// ('docked') only a ship the player can normally own.</summary>
+        public static List<OptionDef> Hulls(Database db, World.SpaceLevel flight, World.StationLevel docked, Action<string> notify)
+        {
+            var categories = World.PlayerHull.Categories(db);
+            if (hullCategory < 0)
+            {
+                // First opened: on the hull flown now.
+                var current = World.PlayerHull.Current(db);
+                hullCategory = Math.Max(0, current != null ? categories.IndexOf(current.category) : 0);
+                hullPick = current != null ? Math.Max(0, World.PlayerHull.OfCategory(db, categories[hullCategory]).IndexOf(current)) : 0;
+            }
+            List<World.PlayerHull.Hull> Current() =>
+                categories.Count > 0 ? World.PlayerHull.OfCategory(db, categories[Math.Clamp(hullCategory, 0, categories.Count - 1)]) : new List<World.PlayerHull.Hull>();
+            World.PlayerHull.Hull Picked()
+            {
+                var list = Current();
+                return list.Count > 0 ? list[Math.Clamp(hullPick, 0, list.Count - 1)] : null;
+            }
+            var pick = Choice("debugHull", () => X("debugHull", "Ship"), false,
+                () => Current().ConvertAll(h => h.label).ToArray(), () => Math.Clamp(hullPick, 0, Math.Max(0, Current().Count - 1)), i => hullPick = i);
+            pick.description = () => X("debugHullHelp",
+                "Not normally flyable ships can't land in a hangar; the capital ships keep their turrets as your auto turrets.");
+            return new List<OptionDef>
+            {
+                Choice("debugHullCategory", () => X("debugHullCategory", "Ship type"), false,
+                    () => categories.ToArray(), () => Math.Clamp(hullCategory, 0, categories.Count - 1), i => { hullCategory = i; hullPick = 0; }),
+                pick,
+                Button("debugHullFly", () => X("debugHullFly", "Fly this ship"), () => notify?.Invoke(World.PlayerHull.Fly(Picked(), flight, docked))),
+                Button("debugHullBack", () => X("cheatLeaveBattleship", "Back to your own ship"), () => notify?.Invoke(World.PlayerHull.Restore(flight, docked))),
+            };
         }
 
         // ---- spawn any ship or object (the pause menu, in flight) ---------------------------------------------------

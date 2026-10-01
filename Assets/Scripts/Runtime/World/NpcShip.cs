@@ -545,10 +545,10 @@ namespace GoF2Remake.World
             }
         }
 
-        /// <summary>Remake debug (PlayerBattleship): one of the player's own battleship turrets.</summary>
+        /// <summary>Remake debug (PlayerHull): one of the turrets on the player's own hull.</summary>
         public bool PlayerOwned { get; private set; }
 
-        /// <summary>A turret on the player's hull (PlayerBattleship): it aims at whatever is hostile to the player and its
+        /// <summary>A turret on the player's hull (PlayerHull): it aims at whatever is hostile to the player and its
         /// shots pass through the player.</summary>
         public void MakePlayerTurret()
         {

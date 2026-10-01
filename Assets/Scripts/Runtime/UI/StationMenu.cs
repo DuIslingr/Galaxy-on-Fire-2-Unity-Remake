@@ -1054,7 +1054,7 @@ namespace GoF2Remake.UI
         void BuildStationDebug()
         {
             string X(string key, string english) => Localization.Extra(key, english);
-            var names = new[] { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items") };
+            var names = new[] { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items"), X("debugShips", "Ships") };
             stationDebugTab = Mathf.Clamp(stationDebugTab, 0, names.Length - 1);
             var tabs = new VisualElement();
             tabs.AddToClassList("debug-tabs");
@@ -1108,6 +1108,20 @@ namespace GoF2Remake.UI
                     foreach (var def in CheatsCatalog.Actions(db, Notify)) Row(def, grid, "debug-grid-cell");
                     break;
                 }
+                case 3:
+                {
+                    // Fly any ship (World.PlayerHull): docked only a ship the player can normally own.
+                    var defs = CheatsCatalog.Hulls(db, null, level, Notify);
+                    var card = Box(optionsScroll.contentContainer, "debug-card");
+                    var title = new Label(X("debugShipsTitle", "Fly any ship").ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                    title.AddToClassList("debug-card-title");
+                    title.AddToClassList("gof-semibold");
+                    card.Add(title);
+                    foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
+                    var buttons = Box(card, "debug-buttons");
+                    foreach (var def in defs) if (def.kind == OptionKind.Button) Row(def, buttons, "debug-action");
+                    break;
+                }
                 default:
                 {
                     var defs = CheatsCatalog.Items(db, level.Stock, Notify);
@@ -1124,11 +1138,13 @@ namespace GoF2Remake.UI
             }
         }
 
+        const int StationDebugTabs = 4;   // Cheats, Actions, Give items, Ships
+
         /// <summary>The Debug page's tab 'step' tabs on (wrapping), rebuilt with the first row selected.</summary>
         void SwitchDebugTab(int step)
         {
             if (step == 0) return;
-            stationDebugTab = ((stationDebugTab + step) % 3 + 3) % 3;
+            stationDebugTab = ((stationDebugTab + step) % StationDebugTabs + StationDebugTabs) % StationDebugTabs;
             ShowSystemPage(SysPage.Debug);
         }
 

@@ -328,7 +328,7 @@ namespace GoF2Remake.World
         }
 
         /// <summary>DAT_002539d4: the battlestation's 8 turrets and 4 shield generators (position, rotation z, shield).</summary>
-        static readonly (Vector3 pos, float rz, bool shield)[] StationTurrets =
+        public static readonly (Vector3 pos, float rz, bool shield)[] StationTurrets =
         {
             (new Vector3(-3994.97f, 23359f, -7378.1f), 1.5708f, false), (new Vector3(3994.96f, 23359f, -7378.1f), -1.5708f, false),
             (new Vector3(1988.03f, -37327.1f, -4511.46f), -1.5708f, true), (new Vector3(-1995.02f, -37327.1f, -4511.46f), 1.5708f, true),

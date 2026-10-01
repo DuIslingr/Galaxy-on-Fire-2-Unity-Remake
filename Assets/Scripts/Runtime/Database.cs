@@ -129,8 +129,18 @@ namespace GoF2Remake.Data
                 var any = Assemblies.Find(a => Match(a, main));
                 if (any != null) return any;
             }
-            // Ship 14, the Terran battleship, has no ship_014_* group: Level::createShip builds battleship_terran (NpcShip).
-            return ship == 14 ? AssemblyByName("battleship_terran") : null;
+            // Globals::getShipGroup's special branches: 13 the Vossk freighter, 14 the Terran battleship (Level::createShip
+            // builds battleship_terran, NpcShip), 15 the freighter by race (Vossk = 13's).
+            return ship switch
+            {
+                13 => AssemblyByName("cargo_004_vossk"),
+                14 => AssemblyByName("battleship_terran"),
+                15 => AssemblyByName(raceName switch
+                {
+                    "nivelian" => "cargo_002_nivelian", "midorian" => "cargo_001_midorian", "vossk" => "cargo_004_vossk", _ => "cargo_003_terran",
+                }),
+                _ => null,
+            };
         }
         public List<WeaponMountSet> WeaponMounts = new List<WeaponMountSet>();
         public List<WantedData> Wanted = new List<WantedData>();

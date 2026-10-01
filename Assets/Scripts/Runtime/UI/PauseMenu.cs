@@ -342,9 +342,10 @@ namespace GoF2Remake.UI
         int debugTab, debugTabCount;
         string debugStatus = "";
 
-        /// <summary>The Debug page (remake-only, CheatsCatalog) on a wide panel: tabs (Cheats, Actions, Give items and, in
-        /// flight, Spawn; click, Q / E or LB / RB), a line with the last action's result, then the tab's rows: the toggles
-        /// and actions in two columns, the item pickers with their buttons, the ship and object spawners side by side.</summary>
+        /// <summary>The Debug page (remake-only, CheatsCatalog) on a wide panel: tabs (Cheats, Actions, Give items, Ships and,
+        /// in flight, Spawn; click, Q / E or LB / RB), a line with the last action's result, then the tab's rows: the toggles
+        /// and actions in two columns, the item and ship pickers with their buttons, the ship and object spawners side by
+        /// side.</summary>
         void BuildDebug()
         {
             optionRows.Clear();
@@ -352,7 +353,7 @@ namespace GoF2Remake.UI
             var db = level != null ? level.Database : Database.Load();
             string X(string key, string english) => Localization.Extra(key, english);
 
-            var names = new List<string> { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items") };
+            var names = new List<string> { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items"), X("debugShips", "Ships") };
             if (level != null) names.Add(X("debugSpawn", "Spawn"));
             debugTabCount = names.Count;
             debugTab = Mathf.Clamp(debugTab, 0, debugTabCount - 1);
@@ -437,6 +438,18 @@ namespace GoF2Remake.UI
                 {
                     var defs = CheatsCatalog.Items(db, null, Notify);
                     var card = Card(content, X("debugItems", "Give items"));
+                    foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
+                    var buttons = new VisualElement();
+                    buttons.AddToClassList("debug-buttons");
+                    card.Add(buttons);
+                    foreach (var def in defs) if (def.kind == OptionKind.Button) Row(def, buttons, "debug-action");
+                    break;
+                }
+                case 3:
+                {
+                    // Fly any ship (World.PlayerHull): the picker, then its buttons.
+                    var defs = CheatsCatalog.Hulls(db, level, null, Notify);
+                    var card = Card(content, X("debugShipsTitle", "Fly any ship"));
                     foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
                     var buttons = new VisualElement();
                     buttons.AddToClassList("debug-buttons");

@@ -124,7 +124,7 @@ namespace GoF2Remake.World
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
         public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
-                               && !DockingBlocked && !PlayerBattleship.Active   // remake debug: the battleship doesn't fit
+                               && !DockingBlocked && PlayerHull.PlayerShip   // remake debug: no hangar for a freighter / capital ship
                                && (Mining == null || Mining.State == Mining.Phase.Idle);
         bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
 
@@ -240,7 +240,7 @@ namespace GoF2Remake.World
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             Traffic.RadarHidden = () => Cutscene;
-            if (PlayerBattleship.Active) PlayerBattleship.AttachTurrets(this);   // remake debug: its 7 turrets on the player's hull
+            PlayerHull.AttachTurrets(this);   // remake debug: a capital ship's turrets on the player's hull (PlayerHull)
             // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
             Docking = Player.gameObject.AddComponent<ObjectDocking>();
             Docking.Setup(db, Player, chase, Weapons);
@@ -483,21 +483,25 @@ namespace GoF2Remake.World
         }
 
         // Level::createPlayer + the undock branch of Level::init.
-        /// <summary>Remake debug (the Debug page's battleship toggle, PlayerBattleship): the player's hull replaced in flight
-        /// where it is: the new model, its flight stats, the chase camera's distance and the model-bound parts (exhaust
-        /// particles, cloak, mounted turret) rebuilt; the battleship gets its 7 turrets, any other ship drops them.</summary>
+        /// <summary>Remake debug (the Debug page's Ships tab, PlayerHull): the player's hull replaced in flight where it is:
+        /// the new model, its flight stats, the chase camera's distance and the model-bound parts (exhaust particles, cloak,
+        /// mounted turret) rebuilt; the old hull's turrets go, the new one's come (the capital ships, ships 45 / 51).
+        /// Session.ShipIndex and PlayerHull's pick are set first (the model is PlayerHull.Assembly).</summary>
         public void SwapPlayerShip(int shipIndex)
         {
             var ctrl = Player;
             if (ctrl == null) return;
-            var prefab = AssembledObject.LoadPrefab(db.ShipAssembly(shipIndex));
-            if (prefab == null) return;
-            var root = ctrl.gameObject;
+            int before = Session.ShipIndex;
             Session.ShipIndex = shipIndex;
+            var prefab = AssembledObject.LoadPrefab(PlayerHull.Assembly(db, shipIndex));
+            if (prefab == null) { Session.ShipIndex = before; return; }
+            var root = ctrl.gameObject;
+            PlayerHull.RemoveTurrets(this);   // before the old model goes (they ride on it)
             if (ctrl.visualModel != null) Destroy(ctrl.visualModel.gameObject);
             var model = Instantiate(prefab, root.transform, false);
             model.GetComponent<AssembledObject>()?.SetPlayerVariant(true);
             foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
+            PlayerHull.PrepareModel(db, model);   // the Void ship at its full size
             ctrl.visualModel = model.transform;
 
             var ship = db.Ship(shipIndex);
@@ -509,18 +513,17 @@ namespace GoF2Remake.World
             ctrl.stats.cargoLoad = Shop.CargoLoad();
             ctrl.ApplyStats();
 
-            PlayerBattleship.FitCamera(root.transform, model.transform, chase);
+            PlayerHull.FitCamera(root.transform, model.transform, chase);
 
             foreach (var ex in root.GetComponents<ShipExhaust>()) Destroy(ex);
-            ShipExhaust.Attach(root, db, ctrl, shipIndex);
+            if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, shipIndex);   // a freighter / capital ship: none
             if (Cloak != null) Destroy(Cloak);
             Cloak = PlayerCloak.Attach(root, db, shipIndex, Health.Target, model.transform);
             if (Navigation != null) Navigation.Cloak = Cloak;
             if (Turret != null) Destroy(Turret);
             Turret = PlayerTurret.Attach(root, db, shipIndex, Session.Equipment, chase);
 
-            if (PlayerBattleship.Active) PlayerBattleship.AttachTurrets(this);
-            else PlayerBattleship.RemoveTurrets(this);
+            PlayerHull.AttachTurrets(this);
         }
 
         void SpawnPlayer()
@@ -562,7 +565,7 @@ namespace GoF2Remake.World
             ctrl.invertYaw = Settings.InvertYaw;
             ctrl.ApplyStats();
 
-            var entry = db.ShipAssembly(Session.ShipIndex);
+            var entry = PlayerHull.Assembly(db, Session.ShipIndex);   // remake debug: the Ships tab's pick (else the ship's own)
             var prefab = AssembledObject.LoadPrefab(entry);
             if (prefab != null)
             {
@@ -571,6 +574,7 @@ namespace GoF2Remake.World
                 // AEGeometry::updateLod always picks LOD 0 in this binary: the player's ship keeps full detail, or its
                 // lights (LOD 0 only) popped in as a cutscene camera closed in.
                 foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
+                PlayerHull.PrepareModel(db, model);   // remake debug: the Void ship at its full size
                 ctrl.visualModel = model.transform;
             }
             Player = ctrl;
@@ -585,8 +589,8 @@ namespace GoF2Remake.World
             // TargetFollowCamera offsets (game local) -> Unity local (-x, y, z) * 0.05.
             chase.offset = new Vector3(0f, 600f, -1338f) * M;
             chase.lookOffset = new Vector3(0f, 600f, -650f) * M;
-            // Remake debug: the battleship's hull is far bigger than any ship the camera was made for.
-            if (PlayerBattleship.Active) PlayerBattleship.FitCamera(root.transform, ctrl.visualModel, chase);
+            // Remake debug: a freighter's or capital ship's hull is far bigger than any ship the camera was made for.
+            if (PlayerHull.Big) PlayerHull.FitCamera(root.transform, ctrl.visualModel, chase);
             // CameraSetPerspective(1.22 rad) is the vertical FOV: with the level look offset the ship then sits in the
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens). Remake: the
             // field of view option (Settings.OriginalFov by default).
@@ -608,7 +612,8 @@ namespace GoF2Remake.World
             Mining.Setup(db, ctrl, Weapons, chase);
             // MGame::OnInitialize: the engine loop (PlayerEgo+0x1c) and the boost sound (+0xd4).
             PlayerEngine.Attach(root, db, ctrl);
-            ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);   // Level::initParticleSystems: the exhaust particles
+            // Level::initParticleSystems: the exhaust particles (remake debug: none on a freighter / capital ship, PlayerHull).
+            if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);
 
             if (Session.LaunchedFromStation || Session.ArrivedByTravel) StartLaunchCamera();
         }
@@ -715,9 +720,9 @@ namespace GoF2Remake.World
             if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation)
             {
                 if (DockingBlocked) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
-                if (PlayerBattleship.Active)   // remake debug: no hangar takes it
+                if (!PlayerHull.PlayerShip)   // remake debug: no hangar takes a freighter / capital ship
                 {
-                    Navigation.Refuse(Localization.Extra("battleshipNoDock", "The battleship doesn't fit in the hangar."));
+                    Navigation.Refuse(string.Format(Localization.Extra("hullNoDock", "The {0} doesn't fit in the hangar."), PlayerHull.Label));
                     return;
                 }
                 Dock(true);
@@ -749,6 +754,18 @@ namespace GoF2Remake.World
         /// fly-in; the story's own moves into a station (the rescue, arrests, "docked at ...") pass false.</summary>
         public void Dock(bool flyIn = false)
         {
+            // Remake debug (PlayerHull): a hull the player can't normally fly never lands in a hangar. The player's own docking
+            // is refused (CanDock and the autopilot already refuse it); the story's moves into a station put the player
+            // back in their own ship first.
+            if (!PlayerHull.PlayerShip)
+            {
+                if (flyIn)
+                {
+                    Navigation?.Refuse(string.Format(Localization.Extra("hullNoDock", "The {0} doesn't fit in the hangar."), PlayerHull.Label));
+                    return;
+                }
+                PlayerHull.ForceOwnShip();
+            }
             Leaving = true;
             Session.LaunchedFromStation = false;
             Session.DockedFromSpace = flyIn;

@@ -168,6 +168,9 @@ namespace GoF2Remake.World
             int station = stationOverride >= 0 ? stationOverride : Session.StationIndex;
             Stock = Shop.EnterStation(db, station);
             Story.OnDocked(db, station, Stock);   // ModStation::OnInitialize's story tweaks (index 1: Betty ...)
+            // Remake debug (PlayerHull): a hull the player can't normally fly never sits in a hangar (an old save from the
+            // battleship toggle): back in the player's own ship.
+            if (!PlayerHull.PlayerShip) PlayerHull.ForceOwnShip();
             shipIndex = shipOverride >= 0 ? shipOverride : Session.ShipIndex;
             Station = db.Stations.Find(s => s.index == station);
             Layout = OrbitLayout.Build(db, station);
@@ -244,6 +247,7 @@ namespace GoF2Remake.World
             shipPivot = OrbitLayout.ToUnity(new Vector3(0f, y, 0f));
             var ship = SpawnShip(shipIndex, new Vector3(0f, y, 0f), 0f, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
+            if (playerShip != null) PlayerHull.FitHangar(playerShip);   // remake debug: a freighter / capital ship shrunk
             RefreshTurret(true);
             shipYaw = StationTables.StartYaw(HangarIndex);
             ApplyShipYaw();
@@ -279,7 +283,7 @@ namespace GoF2Remake.World
             shipIndex = index;
             var ship = SpawnShip(index, new Vector3(0f, StationTables.PadPivotY(HangarIndex, -1, index, Quaternion.identity) / M, 0f), 0f, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
-            if (playerShip != null && index == PlayerBattleship.Ship) PlayerBattleship.FitHangar(playerShip);   // remake debug
+            if (playerShip != null) PlayerHull.FitHangar(playerShip);   // remake debug: a freighter / capital ship shrunk
             RefreshTurret(true);
             ApplyShipYaw();
         }
@@ -430,7 +434,7 @@ namespace GoF2Remake.World
         /// <summary>createShip(race, 0, idx, null, false): NPC mesh group, setExhaustVisible(false), asleep.</summary>
         GameObject SpawnShip(int index, Vector3 gamePos, float gameYaw, Transform parent, string label)
         {
-            var entry = db.ShipAssembly(index);
+            var entry = PlayerHull.Assembly(db, index);   // the player's own ship: remake debug, the Ships tab's pick
             if (entry == null) return null;
             var go = Spawn(entry.name, OrbitLayout.ToUnity(gamePos), OrbitLayout.RotationToUnity(new Vector3(0f, gameYaw, 0f)), parent, label);
             var asm = go != null ? go.GetComponent<AssembledObject>() : null;

@@ -351,14 +351,14 @@ namespace GoF2Remake.Flight
             (new Vector3(0, 5669, -13872), Vector3.zero), (new Vector3(-2356, 1115, 7324), new Vector3(0, 0, Mathf.PI / 2)),
             (new Vector3(0, 2855, 4161), Vector3.zero),
         };
-        static readonly (Vector3 pos, Vector3 rot)[] CarrierTurrets =
+        public static readonly (Vector3 pos, Vector3 rot)[] CarrierTurrets =
         {
             (new Vector3(-6726, 2458, -66), new Vector3(0, Mathf.PI / 2, 0)), (new Vector3(5824, 2458, 10243), new Vector3(0, -Mathf.PI / 2, 0)),
             (new Vector3(-6726, 2458, 2100), new Vector3(0, Mathf.PI / 2, 0)), (new Vector3(5824, 2458, 8437), new Vector3(0, -Mathf.PI / 2, 0)),
             (new Vector3(-5549, -2743, 11954), new Vector3(-Mathf.PI, Mathf.PI / 2, 0)), (new Vector3(-5549, -2743, -3711), new Vector3(-Mathf.PI, Mathf.PI / 2, 0)),
             (new Vector3(4981, -2743, 14659), new Vector3(Mathf.PI, -2.1817f, 0)), (new Vector3(0, 2458, -32811), Vector3.zero),
         };
-        static readonly Vector3[] VosskTurrets =
+        public static readonly Vector3[] VosskTurrets =
         {
             new Vector3(10283, -1123, 26039), new Vector3(-10171, -1083, 25907), new Vector3(-15624, -787, -7569),
             new Vector3(15624, -787, -7569), new Vector3(0, 4901, 3084),
