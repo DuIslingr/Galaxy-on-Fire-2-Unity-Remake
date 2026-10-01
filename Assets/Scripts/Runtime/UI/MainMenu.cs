@@ -71,7 +71,7 @@ namespace GoF2Remake.UI
 
         VisualElement root, logo, splash, splashLogo, fade, dialog, mainColumn, mainButtons;
         Label pressAnyKey, versionLabel, hintLabel;
-        Button resumeButton, newGameButton, multiplayerButton, loadButton, optionsButton, aboutButton, exitButton;
+        Button resumeButton, newGameButton, multiplayerButton, loadButton, optionsButton, aboutButton, debugButton, exitButton;
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
         VisualElement openPanel;
         readonly List<OptionControl> optionControls = new List<OptionControl>();
@@ -137,6 +137,8 @@ namespace GoF2Remake.UI
             loadButton = Bind("loadButton", () => { BuildSlots(); OpenPanel("loadPanel"); });
             optionsButton = Bind("optionsButton", () => { OpenPanel("optionsPanel"); SelectTab(OptionPages[0].page); });
             aboutButton = Bind("aboutButton", () => OpenPanel("aboutPanel"));
+            debugButton = Bind("debugButton", OpenDebug);
+            UpdateDebugButton();
             exitButton = Bind("exitButton", () => ShowDialog(Localization.Get(390), Localization.Get(53), Quit));
             resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);   // only with a save
 
@@ -172,6 +174,7 @@ namespace GoF2Remake.UI
             Bind("cardValkyrie", () => PickCampaign(Campaign.Valkyrie));
             Bind("cardSupernova", () => PickCampaign(Campaign.Supernova));
             BuildDebugPanel();
+            UpdateDebugButton();
             SetupMultiplayerPanel();
             Bind("easyButton", () => PickDifficulty(Session.DifficultyEasy));
             Bind("normalButton", () => PickDifficulty(Session.DifficultyNormal));
@@ -830,12 +833,16 @@ namespace GoF2Remake.UI
             }
         }
 
+        /// <summary>The main menu's Debug button: only with the debug tools on (Options > Gameplay, or opened once).</summary>
+        void UpdateDebugButton() => debugButton?.EnableInClassList("menu-button--gone", !Cheats.Unlocked || !panels.ContainsKey("debugPanel"));
+
         void OpenDebug()
         {
             if (!panels.ContainsKey("debugPanel") || openPanel == panels["debugPanel"]) return;
             if (dialog.ClassListContains("dialog-backdrop--shown")) return;
             Play(buttonRelease);
             Cheats.Unlocked = true;   // from now on the pause menu and the station's system menu have a Debug page
+            UpdateDebugButton();
             foreach (var c in debugControls) c.Refresh();
             OpenPanel("debugPanel");
         }
@@ -1074,7 +1081,7 @@ namespace GoF2Remake.UI
                 HookFocusSound(c.Field);
                 if (def.kind == OptionKind.Choice || def.kind == OptionKind.Toggle) c.Changed += () => Play(buttonRelease);
                 // Options depend on each other (STP turns MSAA off): every row follows a change.
-                c.Changed += () => { foreach (var o in optionControls) if (o != c) o.Refresh(); };
+                c.Changed += () => { foreach (var o in optionControls) if (o != c) o.Refresh(); UpdateDebugButton(); };
                 // Original: the FX volume plays a sample on release; remake: the voice volume a voice line.
                 if (def.id == "sfx") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => Play(infoSound));
                 if (def.id == "voice") c.Field.RegisterCallback<PointerCaptureOutEvent>(_ => PlayVoicePreview());
@@ -1132,6 +1139,7 @@ namespace GoF2Remake.UI
             Set("optionsButton", T(31));
             Set("aboutButton", T(43));
             Set("exitButton", T(33));
+            Set("debugButton", Localization.Extra("debugButton", "Debug").ToUpperInvariant());
             foreach (var n in new[] { "campaignBack", "difficultyBack", "economyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" }) Set(n, "‹  " + T(170));
             string mp = Localization.Extra("multiplayer", "Multiplayer").ToUpperInvariant();
             Set("multiplayerButton", mp);

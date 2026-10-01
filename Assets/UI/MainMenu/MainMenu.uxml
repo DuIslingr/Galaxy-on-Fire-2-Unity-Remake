@@ -14,7 +14,8 @@
                     <ui:Button name="loadButton" class="menu-button gof-semibold delay-4" />
                     <ui:Button name="optionsButton" class="menu-button gof-semibold delay-5" />
                     <ui:Button name="aboutButton" class="menu-button gof-semibold delay-6" />
-                    <ui:Button name="exitButton" class="menu-button gof-semibold delay-7" />
+                    <ui:Button name="debugButton" class="menu-button gof-semibold delay-7" />
+                    <ui:Button name="exitButton" class="menu-button gof-semibold delay-8" />
                 </ui:VisualElement>
             </ui:VisualElement>
 
