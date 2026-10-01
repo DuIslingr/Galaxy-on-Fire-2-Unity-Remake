@@ -11,7 +11,10 @@
 //                        lock (+0x15c) keeps it from shrinking at index 40 (not in the alien orbit) and 42 (in it) and
 //                        from reopening outside the alien orbit at 42; freeMissionLock releases it
 //   reset(closing)       timer 0 (open for 60 s) or 59000 (shrinks in 1 s); open(): timer -3000, scale 0 (grows in 3 s)
-//   drawing              turned to face the camera every frame, scaled by the scale (4096 = 1)
+//   drawing              turned to face the camera every frame (setDirection(normalize(camera - wormhole) + (0.5, 0, 0),
+//                        up): a slight tilt), scaled by the scale (4096 = 1). Its two layers spin about the facing axis
+//                        (file rotY, -2 pi per 20 s / 10 s); PartAnimation's default mapping turned that spin the wrong
+//                        way round (the import's 180 deg yaw reverses a spin about Z), so the wormhole flips it
 //   PlayerEgo::calcCollision  visible, not shrinking, within 40000: the loop sound 34 at the wormhole, the player moved
 //                        toward it by (40000 - d) / 256 units per (30 fps) frame, camera hit(); within 1000 = inside
 //                        (PlayerEgo+0x25, isInWormhole); the ride itself is SpaceLevel's (MGame::OnUpdate)
@@ -52,7 +55,17 @@ namespace GoF2Remake.World
             {
                 w.model = Instantiate(assets.wormhole, go.transform, false);
                 w.baseScale = w.model.transform.localScale;
-                foreach (var a in w.model.GetComponentsInChildren<PartAnimation>(true)) a.loop = true;   // animation state 2
+                foreach (var a in w.model.GetComponentsInChildren<PartAnimation>(true))
+                {
+                    a.loop = true;   // animation state 2
+                    // The spin about the facing axis (file rotY -> Unity z) the other way round: it turned backwards.
+                    if (a.rotationMap != null)
+                    {
+                        var map = (AxisMap[])a.rotationMap.Clone();
+                        for (int i = 0; i < map.Length; i++) if (map[i].source == 1) map[i].sign = -map[i].sign;
+                        a.rotationMap = map;
+                    }
+                }
             }
             w.loop = go.AddComponent<AudioSource>();
             w.loop.playOnAwake = false;
@@ -148,7 +161,8 @@ namespace GoF2Remake.World
             if (cam != null)
             {
                 var d = cam.transform.position - transform.position;
-                if (d.sqrMagnitude > 1e-6f) transform.rotation = Quaternion.LookRotation(d.normalized, Vector3.up);
+                // PlayerWormHole::update: the direction to the camera, normalised, then x + 0.5 (game x = Unity x).
+                if (d.sqrMagnitude > 1e-6f) transform.rotation = Quaternion.LookRotation(d.normalized + new Vector3(0.5f, 0f, 0f), Vector3.up);
             }
             model.transform.localScale = baseScale * (scale / 4096f);
         }
