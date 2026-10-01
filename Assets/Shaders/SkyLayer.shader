@@ -12,6 +12,7 @@ Shader "GoF2/SkyLayer"
         [HDR] _Color ("Color", Color) = (1, 1, 1, 1)
         _Fade ("Fade", Float) = 1
         _UVOffset ("UV offset", Vector) = (0, 0, 0, 0)
+        _UseVertexColor ("Multiply vertex colour", Float) = 0
         _Lit ("Lit", Float) = 0
         _LightDir ("Light direction (toward the light)", Vector) = (0, 1, 0, 0)
         [HDR] _LightColor ("Light colour", Color) = (1, 1, 1, 1)
@@ -40,6 +41,7 @@ Shader "GoF2/SkyLayer"
                 half4 _Color;
                 float _Fade;
                 float4 _UVOffset;
+                float _UseVertexColor;
                 float _Lit;
                 float4 _LightDir;
                 half4 _LightColor;
@@ -47,8 +49,8 @@ Shader "GoF2/SkyLayer"
                 float _SrcBlend, _DstBlend;
             CBUFFER_END
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; half4 color : COLOR; };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; half4 color : COLOR; };
 
             Varyings vert(Attributes i)
             {
@@ -63,12 +65,15 @@ Shader "GoF2/SkyLayer"
                 // streamed into it).
                 o.uv = i.uv - _UVOffset.xy;
                 o.normalWS = TransformObjectToWorldNormal(i.normalOS);
+                // The supernova flares fade out toward their edges through their vertex colours (0..0.5): the original
+                // draws a mesh's colour array whenever it has one.
+                o.color = _UseVertexColor > 0.5 ? i.color : half4(1, 1, 1, 1);
                 return o;
             }
 
             half4 frag(Varyings i) : SV_Target
             {
-                half4 t = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _Color;
+                half4 t = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, i.uv) * _Color * i.color;
                 if (_Lit > 0.5)
                 {
                     // Two-sided: the camera sits inside the belt.

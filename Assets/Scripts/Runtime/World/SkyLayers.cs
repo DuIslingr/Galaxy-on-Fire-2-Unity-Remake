@@ -93,6 +93,9 @@ namespace GoF2Remake.World
             foreach (var r in go.GetComponentsInChildren<Renderer>(true))
             {
                 var m = new Material(mat) { renderQueue = queue };
+                // The mesh's vertex colours multiply in (the supernova flares' fade to the edges); meshes without any don't.
+                var mf = r.GetComponent<MeshFilter>();
+                m.SetFloat("_UseVertexColor", mf != null && mf.sharedMesh != null && mf.sharedMesh.HasVertexAttribute(UnityEngine.Rendering.VertexAttribute.Color) ? 1f : 0f);
                 var mats = new Material[r.sharedMaterials.Length];
                 for (int i = 0; i < mats.Length; i++) mats[i] = m;
                 r.sharedMaterials = mats;
