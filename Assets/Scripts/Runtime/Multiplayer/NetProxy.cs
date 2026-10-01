@@ -346,7 +346,9 @@ namespace GoF2Remake.Multiplayer
             visual = prefab != null ? Instantiate(prefab, transform, false) : new GameObject("(no model)");
             visual.transform.SetParent(transform, false);
             visual.transform.localScale = scale.Value;
-            visual.GetComponent<AssembledObject>()?.SetPlayerVariant(false);
+            var asm = visual.GetComponent<AssembledObject>();
+            asm?.SetPlayerVariant(GoF2Remake.Data.Settings.NpcPlayerEngines && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0
+                                  && asm.playerVariantParts[0] != null);
             name = $"NetProxy {model.Value}";
             visual.SetActive(shown);
         }

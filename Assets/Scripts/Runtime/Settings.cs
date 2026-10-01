@@ -93,6 +93,10 @@ namespace GoF2Remake.Data
         /// <summary>The sun's lens flare in flight (LensFlareView).</summary>
         public static bool LensFlare { get => GetBool("lensFlare", true); set => SetBool("lensFlare", value); }
 
+        /// <summary>Remake: NPC ships fly with the player's engine system (the *_engine_glow_add mesh and the exhaust
+        /// particles) instead of the original's *_engine_add mesh; from the next spawn.</summary>
+        public static bool NpcPlayerEngines { get => GetBool("npcPlayerEngines", true); set => SetBool("npcPlayerEngines", value); }
+
         /// <summary>The chase camera's vertical field of view in degrees (at 16:9; the original's is OriginalFov).</summary>
         public static float FieldOfView { get => Get("fov", OriginalFov); set => Set("fov", Mathf.Clamp(value, 55f, 95f)); }
 
@@ -169,7 +173,7 @@ namespace GoF2Remake.Data
             foreach (var key in new[]
                      {
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
-                         "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "fov", "cameraShake",
+                         "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);

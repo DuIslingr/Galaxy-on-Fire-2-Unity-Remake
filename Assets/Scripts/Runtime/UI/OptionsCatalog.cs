@@ -141,6 +141,8 @@ namespace GoF2Remake.UI
                 () => new[] { X("off", "Off"), X("bloomRemake", "Remake"), X("bloomOriginal", "Original") },
                 () => Mathf.Clamp(Settings.BloomStyle, 0, 2), i => Settings.BloomStyle = i));
             list.Add(Toggle("lensFlare", OptionPage.Graphics, () => X("lensFlare", "Lens flare"), () => Settings.LensFlare, v => Settings.LensFlare = v));
+            list.Add(Toggle("npcPlayerEngines", OptionPage.Graphics, () => X("npcPlayerEngines", "Other ships' engines like yours"),
+                () => Settings.NpcPlayerEngines, v => Settings.NpcPlayerEngines = v));
             list.Add(Slider("fov", OptionPage.Graphics, () => X("fov", "Field of view"), 55f, 95f,
                 () => Settings.FieldOfView, v => Settings.FieldOfView = Mathf.Round(v), v => $"{Mathf.RoundToInt(v)}°"));
             list.Add(Slider("cameraShake", OptionPage.Graphics, () => X("cameraShake", "Camera shake"), 0f, 1f,

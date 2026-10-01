@@ -100,7 +100,11 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The engine exhaust meshes (cutscenes: "exhaust hidden" while the pirates wait).</summary>
-        public void SetExhaust(bool on) => modelGo?.GetComponent<AssembledObject>()?.SetExhaust(on, false);
+        public void SetExhaust(bool on) => modelGo?.GetComponent<AssembledObject>()?.SetExhaust(on, playerEngines);
+
+        /// <summary>Remake option (Settings.NpcPlayerEngines): the player's engine glow mesh and exhaust particles instead of
+        /// the *_engine_add mesh; ships without a glow mesh (39 / 41, the battleship, static objects) keep theirs.</summary>
+        bool playerEngines;
 
         /// <summary>The engine loop (PlayerFighter: no NPC engine sound in index 1).</summary>
         public void SetEngineSound(bool on)
@@ -328,9 +332,20 @@ namespace GoF2Remake.World
             if (prefab != null)
             {
                 modelGo = Instantiate(prefab, transform, false);
-                modelGo.GetComponent<AssembledObject>()?.SetPlayerVariant(false);
+                var asm = modelGo.GetComponent<AssembledObject>();
+                playerEngines = Settings.NpcPlayerEngines && spec.fixedObject == null && spec.turretAssembly == null
+                                && asm != null && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0 && asm.playerVariantParts[0] != null;
+                asm?.SetPlayerVariant(playerEngines);
                 model = modelGo.transform;
                 if (spec.scale != 1f) model.localScale *= spec.scale;
+                if (playerEngines)
+                {
+                    var glow = asm.playerVariantParts[0];
+                    Flight.ShipExhaust.AttachRemote(gameObject, database, model, spec.ship,
+                        () => glow != null && glow.activeInHierarchy && Current == State.Fly && !Hp.empDisabled,
+                        () => Mathf.Clamp01((speed - baseSpeed) / Mathf.Max(0.01f, NpcTables.BoostSpeed - baseSpeed)),
+                        () => cloak != null ? cloak.Percentage : 0f);
+                }
             }
 
             int kind = spec.freighter ? 1 : 0;

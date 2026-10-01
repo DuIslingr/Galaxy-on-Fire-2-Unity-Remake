@@ -26,6 +26,9 @@ namespace GoF2Remake.EditorTools
         public const float EmissiveGlow = 4f;
         /// <summary>HDR multiplier for additive layers (light sprites, engine flames, FX).</summary>
         public const float AdditiveGlow = 2.5f;
+        /// <summary>The ships' engine glow (ship_engine_glow / v_ship_engine_glow: the player's engines, and the NPCs' with
+        /// the remake option): a little more than the other additive layers.</summary>
+        public const float EngineGlow = 3.5f;
 
         // Mesh names of the glowing layers. Unlit materials not matching this (skyboxes, galaxy map
         // background) keep _Glow = 1 so they never bloom.
@@ -39,6 +42,7 @@ namespace GoF2Remake.EditorTools
             var glowMats = new HashSet<int>(table.meshes.Where(m => GlowMesh.IsMatch(System.IO.Path.GetFileNameWithoutExtension(m.model)))
                                                         .Select(m => m.materialId));
             var shading = table.materials.ToDictionary(m => m.id, m => m.shading);
+            var engineGlow = new HashSet<int>(table.materials.Where(m => m.textures != null && m.textures.Any(t => t.EndsWith("ship_engine_glow.png"))).Select(m => m.id));
 
             int changed = 0;
             foreach (var guid in AssetDatabase.FindAssets("t:Material", new[] { ImportSettings.Root + "/Materials" }))
@@ -50,7 +54,8 @@ namespace GoF2Remake.EditorTools
                 int id = int.Parse(m.Groups[1].Value);
                 shading.TryGetValue(id, out var sh);
                 float glow = 1f;
-                if (sh == "additive" || sh == "additive_anim") glow = AdditiveGlow;   // all additive layers are light
+                if (engineGlow.Contains(id)) glow = EngineGlow;
+                else if (sh == "additive" || sh == "additive_anim") glow = AdditiveGlow;   // all additive layers are light
                 // A lit alpha-test layer is lit geometry, not a light, whatever its mesh is called (the wrecked station's
                 // *_alpha_emissive girders: the original's shader cuts at alpha 0.5 and lights it; glowing, the red its
                 // transparent texels carry bloomed around every girder).
