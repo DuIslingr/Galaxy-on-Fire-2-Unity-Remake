@@ -122,6 +122,10 @@ namespace GoF2Remake.World
             playerSpeed = 0f;
             cam.LookAt(new Vector3(1500, 1600, -3000), Player);
             campaign.Fade(true, Color.black, 5000f, fromOpaque: true);
+            // Index 1 plays no music of its own: MGame::OnRelease only stops the FX categories, so 141 (Space_Battle_Medium,
+            // started by index 0's state 7 after the time jump) plays on through the rescue (the radar never runs here to
+            // change it). The scene reload stopped it, so it starts again with the level.
+            campaign.PlayMusic(assets?.timeShift, true);
             Step = 0;
         }
 
