@@ -38,6 +38,12 @@ namespace GoF2Remake.UI
         static string VersionText =>
             "Galaxy on Fire 2 Unity Remake created with <sprite=\"gof2_text_icons\" name=\"heart\"> by JoppieToppie  ·  " + BuildVersion.Text;
 
+        [Tooltip("Editor only: pretend this build version (e.g. 2026.09.29.2200) so the update check runs; empty = no check.")]
+        public string editorTestVersion = "";
+
+        /// <summary>The version the update check compares with the newest release (the Editor's only if pretended).</summary>
+        string CheckVersion => Application.isEditor ? editorTestVersion : BuildVersion.Text;
+
         [Header("Editor splash (players use Unity's splash screen with the same logos)")]
         [Tooltip("MTitle image 7001 (FISHLABS). Each logo: 1 s fade in, 2 s hold, 1 s fade out.")]
         public Texture2D[] editorSplashLogos;
@@ -72,6 +78,8 @@ namespace GoF2Remake.UI
         VisualElement root, logo, splash, splashLogo, fade, dialog, mainColumn, mainButtons;
         Label pressAnyKey, versionLabel, hintLabel;
         Button resumeButton, newGameButton, multiplayerButton, loadButton, optionsButton, aboutButton, debugButton, exitButton;
+        VisualElement updateRow;
+        Button updateButton;
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
         VisualElement openPanel;
         readonly List<OptionControl> optionControls = new List<OptionControl>();
@@ -100,6 +108,8 @@ namespace GoF2Remake.UI
             Settings.Changed += ApplySettings;
             InputMode.Changed -= UpdatePressAnyKey;
             InputMode.Changed += UpdatePressAnyKey;
+            UpdateCheck.Changed -= RefreshUpdateButton;
+            UpdateCheck.Changed += RefreshUpdateButton;
             // PanelRenderer hands out the UI root when it (re)loads the UXML, including live reloads.
             // Register first: assigning the panel settings below reloads the UI.
             panelRenderer.RegisterUIReloadCallback(OnUIReload);
@@ -142,6 +152,8 @@ namespace GoF2Remake.UI
             exitButton = Bind("exitButton", () => ShowDialog(Localization.Get(390), Localization.Get(53), Quit));
             resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);   // only with a save
             UpdateColumnFit();
+            updateRow = root.Q("updateRow");
+            updateButton = Bind("updateButton", () => Application.OpenURL(UpdateCheck.ReleaseUrl ?? UpdateCheck.ReleasesPage));
 
             foreach (var n in new[] { "campaignPanel", "difficultyPanel", "economyPanel", "loadPanel", "optionsPanel", "aboutPanel", "multiplayerPanel" })
             {
@@ -231,6 +243,7 @@ namespace GoF2Remake.UI
             pressAnyKey.AddToClassList("press-any-key--hidden");
             root.AddToClassList("menu-root--menu");
             FocusFirst(mainButtons);
+            RefreshUpdateButton();
         }
 
         [Tooltip("Force the phone layout (for testing in the editor).")]
@@ -321,6 +334,7 @@ namespace GoF2Remake.UI
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             Settings.Changed -= ApplySettings;
             InputMode.Changed -= UpdatePressAnyKey;
+            UpdateCheck.Changed -= RefreshUpdateButton;
             anyKey?.Dispose();
         }
 
@@ -516,6 +530,9 @@ namespace GoF2Remake.UI
             }).Every(0);
             root.AddToClassList("menu-root--menu");
             mainButtons.AddToClassList("main-buttons--revealing");
+            // Remake: is a newer release out (once per run; the button shows when the answer comes, RefreshUpdateButton)?
+            UpdateCheck.Start(CheckVersion);
+            RefreshUpdateButton();
             root.schedule.Execute(() =>
             {
                 foreach (var b in mainButtons.Query<Button>().ToList()) b.RemoveFromClassList("menu-button--hidden");
@@ -535,6 +552,7 @@ namespace GoF2Remake.UI
             p.schedule.Execute(() => p.AddToClassList("panel--visible")).ExecuteLater(16);
             mainColumn.AddToClassList("main-column--dimmed");
             SetFocusable(mainButtons, false);
+            RefreshUpdateButton();
             p.schedule.Execute(() => FocusFirst(p)).ExecuteLater(30);
             if (name == "multiplayerPanel") RefreshAddresses();   // the adapters may have changed
         }
@@ -558,6 +576,7 @@ namespace GoF2Remake.UI
             openPanel = null;
             mainColumn.RemoveFromClassList("main-column--dimmed");
             SetFocusable(mainButtons, true);
+            RefreshUpdateButton();
             var target = closing == panels["campaignPanel"] || panels.TryGetValue("debugPanel", out var ap) && closing == ap ? newGameButton
                 : closing == panels["loadPanel"] ? loadButton
                 : closing == panels["optionsPanel"] ? optionsButton
@@ -850,6 +869,20 @@ namespace GoF2Remake.UI
             bool resume = resumeButton != null && !resumeButton.ClassListContains("menu-button--gone");
             bool debug = debugButton != null && !debugButton.ClassListContains("menu-button--gone");
             mainColumn.EnableInClassList("main-column--full", resume && debug);
+        }
+
+        /// <summary>"Update available" (UpdateCheck): in the menu, a newer release out and no panel open (the panels reach
+        /// the bottom centre). Keys / controller reach it with Down from the last menu row.</summary>
+        void RefreshUpdateButton()
+        {
+            if (updateRow == null || updateButton == null) return;
+            bool shown = UpdateCheck.Available && screen == MenuState.Menu && openPanel == null;
+            if (UpdateCheck.Available)
+                updateButton.text = string.IsNullOrEmpty(UpdateCheck.LatestTag)
+                    ? Localization.Extra("updateAvailable", "Update available").ToUpperInvariant()
+                    : $"{Localization.Extra("updateAvailable", "Update available").ToUpperInvariant()}  ·  {UpdateCheck.LatestTag}";
+            updateRow.EnableInClassList("update-row--shown", shown);
+            updateButton.focusable = shown;
         }
 
         void OpenDebug()
@@ -1216,6 +1249,7 @@ namespace GoF2Remake.UI
 
             UpdatePressAnyKey();
             versionLabel.text = VersionText;
+            RefreshUpdateButton();
             hintLabel.text = Localization.Extra("hint", "↑ ↓  NAVIGATE     ENTER  SELECT     ESC  " + T(170));
             var aboutText = root.Q<Label>("aboutText");
             aboutText.text = $"{VersionText}\n\n{AboutText.Get()}\n\n{Localization.Get(48)}";
@@ -1253,6 +1287,8 @@ namespace GoF2Remake.UI
 
             var scope = dialog.ClassListContains("dialog-backdrop--shown") ? dialog : openPanel ?? mainButtons;
             var items = Focusables(scope);
+            if (scope == mainButtons && updateButton != null && updateButton.focusable && updateRow.ClassListContains("update-row--shown"))
+                items.Add(updateButton);   // "Update available" below the list
             if (items.Count == 0) return;
             int i = focused != null ? items.IndexOf(focused) : -1;
             int step = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1;

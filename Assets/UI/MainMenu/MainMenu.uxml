@@ -159,6 +159,10 @@
             <ui:Label name="versionLabel" class="footer-text" />
             <ui:Label name="hintLabel" class="footer-text footer-hint" />
         </ui:VisualElement>
+
+        <ui:VisualElement name="updateRow" class="update-row" picking-mode="Ignore">
+            <ui:Button name="updateButton" class="update-button gof-semibold" />
+        </ui:VisualElement>
         </ui:VisualElement>
 
         <ui:VisualElement name="dialog" class="dialog-backdrop">

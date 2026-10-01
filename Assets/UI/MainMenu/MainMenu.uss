@@ -804,6 +804,56 @@
     opacity: 1;
 }
 
+/* Remake: "Update available" (UpdateCheck), bottom centre above the footer line (the credit line is wide enough to
+   reach the centre on 4:3), shown in the menu while no panel is open. */
+.update-row {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 72px;
+    flex-direction: row;
+    justify-content: center;
+    display: none;
+}
+
+.update-row--shown {
+    display: flex;
+}
+
+.update-button {
+    background-color: rgba(4, 10, 18, 0.78);
+    border-width: 1px;
+    border-color: var(--gof-amber);
+    border-radius: 0;
+    margin: 0;
+    padding: 10px 28px;
+    -unity-text-align: middle-center;
+    font-size: 18px;
+    letter-spacing: 4px;
+    color: var(--gof-amber);
+    transition-duration: 0.18s;
+    transition-timing-function: ease-out-cubic;
+}
+
+.update-button:focus,
+.can-hover .update-button:hover {
+    color: #FFFFFF;
+    background-color: var(--gof-amber-soft);
+}
+
+.menu-root .update-button:active {
+    background-color: var(--gof-amber);
+    color: #000000;
+}
+
+.layout-phone .update-row {
+    bottom: 60px;
+}
+
+.layout-phone .update-button {
+    padding: 14px 32px;
+}
+
 .footer-text {
     font-size: 15px;
     letter-spacing: 2px;
