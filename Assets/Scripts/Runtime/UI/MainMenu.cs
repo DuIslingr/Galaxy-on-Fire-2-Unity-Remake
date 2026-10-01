@@ -145,7 +145,13 @@ namespace GoF2Remake.UI
             newGameButton = Bind("newGameButton", () => OpenPanel("campaignPanel"));
             multiplayerButton = Bind("multiplayerButton", OpenMultiplayer);
             loadButton = Bind("loadButton", () => { BuildSlots(); OpenPanel("loadPanel"); });
-            optionsButton = Bind("optionsButton", () => { OpenPanel("optionsPanel"); SelectTab(OptionPages[0].page); });
+            optionsButton = Bind("optionsButton", () =>
+            {
+                // The rows follow what is known now (DLSS / FSR only once URP has made its pipeline, after these rows were built).
+                foreach (var c in optionControls) c.Refresh();
+                OpenPanel("optionsPanel");
+                SelectTab(OptionPages[0].page);
+            });
             aboutButton = Bind("aboutButton", () => OpenPanel("aboutPanel"));
             debugButton = Bind("debugButton", OpenDebug);
             UpdateDebugButton();

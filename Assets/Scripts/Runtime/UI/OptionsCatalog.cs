@@ -26,6 +26,7 @@ namespace GoF2Remake.UI
         public Func<string> description;   // optional line under the row
         public Func<UnityEngine.UIElements.VisualElement> extra;   // optional element under the row (not focusable)
         public bool inGameOnly;            // only in a running game's menus (pause / station), not the main menu
+        public Func<bool> visible;         // optional: the row shows only while true (OptionControl.Refresh)
 
         // Slider
         public float min, max;
@@ -104,17 +105,28 @@ namespace GoF2Remake.UI
                 () => new[] { Localization.Get(507), Localization.Get(508), Localization.Get(509) },
                 () => Settings.Quality, i => Settings.Quality = i,
                 () => QualityDescription(Settings.Quality)));
-            list.Add(Choice("renderScale", OptionPage.Graphics, () => X("renderScale", "Render scale"), false,
+            // DLSS / FSR 2+ pick their own render resolution (the Upscaler quality below): no render scale while one is on.
+            bool DlssOrFsrOn() => Bootstrap.ActiveUpscaler == Settings.UpscalerDlss || Bootstrap.ActiveUpscaler == Settings.UpscalerFsrTemporal;
+            var renderScale = Choice("renderScale", OptionPage.Graphics, () => X("renderScale", "Render scale"), false,
                 () => RenderScales.Select(Percent).ToArray(),
                 () => Nearest(RenderScales, Settings.RenderScale > 0f ? Settings.RenderScale : Bootstrap.DefaultRenderScale),
-                i => Settings.RenderScale = RenderScales[i]));
+                i => Settings.RenderScale = RenderScales[i]);
+            renderScale.visible = () => !DlssOrFsrOn();
+            list.Add(renderScale);
             // Only the upscalers this device runs (Android: FSR 1 needs GLES 3.1 / Vulkan, STP Vulkan; DLSS / FSR 2+: Windows
-            // builds with the upscaler framework, the GPU and graphics API they need, UpscalerFramework).
-            var upscalers = new List<int> { Settings.UpscalerOff };
-            if (Bootstrap.FsrSupported) upscalers.Add(Settings.UpscalerFsr);
-            if (Bootstrap.StpSupported) upscalers.Add(Settings.UpscalerStp);
-            if (Bootstrap.DlssSupported) upscalers.Add(Settings.UpscalerDlss);
-            if (Bootstrap.FsrTemporalSupported) upscalers.Add(Settings.UpscalerFsrTemporal);
+            // builds with the upscaler framework, the GPU and graphics API they need, UpscalerFramework). Asked again on every
+            // refresh: DLSS / FSR are only known once URP has made its pipeline (the first frame), and the main menu builds
+            // its rows before that.
+            List<int> Upscalers()
+            {
+                var l = new List<int> { Settings.UpscalerOff };
+                if (Bootstrap.FsrSupported) l.Add(Settings.UpscalerFsr);
+                if (Bootstrap.StpSupported) l.Add(Settings.UpscalerStp);
+                if (Bootstrap.DlssSupported) l.Add(Settings.UpscalerDlss);
+                if (Bootstrap.FsrTemporalSupported) l.Add(Settings.UpscalerFsrTemporal);
+                return l;
+            }
+            var upscalers = Upscalers();
             string UpscalerName(int u) => u switch
             {
                 Settings.UpscalerFsr => "FSR 1",
@@ -123,11 +135,11 @@ namespace GoF2Remake.UI
                 Settings.UpscalerFsrTemporal => UpscalerFramework.BestFsrLabel ?? "FSR",
                 _ => X("off", "Off"),
             };
-            if (upscalers.Count > 1)
+            if (upscalers.Count > 1 || UpscalerFramework.Compiled)
                 list.Add(Choice("upscaler", OptionPage.Graphics, () => X("upscaler", "Upscaler"), true,
-                    () => upscalers.Select(UpscalerName).ToArray(),
-                    () => Math.Max(0, upscalers.IndexOf(Bootstrap.ActiveUpscaler)),
-                    i => Settings.Upscaler = upscalers[i],
+                    () => Upscalers().Select(UpscalerName).ToArray(),
+                    () => Math.Max(0, Upscalers().IndexOf(Bootstrap.ActiveUpscaler)),
+                    i => { var l = Upscalers(); Settings.Upscaler = l[Math.Clamp(i, 0, l.Count - 1)]; },
                     () => Bootstrap.ActiveUpscaler switch
                     {
                         Settings.UpscalerFsr => X("upscalerFsr", "AMD FidelityFX Super Resolution 1: sharp upscaling from the render scale"),
@@ -137,15 +149,18 @@ namespace GoF2Remake.UI
                             UpscalerFramework.BestFsrLabel ?? "FSR"),
                         _ => X("upscalerOff", "Plain scaling from the render scale"),
                     }));
-            // DLSS / FSR 2+: the render resolution by quality mode (the render scale doesn't apply to them).
-            if (Bootstrap.DlssSupported || Bootstrap.FsrTemporalSupported)
-                list.Add(Choice("upscalerQuality", OptionPage.Graphics, () => X("upscalerQuality", "Upscaler quality"), false,
+            // DLSS / FSR 2+: the render resolution by quality mode, in place of the render scale; only while one of them is on (in
+            // builds with the framework).
+            if (UpscalerFramework.Compiled)
+            {
+                var quality = Choice("upscalerQuality", OptionPage.Graphics, () => X("upscalerQuality", "Upscaler quality"), false,
                     () => new[] { X("upscalerNative", "Native (DLAA / native AA)"), X("upscalerQ", "Quality"), X("upscalerB", "Balanced"),
                                   X("upscalerP", "Performance"), X("upscalerUP", "Ultra performance") },
                     () => Settings.UpscalerQuality, i => Settings.UpscalerQuality = i,
-                    () => Bootstrap.ActiveUpscaler == Settings.UpscalerDlss || Bootstrap.ActiveUpscaler == Settings.UpscalerFsrTemporal
-                        ? X("upscalerQualityHelp", "DLSS / FSR: the resolution they render at, from native down to a third; the render scale doesn't apply")
-                        : X("upscalerQualityOff", "Only used by DLSS and FSR 2 / 3 / 4")));
+                    () => X("upscalerQualityHelp", "The resolution DLSS / FSR render at, from native down to a third (replaces the render scale)"));
+                quality.visible = DlssOrFsrOn;
+                list.Add(quality);
+            }
             // MSAA with a temporal upscaler on (STP, DLSS, FSR 2+): its anti-aliasing takes the place (shown as off); picking MSAA
             // turns the upscaler off.
             list.Add(Choice("msaa", OptionPage.Graphics, () => X("antiAliasing", "Anti-aliasing"), true,

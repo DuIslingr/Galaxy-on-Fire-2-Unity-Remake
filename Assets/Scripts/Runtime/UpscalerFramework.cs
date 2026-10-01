@@ -32,7 +32,7 @@ namespace GoF2Remake
 
 #if ENABLE_UPSCALER_FRAMEWORK
         /// <summary>The framework is compiled in (desktop builds).</summary>
-        public const bool Compiled = true;
+        public static bool Compiled => true;
 
         static UniversalRenderPipeline Pipeline => RenderPipelineManager.currentPipeline as UniversalRenderPipeline;
 
@@ -116,7 +116,7 @@ namespace GoF2Remake
 #endif
         }
 #else
-        public const bool Compiled = false;
+        public static bool Compiled => false;
         public static bool Supports(string id) => false;
         public static bool DlssSupported => false;
         public static string BestFsr => null;

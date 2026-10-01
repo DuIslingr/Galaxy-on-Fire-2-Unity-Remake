@@ -67,8 +67,12 @@ namespace GoF2Remake.UI
             Refresh();
         }
 
+        /// <summary>The row is shown (OptionDef.visible; always without one).</summary>
+        public bool Shown => def.visible == null || def.visible();
+
         public void Refresh()
         {
+            if (def.visible != null) Root.style.display = Shown ? DisplayStyle.Flex : DisplayStyle.None;
             if (slider != null)
             {
                 slider.SetValueWithoutNotify(def.get());

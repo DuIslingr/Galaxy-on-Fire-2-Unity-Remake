@@ -280,6 +280,14 @@ namespace GoF2Remake.UI
             HighlightOptions();
         }
 
+        /// <summary>After a change rows may come or go (the render scale while DLSS / FSR is on): the highlight stays on 'item'.</summary>
+        void KeepOptionSelected(VisualElement item)
+        {
+            int i = options.NavItems().IndexOf(item);
+            if (i >= 0) optionIndex = i;
+            HighlightOptions();
+        }
+
         void HighlightOptions()
         {
             if (options == null) return;
@@ -325,14 +333,14 @@ namespace GoF2Remake.UI
             if (side != 0)
             {
                 if (options.IsTab(current)) options.StepTab(side);
-                else if (row != null) row.Step(side);
+                else if (row != null) { row.Step(side); KeepOptionSelected(current); }
                 else { optionIndex = side < 0 ? items.IndexOf(options.BackButton) : items.IndexOf(options.DefaultsButton); HighlightOptions(); }
                 return;
             }
             bool confirm = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
                            || (pad != null && pad.buttonSouth.wasPressedThisFrame);
             if (!confirm) return;
-            if (row != null) row.Activate();
+            if (row != null) { row.Activate(); KeepOptionSelected(current); }
             else if (current == options.BackButton) Show(Page.Main);
             else if (current == options.DefaultsButton) options.RestoreDefaults();
         }
