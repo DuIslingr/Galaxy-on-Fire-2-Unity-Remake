@@ -709,8 +709,8 @@ namespace GoF2Remake.Multiplayer
             return text.Length > MaxPasswordLength ? text.Substring(0, MaxPasswordLength) : text;
         }
 
-        /// <summary>Server: a game connecting gets in only with this game's exact version (the Editor, for testing, takes any;
-        /// a development build also takes the Editor) and the session's password, if it has one. Turned away = the reason is
+        /// <summary>Server: a game connecting gets in only with this game's exact version (testing: the Editor takes any, and
+        /// every build takes the Editor) and the session's password, if it has one. Turned away = the reason is
         /// their popup. The host's own client always gets in.</summary>
         static void Approve(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
         {
@@ -729,7 +729,7 @@ namespace GoF2Remake.Multiplayer
                 response.Reason = Localization.Extra("mpHostLeft", "The host ended the session.");
                 return;
             }
-            bool same = theirs == Version || Application.isEditor || (Debug.isDebugBuild && theirs == "editor");
+            bool same = theirs == Version || Application.isEditor || theirs == "editor";   // the Editor always joins (testing)
             if (!same)
             {
                 response.Approved = false;

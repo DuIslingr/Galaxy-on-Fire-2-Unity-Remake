@@ -1,11 +1,12 @@
 // DedicatedServerLaunchers.cs
 // After a Windows or Linux player build: a launcher for the dedicated server (DedicatedServer) next to the game, so a
 // server starts with a double click (Windows) or one command (Linux) instead of typing the command line. The name,
-// password and player limit are at the top of the file to edit; it starts the game headless (-batchmode -nographics),
-// online through Unity Relay and listed in the server browser. Windows: the server opens its own console window (the
+// password and player limit are at the top of the file to edit (a rebuild keeps the values already there); it starts
+// the game headless (-batchmode -nographics), online through Unity Relay and listed in the server browser. Windows: the server opens its own console window (the
 // log and the commands); Linux: the terminal it runs in.
 
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -26,9 +27,32 @@ namespace GoF2Remake.EditorTools
             if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder)) return;
             string name = Path.GetFileName(exe);
             if (target == BuildTarget.StandaloneWindows64)
-                File.WriteAllText(Path.Combine(folder, "Start Dedicated Server.bat"), WindowsLauncher(name).Replace("\n", "\r\n"));
+            {
+                string path = Path.Combine(folder, "Start Dedicated Server.bat");
+                File.WriteAllText(path, KeepSettings(path, WindowsLauncher(name), true).Replace("\n", "\r\n"));
+            }
             else
-                File.WriteAllText(Path.Combine(folder, "start-server.sh"), LinuxLauncher(name));
+            {
+                string path = Path.Combine(folder, "start-server.sh");
+                File.WriteAllText(path, KeepSettings(path, LinuxLauncher(name), false));
+            }
+        }
+
+        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS" };
+
+        /// <summary>A launcher already there keeps its edited settings (the name, password and player limit) in the new one.</summary>
+        static string KeepSettings(string path, string text, bool windows)
+        {
+            if (!File.Exists(path)) return text;
+            string old = File.ReadAllText(path).Replace("\r\n", "\n");
+            foreach (string key in Settings)
+            {
+                // Windows "set KEY=value" (the rest of the line); Linux "KEY=value  # comment" (a word or a quoted string).
+                string pattern = windows ? $"(?m)^(set {key}=)(.*)$" : $"(?m)^({key}=)(\"[^\"]*\"|\\S*)";
+                var had = Regex.Match(old, pattern);
+                if (had.Success) text = Regex.Replace(text, pattern, m => m.Groups[1].Value + had.Groups[2].Value);
+            }
+            return text;
         }
 
         static string WindowsLauncher(string exe) =>

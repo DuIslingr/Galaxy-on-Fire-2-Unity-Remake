@@ -625,8 +625,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   game with that code, no internet, else the service's message).
 - **Version check and passwords** (Netcode's connection approval, `NetGame.Approve`): every connecting game sends
   `NetGame.Version` (`Application.version`, "editor" in the Editor) and its password (`ConnectionData`); only the exact
-  same version gets in ("This game runs version X, yours is Y..."; the Editor as server takes any version, a development
-  build also takes the Editor), then the session's password if it has one (`HostPassword`: "needs a password" / "Wrong
+  same version gets in ("This game runs version X, yours is Y..."; the Editor as server takes any version, and every build
+  lets the Editor in, for testing: it skips only the version check, not the password), then the session's password if it has one (`HostPassword`: "needs a password" / "Wrong
   password."); the reason is the player's popup. The server checks it: the lobby's join code is public. Builds from
   before the check don't use approval, which is part of Netcode's config hash, so they fail its handshake. Verified with
   a Windows build and the Editor: the version refusal, no / wrong / right password over Relay, the listing and its count.
