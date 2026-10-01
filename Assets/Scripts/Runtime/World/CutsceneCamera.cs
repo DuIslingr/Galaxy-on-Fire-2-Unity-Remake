@@ -75,7 +75,7 @@ namespace GoF2Remake.World
         void Aim(float dtMs)
         {
             var look = target != null ? target.position : lookPoint;
-            if (Rumble > 0f)
+            if (Rumble > 0f && dtMs > 0f)   // paused (dt 0): no jitter, like TargetFollowCamera::update
                 look += new Vector3(Random.Range(0, 100) - 50, Random.Range(0, 100) - 50, Random.Range(0, 100) - 50) * (Rumble * M * Settings.CameraShake);
             var d = look - cam.transform.position;
             if (d.sqrMagnitude > 1e-6f) cam.transform.rotation = Quaternion.LookRotation(d, Vector3.up);

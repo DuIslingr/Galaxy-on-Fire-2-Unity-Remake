@@ -75,6 +75,9 @@ namespace GoF2Remake.Flight
             var ship = target.transform;
             var model = target.Model;
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // TargetFollowCamera gets the player's dt
+            // TargetFollowCamera::update 0x186e40 does everything inside `if (0 < dt)`: paused, the camera neither follows,
+            // shakes nor rumbles (the shake timer would never run out, the jitter piled up every frame).
+            if (dtMs <= 0f) { rumble = 0f; return; }
             if (constantRumble > 0f) rumble = Mathf.Max(rumble, constantRumble);
             rumble *= GoF2Remake.Data.Settings.CameraShake;   // the camera shake option
             if (follow != null)
