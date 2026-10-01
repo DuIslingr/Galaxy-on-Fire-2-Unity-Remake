@@ -78,7 +78,9 @@ namespace GoF2Remake.Flight
                         {
                             var d = Instantiate(assets.debris, root.transform, false);
                             d.transform.localRotation = Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), 0f);
-                            d.transform.localScale *= Random.Range(50, 100) * 0.01f * scale;
+                            // addFireStreaks: 0.5..0.99, never scaled again (Explosion::setScaling 0xb4ee0 scales only the
+                            // blast and its _add, the streaks just get its animation speed): a freighter's x6 made them huge lines.
+                            d.transform.localScale *= Random.Range(50, 100) * 0.01f;
                             GunRig.StripForFx(d);
                             foreach (var a in d.GetComponentsInChildren<PartAnimation>(true)) a.applyMaterialChannels = true;   // fade as they stretch
                             e.lengthMs = Mathf.Max(e.lengthMs, PartAnimation.PlayOnce(d));
