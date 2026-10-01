@@ -99,7 +99,7 @@
     position: absolute;
     left: 48px;
     top: 120px;
-    bottom: 40px;
+    bottom: 64px;   /* clear of the news ticker (36 px) along the bottom edge */
     width: 440px;
 }
 
@@ -168,7 +168,7 @@
 .launch-button {
     position: absolute;
     right: 40px;
-    bottom: 40px;
+    bottom: 64px;
     min-width: 260px;
     padding: 20px 34px;
     font-size: 28px;
@@ -199,7 +199,7 @@
     display: none;
     position: absolute;
     right: 340px;
-    bottom: 40px;
+    bottom: 64px;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: flex-end;
