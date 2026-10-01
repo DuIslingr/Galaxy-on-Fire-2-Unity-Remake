@@ -661,8 +661,8 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The end of the start sequence (LevelScript +0x24 > 7000): the chase camera and the controls come back, then
-        /// the autopilot to a programmed station. 'skipped' (LevelScript::skipSequence, any input): the camera snaps
-        /// behind the ship instead of easing there.</summary>
+        /// the autopilot to a programmed station. 'skipped': the camera snaps behind the ship instead of easing there (the
+        /// launch camera option off, a level opening on its own cutscene); a player's skip eases like the natural end.</summary>
         void EndLaunchCamera(bool skipped)
         {
             launchCameraMs = 0f;
@@ -725,8 +725,11 @@ namespace GoF2Remake.World
             if (launchCameraMs <= 0f) return;
             // A level script took the camera (the prologue / rescue scripts own it from the start): the fly-in is over.
             if (chase.scriptCamera) { EndLaunchCamera(true); return; }
-            // Remake option: no launch / arrival camera = skipped at once.
-            if (!Settings.LaunchCamera || Time.timeScale > 0f && PlayerTriedToFly()) { EndLaunchCamera(true); return; }
+            // Remake option: no launch / arrival camera = skipped at once (the camera never showed: it snaps behind the ship).
+            if (!Settings.LaunchCamera) { EndLaunchCamera(true); return; }
+            // LevelScript::skipSequence 0x16f57c only sets the fly-in clock to 7001: the next frame ends it like the natural
+            // end (setLookAtCam(false), no resetCamera), so the chase camera eases in from where the camera is.
+            if (Time.timeScale > 0f && PlayerTriedToFly()) { EndLaunchCamera(false); return; }
             launchCameraMs -= Time.deltaTime * 1000f;
             var cam = mainCamera.transform;
             cam.rotation = Quaternion.LookRotation(Player.transform.position - cam.position, Player.transform.up);
