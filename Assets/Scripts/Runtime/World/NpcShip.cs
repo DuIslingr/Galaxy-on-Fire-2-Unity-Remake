@@ -294,7 +294,9 @@ namespace GoF2Remake.World
         /// <summary>The shock blast: 'center' and 'radius' in Unity metres.</summary>
         public void InitPush(Vector3 center, float radius)
         {
-            if (IsFixed || IsFreighter || radius <= 0f) return;
+            // KIPlayer::initPush is empty and PlayerTurret inherits it; only PlayerFighter / PlayerAsteroid push. The turret
+            // assemblies on battleships and carriers stay mounted.
+            if (IsFixed || IsFreighter || IsTurret || radius <= 0f) return;
             var away = transform.position - center;
             float d = away.magnitude;
             pushTotalMs = pushMs = (1f - Mathf.Min(d / radius, 1f)) * PushMaxMs;
