@@ -48,7 +48,7 @@ namespace GoF2Remake.Flight
         public static event Action Changed;
 
         public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight,
-            FirePrimary, FireSecondary, SwitchSecondary, Action, AutopilotMenu, Wingmen, KhadorDrive, FastForward,
+            FirePrimary, FireSecondary, SwitchSecondary, Action, AutopilotMenu, ActionsMenu, Wingmen, KhadorDrive, FastForward,
             Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, Screenshot;
 
         static string X(string key, string english) => Localization.Extra(key, english);
@@ -87,7 +87,9 @@ namespace GoF2Remake.Flight
             AutoTurret = Button("autoTurret", () => X("ctlAutoTurret", "Auto turret on / off"), "<Keyboard>/y", null, "<Gamepad>/dpad/down");
             // ---- navigation and equipment
             Action = Button("action", () => X("ctlAction", "Action (dock, autopilot, jump, mine)"), "<Keyboard>/f", "<Keyboard>/enter", "<Gamepad>/buttonWest");
-            AutopilotMenu = Button("autopilotMenu", () => X("ctlAutopilotMenu", "Autopilot menu"), "<Keyboard>/q", "<Keyboard>/e", "<Gamepad>/select");
+            AutopilotMenu = Button("autopilotMenu", () => X("ctlAutopilotMenu", "Autopilot menu"), "<Keyboard>/q", null, "<Gamepad>/select");
+            // The PC version's E "Actions": the quick menu (Hud::initHudMenu(0): secondary weapons, wingmen, cloak, Khador Drive).
+            ActionsMenu = Button("actionsMenu", () => X("ctlActionsMenu", "Actions menu"), "<Keyboard>/e", null, "<Gamepad>/dpad/left");
             FastForward = Button("fastForward", () => X("ctlFastForward", "Fast-forward (hold)"), "<Keyboard>/tab", null, "<Gamepad>/buttonNorth");
             Wingmen = Button("wingmen", () => X("ctlWingmen", "Wingmen"), "<Keyboard>/v", null, null);
             KhadorDrive = Button("khadorDrive", () => X("ctlKhador", "Khador Drive"), "<Keyboard>/k", null, null);

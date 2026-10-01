@@ -271,10 +271,12 @@ namespace GoF2Remake.Flight
 
         // ---- autopilot menu (Hud::initHudMenu(3)) ------------------------------------------------------------
 
-        /// <summary>Hud::initHudMenu(3)'s entries in its order, then the remake's Khador Drive, wingmen and cloak.</summary>
-        public List<Target> MenuEntries()
+        /// <summary>The autopilot menu: Hud::initHudMenu(3)'s entries in its order. 'actions' = the quick menu instead,
+        /// Hud::initHudMenu(0): secondary weapons, the cloak, the Khador Drive and the wingmen.</summary>
+        public List<Target> MenuEntries(bool actions = false)
         {
             var list = new List<Target>();
+            if (actions) return ActionEntries(list);
             if (!layout.alienOrbit)
             {
                 if (AsteroidField != null) list.Add(AsteroidField);
@@ -292,21 +294,34 @@ namespace GoF2Remake.Flight
             }
             // Level::getDockingTarget: every one with a name (PlayerFixedObject::getName), in the alien orbit too.
             foreach (var t in Targets) if (t.kind == Kind.DockingTarget && !t.hidden && !string.IsNullOrEmpty(t.name)) list.Add(t);
-            // Hud::initHudMenu(0): 266 "Secondary weapons" with any secondary mounted (its list is Hud::initHudMenu(1)).
+            return list;
+        }
+
+        List<Target> ActionEntries(List<Target> list)
+        {
+            // Hud::initHudMenu(0) in its order: 266 "Secondary weapons" with any secondary mounted (its list is
+            // Hud::initHudMenu(1)), 306 Wingmen, the item entries (0x18e734: the cloak by the item's name, unusable while
+            // cloaked / charging / recharging), 1359 Khador Drive.
             if (weapons != null && weapons.SecondaryItems().Count > 0) list.Add(new Target { kind = Kind.Secondary, name = Localization.Get(266) });
-            if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
-            // Hud::initHudMenu(0) 0x18e734: the cloak entry (the item's name), unusable while cloaked / charging / recharging.
             if (Cloak != null) list.Add(new Target { kind = Kind.Cloak, name = Cloak.ItemName, disabled = !Cloak.Rules.Available });
+            if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
             return list;
         }
 
         /// <summary>MGame::OnTouchEnd, autopilot button: only while nothing else flies the ship; pauses the game.</summary>
         public bool CanOpenMenu => !Autopilot && !Jumping && !paused && (mining == null || mining.State == Mining.Phase.Idle) && (Docking == null || !Docking.Busy);
+        /// <summary>MGame::OnTouchEnd, quick menu button (key 4): refused only while mining (PlayerEgo::isMining), so it opens
+        /// on the autopilot too (remake: not while jumping or docking at an object either).</summary>
+        public bool CanOpenActions => !Jumping && !paused && (mining == null || mining.State == Mining.Phase.Idle) && (Docking == null || !Docking.Busy);
 
-        public void OpenMenu()
+        /// <summary>The open menu is the quick (action) menu, not the autopilot's.</summary>
+        public bool MenuIsActions { get; private set; }
+
+        public void OpenMenu(bool actions = false)
         {
-            if (!CanOpenMenu) return;
+            if (actions ? !CanOpenActions : !CanOpenMenu) return;
+            MenuIsActions = actions;
             MenuOpen = true;
             if (weapons != null) weapons.Blocked = true;
             ApplyTimeScale();

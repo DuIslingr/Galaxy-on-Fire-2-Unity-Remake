@@ -214,12 +214,7 @@ namespace GoF2Remake.UI
                 SecondaryReleased = () => { if (!MiningOrDocked) weapons?.FireSecondary(); },
                 BoostReleased = () => { if (!MiningOrDocked) ship?.Boost(); },
                 CameraReleased = () => { if (mining == null || mining.State == Mining.Phase.Idle) level?.FreeLook?.Cycle(); },
-                MenuReleased = () =>
-                {
-                    if (nav == null) return;
-                    if (nav.MenuOpen) CloseAutopilotMenu();
-                    else if (nav.CanOpenMenu) OpenAutopilotMenu();
-                },
+                MenuReleased = OnActionsButton,
                 TurretReleased = () => level?.Turret?.Toggle(),
                 PausePressed = () => PlayButton(true),
                 PauseReleased = () => { PlayButton(false); OpenPause(); },
@@ -273,7 +268,7 @@ namespace GoF2Remake.UI
                 if (Time.unscaledTime >= quickMenuCheck && nav != null)
                 {
                     quickMenuCheck = Time.unscaledTime + 0.5f;
-                    quickMenuEntries = nav.MenuEntries().Exists(t => t.kind == Navigation.Kind.KhadorDrive || t.kind == Navigation.Kind.Wingmen || t.kind == Navigation.Kind.Cloak || t.kind == Navigation.Kind.Secondary);
+                    quickMenuEntries = nav.MenuEntries(true).Count > 0;
                 }
                 f.menu = quickMenuEntries;
                 var fl = level.FreeLook;
@@ -348,10 +343,10 @@ namespace GoF2Remake.UI
         /// when the entry isn't offered.</summary>
         void OpenMenuEntry(Navigation.Kind kind)
         {
-            if (nav == null || nav.MenuOpen || !nav.CanOpenMenu) return;
-            var entry = nav.MenuEntries().Find(t => t.kind == kind && !t.disabled);
+            if (nav == null || nav.MenuOpen || !nav.CanOpenActions) return;
+            var entry = nav.MenuEntries(true).Find(t => t.kind == kind && !t.disabled);
             if (entry == null) return;
-            OpenAutopilotMenu();
+            OpenAutopilotMenu(true);
             if (!nav.MenuOpen) return;
             int i = menuButtons.FindIndex(b => b.target != null && b.target.kind == kind);
             if (i < 0) return;
@@ -376,7 +371,7 @@ namespace GoF2Remake.UI
                     Hint(T("hudSelect", "SELECT"), InputGlyph.Key("↑"), InputGlyph.Key("↓"));
                     Hint(T("hudConfirm", "CONFIRM"), InputGlyph.Key("ENTER", true), InputGlyph.Key("1-8", true));
                     var back = new List<VisualElement> { InputGlyph.Key("ESC") };
-                    back.AddRange(InputGlyph.For(GameControls.AutopilotMenu, kind));
+                    back.AddRange(InputGlyph.For(nav.MenuIsActions ? GameControls.ActionsMenu : GameControls.AutopilotMenu, kind));
                     Hint(T("hudBack", "BACK"), back.ToArray());
                 }
                 else
@@ -435,6 +430,7 @@ namespace GoF2Remake.UI
                 Hint(level.Turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : T("hudTurretView", "TURRET VIEW"),
                      level.Turret.IsAuto ? GameControls.AutoTurret : GameControls.Camera);
             Hint(Localization.Get(571).ToUpperInvariant(), GameControls.AutopilotMenu);
+            if (nav != null && nav.MenuEntries(true).Count > 0) Hint(T("hudActions", "ACTIONS"), GameControls.ActionsMenu);
             Hint(T("hudMenu", "MENU"), menuKey);
         }
 
@@ -554,10 +550,10 @@ namespace GoF2Remake.UI
                 return;
             }
             // The PC version's keys (its help texts 1731 / 1732, 638, 18 and the default list), rebindable (GameControls):
-            // Q Autopilot (the target list, again = off) and E Actions (the action menu; the remake has one menu for both),
-            // V Wingmen, K Khador Drive, M or the middle mouse button: mouse control (not the mouse while it orbits the
+            // Q Autopilot (the target list, again = off) and E Actions (the quick menu), V Wingmen, K Khador Drive, M or the middle mouse button: mouse control (not the mouse while it orbits the
             // free-look camera).
             if (nav != null && GameControls.AutopilotMenu.WasPressedThisFrame()) OnAutopilotButton();
+            else if (nav != null && GameControls.ActionsMenu.WasPressedThisFrame()) OnActionsButton();
             else if (nav != null && GameControls.Wingmen.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.Wingmen);
             else if (nav != null && GameControls.KhadorDrive.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.KhadorDrive);
             bool freeLookNow = level != null && level.FreeLook != null && level.FreeLook.FreeLookActive;
@@ -820,19 +816,28 @@ namespace GoF2Remake.UI
             else if (nav.CanOpenMenu) OpenAutopilotMenu();
         }
 
+        /// <summary>The quick menu button (HUD key 4, MGame::OnTouchEnd; the PC version's E "Actions"): opens / closes the
+        /// action menu, on the autopilot too.</summary>
+        void OnActionsButton()
+        {
+            if (nav == null) return;
+            if (nav.MenuOpen) CloseAutopilotMenu();
+            else if (nav.CanOpenActions && nav.MenuEntries(true).Count > 0) OpenAutopilotMenu(true);
+        }
+
         // ---- autopilot menu (Hud::initHudMenu(3)) --------------------------------------------------------------
 
-        void OpenAutopilotMenu()
+        void OpenAutopilotMenu(bool actions = false)
         {
-            nav.OpenMenu();
+            nav.OpenMenu(actions);
             if (!nav.MenuOpen) return;
             touch?.ReleaseAll();
             weapons?.SetPrimaryHeld(false);
             autopilotMenuItems.Clear();
             menuButtons.Clear();
             menuActions.Clear();
-            root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();
-            foreach (var t in nav.MenuEntries())
+            root.Q<Label>("autopilotMenuTitle").text = Localization.Get(actions ? 172 : 571).ToUpperInvariant();   // Menu / Autopilot
+            foreach (var t in nav.MenuEntries(actions))
             {
                 var target = t;
                 var b = new Button { text = t.name.ToUpperInvariant() };
@@ -879,7 +884,7 @@ namespace GoF2Remake.UI
             // The press that opened the menu can still read as "pressed this frame" on the next frame (editor input
             // updates): ignore the toggle keys for two frames.
             if (Time.frameCount - menuOpenedFrame < 2) return;
-            if ((kb != null && kb.escapeKey.wasPressedThisFrame) || GameControls.AutopilotMenu.WasPressedThisFrame()
+            if ((kb != null && kb.escapeKey.wasPressedThisFrame) || GameControls.AutopilotMenu.WasPressedThisFrame() || GameControls.ActionsMenu.WasPressedThisFrame()
                 || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame)))
             {
                 CloseAutopilotMenu();
