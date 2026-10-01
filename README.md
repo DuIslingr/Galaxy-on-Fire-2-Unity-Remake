@@ -2,13 +2,14 @@
 
 # Galaxy on Fire 2 Remake (Unity)
 
-A remake of the 2010 space game *Galaxy on Fire 2* by FISHLABS in Unity 6, for Windows and Android. It aims to be a
+A remake of the 2010 space game *Galaxy on Fire 2* by FISHLABS in Unity 6, for Windows, Linux and Android. It aims to be a
 faithful port of the original gameplay, including flight, combat, trading, mining, stations, the bar and the whole
 story. It is built on the original assets and on game logic ported from the decompiled game code.
 
-**Status:** the main campaign, the Valkyrie add-on and the Supernova add-on can be played from start to end. Supernova
-is built but has not been fully played through yet. Multiplayer is experimental. Each build's version is the date and
-time it was built (for example `2026.09.29.2315`), shown in the main menu.
+**Status:** the main campaign, the Valkyrie add-on and the Supernova add-on can be played from start to end. The
+Supernova opening and final battle have been rebuilt from the original scripts, but the add-on has not been fully played
+through yet. Multiplayer is experimental. A build's version is the date and time of its release (for example
+`2026.10.01.1200`), the same on every platform, shown in the main menu.
 
 ## Features
 
@@ -28,11 +29,15 @@ time it was built (for example `2026.09.29.2315`), shown in the main menu.
   crates, the asteroids and the shop stock. Local and global chat.
 - **Remake extras:**
   - Arrival and take-off flights in the hangar, animated dialogue text, and the original-style bloom as an option.
-  - Upscaling (FSR 1, STP), photo mode and screenshots.
+  - Four difficulties (Easy, Normal, Hard, Extreme) that can be changed during a game, and a choice between the PC
+    and Android economies for a new game.
+  - Other ships' engines like the player's (an option), upscaling (FSR 1, STP), photo mode and screenshots.
+  - Discord Rich Presence on Windows: your Discord status shows what you are doing in the game.
   - A Dutch translation, and a choice between German and English voices.
-  - A debug panel to jump to any story step, plus cheats.
-- **Controls and screens:** touch, tilt, keyboard and mouse, and controllers (shown with Xbox buttons). Landscape
-  screens from 4:3 up to 32:9, phones included.
+  - Debug tools (Options > Gameplay): jump to any story step, cheats, give items, spawn ships and objects.
+- **Controls and screens:** touch, tilt, keyboard and mouse, and controllers (shown with Xbox buttons), all rebindable.
+  Gyro steering with a DualSense, DualShock 4 or Switch Pro Controller on Windows. Landscape screens from 4:3 up to
+  32:9, phones included.
 
 ## Getting started
 
@@ -48,7 +53,8 @@ Editor holds the asset build tools. The generated assets are already in the repo
 Always **switch the active build profile** (File > Build Profiles > Switch Profile) before building another platform.
 URP chooses which shader variants to keep from the active platform. An Android build made while Windows was active
 renders black, so the editor script `BuildTargetGuard` refuses such builds. `BuildVersionStamp` gives every build its
-date and time as its version.
+date and time as its version; for a release, set the Editor process's `GOF2_BUILD_VERSION` environment variable so all
+platforms get the same one.
 
 ### Multiplayer
 
@@ -60,20 +66,27 @@ which is 7777 by default. The others join with the host's address, optionally wi
 | Key | Action |
 |---|---|
 | Arrow keys | Steer |
-| W / S | Boost / brake |
+| W | Boost |
+| S | Brake (the engines stop while held) |
 | `]` / `/` or the mouse wheel | Throttle |
 | Space / left mouse | Primary weapons |
 | R / right mouse | Secondary weapon |
-| A / D | Dodge left / right |
+| G | Switch secondary weapon |
+| A / D | Strafe left / right |
+| 1 / 3 | Roll left / right |
+| 2 | Level out |
 | F / Enter | Action (dock, autopilot, mine, jump) |
 | Q | Autopilot menu |
+| E | Actions menu (secondary weapons, wingmen, cloak, Khador Drive) |
 | Tab | Fast-forward |
 | T | Camera / turret view |
-| M | Toggle mouse steering |
+| V / K / C / X | Wingmen / Khador Drive / cloak / time extender |
+| M or middle mouse | Toggle mouse steering |
 | B | Chat (multiplayer) |
 | F12 | Screenshot |
 | Esc | Pause |
 
+Every flight control can be rebound in Options > Controls (two keyboard / mouse keys and a controller button each).
 Controllers and touch are fully supported. The in-game hints show the buttons for whichever input you last used.
 
 ## Project layout
@@ -100,4 +113,5 @@ The remake is built on the **FULL HD version and modifications made by KiritoJPK
 ABYSS® are registered trademarks of FISHLABS Entertainment GmbH. All rights reserved. This is an unofficial fan project,
 not affiliated with or endorsed by FISHLABS or Deep Silver.
 
-Fonts: Inter (SIL Open Font License). Built with Unity, the Universal Render Pipeline and Netcode for GameObjects.
+Fonts: Inter (SIL Open Font License). Controller gyro: [JoyShockLibrary](https://github.com/JibbSmart/JoyShockLibrary)
+by Julian Smart (MIT License). Built with Unity, the Universal Render Pipeline and Netcode for GameObjects.
