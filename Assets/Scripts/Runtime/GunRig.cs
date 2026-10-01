@@ -210,7 +210,10 @@ namespace GoF2Remake.Flight
             beamMs -= dtMs;
             var from = ship != null ? ship.TransformPoint(gun.mountLocal) : gun.bullets[0].position;
             var dir = gun.BeamDir.sqrMagnitude > 1e-9f ? gun.BeamDir : Vector3.forward;
-            t.SetPositionAndRotation(from, Quaternion.LookRotation(dir, ship != null ? ship.up : Vector3.up));
+            // BeamGun::update: setDirection(beamDir, up (0, 1, 0)), world up (the crossed planes don't roll with the ship);
+            // a beam fired straight up / down takes the ship's up instead.
+            var up = Mathf.Abs(Vector3.Dot(dir.normalized, Vector3.up)) > 0.999f && ship != null ? ship.up : Vector3.up;
+            t.SetPositionAndRotation(from, Quaternion.LookRotation(dir, up));
             t.localScale = new Vector3(1f, 1f, gun.BeamLengthUnits);
             if (beamMs <= 0f) t.gameObject.SetActive(false);
         }
