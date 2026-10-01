@@ -157,7 +157,11 @@
                                 </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:TextField name="mpSessionName" class="debug-filter mp-password" />
-                            <ui:TextField name="mpHostPassword" class="debug-filter mp-password" />
+                            <ui:VisualElement class="mp-host-row">
+                                <ui:TextField name="mpHostPassword" class="debug-filter mp-password mp-host-password" />
+                                <ui:Label name="mpMaxPlayersLabel" class="mp-label mp-max-label gof-semibold" />
+                                <ui:TextField name="mpMaxPlayers" class="debug-filter mp-max-players" />
+                            </ui:VisualElement>
                             <ui:Button name="mpHost" class="mp-action gof-semibold" />
                         </ui:VisualElement>
                     </ui:VisualElement>

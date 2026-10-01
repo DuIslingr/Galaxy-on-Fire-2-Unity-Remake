@@ -465,6 +465,30 @@
     color: var(--gof-amber);
 }
 
+/* the host card's password and the session size on one row */
+.mp-host-row {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 0 0 12px 0;
+}
+
+.mp-host-row .mp-host-password {
+    flex-grow: 1;
+    margin: 0 14px 0 0;
+}
+
+.mp-max-label {
+    flex-shrink: 0;
+    margin: 0 8px 0 0;
+    white-space: nowrap;
+}
+
+.mp-max-players {
+    width: 64px;
+    margin: 0;
+}
+
 /* the panel: a fixed height, the server browser takes what the rest leaves */
 .mp-panel {
     max-width: 1280px;

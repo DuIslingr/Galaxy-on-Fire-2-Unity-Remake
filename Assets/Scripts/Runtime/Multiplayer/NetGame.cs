@@ -164,8 +164,17 @@ namespace GoF2Remake.Multiplayer
 
         // ---- Unity Relay (online sessions) ------------------------------------------------------------------
 
-        /// <summary>The players an online host takes (Relay's connections, the host not counted).</summary>
-        public const int MaxOnlinePlayers = 16;
+        /// <summary>The default and the largest session (players, a host's own included; Relay takes at most 100).</summary>
+        public const int DefaultMaxPlayers = 16, MaxPlayersLimit = 100;
+
+        /// <summary>The session's size, a host's own player included (the Host card, -maxplayers): Relay's connections, the
+        /// server browser's "x / max", and the connection approval turns away a player past it (a local session too).</summary>
+        public static int MaxPlayers
+        {
+            get => maxPlayers;
+            set => maxPlayers = Mathf.Clamp(value, 2, MaxPlayersLimit);
+        }
+        static int maxPlayers = DefaultMaxPlayers;
 
         /// <summary>The game's version as the sessions compare it: only the exact same build plays together (the connection
         /// approval, the server browser's filter). "editor" in the Editor.</summary>
@@ -174,7 +183,6 @@ namespace GoF2Remake.Multiplayer
         // The listing PrepareOnlineHost asked for (StartHost / StartServer publish it once running).
         static bool listPending;
         static string listName;
-        static int listMax;
         const string RelayConnection = "dtls";   // encrypted UDP (WSS is only for web players)
 
         /// <summary>The online session's join code (the host's, and the code a client joined with), null = a local session.</summary>
@@ -215,19 +223,21 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>Before hosting online: signs in, reserves a Relay allocation and its join code (StartHost / StartServer
-        /// then use it); 'listName' non-null = listed in the server browser under that name. False = Status says why.</summary>
-        public static async Task<bool> PrepareOnlineHost(int maxPlayers = MaxOnlinePlayers, string listName = null)
+        /// then use it) for MaxPlayers; 'listName' non-null = listed in the server browser under that name. False = Status
+        /// says why.</summary>
+        public static async Task<bool> PrepareOnlineHost(string listName = null)
         {
             Status = "";
             hostAllocation = null;
             JoinCode = null;
             listPending = listName != null;
             NetGame.listName = listName;
-            listMax = maxPlayers;
             try
             {
                 await SignInForOnline();
-                var allocation = await RelayService.Instance.CreateAllocationAsync(Mathf.Clamp(maxPlayers, 1, 100));
+                // Relay's connections are the others: a player host is one of the session's players.
+                int connections = DedicatedServer.Enabled ? MaxPlayers : MaxPlayers - 1;
+                var allocation = await RelayService.Instance.CreateAllocationAsync(Mathf.Clamp(connections, 1, MaxPlayersLimit));
                 JoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
                 hostAllocation = allocation;
                 return true;
@@ -291,8 +301,8 @@ namespace GoF2Remake.Multiplayer
             listPending = false;
             if (!list) return;
             string host = dedicated ? Localization.Extra("mpDedicated", "Dedicated server") : (Clean(PlayerName).Length > 0 ? Clean(PlayerName) : "Player 1");
-            // The lobby's size counts every player, a host's own too.
-            NetLobby.Publish(listName ?? DefaultSessionName(), host, JoinCode, listMax + (dedicated ? 0 : 1), dedicated);
+            // The lobby's size counts every player, a host's own too (like the browser's player count).
+            NetLobby.Publish(listName ?? DefaultSessionName(), host, JoinCode, MaxPlayers, dedicated);
         }
 
         static string OnlineError(Exception e, string code)
@@ -747,6 +757,14 @@ namespace GoF2Remake.Multiplayer
                     ? Localization.Extra("mpNeedsPassword", "This game has a password: enter it under Join, then join again.")
                     : Localization.Extra("mpWrongPassword", "Wrong password.");
                 Debug.Log($"NetGame: turned away client {request.ClientNetworkId}: {(password.Length == 0 ? "no password" : "wrong password")}");
+                return;
+            }
+            // Full: the players in the session (a host's own included) at MaxPlayers.
+            if (manager != null && manager.ConnectedClientsIds.Count >= MaxPlayers)
+            {
+                response.Approved = false;
+                response.Reason = string.Format(Localization.Extra("mpServerFull", "The game is full ({0} players)."), MaxPlayers);
+                Debug.Log($"NetGame: turned away client {request.ClientNetworkId}: full ({MaxPlayers})");
             }
         }
 

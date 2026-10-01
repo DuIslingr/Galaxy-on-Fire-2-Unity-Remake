@@ -697,6 +697,22 @@ namespace GoF2Remake.UI
                     PlayerPrefs.SetString("mp_host_password", GoF2Remake.Multiplayer.NetGame.CleanPassword(e.newValue));
                 });
             }
+            var maxPlayers = root.Q<TextField>("mpMaxPlayers");
+            if (maxPlayers != null)
+            {
+                // The session's size, the host included (2..100, PlayerPrefs "mp_max_players"); shown clamped once left.
+                maxPlayers.maxLength = 3;
+                maxPlayers.keyboardType = TouchScreenKeyboardType.NumberPad;
+                GoF2Remake.Multiplayer.NetGame.MaxPlayers = PlayerPrefs.GetInt("mp_max_players", GoF2Remake.Multiplayer.NetGame.DefaultMaxPlayers);
+                maxPlayers.value = GoF2Remake.Multiplayer.NetGame.MaxPlayers.ToString();
+                maxPlayers.RegisterValueChangedCallback(e =>
+                {
+                    if (!int.TryParse(e.newValue, out int n)) return;
+                    GoF2Remake.Multiplayer.NetGame.MaxPlayers = n;
+                    PlayerPrefs.SetInt("mp_max_players", GoF2Remake.Multiplayer.NetGame.MaxPlayers);
+                });
+                maxPlayers.RegisterCallback<FocusOutEvent>(_ => maxPlayers.SetValueWithoutNotify(GoF2Remake.Multiplayer.NetGame.MaxPlayers.ToString()));
+            }
             mpJoinPassword = root.Q<TextField>("mpJoinPassword");
             if (mpJoinPassword != null)
             {
@@ -931,8 +947,7 @@ namespace GoF2Remake.UI
             {
                 // Online: the Relay session (and its listing) is reserved before the fade, so a failure shows here.
                 if (mpStatus != null) mpStatus.text = Localization.Extra("mpOnlineStarting", "Starting an online session...");
-                var prep = GoF2Remake.Multiplayer.NetGame.PrepareOnlineHost(GoF2Remake.Multiplayer.NetGame.MaxOnlinePlayers,
-                    Mode == HostMode.Public ? SessionName() : null);
+                var prep = GoF2Remake.Multiplayer.NetGame.PrepareOnlineHost(Mode == HostMode.Public ? SessionName() : null);
                 while (!prep.IsCompleted) yield return null;
                 if (prep.IsFaulted || !prep.Result)
                 {
@@ -1529,6 +1544,7 @@ namespace GoF2Remake.UI
             ApplyHostMode();
             var hostPw = root.Q<TextField>("mpHostPassword");
             if (hostPw != null) hostPw.textEdition.placeholder = Localization.Extra("mpHostPasswordHint", "Password (optional)");
+            Set("mpMaxPlayersLabel", Localization.Extra("mpMaxPlayers", "Max players").ToUpperInvariant());
             if (mpJoinPassword != null) mpJoinPassword.textEdition.placeholder = Localization.Extra("mpJoinPasswordHint", "Password");
             Set("mpPortLabel", Localization.Extra("mpPortLabel", "Port").ToUpperInvariant());
             Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());

@@ -71,7 +71,7 @@ To host, pick one of three modes:
 - **Invite only** (online, joined with the code)
 - **Local network** (others join with this device's address and port, 7777 by default)
 
-Any mode can have a password. Once you're in, the join code is on the clipboard and shown under the station's system information.
+Any mode can have a password and a player limit (Max players, 2 to 100, you included). Once you're in, the join code is on the clipboard and shown under the station's system information.
 Online play goes through Unity Relay, so no port forwarding is needed.
 
 **Dedicated server.** The Windows and Linux builds can run a session without anyone playing on that machine. Next to

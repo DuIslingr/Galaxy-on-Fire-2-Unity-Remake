@@ -6,7 +6,7 @@
 //                    on this machine's address); listed in the server browser (NetLobby) unless -unlisted
 //   -name "..."      the server browser's name for it
 //   -password X      players need it to join (NetGame's connection approval)
-//   -maxplayers N    Relay's player limit (default 16, at most 100)
+//   -maxplayers N    the player limit (default 16, 2..100: Relay's connections, the browser, the approval)
 //   -port N          the local port (default 7777); -fps N the server's frame rate (default 60)
 // Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
@@ -48,7 +48,6 @@ namespace GoF2Remake.Multiplayer
         static bool consoleLog;
         static DedicatedServer instance;
         static ushort port;
-        static int maxPlayers;
         static bool relay;
         static float startedAt;
 
@@ -75,7 +74,7 @@ namespace GoF2Remake.Multiplayer
             if (instance != null) return;
             int fps = int.TryParse(Value("-fps"), out int f) ? Mathf.Clamp(f, 10, 240) : 60;
             port = ushort.TryParse(Value("-port"), out ushort p) && p >= 1024 ? p : NetGame.DefaultPort;
-            maxPlayers = int.TryParse(Value("-maxplayers"), out int mp) ? Mathf.Clamp(mp, 1, 100) : NetGame.MaxOnlinePlayers;
+            NetGame.MaxPlayers = int.TryParse(Value("-maxplayers"), out int mp) ? mp : NetGame.DefaultMaxPlayers;   // 2..100
             NetGame.HostPassword = NetGame.CleanPassword(Value("-password"));
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
@@ -138,16 +137,17 @@ namespace GoF2Remake.Multiplayer
             {
                 Log("Reserving an online session (Unity Relay)...");
                 string listed = HasFlag("-unlisted") ? null : (Value("-name") ?? "Galaxy on Fire 2 server");
-                if (!await NetGame.PrepareOnlineHost(maxPlayers, listed)) { Fail(); return; }
+                if (!await NetGame.PrepareOnlineHost(listed)) { Fail(); return; }
             }
             if (!NetGame.StartServer(port)) { Fail(); return; }
             if (NetGame.JoinCode != null)
-                Log($"Online through Unity Relay, up to {maxPlayers} players. Join code: {NetGame.JoinCode}");
+                Log($"Online through Unity Relay. Join code: {NetGame.JoinCode}");
             else
             {
                 Log($"Listening on port {port} (UDP, every network adapter). Players join on this machine's address{(port != NetGame.DefaultPort ? ":" + port : "")}.");
                 foreach (var (name, address) in NetGame.LocalAddresses()) Log($"  {name}: {address}");
             }
+            Log($"Up to {NetGame.MaxPlayers} players (-maxplayers).");
             if (NetGame.HasPassword) Log("Players need the password (-password) to join.");
             Log("Type \"help\" for the commands.");
         }

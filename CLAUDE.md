@@ -604,7 +604,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   row: the code-or-address field (`mp_address`), the password field (this run only; `-mppassword` for testing), Join.
   **Host a game**: Public / Invite only / Local network (`mp_mode`); online = a Relay session (Public also listed under
   the Game name field, `mp_session_name`, default "<pilot>'s universe"); the password field (`mp_host_password`,
-  optional, every mode); Local network shows every address of this device others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
+  optional, every mode) and Max players beside it (`mp_max_players`, `NetGame.MaxPlayers`: 2..100, the host included,
+  default 16; Relay's connections are that minus a player host, the browser's limit is it, and the connection approval
+  turns away a player past it in every mode, "The game is full (N players)."); Local network shows every address of this device others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
   ZeroTier, Radmin, Tailscale; not down, loopback, link-local or virtual-machine adapters; Android's Linux names
   mapped: wlan = Wi-Fi, swlan / ap = Hotspot, rndis / usb = USB, tun = VPN, mobile data (rmnet, ccmni) left out; Windows'
   mobile hotspot = Hotspot; none = a "connect to Wi-Fi" line, never 127.0.0.1), a tap copies it (with
@@ -615,8 +617,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   session's end reason. Touch presses don't take the focus in the menu, except in a text field (the on-screen keyboard
   needs it).
 - **Online (Relay / Lobby)** (`NetGame.PrepareOnlineHost` / `StartClientOnline`, `NetLobby`): hosting online signs in
-  (anonymous; a profile per `-mpname`, so two games on one machine are two players), reserves a Relay allocation (16
-  players + the host; a dedicated server's `-maxplayers`, at most 100) and its join code before the fade, then StartHost
+  (anonymous; a profile per `-mpname`, so two games on one machine are two players), reserves a Relay allocation (`NetGame.MaxPlayers`
+  connections, one less for a player host; a dedicated server's `-maxplayers`) and its join code before the fade, then StartHost
   / StartServer connect through it (`RelayServerData`, "dtls"); the code goes to the clipboard and shows on its own plate
   under the station's system information (Copy; `SquadView`); a client joins the allocation by its code and connects. A listed game
   is a public lobby (`NetLobby.Publish`: name, host, players (N1), dedicated, password, version (S1), the join code;
@@ -822,7 +824,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   shared: the owned Kaamo Club's storage.
 - **Dedicated server** (`DedicatedServer`, `NetGame.StartServer`): the normal Windows / Linux player started with `-server`
   (with `-batchmode -nographics`; `-relay` online with a join code, listed as `-name "..."` unless `-unlisted`;
-  `-password`; `-maxplayers` (Relay, default 16); `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment
+  `-password`; `-maxplayers` (2..100, default 16); `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment
   variable does the same in the Editor's Play mode ("relay" = -relay), commands through `DedicatedServer.Run`). Every
   Windows / Linux build gets a launcher next to the game (`DedicatedServerLaunchers`: `Start Dedicated Server.bat` /
   `start-server.sh`, the name, password and player limit at the top, online and listed; `-password` only when one is
