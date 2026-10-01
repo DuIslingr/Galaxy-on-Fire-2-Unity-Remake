@@ -33,7 +33,8 @@ namespace GoF2Remake.UI
             public bool used;
         }
 
-        readonly VisualElement layer, lockRing, lockPlate, lockClass, statusPanel, shieldRow, shieldIcon, shieldFill, hullIcon, hullFill, armorFill;
+        readonly VisualElement layer, lockRing, lockPlate, lockClass, statusPanel, shieldRow, shieldIcon, shieldFill, hullIcon, hullFill, armorFill,
+                                      gammaRow, gammaFill, speedPanel;
         readonly Label lockOre;
         readonly VisualElement[] arcs = new VisualElement[4];
         readonly Texture2D[] lockFrames = new Texture2D[24];
@@ -62,6 +63,9 @@ namespace GoF2Remake.UI
             hullIcon = root.Q("hullIcon");
             hullFill = root.Q("hullFill");
             armorFill = root.Q("armorFill");
+            gammaRow = root.Q("gammaRow");
+            gammaFill = root.Q("gammaFill");
+            speedPanel = root.Q("speedPanel");
             arcs[0] = root.Q("arcLeft");
             arcs[1] = root.Q("arcRight");
             arcs[2] = root.Q("arcTop");
@@ -72,6 +76,9 @@ namespace GoF2Remake.UI
             shieldFill.style.backgroundImage = new StyleBackground(Tex("status_shield_fill"));
             hullFill.style.backgroundImage = new StyleBackground(Tex("status_hull_fill"));
             armorFill.style.backgroundImage = new StyleBackground(Tex("status_armor_fill"));
+            Image(root.Q("gammaIcon"), Tex("status_gamma"));
+            Image(root.Q("gammaFrame"), Tex("status_gamma_frame"), false);
+            gammaFill.style.backgroundImage = new StyleBackground(Tex("status_gamma_fill"));
         }
 
         static void Image(VisualElement e, Texture2D tex, bool size = true)
@@ -292,6 +299,12 @@ namespace GoF2Remake.UI
             hullFill.style.width = hp.HullFraction * 248f;
             armorFill.style.display = health.HasArmor ? DisplayStyle.Flex : DisplayStyle.None;
             armorFill.style.width = hp.ArmorFraction * 248f;
+            // Hud::draw: the third row (icon 0x1f59, frame 0x1f5a, fill 0x1f5b, gamma / 100 * 248) where gamma rays drain the pool.
+            bool gamma = health.Gamma >= 0f;
+            gammaRow.style.display = gamma ? DisplayStyle.Flex : DisplayStyle.None;
+            if (gamma) gammaFill.style.width = Mathf.Clamp01(health.Gamma / 100f) * 248f;
+            // The secondary weapon's plate moves below the third row.
+            speedPanel?.EnableInClassList("speed-panel--low", gamma && health.HasShield);
 
             // Hit arcs: blue with the shield up, red without; left mirrored, bottom flipped.
             bool blue = hp.shield > 0f;

@@ -357,6 +357,11 @@
     max-width: 320px;
 }
 
+/* Below the gamma row (supernova orbits: three status rows). */
+.speed-panel--low {
+    top: 160px;
+}
+
 /* Hud::updateSecondaryWeaponString: "<name> (<amount>)" of the selected secondary; tap to switch (touch). */
 .secondary-label {
     display: none;
