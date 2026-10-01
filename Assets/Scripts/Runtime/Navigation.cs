@@ -578,7 +578,7 @@ namespace GoF2Remake.Flight
         /// a menu, conversation or map is open (the world goes on there).</summary>
         public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active);
 
-        void OnDestroy() => halted = false;
+        void OnDestroy() { halted = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
 
         void ApplyTimeScale()
         {
@@ -586,6 +586,9 @@ namespace GoF2Remake.Flight
             float scale = MenuOpen || paused || pauseMenuOpen ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
             if (GoF2Remake.Multiplayer.NetGame.Active) scale = 1f;   // multiplayer: one player's pause doesn't stop the shared world
             if (Time.timeScale != scale) Time.timeScale = scale;
+            // A halted clock also halts the sound, as PauseMenu does: the engine loops, a boost fired just before and every
+            // other source played on through a conversation. The voice, UI and star-map sources ignore the listener pause.
+            if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = scale == 0f;
         }
 
         void Say(string text) => Message?.Invoke(text);
