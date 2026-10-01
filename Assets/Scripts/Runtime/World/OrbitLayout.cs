@@ -51,7 +51,8 @@ namespace GoF2Remake.World
         public Vector3 lightDirection;   // unit vector toward the sun (game space)
         public string sunTexture;
         public float sunScale = 0.2288818359375f;   // 15000 / 65536
-        /// <summary>Status::inSupernovaSystem (system 27): the sun's own sizes and the sn_sun_011 streak (StarSystem+0xc).</summary>
+        /// <summary>StarSystem+0xc = Status::inSupernovaSystem (system 27 before campaign 0x9e): the sun's own sizes, drawn
+        /// without roll or swelling, and the sn_sun_011 glow / streak (see Backdrop).</summary>
         public bool supernovaSun;
         public int flareColor;
         public readonly List<Planet> planets = new List<Planet>();
@@ -184,14 +185,18 @@ namespace GoF2Remake.World
         {
             sunTexture = SunTextures[Mathf.Clamp(systemTexture, 0, SunTextures.Length - 1)];
             flareColor = systemIndex >= 0 && systemIndex < FlareColors.Length ? FlareColors[systemIndex] : 3;
-            // StarSystem::StarSystem in the supernova system: the sun billboard at 0.99182 (1.37329 from campaign 0x6a), its
-            // streak layer (1.98364, 0.19836, 0.99182) drawn with sn_sun_011 (0x2dde); at 0x59 (before the explosion) and past
-            // 0x9d the sun itself is sn_sun_011 too, flare colour 3.
+            // StarSystem::StarSystem in the supernova system (Status::inSupernovaSystem: system 27 before 0x9e): the sun
+            // billboard at 0.99182 (1.37329 from campaign 0x6a), its streak layer drawn with sn_sun_011 (0x2dde). At 0x59
+            // (before the explosion) and past 0x9d the sun itself is sn_sun_011, flare colour 3; past 0x9d the system is no
+            // longer the supernova system, so the sun has the normal size and look.
             if (systemIndex == 27)
             {
                 int mission = Session.FreePlay ? 20 : Session.CampaignMission;
-                sunScale = mission < 0x6a ? 0.9918212890625f : 1.373291015625f;
-                supernovaSun = true;
+                if (mission < 0x9e)
+                {
+                    sunScale = mission < 0x6a ? 0.9918212890625f : 1.373291015625f;
+                    supernovaSun = true;
+                }
                 if (mission == 0x59 || mission > 0x9d) { sunTexture = "sn_sun_011"; flareColor = 3; }
             }
             var rnd = new JavaRandom(300L * stationIndex);

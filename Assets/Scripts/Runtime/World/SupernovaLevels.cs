@@ -1302,7 +1302,9 @@ namespace GoF2Remake.World
                     cam.SetTarget(Player);
                     Player.rotation = Quaternion.LookRotation(-Player.forward, Vector3.up);
                     if (bomb != null) { Object.Destroy(bomb); bomb = null; }
-                    level.Backdrop?.SwitchSun("sn_supernova");
+                    // StarSystem::switchSunForSupernovaExpansion: the sun back to a uniform 1.37329 (the size from 0x6a on),
+                    // same texture.
+                    if (level.Backdrop != null) level.Backdrop.sunScaleFactor = 1.373291015625f / level.Layout.sunScale;
                     playerSpeed = 12f;
                     Step = 13;
                     break;
