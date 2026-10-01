@@ -47,7 +47,7 @@ namespace GoF2Remake.Flight
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary }
 
         public class Target
         {
@@ -292,6 +292,8 @@ namespace GoF2Remake.Flight
             }
             // Level::getDockingTarget: every one with a name (PlayerFixedObject::getName), in the alien orbit too.
             foreach (var t in Targets) if (t.kind == Kind.DockingTarget && !t.hidden && !string.IsNullOrEmpty(t.name)) list.Add(t);
+            // Hud::initHudMenu(0): 266 "Secondary weapons" with any secondary mounted (its list is Hud::initHudMenu(1)).
+            if (weapons != null && weapons.SecondaryItems().Count > 0) list.Add(new Target { kind = Kind.Secondary, name = Localization.Get(266) });
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
             // Hud::initHudMenu(0) 0x18e734: the cloak entry (the item's name), unusable while cloaked / charging / recharging.

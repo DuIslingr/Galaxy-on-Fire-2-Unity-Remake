@@ -127,6 +127,27 @@ namespace GoF2Remake.Flight
             }
         }
         public string SecondaryName => SelectedSecondary >= 0 ? UI.ItemInfo.ItemName(SelectedSecondary) : "";
+        /// <summary>The mounted secondary items in mount order, each once (Hud::initHudMenu(1)'s list).</summary>
+        public List<int> SecondaryItems()
+        {
+            var items = new List<int>();
+            foreach (var r in rigs) if (r.gun.isSecondary && !items.Contains(r.gun.itemIndex)) items.Add(r.gun.itemIndex);
+            return items;
+        }
+        /// <summary>The remaining ammo of one mounted secondary item.</summary>
+        public int AmmoOf(int item)
+        {
+            int n = 0;
+            foreach (var r in rigs) if (r.gun.isSecondary && r.gun.itemIndex == item && r.stack != null) n += Mathf.Max(0, r.stack.amount);
+            return n;
+        }
+        /// <summary>The flight menu's pick (MGame::OnTouchEnd, keys 0x2000 / 0x4000 / 0x8000 / 0x10000).</summary>
+        public void SelectSecondary(int item)
+        {
+            if (!SecondaryItems().Contains(item)) return;
+            SelectedSecondary = item;
+            Session.SelectedSecondary = item;
+        }
         /// <summary>More than one secondary item is mounted (the HUD offers the switch).</summary>
         public bool CanCycleSecondary { get { int n = 0, last = -1; foreach (var r in rigs) if (r.gun.isSecondary && r.gun.itemIndex != last) { last = r.gun.itemIndex; n++; } return n > 1; } }
         /// <summary>No firing (the mining minigame blocks the guns, MGame::OnTouchBegin / OnTouchEnd).</summary>

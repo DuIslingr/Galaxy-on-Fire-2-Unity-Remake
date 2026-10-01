@@ -273,7 +273,7 @@ namespace GoF2Remake.UI
                 if (Time.unscaledTime >= quickMenuCheck && nav != null)
                 {
                     quickMenuCheck = Time.unscaledTime + 0.5f;
-                    quickMenuEntries = nav.MenuEntries().Exists(t => t.kind == Navigation.Kind.KhadorDrive || t.kind == Navigation.Kind.Wingmen || t.kind == Navigation.Kind.Cloak);
+                    quickMenuEntries = nav.MenuEntries().Exists(t => t.kind == Navigation.Kind.KhadorDrive || t.kind == Navigation.Kind.Wingmen || t.kind == Navigation.Kind.Cloak || t.kind == Navigation.Kind.Secondary);
                 }
                 f.menu = quickMenuEntries;
                 var fl = level.FreeLook;
@@ -921,6 +921,7 @@ namespace GoF2Remake.UI
         {
             if (target != null && target.disabled) return;   // TouchButton+0xa7: half-transparent, no taps
             if (target != null && target.kind == Navigation.Kind.Wingmen) { OpenWingmanMenu(); return; }
+            if (target != null && target.kind == Navigation.Kind.Secondary) { OpenSecondaryMenu(); return; }
             nav.ChooseMenuEntry(target);
             HideAutopilotMenu();
         }
@@ -954,6 +955,39 @@ namespace GoF2Remake.UI
                 menuActions.Add(act);
             }
             menuIndex = 0;
+            HighlightMenu();
+        }
+
+        /// <summary>Hud::initHudMenu(1): each mounted secondary as "<name> (<amount>)"; a pick selects it, closes the menu and
+        /// resumes the game.</summary>
+        void OpenSecondaryMenu()
+        {
+            if (weapons == null) return;
+            autopilotMenuItems.Clear();
+            menuButtons.Clear();
+            menuActions.Clear();
+            root.Q<Label>("autopilotMenuTitle").text = Localization.Get(266).ToUpperInvariant();
+            int selected = 0;
+            foreach (int item in weapons.SecondaryItems())
+            {
+                int it = item;
+                System.Action act = () =>
+                {
+                    weapons.SelectSecondary(it);
+                    CloseAutopilotMenu();
+                    root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();
+                };
+                if (it == weapons.SelectedSecondary) selected = menuButtons.Count;
+                var b = new Button { text = $"{ItemInfo.ItemName(it)} ({weapons.AmmoOf(it)})".ToUpperInvariant() };
+                b.AddToClassList("autopilot-menu-item");
+                b.AddToClassList("gof-semibold");
+                b.focusable = false;
+                b.clicked += act;
+                autopilotMenuItems.Add(b);
+                menuButtons.Add((b, null));
+                menuActions.Add(act);
+            }
+            menuIndex = selected;
             HighlightMenu();
         }
 
