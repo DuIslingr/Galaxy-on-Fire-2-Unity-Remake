@@ -1,5 +1,8 @@
 // NetGame.cs
-// Remake-only multiplayer (Netcode for GameObjects over Unity Transport, direct IP, port 7777): one shared game world.
+// Remake-only multiplayer (Netcode for GameObjects over Unity Transport): one shared game world. Online sessions go
+// through Unity Relay (Multiplayer Services: the host gets a join code, the others join with it, no address or port
+// forwarding; anonymous Unity Authentication), listed in the server browser unless the host keeps it to its code
+// (NetLobby, Unity Lobby); local ones by direct IP, port 7777.
 // The main menu's Multiplayer panel hosts or joins; every player starts a fresh free-play game docked at Var Hastra (78) and then
 // plays it like single player: their own scenes (Space for their orbit, Station for their hangar), economy, jumps and
 // docking. No scene synchronisation: the network objects live in DontDestroyOnLoad and each player shows only what is
@@ -23,9 +26,14 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using System.Threading.Tasks;
 using GoF2Remake.Data;
 using Unity.Netcode;
 using Unity.Netcode.Transports.UTP;
+using Unity.Services.Authentication;
+using Unity.Services.Core;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -75,6 +83,9 @@ namespace GoF2Remake.Multiplayer
             closing = quitAfter = worldEntered = transportConnected = sessionGame = lostHandled = false;
             Dedicated = false;
             hostEndReason = null;
+            JoinCode = null;
+            hostAllocation = null;
+            listPending = false;
             playersSpawned.Clear();
         }
         public static bool IsServer => Active && manager.IsServer;
@@ -144,15 +155,163 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Why the last session ended or failed ("" = none), shown by the menu.</summary>
         public static string Status { get; private set; } = "";
 
+        // ---- Unity Relay (online sessions) ------------------------------------------------------------------
+
+        /// <summary>The players an online host takes (Relay's connections, the host not counted).</summary>
+        public const int MaxOnlinePlayers = 16;
+
+        /// <summary>The game's version as the sessions compare it: only the exact same build plays together (the connection
+        /// approval, the server browser's filter). "editor" in the Editor.</summary>
+        public static string Version => Application.isEditor ? "editor" : Application.version;
+
+        // The listing PrepareOnlineHost asked for (StartHost / StartServer publish it once running).
+        static bool listPending;
+        static string listName;
+        static int listMax;
+        const string RelayConnection = "dtls";   // encrypted UDP (WSS is only for web players)
+
+        /// <summary>The online session's join code (the host's, and the code a client joined with), null = a local session.</summary>
+        public static string JoinCode { get; private set; }
+        static Allocation hostAllocation;
+
+        /// <summary>"ABC123": a Relay join code (6 letters / digits, no dots or colons), not an address.</summary>
+        public static bool IsJoinCode(string text)
+        {
+            text = (text ?? "").Trim();
+            if (text.Length != 6) return false;
+            foreach (char c in text) if (!char.IsLetterOrDigit(c) || c > 'z') return false;
+            return true;
+        }
+
+        /// <summary>Unity Services up and this player signed in anonymously (a profile per -mpname, so two games on one
+        /// machine are two players).</summary>
+        public static async Task SignInForOnline()
+        {
+            if (UnityServices.State == ServicesInitializationState.Uninitialized)
+            {
+                var options = new InitializationOptions();
+                string profile = Profile();
+                if (profile != null) options.SetProfile(profile);
+                await UnityServices.InitializeAsync(options);
+            }
+            while (UnityServices.State == ServicesInitializationState.Initializing) await Task.Yield();
+            if (!AuthenticationService.Instance.IsSignedIn) await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        }
+
+        static string Profile()
+        {
+            string name = DedicatedServer.Enabled ? "server" : NameOverride;
+            if (string.IsNullOrEmpty(name)) return null;
+            var sb = new System.Text.StringBuilder();
+            foreach (char c in name) if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_') sb.Append(c);
+            return sb.Length == 0 ? null : sb.ToString(0, Math.Min(sb.Length, 30));
+        }
+
+        /// <summary>Before hosting online: signs in, reserves a Relay allocation and its join code (StartHost / StartServer
+        /// then use it); 'listName' non-null = listed in the server browser under that name. False = Status says why.</summary>
+        public static async Task<bool> PrepareOnlineHost(int maxPlayers = MaxOnlinePlayers, string listName = null)
+        {
+            Status = "";
+            hostAllocation = null;
+            JoinCode = null;
+            listPending = listName != null;
+            NetGame.listName = listName;
+            listMax = maxPlayers;
+            try
+            {
+                await SignInForOnline();
+                var allocation = await RelayService.Instance.CreateAllocationAsync(Mathf.Clamp(maxPlayers, 1, 100));
+                JoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+                hostAllocation = allocation;
+                return true;
+            }
+            catch (Exception e)
+            {
+                Status = OnlineError(e, null);
+                Debug.LogWarning("NetGame: Relay allocation failed: " + e);
+                JoinCode = null;
+                return false;
+            }
+        }
+
+        /// <summary>Joins an online session by its join code: signs in, joins its Relay allocation, connects. False = Status
+        /// says why; true = connecting (as StartClient).</summary>
+        public static async Task<bool> StartClientOnline(string code)
+        {
+            code = (code ?? "").Trim().ToUpperInvariant();
+            PrepareSession();
+            hostEndReason = null;
+            JoinAllocation join;
+            try
+            {
+                await SignInForOnline();
+                join = await RelayService.Instance.JoinAllocationAsync(code);
+            }
+            catch (Exception e)
+            {
+                Status = OnlineError(e, code);
+                Debug.LogWarning("NetGame: Relay join failed: " + e);
+                sessionGame = false;   // no session started
+                return false;
+            }
+            var m = EnsureManager();
+            Transport.SetRelayServerData(join.ToRelayServerData(RelayConnection));
+            m.NetworkConfig.ConnectionData = Payload();
+            if (!m.StartClient())
+            {
+                Status = Localization.Extra("mpJoinFailed", "Could not connect.");
+                Shutdown();
+                return false;
+            }
+            JoinCode = code;
+            return true;
+        }
+
+        /// <summary>NetLobby: a failed request's reason for the menu.</summary>
+        internal static void SetOnlineError(Exception e) => Status = OnlineError(e, null);
+
+        /// <summary>The name an online host lists its session under: the pilot's.</summary>
+        public static string DefaultSessionName()
+        {
+            string n = Clean(PlayerName);
+            return string.Format(Localization.Extra("mpSessionName", "{0}'s universe"), n.Length > 0 ? n : Localization.Extra("mpAPilot", "A pilot"));
+        }
+
+        /// <summary>Running online and asked to be listed: into the server browser.</summary>
+        static void PublishIfListed(bool dedicated)
+        {
+            bool list = listPending && JoinCode != null;
+            listPending = false;
+            if (!list) return;
+            string host = dedicated ? Localization.Extra("mpDedicated", "Dedicated server") : (Clean(PlayerName).Length > 0 ? Clean(PlayerName) : "Player 1");
+            // The lobby's size counts every player, a host's own too.
+            NetLobby.Publish(listName ?? DefaultSessionName(), host, JoinCode, listMax + (dedicated ? 0 : 1), dedicated);
+        }
+
+        static string OnlineError(Exception e, string code)
+        {
+            if (e is RelayServiceException r && code != null
+                && (r.Reason == RelayExceptionReason.JoinCodeNotFound || r.Reason == RelayExceptionReason.EntityNotFound || r.Reason == RelayExceptionReason.AllocationNotFound))
+                return string.Format(Localization.Extra("mpNoCode", "No game found with join code {0}."), code);
+            if (e is RequestFailedException f && (f.ErrorCode == CommonErrorCodes.TransportError || f.ErrorCode == CommonErrorCodes.Timeout || f.ErrorCode == CommonErrorCodes.ServiceUnavailable))
+                return Localization.Extra("mpOffline", "Can't reach Unity's servers: online play needs an internet connection.");
+            return string.Format(Localization.Extra("mpOnlineFailed", "Online play failed: {0}"), e.Message);
+        }
+
+        /// <summary>Hosts: online when PrepareOnlineHost reserved an allocation just before, else on this device's port.</summary>
         public static bool StartHost()
         {
+            var relay = hostAllocation;
+            hostAllocation = null;
             PrepareSession();
             Seed = Environment.TickCount & 0x7fffffff;
             ushort port = HostPort;
-            // Listening on every adapter (LAN, Wi-Fi, a VPN like Hamachi): any address of this device reaches it.
             var m = EnsureManager();
-            Transport.SetConnectionData("127.0.0.1", port, "0.0.0.0");
-            if (!CanHost() || !m.StartHost())
+            // Online through the Relay allocation; locally listening on every adapter (LAN, Wi-Fi, a VPN like Hamachi): any
+            // address of this device reaches it.
+            if (relay != null) Transport.SetRelayServerData(relay.ToRelayServerData(RelayConnection));
+            else { JoinCode = null; Transport.SetConnectionData("127.0.0.1", port, "0.0.0.0"); }
+            if ((relay == null && !CanHost()) || !m.StartHost())
             {
                 if (Status.Length == 0) Status = string.Format(Localization.Extra("mpHostFailed", "Could not start hosting on port {0}."), port);
                 Shutdown();
@@ -162,6 +321,8 @@ namespace GoF2Remake.Multiplayer
             state.GetComponent<NetState>().SetSeed(Seed);
             state.GetComponent<NetworkObject>().Spawn(false);
             SpawnPlayer(NetworkManager.ServerClientId);
+            if (JoinCode != null) GUIUtility.systemCopyBuffer = JoinCode;   // ready to paste to friends
+            PublishIfListed(false);
             EnterWorld();
             return true;
         }
@@ -171,12 +332,15 @@ namespace GoF2Remake.Multiplayer
         /// squads, missions, crate claims, the chat relay) runs as with a host; the orbits are run by the players in them.</summary>
         public static bool StartServer(ushort port)
         {
+            var relay = hostAllocation;
+            hostAllocation = null;
             PrepareSession();
             Dedicated = true;
             Seed = Environment.TickCount & 0x7fffffff;
             var m = EnsureManager();
-            Transport.SetConnectionData("0.0.0.0", port, "0.0.0.0");
-            if (!CanHost(port) || !m.StartServer())
+            if (relay != null) Transport.SetRelayServerData(relay.ToRelayServerData(RelayConnection));
+            else { JoinCode = null; Transport.SetConnectionData("0.0.0.0", port, "0.0.0.0"); }
+            if ((relay == null && !CanHost(port)) || !m.StartServer())
             {
                 if (Status.Length == 0) Status = string.Format(Localization.Extra("mpHostFailed", "Could not start hosting on port {0}."), port);
                 Shutdown();
@@ -185,6 +349,7 @@ namespace GoF2Remake.Multiplayer
             var state = UnityEngine.Object.Instantiate(Resources.Load<GameObject>($"{PrefabFolder}/NetState"));
             state.GetComponent<NetState>().SetSeed(Seed, true);
             state.GetComponent<NetworkObject>().Spawn(false);
+            PublishIfListed(true);
             return true;
         }
 
@@ -225,6 +390,7 @@ namespace GoF2Remake.Multiplayer
             }
             var m = EnsureManager();
             Transport.SetConnectionData(ip, port);
+            m.NetworkConfig.ConnectionData = Payload();
             if (!m.StartClient())
             {
                 Status = Localization.Extra("mpJoinFailed", "Could not connect.");
@@ -294,6 +460,9 @@ namespace GoF2Remake.Multiplayer
             // transport down a second time: "DisconnectRemoteClient should only be called on a listening server!").
             UnityEngine.Object.Destroy(manager.gameObject, 0.25f);
             manager = null;
+            JoinCode = null;   // the Relay allocation goes with the host's connection
+            listPending = false;
+            NetLobby.Unpublish();
             if (SceneManager.GetActiveScene().name == MenuScene) sessionGame = false;   // already back in the menu
             // The session's objects live in DontDestroyOnLoad: gone with it (after Netcode's own shutdown, like the manager).
             foreach (var n in UnityEngine.Object.FindObjectsByType<NetworkObject>(FindObjectsInactive.Include))
@@ -489,7 +658,15 @@ namespace GoF2Remake.Multiplayer
             transport.DisconnectTimeoutMS = 5000;   // a player whose game closed without leaving is gone after 5 s (default 30)
             manager = go.AddComponent<NetworkManager>();
             // No scene management: every player loads their own scenes (the shared world, see the header).
-            manager.NetworkConfig = new NetworkConfig { NetworkTransport = transport, EnableSceneManagement = false, ConnectionApproval = false };
+            // Connection approval: every connecting game sends its version (ConnectionData) and only the exact same one gets
+            // in (Approve). Builds from before the check don't use approval, which is part of Netcode's config hash: they
+            // fail its handshake ("NetworkConfig mismatch") before anything else.
+            manager.NetworkConfig = new NetworkConfig
+            {
+                NetworkTransport = transport, EnableSceneManagement = false, ConnectionApproval = true,
+                ConnectionData = Payload(),
+            };
+            manager.ConnectionApprovalCallback = Approve;
             foreach (var name in PrefabNames)
             {
                 var prefab = Resources.Load<GameObject>($"{PrefabFolder}/{name}");
@@ -506,6 +683,68 @@ namespace GoF2Remake.Multiplayer
             Application.wantsToQuit += WantsToQuit;   // hosting: the others hear why first
             return manager;
         }
+
+        public const int MaxPasswordLength = 32;
+
+        /// <summary>The session's password, empty = none: set before hosting (the Host card, -password); the connection
+        /// approval checks every joining game against it (the server's own check: the lobby's join code is public).</summary>
+        public static string HostPassword { get; set; } = "";
+
+        /// <summary>The password this game joins with (the Join card), empty = none.</summary>
+        public static string JoinPassword { get; set; } = CommandLineValue("-mppassword") ?? "";   // -mppassword: testing with -mpjoin
+
+        /// <summary>What a connecting game sends: its version, a line break, the password it joins with.</summary>
+        static byte[] Payload() => System.Text.Encoding.UTF8.GetBytes(Version + "\n" + CleanPassword(JoinPassword));
+
+        public static string CleanPassword(string text)
+        {
+            text = (text ?? "").Trim();
+            return text.Length > MaxPasswordLength ? text.Substring(0, MaxPasswordLength) : text;
+        }
+
+        /// <summary>Server: a game connecting gets in only with this game's exact version (the Editor, for testing, takes any;
+        /// a development build also takes the Editor) and the session's password, if it has one. Turned away = the reason is
+        /// their popup. The host's own client always gets in.</summary>
+        static void Approve(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
+        {
+            string payload = request.Payload != null && request.Payload.Length > 0 && request.Payload.Length <= 256
+                ? System.Text.Encoding.UTF8.GetString(request.Payload) : "";
+            int nl = payload.IndexOf('\n');
+            string theirs = nl < 0 ? payload : payload.Substring(0, nl);
+            string password = nl < 0 ? "" : payload.Substring(nl + 1);
+            response.CreatePlayerObject = false;   // NetGame spawns the NetPlayer itself
+            response.Pending = false;
+            response.Approved = true;
+            if (request.ClientNetworkId == NetworkManager.ServerClientId) return;   // a host's own client
+            if (closing)
+            {
+                response.Approved = false;
+                response.Reason = Localization.Extra("mpHostLeft", "The host ended the session.");
+                return;
+            }
+            bool same = theirs == Version || Application.isEditor || (Debug.isDebugBuild && theirs == "editor");
+            if (!same)
+            {
+                response.Approved = false;
+                response.Reason = string.Format(Localization.Extra("mpWrongVersion",
+                    "This game runs version {0}, yours is {1}. Both need the same version to play together."),
+                    Version, theirs.Length > 0 ? theirs : Localization.Extra("mpOlderVersion", "an older one"));
+                Debug.Log($"NetGame: turned away client {request.ClientNetworkId}, version '{theirs}' (this one {Version})");
+                return;
+            }
+            string expected = CleanPassword(HostPassword);
+            if (expected.Length > 0 && password != expected)
+            {
+                response.Approved = false;
+                response.Reason = password.Length == 0
+                    ? Localization.Extra("mpNeedsPassword", "This game has a password: enter it under Join, then join again.")
+                    : Localization.Extra("mpWrongPassword", "Wrong password.");
+                Debug.Log($"NetGame: turned away client {request.ClientNetworkId}: {(password.Length == 0 ? "no password" : "wrong password")}");
+            }
+        }
+
+        /// <summary>The session has a password (the server browser's tag).</summary>
+        internal static bool HasPassword => CleanPassword(HostPassword).Length > 0;
 
         static void OnClientConnected(ulong clientId)
         {

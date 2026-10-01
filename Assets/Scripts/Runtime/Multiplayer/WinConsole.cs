@@ -16,21 +16,27 @@ namespace GoF2Remake.Multiplayer
     static class WinConsole
     {
         const int StdInput = -10, StdOutput = -11;
-        const uint Utf8 = 65001, FileTypeUnknown = 0;
+        const uint Utf8 = 65001, FileTypeDisk = 1, FileTypePipe = 3;
 
         delegate bool CtrlHandler(uint ctrlType);
         static CtrlHandler handler;   // kept alive: the native side holds only a pointer
 
-        /// <summary>The standard output goes somewhere (redirected to a file or pipe, or a console already there).</summary>
+        /// <summary>The standard output is redirected to a file or a pipe. A console handle inherited from the terminal that
+        /// started this GUI program doesn't count: it isn't attached to that console, so nothing written there shows.</summary>
         public static bool HasOutput()
         {
             IntPtr h = GetStdHandle(StdOutput);
-            return h != IntPtr.Zero && h != new IntPtr(-1) && GetFileType(h) != FileTypeUnknown;
+            if (h == IntPtr.Zero || h == new IntPtr(-1)) return false;
+            uint type = GetFileType(h);
+            return type == FileTypeDisk || type == FileTypePipe;
         }
 
         public static void Open(string title)
         {
             if (GetConsoleWindow() == IntPtr.Zero && !AllocConsole()) throw new IOException("AllocConsole failed");
+            // The new console's own handles (an inherited terminal handle would still be in the slots).
+            SetStdHandle(StdInput, CreateFile("CONIN$", GenericRead | GenericWrite, FileShareRead | FileShareWrite, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero));
+            SetStdHandle(StdOutput, CreateFile("CONOUT$", GenericRead | GenericWrite, FileShareRead | FileShareWrite, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero));
             SetConsoleOutputCP(Utf8);
             SetConsoleCP(Utf8);
             SetConsoleTitle(title);
@@ -52,7 +58,11 @@ namespace GoF2Remake.Multiplayer
             SetConsoleCtrlHandler(handler, true);
         }
 
+        const uint GenericRead = 0x80000000, GenericWrite = 0x40000000, FileShareRead = 1, FileShareWrite = 2, OpenExisting = 3;
         [DllImport("kernel32.dll", SetLastError = true)] static extern bool AllocConsole();
+        [DllImport("kernel32.dll", SetLastError = true)] static extern bool SetStdHandle(int std, IntPtr handle);
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        static extern IntPtr CreateFile(string name, uint access, uint share, IntPtr security, uint creation, uint flags, IntPtr template);
         [DllImport("kernel32.dll")] static extern IntPtr GetConsoleWindow();
         [DllImport("kernel32.dll", SetLastError = true)] static extern IntPtr GetStdHandle(int std);
         [DllImport("kernel32.dll")] static extern uint GetFileType(IntPtr handle);

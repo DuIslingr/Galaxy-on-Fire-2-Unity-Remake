@@ -418,6 +418,11 @@
     margin-bottom: 10px;
 }
 
+.mp-card-fill--empty {
+    min-height: 0;
+    margin-bottom: 0;
+}
+
 /* one address: the adapter's name, the address, "copied" after a tap */
 .mp-address-row {
     flex-direction: row;
@@ -458,6 +463,224 @@
 
 .mp-address-row--copied .mp-address-copy {
     color: var(--gof-amber);
+}
+
+/* the panel: a fixed height, the server browser takes what the rest leaves */
+.mp-panel {
+    max-width: 1280px;
+    height: 84%;
+    max-height: 84%;
+}
+
+.mp-title-spacer {
+    flex-grow: 1;
+}
+
+.mp-name-label {
+    margin: 0 12px 0 0;
+}
+
+.mp-panel .mp-name {
+    width: 300px;
+    margin: 0;
+}
+
+.mp-panel .mp-intro {
+    flex-shrink: 0;
+    margin-bottom: 16px;
+    font-size: 16px;
+    color: var(--gof-text-dim);
+}
+
+.mp-body {
+    flex-direction: row;
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.mp-browser {
+    flex-grow: 1.7;
+}
+
+.mp-host {
+    flex-grow: 1;
+}
+
+.mp-card-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.mp-server-count {
+    font-size: 13px;
+    color: var(--gof-text-dim);
+}
+
+.mp-browser .mp-server-list {
+    flex-grow: 1;
+    min-height: 100px;
+    max-height: none;
+}
+
+.mp-join-label {
+    flex-shrink: 0;
+    margin: 14px 0 6px 0;
+}
+
+.mp-join-row {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.mp-join-row .mp-address {
+    flex-grow: 1.3;
+    flex-basis: 0;
+    margin: 0 8px 0 0;
+}
+
+.mp-join-row .mp-join-password {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 8px 0 0;
+}
+
+.mp-join-row .mp-join-button {
+    padding: 8px 26px;
+    font-size: 18px;
+}
+
+/* the host card's choice: Public / Invite only / Local network */
+.mp-mode-row {
+    flex-grow: 0;
+    margin: 12px 0 0 0;
+}
+
+/* the join card: the server browser. Only the list gives way when the panel is short (everything else keeps its
+   height, so nothing slides under the title). */
+.mp-card-title,
+.mp-card-text,
+.mp-mode-row,
+.mp-card .debug-filter,
+.mp-action {
+    flex-shrink: 0;
+}
+
+.mp-server-list {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 62px;
+    max-height: 200px;
+    margin: 10px 0 0 0;
+    background-color: rgba(0, 0, 0, 0.18);
+}
+
+.mp-server-row {
+    flex-direction: column;
+    align-items: stretch;
+    margin-bottom: 3px;
+    padding: 6px 10px;
+}
+
+.mp-server-line {
+    flex-direction: row;
+    align-items: center;
+}
+
+.mp-server-name {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    font-size: 17px;
+    color: var(--gof-text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mp-server-info {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+    margin-top: 2px;
+    font-size: 13px;
+    color: var(--gof-text-dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mp-server-tag {
+    flex-shrink: 0;
+    margin-left: 8px;
+    padding: 1px 6px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    white-space: nowrap;
+    color: var(--gof-cyan);
+    border-width: 1px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 2px;
+}
+
+.mp-server-tag--password {
+    color: var(--gof-amber);
+    border-color: var(--gof-amber-soft);
+}
+
+.mp-password {
+    margin: 0 0 12px 0;
+}
+
+.mp-join-fill .mp-password {
+    margin: 10px 0 0 0;
+}
+
+.mp-join-fill {
+    flex-shrink: 0;
+}
+
+.mp-server-version {
+    flex-shrink: 0;
+    margin: 2px 0 0 12px;
+    font-size: 13px;
+    -unity-text-align: middle-right;
+    color: var(--gof-text-dim);
+    white-space: nowrap;
+}
+
+.mp-server-version--other {
+    color: var(--gof-amber);
+}
+
+.mp-server-row--full .mp-server-name,
+.mp-server-row--full .mp-server-info {
+    color: var(--gof-text-dim);
+}
+
+.mp-server-row--full {
+    opacity: 0.6;
+}
+
+.mp-server-empty {
+    margin: 12px;
+    font-size: 15px;
+    color: var(--gof-text-dim);
+    white-space: normal;
+}
+
+.mp-join-text {
+    flex-shrink: 0;
+    margin: 8px 0 6px 0;
+}
+
+.mp-join-fill {
+    flex-grow: 0;
+    min-height: 0;
+    margin-bottom: 12px;
 }
 
 .mp-port-row {
@@ -893,6 +1116,14 @@
 
 .layout-phone .mp-card {
     padding: 14px 16px;
+}
+
+.layout-phone .mp-panel .mp-intro {
+    display: none;
+}
+
+.layout-phone .mp-panel .mp-name {
+    width: 220px;
 }
 
 .layout-phone .campaign-card {

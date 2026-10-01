@@ -25,6 +25,7 @@ namespace GoF2Remake.UI
         const float RefreshSeconds = 0.25f;
 
         static bool squadCollapsed, pilotsCollapsed;
+        bool codeCopied;
 
         VisualElement box, squadPanel, squadBody, pilotsPanel, pilotsBody, invitePopup;
         Button squadHeader, pilotsHeader;
@@ -206,7 +207,7 @@ namespace GoF2Remake.UI
             }
             pilotsPanel.style.display = pilots.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             if (pilots.Count == 0) { pilotsKey = ""; return; }
-            var sb = new StringBuilder(pilotsCollapsed ? "c" : "o");
+            var sb = new StringBuilder(pilotsCollapsed ? "c" : "o").Append(NetGame.JoinCode).Append(codeCopied);
             foreach (var p in pilots) sb.Append('|').Append(p.OwnerClientId).Append(p.DisplayName).Append(NetSquad.Same(p, me)).Append(NetSquad.WasInvited(p));
             string key = sb.ToString();
             if (key == pilotsKey) return;
@@ -214,6 +215,19 @@ namespace GoF2Remake.UI
             pilotsHeader.text = $"{Localization.Extra("mpPilotsHere", "Pilots in this hangar").ToUpperInvariant()} ({pilots.Count})  {(pilotsCollapsed ? "+" : "-")}";
             pilotsBody.Clear();
             pilotsBody.style.display = pilotsCollapsed ? DisplayStyle.None : DisplayStyle.Flex;
+            if (NetGame.JoinCode != null)
+            {
+                // An online session: its join code, for asking friends in (a tap copies it).
+                var row = new VisualElement();
+                row.AddToClassList("squad-pilot");
+                var label = new Label($"{Localization.Extra("mpJoinCode", "Join code")}  {NetGame.JoinCode}");
+                label.AddToClassList("squad-name");
+                row.Add(label);
+                string code = NetGame.JoinCode;
+                row.Add(MakeButton(codeCopied ? Localization.Extra("mpCopied", "copied") : Localization.Extra("mpCopy", "copy"),
+                    () => { GUIUtility.systemCopyBuffer = code; codeCopied = true; pilotsKey = ""; }, null));
+                pilotsBody.Add(row);
+            }
             foreach (var p in pilots)
             {
                 var row = new VisualElement();

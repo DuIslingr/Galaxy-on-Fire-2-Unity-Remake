@@ -61,20 +61,41 @@ platforms get the same one.
 
 ### Multiplayer
 
-In the main menu, open **Multiplayer**. One player hosts a game: the panel lists this device's addresses and the port,
-which is 7777 by default. The others join with the host's address, optionally with `address:port`.
+In the main menu, open **Multiplayer**. The **server browser** lists the public games. Click one to join; games
+marked PASSWORD need the password typed in first. You can also join with a **join code** or, on a local network, an
+address. Only the exact same game version can join, and the browser shows each game's version.
 
-**Dedicated server.** The Windows and Linux builds can run a session without anyone playing on that machine:
+To host, pick one of three modes:
+
+- **Public** (online, listed in the browser, with a name)
+- **Invite only** (online, joined with the code)
+- **Local network** (others join with this device's address and port, 7777 by default)
+
+Any mode can have a password. Once you're in, the join code is in the station's pilot list and on the clipboard.
+Online play goes through Unity Relay, so no port forwarding is needed.
+
+**Dedicated server.** The Windows and Linux builds can run a session without anyone playing on that machine. Next to
+the game are two launchers: **Start Dedicated Server.bat** (Windows) and **start-server.sh** (Linux, `sh start-server.sh`).
+They start it online and listed in the server browser. Edit the name, password and player limit at the top of the file.
+By hand:
 
 ```
-GoF2Remake.exe -batchmode -nographics -server -port 7777
-./GoF2Remake.x86_64 -batchmode -nographics -server -port 7777 -logFile -
+GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -password secret
+./GoF2Remake.x86_64 -batchmode -nographics -server -relay -name "My universe" -logFile -
 ```
 
-`-batchmode -nographics` gives no window and no rendering. `-port` defaults to 7777, and `-fps` sets the server's frame
-rate (default 60). Players join with the server machine's address. On Windows the server opens its own console window.
-On Linux it uses the terminal, where `-logFile -` prints the log. The console shows joins, leaves, where each player is,
-and the chat. It takes these commands:
+The options:
+
+- `-batchmode -nographics`: no window, no rendering, no sound.
+- `-relay`: hosts online with a join code shown in the console. It is listed in the browser unless you add `-unlisted`.
+  Without `-relay`, players join with the server machine's address.
+- `-password`: players need it to join.
+- `-maxplayers`: the player limit, default 16, at most 100.
+- `-port`: the local network port, default 7777.
+- `-fps`: the server's frame rate, default 60.
+
+On Windows the server opens its own console window. On Linux it uses the terminal. The console shows joins, leaves,
+where each player is, and the chat. It takes these commands:
 
 - `help`
 - `status`

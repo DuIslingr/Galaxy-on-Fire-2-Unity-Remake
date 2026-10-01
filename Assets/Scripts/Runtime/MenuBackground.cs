@@ -51,6 +51,7 @@ namespace GoF2Remake.Visuals
 
         void Awake()
         {
+            if (Multiplayer.DedicatedServer.ShutOff(gameObject.scene)) return;   // a dedicated server has no backdrop
             var db = Database.Load();
             bool ending = Session.EndingPending;
             if (!ending) Session.ResetNewGame();   // Status::resetGame

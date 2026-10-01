@@ -115,35 +115,50 @@
                     </ui:ScrollView>
                     <ui:Button name="aboutBack" class="menu-button back-button gof-semibold" />
                 </ui:VisualElement>
-                <ui:VisualElement name="multiplayerPanel" class="panel panel--wide">
+                <ui:VisualElement name="multiplayerPanel" class="panel panel--wide mp-panel">
                     <ui:VisualElement class="mp-title-row">
                         <ui:Label name="multiplayerTitle" class="panel-title gof-semibold" />
                         <ui:Label name="mpBadge" class="mp-badge gof-semibold" />
+                        <ui:VisualElement class="mp-title-spacer" />
+                        <ui:Label name="mpNameLabel" class="mp-label mp-name-label gof-semibold" />
+                        <ui:TextField name="mpName" class="debug-filter mp-name" />
                     </ui:VisualElement>
                     <ui:VisualElement class="panel-accent" />
                     <ui:Label name="mpIntro" class="mp-intro" />
-                    <ui:Label name="mpNameLabel" class="mp-label gof-semibold" />
-                    <ui:TextField name="mpName" class="debug-filter mp-name" />
-                    <ui:VisualElement class="mp-cards">
-                        <ui:VisualElement class="mp-card">
+                    <ui:VisualElement class="mp-body">
+                        <ui:VisualElement class="mp-card mp-browser">
+                            <ui:VisualElement class="mp-card-head">
+                                <ui:Label name="mpJoinTitle" class="mp-card-title gof-semibold" />
+                                <ui:Label name="mpServerCount" class="mp-server-count" />
+                            </ui:VisualElement>
+                            <ui:ScrollView name="mpServerList" class="mp-server-list" />
+                            <ui:Label name="mpJoinText" class="mp-label mp-join-label gof-semibold" />
+                            <ui:VisualElement class="mp-join-row">
+                                <ui:TextField name="mpAddress" class="debug-filter mp-address" />
+                                <ui:TextField name="mpJoinPassword" class="debug-filter mp-join-password" />
+                                <ui:Button name="mpJoin" class="mp-action mp-join-button gof-semibold" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="mp-card mp-card--last mp-host">
                             <ui:Label name="mpHostTitle" class="mp-card-title gof-semibold" />
+                            <ui:VisualElement name="mpModeRow" class="choice-segments mp-mode-row">
+                                <ui:Button name="mpModePublic" class="choice-segment gof-semibold" />
+                                <ui:Button name="mpModePrivate" class="choice-segment gof-semibold" />
+                                <ui:Button name="mpModeLocal" class="choice-segment gof-semibold" />
+                            </ui:VisualElement>
                             <ui:Label name="mpHostText" class="mp-card-text" />
-                            <ui:VisualElement class="mp-card-fill">
-                                <ui:VisualElement name="mpAddressList" class="mp-address-list" />
-                                <ui:VisualElement class="mp-port-row">
-                                    <ui:Label name="mpPortLabel" class="mp-label mp-port-label gof-semibold" />
-                                    <ui:TextField name="mpPort" class="debug-filter mp-port" />
+                            <ui:VisualElement name="mpHostFill" class="mp-card-fill">
+                                <ui:VisualElement name="mpLocalBox">
+                                    <ui:VisualElement name="mpAddressList" class="mp-address-list" />
+                                    <ui:VisualElement class="mp-port-row">
+                                        <ui:Label name="mpPortLabel" class="mp-label mp-port-label gof-semibold" />
+                                        <ui:TextField name="mpPort" class="debug-filter mp-port" />
+                                    </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
+                            <ui:TextField name="mpSessionName" class="debug-filter mp-password" />
+                            <ui:TextField name="mpHostPassword" class="debug-filter mp-password" />
                             <ui:Button name="mpHost" class="mp-action gof-semibold" />
-                        </ui:VisualElement>
-                        <ui:VisualElement class="mp-card mp-card--last">
-                            <ui:Label name="mpJoinTitle" class="mp-card-title gof-semibold" />
-                            <ui:Label name="mpJoinText" class="mp-card-text" />
-                            <ui:VisualElement class="mp-card-fill">
-                                <ui:TextField name="mpAddress" class="debug-filter mp-address" />
-                            </ui:VisualElement>
-                            <ui:Button name="mpJoin" class="mp-action gof-semibold" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Label name="mpStatus" class="mp-status" />

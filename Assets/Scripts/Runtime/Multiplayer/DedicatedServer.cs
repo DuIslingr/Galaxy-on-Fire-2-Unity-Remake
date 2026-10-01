@@ -2,16 +2,24 @@
 // Remake-only: the normal Windows / Linux player as a dedicated multiplayer server, so a session runs without anyone
 // playing on the hosting machine. Started with -server on the command line (Unity's -batchmode -nographics recommended:
 // no window, no rendering), or the GOF2_SERVER environment variable (the Editor's Play mode, for testing). Options:
-// -port N (default 7777), -fps N (the server's frame rate, default 60).
-// Bootstrap calls Boot before the first scene wakes: the main menu scene's objects are switched off before their Awake (no
-// menu, music or live orbit backdrop) and replaced by an empty scene; then NetGame.StartServer runs the session's world
-// (NetState: the seed, the shared stock, squads, missions, crate claims, the chat relay) without a player of its own. Every
-// player's game is a client and runs its orbits as with a host (the first player in an orbit runs its NPCs).
+//   -relay           online through Unity Relay: the console shows the join code, no port forwarding (else players join
+//                    on this machine's address); listed in the server browser (NetLobby) unless -unlisted
+//   -name "..."      the server browser's name for it
+//   -password X      players need it to join (NetGame's connection approval)
+//   -maxplayers N    Relay's player limit (default 16, at most 100)
+//   -port N          the local port (default 7777); -fps N the server's frame rate (default 60)
+// Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
+// Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
+// MainMenu / MenuBackground call ShutOff as they wake (the scene's objects off before the rest wake: no menu, music or
+// live orbit backdrop), and the scene is unloaded once loaded. The process is muted (AudioListener volume 0, paused).
+// Then NetGame.StartServer runs the session's world (NetState: the seed, the shared stock, squads, missions, crate
+// claims, the chat relay) without a player of its own; every player's game runs its orbits as with a host (the first
+// player in an orbit runs its NPCs).
 // The console: the log (joins and leaves with the client ids, where each player is, chat, errors) and commands (help,
-// status, list, say, kick, stop). Windows players are GUI programs: the server opens its own console window unless its
-// output is redirected, -logFile is given or -noconsole; Linux uses the terminal's stdin / stdout (-logFile - prints the
-// log there). Unity prints its log to a standard output it starts with, so only that window gets the log mirrored. Ctrl+C or closing the window stops the server like "stop": the
-// players hear why first (NetGame.StopServer).
+// status, list, say, kick, stop). Windows players are GUI programs: the server opens its own console window (WinConsole)
+// unless its output is redirected to a file or pipe (or -noconsole); the log is mirrored into that window (Unity prints
+// its log only to a standard output it starts with). Linux uses the terminal's stdin / stdout (-logFile - prints the log
+// there). Ctrl+C or closing the window stops the server like "stop": the players hear why first (NetGame.StopServer).
 
 using System;
 using System.Collections.Concurrent;
@@ -40,6 +48,8 @@ namespace GoF2Remake.Multiplayer
         static bool consoleLog;
         static DedicatedServer instance;
         static ushort port;
+        static int maxPlayers;
+        static bool relay;
         static float startedAt;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -71,6 +81,9 @@ namespace GoF2Remake.Multiplayer
             if (instance != null) return;
             int fps = int.TryParse(Value("-fps"), out int f) ? Mathf.Clamp(f, 10, 240) : 60;
             port = ushort.TryParse(Value("-port"), out ushort p) && p >= 1024 ? p : NetGame.DefaultPort;
+            maxPlayers = int.TryParse(Value("-maxplayers"), out int mp) ? Mathf.Clamp(mp, 1, 100) : NetGame.MaxOnlinePlayers;
+            NetGame.HostPassword = NetGame.CleanPassword(Value("-password"));
+            relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
 #if UNITY_EDITOR
             int editorVSync = QualitySettings.vSyncCount;
@@ -78,36 +91,77 @@ namespace GoF2Remake.Multiplayer
 #endif
             QualitySettings.vSyncCount = 0;   // batch mode has no display to sync to: the cap keeps the CPU idle
             Application.targetFrameRate = fps;
+            AudioListener.volume = 0f;   // a server makes no sound, with or without -nographics
             AudioListener.pause = true;
 
             var first = SceneManager.GetActiveScene();
-            foreach (var root in first.GetRootGameObjects()) root.SetActive(false);
-            var empty = SceneManager.CreateScene("DedicatedServer");
-            SceneManager.SetActiveScene(empty);
-            if (first.IsValid() && first.isLoaded) SceneManager.UnloadSceneAsync(first);
+            serverScene = SceneManager.CreateScene("DedicatedServer");
+            SceneManager.SetActiveScene(serverScene);
+            // The Editor: the first scene is loaded already, its objects not awake: off and gone now. A player loads it
+            // after this (ShutOff as it wakes, OnSceneLoaded unloads it).
+            if (first.IsValid() && first.isLoaded && first != serverScene)
+            {
+                foreach (var root in first.GetRootGameObjects()) root.SetActive(false);
+                SceneManager.UnloadSceneAsync(first);
+            }
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
 
             var go = new GameObject("DedicatedServer");
             DontDestroyOnLoad(go);
             instance = go.AddComponent<DedicatedServer>();
         }
 
+        static Scene serverScene;
+
+        /// <summary>MainMenu / MenuBackground as they wake: on a dedicated server their scene is switched off at once (true =
+        /// do nothing more); OnSceneLoaded unloads it.</summary>
+        public static bool ShutOff(Scene scene)
+        {
+            if (!Enabled) return false;
+            foreach (var root in scene.GetRootGameObjects()) if (root.activeSelf) root.SetActive(false);
+            return true;
+        }
+
+        /// <summary>Any other scene that loads on a server (the first scene in a player): off and unloaded.</summary>
+        static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!Enabled || scene == serverScene || !scene.IsValid()) return;
+            foreach (var root in scene.GetRootGameObjects()) if (root.activeSelf) root.SetActive(false);
+            if (serverScene.IsValid() && serverScene.isLoaded) SceneManager.SetActiveScene(serverScene);
+            SceneManager.UnloadSceneAsync(scene);
+        }
+
         readonly Dictionary<ulong, (string name, string where, float since)> known = new Dictionary<ulong, (string, string, float)>();
         float trackTimer;
 
-        void Start()
+        async void Start()
         {
             OpenConsole();
             startedAt = Time.unscaledTime;
             Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version}");
-            if (!NetGame.StartServer(port))
+            if (relay)
             {
-                Debug.LogError("Server: " + NetGame.Status);
-                Application.Quit(1);
-                return;
+                Log("Reserving an online session (Unity Relay)...");
+                string listed = HasFlag("-unlisted") ? null : (Value("-name") ?? "Galaxy on Fire 2 server");
+                if (!await NetGame.PrepareOnlineHost(maxPlayers, listed)) { Fail(); return; }
             }
-            Log($"Listening on port {port} (UDP, every network adapter). Players join on this machine's address{(port != NetGame.DefaultPort ? ":" + port : "")}.");
-            foreach (var (name, address) in NetGame.LocalAddresses()) Log($"  {name}: {address}");
+            if (!NetGame.StartServer(port)) { Fail(); return; }
+            if (NetGame.JoinCode != null)
+                Log($"Online through Unity Relay, up to {maxPlayers} players. Join code: {NetGame.JoinCode}");
+            else
+            {
+                Log($"Listening on port {port} (UDP, every network adapter). Players join on this machine's address{(port != NetGame.DefaultPort ? ":" + port : "")}.");
+                foreach (var (name, address) in NetGame.LocalAddresses()) Log($"  {name}: {address}");
+            }
+            if (NetGame.HasPassword) Log("Players need the password (-password) to join.");
             Log("Type \"help\" for the commands.");
+        }
+
+        static void Fail()
+        {
+            Debug.LogError("Server: " + NetGame.Status);
+            Application.Quit(1);
         }
 
         void Update()
@@ -128,6 +182,7 @@ namespace GoF2Remake.Multiplayer
         {
             if (instance == this) instance = null;
             if (consoleLog) Application.logMessageReceivedThreaded -= Mirror;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         // ---- players ----------------------------------------------------------------------------------------
@@ -210,13 +265,13 @@ namespace GoF2Remake.Multiplayer
             {
                 case "help": case "?":
                     return "Commands:\n" +
-                           "  status              port, uptime, players\n" +
+                           "  status              join code / port, uptime, players\n" +
                            "  list                the players: client id, name, where, ship, squad\n" +
                            "  say <text>          a chat line to everyone, from \"Server\"\n" +
                            "  kick <id|name> [reason]  drops a player\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
                 case "status":
-                    return $"{(NetGame.Active ? "Running" : "Not running")} on port {port}, up {Duration(Time.unscaledTime - startedAt)}, " +
+                    return $"{(NetGame.Active ? "Running" : "Not running")} {(NetGame.JoinCode != null ? $"online, join code {NetGame.JoinCode}" : $"on port {port}")}, up {Duration(Time.unscaledTime - startedAt)}, " +
                            $"{NetGame.ClientIds.Count} player(s), world seed {NetGame.Seed}, {Application.targetFrameRate} fps.";
                 case "list": case "players": case "who":
                     return List();
@@ -310,7 +365,9 @@ namespace GoF2Remake.Multiplayer
 #if UNITY_STANDALONE_WIN
                 // A GUI program: without redirected output, a console window of its own (a parent's console would share its
                 // input with the shell that started it).
-                if (Value("-logFile") == null && !WinConsole.HasOutput())
+                // Its own window unless the output goes to a file or pipe (with -logFile, Unity's stdout is that log file:
+                // the window then still opens).
+                if (Value("-logFile") != null || !WinConsole.HasOutput())
                 {
                     mirror = true;
                     WinConsole.Open($"{Application.productName} server (port {port})");

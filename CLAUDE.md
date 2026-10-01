@@ -581,7 +581,9 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
 ## Multiplayer (remake-only)
 
 Netcode for GameObjects 3.0 (`com.unity.netcode.gameobjects`, which now also brings Netcode for Entities, Entities, Burst and
-Collections) over Unity Transport, direct IP, port 7777. Code in `Scripts/Runtime/Multiplayer` (`GoF2Remake.Multiplayer`);
+Collections) over Unity Transport: online through Unity Relay with a join code and the Unity Lobby server browser
+(`com.unity.services.multiplayer`, project linked to Unity Cloud, Relay and Lobby on in the dashboard, anonymous Unity
+Authentication), or on the local network by direct IP, port 7777. Code in `Scripts/Runtime/Multiplayer` (`GoF2Remake.Multiplayer`);
 the network prefabs in `Resources/GoF2Net` (**GoF2 > Build Network Prefabs**: NetPlayer / NetProxy / NetState / NetCrate, each a
 NetworkObject; it re-saves them so each gets its own GlobalObjectIdHash, and switches Android's internet permission on).
 Single player is untouched: every multiplayer path runs only while `NetGame.Active`.
@@ -592,17 +594,42 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
   (`SaveGame.Save` refuses), so it never touches the single-player saves.
-- **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (an
-  "Experimental" badge, the pilot name `mp_name`, then two cards): **Host a game** lists every address of this device
-  others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
+- **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (a fixed 84 %
+  high panel: the title with the "Experimental" badge and the pilot name `mp_name`, a one-line intro, then the server
+  browser and the host column). **Server browser** (`NetLobby.Query` every 5 s while the panel is open; rows rebuilt
+  only when the list changed, so a controller's focus stays): every listed game of every version, this version's first
+  and the fullest first; two lines per game: its name with SERVER (dedicated) / PASSWORD tags, then the host, players /
+  limit ("full") and the version (another version: amber "needs X", not joinable, a tap says why); a tap joins by its
+  join code (a password game with the password field empty asks for it first); "N games" by the title. Under it one
+  row: the code-or-address field (`mp_address`), the password field (this run only; `-mppassword` for testing), Join.
+  **Host a game**: Public / Invite only / Local network (`mp_mode`); online = a Relay session (Public also listed under
+  the Game name field, `mp_session_name`, default "<pilot>'s universe"); the password field (`mp_host_password`,
+  optional, every mode); Local network shows every address of this device others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
   ZeroTier, Radmin, Tailscale; not down, loopback, link-local or virtual-machine adapters; Android's Linux names
   mapped: wlan = Wi-Fi, swlan / ap = Hotspot, rndis / usb = USB, tun = VPN, mobile data (rmnet, ccmni) left out; Windows'
   mobile hotspot = Hotspot; none = a "connect to Wi-Fi" line, never 127.0.0.1), a tap copies it (with
   ":port" when not 7777), and the port field (`mp_port`, `NetGame.HostPort`, default 7777); the host listens on all
   adapters (0.0.0.0). A port in use is caught before the fade (`NetGame.CanHost`: UDP bind test), the panel says so and
-  puts the next free port in the field. **Join a game**: the address field (`mp_address`; "host" or "host:port", a name
-  is looked up, `NetGame.ParseAddress`), Join; below them the last session's end reason. Touch presses don't take the
-  focus in the menu, except in a text field (the on-screen keyboard needs it).
+  puts the next free port in the field. The address field takes a join code (6 letters / digits, `NetGame.IsJoinCode`)
+  or "host" / "host:port" (a name is looked up, `NetGame.ParseAddress`); the status line under the cards gives the last
+  session's end reason. Touch presses don't take the focus in the menu, except in a text field (the on-screen keyboard
+  needs it).
+- **Online (Relay / Lobby)** (`NetGame.PrepareOnlineHost` / `StartClientOnline`, `NetLobby`): hosting online signs in
+  (anonymous; a profile per `-mpname`, so two games on one machine are two players), reserves a Relay allocation (16
+  players + the host; a dedicated server's `-maxplayers`, at most 100) and its join code before the fade, then StartHost
+  / StartServer connect through it (`RelayServerData`, "dtls"); the code goes to the clipboard and shows at the top of
+  the station's pilot list (Copy; `SquadView`); a client joins the allocation by its code and connects. A listed game
+  is a public lobby (`NetLobby.Publish`: name, host, players (N1), dedicated, password, version (S1), the join code;
+  nobody joins the lobby, it is only the listing): a heartbeat every 15 s, the player count updated as it changes,
+  deleted with the session (a game that died drops out after Lobby's 30 s). Errors in plain words (`OnlineError`: no
+  game with that code, no internet, else the service's message).
+- **Version check and passwords** (Netcode's connection approval, `NetGame.Approve`): every connecting game sends
+  `NetGame.Version` (`Application.version`, "editor" in the Editor) and its password (`ConnectionData`); only the exact
+  same version gets in ("This game runs version X, yours is Y..."; the Editor as server takes any version, a development
+  build also takes the Editor), then the session's password if it has one (`HostPassword`: "needs a password" / "Wrong
+  password."); the reason is the player's popup. The server checks it: the lobby's join code is public. Builds from
+  before the check don't use approval, which is part of Netcode's config hash, so they fail its handshake. Verified with
+  a Windows build and the Editor: the version refusal, no / wrong / right password over Relay, the listing and its count.
 - **NetPlayer** (one per player): the owner writes where they are (station; `Place` Space / Hangar / Departing, from the
   scene it is in and `StationLevel.PlayerDeparting`), ship, name, hull, and in space the pose. The others in the same
   orbit (`SharesOrbit`) see the ship model with the pilot name, lockable, a sphere `Obstacle` (1.6 x the model's bounding
@@ -794,19 +821,28 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   that aren't one player's (`NetStock.HostExtras`: Kappa's EMP GL I at free play, energy cells at 10 / 100 / 101). Not
   shared: the owned Kaamo Club's storage.
 - **Dedicated server** (`DedicatedServer`, `NetGame.StartServer`): the normal Windows / Linux player started with `-server`
-  (with `-batchmode -nographics`; `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment variable does
-  the same in the Editor's Play mode, commands through `DedicatedServer.Run`). `Bootstrap` hands over before the first
-  scene wakes: the main menu's root objects are switched off before their Awake and the scene is swapped for an empty
-  one; none of the Bootstrap extras (options, Discord, haptics, bloom, the screenshot key); vsync off at the frame cap.
+  (with `-batchmode -nographics`; `-relay` online with a join code, listed as `-name "..."` unless `-unlisted`;
+  `-password`; `-maxplayers` (Relay, default 16); `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment
+  variable does the same in the Editor's Play mode ("relay" = -relay), commands through `DedicatedServer.Run`). Every
+  Windows / Linux build gets a launcher next to the game (`DedicatedServerLaunchers`: `Start Dedicated Server.bat` /
+  `start-server.sh`, the name, password and player limit at the top, online and listed). `Bootstrap` hands over before
+  the first scene wakes and swaps in an empty scene; the main menu scene never runs: in the Editor it is loaded already
+  and switched off at once, in a player it is still loading then, so `MainMenu.OnEnable` / `MenuBackground.Awake` call
+  `DedicatedServer.ShutOff` (the whole scene off before the rest wakes) and it is unloaded once loaded (before this, a
+  player build ran the menu, its live orbit and its music under the server, and the menu reset the password); the
+  process is muted (AudioListener volume 0, paused); none of the Bootstrap extras (options, Discord, haptics, bloom,
+  the screenshot key); vsync off at the frame cap.
   `NetGame.StartServer` = StartHost's world without a player of its own (no NetPlayer, no EnterWorld); clients ids start
   at 1 (`NetState.Dedicated`: "Player N" counts from 1); the session-ending checks count the others, not the host
   (`OthersConnected`); `OnServerStopped` quits; the others' NetPlayers build no model there. The console (Windows: its
-  own window through `WinConsole` unless stdout is redirected, `-logFile` given or `-noconsole`; the log is mirrored only
-  into that window, Unity prints it to a stdout it starts with; Linux: the terminal): joins / leaves with the client ids,
+  own window through `WinConsole` unless stdout is redirected to a file or pipe (a terminal's inherited console handle
+  doesn't count: a GUI program isn't attached to it) or `-noconsole`; with `-logFile` the window still opens (Unity's
+  stdout is then that file); the log is mirrored into the window, Unity prints it only to a stdout it starts with;
+  Linux: the terminal): joins / leaves with the client ids,
   each player's moves, chat; commands help, status, list, say (a global chat line from "Server", `NetState.ServerChat`),
   kick (`NetGame.Kick`: the reason is the player's popup), stop (`NetGame.StopServer`: the goodbye, then quit; Ctrl+C
   and closing the window too). Verified: the Windows build headless with the Editor as the client (join, chat, say,
-  kick, stop).
+  kick, stop; over Relay, listed, with a password; the console window, no menu).
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.
 - **Medals** are off in sessions (`Achievements.Check` / `Elite` award nothing, the Status window hides the medal column).
