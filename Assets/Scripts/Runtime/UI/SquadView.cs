@@ -68,7 +68,8 @@ namespace GoF2Remake.UI
             box.Add(squadPanel);
             pilotsPanel = Panel(out pilotsHeader, out pilotsBody, () => { pilotsCollapsed = !pilotsCollapsed; pilotsKey = ""; });
             box.Add(pilotsPanel);
-            parent.Add(box);
+            // Under everything else on that layer (the hangar, missions and status windows, the HUD): the first child.
+            parent.Insert(0, box);
 
             invitePopup = new VisualElement();
             invitePopup.AddToClassList("squad-invite");
