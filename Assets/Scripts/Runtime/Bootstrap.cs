@@ -48,6 +48,7 @@ namespace GoF2Remake
             Visuals.ClassicBloomPass.Install();   // the "Original" bloom option
             HitchLogger.Install();                // development builds: frame hitches to hitches.log
             UI.ScreenshotKey.Install();           // F12: a screenshot to the pictures library
+            UI.DiscordPresence.Install();         // desktop: Discord Rich Presence
             Settings.Changed -= ApplyAll;
             Settings.Changed += ApplyAll;
             SceneManager.sceneLoaded -= OnSceneLoaded;

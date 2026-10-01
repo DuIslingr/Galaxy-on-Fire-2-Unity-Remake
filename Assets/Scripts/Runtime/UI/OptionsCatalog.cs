@@ -201,6 +201,10 @@ namespace GoF2Remake.UI
                 () => Settings.AnimatedDialogue, v => Settings.AnimatedDialogue = v));
             list.Add(Toggle("inputHints", OptionPage.Gameplay, () => X("inputHintsFlight", "Button hints in flight"),
                 () => Settings.InputHints, v => Settings.InputHints = v));
+            // Remake: Discord Rich Presence (DiscordPresence), desktop only.
+            if (!Application.isMobilePlatform)
+                list.Add(Toggle("discordPresence", OptionPage.Gameplay, () => X("discordPresence", "Show what I'm doing in Discord"),
+                    () => Settings.DiscordPresence, v => Settings.DiscordPresence = v));
             // Remake: the difficulty of the game in progress (the new game's panel sets it first; saved with the game). NPC
             // hulls and guns, raiders and the Extreme rules follow from the next orbit or docking. Not in multiplayer: every
             // session plays on Normal.

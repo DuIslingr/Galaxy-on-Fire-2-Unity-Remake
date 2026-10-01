@@ -113,6 +113,8 @@ namespace GoF2Remake.Data
         public static bool InvertDrillX { get => GetBool("invertDrillX", false); set => SetBool("invertDrillX", value); }
         /// <summary>Globals::mouseCursorActivated (the PC version): the mouse moves the crosshair and steers (desktop only).</summary>
         public static bool MouseSteering { get => GetBool("mouseSteering", true); set => SetBool("mouseSteering", value); }
+        /// <summary>Remake: Discord Rich Presence (DiscordPresence, desktop).</summary>
+        public static bool DiscordPresence { get => GetBool("discordPresence", true); set => SetBool("discordPresence", value); }
         /// <summary>options[0x11] = 0: the accelerometer steers (MGame::handleAccelerometer).</summary>
         public static bool TiltSteering { get => GetBool("tiltSteering", false); set => SetBool("tiltSteering", value); }
         /// <summary>options+0x18: the tilt sensitivity, 0..1 (default 1, the maximum).</summary>
