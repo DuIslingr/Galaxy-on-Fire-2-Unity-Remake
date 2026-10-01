@@ -342,6 +342,17 @@
     color: var(--gof-cyan);
 }
 
+.system-option .binding-header > .binding-label {
+    min-width: 230px;   /* the rows' name Labels have it */
+}
+
+/* The key bindings' column titles: Labels, but not option labels. */
+.system-option .binding-header-cell {
+    min-width: 0;
+    font-size: 13px;
+    color: var(--gof-text-dim);
+}
+
 .system-option .option-description {
     min-width: 0;
     font-size: 15px;

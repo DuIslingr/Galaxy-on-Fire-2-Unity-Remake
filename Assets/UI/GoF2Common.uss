@@ -526,8 +526,38 @@
     flex-basis: 0;
 }
 
+/* Option rows that are actions (Reset key bindings, Steering Calibration): a framed button, not a row of plain text. */
+.option-item .option-button {
+    align-self: flex-start;
+    min-width: 240px;
+    margin: 4px 0;
+    padding: 6px 18px;
+    -unity-text-align: middle-center;
+    letter-spacing: 2px;
+    color: var(--gof-text);
+    background-color: var(--gof-cyan-faint);
+    border-width: 1px;
+    border-color: var(--gof-cyan-soft);
+    border-radius: 0;
+}
+
+.option-item .option-button:focus,
+.can-hover .option-item .option-button:hover {
+    background-color: var(--gof-cyan-soft);
+    border-color: var(--gof-cyan);
+    color: #FFFFFF;
+}
+
+.option-item .option-button:active {
+    background-color: var(--gof-cyan);
+    color: #0B1016;
+}
+
 /* The spawn / give buttons look like buttons, not rows. */
 .debug-action .option-button {
+    align-self: stretch;
+    min-width: 0;
+    margin: 0;
     padding: 8px 12px;
     -unity-text-align: middle-center;
     letter-spacing: 2px;
@@ -538,7 +568,9 @@
     border-radius: 0;
 }
 
-.debug-action .option-button:focus {
+.debug-action .option-button:focus,
+.can-hover .option-item.debug-action .option-button:hover,
+.option-item.debug-action .option-button:active {
     background-color: var(--gof-amber);
     color: #0B1016;
 }

@@ -767,8 +767,18 @@
 }
 
 .pause-option .choice-value,
-.pause-option .option-description {
+.pause-option .option-description,
+.pause-option .binding-header-cell {
     min-width: 0;
+}
+
+.pause-option .binding-header > .binding-label {
+    min-width: 250px;   /* the rows' name Labels have it */
+}
+
+.pause-option .binding-header-cell {
+    font-size: 13px;
+    color: var(--gof-text-dim);
 }
 
 .pause-option .choice-value {
