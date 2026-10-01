@@ -702,7 +702,7 @@ namespace GoF2Remake.World
 
         void SetLens(float fovRad, float near, float far)
         {
-            mainCamera.fieldOfView = Aspect.VerticalFov(fovRad * Mathf.Rad2Deg, mainCamera.aspect);
+            mainCamera.fieldOfView = Aspect.VerticalFovKeepWidth(fovRad * Mathf.Rad2Deg, mainCamera.aspect);   // the rooms end outside 16:9
             mainCamera.nearClipPlane = near * M;
             mainCamera.farClipPlane = far * M;
         }
