@@ -25,6 +25,7 @@ namespace GoF2Remake.UI
         public Func<string> label;
         public Func<string> description;   // optional line under the row
         public Func<UnityEngine.UIElements.VisualElement> extra;   // optional element under the row (not focusable)
+        public bool inGameOnly;            // only in a running game's menus (pause / station), not the main menu
 
         // Slider
         public float min, max;
@@ -200,6 +201,19 @@ namespace GoF2Remake.UI
                 () => Settings.AnimatedDialogue, v => Settings.AnimatedDialogue = v));
             list.Add(Toggle("inputHints", OptionPage.Gameplay, () => X("inputHintsFlight", "Button hints in flight"),
                 () => Settings.InputHints, v => Settings.InputHints = v));
+            // Remake: the difficulty of the game in progress (the new game's panel sets it first; saved with the game). NPC
+            // hulls and guns, raiders and the Extreme rules follow from the next orbit or docking. Not in multiplayer: every
+            // session plays on Normal.
+            if (!Multiplayer.NetGame.Active)
+            {
+                float[] levels = { Session.DifficultyEasy, Session.DifficultyNormal, Session.DifficultyHard, Session.DifficultyExtreme };
+                var difficulty = Choice("difficulty", OptionPage.Gameplay, () => X("difficulty", "Difficulty"), true,
+                    () => levels.Select(Session.DifficultyName).ToArray(),
+                    () => Nearest(levels, Session.Difficulty), i => Session.Difficulty = levels[Mathf.Clamp(i, 0, levels.Length - 1)],
+                    () => X("difficultyHelp", "Changes the game in progress; enemies and the Extreme rules follow from the next orbit or docking."));
+                difficulty.inGameOnly = true;
+                list.Add(difficulty);
+            }
             // Remake: the testing tools (Cheats.Unlocked), also opened by F10, LB + RB or three fingers on the main menu.
             var debug = Toggle("debugTools", OptionPage.Gameplay, () => X("debugTools", "Debug tools"), () => Cheats.Unlocked, v => Cheats.Unlocked = v);
             debug.description = () => X("debugToolsHelp", "A Debug button in the main menu (the mission select) and a Debug page in the pause and station menus (cheats, items, spawns).");

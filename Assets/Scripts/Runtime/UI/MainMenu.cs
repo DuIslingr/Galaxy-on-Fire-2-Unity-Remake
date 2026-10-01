@@ -1076,6 +1076,7 @@ namespace GoF2Remake.UI
             optionControls.Clear();
             foreach (var def in OptionsCatalog.All())
             {
+                if (def.inGameOnly) continue;
                 var c = new OptionControl(def);
                 c.Field.AddToClassList("option-row");
                 HookFocusSound(c.Field);
