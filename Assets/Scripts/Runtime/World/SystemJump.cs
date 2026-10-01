@@ -238,6 +238,14 @@ namespace GoF2Remake.World
         void StartCharging()
         {
             Session.InstantJump = false;
+            // Remake: a Khador jump straight into the campaign target's orbit takes the planet jump's equipment checks (24 a
+            // scanner and a tractor beam, the Supernova's 3213-3218); the original only gates the planet jump
+            // (MGame::OnTouchBegin), so the drive could arrive without them and the step couldn't be done.
+            if (!storyTarget.HasValue && nav.PlanetJumpRefused != null && nav.PlanetJumpRefused(Session.ProgrammedStation))
+            {
+                Session.ProgrammedStation = -1;
+                return;
+            }
             int cells = storyTarget.HasValue ? jumpCells : Session.EnergyCellsForNextJump;
             if (Cheats.FreeJumps) cells = 0;   // remake: the Debug panel's free jumps
             if (GalaxyMap.CellsInCargo() < cells)

@@ -171,6 +171,7 @@ namespace GoF2Remake.Data
             if (campaign == Campaign.GalaxyOnFire2 && Index > 8)
                 foreach (int h in new[] { 0x17, 8, 9, 10, 0x1c, 0x15, 0xd, 0x13, 0xe, 0xf, 0x1d, 0x1e, 0x20, 0x21, 0x22, 0x23, 0x24, 0x38 })
                     Session.Hints.Add(h);
+            GiveStepRequirements(db);
             Session.PlayerHull = Session.PlayerArmor = -1;
             Session.PlayerShield = -1f;
             Session.PreviousStationIndex = -1;
@@ -188,6 +189,32 @@ namespace GoF2Remake.Data
             Session.StationIndex = lastStation >= 0 ? lastStation : Session.StationIndex >= 0 ? Session.StationIndex : 78;
             Session.LaunchedFromStation = Session.ArrivedByTravel = false;
             return "Station";
+        }
+
+        /// <summary>The debug start: the equipment the step's planet-jump checks ask for (RequirementRefusal, 532), so a jump
+        /// straight into a step doesn't leave the player at its target without it (and the scanner / tractor beam of step 24
+        /// stay for the salvage steps after it). Added as mounted if the ship has none of that kind.</summary>
+        static void GiveStepRequirements(Database db)
+        {
+            void Ensure(int category, int item, int amount = 1)
+            {
+                var have = Session.Equipment.Find(e => db.Item(e.item)?.categoryId == category);
+                if (have == null) Session.Equipment.Add(new ItemStack(item, amount));
+                else if (have.amount < amount) have.amount = amount;
+            }
+            int n = Index;
+            if (Session.Campaign == Campaign.GalaxyOnFire2 && n >= 24) { Ensure(17, 81); Ensure(13, 68); }   // Telta Quickscan, AB-1
+            if (Session.Campaign != Campaign.Supernova) return;
+            if (n == 91 || n == 94) Ensure(20, 93);                     // Large Cabin
+            if (n >= 105) Ensure(38, 206);                              // Gamma Shield II
+            if (n == 135) Ensure(19, 86);                               // IMT Extract 1.3
+            if (n == 139)
+            {
+                bool vossk = Session.ShipIndex == 42 || (Session.ShipIndex < Shop.ShipRace.Length && Shop.ShipRace[Session.ShipIndex] == 1);
+                if (!vossk) Session.ShipIndex = 42;
+                Ensure(29, 190);                                        // Signature: Vossk
+            }
+            if (n >= 142) { Ensure(33, 196); Ensure(35, 198); Ensure(34, 197, 15); }   // filter, collector, 15 ionizing missiles
         }
 
         /// <summary>The mission select's line for step 'index': its objective text (the target's name filled in), else the
