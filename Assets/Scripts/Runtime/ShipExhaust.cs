@@ -17,6 +17,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class ShipExhaust : MonoBehaviour
     {
         const float M = 0.05f;
@@ -112,22 +113,37 @@ namespace GoF2Remake.Flight
                 g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.black, 1f) },
                           new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
                 col.color = g;
-                var tsa = ps.textureSheetAnimation;
-                tsa.enabled = true;
-                tsa.mode = ParticleSystemAnimationMode.Grid;
-                tsa.numTilesX = 8;
-                tsa.numTilesY = 8;
-                tsa.animation = ParticleSystemAnimationType.WholeSheet;
-                tsa.frameOverTime = new ParticleSystem.MinMaxCurve(cell / 64f);
+                // The cell as a camera-facing quad whose UVs stay half a texel inside it: a texture-sheet cell reached the
+                // cell's edge, and the bilinear filter pulled in the trail strips that start right under the glows (a
+                // purple / red line under every particle: lines behind the thrusters).
                 var r = go.GetComponent<ParticleSystemRenderer>();
-                r.renderMode = ParticleSystemRenderMode.Billboard;
-                r.maxParticleSize = 10f;
+                r.renderMode = ParticleSystemRenderMode.Mesh;
+                r.mesh = CellQuad(cell);
+                r.alignment = ParticleSystemRenderSpace.View;
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 r.receiveShadows = false;
                 if (mat != null) r.sharedMaterial = mat;
                 systems.Add(ps);
                 baseSizes.Add(size * M);
             }
+        }
+
+        static readonly Mesh[] cellQuads = new Mesh[64];
+
+        /// <summary>A unit quad (a billboard's size) mapping cell 'cell' of the 8 x 8, 1024 px particles.png, inset half a texel.</summary>
+        static Mesh CellQuad(int cell)
+        {
+            if (cellQuads[cell] != null) return cellQuads[cell];
+            const float px = 1f / 1024f, step = 1f / 8f;
+            int cx = cell % 8, cy = cell / 8;   // rows from the top
+            float u0 = cx * step + 0.5f * px, u1 = (cx + 1) * step - 0.5f * px;
+            float v1 = 1f - cy * step - 0.5f * px, v0 = 1f - (cy + 1) * step + 0.5f * px;
+            var m = new Mesh { name = $"ExhaustCell{cell}" };
+            m.vertices = new[] { new Vector3(-0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f) };
+            m.uv = new[] { new Vector2(u0, v0), new Vector2(u1, v0), new Vector2(u1, v1), new Vector2(u0, v1) };
+            m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
+            m.RecalculateBounds();
+            return cellQuads[cell] = m;
         }
 
         void Update()
