@@ -261,7 +261,7 @@ In fog systems every planet (index ≥ 1) is drawn with blend 21 and transform c
 2. **Only 000..010 are baked.** Systems 22..32 use `v_skybox_011`..`014` and `sn_skybox_015`..`018` (textureIndex 11..18), which are loaded from `Models/valkyrie|supernova/skyboxes/...`. `LoadMesh($"Models/main/skyboxes/{name}")` cannot find them. Index 14 must use the mesh `v_skybox_013.fbx` with the texture `v_skybox_014.png`.
 3. `skybox_010` is the Void/alien sky (always with `stars_002`), not a system sky.
 4. **No orientation.** Both layers are rotated per station by R_sky (random Euler XYZ, seeded with stationIndex·2), zero in the tex 17/18 systems, and sun-aligned in system 27. `Skybox/Cubemap` only supports a Y rotation, so this needs a custom skybox shader (sample with R_skyᵀ · dir) or a camera-centred sky mesh.
-5. The extra layers are not in the bake: ring sky, storms, supernova flares, asteroid belt. They are camera-centred and world-aligned, **not** rotated by R_sky, and they are drawn after the sun and planets (the ring sky is drawn before them).
+5. The extra layers are not in the bake: ring sky, storms, supernova flares, asteroid belt. They are camera-centred and drawn after the sun and planets (the ring sky is drawn before them). The ring sky, the storms (their own random rotation) and the belt are world-aligned; **the supernova flares keep `renderBG`'s view · R_sky matrix** (Level+0x1d0 is only reset for the ring and storm layers), so in system 27 they are sun-aligned like the nebula: the fire streams out of the supernova.
 6. Draw order and blending are correct: stars opaque, then nebula additive. The stars sphere (r 450) lies outside the nebula sphere (r 400), but with no depth test only the draw order matters.
 
 ## Unity rebuild cheat-sheet

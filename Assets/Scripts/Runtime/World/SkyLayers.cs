@@ -1,6 +1,7 @@
 // SkyLayers.cs
 // The extra sky layers of an orbit (Level::createSpace 0xbbba0 / renderBG 0xd43f0; Reference/research/space_backdrop.md,
-// "Skybox layers"). Camera-centred meshes, world-aligned (identity model matrix, not rotated by R_sky), drawn by
+// "Skybox layers"). Camera-centred meshes, world-aligned (identity model matrix, not rotated by R_sky; the supernova
+// flares do take R_sky, the nebula's sun-aligned rotation: renderBG draws them with its matrix), drawn by
 // GoF2/SkyLayer on the far plane in the original's order: the ring sky before the sun and planets, the rest after them.
 //   planet ring sky   Status::inPlanetRingOrbit: stations 120, 126, 130, 132                         alpha
 //   supernova flares  the supernova system (27), mission != 89 and < 158; the nasty texture from 106,
@@ -53,8 +54,14 @@ namespace GoF2Remake.World
                 float speed = mission > 106 ? 1.5f : 1f;
                 // Their loop is 1000 .. 60000 ms: the UV scroll runs one texture width over it (a seamless wrap); the first
                 // second is a one-off fade from 100 to the steady 50.
-                Add(a.flares1, mat, FlaresQueue, speed, 1000f);
-                Add(a.flares2, mat, FlaresQueue + 1, speed, 1000f);
+                // Level::renderBG draws them with the nebula's matrix, R_sky included (in system 27 its +Y points at the
+                // supernova), so the fire streams out of the supernova; only the ring sky and the storms reset to the bare
+                // camera rotation.
+                var skyRotation = OrbitBuilder.SkyRotation(layout);
+                var f1 = Add(a.flares1, mat, FlaresQueue, speed, 1000f);
+                var f2 = Add(a.flares2, mat, FlaresQueue + 1, speed, 1000f);
+                if (f1 != null) f1.rotation = skyRotation;
+                if (f2 != null) f2.rotation = skyRotation;
             }
             if (mission >= 90 && (supernova || layout.systemTexture == 16 || layout.systemTexture == 18))
             {

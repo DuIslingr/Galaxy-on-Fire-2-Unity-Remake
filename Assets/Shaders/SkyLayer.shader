@@ -59,7 +59,9 @@ Shader "GoF2/SkyLayer"
                 #else
                     o.positionCS.z = o.positionCS.w * (1 - 1e-6);
                 #endif
-                o.uv = i.uv + _UVOffset.xy;
+                // The texture moves toward +u as v5_0 grows (the supernova flares stream out of the supernova; added, they
+                // streamed into it).
+                o.uv = i.uv - _UVOffset.xy;
                 o.normalWS = TransformObjectToWorldNormal(i.normalOS);
                 return o;
             }
