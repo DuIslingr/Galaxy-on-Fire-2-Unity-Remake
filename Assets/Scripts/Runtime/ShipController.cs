@@ -134,7 +134,13 @@ namespace GoF2Remake.Flight
             // PlayerEgo::left / right / up / down on Extreme (+0x235): the live cargo load against Ship::getMaxLoad.
             if (stats != null && stats.cargoAffectsHandling) stats.cargoLoad = Data.Shop.CargoLoad();
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
-            if (externalControl) { SpeedMetersPerSecond = ExternalSpeedMetersPerSecond; Maneuver.Cancel(); return; }
+            if (externalControl)
+            {
+                SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
+                Maneuver.Cancel();
+                UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
+                return;
+            }
             if (useBuiltInInput && !inputLocked) ReadDodgeInput();
             if (Maneuver.Active && (inputLocked || steeringLocked)) Maneuver.Cancel();
             ManeuverSlide = Vector3.zero;
@@ -238,11 +244,11 @@ namespace GoF2Remake.Flight
             return Vector2.ClampMagnitude(GameControls.Steer.ReadValue<Vector2>(), 1f);
         }
 
-        void UpdateVisualBank()
+        void UpdateVisualBank() => UpdateVisualBank(Model.VisualYawBank * bankDegreesPerH, Model.VisualPitchBank * pitchTiltDegreesPerH);
+
+        void UpdateVisualBank(float targetBank, float targetTilt)
         {
             if (visualModel == null) return;
-            float targetBank = Model.VisualYawBank * bankDegreesPerH;
-            float targetTilt = Model.VisualPitchBank * pitchTiltDegreesPerH;
             float k = 1f - Mathf.Exp(-bankSmoothing * Time.deltaTime);
             bankAngle = Mathf.Lerp(bankAngle, targetBank, k);
             tiltAngle = Mathf.Lerp(tiltAngle, targetTilt, k);
