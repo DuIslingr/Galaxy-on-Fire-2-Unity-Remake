@@ -668,6 +668,7 @@ namespace GoF2Remake.World
             launchCameraMs = 0f;
             Player.inputLocked = false;
             if (Weapons != null) Weapons.Blocked = false;
+            if (chase.scriptCamera) return;   // a level script's cutscene camera owns it (its Release brings the chase back)
             chase.enabled = true;   // eases from here to the chase position
             if (skipped) chase.Snap();
             if (Session.ProgrammedStation >= 0 && !Session.InstantJump) Navigation?.ContinueToProgrammedStation();
@@ -722,6 +723,8 @@ namespace GoF2Remake.World
                 return;
             }
             if (launchCameraMs <= 0f) return;
+            // A level script took the camera (the prologue / rescue scripts own it from the start): the fly-in is over.
+            if (chase.scriptCamera) { EndLaunchCamera(true); return; }
             // Remake option: no launch / arrival camera = skipped at once.
             if (!Settings.LaunchCamera || Time.timeScale > 0f && PlayerTriedToFly()) { EndLaunchCamera(true); return; }
             launchCameraMs -= Time.deltaTime * 1000f;

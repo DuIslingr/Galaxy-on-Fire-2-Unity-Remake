@@ -41,7 +41,7 @@ namespace GoF2Remake.World
         {
             if (cam == null) return;
             Active = true;
-            if (chase != null) chase.enabled = false;
+            if (chase != null) { chase.enabled = false; chase.scriptCamera = true; }
             cam.transform.position = unityPosition;
             target = follow;
             lookPoint = unityPoint;
@@ -62,7 +62,7 @@ namespace GoF2Remake.World
             Active = false;
             Rumble = 0f;
             dolly = Vector3.zero;
-            if (chase != null) { chase.enabled = true; chase.Snap(); }
+            if (chase != null) { chase.scriptCamera = false; chase.enabled = true; chase.Snap(); }
         }
 
         public void LateTick(float dtMs)

@@ -63,6 +63,9 @@ namespace GoF2Remake.Flight
         [System.NonSerialized] public bool followRigid, followUsesUp;
         /// <summary>A constant rumble on top (PlayerEgo::update: 0.2 while the Liberator is steered).</summary>
         [System.NonSerialized] public float constantRumble;
+        /// <summary>A level script's look-at camera (CutsceneCamera) holds the camera: the launch / arrival camera leaves it
+        /// alone and doesn't hand it back (LevelScript: M0 / M1 never end the fly-in, their scripts own the camera).</summary>
+        [System.NonSerialized] public bool scriptCamera;
 
         void Awake() => cam = GetComponent<Camera>();
 
