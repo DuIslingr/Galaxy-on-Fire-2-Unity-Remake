@@ -2,7 +2,8 @@
 // Every player build gets its date and time as its version (BuildVersion.Format, e.g. 2026.09.29.2315): set into
 // PlayerSettings.bundleVersion before the build (Application.version, Android's versionName) and put back once the build
 // has finished or failed (EditorApplication.delayCall runs after BuildPipeline.BuildPlayer returns), so the project
-// settings keep their own value. A release's builds share one version through GOF2_BUILD_VERSION (OverrideVariable).
+// settings keep their own value. UWP builds also get it as their package version (yyyy.M.d.HHmm). A release's builds
+// share one version through GOF2_BUILD_VERSION (OverrideVariable).
 
 using UnityEditor;
 using UnityEditor.Build;
@@ -28,10 +29,20 @@ namespace GoF2Remake.EditorTools
                 stamp = System.DateTime.Now.ToString(GoF2Remake.UI.BuildVersion.Format, System.Globalization.CultureInfo.InvariantCulture);
             PlayerSettings.bundleVersion = stamp;
             UnityEngine.Debug.Log($"GoF2: build version {stamp}");
+            // UWP: the package version is four numbers up to 65535 each: yyyy.M.d.HHmm (2026.10.02.0008 -> 2026.10.2.8).
+            var savedWsa = PlayerSettings.WSA.packageVersion;
+            bool wsa = report.summary.platform == BuildTarget.WSAPlayer;
+            if (wsa)
+            {
+                var p = stamp.Split('.');
+                if (p.Length == 4 && int.TryParse(p[0], out int y) && int.TryParse(p[1], out int mo) && int.TryParse(p[2], out int d) && int.TryParse(p[3], out int hm))
+                    PlayerSettings.WSA.packageVersion = new System.Version(y, mo, d, hm);
+            }
             // The build saves the project settings with the stamp in them: put the value back and save them again.
             EditorApplication.delayCall += () =>
             {
                 PlayerSettings.bundleVersion = saved;
+                if (wsa) PlayerSettings.WSA.packageVersion = savedWsa;
                 AssetDatabase.SaveAssets();
             };
         }

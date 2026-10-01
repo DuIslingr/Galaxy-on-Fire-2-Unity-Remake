@@ -2,9 +2,11 @@
 
 # Galaxy on Fire 2 Remake (Unity)
 
-A remake of the 2010 space game *Galaxy on Fire 2* by FISHLABS in Unity 6, for Windows, Linux and Android. It aims to be a
-faithful port of the original gameplay, including flight, combat, trading, mining, stations, the bar and the whole
-story. It is built on the original assets and on game logic ported from the decompiled game code.
+A remake of the 2010 space game *Galaxy on Fire 2* by FISHLABS in Unity 6, for Windows (also as a UWP app), Linux and
+Android. It aims to be a faithful port of the original gameplay, including flight, combat, trading, mining, stations,
+the bar and the whole story. It is built on the original assets and on game logic ported from the decompiled game code.
+Downloads are on the [releases page](https://github.com/JoppieToppie/Galaxy-on-Fire-2-Unity-Remake/releases); each
+release says how to install it.
 
 **Status:** the main campaign, the Valkyrie add-on and the Supernova add-on can be played from start to end. The
 Supernova opening and final battle have been rebuilt from the original scripts, but the add-on has not been fully played
@@ -24,7 +26,8 @@ through yet. Multiplayer is experimental. A build's version is the date and time
 - **Economy and stations:** hangars, shops and ship dealers, and the space lounge with bar agents and every
   freelance mission type. Also blueprints, wingmen, medals, the Kaamo Club and save games.
 - **Mining:** asteroid mining with the drilling minigame, plus gas clouds, hacking and docking at objects.
-- **Multiplayer (experimental):** a shared universe over LAN or VPN. Players see each other in space and in the
+- **Multiplayer (experimental):** a shared universe, online through a server browser or a join code, or over a local
+  network. Players can host from the game or run a dedicated server. Players see each other in space and in the
   hangars, and can fight each other. Squads share bar missions and their rewards. Everyone shares the NPC traffic, the
   crates, the asteroids and the shop stock. Local and global chat.
 - **Remake extras:**
@@ -61,51 +64,96 @@ platforms get the same one.
 
 ### Multiplayer
 
-In the main menu, open **Multiplayer**. The **server browser** lists the public games. Click one to join; games
-marked PASSWORD need the password typed in first. You can also join with a **join code** or, on a local network, an
-address. Only the exact same game version can join, and the browser shows each game's version.
+Multiplayer is experimental. Everyone in a session shares one universe: you see each other in space and in the hangars,
+form squads, and fly bar missions together. Every player starts a fresh free-play game docked at Var Hastra, and
+sessions don't touch your single-player saves. Only the **exact same game version** can play together, so everyone
+needs the same release.
 
-To host, pick one of three modes:
+#### Joining a game
 
-- **Public** (online, listed in the browser, with a name)
-- **Invite only** (online, joined with the code)
-- **Local network** (others join with this device's address and port, 7777 by default)
+1. In the main menu, open **Multiplayer** and type your **pilot name** at the top.
+2. The **server browser** lists the public games with their name, host, players (for example `4 / 16`) and version.
+   It refreshes every 5 seconds. Click a game to join it.
+   - A game tagged **PASSWORD** needs its password: type it in the **Password** field under the list first.
+   - A game on another version shows "needs <version>" and can't be joined.
+3. To join a game that isn't listed, type its **join code** (six letters or digits, like `QKJH9N`) in the field under
+   the list and press **Join**. On a local network you can type the host's address instead (`192.168.1.20`, or
+   `192.168.1.20:7778` for another port).
 
-Any mode can have a password and a player limit (Max players, 2 to 100, you included). Once you're in, the join code is on the clipboard and shown under the station's system information.
-Online play goes through Unity Relay, so no port forwarding is needed.
+#### Hosting from the game
 
-**Dedicated server.** The Windows and Linux builds can run a session without anyone playing on that machine. Next to
-the game are two launchers: **Start Dedicated Server.bat** (Windows) and **start-server.sh** (Linux, `sh start-server.sh`).
-They start it online and listed in the server browser. Edit the name, password and player limit at the top of the file.
-By hand:
+On the **Host a game** card, pick a mode:
+
+- **Public:** online, and listed in the server browser under the **Game name** you choose.
+- **Invite only:** online, but not listed. Friends join with your join code.
+- **Local network:** for players on the same network (or a VPN like Hamachi or ZeroTier). The card lists your
+  addresses (tap one to copy it) and the port, 7777 by default.
+
+Every mode can have a **password** and a **Max players** limit (2 to 100, you included). Press **Host**. In an online
+game the join code is copied to your clipboard and shown under the station's system information, with a Copy button.
+Online play goes through Unity Relay: no port forwarding, but it needs an internet connection. With a player host,
+all traffic goes through the host's connection, so for big sessions a dedicated server is better.
+
+#### Running a dedicated server
+
+A dedicated server hosts a session without anyone playing on that machine. It uses the normal Windows or Linux
+download; no extra files are needed.
+
+**Windows**
+
+1. Open `Start Dedicated Server.bat` in the game folder with a text editor (Notepad), and set:
+   - `NAME`: the game's name in the server browser.
+   - `PASSWORD`: leave it empty for none.
+   - `MAXPLAYERS`: the player limit, at most 100.
+2. Save the file and double-click it. A console window opens; the game itself runs without a window and without sound.
+3. The console shows the **join code**, and the game appears in everyone's server browser.
+
+**Linux**
+
+1. Edit `NAME`, `PASSWORD` and `MAXPLAYERS` at the top of `start-server.sh` in the game folder.
+2. Run it in a terminal: `sh start-server.sh`. The terminal shows the join code and the log.
+
+**The console**
+
+The console shows who joins and leaves, where each player is, and the chat. Only the server can run commands; players
+can't. Type one and press Enter:
+
+| Command | What it does |
+|---|---|
+| `help` | Lists the commands. |
+| `status` | The join code (or port), uptime, players, world seed. |
+| `list` | The players: client id, name, where they are, ship, squad. |
+| `say <text>` | A chat line to everyone, from "Server". |
+| `kick <id or name> [reason]` | Drops a player; they see the reason. |
+| `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
+
+**Starting it by hand**
+
+The launchers only start the game with these options, which you can also use yourself:
 
 ```
-GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -password secret
+GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -password secret -maxplayers 32
 ./GoF2Remake.x86_64 -batchmode -nographics -server -relay -name "My universe" -logFile -
 ```
 
-The options:
+| Option | Meaning |
+|---|---|
+| `-batchmode -nographics` | No window, no rendering, no sound. |
+| `-server` | Run as a dedicated server. |
+| `-relay` | Host online with a join code (Unity Relay). Without it, players join on the server machine's address. |
+| `-name "..."` | The name in the server browser (online). |
+| `-unlisted` | Keep the game out of the server browser; players join with the join code. |
+| `-password X` | Players need this password to join. |
+| `-maxplayers N` | The player limit, 2 to 100 (default 16). |
+| `-port N` | The port for local network play (default 7777, UDP). |
+| `-fps N` | The server's frame rate (default 60). |
 
-- `-batchmode -nographics`: no window, no rendering, no sound.
-- `-relay`: hosts online with a join code shown in the console. It is listed in the browser unless you add `-unlisted`.
-  Without `-relay`, players join with the server machine's address.
-- `-password`: players need it to join.
-- `-maxplayers`: the player limit, default 16, at most 100.
-- `-port`: the local network port, default 7777.
-- `-fps`: the server's frame rate, default 60.
+Good to know:
 
-On Windows the server opens its own console window. On Linux it uses the terminal. The console shows joins, leaves,
-where each player is, and the chat. It takes these commands:
-
-- `help`
-- `status`
-- `list`
-- `say <text>` (a chat line from "Server")
-- `kick <id|name> [reason]`
-- `stop` (or Ctrl+C): the players are told why first.
-
-The server only keeps the shared world: the shop stock, squads, missions and chat. Each orbit's NPCs are run by the
-first player in it, as with a player host.
+- A local network server (without `-relay`) needs UDP port 7777 open in the firewall for the other players.
+- The server keeps the shared world: the shop stock, squads, missions and chat. Each orbit's NPCs are run by the first
+  player who arrives there, so the server itself needs very little CPU.
+- Players on a different game version are turned away with a message saying which version the server runs.
 
 ## Controls (keyboard)
 
