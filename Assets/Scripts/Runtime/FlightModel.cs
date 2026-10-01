@@ -139,6 +139,9 @@ namespace GoF2Remake.Flight
             (int)(TargetRateScale * EffectiveHandling) / TargetRateDivisor * RateToRadiansPerMs * 1000f * Mathf.Rad2Deg;
 
         public void ChangeThrottle(float delta) => Throttle = Mathf.Clamp01(Throttle + delta);
+        /// <summary>The PC version's "Brake" (binding 3361, apart from "Throttle down" 3360): the engines stop while it is
+        /// held; the throttle is kept, so releasing it flies on at once. The phone original has no brake.</summary>
+        public bool Braking;
         public void SetThrottle(float value) => Throttle = Mathf.Clamp01(value);
 
         public bool HasBooster => hasBooster;
@@ -216,7 +219,7 @@ namespace GoF2Remake.Flight
             if (!pitchInput) PitchRate = Mathf.MoveTowards(PitchRate, 0f, dtMs * Handling / DecayDivisor);
 
             // ---- movement -------------------------------------------------------------------------
-            float forward = dtMs * Throttle * CurrentSpeed;
+            float forward = Braking ? 0f : dtMs * Throttle * CurrentSpeed;
 
             float push = 0f;
             if (Mathf.Abs(collisionPush) > CollisionPushCutoff)
@@ -246,7 +249,7 @@ namespace GoF2Remake.Flight
             // The bank follows the rate: a full-stick rate (750 H / 63) banks like a full stick.
             VisualYawBank = yawRate / (TargetRateScale / TargetRateDivisor);
             VisualPitchBank = 0f;
-            float forward = dtMs * Throttle * CurrentSpeed;
+            float forward = Braking ? 0f : dtMs * Throttle * CurrentSpeed;
             UpdateBoost(dtMs);
             return new FrameResult { forwardUnits = forward };
         }

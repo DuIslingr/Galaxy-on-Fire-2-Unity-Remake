@@ -153,6 +153,7 @@ namespace GoF2Remake.Flight
             }
 
             // The launch / arrival camera: no steering, throttle, boost or levelling (the ship flies on).
+            if (!useBuiltInInput || inputLocked) Model.Braking = false;
             Vector2 steer = useBuiltInInput && !inputLocked ? ReadInput() : Vector2.zero;
             if (!inputLocked && externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
             var mouseSteer = !inputLocked ? ReadMouseSteer() : Vector2.zero;
@@ -213,11 +214,17 @@ namespace GoF2Remake.Flight
             }
         }
 
+        bool brakeOverridden;
+
         Vector2 ReadInput()
         {
             float throttle = GameControls.Throttle.ReadValue<float>();
-            if (GameControls.Brake.IsPressed()) throttle -= 2f;   // Brake (S): down twice as fast as "/"
             if (Mathf.Abs(throttle) > 0.01f) Model.ChangeThrottle(throttle * throttleChangePerSecond * Time.deltaTime);
+            // Brake (S): the engines stop while it is held (FlightModel.Braking); a boost overrides it until it is pressed again.
+            bool brake = GameControls.Brake.IsPressed();
+            if (!brake) brakeOverridden = false;
+            if (brake && GameControls.Boost.WasPressedThisFrame()) brakeOverridden = true;
+            Model.Braking = brake && !brakeOverridden;
             // The wheel: +- thrust, 10 % a notch (not while it zooms the free-look camera).
             var mouse = Mouse.current;
             if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
