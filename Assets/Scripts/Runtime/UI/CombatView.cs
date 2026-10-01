@@ -162,7 +162,7 @@ namespace GoF2Remake.UI
                     string who = string.IsNullOrEmpty(locked.displayName) ? RaceName(locked.race) : locked.displayName;
                     lockOre.text = locked.plateNameOnly && !string.IsNullOrEmpty(locked.displayName) ? locked.displayName : $"{who} {Mathf.RoundToInt(locked.HullFraction * 100f)}%";
                     lockOre.EnableInClassList("lock-ore--wanted", locked.plateWanted);
-                    var icon = locked.race >= 0 && locked.race <= 3 || locked.race == 8 || locked.race == 9 ? Tex($"race_{locked.race}") : null;
+                    var icon = !locked.plateNoIcon && (locked.race >= 0 && locked.race <= 3 || locked.race == 8 || locked.race == 9) ? Tex($"race_{locked.race}") : null;
                     lockClass.style.display = icon != null ? DisplayStyle.Flex : DisplayStyle.None;
                     Image(lockClass, icon);
                 }

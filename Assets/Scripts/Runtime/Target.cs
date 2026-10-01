@@ -51,6 +51,11 @@ namespace GoF2Remake.Flight
         /// <summary>Radar::drawCurrentLock: the Hijacker (1611) and the Informer (1663) show their name alone; a Most Wanted
         /// criminal is drawn in its own colour.</summary>
         public bool plateNameOnly, plateWanted;
+        /// <summary>No race icon on the lock plate (the space junk).</summary>
+        public bool plateNoIcon;
+        /// <summary>The space junk's lock plate. PlayerJunk is a KIPlayer of race -1, which Radar::drawCurrentLock turns into
+        /// text 406 - 1 = 405 "Secure" (and no icon); remake: "Space junk".</summary>
+        public static string JunkName => GoF2Remake.Data.Localization.Extra("spaceJunk", "Space junk");
         /// <summary>Targets outside the traffic's ship list that the radar still shows and locks (the Junk removal's space junk,
         /// PlayerJunk: a far dot always).</summary>
         public static readonly System.Collections.Generic.List<Target> RadarObjects = new System.Collections.Generic.List<Target>();

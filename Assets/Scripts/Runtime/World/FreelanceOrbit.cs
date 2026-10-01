@@ -644,7 +644,8 @@ namespace GoF2Remake.World
             t.race = Standing.Pirate;
             t.hostileToPlayer = true;
             t.destroyedSound = CombatAssets.Pick(assets?.garbageExplosion);   // PlayerJunk::update: 22 Garbage_Explosion
-            t.displayName = null;
+            t.displayName = Target.JunkName;
+            t.plateNameOnly = t.plateNoIcon = true;
             t.Died += dead =>
             {
                 // PlayerJunk::update 0x18afb4: no Explosion, one emitManual of record 0x15 SET_EXPLOSION_MANUALLY_JUNK

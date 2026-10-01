@@ -210,7 +210,8 @@ namespace GoF2Remake.Multiplayer
             target.RemoteDamage = (amount, hitVector, byNpc) => DamageRpc(amount, hitVector, byNpc);
             target.RemoteEmp = emp => EmpRpc(emp);
             // Space junk is lockable after the ships and a far dot, like the owner's own junk (Target.RadarObjects).
-            if (IsJunk) Target.RadarObjects.Add(target); else Target.NetShips.Add(target);
+            if (IsJunk) { Target.RadarObjects.Add(target); target.plateNameOnly = target.plateNoIcon = true; }
+            else Target.NetShips.Add(target);
             SetShown(false);
         }
 
@@ -380,7 +381,7 @@ namespace GoF2Remake.Multiplayer
             target.untargetable = hidden.Value || life.Value != Flying;
             // A mission ship's name only for the mission's team (its owner and their squad).
             bool team = !missionShip.Value || NetSquad.SameClient(OwnerClientId, NetPlayer.Local);
-            target.displayName = label.Value.Length > 0 && team ? label.Value.ToString() : null;
+            target.displayName = IsJunk ? Target.JunkName : label.Value.Length > 0 && team ? label.Value.ToString() : null;
             if (life.Value != shownLife)
             {
                 // NpcShip.UpdateDying's end: the explosion (with its sound); a fighter's model goes with it.
