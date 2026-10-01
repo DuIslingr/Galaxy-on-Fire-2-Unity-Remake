@@ -64,6 +64,8 @@ namespace GoF2Remake.Flight
         /// <summary>An autopilot moves the ship (asteroid docking, PlayerEgo+0x145): no input, no flight model step and
         /// no cosmetic banking; it reports its speed through ExternalSpeedMetersPerSecond.</summary>
         [System.NonSerialized] public bool externalControl;
+        /// <summary>The death tumble owns the model's rotation (PlayerHealth): no levelling of the bank meanwhile.</summary>
+        [System.NonSerialized] public bool modelTumbling;
         /// <summary>The turret view / the Liberator: the ship flies straight on its throttle (no steering, auto-level on);
         /// the stick goes to <see cref="SteerInput"/> instead.</summary>
         [System.NonSerialized] public bool steeringLocked;
@@ -141,7 +143,7 @@ namespace GoF2Remake.Flight
             {
                 SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
                 Maneuver.Cancel();
-                UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
+                if (!modelTumbling) UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
                 return;
             }
             if (useBuiltInInput && !inputLocked) ReadDodgeInput();

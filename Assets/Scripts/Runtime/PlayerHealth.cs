@@ -341,6 +341,7 @@ namespace GoF2Remake.Flight
             deathMs = 0f;
             ship.ExternalSpeedMetersPerSecond = ship.SpeedMetersPerSecond;
             ship.externalControl = true;
+            ship.modelTumbling = true;   // the tumble below; the controller's levelling had reset it every frame
             ship.autopilotTarget = null;
             if (weapons != null) weapons.Blocked = true;
             if (chase != null) chase.enabled = false;   // TargetFollowCamera::setActive(false): the camera stays where it is
