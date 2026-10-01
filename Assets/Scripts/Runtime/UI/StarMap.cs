@@ -274,11 +274,29 @@ namespace GoF2Remake.UI
             if (pendingHint != null && dialog != null && !DialogOpen) { var hint = pendingHint; pendingHint = null; ShowHint(hint); }
         }
 
+        /// <summary>StarMap::init 0xd6d20: StarMap+0xf4 = campaign mission > 15. Until then (Mido, the tutorial) the map
+        /// opens in the current system's system view and Back closes it: no galaxy view (starmap_travel.md 2 / 3).</summary>
+        static bool GalaxyAllowed => Session.FreePlay || Session.CampaignMission > 15;
+
         void RevealMap()
         {
             root.RemoveFromClassList("map-dialog-only");
             BuildWorld();
             BuildSystemItems();
+            if (!GalaxyAllowed && revealSystem < 0 && currentSystem >= 0 && currentSystem < suns.Length)
+            {
+                selected = centred = zoomSystem = currentSystem;
+                BuildSystem(currentSystem);
+                FillSystemHeader(currentSystem);
+                systemView = true;
+                zoomDir = 0;
+                fade = 0f;
+                if (suns[currentSystem] != null) suns[currentSystem].localScale = Vector3.one * sunScale / 3f;
+                UpdateCamera();
+                BuildHints(InputMode.Current);
+                ApplyInputMode();
+                return;
+            }
             if (mode == StarMapMode.Mission && focusStation >= 0)
             {
                 int from = routeFrom >= 0 ? routeFrom : currentSystem, to = SystemOf(focusStation);
@@ -963,7 +981,7 @@ namespace GoF2Remake.UI
             if (DialogOpen) { AnswerDialog(false); return; }
             whooshOn = false;   // StarMap::OnTouchEnd: the back button stops 0x66
             if (zoomDir != 0) return;
-            if (systemView) ZoomOut();
+            if (systemView && GalaxyAllowed) ZoomOut();
             else Close(new StarMapResult { station = -1 });
         }
 
