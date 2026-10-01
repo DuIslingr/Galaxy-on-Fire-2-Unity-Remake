@@ -186,7 +186,7 @@ namespace GoF2Remake.World
 
         public bool DeadRange(int a, int b)
         {
-            for (int i = a; i < b; i++) if (!ShipDead(i)) return false;
+            for (int i = a; i < b; i++) if (!ShipDestroyed(i)) return false;
             return true;
         }
 
@@ -282,6 +282,10 @@ namespace GoF2Remake.World
         public int ScriptEvent => Event;
         public int ShipCount => Ships.Count;
         public bool ShipDead(int i) => i >= 0 && i < Ships.Count && (Ships[i] == null || !Ships[i].Target.Alive);
+        /// <summary>KIPlayer::isDead (state 4), what the level objectives check (Objective::achieved 1 / 7 / 0x12 / 0x14): past
+        /// the death tumble, at the explosion. The radio's triggers take Player::isDead (no hull left, ShipDead).</summary>
+        public bool ShipDestroyed(int i) => i >= 0 && i < Ships.Count
+                                            && (Ships[i] == null || (!Ships[i].Target.Alive && (Ships[i].Current == NpcShip.State.Dead || Ships[i].Gone)));
         public bool ShipActive(int i) => i >= 0 && i < Ships.Count && Ships[i] != null && !Ships[i].Gone && !Ships[i].Asleep && Ships[i].Target.Alive;
         public float ShipHullFraction(int i) => i >= 0 && i < Ships.Count && Ships[i] != null ? Ships[i].Target.HullFraction : 0f;
         /// <summary>Radio trigger 0x10 / the enemies-left counter: a ship that isn't always-friend.</summary>

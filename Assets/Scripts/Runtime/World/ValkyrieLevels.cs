@@ -239,7 +239,7 @@ namespace GoF2Remake.World
                 s.Place(ToUnity(at), Dir(new Vector3(1, 0, 0)));
             }
             c.WinObjective = () => c.Radio != null && c.Radio.LastOver;   // 0x16
-            c.FailObjective = () => c.ShipDead(0);                          // 1 (0): Khador dead
+            c.FailObjective = () => c.ShipDestroyed(0);                          // 1 (0): Khador dead
         }
 
         void Build65()
@@ -271,7 +271,7 @@ namespace GoF2Remake.World
             c.SpawnShip(0, 27, PlayerGame + new Vector3(2000, 500, -7000), false,
                         s => { s.alwaysFriend = true; s.nameText = 1633; s.hitpoints = 9999999; s.route = route.Clone(); s.noLoot = true; });
             c.WinObjective = () => c.Radio != null && c.Radio.LastOver;   // 0x16
-            c.FailObjective = () => c.ShipDead(0);                          // 1 (0): the outpost destroyed
+            c.FailObjective = () => c.ShipDestroyed(0);                          // 1 (0): the outpost destroyed
         }
 
         /// <summary>StarSystem::getPlanets()[1]: the second planet billboard (game units, -20000 * its direction).</summary>
@@ -309,7 +309,7 @@ namespace GoF2Remake.World
             var trot = c.SpawnShip(0, 12, at, false, s => { s.alwaysFriend = true; s.nameText = 1631; s.route = route; s.hitpoints = hull; s.noLoot = true; });
             trot.Place(ToUnity(at), Dir((target - at).normalized));
             // Level::assignGuns, mission 0x46: every ship but the wingmen fires the Disruptor Laser at x2.5 (NpcTables.GunDamage).
-            c.WinObjective = () => c.ShipDead(0);   // 1 (0)
+            c.WinObjective = () => c.ShipDestroyed(0);   // 1 (0)
         }
 
         void Build73()

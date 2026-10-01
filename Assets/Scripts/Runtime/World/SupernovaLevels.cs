@@ -247,7 +247,7 @@ namespace GoF2Remake.World
             var wreck = Static("sn_cargo_001_midorian_wrecked", new Vector3(-20000, 0, 60000), new Vector3(0, 5.4978f, 0), -1, 0, 3,
                                s => { s.hitpoints = Mathf.Max(1, NpcTables.Hull(1, 15) / 20); s.inactive = true; });
             wreck.RadarHidden = true;
-            c.FailObjective = () => c.ShipDead(0);   // Objective(1, 0): the wreck destroyed
+            c.FailObjective = () => c.ShipDestroyed(0);   // Objective(1, 0): the wreck destroyed
             // PlayerFixedObject::update animates the wreck's +0x14 transform; +0xc (the *_wrecked_anim root) only from the
             // break-up on (below): held until then.
             wreckAnims.Clear();
@@ -274,7 +274,7 @@ namespace GoF2Remake.World
             var freighter = Static("cargo_001_midorian", new Vector3(80000, 0, 110000), Vector3.zero, 3209, ObjectDocking.DropOff, 4);
             MovePlayer(new Vector3(0, 0, 200000), G(freighter) - new Vector3(0, 0, 200000));
             c.WinObjective = () => c.Radio != null && c.Radio.LastOver;   // 0x16
-            c.FailObjective = () => c.ShipDead(3);                          // 1 (3): the freighter destroyed
+            c.FailObjective = () => c.ShipDestroyed(3);                          // 1 (3): the freighter destroyed
         }
 
         // 94: Luur, the burning station's evacuation.
@@ -292,7 +292,7 @@ namespace GoF2Remake.World
                 shuttles.Add(new Shuttle { ship = s, points = new[] { Vector3.zero, new Vector3(20000, -3000, 30000), new Vector3(30000, -5000, 40000) },
                                            dockMs = new[] { 12000f, 0f, 12000f }, dropOff = 2, perUnitMs = 1500f, leg = i });
             }
-            c.FailObjective = () => c.ShipDead(7);   // Objective(1, 7): the freighter destroyed
+            c.FailObjective = () => c.ShipDestroyed(7);   // Objective(1, 7): the freighter destroyed
         }
 
         // "Meanwhile, back on Thynome station..." (95, 99, 109, 119, 126, 133, 160, 161): the ctor block 0x15f852.

@@ -159,7 +159,7 @@ namespace GoF2Remake.World
             c.SpawnShip(0, 17, b.points[0] + new Vector3(1000, 0, 2000), false, s => { s.alwaysEnemy = true; s.route = b; s.nameText = 1611; s.asleep = true; });
             for (int i = 0; i < 3; i++) c.SpawnShip(0, 5, a.points[0], true, s => { s.route = a; s.asleep = true; });
             c.WinObjective = () => c.Radio != null && c.Radio.LastOver;   // 0x16: the last line (the Hijacker disabled)
-            c.FailObjective = () => c.ShipDead(0);                          // 7 (1): the Hijacker destroyed
+            c.FailObjective = () => c.ShipDestroyed(0);                          // 7 (1): the Hijacker destroyed
         }
 
         void Build24()
@@ -249,7 +249,7 @@ namespace GoF2Remake.World
             }
             for (int i = 0; i < 4; i++) c.SpawnShip(Standing.Void, 8, e, true, s => s.alwaysEnemy = true);
             for (int i = 0; i < 4; i++) c.SpawnShip(Standing.Void, 8, new Vector3(-500000, -500000, -500000), false, s => { s.alwaysEnemy = true; s.inactive = true; });
-            c.FailObjective = () => c.ShipDead(0);   // 7 (1): the freighter destroyed
+            c.FailObjective = () => c.ShipDestroyed(0);   // 7 (1): the freighter destroyed
         }
 
         void Build41()
@@ -267,7 +267,7 @@ namespace GoF2Remake.World
             };
             foreach (var p in at) c.SpawnShip(Standing.Void, 8, p, false, s => s.alwaysEnemy = true);
             c.WinObjective = () => won41;            // 0x19 (0): the script's flag on the freighter
-            c.FailObjective = () => c.ShipDead(0);   // 7 (1)
+            c.FailObjective = () => c.ShipDestroyed(0);   // 7 (1)
         }
 
         // ---- cutscene helpers (the "enter" / "leave" sequences, campaign_levels_a.md 1.5) ------------------------------
