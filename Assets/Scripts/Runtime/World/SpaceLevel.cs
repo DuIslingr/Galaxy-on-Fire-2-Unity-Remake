@@ -144,7 +144,7 @@ namespace GoF2Remake.World
         /// <summary>Options changed in flight (the pause menu) reach the ship and the chase camera at once.</summary>
         void ApplyOptions()
         {
-            if (Player != null) { Player.sensitivity = Settings.Sensitivity; Player.invertPitch = Settings.InvertPitch; }
+            if (Player != null) { Player.sensitivity = Settings.Sensitivity; Player.invertPitch = Settings.InvertPitch; Player.invertYaw = Settings.InvertYaw; }
             if (chase != null) chase.baseFov = Settings.FieldOfView;
         }
 
@@ -559,6 +559,7 @@ namespace GoF2Remake.World
             ctrl.stats.cargoLoad = Shop.CargoLoad();
             ctrl.sensitivity = Settings.Sensitivity;
             ctrl.invertPitch = Settings.InvertPitch;
+            ctrl.invertYaw = Settings.InvertYaw;
             ctrl.ApplyStats();
 
             var entry = db.ShipAssembly(Session.ShipIndex);

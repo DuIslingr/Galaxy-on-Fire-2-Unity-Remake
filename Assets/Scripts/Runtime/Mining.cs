@@ -352,6 +352,9 @@ namespace GoF2Remake.Flight
             var v = new Vector2(touchInput.x, -touchInput.y);
             var s = GameControls.Steer.ReadValue<Vector2>();
             if (s.sqrMagnitude > 0.02f && s.sqrMagnitude > v.sqrMagnitude) v = new Vector2(s.x, -s.y);
+            // Remake: the drill's own invert options (flight's don't apply here).
+            if (Settings.InvertDrillX) v.x = -v.x;
+            if (Settings.InvertDrillY) v.y = -v.y;
             return Vector2.ClampMagnitude(v, 1f);
         }
 

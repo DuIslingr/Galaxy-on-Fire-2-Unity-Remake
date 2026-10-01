@@ -103,7 +103,14 @@ namespace GoF2Remake.Data
 
         /// <summary>Steering sensitivity (FlightModel.Sensitivity, 0..2.2).</summary>
         public static float Sensitivity { get => Get("sensitivity", 1f); set => Set("sensitivity", Mathf.Clamp(value, 0f, 2.2f)); }
+        /// <summary>Flight steering, up / down inverted (options[0x10]'s "Invert controls", 500; every input: stick, keys,
+        /// touch, tilt, mouse).</summary>
         public static bool InvertPitch { get => GetBool("invertPitch", false); set => SetBool("invertPitch", value); }
+        /// <summary>Remake: flight steering, left / right inverted.</summary>
+        public static bool InvertYaw { get => GetBool("invertYaw", false); set => SetBool("invertYaw", value); }
+        /// <summary>Remake: the mining minigame's drill inverted on its own, up / down and left / right.</summary>
+        public static bool InvertDrillY { get => GetBool("invertDrillY", false); set => SetBool("invertDrillY", value); }
+        public static bool InvertDrillX { get => GetBool("invertDrillX", false); set => SetBool("invertDrillX", value); }
         /// <summary>Globals::mouseCursorActivated (the PC version): the mouse moves the crosshair and steers (desktop only).</summary>
         public static bool MouseSteering { get => GetBool("mouseSteering", true); set => SetBool("mouseSteering", value); }
         /// <summary>options[0x11] = 0: the accelerometer steers (MGame::handleAccelerometer).</summary>
@@ -161,7 +168,7 @@ namespace GoF2Remake.Data
                      {
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
                          "frameRate", "renderScale", "upscaler", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "fov", "cameraShake",
-                         "sensitivity", "invertPitch", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
+                         "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);
             PlayerPrefs.Save();

@@ -32,6 +32,7 @@ namespace GoF2Remake.Flight
         [UnityEngine.Serialization.FormerlySerializedAs("useLegacyInput")]
         public bool useBuiltInInput = true;
         public bool invertPitch = false;
+        public bool invertYaw = false;
         public float throttleChangePerSecond = 0.8f;
 
         // The controls are GameControls' (rebindable): Steer, Throttle, Brake, Boost, LevelOut, Roll (remake: manual roll, the
@@ -171,7 +172,7 @@ namespace GoF2Remake.Flight
             if (autopilotTarget != null || steeringLocked) steer = Vector2.zero;
 
             // Model convention: +x = yaw left, +y = pitch down. Map "stick right = turn right".
-            var model = new Vector2(-steer.x, invertPitch ? steer.y : -steer.y);
+            var model = new Vector2(invertYaw ? steer.x : -steer.x, invertPitch ? steer.y : -steer.y);
 
             var r = Model.Step(model, dtMs, transform.up, transform.right);
 
