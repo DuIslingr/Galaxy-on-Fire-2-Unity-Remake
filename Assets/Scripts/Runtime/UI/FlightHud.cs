@@ -427,7 +427,8 @@ namespace GoF2Remake.UI
             Hint(fire, GameControls.FirePrimary);
             Hint(T("hudMissile", "MISSILE"), GameControls.FireSecondary);
             if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), GameControls.SwitchSecondary);
-            Hint(T("hudDodge", "DODGE"), GameControls.DodgeLeft, GameControls.DodgeRight);
+            Hint(T("hudStrafe", "STRAFE"), GameControls.StrafeLeft, GameControls.StrafeRight);
+            Hint(T("hudDodge", "DODGE"), GameControls.DodgeLeft, GameControls.DodgeRight);   // left out while unbound
             Hint(T("hudRoll", "ROLL"), GameControls.Roll);
             Hint(T("hudLevel", "LEVEL"), GameControls.LevelOut);
             if (level != null && level.Turret != null)

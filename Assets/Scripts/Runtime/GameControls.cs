@@ -47,7 +47,7 @@ namespace GoF2Remake.Flight
         /// <summary>A binding changed (a rebind, a reset): hints and option rows show the new keys.</summary>
         public static event Action Changed;
 
-        public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, DodgeLeft, DodgeRight,
+        public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight,
             FirePrimary, FireSecondary, SwitchSecondary, Action, AutopilotMenu, Wingmen, KhadorDrive, FastForward,
             Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, Screenshot;
 
@@ -73,8 +73,12 @@ namespace GoF2Remake.Flight
                 new Func<string>[] { () => X("ctlLeft", "left"), () => X("ctlRight", "right") },
                 new[] { "<Keyboard>/1", "<Keyboard>/3" }, padParts: new string[] { null, null });
             LevelOut = Button("levelOut", () => X("ctlLevelOut", "Level out"), "<Keyboard>/2", null, "<Gamepad>/buttonNorth");
-            DodgeLeft = Button("dodgeLeft", () => X("ctlDodgeLeft", "Dodge left"), "<Keyboard>/a", null, null);
-            DodgeRight = Button("dodgeRight", () => X("ctlDodgeRight", "Dodge right"), "<Keyboard>/d", null, null);
+            // The PC version's binding screen: 3350 / 3351 "Strafe left / right" (held, PlayerEgo::strafe). The dodge (the
+            // phone's swipe; the right stick's flick) has no keyboard default.
+            StrafeLeft = Button("strafeLeft", () => Localization.Get(3350), "<Keyboard>/a", null, null);
+            StrafeRight = Button("strafeRight", () => Localization.Get(3351), "<Keyboard>/d", null, null);
+            DodgeLeft = Button("dodgeLeft", () => X("ctlDodgeLeft", "Dodge left"), null, null, null);
+            DodgeRight = Button("dodgeRight", () => X("ctlDodgeRight", "Dodge right"), null, null, null);
             // ---- weapons
             FirePrimary = Button("firePrimary", () => X("ctlFirePrimary", "Fire"), "<Keyboard>/space", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
             FireSecondary = Button("fireSecondary", () => X("ctlFireSecondary", "Fire secondary"), "<Keyboard>/r", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");

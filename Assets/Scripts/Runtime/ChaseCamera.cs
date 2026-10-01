@@ -123,6 +123,7 @@ namespace GoF2Remake.Flight
             // ... and translateNoUpdate(-0.9 x the slide) every frame: the camera takes back most of the sideways move,
             // so the ship visibly slides across the view and the camera catches up afterwards.
             transform.position -= dodgeLag * target.ManeuverSlide;
+            transform.position += target.StrafeSlide;   // handleShip: translateNoUpdate by the strafe, the camera keeps its place
             transform.rotation = Quaternion.Slerp(transform.rotation, desiredRot, 1f - Mathf.Exp(-rotK * dtMs));
 
             if (shakeMs > 0f)

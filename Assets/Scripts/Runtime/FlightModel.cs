@@ -142,6 +142,31 @@ namespace GoF2Remake.Flight
         /// <summary>The PC version's "Brake" (binding 3361, apart from "Throttle down" 3360): the engines stop while it is
         /// held; the throttle is kept, so releasing it flies on at once. The phone original has no brake.</summary>
         public bool Braking;
+
+        // ---- strafe (PlayerEgo::strafe 0xad838, the PC port's handler: no caller in the phone build; handleShip moves
+        // the ship by it, PlayerEgo+0x37c / +0x380) -------------------------------------------------------------------
+        const float StrafeFrameMs = 1000f / 30f;
+        float strafeRamp = 0.1f;
+        /// <summary>Sideways speed in units/ms, + = right.</summary>
+        public float StrafeVelocity { get; private set; }
+
+        /// <summary>Held strafe key, every frame: v = ramp * dir * min(H' * 30 * 0.002, 2) (H' = the cargo-reduced handling
+        /// on Extreme), the ramp from 0.1 x1.5 a (30 fps) frame up to 1: full sideways speed after ~6 frames.</summary>
+        public void Strafe(int dir, float dtMs)
+        {
+            StrafeVelocity = strafeRamp * dir * Mathf.Min(EffectiveHandling * 30f * 0.002f, 2f);
+            strafeRamp = Mathf.Min(strafeRamp * Mathf.Pow(1.5f, dtMs / StrafeFrameMs), 1f);
+        }
+
+        /// <summary>handleShip: while |v| &gt; 0.01 the ship moves v * dt sideways and v drops x0.7 a (30 fps) frame;
+        /// below it the ramp resets to 0.1. Returns this frame's sideways move in units.</summary>
+        public float StepStrafe(float dtMs)
+        {
+            if (Mathf.Abs(StrafeVelocity) <= 0.01f) { StrafeVelocity = 0f; strafeRamp = 0.1f; return 0f; }
+            float d = StrafeVelocity * dtMs;
+            StrafeVelocity *= Mathf.Pow(0.7f, dtMs / StrafeFrameMs);
+            return d;
+        }
         public void SetThrottle(float value) => Throttle = Mathf.Clamp01(value);
 
         public bool HasBooster => hasBooster;

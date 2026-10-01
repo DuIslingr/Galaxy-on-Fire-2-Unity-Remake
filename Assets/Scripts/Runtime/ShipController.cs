@@ -57,6 +57,8 @@ namespace GoF2Remake.Flight
         public event System.Action DodgeRequested;
         /// <summary>The dodge's sideways move this frame (world, metres; zero otherwise): the chase camera takes back 90 %.</summary>
         public Vector3 ManeuverSlide { get; private set; }
+        /// <summary>This frame's strafe move (world, metres): the chase camera moves with it (TargetFollowCamera::translateNoUpdate).</summary>
+        public Vector3 StrafeSlide { get; private set; }
 
         /// <summary>An autopilot moves the ship (asteroid docking, PlayerEgo+0x145): no input, no flight model step and
         /// no cosmetic banking; it reports its speed through ExternalSpeedMetersPerSecond.</summary>
@@ -144,6 +146,7 @@ namespace GoF2Remake.Flight
             if (useBuiltInInput && !inputLocked) ReadDodgeInput();
             if (Maneuver.Active && (inputLocked || steeringLocked)) Maneuver.Cancel();
             ManeuverSlide = Vector3.zero;
+            StrafeSlide = Vector3.zero;
             if (Maneuver.Active)
             {
                 // PlayerEgo::updateManeuver instead of handleShip (also over the autopilot's steering).
@@ -195,14 +198,28 @@ namespace GoF2Remake.Flight
             }
             transform.position += transform.forward * (r.forwardUnits * metersPerUnit)
                                 + transform.right * (r.sidePushUnits * metersPerUnit);
+            // The PC version's held strafe (bindings 3350 / 3351 "Strafe left / right"): not on the autopilot or while the
+            // controls are locked.
+            if (useBuiltInInput && !inputLocked && !steeringLocked && autopilotTarget == null)
+            {
+                int dir = (GameControls.StrafeRight.IsPressed() ? 1 : 0) - (GameControls.StrafeLeft.IsPressed() ? 1 : 0);
+                if (dir != 0) Model.Strafe(dir, dtMs);
+            }
+            float strafe = Model.StepStrafe(dtMs);
+            if (strafe != 0f)
+            {
+                StrafeSlide = transform.right * (strafe * metersPerUnit);
+                transform.position += StrafeSlide;
+            }
 
             SpeedMetersPerSecond = dtMs > 0f ? r.forwardUnits * metersPerUnit / (dtMs / 1000f) : 0f;
 
             UpdateVisualBank();
         }
 
-        // The dodge bindings (the original: a touch swipe, FlightHud): GameControls' DodgeLeft / DodgeRight (A / D, the PC
-        // version's "Move left / right"), or (remake) a sideways flick of the controller's right stick while no binding uses it.
+        // The dodge bindings (the original: a touch swipe, FlightHud): GameControls' DodgeLeft / DodgeRight (no keyboard default:
+        // A / D are the PC version's held strafe), or (remake) a sideways flick of the controller's right stick while no
+        // binding uses it.
         bool stickFlicked;
 
         void ReadDodgeInput()
