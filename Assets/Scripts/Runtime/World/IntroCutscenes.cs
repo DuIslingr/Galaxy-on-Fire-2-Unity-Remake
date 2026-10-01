@@ -34,7 +34,7 @@ namespace GoF2Remake.World
         readonly int index;
         float stepMs, playerSpeed = 2f;   // u/ms
         float fxMs, fxLength;
-        bool soundsPlayed, loading;
+        bool soundsPlayed, loading, battleOver;
         GameObject fx;
         ShipSmoke smoke;
 
@@ -223,6 +223,13 @@ namespace GoF2Remake.World
                     }
                     break;
                 case 4:
+                    // Radar::draw (the fight isn't a cutscene): a dying pirate no longer counts (KIPlayer::isDying), and with
+                    // no hostile ship left 142 isn't in the battle set, so the system's calm track takes over until 143.
+                    if (!battleOver && pirates.Count > 0 && pirates.TrueForAll(p => p == null || p.Gone || p.Current == NpcShip.State.Dying || p.Current == NpcShip.State.Dead))
+                    {
+                        battleOver = true;
+                        if (level.Traffic != null) campaign.PlayMusic(level.Traffic.CalmClip(), true);
+                    }
                     if (Over(10))
                     {
                         // The pirates are dead: back to the cutscene, guns off, facing +X, camera out to the side.

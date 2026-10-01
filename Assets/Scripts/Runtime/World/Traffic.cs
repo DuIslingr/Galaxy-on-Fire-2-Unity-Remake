@@ -846,7 +846,7 @@ namespace GoF2Remake.World
         /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
         /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before
         /// 0x6a) / 2242 or else 148, the deep science orbits (10 / 100) 152, else the system race's (DAT_00252010).</summary>
-        AudioClip CalmClip()
+        public AudioClip CalmClip()
         {
             var story = StoryAssets.Load();
             var sn = SupernovaAssets.Load();
