@@ -529,6 +529,8 @@ namespace GoF2Remake.UI
             root.EnableInClassList("hud-map", mapOpen);
             if (mapOpen) return;   // the map has its own input
 
+            // MGame::OnUpdate: DialogueWindow::update runs only while the player lives; a conversation open at the death waits.
+            if (storyDialogue != null) storyDialogue.Paused = health != null && health.Dead;
             if (storyDialogue != null && storyDialogue.IsOpen)
             {
                 // No radio box under a conversation: the success dialogue can open on the frame a radio line ends, before

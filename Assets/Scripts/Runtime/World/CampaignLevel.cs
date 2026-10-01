@@ -202,6 +202,10 @@ namespace GoF2Remake.World
                 FadeAlpha = fadeIn ? 1f - t : t;
                 if (fadeIn && t >= 1f) fading = false;   // a fade-out stays opaque (enableFillScreen)
             }
+            // The player's death stops the level: its script, cutscenes and radio wait (MGame::OnUpdate only runs the dialogue
+            // windows and the success check while the player lives; remake: LevelScript::process waits too, so a cutscene
+            // or a story step can't play on under the game over).
+            if (level.Health != null && level.Health.Dead) return;
             if (intro != null && Story.Index == BuiltIndex) intro.Tick(dtMs);
             main?.Tick(Story.Index, dtMs);
             valkyrie?.Tick(Story.Index, dtMs);
