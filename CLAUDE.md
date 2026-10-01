@@ -446,7 +446,7 @@ Research: `Reference/research/weapons.md` (functions, per-item table, fx, sounds
   (the gold / red / purple strips, 50 / 100 / 150 units, every 50, 25 sections, 1000 ms). NPC rockets have none (setRadar
   is the player's); SunFire's record 28 (another manager) isn't built. Remake: one camera-facing ribbon for the
   original's two crossed ones. The rocket meshes' `_add` flame children were already there.
-- Explosions (`Explosion.Spawn(type, ...)`): 0 ship, 7 EMP, 8-10 scatter, 11 shock blast, 13 fireworks. The fx atlases are imported without mipmaps and clamped (`AssetImport.IsFxAtlas`).
+- Explosions (`Explosion.Spawn(type, ...)`): 0 ship, 7 EMP, 8-10 scatter, 11 shock blast, 13 fireworks. The fx atlases are imported clamped (repeat wrapping drew lines on explosions) with mipmaps, trilinear and 8x anisotropic like the original (`AssetImport.IsFxAtlas`; every fx .aei is type 3 / 0x42, image flag 2 = glGenerateMipmap): without mips the exhaust and engine glow shimmered.
 
 ## Combat equipment
 

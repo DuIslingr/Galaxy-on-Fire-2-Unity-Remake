@@ -50,9 +50,14 @@ namespace GoF2Remake.EditorTools
             }
             else if (IsFxAtlas(assetPath, name))
             {
-                // Effect atlases (explosions, projectiles, sparks): each mesh maps one cell, so mipmaps and wrapping
-                // blend the neighbouring cells into its edges (lines on explosions). No mips, clamped.
-                ti.mipmapEnabled = false;
+                // Effect atlases (explosions, projectiles, sparks, engine glow): each mesh maps one cell, so repeat wrapping
+                // pulled the opposite edge's cells into the outer cells (lines on explosions): clamped. Mipmaps as the
+                // original (TextureCreateFromFileIntern: every fx .aei is type 3 / 0x42, image flag 2 = glGenerateMipmap,
+                // trilinear, 8x anisotropic); without them the small sprites (exhaust, engine glow) shimmered and looked
+                // pixelated.
+                ti.mipmapEnabled = true;
+                ti.filterMode = FilterMode.Trilinear;
+                ti.anisoLevel = 8;
                 ti.wrapMode = TextureWrapMode.Clamp;
             }
             else if (assetPath.Contains("/Textures/textures/"))
