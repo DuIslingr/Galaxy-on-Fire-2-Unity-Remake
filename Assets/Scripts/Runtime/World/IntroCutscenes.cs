@@ -79,7 +79,15 @@ namespace GoF2Remake.World
 
         public void Build()
         {
-            campaign.PlayerInvulnerable = true;   // HP 9 999 999
+            // Case 0: Player::setHitpoints(9 999 999) (the maximum too), not setVulnerable(false): the shield and armor still take
+            // the pirates' hits, only the hull never runs out. The rescue has nothing to hit it.
+            if (index == 0 && level.Health != null && level.Health.Hp != null)
+            {
+                var hp = level.Health.Hp;
+                hp.hull = hp.maxHull = 9999999;
+                level.Health.Target.hp = level.Health.Target.maxHp = hp.hull;
+            }
+            else campaign.PlayerInvulnerable = true;
             campaign.Cutscene = true;
             campaign.CollisionOff = true;
             campaign.StartSequenceOver = false;
