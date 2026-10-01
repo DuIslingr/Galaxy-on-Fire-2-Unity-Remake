@@ -1140,6 +1140,17 @@ namespace GoF2Remake.UI
                 optionControls.Add(c);
             }
 
+            // Remake: every save to one file and back (SaveTransfer), main menu only (no game is loaded here).
+            foreach (var def in SaveTransferOptions())
+            {
+                var c = new OptionControl(def);
+                c.Field.AddToClassList("option-row");
+                HookFocusSound(c.Field);
+                c.Changed += () => Play(buttonRelease);
+                root.Q(PageName(def.page)).Add(c.Root);
+                optionControls.Add(c);
+            }
+
             var langList = root.Q("languageList");
             for (int i = 0; i < languageCodes.Length && i < languageNames.Length; i++)
             {
@@ -1151,6 +1162,92 @@ namespace GoF2Remake.UI
                 HookFocusSound(b);
                 langList.Add(b);
             }
+        }
+
+        OptionDef[] SaveTransferOptions()
+        {
+            string where = SaveTransfer.HasFileDialog ? null : SaveTransfer.TransferFolder;
+            return new[]
+            {
+                new OptionDef
+                {
+                    id = "exportSaves", page = OptionPage.Gameplay, kind = OptionKind.Button,
+                    label = () => Localization.Extra("exportSaves", "Export saves"),
+                    description = () => where == null
+                        ? Localization.Extra("exportSavesHelp", "Every save slot into one file, to keep a copy or move your games to another device.")
+                        : Localization.Extra("exportSavesHelpFolder", "Every save slot into one file in this folder:") + " " + where,
+                    action = () => root.schedule.Execute(ExportSaves).ExecuteLater(1),   // after the click (the dialog is modal)
+                },
+                new OptionDef
+                {
+                    id = "importSaves", page = OptionPage.Gameplay, kind = OptionKind.Button,
+                    label = () => Localization.Extra("importSaves", "Import saves"),
+                    description = () => where == null
+                        ? Localization.Extra("importSavesHelp", "Replaces every save with the ones in an exported file.")
+                        : Localization.Extra("importSavesHelpFolder", "Replaces every save with the newest exported file in this folder:") + " " + where,
+                    action = () => root.schedule.Execute(PickImport).ExecuteLater(1),
+                },
+            };
+        }
+
+        string SaveTransferTitle(bool import) => (import ? Localization.Extra("importSaves", "Import saves") : Localization.Extra("exportSaves", "Export saves"));
+
+        void ExportSaves()
+        {
+            if (dialog.ClassListContains("dialog-backdrop--shown")) return;
+            var r = SaveTransfer.Export();
+            switch (r.outcome)
+            {
+                case SaveTransfer.Outcome.Done:
+                    ShowNotice(SaveTransferTitle(false), string.Format(Localization.Extra("exportDone", "{0} saves exported to:\n{1}"), r.slots, r.path));
+                    break;
+                case SaveTransfer.Outcome.NothingToExport:
+                    ShowNotice(SaveTransferTitle(false), Localization.Extra("exportNothing", "There are no saves to export."));
+                    break;
+                case SaveTransfer.Outcome.Failed:
+                    ShowNotice(SaveTransferTitle(false), Localization.Extra("exportFailed", "Export failed:") + " " + r.problem);
+                    break;
+            }
+        }
+
+        /// <summary>Import, step 1: the file (picked, or the newest in the Transfer folder), checked whole; then the warning.</summary>
+        void PickImport()
+        {
+            if (dialog.ClassListContains("dialog-backdrop--shown")) return;
+            string path = SaveTransfer.PickImportFile();
+            var r = SaveTransfer.Check(path);
+            switch (r.outcome)
+            {
+                case SaveTransfer.Outcome.Cancelled:
+                    return;
+                case SaveTransfer.Outcome.NoFile:
+                    ShowNotice(SaveTransferTitle(true), string.Format(Localization.Extra("importNoFile", "No exported saves (.{0}) found in:\n{1}"),
+                        SaveTransfer.Extension, SaveTransfer.TransferFolder));
+                    return;
+                case SaveTransfer.Outcome.Invalid:
+                case SaveTransfer.Outcome.Failed:
+                    ShowNotice(SaveTransferTitle(true), string.Format(Localization.Extra("importInvalid", "This file can't be imported, your saves are unchanged.\n{0}: {1}"),
+                        System.IO.Path.GetFileName(path), r.problem));
+                    return;
+            }
+            // Step 2: the warning; nothing is written before Yes.
+            ShowDialog(SaveTransferTitle(true),
+                string.Format(Localization.Extra("importWarning",
+                    "WARNING: importing overwrites ALL your existing saves, the auto-save too, with the {0} saves in \"{1}\". Export them first if you want to keep them. Import anyway?"),
+                    r.slots, System.IO.Path.GetFileName(path)),
+                () => root.schedule.Execute(() => ImportSaves(path)).ExecuteLater(1));
+        }
+
+        void ImportSaves(string path)
+        {
+            var r = SaveTransfer.Import(path);
+            resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);
+            UpdateColumnFit();
+            if (r.outcome == SaveTransfer.Outcome.Done)
+                ShowNotice(SaveTransferTitle(true), string.Format(Localization.Extra("importDone", "{0} saves imported."), r.slots));
+            else
+                ShowNotice(SaveTransferTitle(true), string.Format(Localization.Extra("importInvalid", "This file can't be imported, your saves are unchanged.\n{0}: {1}"),
+                    System.IO.Path.GetFileName(path), r.problem));
         }
 
         void SelectTab(string page)

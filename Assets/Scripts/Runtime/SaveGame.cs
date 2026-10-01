@@ -98,6 +98,10 @@ namespace GoF2Remake.Data
 
         static string Dir => Path.Combine(Application.persistentDataPath, "Saves");
         static string PathOf(int slot) => Path.Combine(Dir, $"slot_{slot:00}.json");
+        /// <summary>The folder of the slot files (SaveTransfer).</summary>
+        public static string Folder => Dir;
+        /// <summary>A slot's file (SaveTransfer).</summary>
+        public static string SlotPath(int slot) => PathOf(slot);
 
         public static bool Exists(int slot) => File.Exists(PathOf(slot));
 
@@ -226,6 +230,89 @@ namespace GoF2Remake.Data
                 eliteFlags = new List<int>(Session.EliteFlags), oreStreak = Session.OreStreak, blindKills = Session.BlindKills,
                 lomaTollPaid = Session.LomaTollPaid, lomaTollRefused = Session.LomaTollRefused,
             };
+        }
+
+        /// <summary>A save file's text from outside (SaveTransfer's import): parsed and checked so loading it can't break the
+        /// game: a version this build knows, and every station, ship, item and system it names in the game's tables
+        /// (an index out of range would throw wherever the game looks it up). 'problem' says what is wrong (English).</summary>
+        public static bool TryParse(string json, Database db, out SaveData save, out string problem)
+        {
+            save = null;
+            if (string.IsNullOrWhiteSpace(json) || json.TrimStart()[0] != '{') { problem = "not a save"; return false; }
+            // JsonUtility keeps the field defaults (version = CurrentVersion) for what the text lacks: "{}" isn't a save.
+            if (!json.Contains("\"version\"") || !json.Contains("\"ship\"") || !json.Contains("\"station\""))
+            {
+                problem = "not a save (fields missing)"; return false;
+            }
+            try { save = JsonUtility.FromJson<SaveData>(json); }
+            catch (Exception e) { problem = "unreadable (" + e.Message + ")"; return false; }
+            if (save == null) { problem = "unreadable"; return false; }
+            try { problem = Check(save, db); }
+            catch (Exception e) { problem = "unreadable (" + e.Message + ")"; }
+            if (problem != null) { save = null; return false; }
+            return true;
+        }
+
+        static string Check(SaveData s, Database db)
+        {
+            int stations = db.Stations.Count, ships = db.Ships.Count, items = db.Items.Count, systems = db.Systems.Count;
+            bool Station(int i) => i >= 0 && i < stations;
+            bool StationOrNone(int i) => i == -1 || Station(i);
+            bool Ship(int i) => i >= 0 && i < ships;
+            bool Item(int i) => i >= 0 && i < items;
+            bool Finite(float f) => !float.IsNaN(f) && !float.IsInfinity(f);
+            string Stacks(List<ItemStack> l, string what)
+            {
+                if (l == null) return null;
+                foreach (var st in l)
+                    if (st == null || !Item(st.item) || st.amount < 0) return $"an unknown item or a negative amount in the {what}";
+                return null;
+            }
+
+            if (s.version < 1) return "not a save (no version)";
+            if (s.version > SaveData.CurrentVersion) return "saved by a newer version of the game; update it first";
+            if (s.campaign < 0 || s.campaign > (int)Campaign.Supernova) return "an unknown campaign";
+            if (s.version >= 10 && s.economy != (int)Economy.Android && s.economy != (int)Economy.Default) return "an unknown economy";
+            if (!Finite(s.playSeconds) || s.playSeconds < 0f) return "a broken playing time";
+            if (!Finite(s.difficulty) || s.difficulty < 0f || s.difficulty > 2f) return "an unknown difficulty";
+            if (!Finite(s.storyStepStart) || !Finite(s.wingmanContractMs)) return "a broken timer";
+            if (s.campaignMission < 0 || s.campaignMission > Story.LastIndex) return "an unknown story mission";
+            if (!Station(s.station) && s.station != Session.VoidOrbit) return "an unknown station";
+            if (!StationOrNone(s.previousStation)) return "an unknown previous station";   // -1: none (also Session.VoidOrbit)
+            if (!Ship(s.ship)) return "an unknown ship";
+            if (s.credits < 0) return "negative credits";
+            if (Stacks(s.equipment, "equipment") is string e1) return e1;
+            if (Stacks(s.cargo, "cargo") is string e2) return e2;
+            if (Stacks(s.kaamoItems, "Kaamo Club storage") is string e3) return e3;
+            if (s.recentStations != null)
+                foreach (var rs in s.recentStations)
+                {
+                    if (rs == null || !Station(rs.station)) return "an unknown station in the shop memory";
+                    if (Stacks(rs.items, "shop memory") is string e4) return e4;
+                    if (rs.ships != null && rs.ships.Exists(x => !Ship(x))) return "an unknown ship in the shop memory";
+                    if (rs.agents != null)
+                        foreach (var a in rs.agents)
+                            if (a == null || !StationOrNone(a.station) || a.sellItem != -1 && !Item(a.sellItem) || a.sellShip != -1 && !Ship(a.sellShip)
+                                || a.sellSystem < -1 || a.sellSystem >= systems)
+                                return "a broken bar visitor";
+                }
+            if (s.kaamoShips != null && s.kaamoShips.Exists(k => k == null || !Ship(k.ship))) return "an unknown ship in the Kaamo Club";
+            if (s.version >= 6 && s.hasParkedShip)
+            {
+                if (s.parkedShip == null || !Ship(s.parkedShip.ship)) return "an unknown parked ship";
+                if (Stacks(s.parkedShip.equipment, "parked ship") is string e5) return e5;
+                if (Stacks(s.parkedShip.cargo, "parked ship") is string e6) return e6;
+            }
+            if (s.storyMission != null && !StationOrNone(s.storyMission.station)) return "an unknown station in the story mission";
+            if (s.freelanceMission != null && !StationOrNone(s.freelanceMission.clientStation)) return "an unknown station in the bar mission";
+            if (s.wanted != null && s.wanted.Exists(w => w == null || !StationOrNone(w.current) || !StationOrNone(w.travelsTo) || !StationOrNone(w.lastSeen)))
+                return "an unknown station on the Most Wanted board";
+            if (!StationOrNone(s.voidInvasionStation)) return "an unknown invaded station";
+            if (s.voidInvasionSystem < -1 || s.voidInvasionSystem >= systems) return "an unknown invaded system";
+            if (s.blueprints != null && s.blueprints.Exists(b => b == null || !Item(b.item))) return "an unknown blueprint";
+            if (s.pendingProducts != null && s.pendingProducts.Exists(p => p == null || !Item(p.item) || !StationOrNone(p.station) || p.quantity < 0))
+                return "an unknown item or station in the production queue";
+            return null;
         }
 
         /// <summary>The save's economy: before version 10 every game used the Android tables.</summary>
