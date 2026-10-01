@@ -115,7 +115,7 @@ namespace GoF2Remake
 
         // ---- upscaler ----------------------------------------------------------------------------------------
 
-        /// <summary>The upscaler option and the MSAA it allows: with the upscaler framework (desktop) the framework's active
+        /// <summary>The upscaler option and the MSAA it allows: with the upscaler framework (desktop, iOS) the framework's active
         /// upscaler (UpscalerFramework, also called for every new pipeline), else the asset's upscaling filter.</summary>
         static void ApplyUpscaling()
         {
@@ -140,13 +140,16 @@ namespace GoF2Remake
             Settings.UpscalerStp => UpscalerFramework.Stp,
             Settings.UpscalerDlss => UpscalerFramework.Dlss,
             Settings.UpscalerFsrTemporal => UpscalerFramework.BestFsr ?? UpscalerFramework.Auto,
+            Settings.UpscalerMetalFxSpatial => UpscalerFramework.MetalFxSpatial,
+            Settings.UpscalerMetalFxTemporal => UpscalerFramework.MetalFxTemporal,
             _ => UpscalerFramework.Auto,
         };
 
-        /// <summary>STP, DLSS and FSR 2+: temporal (anti-aliasing included, MSAA off, the quality mode picks the resolution of
-        /// DLSS / FSR).</summary>
+        /// <summary>STP, DLSS, FSR 2+ and MetalFX Temporal: temporal (anti-aliasing included, MSAA off, the quality mode picks
+        /// the resolution of DLSS / FSR).</summary>
         public static bool IsTemporal(int upscaler) =>
-            upscaler == Settings.UpscalerStp || upscaler == Settings.UpscalerDlss || upscaler == Settings.UpscalerFsrTemporal;
+            upscaler == Settings.UpscalerStp || upscaler == Settings.UpscalerDlss || upscaler == Settings.UpscalerFsrTemporal
+            || upscaler == Settings.UpscalerMetalFxTemporal;
 
         /// <summary>NVIDIA DLSS on this device (desktop builds with the upscaler framework, an RTX GPU, Direct3D 11 / 12 or
         /// Vulkan; known once URP has made its pipeline).</summary>
@@ -154,6 +157,11 @@ namespace GoF2Remake
 
         /// <summary>AMD FSR 2 / 3 / 4 on this device (the newest it runs, UpscalerFramework.BestFsr).</summary>
         public static bool FsrTemporalSupported => UpscalerFramework.BestFsr != null;
+
+        /// <summary>Apple MetalFX Spatial / Temporal on this device (macOS / iOS builds on Metal, UpscalerFramework; known once URP has
+        /// made its pipeline).</summary>
+        public static bool MetalFxSpatialSupported => UpscalerFramework.MetalFxSpatialSupported;
+        public static bool MetalFxTemporalSupported => UpscalerFramework.MetalFxTemporalSupported;
 
         /// <summary>FSR 1 needs shader model 4.5 (FSRUtils); STP compute shaders and no OpenGL ES (STP.IsSupported), so on
         /// Android it runs on Vulkan only, and its compute shaders in the build (StpResourcesPresent).</summary>
@@ -196,6 +204,8 @@ namespace GoF2Remake
             Settings.UpscalerStp when StpSupported => Settings.UpscalerStp,
             Settings.UpscalerDlss when DlssSupported => Settings.UpscalerDlss,
             Settings.UpscalerFsrTemporal when FsrTemporalSupported => Settings.UpscalerFsrTemporal,
+            Settings.UpscalerMetalFxSpatial when MetalFxSpatialSupported => Settings.UpscalerMetalFxSpatial,
+            Settings.UpscalerMetalFxTemporal when MetalFxTemporalSupported => Settings.UpscalerMetalFxTemporal,
             _ => Settings.UpscalerOff,
         };
 
