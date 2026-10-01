@@ -258,6 +258,9 @@ namespace GoF2Remake.World
         /// then, so no generic line plays in a mission orbit (the level's own radio is separate). Null = never.</summary>
         public Func<bool> LevelMissionActive;
 
+        /// <summary>A story cutscene runs (SpaceLevel.Cutscene): the original draws no radar then, so no music switch.</summary>
+        public Func<bool> RadarHidden;
+
         bool RadioBlocked => LevelMissionActive != null && LevelMissionActive();
 
         /// <summary>A story speaker's line in the radio box (Level::createRadioMessage 0x13 / 0x1b), with its voice.</summary>
@@ -869,6 +872,9 @@ namespace GoF2Remake.World
         {
             if (assets == null || music == null) return;
             if (MusicMuted) { if (music.isPlaying) music.Stop(); musicCategory = pendingCategory = -1; return; }
+            // MGame::OnRender2D skips Radar::draw while LevelScript's cutscene flag is set, so nothing switches the music
+            // during a story cutscene (index 14's arrest: the pirates vanish, the battle track plays on).
+            if (RadarHidden != null && RadarHidden() && musicCategory >= 0) { music.volume = fade * Settings.MusicVolume; return; }
             // Radar::draw 0x157c6c: while 143 IntroAtmo plays nothing switches.
             var introAtmo = StoryAssets.Load()?.introAtmo;
             if (introAtmo != null && music.clip == introAtmo && music.isPlaying) { music.volume = fade * Settings.MusicVolume; return; }

@@ -239,6 +239,7 @@ namespace GoF2Remake.World
             Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
+            Traffic.RadarHidden = () => Cutscene;
             if (PlayerBattleship.Active) PlayerBattleship.AttachTurrets(this);   // remake debug: its 7 turrets on the player's hull
             // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
             Docking = Player.gameObject.AddComponent<ObjectDocking>();
