@@ -977,9 +977,12 @@ namespace GoF2Remake.UI
         enum SysPage { Main, Save, Load, Options, Debug }
         SysPage sysPage;
         Button newGameButton, loadGameButton, optionsButton, aboutButton, optionsBack, debugButton;
-        /// <summary>The Options page's scroll list also shows the Debug page (remake-only cheats, CheatsCatalog).</summary>
-        bool OptionsLikePage => sysPage == SysPage.Options || sysPage == SysPage.Debug;
+        /// <summary>The Debug page's scroll list (remake-only cheats, CheatsCatalog).</summary>
+        bool DebugPage => sysPage == SysPage.Debug;
         VisualElement systemOptions;
+        /// <summary>The Options page: the main menu's Options panel (OptionsView) in place of the menu's panel, built anew
+        /// each time it opens.</summary>
+        OptionsView optionsView;
         ScrollView optionsScroll;
         readonly System.Collections.Generic.List<OptionControl> stationOptions = new System.Collections.Generic.List<OptionControl>();
 
@@ -1009,7 +1012,7 @@ namespace GoF2Remake.UI
             // Multiplayer: a session's game is never saved, and no single-player save is loaded into it.
             if (GoF2Remake.Multiplayer.NetGame.Active)
                 foreach (var b in new[] { loadGameButton, saveGameButton }) if (b != null) b.style.display = DisplayStyle.None;
-            // The options page: every option of the catalog (OptionsCatalog, like the pause menu).
+            // The Debug page's scroll list (Options is an OptionsView, BuildOptionsView).
             systemOptions = new VisualElement();
             systemOptions.AddToClassList("system-menu-page");
             optionsScroll = new ScrollView(ScrollViewMode.Vertical) { horizontalScrollerVisibility = ScrollerVisibility.Hidden, verticalScrollerVisibility = ScrollerVisibility.Hidden };
@@ -1022,33 +1025,24 @@ namespace GoF2Remake.UI
             systemMain.parent.Add(systemOptions);
         }
 
-        Button optionsReset;
+        /// <summary>The Options page like the main menu's (OptionsView: its tabs, rows, Back and Default settings), over
+        /// the menu's own panel; the rows take the panel's focus like the menu's buttons.</summary>
+        void BuildOptionsView()
+        {
+            optionsView = new OptionsView(() => { Play(buttonRelease); ShowSystemPage(SysPage.Main); }, true);
+            foreach (var b in new[] { optionsView.BackButton, optionsView.DefaultsButton })
+                b.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
+            optionsView.DefaultsRestored += () => Play(buttonRelease);
+            optionsView.Changed += c => { if (c.def.kind == OptionKind.Choice || c.def.kind == OptionKind.Toggle) Play(buttonRelease); };
+            optionsView.TabChanged += () => Select(optionsView.ActiveTab);
+            systemMenu.Add(optionsView.Root);
+        }
 
         void BuildStationOptions()
         {
             optionsScroll.Clear();
             stationOptions.Clear();
-            if (sysPage == SysPage.Debug) { BuildStationDebug(); return; }
-            OptionPage? page = null;
-            foreach (var def in OptionsCatalog.All())
-            {
-                if (page != def.page)
-                {
-                    page = def.page;
-                    var h = new Label(OptionsCatalog.PageTitle(def.page).ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
-                    h.AddToClassList("system-options-heading");
-                    h.AddToClassList("gof-semibold");
-                    optionsScroll.Add(h);
-                }
-                var c = new OptionControl(def);
-                c.Changed += () => { foreach (var o in stationOptions) if (o != c) o.Refresh(); };
-                c.Root.AddToClassList("system-option");
-                var root0 = c.Root;
-                c.Field.RegisterCallback<FocusInEvent>(_ => { if (!DragScroll.PointerActive) optionsScroll.ScrollTo(root0); });
-                optionsScroll.Add(c.Root);
-                stationOptions.Add(c);
-            }
-            optionsReset = SystemButton(Localization.Get(497), -1, () => { Settings.ResetToDefaults(); foreach (var o in stationOptions) o.Refresh(); }, optionsScroll.contentContainer);
+            BuildStationDebug();
         }
 
         /// <summary>The Debug page: the cheat toggles and actions (CheatsCatalog); an action reports in a toast.</summary>
@@ -1059,7 +1053,6 @@ namespace GoF2Remake.UI
         /// results as toasts.</summary>
         void BuildStationDebug()
         {
-            optionsReset = null;
             string X(string key, string english) => Localization.Extra(key, english);
             var names = new[] { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items") };
             stationDebugTab = Mathf.Clamp(stationDebugTab, 0, names.Length - 1);
@@ -1162,17 +1155,22 @@ namespace GoF2Remake.UI
             bool slots = page == SysPage.Save || page == SysPage.Load;
             systemMain.EnableInClassList("system-menu-page--shown", page == SysPage.Main);
             systemSave.EnableInClassList("system-menu-page--shown", slots);
-            systemOptions?.EnableInClassList("system-menu-page--shown", page == SysPage.Options || page == SysPage.Debug);
-            root.Q(className: "system-menu")?.EnableInClassList("system-menu--wide", page == SysPage.Debug);
+            systemOptions?.EnableInClassList("system-menu-page--shown", page == SysPage.Debug);
+            var menuPanel = root.Q(className: "system-menu");
+            menuPanel?.EnableInClassList("system-menu--wide", page == SysPage.Debug);
+            if (optionsView != null) { optionsView.Root.RemoveFromHierarchy(); optionsView = null; }
+            if (menuPanel != null) menuPanel.style.display = page == SysPage.Options ? DisplayStyle.None : StyleKeyword.Null;
+            if (page == SysPage.Options) BuildOptionsView();
             int title = page == SysPage.Save ? 30 : page == SysPage.Load ? 29 : page == SysPage.Options ? 31 : 172;   // Menu
             root.Q<Label>("systemMenuTitle").text = page == SysPage.Debug ? Localization.Extra("debugTitle", "Debug").ToUpperInvariant()
                                                                           : Localization.Get(title).ToUpperInvariant();
             if (slots) BuildSaveSlots();
-            if (page == SysPage.Options || page == SysPage.Debug) BuildStationOptions();
+            if (page == SysPage.Debug) BuildStationOptions();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             Select(page == SysPage.Save ? saveSlotList.contentContainer.ElementAt(1)     // slot 1: the first manual slot
                  : page == SysPage.Load ? saveSlotList.contentContainer.ElementAt(0)
-                 : page == SysPage.Options || page == SysPage.Debug ? (stationOptions.Count > 0 ? stationOptions[0].Field : optionsBack)
+                 : page == SysPage.Options ? optionsView.ActiveTab
+                 : page == SysPage.Debug ? (stationOptions.Count > 0 ? stationOptions[0].Field : optionsBack)
                  : newGameButton);
             BuildHints(InputMode.Current);
         }
@@ -1221,11 +1219,11 @@ namespace GoF2Remake.UI
         /// <summary>The system menu's focusable items (its buttons, or the slot rows plus Back).</summary>
         VisualElement[] SystemMenuItems()
         {
-            if (OptionsLikePage)
+            if (sysPage == SysPage.Options && optionsView != null) return optionsView.NavItems().ToArray();
+            if (DebugPage)
             {
                 var o = new System.Collections.Generic.List<VisualElement>();
                 foreach (var c in stationOptions) o.Add(c.Field);
-                if (optionsReset != null) o.Add(optionsReset);
                 o.Add(optionsBack);
                 return o.ToArray();
             }
@@ -1364,7 +1362,37 @@ namespace GoF2Remake.UI
                 items = l.ToArray();
             }
             else items = stationItems;
-            if (!DialogOpen && SystemMenuOpen && OptionsLikePage && horizontal)
+            if (!DialogOpen && SystemMenuOpen && sysPage == SysPage.Options && optionsView != null && (horizontal || vertical))
+            {
+                // Like the main menu's Options: up / down walk the tab row, the tab's rows and the footer (stopping at the
+                // ends, Default settings beside Back); left / right switch tabs on the tab row, step a row, or move
+                // between Back and Default settings.
+                var f = root.focusController?.focusedElement as VisualElement;
+                var nav = optionsView.NavItems();
+                int at = nav.IndexOf(f);
+                if (horizontal)
+                {
+                    int dir = e.direction == NavigationMoveEvent.Direction.Left ? -1 : 1;
+                    var row = optionsView.RowOf(f);
+                    if (optionsView.IsTab(f)) optionsView.StepTab(dir);
+                    else if (row != null) row.Step(dir);
+                    else if (f == optionsView.BackButton || f == optionsView.DefaultsButton)
+                        Select(dir < 0 ? optionsView.BackButton : optionsView.DefaultsButton);
+                    else Select(optionsView.ActiveTab);
+                }
+                else
+                {
+                    int step = e.direction == NavigationMoveEvent.Direction.Up ? -1 : 1;
+                    int next = at < 0 ? 0 : at + step;
+                    if (step > 0 && f == optionsView.BackButton) next = at;
+                    if (step < 0 && f == optionsView.DefaultsButton) next = at - 2;
+                    Select(nav[Mathf.Clamp(next, 0, nav.Count - 1)]);
+                }
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+                return;
+            }
+            if (!DialogOpen && SystemMenuOpen && DebugPage && horizontal)
             {
                 // Left / right steps the focused option (OptionControl.Step, like the pause menu).
                 var f = root.focusController?.focusedElement as VisualElement;
@@ -1491,13 +1519,19 @@ namespace GoF2Remake.UI
             }
             if (Flight.GameControls.BlocksMenus) return;   // a key binding is being captured (Options): its key isn't a menu key
             DpadTapNavigation.Pump(root);   // D-pad taps the panel's own navigation drops (the Steam controller)
-            // The Debug page's tabs: Q / E, LB / RB.
-            if (SystemMenuOpen && sysPage == SysPage.Debug && !DialogOpen)
+            // The Debug and Options pages' tabs: Q / E, LB / RB.
+            if (SystemMenuOpen && (sysPage == SysPage.Debug || sysPage == SysPage.Options && optionsView != null) && !DialogOpen)
             {
                 var dkb = GoF2Remake.Multiplayer.NetChat.Keys;
                 var dpad = Gamepad.current;
-                if ((dkb != null && dkb.qKey.wasPressedThisFrame) || (dpad != null && dpad.leftShoulder.wasPressedThisFrame)) { SwitchDebugTab(-1); return; }
-                if ((dkb != null && dkb.eKey.wasPressedThisFrame) || (dpad != null && dpad.rightShoulder.wasPressedThisFrame)) { SwitchDebugTab(1); return; }
+                int tab = 0;
+                if ((dkb != null && dkb.qKey.wasPressedThisFrame) || (dpad != null && dpad.leftShoulder.wasPressedThisFrame)) tab = -1;
+                if ((dkb != null && dkb.eKey.wasPressedThisFrame) || (dpad != null && dpad.rightShoulder.wasPressedThisFrame)) tab = 1;
+                if (tab != 0)
+                {
+                    if (sysPage == SysPage.Debug) SwitchDebugTab(tab); else optionsView.StepTab(tab);
+                    return;
+                }
             }
             if (lounge != null && lounge.Active != root.ClassListContains("lounge-open")) lounge.OnViewChanged();   // also under a dialog
             if (StarMap.IsOpen) return;   // the map has its own input

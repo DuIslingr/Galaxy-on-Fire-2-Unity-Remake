@@ -2,8 +2,8 @@
 // The in-flight pause menu (MenuTouchWindow mode 1, Reference/research/mainmenu_notes.md 2.4): header 40 "Pause", then
 // 41 Resume, 129 Missions (from campaign 16, not in the alien orbit), 166 Cargo hold (from 2), 31 Options, 59 Action Freeze
 // (PhotoMode), 395 Skip (LevelScript::canSkipCutsceneNow: the prologue / rescue, 154, 157, 158) and 522 Back to Main Menu
-// (confirm 523). The game and its sounds pause while it is open. Options holds the main menu's options (OptionsCatalog)
-// but the language. Also the ChoiceWindow (Ask: Loma's toll 448, the flight hints). The share buttons (60 / 61) are dead
+// (confirm 523). The game and its sounds pause while it is open. Options is the main menu's Options panel (OptionsView:
+// the same tabs and rows, OptionsCatalog) but the text language. Also the ChoiceWindow (Ask: Loma's toll 448, the flight hints). The share buttons (60 / 61) are dead
 // code in the original (the remake's 60 saves the picture).
 // Plain class driven by FlightHud: Esc / controller Menu / the touch Menu button open it; Esc / B step back.
 
@@ -33,6 +33,9 @@ namespace GoF2Remake.UI
         SpaceLevel level;
         bool audioWasPaused;
         float previousTimeScale = 1f;
+        /// <summary>The Options page (built anew each time it opens), in place of the panel while it shows.</summary>
+        OptionsView options;
+        int optionIndex;
 
         public bool IsOpen { get; private set; }
         /// <summary>ChoiceWindow::set: sound 126 when the confirmation shows.</summary>
@@ -119,6 +122,8 @@ namespace GoF2Remake.UI
         {
             page = p;
             panel.RemoveFromClassList("pause-panel--wide");   // the Debug page's
+            if (options != null) { options.Root.RemoveFromHierarchy(); options = null; }
+            panel.style.display = StyleKeyword.Null;
             body.Clear();
             items.Clear();
             actions.Clear();
@@ -173,10 +178,8 @@ namespace GoF2Remake.UI
                     Item("‹  " + T(170), () => Show(Page.Main));
                     break;
                 case Page.Options:
-                    title.text = T(31);
                     BuildOptions();
-                    Item("‹  " + T(170), () => Show(Page.Main));
-                    break;
+                    return;
                 case Page.Debug:
                     title.text = Localization.Extra("debugTitle", "Debug").ToUpperInvariant();
                     BuildDebug();
@@ -264,26 +267,74 @@ namespace GoF2Remake.UI
 
         readonly Dictionary<VisualElement, OptionControl> optionRows = new Dictionary<VisualElement, OptionControl>();
 
-        /// <summary>The main menu's options (OptionsCatalog) page by page under their headings, then Default settings (497).
-        /// Rows don't take focus: the keys / D-pad drive them through Tick.</summary>
+        /// <summary>The Options page: the main menu's Options panel (OptionsView) in place of the pause panel, starting on the
+        /// first tab. Its rows don't take focus: Tick moves the highlight (TickOptions).</summary>
         void BuildOptions()
         {
-            optionRows.Clear();
-            Scroll();
-            OptionPage? page = null;
-            foreach (var def in OptionsCatalog.All())
+            panel.style.display = DisplayStyle.None;
+            options = new OptionsView(() => Show(Page.Main), false);
+            options.TabChanged += () => { optionIndex = 0; HighlightOptions(); };
+            options.Root.EnableInClassList("can-hover", InputMode.Current == InputKind.KeyboardMouse);
+            backdrop.Add(options.Root);
+            optionIndex = 0;
+            HighlightOptions();
+        }
+
+        void HighlightOptions()
+        {
+            if (options == null) return;
+            var items = options.NavItems();
+            optionIndex = Mathf.Clamp(optionIndex, 0, items.Count - 1);
+            options.Select(InputMode.Current != InputKind.Touch ? items[optionIndex] : null);
+        }
+
+        /// <summary>The Options page's keys, like the main menu's: up / down walk the tab row, the tab's rows and the footer
+        /// (stopping at the ends); left / right switch tabs on the tab row, step a row, or move between Back and Default
+        /// settings; Q / E and LB / RB switch tabs anywhere; Enter / A takes the row or button.</summary>
+        void TickOptions(UnityEngine.InputSystem.Keyboard kb, Gamepad pad)
+        {
+            options.Root.EnableInClassList("can-hover", InputMode.Current == InputKind.KeyboardMouse);
+            int tab = 0;
+            if ((kb != null && kb.qKey.wasPressedThisFrame) || (pad != null && pad.leftShoulder.wasPressedThisFrame)) tab = -1;
+            if ((kb != null && kb.eKey.wasPressedThisFrame) || (pad != null && pad.rightShoulder.wasPressedThisFrame)) tab = 1;
+            if (tab != 0) { options.StepTab(tab); return; }
+
+            var items = options.NavItems();
+            int move = 0;
+            if (kb != null && (kb.wKey.wasPressedThisFrame || kb.upArrowKey.wasPressedThisFrame)) move = -1;
+            if (kb != null && (kb.sKey.wasPressedThisFrame || kb.downArrowKey.wasPressedThisFrame)) move = 1;
+            if (pad != null && (pad.dpad.up.wasPressedThisFrame || pad.leftStick.up.wasPressedThisFrame)) move = -1;
+            if (pad != null && (pad.dpad.down.wasPressedThisFrame || pad.leftStick.down.wasPressedThisFrame)) move = 1;
+            if (move != 0)
             {
-                if (page != def.page) { page = def.page; Text(OptionsCatalog.PageTitle(def.page).ToUpperInvariant(), "pause-heading"); }
-                var c = new OptionControl(def);
-                c.Field.focusable = false;
-                c.Changed += () => { foreach (var o in optionRows.Values) if (o != c) o.Refresh(); };   // STP turns MSAA off
-                c.Root.AddToClassList("pause-option");
-                scroll.Add(c.Root);
-                items.Add(c.Root);
-                actions.Add(null);
-                optionRows[c.Root] = c;
+                // Down from Back skips Default settings beside it (and up from it comes back over Back).
+                int next = optionIndex + move;
+                if (move > 0 && items[optionIndex] == options.BackButton) next = optionIndex;
+                if (move < 0 && items[optionIndex] == options.DefaultsButton) next = optionIndex - 2;
+                optionIndex = Mathf.Clamp(next, 0, items.Count - 1);
+                HighlightOptions();
+                return;
             }
-            Item(T(497), () => { Settings.ResetToDefaults(); foreach (var c in optionRows.Values) c.Refresh(); });
+            int side = 0;
+            if (kb != null && (kb.aKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame)) side = -1;
+            if (kb != null && (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame)) side = 1;
+            if (pad != null && (pad.dpad.left.wasPressedThisFrame || pad.leftStick.left.wasPressedThisFrame)) side = -1;
+            if (pad != null && (pad.dpad.right.wasPressedThisFrame || pad.leftStick.right.wasPressedThisFrame)) side = 1;
+            var current = items[optionIndex];
+            var row = options.RowOf(current);
+            if (side != 0)
+            {
+                if (options.IsTab(current)) options.StepTab(side);
+                else if (row != null) row.Step(side);
+                else { optionIndex = side < 0 ? items.IndexOf(options.BackButton) : items.IndexOf(options.DefaultsButton); HighlightOptions(); }
+                return;
+            }
+            bool confirm = (kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.spaceKey.wasPressedThisFrame))
+                           || (pad != null && pad.buttonSouth.wasPressedThisFrame);
+            if (!confirm) return;
+            if (row != null) row.Activate();
+            else if (current == options.BackButton) Show(Page.Main);
+            else if (current == options.DefaultsButton) options.RestoreDefaults();
         }
 
         // ---- the Debug page ----------------------------------------------------------------------------------
@@ -434,6 +485,13 @@ namespace GoF2Remake.UI
             }
             var kb = GoF2Remake.Multiplayer.NetChat.Keys;
             var pad = Gamepad.current;
+            if (page == Page.Options && options != null)
+            {
+                if ((kb != null && (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame))
+                    || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame))) { Show(Page.Main); return; }
+                TickOptions(kb, pad);
+                return;
+            }
             bool back = (kb != null && (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame))
                         || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.startButton.wasPressedThisFrame));
             if (back)
