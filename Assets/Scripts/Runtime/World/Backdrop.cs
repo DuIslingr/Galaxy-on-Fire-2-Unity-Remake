@@ -13,6 +13,7 @@
 
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace GoF2Remake.World
 {
@@ -162,6 +163,15 @@ namespace GoF2Remake.World
                 quad.bounds = new Bounds(Vector3.zero, Vector3.one * 1e5f);   // never frustum-culled by its own size
                 return quad;
             }
+        }
+
+        // Placed again right before the camera renders: the chase / cutscene cameras move in their own LateUpdate, which
+        // may run after this one, and the bodies then trailed the camera by a frame (a stutter at fast-forward's x5).
+        void OnEnable() => RenderPipelineManager.beginCameraRendering += OnBeginCamera;
+        void OnDisable() => RenderPipelineManager.beginCameraRendering -= OnBeginCamera;
+        void OnBeginCamera(ScriptableRenderContext context, Camera camera)
+        {
+            if (camera == cam) LateUpdate();
         }
 
         void LateUpdate()
