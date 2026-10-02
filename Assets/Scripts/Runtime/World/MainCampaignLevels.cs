@@ -658,14 +658,19 @@ namespace GoF2Remake.World
                 case 2:
                     // It drifts (0, -dt, 2dt) and rolls dt * 3e-5 for 15 s.
                     f.transform.position += ToUnity(new Vector3(0f, -1f, 2f)) * dtMs;
-                    // AEGeometry::rotate(dt * 3e-5, -, 3e-5): pitch and roll (the middle axis is lost in the decompilation).
-                    f.transform.Rotate(new Vector3(dtMs * 3e-5f, 0f, dtMs * 3e-5f) * Mathf.Rad2Deg, Space.Self);
+                    // AEGeometry::rotate(0, 0, dt * 3e-5) (disassembly 0x166df4): a roll only (game z = the hull's own axis;
+                    // the mirror flips its sign).
+                    f.transform.Rotate(0f, 0f, -dtMs * 3e-5f * Mathf.Rad2Deg, Space.Self);
                     if (stepMs >= 15000f) Step = 3;
                     break;
                 case 3:
-                    f.Place(ToUnity(new Vector3(2006, -31500, -86720)), f.transform.forward);
+                    // LevelScript 0x29 step 3 (0x16c676): setPosition(2006, -31500, -86720), then the absolute
+                    // setRotation(-0.4, 0, 1.8): on its side on the mother ship's arm (keeping the drift's heading with a
+                    // level roll put it in nose first, like a dart); the wreck takes this pose when it dies.
+                    f.transform.SetPositionAndRotation(ToUnity(new Vector3(2006, -31500, -86720)), OrbitLayout.RotationToUnity(new Vector3(-0.4f, 0f, 1.8f)));
                     f.SetExhaust(false);
-                    cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(-6000, 3000, -8000)), f.transform);
+                    // The camera at the freighter + (3000, 1000, 2000), world up (useTargetsUpVector(false)).
+                    cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(3000, 1000, 2000)), f.transform);
                     for (int i = 1; i < c.Ships.Count; i++) S(i)?.SetOnlyEnemy(level.Health.Target);
                     Step = 4;
                     break;
