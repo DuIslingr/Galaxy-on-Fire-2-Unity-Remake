@@ -9,6 +9,7 @@
 //   -maxplayers N    the player limit (default 16, 2..100: Relay's connections, the browser, the approval)
 //   -allowdebug      the players may use the Debug menu (cheats, items, spawns); off by default (NetGame.HostAllowsDebug)
 //   -port N          the local port (default 7777); -fps N the server's frame rate (default 60)
+//   -freepvp         players may fight anywhere (else only in arena matches, NetArena)
 //   -noprofiles      no player profiles (NetProfiles; on by default: credits, ships, cargo, Kaamo Club, squad kept
 //                    per player between sessions); -maxprofiles N (default 50), -maxearn N (worth a profile may gain
 //                    per minute online without -allowdebug, default 1 000 000), -profiledir PATH (default
@@ -88,6 +89,7 @@ namespace GoF2Remake.Multiplayer
             NetGame.MaxPlayers = int.TryParse(Value("-maxplayers"), out int mp) ? mp : NetGame.DefaultMaxPlayers;   // 2..100
             NetGame.HostPassword = NetGame.CleanPassword(Value("-password"));
             NetGame.HostAllowsDebug = HasFlag("-allowdebug");
+            NetGame.FreePvp = HasFlag("-freepvp");
             NetProfiles.Configure(!HasFlag("-noprofiles"),
                 int.TryParse(Value("-maxprofiles"), out int profiles) ? profiles : NetProfiles.DefaultMaxProfiles,
                 int.TryParse(Value("-maxearn"), out int earn) ? earn : NetProfiles.DefaultEarnPerMinute,
@@ -164,6 +166,7 @@ namespace GoF2Remake.Multiplayer
                 Log(NetGame.HostAllowsDebug ? "Player profiles: uploads are taken as the players' games send them (-allowdebug)."
                                             : $"Player profiles: uploads are checked (at most {NetProfiles.EarnPerMinute:N0} worth gained per minute: -maxearn).");
             else Log("Player profiles are off (-noprofiles): nothing is saved.");
+            Log(NetGame.FreePvp ? "Players may fight anywhere (-freepvp)." : "Players fight only in arena matches (/duel, /ffa; -freepvp allows it anywhere).");
             Log("Type \"help\" for the commands.");
         }
 
@@ -290,6 +293,7 @@ namespace GoF2Remake.Multiplayer
 
         static string Where(NetPlayer p)
         {
+            if (NetArena.IsArenaOrbit(p.Station) && p.InSpace) return $"in arena match {p.Station - NetArena.OrbitBase}";
             string station = StationName(p.Station);
             switch (p.Where)
             {
@@ -331,6 +335,7 @@ namespace GoF2Remake.Multiplayer
                            "  list                the players: client id, name, where, ship, squad\n" +
                            "  say <text>          a chat line to everyone, from \"Server\"\n" +
                            "  kick <id|name> [reason]  drops a player\n" +
+                           "  arenas              the arena matches and queues\n" +
                            "  profiles            the player profiles (id, name, devices, worth, who is online)\n" +
                            "  profile delete <id> deletes a profile (not while it is online; its file is kept as .bak)\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
@@ -347,6 +352,8 @@ namespace GoF2Remake.Multiplayer
                     return "";   // the chat line itself is logged
                 case "kick":
                     return Kick(rest);
+                case "arenas":
+                    return NetArena.ConsoleList();
                 case "profiles":
                     return NetProfiles.ConsoleList();
                 case "profile":

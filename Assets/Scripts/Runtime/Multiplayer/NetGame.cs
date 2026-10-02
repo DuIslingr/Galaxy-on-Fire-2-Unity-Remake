@@ -662,6 +662,8 @@ namespace GoF2Remake.Multiplayer
             sessionGame = true;
             Dedicated = false;
             NetStock.Reset();
+            NetArena.Reset();
+            NetArenaClient.Reset();
             Session.ResetNewGame();
             Session.Difficulty = Session.DifficultyNormal;   // every session plays on Normal (the shared stock, NPCs, rewards)
             Session.Economy = Economy.Android;               // and on one economy (the shared stock's prices)
@@ -784,6 +786,10 @@ namespace GoF2Remake.Multiplayer
         /// session nothing restricts it (Cheats.Allowed).</summary>
         public static bool DebugAllowed => NetState.Instance != null && NetState.Instance.DebugAllowed;
 
+        /// <summary>Players may shoot each other anywhere, not only in arena matches (a dedicated server's -freepvp; off by
+        /// default). NetState carries it to every player.</summary>
+        public static bool FreePvp { get; set; }
+
         /// <summary>The session has a password (the server browser's tag).</summary>
         internal static bool HasPassword => CleanPassword(HostPassword).Length > 0;
 
@@ -842,6 +848,7 @@ namespace GoF2Remake.Multiplayer
                 // and so does what they showed of their orbit (NGO destroys the objects a leaving client owns).
                 playersSpawned.Remove(clientId);
                 NetProfiles.OnDisconnect(clientId);   // its profile's control goes to its next device online
+                NetArena.OnDisconnect(clientId);      // out of their queue or match
                 // (Netcode has usually despawned the player object already: its mission cargo is handed over in
                 // NetPlayer.OnNetworkDespawn.)
                 foreach (var p in UnityEngine.Object.FindObjectsByType<NetPlayer>())

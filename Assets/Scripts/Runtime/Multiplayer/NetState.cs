@@ -13,7 +13,9 @@
 //   the shared shop stock (NetStock): the host's list per station, the players' trades, the reset;
 //   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed);
 //   a dedicated server's player profiles (NetProfiles / NetProfileClient): signing in, the profile to the player, their
-//     uploads, handing control between a profile's devices, the chat's /link /control /profile commands.
+//     uploads, handing control between a profile's devices, the chat's /link /control /profile commands;
+//   arena matches (NetArena / NetArenaClient): the chat's /duel /accept /decline /ffa /leave /arena /top, a match's
+//     start, state, end and kills; whether players may fight outside them (FreePvp, -freepvp).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -32,6 +34,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> dedicated = new NetworkVariable<bool>();
         readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice, fixed for the session
         readonly NetworkVariable<bool> profilesOn = new NetworkVariable<bool>();     // the server keeps player profiles (NetProfiles)
+        readonly NetworkVariable<bool> freePvp = new NetworkVariable<bool>();        // players may fight anywhere (else only in arenas)
         readonly NetworkVariable<FixedString64Bytes> serverId = new NetworkVariable<FixedString64Bytes>();   // their key on the client
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
@@ -56,6 +59,9 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The server keeps player profiles: a joining game signs in and waits for its profile (NetProfileClient).</summary>
         public bool ProfilesOn => profilesOn.Value;
 
+        /// <summary>Players may shoot each other anywhere (NetGame.FreePvp, -freepvp); else only in an arena match.</summary>
+        public bool FreePvp => freePvp.Value;
+
         public override void OnNetworkSpawn()
         {
             name = "NetState";
@@ -68,6 +74,7 @@ namespace GoF2Remake.Multiplayer
                 debugAllowed.Value = NetGame.HostAllowsDebug;
                 profilesOn.Value = NetProfiles.Enabled;
                 serverId.Value = NetProfiles.ServerId;
+                freePvp.Value = NetGame.FreePvp;
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
             }
@@ -132,11 +139,15 @@ namespace GoF2Remake.Multiplayer
         {
             text = NetChat.Clean(text);
             if (text.Length == 0) return;
-            // Profile commands (/link, /control, /profile): answered to the sender only, never shown to the others.
-            if (text[0] == '/' && NetProfiles.Enabled)
+            // Commands (the arena's /duel /ffa ..., the profiles' /link /control /profile): answered to the sender only,
+            // never shown to the others.
+            if (text[0] == '/')
             {
-                string answer = NetProfiles.Command(rpc.Receive.SenderClientId, text);
-                if (!string.IsNullOrEmpty(answer)) Notify(rpc.Receive.SenderClientId, answer);
+                ulong from = rpc.Receive.SenderClientId;
+                string answer = NetArena.Command(from, text)
+                                ?? (NetProfiles.Enabled ? NetProfiles.Command(from, text)
+                                    : Localization.Extra("mpArenaCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena."));
+                if (!string.IsNullOrEmpty(answer)) Notify(from, answer);
                 return;
             }
             NetPlayer sender = null;
@@ -250,6 +261,7 @@ namespace GoF2Remake.Multiplayer
             var victim = NetSquad.Find(rpc.Receive.SenderClientId);
             var by = NetSquad.Find(killer);
             if (victim == null || by == null) return;
+            NetArena.OnKill(victim.OwnerClientId, by.OwnerClientId);   // an arena match's score
             NoticeRpc(string.Format(Localization.Extra("mpDestroyedBy", "{0} was destroyed by {1}."), victim.DisplayName, by.DisplayName));
         }
 
@@ -314,6 +326,50 @@ namespace GoF2Remake.Multiplayer
 
         [Rpc(SendTo.SpecifiedInParams)]
         void RequestUploadRpc(RpcParams rpc = default) => NetProfileClient.Upload(true);
+
+        // ---- arena matches (NetArena / NetArenaClient) -----------------------------------------------------
+
+        /// <summary>Server: the player goes into match 'id' (their game loads the arena).</summary>
+        internal void ArenaStart(ulong client, int id, byte kind, int orbitId, int template, bool voids, int slot, int killLimit, float seconds)
+        {
+            if (IsServer) ArenaStartRpc(id, kind, orbitId, template, voids, slot, killLimit, seconds, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void ArenaStartRpc(int id, byte kind, int orbitId, int template, bool voids, int slot, int killLimit, float seconds, RpcParams rpc = default)
+            => NetArenaClient.OnStart(id, kind, orbitId, template, voids, slot, killLimit, seconds);
+
+        /// <summary>A player's game has the arena loaded.</summary>
+        [Rpc(SendTo.Server)]
+        public void ArenaReadyRpc(int id, RpcParams rpc = default) => NetArena.OnReady(rpc.Receive.SenderClientId, id);
+
+        /// <summary>Server: the match's phase, seconds left, scores and a kill-feed line ("" = none) to one player.</summary>
+        internal void ArenaState(ulong client, int id, byte phase, float left, ulong[] players, int[] kills, string feed)
+        {
+            if (IsServer) ArenaStateRpc(id, phase, left, players, kills, feed, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void ArenaStateRpc(int id, byte phase, float left, ulong[] players, int[] kills, string feed, RpcParams rpc = default)
+            => NetArenaClient.OnState(id, phase, left, players, kills, feed);
+
+        /// <summary>Server: the match is over (the result's text); the player's game goes home after showing it.</summary>
+        internal void ArenaEnd(ulong client, int id, string text)
+        {
+            if (IsServer) ArenaEndRpc(id, text, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void ArenaEndRpc(int id, string text, RpcParams rpc = default) => NetArenaClient.OnEnd(id, text);
+
+        /// <summary>Server: the player left their match (/leave): home at once.</summary>
+        internal void ArenaLeave(ulong client)
+        {
+            if (IsServer) ArenaLeaveRpc(RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void ArenaLeaveRpc(RpcParams rpc = default) => NetArenaClient.OnLeave();
 
         [Rpc(SendTo.SpecifiedInParams)]
         void JoinedSquadRpc(RpcParams rpc = default) => NetMissions.OnJoinedSquad();
@@ -585,6 +641,7 @@ namespace GoF2Remake.Multiplayer
             NetStock.Flush();   // the shared stock that arrived, applied between frames (every player)
             if (!IsServer || !IsSpawned) return;
             NetProfiles.Tick();   // link codes and handovers that ran out
+            NetArena.Tick();      // queues, countdowns, time limits
             if ((sweepTimer -= Time.unscaledDeltaTime) > 0f) return;
             sweepTimer = SweepSeconds;
             NetStock.HostTick(this);   // the stock resets

@@ -234,6 +234,11 @@ namespace GoF2Remake.Multiplayer
             turretModel = PlayerTurret.BuildStatic(NetGame.Db, ship.Value, new[] { new ItemStack(turretItem.Value, 1) }, model.transform);
         }
 
+        /// <summary>The local player and 'other' (in the same orbit) may shoot each other: in an arena match (its own orbit
+        /// id), or anywhere on a server started with -freepvp (NetState.FreePvp). Squadmates never (NetSquad).</summary>
+        static bool PvpWith(NetPlayer other) =>
+            other != null && ((NetState.Instance != null && NetState.Instance.FreePvp) || NetArena.IsArenaOrbit(other.Station));
+
         /// <summary>This player's shots pass through their squadmates (the local player's ship included).</summary>
         bool ThroughSquad(Target t)
         {
@@ -255,6 +260,13 @@ namespace GoF2Remake.Multiplayer
         {
             var own = level != null && level.Health != null ? level.Health.Target : null;
             if (own == null) return;
+            // A player's hit counts only where players may fight (an arena match, or a -freepvp server) and from the same
+            // orbit: a modified game can't hurt anyone in free roam.
+            if (!byNpc)
+            {
+                var from = NetSquad.Find(rpc.Receive.SenderClientId);
+                if (from == null || from.Station != Station || !PvpWith(from)) return;
+            }
             bool alive = own.Alive;
             own.Damage(amount, byNpc, hitVector);
             if (alive && !own.Alive && !byNpc && NetState.Instance != null) NetState.Instance.DestroyedByRpc(rpc.Receive.SenderClientId);
@@ -341,8 +353,10 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Another game's EMP on this player's ship: players have no EMP pool, so it drains that much shield and
         /// shows the lightning for 1.5 s (a remake pick).</summary>
         [Rpc(SendTo.Owner)]
-        void EmpRpc(int emp)
+        void EmpRpc(int emp, RpcParams rpc = default)
         {
+            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            if (from == null || from.Station != Station || !PvpWith(from)) return;   // only where players may fight
             var hp = level != null && level.Health != null && level.Health.Target != null ? level.Health.Target.hitpoints : null;
             if (hp == null || !hp.Alive) return;
             hp.shield = Mathf.Max(0f, hp.shield - emp);
@@ -386,7 +400,7 @@ namespace GoF2Remake.Multiplayer
                     target.hp = hull.Value * target.maxHp;   // 0 = destroyed: no marker, no lock, no NPC after it
                     bool mate = NetSquad.Same(this, Local);   // squadmates: green, out of each other's line of fire
                     target.friendToPlayer = mate;
-                    target.playerProof = mate;
+                    target.playerProof = mate || !PvpWith(this);   // free roam: no player hurts another (NetArena)
                 }
                 mirror?.Update(Time.deltaTime * 1000f);
                 return;
@@ -402,7 +416,7 @@ namespace GoF2Remake.Multiplayer
             if (empShock.Value != shock) empShock.Value = shock;
             // Where the local player is: the scene they are in.
             Place now = level != null ? Place.Space : dock != null ? (dock.PlayerDeparting ? Place.Departing : Place.Hangar) : Place.None;
-            int at = level != null && level.Layout != null ? level.Layout.stationIndex : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
+            int at = level != null && level.Layout != null ? level.NetOrbitId : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
             if (place.Value != (byte)now) place.Value = (byte)now;
             if (station.Value != at) station.Value = at;
             bool runs = level != null && level.NetAuthority;

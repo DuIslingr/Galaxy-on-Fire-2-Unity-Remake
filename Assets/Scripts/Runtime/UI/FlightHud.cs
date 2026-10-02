@@ -134,6 +134,7 @@ namespace GoF2Remake.UI
             {
                 ChatView.Attach(gameObject, safeArea ?? root);    // multiplayer chat
                 SquadView.Attach(gameObject, safeArea ?? root);   // the squad window, invitations
+                ArenaView.Attach(gameObject, safeArea ?? root);   // an arena match: score, timer, respawn, result
             }
 
             InputGlyph.TrackHintsOption(hints);
@@ -1029,6 +1030,7 @@ namespace GoF2Remake.UI
 
         void OnGameOver()
         {
+            if (GoF2Remake.Multiplayer.NetArenaClient.InMatch) return;   // an arena match respawns the ship instead
             gameOverMs = 0f;
             gameOver.AddToClassList("game-over--shown");
             gameOverText.text = GoF2Remake.Multiplayer.NetGame.Active

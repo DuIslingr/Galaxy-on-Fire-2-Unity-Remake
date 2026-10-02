@@ -59,6 +59,7 @@ namespace GoF2Remake.Multiplayer
             public List<Device> devices = new List<Device>();
             public long worth;     // at the last accepted upload (Worth)
             public float playSeconds;
+            public int arenaKills, arenaDeaths, arenaWins;   // NetArena's matches (the leaderboard, /top)
         }
 
         [Serializable] class AccountIndex { public string serverId; public List<Account> accounts = new List<Account>(); }
@@ -378,7 +379,7 @@ namespace GoF2Remake.Multiplayer
                     return string.Format(Localization.Extra("mpProfileInfo", "Profile {0}, {1} device(s); this one {2}."), login.account.id,
                         login.account.devices.Count, login.controller ? Localization.Extra("mpControls", "controls it") : Localization.Extra("mpWatches", "watches"));
                 default:
-                    return Localization.Extra("mpCommands", "Commands: /link (a code for another device), /link CODE, /control, /profile.");
+                    return Localization.Extra("mpCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena, /top; /link (a code for another device), /link CODE, /control, /profile.");
             }
         }
 
@@ -484,6 +485,31 @@ namespace GoF2Remake.Multiplayer
                 NetState.Instance.RestoreSquad(mate, me);
                 return;
             }
+        }
+
+        // ---- arena stats (NetArena) -------------------------------------------------------------------------
+
+        /// <summary>A finished match's kills, deaths and win into the player's profile (guests: nothing).</summary>
+        public static void AddArenaStats(ulong client, int kills, int deaths, bool won)
+        {
+            if (!Enabled || !logins.TryGetValue(client, out var l) || l.account == null) return;
+            l.account.arenaKills += kills;
+            l.account.arenaDeaths += deaths;
+            if (won) l.account.arenaWins++;
+            SaveIndex();
+        }
+
+        /// <summary>/top: the ten profiles with the most arena wins (then kills).</summary>
+        public static string Leaderboard()
+        {
+            if (!Enabled) return Localization.Extra("mpTopNone", "This server keeps no profiles, so no leaderboard.");
+            var list = index.accounts.FindAll(a => a.arenaKills + a.arenaDeaths > 0);
+            if (list.Count == 0) return Localization.Extra("mpTopEmpty", "No arena matches fought yet.");
+            list.Sort((a, b) => a.arenaWins != b.arenaWins ? b.arenaWins.CompareTo(a.arenaWins) : b.arenaKills.CompareTo(a.arenaKills));
+            var sb = new StringBuilder(Localization.Extra("mpTopTitle", "Arena leaderboard (wins, kills / deaths):"));
+            for (int i = 0; i < list.Count && i < 10; i++)
+                sb.Append($"\n{i + 1}. {(string.IsNullOrEmpty(list[i].name) ? list[i].id : list[i].name)}: {list[i].arenaWins}, {list[i].arenaKills} / {list[i].arenaDeaths}");
+            return sb.ToString();
         }
 
         // ---- the server console -----------------------------------------------------------------------------

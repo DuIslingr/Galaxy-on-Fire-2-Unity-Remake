@@ -656,7 +656,30 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   NPC shots from the authority's side) go to their game (`NetPlayer.HitRpc`, `Target.RemoteDamage` with the NPC flag),
   which applies them to its own ship. Destroyed by a player: "X was destroyed by Y." for everyone
   (`NetState.DestroyedByRpc`). A destroyed player's game over says "Tap to respawn at the station." and docks them at the
-  orbit's station, repaired (no save is loaded).
+  orbit's station, repaired (no save is loaded). Players can only hurt each other in an arena match (below) or on a
+  server started with `-freepvp` (`NetState.FreePvp`, `NetGame.FreePvp`): elsewhere another player's ship is
+  `playerProof` (shots pass) and the owner's `HitRpc` / `EmpRpc` drop a player's hit unless the sender is in the same
+  orbit and may fight (`NetPlayer.PvpWith`).
+- **Arena matches** (`NetArena` server, `NetArenaClient` player, `ArenaView` HUD panel; chat commands, answered
+  privately): `/duel <name> [voids]` (both docked; `/accept` / `/decline` within 60 s; first to 3 kills or 5 min) and
+  `/ffa [voids]` (a queue per option, docked; starts 30 s after the 2nd pilot or at once with 8; first to 15 kills or
+  10 min), `/leave`, `/arena`,
+  `/top` (the profiles' leaderboard: wins, kills / deaths, `NetProfiles.AddArenaStats`). A match is a private copy of
+  the Void's home orbit (`NetArena.Template` = `Session.VoidOrbit`: its sky, fog, music, Void crystal asteroids): its own orbit id `NetArena.OrbitBase` (100000) + the match, which
+  `SpaceLevel.NetOrbitId` gives NetPlayer / NetOrbit, so the same-orbit checks keep it to its players (asteroids seeded
+  by that id). SpaceLevel's arena mode: no station or gate (no docking, no jumps: `JumpsBlocked`), no traffic (passive)
+  unless the match has the Void fighters (`voids`: the orbit's own traffic, run by the first player in the match's
+  orbit like any orbit's NPCs, the dead ones back every 45 s by `Traffic.UpdateAlienAttackers`; a Void kill scores
+  nothing, dying to one is a respawn), no wingmen, no mission / siege / spy, the asteroids at the centre, the player on a ring of 8 spawn points 2 km out
+  facing the centre (a duel's two opposite; a respawn the point farthest from the others), no mining (`Mining.UpdateLock`).
+  Flow: `ArenaStartRpc` (the profile uploaded, the equipment noted, the take-off, the arena loads) -> `ArenaReadyRpc`
+  (all in, or 20 s: the missing ones sent home) -> 5 s countdown (controls and guns locked by `NetArenaClient.Tick`) ->
+  the fight (`ArenaStateRpc`: phase, time left, kills, a kill-feed line; kills from `DestroyedByRpc`) -> the end
+  (`ArenaEndRpc`: winner or draw and everyone's kills / deaths, shown 6 s) -> docked where the match began. Destroyed:
+  no game over, the arena reloads 3.5 s later (repaired, the equipment and ammo as at the start). Nothing is at stake:
+  no uploads during a match (`NetProfileClient.Upload`), the loadout and the cargo (Void loot) restored at the end. Leaving / disconnecting: out;
+  a duel goes to the one who stays, a free-for-all ends below 2 players. Server console `arenas`; `list` shows
+  "in arena match N". Not tested in a build yet.
 - **Squads** (`NetSquad`, the host's `NetPlayer.SquadId`, NetState's RPCs): the station's pilot list (players docked
   there, the local player first as "(you)") has Invite; the invited player gets an Accept / Decline popup (45 s); accepting joins the inviter's squad (a new
   one if needed, leaving the old one); squads form only in a hangar (the popup shows only while docked, and the host

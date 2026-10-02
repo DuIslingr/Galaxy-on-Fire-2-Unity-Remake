@@ -157,6 +157,7 @@ namespace GoF2Remake.Flight
         /// <summary>Radar::draw, asteroid part: box around the crosshair, nearest in 3D, lock timer.</summary>
         void UpdateLock(float dtMs)
         {
+            if (GoF2Remake.Multiplayer.NetArenaClient.InMatch) return;   // no mining in an arena match
             var cam = Camera.main;
             Target best = null;
             if (cam != null)

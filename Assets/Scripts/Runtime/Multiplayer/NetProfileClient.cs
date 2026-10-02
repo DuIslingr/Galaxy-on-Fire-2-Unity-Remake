@@ -156,6 +156,7 @@ namespace GoF2Remake.Multiplayer
         public static void Upload(bool handover = false)
         {
             if (!Active || waiting || Guest || (!Controller && !handover) || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
+            if (NetArenaClient.InMatch) return;   // nothing of an arena match is saved (its start uploaded the profile)
             uploadTimer = UploadSeconds;
             var parts = NetProfiles.Pack(SaveGame.ProfileJson());
             int seq = ++outSeq;

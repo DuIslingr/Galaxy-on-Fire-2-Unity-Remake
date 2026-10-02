@@ -45,7 +45,7 @@ namespace GoF2Remake.Multiplayer
         bool applyingRemote, requestedList;
         float scanTimer;
 
-        public int Station => level != null && level.Layout != null ? level.Layout.stationIndex : -1;
+        public int Station => level != null && level.Layout != null ? level.NetOrbitId : -1;   // an arena: the match's own id
         /// <summary>The orbit's system race (a remote kill's standing, Standing.ApplyKill).</summary>
         public int SystemRace => level != null && level.Traffic != null ? level.Traffic.SystemRace : -1;
         bool Authority => level != null && level.NetAuthority;
