@@ -224,6 +224,7 @@ namespace GoF2Remake.UI
                 GetThrust = () => ship != null ? ship.Model.Throttle : 0f,
                 SetThrust = t => ship?.SetThrottle(t),
                 FreeLookDrag = (delta, held) => level?.FreeLook?.TouchDrag(delta, held),
+                FreeLookPinch = span => level?.FreeLook?.TouchPinch(span),
             };
         }
 
@@ -783,6 +784,7 @@ namespace GoF2Remake.UI
                 if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
                 else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
                 var voiceClip = StoryAssets.Load()?.Voice(chatter.voice);
+                if (voiceClip != null) level.Traffic.HoldChatter(voiceClip.length * 1000f + 500f);
                 if (chatter.portrait == null && StoryTable.IsNarration(chatter.speakerId)) radioReveal.Clear();
                 else radioReveal.Begin(chatter.text, chatterAlien, voiceClip);
                 if (voiceClip != null && voiceSource != null) { voiceSource.clip = voiceClip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
@@ -802,6 +804,7 @@ namespace GoF2Remake.UI
                 Portrait.Show(radioPortrait, AgentGenerator.CreatePortrait(true, line.speaker == 0x40 ? 0 : line.speaker == 0x41 ? 2 : line.speaker == 0x15 ? 3 : 1), false);
             else Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
+            if (clip != null) radio.HoldFor(clip.length * 1000f + 500f);
             if (StoryTable.IsNarration(line.speaker)) radioReveal.Clear();
             else radioReveal.Begin(lineText, lineAlien, clip);
             if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }

@@ -59,6 +59,7 @@ namespace GoF2Remake.Flight
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
             public NpcShip dockingShip;     // docking targets: the object
+            public bool freelance;          // waypoints: a freelance mission's route (the white freelance icon, not the gold story one)
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
 
@@ -103,13 +104,13 @@ namespace GoF2Remake.Flight
         /// <summary>A campaign level's player route (Level+0x108, PlayerEgo::setRoute): its current waypoint is a landmark
         /// target named "Waypoint" (548): marked on the HUD, lockable, and the autopilot flies to it; "Waypoint reached."
         /// (543) / "Last waypoint reached." (544) as the route advances.</summary>
-        public void SetRoute(Route route)
+        public void SetRoute(Route route, bool freelance = false)
         {
             playerRoute = route;
             routeTarget = null;
             Targets.RemoveAll(t => t.kind == Kind.Waypoint);
             if (route == null) return;
-            routeTarget = new Target { kind = Kind.Waypoint, name = Localization.Get(548) };
+            routeTarget = new Target { kind = Kind.Waypoint, name = Localization.Get(548), freelance = freelance };
             routeIndex = route.index;
             UpdateRoute();
         }
@@ -577,7 +578,7 @@ namespace GoF2Remake.Flight
         /// a menu, conversation or map is open (the world goes on there).</summary>
         public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active);
 
-        void OnDestroy() => halted = false;
+        void OnDestroy() { halted = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
 
         void ApplyTimeScale()
         {
@@ -585,6 +586,9 @@ namespace GoF2Remake.Flight
             float scale = MenuOpen || paused || pauseMenuOpen ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
             if (GoF2Remake.Multiplayer.NetGame.Active) scale = 1f;   // multiplayer: one player's pause doesn't stop the shared world
             if (Time.timeScale != scale) Time.timeScale = scale;
+            // A halted clock also halts the sound, as PauseMenu does: the engine loops, a boost fired just before and every
+            // other source played on through a conversation. The voice, UI and star-map sources ignore the listener pause.
+            if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = scale == 0f;
         }
 
         void Say(string text) => Message?.Invoke(text);

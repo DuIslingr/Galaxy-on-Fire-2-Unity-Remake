@@ -7,7 +7,8 @@
 // at fire time, following the mount, its animation restarted per shot and hidden when it ends. Mines are drawn at x0.7
 // and tumble (MineGun). Scatter shells have no impact mesh (their burst explosion replaces it).
 // The guided Liberator (BombGun, attr 15): its deploy animation plays once per launch, starting 500 ms after it.
-// The player's rockets, missiles and thermo shots trail smoke (RocketTrail, EnableTrails; NPC guns have none).
+// The player's rockets, missiles and thermo shots trail smoke, EMP bombs fire sprites (RocketTrail, EnableTrails; NPC
+// guns have none).
 // Projectiles, muzzle flashes and impacts fade by their `extra` (opacity) channel: without it an impact's big glow part
 // (radius ~3600 units, meant at 20 % and gone after 267 ms) stayed at full brightness and the impact looked far too big.
 
@@ -36,6 +37,7 @@ namespace GoF2Remake.Flight
         int nextImpact;
         readonly Transform fxRoot;
         RocketTrail[] trails;
+        ParticleSystem[] flames;   // EMP bombs: record 12 (RocketTrail.MissileTrail)
 
         /// <param name="fxRoot">Parent of the projectiles and impacts (world space).</param>
         /// <param name="muzzleParent">The ship (null = no muzzle flash).</param>
@@ -94,9 +96,14 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>RocketGun::setRadar (the player's guns, and other players' mirrored shots): one smoke trail per bullet
-        /// for rockets, missiles, cluster missiles and thermo guns; nothing for the other kinds.</summary>
+        /// for rockets, missiles, cluster missiles and thermo guns, a fire-sprite system for EMP bombs.</summary>
         public void EnableTrails()
         {
+            if (flames == null && gun.kind == Gun.Kind.EmpBomb)
+            {
+                flames = new ParticleSystem[gun.bullets.Length];
+                for (int i = 0; i < flames.Length; i++) flames[i] = RocketTrail.MissileTrail(gun, fxRoot);
+            }
             var rec = RocketTrail.For(gun);
             if (rec == null || trails != null) return;
             var mat = CombatAssets.Load()?.particlesMaterial;
@@ -176,6 +183,7 @@ namespace GoF2Remake.Flight
                     if (launched) trails[i].Restart(gun.bullets[i].position);
                     else if (!active && wasActive[i]) trails[i].Stop();
                 }
+                if (flames?[i] != null && !active && wasActive[i]) flames[i].Stop(true, ParticleSystemStopBehavior.StopEmitting);
                 wasActive[i] = active;
                 if (!active) { trails?[i].Tick(dtMs, false, default, cam); continue; }
                 ref var b = ref gun.bullets[i];
@@ -197,11 +205,16 @@ namespace GoF2Remake.Flight
                 t.SetPositionAndRotation(b.position, rot);
                 t.localScale = Vector3.one * gun.VisualScale(i) * (spin != null ? 0.7f : 1f);
                 trails?[i].Tick(dtMs, true, b.position, cam);
+                if (flames?[i] != null)
+                {
+                    flames[i].transform.SetPositionAndRotation(b.position, rot);
+                    if (launched) flames[i].Play(true);
+                }
             }
             projectilesDone(dtMs, cam);
         }
 
-        /// <summary>The beam: at the mount, along the fire-time direction, scaled to its length (units).</summary>
+        /// <summary>The beam: at the mount, re-aimed every frame, scaled to its length (units).</summary>
         void UpdateBeam(float dtMs)
         {
             var t = projectiles.Length > 0 ? projectiles[0] : null;
@@ -209,12 +222,22 @@ namespace GoF2Remake.Flight
             if (beamMs <= 0f) { if (t.gameObject.activeSelf) t.gameObject.SetActive(false); return; }
             beamMs -= dtMs;
             var from = ship != null ? ship.TransformPoint(gun.mountLocal) : gun.bullets[0].position;
+            // BeamGun::update aims the beam every frame: at the locked target while it lives, else straight ahead. Kept at
+            // its fire-time direction it trailed off the nose through a turn (the beam shows for a second per shot).
             var dir = gun.BeamDir.sqrMagnitude > 1e-9f ? gun.BeamDir : Vector3.forward;
-            // BeamGun::update: setDirection(beamDir, up (0, 1, 0)), world up (the crossed planes don't roll with the ship);
-            // a beam fired straight up / down takes the ship's up instead.
-            var up = Mathf.Abs(Vector3.Dot(dir.normalized, Vector3.up)) > 0.999f && ship != null ? ship.up : Vector3.up;
+            float length = gun.BeamLengthUnits;
+            var target = gun.BeamTarget;
+            if (target != null && target.gameObject.activeInHierarchy)
+            {
+                var d = target.position - from;
+                if (d.sqrMagnitude > 1e-6f) { dir = d.normalized; length = d.magnitude / Gun.MetersPerUnit; }
+            }
+            else if (ship != null) { dir = ship.forward; length = Gun.BeamRangeUnits; }
+            // setDirection(beamDir, up (0, 1, 0)), world up (the crossed planes don't roll with the ship); a beam fired
+            // straight up / down takes the ship's up instead.
+            var up = Mathf.Abs(Vector3.Dot(dir, Vector3.up)) > 0.999f && ship != null ? ship.up : Vector3.up;
             t.SetPositionAndRotation(from, Quaternion.LookRotation(dir, up));
-            t.localScale = new Vector3(1f, 1f, gun.BeamLengthUnits);
+            t.localScale = new Vector3(1f, 1f, length);
             if (beamMs <= 0f) t.gameObject.SetActive(false);
         }
 
@@ -241,6 +264,7 @@ namespace GoF2Remake.Flight
             foreach (var t in projectiles) if (t != null) t.gameObject.SetActive(false);
             for (int i = 0; i < gun.bullets.Length; i++) gun.bullets[i].timer = -1e9f;
             if (trails != null) foreach (var tr in trails) tr.Clear();
+            if (flames != null) foreach (var f in flames) if (f != null) f.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
     }
 }

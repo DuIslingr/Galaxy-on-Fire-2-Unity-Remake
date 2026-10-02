@@ -288,6 +288,7 @@ namespace GoF2Remake.Flight
             if (chase != null) chase.enabled = false;   // TargetFollowCamera::setActive(false): the camera stays put
             Haptics.Play(Haptics.MiningLanding);   // remake
             capturedUp = ship.visualModel != null ? ship.visualModel.up : ship.transform.up;
+            ship.modelHeld = true;   // the pitch-up below is cumulative; ShipController would level the model again every frame
         }
 
         void StartMinigame()
@@ -440,6 +441,7 @@ namespace GoF2Remake.Flight
             LockFrame = -1;
             lockTimer = 0f;
             ship.externalControl = false;
+            ship.modelHeld = false;
             ship.ExternalSpeedMetersPerSecond = 0f;
             if (ship.visualModel != null) ship.visualModel.localRotation = Quaternion.identity;
             if (weapons != null) weapons.Blocked = weapons.PrimaryBlocked = false;

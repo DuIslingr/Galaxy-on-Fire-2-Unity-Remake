@@ -262,7 +262,7 @@ namespace GoF2Remake.World
             {
                 FreelanceOrbit = new GameObject("FreelanceOrbit mission").AddComponent<FreelanceOrbit>();
                 FreelanceOrbit.Setup(this, Traffic);
-                Navigation.SetRoute(FreelanceOrbit.PlayerRoute);
+                Navigation.SetRoute(FreelanceOrbit.PlayerRoute, true);
             }
             else if (missionFollower)
             {
@@ -412,6 +412,7 @@ namespace GoF2Remake.World
         }
 
         bool riding, rode;
+        float rideHoldMs;
         /// <summary>The level is being left (wormhole ride, docking): the story checks stop.</summary>
         public bool Leaving { get; private set; }
 
@@ -427,6 +428,10 @@ namespace GoF2Remake.World
                 RideWormhole();
                 return;
             }
+            // Step 24: Carla's "What is this thing? KEITH!" (radio line 4, text 1921) starts as the wormhole opens and shows
+            // 2 s later; the ride waits for it (8 s at most), or the scene load swallows the line.
+            if (active && index == 24 && Campaign.Radio != null && Campaign.Radio.Triggered(4) && !Campaign.Radio.Over(4)
+                && (rideHoldMs += Time.deltaTime * 1000f) < 8000f) return;
             if (active)
             {
                 if (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3)) { riding = true; Health.Kill(); return; }
@@ -474,11 +479,16 @@ namespace GoF2Remake.World
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see Obstacle).</summary>
         void AddObstacles() => OrbitBuilder.AddObstacles(Layout, Station, Jumpgate);
 
+        float farClip = 300000f * M;   // the level's far plane (m), see SetupCamera
+
         void SetupCamera()
         {
             if (mainCamera == null) mainCamera = Camera.main;
             mainCamera.nearClipPlane = 20f * M;
-            mainCamera.farClipPlane = 300000f * M;
+            // StarSystem::render: 300000, 450000 in the alien orbit before mission 0x50 (the Void's fighters sit up to
+            // 100000 out and the wormhole reopens 60000-100000 out while the player arrives 170000-220000 out).
+            farClip = (Layout != null && Layout.alienOrbit && Story.Index < 0x50 ? 450000f : 300000f) * M;
+            mainCamera.farClipPlane = farClip;
             mainCamera.clearFlags = CameraClearFlags.Skybox;
         }
 
@@ -513,7 +523,7 @@ namespace GoF2Remake.World
             ctrl.stats.cargoLoad = Shop.CargoLoad();
             ctrl.ApplyStats();
 
-            PlayerHull.FitCamera(root.transform, model.transform, chase);
+            PlayerHull.FitCamera(root.transform, model.transform, chase, farClip);
 
             foreach (var ex in root.GetComponents<ShipExhaust>()) Destroy(ex);
             if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, shipIndex);   // a freighter / capital ship: none
@@ -590,7 +600,7 @@ namespace GoF2Remake.World
             chase.offset = new Vector3(0f, 600f, -1338f) * M;
             chase.lookOffset = new Vector3(0f, 600f, -650f) * M;
             // Remake debug: a freighter's or capital ship's hull is far bigger than any ship the camera was made for.
-            if (PlayerHull.Big) PlayerHull.FitCamera(root.transform, ctrl.visualModel, chase);
+            if (PlayerHull.Big) PlayerHull.FitCamera(root.transform, ctrl.visualModel, chase, farClip);
             // CameraSetPerspective(1.22 rad) is the vertical FOV: with the level look offset the ship then sits in the
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens). Remake: the
             // field of view option (Settings.OriginalFov by default).

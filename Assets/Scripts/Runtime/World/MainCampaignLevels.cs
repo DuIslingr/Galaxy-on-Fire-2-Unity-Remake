@@ -449,7 +449,7 @@ namespace GoF2Remake.World
                     if (Over(3))
                     {
                         foreach (var s in c.Ships) if (s != null && s.Race == Standing.Void) Remove(s);
-                        Hole?.SetVisible(false);
+                        Hole?.ResetTimer(true);   // reset(closing): shrinks away after a second
                         Step = 5;
                     }
                     break;

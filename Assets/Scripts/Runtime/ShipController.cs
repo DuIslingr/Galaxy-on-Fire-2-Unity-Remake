@@ -72,6 +72,8 @@ namespace GoF2Remake.Flight
         /// <summary>The stick this frame (keys, stick, touch), also while steering is locked.</summary>
         public Vector2 SteerInput { get; private set; }
         [System.NonSerialized] public float ExternalSpeedMetersPerSecond;
+        /// <summary>A docking script turns the model itself (the asteroid landing's pitch-up): the levelling leaves it alone.</summary>
+        [System.NonSerialized] public bool modelHeld;
 
         /// <summary>Autopilot (PlayerEgo::setAutoPilot): the world position to fly to, re-read every frame; null = off.
         /// The stick is ignored; throttle, boost and the flight model's speed still apply (autopilot_travel.md 3.3).</summary>
@@ -143,7 +145,7 @@ namespace GoF2Remake.Flight
             {
                 SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
                 Maneuver.Cancel();
-                if (!modelTumbling) UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
+                if (!modelTumbling && !modelHeld) UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
                 return;
             }
             if (useBuiltInInput && !inputLocked) ReadDodgeInput();
