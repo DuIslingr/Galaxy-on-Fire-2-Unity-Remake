@@ -268,6 +268,8 @@ namespace GoF2Remake.Flight
                     "buttonsouth" => "A", "buttoneast" => "B", "buttonwest" => "X", "buttonnorth" => "Y",
                     "leftshoulder" => "LB", "rightshoulder" => "RB", "lefttrigger" => "LT", "righttrigger" => "RT",
                     "leftstick" => "LS", "rightstick" => "RS", "leftstickpress" => "LS", "rightstickpress" => "RS",
+                    "leftstick/up" => "LS ↑", "leftstick/down" => "LS ↓", "leftstick/left" => "LS ←", "leftstick/right" => "LS →",
+                    "rightstick/up" => "RS ↑", "rightstick/down" => "RS ↓", "rightstick/left" => "RS ←", "rightstick/right" => "RS →",
                     "dpad" => "D-PAD", "dpad/up" => "D-PAD ↑", "dpad/down" => "D-PAD ↓", "dpad/left" => "D-PAD ←", "dpad/right" => "D-PAD →",
                     "start" => "MENU", "select" => "VIEW",
                     _ => InputControlPath.ToHumanReadableString(path, InputControlPath.HumanReadableStringOptions.OmitDevice).ToUpperInvariant(),
@@ -375,12 +377,25 @@ namespace GoF2Remake.Flight
                 .OnMatchWaitForAnother(0.1f);
             if (IsPad(slot))
             {
+                bool wholeStick = single && row.padType == "Vector2";
                 op.WithControlsHavingToMatchPath("<Gamepad>")
-                  .WithExpectedControlType(single && row.padType == "Vector2" ? "Vector2" : "Button");
-                // Stick directions would catch a drifting stick; a whole stick is the Vector2 slot's.
-                foreach (var stick in new[] { "leftStick", "rightStick" })
-                    foreach (var dir in new[] { "up", "down", "left", "right" })
-                        op.WithControlsExcluding($"<Gamepad>/{stick}/{dir}");
+                  .WithExpectedControlType(wholeStick ? "Vector2" : "Button");
+                if (wholeStick)
+                {
+                    // A whole stick (or the D-pad), not one of its directions.
+                    foreach (var stick in new[] { "leftStick", "rightStick" })
+                        foreach (var dir in new[] { "up", "down", "left", "right" })
+                            op.WithControlsExcluding($"<Gamepad>/{stick}/{dir}");
+                }
+                else
+                {
+                    // A stick pushed one way is a button too (right stick up / down for the throttle); pushed past half
+                    // way, so a drifting stick isn't caught.
+                    op.WithMagnitudeHavingToBeGreaterThan(0.5f);
+                    foreach (var stick in new[] { "leftStick", "rightStick" })
+                        foreach (var axis in new[] { "x", "y" })
+                            op.WithControlsExcluding($"<Gamepad>/{stick}/{axis}");
+                }
             }
             else
             {

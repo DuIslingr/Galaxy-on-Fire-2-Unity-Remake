@@ -491,7 +491,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   `GameControls.Suspend`) of 28 rows (steer, throttle, brake, boost, roll, level out, strafe left / right, dodge left / right (no keyboard default), fire, fire secondary,
   switch secondary, camera / turret view, auto turret, action, autopilot menu, actions menu, fast-forward, wingmen, Khador Drive, cloak,
   time extender, mouse steering, chat, chat send, chat channel, screenshot), each with two keyboard / mouse slots and a controller slot (binding
-  groups Keyboard / Gamepad; steer's controller slot is a whole stick or the D-pad so the stick keeps its radial dead zone;
+  groups Keyboard / Gamepad; steer's controller slot is a whole stick or the D-pad so the stick keeps its radial dead zone,
+  the other controller slots also take a stick pushed one way past half way, "RS ↑";
   steer, throttle and roll are composites captured part by part). Defaults: the PC keys above and the controller buttons
   (LS steer, RB / LB throttle, A boost, Y level out and fast-forward (hold), RT / LT fire, D-pad right / up / down switch
   secondary / camera / auto turret, X action, View autopilot menu, D-pad left actions menu, RS / LS press cloak / time extender); the right stick's
