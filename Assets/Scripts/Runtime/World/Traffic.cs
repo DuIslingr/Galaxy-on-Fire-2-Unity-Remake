@@ -296,6 +296,9 @@ namespace GoF2Remake.World
             chatterQueue.Enqueue(c);
         }
 
+        /// <summary>Remake: the chatter stays up at least until its voice clip is over (as Radio.HoldFor).</summary>
+        public void HoldChatter(float ms) { if (chatter != null) chatterDurationMs = Mathf.Max(chatterDurationMs, ms); }
+
         /// <summary>Radio::update: hidden 2000 ms, then lines * 2000 + 1500 ms (world time).</summary>
         void UpdateChatter(float dtMs)
         {
