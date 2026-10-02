@@ -1205,10 +1205,12 @@ namespace GoF2Remake.UI
                     vel *= Mathf.Pow(0.9f, f);
                     if (vel.magnitude <= 0.5f) vel = Vector2.zero;
                 }
-                // Pan limits: a spring back inside [-500, 120] x [-400, 140] (camera / 20).
+                // Pan limits: a spring back inside [-500, 120] x [-400, 140] (camera / 20). Not while centring a system:
+                // StarMap::update's auto-centre overwrites the spring's velocity, so the camera reaches a sun past the limit
+                // (Skor Terpa, system 32, is above it: the two settled ~90 px apart and it could never be zoomed into).
                 var c = start + pan;
                 var clamped = new Vector2(Mathf.Clamp(c.x, -500f, 120f), Mathf.Clamp(c.y, -400f, 140f));
-                if (clamped != c && pointer < 0)
+                if (clamped != c && pointer < 0 && !autoCentre)
                 {
                     pan += (clamped - c) * Mathf.Min(1f, 0.1f * f);
                     if (clamped.x != c.x) vel.x = 0f;
