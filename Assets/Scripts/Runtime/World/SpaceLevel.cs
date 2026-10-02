@@ -262,7 +262,7 @@ namespace GoF2Remake.World
             {
                 FreelanceOrbit = new GameObject("FreelanceOrbit mission").AddComponent<FreelanceOrbit>();
                 FreelanceOrbit.Setup(this, Traffic);
-                Navigation.SetRoute(FreelanceOrbit.PlayerRoute);
+                Navigation.SetRoute(FreelanceOrbit.PlayerRoute, true);
             }
             else if (missionFollower)
             {
