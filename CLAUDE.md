@@ -759,7 +759,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   are swallowed there (`StopPropagation` + `focusController.IgnoreEvent`: stopping alone still moved the focus to a menu
   button, which ended the typing). No send button (the key sends). Another player's line plays the original's
   incoming-message sound (FMOD 125 Message_Inc, volume 0.241 × `Sfx.EventGain` × the FX volume, one at a time; a copy
-  of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving; join / leave notices; every line
+  of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving (full width, nearly opaque; the flight HUD's key hints under the chat are hidden while it shows); join / leave notices; every line
   is also in the player log (`[Chat ...]`). While typing the game's keys
   are off: the code-made InputActions are disabled and the direct keyboard reads go through `NetChat.Keys` (null then;
   FlightHud, ShipController, Mining, SpaceLevel, StationMenu, PauseMenu), the station menu's navigation too.
