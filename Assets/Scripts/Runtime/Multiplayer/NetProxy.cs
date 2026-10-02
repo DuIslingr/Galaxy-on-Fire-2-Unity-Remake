@@ -347,7 +347,7 @@ namespace GoF2Remake.Multiplayer
             visual.transform.SetParent(transform, false);
             visual.transform.localScale = scale.Value;
             var asm = visual.GetComponent<AssembledObject>();
-            asm?.SetPlayerVariant(GoF2Remake.Data.Settings.NpcPlayerEngines && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0
+            asm?.SetPlayerVariant((GoF2Remake.Data.Settings.NpcPlayerEngines || !asm.HasNpcExhaust) && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0
                                   && asm.playerVariantParts[0] != null);
             name = $"NetProxy {model.Value}";
             visual.SetActive(shown);

@@ -335,7 +335,8 @@ namespace GoF2Remake.World
             {
                 modelGo = Instantiate(prefab, transform, false);
                 var asm = modelGo.GetComponent<AssembledObject>();
-                playerEngines = Settings.NpcPlayerEngines && spec.fixedObject == null && spec.turretAssembly == null
+                // The option, or a model with no NPC engine part at all (the Kaamo Club's 55-63: only the engine glow).
+                playerEngines = (Settings.NpcPlayerEngines || (asm != null && !asm.HasNpcExhaust)) && spec.fixedObject == null && spec.turretAssembly == null
                                 && asm != null && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0 && asm.playerVariantParts[0] != null;
                 asm?.SetPlayerVariant(playerEngines);
                 model = modelGo.transform;

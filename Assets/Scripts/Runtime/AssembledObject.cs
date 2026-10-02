@@ -57,6 +57,9 @@ namespace GoF2Remake.Visuals
         public Vector3 spawnRotationEngine;
 
         /// <summary>The engine exhaust on / off: the player parts ('player') or the NPC parts (cutscenes: engines off).</summary>
+        /// <summary>The NPC engine parts exist (the Kaamo Club's ships 55-63 have only the player's engine glow).</summary>
+        public bool HasNpcExhaust => npcVariantParts != null && npcVariantParts.Length > 0;
+
         public void SetExhaust(bool on, bool player)
         {
             var parts = player ? playerVariantParts : npcVariantParts;
