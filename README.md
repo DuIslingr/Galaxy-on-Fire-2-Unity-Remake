@@ -127,6 +127,8 @@ can't. Type one and press Enter:
 | `list` | The players: client id, name, where they are, ship, squad. |
 | `say <text>` | A chat line to everyone, from "Server". |
 | `kick <id or name> [reason]` | Drops a player; they see the reason. |
+| `profiles` | The player profiles: id, name, devices, worth, who is online. |
+| `profile delete <id>` | Deletes a profile (not while it is online; its file is kept as `.bak`). |
 | `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
 
 **Starting it by hand**
@@ -150,6 +152,10 @@ GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -passwo
 | `-allowdebug` | The players may use the Debug menu (cheats, items, spawns). Off without it. |
 | `-port N` | The port for local network play (default 7777, UDP). |
 | `-fps N` | The server's frame rate (default 60). |
+| `-noprofiles` | Don't keep player profiles (every session starts fresh, like before). |
+| `-maxprofiles N` | How many player profiles the server keeps (default 50). New devices past it play as guests. |
+| `-maxearn N` | Without `-allowdebug`: how much a profile's worth may grow per minute online (default 1 000 000). |
+| `-profiledir PATH` | Where the profiles are stored (default `ServerProfiles` in the game's data folder). |
 
 Good to know:
 
@@ -157,6 +163,22 @@ Good to know:
 - The server keeps the shared world: the shop stock, squads, missions and chat. Each orbit's NPCs are run by the first
   player who arrives there, so the server itself needs very little CPU.
 - Players on a different game version are turned away with a message saying which version the server runs.
+
+**Player profiles**
+
+A dedicated server keeps each player's progress: credits, ship and its mods, equipment, cargo, the Kaamo Club and its
+storage, and their squad. A player's game gets a secret key from the server on its first visit and signs in with it
+every time after; the progress is saved when docking, every minute and when leaving. Players type these in the chat:
+
+| Command | Meaning |
+|---|---|
+| `/link` | A 6-letter code for 5 minutes, to use the profile on another device. |
+| `/link CODE` | On the other device: use the profile the code belongs to. `/link CODE force` if this device has progress of its own (it is deleted). |
+| `/control` | Two devices of one profile online: the first one plays, the other watches from the station. This takes over once the playing one is docked. |
+| `/profile` | The profile's id and devices. |
+
+Without `-allowdebug` the server turns away progress that can't be right (worth growing faster than `-maxearn`, ships
+nobody can own). The players' games still run the economy, so this isn't proof against a modified game.
 
 ## Controls (keyboard)
 

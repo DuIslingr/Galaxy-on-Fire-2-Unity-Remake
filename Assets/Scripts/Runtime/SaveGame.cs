@@ -146,6 +146,8 @@ namespace GoF2Remake.Data
         /// <summary>ModStation::autosave: slot 0, not for a game without playing time.</summary>
         public static void AutoSave()
         {
+            // Multiplayer: a server that keeps profiles gets the docked game instead (NetProfileClient; a no-op without).
+            if (GoF2Remake.Multiplayer.NetGame.SessionGame) { GoF2Remake.Multiplayer.NetProfileClient.Upload(); return; }
             if (Session.PlaySeconds <= 0f) return;
             Save(AutoSaveSlot);
         }
@@ -157,6 +159,36 @@ namespace GoF2Remake.Data
             if (s == null) return false;
             Apply(s);
             return true;
+        }
+
+        /// <summary>Multiplayer (NetProfileClient): the game as a server profile: a save without the shop memory (the session's
+        /// stock is the host's, NetStock; the bar visitors come again), compact.</summary>
+        public static string ProfileJson()
+        {
+            var s = Capture();
+            s.recentStations = null;
+            return JsonUtility.ToJson(s, false);
+        }
+
+        /// <summary>Multiplayer: a server profile into the session's game (already checked by TryParse), under the session's
+        /// rules (NetGame.PrepareSession: free play on Normal, the Android economy). A squad mission, its Courier containers
+        /// and passengers don't outlive the session they belonged to; the game starts docked where the profile was (an orbit
+        /// that isn't a station: Var Hastra).</summary>
+        public static void ApplyProfile(SaveData s)
+        {
+            Apply(s);
+            Session.Difficulty = Session.DifficultyNormal;
+            Session.Economy = Economy.Android;
+            Session.FreePlay = true;
+            Session.CampaignMission = Session.FreePlayMission;
+            Session.FreelanceMission = new FreelanceMission();
+            Session.Passengers = 0;
+            Session.Cargo.RemoveAll(c => c.item == Freelance.SecureContainer);   // a Courier's containers (unsaleable)
+            if (Session.StationIndex < 0 || Session.StationIndex >= GoF2Remake.Multiplayer.NetGame.Db.Stations.Count)
+                Session.StationIndex = GoF2Remake.Multiplayer.NetGame.Station;
+            Session.ProgrammedStation = -1;
+            Session.LaunchedFromStation = false;
+            Session.DockedFromSpace = false;
         }
 
         static SaveData Capture()

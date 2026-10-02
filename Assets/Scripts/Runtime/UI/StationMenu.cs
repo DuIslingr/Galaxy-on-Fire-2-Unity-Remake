@@ -264,6 +264,7 @@ namespace GoF2Remake.UI
         void OpenHangar()
         {
             if (HangarOpen || level == null || !Story.HangarUnlocked) return;
+            if (RefuseObserver()) return;
             if (level.View != StationView.Hangar) level.SetView(StationView.Hangar);
             FirstVisitHint(8, 622);   // before the first row's selection hint
             hangarWindow.Open();
@@ -493,6 +494,7 @@ namespace GoF2Remake.UI
         void OpenLounge()
         {
             if (level == null || !Story.LoungeUnlocked(level.Station != null ? level.Station.index : -1)) return;
+            if (RefuseObserver()) return;
             CloseHangar();
             level?.SetView(StationView.Lounge);
             FirstVisitHint(0xd, 627);
@@ -504,6 +506,7 @@ namespace GoF2Remake.UI
         void OpenMap()
         {
             if (level == null || StarMap.IsOpen || !Story.MapUnlocked) return;
+            if (RefuseObserver()) return;
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
             if (Story.MapRefusal is string refusal) { ShowDialog(refusal, null, true); return; }   // index 77: take the Cronus
             CloseHangar();
@@ -548,10 +551,20 @@ namespace GoF2Remake.UI
             return true;
         }
 
+        /// <summary>Multiplayer: another device of this player's server profile controls it, so this one stays on the main
+        /// view (NetProfileClient.Refusal): no hangar, lounge, map or launch.</summary>
+        bool RefuseObserver()
+        {
+            if (!(GoF2Remake.Multiplayer.NetProfileClient.Refusal is string text)) return false;
+            ShowToast(text);
+            return true;
+        }
+
         /// <summary>ModStation::leaveStation: refused while the cargo hold is overloaded (204). Remake: launches at once, without
         /// the original's "Depart the station?" (397).</summary>
         void AskLaunch()
         {
+            if (RefuseObserver()) return;
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
             if (RefuseLaunchForStory()) return;
             level.Launch();

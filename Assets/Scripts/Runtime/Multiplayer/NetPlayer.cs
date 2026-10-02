@@ -55,6 +55,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<byte> place = new NetworkVariable<byte>((byte)Place.None, Read, Write);
         readonly NetworkVariable<bool> authority = new NetworkVariable<bool>(false, Read, Write);
         readonly NetworkVariable<int> squad = new NetworkVariable<int>(0);   // the host's (NetSquad), 0 = none
+        readonly NetworkVariable<bool> observer = new NetworkVariable<bool>(false);   // the server's: another device controls the profile
         readonly NetworkVariable<bool> engine = new NetworkVariable<bool>(true, Read, Write);   // the engine glow shows
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
@@ -127,6 +128,10 @@ namespace GoF2Remake.Multiplayer
         public float Armor => armor.Value;
         /// <summary>Host: into squad 'id' (0 = none).</summary>
         public void SetSquad(int id) { if (IsServer && squad.Value != id) squad.Value = id; }
+        /// <summary>Another device of this player's profile controls it: this one stays docked (NetProfiles).</summary>
+        public bool Observer => observer.Value;
+        /// <summary>Server: NetProfiles' role for this device.</summary>
+        public void SetObserver(bool on) { if (IsServer && observer.Value != on) observer.Value = on; }
         public string DisplayName
         {
             get
@@ -386,6 +391,7 @@ namespace GoF2Remake.Multiplayer
                 mirror?.Update(Time.deltaTime * 1000f);
                 return;
             }
+            NetProfileClient.Tick();   // the server profile's periodic upload
             if (ship.Value != Session.ShipIndex) ship.Value = Session.ShipIndex;   // bought another
             if (standing0.Value != Session.Standing[0]) standing0.Value = Session.Standing[0];
             if (standing1.Value != Session.Standing[1]) standing1.Value = Session.Standing[1];

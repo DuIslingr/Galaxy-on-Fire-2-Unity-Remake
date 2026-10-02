@@ -607,7 +607,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   jumps and docking. The network objects live in DontDestroyOnLoad and each player shows only what is where they are.
   The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
-  (`SaveGame.Save` refuses), so it never touches the single-player saves.
+  (`SaveGame.Save` refuses), so it never touches the single-player saves; a dedicated server keeps player profiles
+  instead (see **Player profiles**).
 - **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (a fixed 84 %
   high panel: the title with the "Experimental" badge and the pilot name `mp_name`, a one-line intro, then the server
   browser and the host column). **Server browser** (`NetLobby.Query` every 5 s while the panel is open; rows rebuilt
@@ -869,6 +870,33 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   kick (`NetGame.Kick`: the reason is the player's popup), stop (`NetGame.StopServer`: the goodbye, then quit; Ctrl+C
   and closing the window too). Verified: the Windows build headless with the Editor as the client (join, chat, say,
   kick, stop; over Relay, listed, with a password; the console window, no menu).
+- **Player profiles** (`NetProfiles` server, `NetProfileClient` player; a dedicated server only, on unless `-noprofiles`;
+  `-maxprofiles N` default 50, `-maxearn N` default 1 000 000, `-profiledir`): `<persistentDataPath>/ServerProfiles`
+  holds `accounts.json` (the server's id, each account's devices with their token hashes, name, squad key, worth) and
+  one `<account>.json` per profile, a `SaveData` without the shop memory (`SaveGame.ProfileJson`; loaded with
+  `SaveGame.ApplyProfile`: the session's rules, no squad mission or Courier containers, docked where it was, an orbit
+  without a station = Var Hastra). Files are written through `.tmp` with the previous one as `.bak`. Signing in: NetState
+  carries `ProfilesOn` / the server id; a joining game doesn't enter the world at once but sends `LoginRpc` (its token
+  for that server from PlayerPrefs `mp_token_<server>` (+ a -mpname hash), and a SHA-256 label of
+  `SystemInfo.deviceUniqueIdentifier`), the server answers with a header (new token, role) and the gzipped profile in
+  4000-byte chunks (Unity Transport's 6144-byte payload limit), then the game enters the world. No known token = a new
+  profile while under the limit, else a guest (nothing saved). Uploads (gzipped chunks, `UploadChunkRpc`): on every
+  docking (`SaveGame.AutoSave`), every 60 s, when leaving (`NetGame.Shutdown`); each is checked like an imported save
+  (`SaveGame.TryParse`), and without `-allowdebug` also turned away when the profile's worth (credits + ship prices +
+  items at `minPrice`, `NetProfiles.Worth`) grew more than 2 000 000 + `-maxearn` per minute online since the last
+  accepted one, or for hulls 13 / 14 / 15 (the player gets "The server didn't save your progress: ..."). Not a server
+  authority: the client still runs the economy (the plan's phase 2: server-priced trades, claimed rewards). Devices: one
+  connection per device (signing in again drops the older one); several devices of one profile = the first controls it,
+  the others are observers (`NetPlayer.Observer`, server-written; `NetProfileClient.Refusal`: the station menu's
+  Hangar / Lounge / Map / Launch refused; their uploads ignored); a controller leaving promotes the next device online
+  (it gets the latest profile and reloads the station). Chat commands (answered privately, never relayed): `/link` (a
+  6-letter code for 5 minutes, controller only), `/link CODE [force]` (this device joins that profile with its own token;
+  its own profile is deleted when it was the only device, `force` needed past 5 minutes of play), `/control` (an observer
+  takes over once the controller is docked: the controller is demoted and uploads once more (`RequestUploadRpc`), then
+  the observer gets the profile; 5 s timeout = the last saved one), `/profile`. Squads: the account keeps a squad key
+  (set on `AcceptInviteRpc`, cleared on `LeaveSquadRpc`, kept through a disconnect); a controller signing in joins a
+  squadmate online (`NetState.RestoreSquad`, anywhere, not only in a hangar). Server console: `profiles`,
+  `profile delete <id>` (not while online), `list` marks observers. Not tested in a build yet.
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.
 - **Medals** are off in sessions (`Achievements.Check` / `Elite` award nothing, the Status window hides the medal column).

@@ -11,10 +11,13 @@
 //   squads (NetSquad): invitations, joining and leaving, a squad of one dissolved; the players' kill notices;
 //   squad missions (NetMissions): the shared missions, their progress and results, a disconnecting carrier's cargo;
 //   the shared shop stock (NetStock): the host's list per station, the players' trades, the reset;
-//   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed).
+//   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed);
+//   a dedicated server's player profiles (NetProfiles / NetProfileClient): signing in, the profile to the player, their
+//     uploads, handing control between a profile's devices, the chat's /link /control /profile commands.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -28,6 +31,8 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> seed = new NetworkVariable<int>();
         readonly NetworkVariable<bool> dedicated = new NetworkVariable<bool>();
         readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice, fixed for the session
+        readonly NetworkVariable<bool> profilesOn = new NetworkVariable<bool>();     // the server keeps player profiles (NetProfiles)
+        readonly NetworkVariable<FixedString64Bytes> serverId = new NetworkVariable<FixedString64Bytes>();   // their key on the client
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
         int pendingSeed;
@@ -48,6 +53,9 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The session allows the Debug menu (NetGame.HostAllowsDebug when it started; off by default).</summary>
         public bool DebugAllowed => debugAllowed.Value;
 
+        /// <summary>The server keeps player profiles: a joining game signs in and waits for its profile (NetProfileClient).</summary>
+        public bool ProfilesOn => profilesOn.Value;
+
         public override void OnNetworkSpawn()
         {
             name = "NetState";
@@ -58,9 +66,13 @@ namespace GoF2Remake.Multiplayer
                 seed.Value = pendingSeed;
                 dedicated.Value = pendingDedicated;
                 debugAllowed.Value = NetGame.HostAllowsDebug;
+                profilesOn.Value = NetProfiles.Enabled;
+                serverId.Value = NetProfiles.ServerId;
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
             }
+            // A server with profiles: the world waits for this player's profile (NetProfileClient.Begin -> EnterWorld).
+            else if (profilesOn.Value) NetProfileClient.Begin(serverId.Value.ToString(), seed.Value);
             else NetGame.EnterWorld(seed.Value);
         }
 
@@ -120,6 +132,13 @@ namespace GoF2Remake.Multiplayer
         {
             text = NetChat.Clean(text);
             if (text.Length == 0) return;
+            // Profile commands (/link, /control, /profile): answered to the sender only, never shown to the others.
+            if (text[0] == '/' && NetProfiles.Enabled)
+            {
+                string answer = NetProfiles.Command(rpc.Receive.SenderClientId, text);
+                if (!string.IsNullOrEmpty(answer)) Notify(rpc.Receive.SenderClientId, answer);
+                return;
+            }
             NetPlayer sender = null;
             foreach (var p in NetPlayer.All) if (p != null && p.OwnerClientId == rpc.Receive.SenderClientId) { sender = p; break; }
             if (sender == null) return;
@@ -167,6 +186,13 @@ namespace GoF2Remake.Multiplayer
                             RpcTarget.Single(joiner.OwnerClientId, RpcTargetUse.Temp));
                 return;
             }
+            JoinSquad(leader, joiner);
+            NetProfiles.SquadJoined(leader.OwnerClientId, joiner.OwnerClientId);   // both profiles remember it
+        }
+
+        /// <summary>'joiner' into 'leader''s squad (a new one if the leader has none).</summary>
+        void JoinSquad(NetPlayer leader, NetPlayer joiner)
+        {
             if (leader.SquadId == 0) leader.SetSquad(nextSquad++);
             joiner.SetSquad(leader.SquadId);
             DissolveSingles();
@@ -180,6 +206,14 @@ namespace GoF2Remake.Multiplayer
             SquadNoticeRpc(leader.SquadId, string.Format(Localization.Extra("mpSquadJoined", "{0} joined the squad."), joiner.DisplayName));
         }
 
+        /// <summary>NetProfiles: a player signing in goes back into the squad their profile remembers ('mate' is online and
+        /// in it). Unlike an invitation this works anywhere, docked or not.</summary>
+        internal void RestoreSquad(NetPlayer mate, NetPlayer joiner)
+        {
+            if (!IsServer || mate == null || joiner == null || mate == joiner || NetSquad.Same(mate, joiner)) return;
+            JoinSquad(mate, joiner);
+        }
+
         [Rpc(SendTo.Server)]
         public void LeaveSquadRpc(RpcParams rpc = default)
         {
@@ -187,6 +221,7 @@ namespace GoF2Remake.Multiplayer
             if (p == null || p.SquadId == 0) return;
             int id = p.SquadId;
             p.SetSquad(0);
+            NetProfiles.SquadLeft(p.OwnerClientId);
             LeftSquadRpc(RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));   // the squad's mission leaves with them
             SquadNoticeRpc(id, string.Format(Localization.Extra("mpSquadLeft", "{0} left the squad."), p.DisplayName));
             DissolveSingles();
@@ -223,6 +258,62 @@ namespace GoF2Remake.Multiplayer
 
         [Rpc(SendTo.SpecifiedInParams)]
         void NoticeToRpc(string text, RpcParams rpc = default) => NetChat.Notice(text);
+
+        /// <summary>Server: a notice in one player's chat.</summary>
+        internal void Notify(ulong client, string text)
+        {
+            if (IsServer && !string.IsNullOrEmpty(text)) NoticeToRpc(text, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        // ---- player profiles (NetProfiles / NetProfileClient) ----------------------------------------------
+
+        int profileSeq;
+
+        /// <summary>A joining game on a server with profiles: its token for this server ("" = none) and device label.</summary>
+        [Rpc(SendTo.Server)]
+        public void LoginRpc(string token, string device, string name, RpcParams rpc = default)
+            => NetProfiles.OnLogin(rpc.Receive.SenderClientId, token, device, name);
+
+        /// <summary>Server: a profile to one player: the header (its new token, if any; its role), then the gzipped chunks
+        /// (none = a fresh start). Reliable RPCs to one client arrive in order.</summary>
+        internal void SendProfile(ulong client, string token, bool controller, bool guest, string json)
+        {
+            if (!IsServer) return;
+            var parts = NetProfiles.Pack(json);
+            int seq = ++profileSeq;
+            ProfileHeaderRpc(seq, parts.Count, token ?? "", controller, guest, RpcTarget.Single(client, RpcTargetUse.Temp));
+            for (int i = 0; i < parts.Count; i++) ProfileChunkRpc(seq, i, parts[i], RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void ProfileHeaderRpc(int seq, int count, string token, bool controller, bool guest, RpcParams rpc = default)
+            => NetProfileClient.OnProfileHeader(seq, count, token, controller, guest);
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void ProfileChunkRpc(int seq, int part, byte[] data, RpcParams rpc = default) => NetProfileClient.OnProfileChunk(seq, part, data);
+
+        /// <summary>A player's profile, a chunk at a time (NetProfileClient.Upload).</summary>
+        [Rpc(SendTo.Server)]
+        public void UploadChunkRpc(int seq, int part, int count, byte[] data, RpcParams rpc = default)
+            => NetProfiles.OnUploadChunk(rpc.Receive.SenderClientId, seq, part, count, data);
+
+        /// <summary>Server: this player's device controls its profile now, or watches.</summary>
+        internal void SendRole(ulong client, bool controller)
+        {
+            if (IsServer) RoleRpc(controller, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void RoleRpc(bool controller, RpcParams rpc = default) => NetProfileClient.OnRole(controller);
+
+        /// <summary>Server: the old controller sends its profile once more before another device takes over (/control).</summary>
+        internal void RequestUpload(ulong client)
+        {
+            if (IsServer) RequestUploadRpc(RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void RequestUploadRpc(RpcParams rpc = default) => NetProfileClient.Upload(true);
 
         [Rpc(SendTo.SpecifiedInParams)]
         void JoinedSquadRpc(RpcParams rpc = default) => NetMissions.OnJoinedSquad();
@@ -493,6 +584,7 @@ namespace GoF2Remake.Multiplayer
         {
             NetStock.Flush();   // the shared stock that arrived, applied between frames (every player)
             if (!IsServer || !IsSpawned) return;
+            NetProfiles.Tick();   // link codes and handovers that ran out
             if ((sweepTimer -= Time.unscaledDeltaTime) > 0f) return;
             sweepTimer = SweepSeconds;
             NetStock.HostTick(this);   // the stock resets

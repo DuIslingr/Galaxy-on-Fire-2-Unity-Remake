@@ -9,6 +9,10 @@
 //   -maxplayers N    the player limit (default 16, 2..100: Relay's connections, the browser, the approval)
 //   -allowdebug      the players may use the Debug menu (cheats, items, spawns); off by default (NetGame.HostAllowsDebug)
 //   -port N          the local port (default 7777); -fps N the server's frame rate (default 60)
+//   -noprofiles      no player profiles (NetProfiles; on by default: credits, ships, cargo, Kaamo Club, squad kept
+//                    per player between sessions); -maxprofiles N (default 50), -maxearn N (worth a profile may gain
+//                    per minute online without -allowdebug, default 1 000 000), -profiledir PATH (default
+//                    <persistentDataPath>/ServerProfiles)
 // Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
 // MainMenu / MenuBackground call ShutOff as they wake (the scene's objects off before the rest wake: no menu, music or
@@ -78,6 +82,10 @@ namespace GoF2Remake.Multiplayer
             NetGame.MaxPlayers = int.TryParse(Value("-maxplayers"), out int mp) ? mp : NetGame.DefaultMaxPlayers;   // 2..100
             NetGame.HostPassword = NetGame.CleanPassword(Value("-password"));
             NetGame.HostAllowsDebug = HasFlag("-allowdebug");
+            NetProfiles.Configure(!HasFlag("-noprofiles"),
+                int.TryParse(Value("-maxprofiles"), out int profiles) ? profiles : NetProfiles.DefaultMaxProfiles,
+                int.TryParse(Value("-maxearn"), out int earn) ? earn : NetProfiles.DefaultEarnPerMinute,
+                Value("-profiledir"));
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
 #if UNITY_EDITOR
@@ -152,6 +160,10 @@ namespace GoF2Remake.Multiplayer
             Log($"Up to {NetGame.MaxPlayers} players (-maxplayers).");
             if (NetGame.HasPassword) Log("Players need the password (-password) to join.");
             Log(NetGame.HostAllowsDebug ? "The Debug menu is allowed (-allowdebug)." : "The Debug menu is off (-allowdebug allows it).");
+            if (NetProfiles.Enabled)
+                Log(NetGame.HostAllowsDebug ? "Player profiles: uploads are taken as the players' games send them (-allowdebug)."
+                                            : $"Player profiles: uploads are checked (at most {NetProfiles.EarnPerMinute:N0} worth gained per minute: -maxearn).");
+            else Log("Player profiles are off (-noprofiles): nothing is saved.");
             Log("Type \"help\" for the commands.");
         }
 
@@ -266,6 +278,8 @@ namespace GoF2Remake.Multiplayer
                            "  list                the players: client id, name, where, ship, squad\n" +
                            "  say <text>          a chat line to everyone, from \"Server\"\n" +
                            "  kick <id|name> [reason]  drops a player\n" +
+                           "  profiles            the player profiles (id, name, devices, worth, who is online)\n" +
+                           "  profile delete <id> deletes a profile (not while it is online; its file is kept as .bak)\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
                 case "status":
                     return $"{(NetGame.Active ? "Running" : "Not running")} {(NetGame.JoinCode != null ? $"online, join code {NetGame.JoinCode}" : $"on port {port}")}, up {Duration(Time.unscaledTime - startedAt)}, " +
@@ -280,6 +294,11 @@ namespace GoF2Remake.Multiplayer
                     return "";   // the chat line itself is logged
                 case "kick":
                     return Kick(rest);
+                case "profiles":
+                    return NetProfiles.ConsoleList();
+                case "profile":
+                    if (rest.StartsWith("delete ", StringComparison.OrdinalIgnoreCase)) return NetProfiles.ConsoleDelete(rest.Substring(7).Trim());
+                    return "profile delete <id>";
                 case "stop": case "quit": case "exit": case "shutdown":
                     Log("Stopping the server...");
                     NetGame.StopServer();
@@ -299,6 +318,7 @@ namespace GoF2Remake.Multiplayer
                 n++;
                 sb.Append($"\n  {p.OwnerClientId,3}  {p.DisplayName,-20}  {Where(p)}, {UI.ItemInfo.ShipName(p.ShipIndex)}");
                 if (p.SquadId != 0) sb.Append($", squad {p.SquadId}");
+                if (p.Observer) sb.Append(", watching (another device controls the profile)");
             }
             return n == 0 ? "No players online." : $"{n} player(s):" + sb;
         }

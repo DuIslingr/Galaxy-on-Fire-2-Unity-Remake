@@ -18,7 +18,8 @@
 //   Shots, hits on proxies and crate claims go between the players in the same orbit (NetShotSender / NetShotMirror,
 //   NetProxy, NetCrate). Not yet: handing an orbit's NPCs over when its authority leaves (they go with it),
 //   player-versus-player damage, NPCs attacking other players than the authority. The players can't die (game over
-//   would load a save), nothing is saved (SaveGame), and the game never pauses (Time.timeScale stays 1).
+//   would load a save), nothing is saved to the single-player slots (SaveGame), and the game never pauses
+//   (Time.timeScale stays 1). A dedicated server keeps player profiles instead (NetProfiles / NetProfileClient).
 // Network prefabs: Resources/GoF2Net (GoF2 > Build Network Prefabs).
 
 using System;
@@ -353,6 +354,7 @@ namespace GoF2Remake.Multiplayer
             hostAllocation = null;
             PrepareSession();
             Dedicated = true;
+            NetProfiles.Start();   // the player profiles (before NetState: it carries the server's id)
             Seed = Environment.TickCount & 0x7fffffff;
             var m = EnsureManager();
             if (relay != null) Transport.SetRelayServerData(relay.ToRelayServerData(RelayConnection));
@@ -435,6 +437,8 @@ namespace GoF2Remake.Multiplayer
         /// them why first and closes a moment later (NetDelayedShutdown), so the reason reaches them.</summary>
         public static void Shutdown()
         {
+            // Leaving a server that keeps profiles: the game as it is now goes up first (queued before the disconnect).
+            if (manager != null && !manager.IsServer && manager.IsConnectedClient && !closing) NetProfileClient.Upload();
             NetChat.Clear();
             NetSquad.Clear();
             worldEntered = false;
@@ -833,6 +837,7 @@ namespace GoF2Remake.Multiplayer
                 // That player's ship goes at once (NGO removes a player object with its owner; this also covers a late one),
                 // and so does what they showed of their orbit (NGO destroys the objects a leaving client owns).
                 playersSpawned.Remove(clientId);
+                NetProfiles.OnDisconnect(clientId);   // its profile's control goes to its next device online
                 // (Netcode has usually despawned the player object already: its mission cargo is handed over in
                 // NetPlayer.OnNetworkDespawn.)
                 foreach (var p in UnityEngine.Object.FindObjectsByType<NetPlayer>())
