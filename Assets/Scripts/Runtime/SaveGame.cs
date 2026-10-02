@@ -381,6 +381,9 @@ namespace GoF2Remake.Data
                 if (s.wingmanPortrait != null && s.wingmanPortrait.Length == 5) Session.WingmanPortrait = s.wingmanPortrait;
                 Session.WingmenHired = s.wingmenHired;
                 Session.UnlockedBlueprints = new HashSet<int>(s.unlockedBlueprints ?? new List<int>());
+                // Saves made while step 59 locked the Liberator blueprint again (the original's lock is a no-op): back,
+                // for every game past 58 that played through it (a Supernova campaign starts at 84 without it).
+                if (Session.CampaignMission > 58 && Session.Campaign != Campaign.Supernova) Session.UnlockedBlueprints.Add(179);
                 Session.StoryAgentsAccepted = new HashSet<int>(s.storyAgentsAccepted ?? new List<int>());
                 if (s.version < 11)   // older saves: a blueprint seller whose blueprint is owned was bought from
                     foreach (var sa in AgentData.StoryAgents)
