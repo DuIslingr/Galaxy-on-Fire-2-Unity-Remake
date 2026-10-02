@@ -868,6 +868,20 @@
     translate: 8px 0;
 }
 
+/* The new game's Kaamo Club expansion toggle (under the economy choices; a choice, not a start button). */
+.choice-button--toggle {
+    margin-top: 22px;
+    border-left-color: var(--gof-line);
+}
+
+.choice-button--toggle.choice-button--on {
+    border-left-color: var(--gof-amber);
+}
+
+.choice-button--on .choice-title {
+    color: var(--gof-amber);
+}
+
 .choice-title {
     font-size: 24px;
     letter-spacing: 4px;

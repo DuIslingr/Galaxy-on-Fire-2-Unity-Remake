@@ -73,6 +73,10 @@
                         <ui:Label name="economyAndroidLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
                         <ui:Label name="economyAndroidDesc" class="choice-desc" picking-mode="Ignore" />
                     </ui:Button>
+                    <ui:Button name="kaamoToggle" class="choice-button choice-button--toggle">
+                        <ui:Label name="kaamoLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="kaamoDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
                     <ui:Button name="economyBack" class="menu-button back-button gof-semibold" />
                 </ui:VisualElement>
 

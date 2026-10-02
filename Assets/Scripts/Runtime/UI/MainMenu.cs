@@ -203,6 +203,7 @@ namespace GoF2Remake.UI
                 () => PickDifficulty(Session.DifficultyExtreme)));
             Bind("economyDefaultButton", () => StartGame(Economy.Default));
             Bind("economyAndroidButton", () => StartGame(Economy.Android));
+            Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
             Bind("dialogYes", () => { var a = dialogYes; CloseDialog(); a?.Invoke(); });
             Bind("dialogNo", CloseDialog);
 
@@ -610,12 +611,37 @@ namespace GoF2Remake.UI
             OpenPanel("economyPanel");
         }
 
+        /// <summary>Remake (GitHub #8): the original's Kaamo Club expansion (an in-app purchase, texts 78 / 88 / 93) as a new
+        /// game's choice: Status::resetGame sets the club's state to 3 (owned) while it is bought, so no siege, no purchase.
+        /// Remembered for the next new game (PlayerPrefs "newgame_kaamo").</summary>
+        static bool KaamoFromStart
+        {
+            get => PlayerPrefs.GetInt("newgame_kaamo", 0) == 1;
+            set { PlayerPrefs.SetInt("newgame_kaamo", value ? 1 : 0); PlayerPrefs.Save(); }
+        }
+
+        void RefreshKaamoToggle()
+        {
+            var b = root.Q<Button>("kaamoToggle");
+            if (b == null) return;
+            bool on = KaamoFromStart;
+            b.EnableInClassList("choice-button--on", on);
+            var label = root.Q<Label>("kaamoLabel");
+            if (label != null)
+                label.text = $"{Localization.Get(78)}: {(on ? Localization.Extra("kaamoOwned", "Owned from the start") : Localization.Extra("kaamoNotOwned", "Win it in the game"))}".ToUpperInvariant();
+            var desc = root.Q<Label>("kaamoDesc");
+            if (desc != null)
+                desc.text = Localization.Extra("kaamoDesc",
+                    "The original's Kaamo Club expansion: the club in the Shima system is yours from day one, without the siege or the 30 million; store as many ships and goods there as you like. Choose, then pick the economy.");
+        }
+
         void StartGame(Economy economy)
         {
             Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
             Session.Campaign = pendingCampaign;
             Session.Difficulty = pendingDifficulty;
             Session.Economy = economy;   // before the Database: it loads that economy's tables
+            if (KaamoFromStart) Session.KaamoState = 3;   // resetGame with the expansion bought: the club owned, its storage empty
             var db = Database.Load();
             // Remake: the mission select starts a new game at the chosen story step (Story.StartAtMission).
             if (pendingStartIndex >= 0) { StartCoroutine(Leave(Story.StartAtMission(db, pendingStartIndex))); return; }
@@ -1597,6 +1623,7 @@ namespace GoF2Remake.UI
             Set("economyAndroidLabel", Session.EconomyName(Economy.Android).ToUpperInvariant());
             Set("economyAndroidDesc", Localization.Extra("economyAndroidDesc",
                 "The Android version's prices: commodities, tractor beams, shields and armor far dearer, blueprints need many more ingredients, ships cheaper."));
+            RefreshKaamoToggle();
             Set("extremeLabel", T(25));
             Set("extremeDesc", Localization.Extra("extremeDesc", "For veterans who finished the game: tougher enemies and a harsher economy."));
             Set("loadTitle", T(29));
