@@ -836,12 +836,20 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   host's arrives; lists are applied between frames (`NetStock.Flush`). The host's lists carry the stations' docking extras
   that aren't one player's (`NetStock.HostExtras`: Kappa's EMP GL I at free play, energy cells at 10 / 100 / 101). Not
   shared: the owned Kaamo Club's storage.
+- **Debug menu in multiplayer** (`NetGame.HostAllowsDebug` → `NetState.DebugAllowed`, a NetworkVariable set when the
+  world spawns, fixed for the session): off by default. The Host card's **Debug menu** Off / Allowed segments
+  (`mp_allow_debug`), a dedicated server's `-allowdebug` (the launchers' `ALLOWDEBUG=1`; `status` and the startup log
+  say which). `Cheats.Allowed` = no session, or the session allows it: otherwise the pause / station Debug pages are
+  gone (`Cheats.PageShown`), the Options "Debug tools" row is hidden, and every cheat flag reads off (`Cheats.On`), so
+  toggles left on in single player don't carry into a session (their saved values are kept). Client-side only: a
+  modified client can still cheat.
 - **Dedicated server** (`DedicatedServer`, `NetGame.StartServer`): the normal Windows / Linux player started with `-server`
   (with `-batchmode -nographics`; `-relay` online with a join code, listed as `-name "..."` unless `-unlisted`;
-  `-password`; `-maxplayers` (2..100, default 16); `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment
+  `-password`; `-maxplayers` (2..100, default 16); `-allowdebug` (the Debug menu, see "Debug menu in multiplayer");
+  `-port`, default 7777; `-fps`, default 60; the `GOF2_SERVER` environment
   variable does the same in the Editor's Play mode ("relay" = -relay), commands through `DedicatedServer.Run`). Every
   Windows / Linux build gets a launcher next to the game (`DedicatedServerLaunchers`: `Start Dedicated Server.bat` /
-  `start-server.sh`, the name, password and player limit at the top, online and listed; `-password` only when one is
+  `start-server.sh`, the name, password, player limit and `ALLOWDEBUG` at the top, online and listed; `-password` only when one is
 set: Unity drops an empty "" argument, so `-password ""` read the next option as the password; `NetGame.CommandLineValue`
 now takes an option right after another (a dash and a letter) as no value). `Bootstrap` hands over before
   the first scene wakes and swaps in an empty scene; the main menu scene never runs: in the Editor it is loaded already

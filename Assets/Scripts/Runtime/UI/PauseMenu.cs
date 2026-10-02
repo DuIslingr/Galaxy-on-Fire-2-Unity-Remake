@@ -139,8 +139,9 @@ namespace GoF2Remake.UI
                     if (cm >= 16 && (level == null || !level.Layout.alienOrbit)) Item(T(129), () => Show(Page.Missions));
                     if (cm >= 2) Item(T(166), () => Show(Page.Cargo));
                     Item(T(31), () => Show(Page.Options));
-                    // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats).
-                    if (Cheats.Unlocked) Item(Localization.Extra("debugTitle", "Debug").ToUpperInvariant(), () => Show(Page.Debug));
+                    // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats); in multiplayer only
+                    // when the session allows it.
+                    if (Cheats.PageShown) Item(Localization.Extra("debugTitle", "Debug").ToUpperInvariant(), () => Show(Page.Debug));
                     var campaign = level != null ? level.Campaign : null;
                     if (campaign != null && campaign.CanSkipCutscene) Item(T(395), () => { Close(); campaign.SkipCutscene(); });
                     // MGame::setCinematicMode: not while a cutscene holds the camera.

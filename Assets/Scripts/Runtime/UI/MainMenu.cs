@@ -713,6 +713,11 @@ namespace GoF2Remake.UI
                 });
                 maxPlayers.RegisterCallback<FocusOutEvent>(_ => maxPlayers.SetValueWithoutNotify(GoF2Remake.Multiplayer.NetGame.MaxPlayers.ToString()));
             }
+            // The Debug menu in the hosted session (PlayerPrefs "mp_allow_debug", off by default; NetGame.HostAllowsDebug).
+            GoF2Remake.Multiplayer.NetGame.HostAllowsDebug = PlayerPrefs.GetInt("mp_allow_debug", 0) != 0;
+            Bind("mpDebugOff", () => SetHostDebug(false));
+            Bind("mpDebugOn", () => SetHostDebug(true));
+            ApplyHostDebug();
             mpJoinPassword = root.Q<TextField>("mpJoinPassword");
             if (mpJoinPassword != null)
             {
@@ -753,6 +758,20 @@ namespace GoF2Remake.UI
                 yield return LeaveForMultiplayer(address);   // returns only when the connection failed
                 yield return new WaitForSeconds(2f);
             }
+        }
+
+        void SetHostDebug(bool allowed)
+        {
+            GoF2Remake.Multiplayer.NetGame.HostAllowsDebug = allowed;
+            PlayerPrefs.SetInt("mp_allow_debug", allowed ? 1 : 0);
+            ApplyHostDebug();
+        }
+
+        void ApplyHostDebug()
+        {
+            bool allowed = GoF2Remake.Multiplayer.NetGame.HostAllowsDebug;
+            root.Q<Button>("mpDebugOff")?.EnableInClassList("choice-segment--active", !allowed);
+            root.Q<Button>("mpDebugOn")?.EnableInClassList("choice-segment--active", allowed);
         }
 
         void SetHostMode(HostMode mode)
@@ -1545,6 +1564,9 @@ namespace GoF2Remake.UI
             var hostPw = root.Q<TextField>("mpHostPassword");
             if (hostPw != null) hostPw.textEdition.placeholder = Localization.Extra("mpHostPasswordHint", "Password (optional)");
             Set("mpMaxPlayersLabel", Localization.Extra("mpMaxPlayers", "Max players").ToUpperInvariant());
+            Set("mpDebugLabel", Localization.Extra("mpDebugMenu", "Debug menu").ToUpperInvariant());
+            Set("mpDebugOff", Localization.Extra("mpDebugOff", "Off").ToUpperInvariant());
+            Set("mpDebugOn", Localization.Extra("mpDebugAllowed", "Allowed").ToUpperInvariant());
             if (mpJoinPassword != null) mpJoinPassword.textEdition.placeholder = Localization.Extra("mpJoinPasswordHint", "Password");
             Set("mpPortLabel", Localization.Extra("mpPortLabel", "Port").ToUpperInvariant());
             Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());

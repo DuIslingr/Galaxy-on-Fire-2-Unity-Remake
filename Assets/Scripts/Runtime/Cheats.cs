@@ -9,6 +9,9 @@
 //   Instant locks    scanner / station / planet / asteroid locks complete at once
 //   Free shopping    items and ships cost nothing
 //   Free jumps       Khador jumps and the cloak need no energy cells
+// Multiplayer: only when the session allows it (the Host card's Debug menu switch, a dedicated server's -allowdebug; off
+// by default): otherwise the Debug pages are gone and every cheat flag reads off (Allowed), so toggles left on in single
+// player don't follow a player into a session. The toggles themselves stay saved for single player.
 // Plain C#: the hooks read the flags (Target, PlayerHealth, VolatileCargo, WeaponSystem, CombatRadar, Mining,
 // Navigation, Hangar, GalaxyMap, PlayerCloak).
 
@@ -22,13 +25,20 @@ namespace GoF2Remake.Data
         /// <summary>The Debug panel has been opened once: the pause menu shows its Debug page from then on.</summary>
         public static bool Unlocked { get => Get("unlocked"); set => Set("unlocked", value); }
 
-        public static bool GodMode { get => Get("godMode"); set => Set("godMode", value); }
-        public static bool InfiniteAmmo { get => Get("infiniteAmmo"); set => Set("infiniteAmmo", value); }
-        public static bool NoSecondaryCooldown { get => Get("noSecondaryCooldown"); set => Set("noSecondaryCooldown", value); }
-        public static bool OneHitKills { get => Get("oneHitKills"); set => Set("oneHitKills", value); }
-        public static bool InstantLocks { get => Get("instantLocks"); set => Set("instantLocks", value); }
-        public static bool FreeShopping { get => Get("freeShopping"); set => Set("freeShopping", value); }
-        public static bool FreeJumps { get => Get("freeJumps"); set => Set("freeJumps", value); }
+        /// <summary>The Debug tools may be used now: always in single player; in a multiplayer session only when its host or
+        /// dedicated server allows them (NetGame.DebugAllowed).</summary>
+        public static bool Allowed => !GoF2Remake.Multiplayer.NetGame.Active || GoF2Remake.Multiplayer.NetGame.DebugAllowed;
+
+        /// <summary>The pause menu and the station's system menu show their Debug page.</summary>
+        public static bool PageShown => Unlocked && Allowed;
+
+        public static bool GodMode { get => On("godMode"); set => Set("godMode", value); }
+        public static bool InfiniteAmmo { get => On("infiniteAmmo"); set => Set("infiniteAmmo", value); }
+        public static bool NoSecondaryCooldown { get => On("noSecondaryCooldown"); set => Set("noSecondaryCooldown", value); }
+        public static bool OneHitKills { get => On("oneHitKills"); set => Set("oneHitKills", value); }
+        public static bool InstantLocks { get => On("instantLocks"); set => Set("instantLocks", value); }
+        public static bool FreeShopping { get => On("freeShopping"); set => Set("freeShopping", value); }
+        public static bool FreeJumps { get => On("freeJumps"); set => Set("freeJumps", value); }
 
         /// <summary>The lock time a scanner check should use ('ms' = the normal one).</summary>
         public static int LockMs(int ms) => InstantLocks ? 0 : ms;
@@ -98,6 +108,9 @@ namespace GoF2Remake.Data
             foreach (var e in Session.Equipment)
                 if (db.Item(e.item)?.TypeId == 1) e.amount = Mathf.Max(e.amount, 50);   // the gun rigs share these stacks
         }
+
+        /// <summary>A cheat flag: its saved value, off while a session doesn't allow the Debug tools.</summary>
+        static bool On(string key) => Allowed && Get(key);
 
         static bool Get(string key) { try { return PlayerPrefs.GetInt("cheat_" + key, 0) != 0; } catch { return false; } }
         static void Set(string key, bool on) { PlayerPrefs.SetInt("cheat_" + key, on ? 1 : 0); PlayerPrefs.Save(); }

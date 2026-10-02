@@ -1,7 +1,7 @@
 // DedicatedServerLaunchers.cs
 // After a Windows or Linux player build: a launcher for the dedicated server (DedicatedServer) next to the game, so a
 // server starts with a double click (Windows) or one command (Linux) instead of typing the command line. The name,
-// password and player limit are at the top of the file to edit (a rebuild keeps the values already there); it starts
+// password, player limit and whether the Debug menu is allowed are at the top of the file to edit (a rebuild keeps the values already there); it starts
 // the game headless (-batchmode -nographics), online through Unity Relay and listed in the server browser. Windows: the server opens its own console window (the
 // log and the commands); Linux: the terminal it runs in.
 
@@ -38,9 +38,10 @@ namespace GoF2Remake.EditorTools
             }
         }
 
-        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS" };
+        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS", "ALLOWDEBUG" };
 
-        /// <summary>A launcher already there keeps its edited settings (the name, password and player limit) in the new one.</summary>
+        /// <summary>A launcher already there keeps its edited settings (the name, password, player limit, Debug menu) in the new
+        /// one; a setting it doesn't have yet (an older launcher) gets the default.</summary>
         static string KeepSettings(string path, string text, bool windows)
         {
             if (!File.Exists(path)) return text;
@@ -65,11 +66,15 @@ namespace GoF2Remake.EditorTools
             "set PASSWORD=\n" +
             "rem At most 100.\n" +
             "set MAXPLAYERS=16\n" +
+            "rem 1 = the players may use the Debug menu (cheats, items, spawns); 0 = off.\n" +
+            "set ALLOWDEBUG=0\n" +
             "rem Add -unlisted to keep it out of the server browser (players then join with the join code from the console).\n" +
             // Only a set password goes on the command line (Unity drops an empty "" argument).
             "set PASSWORDARG=\n" +
             "if defined PASSWORD set PASSWORDARG=-password \"%PASSWORD%\"\n" +
-            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS%\n";
+            "set DEBUGARG=\n" +
+            "if \"%ALLOWDEBUG%\"==\"1\" set DEBUGARG=-allowdebug\n" +
+            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS% %DEBUGARG%\n";
 
         static string LinuxLauncher(string exe) =>
             "#!/bin/sh\n" +
@@ -79,10 +84,12 @@ namespace GoF2Remake.EditorTools
             "NAME=\"Galaxy on Fire 2 server\"\n" +
             "PASSWORD=\"\"        # empty = none\n" +
             "MAXPLAYERS=16      # at most 100\n" +
+            "ALLOWDEBUG=0       # 1 = the players may use the Debug menu (cheats, items, spawns)\n" +
             "# Add -unlisted to keep it out of the server browser (players then join with the join code shown here).\n" +
             "cd \"$(dirname \"$0\")\"\n" +
             $"chmod +x ./{exe} 2>/dev/null\n" +
             "if [ -n \"$PASSWORD\" ]; then set -- -password \"$PASSWORD\"; else set --; fi\n" +
+            "if [ \"$ALLOWDEBUG\" = \"1\" ]; then set -- \"$@\" -allowdebug; fi\n" +
             $"exec ./{exe} -batchmode -nographics -server -relay -name \"$NAME\" \"$@\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
     }
 }

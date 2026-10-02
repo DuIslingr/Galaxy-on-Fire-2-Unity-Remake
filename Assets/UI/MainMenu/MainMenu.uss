@@ -489,6 +489,28 @@
     margin: 0;
 }
 
+/* the host card's Debug menu switch (Off / Allowed), under the password row */
+.mp-debug-row {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    margin: 0 0 12px 0;
+}
+
+.mp-debug-label {
+    flex-shrink: 0;
+    margin: 0 14px 0 0;
+    white-space: nowrap;
+}
+
+.mp-debug-segments {
+    flex-grow: 1;
+}
+
+.mp-debug-segments .choice-segment {
+    flex-basis: 0;
+}
+
 /* the panel: a fixed height, the server browser takes what the rest leaves */
 .mp-panel {
     max-width: 1280px;

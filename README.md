@@ -89,7 +89,8 @@ On the **Host a game** card, pick a mode:
 - **Local network:** for players on the same network (or a VPN like Hamachi or ZeroTier). The card lists your
   addresses (tap one to copy it) and the port, 7777 by default.
 
-Every mode can have a **password** and a **Max players** limit (2 to 100, you included). Press **Host**. In an online
+Every mode can have a **password** and a **Max players** limit (2 to 100, you included). **Debug menu** (Off by
+default) decides whether the players may use the Debug menu (cheats, items, spawns) in your session. Press **Host**. In an online
 game the join code is copied to your clipboard and shown under the station's system information, with a Copy button.
 Online play goes through Unity Relay: no port forwarding, but it needs an internet connection. With a player host,
 all traffic goes through the host's connection, so for big sessions a dedicated server is better.
@@ -105,12 +106,13 @@ download; no extra files are needed.
    - `NAME`: the game's name in the server browser.
    - `PASSWORD`: leave it empty for none.
    - `MAXPLAYERS`: the player limit, at most 100.
+   - `ALLOWDEBUG`: `1` lets the players use the Debug menu (cheats, items, spawns); `0` (the default) turns it off.
 2. Save the file and double-click it. A console window opens; the game itself runs without a window and without sound.
 3. The console shows the **join code**, and the game appears in everyone's server browser.
 
 **Linux**
 
-1. Edit `NAME`, `PASSWORD` and `MAXPLAYERS` at the top of `start-server.sh` in the game folder.
+1. Edit `NAME`, `PASSWORD`, `MAXPLAYERS` and `ALLOWDEBUG` at the top of `start-server.sh` in the game folder.
 2. Run it in a terminal: `sh start-server.sh`. The terminal shows the join code and the log.
 
 **The console**
@@ -121,7 +123,7 @@ can't. Type one and press Enter:
 | Command | What it does |
 |---|---|
 | `help` | Lists the commands. |
-| `status` | The join code (or port), uptime, players, world seed. |
+| `status` | The join code (or port), uptime, players, world seed, whether the Debug menu is allowed. |
 | `list` | The players: client id, name, where they are, ship, squad. |
 | `say <text>` | A chat line to everyone, from "Server". |
 | `kick <id or name> [reason]` | Drops a player; they see the reason. |
@@ -145,6 +147,7 @@ GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -passwo
 | `-unlisted` | Keep the game out of the server browser; players join with the join code. |
 | `-password X` | Players need this password to join. |
 | `-maxplayers N` | The player limit, 2 to 100 (default 16). |
+| `-allowdebug` | The players may use the Debug menu (cheats, items, spawns). Off without it. |
 | `-port N` | The port for local network play (default 7777, UDP). |
 | `-fps N` | The server's frame rate (default 60). |
 

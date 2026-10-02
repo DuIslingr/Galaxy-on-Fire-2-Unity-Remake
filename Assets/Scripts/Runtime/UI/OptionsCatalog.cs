@@ -277,6 +277,7 @@ namespace GoF2Remake.UI
             // Remake: the testing tools (Cheats.Unlocked), also opened by F10, LB + RB or three fingers on the main menu.
             var debug = Toggle("debugTools", OptionPage.Gameplay, () => X("debugTools", "Debug tools"), () => Cheats.Unlocked, v => Cheats.Unlocked = v);
             debug.description = () => X("debugToolsHelp", "A Debug button in the main menu (the mission select) and a Debug page in the pause and station menus (cheats, items, spawns).");
+            debug.visible = () => Cheats.Allowed;   // not in a multiplayer session that doesn't allow the Debug menu
             list.Add(debug);
             return list;
         }

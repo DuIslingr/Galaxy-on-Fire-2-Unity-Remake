@@ -162,6 +162,13 @@
                                 <ui:Label name="mpMaxPlayersLabel" class="mp-label mp-max-label gof-semibold" />
                                 <ui:TextField name="mpMaxPlayers" class="debug-filter mp-max-players" />
                             </ui:VisualElement>
+                            <ui:VisualElement class="mp-debug-row">
+                                <ui:Label name="mpDebugLabel" class="mp-label mp-debug-label gof-semibold" />
+                                <ui:VisualElement class="choice-segments mp-debug-segments">
+                                    <ui:Button name="mpDebugOff" class="choice-segment gof-semibold" />
+                                    <ui:Button name="mpDebugOn" class="choice-segment gof-semibold" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
                             <ui:Button name="mpHost" class="mp-action gof-semibold" />
                         </ui:VisualElement>
                     </ui:VisualElement>

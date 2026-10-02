@@ -768,6 +768,15 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
+        /// <summary>The Debug menu (cheats, items, spawns, other hulls) is allowed in the session this game hosts: set before
+        /// hosting (the Host card's Debug menu switch, PlayerPrefs "mp_allow_debug"; a dedicated server's -allowdebug). Off by
+        /// default. NetState carries it to every player.</summary>
+        public static bool HostAllowsDebug { get; set; }
+
+        /// <summary>The running session allows the Debug menu (NetState's flag, false until it has arrived); outside a
+        /// session nothing restricts it (Cheats.Allowed).</summary>
+        public static bool DebugAllowed => NetState.Instance != null && NetState.Instance.DebugAllowed;
+
         /// <summary>The session has a password (the server browser's tag).</summary>
         internal static bool HasPassword => CleanPassword(HostPassword).Length > 0;
 

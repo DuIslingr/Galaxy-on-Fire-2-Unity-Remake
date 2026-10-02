@@ -10,7 +10,8 @@
 //   the chat relay (NetChat): a player's line reaches everyone with the sender's name and location;
 //   squads (NetSquad): invitations, joining and leaving, a squad of one dissolved; the players' kill notices;
 //   squad missions (NetMissions): the shared missions, their progress and results, a disconnecting carrier's cargo;
-//   the shared shop stock (NetStock): the host's list per station, the players' trades, the reset.
+//   the shared shop stock (NetStock): the host's list per station, the players' trades, the reset;
+//   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -26,6 +27,7 @@ namespace GoF2Remake.Multiplayer
 
         readonly NetworkVariable<int> seed = new NetworkVariable<int>();
         readonly NetworkVariable<bool> dedicated = new NetworkVariable<bool>();
+        readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice, fixed for the session
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
         int pendingSeed;
@@ -43,6 +45,9 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The session runs on a dedicated server: the players' client ids start at 1.</summary>
         public bool Dedicated => dedicated.Value;
 
+        /// <summary>The session allows the Debug menu (NetGame.HostAllowsDebug when it started; off by default).</summary>
+        public bool DebugAllowed => debugAllowed.Value;
+
         public override void OnNetworkSpawn()
         {
             name = "NetState";
@@ -52,6 +57,7 @@ namespace GoF2Remake.Multiplayer
             {
                 seed.Value = pendingSeed;
                 dedicated.Value = pendingDedicated;
+                debugAllowed.Value = NetGame.HostAllowsDebug;
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
             }
