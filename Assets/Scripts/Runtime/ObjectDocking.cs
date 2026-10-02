@@ -14,8 +14,10 @@
 //              1 + 0xae   the campaign mission's goods out of the hold, 1 per 1000 ms, value + 1 (the mining plant's titanium)
 //              3          the hacking game (HackingGame(0, 4), (0, 1) at campaign 91)
 //   undock     state 3: back out to the approach point, then the chase camera behind the ship and the controls back
-// Remake picks: the docked orientation (the points' second vector wasn't traced): nose along the approach, the object's up;
-// the undock eases back to the approach point over 1500 ms instead of flying there; the approach reaches its point within
+//   docked pose (approachDockingPoint state 2): nose = the docking point's direction (SpacePoints), up = from the docking
+//              point toward the approach point, eased in over 2000 ms; it stops when within the ship's hangar height
+//              (DAT_00252204 = StationTables.ShipY) of the point, so its pivot rests that far up the approach line.
+// Remake picks: the undock eases back to the approach point over 1500 ms instead of flying there; the approach reaches its point within
 // PlayerEgo+0x1d8 = 0x578 (1400) units, and a ship circling it (its turning circle is ~2500 units across at 2 u/ms) starts
 // the ease-in after 4 s within 4000 units.
 
@@ -72,7 +74,7 @@ namespace GoF2Remake.Flight
         CombatAudio sounds;
         AudioSource sfx;
         AudioClip dockSound, turnSound, solvedSound;
-        Vector3 approachLocal, dockLocal;
+        Vector3 approachLocal, dockLocal, dockDirLocal, pivotLocal;
         Vector3 fromPos, toPos;
         Quaternion fromRot, toRot;
         float phaseMs, tickMs;
@@ -159,13 +161,12 @@ namespace GoF2Remake.Flight
                 if (p.type != SpacePoints.Dock) continue;
                 var l = ToLocal(p.engine);
                 float d = (l - approachLocal).sqrMagnitude;
-                if (d < best) { best = d; dockLocal = l; found = true; }
+                if (d < best) { best = d; dockLocal = l; dockDirLocal = SpacePoints.DirToLocal(p.dir); found = true; }
             }
             return found;
         }
 
-        /// <summary>An engine-space offset in the object's Unity space: (-x, y, z) * 0.05 (the models are mirrored and turned).</summary>
-        static Vector3 ToLocal(Vector3 engine) => new Vector3(-engine.x, engine.y, engine.z) * M;
+        static Vector3 ToLocal(Vector3 engine) => SpacePoints.ToLocal(engine);
 
         // ---- per frame --------------------------------------------------------------------------------------
 
@@ -214,10 +215,15 @@ namespace GoF2Remake.Flight
             phaseMs = 0f;
             fromPos = ship.transform.position;
             fromRot = ship.transform.rotation;
-            toPos = Target.transform.TransformPoint(dockLocal);
-            var along = Vector3.ProjectOnPlane(toPos - at, Target.transform.up);
-            if (along.sqrMagnitude < 1e-4f) along = Vector3.ProjectOnPlane(ship.transform.forward, Target.transform.up);
-            toRot = Quaternion.LookRotation(along.sqrMagnitude > 1e-6f ? along.normalized : ship.transform.forward, Target.transform.up);
+            // approachDockingPoint state 2: up = docking point -> approach point, nose = the point's direction (rotated by the
+            // object); docked within the ship's height of the point (DAT_00252204), on that line.
+            var upLocal = approachLocal - dockLocal;
+            upLocal = upLocal.sqrMagnitude > 1e-8f ? upLocal.normalized : Vector3.up;
+            pivotLocal = dockLocal + upLocal * (StationTables.ShipY(Session.ShipIndex) * M);
+            toPos = Target.transform.TransformPoint(pivotLocal);
+            var q = Target.transform.rotation;
+            var nose = q * dockDirLocal;
+            toRot = Quaternion.LookRotation(nose.sqrMagnitude > 1e-6f ? nose : ship.transform.forward, q * upLocal);
             if (chase != null) chase.enabled = false;
             SetExhaust(false);
             Play(dockSound);
@@ -227,7 +233,7 @@ namespace GoF2Remake.Flight
         {
             phaseMs += dtMs;
             float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(phaseMs / EnterMs));
-            if (Target != null) toPos = Target.transform.TransformPoint(dockLocal);   // the object may drift (freighters)
+            if (Target != null) toPos = Target.transform.TransformPoint(pivotLocal);   // the object may drift (freighters)
             ship.transform.SetPositionAndRotation(Vector3.Lerp(fromPos, toPos, t), Quaternion.Slerp(fromRot, toRot, t));
             ship.ExternalSpeedMetersPerSecond = 0f;
             if (phaseMs < EnterMs) return;
@@ -241,7 +247,7 @@ namespace GoF2Remake.Flight
 
         void UpdateDocked(float dtMs)
         {
-            if (Target != null) ship.transform.position = Target.transform.TransformPoint(dockLocal);
+            if (Target != null) ship.transform.position = Target.transform.TransformPoint(pivotLocal);
             ship.ExternalSpeedMetersPerSecond = 0f;
             if (Target == null) return;
             if (Target.DockingType == Hackable && Hacking == null) StartHacking();
