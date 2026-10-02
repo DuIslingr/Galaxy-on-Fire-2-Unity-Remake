@@ -496,7 +496,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   (LS steer, RB / LB throttle, A boost, Y level out and fast-forward (hold), RT / LT fire, D-pad right / up / down switch
   secondary / camera / auto turret, X action, View autopilot menu, D-pad left actions menu, RS / LS press cloak / time extender); the right stick's
   flick still dodges while no controller binding uses that stick. Overrides in PlayerPrefs `controls_bindings`
-  (`SaveBindingOverridesAsJson`; an empty override unbinds); "Reset key bindings" and Default settings (497) clear them. A
+  (by action name and binding index: the Input System's own JSON finds bindings by id, new every launch for code-made ones, so
+  nothing saved applied after a restart; an empty override unbinds); "Reset key bindings" and Default settings (497) clear them. A
   capture (`GameControls.Rebind`, `PerformInteractiveRebinding`): Esc cancels, Backspace / Delete (or a right click on the
   cell) unbinds, the controller's Menu can't be taken; a key or button can be bound to several rows at once (no swapping:
   the controller has too few buttons for one each); meanwhile and on the frame after

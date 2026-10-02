@@ -3,7 +3,9 @@
 // Defaults: the PC version's keys (Galaxy on Fire 2 Full HD, see CLAUDE.md "UI and platforms") and the remake's controller
 // buttons. Every row has three slots: two keyboard / mouse bindings and one controller binding (Steer's controller slot is a
 // whole stick or the D-pad, so the stick keeps its radial dead zone). The player's changes are binding overrides kept in
-// PlayerPrefs ("controls_bindings"); an empty override unbinds a slot. Menus keep their fixed keys (arrows, Enter, Esc,
+// PlayerPrefs ("controls_bindings", by action name and binding index: the Input System's own override JSON finds bindings
+// by their id, which code-made bindings get new every launch, so its saved overrides never applied after a restart); an
+// empty override unbinds a slot. Menus keep their fixed keys (arrows, Enter, Esc,
 // controller A / B / Menu) so no binding can lock the player out; the pause key (Esc / Menu) isn't rebindable either.
 // A key or button can be bound to several controls at once (the controller has too few buttons for one each): a rebind
 // never takes it from another row.
@@ -176,20 +178,39 @@ namespace GoF2Remake.Flight
             if (Application.isPlaying) Map.Enable();
         }
 
+        [Serializable] sealed class SavedOverride { public string action; public int index; public string path; }
+        [Serializable] sealed class SavedOverrides { public int version = 2; public List<SavedOverride> bindings = new List<SavedOverride>(); }
+
         static void Load()
         {
             Map.RemoveAllBindingOverrides();
             string json = PlayerPrefs.GetString(PrefsKey, "");
-            if (json.Length > 0)
+            if (json.Length == 0) return;
+            try
             {
-                try { Map.LoadBindingOverridesFromJson(json); }
-                catch (Exception e) { Debug.LogWarning("GameControls: bindings not loaded: " + e.Message); }
+                var saved = JsonUtility.FromJson<SavedOverrides>(json);
+                // Version 1 was the Input System's JSON (binding ids that no longer exist): nothing to restore.
+                if (saved == null || saved.version < 2 || saved.bindings == null) return;
+                foreach (var o in saved.bindings)
+                {
+                    var action = Map.FindAction(o.action);
+                    if (action == null || o.index < 0 || o.index >= action.bindings.Count || action.bindings[o.index].isComposite) continue;
+                    action.ApplyBindingOverride(o.index, o.path ?? "");
+                }
             }
+            catch (Exception e) { Debug.LogWarning("GameControls: bindings not loaded: " + e.Message); }
         }
 
         static void Save()
         {
-            PlayerPrefs.SetString(PrefsKey, Map.SaveBindingOverridesAsJson());
+            var saved = new SavedOverrides();
+            foreach (var action in Map.actions)
+                for (int i = 0; i < action.bindings.Count; i++)
+                {
+                    var b = action.bindings[i];
+                    if (b.overridePath != null) saved.bindings.Add(new SavedOverride { action = action.name, index = i, path = b.overridePath });
+                }
+            PlayerPrefs.SetString(PrefsKey, JsonUtility.ToJson(saved));
             PlayerPrefs.Save();
         }
 
