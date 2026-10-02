@@ -5,7 +5,8 @@
 //                                       limited to [-500, +70] * 2 pi / 4096 on the gun's pitch accumulator, whose positive
 //                                       turn about X dips the barrel: 44 deg up, 6 deg down (#9, #17: it was the reverse)
 //   PlayerEgo::handleAutoTurret 0xa8ae0 180-182 (attr 16 = 1) aim and fire by themselves: every 3000 ms the nearest hostile,
-//                                       active ship within 60000 units (the last unreachable one skipped), aim point = its
+//                                       active ship without KIPlayer+0x70 (radar-hidden, as a cloak makes it) within 60000
+//                                       units (the last unreachable one skipped), aim point = its
 //                                       position + its heading * 1500 (a), fire when aligned (all turret guns on their own
 //                                       reload); 500 ms without a shot stops the loop sound. Independent of the primaries.
 //                                       Toggled with the HUD's auto-turret button (on at the start).
@@ -309,6 +310,7 @@ namespace GoF2Remake.Flight
             foreach (var t in Target.All)
             {
                 if (t == null || !t.isShip || !t.hostileToPlayer || !t.Alive || t == unreachable || t.untargetable || !t.isActiveAndEnabled) continue;
+                if (t.GetComponent<World.NpcShip>() is World.NpcShip npc && npc.RadarHidden) continue;   // KIPlayer+0x70: cloaked too
                 float d = (t.transform.position - transform.position).magnitude;
                 if (d < bestD) { bestD = d; best = t; }
             }
