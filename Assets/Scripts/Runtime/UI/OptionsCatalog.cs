@@ -106,6 +106,7 @@ namespace GoF2Remake.UI
                 () => Settings.Quality, i => Settings.Quality = i,
                 () => QualityDescription(Settings.Quality)));
             // DLSS / FSR 2+ pick their own render resolution (the Upscaler quality below): no render scale while one is on.
+            // MetalFX keeps the render scale (its input resolution; URP clamps it into MetalFX Temporal's supported range).
             bool DlssOrFsrOn() => Bootstrap.ActiveUpscaler == Settings.UpscalerDlss || Bootstrap.ActiveUpscaler == Settings.UpscalerFsrTemporal;
             var renderScale = Choice("renderScale", OptionPage.Graphics, () => X("renderScale", "Render scale"), false,
                 () => RenderScales.Select(Percent).ToArray(),
@@ -114,7 +115,7 @@ namespace GoF2Remake.UI
             renderScale.visible = () => !DlssOrFsrOn();
             list.Add(renderScale);
             // Only the upscalers this device runs (Android: FSR 1 needs GLES 3.1 / Vulkan, STP Vulkan; DLSS / FSR 2+: Windows
-            // builds with the upscaler framework, the GPU and graphics API they need, UpscalerFramework). Asked again on every
+            // builds with the upscaler framework, the GPU and graphics API they need; MetalFX: macOS / iOS on Metal, UpscalerFramework). Asked again on every
             // refresh: DLSS / FSR are only known once URP has made its pipeline (the first frame), and the main menu builds
             // its rows before that.
             List<int> Upscalers()
@@ -124,6 +125,8 @@ namespace GoF2Remake.UI
                 if (Bootstrap.StpSupported) l.Add(Settings.UpscalerStp);
                 if (Bootstrap.DlssSupported) l.Add(Settings.UpscalerDlss);
                 if (Bootstrap.FsrTemporalSupported) l.Add(Settings.UpscalerFsrTemporal);
+                if (Bootstrap.MetalFxSpatialSupported) l.Add(Settings.UpscalerMetalFxSpatial);
+                if (Bootstrap.MetalFxTemporalSupported) l.Add(Settings.UpscalerMetalFxTemporal);
                 return l;
             }
             var upscalers = Upscalers();
@@ -133,6 +136,8 @@ namespace GoF2Remake.UI
                 Settings.UpscalerStp => "STP",
                 Settings.UpscalerDlss => "DLSS",
                 Settings.UpscalerFsrTemporal => UpscalerFramework.BestFsrLabel ?? "FSR",
+                Settings.UpscalerMetalFxSpatial => "MetalFX",
+                Settings.UpscalerMetalFxTemporal => "MetalFX Temporal",
                 _ => X("off", "Off"),
             };
             if (upscalers.Count > 1 || UpscalerFramework.Compiled)
@@ -147,6 +152,8 @@ namespace GoF2Remake.UI
                         Settings.UpscalerDlss => X("upscalerDlss", "NVIDIA DLSS: AI upscaling and anti-aliasing (DLAA at Native), replaces MSAA; the quality sets its resolution"),
                         Settings.UpscalerFsrTemporal => string.Format(X("upscalerFsrTemporal", "AMD {0}: temporal upscaling and anti-aliasing, replaces MSAA; the quality sets its resolution"),
                             UpscalerFramework.BestFsrLabel ?? "FSR"),
+                        Settings.UpscalerMetalFxSpatial => X("upscalerMetalFxSpatial", "Apple MetalFX Spatial: sharp upscaling from the render scale"),
+                        Settings.UpscalerMetalFxTemporal => X("upscalerMetalFxTemporal", "Apple MetalFX Temporal: temporal anti-aliasing and upscaling from the render scale, replaces MSAA"),
                         _ => X("upscalerOff", "Plain scaling from the render scale"),
                     }));
             // DLSS / FSR 2+: the render resolution by quality mode, in place of the render scale; only while one of them is on (in
@@ -161,7 +168,7 @@ namespace GoF2Remake.UI
                 quality.visible = DlssOrFsrOn;
                 list.Add(quality);
             }
-            // MSAA with a temporal upscaler on (STP, DLSS, FSR 2+): its anti-aliasing takes the place (shown as off); picking MSAA
+            // MSAA with a temporal upscaler on (STP, DLSS, FSR 2+, MetalFX Temporal): its anti-aliasing takes the place (shown as off); picking MSAA
             // turns the upscaler off.
             list.Add(Choice("msaa", OptionPage.Graphics, () => X("antiAliasing", "Anti-aliasing"), true,
                 () => new[] { X("off", "Off"), "MSAA 2×", "MSAA 4×", "MSAA 8×" },
