@@ -325,7 +325,9 @@ namespace GoF2Remake.UI
 
         /// <summary>StarMap::drawOnScreenInfo: the story / freelance icons on the player's own missions' targets
         /// (Status::getCampaignMission / getFreelanceMission), in mission mode too: the map's mission only gets the route.</summary>
-        int StoryTarget => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay ? Story.TargetStation : -1;
+        bool StoryShown => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay;
+        /// <summary>The story icon on this station (step 59: every convoy target still to do, Story.MapMarks).</summary>
+        bool StoryMarked(int station) => StoryShown && Story.MapMarks(station);
         int FreelanceTarget => Freelance.Active ? Freelance.Mission.target : -1;
 
         // ---- 3D --------------------------------------------------------------------------------------------
@@ -629,7 +631,7 @@ namespace GoF2Remake.UI
                 bool fully = s.stations.Count > 0 && s.stations.TrueForAll(st => Session.VisitedStations.Contains(st));
                 it.visited.style.display = fully ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = s.index == currentSystem ? DisplayStyle.Flex : DisplayStyle.None;
-                it.story.style.display = StoryTarget >= 0 && SystemOf(StoryTarget) == s.index ? DisplayStyle.Flex : DisplayStyle.None;
+                it.story.style.display = s.stations.Exists(StoryMarked) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.freelance.style.display = FreelanceTarget >= 0 && SystemOf(FreelanceTarget) == s.index ? DisplayStyle.Flex : DisplayStyle.None;
                 systemItems[s.index] = it;
             }
@@ -644,7 +646,7 @@ namespace GoF2Remake.UI
                 it.visited.style.display = Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = p.station == currentStation ? DisplayStyle.Flex : DisplayStyle.None;
-                it.story.style.display = p.station == StoryTarget ? DisplayStyle.Flex : DisplayStyle.None;
+                it.story.style.display = StoryMarked(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.freelance.style.display = p.station == FreelanceTarget ? DisplayStyle.Flex : DisplayStyle.None;
                 planetItems.Add(it);
             }

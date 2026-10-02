@@ -73,6 +73,28 @@ namespace GoF2Remake.Data
         public static int TargetStation => Mission == null ? -1
                                           : Mission.type == StoryType.VoidInvasion && Index < GameWonIndex ? Session.VoidInvasionStation : Mission.station;
 
+        /// <summary>StarMap::drawOnScreenInfo: the stations the map marks with the story icon. Type 0xa3 (step 59, the arms
+        /// convoy) marks every target of Status+0x90 not yet done (done ones are negative) instead of the mission's own
+        /// station (101 Valkyrie / system 23, skipped at 0x3b); else the target station.</summary>
+        public static bool MapMarks(int station)
+        {
+            if (station < 0) return false;
+            if (Mission != null && Mission.type == StoryType.TargetList) return Session.StoryTargets.Contains(station);
+            return station == TargetStation;
+        }
+
+        /// <summary>The station the Missions window's map centres on: step 59's first remaining convoy target, else the
+        /// target station.</summary>
+        public static int MapTarget
+        {
+            get
+            {
+                if (Mission != null && Mission.type == StoryType.TargetList)
+                    foreach (int t in Session.StoryTargets) if (t >= 0) return t;
+                return TargetStation;
+            }
+        }
+
         /// <summary>Status::gameWon: index &gt; 44.</summary>
         public static bool GameWon => Index >= GameWonIndex;
         /// <summary>Status::dlc1Won: index &gt; 83.</summary>
