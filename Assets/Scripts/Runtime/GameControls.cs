@@ -5,7 +5,8 @@
 // whole stick or the D-pad, so the stick keeps its radial dead zone). The player's changes are binding overrides kept in
 // PlayerPrefs ("controls_bindings"); an empty override unbinds a slot. Menus keep their fixed keys (arrows, Enter, Esc,
 // controller A / B / Menu) so no binding can lock the player out; the pause key (Esc / Menu) isn't rebindable either.
-// Rebinding a key another row uses swaps the two.
+// A key or button can be bound to several controls at once (the controller has too few buttons for one each): a rebind
+// never takes it from another row.
 
 using System;
 using System.Collections.Generic;
@@ -49,7 +50,7 @@ namespace GoF2Remake.Flight
 
         public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight,
             FirePrimary, FireSecondary, SwitchSecondary, Action, AutopilotMenu, ActionsMenu, Wingmen, KhadorDrive, FastForward,
-            Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, Screenshot;
+            Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, ChatSend, ChatChannel, Screenshot;
 
         static string X(string key, string english) => Localization.Extra(key, english);
 
@@ -98,6 +99,9 @@ namespace GoF2Remake.Flight
             // ---- other
             MouseSteering = Button("mouseSteering", () => X("ctlMouseSteering", "Mouse steering on / off"), "<Keyboard>/m", "<Mouse>/middleButton", null, padSlot: false);
             Chat = Button("chat", () => X("ctlChat", "Chat (multiplayer)"), "<Keyboard>/b", null, null);
+            // Read by ChatView while a line is typed (PressedNow: the map is off meanwhile).
+            ChatSend = Button("chatSend", () => X("ctlChatSend", "Chat: send message"), "<Keyboard>/enter", "<Keyboard>/numpadEnter", null, padSlot: false);
+            ChatChannel = Button("chatChannel", () => X("ctlChatChannel", "Chat: switch Local / Global"), "<Keyboard>/tab", null, null, padSlot: false);
             Screenshot = Button("screenshot", () => X("ctlScreenshot", "Screenshot"), "<Keyboard>/f12", null, null);
         }
 
@@ -289,6 +293,21 @@ namespace GoF2Remake.Flight
             return string.Join(" ", names);
         }
 
+        /// <summary>A control bound to 'action' went down this frame, read from the devices themselves: works while the map is
+        /// off (ChatView reads the chat keys while a line is typed and the flight controls are suspended).</summary>
+        public static bool PressedNow(InputAction action)
+        {
+            if (action == null) return false;
+            foreach (var b in action.bindings)
+            {
+                if (b.isComposite || string.IsNullOrEmpty(b.effectivePath)) continue;
+                using (var controls = InputSystem.FindControls(b.effectivePath))
+                    foreach (var c in controls)
+                        if (c is ButtonControl button && button.wasPressedThisFrame) return true;
+            }
+            return false;
+        }
+
         /// <summary>The first bound slot's text for the keyboard or the controller ("" = none): the flight hints' #KEY_ tokens.</summary>
         public static string KeyText(InputAction action, bool pad)
         {
@@ -327,7 +346,6 @@ namespace GoF2Remake.Flight
             int index = idx[part];
             bool single = idx.Length == 1;
             prompt?.Invoke(single ? null : row.partLabels?[part]?.Invoke());
-            string old = row.action.bindings[index].effectivePath ?? "";
             bool clear = false;
 
             var op = row.action.PerformInteractiveRebinding(index)
@@ -359,8 +377,6 @@ namespace GoF2Remake.Flight
             });
             op.OnComplete(o =>
             {
-                string now = row.action.bindings[index].effectivePath ?? "";
-                SwapOthers(row.action, index, slot, now, old);
                 Dispose();
                 if (part + 1 < idx.Length) RebindPart(row, slot, part + 1, prompt, done);
                 else Finish(done);
@@ -413,24 +429,6 @@ namespace GoF2Remake.Flight
             foreach (int i in idx) row.action.ApplyBindingOverride(i, "");
             Save();
             Changed?.Invoke();
-        }
-
-        /// <summary>Another binding of the same kind (keyboard / controller) that had the new control gets the old one.</summary>
-        static void SwapOthers(InputAction action, int index, BindSlot slot, string now, string old)
-        {
-            if (string.IsNullOrEmpty(now)) return;
-            bool pad = IsPad(slot);
-            foreach (var row in rows)
-                for (int s = 0; s < 3; s++)
-                {
-                    if (row.slots[s] == null || (s == (int)BindSlot.Pad) != pad) continue;
-                    foreach (int i in row.slots[s])
-                    {
-                        if (row.action == action && i == index) continue;
-                        if (string.Equals(row.action.bindings[i].effectivePath, now, StringComparison.OrdinalIgnoreCase))
-                            row.action.ApplyBindingOverride(i, old);
-                    }
-                }
         }
     }
 }

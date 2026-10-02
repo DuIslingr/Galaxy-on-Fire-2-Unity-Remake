@@ -1,8 +1,13 @@
 // ChatView.cs
 // Multiplayer chat panel (NetChat) in the flight HUD and the station menu, while a session runs: on the left, the recent
-// lines (fading 12 s after they came in, all shown while typing) over an input row. B (or a tap on the "Chat" tab) opens
-// the input, Enter sends, Tab switches Local / Global, Esc closes; the game's keys are off while it is open
-// (NetChat.SetTyping). Local lines reach the players in this orbit or docked here, global ones everyone.
+// lines (fading 12 s after they came in, all shown while typing) over an input row. The chat key (B, GameControls.Chat;
+// or a tap on the "Chat" tab) opens the input with the cursor in it, the send key (Enter / keypad Enter,
+// GameControls.ChatSend) sends, the channel key (Tab, GameControls.ChatChannel) switches Local / Global, Esc closes; all
+// rebindable in Options > Controls (read here from the devices: the game's keys are off while it is open,
+// NetChat.SetTyping). The field keeps the focus while typing: the UI's navigation (the arrows, W A S D, Tab, Space /
+// Enter as submit) would otherwise move it to a menu button and end the typing. Local lines reach the players in this
+// orbit or docked here, global ones everyone. Another player's line plays the original's incoming-message sound (FMOD
+// event 125 Message_Inc, volume 0.241, one at a time; a copy of the clip in Resources/GoF2Net/ChatMessage).
 // Styles: Resources/GoF2Net/Chat.uss.
 
 using GoF2Remake.Data;
@@ -16,11 +21,19 @@ namespace GoF2Remake.UI
     {
         const float ShowSeconds = 12f, FadeSeconds = 2f;
         const int Lines = 8;
+        /// <summary>Message_Inc's event volume (FMOD event 125).</summary>
+        const float MessageVolume = 0.241f;
+        /// <summary>Frames Open keeps focusing the field (the row only shows once its style has applied).</summary>
+        const int FocusFrames = 15;
 
         VisualElement box, log;
         TextField field;
         Button channel;
+        Label tab;
+        AudioSource sound;
+        AudioClip messageClip;
         bool open, hooked;
+        int focusTries, swallowFrame = -1, openFrame = -10;
 
         /// <summary>The panel on 'parent' (again after a UI reload), on the HUD's own GameObject.</summary>
         public static void Attach(GameObject host, VisualElement parent)
@@ -39,7 +52,7 @@ namespace GoF2Remake.UI
             var sheet = Resources.Load<StyleSheet>("GoF2Net/Chat");
             if (sheet != null) box.styleSheets.Add(sheet);
 
-            var tab = new Label(Localization.Extra("mpChat", "Chat") + "  (B)");
+            tab = new Label();
             tab.AddToClassList("chat-tab");
             tab.RegisterCallback<PointerDownEvent>(e => { if (!open) Open(); e.StopPropagation(); });
             box.Add(tab);
@@ -55,23 +68,24 @@ namespace GoF2Remake.UI
             field = new TextField { maxLength = NetChat.MaxLength };
             field.AddToClassList("chat-field");
             field.RegisterCallback<KeyDownEvent>(OnKey, TrickleDown.TrickleDown);
-            field.RegisterCallback<NavigationCancelEvent>(e => { Close(); e.StopPropagation(); }, TrickleDown.TrickleDown);
-            field.RegisterCallback<NavigationMoveEvent>(e => e.StopPropagation(), TrickleDown.TrickleDown);
+            // The UI's navigation keeps out of the line: no focus move (the arrows move the cursor, W A S D / Space type).
+            field.RegisterCallback<NavigationCancelEvent>(e => { Close(); Swallow(e); }, TrickleDown.TrickleDown);
+            field.RegisterCallback<NavigationMoveEvent>(Swallow, TrickleDown.TrickleDown);
+            field.RegisterCallback<NavigationSubmitEvent>(Swallow, TrickleDown.TrickleDown);
             // Focus going anywhere but the row's own buttons (a click on the game, Android closing the keyboard): the
             // typing ends, the draft stays; otherwise the game's keys would stay off.
             field.RegisterCallback<FocusOutEvent>(e =>
             {
-                if (e.relatedTarget is VisualElement to && (to == channel || to.name == "chatSend")) return;
+                if (e.relatedTarget is VisualElement to && to == channel) return;
+                if (focusTries > 0) return;   // still opening
                 Suspend();
             });
             row.Add(field);
-            var send = new Button(SendLine) { text = "›", name = "chatSend" };
-            send.AddToClassList("chat-send");
-            row.Add(send);
             box.Add(row);
             parent.Add(box);
 
-            if (!hooked) { NetChat.Added += OnAdded; hooked = true; }
+            if (!hooked) { NetChat.Added += OnAdded; GoF2Remake.Flight.GameControls.Changed += RefreshKeys; hooked = true; }
+            RefreshKeys();
             RefreshChannel();
             Rebuild();
             box.EnableInClassList("chat--open", open);
@@ -79,15 +93,37 @@ namespace GoF2Remake.UI
 
         void OnDestroy()
         {
-            if (hooked) NetChat.Added -= OnAdded;
+            if (hooked) { NetChat.Added -= OnAdded; GoF2Remake.Flight.GameControls.Changed -= RefreshKeys; }
             if (open) NetChat.DropTyping();   // the scene's actions go with it (not enabled again)
+        }
+
+        /// <summary>An event the line keeps to itself: no other handler, no focus move.</summary>
+        void Swallow(EventBase e)
+        {
+            e.StopPropagation();
+            field.focusController?.IgnoreEvent(e);
         }
 
         void OnKey(KeyDownEvent e)
         {
-            if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter) { SendLine(); e.StopPropagation(); }
-            else if (e.keyCode == KeyCode.Escape) { Close(); e.StopPropagation(); }
-            else if (e.keyCode == KeyCode.Tab) { ToggleChannel(); e.StopPropagation(); field.schedule.Execute(() => field.Focus()); }
+            if (e.keyCode == KeyCode.Escape) { Close(); Swallow(e); return; }
+            // The chat key that opened the line types its letter a moment later (the text arrives after the focus): the
+            // characters of the first frames after opening stay out (nobody types that fast).
+            if (Time.frameCount - openFrame <= 2 && e.character != '\0') { Swallow(e); return; }
+            // The send / channel keys (rebindable): their key events, and the character the key would type, stay out of the line.
+            bool send = GoF2Remake.Flight.GameControls.PressedNow(GoF2Remake.Flight.GameControls.ChatSend);
+            bool channelKey = !send && GoF2Remake.Flight.GameControls.PressedNow(GoF2Remake.Flight.GameControls.ChatChannel);
+            if (e.keyCode != KeyCode.None && (send || channelKey) && swallowFrame != Time.frameCount)
+            {
+                swallowFrame = Time.frameCount;
+                Swallow(e);
+                if (send) SendLine();
+                else ToggleChannel();
+                return;
+            }
+            if (swallowFrame == Time.frameCount) { Swallow(e); return; }
+            // Never a tab in the line, and Tab never moves the focus.
+            if (e.keyCode == KeyCode.Tab || e.character == '\t') Swallow(e);
         }
 
         void Open()
@@ -95,8 +131,16 @@ namespace GoF2Remake.UI
             open = true;
             box.EnableInClassList("chat--open", true);
             NetChat.SetTyping(true);
-            field.schedule.Execute(() => field.Focus());
+            focusTries = FocusFrames;   // Update focuses the field once the row shows (a hidden element can't take it)
+            openFrame = Time.frameCount;
+            field.Focus();
             Rebuild();
+        }
+
+        bool FieldFocused()
+        {
+            var f = field?.focusController?.focusedElement as VisualElement;
+            return f != null && (f == field || field.Contains(f));
         }
 
         void Close()
@@ -113,7 +157,6 @@ namespace GoF2Remake.UI
         void SendLine()
         {
             NetChat.Send(field.value);
-            open = true;   // also after the field lost the focus to this button (Suspend)
             Close();
         }
 
@@ -133,6 +176,21 @@ namespace GoF2Remake.UI
             RefreshChannel();
         }
 
+        /// <summary>The tab and the empty line name the current keys (they are rebindable).</summary>
+        void RefreshKeys()
+        {
+            if (tab == null) return;
+            string key = GoF2Remake.Flight.GameControls.KeyText(GoF2Remake.Flight.GameControls.Chat, false);
+            tab.text = Localization.Extra("mpChat", "Chat") + (key.Length > 0 ? $"  ({key})" : "");
+            string sendKey = GoF2Remake.Flight.GameControls.KeyText(GoF2Remake.Flight.GameControls.ChatSend, false);
+            string channelKey = GoF2Remake.Flight.GameControls.KeyText(GoF2Remake.Flight.GameControls.ChatChannel, false);
+            var hints = new System.Collections.Generic.List<string>();
+            if (sendKey.Length > 0) hints.Add(string.Format(Localization.Extra("mpChatSendHint", "{0} send"), sendKey));
+            if (channelKey.Length > 0) hints.Add(string.Format(Localization.Extra("mpChatChannelHint", "{0} channel"), channelKey));
+            hints.Add(Localization.Extra("mpChatCloseHint", "Esc close"));
+            field.textEdition.placeholder = string.Join("  ·  ", hints);
+        }
+
         void RefreshChannel()
         {
             bool global = NetChat.Sending == NetChat.Channel.Global;
@@ -140,7 +198,28 @@ namespace GoF2Remake.UI
             channel.EnableInClassList("chat-channel--global", global);
         }
 
-        void OnAdded(NetChat.Message m) => Rebuild();
+        void OnAdded(NetChat.Message m)
+        {
+            Rebuild();
+            // A line from another player (not one's own, not a join / leave notice): the incoming-message sound.
+            if (m.channel != NetChat.Channel.Notice && !m.own) PlayMessageSound();
+        }
+
+        void PlayMessageSound()
+        {
+            if (messageClip == null) messageClip = Resources.Load<AudioClip>("GoF2Net/ChatMessage");
+            if (messageClip == null) return;
+            if (sound == null)
+            {
+                sound = gameObject.AddComponent<AudioSource>();
+                sound.playOnAwake = false;
+                sound.spatialBlend = 0f;
+            }
+            if (sound.isPlaying) return;   // max_playbacks 1
+            sound.clip = messageClip;
+            sound.volume = Mathf.Clamp01(MessageVolume * GoF2Remake.Flight.Sfx.EventGain * Settings.SfxVolume);
+            sound.Play();
+        }
 
         void Rebuild()
         {
@@ -176,6 +255,12 @@ namespace GoF2Remake.UI
             box.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
             if (!session) { if (open) Close(); return; }
             if (!open && !NetChat.Typing && GoF2Remake.Flight.GameControls.Chat.WasPressedThisFrame()) Open();   // rebindable (B)
+            // Opening: the cursor goes into the line as soon as the row can take the focus.
+            if (open && focusTries > 0)
+            {
+                if (FieldFocused()) focusTries = 0;
+                else { focusTries--; field.Focus(); }
+            }
             // Lines fade out a while after they came in (all shown while typing).
             float now = Time.unscaledTime;
             foreach (var child in log.Children())

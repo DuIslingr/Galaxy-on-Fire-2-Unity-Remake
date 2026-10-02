@@ -488,9 +488,9 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   control is rebindable (see **Key bindings**).
 - **Key bindings** (remake, `GameControls` + `BindingRow`; Options > Controls in the main, pause and station menus): the flight
   controls are one code-made InputActionMap ("Flight", always enabled; chat typing and a capture suspend it,
-  `GameControls.Suspend`) of 26 rows (steer, throttle, brake, boost, roll, level out, strafe left / right, dodge left / right (no keyboard default), fire, fire secondary,
+  `GameControls.Suspend`) of 28 rows (steer, throttle, brake, boost, roll, level out, strafe left / right, dodge left / right (no keyboard default), fire, fire secondary,
   switch secondary, camera / turret view, auto turret, action, autopilot menu, actions menu, fast-forward, wingmen, Khador Drive, cloak,
-  time extender, mouse steering, chat, screenshot), each with two keyboard / mouse slots and a controller slot (binding
+  time extender, mouse steering, chat, chat send, chat channel, screenshot), each with two keyboard / mouse slots and a controller slot (binding
   groups Keyboard / Gamepad; steer's controller slot is a whole stick or the D-pad so the stick keeps its radial dead zone;
   steer, throttle and roll are composites captured part by part). Defaults: the PC keys above and the controller buttons
   (LS steer, RB / LB throttle, A boost, Y level out and fast-forward (hold), RT / LT fire, D-pad right / up / down switch
@@ -498,7 +498,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   flick still dodges while no controller binding uses that stick. Overrides in PlayerPrefs `controls_bindings`
   (`SaveBindingOverridesAsJson`; an empty override unbinds); "Reset key bindings" and Default settings (497) clear them. A
   capture (`GameControls.Rebind`, `PerformInteractiveRebinding`): Esc cancels, Backspace / Delete (or a right click on the
-  cell) unbinds, the controller's Menu can't be taken, a key another row uses is swapped; meanwhile and on the frame after
+  cell) unbinds, the controller's Menu can't be taken; a key or button can be bound to several rows at once (no swapping:
+  the controller has too few buttons for one each); meanwhile and on the frame after
   (`GameControls.BlocksMenus`) the menus ignore their keys and the panel's navigation events. Fixed on purpose: the menus'
   keys (arrows, Enter, Esc, controller A / B / Menu) and pause. The HUD hints (`InputGlyph.For`, rebuilt on
   `GameControls.Changed`; an unbound control's hint is left out), the action prompt's glyph and the hint texts' `#KEY_*`
@@ -745,8 +746,17 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (still in the pilot list). In multiplayer the hangar keeps a HangarTraffic for the guests even without the NPC traffic.
 - **Chat** (`NetChat`, `ChatView` in the flight HUD and the station menu; styles `Resources/GoF2Net/Chat.uss`): global
   (everyone) and local (the same orbit, or docked at the same station); the host stamps each line with the sender's name
-  and location. B or the "Chat" tab opens the input, Enter sends, Tab switches Local / Global, Esc closes; lines fade 12 s
-  after arriving; join / leave notices; every line is also in the player log (`[Chat ...]`). While typing the game's keys
+  and location. The chat key (B) or the "Chat" tab opens the input with the cursor in it (`ChatView` keeps focusing the
+  field for a few frames until its row shows; the opening key's letter, which arrives after the focus, is dropped), the
+  send key (Enter / keypad Enter, `GameControls.ChatSend`) sends, the channel key (Tab, `GameControls.ChatChannel`)
+  switches Local / Global, Esc closes; the send and channel keys are rebindable rows read straight from the devices
+  (`GameControls.PressedNow`: the flight map is off while typing), and their key events and characters stay out of the
+  line. The field keeps the focus: the project-wide UI map's Navigate (arrows, W A S D), Tab and Submit (Space / Enter)
+  are swallowed there (`StopPropagation` + `focusController.IgnoreEvent`: stopping alone still moved the focus to a menu
+  button, which ended the typing). No send button (the key sends). Another player's line plays the original's
+  incoming-message sound (FMOD 125 Message_Inc, volume 0.241 × `Sfx.EventGain` × the FX volume, one at a time; a copy
+  of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving; join / leave notices; every line
+  is also in the player log (`[Chat ...]`). While typing the game's keys
   are off: the code-made InputActions are disabled and the direct keyboard reads go through `NetChat.Keys` (null then;
   FlightHud, ShipController, Mining, SpaceLevel, StationMenu, PauseMenu), the station menu's navigation too.
 - **Leaving**: closing the game leaves the session (`Application.quitting`); a player whose game died is dropped after 5 s
