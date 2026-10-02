@@ -248,8 +248,14 @@ namespace GoF2Remake.Flight
             if (layout.hasStation && st != null)
                 Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = st.index,
                                          name = st.index == 101 ? st.name : $"{st.name} {Localization.Get(136)}" });
-            else if (layout.hasStation && layout.alienOrbit)   // the Void station: 415 "Void", distance only, no autopilot
-                Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = Session.VoidOrbit, name = Localization.Get(415) });
+            else if (layout.hasStation && layout.alienOrbit)   // the Void station: distance only, no autopilot
+            {
+                // Radar::Radar: 415 "Void" + " Station" (the Void pseudo-station's index is -1, not 101); after the Valkyrie
+                // add-on the battlestation is there and landmark[0] carries station 101's name (Level::createSpace).
+                string name = Story.Dlc1Won ? db.Stations.Find(s => s.index == 101)?.name ?? Localization.Get(77)
+                                            : $"{Localization.Get(415)} {Localization.Get(136)}";
+                Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = Session.VoidOrbit, name = name });
+            }
             if (layout.hasJumpgate)
                 Targets.Add(new Target { kind = Kind.Jumpgate, fixedPosition = OrbitLayout.ToUnity(layout.jumpgate), name = Localization.Get(547) });
             if (layout.systemIndex >= 0)
