@@ -19,7 +19,8 @@
 //   36 B'akka       the kill contest with Errkt (H'Soc, speed 3, on the player's 4-waypoint route): 7 sleeping pirates;
 //                   won with more kills than Errkt, failed with as many or fewer
 //   38 Dekato       two parked Nivelian freighters, five Midorian fighters: kill them before both freighters die
-//   40 invasion     Errkt's freighter (Vossk, 5 * level + 1800) comes out at 40 s and flies (+Z) through the wormhole, the
+//   40 invasion     Errkt's freighter (Vossk, 5 * level + 1800) comes out at 40 s and flies (+Z) into the wormhole (which
+//                   swallows it: its distance past the hole doubles every frame; then Keith's 2048), the
 //                   player's orbit    Terran fighters (Jean Baffour) help, 4 + 4 reserve Void fighters; the wormhole never closes; entering
 //                   it after the freighter went through carries its hull into 41
 //   41 Void         the escort to the mother ship: seven Void fighters, three more at the freighter near z -100000, its
@@ -330,7 +331,7 @@ namespace GoF2Remake.World
                 case 24: if (index == 24) Tick24(dtMs); break;
                 case 25: if (index == 26 && Step == 0 && Triggered(1)) { Hole?.ResetTimer(false); Hole?.SetVisible(true); Step = 1; } break;
                 case 29: if (index == 29) Tick29(dtMs); break;
-                case 40: if (index == 40) Tick40(); break;
+                case 40: if (index == 40) Tick40(dtMs); break;
                 case 41: if (index == 41) Tick41(dtMs); else if (index == 42) Tick42(dtMs); break;
             }
         }
@@ -548,7 +549,7 @@ namespace GoF2Remake.World
         }
 
         // 40: Errkt's freighter through the wormhole (M40).
-        void Tick40()
+        void Tick40(float dtMs)
         {
             var f = S(0);
             if (f == null) return;
@@ -589,19 +590,31 @@ namespace GoF2Remake.World
                     }
                     break;
                 case 3:
-                    if (Hole != null && z >= Hole.GamePosition.z) Step = 4;
+                    if (Hole != null && z >= Hole.GamePosition.z) { holeZ = Hole.GamePosition.z; Step = 4; }
                     break;
                 case 4:
+                {
+                    // LevelScript 0x28 event 4 (0x1676e0): moveForward((z - 200000) - dt) on top of PlayerFixedObject's
+                    // own moveForward(dt): each 30 fps frame it advances by its distance past the wormhole, which doubles
+                    // it, so the hole swallows the freighter in about half a second (here per real time, not per frame).
+                    float past = Mathf.Max(1f, z - holeZ);
+                    float extra = past * (Mathf.Pow(2f, dtMs / (1000f / 30f)) - 1f);
+                    f.transform.position += f.transform.forward * (extra * M);
+                    z = -f.transform.position.z / M;
                     if (z > 500000f)
                     {
+                        // Inactive, not dead: radio trigger 0x18 then gives Keith's 2048 (Errkt went through).
                         f.Place(ToUnity(new Vector3(0, 0, -200000)), Dir(new Vector3(0, 0, 1)));
                         f.Deactivate();
                         f.SetVisible(false);
                         Step = 5;
                     }
                     break;
+                }
             }
         }
+
+        float holeZ;
 
         // 41: Errkt's last flight (M41).
         void Tick41(float dtMs)
