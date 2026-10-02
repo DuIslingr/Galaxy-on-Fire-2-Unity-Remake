@@ -36,6 +36,7 @@ crashlytics-build.properties
 # OS
 .DS_Store
 Thumbs.db
+Tools
 
 # GoF2: one-time import parts (the extracted assets live in Assets)
 /GoF2_ImportParts/
