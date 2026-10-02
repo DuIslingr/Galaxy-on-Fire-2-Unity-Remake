@@ -861,6 +861,7 @@ PlayerSettings:
     Android: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
     Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY;ENABLE_UPSCALER_FRAMEWORK
     WebGL: SENTIS_ANALYTICS_ENABLED
+    iPhone: ENABLE_UPSCALER_FRAMEWORK
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
