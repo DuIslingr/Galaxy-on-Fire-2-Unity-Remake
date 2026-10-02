@@ -211,6 +211,9 @@ namespace GoF2Remake.Multiplayer
                 await UnityServices.InitializeAsync(options);
             }
             while (UnityServices.State == ServicesInitializationState.Initializing) await Task.Yield();
+            // A sign-in that expired while offline (its refresh failed): signed out first, the cached session token kept,
+            // so the same anonymous player signs in again (a dedicated server starting again after a lost connection).
+            if (AuthenticationService.Instance.IsExpired) AuthenticationService.Instance.SignOut(false);
             if (!AuthenticationService.Instance.IsSignedIn) await AuthenticationService.Instance.SignInAnonymouslyAsync();
         }
 
@@ -348,14 +351,14 @@ namespace GoF2Remake.Multiplayer
         /// <summary>A dedicated server (DedicatedServer, the -server command line): the session's world without a player of
         /// its own: no NetPlayer, no scene, listening on every adapter. The host's bookkeeping (NetState, the shared stock,
         /// squads, missions, crate claims, the chat relay) runs as with a host; the orbits are run by the players in them.</summary>
-        public static bool StartServer(ushort port)
+        public static bool StartServer(ushort port, bool keepSeed = false)
         {
             var relay = hostAllocation;
             hostAllocation = null;
             PrepareSession();
             Dedicated = true;
             NetProfiles.Start();   // the player profiles (before NetState: it carries the server's id)
-            Seed = Environment.TickCount & 0x7fffffff;
+            if (!keepSeed || Seed == 0) Seed = Environment.TickCount & 0x7fffffff;   // a restart keeps the world's asteroid fields
             var m = EnsureManager();
             if (relay != null) Transport.SetRelayServerData(relay.ToRelayServerData(RelayConnection));
             else { JoinCode = null; Transport.SetConnectionData("0.0.0.0", port, "0.0.0.0"); }
@@ -801,13 +804,14 @@ namespace GoF2Remake.Multiplayer
             OnClientDisconnect(manager.LocalClientId);
         }
 
-        /// <summary>A dedicated server stopped by itself (a host's own stop comes through OnStopped): nothing to go back to.</summary>
+        /// <summary>A dedicated server stopped by itself (a transport failure: the network or the Relay connection went; a
+        /// host's own stop comes through OnStopped): it starts again (DedicatedServer.ConnectionLost), else quits.</summary>
         static void OnServerStopped(bool wasHost)
         {
             if (manager == null || wasHost || !Dedicated) return;
             Debug.LogError("NetGame: the server stopped (network error).");
             ShutdownNow();
-            Application.Quit(1);
+            if (!DedicatedServer.ConnectionLost()) Application.Quit(1);
         }
 
         /// <summary>The session is over while playing: out of it, back to the Multiplayer panel with the reason.</summary>

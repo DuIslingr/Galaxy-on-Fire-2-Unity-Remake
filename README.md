@@ -163,6 +163,9 @@ Good to know:
 - The server keeps the shared world: the shop stock, squads, missions and chat. Each orbit's NPCs are run by the first
   player who arrives there, so the server itself needs very little CPU.
 - Players on a different game version are turned away with a message saying which version the server runs.
+- When the internet connection drops (a router restart), the server starts its game again by itself once it is back
+  (tries after 5, 10, 20, 40 s, then every minute). Online it gets a new join code and is listed again; the players
+  join again. An online server started without internet keeps trying the same way.
 
 **Player profiles**
 

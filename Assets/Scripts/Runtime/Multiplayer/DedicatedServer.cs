@@ -17,6 +17,10 @@
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
 // MainMenu / MenuBackground call ShutOff as they wake (the scene's objects off before the rest wake: no menu, music or
 // live orbit backdrop), and the scene is unloaded once loaded. The process is muted (AudioListener volume 0, paused).
+// Losing the network (the router restarting, the Relay connection gone) stops Netcode's server: instead of quitting, the
+// server starts its session again (Reconnect: after 5 s, then 10, 20, 40 and every 60 s until it is back), online with a
+// new Relay allocation, join code and listing, the world seed kept. The players were dropped with the connection; they
+// join again (from the server browser, or with the new code) and the profiles bring their progress back.
 // Then NetGame.StartServer runs the session's world (NetState: the seed, the shared stock, squads, missions, crate
 // claims, the chat relay) without a player of its own; every player's game runs its orbits as with a host (the first
 // player in an orbit runs its NPCs).
@@ -32,6 +36,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using GoF2Remake.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -62,6 +67,7 @@ namespace GoF2Remake.Multiplayer
             Enabled = Detect();
             while (commands.TryDequeue(out _)) { }
             instance = null;
+            reconnecting = false;
         }
 
         static bool Detect() =>
@@ -143,13 +149,35 @@ namespace GoF2Remake.Multiplayer
             OpenConsole();
             startedAt = Time.unscaledTime;
             Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version}");
+            if (!await StartSession(false))
+            {
+                // Online without a network yet (the machine came up before its router): keep trying, like after a lost
+                // connection. A local server's failure (the port in use) won't go away by waiting.
+                if (!relay) { Fail(); return; }
+                Debug.LogWarning("Server: " + NetGame.Status);
+                Reconnect();
+            }
+            Log($"Up to {NetGame.MaxPlayers} players (-maxplayers).");
+            if (NetGame.HasPassword) Log("Players need the password (-password) to join.");
+            Log(NetGame.HostAllowsDebug ? "The Debug menu is allowed (-allowdebug)." : "The Debug menu is off (-allowdebug allows it).");
+            if (!HasFlag("-noprofiles"))
+                Log(NetGame.HostAllowsDebug ? "Player profiles: uploads are taken as the players' games send them (-allowdebug)."
+                                            : $"Player profiles: uploads are checked (at most {NetProfiles.EarnPerMinute:N0} worth gained per minute: -maxearn).");
+            else Log("Player profiles are off (-noprofiles): nothing is saved.");
+            Log("Type \"help\" for the commands.");
+        }
+
+        /// <summary>Starts the session (online: a Relay allocation and listing first); 'again' = after a lost connection, the
+        /// world seed kept. False = NetGame.Status says why.</summary>
+        static async Task<bool> StartSession(bool again)
+        {
             if (relay)
             {
                 Log("Reserving an online session (Unity Relay)...");
                 string listed = HasFlag("-unlisted") ? null : (Value("-name") ?? "Galaxy on Fire 2 server");
-                if (!await NetGame.PrepareOnlineHost(listed)) { Fail(); return; }
+                if (!await NetGame.PrepareOnlineHost(listed)) return false;
             }
-            if (!NetGame.StartServer(port)) { Fail(); return; }
+            if (!NetGame.StartServer(port, again)) return false;
             if (NetGame.JoinCode != null)
                 Log($"Online through Unity Relay. Join code: {NetGame.JoinCode}");
             else
@@ -157,14 +185,39 @@ namespace GoF2Remake.Multiplayer
                 Log($"Listening on port {port} (UDP, every network adapter). Players join on this machine's address{(port != NetGame.DefaultPort ? ":" + port : "")}.");
                 foreach (var (name, address) in NetGame.LocalAddresses()) Log($"  {name}: {address}");
             }
-            Log($"Up to {NetGame.MaxPlayers} players (-maxplayers).");
-            if (NetGame.HasPassword) Log("Players need the password (-password) to join.");
-            Log(NetGame.HostAllowsDebug ? "The Debug menu is allowed (-allowdebug)." : "The Debug menu is off (-allowdebug allows it).");
-            if (NetProfiles.Enabled)
-                Log(NetGame.HostAllowsDebug ? "Player profiles: uploads are taken as the players' games send them (-allowdebug)."
-                                            : $"Player profiles: uploads are checked (at most {NetProfiles.EarnPerMinute:N0} worth gained per minute: -maxearn).");
-            else Log("Player profiles are off (-noprofiles): nothing is saved.");
-            Log("Type \"help\" for the commands.");
+            return true;
+        }
+
+        static bool reconnecting;
+
+        /// <summary>NetGame: Netcode's server stopped by itself (the network went). True = the server starts again
+        /// (Reconnect); false = no server here, the caller quits.</summary>
+        public static bool ConnectionLost()
+        {
+            if (instance == null) return false;
+            if (!reconnecting) instance.Reconnect();
+            return true;
+        }
+
+        async void Reconnect()
+        {
+            reconnecting = true;
+            float delay = 5f;   // the old NetworkManager is destroyed a moment after the stop (NetGame.ShutdownNow)
+            Log($"Offline; starting the session again in {delay:0} s.");
+            while (instance == this)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(delay));   // Unity's synchronisation context: back on the main thread
+                if (instance != this || NetGame.Active) break;
+                if (await StartSession(true))
+                {
+                    Log(NetGame.JoinCode != null ? "Back online. The players need to join again (the server browser, or the new join code)."
+                                                 : "Back online. The players need to join again.");
+                    break;
+                }
+                delay = Mathf.Min(delay * 2f, 60f);
+                Log($"Still offline ({NetGame.Status}); trying again in {delay:0} s.");
+            }
+            reconnecting = false;
         }
 
         static void Fail()

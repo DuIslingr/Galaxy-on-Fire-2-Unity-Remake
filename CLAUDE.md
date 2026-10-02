@@ -861,7 +861,11 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   the screenshot key); vsync off at the frame cap.
   `NetGame.StartServer` = StartHost's world without a player of its own (no NetPlayer, no EnterWorld); clients ids start
   at 1 (`NetState.Dedicated`: "Player N" counts from 1); the session-ending checks count the others, not the host
-  (`OthersConnected`); `OnServerStopped` quits; the others' NetPlayers build no model there. The console (Windows: its
+  (`OthersConnected`); `OnServerStopped` (a transport failure: the network or the Relay connection lost) no longer
+  quits: `DedicatedServer.ConnectionLost` starts the session again (`Reconnect`: 5 s, then 10, 20, 40 and every 60 s;
+  a new Relay allocation, join code and listing, the world seed kept, `StartServer(port, keepSeed)`; the players join
+  again), also when an online server starts without a network; an expired anonymous sign-in is signed out (session
+  token kept) and in again (`SignInForOnline`); the others' NetPlayers build no model there. The console (Windows: its
   own window through `WinConsole` unless stdout is redirected to a file or pipe (a terminal's inherited console handle
   doesn't count: a GUI program isn't attached to it) or `-noconsole`; with `-logFile` the window still opens (Unity's
   stdout is then that file); the log is mirrored into the window, Unity prints it only to a stdout it starts with;
