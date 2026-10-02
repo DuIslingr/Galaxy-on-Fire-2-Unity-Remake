@@ -22,6 +22,10 @@ def build():
             return None
         n = F.name_of(sid, ev)
         files = oggs.get(n, []) if n else []
+        if n and not files:
+            # Re-recorded lines keep the event name but their waves are named <event>_Alt2 (Brillo Lampeter's 11 Supernova
+            # lines, MISSION_END_95_8_Alt2 ...); StoryAssets.Voice finds them by the event name too.
+            files = next((oggs[k] for k in oggs if k.lower() in (n.lower() + '_alt2', n.lower() + '_alt')), [])
         return {'event': sid, 'name': n,
                 'eng': next((f for f in files if '_eng/' in f), None),
                 'deu': next((f for f in files if '_deu/' in f), None)}
