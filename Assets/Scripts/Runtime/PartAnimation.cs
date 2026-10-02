@@ -65,7 +65,7 @@ namespace GoF2Remake.Visuals
         [Tooltip("Apply the `extra` (opacity) and `v5_0` (UV scroll) channels to the part renderers (_Fade / _UVOffset).")]
         public bool applyMaterialChannels;
 
-        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised, uvRepeats; }
+        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised; }
         readonly List<Track> tracks = new List<Track>();
         float timeMs, lengthMs;
 
@@ -125,8 +125,6 @@ namespace GoF2Remake.Visuals
             // 1 = _UVOffset (GoF2/SkyLayer), 2 = _MainTex_ST (the Shader Graphs' main texture tiling and offset), 0 = none
             tk.uvMode = mat == null ? 0 : mat.HasProperty("_UVOffset") ? 1 : mat.HasProperty("_MainTex_ST") ? 2 : 0;
             if (tk.uvMode == 2) { var sc = mat.mainTextureScale; var of = mat.mainTextureOffset; tk.baseST = new Vector4(sc.x, sc.y, of.x, of.y); }
-            var tex = mat != null ? mat.mainTexture : null;
-            tk.uvRepeats = tex != null && tex.wrapMode == TextureWrapMode.Repeat;
         }
 
         /// <summary>How often the looping animation has wrapped (the storm sky re-rolls its rotation on each).</summary>
@@ -281,19 +279,13 @@ namespace GoF2Remake.Visuals
                     var v = new Vector3(s[0], s[1], s[2]);
                     tk.tr.localScale = Vector3.Scale(tk.baseScale, v);
                 }
-                // The UV scroll channels (v5_0 u, v5_1 v; 100 = one texture) run on every repeating texture, as the engine
-                // animates them on any mesh (the burning stations' fire and smoke, plasma beams and streams, projectiles, gas
-                // clouds); the clamped effect atlases are left alone (a scrolled cell would smear its edge). `extra` stays opt-in.
+                // The UV scroll channels (v5_0 u, v5_1 v; 100 = one texture) run on every mesh, as the engine animates them
+                // (the burning stations' fire and smoke, plasma beams and streams, projectiles, gas clouds), the clamped
+                // effect atlases too: their scrolling cells stay inside the texture (the beams' strips repeat every scroll
+                // period, sn_projectiles 207 / 222 / 228; the fireworks step down their column), so nothing smears; held
+                // still, the transfusion / repair beams and the Raccoon's beam lost their flow. `extra` stays opt-in.
                 bool uvAnimated = tk.uv != null || tk.uvY != null;
-                if (uvAnimated)
-                {
-                    InitMaterialTrack(tk);
-                    // Opted in or not, an atlas (_MainTex_ST) scrolls only when its texture repeats: on a clamped effect
-                    // atlas the offset slid the cell into its neighbours (the Raccoon's beam, item 228, smeared). The sky
-                    // layers' _UVOffset wraps in the shader.
-                    if (tk.uvMode == 2 && !tk.uvRepeats) uvAnimated = false;
-                }
-                if ((applyMaterialChannels && (tk.extra != null || uvAnimated)) || (uvAnimated && tk.uvRepeats))
+                if ((applyMaterialChannels && tk.extra != null) || uvAnimated)
                 {
                     InitMaterialTrack(tk);
                     if (tk.renderer == null) continue;
