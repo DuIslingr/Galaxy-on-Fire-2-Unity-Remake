@@ -154,6 +154,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake: the ship flies into the hangar after docking and out of it when launching (HangarFlight).</summary>
         public static bool HangarFlights { get => GetBool("hangarFlights", true); set => SetBool("hangarFlights", value); }
 
+        /// <summary>Remake (GitHub #6): now and then a free-flight orbit holds a pirate outpost or a pirate boss with escorts
+        /// (TrafficPlan.AddPirateEvent), each with a bounty.</summary>
+        public static bool PirateEvents { get => GetBool("pirateEvents", true); set => SetBool("pirateEvents", value); }
+
         /// <summary>DialogueWindow::update: with voice, turn the page once the line has ended.</summary>
         public static bool AutoAdvanceDialogue { get => GetBool("autoAdvanceDialogue", true); set => SetBool("autoAdvanceDialogue", value); }
 
@@ -190,6 +194,7 @@ namespace GoF2Remake.Data
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
                          "frameRate", "renderScale", "upscaler", "upscalerQuality", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "gyroSteering", "gyroSensitivity", "haptics", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
+                         "pirateEvents",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);
             PlayerPrefs.Save();

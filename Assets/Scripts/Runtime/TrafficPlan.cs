@@ -69,6 +69,8 @@ namespace GoF2Remake.Flight
         public int secondaryItem = -1;     // a second gun slot (the wanted flying ships 45-48: G'liissk rockets) ...
         public float secondaryFactor = 1f; // ... at x4
         public int hiddenBlueprint = -1;   // a Supernova wreck's hidden blueprint (TrafficPlan.HiddenBlueprints slot)
+        public int pirateEvent;            // remake: EventOutpost / EventBoss (TrafficPlan.AddPirateEvent), 0 = none
+        public const int EventOutpost = 1, EventBoss = 2;
     }
 
     public static class TrafficPlan
@@ -274,7 +276,72 @@ namespace GoF2Remake.Flight
                 for (int i = 0; i < specters; i++)
                     list.Add(new SpawnSpec { group = NpcGroup.Special, race = Standing.Specter, ship = 44, alwaysEnemy = true, position = sp + Jitter() });
             }
+            AddPirateEvent(list, db, station, system, secEff, story, cm, baseSystem);
             return list;
+        }
+
+        // ---- remake: pirate events (GitHub #6) ----------------------------------------------------------------------
+
+        /// <summary>The chance of an event per orbit entry by security level (secure systems rarely).</summary>
+        static readonly int[] EventChance = { 10, 7, 4, 2 };
+        static readonly int[] BossShips = { 60, 29, 32, 25 };       // Darkzov, Mantis, Wasp, Tyrion
+        static readonly int[] BossLoot = { 113, 108, 107, 102, 101 };   // Implants, Vossk Organs, Organs, Rare Plants / Animals
+
+        /// <summary>Remake (option "Pirate outposts and bosses", on by default): now and then (10 / 7 / 4 / 2 % by security) a
+        /// free-flight orbit holds a sleeping pirate outpost with its guards far out (the pirate bases' outpost: radio 435-437 when
+        /// a guard wakes, 438-440 when it falls) or a pirate boss (a Wanted-like hull and gun by the player's rank, speed 3.5,
+        /// a crate of rare goods) with 2-4 escorts in front of the station; either pays a bounty (Traffic.PirateEventDone). Not in
+        /// the tutorial, Mido or below rank 2, the special orbits (Loma, the empty ones, the supernova system, the pirates' own
+        /// systems), a pirate base's system or the Kaamo siege.</summary>
+        static void AddPirateEvent(List<SpawnSpec> list, Database db, int station, SystemData system, int secEff, bool story, int cm, bool baseSystem)
+        {
+            // Not for a beginner: Mido (the starting system) and below rank 2 stay as the original.
+            if (!Settings.PirateEvents || (story && cm < 0x10) || baseSystem || KaamoClub.SiegeAt(station) || system.index == 15 || Session.Rank < 2) return;
+            if (station == 100 || station == 101 || station == 108 || station == 10 || (station >= 102 && station <= 104)) return;
+            if (system.index == 25 || system.index == 27 || system.index == 32 || system.index == 33) return;
+            if (Random.Range(0, 100) >= EventChance[Mathf.Clamp(secEff, 0, 3)]) return;
+            int rank = Mathf.Min(Session.Rank, 20);
+            if (Random.value < 0.5f)
+            {
+                // The outpost, 70-110 km out in a random direction (flattened), guarded like a pirate base.
+                var dir = Random.onUnitSphere;
+                dir.y *= 0.3f;
+                var at = dir.normalized * Random.Range(70000f, 110000f);
+                var assets = CombatAssets.Load();
+                var loot = PirateBases.Loot[Random.Range(0, PirateBases.Loot.Length)];
+                list.Add(new SpawnSpec
+                {
+                    group = NpcGroup.Outpost, race = Standing.Pirate, ship = -1, position = at,
+                    fixedObject = "station_pirates", collisionId = 1002, hitRadius = 7500f, hitpoints = KaamoClub.OutpostHull(),
+                    wreckPrefab = assets != null ? assets.outpostWreck : null, explosionScale = 8f, stationary = true, asleep = true,
+                    nameText = 441, lootItem = loot.item, lootAmount = loot.amount, alwaysEnemy = true, pirateEvent = SpawnSpec.EventOutpost,
+                });
+                int guards = (int)((Session.Difficulty - 0.5f) * 5f + 5f);
+                for (int g = 0; g < guards; g++)
+                {
+                    float S() => Random.value < 0.5f ? -1f : 1f;
+                    list.Add(new SpawnSpec
+                    {
+                        group = NpcGroup.Guard, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate), asleep = true, guard = true,
+                        position = at + new Vector3(S() * Random.Range(0, 20000) + 10000, S() * Random.Range(0, 20000) + 10000, S() * Random.Range(0, 20000) + 10000),
+                    });
+                }
+                return;
+            }
+            // The boss and its escorts, in front of the station like a raider group (no raider waves: group Special).
+            var spawn = RaiderSpawn();
+            int hull = (int)((15 * rank + 1500 + 4 * 45) * Session.DifficultyFactor);
+            int gun = rank < 5 ? 23 : rank < 10 ? 15 : rank < 15 ? 26 : 21;   // Micro Gun MKII, H'nookk, Scram Cannon, Tyrfing
+            list.Add(new SpawnSpec
+            {
+                group = NpcGroup.Special, race = Standing.Pirate, ship = BossShips[Random.Range(0, BossShips.Length)], position = spawn,
+                hitpoints = hull, nameText = 1606, speed = 3.5f, gunItem = gun, gunFactor = 2f, alwaysEnemy = true,
+                lootItem = BossLoot[Random.Range(0, BossLoot.Length)], lootAmount = Random.Range(3, 9), pirateEvent = SpawnSpec.EventBoss,
+            });
+            int escorts = Random.Range(2, 5);
+            for (int i = 0; i < escorts; i++)
+                list.Add(new SpawnSpec { group = NpcGroup.Special, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate),
+                                         position = spawn + Jitter(), alwaysEnemy = true });
         }
 
         // ---- the Most Wanted criminal (Level::createMission 0xbda70, wingmen_wanted.md 2.6) ---------------------------

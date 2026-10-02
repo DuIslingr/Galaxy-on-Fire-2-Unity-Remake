@@ -337,6 +337,41 @@ namespace GoF2Remake.World
             Radio(438, 440, Standing.Pirate);
         }
 
+        // ---- remake: pirate events (TrafficPlan.AddPirateEvent, GitHub #6) ----------------------------------------------
+
+        bool bossCalled;
+        float eventMs;
+
+        /// <summary>The event's outpost or boss destroyed (whoever did it): the pirates' "Nooooo!" for an outpost, and the bounty
+        /// (outpost 10 000 + 1500 per rank, boss 4000 + 1500 per rank).</summary>
+        public void PirateEventDone(NpcShip ship)
+        {
+            int rank = Mathf.Min(Session.Rank, 20);
+            bool outpost = ship.Spec.pirateEvent == SpawnSpec.EventOutpost;
+            if (outpost) Radio(438, 440, Standing.Pirate);
+            int reward = (outpost ? 10000 : 4000) + 1500 * rank;
+            Session.Credits += reward;
+            BountyCollected?.Invoke(reward);
+        }
+
+        /// <summary>The boss calls the player 8 s into the orbit (the Pirate Boss face, speaker 9).</summary>
+        void UpdatePirateEvent(float dtMs)
+        {
+            if (bossCalled || RadioBlocked) return;
+            eventMs += dtMs;
+            if (eventMs < 8000f) return;
+            var boss = Ships.Find(s => s.Spec.pirateEvent == SpawnSpec.EventBoss);
+            if (boss == null || !boss.Target.Alive) { bossCalled = true; return; }
+            bossCalled = true;
+            chatterQueue.Clear();
+            chatter = null;
+            chatterQueue.Enqueue(new Chatter
+            {
+                text = Localization.Extra("pirateBossCall", "This orbit is mine now, pilot. Drop your cargo and turn around, or my boys turn you into scrap!"),
+                speakerId = 9, speaker = Localization.Get(1606),
+            });
+        }
+
         // ---- Alice in the Void (MGame::OnInitialize -> Level::createRadioMessage(8), tables 0x2541c8 / 0x2543a0) ---------
 
         /// <summary>Per conversation the number of lines (DAT_002543a0) and the (speaker image, text) pairs (DAT_002541c8):
@@ -545,6 +580,7 @@ namespace GoF2Remake.World
             }
             // PlayerFighter::update's death: a Most Wanted criminal pays its bounty whoever killed it; no standing hit.
             if (ship.Spec.wantedIndex >= 0) { WantedKilled(ship); if (byPlayer && ship.Target.hostileToPlayer) CountKill(); return; }
+            if (ship.Spec.pirateEvent != 0) PirateEventDone(ship);   // remake: the event's bounty, whoever killed it
             if (!byPlayer) return;
             // Player::damage: the convoy freighter ("Arms delivery") destroyed by the Liberator (0xb3) -> step 59's bonus.
             if (ship.Spec.convoyRole == SpawnSpec.ConvoyFreighter && ship.Target.lastPlayerWeapon == 179 && Session.StoryMission != null)
@@ -577,6 +613,7 @@ namespace GoF2Remake.World
             UpdateLomaToll();
             UpdateConvoy();
             UpdateWanted();
+            UpdatePirateEvent(dtMs);
             int hostiles = 0;
             if (hasScanner)
                 foreach (var s in Ships)
