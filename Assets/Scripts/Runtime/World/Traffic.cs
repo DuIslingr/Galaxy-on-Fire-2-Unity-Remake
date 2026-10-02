@@ -771,13 +771,17 @@ namespace GoF2Remake.World
         }
 
         /// <summary>Level::createRadioMessage(0xe / 0xf, system race): text 'baseText' - 2 per target station still to do
-        /// (0xe: 2185 / 2187 / 2189 "too close" lines; 0xf: 2186 / 2188, none after the last one).</summary>
+        /// (0xe: 2185 / 2187 / 2189 "too close" lines from the convoy, a face of the system race; 0xf: 2186 / 2188, none after
+        /// the last one, are Keith's: Level.c 15863 jumps to the image-0 case, speaker 0 "Keith T. Maxwell").</summary>
         void ConvoyRadio(int baseText, bool afterKill)
         {
             int text = baseText;
             foreach (int t in Session.StoryTargets) if (t >= 0) text -= 2;
-            if (afterKill && (text < 0x889 || text > 0x88d)) return;
-            Radio(text, text, SystemRace);
+            if (!afterKill) { Radio(text, text, SystemRace); return; }
+            if (text < 0x889 || text > 0x88d || RadioBlocked) return;
+            chatterQueue.Clear();
+            chatter = null;
+            chatterQueue.Enqueue(new Chatter { text = Localization.Get(text), speakerId = 0, speaker = Localization.Get(1597), voice = GenericVoice.For(text) });
         }
 
         /// <summary>Level::updateOrbit: relaunches and raider waves (not in a campaign orbit).</summary>
