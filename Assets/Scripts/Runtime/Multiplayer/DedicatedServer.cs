@@ -336,6 +336,8 @@ namespace GoF2Remake.Multiplayer
                            "  say <text>          a chat line to everyone, from \"Server\"\n" +
                            "  kick <id|name> [reason]  drops a player\n" +
                            "  arenas              the arena matches and queues\n" +
+                           "  crews               the crews (tag, name, members, leader, bank)\n" +
+                           "  crew disband <TAG>  ends a crew\n" +
                            "  profiles            the player profiles (id, name, devices, worth, who is online)\n" +
                            "  profile delete <id> deletes a profile (not while it is online; its file is kept as .bak)\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
@@ -354,6 +356,11 @@ namespace GoF2Remake.Multiplayer
                     return Kick(rest);
                 case "arenas":
                     return NetArena.ConsoleList();
+                case "crews":
+                    return NetCrews.ConsoleList();
+                case "crew":
+                    if (rest.StartsWith("disband ", StringComparison.OrdinalIgnoreCase)) return NetCrews.ConsoleDisband(rest.Substring(8).Trim());
+                    return "crew disband <TAG>";
                 case "profiles":
                     return NetProfiles.ConsoleList();
                 case "profile":

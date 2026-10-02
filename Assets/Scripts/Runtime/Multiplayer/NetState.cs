@@ -14,6 +14,7 @@
 //   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed);
 //   a dedicated server's player profiles (NetProfiles / NetProfileClient): signing in, the profile to the player, their
 //     uploads, handing control between a profile's devices, the chat's /link /control /profile commands;
+//   crews (NetCrews): the chat's /crew and /c commands;
 //   arena matches (NetArena / NetArenaClient): the chat's /duel /accept /decline /ffa /leave /arena /top, a match's
 //     start, state, end and kills; whether players may fight outside them (FreePvp, -freepvp).
 
@@ -145,7 +146,7 @@ namespace GoF2Remake.Multiplayer
             {
                 ulong from = rpc.Receive.SenderClientId;
                 string answer = NetArena.Command(from, text)
-                                ?? (NetProfiles.Enabled ? NetProfiles.Command(from, text)
+                                ?? (NetProfiles.Enabled ? NetCrews.Command(from, text) ?? NetProfiles.Command(from, text)
                                     : Localization.Extra("mpArenaCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena."));
                 if (!string.IsNullOrEmpty(answer)) Notify(from, answer);
                 return;
@@ -153,7 +154,7 @@ namespace GoF2Remake.Multiplayer
             NetPlayer sender = null;
             foreach (var p in NetPlayer.All) if (p != null && p.OwnerClientId == rpc.Receive.SenderClientId) { sender = p; break; }
             if (sender == null) return;
-            ChatRpc(sender.OwnerClientId, sender.DisplayName, text, global, sender.Station, sender.InSpace, sender.InHangar);
+            ChatRpc(sender.OwnerClientId, sender.TaggedName, text, global, sender.Station, sender.InSpace, sender.InHangar);
         }
 
         /// <summary>Server: a global chat line from the server itself (the dedicated server's say command).</summary>

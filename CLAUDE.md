@@ -660,6 +660,16 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   server started with `-freepvp` (`NetState.FreePvp`, `NetGame.FreePvp`): elsewhere another player's ship is
   `playerProof` (shots pass) and the owner's `HitRpc` / `EmpRpc` drop a player's hit unless the sender is in the same
   orbit and may fight (`NetPlayer.PvpWith`).
+- **Crews** (`NetCrews`, a dedicated server with profiles; phase 1 of home systems / territory): the lasting player
+  groups, kept by profile in `crews.json` beside the profiles (squads stay the session's quick fly-together groups).
+  A crew: name (24), tag (2-4 letters / digits, unique; `NetPlayer.CrewTag`, server-written, `TaggedName` "[TAG] Name"
+  on the lock plate and in chat), leader, officers, members (profile ids, at most 50), bank and home station (for the
+  next phases). Chat commands (private answers): `/crew create TAG Name`, `invite <pilot>` (officers; 5 min),
+  `join TAG`, `leave` (the leader only by handing over or as the last member), `kick <pilot>` (officers: members;
+  the leader: officers too), `promote` / `demote <pilot>`, `leader <pilot>`, `disband` (leader), `info [TAG]`, `list`;
+  `/c <text>` to the crew's online members. A deleted profile leaves its crew; a leaderless crew passes to its first
+  officer, else first member; an empty one ends. Console: `crews`, `crew disband <TAG>`. Next phases: claims (home
+  station, map / HUD marks), sieges, the trade cut, the station's defence and its toll. Not tested in a build yet.
 - **Arena matches** (`NetArena` server, `NetArenaClient` player, `ArenaView` HUD panel; chat commands, answered
   privately): `/duel <name> [voids]` (both docked; `/accept` / `/decline` within 60 s; first to 3 kills or 5 min) and
   `/ffa [voids]` (a queue per option, docked; starts 30 s after the 2nd pilot or at once with 8; first to 15 kills or

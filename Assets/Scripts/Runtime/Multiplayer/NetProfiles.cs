@@ -136,10 +136,38 @@ namespace GoF2Remake.Multiplayer
             if (index.accounts == null) index.accounts = new List<Account>();
             if (string.IsNullOrEmpty(index.serverId)) index.serverId = RandomHex(16);
             SaveIndex();
+            NetCrews.Load();
             Debug.Log($"Server: player profiles on: {index.accounts.Count} / {MaxProfiles} in {folder}.");
         }
 
         static string IndexPath => Path.Combine(folder, "accounts.json");
+
+        /// <summary>Where the profiles are kept (NetCrews keeps crews.json there too).</summary>
+        internal static string Folder => folder;
+
+        /// <summary>A connected player's profile id, null = a guest or not signed in.</summary>
+        internal static string AccountOf(ulong client) => logins.TryGetValue(client, out var l) && l.account != null ? l.account.id : null;
+
+        /// <summary>A profile's last pilot name, null = unknown.</summary>
+        internal static string AccountName(string id)
+        {
+            var a = index?.accounts.Find(x => x.id == id);
+            return a == null || string.IsNullOrEmpty(a.name) ? null : a.name;
+        }
+
+        /// <summary>The connected devices of a profile.</summary>
+        internal static IEnumerable<ulong> ClientsOf(string id)
+        {
+            var result = new List<ulong>();
+            foreach (var l in logins.Values) if (l.account != null && l.account.id == id) result.Add(l.client);
+            return result;
+        }
+
+        internal static bool IsOnline(string id)
+        {
+            foreach (var l in logins.Values) if (l.account != null && l.account.id == id) return true;
+            return false;
+        }
         static string ProfilePath(string id) => Path.Combine(folder, id + ".json");
 
         // ---- signing in -------------------------------------------------------------------------------------
@@ -198,6 +226,7 @@ namespace GoF2Remake.Multiplayer
                 NetState.Instance.Notify(client, Localization.Extra("mpObserverJoined",
                     "Your profile is in use on another device: this one watches from the station. Type /control once the other one is docked."));
             if (login.controller && account != null) RestoreSquad(login);
+            NetCrews.OnLogin(client);   // the crew's tag on the name
         }
 
         /// <summary>NetGame: a player left. A controller's profile goes to its next device online, if any.</summary>
@@ -379,7 +408,7 @@ namespace GoF2Remake.Multiplayer
                     return string.Format(Localization.Extra("mpProfileInfo", "Profile {0}, {1} device(s); this one {2}."), login.account.id,
                         login.account.devices.Count, login.controller ? Localization.Extra("mpControls", "controls it") : Localization.Extra("mpWatches", "watches"));
                 default:
-                    return Localization.Extra("mpCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena, /top; /link (a code for another device), /link CODE, /control, /profile.");
+                    return Localization.Extra("mpCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena, /top; /crew (help: /crew help), /c <text>; /link (a code for another device), /link CODE, /control, /profile.");
             }
         }
 
@@ -431,6 +460,7 @@ namespace GoF2Remake.Multiplayer
             SendProfile(login, token);
             Debug.Log($"Server: client {login.client} linked to profile {target.id} ({target.devices.Count} devices).");
             if (login.controller) RestoreSquad(login);
+            NetCrews.OnLogin(login.client);
             return login.controller ? Localization.Extra("mpLinked", "Linked: this device uses your profile now.")
                                     : Localization.Extra("mpLinkedObserver", "Linked. Your other device controls the profile: this one watches until you type /control.");
         }
@@ -543,6 +573,7 @@ namespace GoF2Remake.Multiplayer
         static void DeleteAccount(Account a)
         {
             index.accounts.Remove(a);
+            NetCrews.OnAccountDeleted(a.id);
             BackUp(ProfilePath(a.id));
             Debug.Log($"Server: profile {a.id} deleted.");
         }
@@ -555,7 +586,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>Through a temporary file, the previous version kept as .bak (a crash mid-write loses nothing).</summary>
-        static bool Write(string path, string text)
+        internal static bool Write(string path, string text)
         {
             try
             {

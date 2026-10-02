@@ -56,6 +56,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> authority = new NetworkVariable<bool>(false, Read, Write);
         readonly NetworkVariable<int> squad = new NetworkVariable<int>(0);   // the host's (NetSquad), 0 = none
         readonly NetworkVariable<bool> observer = new NetworkVariable<bool>(false);   // the server's: another device controls the profile
+        readonly NetworkVariable<FixedString32Bytes> crewTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetCrews, "" = none
         readonly NetworkVariable<bool> engine = new NetworkVariable<bool>(true, Read, Write);   // the engine glow shows
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
@@ -132,6 +133,12 @@ namespace GoF2Remake.Multiplayer
         public bool Observer => observer.Value;
         /// <summary>Server: NetProfiles' role for this device.</summary>
         public void SetObserver(bool on) { if (IsServer && observer.Value != on) observer.Value = on; }
+        /// <summary>The player's crew tag (NetCrews), "" = no crew.</summary>
+        public string CrewTag => crewTag.Value.ToString();
+        /// <summary>Server: NetCrews' tag for this player.</summary>
+        public void SetCrewTag(string tag) { if (IsServer && crewTag.Value.ToString() != (tag ?? "")) crewTag.Value = tag ?? ""; }
+        /// <summary>The name with the crew's tag before it ("[TAG] Name"): the lock plate and the chat.</summary>
+        public string TaggedName => CrewTag.Length > 0 ? $"[{CrewTag}] {DisplayName}" : DisplayName;
         public string DisplayName
         {
             get
@@ -194,6 +201,7 @@ namespace GoF2Remake.Multiplayer
             target.RemoteEmp = emp => EmpRpc(emp);
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
+            crewTag.OnValueChanged += (_, _) => ApplyName();
             Target.NetShips.Add(target);
             obstacle = gameObject.AddComponent<Obstacle>();
             obstacle.projectFromVolume = false;
@@ -249,7 +257,7 @@ namespace GoF2Remake.Multiplayer
 
         void ApplyName()
         {
-            target.displayName = DisplayName;
+            target.displayName = TaggedName;
             name = $"NetPlayer {OwnerClientId} ({target.displayName})";
         }
 

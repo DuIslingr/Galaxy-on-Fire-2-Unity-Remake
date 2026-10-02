@@ -128,6 +128,7 @@ can't. Type one and press Enter:
 | `say <text>` | A chat line to everyone, from "Server". |
 | `kick <id or name> [reason]` | Drops a player; they see the reason. |
 | `arenas` | The arena matches and queues. |
+| `crews`, `crew disband <TAG>` | The crews; end one. |
 | `profiles` | The player profiles: id, name, devices, worth, who is online. |
 | `profile delete <id>` | Deletes a profile (not while it is online; its file is kept as `.bak`). |
 | `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
@@ -181,6 +182,20 @@ every time after; the progress is saved when docking, every minute and when leav
 | `/link CODE` | On the other device: use the profile the code belongs to. `/link CODE force` if this device has progress of its own (it is deleted). |
 | `/control` | Two devices of one profile online: the first one plays, the other watches from the station. This takes over once the playing one is docked. |
 | `/profile` | The profile's id and devices. |
+
+**Crews**
+
+A crew is a lasting group of players on a server with profiles (squads stay the quick groups for flying together).
+Its tag shows before its members' names.
+
+| Command | Meaning |
+|---|---|
+| `/crew create TAG Name` | Start a crew: a tag of 2-4 letters or digits, then its name. |
+| `/crew invite <pilot>` | Invite a pilot (leader and officers). They type `/crew join TAG` within 5 minutes. |
+| `/crew leave`, `/crew kick <pilot>` | Leave, or remove a member (officers remove members, the leader anyone). |
+| `/crew promote <pilot>`, `/crew demote <pilot>`, `/crew leader <pilot>` | Ranks (leader only). |
+| `/crew info [TAG]`, `/crew list`, `/crew disband` | About a crew, all crews, end yours (leader). |
+| `/c <text>` | Talk to your crew. |
 
 **Arena matches**
 
