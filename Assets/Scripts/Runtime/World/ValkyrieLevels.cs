@@ -274,18 +274,21 @@ namespace GoF2Remake.World
             c.FailObjective = () => c.ShipDestroyed(0);                          // 1 (0): the outpost destroyed
         }
 
-        /// <summary>StarSystem::getPlanets()[1]: the second planet billboard (game units, -20000 * its direction).</summary>
-        Vector3 Planet1()
+        /// <summary>StarSystem::getPlanets()[1] (game units, -20000 * its direction): the original's list starts with the sun
+        /// (StarSystem::StarSystem: element 0 the sun, element i the planet of SolarSystem::getStations()[i - 1]), so element 1
+        /// is the system's first station's planet, Lopat in Vulpes, where Trot flies off to ("He's flying to Lopat"). The
+        /// remake's planet list has no sun: its [0]. ([1] showed Inari Onu, the orbit's own planet.)</summary>
+        Vector3 FirstStationPlanet()
         {
             var planets = level.Layout.planets;
             if (planets.Count == 0) return new Vector3(0, 0, -20000);
-            var p = planets[Mathf.Min(1, planets.Count - 1)];
+            var p = planets[0];
             return -OrbitLayout.BackdropDistance * OrbitLayout.Direction(p.pitch, p.yaw);
         }
 
         void Build69()
         {
-            var q = 4f * Planet1();
+            var q = 4f * FirstStationPlanet();
             var route = new Route(false);
             route.points.Add(q);
             route.points.Add(10f * q);
