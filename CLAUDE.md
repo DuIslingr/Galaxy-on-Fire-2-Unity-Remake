@@ -668,8 +668,19 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `join TAG`, `leave` (the leader only by handing over or as the last member), `kick <pilot>` (officers: members;
   the leader: officers too), `promote` / `demote <pilot>`, `leader <pilot>`, `disband` (leader), `info [TAG]`, `list`;
   `/c <text>` to the crew's online members. A deleted profile leaves its crew; a leaderless crew passes to its first
-  officer, else first member; an empty one ends. Console: `crews`, `crew disband <TAG>`. Next phases: claims (home
-  station, map / HUD marks), sieges, the trade cut, the station's defence and its toll. Not tested in a build yet.
+  officer, else first member; an empty one ends. Console: `crews`, `crew disband <TAG>`.
+  Phase 2, territory (`NetCrewsClient` on the player's side): the **bank** (`/crew deposit N`: the server asks the
+  player's game to pay, `ChargeRpc` / `ChargedRpc` with a server token; `/crew withdraw N`, officers: `GrantRpc`; both
+  move the profile's recorded worth, `NetProfiles.AdjustWorth`, so the upload check fits them; a game lying about
+  paying is only caught by that check); **claims** (`/crew claim`, officers, docked there: `-claimcost` (500 000) from the
+  bank, `-maxclaims` (3) per crew, not 108 or system 25; `/crew unclaim`, `/crew home`, `/crew claims [TAG]`; the first
+  claim is the home; a claim no member docked at for `-claimdays` (14) lapses, `NetCrews.Tick` once a minute; a claim
+  is announced to everyone); `NetState.Claims` ("station|TAG|Name" lines, a 4 KB FixedString) shows the holder on the
+  star map (planet "[TAG] Name", system "Name [TAG]"), the station header's system line and the orbit information.
+  **Home**: a member's game starts docked at the crew's home (`ProfileHeaderRpc`'s home), and a destroyed member
+  respawns there (`NetPlayer.CrewHome`, `FlightHud.LoadLastSave`). Disbanding frees the crew's claims (the bank is
+  lost). Next phases: sieges, the trade cut, shared storage, the station's defence and its toll. Not tested in a build
+  yet.
 - **Arena matches** (`NetArena` server, `NetArenaClient` player, `ArenaView` HUD panel; chat commands, answered
   privately): `/duel <name> [voids]` (both docked; `/accept` / `/decline` within 60 s; first to 3 kills or 5 min) and
   `/ffa [voids]` (a queue per option, docked; starts 30 s after the 2nd pilot or at once with 8; first to 15 kills or

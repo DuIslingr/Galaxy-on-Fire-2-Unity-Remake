@@ -32,6 +32,7 @@ namespace GoF2Remake.Multiplayer
         static byte[][] inParts;
         static string inToken;
         static bool inController, inGuest;
+        static int inHome = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
@@ -100,8 +101,9 @@ namespace GoF2Remake.Multiplayer
 
         // ---- the profile coming in --------------------------------------------------------------------------
 
-        internal static void OnProfileHeader(int seq, int count, string token, bool controller, bool guest)
+        internal static void OnProfileHeader(int seq, int count, string token, bool controller, bool guest, int home)
         {
+            inHome = home;
             inSeq = seq;
             inGot = 0;
             inParts = new byte[Mathf.Max(0, count)][];
@@ -134,6 +136,8 @@ namespace GoF2Remake.Multiplayer
             if (waiting)
             {
                 waiting = false;
+                // A crew member's game starts docked at the crew's home (NetCrews).
+                if (inHome >= 0 && inHome < NetGame.Db.Stations.Count) Session.StationIndex = inHome;
                 NetGame.EnterWorld(seed);
                 return;
             }

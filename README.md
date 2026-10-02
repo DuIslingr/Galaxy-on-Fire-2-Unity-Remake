@@ -155,6 +155,9 @@ GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -passwo
 | `-port N` | The port for local network play (default 7777, UDP). |
 | `-fps N` | The server's frame rate (default 60). |
 | `-freepvp` | Players may fight each other anywhere, not only in arena matches. |
+| `-claimcost N` | What a crew pays from its bank to claim a station (default 500 000). |
+| `-maxclaims N` | Stations per crew (default 3). |
+| `-claimdays N` | Days without a member docking before a claim is lost (default 14). |
 | `-noprofiles` | Don't keep player profiles (every session starts fresh, like before). |
 | `-maxprofiles N` | How many player profiles the server keeps (default 50). New devices past it play as guests. |
 | `-maxearn N` | Without `-allowdebug`: how much a profile's worth may grow per minute online (default 1 000 000). |
@@ -195,6 +198,9 @@ Its tag shows before its members' names.
 | `/crew leave`, `/crew kick <pilot>` | Leave, or remove a member (officers remove members, the leader anyone). |
 | `/crew promote <pilot>`, `/crew demote <pilot>`, `/crew leader <pilot>` | Ranks (leader only). |
 | `/crew info [TAG]`, `/crew list`, `/crew disband` | About a crew, all crews, end yours (leader). |
+| `/crew deposit N`, `/crew withdraw N` | Put credits into the crew bank; take them out (leader and officers). |
+| `/crew claim`, `/crew unclaim`, `/crew home` | Docked at a station: claim it for the crew (paid from the bank), give it up, or make it the crew's home (leader and officers). Members start and respawn at the home. |
+| `/crew claims [TAG]` | A crew's stations. A station no member docks at for 14 days is lost. |
 | `/c <text>` | Talk to your crew. |
 
 **Arena matches**

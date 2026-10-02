@@ -57,6 +57,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> squad = new NetworkVariable<int>(0);   // the host's (NetSquad), 0 = none
         readonly NetworkVariable<bool> observer = new NetworkVariable<bool>(false);   // the server's: another device controls the profile
         readonly NetworkVariable<FixedString32Bytes> crewTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetCrews, "" = none
+        readonly NetworkVariable<int> crewHome = new NetworkVariable<int>(-1);   // the server's: the crew's home station, -1 = none
         readonly NetworkVariable<bool> engine = new NetworkVariable<bool>(true, Read, Write);   // the engine glow shows
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
@@ -137,6 +138,10 @@ namespace GoF2Remake.Multiplayer
         public string CrewTag => crewTag.Value.ToString();
         /// <summary>Server: NetCrews' tag for this player.</summary>
         public void SetCrewTag(string tag) { if (IsServer && crewTag.Value.ToString() != (tag ?? "")) crewTag.Value = tag ?? ""; }
+        /// <summary>The crew's home station (NetCrews; a destroyed member respawns there), -1 = none.</summary>
+        public int CrewHome => crewHome.Value;
+        /// <summary>Server: NetCrews' home for this player.</summary>
+        public void SetCrewHome(int station) { if (IsServer && crewHome.Value != station) crewHome.Value = station; }
         /// <summary>The name with the crew's tag before it ("[TAG] Name"): the lock plate and the chat.</summary>
         public string TaggedName => CrewTag.Length > 0 ? $"[{CrewTag}] {DisplayName}" : DisplayName;
         public string DisplayName

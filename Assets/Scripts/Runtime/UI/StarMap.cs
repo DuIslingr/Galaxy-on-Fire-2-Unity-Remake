@@ -616,6 +616,9 @@ namespace GoF2Remake.UI
                 if (s.index >= suns.Length || suns[s.index] == null) continue;
                 var it = MakeItem(false);
                 it.name.text = s.name;
+                // Multiplayer: a crew holding a station here (NetCrews).
+                string crew = GoF2Remake.Multiplayer.NetCrewsClient.SystemTag(db, s.index);
+                if (crew != null) it.name.text += $" [{crew}]";
                 bool owned = GalaxyMap.HasOwner(s.index) && s.raceId >= 0 && s.raceId <= 3;
                 if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(Tex($"race_{s.raceId}"));
                 it.raceIcon.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
@@ -641,6 +644,7 @@ namespace GoF2Remake.UI
             {
                 var it = MakeItem(true);
                 it.name.text = StationName(p.station, false);
+                if (GoF2Remake.Multiplayer.NetCrewsClient.Owner(p.station, out string crew, out _)) it.name.text = $"[{crew}] {it.name.text}";
                 it.visited.style.display = Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = p.station == currentStation ? DisplayStyle.Flex : DisplayStyle.None;

@@ -14,7 +14,7 @@
 //   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed);
 //   a dedicated server's player profiles (NetProfiles / NetProfileClient): signing in, the profile to the player, their
 //     uploads, handing control between a profile's devices, the chat's /link /control /profile commands;
-//   crews (NetCrews): the chat's /crew and /c commands;
+//   crews (NetCrews): the chat's /crew and /c commands, the claims (Claims), bank deposits and payouts;
 //   arena matches (NetArena / NetArenaClient): the chat's /duel /accept /decline /ffa /leave /arena /top, a match's
 //     start, state, end and kills; whether players may fight outside them (FreePvp, -freepvp).
 
@@ -36,6 +36,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice, fixed for the session
         readonly NetworkVariable<bool> profilesOn = new NetworkVariable<bool>();     // the server keeps player profiles (NetProfiles)
         readonly NetworkVariable<bool> freePvp = new NetworkVariable<bool>();        // players may fight anywhere (else only in arenas)
+        readonly NetworkVariable<FixedString4096Bytes> claims = new NetworkVariable<FixedString4096Bytes>();   // NetCrews' territory
         readonly NetworkVariable<FixedString64Bytes> serverId = new NetworkVariable<FixedString64Bytes>();   // their key on the client
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
@@ -63,6 +64,21 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Players may shoot each other anywhere (NetGame.FreePvp, -freepvp); else only in an arena match.</summary>
         public bool FreePvp => freePvp.Value;
 
+        /// <summary>The crews' claimed stations, "station|TAG|Name" per line (NetCrews, NetCrewsClient).</summary>
+        public string Claims => claims.Value.ToString();
+
+        /// <summary>Server: the claims (cut at a whole line to fit the network variable's 4 KB).</summary>
+        internal void SetClaims(string text)
+        {
+            if (!IsServer) return;
+            text ??= "";
+            while (System.Text.Encoding.UTF8.GetByteCount(text) > 4000)
+            {
+                int cut = text.LastIndexOf('\n', text.Length - 2);
+                text = cut < 0 ? "" : text.Substring(0, cut + 1);
+            }
+            if (claims.Value.ToString() != text) claims.Value = text;
+        }
         public override void OnNetworkSpawn()
         {
             name = "NetState";
@@ -76,6 +92,7 @@ namespace GoF2Remake.Multiplayer
                 profilesOn.Value = NetProfiles.Enabled;
                 serverId.Value = NetProfiles.ServerId;
                 freePvp.Value = NetGame.FreePvp;
+                NetCrews.OnStateSpawned();   // the claims, now that this object exists
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
             }
@@ -289,18 +306,18 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>Server: a profile to one player: the header (its new token, if any; its role), then the gzipped chunks
         /// (none = a fresh start). Reliable RPCs to one client arrive in order.</summary>
-        internal void SendProfile(ulong client, string token, bool controller, bool guest, string json)
+        internal void SendProfile(ulong client, string token, bool controller, bool guest, string json, int home)
         {
             if (!IsServer) return;
             var parts = NetProfiles.Pack(json);
             int seq = ++profileSeq;
-            ProfileHeaderRpc(seq, parts.Count, token ?? "", controller, guest, RpcTarget.Single(client, RpcTargetUse.Temp));
+            ProfileHeaderRpc(seq, parts.Count, token ?? "", controller, guest, home, RpcTarget.Single(client, RpcTargetUse.Temp));
             for (int i = 0; i < parts.Count; i++) ProfileChunkRpc(seq, i, parts[i], RpcTarget.Single(client, RpcTargetUse.Temp));
         }
 
         [Rpc(SendTo.SpecifiedInParams)]
-        void ProfileHeaderRpc(int seq, int count, string token, bool controller, bool guest, RpcParams rpc = default)
-            => NetProfileClient.OnProfileHeader(seq, count, token, controller, guest);
+        void ProfileHeaderRpc(int seq, int count, string token, bool controller, bool guest, int home, RpcParams rpc = default)
+            => NetProfileClient.OnProfileHeader(seq, count, token, controller, guest, home);
 
         [Rpc(SendTo.SpecifiedInParams)]
         void ProfileChunkRpc(int seq, int part, byte[] data, RpcParams rpc = default) => NetProfileClient.OnProfileChunk(seq, part, data);
@@ -327,6 +344,36 @@ namespace GoF2Remake.Multiplayer
 
         [Rpc(SendTo.SpecifiedInParams)]
         void RequestUploadRpc(RpcParams rpc = default) => NetProfileClient.Upload(true);
+
+        // ---- crews (NetCrews / NetCrewsClient) -------------------------------------------------------------
+
+        /// <summary>Server: the player's game is asked to pay a crew deposit ('token' answers it).</summary>
+        internal void Charge(ulong client, int token, int amount)
+        {
+            if (IsServer) ChargeRpc(token, amount, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void ChargeRpc(int token, int amount, RpcParams rpc = default) => NetCrewsClient.OnCharge(token, amount);
+
+        /// <summary>The player's game paid the deposit 'token' (or had too few credits).</summary>
+        [Rpc(SendTo.Server)]
+        public void ChargedRpc(int token, bool paid, RpcParams rpc = default) => NetCrews.OnCharged(rpc.Receive.SenderClientId, token, paid);
+
+        /// <summary>Server: credits from the crew bank to the player's game.</summary>
+        internal void Grant(ulong client, int amount)
+        {
+            if (IsServer) GrantRpc(amount, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void GrantRpc(int amount, RpcParams rpc = default) => NetCrewsClient.OnGrant(amount);
+
+        /// <summary>Server: a notice for everyone (a claim).</summary>
+        internal void Announce(string text)
+        {
+            if (IsServer && !string.IsNullOrEmpty(text)) NoticeRpc(text);
+        }
 
         // ---- arena matches (NetArena / NetArenaClient) -----------------------------------------------------
 
@@ -643,6 +690,7 @@ namespace GoF2Remake.Multiplayer
             if (!IsServer || !IsSpawned) return;
             NetProfiles.Tick();   // link codes and handovers that ran out
             NetArena.Tick();      // queues, countdowns, time limits
+            if (NetProfiles.Enabled) NetCrews.Tick();   // claims kept by docking members, lapses, stale deposits
             if ((sweepTimer -= Time.unscaledDeltaTime) > 0f) return;
             sweepTimer = SweepSeconds;
             NetStock.HostTick(this);   // the stock resets

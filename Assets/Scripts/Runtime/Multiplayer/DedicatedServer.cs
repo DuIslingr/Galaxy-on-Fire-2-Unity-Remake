@@ -14,6 +14,8 @@
 //                    per player between sessions); -maxprofiles N (default 50), -maxearn N (worth a profile may gain
 //                    per minute online without -allowdebug, default 1 000 000), -profiledir PATH (default
 //                    <persistentDataPath>/ServerProfiles)
+//   -claimcost N     a crew's station claim from its bank (default 500 000); -maxclaims N per crew (default 3);
+//   -claimdays N     the days without a member docking before a claim lapses (default 14) (NetCrews)
 // Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
 // MainMenu / MenuBackground call ShutOff as they wake (the scene's objects off before the rest wake: no menu, music or
@@ -94,6 +96,9 @@ namespace GoF2Remake.Multiplayer
                 int.TryParse(Value("-maxprofiles"), out int profiles) ? profiles : NetProfiles.DefaultMaxProfiles,
                 int.TryParse(Value("-maxearn"), out int earn) ? earn : NetProfiles.DefaultEarnPerMinute,
                 Value("-profiledir"));
+            NetCrews.Configure(int.TryParse(Value("-claimcost"), out int cost) ? cost : NetCrews.DefaultClaimCost,
+                int.TryParse(Value("-maxclaims"), out int maxClaims) ? maxClaims : NetCrews.DefaultMaxClaims,
+                int.TryParse(Value("-claimdays"), out int days) ? days : NetCrews.DefaultLapseDays);
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
 #if UNITY_EDITOR

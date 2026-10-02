@@ -1057,8 +1057,16 @@ namespace GoF2Remake.UI
         {
             if (gameOverMs < 7000f) return;
             gameOverMs = -1f;
-            // Multiplayer: back in this orbit's station, repaired (docking repairs), everything else kept.
-            if (GoF2Remake.Multiplayer.NetGame.Active) { Session.DockedFromSpace = false; SceneManager.LoadScene("Station"); return; }
+            // Multiplayer: back in this orbit's station (a crew member: the crew's home, NetCrews), repaired (docking
+            // repairs), everything else kept.
+            if (GoF2Remake.Multiplayer.NetGame.Active)
+            {
+                int home = GoF2Remake.Multiplayer.NetCrewsClient.Home;
+                if (home >= 0 && home < GoF2Remake.Multiplayer.NetGame.Db.Stations.Count) Session.StationIndex = home;
+                Session.DockedFromSpace = false;
+                SceneManager.LoadScene("Station");
+                return;
+            }
             if (Session.LoadAutosave() && Application.CanStreamedLevelBeLoaded("Station")) SceneManager.LoadScene("Station");
             else BackToMenu();
         }
@@ -1080,6 +1088,8 @@ namespace GoF2Remake.UI
             if (tex != null) { logo.style.backgroundImage = new StyleBackground(tex); logo.style.width = tex.width; logo.style.height = tex.height; }
             orbitInfo.Q<Label>("orbitStation").text = st == null ? "" : st.index == 101 ? st.name : $"{st.name} {Localization.Get(136)}";
             orbitInfo.Q<Label>("orbitSystem").text = st == null ? "" : $"{st.systemName} {Localization.Get(137)}";
+            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetCrewsClient.OwnerText(st.index);   // a crew's station (NetCrews)
+            if (holder.Length > 0) orbitInfo.Q<Label>("orbitSystem").text += $"  ·  {holder}";
             int sec = Mathf.Clamp(GalaxyMap.SecurityOf(level.Database.Systems.Find(s => s.index == system)), 0, 3);
             var secLabel = orbitInfo.Q<Label>("orbitSecurity");
             secLabel.text = Localization.Get(402 + sec);

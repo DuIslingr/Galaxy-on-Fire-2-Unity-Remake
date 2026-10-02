@@ -13,6 +13,17 @@
 //   Storage: crews.json beside the profiles (NetProfiles.Folder), written like them (through .tmp, the old one as .bak).
 //   A profile deleted (the console, a /link that replaces it) leaves its crew; a leaderless crew passes to its first
 //   officer, else its first member.
+// Phase 2, territory:
+//   Bank: "/crew deposit N" takes N credits from the player (ChargeRpc: their game pays if it can and answers) into the
+//     bank; "/crew withdraw N" (officers) pays N out to the player (GrantRpc). Both move the profile's worth with them
+//     (NetProfiles.AdjustWorth), so the upload check neither trips on a withdrawal nor lets a deposit that wasn't paid
+//     go unnoticed for long (the client still runs its credits: a modified game can lie about paying).
+//   Claims: "/crew claim" (officers, docked at the station) claims it for ClaimCost from the bank, at most MaxClaims per
+//     crew; not the Kaamo Club (108) or Loma (system 25). The first claim is the home; "/crew home" (officers, docked at
+//     another claim) moves it; "/crew unclaim" (officers, docked there) gives it up. A claim no member has docked at for
+//     LapseDays lapses. The claims reach every player (NetState.Claims: "station|TAG|Name" lines; NetCrewsClient), who
+//     see the owner on the star map, the station's header and the orbit information.
+//   Home: a member signing in starts docked at the crew's home, and a destroyed member respawns there.
 
 using System;
 using System.Collections.Generic;
@@ -27,7 +38,23 @@ namespace GoF2Remake.Multiplayer
     public static class NetCrews
     {
         public const int MaxNameLength = 24, MaxMembers = 50;
-        const float InviteSeconds = 300f;
+        const float InviteSeconds = 300f, ClaimTickSeconds = 60f, ChargeSeconds = 30f;
+        public const int DefaultClaimCost = 500_000, DefaultMaxClaims = 3, DefaultLapseDays = 14;
+        const int KaamoStation = 108, LomaSystem = 25;
+
+        /// <summary>A claim's price from the bank (-claimcost), the claims per crew (-maxclaims), the days without a member
+        /// docking before a claim lapses (-claimdays).</summary>
+        public static int ClaimCost { get; private set; } = DefaultClaimCost;
+        public static int MaxClaims { get; private set; } = DefaultMaxClaims;
+        public static int LapseDays { get; private set; } = DefaultLapseDays;
+
+        /// <summary>DedicatedServer.Boot: the command line's choices.</summary>
+        public static void Configure(int claimCost, int maxClaims, int lapseDays)
+        {
+            ClaimCost = Mathf.Max(0, claimCost);
+            MaxClaims = Mathf.Clamp(maxClaims, 0, 100);
+            LapseDays = Mathf.Max(1, lapseDays);
+        }
 
         [Serializable]
         public class Crew
@@ -38,13 +65,24 @@ namespace GoF2Remake.Multiplayer
             public int home = -1;
         }
 
-        [Serializable] class CrewList { public List<Crew> crews = new List<Crew>(); }
+        [Serializable] public class Claim { public int station; public string crew, claimed, lastDock; }
+
+        [Serializable] class CrewList { public List<Crew> crews = new List<Crew>(); public List<Claim> claims = new List<Claim>(); }
+
+        // Deposits waiting for the player's game to pay: by a token the server made (the amount is the server's own).
+        static readonly Dictionary<int, (string account, string crew, int amount, float until)> charges = new Dictionary<int, (string, string, int, float)>();
+        static int nextCharge = 1;
+        static float claimTimer;
 
         static CrewList list;
         static readonly Dictionary<string, (string crew, float until)> invites = new Dictionary<string, (string, float)>();   // by profile id
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { list = null; invites.Clear(); }
+        static void ResetStatics()
+        {
+            list = null; invites.Clear(); charges.Clear(); claimTimer = 0f;
+            ClaimCost = DefaultClaimCost; MaxClaims = DefaultMaxClaims; LapseDays = DefaultLapseDays;
+        }
 
         static string PathOf => Path.Combine(NetProfiles.Folder, "crews.json");
 
@@ -56,7 +94,10 @@ namespace GoF2Remake.Multiplayer
             catch (Exception e) { Debug.LogError($"NetCrews: crews.json unreadable ({e.Message}); starting a new list (the old file stays as .bak on the next write)."); list = null; }
             if (list == null) list = new CrewList();
             if (list.crews == null) list.crews = new List<Crew>();
+            if (list.claims == null) list.claims = new List<Claim>();
             foreach (var c in list.crews) { c.officers ??= new List<string>(); c.members ??= new List<string>(); }
+            charges.Clear();
+            PublishClaims();
         }
 
         static void Save() { if (list != null) NetProfiles.Write(PathOf, JsonUtility.ToJson(list, true)); }
@@ -73,13 +114,15 @@ namespace GoF2Remake.Multiplayer
 
         // ---- names --------------------------------------------------------------------------------------------
 
-        /// <summary>NetProfiles: a player signed in (or linked): their crew's tag on their name.</summary>
+        /// <summary>NetProfiles: a player signed in (or linked): their crew's tag on their name, its home.</summary>
         public static void OnLogin(ulong client) => RefreshTag(client);
 
         static void RefreshTag(ulong client)
         {
             var p = NetSquad.Find(client);
-            if (p != null) p.SetCrewTag(OfClient(client)?.tag ?? "");
+            if (p == null) return;
+            p.SetCrewTag(OfClient(client)?.tag ?? "");
+            p.SetCrewHome(HomeOf(NetProfiles.AccountOf(client)));
         }
 
         static void RefreshTags(string account) { foreach (ulong c in NetProfiles.ClientsOf(account)) RefreshTag(c); }
@@ -123,9 +166,16 @@ namespace GoF2Remake.Multiplayer
                 case "disband": return Disband(me);
                 case "info": return Info(arg.Length > 0 ? ByTag(arg) : Of(me), arg);
                 case "list": return ListText();
+                case "deposit": return Deposit(client, me, arg);
+                case "withdraw": return Withdraw(client, me, arg);
+                case "claim": return ClaimHere(client, me);
+                case "unclaim": return Unclaim(client, me);
+                case "home": return SetHome(client, me);
+                case "claims": return ClaimsText(arg.Length > 0 ? ByTag(arg) : Of(me));
                 default:
                     return Localization.Extra("mpCrewHelp", "Crew commands: /crew create TAG Name, invite <pilot>, join TAG, leave, kick <pilot>, " +
-                                                            "promote / demote <pilot>, leader <pilot>, disband, info [TAG], list; /c <text> talks to your crew.");
+                                                            "promote / demote <pilot>, leader <pilot>, disband, info [TAG], list; deposit N, withdraw N; " +
+                                                            "claim, unclaim, home, claims [TAG] (docked at the station); /c <text> talks to your crew.");
             }
         }
 
@@ -245,6 +295,8 @@ namespace GoF2Remake.Multiplayer
             TellCrew(crew, string.Format(Localization.Extra("mpCrewDisbanded", "The crew [{0}] {1} was disbanded."), crew.tag, crew.name));
             var members = new List<string>(crew.members);
             list.crews.Remove(crew);
+            list.claims.RemoveAll(c => c.crew == crew.id);   // its territory is free again (the bank goes with it)
+            PublishClaims();
             Save();
             foreach (var m in members) RefreshTags(m);
             Debug.Log($"Server: crew [{crew.tag}] {crew.name} disbanded.");
@@ -271,7 +323,10 @@ namespace GoF2Remake.Multiplayer
             if (crew.officers.Count > 0) sb.Append(", officers ").Append(string.Join(", ", crew.officers.ConvertAll(NameOf)));
             var online = crew.members.FindAll(m => NetProfiles.IsOnline(m));
             sb.Append(online.Count > 0 ? ". Online: " + string.Join(", ", online.ConvertAll(NameOf)) : ". Nobody online");
-            sb.Append($". Bank {crew.bank:N0}.");
+            sb.Append($". Bank {crew.bank:N0}");
+            var claims = list.claims.FindAll(c => c.crew == crew.id);
+            if (claims.Count > 0) sb.Append(". Territory: ").Append(string.Join(", ", claims.ConvertAll(c => StationName(c.station) + (c.station == crew.home ? " (home)" : ""))));
+            sb.Append('.');
             return sb.ToString();
         }
 
@@ -289,7 +344,13 @@ namespace GoF2Remake.Multiplayer
             crew.members.Remove(account);
             crew.officers.Remove(account);
             invites.Remove(account);
-            if (crew.members.Count == 0) { list.crews.Remove(crew); Debug.Log($"Server: crew [{crew.tag}] {crew.name} ended (no members)."); }
+            if (crew.members.Count == 0)
+            {
+                list.crews.Remove(crew);
+                list.claims.RemoveAll(c => c.crew == crew.id);
+                PublishClaims();
+                Debug.Log($"Server: crew [{crew.tag}] {crew.name} ended (no members).");
+            }
             else
             {
                 if (crew.leader == account)
@@ -310,6 +371,212 @@ namespace GoF2Remake.Multiplayer
             var crew = Of(account);
             if (crew != null) Remove(crew, account);
         }
+
+        // ---- the bank ---------------------------------------------------------------------------------------
+
+        static bool TryAmount(string arg, out int amount) => int.TryParse(arg.Replace(",", "").Replace(".", "").Replace(" ", ""), out amount) && amount > 0;
+
+        static string Deposit(ulong client, string me, string arg)
+        {
+            var crew = Of(me);
+            if (crew == null) return Localization.Extra("mpCrewNone", "You aren't in a crew.");
+            if (!TryAmount(arg, out int amount)) return "/crew deposit N";
+            if (!NetProfiles.Controls(client)) return Localization.Extra("mpCrewController", "Do that on the device that controls your profile.");
+            int token = nextCharge++;
+            charges[token] = (me, crew.id, amount, Time.realtimeSinceStartup + ChargeSeconds);
+            NetState.Instance?.Charge(client, token, amount);
+            return "";
+        }
+
+        /// <summary>NetState.ChargedRpc: the player's game paid a deposit (or couldn't: not enough credits).</summary>
+        public static void OnCharged(ulong client, int token, bool paid)
+        {
+            if (!charges.TryGetValue(token, out var c) || c.account != NetProfiles.AccountOf(client)) return;
+            charges.Remove(token);
+            var crew = list?.crews.Find(x => x.id == c.crew);
+            if (!paid) { NetState.Instance?.Notify(client, Localization.Extra("mpCrewNoCredits", "You don't have that many credits.")); return; }
+            NetProfiles.AdjustWorth(c.account, -c.amount);
+            if (crew == null) { Grant(client, c.account, c.amount); return; }   // the crew went meanwhile: back to the player
+            crew.bank += c.amount;
+            Save();
+            TellCrew(crew, string.Format(Localization.Extra("mpCrewDeposited", "{0} put {1:N0} credits into the bank ({2:N0})."), NameOf(c.account), c.amount, crew.bank));
+        }
+
+        static string Withdraw(ulong client, string me, string arg)
+        {
+            var crew = Of(me);
+            if (crew == null || !IsOfficer(crew, me)) return Localization.Extra("mpCrewNotOfficer", "Only a crew's leader and officers can do that.");
+            if (!TryAmount(arg, out int amount)) return "/crew withdraw N";
+            if (!NetProfiles.Controls(client)) return Localization.Extra("mpCrewController", "Do that on the device that controls your profile.");
+            if (crew.bank < amount) return string.Format(Localization.Extra("mpCrewBankShort", "The bank has {0:N0} credits."), crew.bank);
+            crew.bank -= amount;
+            Save();
+            Grant(client, me, amount);
+            TellCrew(crew, string.Format(Localization.Extra("mpCrewWithdrew", "{0} took {1:N0} credits from the bank ({2:N0})."), NameOf(me), amount, crew.bank));
+            return "";
+        }
+
+        /// <summary>Credits to the player's game; their profile's worth moves with it (the upload check).</summary>
+        static void Grant(ulong client, string account, int amount)
+        {
+            NetProfiles.AdjustWorth(account, amount);
+            NetState.Instance?.Grant(client, amount);
+        }
+
+        // ---- territory --------------------------------------------------------------------------------------
+
+        static string StationName(int station)
+        {
+            var st = NetGame.Db.Stations.Find(s => s.index == station);
+            return st != null ? st.name : $"station {station}";
+        }
+
+        static Claim ClaimAt(int station) => list?.claims.Find(c => c.station == station);
+
+        /// <summary>The player's station while docked there (-1 = not docked).</summary>
+        static int DockedAt(ulong client)
+        {
+            var p = NetSquad.Find(client);
+            return p != null && p.InHangar ? p.Station : -1;
+        }
+
+        static string ClaimHere(ulong client, string me)
+        {
+            var crew = Of(me);
+            if (crew == null || !IsOfficer(crew, me)) return Localization.Extra("mpCrewNotOfficer", "Only a crew's leader and officers can do that.");
+            int station = DockedAt(client);
+            var st = NetGame.Db.Stations.Find(s => s.index == station);
+            if (st == null) return Localization.Extra("mpCrewDockFirst", "Dock at the station first.");
+            if (station == KaamoStation || st.system == LomaSystem) return Localization.Extra("mpCrewNotClaimable", "This station can't be claimed.");
+            var held = ClaimAt(station);
+            if (held != null)
+            {
+                var owner = list.crews.Find(c => c.id == held.crew);
+                return held.crew == crew.id ? Localization.Extra("mpCrewOwnClaim", "Your crew holds this station already.")
+                                            : string.Format(Localization.Extra("mpCrewClaimedBy", "[{0}] {1} holds this station."), owner?.tag, owner?.name);
+            }
+            int count = list.claims.FindAll(c => c.crew == crew.id).Count;
+            if (count >= MaxClaims) return string.Format(Localization.Extra("mpCrewMaxClaims", "A crew holds at most {0} stations."), MaxClaims);
+            if (crew.bank < ClaimCost)
+                return string.Format(Localization.Extra("mpCrewClaimCost", "A claim costs {0:N0} credits from the bank (it has {1:N0}): /crew deposit N."), ClaimCost, crew.bank);
+            crew.bank -= ClaimCost;
+            string now = DateTime.UtcNow.ToString("o");
+            list.claims.Add(new Claim { station = station, crew = crew.id, claimed = now, lastDock = now });
+            if (crew.home < 0 || ClaimAt(crew.home)?.crew != crew.id) crew.home = station;
+            Save();
+            PublishClaims();
+            RefreshHomes(crew);
+            Debug.Log($"Server: [{crew.tag}] claimed {st.name}.");
+            NetState.Instance?.Announce(string.Format(Localization.Extra("mpCrewClaimedNews", "[{0}] {1} claimed {2}."), crew.tag, crew.name, st.name));
+            return "";
+        }
+
+        static string Unclaim(ulong client, string me)
+        {
+            var crew = Of(me);
+            if (crew == null || !IsOfficer(crew, me)) return Localization.Extra("mpCrewNotOfficer", "Only a crew's leader and officers can do that.");
+            var held = ClaimAt(DockedAt(client));
+            if (held == null || held.crew != crew.id) return Localization.Extra("mpCrewNotYours", "Dock at one of your crew's stations first.");
+            list.claims.Remove(held);
+            if (crew.home == held.station) crew.home = list.claims.Find(c => c.crew == crew.id)?.station ?? -1;
+            Save();
+            PublishClaims();
+            RefreshHomes(crew);
+            TellCrew(crew, string.Format(Localization.Extra("mpCrewUnclaimed", "Your crew gave up {0}."), StationName(held.station)));
+            return "";
+        }
+
+        static string SetHome(ulong client, string me)
+        {
+            var crew = Of(me);
+            if (crew == null || !IsOfficer(crew, me)) return Localization.Extra("mpCrewNotOfficer", "Only a crew's leader and officers can do that.");
+            var held = ClaimAt(DockedAt(client));
+            if (held == null || held.crew != crew.id) return Localization.Extra("mpCrewNotYours", "Dock at one of your crew's stations first.");
+            crew.home = held.station;
+            Save();
+            RefreshHomes(crew);
+            TellCrew(crew, string.Format(Localization.Extra("mpCrewHome", "{0} is your crew's home now."), StationName(held.station)));
+            return "";
+        }
+
+        static double DaysSince(string utc) =>
+            DateTime.TryParse(utc, null, System.Globalization.DateTimeStyles.RoundtripKind, out var t) ? (DateTime.UtcNow - t.ToUniversalTime()).TotalDays : 0;
+
+        static string ClaimsText(Crew crew)
+        {
+            if (crew == null) return Localization.Extra("mpCrewNone", "You aren't in a crew.");
+            var claims = list.claims.FindAll(c => c.crew == crew.id);
+            if (claims.Count == 0) return string.Format(Localization.Extra("mpCrewNoClaims", "[{0}] holds no stations."), crew.tag);
+            var sb = new StringBuilder($"[{crew.tag}] {crew.name}:");
+            foreach (var c in claims)
+                sb.Append($"\n{StationName(c.station)}{(c.station == crew.home ? " (home)" : "")}: lapses in {Math.Max(0, LapseDays - DaysSince(c.lastDock)):0.#} days without a member docking");
+            return sb.ToString();
+        }
+
+        /// <summary>A profile's crew home station, -1 = none (NetProfiles: where a member's game starts).</summary>
+        public static int HomeOf(string account)
+        {
+            var crew = Of(account);
+            return crew != null && ClaimAt(crew.home)?.crew == crew.id ? crew.home : -1;
+        }
+
+        static void RefreshHomes(Crew crew)
+        {
+            foreach (var m in crew.members)
+                foreach (ulong c in NetProfiles.ClientsOf(m)) NetSquad.Find(c)?.SetCrewHome(HomeOf(m));
+        }
+
+        /// <summary>Every claim to the players (NetState.Claims): "station|TAG|Name" per line.</summary>
+        static void PublishClaims()
+        {
+            if (list == null || NetState.Instance == null) return;
+            var sb = new StringBuilder();
+            foreach (var c in list.claims)
+            {
+                var crew = list.crews.Find(x => x.id == c.crew);
+                if (crew != null) sb.Append(c.station).Append('|').Append(crew.tag).Append('|').Append(crew.name.Replace("|", " ")).Append('\n');
+            }
+            NetState.Instance.SetClaims(sb.ToString());
+        }
+
+        /// <summary>NetState: spawned on the server (the claims go out once it exists).</summary>
+        public static void OnStateSpawned() => PublishClaims();
+
+        /// <summary>NetState.Update (server): members docked at a claim keep it; claims nobody kept lapse; old deposits drop.</summary>
+        public static void Tick()
+        {
+            if (list == null) return;
+            if (charges.Count > 0)
+                foreach (var key in new List<int>(charges.Keys)) if (charges[key].until < Time.realtimeSinceStartup) charges.Remove(key);
+            if ((claimTimer -= Time.unscaledDeltaTime) > 0f) return;
+            claimTimer = ClaimTickSeconds;
+            if (list.claims.Count == 0) return;
+            bool changed = false;
+            string now = DateTime.UtcNow.ToString("o");
+            foreach (var p in NetPlayer.All)
+            {
+                if (p == null || !p.IsSpawned || !p.InHangar) continue;
+                var held = ClaimAt(p.Station);
+                var crew = held != null ? OfClient(p.OwnerClientId) : null;
+                if (crew != null && crew.id == held.crew) { held.lastDock = now; changed = true; }
+            }
+            foreach (var c in new List<Claim>(list.claims))
+            {
+                if (DaysSince(c.lastDock) < LapseDays) continue;
+                list.claims.Remove(c);
+                var crew = list.crews.Find(x => x.id == c.crew);
+                if (crew != null)
+                {
+                    if (crew.home == c.station) crew.home = list.claims.Find(x => x.crew == crew.id)?.station ?? -1;
+                    TellCrew(crew, string.Format(Localization.Extra("mpCrewLapsed", "Nobody of your crew docked at {0} for {1} days: the claim lapsed."), StationName(c.station), LapseDays));
+                    RefreshHomes(crew);
+                }
+                Debug.Log($"Server: the claim on {StationName(c.station)} lapsed.");
+                changed = true;
+            }
+            if (changed) { Save(); PublishClaims(); }
+        }
+
 
         // ---- the server console -----------------------------------------------------------------------------
 

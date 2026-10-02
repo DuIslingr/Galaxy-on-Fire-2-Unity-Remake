@@ -187,6 +187,9 @@ namespace GoF2Remake.UI
             root.Q<Label>("stationTitle").text = st == null ? "" :
                 (st.index == 101 ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101
             root.Q<Label>("systemName").text = st == null ? "" : $"{st.systemName} {T(137)}";
+            // Multiplayer: the crew holding this station (NetCrews).
+            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetCrewsClient.OwnerText(st.index);
+            if (holder.Length > 0) root.Q<Label>("systemName").text += $"  ·  {holder}";
             root.Q<Label>("techLevel").text = st == null ? "" : $"{T(133)}: {st.techLevel}";
             int race = level != null ? level.Layout.raceId : -1;
             var raceLabel = root.Q<Label>("raceName");

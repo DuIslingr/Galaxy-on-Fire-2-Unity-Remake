@@ -163,6 +163,19 @@ namespace GoF2Remake.Multiplayer
             return result;
         }
 
+        /// <summary>The player's device controls its profile (a signed-in controller, not a guest or an observer).</summary>
+        internal static bool Controls(ulong client) => logins.TryGetValue(client, out var l) && l.account != null && l.controller;
+
+        /// <summary>Credits the server moved in or out of a profile (the crew bank): its recorded worth moves too, so the
+        /// next upload is measured against what the game should have now.</summary>
+        internal static void AdjustWorth(string id, long delta)
+        {
+            var a = index?.accounts.Find(x => x.id == id);
+            if (a == null) return;
+            a.worth += delta;
+            SaveIndex();
+        }
+
         internal static bool IsOnline(string id)
         {
             foreach (var l in logins.Values) if (l.account != null && l.account.id == id) return true;
@@ -303,7 +316,8 @@ namespace GoF2Remake.Multiplayer
             if (login.account != null)
                 try { if (File.Exists(ProfilePath(login.account.id))) json = File.ReadAllText(ProfilePath(login.account.id)); }
                 catch (Exception e) { Debug.LogError($"NetProfiles: profile {login.account.id} unreadable: {e.Message}"); }
-            NetState.Instance?.SendProfile(login.client, newToken, login.controller, login.account == null, json);
+            int home = login.account != null ? NetCrews.HomeOf(login.account.id) : -1;   // a crew member starts at its home
+            NetState.Instance?.SendProfile(login.client, newToken, login.controller, login.account == null, json, home);
         }
 
         // ---- uploads ----------------------------------------------------------------------------------------
