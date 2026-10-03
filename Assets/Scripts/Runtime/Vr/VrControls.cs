@@ -53,8 +53,14 @@ namespace GoF2Remake.Vr
             stickGrip = stickTop.GetComponent<MeshRenderer>();
             // The speed handle: a slot along the left console and the handle riding in it.
             Part(PrimitiveType.Cube, "Throttle slot", (HandleFrom + HandleTo) * 0.5f - new Vector3(0f, 0.02f, 0f), new Vector3(0.03f, 0.012f, 0.32f), frame, parts);
-            handle = Part(PrimitiveType.Cube, "Throttle handle", HandleFrom, new Vector3(0.07f, 0.05f, 0.035f), handleMaterial, parts);
-            handleKnob = handle.GetComponent<MeshRenderer>();
+            // The lever: a short shaft rising out of the slot with a crosswise grip on top; 'handle' rides along the slot.
+            handle = new GameObject("Throttle lever").transform;
+            handle.SetParent(parts, false);
+            handle.localPosition = HandleFrom;
+            Part(PrimitiveType.Cylinder, "Throttle shaft", new Vector3(0f, 0.045f, 0f), new Vector3(0.016f, 0.045f, 0.016f), frame, handle);
+            var grip = Part(PrimitiveType.Capsule, "Throttle grip", new Vector3(0f, 0.095f, 0f), new Vector3(0.035f, 0.05f, 0.035f), handleMaterial, handle);
+            grip.localRotation = Quaternion.Euler(0f, 0f, 90f);   // lying across, for the left hand
+            handleKnob = grip.GetComponent<MeshRenderer>();
         }
 
         static Transform Part(PrimitiveType type, string name, Vector3 position, Vector3 scale, Material material, Transform parent)
@@ -114,7 +120,7 @@ namespace GoF2Remake.Vr
             if (canGrab)
             {
                 var leftLocal = transform.InverseTransformPoint(rig.LeftHand.position);
-                if (left && !leftWas && Vector3.Distance(leftLocal, handle.localPosition) < GrabReach) handleHeld2 = true;
+                if (left && !leftWas && Vector3.Distance(leftLocal, handle.localPosition + Vector3.up * 0.095f) < GrabReach) handleHeld2 = true;
                 if (!left) handleHeld2 = false;
                 if (handleHeld2)
                 {

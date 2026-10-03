@@ -1060,7 +1060,7 @@ Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF
   a modelled one replaces it. The flight HUD is split by region of its texture (`VrPanels.Crop` / `TextureOf`, panel pixels
   at 1920 x 1080): the canopy HUD shows only the middle (x 326..1594, y 0..1026: crosshair, markers, lock plate, messages,
   menus; `.hud-vr` centres the autopilot menu), the displays the corners (status bars + recharge icons left, cargo readout
-  right, the secondary plate centre, the control hints on the left console). The laser works in flight only while
+  right, the secondary plate centre; the control hints aren't shown in the cockpit). The laser works in flight only while
   `Navigation.InputHalted` (a menu, conversation or map; else the trigger fires). `VrRig.DebugLook` fixes the simulation's
   look for tests.
 - **Station** (`StationLevel.VrCamera`, `VrStation`): standing, still (no drift, sway or intro). The hangar: on the floor
@@ -1071,7 +1071,7 @@ Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF
   `StationLevel.VisitorPicked` -> `LoungePanel.OpenChat`), and with a headset the grip on the ship grabs it: pulling the
   hand right / left turns it (4 rad per metre along the head's right), letting go flings it (`FlingShip`).
 - **Stick, throttle, radar** (`VrControls`, `VrRadar`, in the cockpit): a small side-stick on the right console and a speed
-  handle in a slot on the left console, always there: not held they show the ship's inputs (the stick tilts with
+  lever (a shaft with a crosswise grip) in a slot on the left console, always there: not held they show the ship's inputs (the stick tilts with
   `ShipController.SteerInput`, the handle sits at the throttle). Options > Controls "VR flight: grab the stick and throttle"
   (`Settings.VrGrabControls`, VR only, off by default: the controllers alone as a gamepad): grabbed with that hand's grip
   within 12 cm, the stick follows the hand's travel (6 cm = full; forward = nose down, right = yaw right; `VrControls.Steer`
@@ -1080,7 +1080,7 @@ Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF
   the front panel: top-down, forward up, ships within 3 km (square-root scaled, the rest on the rim) red / green / yellow by
   `hostileToPlayer` / `friendToPlayer`, only with a scanner (`CombatRadar.HasScanner`), the station cyan, the player white,
   a dot above bigger / below smaller. In VR the HUD's radar ellipse and its off-screen dots / boxes / gate icons are hidden
-  (they reached onto the displays; the scope has them), the hints display's cut-out ends left of the ellipse (x 300).
+  (they reached onto the displays; the scope has them).
 
 ## Recovered facts already implemented
 

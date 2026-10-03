@@ -5,8 +5,8 @@
 // The flight HUD is split: its middle (the crosshair, the markers, the lock plate, the messages, the menus) stays on the
 // canopy HUD 2 m ahead, which spans the scene camera's view (VrRig) so the markers sit on what they mark, cropped to that
 // middle; its corners go onto the cockpit's displays, the same texture cut out (VrPanels.Crop): the shield / hull / armor
-// bars and the recharge icons (left), the cargo readout (right), the selected secondary (centre), the control hints
-// (the left console).
+// bars and the recharge icons (left), the cargo readout (right), the selected secondary (centre). The control hints aren't
+// shown in the cockpit; the left console has the speed handle (VrControls).
 
 using GoF2Remake.Flight;
 using GoF2Remake.UI;
@@ -24,7 +24,6 @@ namespace GoF2Remake.Vr
         static readonly Rect StatusRegion = new Rect(0f, 0f, 430f, 215f);
         static readonly Rect ReadoutRegion = new Rect(1490f, 0f, 430f, 145f);
         static readonly Rect SecondaryRegion = new Rect(730f, 1035f, 460f, 45f);
-        static readonly Rect HintsRegion = new Rect(0f, 285f, 300f, 795f);   // left of the radar ellipse's hit arc (x 303)
         static readonly Rect CanopyRegion = new Rect(326f, 0f, 1268f, 1026f);
 
         VrRig rig;
@@ -138,9 +137,6 @@ namespace GoF2Remake.Vr
             radar.position = front.TransformPoint(new Vector3(0f, 0.045f / front.localScale.y, -0.5f - 0.003f / front.localScale.z));
             radar.rotation = front.rotation;
             radar.gameObject.AddComponent<VrRadar>().Init();
-            // A slab on the left console, its -z face turned up and in toward the pilot.
-            var consoleFace = Box("Left console face", new Vector3(-0.56f, -0.42f, 0.22f), new Vector3(0.24f, 0.46f, 0.02f), new Vector3(65f, -18f, 0f), frame).transform;
-            Display(consoleFace, new Vector2(0f, 0f), 0.16f, HintsRegion);
             _ = left;
         }
 
