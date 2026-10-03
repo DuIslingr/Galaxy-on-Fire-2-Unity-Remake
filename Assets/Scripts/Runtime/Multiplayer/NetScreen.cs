@@ -1,5 +1,6 @@
 // NetScreen.cs
-// Remake multiplayer: what the server shows on a player's screen besides the chat (NetAdmin's /title and /timer): a big
+// Remake multiplayer: what the server shows on a player's screen besides the chat (NetAdmin's /title, /timer and /dialog;
+// the dialogues go to the scene's own dialogue window, DialogueView.Latest, one after another): a big
 // title with an optional subtitle in the upper middle (fades in 0.3 s, holds, fades out 0.6 s), and a countdown with its
 // label at the top centre under the HUD message (m:ss, the last 10 s in amber; it stays at 0:00 for 2 s). Its own panel
 // (like FpsCounter: the star map's panel settings, sorted over the HUDs and menus), kept across scenes, so docking or
@@ -7,6 +8,7 @@
 
 using GoF2Remake.Data;
 using GoF2Remake.UI;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -26,9 +28,17 @@ namespace GoF2Remake.Multiplayer
         float titleStart, titleEnd = -1f, timerEnd = -1f;
         string titleText = "", subtitleText = "", timerText = "";
         bool pending;
+        static readonly Queue<List<DialogueView.Page>> dialogs = new Queue<List<DialogueView.Page>>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => instance = null;
+        static void ResetStatics() { instance = null; dialogs.Clear(); }
+
+        /// <summary>A conversation from the server: shown in this scene's dialogue window once nothing else is open there.</summary>
+        public static void QueueDialog(List<DialogueView.Page> pages)
+        {
+            if (pages == null || pages.Count == 0 || Get() == null) return;
+            if (dialogs.Count < 10) dialogs.Enqueue(pages);
+        }
 
         static NetScreen Get()
         {
@@ -142,6 +152,9 @@ namespace GoF2Remake.Multiplayer
         {
             if (title == null) return;
             if (!NetGame.Active && (titleEnd >= 0f || timerEnd >= 0f)) { titleEnd = timerEnd = -1f; pending = true; }
+            if (!NetGame.Active) dialogs.Clear();
+            var view = DialogueView.Latest;
+            if (dialogs.Count > 0 && view != null && view.Usable && !view.IsOpen && !StarMap.IsOpen) view.Show(dialogs.Dequeue(), null);
             float now = Time.unscaledTime;
             // The title: fade in, hold, fade out.
             bool titleOn = titleEnd >= 0f && now < titleEnd + FadeOut;

@@ -25,8 +25,15 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class DialogueView
     {
+        /// <summary>The newest dialogue window (the flight HUD's or the station menu's): multiplayer's /dialog shows there.</summary>
+        public static DialogueView Latest;
+
+        /// <summary>It is on screen (its panel lives: a scene change leaves the old one behind).</summary>
+        public bool Usable => root != null && root.panel != null;
+
         public struct Page
         {
             public int speaker;
@@ -91,6 +98,7 @@ namespace GoF2Remake.UI
         {
             root = container.Q("dialogueRoot");
             if (root == null) { Debug.LogError("DialogueView: no dialogueRoot (Dialogue.uxml instance) in the UI"); return; }
+            Latest = this;
             voice = voiceSource;
             portrait = root.Q("dialoguePortrait");
             speaker = root.Q<Label>("dialogueSpeaker");

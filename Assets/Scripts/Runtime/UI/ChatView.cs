@@ -84,7 +84,7 @@ namespace GoF2Remake.UI
             channel = new Button(ToggleChannel);
             channel.AddToClassList("chat-channel");
             row.Add(channel);
-            field = new TextField { maxLength = NetChat.MaxLength };
+            field = new TextField { maxLength = NetChat.MaxCommandLength };   // a chat line is cut to MaxLength when sent
             field.AddToClassList("chat-field");
             field.RegisterCallback<KeyDownEvent>(OnKey, TrickleDown.TrickleDown);
             field.RegisterValueChangedCallback(e =>

@@ -22,7 +22,7 @@ namespace GoF2Remake.World
         /// <summary>Ship 'ship' of 'race' 400 m ahead of the player (hostile / by the standings / friendly / neutral), or at
         /// 'at' (a Unity position in this orbit, multiplayer's /spawn ... at x y z); 'count' of them side by side, 60 m apart;
         /// the result text.</summary>
-        public static string SpawnShip(SpaceLevel level, int race, int ship, Behaviour behaviour, int count = 1, Vector3? at = null)
+        public static string SpawnShip(SpaceLevel level, int race, int ship, Behaviour behaviour, int count = 1, Vector3? at = null, int eventTag = 0)
         {
             if (level == null || level.Traffic == null || level.Player == null) return Localization.Extra("debugNoFlight", "Only in flight.");
             var p = level.Player.transform;
@@ -41,6 +41,7 @@ namespace GoF2Remake.World
                     alwaysEnemy = behaviour == Behaviour.Hostile,
                     alwaysFriend = behaviour == Behaviour.Friendly,
                     alwaysNeutral = behaviour == Behaviour.Neutral,
+                    eventTag = eventTag,
                 };
                 if (level.Traffic.SpawnShip(spec) != null) made++;
             }

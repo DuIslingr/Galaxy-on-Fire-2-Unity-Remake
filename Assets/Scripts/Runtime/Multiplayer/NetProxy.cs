@@ -67,6 +67,8 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> missionShip = new NetworkVariable<bool>(false, Read, Owner);   // a freelance mission's (NpcShip.MissionShip)
         readonly NetworkVariable<int> roleFlags = new NetworkVariable<int>(0, Read, Owner);    // its mission role (FreelanceOrbit.RoleFlags)
         readonly NetworkVariable<int> specHull = new NetworkVariable<int>(-1, Read, Owner);    // its max hull (a takeover keeps it)
+        readonly NetworkVariable<int> eventFlags = new NetworkVariable<int>(0, Read, Owner);   // an event's batch tag << 1 | spawned as an enemy (NetEvents)
+        readonly NetworkVariable<ulong> killer = new NetworkVariable<ulong>(ulong.MaxValue, Read, Owner);   // the player who destroyed it (NetEvents' kills)
         readonly NetworkVariable<ulong> creator = new NetworkVariable<ulong>(ulong.MaxValue);  // server-written at spawn: whose ship
 
         readonly NetSmoothing smoothing = new NetSmoothing();
@@ -95,6 +97,13 @@ namespace GoF2Remake.Multiplayer
         public bool IsMissionShip => missionShip.Value;
         /// <summary>A player's hired wingman (their game's NPC).</summary>
         public bool IsWingman => (NpcGroup)specGroup.Value == NpcGroup.Wingman;
+        /// <summary>The event batch that spawned it (NetEvents), 0 = none.</summary>
+        public int EventTag => eventFlags.Value >> 1;
+        /// <summary>The client id of the player who destroyed it (their own game's player, or another player's hit), MaxValue =
+        /// none yet or an NPC.</summary>
+        public ulong Killer => killer.Value;
+        /// <summary>Flying (not dying, dead or gone): an event's living ship.</summary>
+        public bool FlyingNow => life.Value == Flying;
         public int RoleFlags => roleFlags.Value;
         public bool IsFlying => life.Value == Flying;
         public string Label => label.Value.ToString();
@@ -112,6 +121,7 @@ namespace GoF2Remake.Multiplayer
                 position = gamePosition, hitpoints = specHull.Value,
                 alwaysEnemy = (f & FreelanceOrbit.RoleAlwaysEnemy) != 0, alwaysFriend = (f & FreelanceOrbit.RoleAlwaysFriend) != 0,
                 stationary = (f & FreelanceOrbit.RoleStationary) != 0, noLoot = (f & FreelanceOrbit.RoleNoLoot) != 0,
+                eventTag = eventFlags.Value >> 1,   // an event's ship stays one (NetEvents counts it on)
             };
         }
         public Vector3 WorldPosition => position.Value;
@@ -188,6 +198,7 @@ namespace GoF2Remake.Multiplayer
                 specFreighter.Value = spec.freighter;
                 missionShip.Value = ship.MissionShip;
                 specHull.Value = ship.Hp != null ? ship.Hp.maxHull : -1;
+                eventFlags.Value = spec.eventTag << 1 | (spec.alwaysEnemy ? 1 : 0);
                 SendState();
                 sender = new NetShotSender(ShotUpRpc, BlastUpRpc, () => ship != null ? ship.CurrentTarget : null);
                 sender.Hook(ship.Guns);
@@ -306,6 +317,7 @@ namespace GoF2Remake.Multiplayer
             ship.Target.killedByRemote = true;   // a freelance mission counts another player's kill as its player's
             ship.Target.Damage(amount, true, hitVector);
             if (ship.Target.Alive) ship.Target.killedByRemote = false;
+            if (!ship.Target.Alive) killer.Value = shooter;
             if (!ship.Target.Alive && NetOrbit.Current != null) KillCreditUpRpc(shooter, ship.Race, NetOrbit.Current.SystemRace, hostile);
         }
 
@@ -385,6 +397,9 @@ namespace GoF2Remake.Multiplayer
                 aggressors.Value = string.Join(",", ship.aggressors);
             }
             byte l = ship.Current == NpcShip.State.Dying ? Dying : ship.Current == NpcShip.State.Dead || ship.Gone ? Dead : Flying;
+            // Destroyed by this game's own player (not an NPC's shot, not another player's: DamageRpc wrote that one).
+            if (l != Flying && life.Value == Flying && killer.Value == ulong.MaxValue && !t.killedByNpc && !t.killedByRemote && !t.Alive)
+                killer.Value = OwnerClientId;
             if (life.Value != l) life.Value = l;
             int role = ship.MissionShip && NetOrbit.Current != null ? NetOrbit.Current.MissionRole(ship) : 0;
             if (roleFlags.Value != role) roleFlags.Value = role;

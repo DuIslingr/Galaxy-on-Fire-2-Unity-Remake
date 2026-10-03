@@ -27,6 +27,13 @@
 //   /title [players] <text> [| subtitle] [for <seconds>]   a big title on their screens (NetScreen; 4 s by default;
 //                                           "clear" takes it away)
 //   /timer [players] <seconds | m:ss> [label]   a countdown at the top of their screens ("stop" takes it away)
+//   /dialog [players] <speaker> : <text> [| [speaker :] next page ...]   the game's dialogue window, page by page, each
+//                                           page with its speaker (a page without one keeps the last): a story speaker by name
+//                                           (Keith, Gunant...; "Keith as Bob" renames it), a race and a name ("vossk K'ekki",
+//                                           "terran female Jane": a random face of that race, the same for everyone and for
+//                                           every page of it), or "player": the reader, Keith's face with their pilot name;
+//                                           %player% in a text or name is the reader's name; shown after any dialogue already
+//                                           open (NetScreen's queue)
 // The players: names, client ids or selectors (@a @s @p @r, NetCommands.FindTargets); in the chat the issuer when none is
 // named. Every order is logged on the server and the target gets a notice naming the admin.
 
@@ -42,7 +49,7 @@ namespace GoF2Remake.Multiplayer
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetAdmin
     {
-        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13 }
+        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14 }
 
         const int MaxGive = 1000, MaxSpawn = 10, MaxCredits = 999999999;
 
@@ -195,7 +202,9 @@ namespace GoF2Remake.Multiplayer
                 race = Shop.ShipMakerRace(ship);
                 if (race < 0 || (race > 3 && race != Standing.Pirate && race != Standing.Void && race != Standing.Specter)) race = Standing.Pirate;
             }
-            Send(t, Order.Spawn, ship, race, count << 8 | (int)behaviour, by, $"spawned {count} x ship {ship} (race {race}, {behaviour}{(at != null ? ", at " + at : "")})", at);
+            int tag = NetEvents.NewBatch(count, behaviour == DebugSpawner.Behaviour.Hostile);   // an event's spawn: counted (enemies / ships)
+            Send(t, Order.Spawn, ship, race, tag << 12 | count << 8 | (int)behaviour, by,
+                $"spawned {count} x ship {ship} (race {race}, {behaviour}{(at != null ? ", at " + at : "")}{(tag != 0 ? ", event batch " + tag : "")})", at);
             return string.Format(X("mpAdmSpawned", "Spawning {0} x {1} at {2}."), count, DebugSpawner.ShipName(NetGame.Db, ship), t.DisplayName);
         });
 
@@ -258,6 +267,77 @@ namespace GoF2Remake.Multiplayer
             Send(t, Order.Title, seconds * 1000, 0, 0, by, $"title \"{main}\" / \"{sub}\" for {seconds} s", main + "\n" + sub);
             return "";
         });
+
+        public static string Dialog(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            // Pages: "speaker : text", a page without a speaker keeps the last one. Each line sent: id, name, face, text
+            // (separated by \u001f): id >= 0 a story speaker (a name = renamed), -1 a generated face, -2 the reader.
+            var lines = new List<string>();
+            var faces = new Dictionary<string, string>();
+            string current = null;
+            foreach (var part in rest.Split('|'))
+            {
+                string page = part.Trim();
+                int colon = page.IndexOf(':');
+                if (colon > 0)
+                {
+                    string spec = ResolveSpeaker(page.Substring(0, colon).Trim(), faces);
+                    if (spec != null) { current = spec; page = page.Substring(colon + 1).Trim(); }
+                    else if (current == null) return string.Format(X("mpAdmNoSpeaker", "No speaker \"{0}\": a story character's name (Keith as Bob renames), a race and a name (vossk K'ekki), or player."), page.Substring(0, colon).Trim());
+                }
+                if (current == null) return Usage("dialog");
+                page = NetChat.Clean(page).Replace("\u001f", " ");
+                if (page.Length > 0 && lines.Count < 20) lines.Add(current + "\u001f" + page);
+            }
+            if (lines.Count == 0) return Usage("dialog");
+            Send(t, Order.Dialog, 0, 0, 0, by, $"dialog, {lines.Count} page(s)", string.Join("\n", lines));
+            return "";
+        });
+
+        /// <summary>A page's speaker as "id\u001fname\u001fface" (NetAdmin.Apply), null = not a speaker: "player", a story
+        /// speaker ("Keith", "Keith as Bob"), or "&lt;race&gt; [female | male] [name]" with a face made once per dialog.</summary>
+        static string ResolveSpeaker(string who, Dictionary<string, string> faces)
+        {
+            if (who.Length == 0) return null;
+            if (who.Equals("player", StringComparison.OrdinalIgnoreCase) || who.Equals("you", StringComparison.OrdinalIgnoreCase))
+                return "-2\u001f%player%\u001f";
+            string rename = "";
+            int asAt = who.IndexOf(" as ", StringComparison.OrdinalIgnoreCase);
+            string baseName = asAt > 0 ? who.Substring(0, asAt).Trim() : who;
+            if (asAt > 0) rename = NetChat.Clean(who.Substring(asAt + 4).Trim()).Replace("\u001f", " ");
+            int speaker = FindSpeaker(baseName);
+            if (speaker >= 0) return speaker + "\u001f" + rename + "\u001f";
+            if (faces.TryGetValue(who.ToLowerInvariant(), out string known)) return known;
+            var words = new List<string>(who.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            int race = RaceWord(words[0]);
+            if (race < 0) return null;
+            words.RemoveAt(0);
+            bool male = true;
+            if (words.Count > 0 && (words[0].Equals("female", StringComparison.OrdinalIgnoreCase) || words[0].Equals("male", StringComparison.OrdinalIgnoreCase)))
+            {
+                male = words[0].Equals("male", StringComparison.OrdinalIgnoreCase);
+                words.RemoveAt(0);
+            }
+            string name = NetChat.Clean(string.Join(" ", words)).Replace("\u001f", " ");
+            if (name.Length == 0) name = Localization.Get(406 + race);
+            string spec = "-1\u001f" + name + "\u001f" + string.Join(",", AgentGenerator.CreatePortrait(male, race));
+            faces[who.ToLowerInvariant()] = spec;
+            return spec;
+        }
+
+        /// <summary>A story speaker by name (whole, or the one it starts, any case); -1 = none.</summary>
+        static int FindSpeaker(string name)
+        {
+            int found = -1, matches = 0;
+            for (int i = 0; i < StoryTable.SpeakerCount; i++)
+            {
+                string n = StoryTable.SpeakerName(i);
+                if (string.IsNullOrEmpty(n)) continue;
+                if (string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) return i;
+                if (n.StartsWith(name, StringComparison.OrdinalIgnoreCase) || n.Split(' ')[0].Equals(name, StringComparison.OrdinalIgnoreCase)) { found = i; matches++; }
+            }
+            return matches == 1 ? found : -1;
+        }
 
         public static string Timer(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
         {
@@ -511,7 +591,8 @@ namespace GoF2Remake.Multiplayer
                     break;
                 case Order.Spawn:
                     if (level == null || NetGame.Db.Ship(a) == null) return;
-                    Notice(by, DebugSpawner.SpawnShip(level, b, a, (DebugSpawner.Behaviour)Mathf.Clamp(c & 0xff, 0, 3), Mathf.Clamp(c >> 8, 1, MaxSpawn), ParseAt(text)));
+                    Notice(by, DebugSpawner.SpawnShip(level, b, a, (DebugSpawner.Behaviour)Mathf.Clamp(c & 0xff, 0, 3), Mathf.Clamp((c >> 8) & 0xf, 1, MaxSpawn),
+                        ParseAt(text), c >> 12));
                     break;
                 case Order.Ship:
                     if (a < 0) { Notice(by, PlayerHull.Restore(level, docked)); break; }
@@ -545,6 +626,30 @@ namespace GoF2Remake.Multiplayer
                 case Order.Timer:
                     NetScreen.ShowTimer(a, text);
                     break;
+                case Order.Dialog:
+                {
+                    string me = NetPlayer.Local != null ? NetPlayer.Local.DisplayName : "";
+                    var list = new List<UI.DialogueView.Page>();
+                    foreach (var line in (text ?? "").Split('\n'))
+                    {
+                        var f = line.Split('\u001f');
+                        if (f.Length < 4 || !int.TryParse(f[0], out int id) || list.Count >= 20) continue;
+                        string name = f[1].Replace("%player%", me), body = f[3].Replace("%player%", me);
+                        int[] face = null;
+                        if (id == -1 && f[2].Length > 0)
+                        {
+                            var parts = f[2].Split(',');
+                            face = new int[parts.Length];
+                            for (int k = 0; k < parts.Length; k++) int.TryParse(parts[k], out face[k]);
+                        }
+                        // The reader: Keith's face (the player character, speaker 0) with their pilot name.
+                        if (id == -2) id = 0;
+                        if (id >= StoryTable.SpeakerCount) continue;
+                        list.Add(new UI.DialogueView.Page { speaker = id, text = body, agentName = name.Length > 0 ? name : null, agentPortrait = face });
+                    }
+                    NetScreen.QueueDialog(list);
+                    break;
+                }
                 case Order.Object:
                     if (level == null || string.IsNullOrEmpty(text)) return;
                     int sep = text.IndexOf('@');

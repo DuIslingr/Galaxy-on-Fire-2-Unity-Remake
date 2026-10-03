@@ -72,6 +72,7 @@ namespace GoF2Remake.Multiplayer
             if (IsServer)
             {
                 NetAdmin.Reset();
+                NetEvents.Reset();
                 seed.Value = pendingSeed;
                 dedicated.Value = pendingDedicated;
                 debugAllowed.Value = NetGame.HostAllowsDebug;
@@ -891,6 +892,7 @@ namespace GoF2Remake.Multiplayer
                 dirtyStock.Clear();
             }
             UpdatePendingSpawns();   // their senders' places arrived
+            NetEvents.Tick();   // a running event script
             if ((sweepTimer -= Time.unscaledDeltaTime) > 0f) return;
             sweepTimer = SweepSeconds;
             NetRateLimit.Tick();   // the clients that kept flooding go

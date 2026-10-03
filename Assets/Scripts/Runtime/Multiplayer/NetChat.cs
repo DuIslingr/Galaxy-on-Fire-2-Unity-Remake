@@ -18,6 +18,8 @@ namespace GoF2Remake.Multiplayer
     public static class NetChat
     {
         public const int MaxLength = 160, Keep = 60;
+        /// <summary>A typed command may be longer (a /dialog conversation; the server's cap NetGuard.MaxCommandArgs).</summary>
+        public const int MaxCommandLength = 500;
 
         public enum Channel { Local, Global, Notice, Whisper }
 
@@ -97,9 +99,15 @@ namespace GoF2Remake.Multiplayer
             return text.Length > MaxLength ? text.Substring(0, MaxLength) : text;
         }
 
+        static string CleanCommand(string text)
+        {
+            text = (text ?? "").Replace("<", "").Replace(">", "").Replace('\n', ' ').Trim();
+            return text.Length > MaxCommandLength ? text.Substring(0, MaxCommandLength) : text;
+        }
+
         public static void Send(string text)
         {
-            text = Clean(text);
+            text = (text ?? "").TrimStart().StartsWith("/") ? CleanCommand(text) : Clean(text);
             if (NetCommands.TryRun(text)) return;   // "/help", "/netstats": this game's own, never sent
             if (text.Length == 0 || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
             NetState.Instance.SendChatRpc(text, Sending == Channel.Global);

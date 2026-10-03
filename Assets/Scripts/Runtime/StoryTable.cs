@@ -127,6 +127,9 @@ namespace GoF2Remake.Data
         /// <summary>Speaker name (text 1597 + speaker).</summary>
         public static string SpeakerName(int speaker) => Localization.Get(1597 + speaker);
 
+        /// <summary>The number of story speakers (multiplayer's /dialog looks them up by name).</summary>
+        public static int SpeakerCount => Data.speakers.Count;
+
         /// <summary>Speakers 19 (Void) and 56 (Corny) talk in the alien font (Globals::fontAlien) in the dialogue window
         /// and the radio (dialogue_cutscenes.md 1.2 / 2.3).</summary>
         public static bool UsesAlienFont(int speaker) => speaker == 19 || speaker == 56;

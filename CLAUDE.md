@@ -819,7 +819,26 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   never the host's player, only the host / console mutes an admin), `/title [players] <text> [| subtitle] [for <seconds>]`
   ("clear") and `/timer [players] <seconds | m:ss> [label]` ("stop"): `NetScreen`, its own panel over every scene, a big
   title with a subtitle in the upper middle (4 s by default, fades) and a countdown at the top centre (the last 10 s amber),
-  cleared when the session ends. Admins: the host's own player, or players the host or the
+  cleared when the session ends. `/dialog [players] <speaker> : <text> [| [speaker :] page ...]`: the scene's dialogue window
+  (`DialogueView.Latest`, queued behind one already open, `NetScreen.QueueDialog`), each page with its speaker (a page
+  without one keeps the last): a story speaker by name (`StoryTable.SpeakerName`; "Keith as Bob" renames it), a race and a
+  name ("vossk K'ekki", "terran female Jane": one `AgentGenerator.CreatePortrait` face made on the server, the same for
+  everyone and every page), or "player" (the reader: speaker 0's face with their pilot name); %player% in a text or name is
+  the reader's name. Typed commands may be 500 characters (`NetChat.MaxCommandLength`; chat lines stay 160).
+- **Events** (`NetEvents`, `/event <name | stop | list>`, admins and the console): text scripts run on the server, one at a
+  time: `<name>.txt` in an Events folder (`persistentDataPath/Events`, or next to the game / dedicated server's executable),
+  else a built-in one (`Resources/GoF2Events`: waves, survival). Lines: any server command without the "/" (run as the
+  server, "{expression}" parts filled in), `wait <s>`, `wait until <condition> [timeout <s>]`, `if` / `else` / `end`,
+  `while` / `end`, `repeat <n> [as <var>]` / `end`, `set <var> = <expression>`, `stop`, `score <kills | time>`, `winner
+  [kills | time]` ("The winner is X with N kills" / "..., alive for m:ss" on screen and in the chat). Expressions: numbers,
+  variables, arithmetic, comparisons, and / or / not, random(a, b), min, max, floor, and the state: `enemies` / `ships` (the
+  event's living spawned ships: each spawn order gets a batch tag, `SpawnSpec.eventTag`, written on its NetProxy with the
+  enemy bit, `NetProxy.EventTag`; a just-sent batch counts until its ships show, 6 s at most), `players`, `inspace`,
+  `docked`, `dead`, `time`. Results: an event ship's killer (`NetProxy.Killer`: its own game's player, or the shooter of a
+  remote hit) counts once per ship (by owner and traffic index: proxies are remade and Netcode reuses ids); time alive in
+  space from the first spawn until a player's first death. Once it has spawned ships, an event ends by itself when no player
+  has been alive in space in its ships' orbits for 3 s ("Event over" with the winner; `set autostop = 0` turns it off).
+  Ticked by `NetState.Update` on the server; reset per session. Admins: the host's own player, or players the host or the
   dedicated server's console made admins (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't
   verified). Players are named whole, any case (the longest name the arguments start with), by a client id as the first
   word, or by a Minecraft-style selector (`NetCommands.FindTargets`): @a everyone, @s yourself, @p the nearest other player
