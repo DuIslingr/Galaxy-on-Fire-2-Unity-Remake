@@ -1,7 +1,7 @@
 // DedicatedServerLaunchers.cs
 // After a Windows or Linux player build: a launcher for the dedicated server (DedicatedServer) next to the game, so a
 // server starts with a double click (Windows) or one command (Linux) instead of typing the command line. The name,
-// password, player limit and whether the Debug menu is allowed are at the top of the file to edit (a rebuild keeps the values already there); it starts
+// password, player limit, whether the Debug menu is allowed and the web admin (WebAdmin) are at the top of the file to edit (a rebuild keeps the values already there); it starts
 // the game headless (-batchmode -nographics), online through Unity Relay and listed in the server browser. Windows: the server opens its own console window (the
 // log and the commands); Linux: the terminal it runs in.
 
@@ -38,7 +38,7 @@ namespace GoF2Remake.EditorTools
             }
         }
 
-        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS", "ALLOWDEBUG" };
+        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS", "ALLOWDEBUG", "WEBPORT", "WEBBIND" };
 
         /// <summary>A launcher already there keeps its edited settings (the name, password, player limit, Debug menu) in the new
         /// one; a setting it doesn't have yet (an older launcher) gets the default.</summary>
@@ -68,13 +68,20 @@ namespace GoF2Remake.EditorTools
             "set MAXPLAYERS=16\n" +
             "rem 1 = the players may use the Debug menu (cheats, items, spawns); 0 = off.\n" +
             "set ALLOWDEBUG=0\n" +
+            "rem The web admin (a browser page: players, bans, settings, console, log): a port such as 8080, empty = off.\n" +
+            "rem Log in with the admin token from the console, or a code from /web in the game.\n" +
+            "set WEBPORT=\n" +
+            "rem 127.0.0.1 = this PC only; 0.0.0.0 = the network too (plain HTTP: not on the open internet).\n" +
+            "set WEBBIND=127.0.0.1\n" +
             "rem Add -unlisted to keep it out of the server browser (players then join with the join code from the console).\n" +
             // Only a set password goes on the command line (Unity drops an empty "" argument).
             "set PASSWORDARG=\n" +
             "if defined PASSWORD set PASSWORDARG=-password \"%PASSWORD%\"\n" +
             "set DEBUGARG=\n" +
             "if \"%ALLOWDEBUG%\"==\"1\" set DEBUGARG=-allowdebug\n" +
-            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS% %DEBUGARG%\n";
+            "set WEBARG=\n" +
+            "if defined WEBPORT set WEBARG=-webport %WEBPORT% -webbind %WEBBIND%\n" +
+            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS% %DEBUGARG% %WEBARG%\n";
 
         static string LinuxLauncher(string exe) =>
             "#!/bin/sh\n" +
@@ -85,11 +92,14 @@ namespace GoF2Remake.EditorTools
             "PASSWORD=\"\"        # empty = none\n" +
             "MAXPLAYERS=16      # at most 100\n" +
             "ALLOWDEBUG=0       # 1 = the players may use the Debug menu (cheats, items, spawns)\n" +
+            "WEBPORT=           # the web admin's port (e.g. 8080), empty = off; log in with the admin token or /web's code\n" +
+            "WEBBIND=127.0.0.1  # 127.0.0.1 = this machine only; 0.0.0.0 = the network (plain HTTP: put a TLS proxy in front)\n" +
             "# Add -unlisted to keep it out of the server browser (players then join with the join code shown here).\n" +
             "cd \"$(dirname \"$0\")\"\n" +
             $"chmod +x ./{exe} 2>/dev/null\n" +
             "if [ -n \"$PASSWORD\" ]; then set -- -password \"$PASSWORD\"; else set --; fi\n" +
             "if [ \"$ALLOWDEBUG\" = \"1\" ]; then set -- \"$@\" -allowdebug; fi\n" +
+            "if [ -n \"$WEBPORT\" ]; then set -- \"$@\" -webport \"$WEBPORT\" -webbind \"$WEBBIND\"; fi\n" +
             $"exec ./{exe} -batchmode -nographics -server -relay -name \"$NAME\" \"$@\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
     }
 }

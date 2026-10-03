@@ -18,6 +18,9 @@
 //   -claimdays N     the days without a member docking before a claim lapses (default 14) (NetCrews)
 //   -siegecost N     a siege on another crew's station, from the bank (default 250 000); -toll N what another crew's
 //                    pilot pays to be spared by a held station's defence (default 10 000, 0 = no toll)
+//   -web [port]      the web admin (WebAdmin: a browser page for the console, players, bans, settings, the log), default
+//                    port 8080 (-webport N too); -webbind ADDRESS what it listens on (default 127.0.0.1, this machine only;
+//                    0.0.0.0 every adapter: then put it behind a TLS reverse proxy)
 // Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
 // MainMenu / MenuBackground call ShutOff as they wake (the scene's objects off before the rest wake: no menu, music or
@@ -183,6 +186,7 @@ namespace GoF2Remake.Multiplayer
                                             : $"Player profiles: uploads are checked (at most {NetProfiles.EarnPerMinute:N0} worth gained per minute: -maxearn).");
             else Log("Player profiles are off (-noprofiles): nothing is saved.");
             Log(NetGame.FreePvp ? "Players may fight anywhere (-freepvp)." : "Players fight only in arena matches (/duel, /ffa; -freepvp allows it anywhere).");
+            WebAdmin.StartFromCommandLine();
             Log("Type \"help\" for the commands.");
         }
 
@@ -257,6 +261,7 @@ namespace GoF2Remake.Multiplayer
                 string answer = Run(line);
                 if (!string.IsNullOrEmpty(answer)) Answer(answer);
             }
+            WebAdmin.Pump();   // the web admin's requests, on the main thread
             if ((trackTimer -= Time.unscaledDeltaTime) <= 0f)
             {
                 trackTimer = TrackSeconds;
@@ -266,7 +271,7 @@ namespace GoF2Remake.Multiplayer
 
         void OnDestroy()
         {
-            if (instance == this) instance = null;
+            if (instance == this) { instance = null; WebAdmin.Stop(); }
             if (consoleLog) Application.logMessageReceivedThreaded -= Mirror;
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
@@ -312,7 +317,7 @@ namespace GoF2Remake.Multiplayer
             return n == 1 ? "1 player online." : $"{n} players online.";
         }
 
-        static string Where(NetPlayer p)
+        internal static string Where(NetPlayer p)
         {
             if (NetArena.IsArenaOrbit(p.Station) && p.InSpace) return $"in arena match {p.Station - NetArena.OrbitBase}";
             string station = StationName(p.Station);
@@ -409,6 +414,12 @@ namespace GoF2Remake.Multiplayer
                     return NetCommands.RunOnServer(cmd, rest, null) ?? $"Unknown command \"{cmd}\". Type \"help\".";
             }
         }
+
+        /// <summary>How long the server has run ("2h 05m").</summary>
+        internal static string Uptime => Duration(Time.unscaledTime - startedAt);
+
+        /// <summary>The local port (-port).</summary>
+        internal static ushort Port => port;
 
         /// <summary>The admins' window: the server in one line.</summary>
         public static string StatusText() =>

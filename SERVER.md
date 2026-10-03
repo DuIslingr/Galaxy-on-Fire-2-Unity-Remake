@@ -15,6 +15,7 @@ arenas, distress calls and their chat commands), see the [README](README.md).
 - [Settings you can change while the server runs](#settings-you-can-change-while-the-server-runs)
 - [Becoming the server's admin](#becoming-the-servers-admin)
 - [The server console](#the-server-console)
+- [The web admin](#the-web-admin)
 - [Files the server keeps](#files-the-server-keeps)
 - [Running it as a Linux service](#running-it-as-a-linux-service)
 - [When the connection drops](#when-the-connection-drops)
@@ -86,6 +87,8 @@ Players on a different game version are turned away with a message saying which 
 | `-port N` | The port for local network play (default 7777, UDP). |
 | `-fps N` | The server's frame rate (default 60). |
 | `-noconsole` | Windows: no console window of its own. |
+| `-web [port]` | Start the [web admin](#the-web-admin) (default port 8080; `-webport N` does the same). |
+| `-webbind ADDRESS` | What the web admin listens on (default `127.0.0.1`, this machine only; `0.0.0.0` for every network adapter). |
 | **Player profiles** | |
 | `-noprofiles` | Don't keep player profiles. Every session starts fresh, and crews, moderation and the leaderboard are off. |
 | `-maxprofiles N` | How many profiles the server keeps (default 50). Devices past the limit play as guests (nothing saved). |
@@ -177,6 +180,32 @@ server can use the console; players use the chat commands above.
 | `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
 
 A server running as a Linux service has no console you can type into. Use the in-game Admin tab instead.
+
+## The web admin
+
+A browser page for running the server: its status, the players online (kick, bans, roles), the bans, the profiles, the
+crews, the settings, the console and the live log. Start the server with `-web` (port 8080) or `-web 9000`. In the
+launchers, set `WEBPORT`.
+
+Open `http://127.0.0.1:8080/` on the server machine. There are two ways to log in, the same as becoming an admin in the
+game:
+
+- **Admin token**: the token `/claimadmin` takes (see [Becoming the server's admin](#becoming-the-servers-admin)). It
+  gives everything the console can do, including `stop`.
+- **Login code**: an op, admin or master types `/web` in the game's chat and gets a one-time code. It works once, within
+  5 minutes. The page then has that pilot's role: ops get kicks and temporary bans, admins also bans, roles, settings and
+  the log, masters also admins and profile deletion. If the pilot is demoted or banned, their session ends.
+
+A login lasts 12 hours (2 hours without using the page). Restarting the server logs everyone out. After 5 wrong tries,
+an address waits 5 minutes. Every command run from the page is logged with who ran it and from which address.
+
+> **Warning:** the web admin is plain HTTP. By default it only listens on the server machine itself. To use it from
+> another computer, use an SSH tunnel (`ssh -L 8080:127.0.0.1:8080 user@server`), or put it behind a reverse proxy with
+> TLS (nginx, Caddy) and start it with `-webbind 127.0.0.1`. Don't open its port to the internet: the admin token would
+> cross the network unencrypted.
+
+The page loads its styles (Tailwind CSS) from `cdn.jsdelivr.net`. Without internet access in the browser it still
+works, but looks plain.
 
 ## Files the server keeps
 

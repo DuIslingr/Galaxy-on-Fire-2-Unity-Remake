@@ -1101,6 +1101,17 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   it): Tab completes and cycles the command names (Shift+Tab back, nothing typed: all), Up / Down the history, Esc clears;
   piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Verified: the Windows build headless with the Editor as the client (join, chat, say,
   kick, stop; over Relay, listed, with a password; the console window, no menu).
+- **Web admin** (`WebAdmin`, a dedicated server started with `-web [port]` / `-webport N`, `-webbind ADDRESS` default
+  127.0.0.1; the launchers' `WEBPORT` / `WEBBIND`; the operator guide in `SERVER.md`): a minimal HTTP/1.1 server on a
+  `TcpListener` (works in the IL2CPP player) serving one page (`Resources/GoF2Server/WebAdmin.html`: Tailwind CSS 4's
+  browser build from jsDelivr, the script inline with a per-response CSP nonce, every server text set as textContent) and
+  a JSON API (`/api/login`, `/logout`, `/state`, `/command`, `/log`) run on the main thread (`WebAdmin.Pump` from
+  `DedicatedServer.Update`). Login like in the game: the admin token (`NetModeration.TokenMatches`, also without profiles:
+  `EnsureToken`) = the console (`DedicatedServer.Run`), or a one-time code from `/web` (ops and up, 5 minutes, bound to the
+  profile) = that profile's role, re-checked every request (`NetModeration.WebCommand`: moderation commands only). Session
+  cookie HttpOnly / SameSite=Strict (12 h, 2 h idle, memory only), POSTs need the `X-GoF2-Admin` header, 5 wrong logins per
+  address then 5 minutes' wait, every command logged. The state reuses `NetPanel.State` (`NetModeration.FillFor`,
+  `NetCrews.FillPanel`); the log tab is a 1000-line ring of `logMessageReceivedThreaded`. Not tested in a build yet.
 - **Player profiles** (`NetProfiles` server, `NetProfileClient` player; a dedicated server only, on unless `-noprofiles`;
   `-maxprofiles N` default 50, `-maxearn N` default 1 000 000, `-profiledir`): `<persistentDataPath>/ServerProfiles`
   holds `accounts.json` (the server's id, each account's devices with their token hashes, name, squad key, worth) and

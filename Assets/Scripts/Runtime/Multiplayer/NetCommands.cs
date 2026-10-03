@@ -33,7 +33,8 @@
 //   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back (with profiles: the
 //                              master admin, NetModeration, kept on the profile)
 // A dedicated server with player profiles adds (their own handlers answer them): moderation by the profiles' roles
-// (NetModeration: /tempban /ban /unban /bans /op /deop /staff /say /disband /deleteprofile /settings /set /claimadmin),
+// (NetModeration: /tempban /ban /unban /bans /op /deop /staff /say /disband /deleteprofile /settings /set /claimadmin;
+// /web a login code for the web admin, WebAdmin),
 // the profiles (NetProfiles: /link /control /profile) and crews (NetCrews: /crew, /c); everywhere the arena matches
 // (NetArena: /duel /accept /decline /ffa /arena /top) and, this game's own, the squad's distress calls (NetDistress:
 // /sos, /assist <player>).
@@ -201,6 +202,9 @@ namespace GoF2Remake.Multiplayer
                 run = (a, by) => Moderate("settings", a, by), description = () => X("mpCmdSettings", "admins: the server's settings") },
             new Command { name = "set", usage = "<key> <value>", arg = Arg.Text, available = () => LocalRole >= NetModeration.Admin, allowed = Anyone,
                 run = (a, by) => Moderate("set", a, by), description = () => X("mpCmdSet", "admins: changes a server setting (saved)") },
+            new Command { name = "web", available = () => ProfilesOn && LocalIsOp, allowed = Anyone, needsPlayer = true,
+                run = (a, by) => WebAdmin.CodeFor(by),
+                description = () => X("mpCmdWeb", "ops: a one-time login code for the server's web admin") },
             new Command { name = "claimadmin", usage = "<token>", arg = Arg.Text, available = () => ProfilesOn, allowed = Anyone,
                 run = (a, by) => Moderate("claimadmin", a, by), needsPlayer = true,
                 description = () => X("mpCmdClaimAdmin", "makes you the server's master admin with its admin token") },

@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>GoF2 Server Admin</title>
+<!-- Served by WebAdmin.cs ({{NONCE}} is replaced per response; the Content-Security-Policy allows only these scripts). -->
+<script nonce="{{NONCE}}" src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<style type="text/tailwindcss">
+  @theme {
+    --color-ink: #070a10;
+    --color-panel: #0e131c;
+    --color-panel-2: #141b27;
+    --color-line: rgb(255 255 255 / 0.08);
+    --color-accent: #f5a524;
+    --color-accent-2: #ff7a1a;
+    --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-mono: ui-monospace, "JetBrains Mono", "Cascadia Code", Consolas, monospace;
+  }
+  @layer components {
+    .card { @apply rounded-2xl border border-line bg-panel/80 p-4 shadow-xl shadow-black/30 backdrop-blur sm:p-5; }
+    .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-line bg-panel-2 px-3 py-1.5 text-sm font-medium text-slate-200 transition hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40; }
+    .btn-accent { @apply border-transparent bg-accent text-ink hover:bg-accent-2 hover:border-transparent; }
+    .btn-danger { @apply border-red-500/30 bg-red-500/10 text-red-300 hover:border-red-400/60 hover:bg-red-500/20; }
+    .btn-xs { @apply px-2 py-1 text-xs; }
+    .field { @apply w-full rounded-lg border border-line bg-ink/70 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-accent/60 focus:ring-2 focus:ring-accent/20; }
+    .pill { @apply inline-flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-xs font-medium; }
+    .tab { @apply whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-100; }
+    .tab-on { @apply bg-accent/15 text-accent hover:bg-accent/20 hover:text-accent; }
+    .th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-500; }
+    .td { @apply border-t border-line px-3 py-2 align-middle text-sm; }
+    .muted { @apply text-slate-500; }
+  }
+</style>
+<style>
+  /* Without the Tailwind build (no internet on the admin's machine) the page still reads: dark, plain. */
+  html, body { background: #070a10; color: #e2e8f0; font-family: system-ui, sans-serif; }
+  input, select, textarea, button { font: inherit; color: inherit; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body class="min-h-full bg-ink text-slate-200 antialiased">
+<div class="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(60rem_30rem_at_10%_-10%,rgb(245_165_36/0.10),transparent),radial-gradient(50rem_30rem_at_110%_10%,rgb(56_189_248/0.07),transparent)]"></div>
+
+<!-- Logging in -->
+<main id="login" class="flex min-h-screen items-center justify-center px-4" hidden>
+  <div class="card w-full max-w-md">
+    <div class="mb-5 flex items-center gap-3">
+      <div class="grid size-10 place-items-center rounded-xl bg-accent/15 text-accent">
+        <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2 3 7v6c0 5 3.8 8.4 9 9 5.2-.6 9-4 9-9V7l-9-5Z"/><path d="m9 12 2 2 4-4"/></svg>
+      </div>
+      <div>
+        <h1 class="text-lg font-semibold">Server admin</h1>
+        <p class="text-sm muted">Galaxy on Fire 2 Unity Remake</p>
+      </div>
+    </div>
+    <div class="mb-4 grid grid-cols-2 gap-1 rounded-xl border border-line bg-ink/60 p-1" role="tablist">
+      <button class="tab tab-on" data-login="token" type="button">Admin token</button>
+      <button class="tab" data-login="code" type="button">Login code</button>
+    </div>
+    <form id="loginForm" class="space-y-3">
+      <input id="loginInput" class="field font-mono" autocomplete="off" spellcheck="false" autofocus>
+      <p id="loginHelp" class="text-xs leading-relaxed muted"></p>
+      <p id="loginError" class="text-sm text-red-400" hidden></p>
+      <button class="btn btn-accent w-full py-2" type="submit">Log in</button>
+    </form>
+  </div>
+</main>
+
+<!-- The admin page -->
+<div id="app" class="mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6" hidden>
+  <header class="mb-4 flex flex-wrap items-center gap-3">
+    <div class="flex min-w-0 flex-1 items-center gap-3">
+      <div class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent/15 text-accent">
+        <svg viewBox="0 0 24 24" class="size-6" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+      </div>
+      <div class="min-w-0">
+        <h1 id="serverName" class="truncate text-lg font-semibold"></h1>
+        <div id="serverLine" class="flex flex-wrap items-center gap-1.5 text-xs muted"></div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span id="whoami" class="pill bg-panel-2"></span>
+      <button id="logout" class="btn btn-xs" type="button">Log out</button>
+    </div>
+  </header>
+
+  <nav id="tabs" class="mb-4 flex gap-1 overflow-x-auto rounded-xl border border-line bg-panel/60 p-1"></nav>
+
+  <section id="view" class="space-y-4"></section>
+</div>
+
+<!-- A form in a dialog (kick, bans) -->
+<dialog id="dialog" class="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-line bg-panel p-0 text-slate-200 shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm">
+  <form id="dialogForm" method="dialog" class="space-y-3 p-5">
+    <h2 id="dialogTitle" class="text-base font-semibold"></h2>
+    <p id="dialogText" class="text-sm muted"></p>
+    <div id="dialogFields" class="space-y-3"></div>
+    <div class="flex justify-end gap-2 pt-1">
+      <button value="cancel" class="btn" type="submit" formnovalidate>Cancel</button>
+      <button id="dialogOk" value="ok" class="btn btn-accent" type="submit">OK</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="pointer-events-none fixed bottom-4 right-4 z-50 flex w-[min(26rem,calc(100vw-2rem))] flex-col gap-2"></div>
+
+<script nonce="{{NONCE}}">
+"use strict";
+(() => {
+  // ---- helpers ------------------------------------------------------------------------------------------------
+  // Every text from the server (player names, reasons, log lines) goes in as textContent: never as HTML.
+  const $ = (id) => document.getElementById(id);
+  function h(tag, attrs, ...kids) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs || {})) {
+      if (v === null || v === undefined || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else if (k === "text") el.textContent = v;
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) if (kid !== null && kid !== undefined && kid !== false)
+      el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+    return el;
+  }
+  const ROLE = ["player", "op", "admin", "master", "console"];
+  const ROLE_CLASS = ["border-line text-slate-400", "border-sky-400/30 text-sky-300", "border-violet-400/30 text-violet-300", "border-accent/40 text-accent", "border-accent/40 text-accent"];
+  const roleBadge = (r) => r > 0 ? h("span", { class: `pill ${ROLE_CLASS[r]}`, text: ROLE[r] }) : null;
+  const fmt = (n) => Number(n).toLocaleString();
+
+  function toast(text, kind = "info") {
+    if (!text) return;
+    const color = kind === "error" ? "border-red-500/40" : kind === "ok" ? "border-emerald-500/40" : "border-line";
+    const el = h("div", { class: `pointer-events-auto whitespace-pre-wrap rounded-xl border ${color} bg-panel-2/95 px-4 py-3 text-sm shadow-xl shadow-black/40 backdrop-blur` , text });
+    $("toasts").append(el);
+    setTimeout(() => el.remove(), Math.min(12000, 3500 + text.length * 40));
+  }
+
+  async function api(path, body) {
+    const opts = { credentials: "same-origin", headers: {} };
+    if (body !== undefined) {
+      opts.method = "POST";
+      opts.headers["Content-Type"] = "application/json";
+      opts.headers["X-GoF2-Admin"] = "1";
+      opts.body = JSON.stringify(body);
+    }
+    let res;
+    try { res = await fetch(path, opts); }
+    catch { throw new Error("The server doesn't answer."); }
+    let data = {};
+    try { data = await res.json(); } catch { }
+    if (res.status === 401 && path !== "/api/login") { showLogin(); throw new Error("Logged out."); }
+    if (!res.ok) throw new Error(data.text || `${res.status} ${res.statusText}`);
+    return data;
+  }
+
+  // ---- logging in ----------------------------------------------------------------------------------------------
+  let loginMode = "token";
+  const LOGIN_HELP = {
+    token: "The admin token from the server's log (\"Server: admin token …\"), admin_token.txt in its data folder, or the console's token command. It gives the whole console.",
+    code: "Type /web in the game's chat (ops, admins and masters) for a one-time code. It works once, for 5 minutes, with your profile's role.",
+  };
+  function setLoginMode(mode) {
+    loginMode = mode;
+    for (const b of document.querySelectorAll("[data-login]")) b.classList.toggle("tab-on", b.dataset.login === mode);
+    $("loginInput").value = "";
+    $("loginInput").type = mode === "token" ? "password" : "text";
+    $("loginInput").placeholder = mode === "token" ? "Admin token" : "ABCD2345";
+    $("loginHelp").textContent = LOGIN_HELP[mode];
+    $("loginError").hidden = true;
+    $("loginInput").focus();
+  }
+  for (const b of document.querySelectorAll("[data-login]")) b.addEventListener("click", () => setLoginMode(b.dataset.login));
+  $("loginForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const value = $("loginInput").value.trim();
+    if (!value) return;
+    try {
+      await api("/api/login", loginMode === "token" ? { token: value } : { code: value });
+      $("loginInput").value = "";
+      start();
+    } catch (err) {
+      $("loginError").textContent = err.message;
+      $("loginError").hidden = false;
+    }
+  });
+  $("logout").addEventListener("click", async () => { try { await api("/api/logout", {}); } catch { } showLogin(); });
+
+  function showLogin() {
+    stopTimers();
+    state = null;
+    $("app").hidden = true;
+    $("login").hidden = false;
+    setLoginMode(loginMode);
+  }
+
+  // ---- state ---------------------------------------------------------------------------------------------------
+  let state = null;
+  let tab = sessionStorage.getItem("gof2tab") || "overview";
+  let stateTimer = 0, logTimer = 0;
+  const consoleLines = [];
+  const history = [];
+  let historyAt = -1;
+  let logLast = 0;
+  const logLines = [];
+  let logFilter = "all", logSearch = "", logFollow = true;
+  let profileFilter = "";
+
+  function stopTimers() { clearInterval(stateTimer); clearInterval(logTimer); stateTimer = logTimer = 0; }
+
+  async function start() {
+    $("login").hidden = true;
+    $("app").hidden = false;
+    await refresh();
+    stopTimers();
+    stateTimer = setInterval(() => { if (!document.hidden) refresh(); }, 3000);
+    logTimer = setInterval(() => { if (!document.hidden && state && state.role >= 2) pullLog(); }, 2000);
+    if (state && state.role >= 2) pullLog();
+  }
+
+  async function refresh() {
+    try { state = await api("/api/state"); }
+    catch (err) { if (state) setOffline(err.message); return; }
+    renderHeader();
+    renderTabs();
+    renderView(false);
+  }
+
+  function setOffline(text) {
+    $("serverLine").replaceChildren(h("span", { class: "pill border-red-500/40 text-red-300", text: text }));
+  }
+
+  async function run(line, quiet) {
+    try {
+      const r = await api("/api/command", { line });
+      consoleLines.push({ cmd: line, text: r.text || "(done)" });
+      if (!quiet) toast(r.text || "Done.", "ok");
+      await refresh();
+      return r.text;
+    } catch (err) { toast(err.message, "error"); return null; }
+  }
+
+  // Names a pilot for a command: "#id" with profiles (NetModeration), the client id without (NetCommands).
+  const pilotArg = (p) => state.profiles ? `#${p.client}` : `${p.client}`;
+
+  // ---- dialogs -------------------------------------------------------------------------------------------------
+  function ask({ title, text, fields = [], ok = "OK", danger = false }) {
+    return new Promise((resolve) => {
+      $("dialogTitle").textContent = title;
+      $("dialogText").textContent = text || "";
+      $("dialogText").hidden = !text;
+      const inputs = {};
+      $("dialogFields").replaceChildren(...fields.map((f) => {
+        const input = h("input", { class: "field", type: f.type || "text", placeholder: f.placeholder || "", min: f.min, max: f.max,
+                                   value: f.value ?? "", required: f.required, maxlength: f.maxlength || 140 });
+        inputs[f.key] = input;
+        return h("label", { class: "block space-y-1" }, h("span", { class: "text-xs font-medium muted", text: f.label }), input);
+      }));
+      $("dialogOk").textContent = ok;
+      $("dialogOk").className = danger ? "btn btn-danger" : "btn btn-accent";
+      const dlg = $("dialog");
+      dlg.onclose = () => {
+        if (dlg.returnValue !== "ok") return resolve(null);
+        const out = {};
+        for (const [k, i] of Object.entries(inputs)) out[k] = i.value.trim();
+        resolve(out);
+      };
+      dlg.returnValue = "";
+      dlg.showModal();
+      (Object.values(inputs)[0] || $("dialogOk")).focus();
+    });
+  }
+  const clean = (s) => (s || "").replace(/[\r\n]+/g, " ").trim();
+
+  async function kick(p) {
+    const fields = [{ key: "reason", label: "Reason (optional)", placeholder: "Shown to the pilot and everyone" }];
+    if (state.profiles) fields.unshift({ key: "minutes", label: "Minutes before they may rejoin", type: "number", min: 0, max: state.role >= 2 ? 525600 : 1440, value: 5 });
+    const a = await ask({ title: `Kick ${p.name}`, fields, ok: "Kick", danger: true });
+    if (a) run(state.profiles ? `kick ${pilotArg(p)} ${Number(a.minutes) || 0} ${clean(a.reason)}` : `kick ${pilotArg(p)} ${clean(a.reason)}`);
+  }
+  async function tempban(who, name) {
+    const a = await ask({ title: `Ban ${name} for a while`, text: "The ban holds their profile and every device it signed in from.",
+      fields: [{ key: "minutes", label: "Minutes", type: "number", min: 1, max: state.role >= 2 ? 5256000 : 1440, value: 60, required: true },
+               { key: "reason", label: "Reason (optional)" }], ok: "Ban", danger: true });
+    if (a && Number(a.minutes) > 0) run(`tempban ${who} ${Number(a.minutes)} ${clean(a.reason)}`);
+  }
+  async function ban(who, name) {
+    const a = await ask({ title: `Ban ${name} for good`, text: "Their profile and every device it signed in from. /unban lifts it.",
+      fields: [{ key: "reason", label: "Reason (optional)" }], ok: "Ban for good", danger: true });
+    if (a) run(`ban ${who} ${clean(a.reason)}`);
+  }
+  async function confirmRun(title, text, line, ok = "Do it") {
+    const a = await ask({ title, text, ok, danger: true });
+    if (a) run(line);
+  }
+
+  // ---- header and tabs -----------------------------------------------------------------------------------------
+  function renderHeader() {
+    const s = state;
+    $("serverName").textContent = s.serverName || "Galaxy on Fire 2 server";
+    const flag = (on, text, cls) => on ? h("span", { class: `pill ${cls}`, text }) : null;
+    $("serverLine").replaceChildren(
+      h("span", { class: `pill ${s.running ? "border-emerald-500/40 text-emerald-300" : "border-red-500/40 text-red-300"}` },
+        h("span", { class: `size-1.5 rounded-full ${s.running ? "bg-emerald-400" : "bg-red-400"}` }), s.running ? "Running" : "Offline"),
+      h("span", { text: `v${s.version}` }), "·", h("span", { text: `up ${s.uptime}` }), "·",
+      h("span", { text: `${s.online} / ${s.maxPlayers} players` }),
+      flag(s.password, "password", "border-line text-slate-300"),
+      flag(s.debug, "debug menu", "border-amber-500/40 text-amber-300"),
+      flag(s.freePvp, "free PvP", "border-red-500/40 text-red-300"),
+      flag(!s.profiles, "no profiles", "border-line text-slate-400"));
+    $("whoami").replaceChildren(h("span", { text: s.me }), roleBadge(s.role));
+  }
+
+  function tabsFor(s) {
+    const t = [["overview", "Overview"], ["players", `Players · ${s.players.length}`]];
+    if (s.profiles && s.role >= 1) t.push(["bans", `Bans · ${s.admin.bans.length}`]);
+    if (s.profiles && s.role >= 2) t.push(["profiles", "Profiles"]);
+    if (s.profiles) t.push(["crews", "Crews"]);
+    if (s.role >= 2) t.push(["settings", "Settings"]);
+    if (s.console) t.push(["console", "Console"]);
+    if (s.role >= 2) t.push(["log", "Log"]);
+    return t;
+  }
+
+  function renderTabs() {
+    const list = tabsFor(state);
+    if (!list.some(([k]) => k === tab)) tab = "overview";
+    $("tabs").replaceChildren(...list.map(([k, label]) =>
+      h("button", { class: `tab ${k === tab ? "tab-on" : ""}`, type: "button", text: label,
+                    onclick: () => { tab = k; sessionStorage.setItem("gof2tab", k); renderTabs(); renderView(true); } })));
+  }
+
+  // Re-rendering on every poll would throw away what is being typed: a tab with a focused field waits.
+  function renderView(force) {
+    const view = $("view");
+    const typing = view.contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
+    if (!force && typing && tab !== "log") return;
+    const fn = { overview, players, bans, profiles, crews, settings, console: consoleView, log: logView }[tab] || overview;
+    if (tab === "log" && !force && view.firstChild) { renderLogLines(); return; }
+    if (tab === "console" && !force && view.firstChild) { renderConsoleOut(); return; }
+    view.replaceChildren(...[].concat(fn()));
+  }
+
+  const card = (title, actions, ...body) =>
+    h("div", { class: "card" },
+      h("div", { class: "mb-3 flex flex-wrap items-center gap-2" }, h("h2", { class: "flex-1 text-sm font-semibold uppercase tracking-wider text-slate-400", text: title }), actions),
+      ...body);
+  const table = (heads, rows, empty) => rows.length === 0
+    ? h("p", { class: "py-6 text-center text-sm muted", text: empty })
+    : h("div", { class: "-mx-4 overflow-x-auto sm:-mx-5" },
+        h("table", { class: "w-full min-w-[40rem]" },
+          h("thead", {}, h("tr", {}, heads.map((x) => h("th", { class: "th first:pl-4 sm:first:pl-5", text: x })))),
+          h("tbody", {}, rows)));
+  const td = (...kids) => h("td", { class: "td first:pl-4 sm:first:pl-5" }, ...kids);
+  const actions = (...btns) => h("div", { class: "flex flex-wrap justify-end gap-1" }, ...btns);
+  const btn = (text, onclick, cls = "") => h("button", { class: `btn btn-xs ${cls}`, type: "button", text, onclick });
+
+  // ---- tabs ----------------------------------------------------------------------------------------------------
+  function stat(label, value, sub) {
+    return h("div", { class: "card" },
+      h("div", { class: "text-xs font-medium uppercase tracking-wider muted", text: label }),
+      h("div", { class: "mt-1 truncate font-mono text-2xl font-semibold text-slate-100", text: value }),
+      sub ? h("div", { class: "mt-1 truncate text-xs muted", text: sub }) : null);
+  }
+
+  function overview() {
+    const s = state, out = [];
+    const join = s.joinCode
+      ? h("button", { class: "mt-1 font-mono text-2xl font-semibold text-accent hover:underline", type: "button", text: s.joinCode, title: "Copy",
+                      onclick: () => navigator.clipboard?.writeText(s.joinCode).then(() => toast("Join code copied.", "ok")) })
+      : h("div", { class: "mt-1 font-mono text-2xl font-semibold text-slate-100", text: `:${s.port}` });
+    out.push(h("div", { class: "grid grid-cols-2 gap-4 lg:grid-cols-4" },
+      stat("Players", `${s.online} / ${s.maxPlayers}`, `${s.players.filter((p) => /docked/.test(p.where)).length} docked`),
+      stat("Uptime", s.uptime, `version ${s.version}`),
+      h("div", { class: "card" }, h("div", { class: "text-xs font-medium uppercase tracking-wider muted", text: s.joinCode ? "Join code" : "Port" }), join,
+        h("div", { class: "mt-1 text-xs muted", text: s.joinCode ? "Unity Relay" : "local network" })),
+      stat("Crews", s.profiles ? String(s.admin.crews.length) : "—", s.profiles ? "with player profiles" : "profiles are off")));
+
+    if (s.role >= 2) {
+      const input = h("input", { class: "field", placeholder: "An announcement for everyone", maxlength: 160 });
+      const send = () => { const t = clean(input.value); if (t) { run(`say ${t}`); input.value = ""; } };
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+      out.push(card("Announce", null, h("div", { class: "flex gap-2" }, input, h("button", { class: "btn btn-accent", type: "button", text: "Send", onclick: send }))));
+    }
+    const grid = h("div", { class: "grid gap-4 lg:grid-cols-2" });
+    if (s.profiles && s.admin.staff.length) grid.append(card("Staff", null,
+      h("ul", { class: "divide-y divide-line" }, s.admin.staff.map((m) => h("li", { class: "flex items-center gap-2 py-2 text-sm" },
+        h("span", { class: `size-2 rounded-full ${m.online ? "bg-emerald-400" : "bg-slate-600"}` }), h("span", { class: "flex-1", text: m.name }), roleBadge(m.role))))));
+    grid.append(card("Arenas", null, h("pre", { class: "whitespace-pre-wrap font-mono text-xs text-slate-300", text: s.arenas || "—" })));
+    if (s.profiles && s.admin.sieges) grid.append(card("Sieges", null, h("pre", { class: "whitespace-pre-wrap font-mono text-xs text-slate-300", text: s.admin.sieges })));
+    out.push(grid);
+    return out;
+  }
+
+  function players() {
+    const s = state, r = s.role;
+    const rows = s.players.map((p) => {
+      const can = r >= 4 || (s.profiles && r > p.role);
+      const b = [];
+      if (can && (r >= 1)) b.push(btn("Kick", () => kick(p), "btn-danger"));
+      if (can && s.profiles && r >= 1) b.push(btn("Temp ban", () => tempban(pilotArg(p), p.name), "btn-danger"));
+      if (can && s.profiles && r >= 2) b.push(btn("Ban", () => ban(pilotArg(p), p.name), "btn-danger"));
+      if (can && s.profiles && r >= 2 && p.role === 0) b.push(btn("Make op", () => run(`op ${pilotArg(p)}`)));
+      if (can && s.profiles && r >= 2 && p.role === 1) b.push(btn("Remove op", () => run(`deop ${pilotArg(p)}`)));
+      if (can && s.profiles && r >= 3 && p.role < 2) b.push(btn("Make admin", () => run(`admin ${pilotArg(p)}`)));
+      if (can && s.profiles && r >= 3 && p.role === 2) b.push(btn("Remove admin", () => run(`unadmin ${pilotArg(p)}`)));
+      return h("tr", { class: "hover:bg-white/[0.02]" },
+        td(h("span", { class: "font-mono text-xs muted", text: `#${p.client}` })),
+        td(h("div", { class: "flex items-center gap-2" },
+          p.tag ? h("span", { class: "font-mono text-xs text-accent", text: `[${p.tag}]` }) : null,
+          h("span", { class: "font-medium text-slate-100", text: p.name }), roleBadge(p.role),
+          p.admin && p.role < 2 ? h("span", { class: "pill border-violet-400/30 text-violet-300", text: "session admin" }) : null,
+          p.observer ? h("span", { class: "pill text-slate-400", text: "watching" }) : null)),
+        td(h("span", { class: "text-slate-300", text: p.where })),
+        td(h("span", { class: "text-slate-400", text: p.ship })),
+        td(h("span", { class: "font-mono text-xs muted", text: p.squad ? `#${p.squad}` : "—" })),
+        td(actions(...b)));
+    });
+    return card("Players online", null, table(["ID", "Pilot", "Where", "Ship", "Squad", ""], rows, "Nobody is online."));
+  }
+
+  function bans() {
+    const s = state;
+    const rows = s.admin.bans.map((b) => h("tr", {},
+      td(h("span", { class: "font-medium text-slate-100", text: b.name })),
+      td(h("span", { class: "font-mono text-xs muted", text: b.account || "guest" })),
+      td(h("span", { class: b.left === "for good" ? "text-red-300" : "text-amber-300", text: b.left })),
+      td(h("span", { class: "text-slate-400", text: b.by })),
+      td(h("span", { class: "text-slate-300", text: b.reason || "—" })),
+      td(actions(btn("Unban", () => run(`unban ${b.account || b.name}`))))));
+    return card("Bans", null, table(["Pilot", "Profile", "Left", "By", "Reason", ""], rows, "Nobody is banned."));
+  }
+
+  function profiles() {
+    const s = state, r = s.role;
+    const filter = h("input", { class: "field max-w-xs", placeholder: "Filter by name or id", value: profileFilter });
+    const body = h("div", {});
+    const draw = () => {
+      const f = profileFilter.toLowerCase();
+      const list = s.admin.profiles.filter((p) => !f || p.name.toLowerCase().includes(f) || p.id.toLowerCase().includes(f));
+      body.replaceChildren(table(["Pilot", "Profile", "Role", "Devices", "Last seen", ""], list.map((p) => {
+        const can = r > p.role;
+        const b = [];
+        if (can && !p.banned) b.push(btn("Temp ban", () => tempban(p.id, p.name), "btn-danger"));
+        if (can && !p.banned) b.push(btn("Ban", () => ban(p.id, p.name), "btn-danger"));
+        if (p.banned) b.push(btn("Unban", () => run(`unban ${p.id}`)));
+        if (can && p.role === 0) b.push(btn("Make op", () => run(`op ${p.id}`)));
+        if (can && p.role === 1) b.push(btn("Remove op", () => run(`deop ${p.id}`)));
+        if (r >= 3 && can && p.role < 2) b.push(btn("Make admin", () => run(`admin ${p.id}`)));
+        if (r >= 3 && can && p.role === 2) b.push(btn("Remove admin", () => run(`unadmin ${p.id}`)));
+        if (r >= 3 && can && !p.online) b.push(btn("Delete", () => confirmRun(`Delete ${p.name}'s profile?`,
+          "Their credits, ships and cargo on this server are gone (the file is kept as .bak).", `deleteprofile ${p.id}`, "Delete"), "btn-danger"));
+        return h("tr", {},
+          td(h("div", { class: "flex items-center gap-2" }, h("span", { class: `size-2 rounded-full ${p.online ? "bg-emerald-400" : "bg-slate-600"}` }),
+            h("span", { class: "font-medium text-slate-100", text: p.name || "—" }), p.banned ? h("span", { class: "pill border-red-500/40 text-red-300", text: "banned" }) : null)),
+          td(h("span", { class: "font-mono text-xs muted", text: p.id })),
+          td(roleBadge(p.role) || h("span", { class: "muted", text: "player" })),
+          td(h("span", { class: "font-mono text-xs", text: String(p.devices) })),
+          td(h("span", { class: "font-mono text-xs muted", text: p.lastSeen || "—" })),
+          td(actions(...b)));
+      }), "No profiles match."));
+    };
+    filter.addEventListener("input", () => { profileFilter = filter.value; draw(); });
+    draw();
+    return card(`Profiles · ${s.admin.profiles.length}`, filter, body);
+  }
+
+  function crews() {
+    const s = state;
+    const rows = s.admin.crews.map((c) => h("tr", {},
+      td(h("span", { class: "font-mono font-semibold text-accent", text: `[${c.tag}]` })),
+      td(h("span", { class: "text-slate-100", text: c.name })),
+      td(h("span", { class: "font-mono text-xs", text: String(c.members) })),
+      td(h("span", { class: "font-mono text-xs", text: String(c.claims) })),
+      td(s.role >= 2 ? actions(btn("Disband", () => confirmRun(`Disband [${c.tag}] ${c.name}?`,
+        "The crew ends, its stations are free again and its bank is lost.", `disband ${c.tag}`, "Disband"), "btn-danger")) : "")));
+    const out = [card("Crews", null, table(["Tag", "Name", "Members", "Stations", ""], rows, "No crews yet."))];
+    if (s.admin.sieges) out.push(card("Sieges", null, h("pre", { class: "whitespace-pre-wrap font-mono text-xs text-slate-300", text: s.admin.sieges })));
+    if (s.admin.claimCost !== undefined) out.push(card("Rules", null, h("div", { class: "grid grid-cols-2 gap-3 text-sm sm:grid-cols-4" },
+      [["Claim", fmt(s.admin.claimCost)], ["Siege", fmt(s.admin.siegeCost)], ["Stations per crew", String(s.admin.maxClaims)], ["Toll", fmt(s.admin.toll)]]
+        .map(([k, v]) => h("div", {}, h("div", { class: "text-xs muted", text: k }), h("div", { class: "font-mono", text: v }))))));
+    return out;
+  }
+
+  function settings() {
+    const rows = state.admin.settings.map((st) => {
+      let input;
+      if (st.kind === 1) {
+        input = h("select", { class: "field max-w-32" }, h("option", { value: "on", text: "on" }), h("option", { value: "off", text: "off" }));
+        input.value = st.value;
+      } else if (st.kind === 3) {
+        input = h("input", { class: "field", type: "password", autocomplete: "new-password", placeholder: st.passwordSet ? "Set (type a new one, or - for none)" : "None (type one to set it)" });
+      } else {
+        input = h("input", { class: "field font-mono", type: st.kind === 0 ? "number" : "text", value: st.value });
+      }
+      const save = () => {
+        const v = clean(input.value);
+        if (!v) { toast("Enter a value first.", "error"); return; }
+        run(`set ${st.key} ${v}`).then(() => { if (st.kind === 3) input.value = ""; });
+      };
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") save(); });
+      return h("div", { class: "grid items-center gap-2 border-t border-line py-3 first:border-t-0 sm:grid-cols-[1fr_16rem_auto]" },
+        h("div", {}, h("div", { class: "text-sm text-slate-100", text: st.label }),
+          h("div", { class: "flex flex-wrap gap-x-2 text-xs muted" }, h("span", { class: "font-mono", text: st.key }),
+            st.note ? h("span", { text: `· ${st.note}` }) : null,
+            st.cli ? h("span", { class: "text-amber-300/80", text: "· set by the launcher's command line" }) : null)),
+        input, h("button", { class: "btn btn-accent", type: "button", text: "Save", onclick: save }));
+    });
+    return card("Server settings", h("span", { class: "text-xs muted", text: "Saved to server_settings.json; the command line wins at a start." }), h("div", {}, rows));
+  }
+
+  // ---- the console (the admin token only) ----------------------------------------------------------------------
+  let consoleOut = null;
+  function consoleView() {
+    consoleOut = h("div", { class: "h-[55vh] overflow-y-auto rounded-xl border border-line bg-ink/80 p-3 font-mono text-xs leading-relaxed" });
+    renderConsoleOut();
+    const input = h("input", { class: "field font-mono", placeholder: "help, status, list, kick #3 5 spam, set toll 5000 …", autocomplete: "off", spellcheck: "false" });
+    const send = async () => {
+      const line = input.value.trim();
+      if (!line) return;
+      input.value = "";
+      history.unshift(line); historyAt = -1;
+      if (/^(stop|quit|exit|shutdown)\b/i.test(line) && !(await ask({ title: "Stop the server?", text: "Every player is told and dropped; it doesn't start again by itself.", ok: "Stop", danger: true }))) return;
+      await run(line, true);
+      renderConsoleOut();
+      input.focus();
+    };
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") send();
+      else if (e.key === "ArrowUp" && historyAt + 1 < history.length) { input.value = history[++historyAt]; e.preventDefault(); }
+      else if (e.key === "ArrowDown") { historyAt = Math.max(-1, historyAt - 1); input.value = historyAt < 0 ? "" : history[historyAt]; e.preventDefault(); }
+    });
+    const quick = ["help", "status", "list", "profiles", "crews", "arenas", "bans", "staff", "settings"].map((c) =>
+      btn(c, async () => { await run(c, true); renderConsoleOut(); }));
+    const stopBtn = btn("Stop server", () => confirmRun("Stop the server?", "Every player is told and dropped; it doesn't start again by itself.", "stop", "Stop"), "btn-danger");
+    setTimeout(() => input.focus(), 0);
+    return card("Console", h("div", { class: "flex flex-wrap gap-1" }, ...quick, stopBtn), consoleOut,
+      h("div", { class: "mt-3 flex gap-2" }, input, h("button", { class: "btn btn-accent", type: "button", text: "Run", onclick: send })));
+  }
+  function renderConsoleOut() {
+    if (!consoleOut) return;
+    if (consoleLines.length === 0) { consoleOut.replaceChildren(h("span", { class: "muted", text: "The server console: every command it takes. Up / Down for the lines run before." })); return; }
+    consoleOut.replaceChildren(...consoleLines.slice(-200).map((l) => h("div", { class: "mb-2" },
+      h("div", { class: "text-accent", text: `> ${l.cmd}` }), h("div", { class: "whitespace-pre-wrap text-slate-300", text: l.text }))));
+    consoleOut.scrollTop = consoleOut.scrollHeight;
+  }
+
+  // ---- the live log ---------------------------------------------------------------------------------------------
+  let logOut = null;
+  async function pullLog() {
+    try {
+      const page = await api(`/api/log?after=${logLast}`);
+      if (page.last < logLast) logLines.length = 0;   // the server restarted
+      logLast = page.last;
+      logLines.push(...page.lines);
+      if (logLines.length > 2000) logLines.splice(0, logLines.length - 2000);
+      if (tab === "log") renderLogLines();
+    } catch { }
+  }
+  function logView() {
+    logOut = h("div", { class: "h-[65vh] overflow-y-auto rounded-xl border border-line bg-ink/80 p-3 font-mono text-xs leading-relaxed" });
+    const kinds = h("select", { class: "field max-w-36" }, ["all", "warning", "error"].map((k) => h("option", { value: k, text: k === "all" ? "Everything" : k === "warning" ? "Warnings +" : "Errors" })));
+    kinds.value = logFilter;
+    kinds.addEventListener("change", () => { logFilter = kinds.value; renderLogLines(); });
+    const search = h("input", { class: "field max-w-xs", placeholder: "Search", value: logSearch });
+    search.addEventListener("input", () => { logSearch = search.value; renderLogLines(); });
+    const follow = h("label", { class: "flex items-center gap-2 text-xs muted" }, h("input", { type: "checkbox", checked: logFollow, onchange: (e) => { logFollow = e.target.checked; } }), "Follow");
+    renderLogLines();
+    return card("Log", h("div", { class: "flex flex-wrap items-center gap-2" }, search, kinds, follow), logOut);
+  }
+  function renderLogLines() {
+    if (!logOut) return;
+    const f = logSearch.toLowerCase();
+    const shown = logLines.filter((l) => (logFilter === "all" || (logFilter === "warning" ? l.kind !== "info" : l.kind === "error"))
+      && (!f || l.text.toLowerCase().includes(f))).slice(-800);
+    const color = { info: "text-slate-300", warning: "text-amber-300", error: "text-red-300" };
+    logOut.replaceChildren(...shown.map((l) => h("div", { class: "whitespace-pre-wrap" },
+      h("span", { class: "muted", text: `${l.time} ` }), h("span", { class: color[l.kind] || "", text: l.text }))));
+    if (logFollow) logOut.scrollTop = logOut.scrollHeight;
+  }
+
+  // ---- go -------------------------------------------------------------------------------------------------------
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && state) refresh(); });
+  api("/api/state").then(() => start()).catch(() => showLogin());
+})();
+</script>
+</body>
+</html>

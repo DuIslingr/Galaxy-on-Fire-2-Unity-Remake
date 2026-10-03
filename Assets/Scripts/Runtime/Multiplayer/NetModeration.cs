@@ -77,6 +77,14 @@ namespace GoF2Remake.Multiplayer
             LoadToken();
         }
 
+        /// <summary>WebAdmin without player profiles (Load never ran): the admin token all the same, for the web login.</summary>
+        internal static void EnsureToken()
+        {
+            if (token != null) return;
+            try { if (!string.IsNullOrEmpty(NetProfiles.Folder)) Directory.CreateDirectory(NetProfiles.Folder); } catch (Exception) { }
+            LoadToken();
+        }
+
         /// <summary>The admin token: -admintoken, GOF2_ADMIN_TOKEN, else admin_token.txt (made once, random).</summary>
         static void LoadToken()
         {
@@ -95,10 +103,11 @@ namespace GoF2Remake.Multiplayer
                 }
             }
             token = token.Trim();
-            Debug.Log($"Server: admin token {token}: type /claimadmin {token} in the game's chat to become this server's master admin.");
+            Debug.Log($"Server: admin token {token}: type /claimadmin {token} in the game's chat to become this server's master admin"
+                      + (WebAdmin.Running ? ", or log in to the web admin with it." : "."));
         }
 
-        static bool TokenMatches(string given)
+        internal static bool TokenMatches(string given)
         {
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(given) || given.Length != token.Length) return false;
             int diff = 0;
@@ -224,7 +233,7 @@ namespace GoF2Remake.Multiplayer
             return Run(cmd, args, ServerConsole, "Server");
         }
 
-        static string Run(string cmd, string args, int role, string by)
+        internal static string Run(string cmd, string args, int role, string by)
         {
             string who = FirstWord(args, out string rest);
             switch (cmd)
@@ -378,6 +387,23 @@ namespace GoF2Remake.Multiplayer
             return sb.ToString();
         }
 
+        // ---- the web admin (WebAdmin) -----------------------------------------------------------------
+
+        /// <summary>The moderation commands a web admin who logged in with a login code (a profile's role) may run.</summary>
+        internal static bool IsWebCommand(string cmd) => IsCommand(cmd) && cmd != "claimadmin";
+
+        /// <summary>WebAdmin: a moderation command line from a web admin with a profile's 'role' (the console's rights come
+        /// with the admin token, DedicatedServer.Run). The answer; null = not a moderation command.</summary>
+        internal static string WebCommand(string line, int role, string by)
+        {
+            var words = (line ?? "").Trim().Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
+            string cmd = words.Length > 0 ? words[0].ToLowerInvariant().TrimStart('/') : "";
+            if (!IsWebCommand(cmd)) return null;
+            if (cmd == "staff") return Staff();
+            if (role < Op) return Localization.Extra("mpAdminNoRight", "Only the server's ops and admins can do that.");
+            return Run(cmd, words.Length > 1 ? words[1] : "", role, by);
+        }
+
         // ---- the station window (NetPanel) -------------------------------------------------------------
 
         /// <summary>The player's role, every online pilot's role and the bans into the snapshot (the bans for ops only).</summary>
@@ -385,13 +411,21 @@ namespace GoF2Remake.Multiplayer
         {
             s.role = RoleOfClient(client);
             foreach (var p in s.pilots) p.role = RoleOfClient((ulong)p.client);
-            if (s.role < Op || list == null) return;
+            FillFor(s);
+        }
+
+        /// <summary>The snapshot's moderation part for s.role: the bans (ops), the server, staff, profiles and settings
+        /// (admins). Also the web admin's (WebAdmin, the console's role for the admin token).</summary>
+        internal static void FillFor(NetPanel.State s)
+        {
+            if (s.role < Op) return;
+            if (s.role >= Admin) NetServerSettings.FillPanel(s);   // with or without profiles
+            if (list == null) return;
             if (s.role >= Admin)
             {
                 s.serverStatus = DedicatedServer.StatusText();
                 foreach (var (name, role, online) in NetProfiles.Staff()) s.staff.Add(new NetPanel.StaffRow { name = name, role = role, online = online });
                 NetProfiles.FillProfiles(s);
-                NetServerSettings.FillPanel(s);
                 foreach (var row in s.profiles) row.banned = list.bans.Exists(b => b.account == row.id);
             }
             Prune();
