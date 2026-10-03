@@ -5,6 +5,11 @@ A remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in 
 ## Environment
 
 - Unity **6.7**, **URP 17.7**, Windows.
+- **Scripting backend:** IL2CPP for Windows / Linux (Standalone; the Editor modules "Windows / Linux Build Support (IL2CPP)";
+  Linux builds from Windows use `com.unity.toolchain.win-x86_64-linux` + `com.unity.sdk.linux-x86_64`, which the first Linux
+  IL2CPP build added) and Android; native callbacks must be static `[AOT.MonoPInvokeCallback]` methods (`WinConsole`). A
+  build folder made with Mono needs clearing before an IL2CPP build. Never ship the `*_BackUpThisFolder_ButDontShipItWithYourGame`
+  folder (IL2CPP's debug data) in a release.
 - **Input System package only.** Active Input Handling is set to the new system. Never use `UnityEngine.Input` or the legacy Input Manager.
 - Packages include `com.unity.pipeline` (Unity CLI bridge). `com.unity.ai.assistant` was removed (its AI Generators logged
   "NoSubscription" errors), so there is no Unity MCP server.
@@ -651,8 +656,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   game with that code, no internet, else the service's message).
 - **Version check and passwords** (Netcode's connection approval, `NetGame.Approve`): every connecting game sends
   `NetGame.Protocol` (the code's fingerprint, `BuildVersion.Fingerprint`: the Editor's `BuildFingerprint` hashes the runtime
-  scripts, `Resources/GoF2Net` prefabs, `Resources/GoF2Data` JSON and `Packages/manifest.json`, paths sorted, line endings
-  normalised, SHA-256's first 12 hex digits; `BuildVersionStamp` writes it into `Resources/GoF2Build/BuildFingerprint.txt`
+  scripts, `Resources/GoF2Net` prefabs, `Resources/GoF2Data` JSON and the resolved versions of the multiplayer packages
+  (Netcode, Unity Transport, Multiplayer Services, from `packages-lock.json`; not the rest of the package list: a build-only
+  package such as the Linux toolchain mustn't split players), paths sorted, line endings normalised, SHA-256's first 12 hex digits; `BuildVersionStamp` writes it into `Resources/GoF2Build/BuildFingerprint.txt`
   for the build, git-ignored and deleted afterwards), its password and its shown version (`ConnectionData`); builds of the
   same code play together whenever and for whichever platform they were built (verified: two Windows builds 2 minutes
   apart), the server browser and its sort use the fingerprint too (lobby key `protocol`; "another build" for the same shown
