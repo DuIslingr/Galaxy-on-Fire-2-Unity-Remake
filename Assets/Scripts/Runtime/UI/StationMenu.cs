@@ -456,6 +456,7 @@ namespace GoF2Remake.UI
         /// <summary>A toast with more medals waiting after it: shorter, so a backlog doesn't take half a minute.</summary>
         const float MedalToastQueuedSeconds = 3f;
         VisualElement medalToast;
+        AudioClip medalSound;
         float medalToastLeft;
         bool medalToastFading, medalToastHovered;
 
@@ -519,7 +520,9 @@ namespace GoF2Remake.UI
             medalToast = toast;
             medalToastLeft = medalQueue.Count > 0 ? MedalToastQueuedSeconds : MedalToastSeconds(m, grade);
             medalToastFading = medalToastHovered = false;
-            Play(infoSound);
+            // Remake's own medal sound (the original used the info window's blip): a rising synthesized chime with echoes.
+            if (medalSound == null) medalSound = Resources.Load<AudioClip>("GoF2Sfx/MedalToast");
+            Play(medalSound != null ? medalSound : infoSound);
             // Drops in and grows (the transition needs a frame), with a short bright flash.
             toast.schedule.Execute(() => toast.AddToClassList("medal-toast--shown"));
             toast.AddToClassList("medal-toast--flash");
