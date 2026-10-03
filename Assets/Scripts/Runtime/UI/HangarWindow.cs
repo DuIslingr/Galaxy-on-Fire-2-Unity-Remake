@@ -505,7 +505,7 @@ namespace GoF2Remake.UI
         /// item to buy (588, 0x1d) and the first non-commodity cargo item to sell (589, 0x1e).</summary>
         void SelectionHint(Row row)
         {
-            if (menu.IsDialogOpen) return;   // one window at a time (the hangar's own first-visit hint may be up)
+            if (menu.IsDialogOpen || !Settings.TutorialHints) return;   // one window at a time; the tutorial popups option
             int text = -1;
             if (tab == Tab.Ship && row.kind == RowKind.Slot && Session.Hints.Add(0x1f)) text = 587;
             else if (tab == Tab.Shop && row.kind == RowKind.ShopItem && Session.Hints.Add(0x1d)) text = 588;

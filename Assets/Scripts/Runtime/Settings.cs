@@ -154,6 +154,11 @@ namespace GoF2Remake.Data
         /// <summary>Remake: the ship flies into the hangar after docking and out of it when launching (HangarFlight).</summary>
         public static bool HangarFlights { get => GetBool("hangarFlights", true); set => SetBool("hangarFlights", value); }
 
+        /// <summary>Remake: the tutorial popups (the flight hints, the stations' first-visit help, the map and hangar hints;
+        /// FlightHints, StationMenu, HangarWindow). Off by default; a new game asks (MainMenu.StartGame). While off, a hint is
+        /// not marked as shown, so turning it on later still shows it once.</summary>
+        public static bool TutorialHints { get => GetBool("tutorialHints", false); set => SetBool("tutorialHints", value); }
+
         /// <summary>Remake (GitHub #6): now and then a free-flight orbit holds a pirate outpost or a pirate boss with escorts
         /// (TrafficPlan.AddPirateEvent), each with a bounty.</summary>
         public static bool PirateEvents { get => GetBool("pirateEvents", true); set => SetBool("pirateEvents", value); }
@@ -194,7 +199,7 @@ namespace GoF2Remake.Data
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
                          "frameRate", "renderScale", "upscaler", "upscalerQuality", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "gyroSteering", "gyroSensitivity", "haptics", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
-                         "pirateEvents",
+                         "pirateEvents", "tutorialHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);
             PlayerPrefs.Save();

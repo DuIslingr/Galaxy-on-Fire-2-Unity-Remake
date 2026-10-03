@@ -83,7 +83,7 @@ namespace GoF2Remake.UI
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
         VisualElement openPanel;
         readonly List<OptionControl> optionControls = new List<OptionControl>();
-        Action dialogYes;
+        Action dialogYes, dialogNo;
         MenuState screen = MenuState.Splash;
         bool skipRequested;
         Campaign pendingCampaign;
@@ -205,7 +205,7 @@ namespace GoF2Remake.UI
             Bind("economyAndroidButton", () => StartGame(Economy.Android));
             Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
             Bind("dialogYes", () => { var a = dialogYes; CloseDialog(); a?.Invoke(); });
-            Bind("dialogNo", CloseDialog);
+            Bind("dialogNo", () => { var a = dialogNo; CloseDialog(); a?.Invoke(); });
 
             foreach (var (tab, pg) in OptionPages) Bind(tab, () => SelectTab(pg));
             Bind("optionsDefaults", () => { Settings.ResetToDefaults(); RefreshTexts(); });   // 497
@@ -635,7 +635,18 @@ namespace GoF2Remake.UI
                     "The original's Kaamo Club expansion: the club in the Shima system is yours from day one, without the siege or the 30 million; store as many ships and goods there as you like. Choose, then pick the economy.");
         }
 
+        /// <summary>Remake: before a new game starts, the question whether to show the tutorial popups (Settings.TutorialHints,
+        /// also in Options > Gameplay); Yes / No set the option and start, Back cancels.</summary>
         void StartGame(Economy economy)
+        {
+            ShowDialog(Localization.Extra("tutorialTitle", "Tutorial popups"),
+                Localization.Extra("tutorialQuestion", "Show the tutorial popups that explain the controls, the hangar, the map and the missions the first time you meet them? You can change this any time in Options > Gameplay."),
+                () => { Settings.TutorialHints = true; BeginGame(economy); });
+            dialogNo = () => { Settings.TutorialHints = false; BeginGame(economy); };
+            Select(root.Q<Button>(Settings.TutorialHints ? "dialogYes" : "dialogNo"));
+        }
+
+        void BeginGame(Economy economy)
         {
             Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
             Session.Campaign = pendingCampaign;
@@ -1367,7 +1378,7 @@ namespace GoF2Remake.UI
                 root.Q<Button>("dialogYes").text = Localization.Get(134).ToUpperInvariant();
             }
             dialog.RemoveFromClassList("dialog-backdrop--shown");
-            dialogYes = null;
+            dialogYes = dialogNo = null;
             if (openPanel != null) FocusFirst(openPanel); else Select(exitButton);
         }
 

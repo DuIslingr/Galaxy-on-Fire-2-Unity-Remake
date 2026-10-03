@@ -280,7 +280,7 @@ namespace GoF2Remake.UI
         /// where the original has them.</summary>
         void FirstVisitHint(int flag, int text, bool keyVariant = false)
         {
-            if (DialogOpen || !Session.Hints.Add(flag)) return;
+            if (DialogOpen || !Settings.TutorialHints || !Session.Hints.Add(flag)) return;   // the tutorial popups option
             ShowDialog(HintText(text, keyVariant), null, true);
         }
 
@@ -512,7 +512,8 @@ namespace GoF2Remake.UI
             var map = StarMap.Open(level.Database, StarMapMode.Station, GalaxyMap.HasJumpDrive(level.Database), OnMapClosed);
             if (map == null) { root.RemoveFromClassList("station-map-open"); return; }
             int cm = Session.FreePlay ? 20 : Session.CampaignMission;
-            if (cm > 15 && Session.Hints.Add(0xe)) map.ShowHint(HintText(628, true));
+            if (!Settings.TutorialHints) { }   // the tutorial popups option
+            else if (cm > 15 && Session.Hints.Add(0xe)) map.ShowHint(HintText(628, true));
             else if (cm < 16 && Session.Hints.Add(0xf)) map.ShowHint(HintText(631, true));
         }
 
