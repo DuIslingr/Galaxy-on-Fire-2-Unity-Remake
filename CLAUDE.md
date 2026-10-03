@@ -763,9 +763,11 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   for the others' NPCs); **trade cut** (`Hangar.Buy` through `NetCrewsClient.BuyPrice`: members -10 %, other crews +5 %;
   the server banks the tax from `StockItemRpc`'s price, `NetCrews.OnPurchase`; the list shows the plain price; ships
   aren't cut). Not yet: shared storage at the home. Not tested in a build yet.
-  UI: the station's **Crew / Arena / Profile window** (`CrewPanel`, code-built, Squad.uss buttons; a "CREW · ARENA"
-  plate under the station information, a dot when an invitation or a challenge waits; Esc / B closes it, the station
-  menu's keys wait while it is open): every chat command as buttons and fields (crew create / join / bank / members by
+  UI: the station's **multiplayer window** (`CrewPanel`, code-built, Squad.uss buttons; a "MULTIPLAYER" button in the
+  top bar left of Menu, a dot when an invitation, a challenge or an unread chat line waits; Esc / B closes it, the station
+  menu's keys wait while it is open). Tabs Chat (the whole chat: lines, Local / Global, the line, Send; Enter sends,
+  "/" commands; built once so the line keeps focus and draft; `ChatView` hides meanwhile), Crew, Arena, Profile, Admin:
+  every chat command as buttons and fields (crew create / join / bank / members by
   rank / invite / territory with Claim, Make home, Give up, Siege at the docked station / leave and disband asked
   twice; arena challenge, accept / decline, the Voids option, the free-for-all queue, matches, leaderboard; profile,
   take control, link codes). `NetPanel`: the window asks for a snapshot (`PanelRequestRpc`, every 2 s open, 6 s closed
@@ -888,7 +890,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`GameControls.PressedNow`: the flight map is off while typing), and their key events and characters stay out of the
   line. The field keeps the focus: the project-wide UI map's Navigate (arrows, W A S D), Tab and Submit (Space / Enter)
   are swallowed there (`StopPropagation` + `focusController.IgnoreEvent`: stopping alone still moved the focus to a menu
-  button, which ended the typing). No send button (the key sends). Another player's line plays the original's
+  button, which ended the typing). Enter / keypad Enter always send, read from the key event (the rebindable send key is
+  read from the device and could miss the UI event's frame: the TextField then took Enter as its submit, lost the focus,
+  and the line was only hidden by `Suspend`); a Send button after the line (touch, mouse). Another player's line plays the original's
   incoming-message sound (FMOD 125 Message_Inc, volume 0.241 × `Sfx.EventGain` × the FX volume, one at a time; a copy
   of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving (full width on a solid background: drawn over the flight HUD's key hints, it covers them); join / leave notices; every line
   is also in the player log (`[Chat ...]`). **Chat commands** (`NetCommands`): a line starting with "/" is a command, never

@@ -1,7 +1,10 @@
 // CrewPanel.cs
-// Remake-only: the station's Crew / Arena / Profile (/ Admin) window in a multiplayer session, the buttons for everything the chat
-// commands do (NetCrews, NetArena, NetProfiles). A "CREW · ARENA" plate under the station's information opens it (a
-// dot on it when a crew invitation or a duel challenge waits). Three tabs:
+// Remake-only: the station's multiplayer window (Chat / Crew / Arena / Profile / Admin) in a session, the buttons for
+// everything the chat commands do (NetCrews, NetArena, NetProfiles). A "MULTIPLAYER" button in the top bar, left of the
+// Menu button, opens it (a dot on it when a crew invitation or a duel challenge waits). Tabs:
+//   Chat: the whole chat (NetChat: the last lines, kept while the window lives), the channel (Local / Global), the line
+//     and a Send button; Enter sends, a line starting with "/" is a command (NetCommands); the flight / station chat
+//     panel (ChatView) hides meanwhile. Built once (a snapshot doesn't rebuild it: the line keeps its focus and draft);
 //   Crew: invitations (Join), without a crew a Create form and the crews; in one: the bank (Deposit / Withdraw), the
 //     members (Promote / Demote / Make leader / Kick by rank), the pilots online to Invite, the territory (the claims,
 //     and for the station docked at: Claim / Make home / Unclaim / Siege), the sieges, Leave / Disband (asked twice);
@@ -31,7 +34,7 @@ namespace GoF2Remake.UI
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class CrewPanel : MonoBehaviour
     {
-        enum Tab { Crew, Arena, Profile, Admin }
+        enum Tab { Chat, Crew, Arena, Profile, Admin }
 
         static CrewPanel current;
 
@@ -40,8 +43,10 @@ namespace GoF2Remake.UI
 
         public static void CloseAny() { if (current != null) current.Close(); }
 
-        VisualElement plate, window, tabs, body;
-        ScrollView scroll;
+        VisualElement plate, window, tabs, body, chatPane;
+        ScrollView scroll, chatScroll;
+        TextField chatField;
+        Button chatChannel, menuButton;
         Button plateButton;
         Label status;
         Tab tab;
@@ -93,25 +98,39 @@ namespace GoF2Remake.UI
             window?.RemoveFromHierarchy();
             sheet = Resources.Load<StyleSheet>("GoF2Net/Squad");
 
-            // The plate: under the station's information (like the join code), else top left.
+            // The button: in the top bar, left of the Menu button (its look); else under the station's information.
             plate = new VisualElement { name = "crewPlate" };
-            if (sheet != null) plate.styleSheets.Add(sheet);
-            plateButton = Btn(Localization.Extra("mpCrewArena", "Crew · Arena"), Open, null);
-            plateButton.style.marginTop = 8;
-            plate.Add(plateButton);
-            var info = parent.Q(className: "station-info");
-            if (info != null && info.parent != null)
+            var menu = parent.Q<Button>("menuButton");
+            menuButton = menu;
+            if (menu != null && menu.parent != null)
             {
-                int at = info.parent.IndexOf(info) + 1;
-                var code = info.parent.Q("joinCodePlate");
-                if (code != null && code.parent == info.parent) at = info.parent.IndexOf(code) + 1;
-                info.parent.Insert(at, plate);
+                plateButton = new Button(Toggle) { name = "netButton" };
+                plateButton.AddToClassList("station-menu-button");
+                plateButton.AddToClassList("gof-semibold");
+                plateButton.style.marginRight = 12;
+                plate = plateButton;
+                menu.parent.Insert(menu.parent.IndexOf(menu), plateButton);
             }
             else
             {
-                plate.style.position = Position.Absolute;
-                plate.style.left = 24; plate.style.top = 140;
-                parent.Add(plate);
+                if (sheet != null) plate.styleSheets.Add(sheet);
+                plateButton = Btn(Localization.Extra("mpCrewArena", "Crew · Arena"), Open, null);
+                plateButton.style.marginTop = 8;
+                plate.Add(plateButton);
+                var info = parent.Q(className: "station-info");
+                if (info != null && info.parent != null)
+                {
+                    int at = info.parent.IndexOf(info) + 1;
+                    var code = info.parent.Q("joinCodePlate");
+                    if (code != null && code.parent == info.parent) at = info.parent.IndexOf(code) + 1;
+                    info.parent.Insert(at, plate);
+                }
+                else
+                {
+                    plate.style.position = Position.Absolute;
+                    plate.style.left = 24; plate.style.top = 140;
+                    parent.Add(plate);
+                }
             }
 
             window = new VisualElement { name = "crewWindow" };
@@ -139,6 +158,8 @@ namespace GoF2Remake.UI
             scroll.style.marginTop = 10;
             body = scroll.contentContainer;
             window.Add(scroll);
+            BuildChatPane();
+            window.Add(chatPane);
             status = Text("", 15, Accent);
             status.style.marginTop = 8;
             status.style.whiteSpace = WhiteSpace.Normal;
@@ -158,13 +179,16 @@ namespace GoF2Remake.UI
                 if (t == Tab.Admin && role < NetModeration.Op) continue;   // the moderation tab: ops and admins only
                 var name = t == Tab.Crew ? Localization.Extra("mpTabCrew", "Crew") : t == Tab.Arena ? Localization.Extra("mpTabArena", "Arena")
                          : t == Tab.Profile ? Localization.Extra("mpTabProfile", "Profile") : Localization.Extra("mpTabAdmin", "Admin");
-                var b = Btn(name, () => { tab = t; confirmLeave = false; BuildTabs(); Rebuild(); }, t == tab ? "squad-button--accept" : null);
+                if (t == Tab.Chat) name = Localization.Extra("mpChat", "Chat");
+                var b = Btn(name, () => { tab = t; confirmLeave = false; BuildTabs(); ShowPane(); Rebuild(); }, t == tab ? "squad-button--accept" : null);
                 b.style.marginRight = 8;
                 tabs.Add(b);
             }
         }
 
         // ---- open / close / refresh -----------------------------------------------------------------------
+
+        void Toggle() { if (isOpen) Close(); else Open(); }
 
         void Open()
         {
@@ -175,6 +199,7 @@ namespace GoF2Remake.UI
             window.BringToFront();
             status.text = "";
             refresh = 0f;
+            ShowPane();
             Rebuild();
         }
 
@@ -190,10 +215,15 @@ namespace GoF2Remake.UI
             if (plate == null) return;
             bool session = NetGame.Active;
             plate.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
+            // In the top bar: the new button takes the bar's free space on its left while it shows.
+            if (plate == plateButton && menuButton != null)
+                menuButton.style.marginLeft = session ? new StyleLength(0f) : new StyleLength(StyleKeyword.Null);
             if (!session) { if (isOpen) Close(); return; }
             var s = NetPanel.Latest;
             bool waiting = s != null && (s.crewInvites.Count > 0 || s.duelFrom.Length > 0);
-            plateButton.text = (Localization.Extra("mpCrewArena", "Crew · Arena") + (waiting ? "  •" : "")).ToUpperInvariant();
+            bool unread = unreadChat && !(isOpen && tab == Tab.Chat);
+            string label = plate == plateButton ? Localization.Extra("mpMultiplayer", "Multiplayer") : Localization.Extra("mpCrewArena", "Crew · Arena");
+            plateButton.text = (label + (waiting || unread ? "  •" : "")).ToUpperInvariant();
             // The plate's dot needs a snapshot now and then even while the window is closed.
             if ((refresh -= Time.unscaledDeltaTime) <= 0f) { refresh = isOpen ? NetPanel.RefreshSeconds : NetPanel.RefreshSeconds * 3f; NetPanel.Request(); }
         }
@@ -207,7 +237,10 @@ namespace GoF2Remake.UI
         /// <summary>The server's answer to a button (the next notice), and invitations / challenges as they come.</summary>
         void OnChat(NetChat.Message m)
         {
-            if (!isOpen || m == null || m.channel != NetChat.Channel.Notice) return;
+            if (m == null) return;
+            AddChatLine(m);
+            if (m.channel != NetChat.Channel.Notice && !m.own && !(isOpen && tab == Tab.Chat)) unreadChat = true;
+            if (!isOpen || m.channel != NetChat.Channel.Notice || tab == Tab.Chat) return;
             if (Time.unscaledTime < answerUntil) status.text = m.text;
             NetPanel.Request();
         }
@@ -227,6 +260,7 @@ namespace GoF2Remake.UI
             if (body == null) return;
             float y = scroll.scrollOffset.y;
             body.Clear();
+            if (tab == Tab.Chat) return;   // the chat pane is built once (its line keeps the focus and the draft)
             var s = NetPanel.Latest;
             if (s == null) { body.Add(Text(Localization.Extra("mpPanelLoading", "Asking the server..."), 16, Dim)); return; }
             switch (tab)
@@ -597,6 +631,118 @@ namespace GoF2Remake.UI
         }
 
         // ---- small builders ---------------------------------------------------------------------------------
+
+        // ---- the Chat tab ---------------------------------------------------------------------------------------
+
+        bool unreadChat;
+        const int ChatKeep = 200;
+
+        /// <summary>The chat pane: the lines (the ones NetChat still has, then each new one), the channel, the line, Send.</summary>
+        void BuildChatPane()
+        {
+            chatPane = new VisualElement();
+            chatPane.style.flexGrow = 1;
+            chatPane.style.marginTop = 10;
+            chatPane.style.display = DisplayStyle.None;
+            chatScroll = new ScrollView(ScrollViewMode.Vertical);
+            chatScroll.style.flexGrow = 1;
+            chatScroll.style.backgroundColor = new Color(0f, 0f, 0f, 0.35f);
+            chatScroll.style.paddingLeft = chatScroll.style.paddingRight = 10;
+            chatScroll.style.paddingTop = chatScroll.style.paddingBottom = 6;
+            chatPane.Add(chatScroll);
+            foreach (var m in NetChat.Messages) AddChatLine(m);
+
+            var hint = Text(Localization.Extra("mpChatWindowHint", "Enter sends · a line starting with / is a command (/help lists them) · /w <pilot> <text> whispers"), 13, Dim);
+            hint.style.marginTop = 6;
+            chatPane.Add(hint);
+
+            var row = Row();
+            row.style.flexWrap = Wrap.NoWrap;
+            row.style.marginTop = 6;
+            chatChannel = Btn("", ToggleChannel, null);
+            chatChannel.style.marginLeft = 0;
+            chatChannel.style.minWidth = 100;
+            row.Add(chatChannel);
+            chatField = new TextField { maxLength = NetChat.MaxCommandLength };
+            chatField.style.flexGrow = 1;
+            chatField.style.flexShrink = 1;
+            chatField.style.marginLeft = 6;
+            chatField.textEdition.placeholder = Localization.Extra("mpChatWindowPlaceholder", "Type a message");
+            // Enter sends (the TextField would take it as its own submit and drop the focus); Tab switches the channel
+            // unless a command is being typed.
+            chatField.RegisterCallback<KeyDownEvent>(e =>
+            {
+                if (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter || e.character == '\n')
+                {
+                    if (e.keyCode != KeyCode.None) SendChat();
+                    e.StopPropagation();
+                    chatField.focusController?.IgnoreEvent(e);
+                }
+                else if (e.keyCode == KeyCode.Tab || e.character == '\t')
+                {
+                    if (e.keyCode == KeyCode.Tab && !chatField.value.StartsWith("/")) ToggleChannel();
+                    e.StopPropagation();
+                    chatField.focusController?.IgnoreEvent(e);
+                }
+            }, TrickleDown.TrickleDown);
+            chatField.RegisterCallback<NavigationSubmitEvent>(e => { e.StopPropagation(); chatField.focusController?.IgnoreEvent(e); }, TrickleDown.TrickleDown);
+            chatField.RegisterCallback<NavigationMoveEvent>(e => { e.StopPropagation(); chatField.focusController?.IgnoreEvent(e); }, TrickleDown.TrickleDown);
+            row.Add(chatField);
+            row.Add(Btn(Localization.Extra("mpChatSend", "Send"), SendChat, "squad-button--accept"));
+            chatPane.Add(row);
+            RefreshChannel();
+        }
+
+        void ShowPane()
+        {
+            bool chat = tab == Tab.Chat;
+            if (scroll != null) scroll.style.display = chat ? DisplayStyle.None : DisplayStyle.Flex;
+            if (status != null) status.style.display = chat ? DisplayStyle.None : DisplayStyle.Flex;
+            if (chatPane == null) return;
+            chatPane.style.display = chat ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!chat) { if (chatField?.focusController?.focusedElement == chatField) chatField.Blur(); return; }
+            unreadChat = false;
+            ScrollChatDown();
+            chatField.schedule.Execute(() => { if (isOpen && tab == Tab.Chat) chatField.Focus(); }).ExecuteLater(50);
+        }
+
+        void AddChatLine(NetChat.Message m)
+        {
+            if (chatScroll == null || m == null) return;
+            var l = new Label(ChatView.Format(m)) { pickingMode = PickingMode.Ignore };
+            l.style.fontSize = 16;
+            l.style.whiteSpace = WhiteSpace.Normal;
+            l.style.marginBottom = 2;
+            l.style.color = m.channel == NetChat.Channel.Notice ? Dim : m.own ? new Color(1f, 1f, 1f, 0.8f) : Color.white;
+            chatScroll.contentContainer.Add(l);
+            while (chatScroll.contentContainer.childCount > ChatKeep) chatScroll.contentContainer.RemoveAt(0);
+            ScrollChatDown();
+        }
+
+        void ScrollChatDown() =>
+            chatScroll?.schedule.Execute(() => chatScroll.scrollOffset = new Vector2(0f, float.MaxValue)).ExecuteLater(1);
+
+        void SendChat()
+        {
+            string line = chatField.value;
+            chatField.value = "";
+            if (!string.IsNullOrWhiteSpace(line)) NetChat.Send(line);
+            chatField.schedule.Execute(() => chatField.Focus()).ExecuteLater(1);   // keep typing
+        }
+
+        void ToggleChannel()
+        {
+            NetChat.Sending = NetChat.Sending == NetChat.Channel.Global ? NetChat.Channel.Local : NetChat.Channel.Global;
+            RefreshChannel();
+        }
+
+        void RefreshChannel()
+        {
+            if (chatChannel == null) return;
+            bool global = NetChat.Sending == NetChat.Channel.Global;
+            chatChannel.text = (global ? Localization.Extra("mpChatGlobal", "Global") : Localization.Extra("mpChatLocal", "Local")).ToUpperInvariant();
+            chatChannel.style.color = global ? new Color(0.94f, 0.7f, 0.35f) : Accent;
+        }
 
         static string SelfName(NetPanel.State s) => s.pilots.Find(p => p.self)?.name ?? "";
 

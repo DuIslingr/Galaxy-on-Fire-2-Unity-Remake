@@ -220,7 +220,7 @@ namespace GoF2Remake.Multiplayer
             NetProfiles.SetRole(account, Master);
             SyncRole(client);
             Debug.Log($"Server: {NetSquad.Find(client)?.DisplayName} (profile {account}) claimed the server: master admin.");
-            return Localization.Extra("mpAdminClaimed", "You are this server's master admin now: the station's Crew · Arena window has an Admin tab.");
+            return Localization.Extra("mpAdminClaimed", "You are this server's master admin now: the station's Multiplayer window (top right) has an Admin tab.");
         }
 
         /// <summary>DedicatedServer: a console command (the console outranks everyone; admin / unadmin only there).</summary>
@@ -361,7 +361,7 @@ namespace GoF2Remake.Multiplayer
             NetProfiles.SetRole(account, role);
             foreach (ulong c in NetProfiles.ClientsOf(account)) SyncRole(c);
             Tell(account, role == Player ? Localization.Extra("mpAdminYouPlayer", "You are a player again (no server role).")
-                                         : string.Format(Localization.Extra("mpAdminYouRole", "You are a {0} of this server now: the station's Crew · Arena window has an Admin tab."), RoleName(role)));
+                                         : string.Format(Localization.Extra("mpAdminYouRole", "You are a {0} of this server now: the station's Multiplayer window (top right) has an Admin tab."), RoleName(role)));
             Debug.Log($"Server: {name} (profile {account}) is a {RoleName(role)} now.");
             return string.Format(Localization.Extra("mpAdminRoleSet", "{0} is a {1} now."), name, RoleName(role));
         }

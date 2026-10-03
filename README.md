@@ -138,7 +138,7 @@ shows who needs help.
 
 **Crews**
 
-Everything below is also in the station's **Crew · Arena** window (under the station's information), with buttons
+Everything below is also in the station's **Multiplayer** window (the button left of Menu, top right), with buttons
 instead of commands.
 
 A crew is a lasting group of players on a server with profiles (squads stay the quick groups for flying together).
@@ -163,10 +163,10 @@ At a crew's station its members buy items 10 % cheaper and its fighters protect 
 **Moderation**
 
 **Become the master admin**: the server writes an admin token to its log at every start (see [SERVER.md](SERVER.md)).
-In the game, type `/claimadmin <token>` in the chat, or use the station's Crew · Arena window, Profile tab, "Claim this
+In the game, type `/claimadmin <token>` in the chat, or use the station's Multiplayer window, Profile tab, "Claim this
 server". The master admin makes admins
 (`/admin <pilot>`, `/unadmin`), admins make ops (`/op <pilot>`, `/deop`). Ops and up get an **Admin** tab in the
-Crew · Arena window: kicks and bans, roles, and for admins the server status, announcements, every profile and the
+Multiplayer window: kicks and bans, roles, and for admins the server status, announcements, every profile and the
 crews.
 
 | Command | Who | Meaning |

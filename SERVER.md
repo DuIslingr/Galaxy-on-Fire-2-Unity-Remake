@@ -106,7 +106,7 @@ The environment variable `GOF2_ADMIN_TOKEN` can replace `-admintoken`.
 
 ## Settings you can change while the server runs
 
-These settings can be changed without a restart. Admins change them in the game, in the station's **Crew · Arena**
+These settings can be changed without a restart. Admins change them in the game, in the station's **Multiplayer**
 window, **Admin** tab, **Server settings**. You can also type `/set <key> <value>` in the game's chat, or
 `set <key> <value>` in the server console. `/settings` (or `settings` in the console) lists them.
 
@@ -135,9 +135,9 @@ Server: admin token Ab3dE9fGh1Jk: type /claimadmin Ab3dE9fGh1Jk in the game's ch
 
 1. Read the token from the log or the console. On a Linux service: `journalctl -u gof2 | grep "admin token"`. The
    token is also in `admin_token.txt` in the server's data folder, and the console shows it with `token`.
-2. Join the server and type `/claimadmin <token>` in the chat. Or open the station's **Crew · Arena** window,
+2. Join the server and type `/claimadmin <token>` in the chat. Or open the station's **Multiplayer** window,
    **Profile** tab, **Claim this server**.
-3. You are the **master admin**. The Crew · Arena window now has an **Admin** tab.
+3. You are the **master admin**. The Multiplayer window now has an **Admin** tab.
 
 To get a new token, delete `admin_token.txt` and restart the server, or start it with `-admintoken X`. Anyone who knows
 the token can make themselves master admin, so keep it private. Wrong tries are logged, and only one try every 5
