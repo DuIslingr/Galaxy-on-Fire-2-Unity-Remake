@@ -53,6 +53,7 @@ namespace GoF2Remake.UI
         NavigationView navView;
         SystemJump jump;
         CombatView combatView;
+        CooldownView cooldownView;   // remake: the booster / cloak recharge for keys and controllers
         PlayerHealth health;
         CombatRadar radar;
         Traffic traffic;
@@ -79,7 +80,6 @@ namespace GoF2Remake.UI
         VisualElement autopilotMenu, autopilotMenuItems;
         readonly System.Collections.Generic.List<(Button button, Navigation.Target target)> menuButtons = new System.Collections.Generic.List<(Button, Navigation.Target)>();
         int menuIndex, lastMenuMove, menuOpenedFrame;
-        Label secondaryLabel;
         WeaponSystem weapons;
         float hitFlashMs;
         const float CrosshairDistanceMeters = 22000f * 0.05f;   // 0x46abe000
@@ -139,9 +139,6 @@ namespace GoF2Remake.UI
             }
 
             InputGlyph.TrackHintsOption(hints);
-            secondaryLabel = root.Q<Label>("secondaryLabel");
-            // Remake: a tap on the secondary's name switches to the next mounted one (the original's HUD quick menu).
-            secondaryLabel?.RegisterCallback<PointerDownEvent>(e => { weapons?.CycleSecondary(); e.StopPropagation(); });
             crosshair = root.Q("crosshair");
             dockPrompt = root.Q("dockPrompt");
             dockGlyph = root.Q("dockGlyph");
@@ -164,6 +161,9 @@ namespace GoF2Remake.UI
             root.Add(transferCounter);
             navView = new NavigationView(root);
             combatView = new CombatView(root);
+            BuildRadarEllipse(root.Q("radarEllipse"));
+            var speedPanel = root.Q("speedPanel");
+            if (speedPanel != null) cooldownView = new CooldownView(speedPanel);
             lensFlare = new LensFlareView(root);
             root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
             if (voiceSource == null)
@@ -205,6 +205,29 @@ namespace GoF2Remake.UI
             UpdateLayout();
         }
 
+        /// <summary>Radar::draw's faint radar ellipse (image 0x4c7, the top-left quarter, 657 x 491): drawn four times mirrored
+        /// around the screen centre in every input mode, except while drilling (MGame::OnRender2D skips Radar::draw then).
+        /// Off-screen markers and the hit arcs sit on it (CombatView / NavigationView EllipseX / Y).</summary>
+        static void BuildRadarEllipse(VisualElement host)
+        {
+            var tex = Resources.Load<Texture2D>("GoF2Hud/radar_ellipse");
+            if (host == null || tex == null) return;
+            host.Clear();
+            for (int q = 0; q < 4; q++)
+            {
+                bool right = (q & 1) != 0, bottom = (q & 2) != 0;   // DrawImage2D's flip 1 = mirrored, 2 = flipped, 3 = both
+                var e = new VisualElement { pickingMode = PickingMode.Ignore };
+                e.AddToClassList("radar-quarter");
+                e.style.backgroundImage = new StyleBackground(tex);
+                e.style.left = right ? 0f : -tex.width;
+                e.style.top = bottom ? 0f : -tex.height;
+                e.style.width = tex.width;
+                e.style.height = tex.height;
+                e.style.scale = new Scale(new Vector3(right ? -1f : 1f, bottom ? -1f : 1f, 1f));
+                host.Add(e);
+            }
+        }
+
         // ---- touch controls (TouchControls, touch_hud.md) ----------------------------------------------------------
 
         void BuildTouchControls()
@@ -214,7 +237,8 @@ namespace GoF2Remake.UI
                 FirePressed = OnTouchFire,
                 // MGame::OnTouchEnd: the secondary, boost and camera don't act while mining or docked at a point.
                 SecondaryReleased = () => { if (!MiningOrDocked) weapons?.FireSecondary(); },
-                BoostReleased = () => { if (!MiningOrDocked) ship?.Boost(); },
+                // The booster also on the way to an asteroid (refused only while drilling, PlayerEgo::isMining).
+                BoostReleased = () => { if (!Drilling && (docking == null || !docking.Busy)) ship?.Boost(); },
                 CameraReleased = () => { if (mining == null || mining.State == Mining.Phase.Idle) level?.FreeLook?.Cycle(); },
                 MenuReleased = OnActionsButton,
                 TurretReleased = () => level?.Turret?.Toggle(),
@@ -226,9 +250,25 @@ namespace GoF2Remake.UI
                 GetThrust = () => ship != null ? ship.Model.Throttle : 0f,
                 SetThrust = t => ship?.SetThrottle(t),
                 FreeLookDrag = (delta, held) => level?.FreeLook?.TouchDrag(delta, held),
+                FreeLookPinch = span => level?.FreeLook?.TouchPinch(span),
             };
         }
 
+        /// <summary>The cursor mode: the mouse is over one of the HUD's buttons (the touch controls, the autopilot pill, the
+        /// secondary plate, the chat), so its click is that button's, not the fire binding's.</summary>
+        bool MouseOverControls()
+        {
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (!cursorMode || mouse == null || root?.panel == null) return false;
+            var sp = mouse.position.ReadValue();
+            var picked = root.panel.Pick(RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(sp.x, Screen.height - sp.y)));
+            for (var e = picked; e != null && e != root; e = e.parent)
+                if (e.ClassListContains("touch-abs") || e.ClassListContains("nav-button") || e == autopilotMenu || e == dockPrompt
+                    || e.ClassListContains("chat") || e.ClassListContains("squad") || e.ClassListContains("squad-invite")) return true;
+            return false;
+        }
+
+        bool Drilling => mining != null && mining.State == Mining.Phase.Mining;
         bool MiningOrDocked => (mining != null && mining.State != Mining.Phase.Idle) || (docking != null && docking.Busy);
 
         /// <summary>MGame::OnTouchBegin on the fire button: with a landmark, planet or docking target locked the autopilot /
@@ -245,15 +285,24 @@ namespace GoF2Remake.UI
 
         float lastThrust = -1f;
 
+        /// <summary>The PC version's cursor mode (Globals::mouseCursorActivated off: M or the middle mouse button, the manual's
+        /// "Mouse control menu / ship"): with keys and mouse and the mouse not steering, Hud::draw's buttons show and take
+        /// clicks (no stick, the cluster in the bottom-right corner). While the mouse steers they are invisible (alpha 0).</summary>
+        bool cursorMode;
+
         /// <summary>The touch controls' state for this frame (Hud::draw's conditions, MGame::OnRender2D's hiding).</summary>
         void UpdateTouch()
         {
             if (touch == null) return;
             var f = new TouchControls.Frame { mode = TouchControls.Mode.Off, nextCamera = -1 };
             bool touchMode = InputMode.Current == InputKind.Touch;
-            if (touchMode && ship != null && level != null && !StarMap.IsOpen && !pauseMenu.IsOpen && !storyDialogue.IsOpen
-                && (health == null || !health.Dead))
+            cursorMode = !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse && !Settings.MouseSteering;
+            root.EnableInClassList("hud-cursor", cursorMode);
+            bool flying = ship != null && level != null && !StarMap.IsOpen && !pauseMenu.IsOpen && !storyDialogue.IsOpen
+                          && (health == null || !health.Dead);
+            if ((touchMode || cursorMode) && flying)
             {
+                f.cursor = cursorMode;
                 bool cinematic = level.Cutscene || !level.LaunchCameraOver || (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
                 f.mode = cinematic ? TouchControls.Mode.PauseOnly : nav != null && nav.MenuOpen ? TouchControls.Mode.MenuOpen : TouchControls.Mode.Full;
                 var phase = mining != null ? mining.State : Mining.Phase.Idle;
@@ -291,19 +340,23 @@ namespace GoF2Remake.UI
                 f.crosshairVisible = crosshair != null && !crosshair.ClassListContains("crosshair--hidden");
                 if (f.crosshairVisible) f.crosshair = new Vector2(crosshair.style.left.value.value, crosshair.style.top.value.value);
             }
-            else if (!touchMode && ship != null && level != null && !StarMap.IsOpen && !pauseMenu.IsOpen && !storyDialogue.IsOpen
-                     && (health == null || !health.Dead) && !level.Cutscene && level.LaunchCameraOver && (nav == null || !nav.Jumping))
+            if (!touchMode && flying && !level.Cutscene && level.LaunchCameraOver && (nav == null || !nav.Jumping))
             {
-                // Remake: keyboard / controller flight gets the touch throttle gauge whenever the throttle moves (keys, wheel,
-                // shoulder buttons, a boost), as the iPhone / PC versions show it.
+                // Keyboard / controller flight (and the cursor mode): the throttle gauge whenever the throttle moves (keys, wheel,
+                // shoulder buttons, a boost; PlayerEgo::draw calls drawThrottle in every mode), and the secondary's plate 0x4c2
+                // at the bottom centre (Hud::draw redraws it opaque while the mouse steers).
                 f.gauge = true;
                 f.crosshairVisible = crosshair != null && !crosshair.ClassListContains("crosshair--hidden");
                 if (f.crosshairVisible) f.crosshair = new Vector2(crosshair.style.left.value.value, crosshair.style.top.value.value);
+                int ammo = weapons != null ? weapons.SecondaryAmmo : -1;
+                bool turretView = level.Turret != null && level.Turret.InTurretView;
+                f.secondary = weapons != null && weapons.SelectedSecondary >= 0 && ammo > 0 && !turretView;
+                f.secondaryText = f.secondary ? $"{weapons.SecondaryName} ({ammo})" : null;
                 float thrust = ship.Model.Throttle;
                 if (lastThrust >= 0f && !Mathf.Approximately(thrust, lastThrust)) touch.NotifyThrottle();
                 lastThrust = thrust;
             }
-            if (f.mode != TouchControls.Mode.Off || !f.gauge) lastThrust = -1f;
+            if (!f.gauge) lastThrust = -1f;
             touch.Update(f, Time.unscaledDeltaTime * 1000f);
         }
 
@@ -341,6 +394,7 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-touch", kind == InputKind.Touch);
             root.EnableInClassList("input-keyboard", kind == InputKind.KeyboardMouse);
             root.EnableInClassList("input-gamepad", kind == InputKind.Gamepad);
+            root.EnableInClassList("hud-vr", Vr.VrMode.Enabled);   // VR: the HUD's middle is the canopy HUD, its corners the cockpit's displays
             if (kind != InputKind.Touch) { touch?.Reset(); weapons?.SetPrimaryHeld(false); }
             // PlayerEgo::update: handling-dependent damping only with the mouse cursor, else resetShipHandling's constants.
             if (chase != null) chase.handlingDependent = kind == InputKind.KeyboardMouse;
@@ -426,7 +480,7 @@ namespace GoF2Remake.UI
             {
                 // Autopilot to an asteroid / mining: only the drill and the action prompt matter.
                 bool drilling = lastPhase == Mining.Phase.Mining;
-                if (drilling) Hint(T("hudDrill", "DRILL"), GameControls.Steer);
+                if (drilling) Hint(T("hudDrill", "DRILL"), GameControls.Drill);
                 if (lastPhase == Mining.Phase.Approaching) Hint(ff, GameControls.FastForward);
                 Hint(drilling ? T("hudMiningStop", "STOP MINING") : T("hudMiningAbort", "ABORT"), GameControls.FirePrimary, GameControls.Action);
                 return;
@@ -483,16 +537,21 @@ namespace GoF2Remake.UI
         void UpdateMouseSteering()
         {
             if (ship == null || level == null) return;
-            bool on = Settings.MouseSteering && !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse
+            bool cursor = Settings.MouseSteering && !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse && !Vr.VrMode.Enabled
                       && !pauseMenu.IsOpen && !(nav != null && nav.MenuOpen) && !StarMap.IsOpen && !storyDialogue.IsOpen
                       && !level.Cutscene && level.LaunchCameraOver && Time.timeScale > 0f && (health == null || !health.Dead)
-                      && (mining == null || mining.State == Mining.Phase.Idle) && !(level.FreeLook != null && level.FreeLook.FreeLookActive)
+                      && !(level.FreeLook != null && level.FreeLook.FreeLookActive)
                       && (weapons == null || !weapons.SteeringMissile) && (level.Docking == null || !level.Docking.Busy)
                       && !GoF2Remake.Multiplayer.NetChat.Typing;   // multiplayer: the cursor free for the chat
+            // PlayerEgo::right etc. forward to the MiningGame while drilling (0xacd48): the mouse steers the drill then (the PC
+            // version's mining); approaching and landing it does nothing, the cursor stays locked.
+            bool idle = mining == null || mining.State == Mining.Phase.Idle;
+            bool on = cursor && idle;
             ship.mouseSteering = on;
-            var wantLock = on ? CursorLockMode.Locked : CursorLockMode.None;
+            if (mining != null) mining.mouseDrill = cursor && mining.State == Mining.Phase.Mining;
+            var wantLock = cursor ? CursorLockMode.Locked : CursorLockMode.None;
             if (UnityEngine.Cursor.lockState != wantLock) UnityEngine.Cursor.lockState = wantLock;
-            if (UnityEngine.Cursor.visible == on) UnityEngine.Cursor.visible = !on;
+            if (UnityEngine.Cursor.visible == cursor) UnityEngine.Cursor.visible = !cursor;
             if (mouseReticle == null && safeArea != null)
             {
                 mouseReticle = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -590,6 +649,7 @@ namespace GoF2Remake.UI
                 ship = level != null ? level.Player : null;
                 if (ship == null) return;
                 weapons = level.Weapons;
+                if (weapons != null) weapons.mouseOverControls = MouseOverControls;
                 mining = level.Mining;
                 if (mining != null) mining.Message += OnMiningMessage;
                 docking = level.Docking;
@@ -667,7 +727,7 @@ namespace GoF2Remake.UI
             if (prompt == null && mining != null) prompt = mining.PromptText;
             if (prompt == null && level.CanDock) prompt = Localization.Extra("hudDock", "DOCK");
             // Touch: no prompt, the fire button is the action button (its arrow shows when fire acts).
-            dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null || InputMode.Current == InputKind.Touch);
+            dockPrompt.EnableInClassList("dock-prompt--hidden", prompt == null || InputMode.Current == InputKind.Touch || cursorMode);   // touch / cursor: the arrow on fire
             if (prompt != null) dockLabel.text = prompt;
             if (prompt != null && GameControls.Action.WasPressedThisFrame())
             {
@@ -711,21 +771,13 @@ namespace GoF2Remake.UI
             bool touchMode = InputMode.Current == InputKind.Touch;
             var raw = touchMode && touch != null ? touch.Stick : Vector2.zero;
             var touchStick = tilt ? TiltSteering.Steer() : new Vector2(Mathf.Sign(raw.x) * raw.x * raw.x, Mathf.Sign(raw.y) * raw.y * raw.y);
+            if (Vr.VrControls.Steer.HasValue) touchStick = Vr.VrControls.Steer.Value;   // VR: the cockpit's stick, held
             ship.SetSteer(touchStick);
             mining?.SetTouchInput(touchStick);
 
-            if (touchMode && touch != null) weapons?.SetPrimaryHeld(touch.FireHeld);   // fire held or autofire latched
+            if ((touchMode || cursorMode) && touch != null) weapons?.SetPrimaryHeld(touch.FireHeld);   // fire held or autofire latched
 
-            // Weapons: the selected secondary's label (keyboard / controller; touch has the plate), crosshair and hit flash.
-            int ammo = weapons != null ? weapons.SecondaryAmmo : -1;
-            if (secondaryLabel != null)
-            {
-                bool any = weapons != null && weapons.SelectedSecondary >= 0;
-                secondaryLabel.EnableInClassList("secondary-label--shown", any);
-                secondaryLabel.EnableInClassList("secondary-label--empty", ammo == 0);
-                string text = any ? $"{weapons.SecondaryName} ({ammo})" : "";
-                if (secondaryLabel.text != text) secondaryLabel.text = text;
-            }
+            // Weapons: crosshair and hit flash (the secondary's name is the plate at the bottom centre, TouchControls).
             UpdateCrosshair();
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == Mining.Phase.Idle);
             miningView.UpdateGame(mining, Time.deltaTime * 1000f);
@@ -739,7 +791,7 @@ namespace GoF2Remake.UI
             var lockRing = root.Q("lockRing");
             lockRing.style.left = crosshair.style.left;
             lockRing.style.top = crosshair.style.top;
-            navView.Update(nav, Camera.main, InputMode.Current == InputKind.Touch, phase,
+            navView.Update(nav, Camera.main, InputMode.Current == InputKind.Touch || cursorMode, phase,
                            level.Layout.alienOrbit ? Standing.Void : level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
             bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
             // Radar::drawCurrentLock's order: an asteroid, then a ship lock, then a landmark (the ship's plate goes over it).
@@ -747,6 +799,7 @@ namespace GoF2Remake.UI
             // Radar::draw isn't called while the launch / arrival camera runs: no ship markers (their layer sets its display
             // inline, which the .hud-launch rule can't override).
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree, !level.LaunchCameraOver);
+            cooldownView?.Update(level.Database, level.Player, level.Cloak, !cinematic && level.LaunchCameraOver && InputMode.Current != InputKind.Touch);
             // The Ultrascan's class-A letters: Radar::draw too, so not during the launch camera or a cinematic.
             miningView.UpdateMarkers(mining, nav != null && nav.AsteroidField != null ? nav.AsteroidField.fixedPosition : (Vector3?)null, Camera.main,
                                      level.LaunchCameraOver && !cinematic && !(docking != null && docking.Busy), root.Q("navMarkers"));
@@ -785,6 +838,7 @@ namespace GoF2Remake.UI
                 if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
                 else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
                 var voiceClip = StoryAssets.Load()?.Voice(chatter.voice);
+                if (voiceClip != null) level.Traffic.HoldChatter(voiceClip.length * 1000f + 500f);
                 if (chatter.portrait == null && StoryTable.IsNarration(chatter.speakerId)) radioReveal.Clear();
                 else radioReveal.Begin(chatter.text, chatterAlien, voiceClip);
                 if (voiceClip != null && voiceSource != null) { voiceSource.clip = voiceClip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
@@ -804,6 +858,7 @@ namespace GoF2Remake.UI
                 Portrait.Show(radioPortrait, AgentGenerator.CreatePortrait(true, line.speaker == 0x40 ? 0 : line.speaker == 0x41 ? 2 : line.speaker == 0x15 ? 3 : 1), false);
             else Portrait.ShowSpeaker(radioPortrait, line.speaker, false);
             var clip = StoryAssets.Load()?.Voice(line.voice);
+            if (clip != null) radio.HoldFor(clip.length * 1000f + 500f);
             if (StoryTable.IsNarration(line.speaker)) radioReveal.Clear();
             else radioReveal.Begin(lineText, lineAlien, clip);
             if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
@@ -859,7 +914,7 @@ namespace GoF2Remake.UI
             foreach (var t in nav.MenuEntries(actions))
             {
                 var target = t;
-                var b = new Button { text = t.name.ToUpperInvariant() };
+                var b = new Button { text = MenuLabel(menuButtons.Count, t.name) };
                 b.AddToClassList("autopilot-menu-item");
                 b.AddToClassList("gof-semibold");
                 b.focusable = false;
@@ -874,6 +929,14 @@ namespace GoF2Remake.UI
             autopilotMenu.AddToClassList("autopilot-menu--shown");
             HighlightMenu();
             BuildHints(InputMode.Current);
+        }
+
+        /// <summary>An entry's text; with keys and mouse numbered "1." to "8." like the PC version's menus (its "Menu select 1-8"
+        /// keys; the station menu's entries are numbered the same way).</summary>
+        static string MenuLabel(int index, string text)
+        {
+            text = text.ToUpperInvariant();
+            return InputMode.Current == InputKind.KeyboardMouse && index < 8 ? $"{index + 1}. {text}" : text;
         }
 
         void CloseAutopilotMenu()
@@ -969,7 +1032,7 @@ namespace GoF2Remake.UI
                     CloseAutopilotMenu();
                     root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();
                 };
-                var b = new Button { text = Localization.Get(text).ToUpperInvariant() };
+                var b = new Button { text = MenuLabel(menuButtons.Count, Localization.Get(text)) };
                 b.AddToClassList("autopilot-menu-item");
                 b.AddToClassList("gof-semibold");
                 b.focusable = false;
@@ -1002,7 +1065,7 @@ namespace GoF2Remake.UI
                     root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();
                 };
                 if (it == weapons.SelectedSecondary) selected = menuButtons.Count;
-                var b = new Button { text = $"{ItemInfo.ItemName(it)} ({weapons.AmmoOf(it)})".ToUpperInvariant() };
+                var b = new Button { text = MenuLabel(menuButtons.Count, $"{ItemInfo.ItemName(it)} ({weapons.AmmoOf(it)})") };
                 b.AddToClassList("autopilot-menu-item");
                 b.AddToClassList("gof-semibold");
                 b.focusable = false;

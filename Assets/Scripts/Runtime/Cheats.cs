@@ -11,17 +11,44 @@
 //   Free jumps       Khador jumps and the cloak need no energy cells
 // Multiplayer: only when the session allows it (the Host card's Debug menu switch, a dedicated server's -allowdebug; off
 // by default): otherwise the Debug pages are gone and every cheat flag reads off (Allowed), so toggles left on in single
-// player don't follow a player into a session. The toggles themselves stay saved for single player.
+// player don't follow a player into a session. The toggles themselves stay saved for single player. An admin's /cheat
+// (NetAdmin) grants a flag to one player for the session (Grant: not saved, whatever the session allows).
 // Plain C#: the hooks read the flags (Target, PlayerHealth, VolatileCargo, WeaponSystem, CombatRadar, Mining,
 // Navigation, Hangar, GalaxyMap, PlayerCloak).
 
+using System.Collections.Generic;
 using GoF2Remake.Flight;
 using UnityEngine;
 
 namespace GoF2Remake.Data
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Cheats
     {
+        /// <summary>The flags an admin's /cheat can grant: the command's word and the flag's key.</summary>
+        public static readonly (string word, string key)[] Flags =
+        {
+            ("god", "godMode"), ("ammo", "infiniteAmmo"), ("cooldown", "noSecondaryCooldown"), ("boost", "noBoostCooldown"),
+            ("onehit", "oneHitKills"), ("locks", "instantLocks"), ("shopping", "freeShopping"), ("jumps", "freeJumps"),
+        };
+
+        /// <summary>Multiplayer: the flags an admin granted this player for the session (NetAdmin's /cheat).</summary>
+        static readonly HashSet<string> granted = new HashSet<string>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => granted.Clear();
+
+        /// <summary>A new session: no grants carried over.</summary>
+        public static void ClearGranted() => granted.Clear();
+
+        /// <summary>Grants (or takes back) flag 'key' for this session; on = null toggles. The flag's state now.</summary>
+        public static bool Grant(string key, bool? on)
+        {
+            bool now = on ?? !granted.Contains(key);
+            if (now) granted.Add(key); else granted.Remove(key);
+            return now;
+        }
+
         /// <summary>The Debug panel has been opened once: the pause menu shows its Debug page from then on.</summary>
         public static bool Unlocked { get => Get("unlocked"); set => Set("unlocked", value); }
 
@@ -35,6 +62,8 @@ namespace GoF2Remake.Data
         public static bool GodMode { get => On("godMode"); set => Set("godMode", value); }
         public static bool InfiniteAmmo { get => On("infiniteAmmo"); set => Set("infiniteAmmo", value); }
         public static bool NoSecondaryCooldown { get => On("noSecondaryCooldown"); set => Set("noSecondaryCooldown", value); }
+        /// <summary>The booster is ready again as soon as a boost ends (no recharge; a booster is still needed).</summary>
+        public static bool NoBoostCooldown { get => On("noBoostCooldown"); set => Set("noBoostCooldown", value); }
         public static bool OneHitKills { get => On("oneHitKills"); set => Set("oneHitKills", value); }
         public static bool InstantLocks { get => On("instantLocks"); set => Set("instantLocks", value); }
         public static bool FreeShopping { get => On("freeShopping"); set => Set("freeShopping", value); }
@@ -110,7 +139,7 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>A cheat flag: its saved value, off while a session doesn't allow the Debug tools.</summary>
-        static bool On(string key) => Allowed && Get(key);
+        static bool On(string key) => (Allowed && Get(key)) || (GoF2Remake.Multiplayer.NetGame.Active && granted.Contains(key));
 
         static bool Get(string key) { try { return PlayerPrefs.GetInt("cheat_" + key, 0) != 0; } catch { return false; } }
         static void Set(string key, bool on) { PlayerPrefs.SetInt("cheat_" + key, on ? 1 : 0); PlayerPrefs.Save(); }

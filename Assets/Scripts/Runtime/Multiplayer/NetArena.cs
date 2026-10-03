@@ -86,6 +86,9 @@ namespace GoF2Remake.Multiplayer
 
         static Match MatchOf(ulong client) => matches.Find(m => m.players.Contains(client));
 
+        /// <summary>The player is in an arena queue or match (/leave leaves that before the squad, NetCommands).</summary>
+        internal static bool InMatch(ulong client) => MatchOf(client) != null;
+
         static string Name(ulong client) { var p = NetSquad.Find(client); return p != null ? p.DisplayName : $"client {client}"; }
 
         // ---- chat commands ----------------------------------------------------------------------------------

@@ -324,10 +324,11 @@ namespace GoF2Remake.Flight
 
         // ---- death (PlayerEgo::explode 0xada6c, MGame::gameOverCheck 0x1b0d04) ---------------------------------
 
-        /// <summary>Player::setHitpoints(0) (MGame::OnUpdate: entering the wormhole too early): death at once, no emergency system.</summary>
-        public void Kill()
+        /// <summary>Player::setHitpoints(0) (MGame::OnUpdate: entering the wormhole too early): death at once, no emergency system.
+        /// 'force' (multiplayer's /kill) also passes god mode.</summary>
+        public void Kill(bool force = false)
         {
-            if (Dead || Cheats.GodMode) return;
+            if (Dead || (Cheats.GodMode && !force)) return;
             hasEmergency = false;
             Hp.hull = 0;
             Target.hp = 0;

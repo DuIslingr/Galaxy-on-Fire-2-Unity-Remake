@@ -139,6 +139,10 @@ namespace GoF2Remake.World
         bool departed;
         /// <summary>The player's ship is flying in or out (the station menu hides and waits).</summary>
         public bool PlayerFlying => playerFlight != null || departed;
+        /// <summary>The player's ship on the turntable (VR: grabbed to turn it).</summary>
+        public Transform PlayerShip => playerShip;
+        /// <summary>VR: a visitor picked with the laser (the lounge opens their chat, LoungePanel).</summary>
+        public System.Action<int> VisitorPicked;
         /// <summary>The player's ship is taking off or gone (multiplayer: the others in this hangar see it leave).</summary>
         public bool PlayerDeparting => (playerFlight != null && !playerFlight.arriving) || departed;
         /// <summary>The hangar's ship traffic (multiplayer: the other players' ships too, NetHangar), null = none.</summary>
@@ -646,6 +650,7 @@ namespace GoF2Remake.World
         {
             if (mainCamera == null) return;
             var cam = mainCamera.transform;
+            if (Vr.VrMode.Enabled) { VrCamera(cam); return; }
             if (View == StationView.Hangar)
             {
                 // ModStation::OnUpdate: each axis eases to a new target on the other side of the base when within 5 units.
@@ -694,6 +699,46 @@ namespace GoF2Remake.World
             }
         }
 
+        /// <summary>VR: standing in the room, still (no drift, sway or intro). The hangar: on the floor beside the pad, between
+        /// the original camera's spot and the ship, facing it, the eyes 1.7 m above the hull's bottom (the pad); the bar: the
+        /// original's view point (B), level.</summary>
+        void VrCamera(Transform cam)
+        {
+            if (View == StationView.Hangar)
+            {
+                var ship = playerShip;
+                var bounds = new Bounds(shipPivot, Vector3.one);
+                if (ship != null && !PlayerFlying)
+                {
+                    bool any = false;
+                    foreach (var r in ship.GetComponentsInChildren<MeshRenderer>())
+                    {
+                        if (!any) { bounds = r.bounds; any = true; } else bounds.Encapsulate(r.bounds);
+                    }
+                    vrShipBounds = bounds;
+                }
+                else if (vrShipBounds.size != Vector3.zero) bounds = vrShipBounds;
+                var original = shipPivot + OrbitLayout.ToUnity(hangarCamBase);
+                var away = original - bounds.center;
+                away.y = 0f;
+                if (away.sqrMagnitude < 0.01f) away = Vector3.back;
+                away.Normalize();
+                float radius = Mathf.Max(bounds.extents.x, bounds.extents.z);
+                var pos = bounds.center + away * (radius + 5f);
+                pos.y = bounds.min.y + 1.7f;
+                cam.SetPositionAndRotation(pos, Quaternion.LookRotation(-away, Vector3.up));
+                SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar);
+            }
+            else
+            {
+                introT = 1.25f;   // no intro ease
+                cam.SetPositionAndRotation(barPosB, Quaternion.Euler(0f, barRotB.eulerAngles.y, 0f));
+                SetLens(StationTables.BarFov, StationTables.BarNear, StationTables.BarFar);
+            }
+        }
+
+        Bounds vrShipBounds;
+
         float Base(int axis) => hangarCamBase[axis];
 
         void NextDriftLeg(int axis, float from)
@@ -715,12 +760,14 @@ namespace GoF2Remake.World
         /// the camera, with the camera's up); the glow sits 100 units behind; Terran bars turn visitors a further 180 deg.</summary>
         void UpdateBillboards()
         {
-            var cam = mainCamera.transform;
+            // VR: they face the head (the headset's camera), upright.
+            var eye = Vr.VrRig.Current != null ? Vr.VrRig.Current.Eye : null;
+            var cam = eye != null ? eye.transform : mainCamera.transform;
             foreach (var v in visitors)
             {
                 var toCam = cam.position - v.feet;
                 if (toCam.sqrMagnitude < 1e-6f) continue;
-                var look = Quaternion.LookRotation(toCam.normalized, cam.up);
+                var look = Quaternion.LookRotation(toCam.normalized, eye != null ? Vector3.up : cam.up);
                 if (v.body != null) v.body.rotation = BarRace == 0 ? look * Quaternion.Euler(0f, 180f, 0f) : look;
                 if (v.glow != null)
                 {

@@ -47,10 +47,10 @@ namespace GoF2Remake.Multiplayer
             public bool inMatch;
             public List<string> matches = new List<string>();
             public string top = "";
-            // Moderation (NetAdmin).
+            // Moderation (NetModeration).
             public int role;                 // 0 player, 1 op, 2 admin
             public List<BanRow> bans = new List<BanRow>();
-            // Admins (NetAdmin): the server, the staff, every profile.
+            // Admins (NetModeration): the server, the staff, every profile.
             public string serverStatus = "";
             public List<StaffRow> staff = new List<StaffRow>();
             public List<ProfileRow> profiles = new List<ProfileRow>();
@@ -112,7 +112,7 @@ namespace GoF2Remake.Multiplayer
                     s.pilots.Add(new Pilot { client = (long)other.OwnerClientId, name = other.DisplayName, tag = other.CrewTag, docked = other.InHangar,
                                              inMatch = NetArena.IsArenaOrbit(other.Station), self = other.OwnerClientId == client });
             NetProfiles.FillPanel(client, s);
-            if (NetProfiles.Enabled) NetAdmin.FillPanel(client, s);
+            if (NetProfiles.Enabled) NetModeration.FillPanel(client, s);
             if (NetProfiles.Enabled) NetCrews.FillPanel(client, s);
             NetArena.FillPanel(client, s);
             var parts = NetProfiles.Pack(JsonUtility.ToJson(s));

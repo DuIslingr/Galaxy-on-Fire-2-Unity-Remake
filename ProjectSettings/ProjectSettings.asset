@@ -861,10 +861,12 @@ PlayerSettings:
     Android: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY
     Standalone: SENTIS_ANALYTICS_ENABLED;APP_UI_EDITOR_ONLY;ENABLE_UPSCALER_FRAMEWORK
     WebGL: SENTIS_ANALYTICS_ENABLED
+    iPhone: ENABLE_UPSCALER_FRAMEWORK
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
     Android: 1
+    Standalone: 1
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration: {}
   il2cppLTOMode: {}
@@ -975,7 +977,7 @@ PlayerSettings:
   cloudProjectId: b4ef389f-7030-4e75-9f7c-9a354a7fb236
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: Galaxy on Fire 2
+  projectName: Galaxy on Fire 2 Remake
   organizationId: joppietoppie-extra
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

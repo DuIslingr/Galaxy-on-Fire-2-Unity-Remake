@@ -163,8 +163,9 @@ namespace GoF2Remake.World
             foreach (var p in planets)
             {
                 if (!p.orbitPlanet) continue;
+                // StarSystem::switchPlanetForIntro also doubles the scaling, but StarSystem::render sets the orbit planet's
+                // scale to +0x58 + zoom every frame (0x15de6c), so the x2 never shows: the size stays.
                 if (mat != null) p.t.GetComponent<MeshRenderer>().sharedMaterial = mat;
-                p.scale *= 2f;
             }
         }
 
@@ -301,7 +302,8 @@ namespace GoF2Remake.World
             float zoom = Mathf.Clamp(gameZ / -800000f, -0.2f, 0.2f);
             foreach (var p in planets)
             {
-                float k = p.orbitPlanet ? p.scale + zoom : p.scale;
+                // StarSystem::render: not in the alien orbit or a planet ring orbit (the orbit planet stays at its size).
+                float k = p.orbitPlanet && !layout.ringOrbit && !layout.alienOrbit ? p.scale + zoom : p.scale;
                 Place(p, c, p.rot, Vector3.one * k);
             }
             foreach (var r in rings) Place(r, c, r.rot, Vector3.one * r.scale);

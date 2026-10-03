@@ -30,6 +30,25 @@ namespace GoF2Remake.Data
             8, 0, 0, 2, 0, 0, 0, 1, 0, 1, 1, 2, 1, 3, 3, 3, 3, 1, 1, 0, 8, 1, 1, 0, 3, 2, 0, 0, 8, 1, 3, 1,
         };
 
+        /// <summary>The race the shop and the ship window name under a ship (remake: the original names none), -1 = none.
+        /// ShipRace is the price rule's table (Ship::adjustPrice, Globals::getRandomEnemyFighter) and differs from what the
+        /// ships are: Vossk for Trunt Harval's Nivelian Specter (44) / Scimitar (49) and the Nivelian Ghost (61), pirate for
+        /// the Terran Gryphon (52), Midorian for the Terran Dark Angel (62); the ship descriptions (977 + index) settle them.
+        /// The Vol Noor (42) is a Grey ship; the one-off Bloodstar (45) and Blue Fyre (46, "Nivelian and Terran design") name
+        /// none; the Amboss (48) is its pirate maker's.</summary>
+        public static int ShipMakerRace(int ship)
+        {
+            switch (ship)
+            {
+                case 42: return 7;
+                case 44: case 49: case 61: return 2;
+                case 52: case 62: return 0;
+                case 45: case 46: return -1;
+                case 48: return 8;
+            }
+            return ship >= 0 && ship < ShipRace.Length ? ShipRace[ship] : -1;
+        }
+
         /// <summary>DAT_00254930 (Item::canBeInstalledMultipleTimes): categories a ship can mount only once.</summary>
         static readonly HashSet<int> OnePerShip = new HashSet<int> { 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 21, 26, 27, 28, 29, 33, 35, 37, 38, 41 };
         public static bool CanInstallMultiple(int category) => !OnePerShip.Contains(category);

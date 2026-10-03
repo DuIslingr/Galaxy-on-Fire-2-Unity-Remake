@@ -122,6 +122,11 @@ namespace GoF2Remake.Multiplayer
                 return owner != null && owner.LocalTarget != null && HostileToRemote(ship, owner.LocalTarget);
             }
             int r = ship.Race;
+            if (ship.alwaysNeutral && !ship.turnedEnemy)
+            {
+                foreach (var id in ship.aggressors) if (NetSquad.SameClient(id, p)) return true;
+                return false;
+            }
             if (r == Standing.Pirate || r == Standing.Void || r == Standing.Specter) return true;
             // A crew's held station: its own race's fighters spare its members and attack other crews' pilots without the toll.
             int territory = Territory(ship, p.Station, p.CrewTag, p.TollStation);

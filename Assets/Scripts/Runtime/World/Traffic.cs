@@ -296,6 +296,9 @@ namespace GoF2Remake.World
             chatterQueue.Enqueue(c);
         }
 
+        /// <summary>Remake: the chatter stays up at least until its voice clip is over (as Radio.HoldFor).</summary>
+        public void HoldChatter(float ms) { if (chatter != null) chatterDurationMs = Mathf.Max(chatterDurationMs, ms); }
+
         /// <summary>Radio::update: hidden 2000 ms, then lines * 2000 + 1500 ms (world time).</summary>
         void UpdateChatter(float dtMs)
         {
@@ -332,6 +335,41 @@ namespace GoF2Remake.World
             baseDestroyedRadio = true;
             PirateBases.Destroyed(StationIndex);
             Radio(438, 440, Standing.Pirate);
+        }
+
+        // ---- remake: pirate events (TrafficPlan.AddPirateEvent, GitHub #6) ----------------------------------------------
+
+        bool bossCalled;
+        float eventMs;
+
+        /// <summary>The event's outpost or boss destroyed (whoever did it): the pirates' "Nooooo!" for an outpost, and the bounty
+        /// (outpost 10 000 + 1500 per rank, boss 4000 + 1500 per rank).</summary>
+        public void PirateEventDone(NpcShip ship)
+        {
+            int rank = Mathf.Min(Session.Rank, 20);
+            bool outpost = ship.Spec.pirateEvent == SpawnSpec.EventOutpost;
+            if (outpost) Radio(438, 440, Standing.Pirate);
+            int reward = (outpost ? 10000 : 4000) + 1500 * rank;
+            Session.Credits += reward;
+            BountyCollected?.Invoke(reward);
+        }
+
+        /// <summary>The boss calls the player 8 s into the orbit (the Pirate Boss face, speaker 9).</summary>
+        void UpdatePirateEvent(float dtMs)
+        {
+            if (bossCalled || RadioBlocked) return;
+            eventMs += dtMs;
+            if (eventMs < 8000f) return;
+            var boss = Ships.Find(s => s.Spec.pirateEvent == SpawnSpec.EventBoss);
+            if (boss == null || !boss.Target.Alive) { bossCalled = true; return; }
+            bossCalled = true;
+            chatterQueue.Clear();
+            chatter = null;
+            chatterQueue.Enqueue(new Chatter
+            {
+                text = Localization.Extra("pirateBossCall", "This orbit is mine now, pilot. Drop your cargo and turn around, or my boys turn you into scrap!"),
+                speakerId = 9, speaker = Localization.Get(1606),
+            });
         }
 
         // ---- Alice in the Void (MGame::OnInitialize -> Level::createRadioMessage(8), tables 0x2541c8 / 0x2543a0) ---------
@@ -545,6 +583,7 @@ namespace GoF2Remake.World
             }
             // PlayerFighter::update's death: a Most Wanted criminal pays its bounty whoever killed it; no standing hit.
             if (ship.Spec.wantedIndex >= 0) { WantedKilled(ship); if (byPlayer && ship.Target.hostileToPlayer) CountKill(); return; }
+            if (ship.Spec.pirateEvent != 0) PirateEventDone(ship);   // remake: the event's bounty, whoever killed it
             if (!byPlayer) return;
             // Player::damage: the convoy freighter ("Arms delivery") destroyed by the Liberator (0xb3) -> step 59's bonus.
             if (ship.Spec.convoyRole == SpawnSpec.ConvoyFreighter && ship.Target.lastPlayerWeapon == 179 && Session.StoryMission != null)
@@ -577,6 +616,7 @@ namespace GoF2Remake.World
             UpdateLomaToll();
             UpdateConvoy();
             UpdateWanted();
+            UpdatePirateEvent(dtMs);
             int hostiles = 0;
             if (hasScanner)
                 foreach (var s in Ships)
@@ -771,13 +811,17 @@ namespace GoF2Remake.World
         }
 
         /// <summary>Level::createRadioMessage(0xe / 0xf, system race): text 'baseText' - 2 per target station still to do
-        /// (0xe: 2185 / 2187 / 2189 "too close" lines; 0xf: 2186 / 2188, none after the last one).</summary>
+        /// (0xe: 2185 / 2187 / 2189 "too close" lines from the convoy, a face of the system race; 0xf: 2186 / 2188, none after
+        /// the last one, are Keith's: Level.c 15863 jumps to the image-0 case, speaker 0 "Keith T. Maxwell").</summary>
         void ConvoyRadio(int baseText, bool afterKill)
         {
             int text = baseText;
             foreach (int t in Session.StoryTargets) if (t >= 0) text -= 2;
-            if (afterKill && (text < 0x889 || text > 0x88d)) return;
-            Radio(text, text, SystemRace);
+            if (!afterKill) { Radio(text, text, SystemRace); return; }
+            if (text < 0x889 || text > 0x88d || RadioBlocked) return;
+            chatterQueue.Clear();
+            chatter = null;
+            chatterQueue.Enqueue(new Chatter { text = Localization.Get(text), speakerId = 0, speaker = Localization.Get(1597), voice = GenericVoice.For(text) });
         }
 
         /// <summary>Level::updateOrbit: relaunches and raider waves (not in a campaign orbit).</summary>
@@ -848,6 +892,9 @@ namespace GoF2Remake.World
         bool SpectersHostile => Ships.Exists(s => s.Race == Standing.Specter && !s.Gone && !s.Inactive && s.Target.Alive && s.Target.hostileToPlayer);
         /// <summary>The supernova system (27) before campaign 0x9e: its own calm music (148).</summary>
         bool SupernovaCalm => !Session.FreePlay && Session.CampaignMission < 0x9e && (db.Stations.Find(s => s.index == StationIndex)?.system ?? -1) == 27;
+
+        /// <summary>DAT_00252010[race]: the system race's space track (Globals::playMusicAndFadeOutCurrent(1)).</summary>
+        public AudioClip RaceSpaceMusic() => assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null;
 
         /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
         /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before

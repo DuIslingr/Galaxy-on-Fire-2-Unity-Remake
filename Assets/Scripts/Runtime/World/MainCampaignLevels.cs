@@ -19,7 +19,8 @@
 //   36 B'akka       the kill contest with Errkt (H'Soc, speed 3, on the player's 4-waypoint route): 7 sleeping pirates;
 //                   won with more kills than Errkt, failed with as many or fewer
 //   38 Dekato       two parked Nivelian freighters, five Midorian fighters: kill them before both freighters die
-//   40 invasion     Errkt's freighter (Vossk, 5 * level + 1800) comes out at 40 s and flies (+Z) through the wormhole, the
+//   40 invasion     Errkt's freighter (Vossk, 5 * level + 1800) comes out at 40 s and flies (+Z) into the wormhole (which
+//                   swallows it: its distance past the hole doubles every frame; then Keith's 2048), the
 //                   player's orbit    Terran fighters (Jean Baffour) help, 4 + 4 reserve Void fighters; the wormhole never closes; entering
 //                   it after the freighter went through carries its hull into 41
 //   41 Void         the escort to the mother ship: seven Void fighters, three more at the freighter near z -100000, its
@@ -330,7 +331,7 @@ namespace GoF2Remake.World
                 case 24: if (index == 24) Tick24(dtMs); break;
                 case 25: if (index == 26 && Step == 0 && Triggered(1)) { Hole?.ResetTimer(false); Hole?.SetVisible(true); Step = 1; } break;
                 case 29: if (index == 29) Tick29(dtMs); break;
-                case 40: if (index == 40) Tick40(); break;
+                case 40: if (index == 40) Tick40(dtMs); break;
                 case 41: if (index == 41) Tick41(dtMs); else if (index == 42) Tick42(dtMs); break;
             }
         }
@@ -449,7 +450,7 @@ namespace GoF2Remake.World
                     if (Over(3))
                     {
                         foreach (var s in c.Ships) if (s != null && s.Race == Standing.Void) Remove(s);
-                        Hole?.SetVisible(false);
+                        Hole?.ResetTimer(true);   // reset(closing): shrinks away after a second
                         Step = 5;
                     }
                     break;
@@ -483,11 +484,13 @@ namespace GoF2Remake.World
                         cam.LookAtUnity(Player.position + side * M, Player);
                         if (Hole != null)
                         {
-                            // Ahead of the player; the remake keeps it clear of the station (inside its volumes the station
-                            // collision would hold the ship off the pull for good).
-                            var ahead = PlayerGame + PlayerDirGame * 30000f;
+                            // Ahead of the player, inside PlayerEgo::calcCollision's 40000 pull radius whatever the ship does
+                            // meanwhile (the original's distance k is lost); the remake keeps it clear of the station by moving
+                            // it above the ship at the same distance instead (adding 30000 upward left it 42000 away from a ship
+                            // parked near the station: never pulled, and gone after a minute).
+                            var ahead = PlayerGame + PlayerDirGame * 20000f;
                             if (level.Station != null && ahead.magnitude < 30000f)
-                                ahead += new Vector3(Player.up.x, Player.up.y, -Player.up.z) * 30000f;
+                                ahead = PlayerGame + new Vector3(Player.up.x, Player.up.y, -Player.up.z) * 20000f;
                             Hole.SetPosition(ahead);
                         }
                         foreach (var s in c.Ships) s?.SetOnlyEnemy(null);
@@ -548,7 +551,7 @@ namespace GoF2Remake.World
         }
 
         // 40: Errkt's freighter through the wormhole (M40).
-        void Tick40()
+        void Tick40(float dtMs)
         {
             var f = S(0);
             if (f == null) return;
@@ -589,19 +592,31 @@ namespace GoF2Remake.World
                     }
                     break;
                 case 3:
-                    if (Hole != null && z >= Hole.GamePosition.z) Step = 4;
+                    if (Hole != null && z >= Hole.GamePosition.z) { holeZ = Hole.GamePosition.z; Step = 4; }
                     break;
                 case 4:
+                {
+                    // LevelScript 0x28 event 4 (0x1676e0): moveForward((z - 200000) - dt) on top of PlayerFixedObject's
+                    // own moveForward(dt): each 30 fps frame it advances by its distance past the wormhole, which doubles
+                    // it, so the hole swallows the freighter in about half a second (here per real time, not per frame).
+                    float past = Mathf.Max(1f, z - holeZ);
+                    float extra = past * (Mathf.Pow(2f, dtMs / (1000f / 30f)) - 1f);
+                    f.transform.position += f.transform.forward * (extra * M);
+                    z = -f.transform.position.z / M;
                     if (z > 500000f)
                     {
+                        // Inactive, not dead: radio trigger 0x18 then gives Keith's 2048 (Errkt went through).
                         f.Place(ToUnity(new Vector3(0, 0, -200000)), Dir(new Vector3(0, 0, 1)));
                         f.Deactivate();
                         f.SetVisible(false);
                         Step = 5;
                     }
                     break;
+                }
             }
         }
+
+        float holeZ;
 
         // 41: Errkt's last flight (M41).
         void Tick41(float dtMs)
@@ -645,14 +660,19 @@ namespace GoF2Remake.World
                 case 2:
                     // It drifts (0, -dt, 2dt) and rolls dt * 3e-5 for 15 s.
                     f.transform.position += ToUnity(new Vector3(0f, -1f, 2f)) * dtMs;
-                    // AEGeometry::rotate(dt * 3e-5, -, 3e-5): pitch and roll (the middle axis is lost in the decompilation).
-                    f.transform.Rotate(new Vector3(dtMs * 3e-5f, 0f, dtMs * 3e-5f) * Mathf.Rad2Deg, Space.Self);
+                    // AEGeometry::rotate(0, 0, dt * 3e-5) (disassembly 0x166df4): a roll only (game z = the hull's own axis;
+                    // the mirror flips its sign).
+                    f.transform.Rotate(0f, 0f, -dtMs * 3e-5f * Mathf.Rad2Deg, Space.Self);
                     if (stepMs >= 15000f) Step = 3;
                     break;
                 case 3:
-                    f.Place(ToUnity(new Vector3(2006, -31500, -86720)), f.transform.forward);
+                    // LevelScript 0x29 step 3 (0x16c676): setPosition(2006, -31500, -86720), then the absolute
+                    // setRotation(-0.4, 0, 1.8): on its side on the mother ship's arm (keeping the drift's heading with a
+                    // level roll put it in nose first, like a dart); the wreck takes this pose when it dies.
+                    f.transform.SetPositionAndRotation(ToUnity(new Vector3(2006, -31500, -86720)), OrbitLayout.RotationToUnity(new Vector3(-0.4f, 0f, 1.8f)));
                     f.SetExhaust(false);
-                    cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(-6000, 3000, -8000)), f.transform);
+                    // The camera at the freighter + (3000, 1000, 2000), world up (useTargetsUpVector(false)).
+                    cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(3000, 1000, 2000)), f.transform);
                     for (int i = 1; i < c.Ships.Count; i++) S(i)?.SetOnlyEnemy(level.Health.Target);
                     Step = 4;
                     break;

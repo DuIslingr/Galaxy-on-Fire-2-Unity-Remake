@@ -65,6 +65,9 @@ namespace GoF2Remake.World
         public float planetLightIntensity = 1f;
         public float ambientIntensity = 1f;
 
+        /// <summary>The orbit's own sky (Level::switchSkyboxForIntro: the prologue's time jump, nebula 9 = Mido's).</summary>
+        public void RestoreOrbitSky() => OrbitBuilder.SetupSky(Layout, ambientIntensity);
+
         public OrbitLayout Layout { get; private set; }
         public ShipController Player { get; private set; }
         public WeaponSystem Weapons { get; private set; }
@@ -202,8 +205,11 @@ namespace GoF2Remake.World
             else SpawnNetworkAsteroids(NetGame.OrbitSeed(NetOrbitId));
             if (prologue && Story.Index == 0)
             {
-                var story = StoryAssets.Load();
-                if (story != null && story.introSky != null) { RenderSettings.skybox = story.introSky; DynamicGI.UpdateEnvironment(); }
+                // Level::createSpace: the belt's sky is nebula 3 (skybox_003) under the orbit's stars and sky rotation;
+                // StarSystem::StarSystem (Level type 3, mission 0): the orbit planet is planet_001_big until the time jump.
+                OrbitBuilder.SetupSky(Layout, ambientIntensity, 3);
+                var own = Layout.planets.Find(p => p.isOrbitPlanet);
+                if (own != null) own.texture = "planet_001_big";
             }
             orbitInfo = Session.ArrivedBySystemJump;
             Session.ArrivedBySystemJump = false;
@@ -272,7 +278,7 @@ namespace GoF2Remake.World
             {
                 FreelanceOrbit = new GameObject("FreelanceOrbit mission").AddComponent<FreelanceOrbit>();
                 FreelanceOrbit.Setup(this, Traffic);
-                Navigation.SetRoute(FreelanceOrbit.PlayerRoute);
+                Navigation.SetRoute(FreelanceOrbit.PlayerRoute, true);
             }
             else if (missionFollower)
             {
@@ -305,8 +311,9 @@ namespace GoF2Remake.World
             Hints.Setup(this);
             Navigation.JumpsBlocked = () => NetArenaClient.InMatch || !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100)   // escorting Khador (MGame::UseKhadorDrive)
-                                            // remake: no Khador Drive out of the Void in the main story (its wormhole is the way back)
-                                            || (Layout.alienOrbit && !Story.GameWon && Story.ForcedKhadorTarget(Layout.stationIndex) == null);
+                                            // remake: no Khador Drive out of the Void while its wormhole is the way back (the
+                                            // main story before the ride out at 43); free play / sessions have no wormhole
+                                            || (Layout.alienOrbit && !Session.FreePlay && Story.Index < 43 && Story.ForcedKhadorTarget(Layout.stationIndex) == null);
             Navigation.SetWormhole(Wormhole);
             Navigation.PlanetJumpRefused = st => StorySpace != null && StorySpace.RefusePlanetJump(st);
             SystemJump.GateBlocked = () => Siege != null && Siege.Active;
@@ -427,6 +434,7 @@ namespace GoF2Remake.World
         }
 
         bool riding, rode;
+        float rideHoldMs;
         /// <summary>The level is being left (wormhole ride, docking): the story checks stop.</summary>
         public bool Leaving { get; private set; }
 
@@ -442,9 +450,13 @@ namespace GoF2Remake.World
                 RideWormhole();
                 return;
             }
+            // Step 24: Carla's "What is this thing? KEITH!" (radio line 4, text 1921) starts as the wormhole opens and shows
+            // 2 s later; the ride waits for it (8 s at most), or the scene load swallows the line.
+            if (active && index == 24 && Campaign.Radio != null && Campaign.Radio.Triggered(4) && !Campaign.Radio.Over(4)
+                && (rideHoldMs += Time.deltaTime * 1000f) < 8000f) return;
             if (active)
             {
-                if (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3)) { riding = true; Health.Kill(); return; }
+                if (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3)) { Health.Kill(); riding = Health.Dead; return; }   // the original sets HP 0 every frame: an emergency system or god mode tries again
                 if (index == 40) Session.LastFreighterHull = Campaign.FreighterHull;
                 if (index < 41) Story.Advance(db);
             }
@@ -486,14 +498,56 @@ namespace GoF2Remake.World
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
+        /// <summary>Remake multiplayer (NetTeleport): an admin's teleport out of this orbit, into another orbit (the pose
+        /// from NetTeleport.TakePose, no launch camera) or into a station's hangar ('dock'). False while the ship can't go
+        /// (already leaving, destroyed).</summary>
+        public bool TeleportOut(int station, bool dock)
+        {
+            if (Leaving || (Health != null && Health.Dead)) return false;
+            if (dock)
+            {
+                Session.StationIndex = station;
+                Dock(false);
+                return true;
+            }
+            Leaving = true;
+            Weapons?.StoreAmmo();
+            if (station == Session.VoidOrbit && !Layout.alienOrbit) Session.VoidReturnStation = Layout.stationIndex;
+            Session.PreviousStationIndex = Layout.stationIndex;
+            Session.StationIndex = station;
+            Session.ArrivedByTravel = false;
+            Session.LaunchedFromStation = false;
+            Session.ProgrammedStation = -1;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            return true;
+        }
+
+        /// <summary>Remake multiplayer (NetTeleport): a teleport within this orbit moves the ship in place, the autopilot off.
+        /// False while something else flies it (mining, object docking, a planet jump, a script's camera, dead): the orbit
+        /// is loaded again instead.</summary>
+        public bool MoveForTeleport(Vector3 position, Quaternion rotation)
+        {
+            if (Leaving || Player == null || (Health != null && Health.Dead) || (Mining != null && Mining.State != Flight.Mining.Phase.Idle)
+                || (Docking != null && Docking.Busy) || (Navigation != null && Navigation.Jumping) || chase == null || chase.scriptCamera)
+                return false;
+            Navigation?.SetAutopilot(null);
+            MovePlayer(position, rotation);
+            return true;
+        }
+
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see Obstacle).</summary>
         void AddObstacles() => OrbitBuilder.AddObstacles(Layout, Station, Jumpgate);
+
+        float farClip = 300000f * M;   // the level's far plane (m), see SetupCamera
 
         void SetupCamera()
         {
             if (mainCamera == null) mainCamera = Camera.main;
             mainCamera.nearClipPlane = 20f * M;
-            mainCamera.farClipPlane = 300000f * M;
+            // StarSystem::render: 300000, 450000 in the alien orbit before mission 0x50 (the Void's fighters sit up to
+            // 100000 out and the wormhole reopens 60000-100000 out while the player arrives 170000-220000 out).
+            farClip = (Layout != null && Layout.alienOrbit && Story.Index < 0x50 ? 450000f : 300000f) * M;
+            mainCamera.farClipPlane = farClip;
             mainCamera.clearFlags = CameraClearFlags.Skybox;
         }
 
@@ -528,7 +582,8 @@ namespace GoF2Remake.World
             ctrl.stats.cargoLoad = Shop.CargoLoad();
             ctrl.ApplyStats();
 
-            PlayerHull.FitCamera(root.transform, model.transform, chase);
+            PlayerHull.FitCamera(root.transform, model.transform, chase, farClip);
+            Weapons?.Rebuild(db, shipIndex, Session.Equipment);   // the new hull's mounts (none for 13 / 14 / 15 / capital ships)
 
             foreach (var ex in root.GetComponents<ShipExhaust>()) Destroy(ex);
             if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, shipIndex);   // a freighter / capital ship: none
@@ -571,6 +626,8 @@ namespace GoF2Remake.World
                 var start = OrbitLayout.ToUnity(new Vector3(70000f, 0f, 100000f));
                 root.transform.SetPositionAndRotation(start, Quaternion.LookRotation(-start.normalized, Vector3.up));
             }
+            // Remake multiplayer: an admin's teleport into this orbit (NetTeleport) brings its own pose.
+            if (NetTeleport.TakePose(out var tpPos, out var tpRot)) root.transform.SetPositionAndRotation(tpPos, tpRot);
             var ctrl = root.AddComponent<ShipController>();
             var equipment = new System.Collections.Generic.List<ItemData>();
             foreach (var e in Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
@@ -609,7 +666,7 @@ namespace GoF2Remake.World
             chase.offset = new Vector3(0f, 600f, -1338f) * M;
             chase.lookOffset = new Vector3(0f, 600f, -650f) * M;
             // Remake debug: a freighter's or capital ship's hull is far bigger than any ship the camera was made for.
-            if (PlayerHull.Big) PlayerHull.FitCamera(root.transform, ctrl.visualModel, chase);
+            if (PlayerHull.Big) PlayerHull.FitCamera(root.transform, ctrl.visualModel, chase, farClip);
             // CameraSetPerspective(1.22 rad) is the vertical FOV: with the level look offset the ship then sits in the
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens). Remake: the
             // field of view option (Settings.OriginalFov by default).

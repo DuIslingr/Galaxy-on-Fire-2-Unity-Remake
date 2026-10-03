@@ -1,7 +1,8 @@
 // BindingRow.cs
 // One line of the key bindings list (remake, Options > Controls; OptionKind.Binding, styled by GoF2Common.uss .binding-*):
 // the control's name, then its slots as cells: two keyboard / mouse keys and the controller button (GameControls). A click or
-// tap on a cell, or Enter / A on the row (left / right pick the cell), waits for the new key: Esc cancels, Backspace / Delete
+// tap on a cell, or Enter / A on the row (left / right pick the cell), waits for the new key: Esc cancels (and the other
+// devices: GameControls.Rebind, or 10 s without input), Backspace / Delete
 // unbinds, a right click unbinds a cell. The row itself is the focusable element, like ChoiceRow. While a key is being
 // captured the panel's navigation events are swallowed (the menus' own keys would act on it too).
 
@@ -61,10 +62,11 @@ namespace GoF2Remake.UI
                 e.StopPropagation();
                 focusController?.IgnoreEvent(e);
             });
-            RegisterCallback<AttachToPanelEvent>(e => { GameControls.Changed += Refresh; BlockWhileRebinding(e.destinationPanel); Refresh(); });
+            RegisterCallback<AttachToPanelEvent>(e => { GameControls.Changed += Refresh; InputMode.Changed += Refresh; BlockWhileRebinding(e.destinationPanel); Refresh(); });
             RegisterCallback<DetachFromPanelEvent>(_ =>
             {
                 GameControls.Changed -= Refresh;
+                InputMode.Changed -= Refresh;
                 if (listening >= 0) GameControls.CancelRebind();
             });
             Refresh();
@@ -101,9 +103,14 @@ namespace GoF2Remake.UI
         /// <summary>Enter / A on the row: capture the selected cell's key.</summary>
         public void Activate() => Listen(selected);
 
+        /// <summary>A keyboard cell takes a capture only once a keyboard was used (InputMode.KeyboardSeen): on a phone without
+        /// one it would wait for a key that can't come.</summary>
+        static bool Usable(int slot) => slot == (int)BindSlot.Pad || InputMode.KeyboardSeen;
+
         void Listen(int slot)
         {
-            if (!row.HasSlot((BindSlot)slot)) return;
+            if (!Usable(slot) && row.HasSlot(BindSlot.Pad)) slot = selected = (int)BindSlot.Pad;   // Enter / A on the row
+            if (!row.HasSlot((BindSlot)slot) || !Usable(slot)) return;
             listening = slot;
             part = null;
             Refresh();
@@ -133,6 +140,7 @@ namespace GoF2Remake.UI
                 b.EnableInClassList("binding-cell--unbound", has && !wait && !GameControls.IsBound(row, (BindSlot)s));
                 b.EnableInClassList("binding-cell--listening", wait);
                 b.EnableInClassList("binding-cell--selected", s == selected);
+                b.SetEnabled(has && Usable(s));
             }
         }
 

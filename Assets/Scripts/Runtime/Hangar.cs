@@ -250,15 +250,19 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>Trade-in: credits += current - new; mounted items move to the first free slot of their type in the new
-        /// ship (Ship::addEquipment), the rest to cargo; the dealer's row becomes the old ship.</summary>
+        /// ship (Ship::addEquipment), the rest to cargo; the dealer's row becomes the old ship. Mods belong to the hull
+        /// (HangarWindow::OnTouchEnd 0x176d94): the new ship gets the bought row's mods, the row that takes the old ship gets
+        /// the old ship's, so a ship sold and bought back keeps its Kaamo upgrades.</summary>
         public bool BuyShip(int ship)
         {
             if (CanBuyShip(ship, out _) != Result.Ok) return false;
             int old = Session.ShipIndex;
+            var oldMods = new List<int>(Session.ShipMods ?? new List<int>());
             if (!Cheats.FreeShopping) ChangeCredits(ShipPrice(old) - ShipPrice(ship));
-            SwitchTo(ship, null);   // mods stay with the old hull (Ship::clone copies them)
+            SwitchTo(ship, Stock.TakeMods(ship));
             int row = Stock.ships.IndexOf(ship);
             if (row >= 0) Stock.ships[row] = old; else Stock.ships.Add(old);
+            Stock.PutMods(old, oldMods);
             GoF2Remake.Multiplayer.NetStock.ShipChanged(Station, ship, old);   // multiplayer: the shared dealer list
             return true;
         }
@@ -297,7 +301,7 @@ namespace GoF2Remake.Data
             int old = Session.ShipIndex;
             var oldMods = Session.ShipMods;
             if (!Cheats.FreeShopping) ChangeCredits(-ShipPrice(ship));
-            SwitchTo(ship, null);
+            SwitchTo(ship, Stock.TakeMods(ship));   // the bought row's mods (OnTouchEnd: getMods of the row, both branches)
             Stock.ships.Remove(ship);   // the bought row is gone
             GoF2Remake.Multiplayer.NetStock.ShipChanged(Station, ship, -1);
             KaamoClub.Store(old, 0, oldMods);   // a bare hull (makeShip(old) + its mods; Ship::clone resets the race to 0)

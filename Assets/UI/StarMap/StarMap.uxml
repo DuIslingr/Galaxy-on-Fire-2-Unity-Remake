@@ -22,6 +22,7 @@
                 <ui:VisualElement class="map-footer" picking-mode="Ignore">
                     <ui:Button name="backButton" class="map-button gof-semibold" />
                     <ui:VisualElement name="hints" class="map-hints" picking-mode="Ignore" />
+                    <ui:Button name="zoomButton" class="map-button gof-semibold" />
                     <ui:Button name="keyButton" class="map-button gof-semibold" />
                 </ui:VisualElement>
             </ui:VisualElement>

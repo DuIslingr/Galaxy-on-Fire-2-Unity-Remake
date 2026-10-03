@@ -287,8 +287,8 @@ namespace GoF2Remake.World
         void Build94()
         {
             for (int i = 0; i < 6; i++) Specter(new Vector3(-700000, 0, -700000), true, s => s.asleep = true).CloakingPossible = false;
-            Static("sn_burning_station_mission_object", Vector3.zero, new Vector3(0, -2.356f, 0), 3208, ObjectDocking.Pickup, 6);
-            Static("cargo_001_midorian", new Vector3(30000, -5000, 40000), Vector3.zero, 3209, ObjectDocking.DropOff, 4);
+            var burning = Static("sn_burning_station_mission_object", Vector3.zero, new Vector3(0, -2.356f, 0), 3208, ObjectDocking.Pickup, 6);
+            var freighter = Static("cargo_001_midorian", new Vector3(30000, -5000, 40000), Vector3.zero, 3209, ObjectDocking.DropOff, 4);
             // [8, 9] Midorian shuttles looping station -> (20000, -3000, 30000) -> freighter, 12 s at each end.
             for (int i = 0; i < 2; i++)
             {
@@ -296,7 +296,8 @@ namespace GoF2Remake.World
                                     sp => { sp.alwaysFriend = true; sp.noLoot = true; });
                 s.SetOnlyEnemy(null);
                 shuttles.Add(new Shuttle { ship = s, points = new[] { Vector3.zero, new Vector3(20000, -3000, 30000), new Vector3(30000, -5000, 40000) },
-                                           dockMs = new[] { 12000f, 0f, 12000f }, dropOff = 2, perUnitMs = 1500f, leg = i });
+                                           dockMs = new[] { 12000f, 0f, 12000f }, dropOff = 2, perUnitMs = 1500f, leg = i,
+                                           dockAt = new[] { burning?.transform, null, freighter?.transform }, dockSets = new[] { 6, 0, 4 } });
             }
             c.FailObjective = () => c.ShipDestroyed(7);   // Objective(1, 7): the freighter destroyed
         }
@@ -336,15 +337,18 @@ namespace GoF2Remake.World
         {
             MovePlayer(new Vector3(90000, 6000, 150000), -new Vector3(90000, 6000, 150000));
             var carrierPos = new Vector3(-50000, 1000, 70000);
-            Static("sn_carrier_terran_1", carrierPos, Vector3.zero, -1, ObjectDocking.DropOff, 5);
+            var carrier = Static("sn_carrier_terran_1", carrierPos, Vector3.zero, -1, ObjectDocking.DropOff, 5);
             c.AddPlaceholder();   // [1] the damaged Tadram (the orbit's own station stands in)
+            // The Tadram's pads (set 10, its col_box proxy at the origin, rotation (0, pi, 0) = Unity identity).
+            var tadram = level.Station != null ? level.Station.transform : new GameObject("Tadram pads").transform;
             var stops = new[] { carrierPos, new Vector3(-30000, 1000, 40000), Vector3.zero };
             var starts = new[] { carrierPos + new Vector3(10000, 6000, -20000), new Vector3(30000, 8000, -35000), new Vector3(35000, 8000, -40000), new Vector3(40000, 8000, -45000) };
             for (int i = 0; i < 4; i++)
             {
                 var s = c.SpawnShip(0, 51, starts[i], false, sp => { sp.alwaysFriend = true; sp.noLoot = true; });
                 s.SetOnlyEnemy(null);
-                shuttles.Add(new Shuttle { ship = s, points = stops, dockMs = new[] { 20000f, 0f, 20000f }, dropOff = 0, perUnitMs = 200f, leg = i % 3, rhino = true });
+                shuttles.Add(new Shuttle { ship = s, points = stops, dockMs = new[] { 20000f, 0f, 20000f }, dropOff = 0, perUnitMs = 200f, leg = i % 3, rhino = true,
+                                           dockAt = new[] { carrier?.transform, null, tadram }, dockSets = new[] { 5, 0, 10 } });
             }
             for (int i = 0; i < 4; i++) Specter(new Vector3(1e6f, 1e6f, 1e6f), false, s => s.asleep = true).CloakingPossible = false;
             c.WinObjective = () => Over(8);                   // Objective(4, 8)
@@ -597,8 +601,11 @@ namespace GoF2Remake.World
             hans.Place(ToUnity(at), Player.forward);
             hans.SetOnlyEnemy(null);
             hans.frozen = true;
-            var valkyrie = Static("v_station_battlestation_anim_mission_object", Vector3.zero, Vector3.zero, 77, ObjectDocking.Hackable, 7);
-            PartAnimation.HoldAll(valkyrie.gameObject);   // PlayerFixedObject::update never advances an idle animation
+            // Level case 0x9a: setRotation(0, pi, 0) (disassembly 0xc4ce0), like every PlayerStation and 157's Valkyrie.
+            var valkyrie = Static("v_station_battlestation_anim_mission_object", Vector3.zero, new Vector3(0f, Mathf.PI, 0f), 77, ObjectDocking.Hackable, 7);
+            // Level::createStaticObject(0x4220) 0xcdcee: Transform::Update(the length) once, unfolded; PlayerFixedObject::update
+            // never advances an idle animation after that.
+            PartAnimation.HoldAllAtEnd(valkyrie.gameObject);
             valkyrie.RadarHidden = true;
             valkyrie.DockingType = 0;   // hackable once Alice turns on the player
             for (int i = 2; i < 22; i++)
@@ -648,7 +655,7 @@ namespace GoF2Remake.World
             var vrot = OrbitLayout.RotationToUnity(new Vector3(0, Mathf.PI, 0));
             var valkyrie = Scenery("v_station_battlestation_anim_mission_object", vp, vrot, "Valkyrie");
             valkyrieGun = Scenery("sn_plasma_gun_valkyrie", vp, vrot, "Valkyrie plasma gun");
-            PartAnimation.HoldAll(valkyrie);
+            PartAnimation.HoldAllAtEnd(valkyrie);   // PlayerStation ctor at 0x9d (0x14727a): unfolded, the burning stages on its arms
             valkyrieGo = valkyrie;
             valkyrieAt = vp;
             valkyrieRot = vrot;
@@ -2052,8 +2059,101 @@ namespace GoF2Remake.World
             public int dropOff, leg;
             public float perUnitMs, waitMs, tickMs;
             public bool rhino, waiting;
+            // The object each leg docks at (null = a plain waypoint) and its SpacePoints set (PlayerFighter states 7-9).
+            public Transform[] dockAt;
+            public int[] dockSets;
+            public int dockPhase;            // 0 flying to the approach point, 1 easing onto the pad, 2 docked
+            public int taken = -1;           // the docking point index taken on dockAt[leg]
+            public Vector3 approachLocal, pivotLocal, fromPos;
+            public Quaternion localRot, fromRot;
+            public float easeMs;
         }
         readonly List<Shuttle> shuttles = new List<Shuttle>();
+        /// <summary>SpacePoint::take / giveFree, per object: the docking points in use.</summary>
+        readonly HashSet<(Transform, int)> takenPoints = new HashSet<(Transform, int)>();
+
+        /// <summary>PlayerFighter states 7 / 8 (game/PlayerFighter.c 2779-2890): the nearest free approach point (type 1), reached
+        /// within 2000 units; then the docking point nearest it, eased onto like the player's (approachDockingPoint: nose = the
+        /// point's direction, up = from the docking point to the approach point, stopping the ship's height short of it,
+        /// DAT_00254820 = StationTables.ShipY) over 2000 ms (assumed: the NPC's ease time was lost in the decompile); state 9
+        /// docked, the exhaust off. Returns true once docked.</summary>
+        bool ShuttleDocking(Shuttle sh, Transform obj, float dtMs)
+        {
+            var s = sh.ship;
+            var points = SpacePoints.Set(sh.dockSets[sh.leg]);
+            if (sh.taken < 0)
+            {
+                // Pick the nearest free approach point and the docking point nearest it.
+                float best = float.MaxValue;
+                int pick = -1;
+                for (int i = 0; i < points.Count; i++)
+                {
+                    if (points[i].type != SpacePoints.Approach || takenPoints.Contains((obj, i))) continue;
+                    float d = (obj.TransformPoint(SpacePoints.ToLocal(points[i].engine)) - s.transform.position).sqrMagnitude;
+                    if (d < best) { best = d; pick = i; }
+                }
+                if (pick < 0) return false;   // every pad busy: hold here (the waypoint logic below keeps it flying)
+                var a = SpacePoints.ToLocal(points[pick].engine);
+                best = float.MaxValue;
+                int dock = -1;
+                for (int i = 0; i < points.Count; i++)
+                {
+                    if (points[i].type != SpacePoints.Dock) continue;
+                    float d = (SpacePoints.ToLocal(points[i].engine) - a).sqrMagnitude;
+                    if (d < best) { best = d; dock = i; }
+                }
+                if (dock < 0) return false;
+                sh.taken = pick;
+                takenPoints.Add((obj, pick));
+                var dLocal = SpacePoints.ToLocal(points[dock].engine);
+                var up = a - dLocal;
+                up = up.sqrMagnitude > 1e-8f ? up.normalized : Vector3.up;
+                var nose = SpacePoints.DirToLocal(points[dock].dir);
+                sh.approachLocal = a;
+                sh.pivotLocal = dLocal + up * (StationTables.ShipY(s.Spec.ship) * M);
+                sh.localRot = Quaternion.LookRotation(nose.sqrMagnitude > 1e-6f ? nose : Vector3.forward, up);
+                sh.dockPhase = 0;
+            }
+            if (sh.dockPhase == 0)
+            {
+                var to = obj.TransformPoint(sh.approachLocal) - s.transform.position;
+                if (to.magnitude / M > 2000f)
+                {
+                    s.scriptedSpeed = 2f;
+                    s.transform.rotation = Quaternion.RotateTowards(s.transform.rotation, Quaternion.LookRotation(to.normalized, Vector3.up), 0.05f * dtMs);
+                    return false;
+                }
+                sh.dockPhase = 1;
+                sh.easeMs = 0f;
+                sh.fromPos = s.transform.position;
+                sh.fromRot = s.transform.rotation;
+            }
+            if (sh.dockPhase == 1)
+            {
+                s.scriptedSpeed = 0f;
+                sh.easeMs += dtMs;
+                float t = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(sh.easeMs / 2000f));
+                s.transform.SetPositionAndRotation(Vector3.Lerp(sh.fromPos, obj.TransformPoint(sh.pivotLocal), t),
+                                                   Quaternion.Slerp(sh.fromRot, obj.rotation * sh.localRot, t));
+                if (t < 1f) return false;
+                sh.dockPhase = 2;
+                s.SetExhaust(false);
+            }
+            // Docked: stay on the pad (the object may move).
+            s.scriptedSpeed = 0f;
+            s.transform.SetPositionAndRotation(obj.TransformPoint(sh.pivotLocal), obj.rotation * sh.localRot);
+            return true;
+        }
+
+        /// <summary>Leaving a pad: the point is free again, the exhaust on; the ship flies off nose first.</summary>
+        void ShuttleUndock(Shuttle sh)
+        {
+            var obj = sh.dockAt != null && sh.leg < sh.dockAt.Length ? sh.dockAt[sh.leg] : null;
+            if (obj != null && sh.taken >= 0) takenPoints.Remove((obj, sh.taken));
+            if (sh.taken >= 0) sh.ship.SetExhaust(true);
+            sh.taken = -1;
+            sh.dockPhase = 0;
+        }
 
         /// <summary>The loops station -> waypoint -> drop-off with their docking times; at the drop-off the evacuees go aboard
         /// the freighter / carrier (1 per 1500 ms, the Rhinos 1 per 200 ms). At 94 they stop unloading once the rest fits
@@ -2078,8 +2178,21 @@ namespace GoF2Remake.World
                     }
                     if (sh.waitMs < sh.dockMs[sh.leg]) continue;
                     sh.waiting = false;
+                    ShuttleUndock(sh);
                     sh.leg = (sh.leg + 1) % sh.points.Length;
                     continue;
+                }
+                // A leg at an object: its pads (the original's docking route waypoint), not the object's centre.
+                var dockObj = sh.dockAt != null && sh.leg < sh.dockAt.Length ? sh.dockAt[sh.leg] : null;
+                if (dockObj != null)
+                {
+                    if (ShuttleDocking(sh, dockObj, dtMs))
+                    {
+                        sh.waiting = sh.dockMs[sh.leg] > 0f;
+                        sh.waitMs = sh.tickMs = 0f;
+                        if (!sh.waiting) { ShuttleUndock(sh); sh.leg = (sh.leg + 1) % sh.points.Length; }
+                    }
+                    if (sh.taken >= 0) continue;   // no free pad: fall through and hold near the object's centre
                 }
                 var to = ToUnity(target) - s.transform.position;
                 if (to.magnitude / M < 2500f)

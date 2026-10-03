@@ -1,38 +1,51 @@
 // NetAdmin.cs
-// Remake-only: moderation on a dedicated server with profiles (NetProfiles). Roles are kept on the profile:
-//   master (3) the server's owner: everything below, plus making / removing admins (/admin, /unadmin) and deleting
-//              profiles (/deleteprofile). Claimed in the game with the server's admin token ("/claimadmin TOKEN"), so a
-//              server needs no console: the token comes from -admintoken (or the GOF2_ADMIN_TOKEN environment variable),
-//              else admin_token.txt beside the profiles, made at the first start; every start logs it. Delete the file
-//              for a new one. The console can also make masters ("master <pilot|profile>");
-//   admin (2)  everything below, plus permanent bans, making / removing ops (/op, /deop), announcements (/say), ending
-//              crews (/disband TAG);
-//   op (1)     kicks with a cooldown and temporary bans (at most MaxOpBanMinutes), unbans, the ban list;
-//   player (0).
-// Nobody acts on a pilot of their own role or higher, or gives a role as high as their own (the console does anything).
-// Chat commands (answered privately; the result is announced to everyone):
-//   /kick <pilot> [minutes] [reason]     drops the pilot; they can't come back for 'minutes' (default KickMinutes)
-//   /tempban <pilot> <minutes> [reason]  the same as a ban that ends
-//   /ban <pilot> [reason]                admin: for good
-//   /unban <pilot|profile id>            /bans the list
-//   /op <pilot>, /deop <pilot>           admin; /admin <pilot>, /unadmin <pilot> master
-//   /say <text>, /disband <TAG>          admin; /deleteprofile <profile id> master
-//   /settings, /set <key> <value>        admin: the server's settings while it runs (NetServerSettings)
-//   /claimadmin <token>                  anyone with a profile: becomes a master
-//   /staff                               who the masters, admins and ops are
-// A pilot is a name online, "#<client id>" (the window's buttons), or a profile's last name / id for one who is offline.
-// A ban holds the profile and every device it signed in from (the device labels), so a banned player can't come back
-// with a new profile from the same device; it is checked when a game signs in (NetProfiles.OnLogin) and the game is
-// dropped with the reason and the time left. Stored in bans.json beside the profiles (written like them); bans that ran
-// out are dropped. Console: kick <id|name> [minutes] [reason], ban, tempban, unban, bans, op, deop, admin, unadmin, master,
-// unmaster, staff. The station window's Admin tab (UI.CrewPanel) has buttons for all of it (NetPanel: the staff, every
-// profile and the server's status for admins).
+// Remake multiplayer: the admin commands that act on players' games (NetCommands' table; the chat and the dedicated
+// server's console alike). The server checks the rights and the arguments, then sends the order to each target's own game
+// (NetState.SendAdmin, server-only), which applies it to its own ship and Session: the server holds no game state.
+//   /kill [players]                         destroys their ships (in space; also through god mode)
+//   /heal [players]                         hull, shield, armor and the gamma pool full
+//   /give [players] <item> [amount] [mount] items into the hold (an item index or name; 1..1000, default 1); "mount" docked:
+//                                           mounted like the hangar does (Cheats.GiveAndMount)
+//   /credits [players] <amount>             credits added (negative: taken, never below 0)
+//   /spawn [players] <ship | object> [race] [count] [enemy | friendly | neutral | standing] [at x y z]
+//                                           NPC ships 400 m ahead of each player as their orbit's traffic (DebugSpawner):
+//                                           a ship index or name, a race (terran, vossk, nivelian, midorian, pirate, void,
+//                                           specter; default the ship's maker, else pirates), 1..10 of them, enemy by
+//                                           default; neutral = neither side whatever the standings, until shot; standing =
+//                                           by the race's standing; "at x y z": there in that player's orbit (game
+//                                           coordinates, what /pos shows), else 400 m ahead of them; a name that is no
+//                                           ship is an assembled object (assemblies.json: station_083_terran, ...) placed
+//                                           as scenery, ahead of them (far enough out for its size) or there
+//   /mute <players> [minutes], /unmute <players>   their chat and whispers dropped on the server (default: the session)
+// The debug panel's tools (Cheats, PlayerHull, DebugSpawner), for one player:
+//   /ship [players] <ship | own>            fly any hull of the Ships tab (a ship's number or name, the capital ships by
+//                                           name; docked only the ownable ones), "own" back to the ship flown before
+//   /ammo [players]                         every mounted secondary to 50
+//   /reveal [players], /peace [players]     every system on the map; both standing axes neutral, no station grudges
+//   /cheat [players] <flag> [on | off]      a debug toggle for the session (god, ammo, cooldown, boost, onehit, locks,
+//                                           shopping, jumps; no on / off: toggled), whatever the session allows
+//   /title [players] <text> [| subtitle] [for <seconds>]   a big title on their screens (NetScreen; 4 s by default;
+//                                           "clear" takes it away)
+//   /timer [players] <seconds | m:ss> [label]   a countdown at the top of their screens ("stop" takes it away)
+//   /dialog [players] <speaker> : <text> [| [speaker :] next page ...]   the game's dialogue window, page by page, each
+//                                           page with its speaker (a page without one keeps the last): a story speaker by name
+//                                           (Keith, Gunant...; "Keith as Bob" renames it), a race and a name ("vossk K'ekki",
+//                                           "terran female Jane": a random face of that race, the same for everyone and for
+//                                           every page of it), or "player": the reader, Keith's face with their pilot name;
+//                                           %player% in a text or name is the reader's name; shown after any dialogue already
+//                                           open (NetScreen's queue); a page "reward [title]: <rewards>" pays when the
+//                                           dialogue closes (like /reward)
+//   /reward [players] <credits | item [amount]> [+ more ...] [| title]   the mission payout: credits and / or items into
+//                                           the hold, shown in the reward box (NetScreen.ShowReward: "Mission accomplished!"
+//                                           or the title, "+ credits", the items with their icons, sound 36)
+// The players: names, client ids or selectors (@a @s @p @r, NetCommands.FindTargets); in the chat the issuer when none is
+// named. Every order is logged on the server and the target gets a notice naming the admin.
 
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using GoF2Remake.Data;
+using GoF2Remake.Flight;
+using GoF2Remake.World;
 using UnityEngine;
 
 namespace GoF2Remake.Multiplayer
@@ -40,358 +53,681 @@ namespace GoF2Remake.Multiplayer
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetAdmin
     {
-        public const int Player = 0, Op = 1, Admin = 2, Master = 3, ServerConsole = 4;
-        public const string TokenEnvironment = "GOF2_ADMIN_TOKEN";
+        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14, Reward = 15 }
 
-        static string token;
+        const int MaxGive = 1000, MaxSpawn = 10, MaxCredits = 999999999;
 
-        public static string RoleName(int role) => role >= Master ? "master" : role == Admin ? "admin" : role == Op ? "op" : "player";
-        public const int KickMinutes = 5, MaxOpBanMinutes = 24 * 60;
+        static string X(string key, string english) => Localization.Extra(key, english);
 
-        [Serializable]
-        public class Ban
-        {
-            public string account = "", name = "", reason = "", by = "", at = "";
-            public List<string> devices = new List<string>();
-            public long until;   // Unix seconds, 0 = for good
-        }
+        // ---- mutes (server) ----------------------------------------------------------------------------------
 
-        [Serializable] class BanList { public List<Ban> bans = new List<Ban>(); }
-
-        static BanList list;
+        /// <summary>Server: muted client -> until when (unscaled time; infinity = the session).</summary>
+        static readonly Dictionary<ulong, float> muted = new Dictionary<ulong, float>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { list = null; token = null; }
+        static void ResetStatics() => muted.Clear();
 
-        static string PathOf => Path.Combine(NetProfiles.Folder, "bans.json");
-        static long Now => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        /// <summary>Server: a new session (NetState spawned).</summary>
+        internal static void Reset() => muted.Clear();
 
-        /// <summary>NetProfiles.Start: the bans loaded.</summary>
-        public static void Load()
+        /// <summary>Server: 'client' may not chat now; 'answer' tells them why.</summary>
+        internal static bool IsMuted(ulong client, out string answer)
         {
-            try { list = File.Exists(PathOf) ? JsonUtility.FromJson<BanList>(File.ReadAllText(PathOf)) : null; }
-            catch (Exception e) { Debug.LogError($"NetAdmin: bans.json unreadable ({e.Message}); starting a new list."); list = null; }
-            if (list == null) list = new BanList();
-            if (list.bans == null) list.bans = new List<Ban>();
-            Prune();
-            LoadToken();
-        }
-
-        /// <summary>The admin token: -admintoken, GOF2_ADMIN_TOKEN, else admin_token.txt (made once, random).</summary>
-        static void LoadToken()
-        {
-            token = NetGame.CommandLineValue("-admintoken");
-            if (string.IsNullOrWhiteSpace(token)) token = Environment.GetEnvironmentVariable(TokenEnvironment);
-            string file = Path.Combine(NetProfiles.Folder, "admin_token.txt");
-            if (string.IsNullOrWhiteSpace(token))
-            {
-                try { if (File.Exists(file)) token = File.ReadAllText(file).Trim(); } catch (Exception) { }
-                if (string.IsNullOrWhiteSpace(token))
-                {
-                    var b = new byte[9];
-                    using (var r = System.Security.Cryptography.RandomNumberGenerator.Create()) r.GetBytes(b);
-                    token = Convert.ToBase64String(b).Replace('+', 'X').Replace('/', 'Y');
-                    NetProfiles.Write(file, token);
-                }
-            }
-            token = token.Trim();
-            Debug.Log($"Server: admin token {token}: type /claimadmin {token} in the game's chat to become this server's master admin.");
-        }
-
-        static bool TokenMatches(string given)
-        {
-            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(given) || given.Length != token.Length) return false;
-            int diff = 0;
-            for (int i = 0; i < token.Length; i++) diff |= token[i] ^ given[i];   // the same time for every wrong guess
-            return diff == 0;
-        }
-
-        static void Save() { if (list != null) NetProfiles.Write(PathOf, JsonUtility.ToJson(list, true)); }
-
-        static void Prune()
-        {
-            if (list != null && list.bans.RemoveAll(b => b.until > 0 && b.until <= Now) > 0) Save();
-        }
-
-        /// <summary>NetProfiles.OnLogin: why this game may not play here (null = it may): a ban on its profile or device.</summary>
-        public static string BanReason(string account, string device)
-        {
-            if (list == null) return null;
-            Prune();
-            var ban = list.bans.Find(b => (account != null && b.account == account) || (!string.IsNullOrEmpty(device) && b.devices.Contains(device)));
-            if (ban == null) return null;
-            string why = ban.reason.Length > 0 ? ban.reason : Localization.Extra("mpBanNoReason", "no reason given");
-            return ban.until == 0
-                ? string.Format(Localization.Extra("mpBanned", "You are banned from this server ({0})."), why)
-                : string.Format(Localization.Extra("mpBannedFor", "You are banned from this server for another {0} ({1})."), Duration(ban.until - Now), why);
-        }
-
-        static string Duration(long seconds)
-        {
-            seconds = Math.Max(0, seconds);
-            if (seconds < 60) return $"{seconds} s";
-            if (seconds < 3600) return $"{seconds / 60 + (seconds % 60 > 0 ? 1 : 0)} min";
-            if (seconds < 86400) return $"{seconds / 3600.0:0.#} h";
-            return $"{seconds / 86400.0:0.#} days";
-        }
-
-        /// <summary>A connected player's role (guests and players 0).</summary>
-        public static int RoleOfClient(ulong client) => NetProfiles.RoleOf(NetProfiles.AccountOf(client));
-
-        // ---- finding a pilot -------------------------------------------------------------------------------
-
-        /// <summary>"#5" (a client id), a name online, else a profile's id or last name. 'client' = the online game, if any.</summary>
-        static bool Find(string who, out string account, out ulong? client, out string name)
-        {
-            account = null; client = null; name = who;
-            who = (who ?? "").Trim();
-            if (who.Length == 0) return false;
-            if (who[0] == '#' && ulong.TryParse(who.Substring(1), out ulong id))
-            {
-                var p = NetSquad.Find(id);
-                if (p == null) return false;
-                client = id; name = p.DisplayName; account = NetProfiles.AccountOf(id);
-                return true;
-            }
-            foreach (var p in NetPlayer.All)
-                if (p != null && p.IsSpawned && string.Equals(p.DisplayName, who, StringComparison.OrdinalIgnoreCase))
-                {
-                    client = p.OwnerClientId; name = p.DisplayName; account = NetProfiles.AccountOf(p.OwnerClientId);
-                    return true;
-                }
-            account = NetProfiles.FindAccount(who);
-            if (account == null) return false;
-            name = NetProfiles.AccountName(account) ?? account;
-            foreach (ulong c in NetProfiles.ClientsOf(account)) { client = c; break; }
+            answer = null;
+            if (!muted.TryGetValue(client, out float until)) return false;
+            if (Time.unscaledTime >= until) { muted.Remove(client); return false; }
+            answer = float.IsPositiveInfinity(until) ? X("mpMutedYou", "You are muted.")
+                : string.Format(X("mpMutedYouFor", "You are muted for {0} more minute(s)."), Mathf.CeilToInt((until - Time.unscaledTime) / 60f));
             return true;
         }
 
-        /// <summary>'actor' (a role) may act on a pilot of role 'target': only on a lower one (the console on anyone).</summary>
-        static bool Outranks(int actor, int target) => actor == ServerConsole || actor > target;
+        // ---- the commands (server) --------------------------------------------------------------------------
 
-        // ---- commands ---------------------------------------------------------------------------------------
-
-        /// <summary>NetState.SendChatRpc: a moderation command's answer to its sender; null = not one.</summary>
-        public static string Command(ulong client, string text)
+        /// <summary>The players the arguments start with, else (a chat issuer, 'playersOptional') the issuer and the whole
+        /// line; runs 'each' and joins the answers. No arguments at all: the issuer.</summary>
+        static string ForTargets(string args, NetPlayer by, bool playersOptional, Func<NetPlayer, string, string> each)
         {
-            var words = text.Trim().Split(new[] { ' ' }, 2, StringSplitOptions.RemoveEmptyEntries);
-            string cmd = words.Length > 0 ? words[0].ToLowerInvariant().TrimStart('/') : "";
-            if (!IsCommand(cmd)) return null;
-            int role = RoleOfClient(client);
-            if (cmd == "staff") return Staff();
-            if (cmd == "claimadmin") return Claim(client, words.Length > 1 ? words[1].Trim() : "");
-            if (role < Op) return Localization.Extra("mpAdminNoRight", "Only the server's ops and admins can do that.");
-            return Run(cmd, words.Length > 1 ? words[1] : "", role, NetSquad.Find(client)?.DisplayName ?? "?");
-        }
-
-        static bool IsCommand(string cmd) =>
-            cmd == "kick" || cmd == "tempban" || cmd == "ban" || cmd == "unban" || cmd == "bans" || cmd == "op" || cmd == "deop" || cmd == "staff"
-            || cmd == "admin" || cmd == "unadmin" || cmd == "say" || cmd == "disband" || cmd == "deleteprofile" || cmd == "claimadmin"
-            || cmd == "set" || cmd == "settings";
-
-        static float lastWrongClaim = -100f;
-
-        /// <summary>/claimadmin TOKEN: the right token makes this player's profile a master (a wrong one is logged, and only
-        /// one try per 5 s is checked).</summary>
-        static string Claim(ulong client, string given)
-        {
-            string account = NetProfiles.AccountOf(client);
-            if (account == null) return Localization.Extra("mpAdminClaimGuest", "Only a pilot with a profile can claim the server.");
-            if (Time.realtimeSinceStartup - lastWrongClaim < 5f) return Localization.Extra("mpAdminClaimWait", "Wait a moment before trying again.");
-            if (!TokenMatches(given))
+            args = (args ?? "").Trim();
+            List<NetPlayer> targets;
+            string rest;
+            if (args.Length == 0)
             {
-                lastWrongClaim = Time.realtimeSinceStartup;
-                Debug.LogWarning($"Server: client {client} ({NetSquad.Find(client)?.DisplayName}) tried a wrong admin token.");
-                return Localization.Extra("mpAdminClaimWrong", "That isn't this server's admin token.");
+                if (by == null) return X("mpAdmNamePlayers", "Name the players (a name, a client id, @a or @r).");
+                targets = new List<NetPlayer> { by };
+                rest = "";
             }
-            NetProfiles.SetRole(account, Master);
-            Debug.Log($"Server: {NetSquad.Find(client)?.DisplayName} (profile {account}) claimed the server: master admin.");
-            return Localization.Extra("mpAdminClaimed", "You are this server's master admin now: the station's Crew · Arena window has an Admin tab.");
-        }
-
-        /// <summary>DedicatedServer: a console command (the console outranks everyone; admin / unadmin only there).</summary>
-        public static string ConsoleCommand(string cmd, string args)
-        {
-            if (!NetProfiles.Enabled) return "Moderation needs player profiles (-noprofiles is set). \"kick <id>\" still drops a player.";
-            if (cmd == "master" || cmd == "unmaster") return SetRoleOf(FirstWord(args, out _), cmd == "master" ? Master : Player, ServerConsole);
-            if (cmd == "staff") return Staff();
-            if (cmd == "token") return $"Admin token: {token} (/claimadmin {token} in the game's chat).";
-            return Run(cmd, args, ServerConsole, "Server");
-        }
-
-        static string Run(string cmd, string args, int role, string by)
-        {
-            string who = FirstWord(args, out string rest);
-            switch (cmd)
+            else
             {
-                case "bans": return BansText();
-                case "unban": return Unban(args.Trim(), by);
-                case "op": case "deop":
-                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
-                    return SetRoleOf(who, cmd == "op" ? Op : Player, role);
-                case "admin": case "unadmin":
-                    if (role < Master) return Localization.Extra("mpAdminOnlyMaster", "Only the server's master admin can do that.");
-                    return SetRoleOf(who, cmd == "admin" ? Admin : Player, role);
-                case "say":
+                targets = NetCommands.FindTargets(args, by, out rest, out string error);
+                if (targets.Count == 0)
                 {
-                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
-                    string text = NetChat.Clean(args);
-                    if (text.Length == 0) return "/say <text>";
-                    NetState.Instance?.ServerChat(role == ServerConsole ? "Server" : $"[{RoleName(role)}] {by}", text);
-                    return "";
+                    if (!playersOptional || by == null || args.StartsWith("@")) return error;
+                    targets = new List<NetPlayer> { by };   // "/give 85 3": the issuer
+                    rest = args;
                 }
-                case "disband":
-                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
-                    return NetCrews.ConsoleDisband(who);
-                case "settings":
-                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
-                    return NetServerSettings.ListText();
-                case "set":
-                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
-                    return NetServerSettings.Set(who, rest, by);
-                case "deleteprofile":
-                {
-                    if (role < Master) return Localization.Extra("mpAdminOnlyMaster", "Only the server's master admin can do that.");
-                    string account = NetProfiles.FindAccount(who);
-                    if (account == null) return string.Format(Localization.Extra("mpAdminNoProfile", "No pilot with a profile called \"{0}\"."), who);
-                    if (!Outranks(role, NetProfiles.RoleOf(account))) return Localization.Extra("mpAdminRank", "You can't do that to a pilot of your rank or higher.");
-                    return NetProfiles.ConsoleDelete(account);
-                }
-                case "kick":
-                {
-                    int minutes = KickMinutes;
-                    string reason = rest;
-                    string first = FirstWord(rest, out string after);
-                    if (int.TryParse(first, out int m)) { minutes = m; reason = after; }
-                    if (role < Admin) minutes = Mathf.Clamp(minutes, 0, MaxOpBanMinutes);
-                    return Punish(who, Mathf.Max(0, minutes), reason, role, by, true);
-                }
-                case "tempban":
-                {
-                    string first = FirstWord(rest, out string reason);
-                    if (!int.TryParse(first, out int minutes) || minutes <= 0) return "/tempban <pilot> <minutes> [reason]";
-                    if (role < Admin && minutes > MaxOpBanMinutes) return string.Format(Localization.Extra("mpAdminOpMax", "Ops ban for at most {0} hours."), MaxOpBanMinutes / 60);
-                    return Punish(who, minutes, reason, role, by, false);
-                }
-                case "ban":
-                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
-                    return Punish(who, -1, rest, role, by, false);
-                default: return null;
             }
+            var answers = new List<string>();
+            foreach (var t in targets)
+            {
+                string a = each(t, rest);
+                if (!string.IsNullOrEmpty(a)) answers.Add(a);
+            }
+            return string.Join("\n", answers);
         }
 
-        static string FirstWord(string text, out string rest)
+        static void Send(NetPlayer to, Order order, int a, int b, int c, NetPlayer by, string log, string text = null)
         {
-            text = (text ?? "").Trim();
-            int space = text.IndexOf(' ');
-            rest = space < 0 ? "" : text.Substring(space + 1).Trim();
-            return space < 0 ? text : text.Substring(0, space);
+            NetState.Instance.SendAdmin(to.OwnerClientId, order, a, b, c, text, NetCommands.IssuerName(by));
+            Debug.Log($"Server: {NetCommands.IssuerName(by)} {log} ({to.DisplayName}, {to.OwnerClientId})");
         }
 
-        /// <summary>Kick (minutes of cooldown, 0 = none), temporary ban (minutes) or ban (-1 = for good).</summary>
-        static string Punish(string who, int minutes, string reason, int role, string by, bool kick)
+        static string NotInSpace(NetPlayer t) => string.Format(X("mpAdmNotInSpace", "{0} isn't in space."), t.DisplayName);
+
+        public static string Kill(string args, NetPlayer by) => ForTargets(args, by, false, (t, _) =>
         {
-            if (!Find(who, out string account, out ulong? client, out string name))
-                return string.Format(Localization.Extra("mpAdminNobody", "No pilot or profile \"{0}\"."), who);
-            if (!Outranks(role, NetProfiles.RoleOf(account))) return Localization.Extra("mpAdminRank", "You can't do that to a pilot of your rank or higher.");
-            reason = NetChat.Clean(reason);
-            bool ban = minutes != 0 && list != null && (account != null || client != null);
-            if (ban)
-            {
-                var devices = account != null ? NetProfiles.DevicesOf(account) : new List<string>();
-                if (account == null && client.HasValue) { string d = NetProfiles.DeviceOf(client.Value); if (!string.IsNullOrEmpty(d)) devices.Add(d); }
-                list.bans.RemoveAll(b => account != null && b.account == account);
-                list.bans.Add(new Ban { account = account ?? "", name = name, reason = reason, by = by, at = DateTime.UtcNow.ToString("o"),
-                                        devices = devices, until = minutes < 0 ? 0 : Now + minutes * 60L });
-                Save();
-            }
-            string length = minutes < 0 ? Localization.Extra("mpAdminForGood", "for good") : minutes > 0 ? string.Format(Localization.Extra("mpAdminFor", "for {0}"), Duration(minutes * 60L)) : "";
-            string note = reason.Length > 0 ? $": {reason}" : "";
-            if (client.HasValue)
-            {
-                string why = kick
-                    ? string.Format(Localization.Extra("mpAdminKickedYou", "{0} removed you from the server{1}{2}."), by, minutes > 0 ? $" ({string.Format(Localization.Extra("mpAdminComeBack", "you can come back in {0}"), Duration(minutes * 60L))})" : "", note)
-                    : string.Format(Localization.Extra("mpAdminBannedYou", "{0} banned you from the server {1}{2}."), by, length, note);
-                // Every device of the profile goes (a ban holds them all), else the one game.
-                var games = account != null ? new List<ulong>(NetProfiles.ClientsOf(account)) : new List<ulong>();
-                if (!games.Contains(client.Value)) games.Add(client.Value);
-                foreach (ulong g in games) NetGame.Kick(g, why);
-            }
-            NetState.Instance?.Announce(kick
-                ? string.Format(Localization.Extra("mpAdminKickNews", "{0} was kicked by {1}{2}."), name, by, note)
-                : string.Format(Localization.Extra("mpAdminBanNews", "{0} was banned {1} by {2}{3}."), name, length, by, note));
-            Debug.Log($"Server: {by} {(kick ? "kicked" : "banned")} {name}{(account != null ? $" (profile {account})" : "")} {length}{note}");
+            if (!t.InSpace) return NotInSpace(t);
+            if (t.Hull <= 0f) return string.Format(X("mpAdmAlreadyDead", "{0} is already destroyed."), t.DisplayName);
+            Send(t, Order.Kill, 0, 0, 0, by, "destroyed a ship");
+            NetState.Instance.NoticeAll(string.Format(X("mpAdmKilledAll", "{0} was destroyed by {1}."), t.DisplayName, NetCommands.IssuerName(by)));
             return "";
-        }
+        });
 
-        static string Unban(string who, string by)
+        public static string Heal(string args, NetPlayer by) => ForTargets(args, by, false, (t, _) =>
         {
-            if (list == null) return Localization.Extra("mpAdminNoBans", "Nobody is banned.");
-            Prune();
-            var ban = list.bans.Find(b => b.account == who || string.Equals(b.name, who, StringComparison.OrdinalIgnoreCase));
-            if (ban == null) return string.Format(Localization.Extra("mpAdminNotBanned", "\"{0}\" isn't banned."), who);
-            list.bans.Remove(ban);
-            Save();
-            Debug.Log($"Server: {by} lifted the ban on {ban.name}.");
-            return string.Format(Localization.Extra("mpAdminUnbanned", "The ban on {0} is lifted."), ban.name);
-        }
+            Send(t, Order.Heal, 0, 0, 0, by, "repaired a ship");
+            return string.Format(X("mpAdmHealed", "Repaired {0}'s ship."), t.DisplayName);
+        });
 
-        /// <summary>A pilot's role to 'role' (0 = back to player), by an actor who outranks both the old and the new role.</summary>
-        static string SetRoleOf(string who, int role, int actor)
+        /// <summary>/ammo, /reveal, /peace: one order without arguments.</summary>
+        public static string Simple(string args, NetPlayer by, Order order) => ForTargets(args, by, false, (t, _) =>
         {
-            if (!Find(who, out string account, out _, out string name) || account == null)
-                return string.Format(Localization.Extra("mpAdminNoProfile", "No pilot with a profile called \"{0}\"."), who);
-            int now = NetProfiles.RoleOf(account);
-            if (!Outranks(actor, now) || !Outranks(actor, role)) return Localization.Extra("mpAdminRank", "You can't do that to a pilot of your rank or higher.");
-            if (now == role) return string.Format(Localization.Extra("mpAdminAlready", "{0} is a {1} already."), name, RoleName(role));
-            NetProfiles.SetRole(account, role);
-            Tell(account, role == Player ? Localization.Extra("mpAdminYouPlayer", "You are a player again (no server role).")
-                                         : string.Format(Localization.Extra("mpAdminYouRole", "You are a {0} of this server now: the station's Crew · Arena window has an Admin tab."), RoleName(role)));
-            Debug.Log($"Server: {name} (profile {account}) is a {RoleName(role)} now.");
-            return string.Format(Localization.Extra("mpAdminRoleSet", "{0} is a {1} now."), name, RoleName(role));
-        }
-
-        static void Tell(string account, string text) { foreach (ulong c in NetProfiles.ClientsOf(account)) NetState.Instance?.Notify(c, text); }
-
-        static string BansText()
-        {
-            Prune();
-            if (list == null || list.bans.Count == 0) return Localization.Extra("mpAdminNoBans", "Nobody is banned.");
-            var sb = new StringBuilder(Localization.Extra("mpAdminBanList", "Bans:"));
-            foreach (var b in list.bans)
-                sb.Append($"\n{b.name} ({(b.account.Length > 0 ? b.account : "guest")}): {(b.until == 0 ? "for good" : Duration(b.until - Now) + " left")}, by {b.by}{(b.reason.Length > 0 ? ": " + b.reason : "")}");
-            return sb.ToString();
-        }
-
-        static string Staff()
-        {
-            var staff = NetProfiles.Staff();
-            if (staff.Count == 0) return Localization.Extra("mpAdminNoStaff", "This server has no admins or ops yet (/claimadmin with the server's token).");
-            var sb = new StringBuilder(Localization.Extra("mpAdminStaff", "Staff:"));
-            foreach (var (name, role, online) in staff) sb.Append($"\n{name}: {RoleName(role)}{(online ? ", online" : "")}");
-            return sb.ToString();
-        }
-
-        // ---- the station window (NetPanel) -------------------------------------------------------------
-
-        /// <summary>The player's role, every online pilot's role and the bans into the snapshot (the bans for ops only).</summary>
-        internal static void FillPanel(ulong client, NetPanel.State s)
-        {
-            s.role = RoleOfClient(client);
-            foreach (var p in s.pilots) p.role = RoleOfClient((ulong)p.client);
-            if (s.role < Op || list == null) return;
-            if (s.role >= Admin)
+            Send(t, order, 0, 0, 0, by, order.ToString().ToLowerInvariant());
+            switch (order)
             {
-                s.serverStatus = DedicatedServer.StatusText();
-                foreach (var (name, role, online) in NetProfiles.Staff()) s.staff.Add(new NetPanel.StaffRow { name = name, role = role, online = online });
-                NetProfiles.FillProfiles(s);
-                NetServerSettings.FillPanel(s);
-                foreach (var row in s.profiles) row.banned = list.bans.Exists(b => b.account == row.id);
+                case Order.Ammo: return string.Format(X("mpAdmAmmo", "{0}'s secondaries refilled."), t.DisplayName);
+                case Order.Reveal: return string.Format(X("mpAdmReveal", "Every system revealed for {0}."), t.DisplayName);
+                default: return string.Format(X("mpAdmPeace", "{0} is at peace with every race."), t.DisplayName);
             }
-            Prune();
-            foreach (var b in list.bans)
-                s.bans.Add(new NetPanel.BanRow { name = b.name, account = b.account, reason = b.reason, by = b.by,
-                                                 left = b.until == 0 ? Localization.Extra("mpAdminForGood", "for good") : Duration(b.until - Now) + " left" });
+        });
+
+        public static string Give(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            rest = rest.Trim();
+            bool mount = rest.EndsWith(" mount", StringComparison.OrdinalIgnoreCase);
+            if (mount) rest = rest.Substring(0, rest.Length - 6).Trim();
+            if (mount && !t.InHangar) return string.Format(X("mpAdmMountDocked", "{0} isn't docked: mounting works in a hangar."), t.DisplayName);
+            if (!ParseAmount(ref rest, 1, MaxGive, out int amount)) return Usage("give");
+            int item = FindItem(rest, out string error);
+            if (item < 0) return error;
+            Send(t, Order.Give, item, amount, mount ? 1 : 0, by, $"gave {amount} x item {item}{(mount ? " (mounted)" : "")}");
+            return string.Format(X("mpAdmGave", "Gave {0} {1} x {2}."), t.DisplayName, amount, UI.ItemInfo.ItemName(item));
+        });
+
+        public static string Credits(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            if (!int.TryParse(rest.Trim(), out int amount) || amount == 0) return Usage("credits");
+            amount = Mathf.Clamp(amount, -MaxCredits, MaxCredits);
+            Send(t, Order.Credits, amount, 0, 0, by, $"gave {amount} credits");
+            return string.Format(amount > 0 ? X("mpAdmCreditsGiven", "Gave {0} {1} credits.") : X("mpAdmCreditsTaken", "Took {1} credits from {0}."),
+                t.DisplayName, Math.Abs(amount));
+        });
+
+        public static string Spawn(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            if (!t.InSpace) return NotInSpace(t);
+            if (!TakeAt(ref rest, out string at)) return Usage("spawn");
+            // From the end: the behaviour, the count and the race, in any order; the rest is the ship.
+            var words = new List<string>(rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            if (words.Count == 0) return Usage("spawn");
+            var behaviour = DebugSpawner.Behaviour.Hostile;
+            int count = 1, race = -1;
+            while (words.Count > 1)
+            {
+                string w = words[words.Count - 1];
+                var b = BehaviourWord(w);
+                if (b.HasValue) behaviour = b.Value;
+                else if (int.TryParse(w, out int n)) count = Mathf.Clamp(n, 1, MaxSpawn);
+                else if (RaceWord(w) >= 0) race = RaceWord(w);
+                else break;
+                words.RemoveAt(words.Count - 1);
+            }
+            string spec = string.Join(" ", words);
+            int ship = FindShip(spec, out string error);
+            if (ship < 0)
+            {
+                // Not a ship: an assembled object (the whole name, before any words were taken as a race or a count).
+                var asm = FindAssembly(rest.Trim(), out string objectError);
+                if (asm == null) return ship == -2 ? error : objectError ?? error;
+                Send(t, Order.Object, 0, 0, 0, by, $"spawned object {asm.name}{(at != null ? " at " + at : "")}", at != null ? asm.name + "@" + at : asm.name);
+                return string.Format(X("mpAdmObject", "Spawning {0} at {1}."), asm.name, t.DisplayName);
+            }
+            if (race < 0)
+            {
+                race = Shop.ShipMakerRace(ship);
+                if (race < 0 || (race > 3 && race != Standing.Pirate && race != Standing.Void && race != Standing.Specter)) race = Standing.Pirate;
+            }
+            int tag = NetEvents.NewBatch(count, behaviour == DebugSpawner.Behaviour.Hostile);   // an event's spawn: counted (enemies / ships)
+            Send(t, Order.Spawn, ship, race, tag << 12 | count << 8 | (int)behaviour, by,
+                $"spawned {count} x ship {ship} (race {race}, {behaviour}{(at != null ? ", at " + at : "")}{(tag != 0 ? ", event batch " + tag : "")})", at);
+            return string.Format(X("mpAdmSpawned", "Spawning {0} x {1} at {2}."), count, DebugSpawner.ShipName(NetGame.Db, ship), t.DisplayName);
+        });
+
+        public static string Ship(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            rest = rest.Trim();
+            if (rest.Length == 0) return Usage("ship");
+            if (string.Equals(rest, "own", StringComparison.OrdinalIgnoreCase))
+            {
+                Send(t, Order.Ship, -1, 0, 0, by, "sent back to their own ship");
+                return string.Format(X("mpAdmShipOwn", "{0} goes back to their own ship."), t.DisplayName);
+            }
+            var hull = FindHull(rest, out string error);
+            if (hull == null) return error;
+            if (!t.InSpace && !hull.playerShip)
+                return string.Format(X("mpAdmShipHangar", "{0} is docked: that ship doesn't fit in a hangar."), t.DisplayName);
+            Send(t, Order.Ship, 0, 0, 0, by, $"swapped the ship to {hull.key}", hull.key);
+            return string.Format(X("mpAdmShip", "{0} flies the {1}."), t.DisplayName, HullName(hull));
+        });
+
+        public static string Cheat(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            var words = rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0) return Usage("cheat") + "  " + FlagList();
+            int flag = Array.FindIndex(Cheats.Flags, f => string.Equals(f.word, words[0], StringComparison.OrdinalIgnoreCase));
+            if (flag < 0) return string.Format(X("mpAdmNoCheat", "No cheat \"{0}\": {1}"), words[0], FlagList());
+            int state = 2;   // toggle
+            if (words.Length > 1)
+            {
+                string w = words[1].ToLowerInvariant();
+                if (w == "on" || w == "true" || w == "1") state = 1;
+                else if (w == "off" || w == "false" || w == "0") state = 0;
+                else return Usage("cheat");
+            }
+            Send(t, Order.Cheat, flag, state, 0, by, $"cheat {Cheats.Flags[flag].word} {(state == 2 ? "toggled" : state == 1 ? "on" : "off")}");
+            return string.Format(X("mpAdmCheat", "{0}: {1} {2}."), t.DisplayName, Cheats.Flags[flag].word,
+                state == 2 ? X("mpAdmToggled", "toggled") : state == 1 ? X("mpAdmOn", "on") : X("mpAdmOff", "off"));
+        });
+
+        public static string Title(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            rest = rest.Trim();
+            if (rest.Length == 0) return Usage("title");
+            if (string.Equals(rest, "clear", StringComparison.OrdinalIgnoreCase))
+            {
+                Send(t, Order.Title, 0, 0, 0, by, "cleared the title", "");
+                return "";
+            }
+            int seconds = 4;
+            var words = new List<string>(rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            if (words.Count >= 3 && string.Equals(words[words.Count - 2], "for", StringComparison.OrdinalIgnoreCase)
+                && int.TryParse(words[words.Count - 1], out int s) && s > 0)
+            {
+                seconds = Mathf.Min(s, 3600);
+                rest = string.Join(" ", words.GetRange(0, words.Count - 2));
+            }
+            int bar = rest.IndexOf('|');
+            string main = NetChat.Clean(bar < 0 ? rest : rest.Substring(0, bar)), sub = bar < 0 ? "" : NetChat.Clean(rest.Substring(bar + 1));
+            if (main.Length + sub.Length == 0) return Usage("title");
+            Send(t, Order.Title, seconds * 1000, 0, 0, by, $"title \"{main}\" / \"{sub}\" for {seconds} s", main + "\n" + sub);
+            return "";
+        });
+
+        public static string Dialog(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            // Pages: "speaker : text", a page without a speaker keeps the last one. Each line sent: id, name, face, text
+            // (separated by \u001f): id >= 0 a story speaker (a name = renamed), -1 a generated face, -2 the reader.
+            var lines = new List<string>();
+            var faces = new Dictionary<string, string>();
+            string current = null;
+            foreach (var part in rest.Split('|'))
+            {
+                string page = part.Trim();
+                int colon = page.IndexOf(':');
+                string prefix = colon > 0 ? page.Substring(0, colon).Trim() : "";
+                if (prefix.Equals("reward", StringComparison.OrdinalIgnoreCase) || prefix.StartsWith("reward ", StringComparison.OrdinalIgnoreCase))
+                {
+                    // A reward page: paid when the dialogue closes.
+                    if (!ParseReward(page.Substring(colon + 1), out int credits, out string items, out string why)) return why;
+                    string heading = NetChat.Clean(prefix.Substring(6).Trim()).Replace("\u001f", " ");
+                    lines.Add($"R\u001f{credits}\u001f{items}\u001f{heading}");
+                    continue;
+                }
+                if (colon > 0)
+                {
+                    string spec = ResolveSpeaker(page.Substring(0, colon).Trim(), faces);
+                    if (spec != null) { current = spec; page = page.Substring(colon + 1).Trim(); }
+                    else if (current == null) return string.Format(X("mpAdmNoSpeaker", "No speaker \"{0}\": a story character's name (Keith as Bob renames), a race and a name (vossk K'ekki), or player."), page.Substring(0, colon).Trim());
+                }
+                if (current == null) return Usage("dialog");
+                page = NetChat.Clean(page).Replace("\u001f", " ");
+                if (page.Length > 0 && lines.Count < 20) lines.Add(current + "\u001f" + page);
+            }
+            if (lines.Count == 0) return Usage("dialog");
+            Send(t, Order.Dialog, 0, 0, 0, by, $"dialog, {lines.Count} page(s)", string.Join("\n", lines));
+            return "";
+        });
+
+        public static string Reward(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            int bar = rest.IndexOf('|');
+            string heading = bar < 0 ? "" : NetChat.Clean(rest.Substring(bar + 1));
+            if (!ParseReward(bar < 0 ? rest : rest.Substring(0, bar), out int credits, out string items, out string why)) return why;
+            Send(t, Order.Reward, credits, 0, 0, by, $"reward {credits} credits, items {items}", heading + "\n" + items);
+            return string.Format(X("mpAdmRewarded", "Rewarded {0}."), t.DisplayName);
+        });
+
+        /// <summary>"5000 + Khador Drive + Energy Cells 10": the credits (summed) and the items as "item:amount;..." (false with
+        /// the reason: nothing, an unknown item).</summary>
+        static bool ParseReward(string spec, out int credits, out string items, out string error)
+        {
+            credits = 0;
+            items = "";
+            error = null;
+            var list = new List<string>();
+            foreach (var raw in spec.Split(new[] { '+', ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string part = raw.Trim();
+                if (part.Length == 0) continue;
+                string digits = part.Replace("$", "").Replace(" ", "");
+                if (long.TryParse(digits, out long c) && c > 0) { credits = (int)Math.Min((long)MaxCredits, credits + c); continue; }
+                if (!ParseAmount(ref part, 1, MaxGive, out int amount)) { error = Usage("reward"); return false; }
+                int item = FindItem(part, out string why);
+                if (item < 0) { error = why; return false; }
+                if (list.Count < 8) list.Add(item + ":" + amount);
+            }
+            items = string.Join(";", list);
+            if (credits == 0 && list.Count == 0) { error = Usage("reward"); return false; }
+            return true;
+        }
+
+        /// <summary>This game: credits and items into the hold, and the reward box.</summary>
+        static void GrantReward(int credits, string items, string heading)
+        {
+            var list = new List<(int, int)>();
+            foreach (var entry in (items ?? "").Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var kv = entry.Split(':');
+                if (kv.Length != 2 || !int.TryParse(kv[0], out int item) || !int.TryParse(kv[1], out int amount) || !NetGuard.Item(item) || amount < 1) continue;
+                amount = Mathf.Min(amount, MaxGive);
+                Cheats.GiveItem(item, amount);
+                list.Add((item, amount));
+            }
+            credits = Mathf.Clamp(credits, 0, MaxCredits);
+            if (credits > 0) Session.Credits = (int)Math.Min((long)Session.Credits + credits, MaxCredits);
+            NetScreen.ShowReward(heading, credits, list);
+        }
+
+        /// <summary>A page's speaker as "id\u001fname\u001fface" (NetAdmin.Apply), null = not a speaker: "player", a story
+        /// speaker ("Keith", "Keith as Bob"), or "&lt;race&gt; [female | male] [name]" with a face made once per dialog.</summary>
+        static string ResolveSpeaker(string who, Dictionary<string, string> faces)
+        {
+            if (who.Length == 0) return null;
+            if (who.Equals("player", StringComparison.OrdinalIgnoreCase) || who.Equals("you", StringComparison.OrdinalIgnoreCase))
+                return "-2\u001f%player%\u001f";
+            string rename = "";
+            int asAt = who.IndexOf(" as ", StringComparison.OrdinalIgnoreCase);
+            string baseName = asAt > 0 ? who.Substring(0, asAt).Trim() : who;
+            if (asAt > 0) rename = NetChat.Clean(who.Substring(asAt + 4).Trim()).Replace("\u001f", " ");
+            int speaker = FindSpeaker(baseName);
+            if (speaker >= 0) return speaker + "\u001f" + rename + "\u001f";
+            if (faces.TryGetValue(who.ToLowerInvariant(), out string known)) return known;
+            var words = new List<string>(who.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            int race = RaceWord(words[0]);
+            if (race < 0) return null;
+            words.RemoveAt(0);
+            bool male = true;
+            if (words.Count > 0 && (words[0].Equals("female", StringComparison.OrdinalIgnoreCase) || words[0].Equals("male", StringComparison.OrdinalIgnoreCase)))
+            {
+                male = words[0].Equals("male", StringComparison.OrdinalIgnoreCase);
+                words.RemoveAt(0);
+            }
+            string name = NetChat.Clean(string.Join(" ", words)).Replace("\u001f", " ");
+            if (name.Length == 0) name = Localization.Get(406 + race);
+            string spec = "-1\u001f" + name + "\u001f" + string.Join(",", AgentGenerator.CreatePortrait(male, race));
+            faces[who.ToLowerInvariant()] = spec;
+            return spec;
+        }
+
+        /// <summary>A story speaker by name (whole, or the one it starts, any case); -1 = none.</summary>
+        static int FindSpeaker(string name)
+        {
+            int found = -1, matches = 0;
+            for (int i = 0; i < StoryTable.SpeakerCount; i++)
+            {
+                string n = StoryTable.SpeakerName(i);
+                if (string.IsNullOrEmpty(n)) continue;
+                if (string.Equals(n, name, StringComparison.OrdinalIgnoreCase)) return i;
+                if (n.StartsWith(name, StringComparison.OrdinalIgnoreCase) || n.Split(' ')[0].Equals(name, StringComparison.OrdinalIgnoreCase)) { found = i; matches++; }
+            }
+            return matches == 1 ? found : -1;
+        }
+
+        public static string Timer(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            rest = rest.Trim();
+            int space = rest.IndexOf(' ');
+            string first = space < 0 ? rest : rest.Substring(0, space), label = space < 0 ? "" : NetChat.Clean(rest.Substring(space + 1));
+            if (string.Equals(first, "stop", StringComparison.OrdinalIgnoreCase))
+            {
+                Send(t, Order.Timer, -1, 0, 0, by, "stopped the timer", "");
+                return "";
+            }
+            int seconds;
+            int colon = first.IndexOf(':');
+            if (colon > 0 && int.TryParse(first.Substring(0, colon), out int m) && int.TryParse(first.Substring(colon + 1), out int sec)) seconds = m * 60 + sec;
+            else if (!int.TryParse(first, out seconds)) return Usage("timer");
+            if (seconds <= 0) return Usage("timer");
+            seconds = Mathf.Min(seconds, 24 * 3600);
+            Send(t, Order.Timer, seconds, 0, 0, by, $"timer {seconds} s \"{label}\"", label);
+            return "";
+        });
+
+        public static string Mute(string args, NetPlayer by, bool on) => ForTargets(args, by, false, (t, rest) =>
+        {
+            if (!on)
+            {
+                if (!muted.Remove(t.OwnerClientId)) return string.Format(X("mpAdmNotMuted", "{0} isn't muted."), t.DisplayName);
+                NetState.Instance.NoticeTo(t, X("mpUnmutedYou", "You can chat again."));
+                Debug.Log($"Server: {NetCommands.IssuerName(by)} unmuted {t.DisplayName} ({t.OwnerClientId})");
+                return string.Format(X("mpAdmUnmuted", "{0} can chat again."), t.DisplayName);
+            }
+            if (t == by) return X("mpCmdNotYourself", "Not on yourself.");
+            if (NetCommands.IsHostPlayer(t) || (NetCommands.IsAdmin(t) && by != null && !NetCommands.IsHostPlayer(by)))
+                return string.Format(X("mpAdmCantMute", "{0} can't be muted."), t.DisplayName);
+            float minutes = float.TryParse(rest.Trim(), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float m) && m > 0f ? m : 0f;
+            muted[t.OwnerClientId] = minutes > 0f ? Time.unscaledTime + minutes * 60f : float.PositiveInfinity;
+            IsMuted(t.OwnerClientId, out string text);
+            NetState.Instance.NoticeTo(t, text);
+            Debug.Log($"Server: {NetCommands.IssuerName(by)} muted {t.DisplayName} ({t.OwnerClientId}){(minutes > 0f ? $" for {minutes} min" : "")}");
+            return minutes > 0f ? string.Format(X("mpAdmMutedFor", "{0} is muted for {1} minute(s)."), t.DisplayName, minutes)
+                                : string.Format(X("mpAdmMuted", "{0} is muted for this session."), t.DisplayName);
+        });
+
+        // ---- argument parsing --------------------------------------------------------------------------------
+
+        static string Usage(string command) => NetCommands.UsageOf(command);
+
+        /// <summary>Takes a trailing "at x y z" (game coordinates) off 'rest': 'at' = "x y z" (invariant), null without one;
+        /// false = an "at" without three finite numbers.</summary>
+        static bool TakeAt(ref string rest, out string at)
+        {
+            at = null;
+            var words = new List<string>(rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            int i = words.FindLastIndex(w => string.Equals(w, "at", StringComparison.OrdinalIgnoreCase));
+            if (i < 0) return true;
+            if (i != words.Count - 4) return false;
+            var v = new float[3];
+            for (int k = 0; k < 3; k++)
+                if (!float.TryParse(words[i + 1 + k], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v[k])
+                    || !NetGuard.Finite(v[k]) || Mathf.Abs(v[k]) > 2e7f) return false;
+            at = string.Format(System.Globalization.CultureInfo.InvariantCulture, "{0} {1} {2}", v[0], v[1], v[2]);
+            rest = string.Join(" ", words.GetRange(0, i));
+            return true;
+        }
+
+        /// <summary>"x y z" game coordinates (TakeAt) as a Unity position; null when empty or broken.</summary>
+        static Vector3? ParseAt(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+            var w = text.Split(' ');
+            if (w.Length != 3) return null;
+            var v = new float[3];
+            for (int k = 0; k < 3; k++)
+                if (!float.TryParse(w[k], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out v[k]) || !NetGuard.Finite(v[k]))
+                    return null;
+            return OrbitLayout.ToUnity(new Vector3(v[0], v[1], v[2]));
+        }
+
+        /// <summary>A trailing whole number (with more before it) is the amount, else 'fallback'; false = nothing left or a
+        /// number below 1.</summary>
+        static bool ParseAmount(ref string rest, int fallback, int max, out int amount)
+        {
+            amount = fallback;
+            rest = rest.Trim();
+            int space = rest.LastIndexOf(' ');
+            if (space > 0 && int.TryParse(rest.Substring(space + 1), out int n))
+            {
+                if (n < 1) return false;
+                amount = Mathf.Min(n, max);
+                rest = rest.Substring(0, space).Trim();
+            }
+            return rest.Length > 0;
+        }
+
+        /// <summary>An item by its index, its whole name or the one name it starts (any case); -1 with the reason.</summary>
+        static int FindItem(string spec, out string error)
+        {
+            error = null;
+            var db = NetGame.Db;
+            if (int.TryParse(spec, out int index) && NetGuard.Item(index)) return index;
+            int found = -1, matches = 0;
+            foreach (var it in db.Items)
+            {
+                string n = UI.ItemInfo.ItemName(it.index);
+                if (string.IsNullOrEmpty(n)) n = it.name ?? "";
+                if (string.Equals(n, spec, StringComparison.OrdinalIgnoreCase)) return it.index;
+                if (n.StartsWith(spec, StringComparison.OrdinalIgnoreCase)) { found = it.index; matches++; }
+            }
+            if (matches == 1) return found;
+            error = matches > 1 ? string.Format(X("mpAdmItemAmbiguous", "\"{0}\" fits {1} items: write more of the name, or its number."), spec, matches)
+                                : string.Format(X("mpAdmNoItem", "No item \"{0}\"."), spec);
+            return -1;
+        }
+
+        /// <summary>An assembled object (assemblies.json) by its whole name or the one name it starts (any case); null with
+        /// the reason.</summary>
+        static AssemblyData FindAssembly(string spec, out string error)
+        {
+            error = null;
+            var all = NetGame.Db.Assemblies;
+            var asm = all.Find(a => string.Equals(a.name, spec, StringComparison.OrdinalIgnoreCase));
+            if (asm != null) return asm;
+            var starts = all.FindAll(a => a.name.StartsWith(spec, StringComparison.OrdinalIgnoreCase));
+            if (starts.Count == 1) return starts[0];
+            error = starts.Count > 1
+                ? string.Format(X("mpAdmObjectAmbiguous", "\"{0}\" fits {1} objects (e.g. {2}): write more of the name."), spec, starts.Count, starts[0].name)
+                : string.Format(X("mpAdmNoShipOrObject", "No ship or object \"{0}\" (a ship's number or name, or an assemblies.json name like station_083_terran)."), spec);
+            return null;
+        }
+
+        /// <summary>A ship of ships.json by its index, its whole name or the one name it starts; -1 with the reason (-2: the
+        /// name fits several ships).</summary>
+        static int FindShip(string spec, out string error)
+        {
+            error = null;
+            var db = NetGame.Db;
+            if (int.TryParse(spec, out int index) && db.Ship(index) != null) return index;
+            int found = -1, matches = 0;
+            foreach (var s in db.Ships)
+            {
+                string n = DebugSpawner.ShipName(db, s.index);
+                if (string.Equals(n, spec, StringComparison.OrdinalIgnoreCase)) return s.index;
+                if (spec.Length > 0 && n.StartsWith(spec, StringComparison.OrdinalIgnoreCase)) { found = s.index; matches++; }
+            }
+            if (matches == 1) return found;
+            error = matches > 1 ? string.Format(X("mpAdmShipAmbiguous", "\"{0}\" fits {1} ships: write more of the name, or its number."), spec, matches)
+                                : string.Format(X("mpAdmNoShip", "No ship \"{0}\"."), spec);
+            return matches > 1 ? -2 : -1;
+        }
+
+        static string HullName(PlayerHull.Hull h)
+        {
+            int i = h.label.IndexOf(" · ");
+            return i >= 0 ? h.label.Substring(i + 3) : h.label;
+        }
+
+        /// <summary>A hull of the debug Ships tab by its ship number, its key, its whole name or the one name it starts; null
+        /// with the reason.</summary>
+        static PlayerHull.Hull FindHull(string spec, out string error)
+        {
+            error = null;
+            var all = PlayerHull.All(NetGame.Db);
+            if (int.TryParse(spec, out int index))
+            {
+                var byIndex = all.Find(h => h.key == "ship_" + index) ?? all.Find(h => h.stats == index);
+                if (byIndex != null) return byIndex;
+            }
+            PlayerHull.Hull found = null;
+            int matches = 0;
+            foreach (var h in all)
+            {
+                string n = HullName(h);
+                if (string.Equals(n, spec, StringComparison.OrdinalIgnoreCase) || string.Equals(h.key, spec, StringComparison.OrdinalIgnoreCase)) return h;
+                if (n.StartsWith(spec, StringComparison.OrdinalIgnoreCase)) { found = h; matches++; }
+            }
+            if (matches == 1) return found;
+            error = matches > 1 ? string.Format(X("mpAdmShipAmbiguous", "\"{0}\" fits {1} ships: write more of the name, or its number."), spec, matches)
+                                : string.Format(X("mpAdmNoShip", "No ship \"{0}\"."), spec);
+            return null;
+        }
+
+        static string FlagList()
+        {
+            var words = new List<string>();
+            foreach (var f in Cheats.Flags) words.Add(f.word);
+            return string.Join(", ", words);
+        }
+
+        static DebugSpawner.Behaviour? BehaviourWord(string w)
+        {
+            switch (w.ToLowerInvariant())
+            {
+                case "enemy": case "hostile": return DebugSpawner.Behaviour.Hostile;
+                case "friendly": case "friend": return DebugSpawner.Behaviour.Friendly;
+                case "neutral": return DebugSpawner.Behaviour.Neutral;
+                case "standing": return DebugSpawner.Behaviour.Normal;
+            }
+            return null;
+        }
+
+        static int RaceWord(string w)
+        {
+            switch (w.ToLowerInvariant())
+            {
+                case "terran": case "terrans": return 0;
+                case "vossk": return 1;
+                case "nivelian": case "nivelians": return 2;
+                case "midorian": case "midorians": return 3;
+                case "pirate": case "pirates": return Standing.Pirate;
+                case "void": return Standing.Void;
+                case "specter": case "specters": return Standing.Specter;
+            }
+            foreach (int r in new[] { 0, 1, 2, 3, Standing.Pirate, Standing.Void, Standing.Specter })
+                if (string.Equals(Localization.Get(406 + r), w, StringComparison.OrdinalIgnoreCase)) return r;
+            return -1;
+        }
+
+        // ---- the target's game ------------------------------------------------------------------------------
+
+        static void Notice(string by, string text) => NetChat.Notice(string.Format(X("mpAdmByYou", "{0}: {1}"), by, text));
+
+        /// <summary>An admin's order on this game's own ship and Session (NetState.AdminRpc, sent only by the server).</summary>
+        internal static void Apply(Order order, int a, int b, int c, string text, string by)
+        {
+            var level = UnityEngine.Object.FindAnyObjectByType<SpaceLevel>();
+            var docked = level == null ? UnityEngine.Object.FindAnyObjectByType<StationLevel>() : null;
+            switch (order)
+            {
+                case Order.Kill:
+                    if (level == null || level.Health == null || level.Health.Dead) return;
+                    level.Health.Kill(true);
+                    break;
+                case Order.Heal:
+                    Cheats.Repair();
+                    NetChat.Notice(string.Format(X("mpAdmHealedYou", "{0} repaired your ship."), by));
+                    break;
+                case Order.Give:
+                    if (!NetGuard.Item(a) || b < 1) return;
+                    b = Mathf.Min(b, MaxGive);
+                    if (c == 1 && docked != null && docked.Stock != null)
+                        Notice(by, $"{UI.ItemInfo.ItemName(a)}: {Cheats.GiveAndMount(NetGame.Db, docked.Stock, a, b)}");
+                    else
+                    {
+                        Cheats.GiveItem(a, b);
+                        NetChat.Notice(string.Format(X("mpAdmGaveYou", "{0} gave you {1} x {2}."), by, b, UI.ItemInfo.ItemName(a)));
+                    }
+                    break;
+                case Order.Credits:
+                    Session.Credits = (int)Mathf.Clamp((long)Session.Credits + a, 0L, MaxCredits);
+                    NetChat.Notice(string.Format(a > 0 ? X("mpAdmCreditsYou", "{0} gave you {1} credits.") : X("mpAdmCreditsTakenYou", "{0} took {1} credits."),
+                        by, Math.Abs(a)));
+                    break;
+                case Order.Spawn:
+                    if (level == null || NetGame.Db.Ship(a) == null) return;
+                    Notice(by, DebugSpawner.SpawnShip(level, b, a, (DebugSpawner.Behaviour)Mathf.Clamp(c & 0xff, 0, 3), Mathf.Clamp((c >> 8) & 0xf, 1, MaxSpawn),
+                        ParseAt(text), c >> 12));
+                    break;
+                case Order.Ship:
+                    if (a < 0) { Notice(by, PlayerHull.Restore(level, docked)); break; }
+                    var hull = PlayerHull.All(NetGame.Db).Find(h => h.key == text);
+                    if (hull != null) Notice(by, PlayerHull.Fly(hull, level, docked));
+                    break;
+                case Order.Ammo:
+                    Cheats.RefillAmmo(NetGame.Db);
+                    NetChat.Notice(string.Format(X("mpAdmAmmoYou", "{0} refilled your secondaries."), by));
+                    break;
+                case Order.Reveal:
+                    Cheats.RevealAllSystems();
+                    NetChat.Notice(string.Format(X("mpAdmRevealYou", "{0} revealed every system on your map."), by));
+                    break;
+                case Order.Peace:
+                    Cheats.MakePeace();
+                    NetChat.Notice(string.Format(X("mpAdmPeaceYou", "{0} made peace for you with every race."), by));
+                    break;
+                case Order.Cheat:
+                    if (a < 0 || a >= Cheats.Flags.Length) return;
+                    bool now = Cheats.Grant(Cheats.Flags[a].key, b == 2 ? (bool?)null : b == 1);
+                    NetChat.Notice(string.Format(now ? X("mpAdmCheatOnYou", "{0} turned {1} on for you.") : X("mpAdmCheatOffYou", "{0} turned {1} off for you."),
+                        by, Cheats.Flags[a].word));
+                    break;
+                case Order.Title:
+                {
+                    int nl = (text ?? "").IndexOf('\n');
+                    NetScreen.ShowTitle(nl < 0 ? text : text.Substring(0, nl), nl < 0 ? "" : text.Substring(nl + 1), a / 1000f);
+                    break;
+                }
+                case Order.Timer:
+                    NetScreen.ShowTimer(a, text);
+                    break;
+                case Order.Dialog:
+                {
+                    string me = NetPlayer.Local != null ? NetPlayer.Local.DisplayName : "";
+                    var list = new List<UI.DialogueView.Page>();
+                    var rewards = new List<(int credits, string items, string heading)>();
+                    foreach (var line in (text ?? "").Split('\n'))
+                    {
+                        var f = line.Split('\u001f');
+                        if (f.Length == 4 && f[0] == "R") { int.TryParse(f[1], out int cr); rewards.Add((cr, f[2], f[3])); continue; }
+                        if (f.Length < 4 || !int.TryParse(f[0], out int id) || list.Count >= 20) continue;
+                        string name = f[1].Replace("%player%", me), body = f[3].Replace("%player%", me);
+                        int[] face = null;
+                        if (id == -1 && f[2].Length > 0)
+                        {
+                            var parts = f[2].Split(',');
+                            face = new int[parts.Length];
+                            for (int k = 0; k < parts.Length; k++) int.TryParse(parts[k], out face[k]);
+                        }
+                        // The reader: Keith's face (the player character, speaker 0) with their pilot name.
+                        if (id == -2) id = 0;
+                        if (id >= StoryTable.SpeakerCount) continue;
+                        list.Add(new UI.DialogueView.Page { speaker = id, text = body, agentName = name.Length > 0 ? name : null, agentPortrait = face });
+                    }
+                    // The reward pages pay when the dialogue closes (at once without pages).
+                    NetScreen.QueueDialog(list, rewards.Count == 0 ? null : (System.Action)(() => { foreach (var r in rewards) GrantReward(r.credits, r.items, r.heading); }));
+                    break;
+                }
+                case Order.Reward:
+                {
+                    var parts = (text ?? "").Split('\n');
+                    GrantReward(a, parts.Length > 1 ? parts[1] : "", parts[0]);
+                    break;
+                }
+                case Order.Object:
+                    if (level == null || string.IsNullOrEmpty(text)) return;
+                    int sep = text.IndexOf('@');
+                    Notice(by, DebugSpawner.SpawnObject(level, sep < 0 ? text : text.Substring(0, sep), sep < 0 ? null : ParseAt(text.Substring(sep + 1))));
+                    break;
+            }
         }
     }
 }

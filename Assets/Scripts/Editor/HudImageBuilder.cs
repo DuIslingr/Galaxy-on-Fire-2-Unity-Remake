@@ -151,6 +151,7 @@ namespace GoF2Remake.EditorTools
             (Ipad, "hit_side_red", 438, 1074, 325, 892, 0, false),
             (Ipad, "hit_top_red", 438, 112, 1000, 375, 0, false),
             (Main, "message_bg", 1601, 746, 392, 44, 0, false),
+            (Ipad, "radar_ellipse", 438, 489, 657, 491, 0, false),   // 0x4c7 the faint radar ellipse's top-left quarter (autopilot_travel.md 1.1)
             (Ipad, "portrait_bg", 1459, 955, 160, 200, 0, false),     // 0x485 ImageFactory::reload (dialogue_cutscenes.md 1.3)
             (Ipad, "portrait_frame", 1879, 249, 160, 200, 0, false),  // 0x511
             // Alien font (resource 1310 = font 1 of texture 10062, Globals::loadFont; AlienText): the magenta glyph row,

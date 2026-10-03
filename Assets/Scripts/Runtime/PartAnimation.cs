@@ -6,9 +6,8 @@
 // to Y-up (engine = (c0, c2, -c1)); engine -> Unity is (x, y, -z) once the import step has turned the
 // models to face +Z (ModelOrientationPostprocessor). That import step bakes a 180 deg turn about Y into the vertices
 // ((-x, y, -z)), so part offsets get the same flip (ImportFlip) or they slide mirrored (the auto turrets' ammo belts
-// left their channel). Rotation axis mapping could not be
-// fully confirmed from the decompiled code, so it is exposed below: if a part spins around the wrong
-// axis, change the rotation mapping in the inspector.
+// left their channel). Rotations: the same frame, so file X / Y / Z turn about Unity x / z / y with the Z one negated
+// (rotationMap, applied in the file's Rx * Ry * Rz order; see the map's comment).
 // applyMaterialChannels (opt-in: the sky layers, explosions): the `extra` channel (0..100, opacity) goes to the part
 // renderer's _Fade, or for the GoF2 Shader Graphs (no _Fade) scales their _Color tint (rgb on additive, alpha otherwise),
 // and `v5_0` (a UV scroll, assumed 100 = one texture width) to its _UVOffset.x, through a MaterialPropertyBlock.
@@ -60,17 +59,26 @@ namespace GoF2Remake.Visuals
 
         [Header("Axis mapping (source channel 0/1/2 = file X/Y/Z)")]
         public AxisMap[] positionMap = { new AxisMap { source = 0, sign = 1 }, new AxisMap { source = 2, sign = 1 }, new AxisMap { source = 1, sign = 1 } };
-        public AxisMap[] rotationMap = { new AxisMap { source = 0, sign = -1 }, new AxisMap { source = 2, sign = -1 }, new AxisMap { source = 1, sign = -1 } };
+        // The keys are Z-up file rotations Rx * Ry * Rz (Transform::InternUpdate 0x7e720 conjugates them into the engine
+        // frame; Quaternion::Set 0x8ba6e / Convert 0x8be1a: ordinary right-handed angles). The part's frame is the file's
+        // through (-x, z, -y) (the position map with ImportFlip), a mirror: file X -> Unity +x (angle kept), file Y -> Unity
+        // +z (kept), file Z -> Unity +y (negated). The old map (-x, -z, -y) spun the wormhole, the Khador jump, the time
+        // jump's hyper drive and the gates' rings backwards (rotY); rotZ (the hangar bots' heading) was already right.
+        public AxisMap[] rotationMap = { new AxisMap { source = 0, sign = 1 }, new AxisMap { source = 2, sign = -1 }, new AxisMap { source = 1, sign = 1 } };
         public bool rotationInRadians = true;
         [Tooltip("Apply the `extra` (opacity) and `v5_0` (UV scroll) channels to the part renderers (_Fade / _UVOffset).")]
         public bool applyMaterialChannels;
 
-        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised, uvRepeats; }
+        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised; }
         readonly List<Track> tracks = new List<Track>();
         float timeMs, lengthMs;
 
         void Awake()
         {
+            // The prefabs saved the old default map: the corrected one instead (an edited map is kept).
+            if (rotationMap != null && rotationMap.Length == 3 && rotationMap[0].source == 0 && rotationMap[1].source == 2 && rotationMap[2].source == 1
+                && rotationMap[0].sign < 0f && rotationMap[1].sign < 0f && rotationMap[2].sign < 0f)
+                rotationMap = new[] { new AxisMap { source = 0, sign = 1 }, new AxisMap { source = 2, sign = -1 }, new AxisMap { source = 1, sign = 1 } };
             if (meta == null) return;
             var m = JsonUtility.FromJson<MeshMeta>(meta.text);
             if (m == null || m.parts == null) return;
@@ -125,15 +133,6 @@ namespace GoF2Remake.Visuals
             // 1 = _UVOffset (GoF2/SkyLayer), 2 = _MainTex_ST (the Shader Graphs' main texture tiling and offset), 0 = none
             tk.uvMode = mat == null ? 0 : mat.HasProperty("_UVOffset") ? 1 : mat.HasProperty("_MainTex_ST") ? 2 : 0;
             if (tk.uvMode == 2) { var sc = mat.mainTextureScale; var of = mat.mainTextureOffset; tk.baseST = new Vector4(sc.x, sc.y, of.x, of.y); }
-            var tex = mat != null ? mat.mainTexture : null;
-            tk.uvRepeats = tex != null && tex.wrapMode == TextureWrapMode.Repeat;
-        }
-
-        /// <summary>A UV-scrolling part whose texture repeats (not a clamped effect atlas).</summary>
-        static bool UvScrollsAnyway(Track tk)
-        {
-            InitMaterialTrack(tk);
-            return tk.uvRepeats;
         }
 
         /// <summary>How often the looping animation has wrapped (the storm sky re-rolls its rotation on each).</summary>
@@ -181,6 +180,11 @@ namespace GoF2Remake.Visuals
             foreach (var a in root.GetComponentsInChildren<PartAnimation>(true)) a.Hold(atMs);
         }
 
+        /// <summary>Hold() on every part animation under 'root' at its last frame: Transform::Update(dt = the length) once
+        /// and never again (the Valkyrie battlestation after step 78: its arms unfolded, PlayerStation ctor 0x1473c2 /
+        /// Level::createStaticObject 0xcdcee).</summary>
+        public static void HoldAllAtEnd(GameObject root) => HoldAll(root, float.MaxValue);
+
         /// <summary>Hold() on every part animation under 'root' at its pose after a one-off first key (OneOffStartMs; t 0
         /// without one): a model whose rest pose only exists for the first 50 ms (the Void station: scale 1 at t 0, its
         /// real x10.065 from 50 ms).</summary>
@@ -219,7 +223,9 @@ namespace GoF2Remake.Visuals
         Quaternion KeyRotation(Track tk, float t)
         {
             var r = new[] { Eval(tk.rot[0], t, 0), Eval(tk.rot[1], t, 0), Eval(tk.rot[2], t, 0) };
-            return Quaternion.Euler(Map(r, rotationMap) * (rotationInRadians ? Mathf.Rad2Deg : 1f));
+            var v = Map(r, rotationMap) * (rotationInRadians ? Mathf.Rad2Deg : 1f);
+            // The file's order Rx * Ry * Rz, its axes X, Y, Z being Unity x, z, y (Quaternion.Euler would apply z, x, y).
+            return Quaternion.AngleAxis(v.x, Vector3.right) * Quaternion.AngleAxis(v.z, Vector3.forward) * Quaternion.AngleAxis(v.y, Vector3.up);
         }
 
         /// <summary>Transform::InternUpdate 0x7e720: each key's rotation becomes a quaternion (Quaternion(x, y, z)) and
@@ -288,11 +294,13 @@ namespace GoF2Remake.Visuals
                     var v = new Vector3(s[0], s[1], s[2]);
                     tk.tr.localScale = Vector3.Scale(tk.baseScale, v);
                 }
-                // The UV scroll channels (v5_0 u, v5_1 v; 100 = one texture) run on every repeating texture, as the engine
-                // animates them on any mesh (the burning stations' fire and smoke, plasma beams and streams, projectiles, gas
-                // clouds); the clamped effect atlases are left alone (a scrolled cell would smear its edge). `extra` stays opt-in.
+                // The UV scroll channels (v5_0 u, v5_1 v; 100 = one texture) run on every mesh, as the engine animates them
+                // (the burning stations' fire and smoke, plasma beams and streams, projectiles, gas clouds), the clamped
+                // effect atlases too: their scrolling cells stay inside the texture (the beams' strips repeat every scroll
+                // period, sn_projectiles 207 / 222 / 228; the fireworks step down their column), so nothing smears; held
+                // still, the transfusion / repair beams and the Raccoon's beam lost their flow. `extra` stays opt-in.
                 bool uvAnimated = tk.uv != null || tk.uvY != null;
-                if ((applyMaterialChannels && (tk.extra != null || uvAnimated)) || (uvAnimated && UvScrollsAnyway(tk)))
+                if ((applyMaterialChannels && tk.extra != null) || uvAnimated)
                 {
                     InitMaterialTrack(tk);
                     if (tk.renderer == null) continue;

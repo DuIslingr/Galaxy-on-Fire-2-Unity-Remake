@@ -70,7 +70,10 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>Stick / keys, each axis -1..1 (+y = down on screen). The original squares it: 3 * v^2 with the sign.</summary>
-        public void SetInput(Vector2 v) => input = new Vector2(Mathf.Sign(v.x) * 3f * v.x * v.x, Mathf.Sign(v.y) * 3f * v.y * v.y);
+        /// <summary>MiningGame::right / left / up / down: input = 3 x the value as the caller shaped it (the touch stick and the
+        /// keys / pad squared per axis like Hud::getAnalog, the PC mouse linear). Squared here as well, the touch stick ran at
+        /// 3 x raw^4: a quarter of the speed at half deflection.</summary>
+        public void SetInput(Vector2 v) => input = 3f * v;
 
         public bool IsInCurrentLayer() => Drill.magnitude < RadiusOf(Layer);
 

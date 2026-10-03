@@ -33,6 +33,13 @@ namespace GoF2Remake.UI
 
         public static string ItemName(int item) => Localization.Get(1274 + item);
         public static string ShipName(int ship) => Localization.Get(913 + ship);
+
+        /// <summary>The ship's race under its name ("" = none, Shop.ShipMakerRace): the four races, Grey and pirates.</summary>
+        public static string ShipRaceText(int ship)
+        {
+            int race = Shop.ShipMakerRace(ship);
+            return race >= 0 && (race <= 3 || race == 7 || race == 8) ? Localization.Get(406 + race) : "";
+        }
         public static string Category(ItemData it) => Localization.Get(221 + it.categoryId);
 
         /// <summary>Attributes the details never list (index, type, price systems, occurrence, prices, Vossk flag, home station).</summary>

@@ -1,7 +1,7 @@
 // UpscalerFramework.cs
 // Remake: NVIDIA DLSS and AMD FSR 2 / 3 / 4 through URP's upscaler framework (Unity 6.7, URP 17.7). The framework and its
 // DLSS / FSR upscalers are in the render pipeline packages behind the undocumented ENABLE_UPSCALER_FRAMEWORK define (set for
-// the Standalone platforms in the Player settings), on the built-in modules com.unity.modules.nvidia / com.unity.modules.amd
+// the Standalone platforms in the Player settings, and for iOS by IosUpscalerDefine), on the built-in modules com.unity.modules.nvidia / com.unity.modules.amd
 // (ENABLE_NVIDIA / ENABLE_AMD on Windows). With the framework compiled in, URP ignores the asset's old upscaling filter: the
 // camera uses the framework's active upscaler (UniversalRenderPipeline.SetUpscaler), so every choice of the Upscaler option
 // goes through here: Off = unity.auto (bilinear / point by the render scale), FSR 1 = amd.fsr1, STP = unity.stp, DLSS =
@@ -11,8 +11,16 @@
 // URP creates its pipeline (RenderPipelineManager.activeRenderPipelineCreated). Which upscalers run on this device comes from the
 // framework's own checks (IUpscaler.isSupportedOnDevice: the NVIDIA / AMD plugin, the GPU and the graphics API: DLSS and
 // FSR 2 on Direct3D 11 / 12 or Vulkan, FSR 3 / 4 on Direct3D 12 only, FSR 4 on AMD's newest GPUs), read from the pipeline's
-// framework instance (UniversalRenderPipeline.upscaling, internal: one reflection read). Without the define (Android) all of
+// framework instance (UniversalRenderPipeline.upscaling, internal: one reflection read). On iOS the framework offers Auto, FSR 1,
+// STP and MetalFX (no NVIDIA / AMD plugins there). Without the define (Android) all of
 // this compiles to nothing and Bootstrap keeps the asset's upscaling filter.
+// Apple MetalFX (apple.metalfx-spatial / apple.metalfx-temporal): the render pipeline core's own MetalFX upscalers, compiled
+// in with the built-in module com.unity.modules.metalfx (ENABLE_METALFX_MODULE) for macOS / iOS players (and the Editor with
+// a macOS target) on Metal. Unlike DLSS / FSR 2+ they have no quality modes: the render scale sets their input resolution
+// (MetalFX Temporal's GetResolutionInfo returns the device's supported range and URP clamps the render scale into it).
+// Spatial is a single-frame upscaler after post-processing (like FSR 1); Temporal is jittered TAA + upscaling (like STP:
+// MSAA off). Device support: MTLFXSpatialScalerDescriptor / MTLFXTemporalScalerDescriptor.supportsDevice (macOS 13+,
+// Apple silicon / recent AMD GPUs).
 
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -24,14 +32,15 @@ namespace GoF2Remake
     public static class UpscalerFramework
     {
         public const string Auto = "unity.auto", Fsr1 = "amd.fsr1", Stp = "unity.stp", Dlss = "nvidia.dlss4",
-            Fsr4 = "amd.fsr4", Fsr3 = "amd.fsr3", Fsr2 = "amd.fsr2";
+            Fsr4 = "amd.fsr4", Fsr3 = "amd.fsr3", Fsr2 = "amd.fsr2",
+            MetalFxSpatial = "apple.metalfx-spatial", MetalFxTemporal = "apple.metalfx-temporal";
 
         /// <summary>The upscaler quality option: 0 native (DLAA / FSR native AA), 1 quality, 2 balanced, 3 performance, 4 ultra
         /// performance.</summary>
         public const int QualityNative = 0, QualityQuality = 1, QualityBalanced = 2, QualityPerformance = 3, QualityUltra = 4;
 
 #if ENABLE_UPSCALER_FRAMEWORK
-        /// <summary>The framework is compiled in (desktop builds).</summary>
+        /// <summary>The framework is compiled in (desktop and iOS builds).</summary>
         public static bool Compiled => true;
 
         static UniversalRenderPipeline Pipeline => RenderPipelineManager.currentPipeline as UniversalRenderPipeline;
@@ -63,6 +72,11 @@ namespace GoF2Remake
         }
 
         public static bool DlssSupported => Supports(Dlss);
+
+        /// <summary>MetalFX Spatial / Temporal on this device (macOS / iOS builds on Metal with the MetalFX module; iOS 16+,
+        /// A13 or newer for Temporal per Apple's supportsDevice).</summary>
+        public static bool MetalFxSpatialSupported => Supports(MetalFxSpatial);
+        public static bool MetalFxTemporalSupported => Supports(MetalFxTemporal);
 
         /// <summary>The newest FSR (4, 3, 2) this device runs, or null.</summary>
         public static string BestFsr => Supports(Fsr4) ? Fsr4 : Supports(Fsr3) ? Fsr3 : Supports(Fsr2) ? Fsr2 : null;
@@ -119,6 +133,8 @@ namespace GoF2Remake
         public static bool Compiled => false;
         public static bool Supports(string id) => false;
         public static bool DlssSupported => false;
+        public static bool MetalFxSpatialSupported => false;
+        public static bool MetalFxTemporalSupported => false;
         public static string BestFsr => null;
         public static string BestFsrLabel => null;
         public static string ActiveId => "";

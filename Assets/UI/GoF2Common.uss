@@ -16,13 +16,16 @@
     --gof-line: rgba(62, 200, 255, 0.25);
     --gof-shadow: rgba(0, 0, 0, 0.6);
 
-    -unity-font-definition: url("project://database/Assets/UI/Fonts/Inter-Regular-SDF.asset");
+    /* The original's interface font (gof2_interface.png's bitmap glyphs, font 1111) is Serpentine: Serpentine ICG Light,
+       with Inter as its fallback for the letters it lacks (Cyrillic, most of Latin Extended-A). */
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Serpentine-ICG-Light-SDF.asset");
     color: var(--gof-text);
     font-size: 20px;
 }
 
 .gof-semibold {
-    -unity-font-definition: url("project://database/Assets/UI/Fonts/Inter-SemiBold-SDF.asset");
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Serpentine-ICG-Light-SDF.asset");
+    -unity-font-style: bold;   /* Serpentine has the one weight: the emphasis is the font asset's bold (faux) style */
 }
 
 /* ---- Slider -------------------------------------------------------------------------- */
@@ -631,7 +634,7 @@
 
 .tab-row {
     flex-direction: row;
-    flex-wrap: wrap;   /* five tabs: a second line on narrow panels rather than wrapped words */
+    flex-wrap: wrap;   /* six tabs: a second line on narrow panels rather than wrapped words */
     margin-bottom: 18px;
 }
 
@@ -704,7 +707,7 @@
 /* OptionsView: the panel itself, like the main menu's .panel (shown at once, no slide-in). */
 .options-panel {
     width: 90%;
-    max-width: 820px;
+    max-width: 1000px;   /* the six tabs on one line */
     max-height: 92%;
     padding: 36px 44px;
     background-color: var(--gof-panel);

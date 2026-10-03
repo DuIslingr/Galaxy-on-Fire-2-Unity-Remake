@@ -7,7 +7,8 @@
 // per frame; zoom 1500..20000 units, wheel / key steps x -50) while the ship flies on under the player's controls; mining,
 // object docking, cutscenes, the jump scenes and death go back to the standard view.
 // Input (remake): V / controller D-pad up cycles; the orbit follows a touch drag off the controls (FlightHud forwards it
-// instead of the dodge swipe), the mouse with the middle button held, or the right stick; the wheel / triggers zoom.
+// instead of the dodge swipe), the mouse with the middle button held, or the right stick; the wheel or a two-finger
+// pinch zooms (as in PhotoMode; the triggers keep firing).
 
 using System;
 using GoF2Remake.Data;
@@ -32,7 +33,7 @@ namespace GoF2Remake.Flight
         ChaseCamera chase;
         PlayerTurret turret;
         Transform anchor;
-        float px, py, distance = 3800f, wheel;
+        float px, py, distance = 3800f, wheel, pinch;
         Vector2 fling, touchDrag;
         bool touchHeld;
         Vector2 lastMouse;
@@ -106,6 +107,9 @@ namespace GoF2Remake.Flight
             touchHeld = held;
         }
 
+        /// <summary>FlightHud: two fingers off the controls change their span (screen pixels) to zoom in free look.</summary>
+        public void TouchPinch(float spanPixels) => pinch += spanPixels;
+
         void Update()
         {
             bool halted = Time.timeScale <= 0f;
@@ -148,13 +152,12 @@ namespace GoF2Remake.Flight
             if (pad != null)
             {
                 var s = pad.rightStick.ReadValue();
-                delta += new Vector2(s.x, -s.y) * 8f * frames;
+                delta += new Vector2(-s.x, -s.y) * 8f * frames;   // right: the camera to the ship's right, up: up (like PhotoMode's arrows)
             }
-            if (mouse != null)
-            {
-                float steps = mouse.scroll.ReadValue().y / 120f;
-                if (Mathf.Abs(steps) > 0f) wheel += steps;
-            }
+            distance += pinch * scale * -50f;
+            pinch = 0f;
+            // A notch reads 1 (the Input System's uniform scroll) or 120 (raw): one step either way.
+            if (mouse != null) wheel += Mathf.Clamp(mouse.scroll.ReadValue().y, -1f, 1f);
             if (Mathf.Abs(wheel) > 0.01f) { distance += wheel * -50f * frames; wheel *= Mathf.Pow(0.9f, frames); } else wheel = 0f;
             px += delta.x;
             py = Mathf.Clamp(py + delta.y, -200f, 200f);
@@ -162,10 +165,11 @@ namespace GoF2Remake.Flight
             Place();
         }
 
-        /// <summary>TargetFollowCamera::rotateAroundTarget in the ship's frame: yaw -0.005 px, pitch -0.005 py.</summary>
+        /// <summary>TargetFollowCamera::rotateAroundTarget in the ship's frame (-0.005 py, -0.005 px), mirrored into Unity's
+        /// (-x, y, z) ship frame: pitch -0.005 py, yaw +0.005 px (see PhotoMode.Place; unmirrored, every axis was inverted).</summary>
         void Place()
         {
-            anchor.localRotation = Quaternion.Euler(0.005f * py * Mathf.Rad2Deg, -0.005f * px * Mathf.Rad2Deg, 0f);
+            anchor.localRotation = Quaternion.Euler(-0.005f * py * Mathf.Rad2Deg, 0.005f * px * Mathf.Rad2Deg, 0f);
             if (chase != null && chase.follow == anchor) chase.followOffset = new Vector3(0f, 0f, -distance * M);
         }
     }

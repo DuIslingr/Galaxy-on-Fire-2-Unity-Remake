@@ -105,6 +105,16 @@ namespace GoF2Remake.Flight
                 return;
             }
 
+            // VR: the camera is the pilot's seat (Vr.VrCockpit), rigidly with the ship: no lag, slide, shake or boost zoom.
+            if (GoF2Remake.Vr.VrMode.Enabled)
+            {
+                transform.SetPositionAndRotation(ship.TransformPoint(GoF2Remake.Vr.VrCockpit.Seat), ship.rotation);
+                rumble = 0f;
+                shakeMs = 0f;
+                if (cam != null) cam.fieldOfView = GoF2Remake.Visuals.Aspect.VerticalFov(baseFov, cam.aspect);
+                return;
+            }
+
             float posK = positionCoefficient, rotK = rotationCoefficient;
             if (handlingDependent)
             {
@@ -163,6 +173,7 @@ namespace GoF2Remake.Flight
             var ship = target.transform;
             transform.position = ship.TransformPoint(offset);
             transform.rotation = Quaternion.LookRotation(ship.TransformPoint(lookOffset) - transform.position, ship.up);
+            if (GoF2Remake.Vr.VrMode.Enabled) transform.SetPositionAndRotation(ship.TransformPoint(GoF2Remake.Vr.VrCockpit.Seat), ship.rotation);
             slide = Vector3.zero;
         }
     }

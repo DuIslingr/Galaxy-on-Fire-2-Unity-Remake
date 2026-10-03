@@ -72,6 +72,8 @@ namespace GoF2Remake.Flight
         /// <summary>The stick this frame (keys, stick, touch), also while steering is locked.</summary>
         public Vector2 SteerInput { get; private set; }
         [System.NonSerialized] public float ExternalSpeedMetersPerSecond;
+        /// <summary>A docking script turns the model itself (the asteroid landing's pitch-up): the levelling leaves it alone.</summary>
+        [System.NonSerialized] public bool modelHeld;
 
         /// <summary>Autopilot (PlayerEgo::setAutoPilot): the world position to fly to, re-read every frame; null = off.
         /// The stick is ignored; throttle, boost and the flight model's speed still apply (autopilot_travel.md 3.3).</summary>
@@ -141,9 +143,10 @@ namespace GoF2Remake.Flight
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
             if (externalControl)
             {
+                Model.TickBoost(dtMs);   // PlayerEgo::update: the boost and its recharge run on (the mining approach boosts)
                 SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
                 Maneuver.Cancel();
-                if (!modelTumbling) UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
+                if (!modelTumbling && !modelHeld) UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
                 return;
             }
             if (useBuiltInInput && !inputLocked) ReadDodgeInput();
@@ -205,9 +208,9 @@ namespace GoF2Remake.Flight
             }
             transform.position += transform.forward * (r.forwardUnits * metersPerUnit)
                                 + transform.right * (r.sidePushUnits * metersPerUnit);
-            // The PC version's held strafe (bindings 3350 / 3351 "Strafe left / right"): not on the autopilot or while the
-            // controls are locked.
-            if (useBuiltInInput && !inputLocked && !steeringLocked && autopilotTarget == null)
+            // The PC version's held strafe (bindings 3350 / 3351 "Strafe left / right"): not while the controls are locked.
+            // Remake: on the autopilot too (it slides the ship sideways; the autopilot keeps correcting the heading).
+            if (useBuiltInInput && !inputLocked && !steeringLocked)
             {
                 int dir = (GameControls.StrafeRight.IsPressed() ? 1 : 0) - (GameControls.StrafeLeft.IsPressed() ? 1 : 0);
                 if (dir != 0) Model.Strafe(dir, dtMs);
@@ -225,23 +228,20 @@ namespace GoF2Remake.Flight
         }
 
         // The dodge bindings (the original: a touch swipe, FlightHud): GameControls' DodgeLeft / DodgeRight (no keyboard default:
-        // A / D are the PC version's held strafe), or (remake) a sideways flick of the controller's right stick while no
-        // binding uses it.
-        bool stickFlicked;
-
+        // A / D are the PC version's held strafe; the controller's right stick pushed left / right). A stick binding is left
+        // alone in free look, where the right stick turns the camera.
         void ReadDodgeInput()
         {
-            if (GameControls.DodgeLeft.WasPressedThisFrame()) RequestDodge(1);
-            if (GameControls.DodgeRight.WasPressedThisFrame()) RequestDodge(2);
-            var pad = Gamepad.current;
-            if (pad != null && !GoF2Remake.Multiplayer.NetChat.Typing && !GameControls.PadUses("<Gamepad>/rightStick"))
-            {
-                float x = pad.rightStick.ReadValue().x;
-                if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
-                if (freeLook != null && freeLook.FreeLookActive) x = 0f;   // the right stick turns the free-look camera
-                if (!stickFlicked && Mathf.Abs(x) > 0.8f) { stickFlicked = true; RequestDodge(x < 0f ? 1 : 2); }
-                else if (Mathf.Abs(x) < 0.3f) stickFlicked = false;
-            }
+            if (GameControls.DodgeLeft.WasPressedThisFrame() && !StickInFreeLook(GameControls.DodgeLeft)) RequestDodge(1);
+            if (GameControls.DodgeRight.WasPressedThisFrame() && !StickInFreeLook(GameControls.DodgeRight)) RequestDodge(2);
+        }
+
+        bool StickInFreeLook(UnityEngine.InputSystem.InputAction a)
+        {
+            if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
+            if (freeLook == null || !freeLook.FreeLookActive) return false;
+            var c = a.activeControl;
+            return c != null && c.path.Contains("Stick", System.StringComparison.OrdinalIgnoreCase);
         }
 
         bool brakeOverridden;

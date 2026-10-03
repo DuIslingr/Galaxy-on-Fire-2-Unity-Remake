@@ -2,7 +2,9 @@
 // The flight HUD's mining visuals (Reference/research/mining.md 3.1 and 4.7), driven by FlightHud:
 //   lock ring    image 0x456, 24 frames around the crosshair, filling while the lock builds up
 //   lock plate   0x4c4 at the top with the class letter (0x44e frame 7 - quality) and the ore name
-//   messages     the HUD message queue (Hud::hudEvent / catchCargo): "Target: Asteroid", "12t Gold", ...
+//   messages     the HUD message queue (Hud::hudEvent / catchCargo, drawEventQueue 0x18f098 / updateQueue 0x18f2a0): one
+//                message at a time for 4000 ms (a queue of 20) on the plate 0x4c3 (392 x 44) at the top centre, y -8, or 42
+//                while the lock plate shows; "Target: Asteroid", "12t Gold", ...
 //   minigame     MiningGame::render2D: rock layers as discs from four mirrored quadrant images (finished layers vanish),
 //                the core (class A), drill ring + 10-frame bit at the drill, energy bar (flickers red when low) with its
 //                label and two scrolling data strips, the depth strip and the ore amount next to the drill (red when it
@@ -24,6 +26,11 @@ namespace GoF2Remake.UI
 
         readonly VisualElement overlay, lockRing, lockPlate, lockClass, messages;
         readonly Label lockOre;
+        Label messageText;
+        readonly Queue<(string text, int colour)> messageQueue = new Queue<(string, int)>();
+        float messageEnd = -1f;
+        const float MessageSeconds = 4f;   // Hud::updateQueue
+        const int MessageQueueSize = 20;
         readonly VisualElement discRoot, core, drillRing, drillBit, energyFrame, energyClip, energyFill, energyLabel;
         readonly VisualElement stripRed, stripOrange, depthStrip, oreBox;
         readonly Label oreText;
@@ -46,6 +53,15 @@ namespace GoF2Remake.UI
             lockClass = root.Q("lockClass");
             lockOre = root.Q<Label>("lockOre");
             messages = root.Q("hudMessages");
+            if (messages != null)
+            {
+                SetImage(messages, Tex("message_bg"));
+                messageText = new Label { pickingMode = PickingMode.Ignore };
+                messageText.AddToClassList("hud-message");
+                messageText.AddToClassList("gof-semibold");
+                messages.Add(messageText);
+                messages.schedule.Execute(UpdateMessages).Every(33);
+            }
             overlay = root.Q("mining");
             SetImage(lockPlate, Tex("plate"));
 
@@ -110,20 +126,32 @@ namespace GoF2Remake.UI
 
         // ---- messages ------------------------------------------------------------------------------------------
 
-        /// <summary>Hud message queue: each line stays 3 s (at most 4 at a time).</summary>
-        /// <param name="colour">Hud::drawEventQueue colours: 0 white, 1 red (255, 42, 0), 2 green (0, 237, 0).</param>
+        /// <summary>Hud::hudEvent: queued, shown one at a time for 4 s (game time: paused with the game). A text already
+        /// showing or waiting isn't queued again (remake: a repeated event would hold the queue up for a minute).</summary>
+        /// <param name="colour">Hud::drawEventQueue colours: 0 white, 1 red (255, 42, 0), 2 green (0, 237, 0), 3 orange (255, 128, 0).</param>
         public void ShowMessage(string text, int colour = 0)
         {
-            if (messages == null || string.IsNullOrEmpty(text)) return;
-            var l = new Label(text) { pickingMode = PickingMode.Ignore };
-            l.AddToClassList("hud-message");
-            if (colour == 1) l.AddToClassList("hud-message--red");
-            else if (colour == 2) l.AddToClassList("hud-message--green");
-            l.AddToClassList("gof-semibold");
-            messages.Add(l);
-            while (messages.childCount > 4) messages.RemoveAt(0);
-            l.schedule.Execute(() => l.AddToClassList("hud-message--fade")).ExecuteLater(2600);
-            l.schedule.Execute(() => l.RemoveFromHierarchy()).ExecuteLater(3000);
+            if (messages == null || string.IsNullOrEmpty(text) || messageQueue.Count >= MessageQueueSize) return;
+            if (messageEnd >= 0f && messageText.text == text) return;
+            foreach (var m in messageQueue) if (m.text == text) return;
+            messageQueue.Enqueue((text, colour));
+            UpdateMessages();
+        }
+
+        void UpdateMessages()
+        {
+            if (messageEnd >= 0f && Time.time >= messageEnd) messageEnd = -1f;
+            if (messageEnd < 0f && messageQueue.Count > 0)
+            {
+                var (text, colour) = messageQueue.Dequeue();
+                messageText.text = text;
+                messageText.EnableInClassList("hud-message--red", colour == 1);
+                messageText.EnableInClassList("hud-message--green", colour == 2);
+                messageText.EnableInClassList("hud-message--orange", colour == 3);
+                messageEnd = Time.time + MessageSeconds;
+            }
+            messages.EnableInClassList("hud-messages--shown", messageEnd >= 0f);
+            messages.EnableInClassList("hud-messages--low", lockPlate != null && lockPlate.ClassListContains("lock-plate--shown"));
         }
 
         // ---- lock --------------------------------------------------------------------------------------------

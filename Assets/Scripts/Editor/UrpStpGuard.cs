@@ -4,9 +4,9 @@
 // asset while playing; Bootstrap restores it when Play mode ends, but a script recompile during Play mode loses that
 // restore, and a build then saved the asset without STP (the APK froze when STP was picked on Android).
 // Enforced on Editor load, whenever Play mode ends, and before every player build.
-// With the upscaler framework compiled in (ENABLE_UPSCALER_FRAMEWORK, the Standalone platforms: UpscalerFramework) URP reads
+// With the upscaler framework compiled in (ENABLE_UPSCALER_FRAMEWORK, the Standalone platforms and iOS: UpscalerFramework) URP reads
 // STP's use from the asset's upscaler priority list instead (isStpUsed), so the guard also keeps that list holding every
-// upscaler the game offers (STP, DLSS, FSR 4 / 3 / 2, FSR 1, Auto); the game picks one at runtime (SetUpscaler), and the
+// upscaler the game offers (STP, DLSS, FSR 4 / 3 / 2, MetalFX Temporal / Spatial, FSR 1, Auto); the game picks one at runtime (SetUpscaler), and the
 // scaling mode stays None so the Editor's own views render plain. The old filter stays STP for the Android builds (no
 // framework there). The list only exists while the framework is compiled: switching to Android and saving the asset drops
 // it, and the guard puts it back on the next load / build with the framework.
@@ -64,7 +64,7 @@ namespace GoF2Remake.EditorTools
 
 #if ENABLE_UPSCALER_FRAMEWORK
         /// <summary>The upscalers every asset lists (the ones registered in this Editor), highest priority first.</summary>
-        static readonly string[] Priority = { "unity.stp", "nvidia.dlss4", "amd.fsr4", "amd.fsr3", "amd.fsr2", "amd.fsr1", "unity.auto" };
+        static readonly string[] Priority = { "unity.stp", "nvidia.dlss4", "amd.fsr4", "amd.fsr3", "amd.fsr2", "apple.metalfx-temporal", "apple.metalfx-spatial", "amd.fsr1", "unity.auto" };
 
         /// <summary>The asset's m_UpscalerPriority (internal) set to Priority through its serialized form; true if it changed.</summary>
         static bool EnforcePriority(UniversalRenderPipelineAsset asset)

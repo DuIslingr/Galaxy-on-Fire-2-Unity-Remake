@@ -274,18 +274,21 @@ namespace GoF2Remake.World
             c.FailObjective = () => c.ShipDestroyed(0);                          // 1 (0): the outpost destroyed
         }
 
-        /// <summary>StarSystem::getPlanets()[1]: the second planet billboard (game units, -20000 * its direction).</summary>
-        Vector3 Planet1()
+        /// <summary>StarSystem::getPlanets()[1] (game units, -20000 * its direction): the original's list starts with the sun
+        /// (StarSystem::StarSystem: element 0 the sun, element i the planet of SolarSystem::getStations()[i - 1]), so element 1
+        /// is the system's first station's planet, Lopat in Vulpes, where Trot flies off to ("He's flying to Lopat"). The
+        /// remake's planet list has no sun: its [0]. ([1] showed Inari Onu, the orbit's own planet.)</summary>
+        Vector3 FirstStationPlanet()
         {
             var planets = level.Layout.planets;
             if (planets.Count == 0) return new Vector3(0, 0, -20000);
-            var p = planets[Mathf.Min(1, planets.Count - 1)];
+            var p = planets[0];
             return -OrbitLayout.BackdropDistance * OrbitLayout.Direction(p.pitch, p.yaw);
         }
 
         void Build69()
         {
-            var q = 4f * Planet1();
+            var q = 4f * FirstStationPlanet();
             var route = new Route(false);
             route.points.Add(q);
             route.points.Add(10f * q);
@@ -375,6 +378,10 @@ namespace GoF2Remake.World
             // [0] Alice's battlestation, unrotated (scenery with the station's volumes mirrored; the radio doesn't count it).
             c.AddPlaceholder();
             battlestation = Scenery("v_station_battlestation_anim_mission_object", host, OrbitLayout.RotationToUnity(Vector3.zero), "Valkyrie battlestation");
+            // PlayerStation ctor 0x1473c2 (station 0x65 from campaign 0x50): Transform::Update(dt = the animation's length)
+            // once, then PlayerStation::update 0x147dbc never runs it again: the arms unfolded (the turrets and shield
+            // generators below sit on them), not the folded load pose that looped as "opening itself".
+            PartAnimation.HoldAllAtEnd(battlestation);
             AddStationVolumes(battlestation, true);
             // [1-12] turrets and shield generators: at host + (-x, y, -z), rotation (0, 0, -rz) (the table rotated by (0, pi, 0)).
             int rank = Session.Rank;
@@ -405,6 +412,7 @@ namespace GoF2Remake.World
             // [0] the battlestation (hidden until it drops out of hyperspace), [1-8] Void fighters.
             c.AddPlaceholder();
             battlestation = Scenery("v_station_battlestation_anim_mission_object", Vector3.zero, Quaternion.identity, "Valkyrie battlestation");
+            PartAnimation.HoldAllAtEnd(battlestation);   // station 101 from 0x50: unfolded and held (as in 80)
             if (battlestation != null) battlestation.SetActive(false);
             AddStationVolumes(battlestation, false);
             for (int i = 0; i < 8; i++)

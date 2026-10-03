@@ -2,15 +2,19 @@
 // The smoke trail behind a player rocket / missile / thermo shot (RocketGun::setRadar 0x18b2b0 / RocketGun::update
 // 0x18b600; ParticleSystemMesh::emitTrail 0x1b6678 / setQuadEdge). The original gives each of the player's bullets its
 // own mesh particle system on Level+0x80 (the particles.png manager, like the exhaust): a quad-strip trail whose next
-// section starts every 'spacing' units flown (the record's +0x28 with flag 0x10), the sections in a ring of 'pool' (the
-// oldest reused, so the trail is at most pool x spacing long), each point fading from its start to its end colour over
+// section starts every 'sectionMs' (emitTrail: +0x94 += dt up to the record's +0x28, with the emitter at least sqrt(6000)
+// units from the last section's start; counted in units flown, the thermo trail hid inside its own 40 m projectile), the
+// sections in a ring of 'pool' (the oldest reused, so the trail spans at most pool x sectionMs), each fading from its start to its end colour over
 // the record's lifetime; two ribbons crossing at 45 deg (flags 0x1000 | 0x2000 | 0x20000), edges at +-size.
 // ParticleSettings records (ParticleSettings::ParticleSettings, stride 0x9c):
-//   39  rockets (sort 4) and missiles (5): size 100, every 125 units, 29 sections, 3000 ms, white -> transparent,
+//   39  rockets (sort 4) and missiles (5): size 100, every 125 ms, 29 sections, 3000 ms, white -> transparent,
 //       particles.png (0.752, 0.002)-(0.998, 0.498): the white smoke strip
-//   25-27  thermo guns 28 / 29 / 30 (25 also the cluster missiles, sort 40): size 50 / 100 / 150, every 50 units, 25
+//   25-27  thermo guns 28 / 29 / 30 (25 also the cluster missiles, sort 40): size 50 / 100 / 150, every 50 ms, 25
 //       sections, 1000 ms, the gold / red / purple strips (0, 0.625)-(0.125, 0.875) + 0.125 per record
 //   (28, SunFire o50: another manager, Level+0x98, not built.)
+//   12  SET_MISSILE_TRAIL, every other RocketGun sort (EMP bombs built here): not a ribbon but one sprite system on
+//       Level+0x84 (sprite_fire, additive) at the bullet, flags 0x2000021 like record 42: 60/s, 1250 ms, size 250..299
+//       +250/s, local velocity (0, 0, -6000), 700 behind the bullet, emitting while it lives (MissileTrail).
 // A launch resets the system; the bullet's death stops the emission and (sorts 4 / 5 / 40) the trail is drawn 2000 ms more
 // (RocketGun+0xd4). NPC guns never get one (setRadar is the player's). Remake: one camera-facing ribbon instead of the
 // crossed pair (the same from every side), each section showing the whole strip (mirrored every other section).
@@ -25,16 +29,16 @@ namespace GoF2Remake.Flight
 
         public sealed class Record
         {
-            public float size, spacing, lifeMs, afterDeathMs;
+            public float size, sectionMs, lifeMs, afterDeathMs;
             public int pool;
             public Rect uv;   // particles.png, GL (bottom-left) UVs
         }
 
         static readonly Record Rocket = new Record
-            { size = 100f, spacing = 125f, pool = 29, lifeMs = 3000f, afterDeathMs = 2000f, uv = Rect.MinMaxRect(0.752f, 0.002f, 0.998f, 0.498f) };
+            { size = 100f, sectionMs = 125f, pool = 29, lifeMs = 3000f, afterDeathMs = 2000f, uv = Rect.MinMaxRect(0.752f, 0.002f, 0.998f, 0.498f) };
 
         static Record Thermo(int k, float size, bool cluster) => new Record
-            { size = size, spacing = 50f, pool = 25, lifeMs = 1000f, afterDeathMs = cluster ? 2000f : 1000f,
+            { size = size, sectionMs = 50f, pool = 25, lifeMs = 1000f, afterDeathMs = cluster ? 2000f : 1000f,
               uv = Rect.MinMaxRect(0.002f + 0.125f * k, 0.625f, 0.125f + 0.125f * k, 0.875f) };
 
         /// <summary>The record for a player gun, null = no trail (RocketGun::setRadar's cases).</summary>
@@ -48,13 +52,27 @@ namespace GoF2Remake.Flight
             return null;
         }
 
+        /// <summary>Record 12 for an EMP bomb (setRadar's last case, addSystem(Level+0x84, bullet, 0xc)); null otherwise.
+        /// Emission off: Play / Stop per launch, the pose set each frame.</summary>
+        public static ParticleSystem MissileTrail(Gun gun, Transform parent)
+        {
+            var mat = gun.kind == Gun.Kind.EmpBomb ? CombatAssets.Load()?.fireMaterial : null;
+            if (mat == null) return null;
+            var ps = ShipSmoke.Create(parent, "Missile trail", mat, 1.25f, 250f, 299f, 76, 0f, Vector3.zero, -700f, 250f, 1);
+            var main = ps.main;
+            main.startSpeed = -6000f * M;   // +0x6c, along the bullet's -Z (the box shape emits along +Z)
+            var em = ps.emission;
+            em.rateOverTime = 60f;
+            return ps;
+        }
+
         readonly Record rec;
         readonly GameObject go;
         readonly Mesh mesh;
         readonly Vector3[] points;     // ring, oldest at 'first'
         readonly float[] born;         // ms
         int first, count;
-        float travelled, clock, deadFor = -1f;
+        float sinceSection, clock, deadFor = -1f;
         Vector3 last;
         Vector3[] verts;
         Vector2[] uvs;
@@ -94,7 +112,7 @@ namespace GoF2Remake.Flight
         public void Restart(Vector3 position)
         {
             first = count = 0;
-            travelled = 0f;
+            sinceSection = 0f;
             deadFor = -1f;
             last = position;
             Push(position);
@@ -127,15 +145,15 @@ namespace GoF2Remake.Flight
             }
             else if (alive)
             {
-                // flag 0x10: one section per 'spacing' units flown
-                float d = Vector3.Distance(position, last) / M;
-                if (d > 1e-3f)
+                // emitTrail: a new section once +0x94 (dt summed) reaches the record's +0x28 ms and the emitter is at least
+                // sqrt(6000) units from the last section's start (+0x80); meanwhile the head follows the bullet (Build).
+                sinceSection += dtMs;
+                if (sinceSection >= rec.sectionMs && (position - last).sqrMagnitude >= 6000f * M * M)
                 {
-                    // the crossings in flight order, 'spacing' apart along this frame's path
-                    for (float s = rec.spacing - travelled; s <= d; s += rec.spacing) Push(Vector3.Lerp(last, position, s / d));
-                    travelled = Mathf.Repeat(travelled + d, rec.spacing);
+                    Push(position);
+                    last = position;
+                    sinceSection = 0f;
                 }
-                last = position;
             }
             while (count > 0 && clock - born[first] >= rec.lifeMs) { first = (first + 1) % rec.pool; count--; }
             Build(deadFor < 0f && alive ? position : (Vector3?)null, cam);

@@ -286,7 +286,9 @@ namespace GoF2Remake.UI
                     for (int n = mounted.Count; n < slots; n++) AddRow(new Row { kind = RowKind.Slot, type = type, equipment = -1 - n });
                     // Remake: the hold's candidates under their own sub-header (284 "Available in cargo"), styled apart from
                     // the mounted slots.
-                    if (cargo.Count > 0) AddHeader(Localization.Get(284), true);
+                    if (cargo.Count > 0)
+                        AddHeader(Localization.Get(284) + (InputMode.Current == InputKind.Touch ? Localization.Extra("shopDoubleTapMount", "  ·  double-tap to mount")
+                                                         : InputMode.Current == InputKind.KeyboardMouse ? Localization.Extra("shopDoubleClickMount", "  ·  double-click to mount") : ""), true);
                     foreach (int i in cargo) AddRow(new Row { kind = RowKind.CargoItem, item = i, type = type });
                 }
             }
@@ -317,6 +319,7 @@ namespace GoF2Remake.UI
             var e = new VisualElement();
             e.AddToClassList("list-row");
             if (row.kind == RowKind.CargoItem) e.AddToClassList("list-row--cargo");
+            if (row.kind == RowKind.Slot && row.equipment >= 0) e.AddToClassList("list-row--mounted");   // remake: tinted, a cyan edge
             var icon = new VisualElement { pickingMode = PickingMode.Ignore };
             icon.AddToClassList("row-icon");
             var texts = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -356,8 +359,7 @@ namespace GoF2Remake.UI
                     var stored = Session.KaamoShips[row.equipment];
                     tex = ItemInfo.ShipIcon(row.ship);
                     name.text = ItemInfo.ShipName(row.ship);
-                    int race = row.ship < Shop.ShipRace.Length ? Shop.ShipRace[row.ship] : 0;
-                    subText.text = (race <= 3 || race == 8 ? Localization.Get(406 + race) : "") + (stored.mods.Count > 0 ? "  (+)" : "");
+                    subText.text = ItemInfo.ShipRaceText(row.ship) + (stored.mods.Count > 0 ? "  (+)" : "");
                     price.text = ItemInfo.Credits(hangar.StoredPrice(row.equipment));   // the sell value
                     break;
                 }
@@ -365,8 +367,7 @@ namespace GoF2Remake.UI
                 {
                     tex = ItemInfo.ShipIcon(row.ship);
                     name.text = ItemInfo.ShipName(row.ship);
-                    int race = row.ship < Shop.ShipRace.Length ? Shop.ShipRace[row.ship] : 0;
-                    subText.text = race <= 3 || race == 8 ? Localization.Get(406 + race) : "";
+                    subText.text = ItemInfo.ShipRaceText(row.ship) + (hangar.Stock.ModsOf(row.ship).Count > 0 ? "  (+)" : "");
                     int delta = hangar.ShipPrice(row.ship) - hangar.ShipPrice(Session.ShipIndex);   // trade-in difference
                     price.text = ItemInfo.Credits(delta);
                     price.EnableInClassList("row-price--expensive", delta > Session.Credits);
@@ -399,6 +400,7 @@ namespace GoF2Remake.UI
                     int n = hangar.CargoOf(row.item);
                     name.text = ItemInfo.ItemName(row.item) + (n > 1 ? $" ({n})" : "");
                     subText.text = ItemInfo.Category(db.Item(row.item));   // the sub-header says "Available in cargo"
+                    sub.Insert(0, Badge(Localization.Extra("shopInCargo", "IN CARGO"), "row-badge--cargo"));
                     break;
                 }
                 case RowKind.Blueprint:
@@ -474,7 +476,15 @@ namespace GoF2Remake.UI
                 info.AddToClassList("gof-semibold");
                 e.Add(info);
             }
-            e.RegisterCallback<ClickEvent>(_ => Select(row, true));
+            e.RegisterCallback<ClickEvent>(ev =>
+            {
+                Select(row, true);
+                // Remake: a double click / double tap on the Ship tab mounts a hold item or demounts a mounted one (the action
+                // button's Mount 281 / Demount 282, when it is enabled).
+                if (ev.clickCount >= 2 && selected == row && (row.kind == RowKind.CargoItem || (row.kind == RowKind.Slot && row.equipment >= 0))
+                    && !actionButton.ClassListContains("detail-action--hidden") && !actionButton.ClassListContains("detail-action--disabled"))
+                    Action();
+            });
             row.element = e;
             list.Add(e);
             rows.Add(row);
@@ -507,7 +517,7 @@ namespace GoF2Remake.UI
         /// item to buy (588, 0x1d) and the first non-commodity cargo item to sell (589, 0x1e).</summary>
         void SelectionHint(Row row)
         {
-            if (menu.IsDialogOpen) return;   // one window at a time (the hangar's own first-visit hint may be up)
+            if (menu.IsDialogOpen || !Settings.TutorialHints) return;   // one window at a time; the tutorial popups option
             int text = -1;
             if (tab == Tab.Ship && row.kind == RowKind.Slot && Session.Hints.Add(0x1f)) text = 587;
             else if (tab == Tab.Shop && row.kind == RowKind.ShopItem && Session.Hints.Add(0x1d)) text = 588;
@@ -601,14 +611,14 @@ namespace GoF2Remake.UI
                 var s = db.Ship(selected.ship);
                 detailIcon.style.backgroundImage = new StyleBackground(ItemInfo.ShipIcon(selected.ship));
                 detailName.text = ItemInfo.ShipName(selected.ship);
-                int race = selected.ship < Shop.ShipRace.Length ? Shop.ShipRace[selected.ship] : 0;
-                detailSub.text = race <= 3 || race == 8 ? T(406 + race) : "";
+                detailSub.text = ItemInfo.ShipRaceText(selected.ship);
                 if (s != null) foreach (var (label, value) in ItemInfo.ShipStats(s, hangar.ShipPrice(selected.ship))) AddStat(label, value);
                 detailText.text = T(977 + selected.ship);
                 if (selected.kind == RowKind.ShopShip)
                 {
                     int delta = hangar.ShipPrice(selected.ship) - hangar.ShipPrice(Session.ShipIndex);
                     ShowAction($"{T(301).ToUpperInvariant()}   {ItemInfo.Credits(delta)}", true);
+                    foreach (int mod in hangar.Stock.ModsOf(selected.ship)) AddStat(ModName(mod), "(+)");   // a traded-in hull's mods
                 }
                 else if (selected.kind == RowKind.StoredShip)
                 {

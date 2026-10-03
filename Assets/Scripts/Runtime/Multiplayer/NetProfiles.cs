@@ -60,7 +60,7 @@ namespace GoF2Remake.Multiplayer
             public long worth;     // at the last accepted upload (Worth)
             public float playSeconds;
             public int arenaKills, arenaDeaths, arenaWins;   // NetArena's matches (the leaderboard, /top)
-            public int role;   // NetAdmin: 0 player, 1 op, 2 admin
+            public int role;   // NetModeration: 0 player, 1 op, 2 admin
         }
 
         [Serializable] class AccountIndex { public string serverId; public List<Account> accounts = new List<Account>(); }
@@ -138,7 +138,7 @@ namespace GoF2Remake.Multiplayer
             if (string.IsNullOrEmpty(index.serverId)) index.serverId = RandomHex(16);
             SaveIndex();
             NetCrews.Load();
-            NetAdmin.Load();
+            NetModeration.Load();
             Debug.Log($"Server: player profiles on: {index.accounts.Count} / {MaxProfiles} in {folder}.");
         }
 
@@ -178,7 +178,7 @@ namespace GoF2Remake.Multiplayer
             SaveIndex();
         }
 
-        /// <summary>A profile's role (NetAdmin), 0 for none / a guest.</summary>
+        /// <summary>A profile's role (NetModeration), 0 for none / a guest.</summary>
         internal static int RoleOf(string id) => id == null ? 0 : index?.accounts.Find(x => x.id == id)?.role ?? 0;
 
         internal static void SetRole(string id, int role)
@@ -258,8 +258,8 @@ namespace GoF2Remake.Multiplayer
                 var entry = account?.devices.Find(d => d.tokenHash == hash);
                 if (entry != null) entry.device = device;   // a label only (the token proves it)
             }
-            // A ban on this profile or this device (NetAdmin): dropped with the reason.
-            if (NetAdmin.BanReason(account?.id, device) is string banned)
+            // A ban on this profile or this device (NetModeration): dropped with the reason.
+            if (NetModeration.BanReason(account?.id, device) is string banned)
             {
                 Debug.Log($"Server: client {client} ({(account != null ? "profile " + account.id : "no profile")}) is banned; dropped.");
                 NetGame.Kick(client, banned);
@@ -382,6 +382,7 @@ namespace GoF2Remake.Multiplayer
                 catch (Exception e) { Debug.LogError($"NetProfiles: profile {login.account.id} unreadable: {e.Message}"); }
             int home = login.account != null ? NetCrews.HomeOf(login.account.id) : -1;   // a crew member starts at its home
             NetState.Instance?.SendProfile(login.client, newToken, login.controller, login.account == null, json, home);
+            NetModeration.SyncRole(login.client);   // the profile's role onto its NetPlayer (NetCommands' rights)
         }
 
         // ---- uploads ----------------------------------------------------------------------------------------

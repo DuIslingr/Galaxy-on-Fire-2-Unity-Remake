@@ -32,6 +32,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         readonly Dictionary<int, Mirror> mirrors = new Dictionary<int, Mirror>();
+        int soundItem = -1;   // the primary weapon item whose shots make the sound
         readonly Transform muzzleParent;
         readonly System.Func<Target> owner;
         readonly System.Func<Target, bool> ignores;
@@ -85,8 +86,15 @@ namespace GoF2Remake.Multiplayer
             }
             else if (!m.gun.Inject(position, velocity, up, lifetimeMs)) return;
             m.rig.OnShot();
+            // Player::calcWeaponSounds: only one primary gun makes the shot sound (the first that fired here stands in for
+            // the shooter's first mounted primary); the others' shots were sounded too, a 4-gun ship 4 times over.
+            if (!m.gun.isSecondary && !Settings.EachWeaponSound)   // the remake option: every weapon item sounds
+            {
+                if (soundItem < 0) soundItem = item;
+                if (item != soundItem) return;
+            }
             var clip = m.fx != null ? m.fx.Shot : null;
-            if (clip != null) Sfx.PlayAt(clip, position, 0.8f);
+            if (clip != null) ShotVoices.PlayAt(clip, position, 0.8f);
         }
 
         /// <summary>A blast of that weapon at 'point': its explosion, and the nearest mirrored bullet is gone.</summary>

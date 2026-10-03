@@ -3,9 +3,12 @@
 // Defaults: the PC version's keys (Galaxy on Fire 2 Full HD, see CLAUDE.md "UI and platforms") and the remake's controller
 // buttons. Every row has three slots: two keyboard / mouse bindings and one controller binding (Steer's controller slot is a
 // whole stick or the D-pad, so the stick keeps its radial dead zone). The player's changes are binding overrides kept in
-// PlayerPrefs ("controls_bindings"); an empty override unbinds a slot. Menus keep their fixed keys (arrows, Enter, Esc,
+// PlayerPrefs ("controls_bindings", by action name and binding index: the Input System's own override JSON finds bindings
+// by their id, which code-made bindings get new every launch, so its saved overrides never applied after a restart); an
+// empty override unbinds a slot. Menus keep their fixed keys (arrows, Enter, Esc,
 // controller A / B / Menu) so no binding can lock the player out; the pause key (Esc / Menu) isn't rebindable either.
-// Rebinding a key another row uses swaps the two.
+// A key or button can be bound to several controls at once (the controller has too few buttons for one each): a rebind
+// never takes it from another row.
 
 using System;
 using System.Collections.Generic;
@@ -47,9 +50,9 @@ namespace GoF2Remake.Flight
         /// <summary>A binding changed (a rebind, a reset): hints and option rows show the new keys.</summary>
         public static event Action Changed;
 
-        public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight,
+        public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight, Drill,
             FirePrimary, FireSecondary, SwitchSecondary, Action, AutopilotMenu, ActionsMenu, Wingmen, KhadorDrive, FastForward,
-            Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, Screenshot;
+            Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, ChatSend, ChatChannel, Screenshot;
 
         static string X(string key, string english) => Localization.Extra(key, english);
 
@@ -74,11 +77,21 @@ namespace GoF2Remake.Flight
                 new[] { "<Keyboard>/1", "<Keyboard>/3" }, padParts: new string[] { null, null });
             LevelOut = Button("levelOut", () => X("ctlLevelOut", "Level out"), "<Keyboard>/2", null, "<Gamepad>/buttonNorth");
             // The PC version's binding screen: 3350 / 3351 "Strafe left / right" (held, PlayerEgo::strafe). The dodge (the
-            // phone's swipe; the right stick's flick) has no keyboard default.
+            // phone's swipe) has no keyboard default; on the controller the right stick pushed left / right (a binding like
+            // any other, rebindable: it was a fixed flick that a right-stick-press binding switched off).
             StrafeLeft = Button("strafeLeft", () => Localization.Get(3350), "<Keyboard>/a", null, null);
             StrafeRight = Button("strafeRight", () => Localization.Get(3351), "<Keyboard>/d", null, null);
-            DodgeLeft = Button("dodgeLeft", () => X("ctlDodgeLeft", "Dodge left"), null, null, null);
-            DodgeRight = Button("dodgeRight", () => X("ctlDodgeRight", "Dodge right"), null, null, null);
+            DodgeLeft = Button("dodgeLeft", () => X("ctlDodgeLeft", "Dodge left"), null, null, "<Gamepad>/rightStick/left");
+            DodgeRight = Button("dodgeRight", () => X("ctlDodgeRight", "Dodge right"), null, null, "<Gamepad>/rightStick/right");
+            // Remake: the mining drill on its own row (it used Steer: binding W A S D there to drill also steered the ship with
+            // the boost / brake / strafe keys). Read only while the minigame runs, when the flight controls aren't, so its
+            // keys may overlap them: the arrows, W A S D as the second keys, the left stick.
+            Drill = Composite("drill", () => X("ctlDrill", "Mining drill"), InputActionType.Value, "Vector2", "2DVector",
+                new[] { "Up", "Down", "Left", "Right" },
+                new Func<string>[] { () => X("ctlUp", "up"), () => X("ctlDown", "down"), () => X("ctlLeft", "left"), () => X("ctlRight", "right") },
+                new[] { "<Keyboard>/upArrow", "<Keyboard>/downArrow", "<Keyboard>/leftArrow", "<Keyboard>/rightArrow" },
+                padSingle: "<Gamepad>/leftStick", padType: "Vector2",
+                keys2: new[] { "<Keyboard>/w", "<Keyboard>/s", "<Keyboard>/a", "<Keyboard>/d" });
             // ---- weapons
             FirePrimary = Button("firePrimary", () => X("ctlFirePrimary", "Fire"), "<Keyboard>/space", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
             FireSecondary = Button("fireSecondary", () => X("ctlFireSecondary", "Fire secondary"), "<Keyboard>/r", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
@@ -98,6 +111,9 @@ namespace GoF2Remake.Flight
             // ---- other
             MouseSteering = Button("mouseSteering", () => X("ctlMouseSteering", "Mouse steering on / off"), "<Keyboard>/m", "<Mouse>/middleButton", null, padSlot: false);
             Chat = Button("chat", () => X("ctlChat", "Chat (multiplayer)"), "<Keyboard>/b", null, null);
+            // Read by ChatView while a line is typed (PressedNow: the map is off meanwhile).
+            ChatSend = Button("chatSend", () => X("ctlChatSend", "Chat: send message"), "<Keyboard>/enter", "<Keyboard>/numpadEnter", null, padSlot: false);
+            ChatChannel = Button("chatChannel", () => X("ctlChatChannel", "Chat: switch Local / Global"), "<Keyboard>/tab", null, null, padSlot: false);
             Screenshot = Button("screenshot", () => X("ctlScreenshot", "Screenshot"), "<Keyboard>/f12", null, null);
         }
 
@@ -116,13 +132,13 @@ namespace GoF2Remake.Flight
         /// ('padParts') or one control ('padSingle', a stick).</summary>
         static InputAction Composite(string id, Func<string> label, InputActionType type, string controlType, string composite,
                                      string[] parts, Func<string>[] partLabels, string[] keys, string[] padParts = null,
-                                     string padSingle = null, string padType = "Button")
+                                     string padSingle = null, string padType = "Button", string[] keys2 = null)
         {
             var a = Map.AddAction(id, type);
             a.expectedControlType = controlType;
             var row = new ControlRow { id = id, label = label, action = a, partLabels = partLabels, padType = padType };
             row.slots[0] = AddComposite(a, composite, parts, keys, KeyGroup);
-            row.slots[1] = AddComposite(a, composite, parts, new string[parts.Length], KeyGroup);
+            row.slots[1] = AddComposite(a, composite, parts, keys2 ?? new string[parts.Length], KeyGroup);
             if (padSingle != null) row.slots[2] = new[] { Add(a, padSingle, PadGroup) };
             else if (padParts != null) row.slots[2] = AddComposite(a, composite, parts, padParts, PadGroup);
             rows.Add(row);
@@ -172,20 +188,39 @@ namespace GoF2Remake.Flight
             if (Application.isPlaying) Map.Enable();
         }
 
+        [Serializable] sealed class SavedOverride { public string action; public int index; public string path; }
+        [Serializable] sealed class SavedOverrides { public int version = 2; public List<SavedOverride> bindings = new List<SavedOverride>(); }
+
         static void Load()
         {
             Map.RemoveAllBindingOverrides();
             string json = PlayerPrefs.GetString(PrefsKey, "");
-            if (json.Length > 0)
+            if (json.Length == 0) return;
+            try
             {
-                try { Map.LoadBindingOverridesFromJson(json); }
-                catch (Exception e) { Debug.LogWarning("GameControls: bindings not loaded: " + e.Message); }
+                var saved = JsonUtility.FromJson<SavedOverrides>(json);
+                // Version 1 was the Input System's JSON (binding ids that no longer exist): nothing to restore.
+                if (saved == null || saved.version < 2 || saved.bindings == null) return;
+                foreach (var o in saved.bindings)
+                {
+                    var action = Map.FindAction(o.action);
+                    if (action == null || o.index < 0 || o.index >= action.bindings.Count || action.bindings[o.index].isComposite) continue;
+                    action.ApplyBindingOverride(o.index, o.path ?? "");
+                }
             }
+            catch (Exception e) { Debug.LogWarning("GameControls: bindings not loaded: " + e.Message); }
         }
 
         static void Save()
         {
-            PlayerPrefs.SetString(PrefsKey, Map.SaveBindingOverridesAsJson());
+            var saved = new SavedOverrides();
+            foreach (var action in Map.actions)
+                for (int i = 0; i < action.bindings.Count; i++)
+                {
+                    var b = action.bindings[i];
+                    if (b.overridePath != null) saved.bindings.Add(new SavedOverride { action = action.name, index = i, path = b.overridePath });
+                }
+            PlayerPrefs.SetString(PrefsKey, JsonUtility.ToJson(saved));
             PlayerPrefs.Save();
         }
 
@@ -221,15 +256,6 @@ namespace GoF2Remake.Flight
             return false;
         }
 
-        /// <summary>A controller binding uses this control (the right stick flick dodges only while nothing steers with it).</summary>
-        public static bool PadUses(string controlPath)
-        {
-            foreach (var row in rows)
-                foreach (var p in Paths(row, BindSlot.Pad))
-                    if (!string.IsNullOrEmpty(p) && p.StartsWith(controlPath, StringComparison.OrdinalIgnoreCase)) return true;
-            return false;
-        }
-
         /// <summary>The short name the HUD and the options show for one control path ("F", "SPACE", "LMB", "A", "RT", "LS").</summary>
         public static string ShortName(string path)
         {
@@ -243,6 +269,8 @@ namespace GoF2Remake.Flight
                     "buttonsouth" => "A", "buttoneast" => "B", "buttonwest" => "X", "buttonnorth" => "Y",
                     "leftshoulder" => "LB", "rightshoulder" => "RB", "lefttrigger" => "LT", "righttrigger" => "RT",
                     "leftstick" => "LS", "rightstick" => "RS", "leftstickpress" => "LS", "rightstickpress" => "RS",
+                    "leftstick/up" => "LS ↑", "leftstick/down" => "LS ↓", "leftstick/left" => "LS ←", "leftstick/right" => "LS →",
+                    "rightstick/up" => "RS ↑", "rightstick/down" => "RS ↓", "rightstick/left" => "RS ←", "rightstick/right" => "RS →",
                     "dpad" => "D-PAD", "dpad/up" => "D-PAD ↑", "dpad/down" => "D-PAD ↓", "dpad/left" => "D-PAD ←", "dpad/right" => "D-PAD →",
                     "start" => "MENU", "select" => "VIEW",
                     _ => InputControlPath.ToHumanReadableString(path, InputControlPath.HumanReadableStringOptions.OmitDevice).ToUpperInvariant(),
@@ -289,6 +317,21 @@ namespace GoF2Remake.Flight
             return string.Join(" ", names);
         }
 
+        /// <summary>A control bound to 'action' went down this frame, read from the devices themselves: works while the map is
+        /// off (ChatView reads the chat keys while a line is typed and the flight controls are suspended).</summary>
+        public static bool PressedNow(InputAction action)
+        {
+            if (action == null) return false;
+            foreach (var b in action.bindings)
+            {
+                if (b.isComposite || string.IsNullOrEmpty(b.effectivePath)) continue;
+                using (var controls = InputSystem.FindControls(b.effectivePath))
+                    foreach (var c in controls)
+                        if (c is ButtonControl button && button.wasPressedThisFrame) return true;
+            }
+            return false;
+        }
+
         /// <summary>The first bound slot's text for the keyboard or the controller ("" = none): the flight hints' #KEY_ tokens.</summary>
         public static string KeyText(InputAction action, bool pad)
         {
@@ -303,6 +346,11 @@ namespace GoF2Remake.Flight
 
         static InputActionRebindingExtensions.RebindingOperation operation;
         static int rebindEndFrame = -10;
+        static bool capturingPad;
+
+        /// <summary>A capture that takes nothing in this long ends by itself: the menus ignore every input while one waits,
+        /// so a player without the device it waits for (a keyboard cell picked with a controller or a tap) had no way out.</summary>
+        const float CaptureTimeoutSeconds = 10f;
 
         /// <summary>A key is being captured: the menus ignore their keys meanwhile (and on the frame it ends, so the
         /// captured key doesn't also act in the menu).</summary>
@@ -311,7 +359,9 @@ namespace GoF2Remake.Flight
 
         /// <summary>Captures the slot's binding (a composite slot part by part). 'prompt' gets the part being asked for
         /// ("up", or null for a single binding); 'done' runs once it ended (captured, cleared or cancelled). Esc (or the
-        /// controller's Menu) cancels, Backspace / Delete unbinds the slot.</summary>
+        /// controller's Menu) cancels, Backspace / Delete unbinds the slot. Another kind of input than the slot's also
+        /// cancels (a keyboard cell: the controller's Menu / B, a tap; a controller cell: a mouse click, a tap), and so does
+        /// waiting CaptureTimeoutSeconds.</summary>
         public static void Rebind(ControlRow row, BindSlot slot, Action<string> prompt, Action done)
         {
             CancelRebind();
@@ -327,21 +377,35 @@ namespace GoF2Remake.Flight
             int index = idx[part];
             bool single = idx.Length == 1;
             prompt?.Invoke(single ? null : row.partLabels?[part]?.Invoke());
-            string old = row.action.bindings[index].effectivePath ?? "";
             bool clear = false;
 
             var op = row.action.PerformInteractiveRebinding(index)
                 .WithCancelingThrough("<Keyboard>/escape")
                 .WithControlsExcluding("<Keyboard>/anyKey")
+                .WithTimeout(CaptureTimeoutSeconds)
                 .OnMatchWaitForAnother(0.1f);
+            capturingPad = IsPad(slot);
             if (IsPad(slot))
             {
+                bool wholeStick = single && row.padType == "Vector2";
                 op.WithControlsHavingToMatchPath("<Gamepad>")
-                  .WithExpectedControlType(single && row.padType == "Vector2" ? "Vector2" : "Button");
-                // Stick directions would catch a drifting stick; a whole stick is the Vector2 slot's.
-                foreach (var stick in new[] { "leftStick", "rightStick" })
-                    foreach (var dir in new[] { "up", "down", "left", "right" })
-                        op.WithControlsExcluding($"<Gamepad>/{stick}/{dir}");
+                  .WithExpectedControlType(wholeStick ? "Vector2" : "Button");
+                if (wholeStick)
+                {
+                    // A whole stick (or the D-pad), not one of its directions.
+                    foreach (var stick in new[] { "leftStick", "rightStick" })
+                        foreach (var dir in new[] { "up", "down", "left", "right" })
+                            op.WithControlsExcluding($"<Gamepad>/{stick}/{dir}");
+                }
+                else
+                {
+                    // A stick pushed one way is a button too (right stick up / down for the throttle); pushed past half
+                    // way, so a drifting stick isn't caught.
+                    op.WithMagnitudeHavingToBeGreaterThan(0.5f);
+                    foreach (var stick in new[] { "leftStick", "rightStick" })
+                        foreach (var axis in new[] { "x", "y" })
+                            op.WithControlsExcluding($"<Gamepad>/{stick}/{axis}");
+                }
             }
             else
             {
@@ -359,8 +423,6 @@ namespace GoF2Remake.Flight
             });
             op.OnComplete(o =>
             {
-                string now = row.action.bindings[index].effectivePath ?? "";
-                SwapOthers(row.action, index, slot, now, old);
                 Dispose();
                 if (part + 1 < idx.Length) RebindPart(row, slot, part + 1, prompt, done);
                 else Finish(done);
@@ -373,13 +435,39 @@ namespace GoF2Remake.Flight
                 Finish(done);
             });
             operation = op;
+            InputSystem.onAfterUpdate -= CancelFromOtherDevice;
+            InputSystem.onAfterUpdate += CancelFromOtherDevice;
             op.Start();
+        }
+
+        /// <summary>The way out of a capture for input it doesn't take: a keyboard cell picked with a controller or a tap
+        /// waited for a key that never came (on a controller or a phone: stuck in the options for good).</summary>
+        static void CancelFromOtherDevice()
+        {
+            var op = operation;
+            if (op == null) { InputSystem.onAfterUpdate -= CancelFromOtherDevice; return; }
+            if (UnityEngine.InputSystem.LowLevel.InputState.currentUpdateType == UnityEngine.InputSystem.LowLevel.InputUpdateType.Editor) return;
+            var touch = Touchscreen.current;
+            bool tap = touch != null && touch.primaryTouch.press.wasPressedThisFrame;
+            bool other;
+            if (capturingPad)
+            {
+                var mouse = Mouse.current;
+                other = tap || mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame);
+            }
+            else
+            {
+                var pad = Gamepad.current;
+                other = tap || pad != null && (pad.startButton.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame);
+            }
+            if (other && op.started && !op.completed && !op.canceled) op.Cancel();
         }
 
         static void Dispose()
         {
             var op = operation;
             operation = null;
+            InputSystem.onAfterUpdate -= CancelFromOtherDevice;
             op?.Dispose();
         }
 
@@ -398,6 +486,7 @@ namespace GoF2Remake.Flight
             if (operation == null) return;
             var op = operation;
             operation = null;
+            InputSystem.onAfterUpdate -= CancelFromOtherDevice;
             op.Dispose();
             rebindEndFrame = Time.frameCount;
             Suspend(false);
@@ -413,24 +502,6 @@ namespace GoF2Remake.Flight
             foreach (int i in idx) row.action.ApplyBindingOverride(i, "");
             Save();
             Changed?.Invoke();
-        }
-
-        /// <summary>Another binding of the same kind (keyboard / controller) that had the new control gets the old one.</summary>
-        static void SwapOthers(InputAction action, int index, BindSlot slot, string now, string old)
-        {
-            if (string.IsNullOrEmpty(now)) return;
-            bool pad = IsPad(slot);
-            foreach (var row in rows)
-                for (int s = 0; s < 3; s++)
-                {
-                    if (row.slots[s] == null || (s == (int)BindSlot.Pad) != pad) continue;
-                    foreach (int i in row.slots[s])
-                    {
-                        if (row.action == action && i == index) continue;
-                        if (string.Equals(row.action.bindings[i].effectivePath, now, StringComparison.OrdinalIgnoreCase))
-                            row.action.ApplyBindingOverride(i, old);
-                    }
-                }
         }
     }
 }

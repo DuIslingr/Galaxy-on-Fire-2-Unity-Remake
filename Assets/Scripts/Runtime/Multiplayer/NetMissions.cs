@@ -210,7 +210,8 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             var m = Freelance.Mission;
-            if (result == Failure && m.type == MissionType.Challenge) Session.Credits -= share;   // the lost wager, shared
+            // The lost wager, shared: never more than this mission's own wager (the server bounds it too).
+            if (result == Failure && m.type == MissionType.Challenge) Session.Credits -= Mathf.Clamp(share, 0, Mathf.Max(0, m.reward));
             bool shown = ResultView != null && ResultView(result, share, from);   // the dialog, before the mission goes
             if (result == Success)
             {

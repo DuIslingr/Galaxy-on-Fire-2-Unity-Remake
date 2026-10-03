@@ -27,6 +27,8 @@
 //                label, no lines, no input) for 4000 ms while its sun grows, then is selected
 //   volatile     Ship::hasVolatileGoods (209 / 204 in the hold) with a drive: a target outside the gate routes gives 612, one
 //                inside goes by the gate (no instant jump)
+// Remake: the full-map overview, one zoom level further out that fits every visible system (the Full map button, Q, the
+// controller's X, the mouse wheel or a pinch): no panning there; a tap or Enter on a system zooms back in on it.
 // Remake choices: hidden systems' suns aren't drawn (the original draws all 34, uncertainty 3); the galaxy sun shrinks to
 // the system-view sun size while zooming instead of a second sun with the flight sun texture; the reveal's sun grows to
 // the normal 0.012 (the original's 0.002 literal, uncertainty 10); the reveal map is view only.
@@ -64,6 +66,8 @@ namespace GoF2Remake.UI
 
         public static StarMap Current { get; private set; }
         public static bool IsOpen => Current != null;
+        /// <summary>The map's own camera (VR draws it into a texture on the floating screen).</summary>
+        public Camera MapCamera => cam;
 
         class Item
         {
@@ -114,13 +118,23 @@ namespace GoF2Remake.UI
         float yaw = 4096f, pitch = -4096f, yawVel, pitchVel, spin, timeMs;
         int cells, cellsInCargo;
         bool noGate, keyShown;
+        // Remake: the full-map overview (0 = the normal galaxy view, 1 = every visible system on screen).
+        bool overview;
+        float overviewT;
+        Vector2 overviewMin, overviewMax;
+        float overviewZ;
+        const float OverviewMs = 650f;
+        float OverviewEase => 0.5f - 0.5f * Mathf.Cos(Mathf.PI * overviewT);
+        bool InOverview => overview || overviewT > 0f;
+        readonly Dictionary<int, Vector2> pinch = new Dictionary<int, Vector2>();
+        float pinchStart;
 
         // UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualElement root, touch, labels, systemHeader, keyBox, hints, dialog;
         Label energyLine;
-        Button backButton, keyButton, dialogYes, dialogNo;
+        Button backButton, keyButton, zoomButton, dialogYes, dialogNo;
         Action dialogAction, dialogNoAction;
         bool dialogInfo;
         int dialogFocus;
@@ -229,19 +243,26 @@ namespace GoF2Remake.UI
             energyLine = root.Q<Label>("energyLine");
             backButton = root.Q<Button>("backButton");
             keyButton = root.Q<Button>("keyButton");
+            zoomButton = root.Q<Button>("zoomButton");
             dialogYes = root.Q<Button>("dialogYes");
             dialogNo = root.Q<Button>("dialogNo");
             root.Q<Label>("mapTitle").text = T(177).ToUpperInvariant();
             backButton.text = Localization.Extra("hudBack", "BACK");
             keyButton.text = T(400).ToUpperInvariant();
             dialogNo.text = T(135).ToUpperInvariant();
-            foreach (var b in new[] { backButton, keyButton, dialogYes, dialogNo })
+            foreach (var b in new[] { backButton, keyButton, zoomButton, dialogYes, dialogNo })
             {
                 b.focusable = false;
                 b.RegisterCallback<PointerDownEvent>(_ => Play(assets.buttonPush), TrickleDown.TrickleDown);
             }
             backButton.clicked += () => { Play(assets.buttonRelease); Back(); };
             keyButton.clicked += () => { Play(assets.buttonRelease); ToggleKey(); };
+            zoomButton.clicked += () => { Play(assets.buttonRelease); SetOverview(!overview); };
+            touch.RegisterCallback<WheelEvent>(e => { if (e.delta.y > 0.01f) SetOverview(true); else if (e.delta.y < -0.01f) SetOverview(false); e.StopPropagation(); });
+            touch.RegisterCallback<PointerDownEvent>(e => PinchTrack(e.pointerId, e.localPosition, true), TrickleDown.TrickleDown);
+            touch.RegisterCallback<PointerMoveEvent>(e => PinchTrack(e.pointerId, e.localPosition, false), TrickleDown.TrickleDown);
+            touch.RegisterCallback<PointerUpEvent>(e => pinch.Remove(e.pointerId), TrickleDown.TrickleDown);
+            touch.RegisterCallback<PointerCancelEvent>(e => pinch.Remove(e.pointerId), TrickleDown.TrickleDown);
             dialogYes.clicked += () => AnswerDialog(true);
             dialogNo.clicked += () => AnswerDialog(false);
             touch.RegisterCallback<PointerDownEvent>(OnPointerDown);
@@ -325,7 +346,9 @@ namespace GoF2Remake.UI
 
         /// <summary>StarMap::drawOnScreenInfo: the story / freelance icons on the player's own missions' targets
         /// (Status::getCampaignMission / getFreelanceMission), in mission mode too: the map's mission only gets the route.</summary>
-        int StoryTarget => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay ? Story.TargetStation : -1;
+        bool StoryShown => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay;
+        /// <summary>The story icon on this station (step 59: every convoy target still to do, Story.MapMarks).</summary>
+        bool StoryMarked(int station) => StoryShown && Story.MapMarks(station);
         int FreelanceTarget => Freelance.Active ? Freelance.Mission.target : -1;
 
         // ---- 3D --------------------------------------------------------------------------------------------
@@ -408,6 +431,20 @@ namespace GoF2Remake.UI
                     foreach (var a in w.GetComponentsInChildren<GoF2Remake.Visuals.PartAnimation>(true)) a.loop = true;
                 }
             }
+            // The overview's frame: every visible system's sun (game units).
+            overviewMin = new Vector2(float.MaxValue, float.MaxValue);
+            overviewMax = new Vector2(float.MinValue, float.MinValue);
+            float zSum = 0f; int zCount = 0;
+            foreach (var s in db.Systems)
+            {
+                if (s.index >= suns.Length || suns[s.index] == null) continue;
+                var g = GalaxyMap.SunPosition(s);
+                overviewMin = Vector2.Min(overviewMin, new Vector2(g.x, g.y));
+                overviewMax = Vector2.Max(overviewMax, new Vector2(g.x, g.y));
+                zSum += g.z; zCount++;
+            }
+            if (zCount == 0) overviewMin = overviewMax = Vector2.zero;
+            overviewZ = zCount > 0 ? zSum / zCount : 3000f;
             start = current != null ? new Vector2(GalaxyMap.SunPosition(current).x, GalaxyMap.SunPosition(current).y) / 20f : Vector2.zero;
             pan = Vector2.zero;
             UpdateCamera();
@@ -456,14 +493,66 @@ namespace GoF2Remake.UI
 
         float ZoomEase => 0.5f - 0.5f * Mathf.Cos(Mathf.PI * Mathf.Clamp01(zoomMs / ZoomMs));
 
+        /// <summary>Remake: the overview camera, back along game -Z until every visible sun (plus a margin for the labels) fits.</summary>
+        Vector3 OverviewCameraGame()
+        {
+            var centre = (overviewMin + overviewMax) / 2f;
+            var half = (overviewMax - overviewMin) / 2f + new Vector2(1500f, 1500f);
+            float tanV = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad), tanH = tanV * Mathf.Max(0.1f, cam.aspect);
+            // The header and the footer take about a fifth of the height.
+            float d = Mathf.Max(half.y / (tanV * 0.8f), half.x / tanH);
+            return new Vector3(centre.x, centre.y, Mathf.Min(0f, overviewZ - d));
+        }
+
+        Vector3 GalaxyViewGame => overviewT > 0f ? Vector3.Lerp(GalaxyCameraGame, OverviewCameraGame(), OverviewEase) : GalaxyCameraGame;
+
         void UpdateCamera()
         {
             if (cam == null) return;
             cam.fieldOfView = Aspect.VerticalFov(1.1504f * Mathf.Rad2Deg, cam.aspect);
             Vector3 pos;
-            if (zoomDir != 0 || systemView) pos = Vector3.Lerp(GalaxyCameraGame, SystemCameraGame(zoomSystem), systemView && zoomDir == 0 ? 1f : ZoomEase);
-            else pos = GalaxyCameraGame;
+            if (zoomDir != 0 || systemView) pos = Vector3.Lerp(GalaxyViewGame, SystemCameraGame(zoomSystem), systemView && zoomDir == 0 ? 1f : ZoomEase);
+            else pos = GalaxyViewGame;
             cam.transform.localPosition = U(pos);
+            cam.farClipPlane = Mathf.Max(64000f, overviewZ - pos.z + 12000f) * M;
+        }
+
+        /// <summary>Remake: in or out of the full-map overview (only in the galaxy view).</summary>
+        void SetOverview(bool on)
+        {
+            if (on == overview || systemView || zoomDir != 0 || revealing || DialogOpen || cam == null) return;
+            overview = on;
+            vel = Vector2.zero;
+            if (on) { autoCentre = false; Play(assets.zoomOut); }
+            else Play(assets.zoomIn);
+            BuildHints(InputMode.Current);
+        }
+
+        /// <summary>Remake: from the overview back to the normal view, centred on 'system' (a tap / Enter on it there).</summary>
+        void FocusFromOverview(int system)
+        {
+            if (system < 0) return;
+            Select(system);
+            var g = SunGame(system);
+            pan = new Vector2(g.x, g.y) / 20f - start;
+            centred = -1;
+            autoCentre = true;   // confirmed once the camera is back (the spring waits, as for any centring)
+            SetOverview(false);
+        }
+
+        /// <summary>Remake: two fingers pinching in open the overview, spreading close it.</summary>
+        void PinchTrack(int id, Vector3 at, bool down)
+        {
+            if (!down && !pinch.ContainsKey(id)) return;
+            pinch[id] = at;
+            if (pinch.Count != 2) { pinchStart = 0f; return; }
+            Vector2 a = default, b = default;
+            int n = 0;
+            foreach (var v in pinch.Values) { if (n++ == 0) a = v; else b = v; }
+            float d = Vector2.Distance(a, b);
+            if (pinchStart <= 0f || down) { pinchStart = d; return; }
+            if (d < pinchStart * 0.75f) { SetOverview(true); pinchStart = d; }
+            else if (d > pinchStart * 1.33f) { SetOverview(false); pinchStart = d; }
         }
 
         /// <summary>StarMap::initStarSystem: planets, orbit rings and a light at the sun.</summary>
@@ -633,7 +722,7 @@ namespace GoF2Remake.UI
                 bool fully = s.stations.Count > 0 && s.stations.TrueForAll(st => Session.VisitedStations.Contains(st));
                 it.visited.style.display = fully ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = s.index == currentSystem ? DisplayStyle.Flex : DisplayStyle.None;
-                it.story.style.display = StoryTarget >= 0 && SystemOf(StoryTarget) == s.index ? DisplayStyle.Flex : DisplayStyle.None;
+                it.story.style.display = s.stations.Exists(StoryMarked) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.freelance.style.display = FreelanceTarget >= 0 && SystemOf(FreelanceTarget) == s.index ? DisplayStyle.Flex : DisplayStyle.None;
                 systemItems[s.index] = it;
             }
@@ -650,7 +739,7 @@ namespace GoF2Remake.UI
                 it.visited.style.display = Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = p.station == currentStation ? DisplayStyle.Flex : DisplayStyle.None;
-                it.story.style.display = p.station == StoryTarget ? DisplayStyle.Flex : DisplayStyle.None;
+                it.story.style.display = StoryMarked(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.freelance.style.display = p.station == FreelanceTarget ? DisplayStyle.Flex : DisplayStyle.None;
                 planetItems.Add(it);
             }
@@ -718,6 +807,8 @@ namespace GoF2Remake.UI
                 Place(it.root, p);
                 bool sel = i == selected, other = selected >= 0 && !sel;
                 it.root.style.opacity = galaxyAlpha;
+                float labelScale = Mathf.Lerp(1f, 0.75f, OverviewEase);
+                it.root.style.scale = new Scale(new Vector3(labelScale, labelScale, 1f));
                 it.ring.EnableInClassList("map-ring--selected", sel);
                 it.ring.style.backgroundImage = new StyleBackground(Tex(sel ? "map_ring_selected" : "map_ring"));
                 it.ring.style.opacity = other ? 64f / 255f : 1f;
@@ -1011,6 +1102,7 @@ namespace GoF2Remake.UI
             if (DialogOpen) { AnswerDialog(false); return; }
             whooshOn = false;   // StarMap::OnTouchEnd: the back button stops 0x66
             if (zoomDir != 0) return;
+            if (overview) { SetOverview(false); return; }
             if (systemView && GalaxyAllowed) ZoomOut();
             else Close(new StarMapResult { station = -1 });
         }
@@ -1145,6 +1237,7 @@ namespace GoF2Remake.UI
             var d = p - lastPos;
             lastPos = p;
             bool far = Mathf.Abs(p.x - downPos.x) > 3f || Mathf.Abs(p.y - downPos.y) > 3f;
+            if (!systemView && (InOverview || pinch.Count > 1)) { if (far) dragged = true; return; }
             if (!systemView)
             {
                 pan += d * DragScale;
@@ -1169,6 +1262,12 @@ namespace GoF2Remake.UI
             if (touch.HasPointerCapture(pointer)) touch.ReleasePointer(pointer);
             pointer = -1;
             if (!release) return;
+            if (!systemView && InOverview)
+            {
+                vel = Vector2.zero;
+                if (overview && !dragged && selected >= 0) FocusFromOverview(selected);
+                return;
+            }
             if (!systemView)
             {
                 if (vel.magnitude <= 3f) vel = Vector2.zero;
@@ -1200,6 +1299,7 @@ namespace GoF2Remake.UI
             if (!revealing) HandleKeys(dtMs);
             if (world == null || this == null) return;
             UpdateReveal(dtMs);
+            overviewT = Mathf.MoveTowards(overviewT, overview ? 1f : 0f, dtMs / OverviewMs);
 
             if (zoomDir != 0)
             {
@@ -1218,7 +1318,7 @@ namespace GoF2Remake.UI
                     BuildHints(InputMode.Current);
                 }
             }
-            else if (!systemView)
+            else if (!systemView && !InOverview)
             {
                 if (autoCentre && selected >= 0 && suns[selected] != null && Project(suns[selected].position, out var sp))
                 {
@@ -1233,10 +1333,12 @@ namespace GoF2Remake.UI
                     vel *= Mathf.Pow(0.9f, f);
                     if (vel.magnitude <= 0.5f) vel = Vector2.zero;
                 }
-                // Pan limits: a spring back inside [-500, 120] x [-400, 140] (camera / 20).
+                // Pan limits: a spring back inside [-500, 120] x [-400, 140] (camera / 20). Not while centring a system:
+                // StarMap::update's auto-centre overwrites the spring's velocity, so the camera reaches a sun past the limit
+                // (Skor Terpa, system 32, is above it: the two settled ~90 px apart and it could never be zoomed into).
                 var c = start + pan;
                 var clamped = new Vector2(Mathf.Clamp(c.x, -500f, 120f), Mathf.Clamp(c.y, -400f, 140f));
-                if (clamped != c && pointer < 0)
+                if (clamped != c && pointer < 0 && !autoCentre)
                 {
                     pan += (clamped - c) * Mathf.Min(1f, 0.1f * f);
                     if (clamped.x != c.x) vel.x = 0f;
@@ -1306,6 +1408,17 @@ namespace GoF2Remake.UI
             }
             if (world == null || zoomDir != 0) return;
             if (Pressed(k => k.kKey.wasPressedThisFrame, g => g.buttonNorth.wasPressedThisFrame)) { Play(assets.buttonRelease); ToggleKey(); }
+            if (!systemView && Pressed(k => k.qKey.wasPressedThisFrame, g => g.buttonWest.wasPressedThisFrame)) SetOverview(!overview);
+            if (!systemView && InOverview)
+            {
+                if (left || right || up || down) SelectInDirection(left ? Vector2.left : right ? Vector2.right : up ? Vector2.down : Vector2.up);
+                if (confirm && overview)
+                {
+                    if (selected < 0) SelectInDirection(Vector2.zero);
+                    else FocusFromOverview(selected);
+                }
+                return;
+            }
 
             Vector2 move = Vector2.zero;
             if (kb != null)
@@ -1440,19 +1553,30 @@ namespace GoF2Remake.UI
                 return;
             }
             bool sys = systemView || zoomDir > 0;
+            string fullMap = overview ? X("mapCloseUp", "CLOSE UP") : X("mapFullMap", "FULL MAP");
+            if (zoomButton != null)
+            {
+                zoomButton.text = fullMap;
+                bool zoomShown = !sys && !revealing;
+                zoomButton.style.display = zoomShown ? DisplayStyle.Flex : DisplayStyle.None;
+                // Both push to the right edge: the Key button sits right after the Full map button while that shows.
+                keyButton.style.marginLeft = zoomShown ? new StyleLength(0f) : new StyleLength(StyleKeyword.Null);
+            }
             if (kind == InputKind.KeyboardMouse)
             {
                 Hint(select, InputGlyph.Key(sys ? "A" : "←"), InputGlyph.Key(sys ? "D" : "→"));
-                Hint(sys ? turn : moveText, InputGlyph.Key("W"), InputGlyph.Key("S"));
+                if (!overview) Hint(sys ? turn : moveText, InputGlyph.Key("W"), InputGlyph.Key("S"));
                 Hint(sys ? confirm : zoom, InputGlyph.Key("ENTER", true));
+                if (!sys) Hint(fullMap, InputGlyph.Key("Q"));
                 Hint(key, InputGlyph.Key("K"));
                 Hint(back, InputGlyph.Key("ESC"));
             }
             else if (kind == InputKind.Gamepad)
             {
                 Hint(select, InputGlyph.Pad(PadButton.DPad));
-                Hint(sys ? turn : moveText, InputGlyph.Pad(PadButton.LeftStick));
+                if (!overview) Hint(sys ? turn : moveText, InputGlyph.Pad(PadButton.LeftStick));
                 Hint(sys ? confirm : zoom, InputGlyph.Pad(PadButton.A));
+                if (!sys) Hint(fullMap, InputGlyph.Pad(PadButton.X));
                 Hint(key, InputGlyph.Pad(PadButton.Y));
                 Hint(back, InputGlyph.Pad(PadButton.B));
             }

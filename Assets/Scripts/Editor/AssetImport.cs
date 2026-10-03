@@ -58,7 +58,7 @@ namespace GoF2Remake.EditorTools
                 ti.mipmapEnabled = true;
                 ti.filterMode = FilterMode.Trilinear;
                 ti.anisoLevel = 8;
-                ti.wrapMode = TextureWrapMode.Clamp;
+                ti.wrapMode = FxRepeats(name) ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
             }
             else if (assetPath.Contains("/Textures/textures/"))
             {
@@ -71,6 +71,11 @@ namespace GoF2Remake.EditorTools
         }
 
         /// <summary>The fx textures that are atlases of separate cells (not the tiling fog, noise, stream and sphere maps).</summary>
+        /// <summary>Effect textures whose meshes map past 0..1 (the original never clamps: TextureCreateFromFileIntern uses
+        /// GL_REPEAT, Engine::clampTextures is only ever 0): khador_jump's expanding streak (u -0.28..1.28) and the time
+        /// jump's hyper_drive ring (v 0..2) smeared their edge texels clamped. Repeat, the atlas's mipmaps kept.</summary>
+        static bool FxRepeats(string name) => name == "khador_jump" || name == "hyper_drive";
+
         public static bool IsFxAtlas(string path, string name)
         {
             if (!path.Contains("/fx/") || name.EndsWith("_normal")) return false;

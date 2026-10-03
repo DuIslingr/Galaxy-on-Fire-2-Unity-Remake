@@ -331,6 +331,9 @@ namespace GoF2Remake.Flight
             return dir * rate * Mathf.Min(dtMs, LevelMaxDtMs);
         }
 
+        /// <summary>The boost timer alone, for frames another component moves the ship (ShipController.externalControl).</summary>
+        public void TickBoost(float dtMs) => UpdateBoost(dtMs);
+
         void UpdateBoost(float dtMs)
         {
             // Timer counts up every frame; negative values mean "recharging" (PlayerEgo::update).
@@ -342,7 +345,7 @@ namespace GoF2Remake.Flight
             {
                 IsBoosting = false;
                 CurrentSpeed = BaseSpeed;
-                boostTimerMs = -boostRechargeMs;
+                boostTimerMs = Data.Cheats.NoBoostCooldown ? 0 : -boostRechargeMs;   // remake debug: no recharge
             }
         }
 

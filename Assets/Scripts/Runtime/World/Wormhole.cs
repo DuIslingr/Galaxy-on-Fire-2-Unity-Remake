@@ -57,14 +57,7 @@ namespace GoF2Remake.World
                 w.baseScale = w.model.transform.localScale;
                 foreach (var a in w.model.GetComponentsInChildren<PartAnimation>(true))
                 {
-                    a.loop = true;   // animation state 2
-                    // The spin about the facing axis (file rotY -> Unity z) the other way round: it turned backwards.
-                    if (a.rotationMap != null)
-                    {
-                        var map = (AxisMap[])a.rotationMap.Clone();
-                        for (int i = 0; i < map.Length; i++) if (map[i].source == 1) map[i].sign = -map[i].sign;
-                        a.rotationMap = map;
-                    }
+                    a.loop = true;   // animation state 2 (the spin's direction: PartAnimation's rotation map)
                 }
             }
             w.loop = go.AddComponent<AudioSource>();
