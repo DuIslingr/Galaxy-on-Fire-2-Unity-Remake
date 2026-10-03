@@ -336,8 +336,12 @@ namespace GoF2Remake.World
                     level.RestoreOrbitSky();   // Level::switchSkyboxForIntro: skybox_009, the system's own sky
                     level.Backdrop?.SwitchOrbitPlanetForIntro();
                     if (level.Asteroids != null) Object.Destroy(level.Asteroids.gameObject);
+                    // LevelScript state 9 (0x167bd0): setDirection(parent, (0, 0, -1)) moves only the drifting parent node,
+                    // then PlayerEgo::rotate(pi/4, pi/4, pi/4) turns the ship node in it (Tumble).
                     Player.SetPositionAndRotation(Vector3.zero, Quaternion.LookRotation(Dir(new Vector3(0, 0, -1)), Vector3.up));
-                    Player.Rotate(45f, 45f, 45f, Space.Self);
+                    wreckEuler = Vector3.zero;
+                    Ship.modelHeld = true;   // ShipController's computer-controlled levelling leaves the model alone
+                    Tumble(Mathf.PI / 4f);
                     cam.LookAt(new Vector3(5000, 500, -10000), Player);
                     Step = 10;
                     break;
@@ -428,12 +432,20 @@ namespace GoF2Remake.World
             }
         }
 
-        /// <summary>The drifting wreck turns (rotate(dt / 3000) ...); only the model, so the drift stays straight.</summary>
+        /// <summary>The drifting wreck turns: PlayerEgo::rotate 0xad980 (rotate(dt / 3000) ... on each axis) adds to the ship
+        /// node's stored Euler angles (+0x2e8..+0x2f0) and rebuilds its local matrix Rx*Ry*Rz, inside the parent that
+        /// drifts along game -z. Only the model turns, so the drift stays straight.</summary>
         void Tumble(float rad)
         {
-            var t = Ship.visualModel != null ? Ship.visualModel : Player;
-            t.Rotate(rad * Mathf.Rad2Deg, rad * Mathf.Rad2Deg, rad * Mathf.Rad2Deg, Space.Self);
+            wreckEuler += Vector3.one * rad;
+            // The model's local rotation: the parent (game -z = Unity identity here) times the node's game rotation, i.e.
+            // Y180 * RotationToUnity(e) (RotationToUnity undoes the import's 180 deg yaw, the parent's own turn adds it back).
+            var local = Quaternion.Euler(0f, 180f, 0f) * OrbitLayout.RotationToUnity(wreckEuler);
+            if (Ship.visualModel != null) Ship.visualModel.localRotation = local;
+            else Player.rotation = Quaternion.LookRotation(Dir(new Vector3(0, 0, -1)), Vector3.up) * local;
         }
+
+        Vector3 wreckEuler;   // PlayerEgo+0x2e8..+0x2f0 (game radians)
 
         void SpawnFx(Vector3 at)
         {
