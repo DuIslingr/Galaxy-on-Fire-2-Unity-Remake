@@ -824,7 +824,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   without one keeps the last): a story speaker by name (`StoryTable.SpeakerName`; "Keith as Bob" renames it), a race and a
   name ("vossk K'ekki", "terran female Jane": one `AgentGenerator.CreatePortrait` face made on the server, the same for
   everyone and every page), or "player" (the reader: speaker 0's face with their pilot name); %player% in a text or name is
-  the reader's name. Typed commands may be 500 characters (`NetChat.MaxCommandLength`; chat lines stay 160).
+  the reader's name; a page `reward [title]: <rewards>` pays when the dialogue closes (like a single-player mission's success page). `/reward [players] <credits | item [amount]> [+ ...] [| title]`: credits and / or up to 8 items into the hold, shown in the reward box (`NetScreen.ShowReward`, `Layout::showMissionRewardMessage` / `drawMissionRewardMessage` 0xe7684: the title, default 216 "Mission accomplished!", over "+ credits" and each item with its shop icon, centred, fades in 2 s, holds until 5 s, fades out until 7 s, sound 36). Typed commands may be 500 characters (`NetChat.MaxCommandLength`; chat lines stay 160).
 - **Events** (`NetEvents`, `/event <name | stop | list>`, admins and the console): text scripts run on the server, one at a
   time: `<name>.txt` in an Events folder (`persistentDataPath/Events`, or next to the game / dedicated server's executable),
   else a built-in one (`Resources/GoF2Events`: waves, survival). Lines: any server command without the "/" (run as the

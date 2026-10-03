@@ -27,6 +27,7 @@
 //                              debug panel's tools for one player: fly any hull, refill, reveal the map, make peace, a
 //                              cheat toggle for the session; a title and a countdown on screen, NetScreen)
 //   /dialog [players] <speaker> : <text> [| page ...]   admins: the dialogue window with a story speaker's or a race's face
+//   /reward [players] <credits | item [amount]> [+ ...] [| title]   admins: a payout in the mission reward box
 //   /event <name | stop | list>  admins: runs an event script (NetEvents: game modes such as waves of enemies)
 //   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back
 // Admins: the host's own player always, else the players the host or the server console made admins (NetPlayer.IsAdmin,
@@ -140,6 +141,9 @@ namespace GoF2Remake.Multiplayer
             new Command { name = "dialog", usage = "[players] <speaker> : <text> [| [speaker :] next page ...]", arg = Arg.PlayerText, self = true,
                 available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Dialog,
                 description = () => X("mpCmdDialog", "admins: a conversation; speakers: a story character (Keith as Bob), a race and a name (vossk K'ekki), or player; %player% = the reader") },
+            new Command { name = "reward", usage = "[players] <credits | item [amount]> [+ more ...] [| title]", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Reward,
+                description = () => X("mpCmdReward", "admins: a mission payout (credits and / or items) in the reward box") },
             new Command { name = "event", usage = "<name | stop | list>", arg = Arg.Text, optional = true, available = () => LocalIsAdmin, allowed = IsAdmin,
                 run = NetEvents.Command, description = () => X("mpCmdEvent", "admins: runs an event script (game modes like waves), stops it or lists them") },
             new Command { name = "mute", usage = "<players> [minutes]", arg = Arg.PlayerText, available = () => LocalIsAdmin, allowed = IsAdmin,

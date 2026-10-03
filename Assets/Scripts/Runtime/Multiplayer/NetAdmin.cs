@@ -33,7 +33,11 @@
 //                                           "terran female Jane": a random face of that race, the same for everyone and for
 //                                           every page of it), or "player": the reader, Keith's face with their pilot name;
 //                                           %player% in a text or name is the reader's name; shown after any dialogue already
-//                                           open (NetScreen's queue)
+//                                           open (NetScreen's queue); a page "reward [title]: <rewards>" pays when the
+//                                           dialogue closes (like /reward)
+//   /reward [players] <credits | item [amount]> [+ more ...] [| title]   the mission payout: credits and / or items into
+//                                           the hold, shown in the reward box (NetScreen.ShowReward: "Mission accomplished!"
+//                                           or the title, "+ credits", the items with their icons, sound 36)
 // The players: names, client ids or selectors (@a @s @p @r, NetCommands.FindTargets); in the chat the issuer when none is
 // named. Every order is logged on the server and the target gets a notice naming the admin.
 
@@ -49,7 +53,7 @@ namespace GoF2Remake.Multiplayer
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetAdmin
     {
-        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14 }
+        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14, Reward = 15 }
 
         const int MaxGive = 1000, MaxSpawn = 10, MaxCredits = 999999999;
 
@@ -279,6 +283,15 @@ namespace GoF2Remake.Multiplayer
             {
                 string page = part.Trim();
                 int colon = page.IndexOf(':');
+                string prefix = colon > 0 ? page.Substring(0, colon).Trim() : "";
+                if (prefix.Equals("reward", StringComparison.OrdinalIgnoreCase) || prefix.StartsWith("reward ", StringComparison.OrdinalIgnoreCase))
+                {
+                    // A reward page: paid when the dialogue closes.
+                    if (!ParseReward(page.Substring(colon + 1), out int credits, out string items, out string why)) return why;
+                    string heading = NetChat.Clean(prefix.Substring(6).Trim()).Replace("\u001f", " ");
+                    lines.Add($"R\u001f{credits}\u001f{items}\u001f{heading}");
+                    continue;
+                }
                 if (colon > 0)
                 {
                     string spec = ResolveSpeaker(page.Substring(0, colon).Trim(), faces);
@@ -293,6 +306,56 @@ namespace GoF2Remake.Multiplayer
             Send(t, Order.Dialog, 0, 0, 0, by, $"dialog, {lines.Count} page(s)", string.Join("\n", lines));
             return "";
         });
+
+        public static string Reward(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            int bar = rest.IndexOf('|');
+            string heading = bar < 0 ? "" : NetChat.Clean(rest.Substring(bar + 1));
+            if (!ParseReward(bar < 0 ? rest : rest.Substring(0, bar), out int credits, out string items, out string why)) return why;
+            Send(t, Order.Reward, credits, 0, 0, by, $"reward {credits} credits, items {items}", heading + "\n" + items);
+            return string.Format(X("mpAdmRewarded", "Rewarded {0}."), t.DisplayName);
+        });
+
+        /// <summary>"5000 + Khador Drive + Energy Cells 10": the credits (summed) and the items as "item:amount;..." (false with
+        /// the reason: nothing, an unknown item).</summary>
+        static bool ParseReward(string spec, out int credits, out string items, out string error)
+        {
+            credits = 0;
+            items = "";
+            error = null;
+            var list = new List<string>();
+            foreach (var raw in spec.Split(new[] { '+', ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string part = raw.Trim();
+                if (part.Length == 0) continue;
+                string digits = part.Replace("$", "").Replace(" ", "");
+                if (long.TryParse(digits, out long c) && c > 0) { credits = (int)Math.Min((long)MaxCredits, credits + c); continue; }
+                if (!ParseAmount(ref part, 1, MaxGive, out int amount)) { error = Usage("reward"); return false; }
+                int item = FindItem(part, out string why);
+                if (item < 0) { error = why; return false; }
+                if (list.Count < 8) list.Add(item + ":" + amount);
+            }
+            items = string.Join(";", list);
+            if (credits == 0 && list.Count == 0) { error = Usage("reward"); return false; }
+            return true;
+        }
+
+        /// <summary>This game: credits and items into the hold, and the reward box.</summary>
+        static void GrantReward(int credits, string items, string heading)
+        {
+            var list = new List<(int, int)>();
+            foreach (var entry in (items ?? "").Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                var kv = entry.Split(':');
+                if (kv.Length != 2 || !int.TryParse(kv[0], out int item) || !int.TryParse(kv[1], out int amount) || !NetGuard.Item(item) || amount < 1) continue;
+                amount = Mathf.Min(amount, MaxGive);
+                Cheats.GiveItem(item, amount);
+                list.Add((item, amount));
+            }
+            credits = Mathf.Clamp(credits, 0, MaxCredits);
+            if (credits > 0) Session.Credits = (int)Math.Min((long)Session.Credits + credits, MaxCredits);
+            NetScreen.ShowReward(heading, credits, list);
+        }
 
         /// <summary>A page's speaker as "id\u001fname\u001fface" (NetAdmin.Apply), null = not a speaker: "player", a story
         /// speaker ("Keith", "Keith as Bob"), or "&lt;race&gt; [female | male] [name]" with a face made once per dialog.</summary>
@@ -630,9 +693,11 @@ namespace GoF2Remake.Multiplayer
                 {
                     string me = NetPlayer.Local != null ? NetPlayer.Local.DisplayName : "";
                     var list = new List<UI.DialogueView.Page>();
+                    var rewards = new List<(int credits, string items, string heading)>();
                     foreach (var line in (text ?? "").Split('\n'))
                     {
                         var f = line.Split('\u001f');
+                        if (f.Length == 4 && f[0] == "R") { int.TryParse(f[1], out int cr); rewards.Add((cr, f[2], f[3])); continue; }
                         if (f.Length < 4 || !int.TryParse(f[0], out int id) || list.Count >= 20) continue;
                         string name = f[1].Replace("%player%", me), body = f[3].Replace("%player%", me);
                         int[] face = null;
@@ -647,7 +712,14 @@ namespace GoF2Remake.Multiplayer
                         if (id >= StoryTable.SpeakerCount) continue;
                         list.Add(new UI.DialogueView.Page { speaker = id, text = body, agentName = name.Length > 0 ? name : null, agentPortrait = face });
                     }
-                    NetScreen.QueueDialog(list);
+                    // The reward pages pay when the dialogue closes (at once without pages).
+                    NetScreen.QueueDialog(list, rewards.Count == 0 ? null : (System.Action)(() => { foreach (var r in rewards) GrantReward(r.credits, r.items, r.heading); }));
+                    break;
+                }
+                case Order.Reward:
+                {
+                    var parts = (text ?? "").Split('\n');
+                    GrantReward(a, parts.Length > 1 ? parts[1] : "", parts[0]);
                     break;
                 }
                 case Order.Object:
