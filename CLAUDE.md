@@ -679,8 +679,29 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   star map (planet "[TAG] Name", system "Name [TAG]"), the station header's system line and the orbit information.
   **Home**: a member's game starts docked at the crew's home (`ProfileHeaderRpc`'s home), and a destroyed member
   respawns there (`NetPlayer.CrewHome`, `FlightHud.LoadLastSave`). Disbanding frees the crew's claims (the bank is
-  lost). Next phases: sieges, the trade cut, shared storage, the station's defence and its toll. Not tested in a build
-  yet.
+  lost).
+  Phase 3, contest and benefits: **sieges** (`/crew siege`, officers of another crew in the orbit or docked there:
+  `-siegecost` (250 000) from the bank, one per crew, the crew needs room for a claim, not within 24 h of the station's
+  last siege; announced, starts 10 min later, lasts 15 min; meanwhile the two crews' pilots may fire at each other in
+  that orbit (`NetCrewsClient.SiegePvp` in `NetPlayer.PvpWith`); every 5 s the side with more pilots there moves the
+  control by 100/300 % per pilot more and second, 100 % = taken (the claim changes hands), the end = held; 24 h
+  protection either way; `NetState.Sieges` lines, `/crew sieges`, console `sieges`; `TerritoryView`'s banner);
+  **defence** (in a held orbit the fighters of the system's race treat the holder's members as friends and other crews'
+  pilots as enemies unless they paid the toll this visit: `NpcShip.TerritoryToLocal`, `NetOrbit.HostileToRemote`,
+  `NetCrewsClient.Relation`; pilots without a crew as always); **toll** (`-toll`, 10 000; `TerritoryView` asks on
+  arrival through `Traffic.Ask`, `NetCrewsClient.PayToll` -> `TollPaidRpc`, the holder's bank, `NetPlayer.TollStation`
+  for the others' NPCs); **trade cut** (`Hangar.Buy` through `NetCrewsClient.BuyPrice`: members -10 %, other crews +5 %;
+  the server banks the tax from `StockItemRpc`'s price, `NetCrews.OnPurchase`; the list shows the plain price; ships
+  aren't cut). Not yet: shared storage at the home. Not tested in a build yet.
+  UI: the station's **Crew / Arena / Profile window** (`CrewPanel`, code-built, Squad.uss buttons; a "CREW · ARENA"
+  plate under the station information, a dot when an invitation or a challenge waits; Esc / B closes it, the station
+  menu's keys wait while it is open): every chat command as buttons and fields (crew create / join / bank / members by
+  rank / invite / territory with Claim, Make home, Give up, Siege at the docked station / leave and disband asked
+  twice; arena challenge, accept / decline, the Voids option, the free-for-all queue, matches, leaderboard; profile,
+  take control, link codes). `NetPanel`: the window asks for a snapshot (`PanelRequestRpc`, every 2 s open, 6 s closed
+  for the dot), the server fills a `NetPanel.State` (`NetProfiles` / `NetCrews` / `NetArena .FillPanel`) and sends it
+  gzipped in chunks (`PanelChunkRpc`); buttons send the chat commands (`NetPanel.Command`) and the window shows the
+  answering notice. The chat commands still work.
 - **Arena matches** (`NetArena` server, `NetArenaClient` player, `ArenaView` HUD panel; chat commands, answered
   privately): `/duel <name> [voids]` (both docked; `/accept` / `/decline` within 60 s; first to 3 kills or 5 min) and
   `/ffa [voids]` (a queue per option, docked; starts 30 s after the 2nd pilot or at once with 8; first to 15 kills or

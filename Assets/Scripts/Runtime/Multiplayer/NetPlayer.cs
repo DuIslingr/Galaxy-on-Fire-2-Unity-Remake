@@ -58,6 +58,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> observer = new NetworkVariable<bool>(false);   // the server's: another device controls the profile
         readonly NetworkVariable<FixedString32Bytes> crewTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetCrews, "" = none
         readonly NetworkVariable<int> crewHome = new NetworkVariable<int>(-1);   // the server's: the crew's home station, -1 = none
+        readonly NetworkVariable<int> tollStation = new NetworkVariable<int>(-1, Read, Write);   // NetCrewsClient.TollStation
         readonly NetworkVariable<bool> engine = new NetworkVariable<bool>(true, Read, Write);   // the engine glow shows
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
@@ -138,6 +139,8 @@ namespace GoF2Remake.Multiplayer
         public string CrewTag => crewTag.Value.ToString();
         /// <summary>Server: NetCrews' tag for this player.</summary>
         public void SetCrewTag(string tag) { if (IsServer && crewTag.Value.ToString() != (tag ?? "")) crewTag.Value = tag ?? ""; }
+        /// <summary>Where this pilot paid the toll for the current visit (-1 = none): a held station's defence spares them.</summary>
+        public int TollStation => tollStation.Value;
         /// <summary>The crew's home station (NetCrews; a destroyed member respawns there), -1 = none.</summary>
         public int CrewHome => crewHome.Value;
         /// <summary>Server: NetCrews' home for this player.</summary>
@@ -248,9 +251,11 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The local player and 'other' (in the same orbit) may shoot each other: in an arena match (its own orbit
-        /// id), or anywhere on a server started with -freepvp (NetState.FreePvp). Squadmates never (NetSquad).</summary>
+        /// id), during a siege between their two crews there (NetCrews), or anywhere on a server started with -freepvp
+        /// (NetState.FreePvp). Squadmates never (NetSquad).</summary>
         static bool PvpWith(NetPlayer other) =>
-            other != null && ((NetState.Instance != null && NetState.Instance.FreePvp) || NetArena.IsArenaOrbit(other.Station));
+            other != null && ((NetState.Instance != null && NetState.Instance.FreePvp) || NetArena.IsArenaOrbit(other.Station)
+                              || (Local != null && NetCrewsClient.SiegePvp(other.Station, Local.CrewTag, other.CrewTag)));   // a crew siege
 
         /// <summary>This player's shots pass through their squadmates (the local player's ship included).</summary>
         bool ThroughSquad(Target t)
@@ -419,6 +424,7 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             NetProfileClient.Tick();   // the server profile's periodic upload
+            if (tollStation.Value != NetCrewsClient.TollStation) tollStation.Value = NetCrewsClient.TollStation;
             if (ship.Value != Session.ShipIndex) ship.Value = Session.ShipIndex;   // bought another
             if (standing0.Value != Session.Standing[0]) standing0.Value = Session.Standing[0];
             if (standing1.Value != Session.Standing[1]) standing1.Value = Session.Standing[1];

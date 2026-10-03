@@ -16,6 +16,8 @@
 //                    <persistentDataPath>/ServerProfiles)
 //   -claimcost N     a crew's station claim from its bank (default 500 000); -maxclaims N per crew (default 3);
 //   -claimdays N     the days without a member docking before a claim lapses (default 14) (NetCrews)
+//   -siegecost N     a siege on another crew's station, from the bank (default 250 000); -toll N what another crew's
+//                    pilot pays to be spared by a held station's defence (default 10 000, 0 = no toll)
 // Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
 // MainMenu / MenuBackground call ShutOff as they wake (the scene's objects off before the rest wake: no menu, music or
@@ -98,7 +100,9 @@ namespace GoF2Remake.Multiplayer
                 Value("-profiledir"));
             NetCrews.Configure(int.TryParse(Value("-claimcost"), out int cost) ? cost : NetCrews.DefaultClaimCost,
                 int.TryParse(Value("-maxclaims"), out int maxClaims) ? maxClaims : NetCrews.DefaultMaxClaims,
-                int.TryParse(Value("-claimdays"), out int days) ? days : NetCrews.DefaultLapseDays);
+                int.TryParse(Value("-claimdays"), out int days) ? days : NetCrews.DefaultLapseDays,
+                int.TryParse(Value("-siegecost"), out int siegeCost) ? siegeCost : NetCrews.DefaultSiegeCost,
+                int.TryParse(Value("-toll"), out int toll) ? toll : NetCrews.DefaultToll);
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
 #if UNITY_EDITOR
@@ -343,6 +347,7 @@ namespace GoF2Remake.Multiplayer
                            "  arenas              the arena matches and queues\n" +
                            "  crews               the crews (tag, name, members, leader, bank)\n" +
                            "  crew disband <TAG>  ends a crew\n" +
+                           "  sieges              the crews' sieges\n" +
                            "  profiles            the player profiles (id, name, devices, worth, who is online)\n" +
                            "  profile delete <id> deletes a profile (not while it is online; its file is kept as .bak)\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
@@ -363,6 +368,8 @@ namespace GoF2Remake.Multiplayer
                     return NetArena.ConsoleList();
                 case "crews":
                     return NetCrews.ConsoleList();
+                case "sieges":
+                    return NetCrews.ConsoleSieges();
                 case "crew":
                     if (rest.StartsWith("disband ", StringComparison.OrdinalIgnoreCase)) return NetCrews.ConsoleDisband(rest.Substring(8).Trim());
                     return "crew disband <TAG>";

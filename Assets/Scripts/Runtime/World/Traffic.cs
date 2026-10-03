@@ -364,6 +364,9 @@ namespace GoF2Remake.World
 
         /// <summary>A ChoiceWindow in flight: (text, yes, no, on yes, on no); the game pauses meanwhile.</summary>
         public event Action<string, string, string, Action, Action> ChoiceRequested;
+
+        /// <summary>A yes / no question in flight through the HUD's ChoiceWindow (the Loma toll's; TerritoryView's toll).</summary>
+        public void Ask(string text, string yes, string no, Action onYes, Action onNo) => ChoiceRequested?.Invoke(text, yes, no, onYes, onNo);
         /// <summary>The toll is paid: Loma's pirates are neither hostile nor friendly (PlayerFighter::update).</summary>
         public bool LomaTollPaid => blackMarket && Session.LomaTollPaid;
         /// <summary>The launch / arrival camera runs (SpaceLevel): the wingmen drift meanwhile.</summary>

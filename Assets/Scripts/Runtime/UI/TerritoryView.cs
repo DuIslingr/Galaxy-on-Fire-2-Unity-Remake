@@ -1,0 +1,102 @@
+// TerritoryView.cs
+// Remake-only: the flight HUD's part of the crews' territory (NetCrews / NetCrewsClient), in a multiplayer session:
+//   the toll: arriving at a station another crew holds (the local pilot in a crew of their own), once the launch /
+//     arrival camera is over, the HUD's ChoiceWindow asks for the toll (NetState.Toll; Traffic.Ask). Paid: the station's
+//     fighters spare this pilot for the visit (NetCrewsClient.TollStation, reset on the next orbit); refused: they
+//     attack (NetOrbit's territory rule). Not in an arena;
+//   the siege banner: in a besieged orbit, top centre: the two crews, the time to the start or the end, the control.
+// Built in code with inline styles.
+
+using GoF2Remake.Data;
+using GoF2Remake.Multiplayer;
+using GoF2Remake.World;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace GoF2Remake.UI
+{
+    public sealed class TerritoryView : MonoBehaviour
+    {
+        Label banner;
+        SpaceLevel level;
+        bool tollAsked;
+
+        /// <summary>The territory HUD on 'parent' (again after a UI reload).</summary>
+        public static void Attach(GameObject host, VisualElement parent)
+        {
+            if (parent == null) return;
+            var view = host.GetComponent<TerritoryView>();
+            if (view == null) view = host.AddComponent<TerritoryView>();
+            view.Build(parent);
+        }
+
+        void Build(VisualElement parent)
+        {
+            banner?.RemoveFromHierarchy();
+            banner = new Label { pickingMode = PickingMode.Ignore };
+            var s = banner.style;
+            s.position = Position.Absolute;
+            s.top = 64; s.left = 0; s.right = 0;
+            s.unityTextAlign = TextAnchor.MiddleCenter;
+            s.fontSize = 18;
+            s.color = new Color(1f, 0.45f, 0.35f);
+            s.unityFontStyleAndWeight = FontStyle.Bold;
+            s.unityTextOutlineColor = Color.black; s.unityTextOutlineWidth = 1f;
+            s.display = DisplayStyle.None;
+            parent.Add(banner);
+        }
+
+        void Update()
+        {
+            if (level == null)
+            {
+                level = FindAnyObjectByType<SpaceLevel>();
+                if (level == null) return;
+                tollAsked = false;
+                // A new orbit: a toll paid elsewhere is over.
+                if (level.Layout != null && NetCrewsClient.TollStation != level.Layout.stationIndex) NetCrewsClient.TollStation = -1;
+            }
+            if (!NetGame.Active || level.Layout == null || NetArenaClient.InMatch) { Show(null); return; }
+            int station = level.NetOrbitId;
+            AskToll(station);
+            Show(BannerText(station));
+        }
+
+        void AskToll(int station)
+        {
+            if (tollAsked || !level.LaunchCameraOver || level.Traffic == null || NetPlayer.Local == null) return;
+            int toll = NetState.Instance != null ? NetState.Instance.Toll : 0;
+            string tag = NetPlayer.Local.CrewTag;
+            if (toll <= 0 || NetCrewsClient.Relation(station, tag, NetCrewsClient.TollStation) >= 0) { tollAsked = true; return; }
+            tollAsked = true;
+            NetCrewsClient.Owner(station, out string owner, out string name);
+            string text = string.Format(Localization.Extra("mpTollAsk",
+                "This station belongs to [{0}] {1}. Pay {2} to pass in peace? Refuse, and its fighters attack you."), owner, name, ItemInfo.Credits(toll));
+            level.Traffic.Ask(text, Localization.Get(134), Localization.Get(135), () =>
+            {
+                if (!NetCrewsClient.PayToll(station))
+                    level.Traffic.Ask(Localization.Get(203).Replace("#C", ItemInfo.Credits(toll - Session.Credits)), null, null, null, null);
+            }, null);
+        }
+
+        static string BannerText(int station)
+        {
+            var s = NetCrewsClient.SiegeAt(station);
+            if (s == null) return null;
+            int left = Mathf.Max(0, Mathf.CeilToInt(s.secondsLeft - (Time.unscaledTime - s.receivedAt)));
+            string time = $"{left / 60}:{left % 60:00}";
+            return s.started
+                ? string.Format(Localization.Extra("mpSiegeBanner", "SIEGE  [{0}] against [{1}]  ·  {2}% taken  ·  {3} left"), s.attacker, s.defender, s.control, time)
+                : string.Format(Localization.Extra("mpSiegeBannerSoon", "SIEGE  [{0}] against [{1}]  ·  starts in {2}"), s.attacker, s.defender, time);
+        }
+
+        void Show(string text)
+        {
+            if (banner == null) return;
+            banner.style.display = text != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (text != null) banner.text = text;
+        }
+
+        void OnDestroy() => banner?.RemoveFromHierarchy();
+    }
+}

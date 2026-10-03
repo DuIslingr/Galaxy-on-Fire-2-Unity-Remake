@@ -121,6 +121,7 @@ namespace GoF2Remake.Data
             var row = Stock.items.Find(s => s.item == item && s.amount > 0);
             if (row == null) return Result.NoStock;
             int price = Storage || Cheats.FreeShopping ? 0 : PriceOf(item);
+            price = GoF2Remake.Multiplayer.NetCrewsClient.BuyPrice(Station, price);   // multiplayer: a crew station's cut / tax
             if (Session.Credits < price) { need = price - Session.Credits; return Result.NoCredits; }
             row.amount--;
             if (row.amount <= 0) Stock.items.Remove(row);

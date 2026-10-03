@@ -2,7 +2,9 @@
 // Remake-only: a player's side of the crews (NetCrews): who holds which station (NetState.Claims, read again when it
 // changes) for the star map, the station's header and the orbit information; the crew bank's deposits (the server asks,
 // the game pays from its credits and answers) and payouts; the home station a destroyed member respawns at
-// (NetPlayer.CrewHome).
+// (NetPlayer.CrewHome). Phase 3: the sieges (NetState.Sieges: who may fire at whom in a besieged orbit, the HUD's
+// banner), the toll this pilot paid for the current visit (TollStation, shown to the others by NetPlayer), the station
+// defence's verdict on a pilot (Relation: the held station's own race's fighters), and the trade cut (BuyPrice).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -16,7 +18,80 @@ namespace GoF2Remake.Multiplayer
         static readonly Dictionary<int, (string tag, string name)> owners = new Dictionary<int, (string, string)>();
 
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { parsedFrom = null; owners.Clear(); }
+        static void ResetStatics() { parsedFrom = siegesFrom = null; owners.Clear(); sieges.Clear(); TollStation = -1; }
+
+        /// <summary>A siege as the players see it: the seconds left counted from when the line arrived.</summary>
+        public sealed class SiegeInfo { public int station, control; public string attacker, defender; public bool started; public float secondsLeft, receivedAt; }
+
+        static string siegesFrom;
+        static readonly Dictionary<int, SiegeInfo> sieges = new Dictionary<int, SiegeInfo>();
+
+        static void RefreshSieges()
+        {
+            string text = NetGame.Active && NetState.Instance != null ? NetState.Instance.Sieges : "";
+            if (text == siegesFrom) return;
+            siegesFrom = text;
+            sieges.Clear();
+            foreach (var line in text.Split('\n'))
+            {
+                var p = line.Split('|');
+                if (p.Length < 6 || !int.TryParse(p[0], out int station)) continue;
+                int.TryParse(p[4], out int left);
+                int.TryParse(p[5], out int control);
+                sieges[station] = new SiegeInfo { station = station, attacker = p[1], defender = p[2], started = p[3] == "1",
+                                                  secondsLeft = left, control = control, receivedAt = UnityEngine.Time.unscaledTime };
+            }
+        }
+
+        /// <summary>The siege of 'station', null = none.</summary>
+        public static SiegeInfo SiegeAt(int station)
+        {
+            RefreshSieges();
+            return sieges.TryGetValue(station, out var s) ? s : null;
+        }
+
+        /// <summary>Two pilots in 'station''s orbit may fire at each other: its siege runs and they are of its two crews.</summary>
+        public static bool SiegePvp(int station, string tagA, string tagB)
+        {
+            var s = SiegeAt(station);
+            if (s == null || !s.started || string.IsNullOrEmpty(tagA) || string.IsNullOrEmpty(tagB)) return false;
+            return (tagA == s.attacker && tagB == s.defender) || (tagA == s.defender && tagB == s.attacker);
+        }
+
+        /// <summary>The station this pilot paid the toll at for the current visit (-1 = none; TerritoryView).</summary>
+        public static int TollStation { get; set; } = -1;
+
+        /// <summary>The held station's defence toward a pilot ('tag' their crew, 'tollAt' where they paid): +1 friend (a
+        /// member), -1 enemy (another crew's pilot without the toll), 0 as always (no holder, no crew, the toll paid).</summary>
+        public static int Relation(int station, string tag, int tollAt)
+        {
+            if (string.IsNullOrEmpty(tag) || !Owner(station, out string owner, out _)) return 0;
+            if (tag == owner) return 1;
+            return tollAt == station ? 0 : -1;
+        }
+
+        /// <summary>The trade cut on a unit's list price at 'station' (multiplayer, a held station): members pay
+        /// NetCrews.MemberDiscountPercent less, other crews' pilots NetCrews.TaxPercent more (the holder's tax).</summary>
+        public static int BuyPrice(int station, int price)
+        {
+            if (price <= 0 || NetPlayer.Local == null) return price;
+            string tag = NetPlayer.Local.CrewTag;
+            if (string.IsNullOrEmpty(tag) || !Owner(station, out string owner, out _)) return price;
+            return tag == owner ? UnityEngine.Mathf.RoundToInt(price * (100 - NetCrews.MemberDiscountPercent) / 100f)
+                                : UnityEngine.Mathf.RoundToInt(price * (100 + NetCrews.TaxPercent) / 100f);
+        }
+
+        /// <summary>The toll for this station's holder: the credits go, the server banks them.</summary>
+        public static bool PayToll(int station)
+        {
+            int toll = NetState.Instance != null ? NetState.Instance.Toll : 0;
+            if (toll <= 0 || Session.Credits < toll) return false;
+            Session.Credits -= toll;
+            TollStation = station;
+            NetState.Instance.TollPaidRpc(station);
+            NetProfileClient.Upload();
+            return true;
+        }
 
         static void Refresh()
         {

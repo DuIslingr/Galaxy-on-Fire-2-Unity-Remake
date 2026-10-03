@@ -24,6 +24,20 @@
 //     LapseDays lapses. The claims reach every player (NetState.Claims: "station|TAG|Name" lines; NetCrewsClient), who
 //     see the owner on the star map, the station's header and the orbit information.
 //   Home: a member signing in starts docked at the crew's home, and a destroyed member respawns there.
+// Phase 3, contest and benefits:
+//   Siege: "/crew siege" (officers of another crew, in the orbit or docked there; SiegeCost from the bank; one at a
+//     time; the crew needs room for another claim; not within ProtectionHours of the station's last siege) is announced
+//     and starts SiegeDelaySeconds later, lasting SiegeSeconds. Meanwhile the two crews' pilots may fire at each other
+//     in that orbit (NetCrewsClient.SiegePvp, NetPlayer.PvpWith; elsewhere free roam stays player-versus-environment).
+//     Every 5 s the side with more pilots in the orbit moves the control: SiegeRate % per pilot more and second, up for
+//     the attackers, down for the defenders; 100 % = the station changes hands; at the end the defenders keep it. Either
+//     way the station is protected for ProtectionHours. NetState.Sieges carries them to the players (the HUD banner,
+//     TerritoryView). "/crew sieges" lists them.
+//   Defence: in a held station's orbit its own race's NPC fighters treat the holder's members as friends and the
+//     members of other crews as enemies, unless that pilot paid the toll (Toll credits, asked on arrival by
+//     TerritoryView; NetPlayer.TollStation) for this visit. Pilots without a crew are treated as always.
+//   Trade cut: at a held station members buy items MemberDiscountPercent cheaper, the members of other crews pay
+//     TaxPercent more, which goes to the holder's bank (OnPurchase, from the shared stock's trades; NetCrewsClient).
 
 using System;
 using System.Collections.Generic;
@@ -40,6 +54,15 @@ namespace GoF2Remake.Multiplayer
         public const int MaxNameLength = 24, MaxMembers = 50;
         const float InviteSeconds = 300f, ClaimTickSeconds = 60f, ChargeSeconds = 30f;
         public const int DefaultClaimCost = 500_000, DefaultMaxClaims = 3, DefaultLapseDays = 14;
+        public const int DefaultSiegeCost = 250_000, DefaultToll = 10_000;
+        public const int MemberDiscountPercent = 10, TaxPercent = 5;
+        const long SiegeDelaySeconds = 600, SiegeSeconds = 900, ProtectionHours = 24;
+        const float SiegeRate = 100f / 300f, SiegeTickSeconds = 5f;
+
+        /// <summary>A siege's price from the bank (-siegecost), the toll a pilot of another crew pays at a held station
+        /// (-toll; 0 = none).</summary>
+        public static int SiegeCost { get; private set; } = DefaultSiegeCost;
+        public static int Toll { get; private set; } = DefaultToll;
         const int KaamoStation = 108, LomaSystem = 25;
 
         /// <summary>A claim's price from the bank (-claimcost), the claims per crew (-maxclaims), the days without a member
@@ -49,8 +72,10 @@ namespace GoF2Remake.Multiplayer
         public static int LapseDays { get; private set; } = DefaultLapseDays;
 
         /// <summary>DedicatedServer.Boot: the command line's choices.</summary>
-        public static void Configure(int claimCost, int maxClaims, int lapseDays)
+        public static void Configure(int claimCost, int maxClaims, int lapseDays, int siegeCost, int toll)
         {
+            SiegeCost = Mathf.Max(0, siegeCost);
+            Toll = Mathf.Max(0, toll);
             ClaimCost = Mathf.Max(0, claimCost);
             MaxClaims = Mathf.Clamp(maxClaims, 0, 100);
             LapseDays = Mathf.Max(1, lapseDays);
@@ -65,14 +90,23 @@ namespace GoF2Remake.Multiplayer
             public int home = -1;
         }
 
-        [Serializable] public class Claim { public int station; public string crew, claimed, lastDock; }
+        [Serializable] public class Claim { public int station; public string crew, claimed, lastDock; public long protectedUntil; }
 
-        [Serializable] class CrewList { public List<Crew> crews = new List<Crew>(); public List<Claim> claims = new List<Claim>(); }
+        /// <summary>A siege: times in Unix seconds, control 0..100 (100 = the attackers take the station).</summary>
+        [Serializable] public class Siege { public int station; public string attacker, defender; public long startsAt, endsAt; public float control; public bool started; }
+
+        [Serializable]
+        class CrewList
+        {
+            public List<Crew> crews = new List<Crew>();
+            public List<Claim> claims = new List<Claim>();
+            public List<Siege> sieges = new List<Siege>();
+        }
 
         // Deposits waiting for the player's game to pay: by a token the server made (the amount is the server's own).
         static readonly Dictionary<int, (string account, string crew, int amount, float until)> charges = new Dictionary<int, (string, string, int, float)>();
         static int nextCharge = 1;
-        static float claimTimer;
+        static float claimTimer, siegeTimer;
 
         static CrewList list;
         static readonly Dictionary<string, (string crew, float until)> invites = new Dictionary<string, (string, float)>();   // by profile id
@@ -80,8 +114,9 @@ namespace GoF2Remake.Multiplayer
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            list = null; invites.Clear(); charges.Clear(); claimTimer = 0f;
+            list = null; invites.Clear(); charges.Clear(); claimTimer = siegeTimer = 0f; taxDirty = false;
             ClaimCost = DefaultClaimCost; MaxClaims = DefaultMaxClaims; LapseDays = DefaultLapseDays;
+            SiegeCost = DefaultSiegeCost; Toll = DefaultToll;
         }
 
         static string PathOf => Path.Combine(NetProfiles.Folder, "crews.json");
@@ -95,6 +130,7 @@ namespace GoF2Remake.Multiplayer
             if (list == null) list = new CrewList();
             if (list.crews == null) list.crews = new List<Crew>();
             if (list.claims == null) list.claims = new List<Claim>();
+            if (list.sieges == null) list.sieges = new List<Siege>();
             foreach (var c in list.crews) { c.officers ??= new List<string>(); c.members ??= new List<string>(); }
             charges.Clear();
             PublishClaims();
@@ -172,10 +208,13 @@ namespace GoF2Remake.Multiplayer
                 case "unclaim": return Unclaim(client, me);
                 case "home": return SetHome(client, me);
                 case "claims": return ClaimsText(arg.Length > 0 ? ByTag(arg) : Of(me));
+                case "siege": return DeclareSiege(client, me);
+                case "sieges": return SiegesText();
                 default:
                     return Localization.Extra("mpCrewHelp", "Crew commands: /crew create TAG Name, invite <pilot>, join TAG, leave, kick <pilot>, " +
                                                             "promote / demote <pilot>, leader <pilot>, disband, info [TAG], list; deposit N, withdraw N; " +
-                                                            "claim, unclaim, home, claims [TAG] (docked at the station); /c <text> talks to your crew.");
+                                                            "claim, unclaim, home, claims [TAG] (docked at the station); siege (in another crew's orbit), sieges; " +
+                                                            "/c <text> talks to your crew.");
             }
         }
 
@@ -296,7 +335,9 @@ namespace GoF2Remake.Multiplayer
             var members = new List<string>(crew.members);
             list.crews.Remove(crew);
             list.claims.RemoveAll(c => c.crew == crew.id);   // its territory is free again (the bank goes with it)
+            list.sieges.RemoveAll(s => s.attacker == crew.id || s.defender == crew.id);
             PublishClaims();
+            PublishSieges();
             Save();
             foreach (var m in members) RefreshTags(m);
             Debug.Log($"Server: crew [{crew.tag}] {crew.name} disbanded.");
@@ -540,18 +581,20 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>NetState: spawned on the server (the claims go out once it exists).</summary>
-        public static void OnStateSpawned() => PublishClaims();
+        public static void OnStateSpawned() { PublishClaims(); PublishSieges(); NetState.Instance?.SetToll(Toll); }
 
         /// <summary>NetState.Update (server): members docked at a claim keep it; claims nobody kept lapse; old deposits drop.</summary>
         public static void Tick()
         {
             if (list == null) return;
+            if ((siegeTimer -= Time.unscaledDeltaTime) <= 0f) { siegeTimer = SiegeTickSeconds; TickSieges(SiegeTickSeconds); }
             if (charges.Count > 0)
                 foreach (var key in new List<int>(charges.Keys)) if (charges[key].until < Time.realtimeSinceStartup) charges.Remove(key);
             if ((claimTimer -= Time.unscaledDeltaTime) > 0f) return;
             claimTimer = ClaimTickSeconds;
             if (list.claims.Count == 0) return;
-            bool changed = false;
+            bool changed = taxDirty;   // the trade tax since the last write (saved once a minute)
+            taxDirty = false;
             string now = DateTime.UtcNow.ToString("o");
             foreach (var p in NetPlayer.All)
             {
@@ -578,6 +621,222 @@ namespace GoF2Remake.Multiplayer
         }
 
 
+        // ---- sieges (phase 3) ---------------------------------------------------------------------------
+
+        static long UnixNow => DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        static Siege SiegeAt(int station) => list?.sieges.Find(s => s.station == station);
+
+        static string DeclareSiege(ulong client, string me)
+        {
+            var crew = Of(me);
+            if (crew == null || !IsOfficer(crew, me)) return Localization.Extra("mpCrewNotOfficer", "Only a crew's leader and officers can do that.");
+            var p = NetSquad.Find(client);
+            int station = p != null ? p.Station : -1;
+            var held = ClaimAt(station);
+            if (held == null) return Localization.Extra("mpSiegeWhere", "Fly to (or dock at) a station another crew holds first.");
+            if (held.crew == crew.id) return Localization.Extra("mpCrewOwnClaim", "Your crew holds this station already.");
+            if (SiegeAt(station) != null) return Localization.Extra("mpSiegeRunning", "This station is under siege already.");
+            if (list.sieges.Exists(s => s.attacker == crew.id)) return Localization.Extra("mpSiegeOne", "Your crew is besieging another station already.");
+            if (held.protectedUntil > UnixNow)
+                return string.Format(Localization.Extra("mpSiegeProtected", "This station can't be besieged for another {0:0.#} hours."), (held.protectedUntil - UnixNow) / 3600f);
+            if (list.claims.FindAll(c => c.crew == crew.id).Count >= MaxClaims)
+                return string.Format(Localization.Extra("mpCrewMaxClaims", "A crew holds at most {0} stations."), MaxClaims);
+            if (crew.bank < SiegeCost)
+                return string.Format(Localization.Extra("mpSiegeCost", "A siege costs {0:N0} credits from the bank (it has {1:N0})."), SiegeCost, crew.bank);
+            var defender = list.crews.Find(c => c.id == held.crew);
+            crew.bank -= SiegeCost;
+            long now = UnixNow;
+            list.sieges.Add(new Siege { station = station, attacker = crew.id, defender = held.crew, startsAt = now + SiegeDelaySeconds, endsAt = now + SiegeDelaySeconds + SiegeSeconds });
+            Save();
+            PublishSieges();
+            NetState.Instance?.Announce(string.Format(Localization.Extra("mpSiegeDeclared",
+                "[{0}] {1} besieges {2}, held by [{3}] {4}: it starts in {5} minutes and lasts {6}."),
+                crew.tag, crew.name, StationName(station), defender?.tag, defender?.name, SiegeDelaySeconds / 60, SiegeSeconds / 60));
+            Debug.Log($"Server: [{crew.tag}] besieges {StationName(station)} ([{defender?.tag}]).");
+            return "";
+        }
+
+        static string SiegesText()
+        {
+            if (list == null || list.sieges.Count == 0) return Localization.Extra("mpSiegeNone", "No sieges.");
+            var sb = new StringBuilder(Localization.Extra("mpSiegeList", "Sieges:"));
+            long now = UnixNow;
+            foreach (var s in list.sieges)
+            {
+                var a = list.crews.Find(c => c.id == s.attacker);
+                var d = list.crews.Find(c => c.id == s.defender);
+                sb.Append($"\n{StationName(s.station)}: [{a?.tag}] against [{d?.tag}], ")
+                  .Append(now < s.startsAt ? $"starts in {(s.startsAt - now) / 60 + 1} min" : $"{s.control:0}% taken, {(s.endsAt - now) / 60 + 1} min left");
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>Every 5 s: a siege starts, the side with more pilots in the orbit moves the control (attackers up,
+        /// defenders down: SiegeRate per pilot more and second), 100 = taken; at its end the defenders keep the station.</summary>
+        static void TickSieges(float dt)
+        {
+            if (list.sieges.Count == 0) return;
+            long now = UnixNow;
+            bool changed = false;
+            foreach (var s in new List<Siege>(list.sieges))
+            {
+                var held = ClaimAt(s.station);
+                var attacker = list.crews.Find(c => c.id == s.attacker);
+                if (held == null || held.crew != s.defender || attacker == null)
+                {
+                    list.sieges.Remove(s);   // the claim lapsed, was given up, or a crew ended: nothing to fight for
+                    changed = true;
+                    continue;
+                }
+                if (now < s.startsAt) continue;
+                if (!s.started)
+                {
+                    s.started = true;
+                    changed = true;
+                    NetState.Instance?.Announce(string.Format(Localization.Extra("mpSiegeStarts", "The siege of {0} has begun: [{1}] and [{2}] may fire at each other there."),
+                        StationName(s.station), attacker.tag, list.crews.Find(c => c.id == s.defender)?.tag));
+                }
+                int att = 0, def = 0;
+                foreach (var p in NetPlayer.All)
+                {
+                    if (p == null || !p.IsSpawned || !p.InSpace || p.Station != s.station || p.Hull <= 0f) continue;
+                    var crew = OfClient(p.OwnerClientId);
+                    if (crew == null) continue;
+                    if (crew.id == s.attacker) att++;
+                    else if (crew.id == s.defender) def++;
+                }
+                if (att != def)
+                {
+                    s.control = Mathf.Clamp(s.control + (att - def) * SiegeRate * dt, 0f, 100f);
+                    changed = true;
+                }
+                if (s.control >= 100f) EndSiege(s, true);
+                else if (now >= s.endsAt) EndSiege(s, false);
+            }
+            if (changed) { Save(); PublishSieges(); }
+        }
+
+        static void EndSiege(Siege s, bool taken)
+        {
+            list.sieges.Remove(s);
+            var held = ClaimAt(s.station);
+            var attacker = list.crews.Find(c => c.id == s.attacker);
+            var defender = list.crews.Find(c => c.id == s.defender);
+            if (held != null) held.protectedUntil = UnixNow + ProtectionHours * 3600L;
+            if (taken && held != null && attacker != null)
+            {
+                held.crew = attacker.id;
+                held.lastDock = DateTime.UtcNow.ToString("o");
+                if (defender != null && defender.home == s.station) defender.home = list.claims.Find(c => c.crew == defender.id)?.station ?? -1;
+                if (attacker.home < 0 || ClaimAt(attacker.home)?.crew != attacker.id) attacker.home = s.station;
+                PublishClaims();
+                if (defender != null) RefreshHomes(defender);
+                RefreshHomes(attacker);
+            }
+            NetState.Instance?.Announce(taken
+                ? string.Format(Localization.Extra("mpSiegeTaken", "[{0}] {1} took {2} from [{3}]."), attacker?.tag, attacker?.name, StationName(s.station), defender?.tag)
+                : string.Format(Localization.Extra("mpSiegeHeld", "[{0}] held {1} against [{2}]."), defender?.tag, StationName(s.station), attacker?.tag));
+            Debug.Log($"Server: the siege of {StationName(s.station)} is over: {(taken ? "taken" : "held")}.");
+            Save();
+            PublishSieges();
+        }
+
+        /// <summary>The sieges to the players (NetState.Sieges): "station|attacker TAG|defender TAG|started (0/1)|seconds
+        /// left (to the start, or to the end)|control %" per line.</summary>
+        static void PublishSieges()
+        {
+            if (list == null || NetState.Instance == null) return;
+            var sb = new StringBuilder();
+            long now = UnixNow;
+            foreach (var s in list.sieges)
+            {
+                var a = list.crews.Find(c => c.id == s.attacker);
+                var d = list.crews.Find(c => c.id == s.defender);
+                if (a == null || d == null) continue;
+                long left = s.started ? s.endsAt - now : s.startsAt - now;
+                sb.Append(s.station).Append('|').Append(a.tag).Append('|').Append(d.tag).Append('|').Append(s.started ? 1 : 0)
+                  .Append('|').Append(Math.Max(0, left)).Append('|').Append(Mathf.RoundToInt(s.control)).Append('\n');
+            }
+            NetState.Instance.SetSieges(sb.ToString());
+        }
+
+        // ---- the station's toll and the trade tax (phase 3) ---------------------------------------------
+
+        /// <summary>NetState.TollPaidRpc: a player of another crew paid the toll at 'station' (their game took the credits):
+        /// into the holder's bank.</summary>
+        public static void OnTollPaid(ulong client, int station)
+        {
+            var held = ClaimAt(station);
+            string account = NetProfiles.AccountOf(client);
+            var payer = Of(account);
+            if (held == null || account == null || payer == null || payer.id == held.crew || Toll <= 0) return;
+            var owner = list.crews.Find(c => c.id == held.crew);
+            if (owner == null) return;
+            owner.bank += Toll;
+            NetProfiles.AdjustWorth(account, -Toll);
+            Save();
+            TellCrew(owner, string.Format(Localization.Extra("mpTollReceived", "[{0}] {1} paid the {2:N0} credits toll at {3}."), payer.tag, NameOf(account), Toll, StationName(station)));
+        }
+
+        /// <summary>NetState.StockItemRpc: a unit bought at 'station' for 'price' (the buyer's game added the tax for a crew's
+        /// station it isn't in: TaxPercent of the list price): the tax into the holder's bank.</summary>
+        public static void OnPurchase(ulong client, int station, int price)
+        {
+            var held = ClaimAt(station);
+            if (held == null || price <= 0 || TaxPercent <= 0) return;
+            var buyer = OfClient(client);
+            if (buyer != null && buyer.id == held.crew) return;   // members pay less, no tax
+            var owner = list.crews.Find(c => c.id == held.crew);
+            if (owner == null) return;
+            int tax = price - Mathf.RoundToInt(price * 100f / (100f + TaxPercent));
+            if (tax <= 0) return;
+            owner.bank += tax;
+            taxDirty = true;
+        }
+
+        static bool taxDirty;
+
+        // ---- the station window (NetPanel) -----------------------------------------------------------------
+
+        /// <summary>The player's crew, invitations, the station they are docked at and every crew into the snapshot.</summary>
+        internal static void FillPanel(ulong client, NetPanel.State s)
+        {
+            if (list == null) return;
+            string me = NetProfiles.AccountOf(client);
+            s.claimCost = ClaimCost; s.siegeCost = SiegeCost; s.maxClaims = MaxClaims; s.toll = Toll;
+            s.sieges = SiegesText();
+            foreach (var c in list.crews)
+                s.crews.Add(new NetPanel.CrewRow { tag = c.tag, name = c.name, members = c.members.Count, claims = list.claims.FindAll(x => x.crew == c.id).Count });
+            if (s.dockedStation >= 0)
+            {
+                var held = ClaimAt(s.dockedStation);
+                s.stationHolder = held != null ? list.crews.Find(c => c.id == held.crew)?.tag ?? "" : "";
+                var st = NetGame.Db.Stations.Find(x => x.index == s.dockedStation);
+                s.stationClaimable = st != null && s.dockedStation != KaamoStation && st.system != LomaSystem;
+            }
+            if (me != null && invites.TryGetValue(me, out var inv) && inv.until > Time.realtimeSinceStartup)
+            {
+                var from = list.crews.Find(c => c.id == inv.crew);
+                if (from != null) s.crewInvites.Add(from.tag + "|" + from.name);
+            }
+            var crew = Of(me);
+            if (crew == null) return;
+            s.inCrew = true;
+            s.crewTag = crew.tag;
+            s.crewName = crew.name;
+            s.bank = crew.bank;
+            s.home = HomeOf(me);
+            s.rank = crew.leader == me ? 2 : crew.officers.Contains(me) ? 1 : 0;
+            foreach (var m in crew.members)
+                s.members.Add(new NetPanel.Member { name = NameOf(m), rank = crew.leader == m ? 2 : crew.officers.Contains(m) ? 1 : 0, online = NetProfiles.IsOnline(m) });
+            s.members.Sort((a, b) => a.rank != b.rank ? b.rank.CompareTo(a.rank) : string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+            foreach (var c in list.claims)
+                if (c.crew == crew.id)
+                    s.claims.Add(new NetPanel.ClaimRow { station = c.station, name = StationName(c.station), home = c.station == s.home,
+                                                         daysLeft = (float)Math.Max(0, LapseDays - DaysSince(c.lastDock)), sieged = SiegeAt(c.station) != null });
+        }
+
         // ---- the server console -----------------------------------------------------------------------------
 
         /// <summary>DedicatedServer's "crews" command.</summary>
@@ -590,6 +849,9 @@ namespace GoF2Remake.Multiplayer
                 sb.Append($"\n  [{c.tag}] {c.name}: {c.members.Count} member(s), leader {NameOf(c.leader)}, bank {c.bank:N0}");
             return sb.ToString();
         }
+
+        /// <summary>DedicatedServer's "sieges" command.</summary>
+        public static string ConsoleSieges() => list == null ? "Crews need player profiles (-noprofiles is set)." : SiegesText();
 
         /// <summary>DedicatedServer's "crew disband TAG".</summary>
         public static string ConsoleDisband(string tag)

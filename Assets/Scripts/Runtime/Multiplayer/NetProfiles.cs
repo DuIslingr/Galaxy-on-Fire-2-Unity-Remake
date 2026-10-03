@@ -531,6 +531,22 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
+        // ---- the station window (NetPanel) -----------------------------------------------------------------
+
+        /// <summary>The player's profile into the window's snapshot, and the leaderboard.</summary>
+        internal static void FillPanel(ulong client, NetPanel.State s)
+        {
+            s.profiles = Enabled;
+            if (!Enabled) return;
+            if (logins.TryGetValue(client, out var l))
+            {
+                s.guest = l.account == null;
+                s.controller = l.controller;
+                if (l.account != null) { s.profileId = l.account.id; s.devices = l.account.devices.Count; }
+            }
+            s.top = Leaderboard();
+        }
+
         // ---- arena stats (NetArena) -------------------------------------------------------------------------
 
         /// <summary>A finished match's kills, deaths and win into the player's profile (guests: nothing).</summary>

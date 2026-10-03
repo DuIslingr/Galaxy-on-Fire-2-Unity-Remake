@@ -128,7 +128,7 @@ can't. Type one and press Enter:
 | `say <text>` | A chat line to everyone, from "Server". |
 | `kick <id or name> [reason]` | Drops a player; they see the reason. |
 | `arenas` | The arena matches and queues. |
-| `crews`, `crew disband <TAG>` | The crews; end one. |
+| `crews`, `crew disband <TAG>`, `sieges` | The crews; end one; the sieges. |
 | `profiles` | The player profiles: id, name, devices, worth, who is online. |
 | `profile delete <id>` | Deletes a profile (not while it is online; its file is kept as `.bak`). |
 | `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
@@ -158,6 +158,8 @@ GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -passwo
 | `-claimcost N` | What a crew pays from its bank to claim a station (default 500 000). |
 | `-maxclaims N` | Stations per crew (default 3). |
 | `-claimdays N` | Days without a member docking before a claim is lost (default 14). |
+| `-siegecost N` | What a crew pays from its bank for a siege (default 250 000). |
+| `-toll N` | The toll other crews' pilots pay at a crew's station (default 10 000, 0 = none). |
 | `-noprofiles` | Don't keep player profiles (every session starts fresh, like before). |
 | `-maxprofiles N` | How many player profiles the server keeps (default 50). New devices past it play as guests. |
 | `-maxearn N` | Without `-allowdebug`: how much a profile's worth may grow per minute online (default 1 000 000). |
@@ -188,6 +190,9 @@ every time after; the progress is saved when docking, every minute and when leav
 
 **Crews**
 
+Everything below is also in the station's **Crew · Arena** window (under the station's information), with buttons
+instead of commands.
+
 A crew is a lasting group of players on a server with profiles (squads stay the quick groups for flying together).
 Its tag shows before its members' names.
 
@@ -201,6 +206,10 @@ Its tag shows before its members' names.
 | `/crew deposit N`, `/crew withdraw N` | Put credits into the crew bank; take them out (leader and officers). |
 | `/crew claim`, `/crew unclaim`, `/crew home` | Docked at a station: claim it for the crew (paid from the bank), give it up, or make it the crew's home (leader and officers). Members start and respawn at the home. |
 | `/crew claims [TAG]` | A crew's stations. A station no member docks at for 14 days is lost. |
+| `/crew siege`, `/crew sieges` | In another crew's orbit (leader and officers): besiege it, paid from the bank. It starts 10 minutes later and lasts 15; meanwhile the two crews may fight there, and the side with more pilots in the orbit takes control. At 100 % the station changes hands; otherwise the defenders keep it. |
+
+At a crew's station its members buy items 10 % cheaper and its fighters protect them. Pilots of other crews pay 5 % more
+(into the crew's bank) and are attacked by the station's fighters unless they pay the toll asked on arrival.
 | `/c <text>` | Talk to your crew. |
 
 **Arena matches**

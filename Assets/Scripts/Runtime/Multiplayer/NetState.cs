@@ -37,6 +37,8 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> profilesOn = new NetworkVariable<bool>();     // the server keeps player profiles (NetProfiles)
         readonly NetworkVariable<bool> freePvp = new NetworkVariable<bool>();        // players may fight anywhere (else only in arenas)
         readonly NetworkVariable<FixedString4096Bytes> claims = new NetworkVariable<FixedString4096Bytes>();   // NetCrews' territory
+        readonly NetworkVariable<FixedString4096Bytes> sieges = new NetworkVariable<FixedString4096Bytes>();   // NetCrews' sieges
+        readonly NetworkVariable<int> toll = new NetworkVariable<int>();   // NetCrews.Toll
         readonly NetworkVariable<FixedString64Bytes> serverId = new NetworkVariable<FixedString64Bytes>();   // their key on the client
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
@@ -71,13 +73,34 @@ namespace GoF2Remake.Multiplayer
         internal void SetClaims(string text)
         {
             if (!IsServer) return;
+            text = Fit(text);
+            if (claims.Value.ToString() != text) claims.Value = text;
+        }
+
+        /// <summary>The sieges, "station|attacker|defender|started|seconds left|control" per line (NetCrews).</summary>
+        public string Sieges => sieges.Value.ToString();
+
+        internal void SetSieges(string text)
+        {
+            if (!IsServer) return;
+            text = Fit(text);
+            if (sieges.Value.ToString() != text) sieges.Value = text;
+        }
+
+        /// <summary>The toll a pilot of another crew pays at a held station (NetCrews.Toll; 0 = none).</summary>
+        public int Toll => toll.Value;
+
+        internal void SetToll(int value) { if (IsServer && toll.Value != value) toll.Value = value; }
+
+        static string Fit(string text)
+        {
             text ??= "";
             while (System.Text.Encoding.UTF8.GetByteCount(text) > 4000)
             {
                 int cut = text.LastIndexOf('\n', text.Length - 2);
                 text = cut < 0 ? "" : text.Substring(0, cut + 1);
             }
-            if (claims.Value.ToString() != text) claims.Value = text;
+            return text;
         }
         public override void OnNetworkSpawn()
         {
@@ -369,11 +392,30 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams)]
         void GrantRpc(int amount, RpcParams rpc = default) => NetCrewsClient.OnGrant(amount);
 
+        /// <summary>A pilot of another crew paid the toll at 'station' (their game took the credits).</summary>
+        [Rpc(SendTo.Server)]
+        public void TollPaidRpc(int station, RpcParams rpc = default) => NetCrews.OnTollPaid(rpc.Receive.SenderClientId, station);
+
         /// <summary>Server: a notice for everyone (a claim).</summary>
         internal void Announce(string text)
         {
             if (IsServer && !string.IsNullOrEmpty(text)) NoticeRpc(text);
         }
+
+        // ---- the station's Crew / Arena / Profile window (NetPanel) ----------------------------------------
+
+        /// <summary>The window asks for its snapshot.</summary>
+        [Rpc(SendTo.Server)]
+        public void PanelRequestRpc(RpcParams rpc = default) => NetPanel.Send(rpc.Receive.SenderClientId);
+
+        /// <summary>Server: a chunk of the snapshot to one player.</summary>
+        internal void PanelChunk(ulong client, int seq, int part, int count, byte[] data)
+        {
+            if (IsServer) PanelChunkRpc(seq, part, count, data, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void PanelChunkRpc(int seq, int part, int count, byte[] data, RpcParams rpc = default) => NetPanel.OnChunk(seq, part, count, data);
 
         // ---- arena matches (NetArena / NetArenaClient) -----------------------------------------------------
 
@@ -547,6 +589,7 @@ namespace GoF2Remake.Multiplayer
         {
             if (!NetStock.HostItem(station, item, delta))
                 ItemRefusedRpc(station, item, price, RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp));
+            else if (delta < 0 && NetProfiles.Enabled) NetCrews.OnPurchase(rpc.Receive.SenderClientId, station, price);   // a crew station's tax
             BroadcastStock(station);
         }
 

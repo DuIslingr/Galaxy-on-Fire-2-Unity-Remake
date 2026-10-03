@@ -134,6 +134,7 @@ namespace GoF2Remake.UI
             {
                 ChatView.Attach(gameObject, safeArea ?? root);   // multiplayer chat
                 SquadView.Attach(gameObject, safeArea ?? root, level != null && level.Layout != null ? level.Layout.stationIndex : -1);   // squad, pilots here
+                CrewPanel.Attach(gameObject, safeArea ?? root);   // the Crew / Arena / Profile window
             }
 
             InputGlyph.TrackHintsOption(hints);
@@ -677,6 +678,7 @@ namespace GoF2Remake.UI
         void Back()
         {
             if (infoWindow != null && infoWindow.IsOpen) { Play(buttonRelease); infoWindow.Close(); }
+            else if (CrewPanel.IsOpenAny) { Play(buttonRelease); CrewPanel.CloseAny(); }   // multiplayer: the crew window
             else if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
             else if (missions != null && missions.IsOpen) { Play(buttonRelease); missions.Close(); }
             else if (status != null && status.IsOpen) { Play(buttonRelease); status.Close(); }
@@ -1591,6 +1593,7 @@ namespace GoF2Remake.UI
             var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)) { Back(); return; }
             if (infoWindow != null && infoWindow.IsOpen) { infoWindow.Tick(); return; }   // it takes all input
+            if (CrewPanel.IsOpenAny) return;   // the crew window's buttons and text fields take the input
             if (pad != null && pad.startButton.wasPressedThisFrame && !DialogOpen)
             {
                 Play(buttonRelease);

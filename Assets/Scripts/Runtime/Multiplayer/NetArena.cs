@@ -332,6 +332,29 @@ namespace GoF2Remake.Multiplayer
             foreach (var p in ids) NetState.Instance?.ArenaState(p, m.id, (byte)m.phase, left, ids, kills, feed ?? "");
         }
 
+        /// <summary>The player's duel challenge, queue and the matches into the station window's snapshot.</summary>
+        internal static void FillPanel(ulong client, NetPanel.State s)
+        {
+            if (challenges.TryGetValue(client, out var c) && c.until > Now) { s.duelFrom = Name(c.from); s.duelVoids = c.voids; }
+            var m = MatchOf(client);
+            if (m != null && m.phase == Phase.Waiting)
+            {
+                s.queue = m.voids ? 2 : 1;
+                s.queueCount = m.players.Count;
+                s.queueStartsIn = m.players.Count >= 2 ? Mathf.Max(0f, m.phaseUntil - Now) : -1f;
+            }
+            s.inMatch = m != null && m.phase != Phase.Waiting;
+            foreach (var x in matches)
+            {
+                var sb = new StringBuilder(x.kind == Kind.Duel ? "Duel" : "Free-for-all");
+                if (x.voids) sb.Append(" with Voids");
+                sb.Append(x.phase == Phase.Waiting ? $" (queue, {x.players.Count} / {FfaMaxPlayers})" : $" ({x.phase})").Append(": ");
+                for (int i = 0; i < x.players.Count; i++)
+                    sb.Append(i > 0 ? ", " : "").Append(Name(x.players[i])).Append(x.phase == Phase.Waiting ? "" : $" {(x.kills.TryGetValue(x.players[i], out int k) ? k : 0)}");
+                s.matches.Add(sb.ToString());
+            }
+        }
+
         /// <summary>NetGame: a player disconnected.</summary>
         public static void OnDisconnect(ulong client) => Leave(client, false);
 
