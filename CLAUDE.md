@@ -616,7 +616,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`SaveGame.Save` refuses), so it never touches the single-player saves.
 - **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (a fixed 84 %
   high panel: the title with the "Experimental" badge and the pilot name `mp_name`, a one-line intro, then the server
-  browser and the host column). **Server browser** (`NetLobby.Query` every 5 s while the panel is open; rows rebuilt
+  browser and the host column). **Pilot name required**: without one (`NetGame.PlayerName` empty, no `-mpname`) opening
+  the panel asks for it in the menu's dialog (`MainMenu.NeedsName`: its `dialogField`, OK refuses an empty name, Back
+  closes), and so do Host, Join and a server browser row before they start (`WithName`). **Server browser** (`NetLobby.Query` every 5 s while the panel is open; rows rebuilt
   only when the list changed, so a controller's focus stays): every listed game of every version, this version's first
   and the fullest first; two lines per game: its name with SERVER (dedicated) / PASSWORD tags, then the host, players /
   limit ("full") and the version (another version: amber "needs X", not joinable, a tap says why); a tap joins by its

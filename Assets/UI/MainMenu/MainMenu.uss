@@ -1066,6 +1066,12 @@
     -unity-text-align: upper-left;
 }
 
+/* The pilot name prompt's field (MainMenu.NeedsName), hidden in the other dialogs. */
+.dialog-field {
+    display: none;
+    margin: -8px 0 26px 0;
+}
+
 .dialog-buttons {
     flex-direction: row;
     justify-content: flex-end;

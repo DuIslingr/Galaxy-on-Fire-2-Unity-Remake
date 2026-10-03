@@ -84,6 +84,8 @@ namespace GoF2Remake.UI
         VisualElement openPanel;
         readonly List<OptionControl> optionControls = new List<OptionControl>();
         Action dialogYes, dialogNo;
+        Func<bool> dialogCheck;   // the Yes button closes the dialog only when this passes (null = always)
+        TextField dialogField;
         MenuState screen = MenuState.Splash;
         bool skipRequested;
         Campaign pendingCampaign;
@@ -136,6 +138,17 @@ namespace GoF2Remake.UI
             splashLogo = root.Q("splashLogo");
             fade = root.Q("fade");
             dialog = root.Q("dialog");
+            dialogField = root.Q<TextField>("dialogField");
+            if (dialogField != null)
+            {
+                dialogField.maxLength = GoF2Remake.Multiplayer.NetGame.MaxNameLength;
+                dialogField.RegisterCallback<KeyDownEvent>(e =>
+                {
+                    if (e.keyCode != KeyCode.Return && e.keyCode != KeyCode.KeypadEnter) return;
+                    e.StopPropagation();
+                    ConfirmDialog();
+                }, TrickleDown.TrickleDown);
+            }
             mainColumn = root.Q("mainColumn");
             mainButtons = root.Q("mainButtons");
             pressAnyKey = root.Q<Label>("pressAnyKey");
@@ -205,7 +218,7 @@ namespace GoF2Remake.UI
             Bind("economyAndroidButton", () => StartGame(Economy.Android));
             Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
             Bind("ngPlusToggle", () => { newGamePlus = !newGamePlus && ngPlusSave != null; RefreshNgPlus(false); });
-            Bind("dialogYes", () => { var a = dialogYes; CloseDialog(); a?.Invoke(); });
+            Bind("dialogYes", ConfirmDialog);
             Bind("dialogNo", () => { var a = dialogNo; CloseDialog(); a?.Invoke(); });
 
             foreach (var (tab, pg) in OptionPages) Bind(tab, () => SelectTab(pg));
@@ -793,13 +806,13 @@ namespace GoF2Remake.UI
             Bind("mpModePrivate", () => SetHostMode(HostMode.Private));
             Bind("mpModeLocal", () => SetHostMode(HostMode.Local));
             ApplyHostMode();
-            Bind("mpHost", () => StartCoroutine(LeaveForMultiplayer(null)));
+            Bind("mpHost", () => WithName(() => StartCoroutine(LeaveForMultiplayer(null))));
             Bind("mpJoin", () =>
             {
                 string address = mpAddress != null ? mpAddress.value.Trim() : "";
                 if (address.Length == 0) return;
                 PlayerPrefs.SetString("mp_address", address);
-                StartCoroutine(LeaveForMultiplayer(address));
+                WithName(() => StartCoroutine(LeaveForMultiplayer(address)));
             });
         }
 
@@ -952,7 +965,7 @@ namespace GoF2Remake.UI
                         if (mpStatus != null) mpStatus.text = Localization.Extra("mpEnterPassword", "That game has a password: enter it under Join, then pick the game again.");
                         mpJoinPassword?.Focus();
                     }
-                    else if (joinable) StartCoroutine(LeaveForMultiplayer(entry.code));
+                    else if (joinable) WithName(() => StartCoroutine(LeaveForMultiplayer(entry.code)));
                     else if (mpStatus != null)
                         mpStatus.text = entry.Full ? Localization.Extra("mpGameFull", "That game is full.")
                             : string.Format(Localization.Extra("mpOtherVersion", "That game runs version {0}, yours is {1}: only the same version can join."), entry.version, GoF2Remake.Multiplayer.NetGame.Version);
@@ -974,6 +987,38 @@ namespace GoF2Remake.UI
         {
             if (mpStatus != null) mpStatus.text = GoF2Remake.Multiplayer.NetGame.Status;   // why the last session ended
             OpenPanel("multiplayerPanel");
+            NeedsName(null);   // the first visit: the name first
+        }
+
+        /// <summary>Multiplayer needs a pilot name (the others see it on the lock plate, in the chat and the pilot lists):
+        /// without one (NetGame.PlayerName empty) a prompt asks for it, then runs 'then'. False = a name is set already.</summary>
+        bool NeedsName(Action then)
+        {
+            if (GoF2Remake.Multiplayer.NetGame.Clean(GoF2Remake.Multiplayer.NetGame.PlayerName).Length > 0 || dialogField == null) return false;
+            ShowDialog(Localization.Extra("mpNameTitle", "Pilot name"),
+                       Localization.Extra("mpNameText", "Choose the name the other pilots will see. You can change it later at the top of the Multiplayer panel."), then);
+            dialogField.value = "";
+            dialogField.textEdition.placeholder = Localization.Extra("mpNamePlaceholder", "Your pilot name");
+            dialogField.style.display = DisplayStyle.Flex;
+            root.Q<Button>("dialogYes").text = "OK";
+            root.Q<Button>("dialogNo").text = Localization.Get(170).ToUpperInvariant();   // Back
+            dialogCheck = () =>
+            {
+                string name = GoF2Remake.Multiplayer.NetGame.Clean(dialogField.value);
+                if (name.Length == 0) { dialogField.Focus(); return false; }
+                GoF2Remake.Multiplayer.NetGame.PlayerName = name;
+                if (mpName != null) mpName.SetValueWithoutNotify(GoF2Remake.Multiplayer.NetGame.PlayerName);
+                ApplyHostMode();   // the default game name is the pilot's
+                return true;
+            };
+            dialogField.Focus();
+            return true;
+        }
+
+        /// <summary>Hosting and joining: 'action' once there is a pilot name (asked first when there is none).</summary>
+        void WithName(Action action)
+        {
+            if (!NeedsName(action)) action();
         }
 
         /// <summary>The host card's addresses: one row per adapter (NetGame.LocalAddresses) with the port when it isn't the
@@ -1394,16 +1439,27 @@ namespace GoF2Remake.UI
             Select(yes);
         }
 
+        void ConfirmDialog()
+        {
+            if (dialogCheck != null && !dialogCheck()) return;
+            var a = dialogYes;
+            CloseDialog();
+            a?.Invoke();
+        }
+
         void CloseDialog()
         {
             var no = root.Q<Button>("dialogNo");
-            if (no.style.display == DisplayStyle.None)
+            if (no.style.display == DisplayStyle.None || dialogField != null && dialogField.style.display == DisplayStyle.Flex)
             {
                 no.style.display = StyleKeyword.Null;
+                no.text = Localization.Get(135).ToUpperInvariant();
                 root.Q<Button>("dialogYes").text = Localization.Get(134).ToUpperInvariant();
             }
+            if (dialogField != null) dialogField.style.display = StyleKeyword.Null;
             dialog.RemoveFromClassList("dialog-backdrop--shown");
             dialogYes = dialogNo = null;
+            dialogCheck = null;
             if (openPanel != null) FocusFirst(openPanel); else Select(exitButton);
         }
 

@@ -204,6 +204,7 @@
                 <ui:Label name="dialogTitle" class="panel-title gof-semibold" />
                 <ui:VisualElement class="panel-accent" />
                 <ui:Label name="dialogText" class="dialog-text" />
+                <ui:TextField name="dialogField" class="debug-filter dialog-field" />
                 <ui:VisualElement class="dialog-buttons">
                     <ui:Button name="dialogYes" class="menu-button dialog-button gof-semibold" />
                     <ui:Button name="dialogNo" class="menu-button dialog-button gof-semibold" />
