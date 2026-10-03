@@ -124,7 +124,7 @@ namespace GoF2Remake.World
         /// <summary>Level::createSpace / PlayerStation: at the origin, rotation (0, pi, 0) (= identity in Unity).</summary>
         public static GameObject SpawnStation(Database db, OrbitLayout layout, Transform parent = null)
         {
-            if (!layout.hasStation && layout.stationIndex != 110) return null;   // 110 keeps its wreck in the empty orbit
+            if (!layout.stationObject) return null;   // Level::createSpace: the empty orbits 27 / 110 / 111 keep their PlayerStation
             string name = StationAssembly(db, layout);
             if (name == null) { Debug.LogWarning($"OrbitBuilder: no station assembly for {layout.stationIndex}"); return null; }
             var go = Spawn(db, name, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Station", parent);
