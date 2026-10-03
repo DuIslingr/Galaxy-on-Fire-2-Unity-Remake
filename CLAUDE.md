@@ -766,8 +766,12 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   for the others' NPCs); **trade cut** (`Hangar.Buy` through `NetFactionsClient.BuyPrice`: members -10 %, other factions +5 %;
   the server banks the tax from `StockItemRpc`'s price, `NetFactions.OnPurchase`; the list shows the plain price; ships
   aren't cut). Not yet: shared storage at the home. Not tested in a build yet.
-  UI: the station's **multiplayer window** (`MultiplayerWindow`, code-built, Squad.uss buttons; a "MULTIPLAYER" button in the
-  top bar left of Menu, a dot when an invitation, a challenge or an unread chat line waits; Esc / B closes it, the station
+  UI: the **multiplayer window** (`MultiplayerWindow`, code-built, Squad.uss buttons; in the station a "MULTIPLAYER" button in
+  the top bar left of Menu; in flight its own button on the right under the HUD readout and N (`FlightHud`: Esc / B / N
+  close it, the flight controls and the mouse-steering cursor wait meanwhile, `Navigation.InputHalted`); the Squad tab
+  has Distress call / End the call in space; both lists scroll by mouse drag too (`DragScroll`) and the chat follows new
+  lines only while at its end; the Admin tab also on a session without profiles for its host (master) and session admins
+  (`NetModeration.RoleOfClient`): kick, mute, session admins, settings, announcements (`NetCommands.ModerateWithoutProfiles`); a dot when an invitation, a challenge or an unread chat line waits; Esc / B closes it, the station
   menu's keys wait while it is open). Tabs Chat (the whole chat: lines, Local / Global, the line, Send; Enter sends,
   "/" commands; built once so the line keeps focus and draft; `ChatView` hides meanwhile), Squad (invitations, members
   with where / distress and Help, Leave, the pilots docked here to Invite; distress itself is called in space), Faction,

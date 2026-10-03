@@ -611,7 +611,7 @@ namespace GoF2Remake.Flight
 
         /// <summary>The player's flight controls (steering, dodge, guns, mining) are off: the game is paused, or in multiplayer
         /// a menu, conversation or map is open (the world goes on there).</summary>
-        public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active);
+        public static bool InputHalted => Time.timeScale <= 0f || (GoF2Remake.Multiplayer.NetGame.Active && (halted || GoF2Remake.UI.MultiplayerWindow.IsOpenAny));
 
         void OnDestroy() { halted = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
 

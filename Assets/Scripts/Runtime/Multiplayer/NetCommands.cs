@@ -270,8 +270,37 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Server: a moderation command (NetModeration checks the role; the console outranks everyone).</summary>
         static string Moderate(string name, string args, NetPlayer by)
         {
-            if (!NetProfiles.Enabled) return X("mpCmdNeedsProfiles", "That needs a dedicated server with player profiles.");
+            if (!NetProfiles.Enabled) return ModerateWithoutProfiles(name, args, by);
             return (by == null ? NetModeration.ConsoleCommand(name, args) : NetModeration.Command(by.OwnerClientId, $"/{name} {args}")) ?? "";
+        }
+
+        /// <summary>A session without profiles (hosted fresh from the menu): the settings and announcements still work for
+        /// its admins (the host); bans, ops and the rest need profiles.</summary>
+        static string ModerateWithoutProfiles(string name, string args, NetPlayer by)
+        {
+            bool admin = by == null || IsAdmin(by);
+            switch (name)
+            {
+                case "settings":
+                    return admin ? NetServerSettings.ListText() : X("mpCmdNoRights", "You don't have the rights for that command.");
+                case "set":
+                {
+                    if (!admin) return X("mpCmdNoRights", "You don't have the rights for that command.");
+                    args = (args ?? "").Trim();
+                    int sp = args.IndexOf(' ');
+                    return sp < 0 ? "/set <key> <value> (/settings lists them)" : NetServerSettings.Set(args.Substring(0, sp), args.Substring(sp + 1), IssuerName(by));
+                }
+                case "say":
+                {
+                    if (!admin) return X("mpCmdNoRights", "You don't have the rights for that command.");
+                    string text = NetChat.Clean(args);
+                    if (text.Length == 0) return "/say <text>";
+                    NetState.Instance?.ServerChat(by == null ? IssuerName(null) : $"[admin] {by.DisplayName}", text);
+                    return "";
+                }
+                default:
+                    return X("mpCmdNeedsProfiles", "That needs player profiles: a dedicated server, or a game hosted with World: Persistent.");
+            }
         }
 
         /// <summary>Server: a command answered by a (client, "/name args") handler (NetArena, NetFactions, NetProfiles);
@@ -279,7 +308,7 @@ namespace GoF2Remake.Multiplayer
         static string Handler(Func<ulong, string, string> handler, bool profiles, string name, string args, NetPlayer by)
         {
             if (by == null) return "";
-            if (profiles && !NetProfiles.Enabled) return X("mpCmdNeedsProfiles", "That needs a dedicated server with player profiles.");
+            if (profiles && !NetProfiles.Enabled) return X("mpCmdNeedsProfiles", "That needs player profiles: a dedicated server, or a game hosted with World: Persistent.");
             return handler(by.OwnerClientId, $"/{name} {args}".Trim()) ?? "";
         }
 
@@ -555,7 +584,7 @@ namespace GoF2Remake.Multiplayer
                 return list;
             }
             var named = MatchPlayer(args, out rest);
-            if (named == null && ulong.TryParse(first, out ulong id) && (named = NetSquad.Find(id)) != null)
+            if (named == null && ulong.TryParse(first.TrimStart('#'), out ulong id) && (named = NetSquad.Find(id)) != null)   // "5" or "#5"
                 rest = space < 0 ? "" : args.Substring(space + 1).Trim();
             if (named != null) list.Add(named);
             else { rest = ""; error = NoPlayer(first.Length > 0 ? first : args); }

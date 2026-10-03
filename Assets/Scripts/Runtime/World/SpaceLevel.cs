@@ -616,8 +616,8 @@ namespace GoF2Remake.World
             if (NetArenaClient.InMatch) { var spawn = NetArenaClient.SpawnPose(); root.transform.SetPositionAndRotation(spawn.position, spawn.rotation); }
             else if (NetGame.Active) root.transform.position += root.transform.right * (NetGame.LocalId * 80f);
             // Multiplayer: answering a squadmate's distress call, next to them (NetDistress).
-            if (NetGame.Active && Session.ArrivedByTravel && NetDistress.ArrivalNear(Layout.stationIndex, out var near, out var facing))
-                root.transform.SetPositionAndRotation(near, facing);
+            if (NetGame.Active && Session.ArrivedByTravel && NetDistress.ArrivalNear(Layout.stationIndex, out var near, out var nearFacing))
+                root.transform.SetPositionAndRotation(near, nearFacing);
             // LevelScript::LevelScript 0x160380: at Coromesk (103) from campaign 0x55 on (or at 0x87), outside the Void, every
             // start is at (70000, 0, 100000) facing the station (the mining plant stands at the origin from then on).
             int cm = Session.CampaignMission;

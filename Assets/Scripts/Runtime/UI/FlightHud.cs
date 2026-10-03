@@ -136,6 +136,7 @@ namespace GoF2Remake.UI
                 SquadView.Attach(gameObject, safeArea ?? root);   // the squad window, invitations
                 ArenaView.Attach(gameObject, safeArea ?? root);   // an arena match: score, timer, respawn, result
                 TerritoryView.Attach(gameObject, safeArea ?? root);   // a faction station's toll, a siege's banner
+                MultiplayerWindow.Attach(gameObject, safeArea ?? root, true);   // the multiplayer window (N): chat, squad, distress, admin
             }
 
             InputGlyph.TrackHintsOption(hints);
@@ -542,7 +543,8 @@ namespace GoF2Remake.UI
                       && !level.Cutscene && level.LaunchCameraOver && Time.timeScale > 0f && (health == null || !health.Dead)
                       && !(level.FreeLook != null && level.FreeLook.FreeLookActive)
                       && (weapons == null || !weapons.SteeringMissile) && (level.Docking == null || !level.Docking.Busy)
-                      && !GoF2Remake.Multiplayer.NetChat.Typing;   // multiplayer: the cursor free for the chat
+                      && !GoF2Remake.Multiplayer.NetChat.Typing   // multiplayer: the cursor free for the chat
+                      && !MultiplayerWindow.IsOpenAny;            // and for the multiplayer window
             // PlayerEgo::right etc. forward to the MiningGame while drilling (0xacd48): the mouse steers the drill then (the PC
             // version's mining); approaching and landing it does nothing, the cursor stays locked.
             bool idle = mining == null || mining.State == Mining.Phase.Idle;
@@ -620,6 +622,22 @@ namespace GoF2Remake.UI
             }
 
             if (pauseMenu.IsOpen) { pauseMenu.Tick(); return; }
+            // Multiplayer: the multiplayer window (N or its button): Esc / B close it; meanwhile the flight keys wait
+            // (Navigation.InputHalted), and N in one of its text fields is a letter.
+            if (MultiplayerWindow.IsOpenAny)
+            {
+                var k = GoF2Remake.Multiplayer.NetChat.Keys;
+                if ((k != null && k.escapeKey.wasPressedThisFrame) || (Gamepad.current != null && (Gamepad.current.buttonEast.wasPressedThisFrame || Gamepad.current.startButton.wasPressedThisFrame))
+                    || (k != null && k.nKey.wasPressedThisFrame && !MultiplayerWindow.TypingAny))
+                    MultiplayerWindow.CloseAny();
+                return;
+            }
+            if (GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.nKey.wasPressedThisFrame
+                && (health == null || !health.Dead))
+            {
+                MultiplayerWindow.ToggleAny();
+                return;
+            }
             if ((GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame))
             {

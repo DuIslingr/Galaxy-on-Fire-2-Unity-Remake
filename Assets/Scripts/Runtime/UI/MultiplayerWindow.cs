@@ -64,14 +64,24 @@ namespace GoF2Remake.UI
         static readonly Color Panel = new Color(0.02f, 0.04f, 0.07f, 0.93f), Accent = new Color(0.56f, 0.85f, 1f),
                               Dim = new Color(0.85f, 0.92f, 0.97f, 0.65f), Good = new Color(0.47f, 0.9f, 0.55f), Bad = new Color(1f, 0.55f, 0.47f);
 
-        /// <summary>The window's plate and window on 'parent' (the station menu's safe area).</summary>
-        public static void Attach(GameObject host, VisualElement parent)
+        /// <summary>The window's button and window on 'parent' (the station menu's or the flight HUD's safe area).</summary>
+        public static void Attach(GameObject host, VisualElement parent, bool flight = false)
         {
             if (parent == null) return;
             var view = host.GetComponent<MultiplayerWindow>();
             if (view == null) view = host.AddComponent<MultiplayerWindow>();
+            view.flight = flight;
             view.Build(parent);
         }
+
+        /// <summary>The flight HUD's: its own button on the right (under the readout, over the squad window), N toggles it.</summary>
+        bool flight;
+
+        /// <summary>FlightHud: N (or the button) opens / closes it.</summary>
+        public static void ToggleAny() { if (current != null) current.Toggle(); }
+
+        /// <summary>A text field of the window has the focus (its keys aren't the game's: FlightHud leaves N alone).</summary>
+        public static bool TypingAny => current != null && current.isOpen && current.window?.focusController?.focusedElement is TextField;
 
         void OnEnable()
         {
@@ -105,7 +115,19 @@ namespace GoF2Remake.UI
             plate = new VisualElement { name = "factionPlate" };
             var menu = parent.Q<Button>("menuButton");
             menuButton = menu;
-            if (menu != null && menu.parent != null)
+            if (flight)
+            {
+                // In flight: on the right, under the HUD readout (top right) and over the squad window (26 %).
+                plateButton = Btn(Localization.Extra("mpMultiplayer", "Multiplayer"), Toggle, null);
+                if (sheet != null) plateButton.styleSheets.Add(sheet);
+                plateButton.style.position = Position.Absolute;
+                plateButton.style.right = 24;
+                plateButton.style.top = new Length(17, LengthUnit.Percent);
+                plateButton.style.marginLeft = 0;
+                plate = plateButton;
+                parent.Add(plateButton);
+            }
+            else if (menu != null && menu.parent != null)
             {
                 plateButton = new Button(Toggle) { name = "netButton" };
                 plateButton.AddToClassList("station-menu-button");
@@ -157,6 +179,7 @@ namespace GoF2Remake.UI
             head.Add(Btn("×", Close, "squad-button--leave"));
             window.Add(head);
             scroll = new ScrollView(ScrollViewMode.Vertical);
+            scroll.AddManipulator(new DragScroll(scroll));   // a mouse drag moves the list like a finger (the menus' lists)
             scroll.style.flexGrow = 1;
             scroll.style.marginTop = 10;
             body = scroll.contentContainer;
@@ -550,6 +573,11 @@ namespace GoF2Remake.UI
                 body.Add(say);
                 BuildSettings(s);
             }
+            if (!s.profiles)
+            {
+                BuildAdminFresh(s, master);
+                return;
+            }
             var opts = Row();
             opts.Add(Field(Localization.Extra("mpPanelReason", "Reason"), reasonText, 80, 320, v => reasonText = v));
             opts.Add(Field(Localization.Extra("mpPanelMinutes", "Minutes"), minutesText, 6, 110, v => minutesText = v));
@@ -652,7 +680,7 @@ namespace GoF2Remake.UI
         {
             var sb = new System.Text.StringBuilder();
             var me = NetPlayer.Local;
-            sb.Append(me != null ? $"{me.SquadId}|{me.Station}|{me.InHangar}" : "-");
+            sb.Append(me != null ? $"{me.SquadId}|{me.Station}|{me.InHangar}|{me.InSpace}|{NetDistress.Active}" : "-");
             foreach (var m in NetSquad.Members()) sb.Append('|').Append(m.OwnerClientId).Append(m.DisplayName).Append(NetCommands.WhereText(m)).Append(m.Distress);
             foreach (var i in NetSquad.Invites) sb.Append("|i").Append(i.from);
             foreach (var p in NetPlayer.All)
@@ -691,9 +719,15 @@ namespace GoF2Remake.UI
                     body.Add(row);
                 }
                 var leave = Row();
+                // The distress call (NetDistress): in space only; docked the line says so.
+                bool inSpace = me != null && me.InSpace;
+                if (inSpace || NetDistress.Active)
+                    leave.Add(Btn(NetDistress.Active ? Localization.Extra("mpDistressEnd", "End the call") : Localization.Extra("mpDistressCall", "Distress call"),
+                                  () => { status.text = NetDistress.Toggle() ?? ""; squadKey = ""; }, NetDistress.Active ? null : "squad-button--leave"));
                 leave.Add(Btn(Localization.Extra("mpLeaveSquad", "Leave squad"), () => { NetSquad.Leave(); squadKey = ""; }, "squad-button--leave"));
                 body.Add(leave);
-                body.Add(Text(Localization.Extra("mpSquadDistressHint", "Distress calls are made in space: the squad window on the right, the actions menu (E), or /sos in the chat. A squadmate's call shows here and in flight with a Help button."), 14, Dim));
+                if (!inSpace)
+                    body.Add(Text(Localization.Extra("mpSquadDistressHint", "Distress calls are made in space: here in flight, the squad window on the right, the actions menu (E), or /sos in the chat. A squadmate's call shows here and in flight with a Help button."), 14, Dim));
             }
 
             Section(Localization.Extra("mpSquadPilotsHere", "Pilots docked here"));
@@ -727,6 +761,7 @@ namespace GoF2Remake.UI
             chatPane.style.marginTop = 10;
             chatPane.style.display = DisplayStyle.None;
             chatScroll = new ScrollView(ScrollViewMode.Vertical);
+            chatScroll.AddManipulator(new DragScroll(chatScroll));
             chatScroll.style.flexGrow = 1;
             chatScroll.style.backgroundColor = new Color(0f, 0f, 0f, 0.35f);
             chatScroll.style.paddingLeft = chatScroll.style.paddingRight = 10;
@@ -796,13 +831,18 @@ namespace GoF2Remake.UI
             l.style.whiteSpace = WhiteSpace.Normal;
             l.style.marginBottom = 2;
             l.style.color = m.channel == NetChat.Channel.Notice ? Dim : m.own ? new Color(1f, 1f, 1f, 0.8f) : Color.white;
+            // Follow the new line only while reading the end (scrolled up to read older lines, the view stays put).
+            bool atEnd = chatScroll.scrollOffset.y >= ChatMaxOffset - 24f;
             chatScroll.contentContainer.Add(l);
             while (chatScroll.contentContainer.childCount > ChatKeep) chatScroll.contentContainer.RemoveAt(0);
-            ScrollChatDown();
+            if (atEnd) ScrollChatDown();
         }
 
+        float ChatMaxOffset => chatScroll == null ? 0f
+            : Mathf.Max(0f, chatScroll.contentContainer.layout.height - chatScroll.contentViewport.layout.height);
+
         void ScrollChatDown() =>
-            chatScroll?.schedule.Execute(() => chatScroll.scrollOffset = new Vector2(0f, float.MaxValue)).ExecuteLater(1);
+            chatScroll?.schedule.Execute(() => chatScroll.scrollOffset = new Vector2(0f, ChatMaxOffset)).ExecuteLater(1);
 
         void SendChat()
         {
@@ -824,6 +864,37 @@ namespace GoF2Remake.UI
             bool global = NetChat.Sending == NetChat.Channel.Global;
             chatChannel.text = (global ? Localization.Extra("mpChatGlobal", "Global") : Localization.Extra("mpChatLocal", "Local")).ToUpperInvariant();
             chatChannel.style.color = global ? new Color(0.94f, 0.7f, 0.35f) : Accent;
+        }
+
+        /// <summary>The Admin tab of a session without profiles (hosted fresh from the menu): kick, mute and session admins
+        /// (NetCommands); bans, ops and the profile list need profiles, which the tab says.</summary>
+        void BuildAdminFresh(NetPanel.State s, bool master)
+        {
+            body.Add(Text(Localization.Extra("mpPanelFreshAdmin", "A fresh world keeps nothing: bans, ops, factions and the profile list need World: Persistent on the Host card (or a dedicated server). Kicks, mutes and session admins work here."), 14, Dim));
+            var opts = Row();
+            opts.Add(Field(Localization.Extra("mpPanelReason", "Reason"), reasonText, 80, 320, v => reasonText = v));
+            opts.Add(Field(Localization.Extra("mpPanelMinutes", "Minutes"), minutesText, 6, 110, v => minutesText = v));
+            body.Add(opts);
+            body.Add(Text(Localization.Extra("mpPanelFreshHint", "Mute: for the minutes (0 = the whole session)."), 14, Dim));
+            Section(Localization.Extra("mpPanelPilotsOnline", "Pilots online"));
+            foreach (var p in s.pilots)
+            {
+                var row = Line((p.tag.Length > 0 ? $"[{p.tag}] " : "") + p.name + RoleLabel(p.role) + (p.self ? "  (" + Localization.Extra("mpPanelYou", "you") + ")" : ""), p.self ? Dim : Color.white);
+                if (!p.self && s.role > p.role)
+                {
+                    string target = "#" + p.client;
+                    row.Add(Btn(Localization.Extra("mpPanelKick", "Kick"), () => Send($"/kick {target} {reasonText.Trim()}"), "squad-button--leave"));
+                    row.Add(Btn(Localization.Extra("mpPanelMute", "Mute"), () =>
+                    {
+                        int m = int.TryParse(minutesText.Trim(), out int v) && v > 0 ? v : 0;
+                        Send(m > 0 ? $"/mute {target} {m}" : $"/mute {target}");
+                    }, null));
+                    row.Add(Btn(Localization.Extra("mpPanelUnmute", "Unmute"), () => Send($"/unmute {target}"), null));
+                    if (master && p.role < NetModeration.Admin) row.Add(Btn(Localization.Extra("mpPanelMakeAdmin", "Make admin"), () => Send($"/admin {target}"), "squad-button--accept"));
+                    if (master && p.role == NetModeration.Admin) row.Add(Btn(Localization.Extra("mpPanelUnadmin", "Remove admin"), () => Send($"/unadmin {target}"), null));
+                }
+                body.Add(row);
+            }
         }
 
         static string SelfName(NetPanel.State s) => s.pilots.Find(p => p.self)?.name ?? "";

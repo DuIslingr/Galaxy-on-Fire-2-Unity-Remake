@@ -145,7 +145,16 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>A connected player's role (guests and players 0).</summary>
-        public static int RoleOfClient(ulong client) => NetProfiles.Enabled ? NetProfiles.RoleOf(NetProfiles.AccountOf(client)) : Player;
+        public static int RoleOfClient(ulong client)
+        {
+            if (NetProfiles.Enabled) return NetProfiles.RoleOf(NetProfiles.AccountOf(client));
+            // A session without profiles (hosted fresh from the menu): the host is its master, the players it made admins
+            // (NetCommands' /admin, NetPlayer.IsAdmin) its admins: the multiplayer window's Admin tab for them.
+            var nm = Unity.Netcode.NetworkManager.Singleton;
+            if (nm != null && nm.IsHost && client == Unity.Netcode.NetworkManager.ServerClientId) return Master;
+            var p = NetSquad.Find(client);
+            return p != null && p.IsAdmin ? Admin : Player;
+        }
 
         /// <summary>Server: a player's role onto their NetPlayer (NetCommands' rights and /help); after signing in and on a
         /// role change.</summary>
@@ -419,11 +428,10 @@ namespace GoF2Remake.Multiplayer
         internal static void FillFor(NetPanel.State s)
         {
             if (s.role < Op) return;
-            if (s.role >= Admin) NetServerSettings.FillPanel(s);   // with or without profiles
-            if (list == null) return;
+            if (s.role >= Admin) { NetServerSettings.FillPanel(s); s.serverStatus = DedicatedServer.StatusText(); }   // with or without profiles
+            if (list == null || !NetProfiles.Enabled) return;
             if (s.role >= Admin)
             {
-                s.serverStatus = DedicatedServer.StatusText();
                 foreach (var (name, role, online) in NetProfiles.Staff()) s.staff.Add(new NetPanel.StaffRow { name = name, role = role, online = online });
                 NetProfiles.FillProfiles(s);
                 foreach (var row in s.profileRows) row.banned = list.bans.Exists(b => b.account == row.id);

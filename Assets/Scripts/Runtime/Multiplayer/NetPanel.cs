@@ -112,7 +112,7 @@ namespace GoF2Remake.Multiplayer
                     s.pilots.Add(new Pilot { client = (long)other.OwnerClientId, name = other.DisplayName, tag = other.FactionTag, docked = other.InHangar,
                                              inMatch = NetArena.IsArenaOrbit(other.Station), self = other.OwnerClientId == client });
             NetProfiles.FillPanel(client, s);
-            if (NetProfiles.Enabled) NetModeration.FillPanel(client, s);
+            NetModeration.FillPanel(client, s);   // roles and the Admin tab (a fresh hosted session: the host's)
             if (NetProfiles.Enabled) NetFactions.FillPanel(client, s);
             NetArena.FillPanel(client, s);
             var parts = NetProfiles.Pack(JsonUtility.ToJson(s));
