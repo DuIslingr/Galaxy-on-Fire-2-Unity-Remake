@@ -79,6 +79,9 @@ namespace GoF2Remake.UI
                 Slider("music", OptionPage.Sound, () => Localization.Get(34), 0f, 1f, () => Settings.MusicVolume, v => Settings.MusicVolume = v, Percent),
                 Slider("sfx", OptionPage.Sound, () => Localization.Get(35), 0f, 1f, () => Settings.SfxVolume, v => Settings.SfxVolume = v, Percent),
                 Slider("voice", OptionPage.Sound, () => Localization.Get(36), 0f, 1f, () => Settings.VoiceVolume, v => Settings.VoiceVolume = v, Percent),
+                // Remake: the original sounds only the first primary gun (Player::calcWeaponSounds).
+                Toggle("eachWeaponSound", OptionPage.Sound, () => X("eachWeaponSound", "Every weapon's own shot sound"),
+                    () => Settings.EachWeaponSound, v => Settings.EachWeaponSound = v),
                 // Remake: the voices apart from the text language (only English and German were recorded); on the Language tab.
                 Choice("voiceLanguage", OptionPage.Language, () => X("voiceLanguage", "Voice language"), true,
                     () => new[] { X("voiceAuto", "As text"), "English", "Deutsch" },

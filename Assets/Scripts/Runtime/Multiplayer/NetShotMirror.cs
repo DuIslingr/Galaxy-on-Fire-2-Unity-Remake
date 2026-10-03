@@ -88,7 +88,7 @@ namespace GoF2Remake.Multiplayer
             m.rig.OnShot();
             // Player::calcWeaponSounds: only one primary gun makes the shot sound (the first that fired here stands in for
             // the shooter's first mounted primary); the others' shots were sounded too, a 4-gun ship 4 times over.
-            if (!m.gun.isSecondary)
+            if (!m.gun.isSecondary && !Settings.EachWeaponSound)   // the remake option: every weapon item sounds
             {
                 if (soundItem < 0) soundItem = item;
                 if (item != soundItem) return;

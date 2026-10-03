@@ -360,21 +360,24 @@ namespace GoF2Remake.Flight
             if (liberator != null) UpdateLiberator(dtMs);
             var cam = Camera.main;
             var homing = HomingLock(cam);
-            // Player::calcWeaponSounds 0xb00b0: only the first primary gun makes the shot sound (Player+0x10c).
+            // Player::calcWeaponSounds 0xb00b0: only the first primary gun makes the shot sound (Player+0x10c). Remake option
+            // (Settings.EachWeaponSound): the first gun of every primary weapon item, so a mixed loadout sounds each weapon.
             Rig soundRig = rigs.Find(x => !x.gun.isSecondary);
+            bool each = Settings.EachWeaponSound;
+            bool Sounds(Rig x) => x == soundRig || (each && !x.gun.isSecondary && rigs.Find(y => !y.gun.isSecondary && y.gun.itemIndex == x.gun.itemIndex) == x);
             foreach (var r in rigs)
             {
                 var gun = r.gun;
                 if (!gun.isSecondary && primaryHeld)
                 {
                     int b = gun.TryFire(FirePose);
-                    if (b >= 0) OnShot(r, r == soundRig);
+                    if (b >= 0) OnShot(r, Sounds(r));
                 }
                 gun.Update(dtMs, Target.All, homing);
                 r.visuals.UpdateVisuals(dtMs, cam, transform.forward);
                 if (r.loop != null)
                 {
-                    bool firing = primaryHeld && !gun.isSecondary && r == soundRig;
+                    bool firing = primaryHeld && !gun.isSecondary && Sounds(r);
                     if (firing)
                     {
                         // Held again while ending: it just carries on.
