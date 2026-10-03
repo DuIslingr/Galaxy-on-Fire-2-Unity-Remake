@@ -137,14 +137,14 @@ namespace GoF2Remake.Multiplayer
             if (index.accounts == null) index.accounts = new List<Account>();
             if (string.IsNullOrEmpty(index.serverId)) index.serverId = RandomHex(16);
             SaveIndex();
-            NetCrews.Load();
+            NetFactions.Load();
             NetModeration.Load();
             Debug.Log($"Server: player profiles on: {index.accounts.Count} / {MaxProfiles} in {folder}.");
         }
 
         static string IndexPath => Path.Combine(folder, "accounts.json");
 
-        /// <summary>Where the profiles are kept (NetCrews keeps crews.json there too).</summary>
+        /// <summary>Where the profiles are kept (NetFactions keeps factions.json there too).</summary>
         internal static string Folder => folder;
 
         /// <summary>A connected player's profile id, null = a guest or not signed in.</summary>
@@ -168,7 +168,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The player's device controls its profile (a signed-in controller, not a guest or an observer).</summary>
         internal static bool Controls(ulong client) => logins.TryGetValue(client, out var l) && l.account != null && l.controller;
 
-        /// <summary>Credits the server moved in or out of a profile (the crew bank): its recorded worth moves too, so the
+        /// <summary>Credits the server moved in or out of a profile (the faction bank): its recorded worth moves too, so the
         /// next upload is measured against what the game should have now.</summary>
         internal static void AdjustWorth(string id, long delta)
         {
@@ -305,7 +305,7 @@ namespace GoF2Remake.Multiplayer
                 NetState.Instance.Notify(client, Localization.Extra("mpObserverJoined",
                     "Your profile is in use on another device: this one watches from the station. Type /control once the other one is docked."));
             if (login.controller && account != null) RestoreSquad(login);
-            NetCrews.OnLogin(client);   // the crew's tag on the name
+            NetFactions.OnLogin(client);   // the faction's tag on the name
         }
 
         /// <summary>NetGame: a player left. A controller's profile goes to its next device online, if any.</summary>
@@ -382,7 +382,7 @@ namespace GoF2Remake.Multiplayer
             if (login.account != null)
                 try { if (File.Exists(ProfilePath(login.account.id))) json = File.ReadAllText(ProfilePath(login.account.id)); }
                 catch (Exception e) { Debug.LogError($"NetProfiles: profile {login.account.id} unreadable: {e.Message}"); }
-            int home = login.account != null ? NetCrews.HomeOf(login.account.id) : -1;   // a crew member starts at its home
+            int home = login.account != null ? NetFactions.HomeOf(login.account.id) : -1;   // a faction member starts at its home
             NetState.Instance?.SendProfile(login.client, newToken, login.controller, login.account == null, json, home);
             NetModeration.SyncRole(login.client);   // the profile's role onto its NetPlayer (NetCommands' rights)
         }
@@ -489,7 +489,7 @@ namespace GoF2Remake.Multiplayer
                     return string.Format(Localization.Extra("mpProfileInfo", "Profile {0}, {1} device(s); this one {2}."), login.account.id,
                         login.account.devices.Count, login.controller ? Localization.Extra("mpControls", "controls it") : Localization.Extra("mpWatches", "watches"));
                 default:
-                    return Localization.Extra("mpCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena, /top; /crew (help: /crew help), /c <text>; /link (a code for another device), /link CODE, /control, /profile; /staff (ops: /kick, /tempban, /unban, /bans; admins: /ban, /op, /deop).");
+                    return Localization.Extra("mpCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena, /top; /faction (help: /faction help), /f <text>; /link (a code for another device), /link CODE, /control, /profile; /staff (ops: /kick, /tempban, /unban, /bans; admins: /ban, /op, /deop).");
             }
         }
 
@@ -541,7 +541,7 @@ namespace GoF2Remake.Multiplayer
             SendProfile(login, token);
             Debug.Log($"Server: client {login.client} linked to profile {target.id} ({target.devices.Count} devices).");
             if (login.controller) RestoreSquad(login);
-            NetCrews.OnLogin(login.client);
+            NetFactions.OnLogin(login.client);
             return login.controller ? Localization.Extra("mpLinked", "Linked: this device uses your profile now.")
                                     : Localization.Extra("mpLinkedObserver", "Linked. Your other device controls the profile: this one watches until you type /control.");
         }
@@ -670,7 +670,7 @@ namespace GoF2Remake.Multiplayer
         static void DeleteAccount(Account a)
         {
             index.accounts.Remove(a);
-            NetCrews.OnAccountDeleted(a.id);
+            NetFactions.OnAccountDeleted(a.id);
             BackUp(ProfilePath(a.id));
             Debug.Log($"Server: profile {a.id} deleted.");
         }

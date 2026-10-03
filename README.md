@@ -136,29 +136,30 @@ Drive if they have one and the energy cells, else the autopilot. They arrive rig
 also in the actions menu (E, the controller's D-pad left, or the touch quick menu button), and a banner at the top
 shows who needs help.
 
-**Crews**
+**Factions**
 
 Everything below is also in the station's **Multiplayer** window (the button left of Menu, top right), with buttons
 instead of commands.
 
-A crew is a lasting group of players on a server with profiles (squads stay the quick groups for flying together).
-Its tag shows before its members' names.
+A faction is a lasting group of players on a server with profiles: a tag before its members' names, a bank, claimed
+stations and sieges. Not to be confused with your **squad** (the friends you invited to fly with you this session) or
+your **wingmen** (the NPC pilots you hire in a bar).
 
 | Command | Meaning |
 |---|---|
-| `/crew create TAG Name` | Start a crew: a tag of 2-4 letters or digits, then its name. |
-| `/crew invite <pilot>` | Invite a pilot (leader and officers). They type `/crew join TAG` within 5 minutes. |
-| `/crew leave`, `/crew kick <pilot>` | Leave, or remove a member (officers remove members, the leader anyone). |
-| `/crew promote <pilot>`, `/crew demote <pilot>`, `/crew leader <pilot>` | Ranks (leader only). |
-| `/crew info [TAG]`, `/crew list`, `/crew disband` | About a crew, all crews, end yours (leader). |
-| `/crew deposit N`, `/crew withdraw N` | Put credits into the crew bank; take them out (leader and officers). |
-| `/crew claim`, `/crew unclaim`, `/crew home` | Docked at a station: claim it for the crew (paid from the bank), give it up, or make it the crew's home (leader and officers). Members start and respawn at the home. |
-| `/crew claims [TAG]` | A crew's stations. A station no member docks at for 14 days is lost. |
-| `/c <text>` | Talk to your crew. |
-| `/crew siege`, `/crew sieges` | In another crew's orbit (leader and officers): besiege it, paid from the bank. It starts 10 minutes later and lasts 15; meanwhile the two crews may fight there, and the side with more pilots in the orbit takes control. At 100 % the station changes hands; otherwise the defenders keep it. |
+| `/faction create TAG Name` | Start a faction: a tag of 2-4 letters or digits, then its name. |
+| `/faction invite <pilot>` | Invite a pilot (leader and officers). They type `/faction join TAG` within 5 minutes. |
+| `/faction leave`, `/faction kick <pilot>` | Leave, or remove a member (officers remove members, the leader anyone). |
+| `/faction promote <pilot>`, `/faction demote <pilot>`, `/faction leader <pilot>` | Ranks (leader only). |
+| `/faction info [TAG]`, `/faction list`, `/faction disband` | About a faction, all factions, end yours (leader). |
+| `/faction deposit N`, `/faction withdraw N` | Put credits into the faction bank; take them out (leader and officers). |
+| `/faction claim`, `/faction unclaim`, `/faction home` | Docked at a station: claim it for the faction (paid from the bank), give it up, or make it the faction's home (leader and officers). Members start and respawn at the home. |
+| `/faction claims [TAG]` | A faction's stations. A station no member docks at for 14 days is lost. |
+| `/f <text>` | Talk to your faction. |
+| `/faction siege`, `/faction sieges` | In another faction's orbit (leader and officers): besiege it, paid from the bank. It starts 10 minutes later and lasts 15; meanwhile the two factions may fight there, and the side with more pilots in the orbit takes control. At 100 % the station changes hands; otherwise the defenders keep it. |
 
-At a crew's station its members buy items 10 % cheaper and its fighters protect them. Pilots of other crews pay 5 % more
-(into the crew's bank) and are attacked by the station's fighters unless they pay the toll asked on arrival.
+At a faction's station its members buy items 10 % cheaper and its fighters protect them. Pilots of other factions pay 5 % more
+(into the faction's bank) and are attacked by the station's fighters unless they pay the toll asked on arrival.
 
 **Moderation**
 
@@ -167,7 +168,7 @@ In the game, type `/claimadmin <token>` in the chat, or use the station's Multip
 server". The master admin makes admins
 (`/admin <pilot>`, `/unadmin`), admins make ops (`/op <pilot>`, `/deop`). Ops and up get an **Admin** tab in the
 Multiplayer window: kicks and bans, roles, and for admins the server status, announcements, every profile and the
-crews.
+factions.
 
 | Command | Who | Meaning |
 |---|---|---|
@@ -175,7 +176,7 @@ crews.
 | `/tempban <pilot> <minutes> [reason]` | ops | Ban for a while (ops at most 24 hours). |
 | `/ban <pilot> [reason]` | admins | Ban for good. |
 | `/unban <pilot or profile id>`, `/bans` | ops | Lift a ban; list them. |
-| `/say <text>`, `/disband <TAG>` | admins | An announcement to everyone; end a crew. |
+| `/say <text>`, `/disband <TAG>` | admins | An announcement to everyone; end a faction. |
 | `/admin <pilot>`, `/unadmin <pilot>`, `/deleteprofile <id>` | master | Admin roles; delete a profile. |
 | `/claimadmin <token>` | anyone | Become the master admin with the server's admin token. |
 | `/staff` | everyone | Who the masters, admins and ops are. |

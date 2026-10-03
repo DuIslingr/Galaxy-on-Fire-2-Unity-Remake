@@ -63,11 +63,11 @@ namespace GoF2Remake.Multiplayer
                  v => { NetGame.FreePvp = v; NetState.Instance?.SetFreePvp(v); }),
             Num("maxprofiles", "-maxprofiles", "Profile limit", 1, 100000, () => NetProfiles.MaxProfiles, v => NetProfiles.MaxProfiles = v),
             Num("maxearn", "-maxearn", "Worth a profile may gain per minute", 0, int.MaxValue, () => NetProfiles.EarnPerMinute, v => NetProfiles.EarnPerMinute = v),
-            Num("claimcost", "-claimcost", "Crew claim cost", 0, int.MaxValue, () => NetCrews.ClaimCost, v => NetCrews.ClaimCost = v),
-            Num("maxclaims", "-maxclaims", "Stations per crew", 0, 100, () => NetCrews.MaxClaims, v => NetCrews.MaxClaims = v),
-            Num("claimdays", "-claimdays", "Days before an unvisited claim lapses", 1, 3650, () => NetCrews.LapseDays, v => NetCrews.LapseDays = v),
-            Num("siegecost", "-siegecost", "Siege cost", 0, int.MaxValue, () => NetCrews.SiegeCost, v => NetCrews.SiegeCost = v),
-            Num("toll", "-toll", "Toll at a crew's station (0 = none)", 0, int.MaxValue, () => NetCrews.Toll, v => { NetCrews.Toll = v; NetState.Instance?.SetToll(v); }),
+            Num("claimcost", "-claimcost", "Faction claim cost", 0, int.MaxValue, () => NetFactions.ClaimCost, v => NetFactions.ClaimCost = v),
+            Num("maxclaims", "-maxclaims", "Stations per faction", 0, 100, () => NetFactions.MaxClaims, v => NetFactions.MaxClaims = v),
+            Num("claimdays", "-claimdays", "Days before an unvisited claim lapses", 1, 3650, () => NetFactions.LapseDays, v => NetFactions.LapseDays = v),
+            Num("siegecost", "-siegecost", "Siege cost", 0, int.MaxValue, () => NetFactions.SiegeCost, v => NetFactions.SiegeCost = v),
+            Num("toll", "-toll", "Toll at a faction's station (0 = none)", 0, int.MaxValue, () => NetFactions.Toll, v => { NetFactions.Toll = v; NetState.Instance?.SetToll(v); }),
         };
 
         static string PathOf => string.IsNullOrEmpty(NetProfiles.Folder) ? null : Path.Combine(NetProfiles.Folder, "server_settings.json");

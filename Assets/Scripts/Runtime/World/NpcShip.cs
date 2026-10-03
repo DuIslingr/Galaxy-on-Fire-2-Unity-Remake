@@ -131,7 +131,7 @@ namespace GoF2Remake.World
         public static System.Func<NpcShip, Target, bool> HostileToRemote;
         /// <summary>Another member of the local player's squad shot this ship: hostile to the local player too.</summary>
         public static System.Func<NpcShip, bool> HostileToLocalBySquad;
-        /// <summary>Multiplayer: a crew's held station (NetCrews): +1 the ship is the local player's friend, -1 an enemy, 0 as
+        /// <summary>Multiplayer: a faction's held station (NetFactions): +1 the ship is the local player's friend, -1 an enemy, 0 as
         /// always (NetOrbit).</summary>
         public static System.Func<NpcShip, int> TerritoryToLocal;
         Target remoteTarget;
@@ -769,7 +769,7 @@ namespace GoF2Remake.World
             if (r == Standing.Pirate && traffic != null && traffic.LomaTollPaid) { hostile = false; friend = false; }
             if (turnedEnemy) { hostile = true; friend = false; }
             if (HostileToLocalBySquad != null && HostileToLocalBySquad(this)) { hostile = true; friend = false; }   // multiplayer
-            int territory = TerritoryToLocal != null ? TerritoryToLocal(this) : 0;   // multiplayer: a crew station's defence
+            int territory = TerritoryToLocal != null ? TerritoryToLocal(this) : 0;   // multiplayer: a faction station's defence
             if (territory > 0 && !turnedEnemy) { hostile = false; friend = true; }
             else if (territory < 0) { hostile = true; friend = false; }
             if (alwaysFriend) { hostile = false; friend = true; }

@@ -162,26 +162,26 @@ namespace GoF2Remake.Multiplayer
                 return false;
             }
             if (r == Standing.Pirate || r == Standing.Void || r == Standing.Specter) return true;
-            // A crew's held station: its own race's fighters spare its members and attack other crews' pilots without the toll.
-            int territory = Territory(ship, p.Station, p.CrewTag, p.TollStation);
+            // A faction's held station: its own race's fighters spare its members and attack other factions' pilots without the toll.
+            int territory = Territory(ship, p.Station, p.FactionTag, p.TollStation);
             if (territory != 0) return territory < 0;
             if (Standing.IsEnemyWith(r, p.Standing0, p.Standing1, p.Signature)) return true;   // their own standing toward the race
             foreach (var id in ship.aggressors) if (NetSquad.SameClient(id, p)) return true;
             return ship.Target != null && ship.Target.hostileToPlayer && NetSquad.Same(p, NetPlayer.Local);
         }
 
-        /// <summary>NetCrews' station defence: a fighter of the held station's race (the system's), toward a pilot.</summary>
+        /// <summary>NetFactions' station defence: a fighter of the held station's race (the system's), toward a pilot.</summary>
         static int Territory(NpcShip ship, int station, string tag, int tollAt)
         {
             var orbit = Current;
             if (orbit == null || orbit.level == null || orbit.level.Layout == null || ship.Race != orbit.level.Layout.raceId) return 0;
-            return NetCrewsClient.Relation(station, tag, tollAt);
+            return NetFactionsClient.Relation(station, tag, tollAt);
         }
 
         static int TerritoryToLocal(NpcShip ship)
         {
             var me = NetPlayer.Local;
-            return me == null ? 0 : Territory(ship, me.Station, me.CrewTag, NetCrewsClient.TollStation);
+            return me == null ? 0 : Territory(ship, me.Station, me.FactionTag, NetFactionsClient.TollStation);
         }
 
         /// <summary>Another member of the local player's squad shot it.</summary>

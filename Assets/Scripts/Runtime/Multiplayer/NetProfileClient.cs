@@ -136,7 +136,7 @@ namespace GoF2Remake.Multiplayer
             if (waiting)
             {
                 waiting = false;
-                // A crew member's game starts docked at the crew's home (NetCrews).
+                // A faction member's game starts docked at the faction's home (NetFactions).
                 if (inHome >= 0 && inHome < NetGame.Db.Stations.Count) Session.StationIndex = inHome;
                 NetGame.EnterWorld(seed);
                 return;

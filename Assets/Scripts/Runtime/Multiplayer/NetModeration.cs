@@ -6,7 +6,7 @@
 //              else admin_token.txt beside the profiles, made at the first start; every start logs it. Delete the file
 //              for a new one. The console can also make masters ("master <pilot|profile>");
 //   admin (2)  everything below, plus permanent bans, making / removing ops (/op, /deop), announcements (/say), ending
-//              crews (/disband TAG);
+//              factions (/disband TAG);
 //   op (1)     kicks with a cooldown and temporary bans (at most MaxOpBanMinutes), unbans, the ban list;
 //   player (0).
 // Nobody acts on a pilot of their own role or higher, or gives a role as high as their own (the console does anything).
@@ -25,7 +25,7 @@
 // with a new profile from the same device; it is checked when a game signs in (NetProfiles.OnLogin) and the game is
 // dropped with the reason and the time left. Stored in bans.json beside the profiles (written like them); bans that ran
 // out are dropped. Console: kick <id|name> [minutes] [reason], ban, tempban, unban, bans, op, deop, admin, unadmin, master,
-// unmaster, staff. The station window's Admin tab (UI.CrewPanel) has buttons for all of it (NetPanel: the staff, every
+// unmaster, staff. The station window's Admin tab (UI.MultiplayerWindow) has buttons for all of it (NetPanel: the staff, every
 // profile and the server's status for admins).
 
 using System;
@@ -256,7 +256,7 @@ namespace GoF2Remake.Multiplayer
                 }
                 case "disband":
                     if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
-                    return NetCrews.ConsoleDisband(who);
+                    return NetFactions.ConsoleDisband(who);
                 case "settings":
                     if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
                     return NetServerSettings.ListText();

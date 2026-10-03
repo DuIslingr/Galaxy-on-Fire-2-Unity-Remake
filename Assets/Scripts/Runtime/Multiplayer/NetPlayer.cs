@@ -60,9 +60,9 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> authority = new NetworkVariable<bool>(false, Read, Write);
         readonly NetworkVariable<int> squad = new NetworkVariable<int>(0);   // the host's (NetSquad), 0 = none
         readonly NetworkVariable<bool> observer = new NetworkVariable<bool>(false);   // the server's: another device controls the profile
-        readonly NetworkVariable<FixedString32Bytes> crewTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetCrews, "" = none
-        readonly NetworkVariable<int> crewHome = new NetworkVariable<int>(-1);   // the server's: the crew's home station, -1 = none
-        readonly NetworkVariable<int> tollStation = new NetworkVariable<int>(-1, Read, Write);   // NetCrewsClient.TollStation
+        readonly NetworkVariable<FixedString32Bytes> factionTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetFactions, "" = none
+        readonly NetworkVariable<int> factionHome = new NetworkVariable<int>(-1);   // the server's: the faction's home station, -1 = none
+        readonly NetworkVariable<int> tollStation = new NetworkVariable<int>(-1, Read, Write);   // NetFactionsClient.TollStation
         readonly NetworkVariable<bool> distress = new NetworkVariable<bool>(false, Read, Write);  // NetDistress: calls for help
         readonly NetworkVariable<bool> admin = new NetworkVariable<bool>(false);   // the server's: admin commands (NetCommands)
         readonly NetworkVariable<byte> staffRole = new NetworkVariable<byte>(0);   // the server's: the profile's role (NetModeration)
@@ -159,22 +159,22 @@ namespace GoF2Remake.Multiplayer
         public bool Observer => observer.Value;
         /// <summary>Server: NetProfiles' role for this device.</summary>
         public void SetObserver(bool on) { if (IsServer && observer.Value != on) observer.Value = on; }
-        /// <summary>The player's crew tag (NetCrews), "" = no crew.</summary>
-        public string CrewTag => crewTag.Value.ToString();
-        /// <summary>Server: NetCrews' tag for this player.</summary>
-        public void SetCrewTag(string tag) { if (IsServer && crewTag.Value.ToString() != (tag ?? "")) crewTag.Value = tag ?? ""; }
+        /// <summary>The player's faction tag (NetFactions), "" = no faction.</summary>
+        public string FactionTag => factionTag.Value.ToString();
+        /// <summary>Server: NetFactions' tag for this player.</summary>
+        public void SetFactionTag(string tag) { if (IsServer && factionTag.Value.ToString() != (tag ?? "")) factionTag.Value = tag ?? ""; }
         /// <summary>This pilot calls their squad for help (NetDistress).</summary>
         public bool Distress => distress.Value;
         /// <summary>The ship's position in its orbit (the owner's, as last sent).</summary>
         public Vector3 Position => position.Value;
         /// <summary>Where this pilot paid the toll for the current visit (-1 = none): a held station's defence spares them.</summary>
         public int TollStation => tollStation.Value;
-        /// <summary>The crew's home station (NetCrews; a destroyed member respawns there), -1 = none.</summary>
-        public int CrewHome => crewHome.Value;
-        /// <summary>Server: NetCrews' home for this player.</summary>
-        public void SetCrewHome(int station) { if (IsServer && crewHome.Value != station) crewHome.Value = station; }
-        /// <summary>The name with the crew's tag before it ("[TAG] Name"): the lock plate and the chat.</summary>
-        public string TaggedName => CrewTag.Length > 0 ? $"[{CrewTag}] {DisplayName}" : DisplayName;
+        /// <summary>The faction's home station (NetFactions; a destroyed member respawns there), -1 = none.</summary>
+        public int FactionHome => factionHome.Value;
+        /// <summary>Server: NetFactions' home for this player.</summary>
+        public void SetFactionHome(int station) { if (IsServer && factionHome.Value != station) factionHome.Value = station; }
+        /// <summary>The name with the faction's tag before it ("[TAG] Name"): the lock plate and the chat.</summary>
+        public string TaggedName => FactionTag.Length > 0 ? $"[{FactionTag}] {DisplayName}" : DisplayName;
         public string DisplayName
         {
             get
@@ -248,7 +248,7 @@ namespace GoF2Remake.Multiplayer
             target.RemoteEmp = emp => { NetAggression.Hit(OwnerClientId, emp); EmpUpRpc(emp); };
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
-            crewTag.OnValueChanged += (_, _) => ApplyName();
+            factionTag.OnValueChanged += (_, _) => ApplyName();
             Target.NetShips.Add(target);
             obstacle = gameObject.AddComponent<Obstacle>();
             obstacle.projectFromVolume = false;
@@ -290,11 +290,11 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The local player and 'other' (in the same orbit) may shoot each other: in an arena match (its own orbit
-        /// id), during a siege between their two crews there (NetCrews), or anywhere on a server started with -freepvp
+        /// id), during a siege between their two factions there (NetFactions), or anywhere on a server started with -freepvp
         /// (NetState.FreePvp). Squadmates never (NetSquad).</summary>
         static bool PvpWith(NetPlayer other) =>
             other != null && ((NetState.Instance != null && NetState.Instance.FreePvp) || NetArena.IsArenaOrbit(other.Station)
-                              || (Local != null && NetCrewsClient.SiegePvp(other.Station, Local.CrewTag, other.CrewTag)));   // a crew siege
+                              || (Local != null && NetFactionsClient.SiegePvp(other.Station, Local.FactionTag, other.FactionTag)));   // a faction siege
 
         /// <summary>This player's shots pass through their squadmates (the local player's ship included).</summary>
         bool ThroughSquad(Target t)
@@ -569,7 +569,7 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             NetProfileClient.Tick();   // the server profile's periodic upload
-            if (tollStation.Value != NetCrewsClient.TollStation) tollStation.Value = NetCrewsClient.TollStation;
+            if (tollStation.Value != NetFactionsClient.TollStation) tollStation.Value = NetFactionsClient.TollStation;
             NetDistress.Tick(this);
             if (distress.Value != NetDistress.Active) distress.Value = NetDistress.Active;
             if (ship.Value != Session.ShipIndex) ship.Value = Session.ShipIndex;   // bought another

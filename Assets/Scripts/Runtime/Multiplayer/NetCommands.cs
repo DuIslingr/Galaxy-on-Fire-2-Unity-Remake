@@ -36,7 +36,7 @@
 // A dedicated server with player profiles adds (their own handlers answer them): moderation by the profiles' roles
 // (NetModeration: /tempban /ban /unban /bans /op /deop /staff /say /disband /deleteprofile /settings /set /claimadmin;
 // /web a login code for the web admin, WebAdmin),
-// the profiles (NetProfiles: /link /control /profile) and crews (NetCrews: /crew, /c); everywhere the arena matches
+// the profiles (NetProfiles: /link /control /profile) and factions (NetFactions: /faction, /f); everywhere the arena matches
 // (NetArena: /duel /accept /decline /ffa /arena /top) and, this game's own, the squad's distress calls (NetDistress:
 // /sos, /assist <player>).
 // Admins: the host's own player always, else the players the host or the server console made admins (NetPlayer.IsAdmin,
@@ -193,12 +193,12 @@ namespace GoF2Remake.Multiplayer
                 run = (a, by) => Moderate("op", a, by), description = () => X("mpCmdOp", "admins: makes a pilot an op (kicks, temporary bans)") },
             new Command { name = "deop", usage = "<player>", arg = Arg.Player, available = () => LocalRole >= NetModeration.Admin, allowed = Anyone,
                 run = (a, by) => Moderate("deop", a, by), description = () => X("mpCmdDeop", "admins: takes a pilot's op role away") },
-            new Command { name = "staff", available = () => ProfilesOn, allowed = Anyone,
+            new Command { name = "staff", available = Everyone, allowed = Anyone,
                 run = (a, by) => Moderate("staff", a, by), description = () => X("mpCmdStaff", "the server's master admins, admins and ops") },
             new Command { name = "say", usage = "<text>", arg = Arg.Text, available = () => LocalRole >= NetModeration.Admin, allowed = Anyone,
                 run = (a, by) => Moderate("say", a, by), needsPlayer = true, description = () => X("mpCmdSay", "admins: an announcement under your role") },
             new Command { name = "disband", usage = "<TAG>", arg = Arg.Text, available = () => LocalRole >= NetModeration.Admin, allowed = Anyone,
-                run = (a, by) => Moderate("disband", a, by), description = () => X("mpCmdDisband", "admins: ends a crew") },
+                run = (a, by) => Moderate("disband", a, by), description = () => X("mpCmdDisband", "admins: ends a faction") },
             new Command { name = "deleteprofile", usage = "<profile>", arg = Arg.Text, available = () => LocalRole >= NetModeration.Master, allowed = Anyone,
                 run = (a, by) => Moderate("deleteprofile", a, by), description = () => X("mpCmdDeleteProfile", "master: deletes an offline pilot's profile") },
             new Command { name = "settings", available = () => LocalRole >= NetModeration.Admin, allowed = Anyone,
@@ -208,26 +208,26 @@ namespace GoF2Remake.Multiplayer
             new Command { name = "web", available = () => ProfilesOn && LocalIsOp, allowed = Anyone, needsPlayer = true,
                 run = (a, by) => WebAdmin.CodeFor(by),
                 description = () => X("mpCmdWeb", "ops: a one-time login code for the server's web admin") },
-            new Command { name = "claimadmin", usage = "<token>", arg = Arg.Text, available = () => ProfilesOn, allowed = Anyone,
+            new Command { name = "claimadmin", usage = "<token>", arg = Arg.Text, available = Everyone, allowed = Anyone,
                 run = (a, by) => Moderate("claimadmin", a, by), needsPlayer = true,
                 description = () => X("mpCmdClaimAdmin", "makes you the server's master admin with its admin token") },
 
-            // Player profiles (NetProfiles), crews (NetCrews), arena matches (NetArena): answered by their own handlers.
-            new Command { name = "link", usage = "[code] [force]", arg = Arg.Text, optional = true, available = () => ProfilesOn, allowed = Anyone,
+            // Player profiles (NetProfiles), factions (NetFactions), arena matches (NetArena): answered by their own handlers.
+            new Command { name = "link", usage = "[code] [force]", arg = Arg.Text, optional = true, available = Everyone, allowed = Anyone,
                 run = (a, by) => Handler(NetProfiles.Command, true, "link", a, by), needsPlayer = true,
                 description = () => X("mpCmdLink", "a code to join this profile from another device, or joins one with its code") },
-            new Command { name = "control", available = () => ProfilesOn, allowed = Anyone,
+            new Command { name = "control", available = Everyone, allowed = Anyone,
                 run = (a, by) => Handler(NetProfiles.Command, true, "control", a, by), needsPlayer = true,
                 description = () => X("mpCmdControl", "this device takes control of your profile") },
-            new Command { name = "profile", available = () => ProfilesOn, allowed = Anyone,
+            new Command { name = "profile", available = Everyone, allowed = Anyone,
                 run = (a, by) => Handler(NetProfiles.Command, true, "profile", a, by), needsPlayer = true,
                 description = () => X("mpCmdProfile", "your profile on this server") },
-            new Command { name = "crew", usage = "<create | invite | join | leave | kick | promote | demote | leader | disband | info | list | deposit | withdraw | claim | unclaim | home | claims | siege | sieges> ...",
-                arg = Arg.Text, available = () => ProfilesOn, allowed = Anyone, run = (a, by) => Handler(NetCrews.Command, true, "crew", a, by), needsPlayer = true,
-                description = () => X("mpCmdCrew", "your crew: members, bank, claimed stations, sieges") },
-            new Command { name = "c", usage = "<text>", arg = Arg.Text, available = () => ProfilesOn, allowed = Anyone, needsPlayer = true,
-                run = (a, by) => NetAdmin.IsMuted(by.OwnerClientId, out string muted) ? muted : Handler(NetCrews.Command, true, "c", a, by),
-                description = () => X("mpCmdCrewChat", "one line to your crew's pilots online") },
+            new Command { name = "faction", usage = "<create | invite | join | leave | kick | promote | demote | leader | disband | info | list | deposit | withdraw | claim | unclaim | home | claims | siege | sieges> ...",
+                arg = Arg.Text, optional = true, available = Everyone, allowed = Anyone, run = (a, by) => Handler(NetFactions.Command, true, "faction", a, by), needsPlayer = true,
+                description = () => X("mpCmdFaction", "your faction: members, bank, claimed stations, sieges") },
+            new Command { name = "f", usage = "<text>", arg = Arg.Text, available = Everyone, allowed = Anyone, needsPlayer = true,
+                run = (a, by) => NetAdmin.IsMuted(by.OwnerClientId, out string muted) ? muted : Handler(NetFactions.Command, true, "f", a, by),
+                description = () => X("mpCmdFactionChat", "one line to your faction's pilots online") },
             new Command { name = "duel", usage = "<player> [voids]", arg = Arg.PlayerText, available = Everyone, allowed = Anyone,
                 run = (a, by) => Handler(NetArena.Command, false, "duel", a, by), needsPlayer = true,
                 description = () => X("mpCmdDuel", "challenges a docked pilot to an arena duel (voids: with the Void fighters)") },
@@ -240,14 +240,16 @@ namespace GoF2Remake.Multiplayer
                 description = () => X("mpCmdFfa", "queues for an arena free-for-all") },
             new Command { name = "arena", available = Everyone, allowed = Anyone, run = (a, by) => Handler(NetArena.Command, false, "arena", a, by), needsPlayer = true,
                 description = () => X("mpCmdArena", "the arena matches and queues") },
-            new Command { name = "top", available = () => ProfilesOn, allowed = Anyone, run = (a, by) => Handler(NetArena.Command, false, "top", a, by), needsPlayer = true,
+            new Command { name = "top", available = Everyone, allowed = Anyone, run = (a, by) => Handler(NetArena.Command, false, "top", a, by), needsPlayer = true,
                 description = () => X("mpCmdTop", "the arena leaderboard") },
 
             // The squad's distress calls (NetDistress): this game's own.
-            new Command { name = "sos", available = () => NetSquad.LocalSquad != 0, local = _ => NetChat.Notice(NetDistress.Toggle()),
-                description = () => X("mpCmdSos", "calls your squad for help, or ends the call") },
-            new Command { name = "assist", usage = "<player>", arg = Arg.Player, available = () => NetSquad.LocalSquad != 0, local = Assist,
+            new Command { name = "sos", available = Everyone, local = _ => Sos(),
+                description = () => X("mpCmdSos", "in space: calls your squad for help, or ends the call") },
+            new Command { name = "assist", usage = "<player>", arg = Arg.Player, available = Everyone, local = Assist,
                 description = () => X("mpCmdAssist", "flies to a squadmate calling for help") },
+            new Command { name = "squad", usage = "[invite <player> | accept | decline | leave]", arg = Arg.Text, optional = true, available = Everyone,
+                local = Squad, description = () => X("mpCmdSquad", "your squad; invite a pilot docked at your station, answer an invitation, leave") },
         };
 
         static bool ProfilesOn => NetState.Instance != null && NetState.Instance.ProfilesOn;
@@ -268,7 +270,7 @@ namespace GoF2Remake.Multiplayer
             return (by == null ? NetModeration.ConsoleCommand(name, args) : NetModeration.Command(by.OwnerClientId, $"/{name} {args}")) ?? "";
         }
 
-        /// <summary>Server: a command answered by a (client, "/name args") handler (NetArena, NetCrews, NetProfiles);
+        /// <summary>Server: a command answered by a (client, "/name args") handler (NetArena, NetFactions, NetProfiles);
         /// 'profiles' = it needs a server with player profiles.</summary>
         static string Handler(Func<ulong, string, string> handler, bool profiles, string name, string args, NetPlayer by)
         {
@@ -290,6 +292,84 @@ namespace GoF2Remake.Multiplayer
             if (args.Length > NetNews.MaxTextLength) return string.Format(X("mpNewsLong", "At most {0} characters."), NetNews.MaxTextLength);
             Debug.Log($"Server: {IssuerName(by)} posted news.");
             return NetNews.Post(NetNews.Kind.Galnet, NetNews.Safe(args)) ? X("mpNewsPosted", "On every station's ticker now.") : X("mpNewsFailed", "Not posted.");
+        }
+
+        /// <summary>/sos: the squad's distress call (NetDistress; only in space and in a squad, else why not).</summary>
+        static void Sos()
+        {
+            if (!NetSquad.InSquad && !NetDistress.Active)
+                NetChat.Notice(X("mpSosNoSquad", "Distress calls go to your squad: form one first (docked: /squad invite <pilot>)."));
+            else NetChat.Notice(NetDistress.Toggle());
+        }
+
+        /// <summary>/squad: who is in it and where; invite, accept, decline, leave (the same as the squad window's buttons).</summary>
+        static void Squad(string args)
+        {
+            args = (args ?? "").Trim();
+            int space = args.IndexOf(' ');
+            string sub = (space < 0 ? args : args.Substring(0, space)).ToLowerInvariant();
+            string rest = space < 0 ? "" : args.Substring(space + 1).Trim();
+            switch (sub)
+            {
+                case "":
+                case "info":
+                {
+                    var members = NetSquad.Members();
+                    var waiting = NetSquad.Invites;
+                    if (members.Count == 0)
+                    {
+                        NetChat.Notice(waiting.Count > 0
+                            ? string.Format(X("mpSquadWaiting", "{0} invites you to their squad: /squad accept or /squad decline."), waiting[waiting.Count - 1].name)
+                            : X("mpSquadNone", "You aren't in a squad. Docked, /squad invite <pilot> invites a pilot docked at the same station."));
+                        return;
+                    }
+                    var sb = new StringBuilder(X("mpSquadList", "Your squad:"));
+                    foreach (var m in members)
+                        sb.Append('
+').Append(m.Distress ? "⚠ " : "").Append(m.DisplayName).Append(m.IsOwner ? " " + X("mpCmdYou", "(you)") : "")
+                          .Append(": ").Append(WhereText(m));
+                    NetChat.Notice(sb.ToString());
+                    return;
+                }
+                case "invite":
+                {
+                    var p = MatchPlayer(rest, out _);
+                    if (p == null) { NetChat.Notice(string.Format(X("mpSquadNoPilot", "No pilot called \"{0}\" online."), rest)); return; }
+                    if (p.IsOwner) { NetChat.Notice(X("mpSquadSelf", "That's you.")); return; }
+                    if (NetSquad.Same(p, NetPlayer.Local)) { NetChat.Notice(string.Format(X("mpSquadAlready", "{0} is in your squad already."), p.DisplayName)); return; }
+                    var me = NetPlayer.Local;
+                    if (me == null || !me.InHangar || !p.InHangar || me.Station != p.Station)
+                    {
+                        NetChat.Notice(X("mpSquadHangarOnly", "Squads can only be formed while docked in the same hangar."));
+                        return;
+                    }
+                    NetSquad.InviteTo(p);
+                    NetChat.Notice(string.Format(X("mpSquadSent", "Invitation sent to {0} (45 seconds)."), p.DisplayName));
+                    return;
+                }
+                case "accept":
+                {
+                    var waiting = NetSquad.Invites;
+                    if (waiting.Count == 0) { NetChat.Notice(X("mpSquadNoInvite", "No squad invitation is waiting.")); return; }
+                    NetSquad.Accept(waiting[waiting.Count - 1]);
+                    return;
+                }
+                case "decline":
+                {
+                    var waiting = NetSquad.Invites;
+                    if (waiting.Count == 0) { NetChat.Notice(X("mpSquadNoInvite", "No squad invitation is waiting.")); return; }
+                    NetSquad.Decline(waiting[waiting.Count - 1]);
+                    NetChat.Notice(X("mpSquadDeclined", "Invitation declined."));
+                    return;
+                }
+                case "leave":
+                    if (!NetSquad.InSquad) { NetChat.Notice(X("mpCmdNoSquad", "You're not in a squad.")); return; }
+                    NetSquad.Leave();
+                    return;
+                default:
+                    NetChat.Notice("/squad [invite <player> | accept | decline | leave]");
+                    return;
+            }
         }
 
         /// <summary>/assist: help a squadmate calling (NetDistress).</summary>

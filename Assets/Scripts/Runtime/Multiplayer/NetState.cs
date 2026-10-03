@@ -15,7 +15,7 @@
 //   a dedicated server's player profiles (NetProfiles / NetProfileClient): signing in, the profile to the player, their
 //     uploads, handing control between a profile's devices (the chat's /link /control /profile: NetCommands);
 //   moderation (NetModeration, through NetCommands): /kick /tempban /ban /unban /bans /op /deop /staff;
-//   crews (NetCrews): the chat's /crew and /c commands, the claims (Claims), bank deposits and payouts;
+//   factions (NetFactions): the chat's /faction and /f commands, the claims (Claims), bank deposits and payouts;
 //   arena matches (NetArena / NetArenaClient): the chat's /duel /accept /decline /ffa /leave /arena /top, a match's
 //     start, state, end and kills; whether players may fight outside them (FreePvp, -freepvp).
 // The server trusts no client further than its own game: every request is limited per client (NetRateLimit) and checked
@@ -52,9 +52,9 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice (a server's admins may change it)
         readonly NetworkVariable<bool> profilesOn = new NetworkVariable<bool>();     // the server keeps player profiles (NetProfiles)
         readonly NetworkVariable<bool> freePvp = new NetworkVariable<bool>();        // players may fight anywhere (else only in arenas)
-        readonly NetworkVariable<FixedString4096Bytes> claims = new NetworkVariable<FixedString4096Bytes>();   // NetCrews' territory
-        readonly NetworkVariable<FixedString4096Bytes> sieges = new NetworkVariable<FixedString4096Bytes>();   // NetCrews' sieges
-        readonly NetworkVariable<int> toll = new NetworkVariable<int>();   // NetCrews.Toll
+        readonly NetworkVariable<FixedString4096Bytes> claims = new NetworkVariable<FixedString4096Bytes>();   // NetFactions' territory
+        readonly NetworkVariable<FixedString4096Bytes> sieges = new NetworkVariable<FixedString4096Bytes>();   // NetFactions' sieges
+        readonly NetworkVariable<int> toll = new NetworkVariable<int>();   // NetFactions.Toll
         readonly NetworkVariable<FixedString64Bytes> serverId = new NetworkVariable<FixedString64Bytes>();   // their key on the client
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
@@ -86,7 +86,7 @@ namespace GoF2Remake.Multiplayer
         internal void SetDebugAllowed(bool on) { if (IsServer && debugAllowed.Value != on) debugAllowed.Value = on; }
         internal void SetFreePvp(bool on) { if (IsServer && freePvp.Value != on) freePvp.Value = on; }
 
-        /// <summary>The crews' claimed stations, "station|TAG|Name" per line (NetCrews, NetCrewsClient).</summary>
+        /// <summary>The factions' claimed stations, "station|TAG|Name" per line (NetFactions, NetFactionsClient).</summary>
         public string Claims => claims.Value.ToString();
 
         /// <summary>Server: the claims (cut at a whole line to fit the network variable's 4 KB).</summary>
@@ -97,7 +97,7 @@ namespace GoF2Remake.Multiplayer
             if (claims.Value.ToString() != text) claims.Value = text;
         }
 
-        /// <summary>The sieges, "station|attacker|defender|started|seconds left|control" per line (NetCrews).</summary>
+        /// <summary>The sieges, "station|attacker|defender|started|seconds left|control" per line (NetFactions).</summary>
         public string Sieges => sieges.Value.ToString();
 
         internal void SetSieges(string text)
@@ -107,7 +107,7 @@ namespace GoF2Remake.Multiplayer
             if (sieges.Value.ToString() != text) sieges.Value = text;
         }
 
-        /// <summary>The toll a pilot of another crew pays at a held station (NetCrews.Toll; 0 = none).</summary>
+        /// <summary>The toll a pilot of another faction pays at a held station (NetFactions.Toll; 0 = none).</summary>
         public int Toll => toll.Value;
 
         internal void SetToll(int value) { if (IsServer && toll.Value != value) toll.Value = value; }
@@ -140,7 +140,7 @@ namespace GoF2Remake.Multiplayer
                 profilesOn.Value = NetProfiles.Enabled;
                 serverId.Value = NetProfiles.ServerId;
                 freePvp.Value = NetGame.FreePvp;
-                NetCrews.OnStateSpawned();   // the claims, now that this object exists
+                NetFactions.OnStateSpawned();   // the claims, now that this object exists
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
                 NetRateLimit.Reset();
@@ -533,32 +533,32 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void RequestUploadRpc(RpcParams rpc = default) => NetProfileClient.Upload(true);
 
-        // ---- crews (NetCrews / NetCrewsClient) -------------------------------------------------------------
+        // ---- factions (NetFactions / NetFactionsClient) -------------------------------------------------------------
 
-        /// <summary>Server: the player's game is asked to pay a crew deposit ('token' answers it).</summary>
+        /// <summary>Server: the player's game is asked to pay a faction deposit ('token' answers it).</summary>
         internal void Charge(ulong client, int token, int amount)
         {
             if (IsServer) ChargeRpc(token, amount, RpcTarget.Single(client, RpcTargetUse.Temp));
         }
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
-        void ChargeRpc(int token, int amount, RpcParams rpc = default) => NetCrewsClient.OnCharge(token, amount);
+        void ChargeRpc(int token, int amount, RpcParams rpc = default) => NetFactionsClient.OnCharge(token, amount);
 
         /// <summary>The player's game paid the deposit 'token' (or had too few credits).</summary>
         [Rpc(SendTo.Server)]
         public void ChargedRpc(int token, bool paid, RpcParams rpc = default)
         {
-            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetCrews.OnCharged(rpc.Receive.SenderClientId, token, paid);
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetFactions.OnCharged(rpc.Receive.SenderClientId, token, paid);
         }
 
-        /// <summary>Server: credits from the crew bank to the player's game.</summary>
+        /// <summary>Server: credits from the faction bank to the player's game.</summary>
         internal void Grant(ulong client, int amount)
         {
             if (IsServer) GrantRpc(amount, RpcTarget.Single(client, RpcTargetUse.Temp));
         }
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
-        void GrantRpc(int amount, RpcParams rpc = default) => NetCrewsClient.OnGrant(amount);
+        void GrantRpc(int amount, RpcParams rpc = default) => NetFactionsClient.OnGrant(amount);
 
         /// <summary>A pilot calls their squad for help ('on') or is safe again: a notice to the squadmates with where (NetDistress).</summary>
         [Rpc(SendTo.Server)]
@@ -577,11 +577,11 @@ namespace GoF2Remake.Multiplayer
             Debug.Log($"Server: {from.DisplayName} {(on ? "calls for help" : "is safe again")} at {st?.name}.");
         }
 
-        /// <summary>A pilot of another crew paid the toll at 'station' (their game took the credits).</summary>
+        /// <summary>A pilot of another faction paid the toll at 'station' (their game took the credits).</summary>
         [Rpc(SendTo.Server)]
         public void TollPaidRpc(int station, RpcParams rpc = default)
         {
-            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetCrews.OnTollPaid(rpc.Receive.SenderClientId, station);
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetFactions.OnTollPaid(rpc.Receive.SenderClientId, station);
         }
 
         /// <summary>Server: a notice for everyone (a claim).</summary>
@@ -590,7 +590,7 @@ namespace GoF2Remake.Multiplayer
             if (IsServer && !string.IsNullOrEmpty(text)) NoticeRpc(text);
         }
 
-        // ---- the station's Crew / Arena / Profile window (NetPanel) ----------------------------------------
+        // ---- the station's Faction / Arena / Profile window (NetPanel) ----------------------------------------
 
         /// <summary>The window asks for its snapshot.</summary>
         [Rpc(SendTo.Server)]
@@ -897,7 +897,7 @@ namespace GoF2Remake.Multiplayer
             }
             if (!NetStock.HostItem(station, item, delta))
                 ItemRefusedRpc(station, item, Mathf.Max(0, price), RpcTarget.Single(client, RpcTargetUse.Temp));
-            else if (delta < 0 && NetProfiles.Enabled) NetCrews.OnPurchase(client, station, Mathf.Max(0, price));   // a crew station's tax
+            else if (delta < 0 && NetProfiles.Enabled) NetFactions.OnPurchase(client, station, Mathf.Max(0, price));   // a faction station's tax
             dirtyStock.Add(station);
         }
 
@@ -1214,7 +1214,7 @@ namespace GoF2Remake.Multiplayer
             if (!IsServer || !IsSpawned) return;
             NetProfiles.Tick();   // link codes and handovers that ran out
             NetArena.Tick();      // queues, countdowns, time limits
-            if (NetProfiles.Enabled) NetCrews.Tick();   // claims kept by docking members, lapses, stale deposits
+            if (NetProfiles.Enabled) NetFactions.Tick();   // claims kept by docking members, lapses, stale deposits
             // The stations traded at this frame: their stock once for everyone docked there.
             if (dirtyStock.Count > 0)
             {

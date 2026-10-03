@@ -705,9 +705,9 @@ namespace GoF2Remake.UI
                 if (s.index >= suns.Length || suns[s.index] == null) continue;
                 var it = MakeItem(false);
                 it.name.text = s.name;
-                // Multiplayer: a crew holding a station here (NetCrews).
-                string crew = GoF2Remake.Multiplayer.NetCrewsClient.SystemTag(db, s.index);
-                if (crew != null) it.name.text += $" [{crew}]";
+                // Multiplayer: a faction holding a station here (NetFactions).
+                string faction = GoF2Remake.Multiplayer.NetFactionsClient.SystemTag(db, s.index);
+                if (faction != null) it.name.text += $" [{faction}]";
                 it.name.text += SquadMark(s.index, -1);   // multiplayer: squadmates here
                 bool owned = GalaxyMap.HasOwner(s.index) && s.raceId >= 0 && s.raceId <= 3;
                 if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(Tex($"race_{s.raceId}"));
@@ -734,7 +734,7 @@ namespace GoF2Remake.UI
             {
                 var it = MakeItem(true);
                 it.name.text = StationName(p.station, false);
-                if (GoF2Remake.Multiplayer.NetCrewsClient.Owner(p.station, out string crew, out _)) it.name.text = $"[{crew}] {it.name.text}";
+                if (GoF2Remake.Multiplayer.NetFactionsClient.Owner(p.station, out string faction, out _)) it.name.text = $"[{faction}] {it.name.text}";
                 it.name.text += SquadMark(-1, p.station);   // multiplayer: squadmates at this station
                 it.visited.style.display = Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;

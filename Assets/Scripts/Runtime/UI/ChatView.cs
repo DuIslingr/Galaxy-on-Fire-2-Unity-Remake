@@ -16,7 +16,7 @@
 // Enter (and keypad Enter) always sends, read from the key event itself: the rebindable send key is read from the device
 // (GameControls.PressedNow), which can miss the frame the UI's key event arrives in, and the TextField then took the
 // Enter as its own submit, lost the focus and the line was only hidden (Suspend), never sent. The row also has a Send
-// button (touch, mouse). While the station's multiplayer window (CrewPanel) is open, its Chat tab is the chat: this
+// button (touch, mouse). While the station's multiplayer window (MultiplayerWindow) is open, its Chat tab is the chat: this
 // panel hides and the chat key doesn't open it.
 // Styles: Resources/GoF2Net/Chat.uss.
 
@@ -364,7 +364,7 @@ namespace GoF2Remake.UI
             NetChat.KeepGameKeysOff();
             if (box == null) return;
             bool session = NetGame.Active;
-            bool window = CrewPanel.IsOpenAny;   // the station's multiplayer window: its Chat tab is the chat meanwhile
+            bool window = MultiplayerWindow.IsOpenAny;   // the station's multiplayer window: its Chat tab is the chat meanwhile
             box.style.display = session && !window ? DisplayStyle.Flex : DisplayStyle.None;
             UpdateStats(session);
             if (!session || window) { if (open) Suspend(); return; }

@@ -1,11 +1,14 @@
-// CrewPanel.cs
-// Remake-only: the station's multiplayer window (Chat / Crew / Arena / Profile / Admin) in a session, the buttons for
-// everything the chat commands do (NetCrews, NetArena, NetProfiles). A "MULTIPLAYER" button in the top bar, left of the
-// Menu button, opens it (a dot on it when a crew invitation or a duel challenge waits). Tabs:
+// MultiplayerWindow.cs
+// Remake-only: the station's multiplayer window (Chat / Faction / Arena / Profile / Admin) in a session, the buttons for
+// everything the chat commands do (NetFactions, NetArena, NetProfiles). A "MULTIPLAYER" button in the top bar, left of the
+// Menu button, opens it (a dot on it when a faction invitation or a duel challenge waits). Tabs:
 //   Chat: the whole chat (NetChat: the last lines, kept while the window lives), the channel (Local / Global), the line
 //     and a Send button; Enter sends, a line starting with "/" is a command (NetCommands); the flight / station chat
 //     panel (ChatView) hides meanwhile. Built once (a snapshot doesn't rebuild it: the line keeps its focus and draft);
-//   Crew: invitations (Join), without a crew a Create form and the crews; in one: the bank (Deposit / Withdraw), the
+//   Squad (NetSquad, client-side, rebuilt when it changes): invitations (Accept / Decline), the members with where they
+//     are and a distress call (Help), Leave, the pilots docked here to Invite; distress calls themselves are made in space
+//     (the flight squad window, the E menu, /sos), which the tab says;
+//   Faction: invitations (Join), without a faction a Create form and the factions; in one: the bank (Deposit / Withdraw), the
 //     members (Promote / Demote / Make leader / Kick by rank), the pilots online to Invite, the territory (the claims,
 //     and for the station docked at: Claim / Make home / Unclaim / Siege), the sieges, Leave / Disband (asked twice);
 //   Arena: a challenge waiting (Accept / Decline), the Void fighters option, the pilots to Challenge, the free-for-all
@@ -14,7 +17,7 @@
 //   Admin (only for the server's ops, admins and masters, NetModeration): a reason and minutes field, every pilot online
 //     with Kick (the minutes as the cooldown), Ban for the minutes, Ban for good and the roles (admins: op; masters:
 //     admin), the bans with Unban; for admins also the server's status and an announcement, the staff, every profile
-//     (a filter; Ban / Unban, roles, Delete for masters, asked twice), the crews (Disband, asked twice) and the server's
+//     (a filter; Ban / Unban, roles, Delete for masters, asked twice), the factions (Disband, asked twice) and the server's
 //     settings (NetServerSettings: a field or a switch with Save each; the ones the launcher's command line sets say so).
 // The Profile tab also has "Claim this server" (the server's admin token, /claimadmin) for its owner.
 // Every button sends the chat command (NetPanel.Command) and the window shows the server's answer (the next chat notice)
@@ -32,11 +35,11 @@ using UnityEngine.UIElements;
 namespace GoF2Remake.UI
 {
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
-    public sealed class CrewPanel : MonoBehaviour
+    public sealed class MultiplayerWindow : MonoBehaviour
     {
-        enum Tab { Chat, Crew, Arena, Profile, Admin }
+        enum Tab { Chat, Squad, Faction, Arena, Profile, Admin }
 
-        static CrewPanel current;
+        static MultiplayerWindow current;
 
         /// <summary>The window is open (StationMenu: Esc closes it, its keys wait).</summary>
         public static bool IsOpenAny => current != null && current.isOpen;
@@ -65,8 +68,8 @@ namespace GoF2Remake.UI
         public static void Attach(GameObject host, VisualElement parent)
         {
             if (parent == null) return;
-            var view = host.GetComponent<CrewPanel>();
-            if (view == null) view = host.AddComponent<CrewPanel>();
+            var view = host.GetComponent<MultiplayerWindow>();
+            if (view == null) view = host.AddComponent<MultiplayerWindow>();
             view.Build(parent);
         }
 
@@ -99,7 +102,7 @@ namespace GoF2Remake.UI
             sheet = Resources.Load<StyleSheet>("GoF2Net/Squad");
 
             // The button: in the top bar, left of the Menu button (its look); else under the station's information.
-            plate = new VisualElement { name = "crewPlate" };
+            plate = new VisualElement { name = "factionPlate" };
             var menu = parent.Q<Button>("menuButton");
             menuButton = menu;
             if (menu != null && menu.parent != null)
@@ -114,7 +117,7 @@ namespace GoF2Remake.UI
             else
             {
                 if (sheet != null) plate.styleSheets.Add(sheet);
-                plateButton = Btn(Localization.Extra("mpCrewArena", "Crew · Arena"), Open, null);
+                plateButton = Btn(Localization.Extra("mpFactionArena", "Faction · Arena"), Open, null);
                 plateButton.style.marginTop = 8;
                 plate.Add(plateButton);
                 var info = parent.Q(className: "station-info");
@@ -133,7 +136,7 @@ namespace GoF2Remake.UI
                 }
             }
 
-            window = new VisualElement { name = "crewWindow" };
+            window = new VisualElement { name = "factionWindow" };
             if (sheet != null) window.styleSheets.Add(sheet);
             var w = window.style;
             w.position = Position.Absolute;
@@ -173,13 +176,14 @@ namespace GoF2Remake.UI
             tabs.Clear();
             int role = NetPanel.Latest != null ? NetPanel.Latest.role : 0;
             shownRole = role;
-            if (tab == Tab.Admin && role < NetModeration.Op) tab = Tab.Crew;
+            if (tab == Tab.Admin && role < NetModeration.Op) tab = Tab.Faction;
             foreach (Tab t in Enum.GetValues(typeof(Tab)))
             {
                 if (t == Tab.Admin && role < NetModeration.Op) continue;   // the moderation tab: ops and admins only
-                var name = t == Tab.Crew ? Localization.Extra("mpTabCrew", "Crew") : t == Tab.Arena ? Localization.Extra("mpTabArena", "Arena")
+                var name = t == Tab.Faction ? Localization.Extra("mpTabFaction", "Faction") : t == Tab.Arena ? Localization.Extra("mpTabArena", "Arena")
                          : t == Tab.Profile ? Localization.Extra("mpTabProfile", "Profile") : Localization.Extra("mpTabAdmin", "Admin");
                 if (t == Tab.Chat) name = Localization.Extra("mpChat", "Chat");
+                if (t == Tab.Squad) name = Localization.Extra("mpTabSquad", "Squad");
                 var b = Btn(name, () => { tab = t; confirmLeave = false; BuildTabs(); ShowPane(); Rebuild(); }, t == tab ? "squad-button--accept" : null);
                 b.style.marginRight = 8;
                 tabs.Add(b);
@@ -220,10 +224,11 @@ namespace GoF2Remake.UI
                 menuButton.style.marginLeft = session ? new StyleLength(0f) : new StyleLength(StyleKeyword.Null);
             if (!session) { if (isOpen) Close(); return; }
             var s = NetPanel.Latest;
-            bool waiting = s != null && (s.crewInvites.Count > 0 || s.duelFrom.Length > 0);
+            bool waiting = s != null && (s.factionInvites.Count > 0 || s.duelFrom.Length > 0);
             bool unread = unreadChat && !(isOpen && tab == Tab.Chat);
-            string label = plate == plateButton ? Localization.Extra("mpMultiplayer", "Multiplayer") : Localization.Extra("mpCrewArena", "Crew · Arena");
+            string label = plate == plateButton ? Localization.Extra("mpMultiplayer", "Multiplayer") : Localization.Extra("mpFactionArena", "Faction · Arena");
             plateButton.text = (label + (waiting || unread ? "  •" : "")).ToUpperInvariant();
+            if (isOpen && tab == Tab.Squad && SquadKey() != squadKey) Rebuild();
             // The plate's dot needs a snapshot now and then even while the window is closed.
             if ((refresh -= Time.unscaledDeltaTime) <= 0f) { refresh = isOpen ? NetPanel.RefreshSeconds : NetPanel.RefreshSeconds * 3f; NetPanel.Request(); }
         }
@@ -231,7 +236,7 @@ namespace GoF2Remake.UI
         void OnChanged()
         {
             if (NetPanel.Latest != null && NetPanel.Latest.role != shownRole && tabs != null) BuildTabs();   // made an op / admin, or no longer
-            if (isOpen) Rebuild();
+            if (isOpen && tab != Tab.Squad) Rebuild();   // the Squad tab follows the players, not the snapshot
         }
 
         /// <summary>The server's answer to a button (the next notice), and invitations / challenges as they come.</summary>
@@ -261,11 +266,12 @@ namespace GoF2Remake.UI
             float y = scroll.scrollOffset.y;
             body.Clear();
             if (tab == Tab.Chat) return;   // the chat pane is built once (its line keeps the focus and the draft)
+            if (tab == Tab.Squad) { BuildSquad(); scroll.scrollOffset = new Vector2(0f, y); return; }   // no snapshot needed
             var s = NetPanel.Latest;
             if (s == null) { body.Add(Text(Localization.Extra("mpPanelLoading", "Asking the server..."), 16, Dim)); return; }
             switch (tab)
             {
-                case Tab.Crew: BuildCrew(s); break;
+                case Tab.Faction: BuildFaction(s); break;
                 case Tab.Arena: BuildArena(s); break;
                 case Tab.Admin: BuildAdmin(s); break;
                 default: BuildProfile(s); break;
@@ -273,43 +279,43 @@ namespace GoF2Remake.UI
             scroll.scrollOffset = new Vector2(0f, y);
         }
 
-        void BuildCrew(NetPanel.State s)
+        void BuildFaction(NetPanel.State s)
         {
-            if (!s.profiles) { body.Add(Text(Localization.Extra("mpPanelNoProfiles", "Crews need a server that keeps player profiles (a dedicated server)."), 16, Dim)); return; }
-            if (s.guest) { body.Add(Text(Localization.Extra("mpPanelGuest", "You play as a guest here: crews need a profile (see the Profile tab)."), 16, Dim)); return; }
-            foreach (var inv in s.crewInvites)
+            if (!s.profiles) { body.Add(Text(Localization.Extra("mpPanelNoProfiles", "Factions need a server that keeps player profiles (a dedicated server)."), 16, Dim)); return; }
+            if (s.guest) { body.Add(Text(Localization.Extra("mpPanelGuest", "You play as a guest here: factions need a profile (see the Profile tab)."), 16, Dim)); return; }
+            foreach (var inv in s.factionInvites)
             {
                 var parts = inv.Split('|');
                 string tag = parts[0], name = parts.Length > 1 ? parts[1] : "";
-                var row = Line($"[{tag}] {name} " + Localization.Extra("mpPanelInvites", "invites you to their crew."), Good);
-                if (!s.inCrew) row.Add(Btn(Localization.Extra("mpPanelJoin", "Join"), () => Send($"/crew join {tag}"), "squad-button--accept"));
+                var row = Line($"[{tag}] {name} " + Localization.Extra("mpPanelInvites", "invites you to their faction."), Good);
+                if (!s.inFaction) row.Add(Btn(Localization.Extra("mpPanelJoin", "Join"), () => Send($"/faction join {tag}"), "squad-button--accept"));
                 body.Add(row);
             }
-            if (!s.inCrew)
+            if (!s.inFaction)
             {
-                Section(Localization.Extra("mpPanelCreate", "Start a crew"));
+                Section(Localization.Extra("mpPanelCreate", "Start a faction"));
                 var row = Row();
                 row.Add(Field(Localization.Extra("mpPanelTag", "Tag"), tagText, 4, 90, v => tagText = v));
-                row.Add(Field(Localization.Extra("mpPanelName", "Name"), nameText, NetCrews.MaxNameLength, 260, v => nameText = v));
-                row.Add(Btn(Localization.Extra("mpPanelCreateButton", "Create"), () => Send($"/crew create {tagText.Trim()} {nameText.Trim()}"), "squad-button--accept"));
+                row.Add(Field(Localization.Extra("mpPanelName", "Name"), nameText, NetFactions.MaxNameLength, 260, v => nameText = v));
+                row.Add(Btn(Localization.Extra("mpPanelCreateButton", "Create"), () => Send($"/faction create {tagText.Trim()} {nameText.Trim()}"), "squad-button--accept"));
                 body.Add(row);
-                body.Add(Text(Localization.Extra("mpPanelCreateHint", "A tag of 2-4 letters or digits shows before your members' names. Or ask a crew to invite you."), 14, Dim));
-                CrewList(s);
+                body.Add(Text(Localization.Extra("mpPanelCreateHint", "A tag of 2-4 letters or digits shows before your members' names. Or ask a faction to invite you."), 14, Dim));
+                FactionList(s);
                 return;
             }
             bool officer = s.rank >= 1, leader = s.rank >= 2;
-            var title = Text($"[{s.crewTag}] {s.crewName}", 24, Accent);
+            var title = Text($"[{s.factionTag}] {s.factionName}", 24, Accent);
             title.style.unityFontStyleAndWeight = FontStyle.Bold;
             body.Add(title);
-            body.Add(Text(s.rank == 2 ? Localization.Extra("mpRankLeader", "You lead this crew.") : s.rank == 1 ? Localization.Extra("mpRankOfficer", "You are an officer.")
+            body.Add(Text(s.rank == 2 ? Localization.Extra("mpRankLeader", "You lead this faction.") : s.rank == 1 ? Localization.Extra("mpRankOfficer", "You are an officer.")
                                                                                                                    : Localization.Extra("mpRankMember", "You are a member."), 14, Dim));
 
             Section(Localization.Extra("mpPanelBank", "Bank"));
             var bank = Row();
             bank.Add(Text($"{s.bank:N0} " + Localization.Extra("mpCredits", "credits"), 18, Color.white));
             bank.Add(Field(Localization.Extra("mpPanelAmount", "Amount"), amountText, 12, 150, v => amountText = v));
-            bank.Add(Btn(Localization.Extra("mpPanelDeposit", "Deposit"), () => Send($"/crew deposit {amountText.Trim()}"), "squad-button--accept"));
-            if (officer) bank.Add(Btn(Localization.Extra("mpPanelWithdraw", "Withdraw"), () => Send($"/crew withdraw {amountText.Trim()}"), null));
+            bank.Add(Btn(Localization.Extra("mpPanelDeposit", "Deposit"), () => Send($"/faction deposit {amountText.Trim()}"), "squad-button--accept"));
+            if (officer) bank.Add(Btn(Localization.Extra("mpPanelWithdraw", "Withdraw"), () => Send($"/faction withdraw {amountText.Trim()}"), null));
             body.Add(bank);
 
             Section(string.Format(Localization.Extra("mpPanelMembers", "Members ({0})"), s.members.Count));
@@ -320,11 +326,11 @@ namespace GoF2Remake.UI
                 bool self = m.name == SelfName(s);
                 if (!self && leader)
                 {
-                    if (m.rank == 0) row.Add(Btn(Localization.Extra("mpPanelPromote", "Promote"), () => Send($"/crew promote {m.name}"), null));
-                    if (m.rank == 1) row.Add(Btn(Localization.Extra("mpPanelDemote", "Demote"), () => Send($"/crew demote {m.name}"), null));
-                    row.Add(Btn(Localization.Extra("mpPanelMakeLeader", "Make leader"), () => Send($"/crew leader {m.name}"), null));
+                    if (m.rank == 0) row.Add(Btn(Localization.Extra("mpPanelPromote", "Promote"), () => Send($"/faction promote {m.name}"), null));
+                    if (m.rank == 1) row.Add(Btn(Localization.Extra("mpPanelDemote", "Demote"), () => Send($"/faction demote {m.name}"), null));
+                    row.Add(Btn(Localization.Extra("mpPanelMakeLeader", "Make leader"), () => Send($"/faction leader {m.name}"), null));
                 }
-                if (!self && officer && (leader || m.rank == 0)) row.Add(Btn(Localization.Extra("mpPanelKick", "Kick"), () => Send($"/crew kick {m.name}"), "squad-button--leave"));
+                if (!self && officer && (leader || m.rank == 0)) row.Add(Btn(Localization.Extra("mpPanelKick", "Kick"), () => Send($"/faction kick {m.name}"), "squad-button--leave"));
                 body.Add(row);
             }
             if (officer)
@@ -336,7 +342,7 @@ namespace GoF2Remake.UI
                     foreach (var p in free)
                     {
                         var row = Line(p.name, Color.white);
-                        row.Add(Btn(Localization.Extra("mpPanelInviteButton", "Invite"), () => Send($"/crew invite {p.name}"), "squad-button--accept"));
+                        row.Add(Btn(Localization.Extra("mpPanelInviteButton", "Invite"), () => Send($"/faction invite {p.name}"), "squad-button--accept"));
                         body.Add(row);
                     }
                 }
@@ -349,40 +355,40 @@ namespace GoF2Remake.UI
             if (s.dockedStation >= 0)
             {
                 string here = StationName(s.dockedStation);
-                bool mine = s.stationHolder == s.crewTag, held = s.stationHolder.Length > 0;
+                bool mine = s.stationHolder == s.factionTag, held = s.stationHolder.Length > 0;
                 var row = Line(string.Format(Localization.Extra("mpPanelDockedAt", "Docked at {0}: {1}"), here,
                     !held ? Localization.Extra("mpPanelFree", "free") : mine ? Localization.Extra("mpPanelOurs", "yours") : $"[{s.stationHolder}]"), Accent);
                 if (officer)
                 {
                     if (!held && s.stationClaimable && s.claims.Count < s.maxClaims)
-                        row.Add(Btn(string.Format(Localization.Extra("mpPanelClaim", "Claim ({0:N0})"), s.claimCost), () => Send("/crew claim"), "squad-button--accept"));
-                    if (mine && s.home != s.dockedStation) row.Add(Btn(Localization.Extra("mpPanelMakeHome", "Make home"), () => Send("/crew home"), null));
-                    if (mine) row.Add(Btn(Localization.Extra("mpPanelUnclaim", "Give up"), () => Send("/crew unclaim"), "squad-button--leave"));
-                    if (held && !mine) row.Add(Btn(string.Format(Localization.Extra("mpPanelSiege", "Siege ({0:N0})"), s.siegeCost), () => Send("/crew siege"), "squad-button--leave"));
+                        row.Add(Btn(string.Format(Localization.Extra("mpPanelClaim", "Claim ({0:N0})"), s.claimCost), () => Send("/faction claim"), "squad-button--accept"));
+                    if (mine && s.home != s.dockedStation) row.Add(Btn(Localization.Extra("mpPanelMakeHome", "Make home"), () => Send("/faction home"), null));
+                    if (mine) row.Add(Btn(Localization.Extra("mpPanelUnclaim", "Give up"), () => Send("/faction unclaim"), "squad-button--leave"));
+                    if (held && !mine) row.Add(Btn(string.Format(Localization.Extra("mpPanelSiege", "Siege ({0:N0})"), s.siegeCost), () => Send("/faction siege"), "squad-button--leave"));
                 }
                 body.Add(row);
             }
             if (s.sieges.Length > 0) body.Add(Text(s.sieges, 14, Dim));
 
-            Section(Localization.Extra("mpPanelCrews", "Crews"));
-            CrewList(s);
+            Section(Localization.Extra("mpPanelFactions", "Factions"));
+            FactionList(s);
 
             var end = Row();
             end.style.marginTop = 16;
             if (leader && s.members.Count <= 1 || !leader)
-                end.Add(Btn(confirmLeave ? Localization.Extra("mpPanelConfirmLeave", "Really leave?") : Localization.Extra("mpPanelLeave", "Leave the crew"),
-                            () => { if (confirmLeave) Send("/crew leave"); else { confirmLeave = true; Rebuild(); } }, "squad-button--leave"));
+                end.Add(Btn(confirmLeave ? Localization.Extra("mpPanelConfirmLeave", "Really leave?") : Localization.Extra("mpPanelLeave", "Leave the faction"),
+                            () => { if (confirmLeave) Send("/faction leave"); else { confirmLeave = true; Rebuild(); } }, "squad-button--leave"));
             if (leader)
                 end.Add(Btn(confirmLeave ? Localization.Extra("mpPanelConfirmDisband", "Really disband? The bank is lost") : Localization.Extra("mpPanelDisband", "Disband"),
-                            () => { if (confirmLeave) Send("/crew disband"); else { confirmLeave = true; Rebuild(); } }, "squad-button--leave"));
+                            () => { if (confirmLeave) Send("/faction disband"); else { confirmLeave = true; Rebuild(); } }, "squad-button--leave"));
             body.Add(end);
         }
 
-        void CrewList(NetPanel.State s)
+        void FactionList(NetPanel.State s)
         {
-            if (s.crews.Count == 0) { body.Add(Text(Localization.Extra("mpPanelNoCrews", "No crews yet."), 14, Dim)); return; }
-            foreach (var c in s.crews)
-                body.Add(Text($"[{c.tag}] {c.name}  ·  {string.Format(Localization.Extra("mpPanelCrewRow", "{0} members, {1} stations"), c.members, c.claims)}", 15, Color.white));
+            if (s.factions.Count == 0) { body.Add(Text(Localization.Extra("mpPanelNoFactions", "No factions yet."), 14, Dim)); return; }
+            foreach (var c in s.factions)
+                body.Add(Text($"[{c.tag}] {c.name}  ·  {string.Format(Localization.Extra("mpPanelFactionRow", "{0} members, {1} stations"), c.members, c.claims)}", 15, Color.white));
         }
 
         void BuildArena(NetPanel.State s)
@@ -620,17 +626,88 @@ namespace GoF2Remake.UI
                 body.Add(row);
             }
 
-            Section(Localization.Extra("mpPanelCrews", "Crews"));
-            if (s.crews.Count == 0) body.Add(Text(Localization.Extra("mpPanelNoCrews", "No crews yet."), 14, Dim));
-            foreach (var c in s.crews)
+            Section(Localization.Extra("mpPanelFactions", "Factions"));
+            if (s.factions.Count == 0) body.Add(Text(Localization.Extra("mpPanelNoFactions", "No factions yet."), 14, Dim));
+            foreach (var c in s.factions)
             {
-                var row = Line($"[{c.tag}] {c.name}  ·  {string.Format(Localization.Extra("mpPanelCrewRow", "{0} members, {1} stations"), c.members, c.claims)}", Color.white);
-                row.Add(Confirm(Localization.Extra("mpPanelDisband", "Disband"), "crew" + c.tag, $"/disband {c.tag}"));
+                var row = Line($"[{c.tag}] {c.name}  ·  {string.Format(Localization.Extra("mpPanelFactionRow", "{0} members, {1} stations"), c.members, c.claims)}", Color.white);
+                row.Add(Confirm(Localization.Extra("mpPanelDisband", "Disband"), "faction" + c.tag, $"/disband {c.tag}"));
                 body.Add(row);
             }
         }
 
         // ---- small builders ---------------------------------------------------------------------------------
+
+        // ---- the Squad tab --------------------------------------------------------------------------------------
+
+        string squadKey = "";
+
+        /// <summary>What the Squad tab shows, as a key: rebuilt only when it changes (a rebuilt button loses a press).</summary>
+        static string SquadKey()
+        {
+            var sb = new System.Text.StringBuilder();
+            var me = NetPlayer.Local;
+            sb.Append(me != null ? $"{me.SquadId}|{me.Station}|{me.InHangar}" : "-");
+            foreach (var m in NetSquad.Members()) sb.Append('|').Append(m.OwnerClientId).Append(m.DisplayName).Append(NetCommands.WhereText(m)).Append(m.Distress);
+            foreach (var i in NetSquad.Invites) sb.Append("|i").Append(i.from);
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.IsSpawned && !p.IsOwner && p.InHangar && me != null && p.Station == me.Station)
+                    sb.Append("|p").Append(p.OwnerClientId).Append(p.DisplayName).Append(p.SquadId).Append(NetSquad.WasInvited(p));
+            return sb.ToString();
+        }
+
+        void BuildSquad()
+        {
+            squadKey = SquadKey();
+            var me = NetPlayer.Local;
+            foreach (var inv in new List<NetSquad.Invite>(NetSquad.Invites))
+            {
+                var row = Line(string.Format(Localization.Extra("mpSquadInvited", "{0} invites you to their squad."), inv.name), Good);
+                var invite = inv;
+                row.Add(Btn(Localization.Extra("mpAccept", "Accept"), () => { NetSquad.Accept(invite); squadKey = ""; }, "squad-button--accept"));
+                row.Add(Btn(Localization.Extra("mpDecline", "Decline"), () => { NetSquad.Decline(invite); squadKey = ""; }, null));
+                body.Add(row);
+            }
+            if (NetSquad.Invites.Count > 0 && NetMissions.AbandonWarning() is string warn && warn.Length > 0) body.Add(Text(warn, 14, Bad));
+
+            var members = NetSquad.Members();
+            Section(Localization.Extra("mpSquadTitle", "Your squad"));
+            if (members.Count == 0)
+                body.Add(Text(Localization.Extra("mpSquadEmptyHint", "You aren't in a squad. Invite a pilot docked here (below), or accept an invitation. A squad shares its bar mission and rewards, its members can't hurt each other, and they can call each other for help."), 15, Dim));
+            else
+            {
+                foreach (var m in members)
+                {
+                    var row = Line((m.Distress ? "⚠ " : "") + m.DisplayName + (m.IsOwner ? $"  ({Localization.Extra("mpYou", "you")})" : "") + "  ·  " + NetCommands.WhereText(m),
+                                   m.Distress ? Bad : Color.white);
+                    var caller = m;
+                    if (!m.IsOwner && m.Distress)
+                        row.Add(Btn(Localization.Extra("mpHelpButton", "Help"), () => { string msg = NetDistress.Help(caller); if (!string.IsNullOrEmpty(msg)) status.text = msg; squadKey = ""; }, "squad-button--accept"));
+                    body.Add(row);
+                }
+                var leave = Row();
+                leave.Add(Btn(Localization.Extra("mpLeaveSquad", "Leave squad"), () => { NetSquad.Leave(); squadKey = ""; }, "squad-button--leave"));
+                body.Add(leave);
+                body.Add(Text(Localization.Extra("mpSquadDistressHint", "Distress calls are made in space: the squad window on the right, the actions menu (E), or /sos in the chat. A squadmate's call shows here and in flight with a Help button."), 14, Dim));
+            }
+
+            Section(Localization.Extra("mpSquadPilotsHere", "Pilots docked here"));
+            int shown = 0;
+            foreach (var p in NetPlayer.All)
+            {
+                if (p == null || !p.IsSpawned || p.IsOwner || me == null || !p.InHangar || !me.InHangar || p.Station != me.Station) continue;
+                shown++;
+                var row = Line(p.DisplayName, Color.white);
+                var target = p;
+                if (NetSquad.Same(p, me)) row.Add(Text(Localization.Extra("mpInYourSquad", "In your squad"), 14, Good));
+                else if (NetSquad.WasInvited(p)) row.Add(Text(Localization.Extra("mpInvited", "Invited"), 14, Dim));
+                else row.Add(Btn(Localization.Extra("mpInvite", "Invite"), () => { NetSquad.InviteTo(target); squadKey = ""; }, "squad-button--accept"));
+                body.Add(row);
+            }
+            if (shown == 0)
+                body.Add(Text(me != null && me.InHangar ? Localization.Extra("mpSquadNobodyHere", "No other pilot is docked here. Squads form in a hangar: meet at a station.")
+                                                       : Localization.Extra("mpSquadDockFirst", "Squads form while docked: dock at the same station as the other pilot."), 15, Dim));
+        }
 
         // ---- the Chat tab ---------------------------------------------------------------------------------------
 

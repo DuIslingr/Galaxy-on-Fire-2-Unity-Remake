@@ -715,7 +715,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `admin_token.txt` beside the profiles (made at the first start; logged at every start; console `token`; a wrong try is
   logged, one check per 5 s), so a server needs no console. Masters make admins (`/admin`, `/unadmin`) and delete
   profiles (`/deleteprofile <id>`, not while online); admins make ops (`/op`, `/deop`), announce (`/say`, as
-  "[admin] Name") and end crews (`/disband <TAG>`); the console can do everything and makes masters (`master` /
+  "[admin] Name") and end factions (`/disband <TAG>`); the console can do everything and makes masters (`master` /
   `unmaster`). Nobody acts on a pilot of their own role or higher, or gives a role as high as their own. Ops: `/kick <pilot> [minutes] [reason]` (dropped; can't rejoin for the minutes, default 5, a
   temporary ban), `/tempban <pilot> <minutes> [reason]` (ops at most 24 h), `/unban <name|profile>`, `/bans`; admins
   also `/ban <pilot> [reason]` (for good). `/staff` for everyone. Nobody acts on their own rank or higher (the console
@@ -728,50 +728,54 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   fields, Kick / Ban (minutes) / Ban for good / Make op / Remove op / Make admin (masters) per pilot, Unban per ban; for
   admins also the server's status line (`DedicatedServer.StatusText`) and an announcement field, the staff (remove op /
   admin), every profile (`NetProfiles.FillProfiles`: at most 200, the most recent first; a filter; Ban / Unban, roles,
-  Delete for masters) and the crews (Disband). Dangerous buttons (Ban for good, Delete, Disband) ask twice. Not tested
+  Delete for masters) and the factions (Disband). Dangerous buttons (Ban for good, Delete, Disband) ask twice. Not tested
   in a build yet.
-- **Crews** (`NetCrews`, a dedicated server with profiles; phase 1 of home systems / territory): the lasting player
-  groups, kept by profile in `crews.json` beside the profiles (squads stay the session's quick fly-together groups).
-  A crew: name (24), tag (2-4 letters / digits, unique; `NetPlayer.CrewTag`, server-written, `TaggedName` "[TAG] Name"
+- **Factions** (`NetFactions`, a dedicated server with profiles; phase 1 of home systems / territory): the lasting player
+  groups, kept by profile in `factions.json` beside the profiles (squads stay the session's quick fly-together groups).
+  A faction: name (24), tag (2-4 letters / digits, unique; `NetPlayer.FactionTag`, server-written, `TaggedName` "[TAG] Name"
   on the lock plate and in chat), leader, officers, members (profile ids, at most 50), bank and home station (for the
-  next phases). Chat commands (private answers): `/crew create TAG Name`, `invite <pilot>` (officers; 5 min),
+  next phases). Chat commands (private answers): `/faction create TAG Name`, `invite <pilot>` (officers; 5 min),
   `join TAG`, `leave` (the leader only by handing over or as the last member), `kick <pilot>` (officers: members;
   the leader: officers too), `promote` / `demote <pilot>`, `leader <pilot>`, `disband` (leader), `info [TAG]`, `list`;
-  `/c <text>` to the crew's online members. A deleted profile leaves its crew; a leaderless crew passes to its first
-  officer, else first member; an empty one ends. Console: `crews`, `crew disband <TAG>`.
-  Phase 2, territory (`NetCrewsClient` on the player's side): the **bank** (`/crew deposit N`: the server asks the
-  player's game to pay, `ChargeRpc` / `ChargedRpc` with a server token; `/crew withdraw N`, officers: `GrantRpc`; both
+  `/f <text>` to the faction's online members. A deleted profile leaves its faction; a leaderless faction passes to its first
+  officer, else first member; an empty one ends. Console: `factions`, `faction disband <TAG>`.
+  Phase 2, territory (`NetFactionsClient` on the player's side): the **bank** (`/faction deposit N`: the server asks the
+  player's game to pay, `ChargeRpc` / `ChargedRpc` with a server token; `/faction withdraw N`, officers: `GrantRpc`; both
   move the profile's recorded worth, `NetProfiles.AdjustWorth`, so the upload check fits them; a game lying about
-  paying is only caught by that check); **claims** (`/crew claim`, officers, docked there: `-claimcost` (500 000) from the
-  bank, `-maxclaims` (3) per crew, not 108 or system 25; `/crew unclaim`, `/crew home`, `/crew claims [TAG]`; the first
-  claim is the home; a claim no member docked at for `-claimdays` (14) lapses, `NetCrews.Tick` once a minute; a claim
+  paying is only caught by that check); **claims** (`/faction claim`, officers, docked there: `-claimcost` (500 000) from the
+  bank, `-maxclaims` (3) per faction, not 108 or system 25; `/faction unclaim`, `/faction home`, `/faction claims [TAG]`; the first
+  claim is the home; a claim no member docked at for `-claimdays` (14) lapses, `NetFactions.Tick` once a minute; a claim
   is announced to everyone); `NetState.Claims` ("station|TAG|Name" lines, a 4 KB FixedString) shows the holder on the
   star map (planet "[TAG] Name", system "Name [TAG]"), the station header's system line and the orbit information.
-  **Home**: a member's game starts docked at the crew's home (`ProfileHeaderRpc`'s home), and a destroyed member
-  respawns there (`NetPlayer.CrewHome`, `FlightHud.LoadLastSave`). Disbanding frees the crew's claims (the bank is
+  **Home**: a member's game starts docked at the faction's home (`ProfileHeaderRpc`'s home), and a destroyed member
+  respawns there (`NetPlayer.FactionHome`, `FlightHud.LoadLastSave`). Disbanding frees the faction's claims (the bank is
   lost).
-  Phase 3, contest and benefits: **sieges** (`/crew siege`, officers of another crew in the orbit or docked there:
-  `-siegecost` (250 000) from the bank, one per crew, the crew needs room for a claim, not within 24 h of the station's
-  last siege; announced, starts 10 min later, lasts 15 min; meanwhile the two crews' pilots may fire at each other in
-  that orbit (`NetCrewsClient.SiegePvp` in `NetPlayer.PvpWith`); every 5 s the side with more pilots there moves the
+  Phase 3, contest and benefits: **sieges** (`/faction siege`, officers of another faction in the orbit or docked there:
+  `-siegecost` (250 000) from the bank, one per faction, the faction needs room for a claim, not within 24 h of the station's
+  last siege; announced, starts 10 min later, lasts 15 min; meanwhile the two factions' pilots may fire at each other in
+  that orbit (`NetFactionsClient.SiegePvp` in `NetPlayer.PvpWith`); every 5 s the side with more pilots there moves the
   control by 100/300 % per pilot more and second, 100 % = taken (the claim changes hands), the end = held; 24 h
-  protection either way; `NetState.Sieges` lines, `/crew sieges`, console `sieges`; `TerritoryView`'s banner);
-  **defence** (in a held orbit the fighters of the system's race treat the holder's members as friends and other crews'
+  protection either way; `NetState.Sieges` lines, `/faction sieges`, console `sieges`; `TerritoryView`'s banner);
+  **defence** (in a held orbit the fighters of the system's race treat the holder's members as friends and other factions'
   pilots as enemies unless they paid the toll this visit: `NpcShip.TerritoryToLocal`, `NetOrbit.HostileToRemote`,
-  `NetCrewsClient.Relation`; pilots without a crew as always); **toll** (`-toll`, 10 000; `TerritoryView` asks on
-  arrival through `Traffic.Ask`, `NetCrewsClient.PayToll` -> `TollPaidRpc`, the holder's bank, `NetPlayer.TollStation`
-  for the others' NPCs); **trade cut** (`Hangar.Buy` through `NetCrewsClient.BuyPrice`: members -10 %, other crews +5 %;
-  the server banks the tax from `StockItemRpc`'s price, `NetCrews.OnPurchase`; the list shows the plain price; ships
+  `NetFactionsClient.Relation`; pilots without a faction as always); **toll** (`-toll`, 10 000; `TerritoryView` asks on
+  arrival through `Traffic.Ask`, `NetFactionsClient.PayToll` -> `TollPaidRpc`, the holder's bank, `NetPlayer.TollStation`
+  for the others' NPCs); **trade cut** (`Hangar.Buy` through `NetFactionsClient.BuyPrice`: members -10 %, other factions +5 %;
+  the server banks the tax from `StockItemRpc`'s price, `NetFactions.OnPurchase`; the list shows the plain price; ships
   aren't cut). Not yet: shared storage at the home. Not tested in a build yet.
-  UI: the station's **multiplayer window** (`CrewPanel`, code-built, Squad.uss buttons; a "MULTIPLAYER" button in the
+  UI: the station's **multiplayer window** (`MultiplayerWindow`, code-built, Squad.uss buttons; a "MULTIPLAYER" button in the
   top bar left of Menu, a dot when an invitation, a challenge or an unread chat line waits; Esc / B closes it, the station
   menu's keys wait while it is open). Tabs Chat (the whole chat: lines, Local / Global, the line, Send; Enter sends,
-  "/" commands; built once so the line keeps focus and draft; `ChatView` hides meanwhile), Crew, Arena, Profile, Admin:
-  every chat command as buttons and fields (crew create / join / bank / members by
+  "/" commands; built once so the line keeps focus and draft; `ChatView` hides meanwhile), Squad (invitations, members
+  with where / distress and Help, Leave, the pilots docked here to Invite; distress itself is called in space), Faction,
+  Arena, Profile, Admin. Every chat command is listed in /help everywhere (on a session without profiles the faction /
+  profile / moderation ones answer that they need a dedicated server with profiles); `/squad [invite <p> | accept |
+  decline | leave]` and `/sos` say why not when they can't. The tabs give
+  every chat command as buttons and fields (faction create / join / bank / members by
   rank / invite / territory with Claim, Make home, Give up, Siege at the docked station / leave and disband asked
   twice; arena challenge, accept / decline, the Voids option, the free-for-all queue, matches, leaderboard; profile,
   take control, link codes). `NetPanel`: the window asks for a snapshot (`PanelRequestRpc`, every 2 s open, 6 s closed
-  for the dot), the server fills a `NetPanel.State` (`NetProfiles` / `NetCrews` / `NetArena .FillPanel`) and sends it
+  for the dot), the server fills a `NetPanel.State` (`NetProfiles` / `NetFactions` / `NetArena .FillPanel`) and sends it
   gzipped in chunks (`PanelChunkRpc`); buttons send the chat commands (`NetPanel.Command`) and the window shows the
   answering notice. The chat commands still work.
 - **Arena matches** (`NetArena` server, `NetArenaClient` player, `ArenaView` HUD panel; chat commands, answered
@@ -900,7 +904,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`NetState.ServerCommandRpc`), the server checks the sender's rights (`allowed`) and runs it, the answer is a notice for
   the sender; the dedicated server's console runs the very same table (`NetCommands.RunOnServer` with no issuer: every
   right, named "Server"; `list` = players, `say` = g). Only what changes or reads this game stays local: `/help` (the
-  commands this player can run, `available`), `/netstats`, `/pos` (the orbit and the game coordinates /tp takes), `/sos` and `/assist` (`NetDistress`). The arena (`/duel` ..., `/leave` leaves a queue or match before the squad), profile (`/link` ...), crew (`/crew`, `/c`) and moderation commands are rows of the same table calling their own handlers; the station window's buttons send them as chat lines, which `SendChatRpc` runs through `NetCommands.RunOnServer`. Server
+  commands this player can run, `available`), `/netstats`, `/pos` (the orbit and the game coordinates /tp takes), `/sos` and `/assist` (`NetDistress`). The arena (`/duel` ..., `/leave` leaves a queue or match before the squad), profile (`/link` ...), faction (`/faction`, `/c`) and moderation commands are rows of the same table calling their own handlers; the station window's buttons send them as chat lines, which `SendChatRpc` runs through `NetCommands.RunOnServer`. Server
   commands: `/players` (where, ship, squad, admin; admins and the console see the client ids), `/g` / `/l <text>` (one line
   to Global / Local), `/w <player> <text>` (a private message to that player only, "[From X]" / "[To X]" in violet, not
   logged), `/invite <player>` (docked at the same station) and `/leave`; admins `/kick <player> [reason]` (never the host's
@@ -1110,7 +1114,7 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   everyone (`NetState.NewsRpc`), a joining player gets the last 15 (`SendAll` from `NetPlayer.OnNetworkSpawn`); the last 40
   (3 days) kept in `news.json` with profiles. Kinds with a coloured "+++ KIND +++" kicker (BREAKING under 15 minutes old),
   the item at the docked station in bold, its age: territory (claims, give-ups, lapses), war (siege declared / begun,
-  held), BREAKING a station taken, crews founded / disbanded, arena (a duel's score, a free-for-all's winner; no draws or
+  held), BREAKING a station taken, factions founded / disbanded, arena (a duel's score, a free-for-all's winner; no draws or
   forfeits), defence (`NetOrbit` counts the raiders the players downed, `Target.remoteKiller`; when none is left the orbit's
   authority sends `DefenseReportRpc`, 3+ kills, checked and once per orbit per 10 minutes; the Kaamo siege broken), new
   pilots, and an admin's `/news <text | clear>` (GalNet). Player text is made tag-free (`NetNews.Safe`). Not tested in a
@@ -1125,7 +1129,7 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   profile) = that profile's role, re-checked every request (`NetModeration.WebCommand`: moderation commands only). Session
   cookie HttpOnly / SameSite=Strict (12 h, 2 h idle, memory only), POSTs need the `X-GoF2-Admin` header, 5 wrong logins per
   address then 5 minutes' wait, every command logged. The state reuses `NetPanel.State` (`NetModeration.FillFor`,
-  `NetCrews.FillPanel`); the log tab is a 1000-line ring of `logMessageReceivedThreaded`. Not tested in a build yet.
+  `NetFactions.FillPanel`); the log tab is a 1000-line ring of `logMessageReceivedThreaded`. Not tested in a build yet.
 - **Player profiles** (`NetProfiles` server, `NetProfileClient` player; a dedicated server only, on unless `-noprofiles`;
   `-maxprofiles N` default 50, `-maxearn N` default 1 000 000, `-profiledir`): `<persistentDataPath>/ServerProfiles`
   holds `accounts.json` (the server's id, each account's devices with their token hashes, name, squad key, worth) and

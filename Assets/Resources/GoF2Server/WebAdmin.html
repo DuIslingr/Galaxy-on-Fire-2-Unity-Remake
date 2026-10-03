@@ -317,7 +317,7 @@
     const t = [["overview", "Overview"], ["players", `Players · ${s.players.length}`]];
     if (s.profiles && s.role >= 1) t.push(["bans", `Bans · ${s.admin.bans.length}`]);
     if (s.profiles && s.role >= 2) t.push(["profiles", "Profiles"]);
-    if (s.profiles) t.push(["crews", "Crews"]);
+    if (s.profiles) t.push(["factions", "Factions"]);
     if (s.role >= 2) t.push(["settings", "Settings"]);
     if (s.console) t.push(["console", "Console"]);
     if (s.role >= 2) t.push(["log", "Log"]);
@@ -337,7 +337,7 @@
     const view = $("view");
     const typing = view.contains(document.activeElement) && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName);
     if (!force && typing && tab !== "log") return;
-    const fn = { overview, players, bans, profiles, crews, settings, console: consoleView, log: logView }[tab] || overview;
+    const fn = { overview, players, bans, profiles, factions, settings, console: consoleView, log: logView }[tab] || overview;
     if (tab === "log" && !force && view.firstChild) { renderLogLines(); return; }
     if (tab === "console" && !force && view.firstChild) { renderConsoleOut(); return; }
     view.replaceChildren(...[].concat(fn()));
@@ -376,7 +376,7 @@
       stat("Uptime", s.uptime, `version ${s.version}`),
       h("div", { class: "card" }, h("div", { class: "text-xs font-medium uppercase tracking-wider muted", text: s.joinCode ? "Join code" : "Port" }), join,
         h("div", { class: "mt-1 text-xs muted", text: s.joinCode ? "Unity Relay" : "local network" })),
-      stat("Crews", s.profiles ? String(s.admin.crews.length) : "—", s.profiles ? "with player profiles" : "profiles are off")));
+      stat("Factions", s.profiles ? String(s.admin.factions.length) : "—", s.profiles ? "with player profiles" : "profiles are off")));
 
     if (s.role >= 2) {
       const input = h("input", { class: "field", placeholder: "An announcement for everyone", maxlength: 160 });
@@ -467,19 +467,19 @@
     return card(`Profiles · ${s.admin.profiles.length}`, filter, body);
   }
 
-  function crews() {
+  function factions() {
     const s = state;
-    const rows = s.admin.crews.map((c) => h("tr", {},
+    const rows = s.admin.factions.map((c) => h("tr", {},
       td(h("span", { class: "font-mono font-semibold text-accent", text: `[${c.tag}]` })),
       td(h("span", { class: "text-slate-100", text: c.name })),
       td(h("span", { class: "font-mono text-xs", text: String(c.members) })),
       td(h("span", { class: "font-mono text-xs", text: String(c.claims) })),
       td(s.role >= 2 ? actions(btn("Disband", () => confirmRun(`Disband [${c.tag}] ${c.name}?`,
-        "The crew ends, its stations are free again and its bank is lost.", `disband ${c.tag}`, "Disband"), "btn-danger")) : "")));
-    const out = [card("Crews", null, table(["Tag", "Name", "Members", "Stations", ""], rows, "No crews yet."))];
+        "The faction ends, its stations are free again and its bank is lost.", `disband ${c.tag}`, "Disband"), "btn-danger")) : "")));
+    const out = [card("Factions", null, table(["Tag", "Name", "Members", "Stations", ""], rows, "No factions yet."))];
     if (s.admin.sieges) out.push(card("Sieges", null, h("pre", { class: "whitespace-pre-wrap font-mono text-xs text-slate-300", text: s.admin.sieges })));
     if (s.admin.claimCost !== undefined) out.push(card("Rules", null, h("div", { class: "grid grid-cols-2 gap-3 text-sm sm:grid-cols-4" },
-      [["Claim", fmt(s.admin.claimCost)], ["Siege", fmt(s.admin.siegeCost)], ["Stations per crew", String(s.admin.maxClaims)], ["Toll", fmt(s.admin.toll)]]
+      [["Claim", fmt(s.admin.claimCost)], ["Siege", fmt(s.admin.siegeCost)], ["Stations per faction", String(s.admin.maxClaims)], ["Toll", fmt(s.admin.toll)]]
         .map(([k, v]) => h("div", {}, h("div", { class: "text-xs muted", text: k }), h("div", { class: "font-mono", text: v }))))));
     return out;
   }
@@ -532,7 +532,7 @@
       else if (e.key === "ArrowUp" && historyAt + 1 < history.length) { input.value = history[++historyAt]; e.preventDefault(); }
       else if (e.key === "ArrowDown") { historyAt = Math.max(-1, historyAt - 1); input.value = historyAt < 0 ? "" : history[historyAt]; e.preventDefault(); }
     });
-    const quick = ["help", "status", "list", "profiles", "crews", "arenas", "bans", "staff", "settings"].map((c) =>
+    const quick = ["help", "status", "list", "profiles", "factions", "arenas", "bans", "staff", "settings"].map((c) =>
       btn(c, async () => { await run(c, true); renderConsoleOut(); }));
     const stopBtn = btn("Stop server", () => confirmRun("Stop the server?", "Every player is told and dropped; it doesn't start again by itself.", "stop", "Stop"), "btn-danger");
     setTimeout(() => input.focus(), 0);

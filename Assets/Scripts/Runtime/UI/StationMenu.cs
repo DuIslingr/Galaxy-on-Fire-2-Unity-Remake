@@ -137,7 +137,7 @@ namespace GoF2Remake.UI
             {
                 ChatView.Attach(gameObject, safeArea ?? root);   // multiplayer chat
                 SquadView.Attach(gameObject, safeArea ?? root, level != null && level.Layout != null ? level.Layout.stationIndex : -1);   // squad, pilots here
-                CrewPanel.Attach(gameObject, safeArea ?? root);   // the Crew / Arena / Profile window
+                MultiplayerWindow.Attach(gameObject, safeArea ?? root);   // the Faction / Arena / Profile window
             }
 
             InputGlyph.TrackHintsOption(hints);
@@ -193,8 +193,8 @@ namespace GoF2Remake.UI
             root.Q<Label>("stationTitle").text = st == null ? "" :
                 (st.index == 101 ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101
             root.Q<Label>("systemName").text = st == null ? "" : $"{st.systemName} {T(137)}";
-            // Multiplayer: the crew holding this station (NetCrews).
-            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetCrewsClient.OwnerText(st.index);
+            // Multiplayer: the faction holding this station (NetFactions).
+            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetFactionsClient.OwnerText(st.index);
             if (holder.Length > 0) root.Q<Label>("systemName").text += $"  ·  {holder}";
             root.Q<Label>("techLevel").text = st == null ? "" : $"{T(133)}: {st.techLevel}";
             int race = level != null ? level.Layout.raceId : -1;
@@ -797,7 +797,7 @@ namespace GoF2Remake.UI
         void Back()
         {
             if (infoWindow != null && infoWindow.IsOpen) { Play(buttonRelease); infoWindow.Close(); }
-            else if (CrewPanel.IsOpenAny) { Play(buttonRelease); CrewPanel.CloseAny(); }   // multiplayer: the crew window
+            else if (MultiplayerWindow.IsOpenAny) { Play(buttonRelease); MultiplayerWindow.CloseAny(); }   // multiplayer: the faction window
             else if (DialogOpen) { Play(buttonRelease); CloseDialog(); }
             else if (missions != null && missions.IsOpen) { Play(buttonRelease); missions.Close(); }
             else if (status != null && status.IsOpen) { Play(buttonRelease); status.Close(); }
@@ -1714,7 +1714,7 @@ namespace GoF2Remake.UI
             var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)) { Back(); return; }
             if (infoWindow != null && infoWindow.IsOpen) { infoWindow.Tick(); return; }   // it takes all input
-            if (CrewPanel.IsOpenAny) return;   // the crew window's buttons and text fields take the input
+            if (MultiplayerWindow.IsOpenAny) return;   // the faction window's buttons and text fields take the input
             if (pad != null && pad.startButton.wasPressedThisFrame && !DialogOpen)
             {
                 Play(buttonRelease);

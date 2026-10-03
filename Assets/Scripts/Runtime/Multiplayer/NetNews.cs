@@ -6,9 +6,9 @@
 // NetPlayer.OnNetworkSpawn). Every player's ticker shows the items of the last TickerHours first, newest first, each with
 // a coloured "+++ KIND +++" kicker (BREAKING for the fresh ones) and its age, then the game's own random news.
 // What makes the news (all on the server):
-//   territory   a crew claims, gives up or loses (lapses) a station (NetCrews);
-//   war         a siege is declared, begins, the station is taken or held (NetCrews);
-//   crews       a crew is founded or disbanded (NetCrews);
+//   territory   a faction claims, gives up or loses (lapses) a station (NetFactions);
+//   war         a siege is declared, begins, the station is taken or held (NetFactions);
+//   factions       a faction is founded or disbanded (NetFactions);
 //   arena       a duel's winner and score, a free-for-all's winner (NetArena; not draws or forfeits);
 //   defence     players repel a raider attack on an orbit (DefenseReportRpc: the orbit's authority reports who downed the
 //               raiders once none is left, at least MinDefenseKills; checked: the sender runs that orbit, the pilots are
@@ -30,7 +30,7 @@ namespace GoF2Remake.Multiplayer
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetNews
     {
-        public enum Kind { Breaking, Territory, War, Arena, Defense, Crew, Galnet, Pilot }
+        public enum Kind { Breaking, Territory, War, Arena, Defense, Faction, Galnet, Pilot }
 
         public sealed class Item
         {
@@ -163,11 +163,11 @@ namespace GoF2Remake.Multiplayer
             return text.Length > MaxTextLength ? text.Substring(0, MaxTextLength) : text;
         }
 
-        /// <summary>A player's own text (names, crew names, an admin's item) for the rich-text ticker: no tags.</summary>
+        /// <summary>A player's own text (names, faction names, an admin's item) for the rich-text ticker: no tags.</summary>
         public static string Safe(string text) => (text ?? "").Replace('<', '‹').Replace('>', '›');
 
         /// <summary>"[TAG] Name".</summary>
-        internal static string CrewName(string tag, string name) => $"[{Safe(tag)}] {Safe(name)}";
+        internal static string FactionName(string tag, string name) => $"[{Safe(tag)}] {Safe(name)}";
 
         /// <summary>"Var Hastra (Mido)".</summary>
         internal static string Place(int station)
@@ -237,7 +237,7 @@ namespace GoF2Remake.Multiplayer
         static readonly (string label, string color)[] Kickers =
         {
             ("BREAKING", "#ff5a4f"), ("TERRITORY", "#f5a524"), ("WAR", "#ff7a1a"), ("ARENA", "#38bdf8"),
-            ("DEFENCE", "#4ade80"), ("CREWS", "#c084fc"), ("GALNET", "#e2e8f0"), ("PILOTS", "#94a3b8"),
+            ("DEFENCE", "#4ade80"), ("FACTIONS", "#c084fc"), ("GALNET", "#e2e8f0"), ("PILOTS", "#94a3b8"),
         };
 
         /// <summary>The session's news for the ticker (rich text, each item followed by NewsTicker.Separator), "" = none:

@@ -1,6 +1,6 @@
 // WebAdmin.cs
 // Remake-only: a small web page for running a dedicated server (DedicatedServer started with -web): the server's status,
-// the players (kick, bans, roles), the bans, the profiles, the crews, the settings, the console and the live log, in a
+// the players (kick, bans, roles), the bans, the profiles, the factions, the settings, the console and the live log, in a
 // browser. One page (Resources/GoF2Server/WebAdmin.html: Tailwind CSS 4's browser build from jsDelivr, the rest inline)
 // and a JSON API, served by a minimal HTTP/1.1 server on a TcpListener (works in the IL2CPP player; no HttpListener).
 //   -web [port]        on, default port DefaultPort (also -webport N)
@@ -500,7 +500,7 @@ namespace GoF2Remake.Multiplayer
                 if (p == null || !p.IsSpawned) continue;
                 st.players.Add(new WebPlayer
                 {
-                    client = (long)p.OwnerClientId, name = p.DisplayName, tag = p.CrewTag, where = DedicatedServer.Where(p),
+                    client = (long)p.OwnerClientId, name = p.DisplayName, tag = p.FactionTag, where = DedicatedServer.Where(p),
                     ship = UI.ItemInfo.ShipName(p.ShipIndex), squad = p.SquadId, role = p.StaffRole, observer = p.Observer,
                     admin = NetCommands.IsAdmin(p),
                 });
@@ -508,7 +508,7 @@ namespace GoF2Remake.Multiplayer
             st.admin.role = role;
             NetModeration.FillFor(st.admin);
             st.admin.dockedStation = -1;
-            if (NetProfiles.Enabled) NetCrews.FillPanel(ulong.MaxValue, st.admin);   // every crew and the sieges (no player's own part)
+            if (NetProfiles.Enabled) NetFactions.FillPanel(ulong.MaxValue, st.admin);   // every faction and the sieges (no player's own part)
             return st;
         }
 

@@ -1,9 +1,9 @@
 // NetPanel.cs
-// Remake-only: what the station's Crew / Arena / Profile window (UI.CrewPanel) shows, and how its buttons act. The window
+// Remake-only: what the station's Faction / Arena / Profile window (UI.MultiplayerWindow) shows, and how its buttons act. The window
 // asks the server for a snapshot (Request -> NetState.PanelRequestRpc) while it is open (every RefreshSeconds, and
-// right after a button); the server fills a State for that player (NetProfiles / NetCrews / NetArena .FillPanel) and
+// right after a button); the server fills a State for that player (NetProfiles / NetFactions / NetArena .FillPanel) and
 // sends it gzipped in chunks like a profile (NetProfiles.Pack; NetState.PanelChunkRpc). The buttons send the same chat
-// commands a player can type (Command -> NetState.SendChatRpc: "/crew claim", "/duel Name voids" ...), so every rule
+// commands a player can type (Command -> NetState.SendChatRpc: "/faction claim", "/duel Name voids" ...), so every rule
 // stays in one place on the server; its answer comes back as a chat notice, which the window shows too.
 
 using System;
@@ -19,21 +19,21 @@ namespace GoF2Remake.Multiplayer
         public class State
         {
             // Profile (NetProfiles).
-            public bool profiles;            // the server keeps profiles (crews, the leaderboard and /link need them)
+            public bool profiles;            // the server keeps profiles (factions, the leaderboard and /link need them)
             public string profileId = "";
             public int devices;
             public bool controller = true, guest;
-            // Crew (NetCrews).
-            public bool inCrew;
-            public string crewTag = "", crewName = "";
+            // Faction (NetFactions).
+            public bool inFaction;
+            public string factionTag = "", factionName = "";
             public long bank;
             public int home = -1, rank;      // rank: 0 member, 1 officer, 2 leader
             public List<Member> members = new List<Member>();
             public List<ClaimRow> claims = new List<ClaimRow>();
-            public List<string> crewInvites = new List<string>();   // "TAG|Name" of the crews inviting this player
-            public List<CrewRow> crews = new List<CrewRow>();
+            public List<string> factionInvites = new List<string>();   // "TAG|Name" of the factions inviting this player
+            public List<FactionRow> factions = new List<FactionRow>();
             public int dockedStation = -1;   // where this player is docked (-1 = not docked)
-            public string stationHolder = "";   // the tag of the crew holding it ("" = free)
+            public string stationHolder = "";   // the tag of the faction holding it ("" = free)
             public bool stationClaimable;
             public int claimCost, siegeCost, maxClaims, toll;
             public string sieges = "";
@@ -65,7 +65,7 @@ namespace GoF2Remake.Multiplayer
 
         [Serializable] public class Member { public string name = ""; public int rank; public bool online; }
         [Serializable] public class ClaimRow { public int station; public string name = ""; public bool home; public float daysLeft; public bool sieged; }
-        [Serializable] public class CrewRow { public string tag = "", name = ""; public int members, claims; }
+        [Serializable] public class FactionRow { public string tag = "", name = ""; public int members, claims; }
         [Serializable] public class Pilot { public long client; public string name = "", tag = ""; public bool docked, inMatch, self; public int role; }
         [Serializable] public class BanRow { public string name = "", account = "", reason = "", by = "", left = ""; }
 
@@ -109,11 +109,11 @@ namespace GoF2Remake.Multiplayer
             if (p != null) s.dockedStation = p.InHangar ? p.Station : -1;
             foreach (var other in NetPlayer.All)
                 if (other != null && other.IsSpawned)
-                    s.pilots.Add(new Pilot { client = (long)other.OwnerClientId, name = other.DisplayName, tag = other.CrewTag, docked = other.InHangar,
+                    s.pilots.Add(new Pilot { client = (long)other.OwnerClientId, name = other.DisplayName, tag = other.FactionTag, docked = other.InHangar,
                                              inMatch = NetArena.IsArenaOrbit(other.Station), self = other.OwnerClientId == client });
             NetProfiles.FillPanel(client, s);
             if (NetProfiles.Enabled) NetModeration.FillPanel(client, s);
-            if (NetProfiles.Enabled) NetCrews.FillPanel(client, s);
+            if (NetProfiles.Enabled) NetFactions.FillPanel(client, s);
             NetArena.FillPanel(client, s);
             var parts = NetProfiles.Pack(JsonUtility.ToJson(s));
             int seq = ++outSeq;

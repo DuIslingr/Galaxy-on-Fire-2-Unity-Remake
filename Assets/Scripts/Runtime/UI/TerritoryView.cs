@@ -1,10 +1,10 @@
 // TerritoryView.cs
-// Remake-only: the flight HUD's part of the crews' territory (NetCrews / NetCrewsClient), in a multiplayer session:
-//   the toll: arriving at a station another crew holds (the local pilot in a crew of their own), once the launch /
+// Remake-only: the flight HUD's part of the factions' territory (NetFactions / NetFactionsClient), in a multiplayer session:
+//   the toll: arriving at a station another faction holds (the local pilot in a faction of their own), once the launch /
 //     arrival camera is over, the HUD's ChoiceWindow asks for the toll (NetState.Toll; Traffic.Ask). Paid: the station's
-//     fighters spare this pilot for the visit (NetCrewsClient.TollStation, reset on the next orbit); refused: they
+//     fighters spare this pilot for the visit (NetFactionsClient.TollStation, reset on the next orbit); refused: they
 //     attack (NetOrbit's territory rule). Not in an arena;
-//   the siege banner: in a besieged orbit, top centre: the two crews, the time to the start or the end, the control;
+//   the siege banner: in a besieged orbit, top centre: the two factions, the time to the start or the end, the control;
 //   otherwise a squadmate's distress call (NetDistress): who, where, and how to answer (the actions menu's Help, the
 //     squad window's Help or /assist); pulsing.
 // Built in code with inline styles.
@@ -56,14 +56,14 @@ namespace GoF2Remake.UI
                 if (level == null) return;
                 tollAsked = false;
                 // A new orbit: a toll paid elsewhere is over.
-                if (level.Layout != null && NetCrewsClient.TollStation != level.Layout.stationIndex) NetCrewsClient.TollStation = -1;
+                if (level.Layout != null && NetFactionsClient.TollStation != level.Layout.stationIndex) NetFactionsClient.TollStation = -1;
             }
             if (!NetGame.Active || level.Layout == null || NetArenaClient.InMatch) { Show(null); return; }
             int station = level.NetOrbitId;
             AskToll(station);
             string text = BannerText(station) ?? DistressText();
             Show(text);
-            if (text != null && banner != null) banner.style.opacity = NetCrewsClient.SiegeAt(station) != null ? 1f : 0.65f + 0.35f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f));
+            if (text != null && banner != null) banner.style.opacity = NetFactionsClient.SiegeAt(station) != null ? 1f : 0.65f + 0.35f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f));
         }
 
         /// <summary>The squadmates calling for help (the nearest first is not known: in squad order), null = none.</summary>
@@ -86,22 +86,22 @@ namespace GoF2Remake.UI
         {
             if (tollAsked || !level.LaunchCameraOver || level.Traffic == null || NetPlayer.Local == null) return;
             int toll = NetState.Instance != null ? NetState.Instance.Toll : 0;
-            string tag = NetPlayer.Local.CrewTag;
-            if (toll <= 0 || NetCrewsClient.Relation(station, tag, NetCrewsClient.TollStation) >= 0) { tollAsked = true; return; }
+            string tag = NetPlayer.Local.FactionTag;
+            if (toll <= 0 || NetFactionsClient.Relation(station, tag, NetFactionsClient.TollStation) >= 0) { tollAsked = true; return; }
             tollAsked = true;
-            NetCrewsClient.Owner(station, out string owner, out string name);
+            NetFactionsClient.Owner(station, out string owner, out string name);
             string text = string.Format(Localization.Extra("mpTollAsk",
                 "This station belongs to [{0}] {1}. Pay {2} to pass in peace? Refuse, and its fighters attack you."), owner, name, ItemInfo.Credits(toll));
             level.Traffic.Ask(text, Localization.Get(134), Localization.Get(135), () =>
             {
-                if (!NetCrewsClient.PayToll(station))
+                if (!NetFactionsClient.PayToll(station))
                     level.Traffic.Ask(Localization.Get(203).Replace("#C", ItemInfo.Credits(toll - Session.Credits)), null, null, null, null);
             }, null);
         }
 
         static string BannerText(int station)
         {
-            var s = NetCrewsClient.SiegeAt(station);
+            var s = NetFactionsClient.SiegeAt(station);
             if (s == null) return null;
             int left = Mathf.Max(0, Mathf.CeilToInt(s.secondsLeft - (Time.unscaledTime - s.receivedAt)));
             string time = $"{left / 60}:{left % 60:00}";

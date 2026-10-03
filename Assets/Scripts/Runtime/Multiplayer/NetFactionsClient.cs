@@ -1,8 +1,8 @@
-// NetCrewsClient.cs
-// Remake-only: a player's side of the crews (NetCrews): who holds which station (NetState.Claims, read again when it
-// changes) for the star map, the station's header and the orbit information; the crew bank's deposits (the server asks,
+// NetFactionsClient.cs
+// Remake-only: a player's side of the factions (NetFactions): who holds which station (NetState.Claims, read again when it
+// changes) for the star map, the station's header and the orbit information; the faction bank's deposits (the server asks,
 // the game pays from its credits and answers) and payouts; the home station a destroyed member respawns at
-// (NetPlayer.CrewHome). Phase 3: the sieges (NetState.Sieges: who may fire at whom in a besieged orbit, the HUD's
+// (NetPlayer.FactionHome). Phase 3: the sieges (NetState.Sieges: who may fire at whom in a besieged orbit, the HUD's
 // banner), the toll this pilot paid for the current visit (TollStation, shown to the others by NetPlayer), the station
 // defence's verdict on a pilot (Relation: the held station's own race's fighters), and the trade cut (BuyPrice).
 
@@ -12,7 +12,7 @@ using GoF2Remake.Data;
 namespace GoF2Remake.Multiplayer
 {
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
-    public static class NetCrewsClient
+    public static class NetFactionsClient
     {
         static string parsedFrom;
         static readonly Dictionary<int, (string tag, string name)> owners = new Dictionary<int, (string, string)>();
@@ -50,7 +50,7 @@ namespace GoF2Remake.Multiplayer
             return sieges.TryGetValue(station, out var s) ? s : null;
         }
 
-        /// <summary>Two pilots in 'station''s orbit may fire at each other: its siege runs and they are of its two crews.</summary>
+        /// <summary>Two pilots in 'station''s orbit may fire at each other: its siege runs and they are of its two factions.</summary>
         public static bool SiegePvp(int station, string tagA, string tagB)
         {
             var s = SiegeAt(station);
@@ -61,8 +61,8 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The station this pilot paid the toll at for the current visit (-1 = none; TerritoryView).</summary>
         public static int TollStation { get; set; } = -1;
 
-        /// <summary>The held station's defence toward a pilot ('tag' their crew, 'tollAt' where they paid): +1 friend (a
-        /// member), -1 enemy (another crew's pilot without the toll), 0 as always (no holder, no crew, the toll paid).</summary>
+        /// <summary>The held station's defence toward a pilot ('tag' their faction, 'tollAt' where they paid): +1 friend (a
+        /// member), -1 enemy (another faction's pilot without the toll), 0 as always (no holder, no faction, the toll paid).</summary>
         public static int Relation(int station, string tag, int tollAt)
         {
             if (string.IsNullOrEmpty(tag) || !Owner(station, out string owner, out _)) return 0;
@@ -71,14 +71,14 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The trade cut on a unit's list price at 'station' (multiplayer, a held station): members pay
-        /// NetCrews.MemberDiscountPercent less, other crews' pilots NetCrews.TaxPercent more (the holder's tax).</summary>
+        /// NetFactions.MemberDiscountPercent less, other factions' pilots NetFactions.TaxPercent more (the holder's tax).</summary>
         public static int BuyPrice(int station, int price)
         {
             if (price <= 0 || NetPlayer.Local == null) return price;
-            string tag = NetPlayer.Local.CrewTag;
+            string tag = NetPlayer.Local.FactionTag;
             if (string.IsNullOrEmpty(tag) || !Owner(station, out string owner, out _)) return price;
-            return tag == owner ? UnityEngine.Mathf.RoundToInt(price * (100 - NetCrews.MemberDiscountPercent) / 100f)
-                                : UnityEngine.Mathf.RoundToInt(price * (100 + NetCrews.TaxPercent) / 100f);
+            return tag == owner ? UnityEngine.Mathf.RoundToInt(price * (100 - NetFactions.MemberDiscountPercent) / 100f)
+                                : UnityEngine.Mathf.RoundToInt(price * (100 + NetFactions.TaxPercent) / 100f);
         }
 
         /// <summary>The toll for this station's holder: the credits go, the server banks them.</summary>
@@ -106,7 +106,7 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
-        /// <summary>The crew holding 'station' (its tag and name), false = nobody (or no session).</summary>
+        /// <summary>The faction holding 'station' (its tag and name), false = nobody (or no session).</summary>
         public static bool Owner(int station, out string tag, out string name)
         {
             Refresh();
@@ -115,10 +115,10 @@ namespace GoF2Remake.Multiplayer
             return false;
         }
 
-        /// <summary>"[TAG] Name" of the station's crew, "" = none.</summary>
+        /// <summary>"[TAG] Name" of the station's faction, "" = none.</summary>
         public static string OwnerText(int station) => Owner(station, out string tag, out string name) ? $"[{tag}] {name}" : "";
 
-        /// <summary>The first crew tag holding a station in 'system' (the star map's galaxy view), null = none.</summary>
+        /// <summary>The first faction tag holding a station in 'system' (the star map's galaxy view), null = none.</summary>
         public static string SystemTag(Database db, int system)
         {
             Refresh();
@@ -130,10 +130,10 @@ namespace GoF2Remake.Multiplayer
             return null;
         }
 
-        /// <summary>The local player's crew home (respawn), -1 = none.</summary>
-        public static int Home => NetPlayer.Local != null ? NetPlayer.Local.CrewHome : -1;
+        /// <summary>The local player's faction home (respawn), -1 = none.</summary>
+        public static int Home => NetPlayer.Local != null ? NetPlayer.Local.FactionHome : -1;
 
-        /// <summary>The server asks for a crew deposit: paid from the credits if there are enough; the answer either way.</summary>
+        /// <summary>The server asks for a faction deposit: paid from the credits if there are enough; the answer either way.</summary>
         internal static void OnCharge(int token, int amount)
         {
             bool paid = amount > 0 && Session.Credits >= amount;
@@ -144,12 +144,12 @@ namespace GoF2Remake.Multiplayer
 
         static void RefreshStationCredits() => UnityEngine.Object.FindAnyObjectByType<UI.StationMenu>()?.RefreshCredits();
 
-        /// <summary>Credits from the crew bank.</summary>
+        /// <summary>Credits from the faction bank.</summary>
         internal static void OnGrant(int amount)
         {
             if (amount <= 0) return;
             Session.Credits += amount;
-            NetChat.Notice(string.Format(Localization.Extra("mpCrewGranted", "+{0:N0} credits from the crew bank."), amount));
+            NetChat.Notice(string.Format(Localization.Extra("mpFactionGranted", "+{0:N0} credits from the faction bank."), amount));
             NetProfileClient.Upload();
             RefreshStationCredits();
         }

@@ -135,7 +135,7 @@ namespace GoF2Remake.UI
                 ChatView.Attach(gameObject, safeArea ?? root);    // multiplayer chat
                 SquadView.Attach(gameObject, safeArea ?? root);   // the squad window, invitations
                 ArenaView.Attach(gameObject, safeArea ?? root);   // an arena match: score, timer, respawn, result
-                TerritoryView.Attach(gameObject, safeArea ?? root);   // a crew station's toll, a siege's banner
+                TerritoryView.Attach(gameObject, safeArea ?? root);   // a faction station's toll, a siege's banner
             }
 
             InputGlyph.TrackHintsOption(hints);
@@ -1121,11 +1121,11 @@ namespace GoF2Remake.UI
         {
             if (gameOverMs < 7000f) return;
             gameOverMs = -1f;
-            // Multiplayer: back in this orbit's station (a crew member: the crew's home, NetCrews), repaired (docking
+            // Multiplayer: back in this orbit's station (a faction member: the faction's home, NetFactions), repaired (docking
             // repairs), everything else kept.
             if (GoF2Remake.Multiplayer.NetGame.Active)
             {
-                int home = GoF2Remake.Multiplayer.NetCrewsClient.Home;
+                int home = GoF2Remake.Multiplayer.NetFactionsClient.Home;
                 if (home >= 0 && home < GoF2Remake.Multiplayer.NetGame.Db.Stations.Count) Session.StationIndex = home;
                 Session.DockedFromSpace = false;
                 SceneManager.LoadScene("Station");
@@ -1152,7 +1152,7 @@ namespace GoF2Remake.UI
             if (tex != null) { logo.style.backgroundImage = new StyleBackground(tex); logo.style.width = tex.width; logo.style.height = tex.height; }
             orbitInfo.Q<Label>("orbitStation").text = st == null ? "" : st.index == 101 ? st.name : $"{st.name} {Localization.Get(136)}";
             orbitInfo.Q<Label>("orbitSystem").text = st == null ? "" : $"{st.systemName} {Localization.Get(137)}";
-            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetCrewsClient.OwnerText(st.index);   // a crew's station (NetCrews)
+            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetFactionsClient.OwnerText(st.index);   // a faction's station (NetFactions)
             if (holder.Length > 0) orbitInfo.Q<Label>("orbitSystem").text += $"  ·  {holder}";
             int sec = Mathf.Clamp(GalaxyMap.SecurityOf(level.Database.Systems.Find(s => s.index == system)), 0, 3);
             var secLabel = orbitInfo.Q<Label>("orbitSecurity");

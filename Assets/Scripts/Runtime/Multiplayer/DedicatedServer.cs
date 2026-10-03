@@ -14,9 +14,9 @@
 //                    per player between sessions); -maxprofiles N (default 50), -maxearn N (worth a profile may gain
 //                    per minute online without -allowdebug, default 1 000 000), -profiledir PATH (default
 //                    <persistentDataPath>/ServerProfiles)
-//   -claimcost N     a crew's station claim from its bank (default 500 000); -maxclaims N per crew (default 3);
-//   -claimdays N     the days without a member docking before a claim lapses (default 14) (NetCrews)
-//   -siegecost N     a siege on another crew's station, from the bank (default 250 000); -toll N what another crew's
+//   -claimcost N     a faction's station claim from its bank (default 500 000); -maxclaims N per faction (default 3);
+//   -claimdays N     the days without a member docking before a claim lapses (default 14) (NetFactions)
+//   -siegecost N     a siege on another faction's station, from the bank (default 250 000); -toll N what another faction's
 //                    pilot pays to be spared by a held station's defence (default 10 000, 0 = no toll)
 //   -web [port]      the web admin (WebAdmin: a browser page for the console, players, bans, settings, the log), default
 //                    port 8080 (-webport N too); -webbind ADDRESS what it listens on (default 127.0.0.1, this machine only;
@@ -105,11 +105,11 @@ namespace GoF2Remake.Multiplayer
                 int.TryParse(Value("-maxprofiles"), out int profiles) ? profiles : NetProfiles.DefaultMaxProfiles,
                 int.TryParse(Value("-maxearn"), out int earn) ? earn : NetProfiles.DefaultEarnPerMinute,
                 Value("-profiledir"));
-            NetCrews.Configure(int.TryParse(Value("-claimcost"), out int cost) ? cost : NetCrews.DefaultClaimCost,
-                int.TryParse(Value("-maxclaims"), out int maxClaims) ? maxClaims : NetCrews.DefaultMaxClaims,
-                int.TryParse(Value("-claimdays"), out int days) ? days : NetCrews.DefaultLapseDays,
-                int.TryParse(Value("-siegecost"), out int siegeCost) ? siegeCost : NetCrews.DefaultSiegeCost,
-                int.TryParse(Value("-toll"), out int toll) ? toll : NetCrews.DefaultToll);
+            NetFactions.Configure(int.TryParse(Value("-claimcost"), out int cost) ? cost : NetFactions.DefaultClaimCost,
+                int.TryParse(Value("-maxclaims"), out int maxClaims) ? maxClaims : NetFactions.DefaultMaxClaims,
+                int.TryParse(Value("-claimdays"), out int days) ? days : NetFactions.DefaultLapseDays,
+                int.TryParse(Value("-siegecost"), out int siegeCost) ? siegeCost : NetFactions.DefaultSiegeCost,
+                int.TryParse(Value("-toll"), out int toll) ? toll : NetFactions.DefaultToll);
             ListName = Value("-name") ?? DefaultListName;
             // The settings saved by the admins (server_settings.json) for whatever the command line didn't give.
             NetServerSettings.Load(HasFlag);
@@ -364,9 +364,9 @@ namespace GoF2Remake.Multiplayer
                            "  master / unmaster <name|profile>   the master admin role; token (the /claimadmin token)\n" +
                            "  arenas              the arena matches and queues\n" +
                            "  settings, set <key> <value>   the settings that change while running (saved; the command line wins at a start)\n" +
-                           "  crews               the crews (tag, name, members, leader, bank)\n" +
-                           "  crew disband <TAG>  ends a crew\n" +
-                           "  sieges              the crews' sieges\n" +
+                           "  factions               the factions (tag, name, members, leader, bank)\n" +
+                           "  faction disband <TAG>  ends a faction\n" +
+                           "  sieges              the factions' sieges\n" +
                            "  profiles            the player profiles (id, name, devices, worth, who is online)\n" +
                            "  profile delete <id> deletes a profile (not while it is online; its file is kept as .bak)\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)\n" +
@@ -393,13 +393,13 @@ namespace GoF2Remake.Multiplayer
                     int sp = rest.IndexOf(' ');
                     return sp < 0 ? "set <key> <value> (\"settings\" lists them)" : NetServerSettings.Set(rest.Substring(0, sp), rest.Substring(sp + 1), "Server");
                 }
-                case "crews":
-                    return NetCrews.ConsoleList();
+                case "factions":
+                    return NetFactions.ConsoleList();
                 case "sieges":
-                    return NetCrews.ConsoleSieges();
-                case "crew":
-                    if (rest.StartsWith("disband ", StringComparison.OrdinalIgnoreCase)) return NetCrews.ConsoleDisband(rest.Substring(8).Trim());
-                    return "crew disband <TAG>";
+                    return NetFactions.ConsoleSieges();
+                case "faction":
+                    if (rest.StartsWith("disband ", StringComparison.OrdinalIgnoreCase)) return NetFactions.ConsoleDisband(rest.Substring(8).Trim());
+                    return "faction disband <TAG>";
                 case "profiles":
                     return NetProfiles.ConsoleList();
                 case "profile":

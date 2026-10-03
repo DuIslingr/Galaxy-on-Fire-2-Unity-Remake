@@ -4,7 +4,7 @@ A dedicated server hosts a Galaxy on Fire 2 Unity Remake multiplayer session wit
 It is the normal Windows or Linux build of the game, started with `-server`. No extra download is needed.
 
 This guide covers setting the server up, its command-line options, the settings you can change while it runs, the
-server console, the files it keeps, and running it as a Linux service. For what players can do in a session (crews,
+server console, the files it keeps, and running it as a Linux service. For what players can do in a session (factions,
 arenas, distress calls and their chat commands), see the [README](README.md).
 
 ## Contents
@@ -83,24 +83,24 @@ Players on a different game version are turned away with a message saying which 
 | `-password X` | Players need this password to join. |
 | `-maxplayers N` | The player limit, 2 to 100 (default 16). |
 | `-allowdebug` | Players may use the Debug menu (cheats, items, spawns). Off without it. |
-| `-freepvp` | Players may fight each other anywhere, not only in arena matches and crew sieges. |
+| `-freepvp` | Players may fight each other anywhere, not only in arena matches and faction sieges. |
 | `-port N` | The port for local network play (default 7777, UDP). |
 | `-fps N` | The server's frame rate (default 60). |
 | `-noconsole` | Windows: no console window of its own. |
 | `-web [port]` | Start the [web admin](#the-web-admin) (default port 8080; `-webport N` does the same). |
 | `-webbind ADDRESS` | What the web admin listens on (default `127.0.0.1`, this machine only; `0.0.0.0` for every network adapter). |
 | **Player profiles** | |
-| `-noprofiles` | Don't keep player profiles. Every session starts fresh, and crews, moderation and the leaderboard are off. |
+| `-noprofiles` | Don't keep player profiles. Every session starts fresh, and factions, moderation and the leaderboard are off. |
 | `-maxprofiles N` | How many profiles the server keeps (default 50). Devices past the limit play as guests (nothing saved). |
 | `-maxearn N` | Without `-allowdebug`: how much a profile's worth may grow per minute online (default 1 000 000). |
 | `-profiledir PATH` | Where the profiles and the server's other files are stored (default: see [Files](#files-the-server-keeps)). |
 | `-admintoken X` | The token for `/claimadmin` (default: a random one, see [Becoming the server's admin](#becoming-the-servers-admin)). |
-| **Crews** | |
-| `-claimcost N` | What a crew pays from its bank to claim a station (default 500 000). |
-| `-maxclaims N` | Stations per crew (default 3). |
+| **Factions** | |
+| `-claimcost N` | What a faction pays from its bank to claim a station (default 500 000). |
+| `-maxclaims N` | Stations per faction (default 3). |
 | `-claimdays N` | Days without a member docking before a claim is lost (default 14). |
-| `-siegecost N` | What a crew pays from its bank for a siege (default 250 000). |
-| `-toll N` | The toll other crews' pilots pay at a crew's station (default 10 000, 0 = none). |
+| `-siegecost N` | What a faction pays from its bank for a siege (default 250 000). |
+| `-toll N` | The toll other factions' pilots pay at a faction's station (default 10 000, 0 = none). |
 
 The environment variable `GOF2_ADMIN_TOKEN` can replace `-admintoken`.
 
@@ -119,7 +119,7 @@ window, **Admin** tab, **Server settings**. You can also type `/set <key> <value
 | `freepvp` | Players may fight anywhere (`on` / `off`) | At once. |
 | `maxprofiles` | The profile limit | At once. |
 | `maxearn` | Worth a profile may gain per minute | At once. |
-| `claimcost`, `maxclaims`, `claimdays`, `siegecost`, `toll` | The crew settings above | At once. |
+| `claimcost`, `maxclaims`, `claimdays`, `siegecost`, `toll` | The faction settings above | At once. |
 
 A change is saved in `server_settings.json` and kept after a restart. **An option given on the command line wins at
 every start.** The launchers always pass `-name` and `-maxplayers`, so a change of those in the game only lasts until
@@ -148,7 +148,7 @@ seconds is checked.
 | Role | Can |
 |---|---|
 | **master** | Everything, plus making and removing admins (`/admin`, `/unadmin`) and deleting profiles (`/deleteprofile`). |
-| **admin** | Everything an op can, plus permanent bans (`/ban`), making and removing ops (`/op`, `/deop`), announcements (`/say`), ending crews (`/disband`), the server settings (`/set`). |
+| **admin** | Everything an op can, plus permanent bans (`/ban`), making and removing ops (`/op`, `/deop`), announcements (`/say`), ending factions (`/disband`), the server settings (`/set`). |
 | **op** | Kicks with a cooldown (`/kick <pilot> [minutes] [reason]`), temporary bans of up to 24 hours (`/tempban`), lifting bans (`/unban`), the ban list (`/bans`). |
 
 Nobody can act on someone of their own rank or higher, or give a role as high as their own. The server console can do
@@ -175,7 +175,7 @@ server can use the console; players use the chat commands above.
 | `settings`, `set <key> <value>` | The settings that change while the server runs. |
 | `profiles` | The player profiles: id, name, devices, worth, who is online. |
 | `profile delete <id>` | Deletes a profile (not while it is online; its file is kept as `.bak`). |
-| `crews`, `crew disband <TAG>`, `sieges` | The crews; end one; the sieges. |
+| `factions`, `faction disband <TAG>`, `sieges` | The factions; end one; the sieges. |
 | `arenas` | The arena matches and queues. |
 | `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
 
@@ -184,7 +184,7 @@ A server running as a Linux service has no console you can type into. Use the in
 ## The web admin
 
 A browser page for running the server: its status, the players online (kick, bans, roles), the bans, the profiles, the
-crews, the settings, the console and the live log. Start the server with `-web` (port 8080) or `-web 9000`. In the
+factions, the settings, the console and the live log. Start the server with `-web` (port 8080) or `-web 9000`. In the
 launchers, set `WEBPORT`.
 
 Open `http://127.0.0.1:8080/` on the server machine. There are two ways to log in, the same as becoming an admin in the
@@ -218,7 +218,7 @@ The server's data folder is `ServerProfiles` in the game's data folder, or the f
 |---|---|
 | `accounts.json` | Every profile: id, name, devices (token hashes only), role, arena statistics, squad. |
 | `<id>.json` | One player's progress: credits, ship, equipment, cargo, Kaamo Club. |
-| `crews.json` | The crews, their banks, claims and sieges. |
+| `factions.json` | The factions, their banks, claims and sieges. |
 | `bans.json` | The bans. |
 | `server_settings.json` | The settings changed while the server ran. |
 | `news.json` | The sector news on the stations' tickers (the last 40 items, at most 3 days old). |
@@ -286,7 +286,7 @@ internet keeps trying the same way.
 Players can only join a server running the same game version. To update:
 
 1. Stop the server (`stop`, or `sudo systemctl stop gof2`).
-2. Replace the game files with the new version. The data folder (profiles, crews, bans, settings) is separate and is
+2. Replace the game files with the new version. The data folder (profiles, factions, bans, settings) is separate and is
    kept.
 3. Start the server again.
 
