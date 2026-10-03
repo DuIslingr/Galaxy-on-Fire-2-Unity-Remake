@@ -329,8 +329,7 @@ namespace GoF2Remake.Multiplayer
                     }
                     var sb = new StringBuilder(X("mpSquadList", "Your squad:"));
                     foreach (var m in members)
-                        sb.Append('
-').Append(m.Distress ? "⚠ " : "").Append(m.DisplayName).Append(m.IsOwner ? " " + X("mpCmdYou", "(you)") : "")
+                        sb.Append('\n').Append(m.Distress ? "⚠ " : "").Append(m.DisplayName).Append(m.IsOwner ? " " + X("mpCmdYou", "(you)") : "")
                           .Append(": ").Append(WhereText(m));
                     NetChat.Notice(sb.ToString());
                     return;
