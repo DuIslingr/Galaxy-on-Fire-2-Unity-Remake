@@ -803,7 +803,23 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   player's game, which moves its ship in place within the same orbit (`SpaceLevel.MoveForTeleport`; not while mining /
   object docking / jumping) or loads the orbit / station like a jump (`SpaceLevel.TeleportOut`, the pose through
   `NetTeleport.TakePose` in `SpawnPlayer`, no launch camera); refused while destroyed or leaving) and `/tphere <player>`;
-  the host (and the console) `/admin` / `/unadmin <player>`. Admins: the host's own player, or players the host or the
+  the host (and the console) `/admin` / `/unadmin <player>`. Admin tools (`NetAdmin`: the server checks the rights and arguments, logs the
+  order and sends it to each target's own game, `NetState.AdminRpc`, server-only; in the chat the players may be left out
+  = yourself): `/kill [players]` (in space, through god mode, "X was destroyed by Y" for everyone), `/heal [players]`
+  (`Cheats.Repair`), `/give [players] <item> [amount] [mount]` (an item's number or name, 1..1000; "mount" docked:
+  `Cheats.GiveAndMount`), `/credits [players] <amount>` (negative takes, never below 0), `/spawn [players] <ship | object>
+  [race] [count] [enemy | friendly | neutral | standing] [at x y z]` (`DebugSpawner`: a ship's number or name as that game's
+  traffic, the race by default its maker's else pirates, 1..10 side by side, enemy by default; neutral = the remake's
+  `SpawnSpec.alwaysNeutral` / `NpcShip.alwaysNeutral`, neither side whatever the standings until turned or shot, also toward
+  the other players (`NetOrbit.HostileToRemote`); a name that is no ship is an assemblies.json object as scenery; "at" = game
+  coordinates in that player's orbit, else ahead of them), `/ship [players] <ship | own>` (`PlayerHull.Fly` / `Restore`: any
+  hull of the debug Ships tab, docked only ownable ones), `/ammo`, `/reveal`, `/peace [players]`, `/cheat [players] <god | ammo |
+  cooldown | boost | onehit | locks | shopping | jumps> [on | off]` (`Cheats.Grant`: that player's flag for the session, not
+  saved, whatever the session allows), `/mute <players> [minutes]` / `/unmute` (the server drops their chat and whispers;
+  never the host's player, only the host / console mutes an admin), `/title [players] <text> [| subtitle] [for <seconds>]`
+  ("clear") and `/timer [players] <seconds | m:ss> [label]` ("stop"): `NetScreen`, its own panel over every scene, a big
+  title with a subtitle in the upper middle (4 s by default, fades) and a countdown at the top centre (the last 10 s amber),
+  cleared when the session ends. Admins: the host's own player, or players the host or the
   dedicated server's console made admins (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't
   verified). Players are named whole, any case (the longest name the arguments start with), by a client id as the first
   word, or by a Minecraft-style selector (`NetCommands.FindTargets`): @a everyone, @s yourself, @p the nearest other player

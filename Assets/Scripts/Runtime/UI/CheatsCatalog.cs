@@ -187,7 +187,7 @@ namespace GoF2Remake.UI
                 Choice("debugShip", () => X("debugShip", "Ship"), false,
                     () => ships.ConvertAll(i => $"{i} · {World.DebugSpawner.ShipName(db, i)}").ToArray(), () => shipPick, i => shipPick = i),
                 Choice("debugBehaviour", () => X("debugBehaviour", "Behaviour"), true,
-                    () => new[] { X("debugHostile", "Hostile"), X("debugNormal", "By standing"), X("debugFriendly", "Friendly") },
+                    () => new[] { X("debugHostile", "Hostile"), X("debugNormal", "By standing"), X("debugFriendly", "Friendly"), X("debugNeutral", "Neutral") },
                     () => behaviourPick, i => behaviourPick = i),
                 Button("debugSpawnShip", () => X("debugSpawnShip", "Spawn ship"), () =>
                     notify?.Invoke(World.DebugSpawner.SpawnShip(level, Races[shipRace], ships[Math.Clamp(shipPick, 0, ships.Count - 1)],

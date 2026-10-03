@@ -79,6 +79,9 @@ namespace GoF2Remake.World
         public bool IsJumper => Spec.group == NpcGroup.Jumper;
 
         [System.NonSerialized] public bool alwaysEnemy, turnedEnemy, alwaysFriend;
+        /// <summary>Remake (/spawn, the debug spawner): neutral to every player whatever the standings, until it is turned
+        /// (friendly fire) or a player shoots it in multiplayer (aggressors).</summary>
+        [System.NonSerialized] public bool alwaysNeutral;
         /// <summary>Player::setShootingEnabled / removeAllGuns (level scripts): false = it still hunts, never fires.</summary>
         [System.NonSerialized] public bool shootingEnabled = true;
         /// <summary>KIPlayer+0x20 set by a level script (index 64: Khador sits still): no steering, no flying, no firing.</summary>
@@ -367,6 +370,7 @@ namespace GoF2Remake.World
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;
             alwaysEnemy = spec.alwaysEnemy;
             alwaysFriend = spec.alwaysFriend;
+            alwaysNeutral = spec.alwaysNeutral;
             Asleep = spec.asleep || spec.inactive;
             inactive = spec.inactive;
             parked = spec.stationary;
@@ -758,6 +762,7 @@ namespace GoF2Remake.World
             // PlayerFighter::update's order: always-enemy, then Loma's paid toll (pirates neither hostile nor friendly), then a
             // turned ship, and the always-friend flag last (setAlwaysEnemy doesn't clear it: a story ally stays one).
             if (alwaysEnemy) { hostile = true; friend = false; }
+            if (alwaysNeutral) { hostile = false; friend = false; }
             if (r == Standing.Pirate && traffic != null && traffic.LomaTollPaid) { hostile = false; friend = false; }
             if (turnedEnemy) { hostile = true; friend = false; }
             if (HostileToLocalBySquad != null && HostileToLocalBySquad(this)) { hostile = true; friend = false; }   // multiplayer

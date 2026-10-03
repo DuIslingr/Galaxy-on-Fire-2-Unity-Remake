@@ -34,6 +34,7 @@ namespace GoF2Remake.Flight
         public bool asleep;        // setToSleep: waits until the player comes within its detect range (NpcShip.UpdateSleep)
         public bool inactive;      // setInitActive(false): waits until the level script wakes it
         public bool alwaysEnemy, alwaysFriend;
+        public bool alwaysNeutral; // remake (/spawn, the debug spawner): neither hostile nor friendly, whatever the standing
         public int hitpoints = -1; // Player::setHitpoints / setMaxHitpoints override (-1 = the createShip formula)
         public bool noLoot;        // KIPlayer+0x4c / +0x48 = 0: no cargo, no crate
         public int nameText = -1;  // KIPlayer+0x18: the name the lock plate shows (text id)

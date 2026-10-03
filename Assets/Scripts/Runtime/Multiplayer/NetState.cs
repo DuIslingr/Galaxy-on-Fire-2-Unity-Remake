@@ -68,8 +68,10 @@ namespace GoF2Remake.Multiplayer
             name = "NetState";
             DontDestroyOnLoad(gameObject);
             Instance = this;
+            Cheats.ClearGranted();   // an admin's /cheat lasts one session
             if (IsServer)
             {
+                NetAdmin.Reset();
                 seed.Value = pendingSeed;
                 dedicated.Value = pendingDedicated;
                 debugAllowed.Value = NetGame.HostAllowsDebug;
@@ -170,6 +172,7 @@ namespace GoF2Remake.Multiplayer
         {
             text = NetChat.Clean(text);
             if (!IsServer || text.Length == 0) return;
+            if (sender != null && NetAdmin.IsMuted(sender.OwnerClientId, out string mutedText)) { NoticeTo(sender, mutedText); return; }   // /mute
             if (sender == null) ServerChat(NetCommands.IssuerName(null), text);
             else ChatRpc(sender.OwnerClientId, sender.DisplayName, text, global, sender.Station, sender.InSpace, sender.InHangar);
         }
@@ -191,6 +194,7 @@ namespace GoF2Remake.Multiplayer
         {
             text = NetChat.Clean(text);
             if (!IsServer || to == null || text.Length == 0) return;
+            if (from != null && NetAdmin.IsMuted(from.OwnerClientId, out string mutedText)) { NoticeTo(from, mutedText); return; }   // /mute
             WhisperedRpc(NetCommands.IssuerName(from), text, false, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
             if (from != null) WhisperedRpc(to.DisplayName, text, true, RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp));
             else Debug.Log($"Server: [To {to.DisplayName}] {text}");
@@ -222,6 +226,21 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>Server: a notice in everyone's chat.</summary>
         internal void NoticeAll(string text) => NoticeRpc(text);
+
+        /// <summary>Server: a notice in one player's chat.</summary>
+        internal void NoticeTo(NetPlayer p, string text)
+        {
+            if (p != null && !string.IsNullOrEmpty(text)) NoticeToRpc(text, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
+        }
+
+        /// <summary>Server: an admin's order for player 'who''s game (NetAdmin: /kill, /heal, /give, /credits, /spawn, /ship...).</summary>
+        internal void SendAdmin(ulong who, NetAdmin.Order order, int a, int b, int c, string text, string by) =>
+            AdminRpc((byte)order, a, b, c, text ?? "", by, RpcTarget.Single(who, RpcTargetUse.Temp));
+
+        /// <summary>Only the server sends these (checked there: the admin's rights, the arguments).</summary>
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void AdminRpc(byte order, int a, int b, int c, string text, string by, RpcParams rpc = default)
+            => NetAdmin.Apply((NetAdmin.Order)order, a, b, c, text, by);
 
         /// <summary>Server: player 'who' goes to 'd' (their game moves its own ship, NetTeleport.Go). 'by' = the admin.</summary>
         internal void SendTeleport(ulong who, NetTeleport.Destination d, string by) =>

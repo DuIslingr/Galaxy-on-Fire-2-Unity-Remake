@@ -22,6 +22,10 @@
 //   /tp [player] <player | station [x y z | dock]>   admins: teleports (NetTeleport) a player (the chat: yourself by
 //                              default) to a player, an orbit (at the launch spot or game coordinates) or a station's hangar
 //   /tphere <player>           admins: brings a player to you
+//   /kill, /heal, /give, /credits, /spawn, /mute, /unmute, /ship, /ammo, /reveal, /peace, /cheat, /title, /timer
+//                              admins: NetAdmin (destroy, repair, items, credits, NPC ships and objects, chat muting, the
+//                              debug panel's tools for one player: fly any hull, refill, reveal the map, make peace, a
+//                              cheat toggle for the session; a title and a countdown on screen, NetScreen)
 //   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back
 // Admins: the host's own player always, else the players the host or the server console made admins (NetPlayer.IsAdmin,
 // for the session only: names aren't verified, so nothing is remembered by name).
@@ -60,6 +64,7 @@ namespace GoF2Remake.Multiplayer
             public Func<NetPlayer, bool> allowed;          // the server: the issuer may run it (null issuer = the console)
             public Func<string, NetPlayer, string> run;    // the server: args, issuer -> the answer
             public bool needsPlayer;                       // only a player can run it (not the console)
+            public bool optional;                          // the argument may be left out (the chat: yourself)
         }
 
         static bool Everyone() => true;
@@ -102,6 +107,38 @@ namespace GoF2Remake.Multiplayer
             new Command { name = "tphere", usage = "<player>", arg = Arg.Player, available = () => LocalIsAdmin, allowed = IsAdmin,
                 run = (a, by) => NetTeleport.Command(a, by, true), needsPlayer = true,
                 description = () => X("mpCmdTpHere", "admins: brings a player to you") },
+            new Command { name = "kill", usage = "[players]", arg = Arg.Player, optional = true, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = NetAdmin.Kill, description = () => X("mpCmdKill", "admins: destroys ships in space (yourself by default)") },
+            new Command { name = "heal", usage = "[players]", arg = Arg.Player, optional = true, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = NetAdmin.Heal, description = () => X("mpCmdHeal", "admins: repairs hull, shield and armor (yourself by default)") },
+            new Command { name = "give", usage = "[players] <item> [amount] [mount]", arg = Arg.PlayerText, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = NetAdmin.Give, description = () => X("mpCmdGive", "admins: items into the hold (an item's number or name)") },
+            new Command { name = "credits", usage = "[players] <amount>", arg = Arg.PlayerText, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = NetAdmin.Credits, description = () => X("mpCmdCredits", "admins: gives credits (negative: takes them)") },
+            new Command { name = "spawn", usage = "[players] <ship | object> [race] [count] [enemy | friendly | neutral | standing] [at x y z]", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Spawn,
+                description = () => X("mpCmdSpawn", "admins: NPC ships (a number or name; enemy by default) or an object (assemblies.json name), ahead or at x y z") },
+            new Command { name = "ship", usage = "[players] <ship | own>", arg = Arg.PlayerText, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = NetAdmin.Ship, description = () => X("mpCmdShip", "admins: flies any ship of the debug Ships tab (its number or name; own = back)") },
+            new Command { name = "ammo", usage = "[players]", arg = Arg.Player, optional = true, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = (a, by) => NetAdmin.Simple(a, by, NetAdmin.Order.Ammo), description = () => X("mpCmdAmmo", "admins: every mounted secondary to 50") },
+            new Command { name = "reveal", usage = "[players]", arg = Arg.Player, optional = true, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = (a, by) => NetAdmin.Simple(a, by, NetAdmin.Order.Reveal), description = () => X("mpCmdReveal", "admins: every system on the star map") },
+            new Command { name = "peace", usage = "[players]", arg = Arg.Player, optional = true, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = (a, by) => NetAdmin.Simple(a, by, NetAdmin.Order.Peace), description = () => X("mpCmdPeace", "admins: neutral standings, no station grudges") },
+            new Command { name = "cheat", usage = "[players] <god | ammo | cooldown | boost | onehit | locks | shopping | jumps> [on | off]", arg = Arg.PlayerText,
+                self = true, available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Cheat,
+                description = () => X("mpCmdCheat", "admins: a debug toggle for a player, this session only (toggled without on / off)") },
+            new Command { name = "title", usage = "[players] <text> [| subtitle] [for <seconds>]", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Title,
+                description = () => X("mpCmdTitle", "admins: a big title on screen (\"clear\" removes it)") },
+            new Command { name = "timer", usage = "[players] <seconds | m:ss> [label]", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Timer,
+                description = () => X("mpCmdTimer", "admins: a countdown on screen (\"stop\" removes it)") },
+            new Command { name = "mute", usage = "<players> [minutes]", arg = Arg.PlayerText, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = (a, by) => NetAdmin.Mute(a, by, true), description = () => X("mpCmdMute", "admins: blocks a player's chat (for the session or some minutes)") },
+            new Command { name = "unmute", usage = "<players>", arg = Arg.Player, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = (a, by) => NetAdmin.Mute(a, by, false), description = () => X("mpCmdUnmute", "admins: lets a muted player chat again") },
             new Command { name = "admin", usage = "<player>", arg = Arg.Player, available = () => LocalIsHost, allowed = IsHostPlayer,
                 run = (a, by) => SetAdmin(a, by, true), description = () => X("mpCmdAdmin", "host: makes a player an admin for this session") },
             new Command { name = "unadmin", usage = "<player>", arg = Arg.Player, available = () => LocalIsHost, allowed = IsHostPlayer,
@@ -118,7 +155,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Server: 'p' has admin rights (the host's own player, or made an admin).</summary>
         public static bool IsAdmin(NetPlayer p) => p != null && (p.IsAdmin || IsHostPlayer(p));
 
-        static bool IsHostPlayer(NetPlayer p) =>
+        internal static bool IsHostPlayer(NetPlayer p) =>
             p != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && p.OwnerClientId == NetworkManager.ServerClientId;
 
         static bool Ready => NetState.Instance != null && NetState.Instance.IsSpawned;
@@ -126,6 +163,9 @@ namespace GoF2Remake.Multiplayer
         static Command Get(string name) => Array.Find(Commands, c => c.name == name);
 
         static string Usage(Command c) => $"/{c.name}{(c.usage.Length > 0 ? " " + c.usage : "")}";
+
+        /// <summary>"/name usage" of a command (NetAdmin's answers).</summary>
+        internal static string UsageOf(string name) { var c = Get(name); return c != null ? Usage(c) : "/" + name; }
 
         // ---- this game ----------------------------------------------------------------------------------------
 
@@ -141,7 +181,7 @@ namespace GoF2Remake.Multiplayer
             var command = Array.Find(Commands, c => c.name == name && c.available());
             if (command == null)
                 NetChat.Notice(string.Format(X("mpCmdUnknown", "Unknown command /{0}. Type /help for the commands you can use."), name));
-            else if (command.arg != Arg.None && args.Length == 0)
+            else if (command.arg != Arg.None && args.Length == 0 && !command.optional)
                 NetChat.Notice(Usage(command));
             else if (command.local != null)
                 command.local(args);
@@ -190,7 +230,7 @@ namespace GoF2Remake.Multiplayer
             if (issuer == null && c.needsPlayer) return string.Format(X("mpCmdPlayersOnly", "/{0} is for players in the chat."), c.name);
             if (issuer != null && !c.allowed(issuer)) return X("mpCmdNoRights", "You don't have the rights for that command.");
             args = (args ?? "").Trim();
-            if (c.arg != Arg.None && args.Length == 0) return Usage(c);
+            if (c.arg != Arg.None && args.Length == 0 && !c.optional) return Usage(c);
             return c.run(args, issuer) ?? "";
         }
 

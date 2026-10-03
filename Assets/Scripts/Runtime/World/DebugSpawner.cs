@@ -15,34 +15,45 @@ namespace GoF2Remake.World
     {
         const float M = 0.05f;
 
-        public enum Behaviour { Hostile, Normal, Friendly }
+        public enum Behaviour { Hostile, Normal, Friendly, Neutral }
 
         static Vector3 ToGame(Vector3 unity) => new Vector3(unity.x, unity.y, -unity.z) / M;
 
-        /// <summary>Ship 'ship' of 'race' 400 m ahead of the player (hostile / by the standings / friendly); the result text.</summary>
-        public static string SpawnShip(SpaceLevel level, int race, int ship, Behaviour behaviour)
+        /// <summary>Ship 'ship' of 'race' 400 m ahead of the player (hostile / by the standings / friendly / neutral), or at
+        /// 'at' (a Unity position in this orbit, multiplayer's /spawn ... at x y z); 'count' of them side by side, 60 m apart;
+        /// the result text.</summary>
+        public static string SpawnShip(SpaceLevel level, int race, int ship, Behaviour behaviour, int count = 1, Vector3? at = null)
         {
             if (level == null || level.Traffic == null || level.Player == null) return Localization.Extra("debugNoFlight", "Only in flight.");
             var p = level.Player.transform;
-            var spec = new SpawnSpec
+            var centre = at ?? p.position + p.forward * 400f + p.up * 40f;
+            int made = 0;
+            for (int i = 0; i < count; i++)
             {
-                group = NpcGroup.Raider,
-                race = race,
-                ship = ship,
-                freighter = ship == 15,
-                position = ToGame(p.position + p.forward * 400f + p.up * 40f),
-                alwaysEnemy = behaviour == Behaviour.Hostile,
-                alwaysFriend = behaviour == Behaviour.Friendly,
-            };
-            var s = level.Traffic.SpawnShip(spec);
-            level.Traffic.ConnectPlayers();   // the new ship and the others see each other (targets, hit lists)
+                float side = (i - (count - 1) * 0.5f) * 60f;
+                var spec = new SpawnSpec
+                {
+                    group = NpcGroup.Raider,
+                    race = race,
+                    ship = ship,
+                    freighter = ship == 15,
+                    position = ToGame(centre + p.right * side),
+                    alwaysEnemy = behaviour == Behaviour.Hostile,
+                    alwaysFriend = behaviour == Behaviour.Friendly,
+                    alwaysNeutral = behaviour == Behaviour.Neutral,
+                };
+                if (level.Traffic.SpawnShip(spec) != null) made++;
+            }
+            level.Traffic.ConnectPlayers();   // the new ships and the others see each other (targets, hit lists)
             string name = ShipName(level.Database, ship);
-            return s != null ? string.Format(Localization.Extra("debugShipSpawned", "{0} spawned."), name)
-                             : string.Format(Localization.Extra("debugSpawnFailed", "{0} couldn't be spawned."), name);
+            return made == 0 ? string.Format(Localization.Extra("debugSpawnFailed", "{0} couldn't be spawned."), name)
+                 : made == 1 ? string.Format(Localization.Extra("debugShipSpawned", "{0} spawned."), name)
+                 : string.Format(Localization.Extra("debugShipsSpawned", "{0} x {1} spawned."), made, name);
         }
 
-        /// <summary>An assembled object ahead of the player, far enough out for its size, facing the player; the result text.</summary>
-        public static string SpawnObject(SpaceLevel level, string assembly)
+        /// <summary>An assembled object ahead of the player, far enough out for its size, facing the player, or centred on 'at'
+        /// (a Unity position in this orbit, multiplayer's /object ... at x y z); the result text.</summary>
+        public static string SpawnObject(SpaceLevel level, string assembly, Vector3? at = null)
         {
             if (level == null || level.Player == null) return Localization.Extra("debugNoFlight", "Only in flight.");
             var prefab = AssembledObject.LoadPrefab(level.Database.AssemblyByName(assembly));
@@ -53,7 +64,8 @@ namespace GoF2Remake.World
             var bounds = new Bounds(go.transform.position, Vector3.zero);
             foreach (var r in go.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
             float radius = Mathf.Max(bounds.extents.magnitude, 5f);
-            go.transform.position += p.forward * (radius + 150f) + (go.transform.position - bounds.center);
+            if (at.HasValue) go.transform.position = at.Value + (go.transform.position - bounds.center);
+            else go.transform.position += p.forward * (radius + 150f) + (go.transform.position - bounds.center);
             return string.Format(Localization.Extra("debugObjectSpawned", "{0} spawned ({1:0} m across)."), assembly, radius * 2f);
         }
 
