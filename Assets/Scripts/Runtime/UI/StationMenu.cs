@@ -452,15 +452,23 @@ namespace GoF2Remake.UI
 
         // ---- medal toasts --------------------------------------------------------------------------------------
 
-        const float MedalToastSeconds = 5f, MedalToastFadeSeconds = 0.4f;
+        const float MedalToastFadeSeconds = 0.4f;
+        /// <summary>A toast with more medals waiting after it: shorter, so a backlog doesn't take half a minute.</summary>
+        const float MedalToastQueuedSeconds = 3f;
         VisualElement medalToast;
         float medalToastLeft;
-        bool medalToastFading;
+        bool medalToastFading, medalToastHovered;
+
+        /// <summary>How long a medal's toast stays: the rarer, the longer (bronze 4 s, silver 5 s, gold 6 s, elite 7 s).</summary>
+        static float MedalToastSeconds(int medal, int grade) =>
+            medal >= Achievements.BaseCount ? 7f : grade == 1 ? 6f : grade == 2 ? 5f : 4f;
 
         /// <summary>ModStation::checkMedals 0xebe74: each new medal pays DAT_00251ff0[grade] (5000 gold / 2500 silver / 1000
         /// bronze; nothing on Extreme). The original shows one ChoiceWindow per medal (353, the plate, the hint 1552 + i)
         /// that waits for OK; remake: a toast at the top of the screen (the plate, 353, the name, the reward) that fades out
-        /// after MedalToastSeconds, one medal after another, and a tap / click on it opens the Status window on that medal.</summary>
+        /// after MedalToastSeconds (by grade; MedalToastQueuedSeconds while more are waiting, the last one its full time; the
+        /// pointer resting on it pauses the countdown), one medal after another, and a tap / click on it opens the Status
+        /// window on that medal.</summary>
         void ShowNextMedal()
         {
             if (medalToast != null) { medalToast.RemoveFromHierarchy(); medalToast = null; }
@@ -505,10 +513,12 @@ namespace GoF2Remake.UI
                 Play(buttonRelease);
                 OpenMedal(m);
             });
+            toast.RegisterCallback<PointerEnterEvent>(_ => medalToastHovered = true);
+            toast.RegisterCallback<PointerLeaveEvent>(_ => medalToastHovered = false);
             (safeArea ?? root).Add(toast);
             medalToast = toast;
-            medalToastLeft = MedalToastSeconds;
-            medalToastFading = false;
+            medalToastLeft = medalQueue.Count > 0 ? MedalToastQueuedSeconds : MedalToastSeconds(m, grade);
+            medalToastFading = medalToastHovered = false;
             Play(infoSound);
             // Drops in and grows (the transition needs a frame), with a short bright flash.
             toast.schedule.Execute(() => toast.AddToClassList("medal-toast--shown"));
@@ -520,7 +530,7 @@ namespace GoF2Remake.UI
         void UpdateMedalToast()
         {
             if (medalToast == null) return;
-            medalToastLeft -= Time.unscaledDeltaTime;
+            if (medalToastFading || !medalToastHovered) medalToastLeft -= Time.unscaledDeltaTime;   // read while pointed at
             if (!medalToastFading && medalToastLeft <= 0f)
             {
                 medalToastFading = true;
