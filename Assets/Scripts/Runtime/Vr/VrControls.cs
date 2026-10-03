@@ -142,10 +142,18 @@ namespace GoF2Remake.Vr
             Steer = null;
         }
 
-        void OnDestroy()
+        // Switched off with the cockpit (a cutscene): let go of both.
+        void OnDisable()
         {
+            var level = stickHeld ? FindAnyObjectByType<World.SpaceLevel>() : null;
+            if (level != null && level.Player != null) level.Player.SetRoll(0f);
+            stickHeld = handleHeld2 = false;
             Steer = null;
             VrPad.GripsAsShoulders = true;
+        }
+
+        void OnDestroy()
+        {
             if (handleMaterial != null) Destroy(handleMaterial);
             if (handleHeld != null) Destroy(handleHeld);
         }

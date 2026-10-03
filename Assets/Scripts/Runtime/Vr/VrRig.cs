@@ -9,6 +9,11 @@
 // scene camera's view at 2 m, so the HUD's markers sit on what they mark); in the simulation it fills the view, so the
 // desktop mouse lines up with it. The right controller's laser points at it (VrPad's virtual mouse, the trigger clicks).
 // The star map draws into a texture on the screen too (its own 3D scene switches the level's cameras off).
+// Cutscenes in flight (a level script's camera, the launch / arrival fly-in, the gate / Khador / planet jump scenes, the
+// death camera; only while the scene camera has left the seat): stabilised, the player placed where the cinematic camera
+// is but with a level horizon (only its yaw, never its pitch or roll; within 20 deg of the camera's heading the rig doesn't
+// turn at all, beyond it turns at most 40 deg/s), the cockpit switched off (the hull shows again), and every cut (the camera
+// jumping 60 m or 30 deg in a frame, entering or leaving the cutscene) masked by a fade from black (0.3 s).
 
 using GoF2Remake.UI;
 using UnityEngine;
@@ -24,7 +29,11 @@ namespace GoF2Remake.Vr
     public sealed class VrRig : MonoBehaviour
     {
         public const int UiLayer = 29;
+        /// <summary>Drawn by the scene cameras but not the eye: the player's hull while seated in the cockpit.</summary>
+        public const int HiddenLayer = 28;
         const float ScreenDistance = 2f, ScreenWidth = 1.9f, LaserLength = 8f;
+        const float CutDistance = 60f, CutAngle = 30f, YawDeadZone = 20f, YawRate = 40f, FadeSeconds = 0.3f;
+        const float ModalWidth = 1.6f, ModalSimDistance = 0.3f;
 
         /// <summary>This scene's rig, null outside VR.</summary>
         public static VrRig Current { get; private set; }
@@ -41,6 +50,16 @@ namespace GoF2Remake.Vr
         Color eyeBackground;
         bool flight;
         Vector2 simLook;
+        GameObject cockpit;
+        World.SpaceLevel level;
+        Transform fade;
+        Material fadeMaterial;
+        float fadeAlpha, rigYaw;
+        Vector3 lastCameraPosition;
+        Quaternion lastCameraRotation;
+
+        /// <summary>In flight a cutscene holds the camera: the stabilised view, no cockpit.</summary>
+        public bool Cinematic { get; private set; }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Current = null; DebugLook = null; }
@@ -86,7 +105,7 @@ namespace GoF2Remake.Vr
             eye.tag = "Untagged";
             eye.depth = cam.depth + 100f;
             eye.nearClipPlane = 0.02f;
-            eyeMask = cam.cullingMask | (1 << UiLayer);
+            eyeMask = (cam.cullingMask | (1 << UiLayer)) & ~(1 << HiddenLayer);
             eye.cullingMask = eyeMask;
             eyeClear = cam.clearFlags;
             eyeBackground = cam.backgroundColor;
@@ -145,10 +164,23 @@ namespace GoF2Remake.Vr
             if (!flight && FindAnyObjectByType<World.StationLevel>() != null) gameObject.AddComponent<VrStation>().Init(this);
             if (flight)
             {
-                var cockpit = new GameObject("VR Cockpit");
+                cockpit = new GameObject("VR Cockpit");
                 cockpit.transform.SetParent(transform, false);
                 cockpit.AddComponent<VrCockpit>().Init(this, panels);
+                level = FindAnyObjectByType<World.SpaceLevel>();
             }
+            // The fade: a black quad just past the near plane, over everything.
+            fade = GameObject.CreatePrimitive(PrimitiveType.Quad).transform;
+            fade.name = "VR Fade";
+            Destroy(fade.GetComponent<Collider>());
+            fade.gameObject.layer = UiLayer;
+            fade.SetParent(head, false);
+            fade.localPosition = new Vector3(0f, 0f, 0.05f);
+            fade.localScale = new Vector3(0.6f, 0.6f, 1f);
+            fadeMaterial = VrPanels.ScreenMaterial(4000);
+            fadeMaterial.SetColor("_BaseColor", new Color(0f, 0f, 0f, 0f));
+            fade.GetComponent<MeshRenderer>().sharedMaterial = fadeMaterial;
+            fade.gameObject.SetActive(false);
             Follow();
         }
 
@@ -180,6 +212,7 @@ namespace GoF2Remake.Vr
             panels?.Release();
             if (mapTexture != null) { mapTexture.Release(); Destroy(mapTexture); }
             if (mapMaterial != null) Destroy(mapMaterial);
+            if (fadeMaterial != null) Destroy(fadeMaterial);
             if (Current == this) Current = null;
         }
 
@@ -187,18 +220,40 @@ namespace GoF2Remake.Vr
         {
             if (logical == null) return;
             Follow();
+            UpdateFade();
             panels.Update();
             PlaceScreen();
             UpdateMap();
             UpdatePointer();
         }
 
-        /// <summary>The rig on the logical camera: its whole pose in flight, else its position and yaw.</summary>
+        /// <summary>The rig on the logical camera: its whole pose in flight, else (and in a cutscene) its position and a
+        /// level heading.</summary>
         void Follow()
         {
             var t = logical.transform;
-            if (flight) transform.SetPositionAndRotation(t.position, t.rotation);
+            bool cinematic = flight && CutsceneHolds();
+            if (cinematic != Cinematic)
+            {
+                Cinematic = cinematic;
+                if (cockpit != null) cockpit.SetActive(!cinematic);
+                Cut(t);
+            }
+            if (cinematic)
+            {
+                if (Vector3.Distance(t.position, lastCameraPosition) > CutDistance || Quaternion.Angle(t.rotation, lastCameraRotation) > CutAngle) Cut(t);
+                else if (Heading(t, out float yaw))
+                {
+                    float off = Mathf.DeltaAngle(rigYaw, yaw);
+                    if (Mathf.Abs(off) > YawDeadZone)
+                        rigYaw += Mathf.Sign(off) * Mathf.Min(Mathf.Abs(off) - YawDeadZone, YawRate * Time.unscaledDeltaTime);
+                }
+                transform.SetPositionAndRotation(t.position, Quaternion.Euler(0f, rigYaw, 0f));
+            }
+            else if (flight) transform.SetPositionAndRotation(t.position, t.rotation);
             else transform.SetPositionAndRotation(t.position, Quaternion.Euler(0f, t.eulerAngles.y, 0f));
+            lastCameraPosition = t.position;
+            lastCameraRotation = t.rotation;
             if (!VrMode.Headset)
             {
                 // The simulation: the eye matches the logical camera (+ the right-drag look).
@@ -216,15 +271,71 @@ namespace GoF2Remake.Vr
             }
         }
 
+        /// <summary>A cutscene holds the scene camera: a level script's, the fly-in, a jump scene or the death camera, and the
+        /// camera isn't on the seat (some scripts keep the pilot's view).</summary>
+        bool CutsceneHolds()
+        {
+            if (level == null) return false;
+            var nav = level.Navigation;
+            var jump = level.SystemJump;
+            bool held = level.Cutscene || !level.LaunchCameraOver || (nav != null && nav.Jumping) || (jump != null && jump.Cinematic)
+                        || (level.Health != null && level.Health.Dead);
+            if (!held) return false;
+            var ship = level.Player != null ? level.Player.transform : null;
+            if (ship == null) return true;
+            var t = logical.transform;
+            return Vector3.Distance(t.position, ship.TransformPoint(VrCockpit.Seat)) > 0.5f || Quaternion.Angle(t.rotation, ship.rotation) > 2f;
+        }
+
+        /// <summary>The camera's heading (degrees about world up); false looking straight up or down.</summary>
+        static bool Heading(Transform t, out float yaw)
+        {
+            var f = t.forward;
+            yaw = 0f;
+            if (new Vector2(f.x, f.z).sqrMagnitude < 0.01f) return false;
+            yaw = Mathf.Atan2(f.x, f.z) * Mathf.Rad2Deg;
+            return true;
+        }
+
+        /// <summary>A cut: face the camera's heading at once, behind a fade from black.</summary>
+        void Cut(Transform t)
+        {
+            if (Heading(t, out float yaw)) rigYaw = yaw;
+            fadeAlpha = 1f;
+        }
+
+        void UpdateFade()
+        {
+            fadeAlpha = Mathf.MoveTowards(fadeAlpha, 0f, Time.unscaledDeltaTime / FadeSeconds);
+            bool on = fadeAlpha > 0f;
+            if (fade.gameObject.activeSelf != on) fade.gameObject.SetActive(on);
+            if (on) fadeMaterial.SetColor("_BaseColor", new Color(0f, 0f, 0f, fadeAlpha));
+        }
+
         /// <summary>The floating screen 2 m ahead: in flight and in the simulation as big as the logical camera's view at that
         /// distance (the HUD's markers line up), else 1.9 m wide.</summary>
         void PlaceScreen()
         {
             float aspect = panels.Aspect;
-            float height, width;
-            if (flight || !VrMode.Headset)
+            float height, width, distance = ScreenDistance;
+            // In the cockpit a conversation, a menu or the map (the flight controls halted) would sit behind the dashboard: with a
+            // headset the screen rises above it (1.6 m wide, its bottom edge 2 deg below straight ahead, tilted toward the eye);
+            // the simulation brings it in front of the cockpit, still filling the view (the desktop mouse lines up with it).
+            bool modal = flight && !Cinematic && Flight.Navigation.InputHalted;
+            if (modal && VrMode.Headset)
             {
-                height = 2f * ScreenDistance * Mathf.Tan(logical.fieldOfView * 0.5f * Mathf.Deg2Rad);
+                width = ModalWidth;
+                height = width / aspect;
+                float centre = ScreenDistance * Mathf.Tan(-2f * Mathf.Deg2Rad) + height * 0.5f;
+                screen.localRotation = Quaternion.Euler(-Mathf.Atan2(centre, ScreenDistance) * Mathf.Rad2Deg, 0f, 0f);
+                screen.localPosition = new Vector3(0f, centre, ScreenDistance);
+                screen.localScale = new Vector3(width, height, 1f);
+                return;
+            }
+            if (modal) distance = ModalSimDistance;
+            if ((flight && !Cinematic) || !VrMode.Headset)
+            {
+                height = 2f * distance * Mathf.Tan(logical.fieldOfView * 0.5f * Mathf.Deg2Rad);
                 width = height * aspect;
             }
             else
@@ -234,7 +345,7 @@ namespace GoF2Remake.Vr
             }
             // The simulation outside flight: the eye looks along the logical camera (its pitch too), the screen in front of it.
             screen.localRotation = !VrMode.Headset && !flight ? Quaternion.Inverse(transform.rotation) * logical.transform.rotation : Quaternion.identity;
-            screen.localPosition = screen.localRotation * new Vector3(0f, 0f, ScreenDistance);
+            screen.localPosition = screen.localRotation * new Vector3(0f, 0f, distance);
             screen.localScale = new Vector3(width, height, 1f);
         }
 

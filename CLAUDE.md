@@ -1058,14 +1058,23 @@ Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF
   (`Settings.LaunchCamera`), no mouse steering.
 - **Cockpit** (`VrCockpit`, flight): `ChaseCamera` puts the scene camera rigidly on the seat (`VrCockpit.Seat`, 1 m above
   the ship's pivot, the ship's rotation; no lag, slide, shake or boost zoom), so the rig, the head and the cockpit (a child
-  of the rig) ride with the ship; the player's hull renderers are hidden. The same code-built cockpit for every ship
+  of the rig) ride with the ship; the player's hull is hidden (its renderers on layer 28, `VrRig.HiddenLayer`, which the
+  eye doesn't draw; back while the cockpit is off). The same code-built cockpit for every ship
   (primitives, URP Lit dark metal: dashboard, front panel, hood, floor, walls, seat back, side consoles, canopy struts) until
   a modelled one replaces it. The flight HUD is split by region of its texture (`VrPanels.Crop` / `TextureOf`, panel pixels
   at 1920 x 1080): the canopy HUD shows only the middle (x 326..1594, y 0..1026: crosshair, markers, lock plate, messages,
   menus; `.hud-vr` centres the autopilot menu), the displays the corners (status bars + recharge icons left, cargo readout
   right, the secondary plate centre; the control hints aren't shown in the cockpit). The laser works in flight only while
-  `Navigation.InputHalted` (a menu, conversation or map; else the trigger fires). `VrRig.DebugLook` fixes the simulation's
-  look for tests.
+  `Navigation.InputHalted` (a menu, conversation or map; else the trigger fires). Meanwhile the screen would sit behind
+  the dashboard: with a headset it rises above it (1.6 m wide, 2 m out, its bottom edge 2 deg below straight ahead, tilted
+  toward the eye), the simulation brings it 0.3 m out, in front of the cockpit (still filling the view). `VrRig.DebugLook`
+  fixes the simulation's look for tests.
+- **Cutscenes** (`VrRig.Cinematic`): while a level script's camera, the launch / arrival fly-in, a gate / Khador / planet
+  jump scene or the death camera holds the scene camera and it has left the seat: stabilised, the rig at the cinematic
+  camera's position with a level horizon (only its yaw: within 20 deg of the camera's heading it doesn't turn, beyond that
+  at most 40 deg/s; never its pitch or roll, so a shot looking down has its subject below), the cockpit switched off (the
+  hull shows), the screen at the 1.9 m size; every cut (60 m or 30 deg in one frame, entering or leaving) re-faces the
+  camera's heading behind a 0.3 s fade from black (a quad at the eye).
 - **Station** (`StationLevel.VrCamera`, `VrStation`): standing, still (no drift, sway or intro). The hangar: on the floor
   between the original camera's spot and the ship, facing it, the eyes 1.7 m above the hull's bottom, 5 m past its radius
   (the ships are ~60 m across: they tower over you); the bar: the original's view point B, level; the visitors turn to the

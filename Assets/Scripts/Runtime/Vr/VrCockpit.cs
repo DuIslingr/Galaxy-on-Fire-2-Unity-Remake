@@ -1,7 +1,8 @@
 // VrCockpit.cs
 // Remake VR, in flight: the player sits in a cockpit (the original has none: the same code-built cockpit for every ship
 // until a modelled one replaces it). ChaseCamera puts the scene camera rigidly on the seat (VrMode: no lag, shake or boost
-// zoom), so the rig, the head and this cockpit (a child of the rig) ride with the ship; the player's own hull is hidden.
+// zoom), so the rig, the head and this cockpit (a child of the rig) ride with the ship; the player's own hull is hidden (its
+// renderers on VrRig.HiddenLayer, which the eye doesn't draw; put back while the cockpit is off: VrRig's cutscene view).
 // The flight HUD is split: its middle (the crosshair, the markers, the lock plate, the messages, the menus) stays on the
 // canopy HUD 2 m ahead, which spans the scene camera's view (VrRig) so the markers sit on what they mark, cropped to that
 // middle; its corners go onto the cockpit's displays, the same texture cut out (VrPanels.Crop): the shield / hull / armor
@@ -30,7 +31,8 @@ namespace GoF2Remake.Vr
         VrPanels panels;
         PanelSettings hudPanel;
         Material frame, glass;
-        GameObject hiddenModel;
+        readonly System.Collections.Generic.Dictionary<GameObject, int> hiddenLayers = new System.Collections.Generic.Dictionary<GameObject, int>();
+        readonly System.Collections.Generic.List<Renderer> renderers = new System.Collections.Generic.List<Renderer>();
         readonly System.Collections.Generic.List<(Material material, Rect region)> displays = new System.Collections.Generic.List<(Material, Rect)>();
         RenderTexture hudTexture;
 
@@ -170,16 +172,31 @@ namespace GoF2Remake.Vr
         /// <summary>A HUD region (panel pixels, top-left origin, 1920 x 1080) as a texture rect (bottom-left origin, 0..1).</summary>
         static Rect ToUv(Rect r) => new Rect(r.x / 1920f, 1f - (r.y + r.height) / 1080f, r.width / 1920f, r.height / 1080f);
 
+        /// <summary>The player's hull (and whatever is attached to it later: turrets, exhaust) onto the hidden layer.</summary>
         void HidePlayerHull()
         {
             var level = FindAnyObjectByType<World.SpaceLevel>();
             var ship = level != null ? level.Player : null;
             var model = ship != null && ship.visualModel != null ? ship.visualModel.gameObject : null;
-            if (model == hiddenModel) return;
-            hiddenModel = model;
             if (model == null) return;
-            foreach (var r in model.GetComponentsInChildren<Renderer>(true)) r.enabled = false;
+            model.GetComponentsInChildren(true, renderers);
+            foreach (var r in renderers)
+            {
+                var go = r.gameObject;
+                if (go.layer == VrRig.HiddenLayer) continue;
+                hiddenLayers[go] = go.layer;
+                go.layer = VrRig.HiddenLayer;
+            }
         }
+
+        /// <summary>The hull's own layers back (the cockpit switched off for a cutscene, or gone).</summary>
+        void ShowPlayerHull()
+        {
+            foreach (var kv in hiddenLayers) if (kv.Key != null && kv.Key.layer == VrRig.HiddenLayer) kv.Key.layer = kv.Value;
+            hiddenLayers.Clear();
+        }
+
+        void OnDisable() => ShowPlayerHull();
 
         void OnDestroy()
         {
