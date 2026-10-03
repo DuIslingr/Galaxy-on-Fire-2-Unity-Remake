@@ -204,6 +204,7 @@ namespace GoF2Remake.UI
             Bind("economyDefaultButton", () => StartGame(Economy.Default));
             Bind("economyAndroidButton", () => StartGame(Economy.Android));
             Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
+            Bind("ngPlusToggle", () => { newGamePlus = !newGamePlus && ngPlusSave != null; RefreshNgPlus(false); });
             Bind("dialogYes", () => { var a = dialogYes; CloseDialog(); a?.Invoke(); });
             Bind("dialogNo", () => { var a = dialogNo; CloseDialog(); a?.Invoke(); });
 
@@ -562,6 +563,7 @@ namespace GoF2Remake.UI
             SetFocusable(mainButtons, false);
             RefreshUpdateButton();
             p.schedule.Execute(() => FocusFirst(p)).ExecuteLater(30);
+            if (name == "campaignPanel") RefreshNgPlus(true);
             if (name == "multiplayerPanel")
             {
                 RefreshAddresses();   // the adapters may have changed
@@ -611,6 +613,27 @@ namespace GoF2Remake.UI
             OpenPanel("economyPanel");
         }
 
+        // Remake (GitHub #4, NewGamePlus): with a finished game in the save slots, the campaign panel offers New Game+.
+        bool newGamePlus;
+        SaveData ngPlusSave;
+
+        void RefreshNgPlus(bool rescan)
+        {
+            var b = root.Q<Button>("ngPlusToggle");
+            if (b == null) return;
+            if (rescan) { ngPlusSave = NewGamePlus.FindFinished(out _); newGamePlus = false; }
+            b.style.display = ngPlusSave != null ? DisplayStyle.Flex : DisplayStyle.None;
+            b.EnableInClassList("choice-button--on", newGamePlus);
+            var label = root.Q<Label>("ngPlusLabel");
+            if (label != null)
+                label.text = $"{Localization.Extra("ngPlus", "New Game+")}: {(newGamePlus ? Localization.Extra("on", "On") : Localization.Extra("off", "Off"))}".ToUpperInvariant();
+            var desc = root.Q<Label>("ngPlusDesc");
+            if (desc != null && ngPlusSave != null)
+                desc.text = string.Format(Localization.Extra("ngPlusDesc",
+                    "Start again with what you earned in your finished game ({0}, {1}): your credits, blueprints and medals, and the Kaamo Club with your ship, its equipment and cargo and everything stored there. Turn it on, then pick a campaign."),
+                    (Campaign)ngPlusSave.campaign switch { Campaign.Valkyrie => "Valkyrie", Campaign.Supernova => "Supernova", _ => "Galaxy on Fire 2" }, ItemInfo.Credits(ngPlusSave.credits));
+        }
+
         /// <summary>Remake (GitHub #8): the original's Kaamo Club expansion (an in-app purchase, texts 78 / 88 / 93) as a new
         /// game's choice: Status::resetGame sets the club's state to 3 (owned) while it is bought, so no siege, no purchase.
         /// Remembered for the next new game (PlayerPrefs "newgame_kaamo").</summary>
@@ -657,7 +680,9 @@ namespace GoF2Remake.UI
             // Remake: the mission select starts a new game at the chosen story step (Story.StartAtMission).
             if (pendingStartIndex >= 0) { StartCoroutine(Leave(Story.StartAtMission(db, pendingStartIndex))); return; }
             // MenuTouchWindow::startGOF2 / startValkyrie / startSupernova: the story's first step (Story).
-            StartCoroutine(Leave(Story.StartCampaign(db, pendingCampaign)));
+            string scene = Story.StartCampaign(db, pendingCampaign);
+            if (newGamePlus && ngPlusSave != null) NewGamePlus.Apply(ngPlusSave);   // remake: New Game+ carries over
+            StartCoroutine(Leave(scene));
         }
 
         // ---- multiplayer (remake-only MVP, NetGame: host or join by address, one shared orbit) ----
