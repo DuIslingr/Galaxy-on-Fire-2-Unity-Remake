@@ -263,7 +263,6 @@ namespace GoF2Remake.UI
             }
             // Lines fade out a while after they came in (all shown while typing).
             float now = Time.unscaledTime;
-            bool shown = open;
             foreach (var child in log.Children())
             {
                 if (!(child.userData is NetChat.Message m)) continue;
@@ -271,19 +270,7 @@ namespace GoF2Remake.UI
                 float a = open ? 1f : Mathf.Clamp01(1f - (age - ShowSeconds) / FadeSeconds);
                 child.style.opacity = a;
                 child.style.display = a > 0f ? DisplayStyle.Flex : DisplayStyle.None;
-                if (a > 0f) shown = true;
-            }
-            // The flight HUD's key hints sit under the chat on the left: hidden while it shows (they drew through it even
-            // with the chat later in the hierarchy).
-            if (hints == null && box.parent != null) hints = box.parent.Q(className: "hints");
-            if (hints != null && shown != hintsHidden)
-            {
-                hintsHidden = shown;
-                hints.style.visibility = shown ? new StyleEnum<Visibility>(Visibility.Hidden) : new StyleEnum<Visibility>(StyleKeyword.Null);
             }
         }
-
-        VisualElement hints;
-        bool hintsHidden;
     }
 }

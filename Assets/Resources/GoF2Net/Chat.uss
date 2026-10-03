@@ -1,5 +1,5 @@
-/* Remake: the lines (full width, no gaps), the tab and the input row are nearly opaque, and the flight HUD's key hints
-   on the left (under the chat) are hidden while it shows (ChatView). */
+/* Remake: the lines (full width, no gaps), the tab and the input row are solid: the chat is drawn over the flight HUD's
+   key hints on the left and covers them while it shows (at even 95 % the bright hint text showed through). */
 
 .chat {
     position: absolute;
@@ -15,7 +15,7 @@
     font-size: 14px;
     letter-spacing: 1px;
     color: rgba(216, 236, 247, 0.75);
-    background-color: rgba(4, 8, 14, 0.95);
+    background-color: rgb(4, 8, 14);
     border-radius: 2px;
 }
 
@@ -26,7 +26,7 @@
     font-size: 17px;
     color: rgb(230, 240, 246);
     white-space: normal;
-    background-color: rgba(4, 8, 14, 0.95);
+    background-color: rgb(4, 8, 14);
     border-radius: 2px;
 }
 
@@ -57,7 +57,7 @@
     padding: 4px 10px;
     font-size: 14px;
     color: rgb(143, 216, 255);
-    background-color: rgba(4, 8, 14, 0.96);
+    background-color: rgb(4, 8, 14);
     border-width: 1px;
     border-color: rgba(143, 216, 255, 0.5);
     border-radius: 2px;
@@ -77,7 +77,7 @@
     padding: 5px 10px;
     font-size: 17px;
     color: rgb(255, 255, 255);
-    background-color: rgba(4, 8, 14, 0.96);
+    background-color: rgb(4, 8, 14);
     border-width: 1px;
     border-color: rgba(216, 236, 247, 0.3);
     border-radius: 2px;
