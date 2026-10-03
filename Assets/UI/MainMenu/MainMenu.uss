@@ -478,8 +478,13 @@
     margin: 0 0 12px 0;
 }
 
+/* The password takes what is left and shrinks (min-width 0): its placeholder's width pushed the player limit out of the
+   card with the wider Serpentine font. */
 .mp-host-row .mp-host-password {
     flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
     margin: 0 14px 0 0;
 }
 
@@ -490,6 +495,7 @@
 }
 
 .mp-max-players {
+    flex-shrink: 0;
     width: 64px;
     margin: 0;
 }
