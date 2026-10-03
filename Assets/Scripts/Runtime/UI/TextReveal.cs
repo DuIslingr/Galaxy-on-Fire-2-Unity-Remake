@@ -538,6 +538,10 @@ namespace GoF2Remake.UI
                 list.Add((speaker.Trim(), Person));
                 foreach (var part in speaker.Split(' ')) if (part.Length >= 3 && char.IsUpper(part[0])) list.Add((part, Person));
             }
+            // Multiplayer: the session's pilots are people too (a server dialog's %player%, other players named in it).
+            if (GoF2Remake.Multiplayer.NetGame.Active)
+                foreach (var p in GoF2Remake.Multiplayer.NetPlayer.All)
+                    if (p != null && p.IsSpawned && p.DisplayName.Trim().Length >= 2) list.Add((p.DisplayName.Trim(), Person));
             list.AddRange(Names());
             string lowerPage = page.ToLowerInvariant();
             foreach (var (name, kind) in list)
