@@ -131,10 +131,11 @@ namespace GoF2Remake.World
             playerSpeed = 0f;
             cam.LookAt(new Vector3(1500, 1600, -3000), Player);
             campaign.Fade(true, Color.black, 5000f, fromOpaque: true);
-            // Index 1 plays no music of its own: MGame::OnRelease only stops the FX categories, so 141 (Space_Battle_Medium,
-            // started by index 0's state 7 after the time jump) plays on through the rescue (the radar never runs here to
-            // change it). The scene reload stopped it, so it starts again with the level.
-            campaign.PlayMusic(assets?.timeShift, true);
+            // Index 0's state 16 (and its skip) sets Globals::switch_to_target_setting before the new level, so
+            // MGame::OnInitialize calls playMusicAndFadeOutCurrent(1): 141 stops and the system race's space track plays
+            // (DAT_00252010; Mido: 137 Space_Nocombat_Midorianer). No campaign-1 rule there: the radar's IntroAtmo for
+            // campaign 1 never runs, the cutscene flag stays set.
+            campaign.PlayMusic(level.Traffic != null ? level.Traffic.RaceSpaceMusic() : assets?.timeShift, true);
             Step = 0;
         }
 

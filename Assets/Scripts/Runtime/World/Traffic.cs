@@ -890,6 +890,9 @@ namespace GoF2Remake.World
         /// <summary>The supernova system (27) before campaign 0x9e: its own calm music (148).</summary>
         bool SupernovaCalm => !Session.FreePlay && Session.CampaignMission < 0x9e && (db.Stations.Find(s => s.index == StationIndex)?.system ?? -1) == 27;
 
+        /// <summary>DAT_00252010[race]: the system race's space track (Globals::playMusicAndFadeOutCurrent(1)).</summary>
+        public AudioClip RaceSpaceMusic() => assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null;
+
         /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
         /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before
         /// 0x6a) / 2242 or else 148, the deep science orbits (10 / 100) 152, else the system race's (DAT_00252010).</summary>
