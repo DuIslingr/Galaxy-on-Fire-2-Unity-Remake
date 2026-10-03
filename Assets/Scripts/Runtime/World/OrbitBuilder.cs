@@ -26,14 +26,15 @@ namespace GoF2Remake.World
 
         // ---- sky, light, fog ---------------------------------------------------------------------------------
 
-        public static void SetupSky(OrbitLayout layout, float ambientIntensity = 1f)
+        public static void SetupSky(OrbitLayout layout, float ambientIntensity = 1f, int nebulaOverride = -1)
         {
             var template = Resources.Load<Material>("GoF2Sky/SpaceSky");
             if (template == null) { Debug.LogWarning("OrbitBuilder: run GoF2 > Bake Space Skies"); return; }
             var sky = new Material(template) { name = "SpaceSky (runtime)" };
             int stars = layout.systemIndex >= 0 ? layout.systemIndex % 3 : 2;   // alien/void: stars_002
             sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{stars:000}"));
-            sky.SetTexture("_Nebula", Resources.Load<Cubemap>($"GoF2Sky/nebula_{layout.systemTexture:000}"));
+            int nebula = nebulaOverride >= 0 ? nebulaOverride : layout.systemTexture;   // the prologue's belt: nebula 3
+            sky.SetTexture("_Nebula", Resources.Load<Cubemap>($"GoF2Sky/nebula_{nebula:000}"));
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
             sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(SkyRotation(layout))));
             RenderSettings.skybox = sky;

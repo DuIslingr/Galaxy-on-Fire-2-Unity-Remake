@@ -219,6 +219,9 @@ namespace GoF2Remake.World
                 return;
             }
             bool ringOrbit = System.Array.IndexOf(RingStations, stationIndex) >= 0;
+            // StarSystem::StarSystem 0x15c89a: mission 0 (the prologue and the main menu's backdrop, Status::resetGame) halves the
+            // orbit planet (before the size overrides by texture, which replace it).
+            bool missionZero = (Session.FreePlay ? 20 : Session.CampaignMission) == 0;
             foreach (int stIdx in sys.stations)
             {
                 var st = db.Stations.Find(s => s.index == stIdx);
@@ -227,6 +230,7 @@ namespace GoF2Remake.World
                 if (stIdx == stationIndex)
                 {
                     int s = rnd.NextInt(20000) + 20000;
+                    if (missionZero) s = (int)(s * 0.5f);
                     if (!ringOrbit)
                     {
                         if (t < 18 && ((1 << t) & 0x21840) != 0) s = rnd.NextInt(15000) + 35000;

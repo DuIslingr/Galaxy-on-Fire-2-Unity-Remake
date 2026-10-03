@@ -333,7 +333,7 @@ namespace GoF2Remake.World
                 case 9:
                 {
                     // Out of the belt: the intro sky and planet switch, the asteroids gone; the ship at the origin.
-                    if (assets != null && assets.introSkyAfterJump != null) { RenderSettings.skybox = assets.introSkyAfterJump; DynamicGI.UpdateEnvironment(); }
+                    level.RestoreOrbitSky();   // Level::switchSkyboxForIntro: skybox_009, the system's own sky
                     level.Backdrop?.SwitchOrbitPlanetForIntro();
                     if (level.Asteroids != null) Object.Destroy(level.Asteroids.gameObject);
                     Player.SetPositionAndRotation(Vector3.zero, Quaternion.LookRotation(Dir(new Vector3(0, 0, -1)), Vector3.up));

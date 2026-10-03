@@ -163,8 +163,9 @@ namespace GoF2Remake.World
             foreach (var p in planets)
             {
                 if (!p.orbitPlanet) continue;
+                // StarSystem::switchPlanetForIntro also doubles the scaling, but StarSystem::render sets the orbit planet's
+                // scale to +0x58 + zoom every frame (0x15de6c), so the x2 never shows: the size stays.
                 if (mat != null) p.t.GetComponent<MeshRenderer>().sharedMaterial = mat;
-                p.scale *= 2f;
             }
         }
 

@@ -65,6 +65,9 @@ namespace GoF2Remake.World
         public float planetLightIntensity = 1f;
         public float ambientIntensity = 1f;
 
+        /// <summary>The orbit's own sky (Level::switchSkyboxForIntro: the prologue's time jump, nebula 9 = Mido's).</summary>
+        public void RestoreOrbitSky() => OrbitBuilder.SetupSky(Layout, ambientIntensity);
+
         public OrbitLayout Layout { get; private set; }
         public ShipController Player { get; private set; }
         public WeaponSystem Weapons { get; private set; }
@@ -193,8 +196,11 @@ namespace GoF2Remake.World
             else SpawnNetworkAsteroids(NetGame.OrbitSeed(station));
             if (prologue && Story.Index == 0)
             {
-                var story = StoryAssets.Load();
-                if (story != null && story.introSky != null) { RenderSettings.skybox = story.introSky; DynamicGI.UpdateEnvironment(); }
+                // Level::createSpace: the belt's sky is nebula 3 (skybox_003) under the orbit's stars and sky rotation;
+                // StarSystem::StarSystem (Level type 3, mission 0): the orbit planet is planet_001_big until the time jump.
+                OrbitBuilder.SetupSky(Layout, ambientIntensity, 3);
+                var own = Layout.planets.Find(p => p.isOrbitPlanet);
+                if (own != null) own.texture = "planet_001_big";
             }
             orbitInfo = Session.ArrivedBySystemJump;
             Session.ArrivedBySystemJump = false;
