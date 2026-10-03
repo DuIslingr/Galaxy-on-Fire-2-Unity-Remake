@@ -568,6 +568,7 @@ namespace GoF2Remake.World
             ctrl.ApplyStats();
 
             PlayerHull.FitCamera(root.transform, model.transform, chase, farClip);
+            Weapons?.Rebuild(db, shipIndex, Session.Equipment);   // the new hull's mounts (none for 13 / 14 / 15 / capital ships)
 
             foreach (var ex in root.GetComponents<ShipExhaust>()) Destroy(ex);
             if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, shipIndex);   // a freighter / capital ship: none

@@ -190,6 +190,18 @@ namespace GoF2Remake.Flight
             GuidedRocket = null;
         }
 
+        /// <summary>Remake debug (SpaceLevel.SwapPlayerShip): the guns again on another hull's mounts, the old ones' visuals,
+        /// loops and pools gone (a swapped hull kept firing from the previous ship's mounts).</summary>
+        public void Rebuild(Database db, int shipIndex, IList<ItemStack> equipment)
+        {
+            StopLoops();
+            foreach (var r in rigs) if (r.loop != null) Destroy(r.loop);
+            rigs.Clear();
+            if (fxRoot != null) Destroy(fxRoot.gameObject);
+            Setup(db, shipIndex, equipment);
+            Owner = owner;
+        }
+
         /// <summary>Level::createPlayer: one gun per equipped primary/secondary item on the ship's mounts.</summary>
         public void Setup(Database db, int shipIndex, IList<ItemStack> equipment)
         {
@@ -308,7 +320,7 @@ namespace GoF2Remake.Flight
                 if (!r.gun.isSecondary || r.gun.itemIndex != SelectedSecondary || r.stack == null || r.stack.amount <= 0) continue;
                 if (r.gun.kind == Gun.Kind.Sentry && !SentryGun.CanDeploy) return false;   // Level+0x6c > 2: refused, no cost
                 if (Cheats.NoSecondaryCooldown) r.gun.reloadAcc = r.gun.reloadMs + 1f;   // remake debug: reloaded at once
-                int b = r.gun.TryFire(FirePose);
+                int b = Fire(r.gun);
                 if (b < 0) continue;
                 if (r.gun.kind == Gun.Kind.Sentry)
                 {
@@ -370,7 +382,7 @@ namespace GoF2Remake.Flight
                 var gun = r.gun;
                 if (!gun.isSecondary && primaryHeld)
                 {
-                    int b = gun.TryFire(FirePose);
+                    int b = Fire(gun);
                     if (b >= 0) OnShot(r, Sounds(r));
                 }
                 gun.Update(dtMs, Target.All, homing);
@@ -420,6 +432,17 @@ namespace GoF2Remake.Flight
                 if (shipController == null) shipController = GetComponent<ShipController>();
                 return shipController != null && shipController.visualModel != null ? shipController.visualModel : transform;
             }
+        }
+
+        /// <summary>A shot from the mount on the banked model (FirePose: the wings' muzzles through a turn), flying along the
+        /// ship's own heading: PlayerEgo::shoot -> Player::shoot passes the unbanked Player matrix to Gun::shootAt, so the
+        /// bullets keep to the crosshair (taking the tilted model's heading put them 8-16 deg off the nose while pitching).</summary>
+        int Fire(Gun g)
+        {
+            var pose = FirePose;
+            if (pose == transform) return g.TryFire(transform);
+            var origin = pose.position + pose.rotation * g.mountLocal - transform.rotation * g.mountLocal;
+            return g.TryFire(origin, transform.rotation);   // TryFire adds rotation * (mountLocal + the forward offset) again
         }
 
         void OnShot(Rig r, bool sound = true)

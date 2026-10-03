@@ -221,9 +221,13 @@ namespace GoF2Remake.Flight
             if (t == null) return;
             if (beamMs <= 0f) { if (t.gameObject.activeSelf) t.gameObject.SetActive(false); return; }
             beamMs -= dtMs;
-            var from = ship != null ? ship.TransformPoint(gun.mountLocal) : gun.bullets[0].position;
-            // BeamGun::update aims the beam every frame: at the locked target while it lives, else straight ahead. Kept at
-            // its fire-time direction it trailed off the nose through a turn (the beam shows for a second per shot).
+            // BeamGun::update: at ship + R * (mount + (0, 0, -100)) when the gun has a mount (5 m behind it).
+            var from = ship != null ? ship.TransformPoint(gun.mountLocal == Vector3.zero ? Vector3.zero
+                                                          : gun.mountLocal + new Vector3(0f, 0f, -100f * Gun.MetersPerUnit))
+                                    : gun.bullets[0].position;
+            // Remake: re-aimed every frame, at the locked target while it lives, else straight ahead. The original keeps the
+            // fire-time direction and length (Gun::shootAt writes +0x8c / +0x90 once; BeamGun::update only reads them), so
+            // its beam trailed off the nose through a turn for the second it shows.
             var dir = gun.BeamDir.sqrMagnitude > 1e-9f ? gun.BeamDir : Vector3.forward;
             float length = gun.BeamLengthUnits;
             var target = gun.BeamTarget;
