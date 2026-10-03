@@ -897,7 +897,10 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   Linux: the terminal): joins / leaves with the client ids,
   each player's moves, chat; commands help, status, list, say (a global chat line from "Server", `NetState.ServerChat`),
   kick (`NetGame.Kick`: the reason is the player's popup), stop (`NetGame.StopServer`: the goodbye, then quit; Ctrl+C
-  and closing the window too). Verified: the Windows build headless with the Editor as the client (join, chat, say,
+  and closing the window too). In its own console window (Windows) or on a terminal (Linux) the input line is edited by
+  `ConsoleInput` (keys one at a time: `WinConsole.RawInput` / `ReadKey`, `Console.ReadKey`; a "> " prompt, log lines above
+  it): Tab completes and cycles the command names (Shift+Tab back, nothing typed: all), Up / Down the history, Esc clears;
+  piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Verified: the Windows build headless with the Editor as the client (join, chat, say,
   kick, stop; over Relay, listed, with a password; the console window, no menu).
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.

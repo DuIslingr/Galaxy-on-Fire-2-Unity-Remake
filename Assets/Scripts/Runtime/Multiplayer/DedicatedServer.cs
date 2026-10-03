@@ -21,6 +21,8 @@
 // unless its output is redirected to a file or pipe (or -noconsole); the log is mirrored into that window (Unity prints
 // its log only to a standard output it starts with). Linux uses the terminal's stdin / stdout (-logFile - prints the log
 // there). Ctrl+C or closing the window stops the server like "stop": the players hear why first (NetGame.StopServer).
+// In its own console window (Windows) or on a terminal (Linux) the input line is edited by ConsoleInput: Tab completes
+// and cycles the command names (CommandNames), Up / Down the lines run before; piped input is read line by line.
 
 using System;
 using System.Collections.Concurrent;
@@ -40,6 +42,8 @@ namespace GoF2Remake.Multiplayer
         public const string EnvironmentSwitch = "GOF2_SERVER";
         const string ServerName = "Server";
         const float TrackSeconds = 1f;
+        /// <summary>The commands Tab completes in the console (ConsoleInput), in help's order.</summary>
+        static readonly string[] CommandNames = { "help", "status", "list", "say", "kick", "stop" };
 
         /// <summary>This process runs as a dedicated server (-server, or GOF2_SERVER set).</summary>
         public static bool Enabled { get; private set; } = Detect();
@@ -336,7 +340,12 @@ namespace GoF2Remake.Multiplayer
 
         static void Write(string text)
         {
-            try { lock (console) console.WriteLine(text); } catch (Exception) { }
+            try
+            {
+                if (ConsoleInput.Active) ConsoleInput.WriteLine(text);   // above the line being typed
+                else lock (console) console.WriteLine(text);
+            }
+            catch (Exception) { }
         }
 
         /// <summary>Every log message on the console, with its time (errors and exceptions with their first trace line).</summary>
@@ -350,6 +359,39 @@ namespace GoF2Remake.Multiplayer
             }
             Write(line);
         }
+
+        /// <summary>The console's own line editing (Tab completion): only in this server's console window (Windows) or on a
+        /// terminal (Linux), not with piped input or output; false = the plain line reader.</summary>
+        static bool StartLineEditing(bool ownWindow)
+        {
+            try
+            {
+#if UNITY_STANDALONE_WIN
+                if (!ownWindow || !WinConsole.RawInput()) return false;
+                ConsoleInput.Start(WinConsole.ReadKey, console, l => commands.Enqueue(l), CommandNames, WinConsole.EnableVt());
+#else
+                if (Console.IsInputRedirected || Console.IsOutputRedirected) return false;
+                _ = Console.KeyAvailable;   // throws without a terminal
+                ConsoleInput.Start(ReadTerminalKey, console, l => commands.Enqueue(l), CommandNames, true);
+#endif
+                return true;
+            }
+            catch (Exception) { return false; }
+        }
+
+#if !UNITY_STANDALONE_WIN
+        static ConsoleInput.Key? ReadTerminalKey()
+        {
+            var k = Console.ReadKey(true);
+            return new ConsoleInput.Key
+            {
+                character = k.KeyChar,
+                enter = k.Key == ConsoleKey.Enter, backspace = k.Key == ConsoleKey.Backspace, escape = k.Key == ConsoleKey.Escape,
+                tab = k.Key == ConsoleKey.Tab, up = k.Key == ConsoleKey.UpArrow, down = k.Key == ConsoleKey.DownArrow,
+                shift = (k.Modifiers & ConsoleModifiers.Shift) != 0,
+            };
+        }
+#endif
 
         void OpenConsole()
         {
@@ -396,6 +438,7 @@ namespace GoF2Remake.Multiplayer
                     Application.logMessageReceivedThreaded += Mirror;
                 }
             }
+            if (input != null && console != null && StartLineEditing(mirror)) return;
             if (input != null)
             {
                 var reader = new StreamReader(input, Encoding.UTF8);
