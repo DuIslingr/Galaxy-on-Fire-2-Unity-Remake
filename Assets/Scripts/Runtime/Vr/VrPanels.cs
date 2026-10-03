@@ -24,6 +24,7 @@ namespace GoF2Remake.Vr
             public GameObject quad;
             public Material material;
             public Rect crop = new Rect(0f, 0f, 1f, 1f);
+            public PanelRenderer renderer;
         }
 
         readonly Transform screen;
@@ -51,7 +52,12 @@ namespace GoF2Remake.Vr
             if ((scanTimer -= Time.unscaledDeltaTime) > 0f) return;
             scanTimer = 0.5f;
             foreach (var r in Object.FindObjectsByType<PanelRenderer>())
-                if (r != null && r.panelSettings != null && !entries.Exists(e => e.settings == r.panelSettings)) Add(r.panelSettings);
+            {
+                if (r == null || r.panelSettings == null) continue;
+                var known = entries.Find(e => e.settings == r.panelSettings);
+                if (known == null) { Add(r.panelSettings); known = entries[entries.Count - 1]; }
+                if (known.renderer == null) known.renderer = r;
+            }
             entries.RemoveAll(e => e.settings == null);
             foreach (var e in entries)
                 if (e.quad != null) e.quad.transform.localPosition = new Vector3(e.crop.center.x - 0.5f, e.crop.center.y - 0.5f, -0.001f * Order(e));
@@ -140,6 +146,38 @@ namespace GoF2Remake.Vr
             e.quad.transform.localScale = new Vector3(uv.width, uv.height, 1f);
             e.material.SetTextureScale("_BaseMap", uv.size);
             e.material.SetTextureOffset("_BaseMap", uv.position);
+        }
+
+        /// <summary>A UI element (not a full-screen backdrop) is under (u, v) of the screen: the laser clicks the UI there,
+        /// else it points past the screen into the world (VrStation: the ship, the visitors).</summary>
+        public bool UiAt(Vector2 uv)
+        {
+            foreach (var e in entries)
+            {
+                var root = e.settings != null ? VisualTreeOf(e.settings) : null;
+                var panel = root != null ? root.panel : null;
+                if (panel == null || !e.quad.activeInHierarchy) continue;
+                // Inside this panel's shown part only (the cropped canopy HUD).
+                if (!e.crop.Contains(uv)) continue;
+                var size = panel.visualTree.layout.size;
+                if (size.x <= 0f || size.y <= 0f) continue;
+                var picked = panel.Pick(new Vector2(uv.x * size.x, (1f - uv.y) * size.y));
+                if (picked == null || picked == panel.visualTree) continue;
+                var b = picked.worldBound;
+                if (b.width > size.x * 0.9f && b.height > size.y * 0.9f) continue;   // a full-screen layer (gesture zone, backdrop)
+                return true;
+            }
+            return false;
+        }
+
+        // PanelSettings' runtime panel root (internal: PanelSettings.visualTree), for picking under the laser.
+        static readonly System.Reflection.PropertyInfo visualTreeProperty =
+            typeof(PanelSettings).GetProperty("visualTree", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+
+        static VisualElement VisualTreeOf(PanelSettings settings)
+        {
+            try { return visualTreeProperty != null ? visualTreeProperty.GetValue(settings) as VisualElement : null; }
+            catch (System.Exception) { return null; }
         }
 
         /// <summary>The screen's aspect (the window's).</summary>

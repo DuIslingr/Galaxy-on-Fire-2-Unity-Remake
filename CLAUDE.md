@@ -1063,8 +1063,14 @@ Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF
   right, the secondary plate centre, the control hints on the left console). The laser works in flight only while
   `Navigation.InputHalted` (a menu, conversation or map; else the trigger fires). `VrRig.DebugLook` fixes the simulation's
   look for tests.
-- To come: standing beside the hangar pad (grab the ship with the
-  laser to turn it), standing in the bar (visitors face you, picked by the laser), a grabbable stick and throttle option.
+- **Station** (`StationLevel.VrCamera`, `VrStation`): standing, still (no drift, sway or intro). The hangar: on the floor
+  between the original camera's spot and the ship, facing it, the eyes 1.7 m above the hull's bottom, 5 m past its radius
+  (the ships are ~60 m across: they tower over you); the bar: the original's view point B, level; the visitors turn to the
+  head (`UpdateBillboards`, upright). The pointer past the UI (`VrRig.WorldPointer`: `VrPanels.UiAt` = a UI element under
+  it, not a full-screen layer) picks a visitor (a 0.45 m capsule feet-head; the trigger / a click opens their chat,
+  `StationLevel.VisitorPicked` -> `LoungePanel.OpenChat`), and with a headset the grip on the ship grabs it: pulling the
+  hand right / left turns it (4 rad per metre along the head's right), letting go flings it (`FlingShip`).
+- To come: a grabbable stick and throttle option.
 
 ## Recovered facts already implemented
 

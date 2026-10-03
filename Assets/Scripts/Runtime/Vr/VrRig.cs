@@ -50,6 +50,9 @@ namespace GoF2Remake.Vr
 
         /// <summary>The headset's camera (null outside VR).</summary>
         public Camera Eye => eye;
+        /// <summary>The right controller's position (VrStation: grabbing the ship).</summary>
+        public Vector3 RightHandPosition => rightHand != null ? rightHand.position : head.position;
+
         /// <summary>The floating screen (the UI quads' frame).</summary>
         public Transform Screen => screen;
 
@@ -135,6 +138,7 @@ namespace GoF2Remake.Vr
             mapMaterial = VrPanels.ScreenMaterial(3050);
             mapScreen.GetComponent<MeshRenderer>().sharedMaterial = mapMaterial;
             mapScreen.gameObject.SetActive(false);
+            if (!flight && FindAnyObjectByType<World.StationLevel>() != null) gameObject.AddComponent<VrStation>().Init(this);
             if (flight)
             {
                 var cockpit = new GameObject("VR Cockpit");
@@ -260,23 +264,61 @@ namespace GoF2Remake.Vr
             eye.backgroundColor = open ? Color.black : eyeBackground;
         }
 
-        /// <summary>The laser (a headset): from the right controller to the screen; the hit drives VrPad's virtual mouse.</summary>
+        /// <summary>The pointer's ray past the UI into the world this frame (VrStation: the ship, the visitors), null = on the
+        /// UI or nothing to point at.</summary>
+        public Ray? WorldPointer { get; private set; }
+        /// <summary>The pointer's select this frame: the right trigger (a headset) or the left mouse button (the simulation).</summary>
+        public bool SelectPressed { get; private set; }
+        bool selectWasDown;
+
+        /// <summary>The laser to 'point' (VrStation, after the rig: a visitor or the ship under it).</summary>
+        public void ShowLaserTo(Vector3 point)
+        {
+            if (laser == null || rightHand == null) return;
+            laser.enabled = true;
+            laser.SetPosition(0, rightHand.position);
+            laser.SetPosition(1, point);
+        }
+
+        /// <summary>The pointer: a headset's right controller (its laser), or the simulation's mouse through the eye. Over a UI
+        /// element on the screen it is the UI's (VrPad's virtual mouse, the trigger clicks); elsewhere it points into the world.
+        /// In flight only while a menu, conversation or map halts the flight controls (else the trigger fires).</summary>
         void UpdatePointer()
         {
-            Vector2 uv = default;
-            float distance = 0f;
-            if (!VrMode.Headset || rightHand == null) return;
-            var ray = new Ray(rightHand.position, rightHand.forward);
-            // In flight the trigger fires: the laser only while a menu, conversation or map halts the flight controls.
-            bool hit = (!flight || Flight.Navigation.InputHalted) && HitScreen(ray, out uv, out distance);
-            laser.enabled = hit;
-            if (hit)
+            WorldPointer = null;
+            bool down;
+            Ray ray;
+            if (VrMode.Headset)
             {
+                if (rightHand == null) return;
+                ray = new Ray(rightHand.position, rightHand.forward);
+                down = VrPad.RightTrigger > 0.6f;
+            }
+            else
+            {
+                var mouse = Mouse.current;
+                if (mouse == null) return;
+                ray = eye.ScreenPointToRay(mouse.position.ReadValue());
+                down = mouse.leftButton.isPressed;
+            }
+            SelectPressed = down && !selectWasDown;
+            selectWasDown = down;
+            if (laser != null) laser.enabled = false;
+            if (flight && !Flight.Navigation.InputHalted) { VrPad.SetPointer(false, default, false, 0f); return; }
+            bool onScreen = HitScreen(ray, out Vector2 uv, out float distance);
+            bool ui = onScreen && panels.UiAt(uv);
+            if (ui && laser != null)
+            {
+                laser.enabled = true;
                 laser.SetPosition(0, ray.origin);
                 laser.SetPosition(1, ray.GetPoint(Mathf.Min(distance, LaserLength)));
             }
-            var pixel = new Vector2(uv.x * UnityEngine.Screen.width, uv.y * UnityEngine.Screen.height);
-            VrPad.SetPointer(hit, pixel, VrPad.RightTrigger > 0.6f, 0f);
+            if (!ui) WorldPointer = ray;
+            if (VrMode.Headset)
+            {
+                var pixel = new Vector2(uv.x * UnityEngine.Screen.width, uv.y * UnityEngine.Screen.height);
+                VrPad.SetPointer(onScreen, pixel, ui && down, 0f);
+            }
         }
 
         /// <summary>Where 'ray' hits the floating screen: (u, v) from its bottom-left corner.</summary>
