@@ -169,7 +169,7 @@ namespace GoF2Remake.Multiplayer
         {
             OpenConsole();
             startedAt = Time.unscaledTime;
-            Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version} (code {NetGame.Protocol})");
+            Log($"Galaxy on Fire 2 Unity Remake dedicated server, build {UI.BuildVersion.Full} (fingerprint {NetGame.Protocol})");
             if (!await StartSession(false))
             {
                 // Online without a network yet (the machine came up before its router): keep trying, like after a lost

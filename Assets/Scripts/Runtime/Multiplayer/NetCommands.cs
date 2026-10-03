@@ -10,6 +10,7 @@
 // This game:
 //   /help                      the commands this player can use
 //   /netstats                  shows / hides the network stats over the HUD (NetStats)
+//   /version                   this game's build (BuildVersion.Full: the version and the code's branch / commit)
 //   /pos                       your orbit and game coordinates (what /tp takes)
 // The server (the console without the "/"):
 //   /players                   everyone in the session: where they are, their ship, squad, admin (admins and the console:
@@ -104,6 +105,9 @@ namespace GoF2Remake.Multiplayer
                 description = () => X("mpCmdHelp", "lists the commands you can use") },
             new Command { name = "netstats", available = Everyone, local = _ => ToggleStats(),
                 description = () => X("mpCmdNetstats", "shows or hides the network stats (ping, packet loss, data in / out)") },
+            new Command { name = "version", available = Everyone,
+                local = _ => NetChat.Notice(string.Format(X("mpVersion", "This game: build {0}"), UI.BuildVersion.Full)),
+                description = () => X("mpCmdVersion", "this game's build (version and the code it was built from)") },
             new Command { name = "pos", available = Everyone, local = _ => NetChat.Notice(NetTeleport.Position()),
                 description = () => X("mpCmdPos", "your orbit and coordinates (what /tp takes)") },
 

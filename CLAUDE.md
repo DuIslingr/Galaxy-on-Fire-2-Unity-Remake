@@ -594,7 +594,10 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   `%LOCALAPPDATA%\Packages\JoppieToppie.GoF2Remake_*\TempState\UnityPlayer.log`. `BuildVersionStamp` also stamps the package version
   (yyyy.M.d.HHmm). Switching to UWP adds default WindowsStoreApps entries to every texture .meta: revert them.
 - **Version** (`BuildVersion`): the menu's credit line and the About page show "Galaxy on Fire 2 Unity Remake created with
-  <heart sprite> by JoppieToppie · <version>"; the version is the build's date and time (`yyyy.MM.dd.HHmm`), stamped into
+  <heart sprite> by JoppieToppie · <version>-b<branch>@<commit>" (`BuildVersion.Full`; the commit, "+dirty" with uncommitted
+  changes under Assets/Scripts / Resources / UI, from git at build time into `Resources/GoF2Build/BuildCommit.txt` by
+  `BuildVersionStamp`; also `/version` in the chat, the multiplayer window's foot and the dedicated server's first log
+  line); the version is the build's date and time (`yyyy.MM.dd.HHmm`), stamped into
   `PlayerSettings.bundleVersion` for each build by `BuildVersionStamp` (Editor) and put back afterwards, so
   `Application.version` and Android's versionName carry it; "editor" in the Editor.
 - **Update check** (remake, `UpdateCheck`): entering the main menu (after the title screen) asks GitHub once per run for the

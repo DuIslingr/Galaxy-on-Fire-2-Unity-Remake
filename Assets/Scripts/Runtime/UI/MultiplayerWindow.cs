@@ -167,6 +167,11 @@ namespace GoF2Remake.UI
             status.style.marginTop = 8;
             status.style.whiteSpace = WhiteSpace.Normal;
             window.Add(status);
+            // Which build this is (testers compare it): the version and the code's branch / commit.
+            var build = Text(string.Format(Localization.Extra("mpBuildLine", "build {0}"), BuildVersion.Full), 12, Dim);
+            build.style.alignSelf = Align.FlexEnd;
+            build.style.marginTop = 4;
+            window.Add(build);
             parent.Add(window);
             BuildTabs();
         }
