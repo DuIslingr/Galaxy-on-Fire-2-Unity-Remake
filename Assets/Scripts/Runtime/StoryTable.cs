@@ -137,5 +137,20 @@ namespace GoF2Remake.Data
         /// <summary>Not a character talking: 16 "Info" (the tutorial pages). The animated dialogue option leaves them plain
         /// (TextReveal); 17 "Story" (the narrator) types in like the characters.</summary>
         public static bool IsNarration(int speaker) => speaker == 16;
+
+        /// <summary>The Info pages that only teach the controls or the menus (the steering and lock briefing at 0, leaving the
+        /// station 1, mining 2, the autopilot 2, the hangar 5, waypoints / radar colours / fast-forward 7, the lounge 12,
+        /// jumpgates 17, the EMP bomb 21). Remake: left out while the tutorial popups are off (Settings.TutorialHints); the
+        /// Info pages that carry the story (the way to Kernstal 9, new coordinates 22, the tractor beam vendor 23, the
+        /// blueprint and target hints 57 / 58) always show.</summary>
+        static readonly HashSet<int> TutorialPages = new HashSet<int> { 1677, 1680, 1718, 1725, 1730, 1746, 1749, 1750, 1753, 1816, 1862, 1878 };
+
+        /// <summary>A conversation's pages as shown: without the controls tutorials while the tutorial popups are off.</summary>
+        public static List<DialoguePage> Shown(List<DialoguePage> pages)
+        {
+            if (pages == null || Settings.TutorialHints) return pages;
+            if (!pages.Exists(p => p.speaker == 16 && TutorialPages.Contains(p.text))) return pages;
+            return pages.FindAll(p => !(p.speaker == 16 && TutorialPages.Contains(p.text)));
+        }
     }
 }

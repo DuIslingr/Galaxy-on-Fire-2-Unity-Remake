@@ -783,8 +783,9 @@ namespace GoF2Remake.UI
             CloseHangar();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             var step = Story.Step;
-            if (step != null && step.success.Count > 0)
-                storyDialogue.Show(step.success, skipped =>
+            var success = step != null ? StoryTable.Shown(step.success) : null;
+            if (success != null && success.Count > 0)
+                storyDialogue.Show(success, skipped =>
                 {
                     // DialogueWindow::OnTouchEnd: skipping step 15's conversation starts the alarm too.
                     if (skipped && !Session.FreePlay && Session.CampaignMission == 0xf) StartVoidAlarm();

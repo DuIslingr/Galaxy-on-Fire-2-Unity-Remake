@@ -69,9 +69,10 @@ namespace GoF2Remake.World
             {
                 briefingChecked = true;
                 var step = Story.Step;
-                if (campaign != null && step != null && step.briefing.Count > 0 && Story.Mission.visible && !Story.Mission.won)
+                var briefing = step != null ? StoryTable.Shown(step.briefing) : null;
+                if (campaign != null && briefing != null && briefing.Count > 0 && Story.Mission.visible && !Story.Mission.won)
                 {
-                    Open(step.briefing, _ => campaign.ResetClock());
+                    Open(briefing, _ => campaign.ResetClock());
                     return;
                 }
             }
@@ -178,7 +179,8 @@ namespace GoF2Remake.World
                     if (s != null && s.IsFreighter && s.Target.Alive) { s.SetHull(9999999); s.frozen = false; s.SetMoving(true); }
             int reward = Story.Mission.reward;
             var step = Story.Step;
-            if (step != null && step.success.Count > 0) Open(step.success, _ => AfterSuccess(reward));
+            var success = step != null ? StoryTable.Shown(step.success) : null;
+            if (success != null && success.Count > 0) Open(success, _ => AfterSuccess(reward));
             else AfterSuccess(reward);
         }
 
