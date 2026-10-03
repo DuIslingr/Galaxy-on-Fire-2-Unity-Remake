@@ -228,23 +228,20 @@ namespace GoF2Remake.Flight
         }
 
         // The dodge bindings (the original: a touch swipe, FlightHud): GameControls' DodgeLeft / DodgeRight (no keyboard default:
-        // A / D are the PC version's held strafe), or (remake) a sideways flick of the controller's right stick while no
-        // binding uses it.
-        bool stickFlicked;
-
+        // A / D are the PC version's held strafe; the controller's right stick pushed left / right). A stick binding is left
+        // alone in free look, where the right stick turns the camera.
         void ReadDodgeInput()
         {
-            if (GameControls.DodgeLeft.WasPressedThisFrame()) RequestDodge(1);
-            if (GameControls.DodgeRight.WasPressedThisFrame()) RequestDodge(2);
-            var pad = Gamepad.current;
-            if (pad != null && !GoF2Remake.Multiplayer.NetChat.Typing && !GameControls.PadUses("<Gamepad>/rightStick"))
-            {
-                float x = pad.rightStick.ReadValue().x;
-                if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
-                if (freeLook != null && freeLook.FreeLookActive) x = 0f;   // the right stick turns the free-look camera
-                if (!stickFlicked && Mathf.Abs(x) > 0.8f) { stickFlicked = true; RequestDodge(x < 0f ? 1 : 2); }
-                else if (Mathf.Abs(x) < 0.3f) stickFlicked = false;
-            }
+            if (GameControls.DodgeLeft.WasPressedThisFrame() && !StickInFreeLook(GameControls.DodgeLeft)) RequestDodge(1);
+            if (GameControls.DodgeRight.WasPressedThisFrame() && !StickInFreeLook(GameControls.DodgeRight)) RequestDodge(2);
+        }
+
+        bool StickInFreeLook(UnityEngine.InputSystem.InputAction a)
+        {
+            if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
+            if (freeLook == null || !freeLook.FreeLookActive) return false;
+            var c = a.activeControl;
+            return c != null && c.path.Contains("Stick", System.StringComparison.OrdinalIgnoreCase);
         }
 
         bool brakeOverridden;

@@ -77,11 +77,12 @@ namespace GoF2Remake.Flight
                 new[] { "<Keyboard>/1", "<Keyboard>/3" }, padParts: new string[] { null, null });
             LevelOut = Button("levelOut", () => X("ctlLevelOut", "Level out"), "<Keyboard>/2", null, "<Gamepad>/buttonNorth");
             // The PC version's binding screen: 3350 / 3351 "Strafe left / right" (held, PlayerEgo::strafe). The dodge (the
-            // phone's swipe; the right stick's flick) has no keyboard default.
+            // phone's swipe) has no keyboard default; on the controller the right stick pushed left / right (a binding like
+            // any other, rebindable: it was a fixed flick that a right-stick-press binding switched off).
             StrafeLeft = Button("strafeLeft", () => Localization.Get(3350), "<Keyboard>/a", null, null);
             StrafeRight = Button("strafeRight", () => Localization.Get(3351), "<Keyboard>/d", null, null);
-            DodgeLeft = Button("dodgeLeft", () => X("ctlDodgeLeft", "Dodge left"), null, null, null);
-            DodgeRight = Button("dodgeRight", () => X("ctlDodgeRight", "Dodge right"), null, null, null);
+            DodgeLeft = Button("dodgeLeft", () => X("ctlDodgeLeft", "Dodge left"), null, null, "<Gamepad>/rightStick/left");
+            DodgeRight = Button("dodgeRight", () => X("ctlDodgeRight", "Dodge right"), null, null, "<Gamepad>/rightStick/right");
             // ---- weapons
             FirePrimary = Button("firePrimary", () => X("ctlFirePrimary", "Fire"), "<Keyboard>/space", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
             FireSecondary = Button("fireSecondary", () => X("ctlFireSecondary", "Fire secondary"), "<Keyboard>/r", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
@@ -243,15 +244,6 @@ namespace GoF2Remake.Flight
         public static bool IsBound(ControlRow row, BindSlot slot)
         {
             foreach (var p in Paths(row, slot)) if (!string.IsNullOrEmpty(p)) return true;
-            return false;
-        }
-
-        /// <summary>A controller binding uses this control (the right stick flick dodges only while nothing steers with it).</summary>
-        public static bool PadUses(string controlPath)
-        {
-            foreach (var row in rows)
-                foreach (var p in Paths(row, BindSlot.Pad))
-                    if (!string.IsNullOrEmpty(p) && p.StartsWith(controlPath, StringComparison.OrdinalIgnoreCase)) return true;
             return false;
         }
 
