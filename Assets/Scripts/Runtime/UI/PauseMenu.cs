@@ -227,7 +227,7 @@ namespace GoF2Remake.UI
             var db = level != null ? level.Database : null;
             Scroll();
             Text(T(555), "pause-heading");
-            bool story = !Session.FreePlay && !Session.StoryMission.IsEmpty && Session.StoryMission.visible && db != null;
+            bool story = !Session.FreePlay && Story.Step != null && Story.Step.objectiveText >= 0 && db != null;   // as MissionsWindow
             Text(story ? Story.ObjectiveText(db) : Localization.Get(174));
             Text(T(556), "pause-heading");
             var m = Freelance.Mission;

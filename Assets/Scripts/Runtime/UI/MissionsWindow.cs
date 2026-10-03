@@ -133,10 +133,12 @@ namespace GoF2Remake.UI
             missionsBody.EnableInClassList("missions-body--hidden", wantedShown);
             wantedBody.EnableInClassList("missions-body--hidden", !wantedShown);
             if (wantedShown) { FillWanted(); return; }
-            // Story: the objective text; no button once there is nothing to show.
-            bool story = !Session.FreePlay && !Session.StoryMission.IsEmpty && Session.StoryMission.visible;
+            // Story: the objective text of every step (MissionsWindow::init 0x17a604: text DAT_00258f68[index] below 0xa4,
+            // hidden and empty missions too: step 13's "find work in the Space Lounge" before the convoy); the map button only
+            // for a mission with a target to show.
+            bool story = !Session.FreePlay && Story.Step != null && Story.Step.objectiveText >= 0;
             storyText.text = story ? Story.ObjectiveText(db) : T(174);
-            Show(storyMap, story && Story.MapTarget >= 0);
+            Show(storyMap, story && !Session.StoryMission.IsEmpty && Session.StoryMission.visible && Story.MapTarget >= 0);
 
             var m = Freelance.Mission;
             bool active = Freelance.Active;

@@ -132,8 +132,9 @@ namespace GoF2Remake.UI
                     Image(m.icon, Tex(t.kind == Navigation.Kind.Waypoint ? (t.freelance ? "map_freelance" : "map_story") : wormhole ? "wormhole_icon" : "gate_icon"));
                     layer.Add(m.icon);
                 }
-                // Radar::draw: the gold story icon 0x454 next to the campaign target's planet (visible missions only).
-                if (t.kind == Navigation.Kind.Planet && !Session.FreePlay && Story.Mission.visible && t.station == Story.TargetStation)
+                // Radar::draw: the gold story icon 0x454 next to the campaign target's planet (visible missions only); remake:
+                // step 59's convoy stations too, like the map (Story.MapMarks; the original only marks the mission's own station).
+                if (t.kind == Navigation.Kind.Planet && !Session.FreePlay && Story.Mission.visible && Story.MapMarks(t.station))
                 {
                     m.story = new VisualElement { pickingMode = PickingMode.Ignore };
                     m.story.AddToClassList("nav-abs");
