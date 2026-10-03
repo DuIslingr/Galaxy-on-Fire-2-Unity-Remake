@@ -78,6 +78,40 @@ namespace GoF2Remake.Multiplayer
         {
             if (Current == this) Current = null;
             ClearNpcHooks();
+            if (watchedTraffic != null) watchedTraffic.ShipDied -= OnShipDied;
+        }
+
+        // ---- the raid news (NetNews) -------------------------------------------------------------------------
+
+        Traffic watchedTraffic;
+        readonly HashSet<ulong> raidKillers = new HashSet<ulong>();
+        int raidKills, raidRace = -1;
+
+        /// <summary>The orbit's traffic (made after Setup, or anew on a takeover): its deaths watched.</summary>
+        void WatchTraffic()
+        {
+            var t = level != null ? level.Traffic : null;
+            if (t == watchedTraffic) return;
+            if (watchedTraffic != null) watchedTraffic.ShipDied -= OnShipDied;
+            watchedTraffic = t;
+            if (t != null) t.ShipDied += OnShipDied;
+        }
+
+        /// <summary>A raider went down: who downed it (this player, or another one: Target.remoteKiller). Once none of the
+        /// orbit's raiders is left, the authority reports the raid's defenders to the server for the news.</summary>
+        void OnShipDied(NpcShip ship, bool byPlayer)
+        {
+            if (!Authority || ship == null || ship.Spec.group != NpcGroup.Raider || watchedTraffic == null) return;
+            if (byPlayer && NetPlayer.Local != null) raidKillers.Add(NetPlayer.Local.OwnerClientId);
+            else if (ship.Target.killedByRemote && ship.Target.remoteKiller != ulong.MaxValue) raidKillers.Add(ship.Target.remoteKiller);
+            else return;   // an NPC's kill (the station's fighters): theirs, not the players'
+            raidKills++;
+            raidRace = ship.Race;
+            if (watchedTraffic.Ships.Exists(s => s != ship && s.Spec.group == NpcGroup.Raider && !s.Gone && s.Target != null && s.Target.Alive)) return;
+            if (raidKills >= NetNews.MinDefenseKills && NetState.Instance != null && NetState.Instance.IsSpawned)
+                NetState.Instance.DefenseReportRpc(Station, raidRace, raidKills, new List<ulong>(raidKillers).ToArray());
+            raidKills = 0;   // a new wave is a new raid
+            raidKillers.Clear();
         }
 
         // ---- the NPCs and the other players (the authority's NpcShip hooks) --------------------------------------
@@ -314,6 +348,7 @@ namespace GoF2Remake.Multiplayer
             var state = NetState.Instance;
             if (state == null || !state.IsSpawned) return;
             if (!requestedList) { requestedList = true; state.RequestDestroyedRpc(Station); }
+            WatchTraffic();
             UpdateHeldAsteroids();
             // Two players arriving at once both found the orbit empty and built its traffic: the higher client id stands
             // down (its ships go, the other's stay), early in the visit only.

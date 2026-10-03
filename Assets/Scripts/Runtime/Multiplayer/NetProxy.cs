@@ -315,8 +315,9 @@ namespace GoF2Remake.Multiplayer
             bool hostile = by != null && World.NpcShip.HostileToRemote != null && World.NpcShip.HostileToRemote(ship, by.LocalTarget);
             ship.OnRemoteHit(shooter, (int)amount);
             ship.Target.killedByRemote = true;   // a freelance mission counts another player's kill as its player's
+            ship.Target.remoteKiller = shooter;  // and the raid news names them (NetOrbit)
             ship.Target.Damage(amount, true, hitVector);
-            if (ship.Target.Alive) ship.Target.killedByRemote = false;
+            if (ship.Target.Alive) { ship.Target.killedByRemote = false; ship.Target.remoteKiller = ulong.MaxValue; }
             if (!ship.Target.Alive) killer.Value = shooter;
             if (!ship.Target.Alive && NetOrbit.Current != null) KillCreditUpRpc(shooter, ship.Race, NetOrbit.Current.SystemRace, hostile);
         }

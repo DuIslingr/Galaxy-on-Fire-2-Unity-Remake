@@ -1101,6 +1101,16 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   it): Tab completes and cycles the command names (Shift+Tab back, nothing typed: all), Up / Down the history, Esc clears;
   piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Verified: the Windows build headless with the Editor as the client (join, chat, say,
   kick, stop; over Relay, listed, with a password; the console window, no menu).
+- **Sector news** (`NetNews`): the station ticker's multiplayer items, before the game's own (`StationMenu.SetupTicker`;
+  rebuilt when the strip wraps, `tickerNewsDirty`, and every minute for the ages). The server posts them and sends each to
+  everyone (`NetState.NewsRpc`), a joining player gets the last 15 (`SendAll` from `NetPlayer.OnNetworkSpawn`); the last 40
+  (3 days) kept in `news.json` with profiles. Kinds with a coloured "+++ KIND +++" kicker (BREAKING under 15 minutes old),
+  the item at the docked station in bold, its age: territory (claims, give-ups, lapses), war (siege declared / begun,
+  held), BREAKING a station taken, crews founded / disbanded, arena (a duel's score, a free-for-all's winner; no draws or
+  forfeits), defence (`NetOrbit` counts the raiders the players downed, `Target.remoteKiller`; when none is left the orbit's
+  authority sends `DefenseReportRpc`, 3+ kills, checked and once per orbit per 10 minutes; the Kaamo siege broken), new
+  pilots, and an admin's `/news <text | clear>` (GalNet). Player text is made tag-free (`NetNews.Safe`). Not tested in a
+  build yet.
 - **Web admin** (`WebAdmin`, a dedicated server started with `-web [port]` / `-webport N`, `-webbind ADDRESS` default
   127.0.0.1; the launchers' `WEBPORT` / `WEBBIND`; the operator guide in `SERVER.md`): a minimal HTTP/1.1 server on a
   `TcpListener` (works in the IL2CPP player) serving one page (`Resources/GoF2Server/WebAdmin.html`: Tailwind CSS 4's

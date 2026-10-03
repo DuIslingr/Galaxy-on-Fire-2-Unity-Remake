@@ -668,6 +668,7 @@ namespace GoF2Remake.Multiplayer
             NetArena.Reset();
             NetArenaClient.Reset();
             NetStats.Reset();
+            NetNews.Reset();
             Session.ResetNewGame();
             Session.Difficulty = Session.DifficultyNormal;   // every session plays on Normal (the shared stock, NPCs, rewards)
             Session.Economy = Economy.Android;               // and on one economy (the shared stock's prices)

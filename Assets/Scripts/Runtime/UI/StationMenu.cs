@@ -71,6 +71,9 @@ namespace GoF2Remake.UI
         float tickerX, tickerUnitWidth;
         bool tickerReady;
         string tickerSingle = "";
+        string tickerBase;          // the game's own items, rolled once per docking
+        bool tickerNewsDirty;       // the session's news changed: rebuilt when the strip wraps (no jump)
+        float tickerBuiltAt;
         VisualElement systemMenu, systemMain, systemSave;
         ScrollView saveSlotList;
         Button saveGameButton, mainMenuButton, systemClose, saveBack;
@@ -154,6 +157,8 @@ namespace GoF2Remake.UI
             hangarWindow = new HangarWindow(this, level, root);
             GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
             GoF2Remake.Multiplayer.NetStock.Changed += OnSharedStock;
+            GoF2Remake.Multiplayer.NetNews.Changed -= OnNews;
+            GoF2Remake.Multiplayer.NetNews.Changed += OnNews;
             infoWindow = new ItemInfoWindow(this, root);
             lounge = new LoungePanel(this, level, root);
             SetupTicker();
@@ -306,19 +311,24 @@ namespace GoF2Remake.UI
             Select(hangarButton);
         }
 
-        /// <summary>NewsTicker: built once per docking (ModStation::OnInitialize state 0x3c), main view only.</summary>
-        void SetupTicker()
+        /// <summary>NewsTicker: built once per docking (ModStation::OnInitialize state 0x3c), main view only. Multiplayer
+        /// (remake): the sector's own news first (NetNews: claims, sieges, raids, arena results ...); 'newsOnly' keeps
+        /// the game's items already rolled.</summary>
+        void SetupTicker(bool newsOnly = false)
         {
             tickerText = root.Q<Label>("tickerText");
             var st = level != null ? level.Station : null;
             bool shown = st != null && NewsTicker.ShownAt(st.index, st.system);
             root.EnableInClassList("ticker-off", !shown);
             if (!shown) return;
-            tickerSingle = NewsTicker.Build(level.Database, st.system, level.Layout.raceId) ?? "";
+            if (!newsOnly || tickerBase == null) tickerBase = NewsTicker.Build(level.Database, st.system, level.Layout.raceId) ?? "";
+            tickerSingle = GoF2Remake.Multiplayer.NetNews.Ticker(st.index) + tickerBase;
+            tickerNewsDirty = false;
+            tickerBuiltAt = Time.unscaledTime;
             tickerText.text = tickerSingle;
             tickerX = 0f;
             tickerReady = false;
-            tickerText.style.visibility = Visibility.Hidden;   // until it starts at the strip's right edge
+            if (!newsOnly) tickerText.style.visibility = Visibility.Hidden;   // until it starts at the strip's right edge
         }
 
         /// <summary>NewsTicker::update: x -= dt * 50 px/s. Remake: the strip is never empty: the news (one copy = the items +
@@ -346,7 +356,16 @@ namespace GoF2Remake.UI
                 return;
             }
             tickerX -= Time.unscaledDeltaTime * NewsTicker.ScrollPxPerSecond;
-            if (tickerX <= -tickerUnitWidth) tickerX += tickerUnitWidth;
+            if (tickerX <= -tickerUnitWidth)
+            {
+                tickerX += tickerUnitWidth;
+                // Multiplayer: new news, or the items' ages ("5 min ago") a minute old: rebuilt as the copy wraps.
+                if (tickerNewsDirty || (GoF2Remake.Multiplayer.NetGame.Active && Time.unscaledTime - tickerBuiltAt > 60f))
+                {
+                    SetupTicker(true);
+                    return;
+                }
+            }
             tickerText.style.left = tickerX;
         }
 
@@ -735,7 +754,20 @@ namespace GoF2Remake.UI
             if (level != null && level.Stock != null && level.Stock.station == station) hangarWindow?.StockChanged();
         }
 
-        void OnDestroy() => GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
+        void OnDestroy()
+        {
+            GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
+            GoF2Remake.Multiplayer.NetNews.Changed -= OnNews;
+        }
+
+        /// <summary>Multiplayer: the sector's news changed (NetNews): at once while the strip has nothing yet, else when it
+        /// wraps.</summary>
+        void OnNews()
+        {
+            if (tickerText == null) return;
+            if (tickerReady) tickerNewsDirty = true;
+            else SetupTicker(true);
+        }
 
         void StartVoidAlarm()
         {

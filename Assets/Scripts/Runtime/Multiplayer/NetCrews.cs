@@ -236,6 +236,7 @@ namespace GoF2Remake.Multiplayer
             Save();
             RefreshTags(me);
             Debug.Log($"Server: crew [{tag}] {name} created by {NameOf(me)}.");
+            NetNews.Post(NetNews.Kind.Crew, $"New crew in the sector: {NetNews.CrewName(tag, name)}, founded by {NetNews.Safe(NameOf(me))}");
             return string.Format(Localization.Extra("mpCrewCreated", "Crew [{0}] {1} created. /crew invite <pilot> to bring others in."), tag, name);
         }
 
@@ -333,6 +334,7 @@ namespace GoF2Remake.Multiplayer
             if (crew == null || crew.leader != me) return Localization.Extra("mpCrewNotLeader", "Only the crew's leader can do that.");
             TellCrew(crew, string.Format(Localization.Extra("mpCrewDisbanded", "The crew [{0}] {1} was disbanded."), crew.tag, crew.name));
             var members = new List<string>(crew.members);
+            int claimsBefore = list.claims.Count;
             list.crews.Remove(crew);
             list.claims.RemoveAll(c => c.crew == crew.id);   // its territory is free again (the bank goes with it)
             list.sieges.RemoveAll(s => s.attacker == crew.id || s.defender == crew.id);
@@ -341,6 +343,9 @@ namespace GoF2Remake.Multiplayer
             Save();
             foreach (var m in members) RefreshTags(m);
             Debug.Log($"Server: crew [{crew.tag}] {crew.name} disbanded.");
+            int freed = claimsBefore - list.claims.Count;
+            NetNews.Post(NetNews.Kind.Crew, $"{NetNews.CrewName(crew.tag, crew.name)} is no more"
+                + (freed > 0 ? $": {freed} station{(freed == 1 ? "" : "s")} up for grabs" : ""));
             return "";
         }
 
@@ -509,6 +514,7 @@ namespace GoF2Remake.Multiplayer
             RefreshHomes(crew);
             Debug.Log($"Server: [{crew.tag}] claimed {st.name}.");
             NetState.Instance?.Announce(string.Format(Localization.Extra("mpCrewClaimedNews", "[{0}] {1} claimed {2}."), crew.tag, crew.name, st.name));
+            NetNews.Post(NetNews.Kind.Territory, $"{NetNews.CrewName(crew.tag, crew.name)} plants its flag on {NetNews.Place(station)}", station);
             return "";
         }
 
@@ -524,6 +530,7 @@ namespace GoF2Remake.Multiplayer
             PublishClaims();
             RefreshHomes(crew);
             TellCrew(crew, string.Format(Localization.Extra("mpCrewUnclaimed", "Your crew gave up {0}."), StationName(held.station)));
+            NetNews.Post(NetNews.Kind.Territory, $"{NetNews.CrewName(crew.tag, crew.name)} pulls out of {NetNews.Place(held.station)}: the station is free", held.station);
             return "";
         }
 
@@ -615,6 +622,9 @@ namespace GoF2Remake.Multiplayer
                     RefreshHomes(crew);
                 }
                 Debug.Log($"Server: the claim on {StationName(c.station)} lapsed.");
+                NetNews.Post(NetNews.Kind.Territory, crew != null
+                    ? $"{NetNews.CrewName(crew.tag, crew.name)} abandoned {NetNews.Place(c.station)}: nobody docked there for {LapseDays} days"
+                    : $"{NetNews.Place(c.station)} is unclaimed again", c.station);
                 changed = true;
             }
             if (changed) { Save(); PublishClaims(); }
@@ -654,6 +664,8 @@ namespace GoF2Remake.Multiplayer
                 "[{0}] {1} besieges {2}, held by [{3}] {4}: it starts in {5} minutes and lasts {6}."),
                 crew.tag, crew.name, StationName(station), defender?.tag, defender?.name, SiegeDelaySeconds / 60, SiegeSeconds / 60));
             Debug.Log($"Server: [{crew.tag}] besieges {StationName(station)} ([{defender?.tag}]).");
+            NetNews.Post(NetNews.Kind.War, $"{NetNews.CrewName(crew.tag, crew.name)} declares war on {NetNews.CrewName(defender?.tag, defender?.name)}: "
+                + $"siege of {NetNews.Place(station)} in {SiegeDelaySeconds / 60} minutes", station);
             return "";
         }
 
@@ -696,6 +708,7 @@ namespace GoF2Remake.Multiplayer
                     changed = true;
                     NetState.Instance?.Announce(string.Format(Localization.Extra("mpSiegeStarts", "The siege of {0} has begun: [{1}] and [{2}] may fire at each other there."),
                         StationName(s.station), attacker.tag, list.crews.Find(c => c.id == s.defender)?.tag));
+                    NetNews.Post(NetNews.Kind.War, $"Fighting erupts at {NetNews.Place(s.station)}: [{NetNews.Safe(attacker.tag)}] against [{NetNews.Safe(list.crews.Find(c => c.id == s.defender)?.tag)}]", s.station);
                 }
                 int att = 0, def = 0;
                 foreach (var p in NetPlayer.All)
@@ -738,6 +751,9 @@ namespace GoF2Remake.Multiplayer
                 ? string.Format(Localization.Extra("mpSiegeTaken", "[{0}] {1} took {2} from [{3}]."), attacker?.tag, attacker?.name, StationName(s.station), defender?.tag)
                 : string.Format(Localization.Extra("mpSiegeHeld", "[{0}] held {1} against [{2}]."), defender?.tag, StationName(s.station), attacker?.tag));
             Debug.Log($"Server: the siege of {StationName(s.station)} is over: {(taken ? "taken" : "held")}.");
+            NetNews.Post(taken ? NetNews.Kind.Breaking : NetNews.Kind.War, taken
+                ? $"{NetNews.Place(s.station)} has fallen! {NetNews.CrewName(attacker?.tag, attacker?.name)} seizes it from [{NetNews.Safe(defender?.tag)}]"
+                : $"{NetNews.CrewName(defender?.tag, defender?.name)} holds {NetNews.Place(s.station)}: the [{NetNews.Safe(attacker?.tag)}] siege is broken", s.station);
             Save();
             PublishSieges();
         }

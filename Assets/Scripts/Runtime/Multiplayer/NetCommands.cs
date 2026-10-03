@@ -30,6 +30,7 @@
 //   /dialog [players] <speaker> : <text> [| page ...]   admins: the dialogue window with a story speaker's or a race's face
 //   /reward [players] <credits | item [amount]> [+ ...] [| title]   admins: a payout in the mission reward box
 //   /event <name | stop | list>  admins: runs an event script (NetEvents: game modes such as waves of enemies)
+//   /news <text | clear>       admins: a GalNet item on every station's news ticker (NetNews)
 //   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back (with profiles: the
 //                              master admin, NetModeration, kept on the profile)
 // A dedicated server with player profiles adds (their own handlers answer them): moderation by the profiles' roles
@@ -164,6 +165,8 @@ namespace GoF2Remake.Multiplayer
                 description = () => X("mpCmdReward", "admins: a mission payout (credits and / or items) in the reward box") },
             new Command { name = "event", usage = "<name | stop | list>", arg = Arg.Text, optional = true, available = () => LocalIsAdmin, allowed = IsAdmin,
                 run = NetEvents.Command, description = () => X("mpCmdEvent", "admins: runs an event script (game modes like waves), stops it or lists them") },
+            new Command { name = "news", usage = "<text | clear>", arg = Arg.Text, available = () => LocalIsAdmin, allowed = IsAdmin, run = News,
+                description = () => X("mpCmdNews", "admins: a GalNet item on every station's news ticker (\"clear\" empties the news)") },
             new Command { name = "mute", usage = "<players> [minutes]", arg = Arg.PlayerText, available = () => LocalIsAdmin, allowed = IsAdmin,
                 run = (a, by) => NetAdmin.Mute(a, by, true), description = () => X("mpCmdMute", "admins: blocks a player's chat (for the session or some minutes)") },
             new Command { name = "unmute", usage = "<players>", arg = Arg.Player, available = () => LocalIsAdmin, allowed = IsAdmin,
@@ -272,6 +275,21 @@ namespace GoF2Remake.Multiplayer
             if (by == null) return "";
             if (profiles && !NetProfiles.Enabled) return X("mpCmdNeedsProfiles", "That needs a dedicated server with player profiles.");
             return handler(by.OwnerClientId, $"/{name} {args}".Trim()) ?? "";
+        }
+
+        /// <summary>/news: an admin's item on the stations' tickers (NetNews), or "clear".</summary>
+        static string News(string args, NetPlayer by)
+        {
+            args = (args ?? "").Trim();
+            if (args.Equals("clear", StringComparison.OrdinalIgnoreCase))
+            {
+                NetNews.Clear();
+                Debug.Log($"Server: {IssuerName(by)} cleared the news.");
+                return X("mpNewsCleared", "The news is cleared.");
+            }
+            if (args.Length > NetNews.MaxTextLength) return string.Format(X("mpNewsLong", "At most {0} characters."), NetNews.MaxTextLength);
+            Debug.Log($"Server: {IssuerName(by)} posted news.");
+            return NetNews.Post(NetNews.Kind.Galnet, NetNews.Safe(args)) ? X("mpNewsPosted", "On every station's ticker now.") : X("mpNewsFailed", "Not posted.");
         }
 
         /// <summary>/assist: help a squadmate calling (NetDistress).</summary>

@@ -218,6 +218,7 @@ namespace GoF2Remake.Multiplayer
             name = $"NetPlayer {OwnerClientId}";
             if (IsServer) ship.OnValueChanged += (old, _) => PreviousShip = old;
             if (IsServer) SetStaffRole(NetModeration.RoleOfClient(OwnerClientId));   // signed in before the ship spawned
+            if (IsServer) NetNews.SendAll(OwnerClientId);   // the sector's recent news for their ticker
             if (IsOwner)
             {
                 Local = this;

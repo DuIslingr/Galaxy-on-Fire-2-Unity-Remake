@@ -133,6 +133,7 @@ namespace GoF2Remake.Multiplayer
             {
                 NetAdmin.Reset();
                 NetEvents.Reset();
+                NetNews.ServerStart();   // the saved news (a dedicated server with profiles)
                 seed.Value = pendingSeed;
                 dedicated.Value = pendingDedicated;
                 debugAllowed.Value = NetGame.HostAllowsDebug;
@@ -1137,6 +1138,12 @@ namespace GoF2Remake.Multiplayer
             ulong client = rpc.Receive.SenderClientId;
             if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Siege)) return;
             if (station != KaamoClub.Station || !NetGuard.InOrbit(client, station)) { NetRateLimit.Reject(client, $"a siege won at {station}"); return; }
+            // The news: everyone fighting there broke it.
+            var heroes = new List<string>();
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.IsSpawned && p.InSpace && p.Station == station) heroes.Add(p.DisplayName);
+            NetNews.Post(NetNews.Kind.Defense, $"{NetNews.Names(heroes)} {(heroes.Count == 1 ? "breaks" : "break")} the pirate siege of the Kaamo Club ({NetNews.Place(station)})",
+                         station, "kaamo", 1800f);
             foreach (var p in NetPlayer.All)
                 if (p != null && p.IsSpawned && p.OwnerClientId != client && p.InSpace && p.Station == station)
                     SiegeWonToRpc(RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
@@ -1144,6 +1151,49 @@ namespace GoF2Remake.Multiplayer
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void SiegeWonToRpc(RpcParams rpc = default) => World.KaamoSiege.Current?.OnRemoteWin();
+
+        // ---- the sector's news (NetNews) ----------------------------------------------------------------------
+
+        /// <summary>Server: a news item for everyone.</summary>
+        internal void BroadcastNews(string packed)
+        {
+            if (IsServer) NewsRpc(packed);
+        }
+
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
+        void NewsRpc(string packed) => NetNews.OnReceive(packed, false);
+
+        /// <summary>Server: a news item to one player ('reset': their list starts over first).</summary>
+        internal void SendNews(ulong client, string packed, bool reset)
+        {
+            if (IsServer) NewsToRpc(packed ?? "", reset, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void NewsToRpc(string packed, bool reset, RpcParams rpc = default) => NetNews.OnReceive(packed, reset);
+
+        /// <summary>An orbit's authority: its raiders are all down, 'killers' downed them (NetOrbit). Checked: the sender runs
+        /// that orbit, the pilots exist and are there, the numbers are sane; one item per orbit and raid (NetNews).</summary>
+        [Rpc(SendTo.Server)]
+        public void DefenseReportRpc(int station, int race, int kills, ulong[] killers, RpcParams rpc = default)
+        {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Kill)) return;
+            var from = NetSquad.Find(client);
+            if (from == null || !from.OrbitAuthority || !NetGuard.InOrbit(client, station) || NetArena.IsArenaOrbit(station)) return;
+            if (kills < NetNews.MinDefenseKills || kills > 60 || killers == null || killers.Length == 0 || killers.Length > 16)
+            {
+                NetRateLimit.Reject(client, $"a defence report of {kills} kills");
+                return;
+            }
+            var names = new List<string>();
+            foreach (ulong k in killers)
+            {
+                var p = NetSquad.Find(k);
+                if (p != null && p.Station == station && !names.Contains(p.DisplayName)) names.Add(p.DisplayName);
+            }
+            if (names.Count > 0) NetNews.Defended(station, race, kills, names);
+        }
 
         /// <summary>Its owner is done with a NetProxy / NetCrate (the ship left or died for good, the crate was taken). Only
         /// those: a client's own player object (or anything else) isn't its to remove.</summary>

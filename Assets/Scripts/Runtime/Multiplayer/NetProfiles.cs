@@ -273,6 +273,8 @@ namespace GoF2Remake.Multiplayer
                     newToken = AddDevice(account, device);
                     index.accounts.Add(account);
                     Debug.Log($"Server: new profile {account.id} for {(name.Length > 0 ? name : "client " + client)} ({index.accounts.Count} / {MaxProfiles}).");
+                    if (name.Length > 0)
+                        NetNews.Post(NetNews.Kind.Pilot, $"New pilot in the sector: {NetNews.Safe(NetGame.Clean(name))} registers at Var Hastra", -1, "newpilot", 120f);
                 }
                 else Debug.Log($"Server: client {client} plays as a guest: the profile limit ({MaxProfiles}) is reached.");
             }

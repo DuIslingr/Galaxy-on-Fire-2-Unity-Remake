@@ -221,6 +221,7 @@ The server's data folder is `ServerProfiles` in the game's data folder, or the f
 | `crews.json` | The crews, their banks, claims and sieges. |
 | `bans.json` | The bans. |
 | `server_settings.json` | The settings changed while the server ran. |
+| `news.json` | The sector news on the stations' tickers (the last 40 items, at most 3 days old). |
 | `admin_token.txt` | The token for `/claimadmin`. |
 
 Every file is written through a temporary file, and the previous version is kept as `.bak`. To back the server up,

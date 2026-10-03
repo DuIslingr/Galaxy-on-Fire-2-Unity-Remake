@@ -324,6 +324,22 @@ namespace GoF2Remake.Multiplayer
                 NetState.Instance?.ArenaEnd(p, m.id, sb.ToString());
             }
             Debug.Log($"Server: {(m.kind == Kind.Duel ? "duel" : "free-for-all")} #{m.id} over: {result.Replace('\n', ' ')}");
+            if (winner.HasValue && !forfeit) PostResult(m, winner.Value);
+        }
+
+        /// <summary>The news (NetNews): a duel's winner and score, a free-for-all's winner.</summary>
+        static void PostResult(Match m, ulong winner)
+        {
+            int Kills(ulong p) => m.kills.TryGetValue(p, out int k) ? k : 0;
+            string where = m.voids ? "the Void arena, Void fighters and all" : "the Void arena";
+            if (m.kind == Kind.Duel)
+            {
+                ulong loser = m.players.Find(p => p != winner);
+                if (loser == winner || !m.players.Contains(loser)) return;
+                NetNews.Post(NetNews.Kind.Arena, $"{NetNews.Safe(Name(winner))} defeats {NetNews.Safe(Name(loser))} {Kills(winner)}–{Kills(loser)} in a duel in {where}");
+            }
+            else
+                NetNews.Post(NetNews.Kind.Arena, $"{NetNews.Safe(Name(winner))} wins a {m.players.Count}-pilot free-for-all in {where} with {Kills(winner)} kills");
         }
 
         /// <summary>The match's state to its players (the HUD): phase, seconds left, the players with their kills.</summary>
