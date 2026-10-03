@@ -345,6 +345,11 @@ namespace GoF2Remake.Flight
 
         static InputActionRebindingExtensions.RebindingOperation operation;
         static int rebindEndFrame = -10;
+        static bool capturingPad;
+
+        /// <summary>A capture that takes nothing in this long ends by itself: the menus ignore every input while one waits,
+        /// so a player without the device it waits for (a keyboard cell picked with a controller or a tap) had no way out.</summary>
+        const float CaptureTimeoutSeconds = 10f;
 
         /// <summary>A key is being captured: the menus ignore their keys meanwhile (and on the frame it ends, so the
         /// captured key doesn't also act in the menu).</summary>
@@ -353,7 +358,9 @@ namespace GoF2Remake.Flight
 
         /// <summary>Captures the slot's binding (a composite slot part by part). 'prompt' gets the part being asked for
         /// ("up", or null for a single binding); 'done' runs once it ended (captured, cleared or cancelled). Esc (or the
-        /// controller's Menu) cancels, Backspace / Delete unbinds the slot.</summary>
+        /// controller's Menu) cancels, Backspace / Delete unbinds the slot. Another kind of input than the slot's also
+        /// cancels (a keyboard cell: the controller's Menu / B, a tap; a controller cell: a mouse click, a tap), and so does
+        /// waiting CaptureTimeoutSeconds.</summary>
         public static void Rebind(ControlRow row, BindSlot slot, Action<string> prompt, Action done)
         {
             CancelRebind();
@@ -374,7 +381,9 @@ namespace GoF2Remake.Flight
             var op = row.action.PerformInteractiveRebinding(index)
                 .WithCancelingThrough("<Keyboard>/escape")
                 .WithControlsExcluding("<Keyboard>/anyKey")
+                .WithTimeout(CaptureTimeoutSeconds)
                 .OnMatchWaitForAnother(0.1f);
+            capturingPad = IsPad(slot);
             if (IsPad(slot))
             {
                 bool wholeStick = single && row.padType == "Vector2";
@@ -425,13 +434,39 @@ namespace GoF2Remake.Flight
                 Finish(done);
             });
             operation = op;
+            InputSystem.onAfterUpdate -= CancelFromOtherDevice;
+            InputSystem.onAfterUpdate += CancelFromOtherDevice;
             op.Start();
+        }
+
+        /// <summary>The way out of a capture for input it doesn't take: a keyboard cell picked with a controller or a tap
+        /// waited for a key that never came (on a controller or a phone: stuck in the options for good).</summary>
+        static void CancelFromOtherDevice()
+        {
+            var op = operation;
+            if (op == null) { InputSystem.onAfterUpdate -= CancelFromOtherDevice; return; }
+            if (UnityEngine.InputSystem.LowLevel.InputState.currentUpdateType == UnityEngine.InputSystem.LowLevel.InputUpdateType.Editor) return;
+            var touch = Touchscreen.current;
+            bool tap = touch != null && touch.primaryTouch.press.wasPressedThisFrame;
+            bool other;
+            if (capturingPad)
+            {
+                var mouse = Mouse.current;
+                other = tap || mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame);
+            }
+            else
+            {
+                var pad = Gamepad.current;
+                other = tap || pad != null && (pad.startButton.wasPressedThisFrame || pad.buttonEast.wasPressedThisFrame);
+            }
+            if (other && op.started && !op.completed && !op.canceled) op.Cancel();
         }
 
         static void Dispose()
         {
             var op = operation;
             operation = null;
+            InputSystem.onAfterUpdate -= CancelFromOtherDevice;
             op?.Dispose();
         }
 
@@ -450,6 +485,7 @@ namespace GoF2Remake.Flight
             if (operation == null) return;
             var op = operation;
             operation = null;
+            InputSystem.onAfterUpdate -= CancelFromOtherDevice;
             op.Dispose();
             rebindEndFrame = Time.frameCount;
             Suspend(false);

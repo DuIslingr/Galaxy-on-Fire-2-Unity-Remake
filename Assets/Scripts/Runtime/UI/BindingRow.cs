@@ -1,7 +1,8 @@
 // BindingRow.cs
 // One line of the key bindings list (remake, Options > Controls; OptionKind.Binding, styled by GoF2Common.uss .binding-*):
 // the control's name, then its slots as cells: two keyboard / mouse keys and the controller button (GameControls). A click or
-// tap on a cell, or Enter / A on the row (left / right pick the cell), waits for the new key: Esc cancels, Backspace / Delete
+// tap on a cell, or Enter / A on the row (left / right pick the cell), waits for the new key: Esc cancels (and the other
+// devices: GameControls.Rebind, or 10 s without input), Backspace / Delete
 // unbinds, a right click unbinds a cell. The row itself is the focusable element, like ChoiceRow. While a key is being
 // captured the panel's navigation events are swallowed (the menus' own keys would act on it too).
 

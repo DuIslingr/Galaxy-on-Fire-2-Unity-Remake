@@ -502,7 +502,9 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   (by action name and binding index: the Input System's own JSON finds bindings by id, new every launch for code-made ones, so
   nothing saved applied after a restart; an empty override unbinds); "Reset key bindings" and Default settings (497) clear them. A
   capture (`GameControls.Rebind`, `PerformInteractiveRebinding`): Esc cancels, Backspace / Delete (or a right click on the
-  cell) unbinds, the controller's Menu can't be taken; a key or button can be bound to several rows at once (no swapping:
+  cell) unbinds, the controller's Menu can't be taken; input of another kind cancels too (a keyboard cell: the controller's
+  Menu / B or a tap; a controller cell: a mouse click or a tap; `CancelFromOtherDevice`), and so do 10 s without a match
+  (a keyboard cell picked with a controller or on a phone waited for good with the menus blocked: a softlock); a key or button can be bound to several rows at once (no swapping:
   the controller has too few buttons for one each); meanwhile and on the frame after
   (`GameControls.BlocksMenus`) the menus ignore their keys and the panel's navigation events. Fixed on purpose: the menus'
   keys (arrows, Enter, Esc, controller A / B / Menu) and pause. The HUD hints (`InputGlyph.For`, rebuilt on
