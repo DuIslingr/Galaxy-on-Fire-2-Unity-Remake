@@ -291,6 +291,7 @@ namespace GoF2Remake.Multiplayer
             var own = level != null && level.Health != null ? level.Health.Target : null;
             if (own == null) return;
             bool alive = own.Alive;
+            if (alive && !byNpc) NetAggression.Mark(shooter);   // they attacked: hostile here (the turrets defend, NetAggression)
             own.Damage(amount, byNpc, hitVector);
             if (alive && !own.Alive && !byNpc && NetState.Instance != null) NetState.Instance.DestroyedByRpc(shooter);
         }
@@ -403,16 +404,17 @@ namespace GoF2Remake.Multiplayer
             if (emp <= 0 || emp > NetGuard.MaxDamage) { NetRateLimit.Reject(shooter, $"an EMP of {emp}"); return; }
             var by = NetSquad.Find(shooter);
             if (!NetGuard.SameOrbit(by, this) || NetSquad.Same(by, this)) return;
-            EmpRpc(emp);
+            EmpRpc(emp, shooter);
         }
 
         /// <summary>The checked EMP (EmpUpRpc): players have no EMP pool, so it drains that much shield and shows the
         /// lightning for 1.5 s (a remake pick).</summary>
         [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
-        void EmpRpc(int emp)
+        void EmpRpc(int emp, ulong shooter)
         {
             var hp = level != null && level.Health != null && level.Health.Target != null ? level.Health.Target.hitpoints : null;
             if (hp == null || !hp.Alive) return;
+            NetAggression.Mark(shooter);
             hp.shield = Mathf.Max(0f, hp.shield - emp);
             empShockMs = 1500f;
         }
@@ -497,6 +499,7 @@ namespace GoF2Remake.Multiplayer
                 // Their ship vanished after its death tumble: the explosion (PlayerEgo::explode, PlayerHealth at 3000 ms).
                 if (shown && !show && SharesOrbit && hull.Value <= 0f) Explosion.Spawn(transform.position);
                 if (show != shown) SetShown(show);
+                if (InSpace && hull.Value <= 0f) NetAggression.Forget(OwnerClientId);   // destroyed: no longer this player's enemy
                 if (!shown) return;
                 smoothing.Apply(transform, rotation.Value);
                 ApplyLook(Time.deltaTime * 1000f);
@@ -506,6 +509,9 @@ namespace GoF2Remake.Multiplayer
                     bool mate = NetSquad.Same(this, Local);   // squadmates: green, out of each other's line of fire
                     target.friendToPlayer = mate;
                     target.playerProof = mate;
+                    // An enemy after attacking this player, until one of them is destroyed (NetAggression): a red marker, the
+                    // turrets and sentries fire at them.
+                    target.hostileToPlayer = !mate && NetAggression.IsHostile(OwnerClientId);
                 }
                 mirror?.Update(Time.deltaTime * 1000f);
                 return;
@@ -591,6 +597,7 @@ namespace GoF2Remake.Multiplayer
             var ownAsm = level.Player.visualModel != null ? level.Player.visualModel.GetComponent<AssembledObject>() : null;
             var glowPart = ownAsm != null && ownAsm.playerVariantParts != null && ownAsm.playerVariantParts.Length > 0 ? ownAsm.playerVariantParts[0] : null;
             bool glowOn = (glowPart == null || glowPart.activeInHierarchy) && (level.Health == null || !level.Health.Dead);
+            if (level.Health != null && level.Health.Dead) NetAggression.Clear();   // a respawn starts clean
             if (engine.Value != glowOn) engine.Value = glowOn;
             float b = level.Player.Model != null ? level.Player.Model.BoostVisualPercent : 0f;
             if (Mathf.Abs(boost.Value - b) > 0.02f) boost.Value = b;

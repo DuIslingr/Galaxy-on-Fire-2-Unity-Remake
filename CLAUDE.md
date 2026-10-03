@@ -683,7 +683,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   orbit (`SharesOrbit`) see the ship model with the pilot name, lockable, a sphere `Obstacle` (1.6 x the model's bounding
   radius) the local ship slides along; elsewhere it is hidden. Remote motion is smoothed (`NetSmoothing`: velocity
   estimate, at most 250 ms ahead, eased, snapped beyond 250 m). It also writes its shield / armor fractions (-1 = none).
-- **Players against players**: another player is a yellow (neutral) marker; hits on their ship (guns, missiles, blasts,
+- **Players against players**: another player is a yellow (neutral) marker until they hit this player's ship (weapons or EMP, `NetPlayer.HitRpc` / `EmpRpc`): then an enemy here for 120 s from their last hit, like an NPC that turned (`NetAggression`): a red marker, and the auto turret, a debug hull's turrets and the sentry guns fire at them (they read `hostileToPlayer`); forgotten when either is destroyed or the session ends; shooting someone doesn't make them a target by itself. Hits on their ship (guns, missiles, blasts,
   NPC shots from the authority's side) go to their game (`NetPlayer.HitRpc`, `Target.RemoteDamage` with the NPC flag),
   which applies them to its own ship. Destroyed by a player: "X was destroyed by Y." for everyone
   (`NetState.DestroyedByRpc`). A destroyed player's game over says "Tap to respawn at the station." and docks them at the

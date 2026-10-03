@@ -69,6 +69,7 @@ namespace GoF2Remake.Multiplayer
             DontDestroyOnLoad(gameObject);
             Instance = this;
             Cheats.ClearGranted();   // an admin's /cheat lasts one session
+            NetAggression.Clear();   // and who attacked whom
             if (IsServer)
             {
                 NetAdmin.Reset();
