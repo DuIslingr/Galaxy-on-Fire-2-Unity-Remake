@@ -58,8 +58,10 @@ namespace GoF2Remake.World
         int jumpCells;
         bool storyForced;
 
-        /// <summary>startChargingJumpDrive 0x1a9710: 1 cell out of the Void, 2 into it; x2 on Extreme.</summary>
+        /// <summary>startChargingJumpDrive 0x1a9710: 1 cell out of the Void, 2 into it; x2 on Extreme. Only checked: the jump
+        /// into the Void takes one share (Ship::removeCargo with iVar6), not the two it asks for.</summary>
         static int VoidCells(bool intoVoid) => (Session.IsExtreme ? 2 : 1) * (intoVoid ? 2 : 1);
+        static int VoidCellsTaken => Session.IsExtreme ? 2 : 1;
         GameObject fx;
 
         /// <summary>The HUD is hidden: docked to the gate or a jump scene running.</summary>
@@ -254,10 +256,12 @@ namespace GoF2Remake.World
             }
             nav.Paused = true;
             if (weapons != null) weapons.Blocked = true;
-            // askForJumpIntoAlienWorld outside the Void: the original asks whenever the Khador map opens (Status+0x78 is
-            // the Void's default station, index -1). The story gates the drive itself (its blueprint unlocks at index 34,
-            // after the wormhole ride at 24), so the prompt needs no gate; a drive from the Debug panel reaches the Void early.
-            bool askVoid = !Session.FreePlay;
+            // askForJumpIntoAlienWorld outside the Void: the original asks whenever the Khador map opens (MGame::UseKhadorDrive
+            // 0x1a9480 when !Status::inAlienOrbit; Status+0x78 is the Void's default station, index -1). The story gates the
+            // drive itself (its blueprint unlocks at index 34, after the wormhole ride at 24), so the prompt needs no gate; a
+            // drive from the Debug panel reaches the Void early. Free play and multiplayer sessions too (Void Crystals), but
+            // only with a real drive: free play's gateless-system stand-in (GalaxyMap.HasJumpDrive) doesn't reach the Void.
+            bool askVoid = GalaxyMap.HasIntegratedDrive(Session.ShipIndex) || Session.Equipment.Exists(e => e.item == GalaxyMap.KhadorDriveItem);
             var map = StarMap.Open(db, StarMapMode.Khador, true, r =>
             {
                 nav.Paused = false;
@@ -283,13 +287,23 @@ namespace GoF2Remake.World
                 return;
             }
             int cells = storyTarget.HasValue ? jumpCells : Session.EnergyCellsForNextJump;
-            if (Cheats.FreeJumps) cells = 0;   // remake: the Debug panel's free jumps
+            // Into the Void it asks for two shares but takes one (startChargingJumpDrive 0x1a9710).
+            int taken = storyTarget == Session.VoidOrbit ? VoidCellsTaken : cells;
+            if (Cheats.FreeJumps) cells = taken = 0;   // remake: the Debug panel's free jumps
             if (GalaxyMap.CellsInCargo() < cells)
             {
                 // Remake: the story's own jumps (78 into the Void, 80 out of it) take what there is instead of stranding the player.
-                if (storyForced) cells = GalaxyMap.CellsInCargo();
-                else { Message?.Invoke(Localization.Get(579)); storyTarget = null; return; }
+                if (storyForced) cells = taken = Mathf.Min(taken, GalaxyMap.CellsInCargo());
+                else
+                {
+                    // 0x243 / 0x244: the original shows 580 ("two cells, only one left") whenever it isn't Extreme and some
+                    // cells are aboard; the remake only where that is what happened.
+                    Message?.Invoke(Localization.Get(cells == 2 && GalaxyMap.CellsInCargo() == 1 ? 580 : 579));
+                    storyTarget = null;
+                    return;
+                }
             }
+            cells = taken;
             GalaxyMap.RemoveCells(cells);
             if (cells > 0) Message?.Invoke($"-{cells}t {Localization.Get(1396)}");
             Play(assets != null ? assets.jumpgateCharge : null);

@@ -301,8 +301,9 @@ namespace GoF2Remake.World
             Hints.Setup(this);
             Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100)   // escorting Khador (MGame::UseKhadorDrive)
-                                            // remake: no Khador Drive out of the Void in the main story (its wormhole is the way back)
-                                            || (Layout.alienOrbit && !Story.GameWon && Story.ForcedKhadorTarget(Layout.stationIndex) == null);
+                                            // remake: no Khador Drive out of the Void while its wormhole is the way back (the
+                                            // main story before the ride out at 43); free play / sessions have no wormhole
+                                            || (Layout.alienOrbit && !Session.FreePlay && Story.Index < 43 && Story.ForcedKhadorTarget(Layout.stationIndex) == null);
             Navigation.SetWormhole(Wormhole);
             Navigation.PlanetJumpRefused = st => StorySpace != null && StorySpace.RefusePlanetJump(st);
             SystemJump.GateBlocked = () => Siege != null && Siege.Active;
@@ -440,7 +441,7 @@ namespace GoF2Remake.World
                 && (rideHoldMs += Time.deltaTime * 1000f) < 8000f) return;
             if (active)
             {
-                if (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3)) { riding = true; Health.Kill(); return; }
+                if (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3)) { Health.Kill(); riding = Health.Dead; return; }   // the original sets HP 0 every frame: an emergency system or god mode tries again
                 if (index == 40) Session.LastFreighterHull = Campaign.FreighterHull;
                 if (index < 41) Story.Advance(db);
             }
