@@ -1,12 +1,11 @@
 // NetAggression.cs
-// Remake multiplayer: the players who attacked this player. Another player is neutral (a yellow marker) until they hit this
-// player's ship with their weapons or an EMP (NetPlayer.HitRpc / EmpRpc, never an NPC's shot, never a squadmate: those
-// can't hit); then they are an enemy here, like an NPC the player shot that turned on them: a red marker, and this
-// player's auto turret, the turrets riding on a debug hull and the deployed sentry guns fire at them
-// (PlayerTurret.PickTarget, SentryGun: whatever is hostileToPlayer; NetPlayer sets the flag on their ship each frame).
-// It lasts 120 s from their last hit (every hit starts it again), or until one of the two is destroyed (or the session
-// ends). Shooting someone doesn't make them a target by itself (a stray bullet mustn't start a turret fight): they become
-// one by shooting back.
+// Remake multiplayer: the players this player is fighting. Another player is neutral (a yellow marker) until one of the two
+// hits the other with weapons or an EMP: then both are enemies to each other, like an NPC the player shot that turned on
+// them (the victim's game marks the attacker, NetPlayer.HitRpc / EmpRpc; the attacker's game marks the victim,
+// NetPlayer's RemoteDamage / RemoteEmp; never an NPC's shot, never a squadmate: those can't hit): a red marker, and the
+// auto turret, the turrets riding on a debug hull and the deployed sentry guns fire at them (PlayerTurret.PickTarget,
+// SentryGun: whatever is hostileToPlayer; NetPlayer sets the flag on their ship each frame). It lasts 120 s from the last
+// hit either way (every hit starts it again), or until one of the two is destroyed (or the session ends).
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -24,7 +23,7 @@ namespace GoF2Remake.Multiplayer
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => until.Clear();
 
-        /// <summary>'attacker' hit this player's ship: an enemy for the next 120 s (again from every hit).</summary>
+        /// <summary>'attacker' hit this player's ship, or this player hit theirs: an enemy for the next 120 s (again from every hit).</summary>
         public static void Mark(ulong attacker) => until[attacker] = Time.unscaledTime + HostileSeconds;
 
         /// <summary>'client' hit this player within the last 120 s, and neither has been destroyed since.</summary>

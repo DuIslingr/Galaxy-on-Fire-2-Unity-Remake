@@ -209,8 +209,10 @@ namespace GoF2Remake.Multiplayer
             target.isShip = true;
             target.customDeath = true;
             target.maxHp = 100f;
-            target.RemoteDamage = (amount, hitVector, byNpc) => HitUpRpc(amount, hitVector, byNpc);
-            target.RemoteEmp = emp => EmpUpRpc(emp);
+            // This player's weapons hitting them: they are this player's enemy too (NetAggression, both ways); an NPC's shot
+            // relayed by this orbit's authority isn't.
+            target.RemoteDamage = (amount, hitVector, byNpc) => { if (!byNpc) NetAggression.Mark(OwnerClientId); HitUpRpc(amount, hitVector, byNpc); };
+            target.RemoteEmp = emp => { NetAggression.Mark(OwnerClientId); EmpUpRpc(emp); };
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
             Target.NetShips.Add(target);
