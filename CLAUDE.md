@@ -585,7 +585,13 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   .msix, the .cer and Install.ps1 (it trusts the certificate, admin prompt, then installs); a release zips that folder
   without the .appxsym symbols and the TelemetryDependencies folder (the script then sends no sideload telemetry). Not
   in UWP: Discord, the controller gyro, the save file dialog (Transfer folder instead), the dedicated server
-  (everything desktop-only is behind `UNITY_STANDALONE_WIN`). `BuildVersionStamp` also stamps the package version
+  (everything desktop-only is behind `UNITY_STANDALONE_WIN`), the window mode / resolution options
+  (`Bootstrap.HasDisplayOptions` false under `UNITY_WSA`: `Screen.mainWindowDisplayInfo` throws NotSupportedException
+  there, which stopped `Bootstrap.Init` and the main menu's options setup, a black screen after the splash). Testing
+  a UWP build here: with Developer Mode on, unpack the .msix (its entry names are URL-encoded) without
+  AppxSignature.p7x / AppxBlockMap.xml / [Content_Types].xml / AppxMetadata, `Add-AppxPackage -Register` its
+  AppxManifest.xml, start it from `shell:AppsFolder\<family>!App`; the log is
+  `%LOCALAPPDATA%\Packages\JoppieToppie.GoF2Remake_*\TempState\UnityPlayer.log`. `BuildVersionStamp` also stamps the package version
   (yyyy.M.d.HHmm). Switching to UWP adds default WindowsStoreApps entries to every texture .meta: revert them.
 - **Version** (`BuildVersion`): the menu's credit line and the About page show "Galaxy on Fire 2 Unity Remake created with
   <heart sprite> by JoppieToppie · <version>"; the version is the build's date and time (`yyyy.MM.dd.HHmm`), stamped into
