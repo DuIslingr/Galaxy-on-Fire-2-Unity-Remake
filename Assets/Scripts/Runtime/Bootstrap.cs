@@ -251,8 +251,14 @@ namespace GoF2Remake
 
         // ---- window ------------------------------------------------------------------------------------------
 
-        /// <summary>Window mode and resolution apply to desktop players only (the Editor's Game view keeps its own).</summary>
+        /// <summary>Window mode and resolution apply to desktop players only (the Editor's Game view keeps its own). Not UWP:
+        /// its window belongs to the app model, and Screen.mainWindowDisplayInfo throws there (NotSupportedException), which
+        /// stopped Bootstrap.Init and the main menu's options setup: a black screen after the splash.</summary>
+#if UNITY_WSA
+        public static bool HasDisplayOptions => false;
+#else
         public static bool HasDisplayOptions => !Application.isMobilePlatform && !Application.isEditor;
+#endif
 
         /// <summary>The display's resolutions, distinct sizes, smallest first.</summary>
         public static List<Vector2Int> Resolutions()
@@ -266,7 +272,13 @@ namespace GoF2Remake
 
         static Vector2Int NativeResolution
         {
-            get { var d = Screen.mainWindowDisplayInfo; return d.width > 0 ? new Vector2Int(d.width, d.height) : new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height); }
+            get
+            {
+                var current = new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height);
+                if (!HasDisplayOptions) return current;   // mainWindowDisplayInfo is Windows / macOS / Linux standalone only
+                var d = Screen.mainWindowDisplayInfo;
+                return d.width > 0 ? new Vector2Int(d.width, d.height) : current;
+            }
         }
 
         /// <summary>Launched with Unity's own window options (-screen-fullscreen / -screen-width / -screen-height /
