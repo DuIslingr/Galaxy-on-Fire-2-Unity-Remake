@@ -19,6 +19,7 @@ namespace GoF2Remake.Multiplayer
     public static class NetStats
     {
         const float RateWindowSeconds = 1f;
+        const int MaxPingRows = 3;   // the host's per-player pings (the panel stays clear of the station's pilot list)
 
         static long bytesIn, bytesOut, windowIn, windowOut;
         static float windowStart = -1f, inPerSecond, outPerSecond;
@@ -81,15 +82,16 @@ namespace GoF2Remake.Multiplayer
 
             if (manager.IsHost)
             {
-                // The host: each player's round trip (Unity Transport's RTT per connection).
-                int shown = 0;
+                // The host: each player's round trip (Unity Transport's RTT per connection), the first MaxPingRows.
+                int others = 0;
                 foreach (var p in NetPlayer.All)
                 {
                     if (p == null || p.IsOwner) continue;
-                    if (shown++ == 8) { sb.Append("…\n"); break; }
-                    sb.Append(string.Format(X("mpStatsPlayerPing", "{0}: {1} ms"), p.DisplayName, transport.GetCurrentRtt(p.OwnerClientId))).Append('\n');
+                    if (others++ < MaxPingRows)
+                        sb.Append(string.Format(X("mpStatsPlayerPing", "{0}: {1} ms"), p.DisplayName, transport.GetCurrentRtt(p.OwnerClientId))).Append('\n');
                 }
-                if (shown == 0) sb.Append(X("mpStatsNoPlayers", "No other players")).Append('\n');
+                if (others > MaxPingRows) sb.Append(string.Format(X("mpStatsMorePlayers", "+{0} more"), others - MaxPingRows)).Append('\n');
+                if (others == 0) sb.Append(X("mpStatsNoPlayers", "No other players")).Append('\n');
             }
             else
             {

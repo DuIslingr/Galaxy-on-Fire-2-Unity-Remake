@@ -8,7 +8,9 @@
 // Enter as submit) would otherwise move it to a menu button and end the typing. Local lines reach the players in this
 // orbit or docked here, global ones everyone. Another player's line plays the original's incoming-message sound (FMOD
 // event 125 Message_Inc, volume 0.241, one at a time; a copy of the clip in Resources/GoF2Net/ChatMessage).
-// A line starting with "/" is a command (NetCommands: /help, /netstats); the network stats (NetStats) show top left while
+// A line starting with "/" is a command (NetCommands: /help, /netstats): while the line is "/" and a name (no space yet)
+// the matching commands show over it, and Tab completes the first, then cycles through them (Shift+Tab back; "/" alone
+// cycles every command); Tab then doesn't switch the channel. The network stats (NetStats) show top left while
 // /netstats has them on.
 // Styles: Resources/GoF2Net/Chat.uss.
 
@@ -28,8 +30,12 @@ namespace GoF2Remake.UI
         /// <summary>Frames Open keeps focusing the field (the row only shows once its style has applied).</summary>
         const int FocusFrames = 15;
 
-        VisualElement box, log;
+        VisualElement box, log, suggest;
         Label stats;
+        // Tab completion: the prefix typed before the first Tab (null = not cycling) and the match shown.
+        string completionPrefix;
+        int completionIndex = -1;
+        string completedText;   // the line Tab last wrote (its change event arrives later: not a new prefix)
         float nextStats;
         TextField field;
         Button channel;
@@ -45,8 +51,11 @@ namespace GoF2Remake.UI
             if (parent == null) return;
             var view = host.GetComponent<ChatView>();
             if (view == null) view = host.AddComponent<ChatView>();
+            view.host = host;
             view.Build(parent);
         }
+
+        GameObject host;
 
         void Build(VisualElement parent)
         {
@@ -64,6 +73,10 @@ namespace GoF2Remake.UI
             log = new VisualElement { pickingMode = PickingMode.Ignore };
             log.AddToClassList("chat-log");
             box.Add(log);
+            suggest = new VisualElement { pickingMode = PickingMode.Ignore };
+            suggest.AddToClassList("chat-suggest");
+            suggest.style.display = DisplayStyle.None;
+            box.Add(suggest);
 
             var row = new VisualElement();
             row.AddToClassList("chat-input-row");
@@ -73,6 +86,11 @@ namespace GoF2Remake.UI
             field = new TextField { maxLength = NetChat.MaxLength };
             field.AddToClassList("chat-field");
             field.RegisterCallback<KeyDownEvent>(OnKey, TrickleDown.TrickleDown);
+            field.RegisterValueChangedCallback(e =>
+            {
+                if (e.newValue != completedText) { completionPrefix = null; completionIndex = -1; completedText = null; }   // typed: a new prefix
+                RefreshSuggestions();
+            });
             // The UI's navigation keeps out of the line: no focus move (the arrows move the cursor, W A S D / Space type).
             field.RegisterCallback<NavigationCancelEvent>(e => { Close(); Swallow(e); }, TrickleDown.TrickleDown);
             field.RegisterCallback<NavigationMoveEvent>(Swallow, TrickleDown.TrickleDown);
@@ -90,6 +108,8 @@ namespace GoF2Remake.UI
             parent.Add(box);
             stats = new Label { name = "netstats", pickingMode = PickingMode.Ignore };
             stats.AddToClassList("netstats");
+            // The station menu: top right under its Menu button (top left is the system block and the join-code plate).
+            stats.EnableInClassList("netstats--station", host.GetComponent<StationMenu>() != null);
             if (sheet != null) stats.styleSheets.Add(sheet);
             stats.style.display = DisplayStyle.None;
             parent.Add(stats);
@@ -120,6 +140,14 @@ namespace GoF2Remake.UI
             // The chat key that opened the line types its letter a moment later (the text arrives after the focus): the
             // characters of the first frames after opening stay out (nobody types that fast).
             if (Time.frameCount - openFrame <= 2 && e.character != '\0') { Swallow(e); return; }
+            // A command being typed: Tab completes / cycles it (before the channel key, Tab by default).
+            if (e.keyCode == KeyCode.Tab && CommandPrefix() != null)
+            {
+                swallowFrame = Time.frameCount;
+                Swallow(e);
+                Complete(e.shiftKey ? -1 : 1);
+                return;
+            }
             // The send / channel keys (rebindable): their key events, and the character the key would type, stay out of the line.
             bool send = GoF2Remake.Flight.GameControls.PressedNow(GoF2Remake.Flight.GameControls.ChatSend);
             bool channelKey = !send && GoF2Remake.Flight.GameControls.PressedNow(GoF2Remake.Flight.GameControls.ChatChannel);
@@ -136,6 +164,56 @@ namespace GoF2Remake.UI
             if (e.keyCode == KeyCode.Tab || e.character == '\t') Swallow(e);
         }
 
+        /// <summary>The command name typed so far (the line is "/" + letters, no space yet), null = not a command.</summary>
+        string CommandPrefix()
+        {
+            string text = field?.value ?? "";
+            return text.Length > 0 && text[0] == '/' && text.IndexOf(' ') < 0 ? text.Substring(1) : null;
+        }
+
+        /// <summary>Tab: the first command matching what was typed, then the next one each time (dir -1: back), wrapping.</summary>
+        void Complete(int dir)
+        {
+            string prefix = completionPrefix ?? CommandPrefix();
+            if (prefix == null) return;
+            var matches = NetCommands.Matching(prefix);
+            if (matches.Count == 0) return;
+            if (completionPrefix == null)
+            {
+                completionPrefix = prefix;
+                completionIndex = dir > 0 ? 0 : matches.Count - 1;
+            }
+            else completionIndex = ((completionIndex + dir) % matches.Count + matches.Count) % matches.Count;
+            string text = "/" + matches[completionIndex].Key;
+            completedText = text;
+            field.value = text;
+            field.schedule.Execute(() => field.SelectRange(text.Length, text.Length));   // the cursor at the end
+            RefreshSuggestions();
+        }
+
+        /// <summary>The commands matching the line (the prefix typed before cycling), the one Tab picked highlighted.</summary>
+        void RefreshSuggestions()
+        {
+            if (suggest == null) return;
+            suggest.Clear();
+            string prefix = open ? completionPrefix ?? CommandPrefix() : null;
+            var matches = prefix != null ? NetCommands.Matching(prefix) : null;
+            bool show = matches != null && matches.Count > 0;
+            suggest.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!show) return;
+            string picked = completionPrefix != null && completionIndex >= 0 && completionIndex < matches.Count ? matches[completionIndex].Key : null;
+            foreach (var m in matches)
+            {
+                var line = new Label($"<b>/{m.Key}</b>   <color=#9fb3c0>{m.Value}</color>") { pickingMode = PickingMode.Ignore };
+                line.AddToClassList("chat-suggest-row");
+                line.EnableInClassList("chat-suggest-row--picked", m.Key == picked);
+                suggest.Add(line);
+            }
+            var hint = new Label(Localization.Extra("mpCmdTabHint", "Tab complete  ·  Enter run")) { pickingMode = PickingMode.Ignore };
+            hint.AddToClassList("chat-suggest-hint");
+            suggest.Add(hint);
+        }
+
         void Open()
         {
             open = true;
@@ -145,6 +223,7 @@ namespace GoF2Remake.UI
             openFrame = Time.frameCount;
             field.Focus();
             Rebuild();
+            RefreshSuggestions();
         }
 
         bool FieldFocused()
@@ -178,6 +257,7 @@ namespace GoF2Remake.UI
             box.EnableInClassList("chat--open", false);
             NetChat.SetTyping(false);
             Rebuild();
+            RefreshSuggestions();
         }
 
         void ToggleChannel()

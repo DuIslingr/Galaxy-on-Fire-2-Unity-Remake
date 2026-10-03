@@ -1,11 +1,13 @@
 // NetCommands.cs
 // Chat commands: a line typed in the chat that starts with "/" runs here on this game instead of being sent (NetChat.Send).
 // Each command says who may use it (`available`); /help lists the ones this player can run. Their answers are chat
-// notices only this player sees.
+// notices only this player sees. Typing "/" lists the matching commands over the chat line and Tab completes / cycles
+// them (ChatView, Matching).
 //   /help       the commands this player can use
 //   /netstats   shows / hides the network stats over the HUD (NetStats)
 
 using System;
+using System.Collections.Generic;
 using GoF2Remake.Data;
 
 namespace GoF2Remake.Multiplayer
@@ -36,6 +38,17 @@ namespace GoF2Remake.Multiplayer
         };
 
         static string X(string key, string english) => Localization.Extra(key, english);
+
+        /// <summary>The commands this player can run whose name starts with 'prefix' (without the "/", any case), in the
+        /// list's order, as (name, description): the chat's suggestions and its Tab completion.</summary>
+        public static List<KeyValuePair<string, string>> Matching(string prefix)
+        {
+            prefix = (prefix ?? "").ToLowerInvariant();
+            var list = new List<KeyValuePair<string, string>>();
+            foreach (var c in Commands)
+                if (c.available() && c.name.StartsWith(prefix, StringComparison.Ordinal)) list.Add(new KeyValuePair<string, string>(c.name, c.description()));
+            return list;
+        }
 
         /// <summary>A chat line starting with "/": runs it (true = it was a command, nothing is sent).</summary>
         public static bool TryRun(string line)
