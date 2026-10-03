@@ -15,6 +15,8 @@ namespace GoF2Remake.UI
         const float WindowSeconds = 0.5f;
 
         static FpsCounter instance;
+        /// <summary>Hidden for now (Action Freeze: the screenshot shows the scene only).</summary>
+        public static bool Suppressed;
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualTreeAsset emptyTree;
@@ -89,12 +91,15 @@ namespace GoF2Remake.UI
 
         void Apply()
         {
-            if (label != null) label.style.display = Settings.ShowFps ? DisplayStyle.Flex : DisplayStyle.None;
+            if (label != null) label.style.display = Settings.ShowFps && !Suppressed ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         void Update()
         {
-            if (label == null || !Settings.ShowFps) return;
+            if (label == null) return;
+            var want = Settings.ShowFps && !Suppressed ? DisplayStyle.Flex : DisplayStyle.None;
+            if (label.style.display != want) label.style.display = want;
+            if (want == DisplayStyle.None) return;
             frames++;
             elapsed += Time.unscaledDeltaTime;
             if (elapsed < WindowSeconds) return;

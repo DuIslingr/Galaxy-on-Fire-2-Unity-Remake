@@ -30,6 +30,8 @@ namespace GoF2Remake.Flight
         public static int ActiveCount { get; private set; }
 
         Target self;
+        /// <summary>The sentry's hittable object (its HUD marker: CombatView).</summary>
+        public Target Target => self;
         Gun gun;
         GunRig rig;
         TurretAim aim;

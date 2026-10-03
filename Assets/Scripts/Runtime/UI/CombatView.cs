@@ -151,6 +151,10 @@ namespace GoF2Remake.UI
                 foreach (var o in Target.RadarObjects)
                     if (o != null && o.Alive && !o.untargetable)
                         DrawShip(Get(o), o.transform.position, o.hostileToPlayer ? 0 : 2, 1f, radar.Locked == o, cam, origin, centre, true);
+                // Level::createSentryGuns: the player's sentries are in Level::getEnemies too, always-friend: green markers.
+                foreach (var sg in SentryGun.All)
+                    if (sg != null && sg.Target != null && sg.Target.Alive)
+                        DrawShip(Get(sg), sg.transform.position, 1, sg.Target.HullFraction, radar.Locked == sg.Target, cam, origin, centre);
                 foreach (var c in Object.FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
                     DrawCrate(Get(c), c.transform.position, c.race == 9, cam, origin, centre);
 

@@ -58,7 +58,6 @@ namespace GoF2Remake.Flight
         AudioSource sfx, beamLoop;
         int lockTimeMs = 8000, tractorItem = -1, tractorLockMs, tractorMode;
         bool cargoScan;
-        const float ScanRangeUnits = 24000f;
         float timer;
         bool noTractorShown;
         Transform beam;
@@ -200,12 +199,12 @@ namespace GoF2Remake.Flight
             Publish();
         }
 
-        /// <summary>Radar::draw on a new lock with Radar+0x1a5: the ship's first cargo entry within 24000 units per axis.</summary>
+        /// <summary>Radar::draw on a new lock with Radar+0x1a5: the ship's first cargo entry. Its 24000-unit test (0x156916)
+        /// is dx &lt; 24000 || dx &gt; -24000 || ..., always true, so it reads at any distance (the remake kept the box: a lock
+        /// completed farther out, and sticky, never read the ship at all; "intermittently nothing").</summary>
         void ReadCargo(Target locked)
         {
             if (locked == null || traffic == null) return;
-            var d = (locked.transform.position - transform.position) / M;
-            if (Mathf.Abs(d.x) >= ScanRangeUnits || Mathf.Abs(d.y) >= ScanRangeUnits || Mathf.Abs(d.z) >= ScanRangeUnits) return;
             var ship = traffic.Ships.Find(s => s != null && s.Target == locked);
             if (ship == null) return;
             var cargo = ship.CargoList;

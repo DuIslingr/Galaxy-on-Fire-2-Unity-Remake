@@ -906,7 +906,11 @@
 }
 
 /* Action Freeze (PhotoMode): the HUD hidden, the logo 0x534 at the top-right, the footer with Back and Save (remake). */
-.hud-photo #hud {
+/* MGame::OnRender2D in cinematic mode draws only the menu window and the lens flare: the hacking game and the object
+   docking's transfer counter (on the root, outside #hud) go too. */
+.hud-photo #hud,
+.hud-photo .hacking-layer,
+.hud-photo .transfer-counter {
     display: none;
 }
 

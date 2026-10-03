@@ -97,6 +97,7 @@ namespace GoF2Remake.UI
             messageMs = 0f;
             message.text = "";
             root.AddToClassList("hud-photo");
+            FpsCounter.Suppressed = true;   // not in the photos either
             overlay.AddToClassList("photo-overlay--shown");
             Place();
         }
@@ -106,6 +107,7 @@ namespace GoF2Remake.UI
             if (!Active) return;
             Active = false;
             root.RemoveFromClassList("hud-photo");
+            FpsCounter.Suppressed = false;
             overlay.RemoveFromClassList("photo-overlay--shown");
             if (cam != null) { cam.transform.position = savedPos; cam.transform.rotation = savedRot; }
             if (chase != null) chase.enabled = chaseWasEnabled;
