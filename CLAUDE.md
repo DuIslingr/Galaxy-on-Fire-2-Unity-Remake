@@ -1070,7 +1070,17 @@ Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF
   it, not a full-screen layer) picks a visitor (a 0.45 m capsule feet-head; the trigger / a click opens their chat,
   `StationLevel.VisitorPicked` -> `LoungePanel.OpenChat`), and with a headset the grip on the ship grabs it: pulling the
   hand right / left turns it (4 rad per metre along the head's right), letting go flings it (`FlingShip`).
-- To come: a grabbable stick and throttle option.
+- **Stick, throttle, radar** (`VrControls`, `VrRadar`, in the cockpit): a small side-stick on the right console and a speed
+  handle in a slot on the left console, always there: not held they show the ship's inputs (the stick tilts with
+  `ShipController.SteerInput`, the handle sits at the throttle). Options > Controls "VR flight: grab the stick and throttle"
+  (`Settings.VrGrabControls`, VR only, off by default: the controllers alone as a gamepad): grabbed with that hand's grip
+  within 12 cm, the stick follows the hand's travel (6 cm = full; forward = nose down, right = yaw right; `VrControls.Steer`
+  replaces the touch stick in FlightHud) and its twist rolls (45 deg = full, `SetRoll`); the handle slides along its 28 cm
+  slot (`SetThrottle`); the grips aren't LB / RB meanwhile (`VrPad.GripsAsShoulders`). The radar scope in the middle of
+  the front panel: top-down, forward up, ships within 3 km (square-root scaled, the rest on the rim) red / green / yellow by
+  `hostileToPlayer` / `friendToPlayer`, only with a scanner (`CombatRadar.HasScanner`), the station cyan, the player white,
+  a dot above bigger / below smaller. In VR the HUD's radar ellipse and its off-screen dots / boxes / gate icons are hidden
+  (they reached onto the displays; the scope has them), the hints display's cut-out ends left of the ellipse (x 300).
 
 ## Recovered facts already implemented
 

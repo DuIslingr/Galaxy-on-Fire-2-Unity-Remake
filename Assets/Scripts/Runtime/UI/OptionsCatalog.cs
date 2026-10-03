@@ -236,6 +236,11 @@ namespace GoF2Remake.UI
             }
             if (!Application.isMobilePlatform)
                 list.Add(Toggle("mouseSteering", OptionPage.Controls, () => X("mouseSteering", "Mouse steering"), () => Settings.MouseSteering, v => Settings.MouseSteering = v));
+            // Remake VR: the cockpit's grabbable stick (right grip) and throttle lever (left grip), else the controllers as a gamepad.
+            var vrGrab = Toggle("vrGrabControls", OptionPage.Controls, () => X("vrGrabControls", "VR flight: grab the stick and throttle"),
+                () => Settings.VrGrabControls, v => Settings.VrGrabControls = v);
+            vrGrab.visible = () => Vr.VrMode.Enabled;
+            list.Add(vrGrab);
             // Remake: haptic feedback (Haptics), the controller's rumble and the phone's vibration; moving it plays a sample.
             var haptics = Slider("haptics", OptionPage.Controls, () => X("haptics", "Vibration"), 0f, 1f,
                 () => Settings.HapticsIntensity, v => { Settings.HapticsIntensity = v; Flight.Haptics.Preview(); },

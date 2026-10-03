@@ -24,7 +24,7 @@ namespace GoF2Remake.Vr
         static readonly Rect StatusRegion = new Rect(0f, 0f, 430f, 215f);
         static readonly Rect ReadoutRegion = new Rect(1490f, 0f, 430f, 145f);
         static readonly Rect SecondaryRegion = new Rect(730f, 1035f, 460f, 45f);
-        static readonly Rect HintsRegion = new Rect(0f, 285f, 430f, 795f);
+        static readonly Rect HintsRegion = new Rect(0f, 285f, 300f, 795f);   // left of the radar ellipse's hit arc (x 303)
         static readonly Rect CanopyRegion = new Rect(326f, 0f, 1268f, 1026f);
 
         VrRig rig;
@@ -46,6 +46,7 @@ namespace GoF2Remake.Vr
             glass = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             glass.SetColor("_BaseColor", new Color(0.015f, 0.03f, 0.045f));
             Build();
+            gameObject.AddComponent<VrControls>().Init(rig, frame);   // the grabbable stick and throttle (an option)
         }
 
         // ---- the model -----------------------------------------------------------------------------------------
@@ -131,9 +132,15 @@ namespace GoF2Remake.Vr
             Display(front, new Vector2(-0.38f, 0.02f), 0.32f, StatusRegion);
             Display(front, new Vector2(0.38f, 0.04f), 0.3f, ReadoutRegion);
             Display(front, new Vector2(0f, -0.08f), 0.34f, SecondaryRegion);
+            // The radar scope in the middle of the front panel, between the status and the cargo displays.
+            var radar = new GameObject("VR Radar").transform;
+            radar.SetParent(transform, false);
+            radar.position = front.TransformPoint(new Vector3(0f, 0.045f / front.localScale.y, -0.5f - 0.003f / front.localScale.z));
+            radar.rotation = front.rotation;
+            radar.gameObject.AddComponent<VrRadar>().Init();
             // A slab on the left console, its -z face turned up and in toward the pilot.
             var consoleFace = Box("Left console face", new Vector3(-0.56f, -0.42f, 0.22f), new Vector3(0.24f, 0.46f, 0.02f), new Vector3(65f, -18f, 0f), frame).transform;
-            Display(consoleFace, new Vector2(0f, 0f), 0.2f, HintsRegion);
+            Display(consoleFace, new Vector2(0f, 0f), 0.16f, HintsRegion);
             _ = left;
         }
 

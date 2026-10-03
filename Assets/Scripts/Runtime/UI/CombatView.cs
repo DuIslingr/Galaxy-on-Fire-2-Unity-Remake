@@ -234,6 +234,12 @@ namespace GoF2Remake.UI
         void DrawShip(Marker m, Vector3 world, int faction, float hull, bool locked, Camera cam, Vector2 origin, Vector2 centre, bool dotOnly = false)
         {
             bool onScreen = Project(cam, world, origin, centre, out var p, out bool near);
+            // VR: no dots on the radar ellipse (it would reach onto the cockpit's displays): the dashboard's scope has them.
+            if (!onScreen && Vr.VrMode.Enabled)
+            {
+                Show(m.bar, false); Show(m.fill, false); Show(m.bracket, false); Show(m.dot, false); Show(m.distance, false);
+                return;
+            }
             string f = Faction[faction];
             bool bar = onScreen && near && !dotOnly;
             Show(m.bar, bar);
@@ -283,7 +289,7 @@ namespace GoF2Remake.UI
             bool onScreen = Project(cam, world, origin, centre, out var p, out bool near);
             Show(m.bar, false); Show(m.fill, false); Show(m.distance, false); Show(m.bracket, false);
             Show(m.emp, false); Show(m.empFill, false);
-            Show(m.dot, true);
+            Show(m.dot, onScreen || !Vr.VrMode.Enabled);   // VR: no off-screen boxes on the ellipse
             var tex = !onScreen ? Tex(voidCrate ? "crate_off_void" : "crate_off") : near ? Tex("bracket") : Tex("crate_dot");
             Image(m.dot, tex);
             if (tex != null) Place(m.dot, p.x - tex.width / 2f, p.y - tex.height / 2f);

@@ -261,6 +261,10 @@
 }
 
 /* VR (Vr.VrCockpit): the HUD's corners are on the cockpit's displays, the canopy shows its middle: the menu there. */
+.hud-vr .radar-ellipse {
+    display: none;
+}
+
 .hud-vr .autopilot-menu {
     left: 50%;
     translate: -50% 0;

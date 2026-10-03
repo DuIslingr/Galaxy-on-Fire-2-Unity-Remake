@@ -237,7 +237,7 @@ namespace GoF2Remake.UI
                 }
                 if (m.icon != null)
                 {
-                    m.icon.style.display = nearCentre ? DisplayStyle.None : DisplayStyle.Flex;
+                    m.icon.style.display = nearCentre || (!onScreen && Vr.VrMode.Enabled) ? DisplayStyle.None : DisplayStyle.Flex;   // VR: none on the ellipse
                     if (!nearCentre)
                     {
                         Vector2 q = onScreen ? p : OffScreen(cam, t.Position, centre);

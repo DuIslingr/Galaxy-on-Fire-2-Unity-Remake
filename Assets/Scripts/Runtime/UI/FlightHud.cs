@@ -769,6 +769,7 @@ namespace GoF2Remake.UI
             bool touchMode = InputMode.Current == InputKind.Touch;
             var raw = touchMode && touch != null ? touch.Stick : Vector2.zero;
             var touchStick = tilt ? TiltSteering.Steer() : new Vector2(Mathf.Sign(raw.x) * raw.x * raw.x, Mathf.Sign(raw.y) * raw.y * raw.y);
+            if (Vr.VrControls.Steer.HasValue) touchStick = Vr.VrControls.Steer.Value;   // VR: the cockpit's stick, held
             ship.SetSteer(touchStick);
             mining?.SetTouchInput(touchStick);
 

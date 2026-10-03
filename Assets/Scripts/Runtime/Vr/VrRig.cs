@@ -50,6 +50,10 @@ namespace GoF2Remake.Vr
 
         /// <summary>The headset's camera (null outside VR).</summary>
         public Camera Eye => eye;
+        /// <summary>The controllers' poses (null without a headset): VrControls grabs the stick and the throttle.</summary>
+        public Transform LeftHand => leftHand;
+        public Transform RightHand => rightHand;
+
         /// <summary>The right controller's position (VrStation: grabbing the ship).</summary>
         public Vector3 RightHandPosition => rightHand != null ? rightHand.position : head.position;
 

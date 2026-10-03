@@ -33,10 +33,16 @@ namespace GoF2Remake.Vr
             map = null;
             pad = null;
             pointer = null;
+            GripsAsShoulders = true;
         }
 
         /// <summary>The right trigger (also the laser's click), 0..1.</summary>
         public static float RightTrigger => rTrigger != null ? rTrigger.ReadValue<float>() : 0f;
+        /// <summary>The grips are the gamepad's LB / RB (the throttle steps); off while the cockpit's stick and throttle are
+        /// grabbed with them (VrControls, the option).</summary>
+        public static bool GripsAsShoulders = true;
+        /// <summary>The left grip (VrControls: the throttle lever), 0..1.</summary>
+        public static float LeftGrip => lGrip != null ? lGrip.ReadValue<float>() : 0f;
         /// <summary>The right grip (VrRig: grabbing with the laser), 0..1.</summary>
         public static float RightGrip => rGrip != null ? rGrip.ReadValue<float>() : 0f;
 
@@ -102,8 +108,8 @@ namespace GoF2Remake.Vr
                 leftTrigger = Read(lTrigger),
                 rightTrigger = Read(rTrigger),
             };
-            s = s.WithButton(GamepadButton.LeftShoulder, Read(lGrip) > 0.55f)
-                 .WithButton(GamepadButton.RightShoulder, Read(rGrip) > 0.55f)
+            s = s.WithButton(GamepadButton.LeftShoulder, GripsAsShoulders && Read(lGrip) > 0.55f)
+                 .WithButton(GamepadButton.RightShoulder, GripsAsShoulders && Read(rGrip) > 0.55f)
                  .WithButton(GamepadButton.South, Pressed(a))
                  .WithButton(GamepadButton.East, Pressed(b))
                  .WithButton(GamepadButton.West, Pressed(x))
