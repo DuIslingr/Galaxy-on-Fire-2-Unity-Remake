@@ -378,8 +378,10 @@ namespace GoF2Remake.World
             // [0] Alice's battlestation, unrotated (scenery with the station's volumes mirrored; the radio doesn't count it).
             c.AddPlaceholder();
             battlestation = Scenery("v_station_battlestation_anim_mission_object", host, OrbitLayout.RotationToUnity(Vector3.zero), "Valkyrie battlestation");
-            // PlayerStation::update 0x147dbc never runs station 101's (0x65) animation: it holds its load pose.
-            PartAnimation.HoldAll(battlestation);
+            // PlayerStation ctor 0x1473c2 (station 0x65 from campaign 0x50): Transform::Update(dt = the animation's length)
+            // once, then PlayerStation::update 0x147dbc never runs it again: the arms unfolded (the turrets and shield
+            // generators below sit on them), not the folded load pose that looped as "opening itself".
+            PartAnimation.HoldAllAtEnd(battlestation);
             AddStationVolumes(battlestation, true);
             // [1-12] turrets and shield generators: at host + (-x, y, -z), rotation (0, 0, -rz) (the table rotated by (0, pi, 0)).
             int rank = Session.Rank;
@@ -410,7 +412,7 @@ namespace GoF2Remake.World
             // [0] the battlestation (hidden until it drops out of hyperspace), [1-8] Void fighters.
             c.AddPlaceholder();
             battlestation = Scenery("v_station_battlestation_anim_mission_object", Vector3.zero, Quaternion.identity, "Valkyrie battlestation");
-            PartAnimation.HoldAll(battlestation);   // station 101: PlayerStation::update never animates it (as in 80)
+            PartAnimation.HoldAllAtEnd(battlestation);   // station 101 from 0x50: unfolded and held (as in 80)
             if (battlestation != null) battlestation.SetActive(false);
             AddStationVolumes(battlestation, false);
             for (int i = 0; i < 8; i++)

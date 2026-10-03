@@ -603,7 +603,9 @@ namespace GoF2Remake.World
             hans.frozen = true;
             // Level case 0x9a: setRotation(0, pi, 0) (disassembly 0xc4ce0), like every PlayerStation and 157's Valkyrie.
             var valkyrie = Static("v_station_battlestation_anim_mission_object", Vector3.zero, new Vector3(0f, Mathf.PI, 0f), 77, ObjectDocking.Hackable, 7);
-            PartAnimation.HoldAll(valkyrie.gameObject);   // PlayerFixedObject::update never advances an idle animation
+            // Level::createStaticObject(0x4220) 0xcdcee: Transform::Update(the length) once, unfolded; PlayerFixedObject::update
+            // never advances an idle animation after that.
+            PartAnimation.HoldAllAtEnd(valkyrie.gameObject);
             valkyrie.RadarHidden = true;
             valkyrie.DockingType = 0;   // hackable once Alice turns on the player
             for (int i = 2; i < 22; i++)
@@ -653,7 +655,7 @@ namespace GoF2Remake.World
             var vrot = OrbitLayout.RotationToUnity(new Vector3(0, Mathf.PI, 0));
             var valkyrie = Scenery("v_station_battlestation_anim_mission_object", vp, vrot, "Valkyrie");
             valkyrieGun = Scenery("sn_plasma_gun_valkyrie", vp, vrot, "Valkyrie plasma gun");
-            PartAnimation.HoldAll(valkyrie);
+            PartAnimation.HoldAllAtEnd(valkyrie);   // PlayerStation ctor at 0x9d (0x14727a): unfolded, the burning stages on its arms
             valkyrieGo = valkyrie;
             valkyrieAt = vp;
             valkyrieRot = vrot;

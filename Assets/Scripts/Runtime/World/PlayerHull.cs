@@ -244,6 +244,7 @@ namespace GoF2Remake.World
             if (model == null) return;
             var h = Current(db);
             if (h != null && h.holdAfterOneOff) PartAnimation.HoldAllAfterOneOff(model);
+            else if (h != null && h.assembly == "v_station_battlestation_anim_mission_object") PartAnimation.HoldAllAtEnd(model);   // unfolded, like levels 80 / 154
         }
 
         /// <summary>The player's engine glow and exhaust particles belong to the ship's own model (the freighters and the
