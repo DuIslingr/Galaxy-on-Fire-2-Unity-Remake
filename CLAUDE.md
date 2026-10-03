@@ -1053,7 +1053,17 @@ Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF
   (actions menu); the right controller's laser is a virtual Mouse placed where it hits the screen (trigger clicks).
 - In VR: the menu backdrop's camera doesn't turn and starts facing the station (`MenuCamera`), no launch / arrival camera
   (`Settings.LaunchCamera`), no mouse steering.
-- To come: the cockpit (instruments on its displays, a canopy HUD), standing beside the hangar pad (grab the ship with the
+- **Cockpit** (`VrCockpit`, flight): `ChaseCamera` puts the scene camera rigidly on the seat (`VrCockpit.Seat`, 1 m above
+  the ship's pivot, the ship's rotation; no lag, slide, shake or boost zoom), so the rig, the head and the cockpit (a child
+  of the rig) ride with the ship; the player's hull renderers are hidden. The same code-built cockpit for every ship
+  (primitives, URP Lit dark metal: dashboard, front panel, hood, floor, walls, seat back, side consoles, canopy struts) until
+  a modelled one replaces it. The flight HUD is split by region of its texture (`VrPanels.Crop` / `TextureOf`, panel pixels
+  at 1920 x 1080): the canopy HUD shows only the middle (x 326..1594, y 0..1026: crosshair, markers, lock plate, messages,
+  menus; `.hud-vr` centres the autopilot menu), the displays the corners (status bars + recharge icons left, cargo readout
+  right, the secondary plate centre, the control hints on the left console). The laser works in flight only while
+  `Navigation.InputHalted` (a menu, conversation or map; else the trigger fires). `VrRig.DebugLook` fixes the simulation's
+  look for tests.
+- To come: standing beside the hangar pad (grab the ship with the
   laser to turn it), standing in the bar (visitors face you, picked by the laser), a grabbable stick and throttle option.
 
 ## Recovered facts already implemented

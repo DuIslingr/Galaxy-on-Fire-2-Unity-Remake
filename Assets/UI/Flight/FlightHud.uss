@@ -260,6 +260,12 @@
     top: 180px;
 }
 
+/* VR (Vr.VrCockpit): the HUD's corners are on the cockpit's displays, the canopy shows its middle: the menu there. */
+.hud-vr .autopilot-menu {
+    left: 50%;
+    translate: -50% 0;
+}
+
 /* Autopilot menu (Hud::initHudMenu(3)): next to the autopilot button; the game is paused while it is open. */
 .autopilot-menu {
     display: none;

@@ -392,6 +392,7 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-touch", kind == InputKind.Touch);
             root.EnableInClassList("input-keyboard", kind == InputKind.KeyboardMouse);
             root.EnableInClassList("input-gamepad", kind == InputKind.Gamepad);
+            root.EnableInClassList("hud-vr", Vr.VrMode.Enabled);   // VR: the HUD's middle is the canopy HUD, its corners the cockpit's displays
             if (kind != InputKind.Touch) { touch?.Reset(); weapons?.SetPrimaryHeld(false); }
             // PlayerEgo::update: handling-dependent damping only with the mouse cursor, else resetShipHandling's constants.
             if (chase != null) chase.handlingDependent = kind == InputKind.KeyboardMouse;

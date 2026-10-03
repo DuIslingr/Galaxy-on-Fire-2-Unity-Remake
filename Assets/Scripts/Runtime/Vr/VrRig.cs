@@ -43,7 +43,10 @@ namespace GoF2Remake.Vr
         Vector2 simLook;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => Current = null;
+        static void ResetStatics() { Current = null; DebugLook = null; }
+
+        /// <summary>Testing (the simulation): a fixed look (degrees: x yaw, y pitch up) instead of the mouse's; null = the mouse.</summary>
+        public static Vector2? DebugLook;
 
         /// <summary>The headset's camera (null outside VR).</summary>
         public Camera Eye => eye;
@@ -132,6 +135,12 @@ namespace GoF2Remake.Vr
             mapMaterial = VrPanels.ScreenMaterial(3050);
             mapScreen.GetComponent<MeshRenderer>().sharedMaterial = mapMaterial;
             mapScreen.gameObject.SetActive(false);
+            if (flight)
+            {
+                var cockpit = new GameObject("VR Cockpit");
+                cockpit.transform.SetParent(transform, false);
+                cockpit.AddComponent<VrCockpit>().Init(this, panels);
+            }
             Follow();
         }
 
@@ -192,6 +201,7 @@ namespace GoF2Remake.Vr
                     simLook.y = Mathf.Clamp(simLook.y, -80f, 80f);
                 }
                 else simLook = Vector2.Lerp(simLook, Vector2.zero, Time.unscaledDeltaTime * 4f);
+                if (DebugLook.HasValue) simLook = DebugLook.Value;
                 var baseRot = flight ? Quaternion.identity : Quaternion.Inverse(transform.rotation) * t.rotation;
                 head.localRotation = baseRot * Quaternion.Euler(-simLook.y, simLook.x, 0f);
                 eye.fieldOfView = logical.fieldOfView;
@@ -253,9 +263,12 @@ namespace GoF2Remake.Vr
         /// <summary>The laser (a headset): from the right controller to the screen; the hit drives VrPad's virtual mouse.</summary>
         void UpdatePointer()
         {
+            Vector2 uv = default;
+            float distance = 0f;
             if (!VrMode.Headset || rightHand == null) return;
             var ray = new Ray(rightHand.position, rightHand.forward);
-            bool hit = HitScreen(ray, out Vector2 uv, out float distance);
+            // In flight the trigger fires: the laser only while a menu, conversation or map halts the flight controls.
+            bool hit = (!flight || Flight.Navigation.InputHalted) && HitScreen(ray, out uv, out distance);
             laser.enabled = hit;
             if (hit)
             {

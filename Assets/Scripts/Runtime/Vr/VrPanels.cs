@@ -23,6 +23,7 @@ namespace GoF2Remake.Vr
             public Color previousClearColor;
             public GameObject quad;
             public Material material;
+            public Rect crop = new Rect(0f, 0f, 1f, 1f);
         }
 
         readonly Transform screen;
@@ -53,7 +54,7 @@ namespace GoF2Remake.Vr
                 if (r != null && r.panelSettings != null && !entries.Exists(e => e.settings == r.panelSettings)) Add(r.panelSettings);
             entries.RemoveAll(e => e.settings == null);
             foreach (var e in entries)
-                if (e.quad != null) e.quad.transform.localPosition = new Vector3(0f, 0f, -0.001f * Order(e));
+                if (e.quad != null) e.quad.transform.localPosition = new Vector3(e.crop.center.x - 0.5f, e.crop.center.y - 0.5f, -0.001f * Order(e));
         }
 
         static int Order(Entry e) => e.settings != null ? Mathf.Clamp((int)e.settings.sortingOrder, -1000, 1000) : 0;
@@ -77,6 +78,7 @@ namespace GoF2Remake.Vr
             e.quad.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             entries.Add(e);
             Resize(e);
+            if (crops.TryGetValue(settings, out var uv)) { e.crop = uv; ApplyCrop(e); }
         }
 
         void Resize(Entry e)
@@ -108,6 +110,36 @@ namespace GoF2Remake.Vr
             m.SetOverrideTag("RenderType", "Transparent");
             m.renderQueue = queue;
             return m;
+        }
+
+        /// <summary>The texture 'settings' renders into (null = not one of these panels).</summary>
+        public RenderTexture TextureOf(PanelSettings settings)
+        {
+            var e = entries.Find(x => x.settings == settings);
+            return e != null ? e.texture : null;
+        }
+
+        /// <summary>Shows only 'uv' (0..1, bottom-left origin) of that panel, in its place on the screen (the cockpit's canopy
+        /// HUD: the corners are on the displays).</summary>
+        public void Crop(PanelSettings settings, Rect uv)
+        {
+            crops[settings] = uv;   // kept for a panel not picked up yet
+            var e = entries.Find(x => x.settings == settings);
+            if (e == null || e.quad == null) return;
+            e.crop = uv;
+            ApplyCrop(e);
+        }
+
+        readonly Dictionary<PanelSettings, Rect> crops = new Dictionary<PanelSettings, Rect>();
+
+        static void ApplyCrop(Entry e)
+        {
+            var uv = e.crop;
+            var p = e.quad.transform.localPosition;
+            e.quad.transform.localPosition = new Vector3(uv.center.x - 0.5f, uv.center.y - 0.5f, p.z);
+            e.quad.transform.localScale = new Vector3(uv.width, uv.height, 1f);
+            e.material.SetTextureScale("_BaseMap", uv.size);
+            e.material.SetTextureOffset("_BaseMap", uv.position);
         }
 
         /// <summary>The screen's aspect (the window's).</summary>
