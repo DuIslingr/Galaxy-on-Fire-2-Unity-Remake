@@ -209,10 +209,10 @@ namespace GoF2Remake.Multiplayer
             target.isShip = true;
             target.customDeath = true;
             target.maxHp = 100f;
-            // This player's weapons hitting them: they are this player's enemy too (NetAggression, both ways); an NPC's shot
+            // This player's weapons hitting them count toward them being this player's enemy too (NetAggression, both ways); an NPC's shot
             // relayed by this orbit's authority isn't.
-            target.RemoteDamage = (amount, hitVector, byNpc) => { if (!byNpc) NetAggression.Mark(OwnerClientId); HitUpRpc(amount, hitVector, byNpc); };
-            target.RemoteEmp = emp => { NetAggression.Mark(OwnerClientId); EmpUpRpc(emp); };
+            target.RemoteDamage = (amount, hitVector, byNpc) => { if (!byNpc) NetAggression.Hit(OwnerClientId, amount); HitUpRpc(amount, hitVector, byNpc); };
+            target.RemoteEmp = emp => { NetAggression.Hit(OwnerClientId, emp); EmpUpRpc(emp); };
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
             Target.NetShips.Add(target);
@@ -293,7 +293,7 @@ namespace GoF2Remake.Multiplayer
             var own = level != null && level.Health != null ? level.Health.Target : null;
             if (own == null) return;
             bool alive = own.Alive;
-            if (alive && !byNpc) NetAggression.Mark(shooter);   // they attacked: hostile here (the turrets defend, NetAggression)
+            if (alive && !byNpc) NetAggression.Hit(shooter, amount);   // an attack makes them an enemy here (NetAggression)
             own.Damage(amount, byNpc, hitVector);
             if (alive && !own.Alive && !byNpc && NetState.Instance != null) NetState.Instance.DestroyedByRpc(shooter);
         }
@@ -416,7 +416,7 @@ namespace GoF2Remake.Multiplayer
         {
             var hp = level != null && level.Health != null && level.Health.Target != null ? level.Health.Target.hitpoints : null;
             if (hp == null || !hp.Alive) return;
-            NetAggression.Mark(shooter);
+            NetAggression.Hit(shooter, emp);
             hp.shield = Mathf.Max(0f, hp.shield - emp);
             empShockMs = 1500f;
         }
