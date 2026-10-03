@@ -1,27 +1,39 @@
 // NetCommands.cs
-// Chat commands: a line typed in the chat that starts with "/" runs here on this game instead of being sent (NetChat.Send).
-// Each command says who may use it (`available`); /help lists the ones this player can run. Their answers are chat
-// notices only this player sees. Typing "/" lists the matching commands over the chat line and Tab completes / cycles
-// them, and a player name after the commands that take one (ChatView, Completions).
+// Chat commands: a line typed in the chat that starts with "/" is a command, never sent as chat (NetChat.Send). Every
+// command that acts on the session runs on the server (ServerCommands): the chat sends its name and arguments
+// (NetState.ServerCommandRpc), the server checks the sender's rights and runs it, and its answer comes back as a notice
+// only the sender sees. The dedicated server's console runs the very same commands (RunOnServer with no issuer: every
+// right, named "Server"). Only the commands that just change or read this game stay here (help, netstats, pos).
+// Each command says who may use it (`available` here for /help and the suggestions, `allowed` on the server, which
+// decides). Typing "/" lists the matching commands over the chat line and Tab completes / cycles them, and a player name
+// after the commands that take one (ChatView, Completions).
+// This game:
 //   /help                      the commands this player can use
-//   /players                   everyone in the session: where they are, their ship, squad, admin
-//   /g <text>, /l <text>       one line to Global / Local without switching the channel
-//   /w <player> <text>         a private message (the host passes it on to that player only, NetState.WhisperRpc)
+//   /netstats                  shows / hides the network stats over the HUD (NetStats)
+//   /pos                       your orbit and game coordinates (what /tp takes)
+// The server (the console without the "/"):
+//   /players                   everyone in the session: where they are, their ship, squad, admin (admins and the console:
+//                              their client ids too)
+//   /g <text>, /l <text>       one line to Global / Local without switching the channel (the console: g = its say)
+//   /w <player> <text>         a private message to that player only
 //   /invite <player>           a squad invitation (docked at the same station, like the pilot list's Invite)
 //   /leave                     leaves the squad
-//   /netstats                  shows / hides the network stats over the HUD (NetStats)
-//   /kick <player> [reason]    admins: drops a player (the host checks the rights again, NetState.KickRpc)
-//   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back (a dedicated server:
-//                              its console's admin / unadmin)
+//   /kick <player> [reason]    admins: drops a player (never the host's own player; only the host removes an admin)
+//   /tp [player] <player | station [x y z | dock]>   admins: teleports (NetTeleport) a player (the chat: yourself by
+//                              default) to a player, an orbit (at the launch spot or game coordinates) or a station's hangar
+//   /tphere <player>           admins: brings a player to you
+//   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back
 // Admins: the host's own player always, else the players the host or the server console made admins (NetPlayer.IsAdmin,
 // for the session only: names aren't verified, so nothing is remembered by name).
-// Player names are matched whole and case-insensitively, the longest name the arguments start with ("Player 2 hi").
+// Player names are matched whole and case-insensitively, the longest name the arguments start with ("Player 2 hi"), or a
+// client id as the first word.
 
 using System;
 using System.Collections.Generic;
 using System.Text;
 using GoF2Remake.Data;
 using Unity.Netcode;
+using UnityEngine;
 
 namespace GoF2Remake.Multiplayer
 {
@@ -30,48 +42,61 @@ namespace GoF2Remake.Multiplayer
     {
         enum Arg { None, Text, Player, PlayerText }
 
-        sealed class Command
-        {
-            public string name, usage = "";
-            public Arg arg;
-            public bool self;   // the player argument may be the player themselves
-            public Func<string> description;
-            public Func<bool> available;
-            public Action<string> run;
-        }
-
         /// <summary>One Tab completion: the whole line it writes, and the suggestion row's name and description.</summary>
         public struct Completion
         {
             public string line, label, description;
         }
 
+        sealed class Command
+        {
+            public string name, usage = "";
+            public Arg arg;
+            public bool self;                              // the player argument may be the issuer themselves (completion)
+            public Func<string> description;
+            public Func<bool> available;                   // this game: listed by /help and the suggestions
+            public Action<string> local;                   // runs on this game; null = a server command
+            public Func<NetPlayer, bool> allowed;          // the server: the issuer may run it (null issuer = the console)
+            public Func<string, NetPlayer, string> run;    // the server: args, issuer -> the answer
+            public bool needsPlayer;                       // only a player can run it (not the console)
+        }
+
         static bool Everyone() => true;
+        static bool Anyone(NetPlayer p) => true;
 
         static readonly Command[] Commands =
         {
-            new Command { name = "help", available = Everyone, run = _ => Help(),
+            new Command { name = "help", available = Everyone, local = _ => Help(),
                 description = () => X("mpCmdHelp", "lists the commands you can use") },
-            new Command { name = "players", available = Everyone, run = _ => Players(),
-                description = () => X("mpCmdPlayers", "everyone in the session: where they are, ship, squad") },
-            new Command { name = "g", usage = "<text>", arg = Arg.Text, available = Everyone, run = a => Say(a, true),
-                description = () => X("mpCmdGlobal", "sends one line to Global") },
-            new Command { name = "l", usage = "<text>", arg = Arg.Text, available = Everyone, run = a => Say(a, false),
-                description = () => X("mpCmdLocal", "sends one line to Local") },
-            new Command { name = "w", usage = "<player> <text>", arg = Arg.PlayerText, available = Everyone, run = Whisper,
-                description = () => X("mpCmdWhisper", "a private message to one player") },
-            new Command { name = "invite", usage = "<player>", arg = Arg.Player, available = Everyone, run = Invite,
-                description = () => X("mpCmdInvite", "invites a player docked here to your squad") },
-            new Command { name = "leave", available = Everyone, run = _ => Leave(),
-                description = () => X("mpCmdLeave", "leaves your squad") },
-            new Command { name = "netstats", available = Everyone, run = _ => ToggleStats(),
+            new Command { name = "netstats", available = Everyone, local = _ => ToggleStats(),
                 description = () => X("mpCmdNetstats", "shows or hides the network stats (ping, packet loss, data in / out)") },
-            new Command { name = "kick", usage = "<player> [reason]", arg = Arg.PlayerText, available = () => LocalIsAdmin, run = Kick,
+            new Command { name = "pos", available = Everyone, local = _ => NetChat.Notice(NetTeleport.Position()),
+                description = () => X("mpCmdPos", "your orbit and coordinates (what /tp takes)") },
+
+            new Command { name = "players", available = Everyone, allowed = Anyone, run = (_, by) => Players(by),
+                description = () => X("mpCmdPlayers", "everyone in the session: where they are, ship, squad") },
+            new Command { name = "g", usage = "<text>", arg = Arg.Text, available = Everyone, allowed = Anyone, run = (a, by) => Say(a, by, true),
+                description = () => X("mpCmdGlobal", "sends one line to Global") },
+            new Command { name = "l", usage = "<text>", arg = Arg.Text, available = Everyone, allowed = Anyone, run = (a, by) => Say(a, by, false),
+                needsPlayer = true, description = () => X("mpCmdLocal", "sends one line to Local") },
+            new Command { name = "w", usage = "<player> <text>", arg = Arg.PlayerText, available = Everyone, allowed = Anyone, run = Whisper,
+                description = () => X("mpCmdWhisper", "a private message to one player") },
+            new Command { name = "invite", usage = "<player>", arg = Arg.Player, available = Everyone, allowed = Anyone, run = Invite,
+                needsPlayer = true, description = () => X("mpCmdInvite", "invites a player docked here to your squad") },
+            new Command { name = "leave", available = Everyone, allowed = Anyone, run = (_, by) => Leave(by),
+                needsPlayer = true, description = () => X("mpCmdLeave", "leaves your squad") },
+            new Command { name = "kick", usage = "<player> [reason]", arg = Arg.PlayerText, available = () => LocalIsAdmin, allowed = IsAdmin, run = Kick,
                 description = () => X("mpCmdKick", "admins: removes a player from the session") },
-            new Command { name = "admin", usage = "<player>", arg = Arg.Player, available = () => LocalIsHost, run = a => SetAdmin(a, true),
-                description = () => X("mpCmdAdmin", "host: makes a player an admin for this session") },
-            new Command { name = "unadmin", usage = "<player>", arg = Arg.Player, available = () => LocalIsHost, run = a => SetAdmin(a, false),
-                description = () => X("mpCmdUnadmin", "host: takes a player's admin rights away") },
+            new Command { name = "tp", usage = NetTeleport.Usage, arg = Arg.PlayerText, self = true, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = (a, by) => NetTeleport.Command(a, by, false),
+                description = () => X("mpCmdTp", "admins: teleports you or a player to a player, an orbit (x y z in game units) or a hangar (dock)") },
+            new Command { name = "tphere", usage = "<player>", arg = Arg.Player, available = () => LocalIsAdmin, allowed = IsAdmin,
+                run = (a, by) => NetTeleport.Command(a, by, true), needsPlayer = true,
+                description = () => X("mpCmdTpHere", "admins: brings a player to you") },
+            new Command { name = "admin", usage = "<player>", arg = Arg.Player, available = () => LocalIsHost, allowed = IsHostPlayer,
+                run = (a, by) => SetAdmin(a, by, true), description = () => X("mpCmdAdmin", "host: makes a player an admin for this session") },
+            new Command { name = "unadmin", usage = "<player>", arg = Arg.Player, available = () => LocalIsHost, allowed = IsHostPlayer,
+                run = (a, by) => SetAdmin(a, by, false), description = () => X("mpCmdUnadmin", "host: takes a player's admin rights away") },
         };
 
         static string X(string key, string english) => Localization.Extra(key, english);
@@ -82,14 +107,21 @@ namespace GoF2Remake.Multiplayer
         public static bool LocalIsAdmin => LocalIsHost || (NetPlayer.Local != null && NetPlayer.Local.IsAdmin);
 
         /// <summary>Server: 'p' has admin rights (the host's own player, or made an admin).</summary>
-        public static bool IsAdmin(NetPlayer p) =>
-            p != null && (p.IsAdmin || (NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && p.OwnerClientId == NetworkManager.ServerClientId));
+        public static bool IsAdmin(NetPlayer p) => p != null && (p.IsAdmin || IsHostPlayer(p));
+
+        static bool IsHostPlayer(NetPlayer p) =>
+            p != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && p.OwnerClientId == NetworkManager.ServerClientId;
 
         static bool Ready => NetState.Instance != null && NetState.Instance.IsSpawned;
 
-        // ---- running ----------------------------------------------------------------------------------------
+        static Command Get(string name) => Array.Find(Commands, c => c.name == name);
 
-        /// <summary>A chat line starting with "/": runs it (true = it was a command, nothing is sent).</summary>
+        static string Usage(Command c) => $"/{c.name}{(c.usage.Length > 0 ? " " + c.usage : "")}";
+
+        // ---- this game ----------------------------------------------------------------------------------------
+
+        /// <summary>A chat line starting with "/": runs it here or sends it to the server (true = it was a command, nothing
+        /// is sent as chat).</summary>
         public static bool TryRun(string line)
         {
             if (string.IsNullOrEmpty(line) || line[0] != '/') return false;
@@ -102,14 +134,62 @@ namespace GoF2Remake.Multiplayer
                 NetChat.Notice(string.Format(X("mpCmdUnknown", "Unknown command /{0}. Type /help for the commands you can use."), name));
             else if (command.arg != Arg.None && args.Length == 0)
                 NetChat.Notice(Usage(command));
-            else command.run(args);
+            else if (command.local != null)
+                command.local(args);
+            else if (Ready)
+                NetState.Instance.ServerCommandRpc(command.name, args);
             return true;
         }
 
-        static string Usage(Command c) => $"/{c.name}{(c.usage.Length > 0 ? " " + c.usage : "")}";
+        static void Help()
+        {
+            NetChat.Notice(X("mpCmdList", "Commands:"));
+            foreach (var c in Commands)
+                if (c.available()) NetChat.Notice($"{Usage(c)}: {c.description()}");
+        }
+
+        static void ToggleStats()
+        {
+            NetStats.Shown = !NetStats.Shown;
+            NetChat.Notice(NetStats.Shown ? X("mpStatsOn", "Network stats on (/netstats hides them).") : X("mpStatsOff", "Network stats off."));
+        }
+
+        // ---- the server: one implementation for the chat and the dedicated server's console -------------------
+
+        /// <summary>The server commands' names (the console's commands and Tab completion).</summary>
+        public static IEnumerable<string> ServerCommandNames
+        {
+            get { foreach (var c in Commands) if (c.run != null) yield return c.name; }
+        }
+
+        /// <summary>The console's help for the server commands: "name usage: description" lines.</summary>
+        public static string ServerCommandHelp()
+        {
+            var sb = new StringBuilder();
+            foreach (var c in Commands)
+                if (c.run != null && !c.needsPlayer) sb.Append($"\n  {c.name}{(c.usage.Length > 0 ? " " + c.usage : "")}: {c.description()}");
+            return sb.ToString();
+        }
+
+        /// <summary>Server: runs command 'name' for 'issuer' (null = the dedicated server's console) after checking its
+        /// rights; the answer for the issuer, null when 'name' is no server command.</summary>
+        public static string RunOnServer(string name, string args, NetPlayer issuer)
+        {
+            var c = Get((name ?? "").ToLowerInvariant());
+            if (c == null || c.run == null) return null;
+            if (!Ready || !NetState.Instance.IsServer) return X("mpCmdNoServer", "The server isn't running.");
+            if (issuer == null && c.needsPlayer) return string.Format(X("mpCmdPlayersOnly", "/{0} is for players in the chat."), c.name);
+            if (issuer != null && !c.allowed(issuer)) return X("mpCmdNoRights", "You don't have the rights for that command.");
+            args = (args ?? "").Trim();
+            if (c.arg != Arg.None && args.Length == 0) return Usage(c);
+            return c.run(args, issuer) ?? "";
+        }
+
+        /// <summary>The issuer's name in notices and the log ("Server" for the console).</summary>
+        public static string IssuerName(NetPlayer issuer) => issuer != null ? issuer.DisplayName : X("mpServerName", "Server");
 
         /// <summary>The player whose name 'args' starts with (whole name, any case, the longest one), the rest after it.</summary>
-        static NetPlayer MatchPlayer(string args, out string rest)
+        internal static NetPlayer MatchPlayer(string args, out string rest)
         {
             NetPlayer best = null;
             rest = "";
@@ -125,44 +205,51 @@ namespace GoF2Remake.Multiplayer
             return best;
         }
 
-        /// <summary>The command's player argument, with a notice when there is none (or it is the player themselves).</summary>
-        static NetPlayer TargetOf(Command c, string args, out string rest)
+        /// <summary>A player named by the arguments' start (MatchPlayer) or by a client id as the first word.</summary>
+        public static NetPlayer FindTarget(string args, out string rest)
         {
             var p = MatchPlayer(args, out rest);
-            if (p == null) { NetChat.Notice(string.Format(X("mpCmdNoPlayer", "No player \"{0}\". /players lists them."), args)); return null; }
-            if (!c.self && p.IsOwner) { NetChat.Notice(X("mpCmdNotYourself", "Not on yourself.")); return null; }
-            return p;
+            if (p != null) return p;
+            int space = args.IndexOf(' ');
+            string first = space < 0 ? args : args.Substring(0, space);
+            if (ulong.TryParse(first, out ulong id) && (p = NetSquad.Find(id)) != null)
+            {
+                rest = space < 0 ? "" : args.Substring(space + 1).Trim();
+                return p;
+            }
+            rest = "";
+            return null;
         }
 
-        static Command Get(string name) => Array.Find(Commands, c => c.name == name);
+        static string NoPlayer(string args) => string.Format(X("mpCmdNoPlayer", "No player \"{0}\". /players lists them."), args);
 
-        static void Help()
+        /// <summary>The command's player argument (never the issuer), or why not in 'error'.</summary>
+        static NetPlayer OtherPlayer(string args, NetPlayer by, out string rest, out string error)
         {
-            NetChat.Notice(X("mpCmdList", "Commands:"));
-            foreach (var c in Commands)
-                if (c.available()) NetChat.Notice($"{Usage(c)}: {c.description()}");
+            var p = FindTarget(args, out rest);
+            error = p == null ? NoPlayer(args) : p == by ? X("mpCmdNotYourself", "Not on yourself.") : null;
+            return error == null ? p : null;
         }
 
-        static void Players()
+        static string Players(NetPlayer by)
         {
+            bool ids = by == null || IsAdmin(by);
             var sb = new StringBuilder();
             int n = 0;
             foreach (var p in NetPlayer.All)
             {
                 if (p == null || !p.IsSpawned) continue;
                 n++;
-                sb.Append('\n').Append(p.DisplayName);
-                if (p.IsOwner) sb.Append(' ').Append(X("mpCmdYou", "(you)"));
+                sb.Append('\n');
+                if (ids) sb.Append('#').Append(p.OwnerClientId).Append(' ');
+                sb.Append(p.DisplayName);
+                if (p == by) sb.Append(' ').Append(X("mpCmdYou", "(you)"));
                 sb.Append(": ").Append(WhereText(p)).Append(", ").Append(UI.ItemInfo.ShipName(p.ShipIndex));
-                if (p.SquadId != 0) sb.Append(", ").Append(NetSquad.Same(p, NetPlayer.Local) && !p.IsOwner ? X("mpCmdYourSquad", "your squad") : X("mpCmdInSquad", "in a squad"));
-                if (IsAdminShown(p)) sb.Append(", ").Append(X("mpCmdAdminTag", "admin"));
+                if (p.SquadId != 0) sb.Append(", ").Append(p != by && NetSquad.Same(p, by) ? X("mpCmdYourSquad", "your squad") : X("mpCmdInSquad", "in a squad"));
+                if (IsAdmin(p)) sb.Append(", ").Append(X("mpCmdAdminTag", "admin"));
             }
-            NetChat.Notice(string.Format(X("mpCmdPlayerCount", "{0} player(s):"), n) + sb);
+            return n == 0 ? X("mpCmdNoPlayers", "No players online.") : string.Format(X("mpCmdPlayerCount", "{0} player(s):"), n) + sb;
         }
-
-        /// <summary>Admin as the other games see it: made an admin, or the host's player (client id 0 with a player host).</summary>
-        static bool IsAdminShown(NetPlayer p) =>
-            p.IsAdmin || (p.OwnerClientId == NetworkManager.ServerClientId && (NetState.Instance == null || !NetState.Instance.Dedicated));
 
         /// <summary>Where a player is, for /players (and the suggestions).</summary>
         public static string WhereText(NetPlayer p)
@@ -177,58 +264,64 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
-        static void Say(string text, bool global)
+        static string Say(string text, NetPlayer by, bool global)
         {
             text = NetChat.Clean(text);
-            if (text.Length > 0 && Ready) NetState.Instance.SendChatRpc(text, global);
+            if (text.Length == 0) return Usage(Get(global ? "g" : "l"));
+            NetState.Instance.Chat(by, text, global);
+            return "";
         }
 
-        static void Whisper(string args)
+        static string Whisper(string args, NetPlayer by)
         {
-            var p = TargetOf(Get("w"), args, out string text);
-            if (p == null) return;
+            var to = OtherPlayer(args, by, out string text, out string error);
+            if (to == null) return error;
             text = NetChat.Clean(text);
-            if (text.Length == 0) { NetChat.Notice(Usage(Get("w"))); return; }
-            if (Ready) NetState.Instance.WhisperRpc(p.OwnerClientId, text);
+            if (text.Length == 0) return Usage(Get("w"));
+            NetState.Instance.Whisper(by, to, text);
+            return "";
         }
 
-        static void Invite(string args)
+        static string Invite(string args, NetPlayer by)
         {
-            var p = TargetOf(Get("invite"), args, out _);
-            var me = NetPlayer.Local;
-            if (p == null || me == null) return;
-            if (NetSquad.Same(p, me)) { NetChat.Notice(string.Format(X("mpCmdAlreadySquad", "{0} is already in your squad."), p.DisplayName)); return; }
-            if (!me.InHangar || !p.InHangar || p.Station != me.Station)
-            {
-                NetChat.Notice(Localization.Extra("mpSquadHangarOnly", "Squads can only be formed while docked in the same hangar."));
-                return;
-            }
-            NetSquad.InviteTo(p);
-            NetChat.Notice(string.Format(X("mpCmdInvited", "Invitation sent to {0}."), p.DisplayName));
+            var to = OtherPlayer(args, by, out _, out string error);
+            if (to == null) return error;
+            if (NetSquad.Same(to, by)) return string.Format(X("mpCmdAlreadySquad", "{0} is already in your squad."), to.DisplayName);
+            if (!by.InHangar || !to.InHangar || to.Station != by.Station)
+                return X("mpSquadHangarOnly", "Squads can only be formed while docked in the same hangar.");
+            NetState.Instance.Invite(by, to);
+            return string.Format(X("mpCmdInvited", "Invitation sent to {0}."), to.DisplayName);
         }
 
-        static void Leave()
+        static string Leave(NetPlayer by)
         {
-            if (!NetSquad.InSquad) { NetChat.Notice(X("mpCmdNoSquad", "You're not in a squad.")); return; }
-            NetSquad.Leave();
+            if (by.SquadId == 0) return X("mpCmdNoSquad", "You're not in a squad.");
+            NetState.Instance.LeaveSquad(by);
+            return "";
         }
 
-        static void Kick(string args)
+        static string Kick(string args, NetPlayer by)
         {
-            var p = TargetOf(Get("kick"), args, out string reason);
-            if (p != null && Ready) NetState.Instance.KickRpc(p.OwnerClientId, NetChat.Clean(reason));
+            var to = OtherPlayer(args, by, out string reason, out string error);
+            if (to == null) return error;
+            if (IsHostPlayer(to) || (to.IsAdmin && by != null && !IsHostPlayer(by))) return X("mpKickRefused", "That player can't be kicked.");
+            string name = to.DisplayName;
+            reason = NetChat.Clean(reason);
+            string message = by == null && reason.Length == 0 ? X("mpKicked", "The server removed you from the session.")
+                : reason.Length > 0 ? string.Format(X("mpKickedBy", "{0} removed you from the session: {1}"), IssuerName(by), reason)
+                : string.Format(X("mpKickedByNoReason", "{0} removed you from the session."), IssuerName(by));
+            if (!NetGame.Kick(to.OwnerClientId, message)) return X("mpKickRefused", "That player can't be kicked.");
+            Debug.Log($"Server: {IssuerName(by)} kicked {name} ({to.OwnerClientId}){(reason.Length > 0 ? ": " + reason : "")}");
+            NetState.Instance.NoticeAll(string.Format(X("mpKickedNotice", "{0} was removed from the session by {1}."), name, IssuerName(by)));
+            return "";
         }
 
-        static void SetAdmin(string args, bool on)
+        static string SetAdmin(string args, NetPlayer by, bool on)
         {
-            var p = TargetOf(Get(on ? "admin" : "unadmin"), args, out _);
-            if (p != null && Ready) NetState.Instance.SetAdminRpc(p.OwnerClientId, on);
-        }
-
-        static void ToggleStats()
-        {
-            NetStats.Shown = !NetStats.Shown;
-            NetChat.Notice(NetStats.Shown ? X("mpStatsOn", "Network stats on (/netstats hides them).") : X("mpStatsOff", "Network stats off."));
+            var to = OtherPlayer(args, by, out _, out string error);
+            if (to == null) return error;
+            NetState.Instance.SetAdmin(to, on);   // logged there
+            return string.Format(on ? X("mpAdminGranted", "{0} is now an admin.") : X("mpAdminRevoked", "{0} is no longer an admin."), to.DisplayName);
         }
 
         // ---- completion (ChatView) --------------------------------------------------------------------------

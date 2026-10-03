@@ -482,6 +482,43 @@ namespace GoF2Remake.World
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
+        /// <summary>Remake multiplayer (NetTeleport): an admin's teleport out of this orbit, into another orbit (the pose
+        /// from NetTeleport.TakePose, no launch camera) or into a station's hangar ('dock'). False while the ship can't go
+        /// (already leaving, destroyed).</summary>
+        public bool TeleportOut(int station, bool dock)
+        {
+            if (Leaving || (Health != null && Health.Dead)) return false;
+            if (dock)
+            {
+                Session.StationIndex = station;
+                Dock(false);
+                return true;
+            }
+            Leaving = true;
+            Weapons?.StoreAmmo();
+            if (station == Session.VoidOrbit && !Layout.alienOrbit) Session.VoidReturnStation = Layout.stationIndex;
+            Session.PreviousStationIndex = Layout.stationIndex;
+            Session.StationIndex = station;
+            Session.ArrivedByTravel = false;
+            Session.LaunchedFromStation = false;
+            Session.ProgrammedStation = -1;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+            return true;
+        }
+
+        /// <summary>Remake multiplayer (NetTeleport): a teleport within this orbit moves the ship in place, the autopilot off.
+        /// False while something else flies it (mining, object docking, a planet jump, a script's camera, dead): the orbit
+        /// is loaded again instead.</summary>
+        public bool MoveForTeleport(Vector3 position, Quaternion rotation)
+        {
+            if (Leaving || Player == null || (Health != null && Health.Dead) || (Mining != null && Mining.State != Flight.Mining.Phase.Idle)
+                || (Docking != null && Docking.Busy) || (Navigation != null && Navigation.Jumping) || chase == null || chase.scriptCamera)
+                return false;
+            Navigation?.SetAutopilot(null);
+            MovePlayer(position, rotation);
+            return true;
+        }
+
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see Obstacle).</summary>
         void AddObstacles() => OrbitBuilder.AddObstacles(Layout, Station, Jumpgate);
 
@@ -568,6 +605,8 @@ namespace GoF2Remake.World
                 var start = OrbitLayout.ToUnity(new Vector3(70000f, 0f, 100000f));
                 root.transform.SetPositionAndRotation(start, Quaternion.LookRotation(-start.normalized, Vector3.up));
             }
+            // Remake multiplayer: an admin's teleport into this orbit (NetTeleport) brings its own pose.
+            if (NetTeleport.TakePose(out var tpPos, out var tpRot)) root.transform.SetPositionAndRotation(tpPos, tpRot);
             var ctrl = root.AddComponent<ShipController>();
             var equipment = new System.Collections.Generic.List<ItemData>();
             foreach (var e in Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }

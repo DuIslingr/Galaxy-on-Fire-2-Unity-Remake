@@ -120,10 +120,18 @@ namespace GoF2Remake.Multiplayer
         {
             text = NetChat.Clean(text);
             if (text.Length == 0) return;
-            NetPlayer sender = null;
-            foreach (var p in NetPlayer.All) if (p != null && p.OwnerClientId == rpc.Receive.SenderClientId) { sender = p; break; }
-            if (sender == null) return;
-            ChatRpc(sender.OwnerClientId, sender.DisplayName, text, global, sender.Station, sender.InSpace, sender.InHangar);
+            var sender = NetSquad.Find(rpc.Receive.SenderClientId);
+            if (sender != null) Chat(sender, text, global);
+        }
+
+        /// <summary>Server: a chat line from 'sender' (null = the server itself, always global), stamped with its name and
+        /// location (/g, /l and the console's say: NetCommands).</summary>
+        internal void Chat(NetPlayer sender, string text, bool global)
+        {
+            text = NetChat.Clean(text);
+            if (!IsServer || text.Length == 0) return;
+            if (sender == null) ServerChat(NetCommands.IssuerName(null), text);
+            else ChatRpc(sender.OwnerClientId, sender.DisplayName, text, global, sender.Station, sender.InSpace, sender.InHangar);
         }
 
         /// <summary>Server: a global chat line from the server itself (the dedicated server's say command).</summary>
@@ -137,64 +145,44 @@ namespace GoF2Remake.Multiplayer
         void ChatRpc(ulong sender, string from, string text, bool global, int station, bool inSpace, bool inHangar)
             => NetChat.Receive(sender, from, text, global, station, inSpace, inHangar);
 
-        /// <summary>/w: a private message, passed on to that player only (and a copy back to the sender).</summary>
-        [Rpc(SendTo.Server)]
-        public void WhisperRpc(ulong target, string text, RpcParams rpc = default)
+        /// <summary>Server: /w, a private message passed on to that player only, and a copy back to the sender (null = the
+        /// server's console, which logs it).</summary>
+        internal void Whisper(NetPlayer from, NetPlayer to, string text)
         {
             text = NetChat.Clean(text);
-            var from = NetSquad.Find(rpc.Receive.SenderClientId);
-            var to = NetSquad.Find(target);
-            if (from == null || text.Length == 0) return;
-            if (to == null || to == from) { NoticeToRpc(Localization.Extra("mpWhisperNobody", "That player isn't in the session."), RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp)); return; }
-            WhisperedRpc(from.DisplayName, text, false, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
-            WhisperedRpc(to.DisplayName, text, true, RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp));
+            if (!IsServer || to == null || text.Length == 0) return;
+            WhisperedRpc(NetCommands.IssuerName(from), text, false, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
+            if (from != null) WhisperedRpc(to.DisplayName, text, true, RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp));
+            else Debug.Log($"Server: [To {to.DisplayName}] {text}");
         }
 
         [Rpc(SendTo.SpecifiedInParams)]
         void WhisperedRpc(string other, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveWhisper(other, text, own);
 
-        // ---- admins (NetCommands) ---------------------------------------------------------------------------
+        // ---- server commands (NetCommands) -----------------------------------------------------------------
 
-        /// <summary>/kick: an admin drops a player. The server checks the rights again (a changed game can call this too):
-        /// never the host's own player or the sender, and only the host removes another admin.</summary>
+        /// <summary>A server command typed in the chat (/kick, /tp, /tphere, /admin, /unadmin): run on the server by the same
+        /// code as the dedicated server's console (NetCommands.RunOnServer), which checks the sender's rights; the answer goes
+        /// back to the sender.</summary>
         [Rpc(SendTo.Server)]
-        public void KickRpc(ulong target, string reason, RpcParams rpc = default)
+        public void ServerCommandRpc(string name, string args, RpcParams rpc = default)
         {
             var from = NetSquad.Find(rpc.Receive.SenderClientId);
-            var to = NetSquad.Find(target);
-            var reply = from != null ? RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp) : null;
-            if (from == null || !NetCommands.IsAdmin(from)) { if (reply != null) NoticeToRpc(Localization.Extra("mpKickNoRights", "Only admins can kick."), reply); return; }
-            bool fromHost = NetworkManager.IsHost && from.OwnerClientId == NetworkManager.ServerClientId;
-            if (to == null || to == from || (to.OwnerClientId == NetworkManager.ServerClientId && NetworkManager.IsHost) || (to.IsAdmin && !fromHost))
-            {
-                NoticeToRpc(Localization.Extra("mpKickRefused", "That player can't be kicked."), reply);
-                return;
-            }
-            string name = to.DisplayName;
-            reason = NetChat.Clean(reason);
-            string message = reason.Length > 0
-                ? string.Format(Localization.Extra("mpKickedBy", "{0} removed you from the session: {1}"), from.DisplayName, reason)
-                : string.Format(Localization.Extra("mpKickedByNoReason", "{0} removed you from the session."), from.DisplayName);
-            if (!NetGame.Kick(to.OwnerClientId, message)) { NoticeToRpc(Localization.Extra("mpKickRefused", "That player can't be kicked."), reply); return; }
-            Debug.Log($"Server: {from.DisplayName} kicked {name} ({to.OwnerClientId}){(reason.Length > 0 ? ": " + reason : "")}");
-            NoticeRpc(string.Format(Localization.Extra("mpKickedNotice", "{0} was removed from the session by {1}."), name, from.DisplayName));
+            if (from == null) return;
+            string reply = NetCommands.RunOnServer(name, args, from);
+            if (!string.IsNullOrEmpty(reply)) NoticeToRpc(reply, RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        /// <summary>/admin, /unadmin: the host (only) makes a player an admin for the session or takes it back.</summary>
-        [Rpc(SendTo.Server)]
-        public void SetAdminRpc(ulong target, bool on, RpcParams rpc = default)
-        {
-            var reply = RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp);
-            if (!NetworkManager.IsHost || rpc.Receive.SenderClientId != NetworkManager.ServerClientId)
-            {
-                NoticeToRpc(Localization.Extra("mpAdminHostOnly", "Only the host can change admins."), reply);
-                return;
-            }
-            var to = NetSquad.Find(target);
-            if (to == null) return;
-            SetAdmin(to, on);
-            NoticeToRpc(string.Format(on ? Localization.Extra("mpAdminGranted", "{0} is now an admin.") : Localization.Extra("mpAdminRevoked", "{0} is no longer an admin."), to.DisplayName), reply);
-        }
+        /// <summary>Server: a notice in everyone's chat.</summary>
+        internal void NoticeAll(string text) => NoticeRpc(text);
+
+        /// <summary>Server: player 'who' goes to 'd' (their game moves its own ship, NetTeleport.Go). 'by' = the admin.</summary>
+        internal void SendTeleport(ulong who, NetTeleport.Destination d, string by) =>
+            TeleportToRpc((byte)d.kind, d.player, d.station, d.hasPos, d.pos, by, RpcTarget.Single(who, RpcTargetUse.Temp));
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void TeleportToRpc(byte kind, ulong player, int station, bool hasPos, Vector3 pos, string by, RpcParams rpc = default)
+            => NetTeleport.Go(new NetTeleport.Destination { kind = (NetTeleport.Kind)kind, player = player, station = station, hasPos = hasPos, pos = pos }, by);
 
         /// <summary>Server: a player's admin rights (the host's /admin, the dedicated server's admin command).</summary>
         public void SetAdmin(NetPlayer p, bool on)
@@ -211,10 +199,14 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Server)]
         public void InviteRpc(ulong target, RpcParams rpc = default)
         {
-            var from = NetSquad.Find(rpc.Receive.SenderClientId);
-            var to = NetSquad.Find(target);
-            if (from == null || to == null || NetSquad.Same(from, to)) return;
-            InvitedRpc(from.OwnerClientId, from.DisplayName, RpcTarget.Single(target, RpcTargetUse.Temp));
+            Invite(NetSquad.Find(rpc.Receive.SenderClientId), NetSquad.Find(target));
+        }
+
+        /// <summary>Server: 'from' invites 'to' into their squad (the pilot list's Invite, /invite).</summary>
+        internal void Invite(NetPlayer from, NetPlayer to)
+        {
+            if (!IsServer || from == null || to == null || NetSquad.Same(from, to)) return;
+            InvitedRpc(from.OwnerClientId, from.DisplayName, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
         }
 
         [Rpc(SendTo.SpecifiedInParams)]
@@ -250,8 +242,13 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Server)]
         public void LeaveSquadRpc(RpcParams rpc = default)
         {
-            var p = NetSquad.Find(rpc.Receive.SenderClientId);
-            if (p == null || p.SquadId == 0) return;
+            LeaveSquad(NetSquad.Find(rpc.Receive.SenderClientId));
+        }
+
+        /// <summary>Server: 'p' leaves their squad (the squad window's Leave, /leave).</summary>
+        internal void LeaveSquad(NetPlayer p)
+        {
+            if (!IsServer || p == null || p.SquadId == 0) return;
             int id = p.SquadId;
             p.SetSquad(0);
             LeftSquadRpc(RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));   // the squad's mission leaves with them

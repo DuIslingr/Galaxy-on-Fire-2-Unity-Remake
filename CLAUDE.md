@@ -776,16 +776,26 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   button, which ended the typing). No send button (the key sends). Another player's line plays the original's
   incoming-message sound (FMOD 125 Message_Inc, volume 0.241 × `Sfx.EventGain` × the FX volume, one at a time; a copy
   of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving (full width on a solid background: drawn over the flight HUD's key hints, it covers them); join / leave notices; every line
-  is also in the player log (`[Chat ...]`). **Chat commands** (`NetCommands`): a line starting with "/" runs on this game,
-  never sent; each command has an `available` check and `/help` lists the ones this player can run (answers as notices):
-  `/players` (where, ship, squad, admin), `/g` / `/l <text>` (one line to Global / Local), `/w <player> <text>` (a private
-  message the host passes to that player only, `NetState.WhisperRpc`, "[From X]" / "[To X]" in violet, not logged),
-  `/invite <player>` (docked at the same station) and `/leave`, `/netstats`; admins `/kick <player> [reason]`
-  (`NetState.KickRpc`: the server checks the rights again, never the host's player or the sender, only the host kicks another
-  admin; everyone gets "X was removed from the session by Y"); the host `/admin` / `/unadmin <player>`. Admins: the host's
-  own player, or players the host or the dedicated server's console (`admin [id|name]`, `unadmin`) made admins
-  (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't verified). Player names match whole, any case,
-  the longest name the arguments start with. Typing "/" lists the matching commands over the line, after a command that
+  is also in the player log (`[Chat ...]`). **Chat commands** (`NetCommands`): a line starting with "/" is a command, never
+  sent as chat. Every command that acts on the session runs on the server: the chat sends its name and arguments
+  (`NetState.ServerCommandRpc`), the server checks the sender's rights (`allowed`) and runs it, the answer is a notice for
+  the sender; the dedicated server's console runs the very same table (`NetCommands.RunOnServer` with no issuer: every
+  right, named "Server"; `list` = players, `say` = g). Only what changes or reads this game stays local: `/help` (the
+  commands this player can run, `available`), `/netstats`, `/pos` (the orbit and the game coordinates /tp takes). Server
+  commands: `/players` (where, ship, squad, admin; admins and the console see the client ids), `/g` / `/l <text>` (one line
+  to Global / Local), `/w <player> <text>` (a private message to that player only, "[From X]" / "[To X]" in violet, not
+  logged), `/invite <player>` (docked at the same station) and `/leave`; admins `/kick <player> [reason]` (never the host's
+  player or the issuer, only the host / the console kicks another admin; everyone gets "X was removed from the session by
+  Y"), `/tp [player] <player | station [x y z | dock]>` (`NetTeleport`: a player (the chat: yourself by default) to another
+  player (beside their ship, or into the hangar they are docked in), an orbit by station index, name or "void" (the launch
+  spot, or game coordinates facing the station) or a station's hangar ("dock"); the server sends the order to that
+  player's game, which moves its ship in place within the same orbit (`SpaceLevel.MoveForTeleport`; not while mining /
+  object docking / jumping) or loads the orbit / station like a jump (`SpaceLevel.TeleportOut`, the pose through
+  `NetTeleport.TakePose` in `SpawnPlayer`, no launch camera); refused while destroyed or leaving) and `/tphere <player>`;
+  the host (and the console) `/admin` / `/unadmin <player>`. Admins: the host's own player, or players the host or the
+  dedicated server's console made admins (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't
+  verified). Player names match whole, any case, the longest name the arguments start with, or a client id as the first
+  word. Typing "/" lists the matching commands over the line, after a command that
   takes a player the matching players; Tab completes the first and cycles through them (Shift+Tab back, "/" alone cycles
   all; before the channel key, Tab by default; `ChatView.Complete`, `NetCommands.Completions`);
   `/netstats` shows / hides the network stats (`NetStats`, PlayerPrefs `mp_netstats`, top left in the flight HUD, the
@@ -914,8 +924,9 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   doesn't count: a GUI program isn't attached to it) or `-noconsole`; with `-logFile` the window still opens (Unity's
   stdout is then that file); the log is mirrored into the window, Unity prints it only to a stdout it starts with;
   Linux: the terminal): joins / leaves with the client ids,
-  each player's moves, chat; commands help, status, list, say (a global chat line from "Server", `NetState.ServerChat`), admin / unadmin (see "Chat commands"),
-  kick (`NetGame.Kick`: the reason is the player's popup), stop (`NetGame.StopServer`: the goodbye, then quit; Ctrl+C
+  each player's moves, chat; commands help, status, admin (alone: the admins), every chat server command
+  without the "/" (players / list, g / say, w, kick, tp, admin / unadmin; see "Chat commands"; a kick's reason is the
+  player's popup), stop (`NetGame.StopServer`: the goodbye, then quit; Ctrl+C
   and closing the window too). In its own console window (Windows) or on a terminal (Linux) the input line is edited by
   `ConsoleInput` (keys one at a time: `WinConsole.RawInput` / `ReadKey`, `Console.ReadKey`; a "> " prompt, log lines above
   it): Tab completes and cycles the command names (Shift+Tab back, nothing typed: all), Up / Down the history, Esc clears;

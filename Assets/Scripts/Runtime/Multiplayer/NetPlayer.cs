@@ -88,6 +88,9 @@ namespace GoF2Remake.Multiplayer
         public static NetPlayer Local { get; private set; }
 
         public int Station => station.Value;
+        /// <summary>The ship's pose in its orbit (Unity space; the owner's ship), for NetTeleport.</summary>
+        public Vector3 Position => position.Value;
+        public Quaternion Rotation => rotation.Value;
         public Place Where => (Place)place.Value;
         public bool InSpace => Where == Place.Space;
         /// <summary>Docked (taking off included).</summary>

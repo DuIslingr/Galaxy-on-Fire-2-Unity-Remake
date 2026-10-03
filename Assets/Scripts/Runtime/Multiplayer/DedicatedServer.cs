@@ -27,6 +27,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -43,7 +44,7 @@ namespace GoF2Remake.Multiplayer
         const string ServerName = "Server";
         const float TrackSeconds = 1f;
         /// <summary>The commands Tab completes in the console (ConsoleInput), in help's order.</summary>
-        static readonly string[] CommandNames = { "help", "status", "list", "say", "kick", "admin", "unadmin", "stop" };
+        static readonly string[] CommandNames = new[] { "help", "status", "list", "say", "admin", "stop" }.Concat(NetCommands.ServerCommandNames).ToArray();
 
         /// <summary>This process runs as a dedicated server (-server, or GOF2_SERVER set).</summary>
         public static bool Enabled { get; private set; } = Detect();
@@ -267,72 +268,29 @@ namespace GoF2Remake.Multiplayer
                 case "help": case "?":
                     return "Commands:\n" +
                            "  status              join code / port, uptime, players\n" +
-                           "  list                the players: client id, name, where, ship, squad\n" +
-                           "  say <text>          a chat line to everyone, from \"Server\"\n" +
-                           "  kick <id|name> [reason]  drops a player\n" +
-                           "  admin [id|name]     makes a player an admin for this session (/kick in the chat); alone: lists the admins\n" +
-                           "  unadmin <id|name>   takes a player's admin rights away\n" +
-                           "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
+                           "  list                the players (= players)\n" +
+                           "  say <text>          a chat line to everyone, from \"Server\" (= g)\n" +
+                           "  admin               lists the admins\n" +
+                           "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)\n" +
+                           "The chat's commands, run by the same code (players by name or client id):" + NetCommands.ServerCommandHelp();
                 case "status":
                     return $"{(NetGame.Active ? "Running" : "Not running")} {(NetGame.JoinCode != null ? $"online, join code {NetGame.JoinCode}" : $"on port {port}")}, up {Duration(Time.unscaledTime - startedAt)}, " +
                            $"{NetGame.ClientIds.Count} player(s), world seed {NetGame.Seed}, {Application.targetFrameRate} fps, " +
                            $"Debug menu {(NetGame.HostAllowsDebug ? "allowed" : "off")}.";
-                case "list": case "players": case "who":
-                    return List();
+                case "list": case "who":
+                    return NetCommands.RunOnServer("players", rest, null);
                 case "say":
-                    if (rest.Length == 0) return "say <text>";
-                    if (NetState.Instance == null || !NetState.Instance.IsSpawned) return "The server isn't running.";
-                    NetState.Instance.ServerChat(ServerName, rest);
-                    return "";   // the chat line itself is logged
-                case "kick":
-                    return Kick(rest);
-                case "admin":
-                    return rest.Length == 0 ? Admins() : SetAdmin(rest, true);
-                case "unadmin":
-                    return rest.Length == 0 ? "unadmin <id|name>" : SetAdmin(rest, false);
+                    return NetCommands.RunOnServer("g", rest, null);   // the chat line itself is logged
+                case "admin" when rest.Length == 0:
+                    return Admins();
                 case "stop": case "quit": case "exit": case "shutdown":
                     Log("Stopping the server...");
                     NetGame.StopServer();
                     return "";
                 default:
-                    return $"Unknown command \"{cmd}\". Type \"help\".";
+                    // The chat's server commands (kick, tp, admin...): the same code as for an admin's chat line.
+                    return NetCommands.RunOnServer(cmd, rest, null) ?? $"Unknown command \"{cmd}\". Type \"help\".";
             }
-        }
-
-        static string List()
-        {
-            var sb = new StringBuilder();
-            int n = 0;
-            foreach (var p in NetPlayer.All)
-            {
-                if (p == null || !p.IsSpawned) continue;
-                n++;
-                sb.Append($"\n  {p.OwnerClientId,3}  {p.DisplayName,-20}  {Where(p)}, {UI.ItemInfo.ShipName(p.ShipIndex)}");
-                if (p.SquadId != 0) sb.Append($", squad {p.SquadId}");
-                if (p.IsAdmin) sb.Append(", admin");
-            }
-            return n == 0 ? "No players online." : $"{n} player(s):" + sb;
-        }
-
-        /// <summary>The player 'who' names: a client id or a whole name (any case).</summary>
-        static NetPlayer FindPlayer(string who)
-        {
-            foreach (var p in NetPlayer.All)
-            {
-                if (p == null || !p.IsSpawned) continue;
-                if ((ulong.TryParse(who, out ulong id) && p.OwnerClientId == id) || string.Equals(p.DisplayName, who, StringComparison.OrdinalIgnoreCase))
-                    return p;
-            }
-            return null;
-        }
-
-        static string SetAdmin(string who, bool on)
-        {
-            var p = FindPlayer(who.Trim());
-            if (p == null) return $"No player \"{who}\" (see \"list\").";
-            if (NetState.Instance == null || !NetState.Instance.IsSpawned) return "The server isn't running.";
-            NetState.Instance.SetAdmin(p, on);
-            return "";   // logged by SetAdmin
         }
 
         static string Admins()
@@ -340,25 +298,6 @@ namespace GoF2Remake.Multiplayer
             var names = new List<string>();
             foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && p.IsAdmin) names.Add($"{p.DisplayName} ({p.OwnerClientId})");
             return names.Count == 0 ? "No admins. admin <id|name> makes one." : "Admins: " + string.Join(", ", names);
-        }
-
-        static string Kick(string args)
-        {
-            if (args.Length == 0) return "kick <id|name> [reason]";
-            int space = args.IndexOf(' ');
-            string who = space < 0 ? args : args.Substring(0, space);
-            string reason = space < 0 ? "" : args.Substring(space + 1).Trim();
-            NetPlayer target = null;
-            foreach (var p in NetPlayer.All)
-            {
-                if (p == null || !p.IsSpawned) continue;
-                if ((ulong.TryParse(who, out ulong id) && p.OwnerClientId == id) || string.Equals(p.DisplayName, who, StringComparison.OrdinalIgnoreCase))
-                { target = p; break; }
-            }
-            if (target == null) return $"No player \"{who}\" (see \"list\").";
-            string name = target.DisplayName;
-            if (reason.Length == 0) reason = Localization.Extra("mpKicked", "The server removed you from the session.");
-            return NetGame.Kick(target.OwnerClientId, reason) ? $"Kicked {name}." : $"Could not kick {name}.";
         }
 
         // ---- console ----------------------------------------------------------------------------------------
