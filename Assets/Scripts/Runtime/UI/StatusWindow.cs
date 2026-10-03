@@ -196,11 +196,25 @@ namespace GoF2Remake.UI
 
         /// <summary>DAT_00252060 (base: none 0x2198ff2f, gold 0xfad10eff, silver white, bronze 0xce8258ff) and DAT_00252050
         /// (elite: none 0xfa792160, gold 0xfa7921ff), RGBA.</summary>
-        static Color MedalTint(bool elite, int grade)
+        internal static Color MedalTint(bool elite, int grade)
         {
             uint c = elite ? (grade == 1 ? 0xfa7921ffu : grade == 0 ? 0xfa792160u : grade == 2 ? 0xffffffffu : 0xce8258ffu)
                            : grade == 1 ? 0xfad10effu : grade == 2 ? 0xffffffffu : grade == 3 ? 0xce8258ffu : 0x2198ff2fu;
             return new Color32((byte)(c >> 24), (byte)(c >> 16), (byte)(c >> 8), (byte)c);
+        }
+
+        /// <summary>The medal selected and in view (the station's new-medal toast was tapped).</summary>
+        public void SelectMedal(int medal)
+        {
+            if (medal < 0 || medal >= medalButtons.Count) return;
+            ShowHint(medal);
+            var button = medalButtons[medal];
+            button.schedule.Execute(() =>
+            {
+                for (var v = button.parent; v != null; v = v.parent)
+                    if (v is ScrollView scroll) { scroll.ScrollTo(button); break; }
+                if (InputMode.Current != InputKind.Touch) button.Focus();
+            });
         }
 
         void ShowHint(int medal)

@@ -425,8 +425,8 @@ namespace GoF2Remake.UI
             medalQueue.Clear();
             foreach (int m in improved) if (m != 0) medalQueue.Enqueue(m);
             if (medalQueue.Count == 0) return false;
-            ShowNextMedal();
-            return true;
+            if (medalToast == null) ShowNextMedal();
+            return false;   // remake: the toasts don't hold up the station (the original's ChoiceWindows waited for OK)
         }
 
         /// <summary>ModStation::checkHints 0xee500: once each, one per frame: 0x1a all base medals (649), 0x1b all gold (650),
@@ -450,21 +450,94 @@ namespace GoF2Remake.UI
         readonly System.Collections.Generic.Queue<int> medalQueue = new System.Collections.Generic.Queue<int>();
         VisualElement dialogPicture;
 
-        /// <summary>ModStation::checkMedals 0xebe74: one ChoiceWindow per new medal (353, the plate, the hint 1552 + i with the
-        /// grade's threshold), each paying DAT_00251ff0[grade] (5000 gold / 2500 silver / 1000 bronze; nothing on Extreme).</summary>
+        // ---- medal toasts --------------------------------------------------------------------------------------
+
+        const float MedalToastSeconds = 5f, MedalToastFadeSeconds = 0.4f;
+        VisualElement medalToast;
+        float medalToastLeft;
+        bool medalToastFading;
+
+        /// <summary>ModStation::checkMedals 0xebe74: each new medal pays DAT_00251ff0[grade] (5000 gold / 2500 silver / 1000
+        /// bronze; nothing on Extreme). The original shows one ChoiceWindow per medal (353, the plate, the hint 1552 + i)
+        /// that waits for OK; remake: a toast at the top of the screen (the plate, 353, the name, the reward) that fades out
+        /// after MedalToastSeconds, one medal after another, and a tap / click on it opens the Status window on that medal.</summary>
         void ShowNextMedal()
         {
+            if (medalToast != null) { medalToast.RemoveFromHierarchy(); medalToast = null; }
             if (medalQueue.Count == 0) return;
             int m = medalQueue.Dequeue();
             int grade = Achievements.Grade(m);
-            if (!Session.IsExtreme) Session.Credits += grade == 1 ? 5000 : grade == 2 ? 2500 : grade == 3 ? 1000 : 0;
-            ShowDialog($"{Localization.Get(353)}\n\n{Localization.Get(1507 + m)}\n{Achievements.Hint(m)}", ShowNextMedal, true);
-            dialogPicture = StatusWindow.MedalPlate(m, grade);
-            dialogPicture.style.alignSelf = Align.Center;
-            dialogPicture.style.marginBottom = 16;
-            var text = root.Q<Label>("dialogText");
-            text.parent.Insert(text.parent.IndexOf(text), dialogPicture);
+            int reward = Session.IsExtreme ? 0 : grade == 1 ? 5000 : grade == 2 ? 2500 : grade == 3 ? 1000 : 0;
+            Session.Credits += reward;
             RefreshCredits();
+
+            var toast = new VisualElement { name = "medalToast" };
+            toast.AddToClassList("medal-toast");
+            var plate = StatusWindow.MedalPlate(m, grade);
+            plate.AddToClassList("medal-toast-plate");
+            plate.pickingMode = PickingMode.Ignore;
+            foreach (var c in plate.Children()) c.pickingMode = PickingMode.Ignore;
+            toast.Add(plate);
+            var texts = new VisualElement { pickingMode = PickingMode.Ignore };
+            texts.AddToClassList("medal-toast-texts");
+            Label Line(string text, string cls)
+            {
+                var l = new Label(text) { pickingMode = PickingMode.Ignore };
+                l.AddToClassList(cls);
+                texts.Add(l);
+                return l;
+            }
+            // The grade's colour (gold / silver / bronze, the elite orange) on the border, the top band and the title; an
+            // unearned grade (elite 0) in the theme's amber.
+            var tint = grade > 0 ? StatusWindow.MedalTint(m >= Achievements.BaseCount, grade) : new Color(0.94f, 0.70f, 0.35f);
+            tint.a = 1f;
+            toast.style.borderTopColor = tint;
+            toast.style.borderLeftColor = toast.style.borderRightColor = toast.style.borderBottomColor = new Color(tint.r, tint.g, tint.b, 0.55f);
+            Line(Localization.Get(353).ToUpperInvariant(), "medal-toast-title").style.color = tint;
+            Line(Localization.Get(1507 + m), "medal-toast-name");
+            if (reward > 0) Line($"+{reward:N0} $", "medal-toast-reward");
+            Line(Localization.Extra(InputMode.Current == InputKind.Touch ? "medalToastTap" : "medalToastClick",
+                InputMode.Current == InputKind.Touch ? "Tap to see your medals" : "Click to see your medals"), "medal-toast-hint");
+            toast.Add(texts);
+            toast.RegisterCallback<PointerDownEvent>(e =>
+            {
+                e.StopPropagation();
+                Play(buttonRelease);
+                OpenMedal(m);
+            });
+            (safeArea ?? root).Add(toast);
+            medalToast = toast;
+            medalToastLeft = MedalToastSeconds;
+            medalToastFading = false;
+            Play(infoSound);
+            // Drops in and grows (the transition needs a frame), with a short bright flash.
+            toast.schedule.Execute(() => toast.AddToClassList("medal-toast--shown"));
+            toast.AddToClassList("medal-toast--flash");
+            toast.schedule.Execute(() => toast.RemoveFromClassList("medal-toast--flash")).ExecuteLater(350);
+        }
+
+        /// <summary>Every frame: the shown toast's time, its fade-out, then the next medal.</summary>
+        void UpdateMedalToast()
+        {
+            if (medalToast == null) return;
+            medalToastLeft -= Time.unscaledDeltaTime;
+            if (!medalToastFading && medalToastLeft <= 0f)
+            {
+                medalToastFading = true;
+                medalToast.RemoveFromClassList("medal-toast--shown");
+                medalToastLeft = MedalToastFadeSeconds;
+            }
+            else if (medalToastFading && medalToastLeft <= 0f) ShowNextMedal();
+        }
+
+        /// <summary>The toast tapped / clicked: the Status window with that medal selected (the rest of the queue goes on).</summary>
+        void OpenMedal(int medal)
+        {
+            if (medalToast != null) { medalToast.RemoveFromHierarchy(); medalToast = null; }
+            if (DialogOpen || SystemMenuOpen || status == null) return;
+            if (!status.IsOpen) OpenStatus();
+            status.SelectMedal(medal);
+            if (medalQueue.Count > 0) ShowNextMedal();
         }
 
         public void OnMissionsClosed()
@@ -1535,6 +1608,7 @@ namespace GoF2Remake.UI
                 if (World.SpaceLevel.PlayerTriedToFly()) level.SkipPlayerFlight();
                 return;
             }
+            UpdateMedalToast();
             if (Flight.GameControls.BlocksMenus) return;   // a key binding is being captured (Options): its key isn't a menu key
             DpadTapNavigation.Pump(root);   // D-pad taps the panel's own navigation drops (the Steam controller)
             // The Debug and Options pages' tabs: Q / E, LB / RB.
