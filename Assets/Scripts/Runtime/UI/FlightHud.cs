@@ -53,6 +53,7 @@ namespace GoF2Remake.UI
         NavigationView navView;
         SystemJump jump;
         CombatView combatView;
+        CooldownView cooldownView;   // remake: the booster / cloak recharge for keys and controllers
         PlayerHealth health;
         CombatRadar radar;
         Traffic traffic;
@@ -162,6 +163,8 @@ namespace GoF2Remake.UI
             root.Add(transferCounter);
             navView = new NavigationView(root);
             combatView = new CombatView(root);
+            var speedPanel = root.Q("speedPanel");
+            if (speedPanel != null) cooldownView = new CooldownView(speedPanel);
             lensFlare = new LensFlareView(root);
             root.Q("storyDialogue").pickingMode = PickingMode.Ignore;
             if (voiceSource == null)
@@ -748,6 +751,7 @@ namespace GoF2Remake.UI
             // Radar::draw isn't called while the launch / arrival camera runs: no ship markers (their layer sets its display
             // inline, which the .hud-launch rule can't override).
             combatView.Update(radar, traffic, health, Camera.main, cinematic, plateFree, !level.LaunchCameraOver);
+            cooldownView?.Update(level.Database, level.Player, level.Cloak, !cinematic && level.LaunchCameraOver && InputMode.Current != InputKind.Touch);
             // The Ultrascan's class-A letters: Radar::draw too, so not during the launch camera or a cinematic.
             miningView.UpdateMarkers(mining, nav != null && nav.AsteroidField != null ? nav.AsteroidField.fixedPosition : (Vector3?)null, Camera.main,
                                      level.LaunchCameraOver && !cinematic && !(docking != null && docking.Busy), root.Q("navMarkers"));

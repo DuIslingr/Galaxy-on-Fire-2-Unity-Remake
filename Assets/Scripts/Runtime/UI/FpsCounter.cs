@@ -1,5 +1,5 @@
 // FpsCounter.cs
-// Remake-only: the frame rate and frame time in the top-left corner (Options > Graphics "Show FPS", Settings.ShowFps), over
+// Remake-only: the frame rate and frame time at the top centre (Options > Graphics "Show FPS", Settings.ShowFps), over
 // every scene and menu. Averaged over half a second of real time, so a paused game still counts. Created by Bootstrap and
 // kept for the whole run; its own panel (the star map's panel settings, sorted above everything else).
 
@@ -68,18 +68,22 @@ namespace GoF2Remake.UI
             root.pickingMode = PickingMode.Ignore;
             root.style.position = Position.Absolute;
             root.style.left = root.style.top = root.style.right = root.style.bottom = 0;
+            // Top centre: the corners hold the status bars, the cargo readout, the pause button and the touch controls.
+            var bar = new VisualElement { pickingMode = PickingMode.Ignore };
+            bar.style.position = Position.Absolute;
+            bar.style.left = bar.style.right = 0;
+            bar.style.top = 2;
+            bar.style.alignItems = Align.Center;
+            root.Add(bar);
             label = new Label { pickingMode = PickingMode.Ignore };
             var s = label.style;
-            s.position = Position.Absolute;
-            s.left = 6;
-            s.top = 4;
             s.fontSize = 15;
             s.color = new Color(0.85f, 1f, 0.85f);
             s.backgroundColor = new Color(0f, 0f, 0f, 0.55f);
             s.paddingLeft = s.paddingRight = 6;
             s.paddingTop = s.paddingBottom = 2;
             s.borderTopLeftRadius = s.borderTopRightRadius = s.borderBottomLeftRadius = s.borderBottomRightRadius = 3;
-            root.Add(label);
+            bar.Add(label);
             Apply();
         }
 

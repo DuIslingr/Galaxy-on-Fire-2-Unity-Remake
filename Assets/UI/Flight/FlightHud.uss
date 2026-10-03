@@ -392,6 +392,47 @@
     color: var(--gof-text-dim);
 }
 
+/* Remake: the booster's and the cloak's recharge for keys / controllers (CooldownView): their shop icons (180 x 88),
+   darkened from the top while recharging, a short flash when ready. Touch shows them on its own buttons. */
+.cooldowns {
+    flex-direction: row;
+    margin-top: 6px;
+}
+
+.input-touch .cooldowns {
+    display: none;
+}
+
+.cooldown {
+    width: 90px;
+    height: 44px;
+    margin-right: 6px;
+    -unity-background-scale-mode: scale-to-fit;
+    background-color: rgba(4, 10, 18, 0.55);
+    border-left-width: 3px;
+    border-left-color: var(--gof-amber);
+    opacity: 1;
+    transition-property: opacity, background-color;
+    transition-duration: 0.2s;
+}
+
+.cooldown--waiting {
+    opacity: 0.55;
+    border-left-color: var(--gof-text-dim);
+}
+
+.cooldown--flash {
+    background-color: rgba(255, 190, 90, 0.5);
+}
+
+.cooldown-shade {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
 /* ---- keyboard / controller hints -------------------------------------------------------- */
 
 .hints {
