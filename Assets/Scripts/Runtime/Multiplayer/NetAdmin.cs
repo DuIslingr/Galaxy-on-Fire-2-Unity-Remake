@@ -17,6 +17,7 @@
 //   /unban <pilot|profile id>            /bans the list
 //   /op <pilot>, /deop <pilot>           admin; /admin <pilot>, /unadmin <pilot> master
 //   /say <text>, /disband <TAG>          admin; /deleteprofile <profile id> master
+//   /settings, /set <key> <value>        admin: the server's settings while it runs (NetServerSettings)
 //   /claimadmin <token>                  anyone with a profile: becomes a master
 //   /staff                               who the masters, admins and ops are
 // A pilot is a name online, "#<client id>" (the window's buttons), or a profile's last name / id for one who is offline.
@@ -185,7 +186,8 @@ namespace GoF2Remake.Multiplayer
 
         static bool IsCommand(string cmd) =>
             cmd == "kick" || cmd == "tempban" || cmd == "ban" || cmd == "unban" || cmd == "bans" || cmd == "op" || cmd == "deop" || cmd == "staff"
-            || cmd == "admin" || cmd == "unadmin" || cmd == "say" || cmd == "disband" || cmd == "deleteprofile" || cmd == "claimadmin";
+            || cmd == "admin" || cmd == "unadmin" || cmd == "say" || cmd == "disband" || cmd == "deleteprofile" || cmd == "claimadmin"
+            || cmd == "set" || cmd == "settings";
 
         static float lastWrongClaim = -100f;
 
@@ -241,6 +243,12 @@ namespace GoF2Remake.Multiplayer
                 case "disband":
                     if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
                     return NetCrews.ConsoleDisband(who);
+                case "settings":
+                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
+                    return NetServerSettings.ListText();
+                case "set":
+                    if (role < Admin) return Localization.Extra("mpAdminOnlyAdmin", "Only an admin can do that.");
+                    return NetServerSettings.Set(who, rest, by);
                 case "deleteprofile":
                 {
                     if (role < Master) return Localization.Extra("mpAdminOnlyMaster", "Only the server's master admin can do that.");
@@ -377,6 +385,7 @@ namespace GoF2Remake.Multiplayer
                 s.serverStatus = DedicatedServer.StatusText();
                 foreach (var (name, role, online) in NetProfiles.Staff()) s.staff.Add(new NetPanel.StaffRow { name = name, role = role, online = online });
                 NetProfiles.FillProfiles(s);
+                NetServerSettings.FillPanel(s);
                 foreach (var row in s.profiles) row.banned = list.bans.Exists(b => b.account == row.id);
             }
             Prune();

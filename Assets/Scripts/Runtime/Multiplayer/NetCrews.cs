@@ -61,15 +61,15 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>A siege's price from the bank (-siegecost), the toll a pilot of another crew pays at a held station
         /// (-toll; 0 = none).</summary>
-        public static int SiegeCost { get; private set; } = DefaultSiegeCost;
-        public static int Toll { get; private set; } = DefaultToll;
+        public static int SiegeCost { get; internal set; } = DefaultSiegeCost;
+        public static int Toll { get; internal set; } = DefaultToll;
         const int KaamoStation = 108, LomaSystem = 25;
 
         /// <summary>A claim's price from the bank (-claimcost), the claims per crew (-maxclaims), the days without a member
         /// docking before a claim lapses (-claimdays).</summary>
-        public static int ClaimCost { get; private set; } = DefaultClaimCost;
-        public static int MaxClaims { get; private set; } = DefaultMaxClaims;
-        public static int LapseDays { get; private set; } = DefaultLapseDays;
+        public static int ClaimCost { get; internal set; } = DefaultClaimCost;
+        public static int MaxClaims { get; internal set; } = DefaultMaxClaims;
+        public static int LapseDays { get; internal set; } = DefaultLapseDays;
 
         /// <summary>DedicatedServer.Boot: the command line's choices.</summary>
         public static void Configure(int claimCost, int maxClaims, int lapseDays, int siegeCost, int toll)

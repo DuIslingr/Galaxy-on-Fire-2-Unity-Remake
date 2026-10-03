@@ -660,6 +660,14 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   server started with `-freepvp` (`NetState.FreePvp`, `NetGame.FreePvp`): elsewhere another player's ship is
   `playerProof` (shots pass) and the owner's `HitRpc` / `EmpRpc` drop a player's hit unless the sender is in the same
   orbit and may fight (`NetPlayer.PvpWith`).
+- **Server settings while running** (`NetServerSettings`; the operator guide is `SERVER.md`, keep it in step with the
+  server's options and commands): name, password, maxplayers, allowdebug, freepvp, maxprofiles, maxearn, claimcost,
+  maxclaims, claimdays, siegecost, toll. Changed by admins (`/set <key> <value>`, `/settings`, the Admin tab's Server
+  settings: a field or switch with Save each) or the console (`set`, `settings`); applied at once where possible
+  (allowdebug / freepvp through `NetState.SetDebugAllowed` / `SetFreePvp`, the toll through `SetToll`; the name at the
+  next listing, `DedicatedServer.ListName`; a higher player limit online after a restart) and saved to
+  `server_settings.json` beside the profiles. A start applies the defaults, then the file, then the command line (an
+  option given there wins: `FromCommandLine`, the window says "set by the launcher"). The password is never sent.
 - **Moderation** (`NetAdmin`, a dedicated server with profiles): roles on the profile (`Account.role`: 0 player, 1 op,
   2 admin, 3 master). The **master admin** (the owner) is claimed in the game: `/claimadmin <token>` (or the station
   window's Profile tab, "Claim this server"), the token from `-admintoken` / `GOF2_ADMIN_TOKEN`, else

@@ -103,6 +103,9 @@ namespace GoF2Remake.Multiplayer
                 int.TryParse(Value("-claimdays"), out int days) ? days : NetCrews.DefaultLapseDays,
                 int.TryParse(Value("-siegecost"), out int siegeCost) ? siegeCost : NetCrews.DefaultSiegeCost,
                 int.TryParse(Value("-toll"), out int toll) ? toll : NetCrews.DefaultToll);
+            ListName = Value("-name") ?? DefaultListName;
+            // The settings saved by the admins (server_settings.json) for whatever the command line didn't give.
+            NetServerSettings.Load(HasFlag);
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
 #if UNITY_EDITOR
@@ -186,7 +189,7 @@ namespace GoF2Remake.Multiplayer
             if (relay)
             {
                 Log("Reserving an online session (Unity Relay)...");
-                string listed = HasFlag("-unlisted") ? null : (Value("-name") ?? "Galaxy on Fire 2 server");
+                string listed = HasFlag("-unlisted") ? null : ListName;
                 if (!await NetGame.PrepareOnlineHost(listed)) return false;
             }
             if (!NetGame.StartServer(port, again)) return false;
@@ -201,6 +204,11 @@ namespace GoF2Remake.Multiplayer
         }
 
         static bool reconnecting;
+
+        public const string DefaultListName = "Galaxy on Fire 2 server";
+
+        /// <summary>The server browser's name (-name, NetServerSettings' "name"; used at the next listing).</summary>
+        public static string ListName { get; set; } = DefaultListName;
 
         /// <summary>NetGame: Netcode's server stopped by itself (the network went). True = the server starts again
         /// (Reconnect); false = no server here, the caller quits.</summary>
@@ -347,6 +355,7 @@ namespace GoF2Remake.Multiplayer
                            "  tempban <name|profile> <minutes> [reason], ban <name|profile> [reason], unban <name|profile>, bans\n" +
                            "  master / unmaster, admin / unadmin, op / deop <name|profile>   server roles; staff; token (the /claimadmin token)\n" +
                            "  arenas              the arena matches and queues\n" +
+                           "  settings, set <key> <value>   the settings that change while running (saved; the command line wins at a start)\n" +
                            "  crews               the crews (tag, name, members, leader, bank)\n" +
                            "  crew disband <TAG>  ends a crew\n" +
                            "  sieges              the crews' sieges\n" +
@@ -371,6 +380,13 @@ namespace GoF2Remake.Multiplayer
                     return NetAdmin.ConsoleCommand(cmd, rest);
                 case "arenas":
                     return NetArena.ConsoleList();
+                case "settings":
+                    return NetServerSettings.ListText();
+                case "set":
+                {
+                    int sp = rest.IndexOf(' ');
+                    return sp < 0 ? "set <key> <value> (\"settings\" lists them)" : NetServerSettings.Set(rest.Substring(0, sp), rest.Substring(sp + 1), "Server");
+                }
                 case "crews":
                     return NetCrews.ConsoleList();
                 case "sieges":

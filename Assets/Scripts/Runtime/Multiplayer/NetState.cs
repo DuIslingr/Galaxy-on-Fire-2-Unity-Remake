@@ -34,7 +34,7 @@ namespace GoF2Remake.Multiplayer
 
         readonly NetworkVariable<int> seed = new NetworkVariable<int>();
         readonly NetworkVariable<bool> dedicated = new NetworkVariable<bool>();
-        readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice, fixed for the session
+        readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice (a server's admins may change it)
         readonly NetworkVariable<bool> profilesOn = new NetworkVariable<bool>();     // the server keeps player profiles (NetProfiles)
         readonly NetworkVariable<bool> freePvp = new NetworkVariable<bool>();        // players may fight anywhere (else only in arenas)
         readonly NetworkVariable<FixedString4096Bytes> claims = new NetworkVariable<FixedString4096Bytes>();   // NetCrews' territory
@@ -66,6 +66,10 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>Players may shoot each other anywhere (NetGame.FreePvp, -freepvp); else only in an arena match.</summary>
         public bool FreePvp => freePvp.Value;
+
+        /// <summary>Server (NetServerSettings): the Debug menu / free PvP changed while running.</summary>
+        internal void SetDebugAllowed(bool on) { if (IsServer && debugAllowed.Value != on) debugAllowed.Value = on; }
+        internal void SetFreePvp(bool on) { if (IsServer && freePvp.Value != on) freePvp.Value = on; }
 
         /// <summary>The crews' claimed stations, "station|TAG|Name" per line (NetCrews, NetCrewsClient).</summary>
         public string Claims => claims.Value.ToString();

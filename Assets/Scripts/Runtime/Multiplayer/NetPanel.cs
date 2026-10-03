@@ -54,7 +54,11 @@ namespace GoF2Remake.Multiplayer
             public string serverStatus = "";
             public List<StaffRow> staff = new List<StaffRow>();
             public List<ProfileRow> profiles = new List<ProfileRow>();
+            public List<SettingRow> settings = new List<SettingRow>();
         }
+
+        /// <summary>A server setting (NetServerSettings): kind 0 number, 1 toggle, 2 text, 3 password (no value sent).</summary>
+        [Serializable] public class SettingRow { public string key = "", label = "", value = "", note = ""; public int kind; public bool cli, passwordSet; }
 
         [Serializable] public class StaffRow { public string name = ""; public int role; public bool online; }
         [Serializable] public class ProfileRow { public string id = "", name = "", lastSeen = ""; public int role, devices; public bool online, banned; }

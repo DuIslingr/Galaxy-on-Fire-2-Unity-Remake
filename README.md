@@ -98,83 +98,9 @@ all traffic goes through the host's connection, so for big sessions a dedicated 
 #### Running a dedicated server
 
 A dedicated server hosts a session without anyone playing on that machine. It uses the normal Windows or Linux
-download; no extra files are needed.
-
-**Windows**
-
-1. Open `Start Dedicated Server.bat` in the game folder with a text editor (Notepad), and set:
-   - `NAME`: the game's name in the server browser.
-   - `PASSWORD`: leave it empty for none.
-   - `MAXPLAYERS`: the player limit, at most 100.
-   - `ALLOWDEBUG`: `1` lets the players use the Debug menu (cheats, items, spawns); `0` (the default) turns it off.
-2. Save the file and double-click it. A console window opens; the game itself runs without a window and without sound.
-3. The console shows the **join code**, and the game appears in everyone's server browser.
-
-**Linux**
-
-1. Edit `NAME`, `PASSWORD`, `MAXPLAYERS` and `ALLOWDEBUG` at the top of `start-server.sh` in the game folder.
-2. Run it in a terminal: `sh start-server.sh`. The terminal shows the join code and the log.
-
-**The console**
-
-The console shows who joins and leaves, where each player is, and the chat. Only the server can run commands; players
-can't. Type one and press Enter:
-
-| Command | What it does |
-|---|---|
-| `help` | Lists the commands. |
-| `status` | The join code (or port), uptime, players, world seed, whether the Debug menu is allowed. |
-| `list` | The players: client id, name, where they are, ship, squad. |
-| `say <text>` | A chat line to everyone, from "Server". |
-| `kick <id or name> [minutes] [reason]` | Drops a player; they see the reason. With profiles they can't rejoin for the minutes (default 5). |
-| `arenas` | The arena matches and queues. |
-| `crews`, `crew disband <TAG>`, `sieges` | The crews; end one; the sieges. |
-| `profiles` | The player profiles: id, name, devices, worth, who is online. |
-| `profile delete <id>` | Deletes a profile (not while it is online; its file is kept as `.bak`). |
-| `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
-
-**Starting it by hand**
-
-The launchers only start the game with these options, which you can also use yourself:
-
-```
-GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -password secret -maxplayers 32
-./GoF2Remake.x86_64 -batchmode -nographics -server -relay -name "My universe" -logFile -
-```
-
-| Option | Meaning |
-|---|---|
-| `-batchmode -nographics` | No window, no rendering, no sound. |
-| `-server` | Run as a dedicated server. |
-| `-relay` | Host online with a join code (Unity Relay). Without it, players join on the server machine's address. |
-| `-name "..."` | The name in the server browser (online). |
-| `-unlisted` | Keep the game out of the server browser; players join with the join code. |
-| `-password X` | Players need this password to join. |
-| `-maxplayers N` | The player limit, 2 to 100 (default 16). |
-| `-allowdebug` | The players may use the Debug menu (cheats, items, spawns). Off without it. |
-| `-port N` | The port for local network play (default 7777, UDP). |
-| `-fps N` | The server's frame rate (default 60). |
-| `-freepvp` | Players may fight each other anywhere, not only in arena matches. |
-| `-claimcost N` | What a crew pays from its bank to claim a station (default 500 000). |
-| `-maxclaims N` | Stations per crew (default 3). |
-| `-claimdays N` | Days without a member docking before a claim is lost (default 14). |
-| `-siegecost N` | What a crew pays from its bank for a siege (default 250 000). |
-| `-toll N` | The toll other crews' pilots pay at a crew's station (default 10 000, 0 = none). |
-| `-admintoken X` | The token for `/claimadmin` (default: a random one in `admin_token.txt`, logged at every start). |
-| `-noprofiles` | Don't keep player profiles (every session starts fresh, like before). |
-| `-maxprofiles N` | How many player profiles the server keeps (default 50). New devices past it play as guests. |
-| `-maxearn N` | Without `-allowdebug`: how much a profile's worth may grow per minute online (default 1 000 000). |
-| `-profiledir PATH` | Where the profiles are stored (default `ServerProfiles` in the game's data folder). |
-
-Good to know:
-
-- A local network server (without `-relay`) needs UDP port 7777 open in the firewall for the other players.
-- The server keeps the shared world: the shop stock, squads, missions and chat. Each orbit's NPCs are run by the first
-  player who arrives there, so the server itself needs very little CPU.
-- Players on a different game version are turned away with a message saying which version the server runs.
-- When the internet connection drops (a router restart), the server starts its game again by itself once it is back
-  (tries after 5, 10, 20, 40 s, then every minute). Online it gets a new join code and is listed again; the players
-  join again. An online server started without internet keeps trying the same way.
+download: edit and run `Start Dedicated Server.bat` (Windows) or `start-server.sh` (Linux) in the game folder. Its
+options, the console, the settings admins can change while it runs, becoming its admin, its files and running it as a
+Linux service are in **[SERVER.md](SERVER.md)**.
 
 **Player profiles**
 
@@ -216,17 +142,17 @@ Its tag shows before its members' names.
 | `/crew deposit N`, `/crew withdraw N` | Put credits into the crew bank; take them out (leader and officers). |
 | `/crew claim`, `/crew unclaim`, `/crew home` | Docked at a station: claim it for the crew (paid from the bank), give it up, or make it the crew's home (leader and officers). Members start and respawn at the home. |
 | `/crew claims [TAG]` | A crew's stations. A station no member docks at for 14 days is lost. |
+| `/c <text>` | Talk to your crew. |
 | `/crew siege`, `/crew sieges` | In another crew's orbit (leader and officers): besiege it, paid from the bank. It starts 10 minutes later and lasts 15; meanwhile the two crews may fight there, and the side with more pilots in the orbit takes control. At 100 % the station changes hands; otherwise the defenders keep it. |
 
 At a crew's station its members buy items 10 % cheaper and its fighters protect them. Pilots of other crews pay 5 % more
 (into the crew's bank) and are attacked by the station's fighters unless they pay the toll asked on arrival.
-| `/c <text>` | Talk to your crew. |
 
 **Moderation**
 
-**Become the master admin without a console**: the server writes an admin token to its log at every start (and to
-`admin_token.txt` next to its profiles; or set your own with `-admintoken X`). In the game, type `/claimadmin <token>`
-in the chat, or use the station's Crew · Arena window, Profile tab, "Claim this server". The master admin makes admins
+**Become the master admin**: the server writes an admin token to its log at every start (see [SERVER.md](SERVER.md)).
+In the game, type `/claimadmin <token>` in the chat, or use the station's Crew · Arena window, Profile tab, "Claim this
+server". The master admin makes admins
 (`/admin <pilot>`, `/unadmin`), admins make ops (`/op <pilot>`, `/deop`). Ops and up get an **Admin** tab in the
 Crew · Arena window: kicks and bans, roles, and for admins the server status, announcements, every profile and the
 crews.
@@ -243,8 +169,8 @@ crews.
 | `/staff` | everyone | Who the masters, admins and ops are. |
 
 A ban covers the pilot's profile and every device it was used on. Nobody can act on someone of their own rank or
-higher. The console has all of these too (`kick`, `ban`, `tempban`, `unban`, `bans`, `op`, `deop`, `admin`, `unadmin`,
-`master`, `unmaster`, `staff`, `token`).
+higher. Admins also change the server's settings while it runs (`/settings`, `/set <key> <value>`, or the Admin tab;
+see [SERVER.md](SERVER.md)).
 
 **Arena matches**
 

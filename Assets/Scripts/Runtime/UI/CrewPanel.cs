@@ -11,7 +11,8 @@
 //   Admin (only for the server's ops, admins and masters, NetAdmin): a reason and minutes field, every pilot online
 //     with Kick (the minutes as the cooldown), Ban for the minutes, Ban for good and the roles (admins: op; masters:
 //     admin), the bans with Unban; for admins also the server's status and an announcement, the staff, every profile
-//     (a filter; Ban / Unban, roles, Delete for masters, asked twice) and the crews (Disband, asked twice).
+//     (a filter; Ban / Unban, roles, Delete for masters, asked twice), the crews (Disband, asked twice) and the server's
+//     settings (NetServerSettings: a field or a switch with Save each; the ones the launcher's command line sets say so).
 // The Profile tab also has "Claim this server" (the server's admin token, /claimadmin) for its owner.
 // Every button sends the chat command (NetPanel.Command) and the window shows the server's answer (the next chat notice)
 // at its foot. The content comes from the server's snapshot (NetPanel.Latest, asked for every 2 s while open) and is
@@ -47,6 +48,7 @@ namespace GoF2Remake.UI
         bool isOpen, voids, force, confirmLeave;
         string tagText = "", nameText = "", amountText = "", linkText = "", reasonText = "", minutesText = "5";
         string sayText = "", filterText = "", tokenText = "", confirmKey = "";
+        readonly Dictionary<string, string> settingEdits = new Dictionary<string, string>();
         int shownRole = -1;
         float refresh, answerUntil;
         StyleSheet sheet;
@@ -435,6 +437,45 @@ namespace GoF2Remake.UI
             }
         }
 
+        /// <summary>Admins: the server's settings, each with its field (or switch) and Save; saved on the server and kept
+        /// after a restart (the command line's own options win at a start: said beside them).</summary>
+        void BuildSettings(NetPanel.State s)
+        {
+            if (s.settings.Count == 0) return;
+            Section(Localization.Extra("mpPanelSettings", "Server settings"));
+            foreach (var row in s.settings)
+            {
+                string key = row.key;
+                var line = Row();
+                line.style.marginBottom = 4;
+                var label = Text(row.label + (row.note.Length > 0 ? $"  ({row.note})" : "") + (row.cli ? "  · " + Localization.Extra("mpPanelFromCli", "set by the launcher") : ""), 15, row.cli ? Dim : Color.white);
+                label.style.width = 380;
+                line.Add(label);
+                if (row.kind == (int)NetServerSettings.Kind.Toggle)
+                {
+                    bool on = row.value == "on";
+                    line.Add(Btn(on ? Localization.Extra("mpPanelOn", "On") : Localization.Extra("mpPanelOff", "Off"), () => Send($"/set {key} {(on ? "off" : "on")}"),
+                                 on ? "squad-button--accept" : null));
+                }
+                else
+                {
+                    bool password = row.kind == (int)NetServerSettings.Kind.Password;
+                    string shown = settingEdits.TryGetValue(key, out var edit) ? edit : password ? "" : row.value;
+                    var field = Field(password ? (row.passwordSet ? Localization.Extra("mpPanelPasswordSet", "set (type a new one, - for none)") : Localization.Extra("mpPanelPasswordNone", "none"))
+                                               : row.label, shown, password ? NetGame.MaxPasswordLength : 64, 220, v => settingEdits[key] = v);
+                    if (password) field.isPasswordField = true;
+                    line.Add(field);
+                    line.Add(Btn(Localization.Extra("mpPanelSave", "Save"), () =>
+                    {
+                        if (!settingEdits.TryGetValue(key, out var v) || v.Trim().Length == 0) return;
+                        settingEdits.Remove(key);
+                        Send($"/set {key} {v.Trim()}");
+                    }, "squad-button--accept"));
+                }
+                body.Add(line);
+            }
+        }
+
         /// <summary>A dangerous button: the first press arms it ("Really?"), the second acts.</summary>
         Button Confirm(string label, string key, string command)
         {
@@ -462,6 +503,7 @@ namespace GoF2Remake.UI
                 say.Add(Field(Localization.Extra("mpPanelAnnounce", "Announcement to everyone"), sayText, 200, 480, v => sayText = v));
                 say.Add(Btn(Localization.Extra("mpPanelSend", "Send"), () => { Send($"/say {sayText.Trim()}"); sayText = ""; }, "squad-button--accept"));
                 body.Add(say);
+                BuildSettings(s);
             }
             var opts = Row();
             opts.Add(Field(Localization.Extra("mpPanelReason", "Reason"), reasonText, 80, 320, v => reasonText = v));

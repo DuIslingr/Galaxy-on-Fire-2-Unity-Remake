@@ -101,10 +101,10 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The profile limit (-maxprofiles): a new device past it plays as a guest.</summary>
-        public static int MaxProfiles { get; private set; } = DefaultMaxProfiles;
+        public static int MaxProfiles { get; internal set; } = DefaultMaxProfiles;
 
         /// <summary>Without the Debug menu: how much worth a profile may gain per minute online (-maxearn), on top of EarnBurst.</summary>
-        public static int EarnPerMinute { get; private set; } = DefaultEarnPerMinute;
+        public static int EarnPerMinute { get; internal set; } = DefaultEarnPerMinute;
 
         /// <summary>This process keeps profiles: a dedicated server started without -noprofiles.</summary>
         public static bool Enabled => configured && NetGame.Dedicated;
