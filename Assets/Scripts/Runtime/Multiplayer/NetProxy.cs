@@ -18,6 +18,8 @@
 // over adopts it with its role (FreelanceOrbit.Promote). Its creator (the player whose game has the ship) stays known
 // after an owner change: the host holding a disconnected player's proxies shows them like anyone else (viewer mode) until
 // they are taken over or swept. Its owner drops a proxy whose ship is gone before it spawned.
+// Hits, EMP, shots and kill credits go through the server's checks (DamageUpRpc, ShotUpRpc, KillCreditUpRpc: the shooter
+// flies in this ship's orbit, sane values, a credit only for a player who hit it a moment ago, once).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -187,7 +189,7 @@ namespace GoF2Remake.Multiplayer
                 missionShip.Value = ship.MissionShip;
                 specHull.Value = ship.Hp != null ? ship.Hp.maxHull : -1;
                 SendState();
-                sender = new NetShotSender(ShotRpc, BlastRpc, () => ship != null ? ship.CurrentTarget : null);
+                sender = new NetShotSender(ShotUpRpc, BlastUpRpc, () => ship != null ? ship.CurrentTarget : null);
                 sender.Hook(ship.Guns);
                 return;
             }
@@ -207,8 +209,8 @@ namespace GoF2Remake.Multiplayer
             target.isShip = true;
             target.customDeath = true;
             target.maxHp = 100f;
-            target.RemoteDamage = (amount, hitVector, byNpc) => DamageRpc(amount, hitVector, byNpc);
-            target.RemoteEmp = emp => EmpRpc(emp);
+            target.RemoteDamage = (amount, hitVector, byNpc) => DamageUpRpc(amount, hitVector, byNpc);
+            target.RemoteEmp = emp => EmpUpRpc(emp);
             // Space junk is lockable after the ships and a far dot, like the owner's own junk (Target.RadarObjects).
             if (IsJunk) { Target.RadarObjects.Add(target); target.plateNameOnly = target.plateNoIcon = true; }
             else Target.NetShips.Add(target);
@@ -229,7 +231,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>NetState: a squadmate took this ship over while its creator is still here: the creator's ship goes.</summary>
-        [Rpc(SendTo.Owner)]
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
         public void TakenOverRpc()
         {
             if (ship != null) ship.Vanish();
@@ -244,28 +246,59 @@ namespace GoF2Remake.Multiplayer
             sparks?.Clear();
         }
 
-        [Rpc(SendTo.NotOwner, Delivery = RpcDelivery.Unreliable)]
+        /// <summary>The owner's NPC shot, through the server (only the ship's game sends its shots): checked and limited like
+        /// a player's (NetPlayer.ShotUpRpc).</summary>
+        [Rpc(SendTo.Server, Delivery = RpcDelivery.Unreliable, InvokePermission = RpcInvokePermission.Owner)]
+        void ShotUpRpc(int item, Vector3 position, Vector3 velocity, Vector3 up, float lifetimeMs, float homingDelayMs, ulong targetId)
+        {
+            if (!NetRateLimit.Allow(OwnerClientId, NetRateLimit.Kind.Shot)) return;
+            if (!NetGuard.Shot(item, position, velocity, up, lifetimeMs, homingDelayMs)) { NetRateLimit.Reject(OwnerClientId, $"an NPC shot of item {item}"); return; }
+            ShotRpc(item, position, velocity, up, lifetimeMs, homingDelayMs, targetId);
+        }
+
+        [Rpc(SendTo.NotOwner, Delivery = RpcDelivery.Unreliable, InvokePermission = RpcInvokePermission.Server)]
         void ShotRpc(int item, Vector3 position, Vector3 velocity, Vector3 up, float lifetimeMs, float homingDelayMs, ulong targetId)
         {
             if (shown) mirror?.Shot(item, position, velocity, up, lifetimeMs, homingDelayMs, NetShots.Resolve(targetId));
         }
 
-        [Rpc(SendTo.NotOwner)]
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        void BlastUpRpc(int item, Vector3 point)
+        {
+            if (!NetRateLimit.Allow(OwnerClientId, NetRateLimit.Kind.Shot)) return;
+            if (!NetGuard.Item(item) || !NetGuard.Position(point)) { NetRateLimit.Reject(OwnerClientId, $"an NPC blast of item {item}"); return; }
+            BlastRpc(item, point);
+        }
+
+        [Rpc(SendTo.NotOwner, InvokePermission = RpcInvokePermission.Server)]
         void BlastRpc(int item, Vector3 point)
         {
             if (shown) mirror?.Blast(item, point);
         }
 
-        /// <summary>Another player's hit on this ship: the owner's ship takes it, and turns on that player's squad (not on its
-        /// own player: taken as an NPC's hit, so no standing change or kill credit for the owner).</summary>
-        [Rpc(SendTo.Owner)]
-        void DamageRpc(float amount, Vector3 hitVector, bool byNpc, RpcParams rpc = default)
+        /// <summary>Another game's hit on this ship, through the server: only from a game flying in this ship's orbit, a finite
+        /// damage up to NetGuard.MaxDamage, at its rate. (A direct RPC to the owner let a modified client destroy every NPC
+        /// of any orbit from anywhere.)</summary>
+        [Rpc(SendTo.Server)]
+        void DamageUpRpc(float amount, Vector3 hitVector, bool byNpc, RpcParams rpc = default)
+        {
+            ulong shooter = rpc.Receive.SenderClientId;
+            if (shooter == OwnerClientId || !NetRateLimit.Allow(shooter, NetRateLimit.Kind.Hit)) return;
+            if (!NetGuard.Damage(amount) || !NetGuard.Finite(hitVector)) { NetRateLimit.Reject(shooter, $"a hit of {amount}"); return; }
+            if (!NetGuard.InOrbit(shooter, station.Value)) return;
+            NetState.Instance?.NoteHit(NetworkObjectId, shooter);
+            DamageRpc(amount, hitVector, byNpc, shooter);
+        }
+
+        /// <summary>The checked hit (DamageUpRpc): the owner's ship takes it, and turns on that player's squad (not on its own
+        /// player: taken as an NPC's hit, so no standing change or kill credit for the owner).</summary>
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        void DamageRpc(float amount, Vector3 hitVector, bool byNpc, ulong shooter)
         {
             if (junk != null) { if (junk.Alive) junk.Damage(amount, true, hitVector); return; }   // counts for the mission (all junk)
             if (ship == null || ship.Target == null || !ship.Target.Alive) return;
             // Another game's NPC (its shot at this player's wingman): an NPC's hit, nobody's kill.
             if (byNpc) { ship.Target.Damage(amount, true, hitVector); return; }
-            ulong shooter = rpc.Receive.SenderClientId;
             var by = NetSquad.Find(shooter);
             // Whether it was after them (their kill counts only then, like the player's own: Traffic.OnShipDied).
             bool hostile = by != null && World.NpcShip.HostileToRemote != null && World.NpcShip.HostileToRemote(ship, by.LocalTarget);
@@ -273,20 +306,47 @@ namespace GoF2Remake.Multiplayer
             ship.Target.killedByRemote = true;   // a freelance mission counts another player's kill as its player's
             ship.Target.Damage(amount, true, hitVector);
             if (ship.Target.Alive) ship.Target.killedByRemote = false;
-            if (!ship.Target.Alive && NetOrbit.Current != null)
-                KillCreditRpc(ship.Race, NetOrbit.Current.SystemRace, hostile, RpcTarget.Single(shooter, RpcTargetUse.Temp));
+            if (!ship.Target.Alive && NetOrbit.Current != null) KillCreditUpRpc(shooter, ship.Race, NetOrbit.Current.SystemRace, hostile);
         }
 
-        /// <summary>Another player's EMP: the owner's ship takes it (it may turn on them).</summary>
-        [Rpc(SendTo.Owner)]
-        void EmpRpc(int emp, RpcParams rpc = default)
+        /// <summary>Another game's EMP on this ship, through the server like a hit.</summary>
+        [Rpc(SendTo.Server)]
+        void EmpUpRpc(int emp, RpcParams rpc = default)
         {
-            if (ship != null) ship.OnRemoteEmp(rpc.Receive.SenderClientId, emp);
+            ulong shooter = rpc.Receive.SenderClientId;
+            if (shooter == OwnerClientId || !NetRateLimit.Allow(shooter, NetRateLimit.Kind.Hit)) return;
+            if (emp <= 0 || emp > NetGuard.MaxDamage) { NetRateLimit.Reject(shooter, $"an EMP of {emp}"); return; }
+            if (NetGuard.InOrbit(shooter, station.Value)) EmpRpc(emp, shooter);
+        }
+
+        /// <summary>The checked EMP: the owner's ship takes it (it may turn on them).</summary>
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        void EmpRpc(int emp, ulong shooter)
+        {
+            if (ship != null) ship.OnRemoteEmp(shooter, emp);
+        }
+
+        bool credited;   // the server: this ship's kill credit went out (one per proxy: a relaunched ship gets a new one)
+
+        /// <summary>The ship's game says 'shooter' destroyed it: the server passes the credit on once, and only to a player who
+        /// hit this ship a moment ago (a modified owner can't hand out kills, or standing changes, to anyone at will).</summary>
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        void KillCreditUpRpc(ulong shooter, int race, int systemRace, bool wasHostile)
+        {
+            if (!NetRateLimit.Allow(OwnerClientId, NetRateLimit.Kind.Kill) || credited) return;
+            var state = NetState.Instance;
+            if (state == null || !state.HitRecently(NetworkObjectId, shooter, 15f) || NetSquad.Find(shooter) == null)
+            {
+                NetRateLimit.Reject(OwnerClientId, "a kill credit for a player who didn't hit the ship");
+                return;
+            }
+            credited = true;
+            KillCreditRpc(Mathf.Clamp(race, -1, 15), Mathf.Clamp(systemRace, -1, 15), wasHostile, RpcTarget.Single(shooter, RpcTargetUse.Temp));
         }
 
         /// <summary>This player destroyed another game's NPC ship: their standing and kills, like the player's own kill
         /// (Traffic.OnShipDied: Standing.ApplyKill, and the kill counted when it was after them).</summary>
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void KillCreditRpc(int race, int systemRace, bool wasHostile, RpcParams rpc = default)
         {
             if (Shop.SystemOf(NetGame.Db, Session.StationIndex) != 25) Standing.ApplyKill(race, systemRace);   // not in Loma
@@ -351,11 +411,14 @@ namespace GoF2Remake.Multiplayer
                 if (!int.TryParse(path.Substring(NpcShip.WreckModelPrefix.Length), out wreck)) wreck = -1;
                 prefab = assets != null && assets.wrecks != null && wreck >= 0 && wreck < assets.wrecks.Length ? assets.wrecks[wreck] : null;
             }
-            else prefab = Resources.Load<GameObject>(path);
+            // Only an assembled prefab (the owner's word: no other Resources asset loaded into the others' games).
+            else prefab = path.StartsWith(AssembledObject.ResourcesFolder + "/") ? Resources.Load<GameObject>(path) : null;
             visual = prefab != null ? Instantiate(prefab, transform, false) : new GameObject("(no model)");
             if (wreck >= 0) PartAnimation.HoldAllAtEnd(visual);
             visual.transform.SetParent(transform, false);
-            visual.transform.localScale = scale.Value;
+            var s = scale.Value;   // finite and within reason (the battleship is 2x, a capital ship more), else as modelled
+            bool sane = NetGuard.Finite(s) && Mathf.Abs(s.x) <= 100f && Mathf.Abs(s.y) <= 100f && Mathf.Abs(s.z) <= 100f;
+            visual.transform.localScale = sane ? s : Vector3.one;
             var asm = visual.GetComponent<AssembledObject>();
             asm?.SetPlayerVariant((GoF2Remake.Data.Settings.NpcPlayerEngines || !asm.HasNpcExhaust) && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0
                                   && asm.playerVariantParts[0] != null);

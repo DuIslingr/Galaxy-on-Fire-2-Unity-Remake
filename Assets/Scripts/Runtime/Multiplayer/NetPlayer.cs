@@ -13,6 +13,8 @@
 //     so two players bump off each other;
 //   a shot mirror: the owner's shots (every gun and the turret, missiles homing on its lock, blasts) drawn here
 //     (NetShotSender -> NetShotMirror); the hits stay the owner's (on NPC proxies through NetProxy).
+// Hits, EMP, shots, blasts and jump effects go through the server, which checks and limits them (HitUpRpc, ShotUpRpc...:
+// NetGuard, NetRateLimit) before passing them on; only the server may send the passed-on ones (InvokePermission.Server).
 // The ship looks and sounds like the owner's: its engine glow and exhaust (ShipExhaust) while their engine shows, bigger
 // with their boost, the engine loop (3D), their cloak (NpcCloak's look, off the radar from 25 %, NPCs don't fire at it),
 // and an EMP's lightning. Their jumps too: the Khador Drive's charge sound and khador_jump fx, a jumpgate's jump animation and
@@ -97,6 +99,9 @@ namespace GoF2Remake.Multiplayer
         public bool InHangar => Where == Place.Hangar || Where == Place.Departing;
         public bool OrbitAuthority => authority.Value;
         public int ShipIndex => ship.Value;
+        /// <summary>Server: the ship this player flew before ShipIndex (a dealer trade-in puts it on the dealer's list,
+        /// NetState.StockShipRpc: the trade may arrive before or after the new ship), -1 = none.</summary>
+        public int PreviousShip { get; private set; } = -1;
         public int SquadId => squad.Value;
         /// <summary>This player's standing axes and signature (their Session): Standing.IsEnemyWith / IsFriendWith.</summary>
         public int Standing0 => standing0.Value;
@@ -180,13 +185,14 @@ namespace GoF2Remake.Multiplayer
             DontDestroyOnLoad(gameObject);
             All.Add(this);
             name = $"NetPlayer {OwnerClientId}";
+            if (IsServer) ship.OnValueChanged += (old, _) => PreviousShip = old;
             if (IsOwner)
             {
                 Local = this;
                 spawnedAt = Time.unscaledTime;
                 ship.Value = Session.ShipIndex;
                 pilot.Value = NetGame.Clean(NetGame.PlayerName);
-                sender = new NetShotSender(ShotRpc, BlastRpc, () => level != null && level.Weapons != null ? level.Weapons.LockTarget : null);
+                sender = new NetShotSender(ShotUpRpc, BlastUpRpc, () => level != null && level.Weapons != null ? level.Weapons.LockTarget : null);
                 SceneManager.sceneLoaded += OnSceneLoaded;
                 admin.OnValueChanged += (_, on) => NetChat.Notice(on
                     ? Localization.Extra("mpYouAdmin", "You are now an admin: /kick is available (/help).")
@@ -203,8 +209,8 @@ namespace GoF2Remake.Multiplayer
             target.isShip = true;
             target.customDeath = true;
             target.maxHp = 100f;
-            target.RemoteDamage = (amount, hitVector, byNpc) => HitRpc(amount, hitVector, byNpc);
-            target.RemoteEmp = emp => EmpRpc(emp);
+            target.RemoteDamage = (amount, hitVector, byNpc) => HitUpRpc(amount, hitVector, byNpc);
+            target.RemoteEmp = emp => EmpUpRpc(emp);
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
             Target.NetShips.Add(target);
@@ -261,25 +267,61 @@ namespace GoF2Remake.Multiplayer
             name = $"NetPlayer {OwnerClientId} ({target.displayName})";
         }
 
-        /// <summary>Another game's hit on this player's ship (a player's weapon, or an NPC that orbit's authority runs): this
-        /// player's own ship takes it; destroyed by a player = a notice for everyone.</summary>
-        [Rpc(SendTo.Owner)]
-        void HitRpc(float amount, Vector3 hitVector, bool byNpc, RpcParams rpc = default)
+        /// <summary>Another game's hit on this player's ship (a player's weapon, or an NPC that orbit's authority runs), through
+        /// the server: only a game flying in this player's orbit, never a squadmate's weapon (squadmates are out of each
+        /// other's line of fire), a finite damage up to NetGuard.MaxDamage, at its rate. (A direct RPC to the owner let a
+        /// modified client destroy any player anywhere, or send NaN damage.)</summary>
+        [Rpc(SendTo.Server)]
+        void HitUpRpc(float amount, Vector3 hitVector, bool byNpc, RpcParams rpc = default)
+        {
+            ulong shooter = rpc.Receive.SenderClientId;
+            if (shooter == OwnerClientId || !NetRateLimit.Allow(shooter, NetRateLimit.Kind.Hit)) return;
+            if (!NetGuard.Damage(amount) || !NetGuard.Finite(hitVector)) { NetRateLimit.Reject(shooter, $"a hit of {amount}"); return; }
+            var by = NetSquad.Find(shooter);
+            if (!NetGuard.SameOrbit(by, this)) return;   // gone from the orbit a moment ago, or a hit from elsewhere
+            if (!byNpc && NetSquad.Same(by, this)) return;
+            NetState.Instance?.NoteHit(NetworkObjectId, shooter);
+            HitRpc(amount, hitVector, byNpc, shooter);
+        }
+
+        /// <summary>The checked hit (HitUpRpc): this player's own ship takes it; destroyed by a player = a notice for everyone.</summary>
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        void HitRpc(float amount, Vector3 hitVector, bool byNpc, ulong shooter)
         {
             var own = level != null && level.Health != null ? level.Health.Target : null;
             if (own == null) return;
             bool alive = own.Alive;
             own.Damage(amount, byNpc, hitVector);
-            if (alive && !own.Alive && !byNpc && NetState.Instance != null) NetState.Instance.DestroyedByRpc(rpc.Receive.SenderClientId);
+            if (alive && !own.Alive && !byNpc && NetState.Instance != null) NetState.Instance.DestroyedByRpc(shooter);
         }
 
-        [Rpc(SendTo.NotOwner, Delivery = RpcDelivery.Unreliable)]
+        /// <summary>The owner's shot, through the server (only the owner sends this player's shots): checked (a weapon item,
+        /// finite values) and limited, then drawn by the others' mirrors. (Unchecked, any client could put shots on any
+        /// player's ship for everyone, or flood them.)</summary>
+        [Rpc(SendTo.Server, Delivery = RpcDelivery.Unreliable, InvokePermission = RpcInvokePermission.Owner)]
+        void ShotUpRpc(int item, Vector3 position, Vector3 velocity, Vector3 up, float lifetimeMs, float homingDelayMs, ulong targetId)
+        {
+            if (!NetRateLimit.Allow(OwnerClientId, NetRateLimit.Kind.Shot)) return;
+            if (!NetGuard.Shot(item, position, velocity, up, lifetimeMs, homingDelayMs)) { NetRateLimit.Reject(OwnerClientId, $"a shot of item {item}"); return; }
+            ShotRpc(item, position, velocity, up, lifetimeMs, homingDelayMs, targetId);
+        }
+
+        [Rpc(SendTo.NotOwner, Delivery = RpcDelivery.Unreliable, InvokePermission = RpcInvokePermission.Server)]
         void ShotRpc(int item, Vector3 position, Vector3 velocity, Vector3 up, float lifetimeMs, float homingDelayMs, ulong targetId)
         {
             if (shown) mirror?.Shot(item, position, velocity, up, lifetimeMs, homingDelayMs, NetShots.Resolve(targetId));
         }
 
-        [Rpc(SendTo.NotOwner)]
+        /// <summary>The owner's blast (a bomb's ignition), through the server like a shot.</summary>
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        void BlastUpRpc(int item, Vector3 point)
+        {
+            if (!NetRateLimit.Allow(OwnerClientId, NetRateLimit.Kind.Shot)) return;
+            if (!NetGuard.Item(item) || !NetGuard.Position(point)) { NetRateLimit.Reject(OwnerClientId, $"a blast of item {item}"); return; }
+            BlastRpc(item, point);
+        }
+
+        [Rpc(SendTo.NotOwner, InvokePermission = RpcInvokePermission.Server)]
         void BlastRpc(int item, Vector3 point)
         {
             if (shown) mirror?.Blast(item, point);
@@ -351,9 +393,22 @@ namespace GoF2Remake.Multiplayer
             sparks?.SetEmitting(empShock.Value);
         }
 
-        /// <summary>Another game's EMP on this player's ship: players have no EMP pool, so it drains that much shield and
-        /// shows the lightning for 1.5 s (a remake pick).</summary>
-        [Rpc(SendTo.Owner)]
+        /// <summary>Another game's EMP on this player's ship, through the server like a hit (the same orbit, no squadmate, a
+        /// sane amount, its rate).</summary>
+        [Rpc(SendTo.Server)]
+        void EmpUpRpc(int emp, RpcParams rpc = default)
+        {
+            ulong shooter = rpc.Receive.SenderClientId;
+            if (shooter == OwnerClientId || !NetRateLimit.Allow(shooter, NetRateLimit.Kind.Hit)) return;
+            if (emp <= 0 || emp > NetGuard.MaxDamage) { NetRateLimit.Reject(shooter, $"an EMP of {emp}"); return; }
+            var by = NetSquad.Find(shooter);
+            if (!NetGuard.SameOrbit(by, this) || NetSquad.Same(by, this)) return;
+            EmpRpc(emp);
+        }
+
+        /// <summary>The checked EMP (EmpUpRpc): players have no EMP pool, so it drains that much shield and shows the
+        /// lightning for 1.5 s (a remake pick).</summary>
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
         void EmpRpc(int emp)
         {
             var hp = level != null && level.Health != null && level.Health.Target != null ? level.Health.Target.hitpoints : null;
@@ -364,12 +419,28 @@ namespace GoF2Remake.Multiplayer
 
         void OnSceneLoaded(Scene scene, LoadSceneMode mode) => FindLevel();
 
-        void OnJumpFx(bool viaGate, Vector3 at, Quaternion facing) => JumpFxRpc(viaGate, at, facing);
-        void OnCharge() => ChargeRpc();
+        void OnJumpFx(bool viaGate, Vector3 at, Quaternion facing) => JumpFxUpRpc(viaGate, at, facing);
+        void OnCharge() => ChargeUpRpc();
+
+        /// <summary>The owner's jump effect, through the server (only the owner announces it; finite, a few a minute: a flood
+        /// of khador_jump effects would bog the others' games down).</summary>
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        void JumpFxUpRpc(bool viaGate, Vector3 at, Quaternion facing)
+        {
+            if (!NetRateLimit.Allow(OwnerClientId, NetRateLimit.Kind.Fx)) return;
+            if (!NetGuard.Position(at) || !NetGuard.Rotation(facing)) { NetRateLimit.Reject(OwnerClientId, "a jump effect"); return; }
+            JumpFxRpc(viaGate, at, facing);
+        }
+
+        [Rpc(SendTo.Server, InvokePermission = RpcInvokePermission.Owner)]
+        void ChargeUpRpc()
+        {
+            if (NetRateLimit.Allow(OwnerClientId, NetRateLimit.Kind.Fx)) ChargeRpc();
+        }
 
         /// <summary>This player's jump effect, where they are shown: the jumpgate's jump animation and sound 31, or the
         /// khador_jump fx and sound 32 (SystemJump: their ship vanishes 1000 / 1700 ms in, `visible`).</summary>
-        [Rpc(SendTo.NotOwner)]
+        [Rpc(SendTo.NotOwner, InvokePermission = RpcInvokePermission.Server)]
         void JumpFxRpc(bool viaGate, Vector3 at, Quaternion facing)
         {
             if (!SharesOrbit) return;
@@ -389,7 +460,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>This player's Khador Drive charging (sound 33), where they are shown.</summary>
-        [Rpc(SendTo.NotOwner)]
+        [Rpc(SendTo.NotOwner, InvokePermission = RpcInvokePermission.Server)]
         void ChargeRpc()
         {
             var assets = StarMapAssets.Load();

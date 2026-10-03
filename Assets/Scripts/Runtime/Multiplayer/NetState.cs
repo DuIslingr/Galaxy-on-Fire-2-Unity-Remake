@@ -12,6 +12,13 @@
 //   squad missions (NetMissions): the shared missions, their progress and results, a disconnecting carrier's cargo;
 //   the shared shop stock (NetStock): the host's list per station, the players' trades, the reset;
 //   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed).
+// The server trusts no client further than its own game: every request is limited per client (NetRateLimit) and checked
+// (NetGuard): the sender exists and acts where it is (spawns, asteroids and claims in its own orbit, trades and hangar
+// ships at the station it is docked at), only on its own objects (despawns) or those it is entitled to (a takeover in its
+// orbit, its squad's mission objects), only with an invitation it got (joining a squad), only on missions the server saw
+// it get (MissionRecord: results, progress and handed-over cargo reach that mission's team alone, shares bounded by the
+// mission's reward), with numbers, indices and texts in range. The messages for the players (notices, results, stock,
+// teleports...) may only come from the server (InvokePermission.Server): a client can't send them to the others.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -23,7 +30,15 @@ namespace GoF2Remake.Multiplayer
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class NetState : NetworkBehaviour
     {
-        const float SweepSeconds = 0.5f;
+        const float SweepSeconds = 0.5f, PruneSeconds = 10f;
+        /// <summary>The asteroid indices an orbit's field may have (OrbitBuilder.SpawnAsteroids makes far fewer).</summary>
+        const int MaxAsteroids = 10000;
+        /// <summary>The NetProxy / NetCrate objects one player may own at once (a busy orbit's traffic, a mission's ships and
+        /// junk, a battle's containers: well below), and how long a spawn request waits for its sender's place to arrive.</summary>
+        const int MaxProxies = 300, MaxCrates = 150, MaxPendingSpawns = 2000;
+        const float SpawnWaitSeconds = 5f;
+        /// <summary>The most a squad mission pays one member (a 10x mission is far below; the docked guard is 1 000 001).</summary>
+        const int MaxMissionPay = 10000000;
 
         readonly NetworkVariable<int> seed = new NetworkVariable<int>();
         readonly NetworkVariable<bool> dedicated = new NetworkVariable<bool>();
@@ -32,7 +47,7 @@ namespace GoF2Remake.Multiplayer
         GameObject proxyPrefab, cratePrefab;
         int pendingSeed;
         bool pendingDedicated;
-        float sweepTimer;
+        float sweepTimer, pruneTimer;
         readonly Dictionary<ulong, float> staleSince = new Dictionary<ulong, float>();
 
         /// <summary>The session's world, null outside one.</summary>
@@ -60,6 +75,7 @@ namespace GoF2Remake.Multiplayer
                 debugAllowed.Value = NetGame.HostAllowsDebug;
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
+                NetRateLimit.Reset();
             }
             else NetGame.EnterWorld(seed.Value);
         }
@@ -86,30 +102,51 @@ namespace GoF2Remake.Multiplayer
             return true;
         }
 
+        // ---- hits (NetPlayer / NetProxy relays) ----------------------------------------------------------------
+
+        /// <summary>Server: who hit what when (the checked hits): a kill notice or a kill credit needs a hit a moment before.</summary>
+        readonly Dictionary<(ulong target, ulong shooter), float> hits = new Dictionary<(ulong, ulong), float>();
+
+        /// <summary>Server: 'shooter' hit the network object 'target' (a NetPlayer or a NetProxy) now.</summary>
+        internal void NoteHit(ulong target, ulong shooter)
+        {
+            if (IsServer) hits[(target, shooter)] = Time.unscaledTime;
+        }
+
+        /// <summary>Server: 'shooter' hit 'target' within the last 'seconds'.</summary>
+        internal bool HitRecently(ulong target, ulong shooter, float seconds) =>
+            hits.TryGetValue((target, shooter), out float t) && Time.unscaledTime - t <= seconds;
+
         // ---- asteroids --------------------------------------------------------------------------------------
 
-        /// <summary>A player destroyed asteroid 'index' of 'station' (shot, mined, rammed).</summary>
+        /// <summary>A player destroyed asteroid 'index' of 'station' (shot, mined, rammed): only a player flying there (else
+        /// one client could empty every field of the session).</summary>
         [Rpc(SendTo.Server)]
         public void AsteroidDestroyedRpc(int station, int index, bool mined, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Asteroid)) return;
+            if (index < 0 || index >= MaxAsteroids || !NetGuard.InOrbit(client, station)) { NetRateLimit.Reject(client, $"asteroid {index} of orbit {station}"); return; }
             if (!destroyed.TryGetValue(station, out var set)) destroyed[station] = set = new HashSet<int>();
-            var by = NetSquad.Find(rpc.Receive.SenderClientId);
+            var by = NetSquad.Find(client);
             if (set.Add(index)) AsteroidGoneRpc(station, index, by != null ? by.DisplayName : "", mined);
         }
 
         /// <summary>'by': the pilot who destroyed it, 'mined': drilled out (else shot / rammed): a miner's message (Mining).</summary>
-        [Rpc(SendTo.Everyone)]
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         void AsteroidGoneRpc(int station, int index, string by, bool mined) => NetOrbit.Current?.OnAsteroidGone(station, index, by, mined);
 
         /// <summary>A player arrived in 'station': the asteroids already gone there.</summary>
         [Rpc(SendTo.Server)]
         public void RequestDestroyedRpc(int station, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Request) || !NetGuard.Orbit(station)) return;
             var list = destroyed.TryGetValue(station, out var set) ? new List<int>(set).ToArray() : new int[0];
-            DestroyedListRpc(station, list, RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp));
+            DestroyedListRpc(station, list, RpcTarget.Single(client, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void DestroyedListRpc(int station, int[] indices, RpcParams rpc = default) => NetOrbit.Current?.OnDestroyedList(station, indices);
 
         // ---- chat (NetChat) ---------------------------------------------------------------------------------
@@ -118,9 +155,12 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Server)]
         public void SendChatRpc(string text, bool global, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Chat)) return;
+            if (text == null || text.Length > NetChat.MaxLength * 4) { NetRateLimit.Reject(client, "an overlong chat line"); return; }
             text = NetChat.Clean(text);
             if (text.Length == 0) return;
-            var sender = NetSquad.Find(rpc.Receive.SenderClientId);
+            var sender = NetSquad.Find(client);
             if (sender != null) Chat(sender, text, global);
         }
 
@@ -141,7 +181,7 @@ namespace GoF2Remake.Multiplayer
             if (IsServer && text.Length > 0) ChatRpc(NetworkManager.ServerClientId, from, text, true, -1, false, false);
         }
 
-        [Rpc(SendTo.Everyone)]
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         void ChatRpc(ulong sender, string from, string text, bool global, int station, bool inSpace, bool inHangar)
             => NetChat.Receive(sender, from, text, global, station, inSpace, inHangar);
 
@@ -156,7 +196,7 @@ namespace GoF2Remake.Multiplayer
             else Debug.Log($"Server: [To {to.DisplayName}] {text}");
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void WhisperedRpc(string other, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveWhisper(other, text, own);
 
         // ---- server commands (NetCommands) -----------------------------------------------------------------
@@ -167,7 +207,14 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Server)]
         public void ServerCommandRpc(string name, string args, RpcParams rpc = default)
         {
-            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Command)) return;
+            if (name == null || name.Length > NetGuard.MaxCommandName || (args != null && args.Length > NetGuard.MaxCommandArgs))
+            {
+                NetRateLimit.Reject(client, "an overlong command");
+                return;
+            }
+            var from = NetSquad.Find(client);
             if (from == null) return;
             string reply = NetCommands.RunOnServer(name, args, from);
             if (!string.IsNullOrEmpty(reply)) NoticeToRpc(reply, RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp));
@@ -180,7 +227,8 @@ namespace GoF2Remake.Multiplayer
         internal void SendTeleport(ulong who, NetTeleport.Destination d, string by) =>
             TeleportToRpc((byte)d.kind, d.player, d.station, d.hasPos, d.pos, by, RpcTarget.Single(who, RpcTargetUse.Temp));
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        /// <summary>Only the server teleports (an admin's /tp, checked there): before, any client could move any player.</summary>
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void TeleportToRpc(byte kind, ulong player, int station, bool hasPos, Vector3 pos, string by, RpcParams rpc = default)
             => NetTeleport.Go(new NetTeleport.Destination { kind = (NetTeleport.Kind)kind, player = player, station = station, hasPos = hasPos, pos = pos }, by);
 
@@ -195,30 +243,47 @@ namespace GoF2Remake.Multiplayer
         // ---- squads (NetSquad) ------------------------------------------------------------------------------
 
         int nextSquad = 1;
+        /// <summary>Server: the invitations sent (inviter, invited) and when: joining a squad needs one (before, any player
+        /// docked beside a squad could join it, and with it get its mission and its shares).</summary>
+        readonly Dictionary<(ulong from, ulong to), float> invites = new Dictionary<(ulong, ulong), float>();
+        const float InviteGraceSeconds = 15f;   // past NetSquad.InviteSeconds: the popup's answer on the way
 
         [Rpc(SendTo.Server)]
         public void InviteRpc(ulong target, RpcParams rpc = default)
         {
-            Invite(NetSquad.Find(rpc.Receive.SenderClientId), NetSquad.Find(target));
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Invite)) return;
+            Invite(NetSquad.Find(client), NetSquad.Find(target));
         }
 
-        /// <summary>Server: 'from' invites 'to' into their squad (the pilot list's Invite, /invite).</summary>
+        /// <summary>Server: 'from' invites 'to' into their squad (the pilot list's Invite, /invite): only while both are docked
+        /// at the same station, like the pilot list shows them.</summary>
         internal void Invite(NetPlayer from, NetPlayer to)
         {
             if (!IsServer || from == null || to == null || NetSquad.Same(from, to)) return;
+            if (!from.InHangar || !to.InHangar || from.Station != to.Station) return;
+            invites[(from.OwnerClientId, to.OwnerClientId)] = Time.unscaledTime;
             InvitedRpc(from.OwnerClientId, from.DisplayName, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void InvitedRpc(ulong from, string name, RpcParams rpc = default) => NetSquad.OnInvited(from, name);
 
         /// <summary>The invited player said yes: into the inviter's squad (a new one if the inviter had none).</summary>
         [Rpc(SendTo.Server)]
         public void AcceptInviteRpc(ulong inviter, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Squad)) return;
             var leader = NetSquad.Find(inviter);
-            var joiner = NetSquad.Find(rpc.Receive.SenderClientId);
+            var joiner = NetSquad.Find(client);
             if (leader == null || joiner == null || leader == joiner || NetSquad.Same(leader, joiner)) return;   // squadmates already
+            // Only an invitation this player got (and not an old one).
+            if (!invites.TryGetValue((inviter, client), out float sent) || Time.unscaledTime - sent > NetSquad.InviteSeconds + InviteGraceSeconds)
+            {
+                NetRateLimit.Reject(client, $"joining {leader.DisplayName}'s squad without an invitation");
+                return;
+            }
             // Squads form only in a hangar: both docked at the same station.
             if (!leader.InHangar || !joiner.InHangar || leader.Station != joiner.Station)
             {
@@ -226,6 +291,7 @@ namespace GoF2Remake.Multiplayer
                             RpcTarget.Single(joiner.OwnerClientId, RpcTargetUse.Temp));
                 return;
             }
+            invites.Remove((inviter, client));
             if (leader.SquadId == 0) leader.SetSquad(nextSquad++);
             joiner.SetSquad(leader.SquadId);
             DissolveSingles();
@@ -242,7 +308,8 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Server)]
         public void LeaveSquadRpc(RpcParams rpc = default)
         {
-            LeaveSquad(NetSquad.Find(rpc.Receive.SenderClientId));
+            ulong client = rpc.Receive.SenderClientId;
+            if (NetRateLimit.Allow(client, NetRateLimit.Kind.Squad)) LeaveSquad(NetSquad.Find(client));
         }
 
         /// <summary>Server: 'p' leaves their squad (the squad window's Leave, /leave).</summary>
@@ -256,7 +323,7 @@ namespace GoF2Remake.Multiplayer
             DissolveSingles();
         }
 
-        [Rpc(SendTo.Everyone)]
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         void SquadNoticeRpc(int squad, string text)
         {
             if (NetSquad.LocalSquad == squad || (NetPlayer.Local != null && text.Contains(NetPlayer.Local.DisplayName))) NetChat.Notice(text);
@@ -272,173 +339,318 @@ namespace GoF2Remake.Multiplayer
                 if (p != null && p.IsSpawned && p.SquadId != 0 && count[p.SquadId] < 2) p.SetSquad(0);
         }
 
-        /// <summary>A player's ship was destroyed by another player: everyone hears of it.</summary>
+        /// <summary>A player's ship was destroyed by another player: everyone hears of it (only of a player who hit them a
+        /// moment ago: no notices blaming anyone at will).</summary>
         [Rpc(SendTo.Server)]
         public void DestroyedByRpc(ulong killer, RpcParams rpc = default)
         {
-            var victim = NetSquad.Find(rpc.Receive.SenderClientId);
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Kill)) return;
+            var victim = NetSquad.Find(client);
             var by = NetSquad.Find(killer);
-            if (victim == null || by == null) return;
+            if (victim == null || by == null || !HitRecently(victim.NetworkObjectId, killer, 30f)) return;
             NoticeRpc(string.Format(Localization.Extra("mpDestroyedBy", "{0} was destroyed by {1}."), victim.DisplayName, by.DisplayName));
         }
 
-        [Rpc(SendTo.Everyone)]
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         void NoticeRpc(string text) => NetChat.Notice(text);
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void NoticeToRpc(string text, RpcParams rpc = default) => NetChat.Notice(text);
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void JoinedSquadRpc(RpcParams rpc = default) => NetMissions.OnJoinedSquad();
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void LeftSquadRpc(RpcParams rpc = default) => NetMissions.OnLeftSquad();
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void SendMissionToRpc(ulong client, RpcParams rpc = default) => NetMissions.SendTo(client);
 
-        /// <summary>A squad member's mission for one player (the squad's new member).</summary>
+        /// <summary>A squad member's mission for one player (the squad's new member): that member joins the mission's team.</summary>
         [Rpc(SendTo.Server)]
         public void ShareMissionToRpc(string json, ulong client, RpcParams rpc = default)
         {
-            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            ulong sender = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(sender, NetRateLimit.Kind.Mission)) return;
+            var from = NetSquad.Find(sender);
             var to = NetSquad.Find(client);
-            if (from == null || to == null || from.SquadId == 0 || to.SquadId != from.SquadId) return;
+            if (from == null || to == null || from == to || from.SquadId == 0 || to.SquadId != from.SquadId) return;
+            if (!ParseMission(json, out var m)) { NetRateLimit.Reject(sender, "a malformed mission"); return; }
+            var record = Register(m, from);   // a mission the holder had alone becomes the squad's
+            if (record == null || record.ended) return;
+            record.members.Add(client);
             ReceiveMissionRpc(json, from.DisplayName, true, RpcTarget.Single(client, RpcTargetUse.Temp));
         }
 
         /// <summary>The host is closing the session: its reason, before the connection goes (NetGame.Shutdown).</summary>
-        [Rpc(SendTo.NotServer)]
+        [Rpc(SendTo.NotServer, InvokePermission = RpcInvokePermission.Server)]
         public void SessionEndingRpc(string reason) => NetGame.OnHostEnding(reason);
 
         // ---- squad missions (NetMissions) -------------------------------------------------------------------
+
+        /// <summary>Host: a squad mission as the server saw it handed out: its team (the players it was shared with: only they
+        /// may report on it, and its results, progress and a carrier's cargo reach only them), its reward and wager (a
+        /// success's share is at most what the mission pays, a failure's at most its wager) and amount (the cargo a carrier
+        /// can hand over). A mission held alone isn't recorded: nobody else has it. Mission ids are the clients' (random), so
+        /// one id may have several records, one per team: a modified client claiming another squad's id gets a record of its
+        /// own and reaches nobody of that squad.</summary>
+        sealed class MissionRecord
+        {
+            public readonly HashSet<ulong> members = new HashSet<ulong>();
+            public int reward, wager, amount;
+            public bool ended;   // its result went out (two members delivering at once: the second is dropped)
+            public float endedAt;
+            public int MaxShare => (int)System.Math.Min(2L * reward + 50L, MaxMissionPay);   // the reward + a standing bonus of up to 100 %
+        }
+
+        readonly Dictionary<long, List<MissionRecord>> missions = new Dictionary<long, List<MissionRecord>>();
+        /// <summary>Host: each squad's last new mission (ShareMissionRpc's check).</summary>
+        readonly Dictionary<int, (long netId, float time, string who)> squadAccepts = new Dictionary<int, (long, float, string)>();
+
+        /// <summary>The mission 'netId' whose team 'client' belongs to, null = none.</summary>
+        MissionRecord RecordOf(long netId, ulong client)
+        {
+            if (netId == 0 || !missions.TryGetValue(netId, out var list)) return null;
+            foreach (var r in list) if (r.members.Contains(client)) return r;
+            return null;
+        }
+
+        /// <summary>The record of 'from's mission 'm', made now with 'from' in its team if there is none.</summary>
+        MissionRecord Register(FreelanceMission m, NetPlayer from)
+        {
+            var record = RecordOf(m.netId, from.OwnerClientId);
+            if (record != null) return record;
+            if (!missions.TryGetValue(m.netId, out var list)) missions[m.netId] = list = new List<MissionRecord>();
+            if (list.Count >= 8) return null;   // ids are random: more teams on one id is a client making them up
+            int reward = Mathf.Clamp(m.reward, 0, MaxMissionPay);
+            record = new MissionRecord
+            {
+                reward = reward, wager = m.type == MissionType.Challenge ? reward : 0, amount = Mathf.Clamp(m.amount, 0, 1023),
+            };
+            record.members.Add(from.OwnerClientId);
+            list.Add(record);
+            return record;
+        }
+
+        /// <summary>A mission as a client sends it: bounded in length, readable, with an id.</summary>
+        static bool ParseMission(string json, out FreelanceMission m)
+        {
+            m = null;
+            if (string.IsNullOrEmpty(json) || json.Length > NetGuard.MaxMissionJson) return false;
+            try { m = JsonUtility.FromJson<FreelanceMission>(json); } catch (System.Exception) { return false; }
+            return m != null && !m.IsEmpty && m.netId != 0;
+        }
 
         /// <summary>A player's mission for their squadmates (a new one or an update).</summary>
         [Rpc(SendTo.Server)]
         public void ShareMissionRpc(string json, bool isNew, RpcParams rpc = default)
         {
-            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Mission)) return;
+            var from = NetSquad.Find(client);
             if (from == null || from.SquadId == 0) return;
+            if (!ParseMission(json, out var m)) { NetRateLimit.Reject(client, "a malformed mission"); return; }
+            long netId = m.netId;
             if (isNew)
             {
                 // The host checks the acceptance too: the whole squad docked at the sender's station, and no other member's
                 // new mission a moment ago (two accepting at once would swap missions): else the sender's is refused.
-                long netId = 0;
-                try { netId = JsonUtility.FromJson<FreelanceMission>(json).netId; } catch (System.Exception) { }
                 string refusal = null;
                 foreach (var p in NetPlayer.All)
                     if (p != null && p != from && p.IsSpawned && p.SquadId == from.SquadId && (p.Where != NetPlayer.Place.Hangar || p.Station != from.Station))
                         refusal = Localization.Extra("mpMissionSquadHere", "The whole squad must be docked at this station to accept a mission.");
                 if (squadAccepts.TryGetValue(from.SquadId, out var last) && last.netId != netId && Time.unscaledTime - last.time < 3f)
                     refusal = string.Format(Localization.Extra("mpMissionAtOnce", "{0} accepted a squad mission at the same moment."), last.who);
+                var record = refusal == null ? Register(m, from) : null;
+                if (refusal == null && record == null) refusal = Localization.Extra("mpMissionRefused", "The squad mission could not be shared.");
                 if (refusal != null) { MissionRefusedRpc(netId, refusal, RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp)); return; }
                 squadAccepts[from.SquadId] = (netId, Time.unscaledTime, from.DisplayName);
+                // The squad, every member of which gets it now, is its team.
+                foreach (var p in NetPlayer.All)
+                    if (p != null && p.IsSpawned && p.SquadId == from.SquadId) record.members.Add(p.OwnerClientId);
+            }
+            else
+            {
+                // An update (the return trip): only of a mission the sender's team has.
+                var record = RecordOf(netId, client);
+                if (record == null || record.ended) return;
             }
             foreach (var p in NetPlayer.All)
                 if (p != null && p != from && p.IsSpawned && p.SquadId == from.SquadId)
                     ReceiveMissionRpc(json, from.DisplayName, isNew, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void ReceiveMissionRpc(string json, string from, bool isNew, RpcParams rpc = default) => NetMissions.Receive(json, from, isNew);
 
-        /// <summary>Host: each squad's last new mission (ShareMissionRpc's check).</summary>
-        readonly Dictionary<int, (long netId, float time, string who)> squadAccepts = new Dictionary<int, (long, float, string)>();
-        /// <summary>Host: the missions already ended (a second result, e.g. two members delivering at once, is dropped).</summary>
-        readonly HashSet<long> endedMissions = new HashSet<long>();
-
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void MissionRefusedRpc(long netId, string reason, RpcParams rpc = default) => NetMissions.OnRefused(netId, reason);
 
-        /// <summary>The squad's mission (the sender's squad, and whoever holds that mission) other than the sender.</summary>
-        List<NetPlayer> MissionTeam(NetPlayer from, long netId)
+        /// <summary>The squad's mission (the sender's squad, and whoever of its team still holds that mission) other than the
+        /// sender. (Before, anyone whose MissionHeld matched: a modified client could read a stranger's mission id and fail
+        /// or abandon it for them.)</summary>
+        List<NetPlayer> MissionTeam(NetPlayer from, long netId, MissionRecord record)
         {
             var list = new List<NetPlayer>();
             foreach (var p in NetPlayer.All)
-                if (p != null && p != from && p.IsSpawned && ((from.SquadId != 0 && p.SquadId == from.SquadId) || p.MissionHeld == netId))
+                if (p != null && p != from && p.IsSpawned
+                    && ((from.SquadId != 0 && p.SquadId == from.SquadId) || (record.members.Contains(p.OwnerClientId) && p.MissionHeld == netId)))
                     list.Add(p);
             return list;
         }
 
         /// <summary>A squad mission's end (NetMissions.Result: success with each member's share, failure, abandoned) for the
-        /// rest of the squad.</summary>
+        /// rest of the squad: only from its team, once, the share bounded by the mission (a success's by its reward, a
+        /// failure's by its Challenge wager, an abandon's none), so nobody can pay or charge other players at will.</summary>
         [Rpc(SendTo.Server)]
         public void MissionResultRpc(long netId, int result, int share, RpcParams rpc = default)
         {
-            var from = NetSquad.Find(rpc.Receive.SenderClientId);
-            if (from == null || netId == 0 || !endedMissions.Add(netId)) return;   // once per mission
-            foreach (var p in MissionTeam(from, netId))
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Mission)) return;
+            var from = NetSquad.Find(client);
+            var record = from != null ? RecordOf(netId, client) : null;
+            if (record == null || record.ended) return;   // a mission held alone (nobody else has it), or ended already
+            switch (result)
+            {
+                case NetMissions.Success: share = Mathf.Clamp(share, 0, record.MaxShare); break;
+                case NetMissions.Failure: share = Mathf.Clamp(share, 0, record.wager); break;
+                case NetMissions.Abandoned: share = 0; break;
+                default: NetRateLimit.Reject(client, $"mission result {result}"); return;
+            }
+            record.ended = true;
+            record.endedAt = Time.unscaledTime;
+            foreach (var p in MissionTeam(from, netId, record))
                 MissionResultToRpc(netId, result, share, from.DisplayName, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void MissionResultToRpc(long netId, int result, int share, string from, RpcParams rpc = default)
             => NetMissions.OnResult(netId, result, share, from);
 
-        /// <summary>The squad mission's shared progress ('status' + delta: delivered ore, the captured container).</summary>
+        /// <summary>The squad mission's shared progress ('status' + delta: delivered ore, the captured container, the Informer's
+        /// 1 / 1000): only from its team, in the steps a game sends.</summary>
         [Rpc(SendTo.Server)]
         public void MissionStatusRpc(long netId, int delta, RpcParams rpc = default)
         {
-            var from = NetSquad.Find(rpc.Receive.SenderClientId);
-            if (from == null || netId == 0 || endedMissions.Contains(netId)) return;
-            foreach (var p in MissionTeam(from, netId))
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Mission)) return;
+            var from = NetSquad.Find(client);
+            var record = from != null ? RecordOf(netId, client) : null;
+            if (record == null || record.ended) return;
+            if (delta < 1 || delta > 1000) { NetRateLimit.Reject(client, $"mission progress {delta}"); return; }
+            foreach (var p in MissionTeam(from, netId, record))
                 MissionStatusToRpc(netId, delta, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void MissionStatusToRpc(long netId, int delta, RpcParams rpc = default) => NetMissions.OnStatus(netId, delta);
 
-        /// <summary>Host: 'gone' disconnects; what they carried for the mission (containers, passengers) goes to a member still
-        /// holding it (their squad first), so the squad keeps a mission it can finish.</summary>
+        /// <summary>Host: 'gone' disconnects; what they carried for the mission (containers, passengers) goes to a member of its
+        /// team still holding it (their squad first), so the squad keeps a mission it can finish. Each count at most the
+        /// mission's amount (MissionCargo is the leaving game's word).</summary>
         public void HandOverMission(NetPlayer gone)
         {
             if (!IsServer || gone == null || gone.MissionHeld == 0 || gone.MissionCargo == 0) return;
+            long netId = gone.MissionHeld;
+            var record = RecordOf(netId, gone.OwnerClientId);
+            if (record == null || record.ended) return;
             NetPlayer to = null;
             foreach (var p in NetPlayer.All)
-                if (p != null && p != gone && p.IsSpawned && p.MissionHeld == gone.MissionHeld
+                if (p != null && p != gone && p.IsSpawned && p.MissionHeld == netId && record.members.Contains(p.OwnerClientId)
                     && (to == null || (p.SquadId == gone.SquadId && to.SquadId != gone.SquadId))) to = p;
-            if (to != null) TakeMissionCargoRpc(gone.MissionHeld, gone.MissionCargo, gone.DisplayName, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
+            if (to == null) return;
+            int cap = Mathf.Clamp(record.amount, 1, 1023), cargo = gone.MissionCargo;
+            int a = Mathf.Min(cargo & 1023, cap), b = Mathf.Min(cargo >> 10 & 1023, cap), c = Mathf.Min(cargo >> 20 & 1023, cap);
+            TakeMissionCargoRpc(netId, a | b << 10 | c << 20, gone.DisplayName, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void TakeMissionCargoRpc(long netId, int cargo, string from, RpcParams rpc = default) => NetMissions.TakeCargo(netId, cargo, from);
 
         // ---- the shared shop stock (NetStock) ------------------------------------------------------------------
 
+        /// <summary>Host: the stations whose stock changed this frame: sent once to the players docked there (Update), not once
+        /// per traded unit (a held arrow trades 5 units a frame).</summary>
+        readonly HashSet<int> dirtyStock = new HashSet<int>();
+        /// <summary>Host: the dealer ships each player reserved at each station and hasn't traded or given back yet: a trade
+        /// may only take a reserved row off the list, and only put back that row or the player's own old hull.</summary>
+        readonly Dictionary<(ulong client, int station), List<int>> reservations = new Dictionary<(ulong, int), List<int>>();
+
         /// <summary>A player docked at 'station': the host's stock there (made now if it has none).</summary>
         [Rpc(SendTo.Server)]
         public void StockRequestRpc(int station, RpcParams rpc = default)
-            => StockRpc(station, NetStock.HostGet(station), RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp));
+        {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Request) || !NetGuard.Station(station)) return;   // no lists for made-up stations
+            StockRpc(station, NetStock.HostGet(station), RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
 
-        /// <summary>A player bought (-1, for 'price') or sold (+1) an item at 'station'; a unit no longer there goes back.</summary>
+        /// <summary>A player bought (-1, for 'price') or sold (+1) one unit of an item at 'station', docked there; a unit no
+        /// longer there goes back.</summary>
         [Rpc(SendTo.Server)]
         public void StockItemRpc(int station, int item, int delta, int price, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Trade)) return;
+            if ((delta != 1 && delta != -1) || !NetGuard.Station(station) || !NetGuard.Item(item) || !NetGuard.DockedAt(client, station))
+            {
+                NetRateLimit.Reject(client, $"a trade of {delta} x item {item} at {station}");
+                return;
+            }
             if (!NetStock.HostItem(station, item, delta))
-                ItemRefusedRpc(station, item, price, RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp));
-            BroadcastStock(station);
+                ItemRefusedRpc(station, item, Mathf.Max(0, price), RpcTarget.Single(client, RpcTargetUse.Temp));
+            dirtyStock.Add(station);
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void ItemRefusedRpc(int station, int item, int price, RpcParams rpc = default) => NetStock.ItemRefused(station, item, price);
 
-        /// <summary>A player wants the dealer's ship 'ship' at 'station': theirs if it is still there (then off the list).</summary>
+        /// <summary>A player docked at 'station' wants the dealer's ship 'ship': theirs if it is still there (then off the list).</summary>
         [Rpc(SendTo.Server)]
         public void ReserveShipRpc(int station, int ship, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Reserve)) return;
+            if (!NetGuard.Station(station) || !NetGuard.Ship(ship) || !NetGuard.DockedAt(client, station))
+            {
+                NetRateLimit.Reject(client, $"a reservation of ship {ship} at {station}");
+                return;
+            }
             bool ok = NetStock.HostReserveShip(station, ship);
-            ReserveResultRpc(station, ship, ok, RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp));
-            if (ok) BroadcastStock(station);
+            if (ok)
+            {
+                if (!reservations.TryGetValue((client, station), out var list)) reservations[(client, station)] = list = new List<int>();
+                list.Add(ship);
+            }
+            ReserveResultRpc(station, ship, ok, RpcTarget.Single(client, RpcTargetUse.Temp));
+            if (ok) dirtyStock.Add(station);
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void ReserveResultRpc(int station, int ship, bool ok, RpcParams rpc = default) => NetStock.ReserveResult(station, ship, ok);
 
-        /// <summary>A player's ship trade at 'station': the dealer's row 'removed' became 'added' (-1 = none).</summary>
+        /// <summary>A player's ship trade at 'station': the dealer's row 'removed' became 'added' (-1 = none). Only a row this
+        /// player reserved goes (it is off the list already), and only that row (not bought after all) or the player's own old
+        /// hull (a trade-in) comes: no dealer ships made up or wiped for everyone.</summary>
         [Rpc(SendTo.Server)]
-        public void StockShipRpc(int station, int removed, int added)
+        public void StockShipRpc(int station, int removed, int added, RpcParams rpc = default)
         {
-            if (NetStock.HostShip(station, removed, added)) BroadcastStock(station);
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Reserve)) return;
+            var from = NetSquad.Find(client);
+            if (from == null || !NetGuard.Station(station) || !NetGuard.DockedAt(client, station)
+                || (removed != -1 && !NetGuard.Ship(removed)) || (added != -1 && !NetGuard.Ship(added)))
+            {
+                NetRateLimit.Reject(client, $"a ship trade {removed} -> {added} at {station}");
+                return;
+            }
+            reservations.TryGetValue((client, station), out var reserved);
+            bool ok;
+            if (removed >= 0) ok = reserved != null && reserved.Remove(removed) && (added < 0 || added == from.ShipIndex || added == from.PreviousShip);
+            else ok = added >= 0 && reserved != null && reserved.Remove(added);   // the reserved row back: not bought after all
+            if (!ok) { NetRateLimit.Reject(client, $"an unreserved ship trade {removed} -> {added} at {station}"); return; }
+            if (NetStock.HostShip(station, removed, added)) dirtyStock.Add(station);
         }
 
         /// <summary>Host: the stock of 'station' for every player docked there.</summary>
@@ -450,46 +662,112 @@ namespace GoF2Remake.Multiplayer
                     StockRpc(station, text, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void StockRpc(int station, string text, RpcParams rpc = default) => NetStock.Apply(station, text);
 
         // ---- the orbit authority's objects ------------------------------------------------------------------
 
+        struct SpawnRequest
+        {
+            public ulong client;
+            public int station, localId;
+            public bool crate;
+            public float time;
+        }
+
+        /// <summary>Host: spawn requests whose sender wasn't seen in that orbit yet (its place arrives at the tick, maybe after
+        /// the request): spawned once it is, dropped after SpawnWaitSeconds.</summary>
+        readonly List<SpawnRequest> pendingSpawns = new List<SpawnRequest>();
+        /// <summary>Host: the NetProxy / NetCrate objects each player owns (counted at the sweep, plus the spawns since).</summary>
+        readonly Dictionary<ulong, (int proxies, int crates)> owned = new Dictionary<ulong, (int, int)>();
+
         /// <summary>An orbit authority shows its ship 'localId' (NetOrbit's list) of 'station' to the others.</summary>
         [Rpc(SendTo.Server)]
-        public void SpawnProxyRpc(int station, int localId, RpcParams rpc = default)
-        {
-            if (proxyPrefab == null) return;
-            var go = Instantiate(proxyPrefab);
-            go.GetComponent<NetProxy>().Init(station, localId);
-            var obj = go.GetComponent<NetworkObject>();
-            obj.DontDestroyWithOwner = true;   // an owner who disconnects leaves it to the host: the others can take it over
-            obj.SpawnWithOwnership(rpc.Receive.SenderClientId, false);
-        }
+        public void SpawnProxyRpc(int station, int localId, RpcParams rpc = default) => RequestSpawn(rpc.Receive.SenderClientId, station, localId, false);
 
         /// <summary>An orbit authority shows its crate 'localId' of 'station' to the others.</summary>
         [Rpc(SendTo.Server)]
-        public void SpawnCrateRpc(int station, int localId, RpcParams rpc = default)
+        public void SpawnCrateRpc(int station, int localId, RpcParams rpc = default) => RequestSpawn(rpc.Receive.SenderClientId, station, localId, true);
+
+        /// <summary>A spawn request: limited per client (a flood of objects for everyone), only for the orbit the sender flies
+        /// in (no objects planted in other orbits), at most MaxProxies / MaxCrates owned at once.</summary>
+        void RequestSpawn(ulong client, int station, int localId, bool crate)
         {
-            if (cratePrefab == null) return;
-            var go = Instantiate(cratePrefab);
-            go.GetComponent<NetCrate>().Init(station, localId);
-            go.GetComponent<NetworkObject>().SpawnWithOwnership(rpc.Receive.SenderClientId, false);
+            if (!NetRateLimit.Allow(client, crate ? NetRateLimit.Kind.CrateSpawn : NetRateLimit.Kind.ProxySpawn)) return;
+            if (localId < 0 || !NetGuard.Orbit(station) || NetSquad.Find(client) == null) { NetRateLimit.Reject(client, $"a spawn {localId} in orbit {station}"); return; }
+            owned.TryGetValue(client, out var n);
+            if (crate ? n.crates >= MaxCrates : n.proxies >= MaxProxies) { NetRateLimit.Reject(client, crate ? "too many crates" : "too many ships"); return; }
+            var request = new SpawnRequest { client = client, station = station, localId = localId, crate = crate, time = Time.unscaledTime };
+            if (NetGuard.InOrbit(client, station)) Spawn(request);
+            else if (pendingSpawns.Count < MaxPendingSpawns) pendingSpawns.Add(request);
+        }
+
+        void Spawn(SpawnRequest r)
+        {
+            owned.TryGetValue(r.client, out var n);
+            if (r.crate)
+            {
+                if (cratePrefab == null) return;
+                var go = Instantiate(cratePrefab);
+                go.GetComponent<NetCrate>().Init(r.station, r.localId);
+                go.GetComponent<NetworkObject>().SpawnWithOwnership(r.client, false);
+                n.crates++;
+            }
+            else
+            {
+                if (proxyPrefab == null) return;
+                var go = Instantiate(proxyPrefab);
+                go.GetComponent<NetProxy>().Init(r.station, r.localId);
+                var obj = go.GetComponent<NetworkObject>();
+                obj.DontDestroyWithOwner = true;   // an owner who disconnects leaves it to the host: the others can take it over
+                obj.SpawnWithOwnership(r.client, false);
+                n.proxies++;
+            }
+            owned[r.client] = n;
+        }
+
+        /// <summary>The waiting spawn requests: their senders arrived in that orbit, or they go.</summary>
+        void UpdatePendingSpawns()
+        {
+            if (pendingSpawns.Count == 0) return;
+            float now = Time.unscaledTime;
+            pendingSpawns.RemoveAll(r =>
+            {
+                if (NetGuard.InOrbit(r.client, r.station)) { Spawn(r); return true; }
+                if (now - r.time < SpawnWaitSeconds) return false;
+                NetRateLimit.Reject(r.client, $"a spawn in orbit {r.station}, where it isn't");
+                return true;
+            });
         }
 
         /// <summary>A player took a ship / junk / crate of another game over (NetOrbit, FreelanceOrbit.Promote): its old copy
-        /// goes for everyone, and when its creator is still in that orbit their own ship goes too (TakenOverRpc).</summary>
+        /// goes for everyone, and when its creator is still in that orbit their own ship goes too (TakenOverRpc). Only a
+        /// player flying in that orbit takes its objects over, and from a creator still there only a squadmate the creator's
+        /// mission objects (a mission orbit's takeover): no wiping other players' ships from anywhere.</summary>
         [Rpc(SendTo.Server)]
         public void AdoptedRpc(ulong objectId, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Adopt)) return;
             if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(objectId, out var obj) || obj == null || !obj.IsSpawned) return;
             var proxy = obj.GetComponent<NetProxy>();
-            var crate = obj.GetComponent<NetCrate>();
-            int station = proxy != null ? proxy.Station : crate != null ? crate.Station : -1;
+            var crate = proxy == null ? obj.GetComponent<NetCrate>() : null;
+            if (proxy == null && crate == null) { NetRateLimit.Reject(client, "a takeover of no ship or crate"); return; }
+            int station = proxy != null ? proxy.Station : crate.Station;
             ulong creator = proxy != null ? proxy.Creator : obj.OwnerClientId;
-            if (creator == rpc.Receive.SenderClientId) return;
+            if (creator == client) return;
+            if (!NetGuard.InOrbit(client, station)) { NetRateLimit.Reject(client, $"a takeover in orbit {station}, where it isn't"); return; }
             if (NetOrbit.InOrbit(creator, station) && obj.OwnerClientId == creator)
             {
+                // A mission orbit's takeover (FreelanceOrbit.Promote): the runner's squadmate, or anyone once the runner no
+                // longer runs that mission (it left the squad and with it the mission).
+                var owner = NetSquad.Find(creator);
+                bool missionObject = proxy != null ? proxy.IsMissionShip || proxy.IsJunk : crate.IsMissionCrate;
+                if (!missionObject || owner == null || (!NetSquad.SameClient(client, owner) && owner.MissionRun != 0))
+                {
+                    NetRateLimit.Reject(client, "a takeover of a ship its game still runs");
+                    return;
+                }
                 if (proxy != null) proxy.TakenOverRpc();
                 else crate.TakenOverRpc();
                 return;   // the creator's game drops its own (NetOrbit's scan despawns it)
@@ -499,72 +777,112 @@ namespace GoF2Remake.Multiplayer
 
         // ---- a hangar's NPC ships (NetHangar) -------------------------------------------------------------------
 
-        /// <summary>The game running 'station's hangar: an NPC ship lands (key, ship, yaw) or takes off (key): the others docked
-        /// there do the same.</summary>
+        /// <summary>The game running 'station's hangar (docked there): an NPC ship lands (key, ship, yaw) or takes off (key):
+        /// the others docked there do the same.</summary>
         [Rpc(SendTo.Server)]
         public void HangarNpcRpc(int station, bool landing, int key, int ship, float yaw, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Hangar)) return;
+            if (!NetGuard.Station(station) || !NetGuard.DockedAt(client, station) || (landing && (!NetGuard.Ship(ship) || !NetGuard.Finite(yaw))))
+            {
+                NetRateLimit.Reject(client, $"a hangar ship at {station}");
+                return;
+            }
             foreach (var p in NetPlayer.All)
-                if (p != null && p.IsSpawned && p.OwnerClientId != rpc.Receive.SenderClientId && p.InHangar && p.Station == station)
+                if (p != null && p.IsSpawned && p.OwnerClientId != client && p.InHangar && p.Station == station)
                     HangarNpcToRpc(landing, key, ship, yaw, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void HangarNpcToRpc(bool landing, int key, int ship, float yaw, RpcParams rpc = default) => NetHangar.Current?.OnRemoteNpc(landing, key, ship, yaw);
 
         /// <summary>A player docked at 'station' wants its NPC ships as they are: the running game sends them.</summary>
         [Rpc(SendTo.Server)]
         public void HangarSnapshotRequestRpc(int station, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Request) || !NetGuard.Station(station)) return;
             NetPlayer runner = null;
             foreach (var p in NetPlayer.All)
-                if (p != null && p.IsSpawned && p.OwnerClientId != rpc.Receive.SenderClientId && p.InHangar && p.Station == station && p.HangarRun
+                if (p != null && p.IsSpawned && p.OwnerClientId != client && p.InHangar && p.Station == station && p.HangarRun
                     && (runner == null || p.OwnerClientId < runner.OwnerClientId)) runner = p;
-            if (runner != null) HangarSnapshotAskRpc(rpc.Receive.SenderClientId, RpcTarget.Single(runner.OwnerClientId, RpcTargetUse.Temp));
+            if (runner != null) HangarSnapshotAskRpc(client, RpcTarget.Single(runner.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void HangarSnapshotAskRpc(ulong requester, RpcParams rpc = default) => NetHangar.Current?.SendSnapshot(requester);
 
+        /// <summary>The running game's answer: only for a player docked where the sender is, bounded in length.</summary>
         [Rpc(SendTo.Server)]
-        public void HangarSnapshotRpc(ulong requester, string data) => HangarSnapshotToRpc(data, RpcTarget.Single(requester, RpcTargetUse.Temp));
+        public void HangarSnapshotRpc(ulong requester, string data, RpcParams rpc = default)
+        {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Hangar)) return;
+            var to = NetSquad.Find(requester);
+            if (to == null || to.OwnerClientId == client || !to.InHangar || !NetGuard.DockedAt(client, to.Station)
+                || (data != null && data.Length > NetGuard.MaxSnapshot))
+            {
+                NetRateLimit.Reject(client, "a hangar snapshot");
+                return;
+            }
+            HangarSnapshotToRpc(data ?? "", RpcTarget.Single(requester, RpcTargetUse.Temp));
+        }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void HangarSnapshotToRpc(string data, RpcParams rpc = default) => NetHangar.Current?.OnSnapshot(data);
 
-        /// <summary>The Kaamo siege won in a player's game: the others in that orbit (their siege view) win it too.</summary>
+        /// <summary>The Kaamo siege won in a player's game (flying in the Kaamo Club's orbit): the others there (their siege
+        /// view) win it too.</summary>
         [Rpc(SendTo.Server)]
         public void SiegeWonRpc(int station, RpcParams rpc = default)
         {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Siege)) return;
+            if (station != KaamoClub.Station || !NetGuard.InOrbit(client, station)) { NetRateLimit.Reject(client, $"a siege won at {station}"); return; }
             foreach (var p in NetPlayer.All)
-                if (p != null && p.IsSpawned && p.OwnerClientId != rpc.Receive.SenderClientId && p.InSpace && p.Station == station)
+                if (p != null && p.IsSpawned && p.OwnerClientId != client && p.InSpace && p.Station == station)
                     SiegeWonToRpc(RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
         }
 
-        [Rpc(SendTo.SpecifiedInParams)]
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void SiegeWonToRpc(RpcParams rpc = default) => World.KaamoSiege.Current?.OnRemoteWin();
 
-        /// <summary>Its owner is done with a NetProxy / NetCrate (the ship left or died for good, the crate was taken).</summary>
+        /// <summary>Its owner is done with a NetProxy / NetCrate (the ship left or died for good, the crate was taken). Only
+        /// those: a client's own player object (or anything else) isn't its to remove.</summary>
         [Rpc(SendTo.Server)]
         public void DespawnRpc(ulong objectId, RpcParams rpc = default)
         {
-            if (NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(objectId, out var obj) && obj != null
-                && obj.OwnerClientId == rpc.Receive.SenderClientId && obj.IsSpawned)
-                obj.Despawn();
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Despawn)) return;
+            if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(objectId, out var obj) || obj == null || !obj.IsSpawned
+                || obj.OwnerClientId != client) return;
+            if (obj.GetComponent<NetProxy>() == null && obj.GetComponent<NetCrate>() == null) { NetRateLimit.Reject(client, "a despawn of no ship or crate"); return; }
+            obj.Despawn();
         }
 
         void Update()
         {
             NetStock.Flush();   // the shared stock that arrived, applied between frames (every player)
             if (!IsServer || !IsSpawned) return;
+            // The stations traded at this frame: their stock once for everyone docked there.
+            if (dirtyStock.Count > 0)
+            {
+                foreach (int station in dirtyStock) BroadcastStock(station);
+                dirtyStock.Clear();
+            }
+            UpdatePendingSpawns();   // their senders' places arrived
             if ((sweepTimer -= Time.unscaledDeltaTime) > 0f) return;
             sweepTimer = SweepSeconds;
+            NetRateLimit.Tick();   // the clients that kept flooding go
             NetStock.HostTick(this);   // the stock resets
             DissolveSingles();   // a squadmate who disconnected
+            if ((pruneTimer -= SweepSeconds) <= 0f) { pruneTimer = PruneSeconds; Prune(); }
             // An orbit's objects go once their owner isn't in that orbit any more.
             var owners = new Dictionary<ulong, NetPlayer>();
             foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned) owners[p.OwnerClientId] = p;
             var stale = new List<NetworkObject>();
+            owned.Clear();
             foreach (var obj in NetworkManager.SpawnManager.SpawnedObjectsList)
             {
                 int station;
@@ -573,6 +891,9 @@ namespace GoF2Remake.Multiplayer
                 if (proxy != null) station = proxy.Station;
                 else if (crate != null) station = crate.Station;
                 else continue;
+                owned.TryGetValue(obj.OwnerClientId, out var n);
+                if (proxy != null) n.proxies++; else n.crates++;
+                owned[obj.OwnerClientId] = n;
                 // A new one waits for its owner's position (sent at the tick, maybe after the spawn request).
                 if (Time.unscaledTime - (proxy != null ? proxy.SpawnedAt : crate.SpawnedAt) < 3f) continue;
                 bool orphan = proxy != null && proxy.Orphan;   // its owner left the session: the host holds it without a ship
@@ -584,6 +905,36 @@ namespace GoF2Remake.Multiplayer
                 if (!watched || Time.unscaledTime - since > 5f) stale.Add(obj);
             }
             foreach (var obj in stale) { staleSince.Remove(obj.NetworkObjectId); if (obj.IsSpawned) obj.Despawn(); }
+        }
+
+        /// <summary>Host, every PruneSeconds: the bookkeeping of players who left and of the past goes (the hits, invitations,
+        /// reservations and mission records would otherwise grow for the whole session).</summary>
+        void Prune()
+        {
+            float now = Time.unscaledTime;
+            var oldHits = new List<(ulong, ulong)>();
+            foreach (var kv in hits) if (now - kv.Value > 60f) oldHits.Add(kv.Key);
+            foreach (var k in oldHits) hits.Remove(k);
+            var oldInvites = new List<(ulong, ulong)>();
+            foreach (var kv in invites) if (now - kv.Value > NetSquad.InviteSeconds + InviteGraceSeconds) oldInvites.Add(kv.Key);
+            foreach (var k in oldInvites) invites.Remove(k);
+            var goneReservations = new List<(ulong, int)>();
+            foreach (var kv in reservations) if (kv.Value.Count == 0 || NetSquad.Find(kv.Key.client) == null) goneReservations.Add(kv.Key);
+            foreach (var k in goneReservations) reservations.Remove(k);
+            var goneMissions = new List<long>();
+            foreach (var kv in missions)
+            {
+                // A record goes a minute after its result (a second result of the same mission is dropped meanwhile), or
+                // once nobody of its team is in the session any more.
+                kv.Value.RemoveAll(r =>
+                {
+                    if (r.ended) return now - r.endedAt > 60f;
+                    foreach (var id in r.members) if (NetSquad.Find(id) != null) return false;
+                    return true;
+                });
+                if (kv.Value.Count == 0) goneMissions.Add(kv.Key);
+            }
+            foreach (var k in goneMissions) missions.Remove(k);
         }
     }
 }

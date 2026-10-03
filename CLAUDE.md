@@ -915,6 +915,19 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   gone (`Cheats.PageShown`), the Options "Debug tools" row is hidden, and every cheat flag reads off (`Cheats.On`), so
   toggles left on in single player don't carry into a session (their saved values are kept). Client-side only: a
   modified client can still cheat.
+- **Server checks** (`NetGuard`, `NetRateLimit`): every client request goes through the server, which checks it and limits
+  its rate before it acts or passes it on. The server's messages to the players are `InvokePermission = RpcInvokePermission.Server`
+  (Netcode's default lets any client send any RPC, and relays it): hits, EMP, shots, blasts, jump effects and kill credits
+  go up to the server (`HitUpRpc`, `ShotUpRpc`...) and down from it. Checks: finite numbers in range (positions within 1e6 m,
+  damage up to 1e6, 1e8 with the debug menu allowed), stations / items / ships that exist, where the sender is (in that
+  orbit, the same orbit, docked there), never a squadmate's weapon, payload caps (mission JSON and hangar snapshots 4096,
+  commands 32 / 512). Invitations are recorded on the server (an acceptance needs one, at most 60 s old); a mission is
+  recorded with its team (only team members report results, a share capped by the reward); dealer ships need a
+  reservation; a kill notice needs a hit from that killer within 30 s; proxies / crates spawn only for a player in that
+  orbit (at most 300 / 150 each); a client despawns only its own proxies and crates. A token bucket per client and
+  request kind drops a flood (logged once a minute); 1500 weighted drops in a minute (shots 0.1, trades 0.2) kick the
+  client. The host's own player is exempt. Still trusted (no server-side world): each player's own ship, credits, cargo,
+  standing and position, damage within the cap, and the orbit authority's NPCs.
 - **Dedicated server** (`DedicatedServer`, `NetGame.StartServer`): the normal Windows / Linux player started with `-server`
   (with `-batchmode -nographics`; `-relay` online with a join code, listed as `-name "..."` unless `-unlisted`;
   `-password`; `-maxplayers` (2..100, default 16); `-allowdebug` (the Debug menu, see "Debug menu in multiplayer");

@@ -843,6 +843,7 @@ namespace GoF2Remake.Multiplayer
                 // That player's ship goes at once (NGO removes a player object with its owner; this also covers a late one),
                 // and so does what they showed of their orbit (NGO destroys the objects a leaving client owns).
                 playersSpawned.Remove(clientId);
+                NetRateLimit.Forget(clientId);
                 // (Netcode has usually despawned the player object already: its mission cargo is handed over in
                 // NetPlayer.OnNetworkDespawn.)
                 foreach (var p in UnityEngine.Object.FindObjectsByType<NetPlayer>())
