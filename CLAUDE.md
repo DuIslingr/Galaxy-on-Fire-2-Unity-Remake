@@ -587,7 +587,11 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   in UWP: Discord, the controller gyro, the save file dialog (Transfer folder instead), the dedicated server
   (everything desktop-only is behind `UNITY_STANDALONE_WIN`), the window mode / resolution options
   (`Bootstrap.HasDisplayOptions` false under `UNITY_WSA`: `Screen.mainWindowDisplayInfo` throws NotSupportedException
-  there, which stopped `Bootstrap.Init` and the main menu's options setup, a black screen after the splash). Testing
+  there, which stopped `Bootstrap.Init` and the main menu's options setup, a black screen after the splash). The back
+  buffer took the window's view-pixel size (1920 x 1080 on a 4K TV, scaled up): `UwpDisplay` sets it to the window's
+  raw pixels (`DisplayInformation.RawPixelsPerViewPixel`), on an Xbox to the HDMI mode (`HdmiDisplayInformation`; only
+  the One X / Series X above 1080p, `AnalyticsInfo.DeviceForm`), again on resize / DPI change, and logs "UwpDisplay: ..."
+  (not yet verified on a 4K display or an Xbox). Testing
   a UWP build here: with Developer Mode on, unpack the .msix (its entry names are URL-encoded) without
   AppxSignature.p7x / AppxBlockMap.xml / [Content_Types].xml / AppxMetadata, `Add-AppxPackage -Register` its
   AppxManifest.xml, start it from `shell:AppsFolder\<family>!App`; the log is
