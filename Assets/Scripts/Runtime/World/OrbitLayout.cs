@@ -36,6 +36,8 @@ namespace GoF2Remake.World
         public bool hasStation;
         /// <summary>Status::inAlienOrbit: the Void's home orbit (Session.VoidOrbit): Void station, sky 010, Void asteroids.</summary>
         public bool alienOrbit;
+        /// <summary>Status::inPlanetRingOrbit (stations 120 / 126 / 130 / 132): the orbit planet has no camera zoom.</summary>
+        public bool ringOrbit;
 
         // Level::createSpace
         public bool hasJumpgate;
@@ -212,20 +214,36 @@ namespace GoF2Remake.World
 
             if (sys == null)
             {
-                // The alien orbit: only its own planet (planet_void_big), sized like a normal orbit planet.
+                // The alien orbit (StarSystem::StarSystem's Void branch: Status::getSystem() is 0 there): the sun sun_010 straight
+                // ahead (moveForward(-20000), no rotation), planet_void_big at rotation (0, 5.2347097, 0) (60 deg right of it),
+                // unseeded size rand(20000) + 20000, no flip, no zoom (Backdrop).
                 if (alienOrbit)
-                    planets.Add(new Planet { station = stationIndex, isOrbitPlanet = true, scale = (rnd.NextInt(20000) + 20000) / 65536f,
-                                             flip = sunSlot >= 12, texture = PlanetTexture(23, true) });
+                {
+                    sunSlot = 0;
+                    sunPitch = 0f;
+                    lightDirection = -Direction(0f, 0f);
+                    planets.Add(new Planet { station = stationIndex, isOrbitPlanet = true, scale = (Random.Range(0, 20000) + 20000) / 65536f,
+                                             yaw = 5.2347097f, flip = false, texture = PlanetTexture(23, true) });
+                }
                 return;
             }
-            bool ringOrbit = System.Array.IndexOf(RingStations, stationIndex) >= 0;
+            ringOrbit = System.Array.IndexOf(RingStations, stationIndex) >= 0;
+            // StarSystem::StarSystem picks "own planet or another" by the system's list order but takes the texture from the
+            // stations loaded in file order (FileRead::loadStationsBinary: ascending index) at the same position: K'ontrr
+            // (system 20, [62, 59, 58, 63, 64]) swaps 58's and 62's planet textures. The own planet's size still follows the
+            // real station's texture.
+            var byFileOrder = new List<int>(sys.stations);
+            byFileOrder.Sort();
             // StarSystem::StarSystem 0x15c89a: mission 0 (the prologue and the main menu's backdrop, Status::resetGame) halves the
             // orbit planet (before the size overrides by texture, which replace it).
             bool missionZero = (Session.FreePlay ? 20 : Session.CampaignMission) == 0;
-            foreach (int stIdx in sys.stations)
+            for (int i = 0; i < sys.stations.Count; i++)
             {
+                int stIdx = sys.stations[i];
                 var st = db.Stations.Find(s => s.index == stIdx);
+                var shown = db.Stations.Find(s => s.index == byFileOrder[i]);
                 int t = st != null ? st.textureIndex : 0;
+                int shownTexture = shown != null ? shown.textureIndex : t;
                 var p = new Planet { station = stIdx, ring = System.Array.IndexOf(RingStations, stIdx) >= 0 };
                 if (stIdx == stationIndex)
                 {
@@ -241,7 +259,7 @@ namespace GoF2Remake.World
                     p.isOrbitPlanet = true;
                     p.scale = s / 65536f;
                     p.flip = sunSlot >= 12;
-                    p.texture = PlanetTexture(t, true);
+                    p.texture = PlanetTexture(shownTexture, true);
                     p.ring = false;   // the ring orbit shows the ring sky layer instead
                 }
                 else
@@ -255,7 +273,7 @@ namespace GoF2Remake.World
                     p.flip = slot > sunSlot;
                     p.pitch = Angle(rnd.NextInt(4096) - 2048);
                     p.yaw = Angle(slot * 0xAAA);
-                    p.texture = PlanetTexture(t, false);
+                    p.texture = PlanetTexture(shownTexture, false);
                 }
                 planets.Add(p);
             }

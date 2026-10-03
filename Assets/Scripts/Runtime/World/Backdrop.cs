@@ -302,7 +302,8 @@ namespace GoF2Remake.World
             float zoom = Mathf.Clamp(gameZ / -800000f, -0.2f, 0.2f);
             foreach (var p in planets)
             {
-                float k = p.orbitPlanet ? p.scale + zoom : p.scale;
+                // StarSystem::render: not in the alien orbit or a planet ring orbit (the orbit planet stays at its size).
+                float k = p.orbitPlanet && !layout.ringOrbit && !layout.alienOrbit ? p.scale + zoom : p.scale;
                 Place(p, c, p.rot, Vector3.one * k);
             }
             foreach (var r in rings) Place(r, c, r.rot, Vector3.one * r.scale);
