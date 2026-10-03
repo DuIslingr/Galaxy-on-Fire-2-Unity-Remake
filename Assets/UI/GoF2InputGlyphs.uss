@@ -1,8 +1,15 @@
 /* Input hints shared by the HUDs (InputGlyph): a hint row (glyphs + label), keyboard keycaps and Xbox-style
    controller buttons (the game always shows Xbox labels). */
 
-.hints--off {
-    display: none;   /* the button hints option (Settings.InputHints) */
+/* The button hints option (Settings.InputHints). Specific enough to beat the HUDs' own ".input-keyboard .hints" /
+   ".input-gamepad .station-hints" rules, which showed the hints again (the option did nothing in flight). */
+.hints--off,
+.input-keyboard .hints--off,
+.input-gamepad .hints--off,
+.input-touch .hints--off,
+.input-keyboard .hints.hints--off,
+.input-gamepad .hints.hints--off {
+    display: none;
 }
 
 .hint {
