@@ -31,7 +31,7 @@ namespace GoF2Remake.Flight
         public Route route;    // null = the default patrol
         public bool startsDead;    // jumpers
         // Campaign levels (Level::createCampaignMission, campaign_levels_a.md 1.2):
-        public bool asleep;        // setToSleep: waits until the player is within +-25 000 or a target within +-50 000
+        public bool asleep;        // setToSleep: waits until the player comes within its detect range (NpcShip.UpdateSleep)
         public bool inactive;      // setInitActive(false): waits until the level script wakes it
         public bool alwaysEnemy, alwaysFriend;
         public int hitpoints = -1; // Player::setHitpoints / setMaxHitpoints override (-1 = the createShip formula)
@@ -47,6 +47,9 @@ namespace GoF2Remake.Flight
         public int collisionId = -1;  // Level::getBoundingVolume id (collision.json below 2000, else static_collisions.json)
         public float hitRadius = -1f; // Player+0x40, the bullet hit cube's half size (units)
         public GameObject wreckPrefab; // setWreckedMeshId: the wreck animation played on death, then the explosion
+        // PlayerFixedObject::setDeadButSelectable 0x180248 (the Supernova wrecks with a hidden blueprint): a fixedObject
+        // freighter ('ship' 13 / 15 of 'race') shown as its wreck held at the animation's end, invulnerable, still lockable.
+        public bool deadButSelectable;
         public float explosionScale = 1f;
         // Capital-ship turrets (PlayerTurret, npc_combat_specials.md 1): a static turret object.
         public string turretAssembly;  // turret_002_static (Terran) / turret_003_static (Vossk)
@@ -76,12 +79,13 @@ namespace GoF2Remake.Flight
     public static class TrafficPlan
     {
         /// <summary>Station::stationHasHiddenBlueprint 0xb3ec8 (blueprints_mods.md 1.4 3): per slot the station
-        /// (DAT_0025273c), the blueprint (DAT_002521f0), the wreck's race (DAT_00253754) and position (DAT_00253768).</summary>
-        public static readonly (int station, int blueprint, int race, Vector3 position)[] HiddenBlueprints =
+        /// (DAT_0025273c), the blueprint (DAT_002521f0), the wreck's race (DAT_00253754), position (DAT_00253768) and docking
+        /// point set (DAT_002537a4: loadSpacePoints 11-14, one per race's freighter wreck).</summary>
+        public static readonly (int station, int blueprint, int race, Vector3 position, int points)[] HiddenBlueprints =
         {
-            (132, 226, 1, new Vector3(-20000, 30000, 80000)), (133, 221, 3, new Vector3(40000, -30000, 100000)),
-            (134, 223, 2, new Vector3(-80000, 80000, -90000)), (129, 225, 0, new Vector3(40000, 20000, 140000)),
-            (123, 227, 2, new Vector3(40000, 20000, 140000)),
+            (132, 226, 1, new Vector3(-20000, 30000, 80000), 14), (133, 221, 3, new Vector3(40000, -30000, 100000), 11),
+            (134, 223, 2, new Vector3(-80000, 80000, -90000), 12), (129, 225, 0, new Vector3(40000, 20000, 140000), 13),
+            (123, 227, 2, new Vector3(40000, 20000, 140000), 12),
         };
 
         static Vector3 Jitter() => new Vector3(Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000);
@@ -256,16 +260,21 @@ namespace GoF2Remake.Flight
                                              position = playerGame + new Vector3(Random.Range(0, 160000) - 80000, Random.Range(0, 100000) - 50000, Random.Range(0, 160000) - 80000) });
             if (PirateBases.StationHasBase(station)) AddPirateBase(list, station, hardcore);
             // 8 a Supernova wreck with a hidden blueprint: dockable and hackable (docking type 3) until it is found.
-            // Remake: the damaged Midorian freighter stands in for every race's wreck (its docking points are known).
+            // Level::createMission (hidden-blueprint block): createShip(race DAT_00253754[k], 1, k == 0 ? 0xd : 0xf), the
+            // race's freighter (the Vossk one for slot 0), setDockingType(3), PlayerFixedObject::setDeadButSelectable (its
+            // wreck mesh at the animation's end, HP 1, invulnerable), placed at DAT_00253768[k], loadSpacePoints(
+            // DAT_002537a4[k]). A fixed object here (never moves, no engine or gun) showing the wreck (deadButSelectable).
             for (int k = 0; k < HiddenBlueprints.Length; k++)
             {
                 if (HiddenBlueprints[k].station != station) continue;
                 bool found = (Session.HiddenBlueprintsFound & (1 << k)) != 0;
+                int race = HiddenBlueprints[k].race;
                 list.Add(new SpawnSpec
                 {
-                    group = NpcGroup.Special, race = HiddenBlueprints[k].race, ship = -1, position = HiddenBlueprints[k].position,
-                    fixedObject = "sn_cargo_001_midorian_wrecked", stationary = true, alwaysFriend = true, hitpoints = 9999999, noLoot = true,
-                    nameText = 3211, dockingType = found ? 0 : 3, spacePoints = 3, hiddenBlueprint = k, hitRadius = 4000f,
+                    group = NpcGroup.Special, race = race, ship = k == 0 ? 13 : 15, position = HiddenBlueprints[k].position,
+                    fixedObject = NpcTables.FreighterAssembly(race), deadButSelectable = true, stationary = true, alwaysFriend = true,
+                    hitpoints = 9999999, noLoot = true, nameText = 3211, dockingType = found ? 0 : 3, spacePoints = HiddenBlueprints[k].points,
+                    hiddenBlueprint = k, hitRadius = 4000f,
                 });
             }
             // 7 Specters, always enemy: one point near the player, each at it + createShip's +-20000 jitter.

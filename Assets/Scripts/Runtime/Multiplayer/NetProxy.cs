@@ -337,13 +337,23 @@ namespace GoF2Remake.Multiplayer
         {
             if (visual != null || (IsJunk ? junkKind.Value < 0 : model.Value.Length == 0)) return;   // the owner's values first
             GameObject prefab;
+            string path = model.Value.ToString();
+            int wreck = -1;
             if (junkKind.Value >= 0)
             {
                 var assets = CombatAssets.Load();
                 prefab = assets != null && assets.junk != null && junkKind.Value < assets.junk.Length ? assets.junk[junkKind.Value] : null;
             }
-            else prefab = Resources.Load<GameObject>(model.Value.ToString());
+            else if (path.StartsWith(NpcShip.WreckModelPrefix))
+            {
+                // A freighter wreck held at its end (NpcShip.ShowWreckAtEnd: the Supernova wrecks with a hidden blueprint).
+                var assets = CombatAssets.Load();
+                if (!int.TryParse(path.Substring(NpcShip.WreckModelPrefix.Length), out wreck)) wreck = -1;
+                prefab = assets != null && assets.wrecks != null && wreck >= 0 && wreck < assets.wrecks.Length ? assets.wrecks[wreck] : null;
+            }
+            else prefab = Resources.Load<GameObject>(path);
             visual = prefab != null ? Instantiate(prefab, transform, false) : new GameObject("(no model)");
+            if (wreck >= 0) PartAnimation.HoldAllAtEnd(visual);
             visual.transform.SetParent(transform, false);
             visual.transform.localScale = scale.Value;
             var asm = visual.GetComponent<AssembledObject>();

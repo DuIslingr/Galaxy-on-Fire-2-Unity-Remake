@@ -16,18 +16,19 @@
 //   6 Wanted         one pirate asleep at (+-(60000+rnd 80000), 0, +-(...)), x3 hull, speed 3.0, named; win: it's dead
 //   7 Junk removal   int(d/10*20)+15 space junk (hull 1, always enemy) around a point 40-70 km ahead + int(0.2d) pirates;
 //                    121 000 ms (Level+0x130, checked every 5 s); win: all junk destroyed
-//   9 Escort         int((int(d/10*5)+3)*hc) race-E attackers asleep on a route ahead; 5 client-race freighters at fixed
-//                    points flying +Z, hull (2*min(level,20) + 150 + 2*campaign) (x1.4 Extreme), always friend; win:
-//                    attackers dead / fail: all freighters dead
+//   9 Escort         int((int(d/10*5)+3)*hc) race-E attackers asleep (always enemy) at random points of a 3-point route
+//                    ahead; 5 freighters of the client race (Terran for races above Midorian) at fixed points flying +Z,
+//                    hull (2*min(level,20) + 150 + 2*campaign) (x1.4 Extreme), always friend; win: attackers dead / fail:
+//                    all freighters dead
 //   10 Intercept     race E (pirates -> Terran): nextInt(2)+2 convoy freighters asleep and parked around a route point,
 //                    hull x0.7 (x1.4 Extreme) + int((int(d/10*5)+3)*hc) escorts asleep; win: the convoy dead
 //   15 Ore Mining    (multiplayer sessions only: the original's generator never rolls it) int((int(0.2d)+1)*hc) race-E
-//                    enemies on a 1-waypoint route (+-70000, 0, 70000); the mining plant (docking type 1) at the asteroid
-//                    field; 2 client-race haulers looping plant <-> plant - 30000 z, never attacking; win: the ore delivered
-//                    to the plant (ObjectDocking) >= amount (Objective 0x1c)
+//                    enemies (always enemy) on a 1-waypoint route (rnd(140000) - 70000, 0, 70000); the mining plant
+//                    (docking type 1) at the asteroid field; 2 client-race haulers looping plant <-> plant - 30000 z, never
+//                    attacking; win: the ore delivered to the plant (ObjectDocking) >= amount (Objective 0x1c)
 //   12 Challenge     the agent's ship (its race, 9 999 999 hull, speed 3.0, named, friend) flies a createRoute(3..4) past
-//                    an odd number of sleeping pirates (i = int(d/10*4): i+3 if odd else i+4); win: all dead with more
-//                    kills than the rival (0x14) / fail: all dead, the rival as good or better (0x15)
+//                    an odd number of sleeping pirates (i = int(d/10*4): i+3 for an even i, i+4 for an odd one); win: all
+//                    dead with more kills than the rival (0x14) / fail: all dead, the rival as good or better (0x15)
 // Briefing (after the launch / arrival camera, not for 0 / 8 / 11): Challenge 372, Junk 378, else 379-383; the game pauses.
 // Checks from 5000 ms of level time. Success: 3 / 5 turn into the return trip (389), the others pay (reward message +
 // sound 36, standing +5). Failure: 384-388 + 392 (Challenge 371 with the score). The remake marks the pirates' location
@@ -538,9 +539,13 @@ namespace GoF2Remake.World
                     int n = (int)(((int)(df * 5f) + 3) * hc);
                     var route = new Route(false);
                     route.points.Add(new Vector3(10000, 0, 100000)); route.points.Add(new Vector3(10000, 0, 150000)); route.points.Add(new Vector3(10000, 0, 200000));
-                    for (int i = 0; i < n; i++) Spawn(clientEnemy, route.points[0] + Jitter(), s => { s.asleep = true; s.route = route.Clone(); });
+                    // Level::createMission case 9: each attacker at a random waypoint (createShip's +-20000 jitter), setToSleep,
+                    // setAlwaysEnemy: hostile whatever the player's standing (a neutral or friendly race's attackers showed as
+                    // friends while they killed the freighters).
+                    for (int i = 0; i < n; i++)
+                        Spawn(clientEnemy, route.points[Random.Range(0, route.points.Count)] + Jitter(), s => { s.asleep = true; s.alwaysEnemy = true; s.route = route.Clone(); });
                     Vector3[] points = { new Vector3(-2500, -300, 27000), new Vector3(6500, 3000, 24000), new Vector3(-4000, -2000, 19000), new Vector3(9000, -6000, 17000), new Vector3(3000, 7000, 15000) };
-                    int race = Mathf.Clamp(mission.clientRace, 0, 3);
+                    int race = mission.clientRace >= 0 && mission.clientRace < 4 ? mission.clientRace : 0;   // clientRace < 4, else Terran
                     int hull = (int)((2 * Mathf.Min(Session.Rank, 20) + 150 + 2 * Session.CampaignMission) * (Session.Difficulty > 0.7f ? 1.4f : 1f));
                     foreach (var p in points)
                         Spawn(race, p, s => { s.freighter = true; s.ship = race == 1 ? 13 : 15; s.alwaysFriend = true; s.hitpoints = hull; s.noLoot = true; }, false);
@@ -574,8 +579,10 @@ namespace GoF2Remake.World
                 {
                     int n = (int)(((int)(0.2f * d) + 1) * hc);
                     var route = new Route(false);
-                    route.points.Add(new Vector3(Sign() * 70000f, 0, 70000f));
-                    for (int i = 0; i < n; i++) Spawn(clientEnemy, route.points[0] + Jitter(), s => s.route = route.Clone());
+                    // Level::createMission case 0xf: a one-waypoint route (rnd(140000) - 70000, 0, 70000); the enemies awake at
+                    // it (createShip's +-20000 jitter), setAlwaysEnemy.
+                    route.points.Add(new Vector3(Random.Range(0, 140000) - 70000f, 0, 70000f));
+                    for (int i = 0; i < n; i++) Spawn(clientEnemy, route.points[0] + Jitter(), s => { s.alwaysEnemy = true; s.route = route.Clone(); });
                     var plantAt = HasField ? level.Layout.asteroidCentre : new Vector3(0, 0, 60000);
                     var spec = Traffic.MiningPlant();
                     spec.position = Multiplayer.NetOrbit.OutOfSight(plantAt);
@@ -597,8 +604,10 @@ namespace GoF2Remake.World
                 case MissionType.Challenge:
                 {
                     var route = CreateRoute(Random.Range(3, 5));
+                    // Level::createMission case 0xc: n = i + 3, i + 4 when that is even, + 1 for the rival: the pirates are
+                    // always an odd number (i + 3 for an even i, i + 4 for an odd one).
                     int i4 = (int)(df * 4f);
-                    int pirates = i4 % 2 == 1 ? i4 + 3 : i4 + 4;
+                    int pirates = (i4 + 3) % 2 == 1 ? i4 + 3 : i4 + 4;
                     rival = Spawn(Mathf.Clamp(mission.clientRace, 0, 7) > 3 ? 0 : mission.clientRace, ToGame(level.Player.transform.position) + new Vector3(1500, 0, 3000),
                                   s => { s.alwaysFriend = true; s.hitpoints = 9999999; s.speed = 3f; s.route = route.Clone(); s.name = mission.clientName; s.noLoot = true; }, false);
                     for (int i = 0; i < pirates; i++)
