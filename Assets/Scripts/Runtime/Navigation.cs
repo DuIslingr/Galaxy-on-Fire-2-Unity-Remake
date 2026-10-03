@@ -599,7 +599,24 @@ namespace GoF2Remake.Flight
         /// a menu, conversation or map is open (the world goes on there).</summary>
         public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active);
 
-        void OnDestroy() { halted = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
+        void OnDestroy() { halted = false; MusicPaused = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
+
+        /// <summary>MGame::pauseSounds 0x1a8304: a conversation, hint or map pauses only the sound effects and the engines
+        /// (FModSound::pauseAllPlayingSoundFXEvents: the events of the effects category); only the pause menu stops
+        /// everything (MGame::OnTouchEnd: FModSound::pauseAllPlaying). The music sources ignore the listener pause and
+        /// follow this instead (SyncMusic).</summary>
+        public static bool MusicPaused { get; private set; }
+
+        /// <summary>A music source keeps playing through the listener pause and pauses with the pause menu only.</summary>
+        public static void SyncMusic(AudioSource music, ref bool held)
+        {
+            if (music == null) return;
+            music.ignoreListenerPause = true;
+            if (MusicPaused == held) return;
+            held = MusicPaused;
+            if (held) music.Pause();
+            else music.UnPause();
+        }
 
         void ApplyTimeScale()
         {
@@ -610,6 +627,7 @@ namespace GoF2Remake.Flight
             // A halted clock also halts the sound, as PauseMenu does: the engine loops, a boost fired just before and every
             // other source played on through a conversation. The voice, UI and star-map sources ignore the listener pause.
             if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = scale == 0f;
+            MusicPaused = pauseMenuOpen && !GoF2Remake.Multiplayer.NetGame.Active;
         }
 
         void Say(string text) => Message?.Invoke(text);
