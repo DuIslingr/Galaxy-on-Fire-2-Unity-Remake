@@ -194,9 +194,9 @@ namespace GoF2Remake.Multiplayer
         {
             switch (race)
             {
-                case Standing.Pirate: return "pirate";
-                case Standing.Void: return "Void";
-                case Standing.Specter: return "Specter";
+                case GoF2Remake.Flight.Standing.Pirate: return "pirate";
+                case GoF2Remake.Flight.Standing.Void: return "Void";
+                case GoF2Remake.Flight.Standing.Specter: return "Specter";
                 default: return race >= 0 && race < 4 ? Localization.Get(406 + race) : "hostile";
             }
         }

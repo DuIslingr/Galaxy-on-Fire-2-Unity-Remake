@@ -779,7 +779,7 @@ namespace GoF2Remake.Multiplayer
             byte[] packed;
             using (var ms = new MemoryStream())
             {
-                using (var gz = new GZipStream(ms, CompressionLevel.Optimal, true))
+                using (var gz = new GZipStream(ms, System.IO.Compression.CompressionLevel.Optimal, true))
                 {
                     byte[] raw = Encoding.UTF8.GetBytes(json);
                     gz.Write(raw, 0, raw.Length);
