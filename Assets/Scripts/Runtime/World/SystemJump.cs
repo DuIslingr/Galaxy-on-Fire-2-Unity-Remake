@@ -68,6 +68,11 @@ namespace GoF2Remake.World
         /// <summary>PlayerEgo::getDriveChargeRate: 0..1 while charging.</summary>
         public float ChargeRate => Mathf.Clamp01(chargeMs / GalaxyMap.ChargeMs);
         public event Action<string> Message;
+        /// <summary>The jump's effect starts (multiplayer: NetPlayer shows it to the others): true = the gate's jump
+        /// animation, false = the khador_jump fx at this position and rotation.</summary>
+        public event Action<bool, Vector3, Quaternion> JumpFxStarted;
+        /// <summary>The Khador Drive starts charging (multiplayer: the others hear it).</summary>
+        public event Action ChargeStarted;
 
         public void Setup(Database database, Navigation navigation, ShipController controller, WeaponSystem weaponSystem,
                           ChaseCamera chaseCamera, GameObject jumpgate)
@@ -180,26 +185,53 @@ namespace GoF2Remake.World
         {
             activated = true;
             animMs = 0f;
-            animLength = 5000f;
-            if (gate != null)
-            {
-                GameObject jump = null;
-                foreach (var t in gate.GetComponentsInChildren<Transform>(true))
-                {
-                    if (t.name.EndsWith("_jump_anim_add")) jump = t.gameObject;
-                    else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(false);
-                }
-                if (jump != null)
-                {
-                    jump.SetActive(true);
-                    GunRig.EnableFades(jump);   // the flash's `extra` fades
-                    float len = PartAnimation.PlayOnce(jump);
-                    if (len > 0f) animLength = len;
-                }
-            }
+            float len = PlayGateJump(gate);
+            animLength = len > 0f ? len : 5000f;
             if (assets != null && assets.jumpgate != null && assets.jumpgate.Length > 0)
                 Play(assets.jumpgate[UnityEngine.Random.Range(0, assets.jumpgate.Length)]);
+            JumpFxStarted?.Invoke(true, gate != null ? gate.transform.position : ship.transform.position, Quaternion.identity);
             Haptics.Play(Haptics.Jump);   // remake
+        }
+
+        /// <summary>PlayerJumpgate::activate on a gate: its _anim_add layers off, the _jump_anim_add played once (the flash's
+        /// `extra` fades); returns the animation's length in ms (0 = none).</summary>
+        public static float PlayGateJump(GameObject gate)
+        {
+            if (gate == null) return 0f;
+            GameObject jump = null;
+            foreach (var t in gate.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name.EndsWith("_jump_anim_add")) jump = t.gameObject;
+                else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(false);
+            }
+            if (jump == null) return 0f;
+            jump.SetActive(true);
+            GunRig.EnableFades(jump);
+            return PartAnimation.PlayOnce(jump);
+        }
+
+        /// <summary>Back to the gate's idle look after PlayGateJump (multiplayer: another player went through it).</summary>
+        public static void ResetGate(GameObject gate)
+        {
+            if (gate == null) return;
+            foreach (var t in gate.GetComponentsInChildren<Transform>(true))
+            {
+                if (t.name.EndsWith("_jump_anim_add")) t.gameObject.SetActive(false);
+                else if (t.name.EndsWith("_anim_add")) t.gameObject.SetActive(true);
+            }
+        }
+
+        /// <summary>The khador_jump fx (15026, scale 2) at 'position', played once; 'lengthMs' = its length (4000 without).</summary>
+        public static GameObject SpawnKhadorFx(StarMapAssets assets, Vector3 position, Quaternion rotation, out float lengthMs)
+        {
+            lengthMs = 4000f;
+            if (assets == null || assets.khadorJump == null) return null;
+            var go = Instantiate(assets.khadorJump, position, rotation);
+            go.transform.localScale *= 2f;
+            GunRig.EnableFades(go);   // the parts' `extra` fade-out
+            float len = PartAnimation.PlayOnce(go);
+            if (len > 0f) lengthMs = len;
+            return go;
         }
 
         // ---- the Khador Drive ------------------------------------------------------------------------------
@@ -263,6 +295,7 @@ namespace GoF2Remake.World
             Play(assets != null ? assets.jumpgateCharge : null);
             chargeMs = 0f;
             state = State.Charging;
+            ChargeStarted?.Invoke();
         }
 
         void StartKhadorScene()
@@ -272,15 +305,8 @@ namespace GoF2Remake.World
             BeginScene(station);
             state = State.KhadorScene;
             var fxPos = ship.transform.position + ship.transform.forward * 3000f * M;
-            if (assets != null && assets.khadorJump != null)
-            {
-                fx = Instantiate(assets.khadorJump, fxPos, ship.transform.rotation);
-                fx.transform.localScale *= 2f;
-                GunRig.EnableFades(fx);   // the parts' `extra` fade-out
-                float len = PartAnimation.PlayOnce(fx);
-                animLength = len > 0f ? len : 4000f;
-            }
-            else animLength = 4000f;
+            fx = SpawnKhadorFx(assets, fxPos, ship.transform.rotation, out animLength);
+            JumpFxStarted?.Invoke(false, fxPos, ship.transform.rotation);
             activated = true;
             animMs = 0f;
             var cam = Camera.main;

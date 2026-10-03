@@ -15,7 +15,8 @@
 //     (NetShotSender -> NetShotMirror); the hits stay the owner's (on NPC proxies through NetProxy).
 // The ship looks and sounds like the owner's: its engine glow and exhaust (ShipExhaust) while their engine shows, bigger
 // with their boost, the engine loop (3D), their cloak (NpcCloak's look, off the radar from 25 %, NPCs don't fire at it),
-// and an EMP's lightning. EMP on a player (the remake's pick: players have no EMP pool) drains that much shield and
+// and an EMP's lightning. Their jumps too: the Khador Drive's charge sound and khador_jump fx, a jumpgate's jump animation and
+// sound (SystemJump's events, JumpFxRpc), the ship gone when theirs vanishes (and an explosion when it was destroyed). EMP on a player (the remake's pick: players have no EMP pool) drains that much shield and
 // shows the lightning for 1.5 s. The owner also shares their standings (Standing.*With), so the NPCs of an orbit another
 // player runs treat them by their own standing.
 // Elsewhere (another orbit, docked) all of it is hidden; the players docked at the same station see them in their hangar
@@ -24,6 +25,7 @@
 using System.Collections.Generic;
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
+using GoF2Remake.UI;
 using GoF2Remake.Visuals;
 using GoF2Remake.World;
 using Unity.Collections;
@@ -59,6 +61,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
         readonly NetworkVariable<bool> empShock = new NetworkVariable<bool>(false, Read, Write);
+        readonly NetworkVariable<bool> visible = new NetworkVariable<bool>(true, Read, Write);   // the ship's model shows (gone in a jump, exploded)
         readonly NetworkVariable<int> standing0 = new NetworkVariable<int>(0, Read, Write);    // Session.Standing, the signature
         readonly NetworkVariable<int> standing1 = new NetworkVariable<int>(0, Read, Write);
         readonly NetworkVariable<int> signature = new NetworkVariable<int>(-1, Read, Write);
@@ -156,6 +159,9 @@ namespace GoF2Remake.Multiplayer
         EmpSparks sparks, ownSparks;
         AssembledObject asm;
         float spawnedAt;
+        SystemJump hookedJump;
+        GameObject jumpedGate;   // a gate this player went through here: back to idle after its animation
+        float gateResetMs;
 
         /// <summary>This player's ship as a Target here: the local player's own where it is theirs, else the proxy Target.</summary>
         public Target LocalTarget => IsOwner ? (level != null && level.Health != null ? level.Health.Target : null) : target;
@@ -346,6 +352,38 @@ namespace GoF2Remake.Multiplayer
 
         void OnSceneLoaded(Scene scene, LoadSceneMode mode) => FindLevel();
 
+        void OnJumpFx(bool viaGate, Vector3 at, Quaternion facing) => JumpFxRpc(viaGate, at, facing);
+        void OnCharge() => ChargeRpc();
+
+        /// <summary>This player's jump effect, where they are shown: the jumpgate's jump animation and sound 31, or the
+        /// khador_jump fx and sound 32 (SystemJump: their ship vanishes 1000 / 1700 ms in, `visible`).</summary>
+        [Rpc(SendTo.NotOwner)]
+        void JumpFxRpc(bool viaGate, Vector3 at, Quaternion facing)
+        {
+            if (!SharesOrbit) return;
+            var assets = StarMapAssets.Load();
+            if (viaGate)
+            {
+                var gate = Local != null && Local.level != null ? Local.level.Jumpgate : null;
+                float len = SystemJump.PlayGateJump(gate);
+                if (len > 0f) { jumpedGate = gate; gateResetMs = len; }
+                if (assets != null && assets.jumpgate != null && assets.jumpgate.Length > 0)
+                    Sfx.PlayAt(assets.jumpgate[Random.Range(0, assets.jumpgate.Length)], gate != null ? gate.transform.position : at);
+                return;
+            }
+            var fx = SystemJump.SpawnKhadorFx(assets, at, facing, out float lengthMs);
+            if (fx != null) Destroy(fx, lengthMs / 1000f + 0.5f);
+            if (assets != null) Sfx.PlayAt(assets.khadorDrive, at);
+        }
+
+        /// <summary>This player's Khador Drive charging (sound 33), where they are shown.</summary>
+        [Rpc(SendTo.NotOwner)]
+        void ChargeRpc()
+        {
+            var assets = StarMapAssets.Load();
+            if (SharesOrbit && assets != null) Sfx.PlayAt(assets.jumpgateCharge, transform.position);
+        }
+
         void WritePools(float s, float a)
         {
             if (Mathf.Abs(shield.Value - s) > 0.004f) shield.Value = s;
@@ -371,7 +409,10 @@ namespace GoF2Remake.Multiplayer
                     joinNoticePending = false;
                     NetChat.Notice(NetChat.JoinedText(DisplayName));
                 }
-                bool show = SharesOrbit;
+                if (jumpedGate != null && (gateResetMs -= Time.deltaTime * 1000f) <= 0f) { SystemJump.ResetGate(jumpedGate); jumpedGate = null; }
+                bool show = SharesOrbit && visible.Value;
+                // Their ship vanished after its death tumble: the explosion (PlayerEgo::explode, PlayerHealth at 3000 ms).
+                if (shown && !show && SharesOrbit && hull.Value <= 0f) Explosion.Spawn(transform.position);
                 if (show != shown) SetShown(show);
                 if (!shown) return;
                 smoothing.Apply(transform, rotation.Value);
@@ -394,6 +435,15 @@ namespace GoF2Remake.Multiplayer
             if (empShockMs > 0f) empShockMs -= Time.deltaTime * 1000f;
             bool shock = empShockMs > 0f;
             if (empShock.Value != shock) empShock.Value = shock;
+            bool vis = level == null || level.Player == null || level.Player.visualModel == null || level.Player.visualModel.gameObject.activeSelf;
+            if (visible.Value != vis) visible.Value = vis;
+            var jump = level != null ? level.SystemJump : null;
+            if (jump != hookedJump)
+            {
+                if (hookedJump != null) { hookedJump.JumpFxStarted -= OnJumpFx; hookedJump.ChargeStarted -= OnCharge; }
+                hookedJump = jump;
+                if (jump != null) { jump.JumpFxStarted += OnJumpFx; jump.ChargeStarted += OnCharge; }
+            }
             // Where the local player is: the scene they are in.
             Place now = level != null ? Place.Space : dock != null ? (dock.PlayerDeparting ? Place.Departing : Place.Hangar) : Place.None;
             int at = level != null && level.Layout != null ? level.Layout.stationIndex : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;

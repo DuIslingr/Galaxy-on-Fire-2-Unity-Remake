@@ -781,7 +781,10 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   while mining, docking at an object, dead), boost (`BoostVisualPercent`) and cloak percentage; the others' copy drives
   the glow parts (`AssembledObject.SetExhaust`), the exhaust particles (`ShipExhaust.AttachRemote`), a 3D engine loop
   (`HangarFlight.AddEngine`, pitched up while boosting) and the cloak (`NpcCloak.Show`: the hull dissolves, lights and
-  glow hide from 25 %; `Target.cloaked`, off the radar and the lock from 25 %).
+  glow hide from 25 %; `Target.cloaked`, off the radar and the lock from 25 %). Their jumps too (`SystemJump.ChargeStarted` /
+  `JumpFxStarted` -> `NetPlayer.ChargeRpc` / `JumpFxRpc`): the Khador Drive's charge (sound 33) and its khador_jump fx with
+  sound 32, a jumpgate's `_jump_anim_add` (back to idle afterwards) with sound 31; the ship goes when theirs vanishes
+  (`NetPlayer.visible`, the owner's model shown), with an explosion when it was destroyed (the death's model hiding).
 - **EMP**: the player's EMP on another game's ship is relayed (`Target.RemoteEmp`): on an NPC proxy its owner's ship
   takes it (`NpcShip.OnRemoteEmp`: past a third of its EMP points it turns on that player, like `OnPlayerEmp`), an
   EMP-disabled proxy shows its lightning to everyone (`EmpSparks`); on another player (remake pick: players have no EMP
