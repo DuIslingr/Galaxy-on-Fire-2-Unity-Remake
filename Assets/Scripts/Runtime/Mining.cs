@@ -298,6 +298,7 @@ namespace GoF2Remake.Flight
         {
             Game = new MiningGame(Target.quality, Target.oreItem, drill.Attr(32), drill.Attr(33), Session.CampaignMission <= 4);
             LostGame = false;
+            mouseOffset = Vector2.zero;   // MGame::OnUpdate zeroes the mouse deltas while docking: the drill starts centred
             Game.InsideChanged += inside =>
             {
                 // MiningGame::update: off target stop(1) + play(3), back on play(1) + stop(3): one loop at a time.
@@ -375,13 +376,31 @@ namespace GoF2Remake.Flight
             }
         }
 
-        /// <summary>The touch stick or the Steer controls (GameControls: the arrows / the left stick by default); +y = down on
-        /// screen for the minigame.</summary>
+        /// <summary>PlayerEgo::update with the mouse cursor on (FlightHud: mouse steering in use) feeds the drill the cursor's
+        /// offset, a virtual stick: the PC version drills with the mouse.</summary>
+        [System.NonSerialized] public bool mouseDrill;
+        Vector2 mouseOffset;
+
+        /// <summary>The touch stick (squared by FlightHud), the Drill controls (GameControls: the arrows, W A S D, the left
+        /// stick; squared per axis like Hud::getAnalog) or the mouse (linear, PlayerEgo::update's offset / limit); the stronger
+        /// one wins. +y = down on screen for the minigame.</summary>
         Vector2 ReadDrillInput()
         {
             var v = new Vector2(touchInput.x, -touchInput.y);
-            var s = GameControls.Steer.ReadValue<Vector2>();
-            if (s.sqrMagnitude > 0.02f && s.sqrMagnitude > v.sqrMagnitude) v = new Vector2(s.x, -s.y);
+            var s = GameControls.Drill.ReadValue<Vector2>();
+            s = new Vector2(Mathf.Sign(s.x) * s.x * s.x, Mathf.Sign(s.y) * s.y * s.y);
+            if (s.sqrMagnitude > 0.0004f && s.sqrMagnitude > v.sqrMagnitude) v = new Vector2(s.x, -s.y);
+            var mouse = UnityEngine.InputSystem.Mouse.current;
+            if (mouseDrill && mouse != null)
+            {
+                // Clamped to +-0.7 of half the screen like the ship's mouse steering; screen down = +y.
+                var lim = new Vector2(Screen.width * 0.35f, Screen.height * 0.35f);
+                var o = mouseOffset + mouse.delta.ReadValue();
+                mouseOffset = new Vector2(Mathf.Clamp(o.x, -lim.x, lim.x), Mathf.Clamp(o.y, -lim.y, lim.y));
+                var m = new Vector2(mouseOffset.x / Mathf.Max(1f, lim.x), -mouseOffset.y / Mathf.Max(1f, lim.y));
+                if (m.sqrMagnitude > v.sqrMagnitude) v = m;
+            }
+            else mouseOffset = Vector2.zero;
             // Remake: the drill's own invert options (flight's don't apply here).
             if (Settings.InvertDrillX) v.x = -v.x;
             if (Settings.InvertDrillY) v.y = -v.y;

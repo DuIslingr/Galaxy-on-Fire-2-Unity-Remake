@@ -430,7 +430,7 @@ namespace GoF2Remake.UI
             {
                 // Autopilot to an asteroid / mining: only the drill and the action prompt matter.
                 bool drilling = lastPhase == Mining.Phase.Mining;
-                if (drilling) Hint(T("hudDrill", "DRILL"), GameControls.Steer);
+                if (drilling) Hint(T("hudDrill", "DRILL"), GameControls.Drill);
                 if (lastPhase == Mining.Phase.Approaching) Hint(ff, GameControls.FastForward);
                 Hint(drilling ? T("hudMiningStop", "STOP MINING") : T("hudMiningAbort", "ABORT"), GameControls.FirePrimary, GameControls.Action);
                 return;
@@ -487,16 +487,17 @@ namespace GoF2Remake.UI
         void UpdateMouseSteering()
         {
             if (ship == null || level == null) return;
-            bool on = Settings.MouseSteering && !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse
+            bool cursor = Settings.MouseSteering && !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse
                       && !pauseMenu.IsOpen && !(nav != null && nav.MenuOpen) && !StarMap.IsOpen && !storyDialogue.IsOpen
                       && !level.Cutscene && level.LaunchCameraOver && Time.timeScale > 0f && (health == null || !health.Dead)
-                      && (mining == null || mining.State == Mining.Phase.Idle) && !(level.FreeLook != null && level.FreeLook.FreeLookActive)
+                      && !(level.FreeLook != null && level.FreeLook.FreeLookActive)
                       && (weapons == null || !weapons.SteeringMissile) && (level.Docking == null || !level.Docking.Busy)
                       && !GoF2Remake.Multiplayer.NetChat.Typing;   // multiplayer: the cursor free for the chat
             ship.mouseSteering = on;
-            var wantLock = on ? CursorLockMode.Locked : CursorLockMode.None;
+            if (mining != null) mining.mouseDrill = cursor && mining.State == Mining.Phase.Mining;
+            var wantLock = cursor ? CursorLockMode.Locked : CursorLockMode.None;
             if (UnityEngine.Cursor.lockState != wantLock) UnityEngine.Cursor.lockState = wantLock;
-            if (UnityEngine.Cursor.visible == on) UnityEngine.Cursor.visible = !on;
+            if (UnityEngine.Cursor.visible == cursor) UnityEngine.Cursor.visible = !cursor;
             if (mouseReticle == null && safeArea != null)
             {
                 mouseReticle = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -540,6 +541,10 @@ namespace GoF2Remake.UI
             if (storyDialogue != null && storyDialogue.IsOpen)
             {
                 // No radio box under a conversation: the success dialogue can open on the frame a radio line ends, before
+            // PlayerEgo::right etc. forward to the MiningGame while drilling (0xacd48): the mouse steers the drill then (the PC
+            // version's mining); approaching and landing it does nothing, the cursor stays locked.
+            bool idle = mining == null || mining.State == Mining.Phase.Idle;
+            bool on = cursor && idle;
                 // UpdateRadio hid it (the dialogue's voice takes over the shared voice source). A line still due shows again
                 // when the window closes.
                 if (radioBox.ClassListContains("radio--shown"))

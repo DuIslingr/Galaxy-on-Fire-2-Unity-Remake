@@ -152,7 +152,7 @@ namespace GoF2Remake.Flight
             if (pad != null)
             {
                 var s = pad.rightStick.ReadValue();
-                delta += new Vector2(s.x, -s.y) * 8f * frames;
+                delta += new Vector2(-s.x, -s.y) * 8f * frames;   // right: the camera to the ship's right, up: up (like PhotoMode's arrows)
             }
             distance += pinch * scale * -50f;
             pinch = 0f;
@@ -165,10 +165,11 @@ namespace GoF2Remake.Flight
             Place();
         }
 
-        /// <summary>TargetFollowCamera::rotateAroundTarget in the ship's frame: yaw -0.005 px, pitch -0.005 py.</summary>
+        /// <summary>TargetFollowCamera::rotateAroundTarget in the ship's frame (-0.005 py, -0.005 px), mirrored into Unity's
+        /// (-x, y, z) ship frame: pitch -0.005 py, yaw +0.005 px (see PhotoMode.Place; unmirrored, every axis was inverted).</summary>
         void Place()
         {
-            anchor.localRotation = Quaternion.Euler(0.005f * py * Mathf.Rad2Deg, -0.005f * px * Mathf.Rad2Deg, 0f);
+            anchor.localRotation = Quaternion.Euler(-0.005f * py * Mathf.Rad2Deg, 0.005f * px * Mathf.Rad2Deg, 0f);
             if (chase != null && chase.follow == anchor) chase.followOffset = new Vector3(0f, 0f, -distance * M);
         }
     }

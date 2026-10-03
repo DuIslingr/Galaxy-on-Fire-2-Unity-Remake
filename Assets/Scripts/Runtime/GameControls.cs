@@ -50,7 +50,7 @@ namespace GoF2Remake.Flight
         /// <summary>A binding changed (a rebind, a reset): hints and option rows show the new keys.</summary>
         public static event Action Changed;
 
-        public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight,
+        public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight, Drill,
             FirePrimary, FireSecondary, SwitchSecondary, Action, AutopilotMenu, ActionsMenu, Wingmen, KhadorDrive, FastForward,
             Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, ChatSend, ChatChannel, Screenshot;
 
@@ -83,6 +83,15 @@ namespace GoF2Remake.Flight
             StrafeRight = Button("strafeRight", () => Localization.Get(3351), "<Keyboard>/d", null, null);
             DodgeLeft = Button("dodgeLeft", () => X("ctlDodgeLeft", "Dodge left"), null, null, "<Gamepad>/rightStick/left");
             DodgeRight = Button("dodgeRight", () => X("ctlDodgeRight", "Dodge right"), null, null, "<Gamepad>/rightStick/right");
+            // Remake: the mining drill on its own row (it used Steer: binding W A S D there to drill also steered the ship with
+            // the boost / brake / strafe keys). Read only while the minigame runs, when the flight controls aren't, so its
+            // keys may overlap them: the arrows, W A S D as the second keys, the left stick.
+            Drill = Composite("drill", () => X("ctlDrill", "Mining drill"), InputActionType.Value, "Vector2", "2DVector",
+                new[] { "Up", "Down", "Left", "Right" },
+                new Func<string>[] { () => X("ctlUp", "up"), () => X("ctlDown", "down"), () => X("ctlLeft", "left"), () => X("ctlRight", "right") },
+                new[] { "<Keyboard>/upArrow", "<Keyboard>/downArrow", "<Keyboard>/leftArrow", "<Keyboard>/rightArrow" },
+                padSingle: "<Gamepad>/leftStick", padType: "Vector2",
+                keys2: new[] { "<Keyboard>/w", "<Keyboard>/s", "<Keyboard>/a", "<Keyboard>/d" });
             // ---- weapons
             FirePrimary = Button("firePrimary", () => X("ctlFirePrimary", "Fire"), "<Keyboard>/space", "<Mouse>/leftButton", "<Gamepad>/rightTrigger");
             FireSecondary = Button("fireSecondary", () => X("ctlFireSecondary", "Fire secondary"), "<Keyboard>/r", "<Mouse>/rightButton", "<Gamepad>/leftTrigger");
@@ -123,13 +132,13 @@ namespace GoF2Remake.Flight
         /// ('padParts') or one control ('padSingle', a stick).</summary>
         static InputAction Composite(string id, Func<string> label, InputActionType type, string controlType, string composite,
                                      string[] parts, Func<string>[] partLabels, string[] keys, string[] padParts = null,
-                                     string padSingle = null, string padType = "Button")
+                                     string padSingle = null, string padType = "Button", string[] keys2 = null)
         {
             var a = Map.AddAction(id, type);
             a.expectedControlType = controlType;
             var row = new ControlRow { id = id, label = label, action = a, partLabels = partLabels, padType = padType };
             row.slots[0] = AddComposite(a, composite, parts, keys, KeyGroup);
-            row.slots[1] = AddComposite(a, composite, parts, new string[parts.Length], KeyGroup);
+            row.slots[1] = AddComposite(a, composite, parts, keys2 ?? new string[parts.Length], KeyGroup);
             if (padSingle != null) row.slots[2] = new[] { Add(a, padSingle, PadGroup) };
             else if (padParts != null) row.slots[2] = AddComposite(a, composite, parts, padParts, PadGroup);
             rows.Add(row);
