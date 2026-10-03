@@ -765,7 +765,13 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   button, which ended the typing). No send button (the key sends). Another player's line plays the original's
   incoming-message sound (FMOD 125 Message_Inc, volume 0.241 × `Sfx.EventGain` × the FX volume, one at a time; a copy
   of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving (full width on a solid background: drawn over the flight HUD's key hints, it covers them); join / leave notices; every line
-  is also in the player log (`[Chat ...]`). While typing the game's keys
+  is also in the player log (`[Chat ...]`). **Chat commands** (`NetCommands`): a line starting with "/" runs on this game,
+  never sent; each command has an `available` check and `/help` lists the ones this player can run (answers as notices);
+  `/netstats` shows / hides the network stats (`NetStats`, PlayerPrefs `mp_netstats`, top left in the flight HUD and the
+  station menu, `ChatView`): host / client (dedicated server), Relay or direct, the client's ping, jitter and packet loss
+  (Unity Transport's `GetConnectionStatistics` on the host connection), the host's ping per player, the data in / out per
+  second and in all (`NetTransport`, UnityTransport counting Netcode's payloads, without the transport's / Relay's
+  headers) and the players. While typing the game's keys
   are off: the code-made InputActions are disabled and the direct keyboard reads go through `NetChat.Keys` (null then;
   FlightHud, ShipController, Mining, SpaceLevel, StationMenu, PauseMenu), the station menu's navigation too.
 - **Leaving**: closing the game leaves the session (`Application.quitting`); a player whose game died is dropped after 5 s

@@ -655,6 +655,7 @@ namespace GoF2Remake.Multiplayer
             sessionGame = true;
             Dedicated = false;
             NetStock.Reset();
+            NetStats.Reset();
             Session.ResetNewGame();
             Session.Difficulty = Session.DifficultyNormal;   // every session plays on Normal (the shared stock, NPCs, rewards)
             Session.Economy = Economy.Android;               // and on one economy (the shared stock's prices)
@@ -669,7 +670,7 @@ namespace GoF2Remake.Multiplayer
             if (manager != null) return manager;
             var go = new GameObject("NetworkManager");
             UnityEngine.Object.DontDestroyOnLoad(go);
-            var transport = go.AddComponent<UnityTransport>();
+            var transport = go.AddComponent<NetTransport>();   // UnityTransport with a byte count (NetStats)
             transport.ConnectTimeoutMS = 1000;
             transport.MaxConnectAttempts = 10;   // a wrong address gives up after about 10 s
             transport.DisconnectTimeoutMS = 5000;   // a player whose game closed without leaving is gone after 5 s (default 30)

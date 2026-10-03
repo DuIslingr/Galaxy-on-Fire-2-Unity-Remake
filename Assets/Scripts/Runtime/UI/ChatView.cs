@@ -8,6 +8,8 @@
 // Enter as submit) would otherwise move it to a menu button and end the typing. Local lines reach the players in this
 // orbit or docked here, global ones everyone. Another player's line plays the original's incoming-message sound (FMOD
 // event 125 Message_Inc, volume 0.241, one at a time; a copy of the clip in Resources/GoF2Net/ChatMessage).
+// A line starting with "/" is a command (NetCommands: /help, /netstats); the network stats (NetStats) show top left while
+// /netstats has them on.
 // Styles: Resources/GoF2Net/Chat.uss.
 
 using GoF2Remake.Data;
@@ -27,6 +29,8 @@ namespace GoF2Remake.UI
         const int FocusFrames = 15;
 
         VisualElement box, log;
+        Label stats;
+        float nextStats;
         TextField field;
         Button channel;
         Label tab;
@@ -47,6 +51,7 @@ namespace GoF2Remake.UI
         void Build(VisualElement parent)
         {
             box?.RemoveFromHierarchy();
+            stats?.RemoveFromHierarchy();
             box = new VisualElement { name = "chat", pickingMode = PickingMode.Ignore };
             box.AddToClassList("chat");
             var sheet = Resources.Load<StyleSheet>("GoF2Net/Chat");
@@ -83,6 +88,11 @@ namespace GoF2Remake.UI
             row.Add(field);
             box.Add(row);
             parent.Add(box);
+            stats = new Label { name = "netstats", pickingMode = PickingMode.Ignore };
+            stats.AddToClassList("netstats");
+            if (sheet != null) stats.styleSheets.Add(sheet);
+            stats.style.display = DisplayStyle.None;
+            parent.Add(stats);
 
             if (!hooked) { NetChat.Added += OnAdded; GoF2Remake.Flight.GameControls.Changed += RefreshKeys; hooked = true; }
             RefreshKeys();
@@ -247,12 +257,25 @@ namespace GoF2Remake.UI
             }
         }
 
+        /// <summary>The /netstats overlay, refreshed 4 times a second while it shows.</summary>
+        void UpdateStats(bool session)
+        {
+            if (stats == null) return;
+            string text = session && NetStats.Shown && Time.unscaledTime >= nextStats ? NetStats.Text() : null;
+            bool show = session && NetStats.Shown;
+            stats.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            if (text == null) return;
+            nextStats = Time.unscaledTime + 0.25f;
+            stats.text = text;
+        }
+
         void Update()
         {
             NetChat.KeepGameKeysOff();
             if (box == null) return;
             bool session = NetGame.Active;
             box.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
+            UpdateStats(session);
             if (!session) { if (open) Close(); return; }
             if (!open && !NetChat.Typing && GoF2Remake.Flight.GameControls.Chat.WasPressedThisFrame()) Open();   // rebindable (B)
             // Opening: the cursor goes into the line as soon as the row can take the focus.

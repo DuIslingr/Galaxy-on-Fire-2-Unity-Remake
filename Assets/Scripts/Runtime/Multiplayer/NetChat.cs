@@ -2,7 +2,7 @@
 // Multiplayer chat: global (every player anywhere) and local (the players in the same orbit, or docked at the same
 // station). A message goes to the host (NetState.SendChatRpc), which stamps it with the sender's name and where they are
 // and sends it to everyone; each player keeps the global ones and the local ones from where they are themselves. Plus
-// the session's notices (a player joined / left). ChatView shows them in the flight HUD and the station menu.
+// the session's notices (a player joined / left). A line starting with "/" is a command for this game (NetCommands). ChatView shows them in the flight HUD and the station menu.
 // While a chat line is being typed (Typing) the game's key input is off: the code-made InputActions are disabled and the
 // direct keyboard reads go through Keys (null meanwhile); outside a session Keys is just Keyboard.current.
 
@@ -100,6 +100,7 @@ namespace GoF2Remake.Multiplayer
         public static void Send(string text)
         {
             text = Clean(text);
+            if (NetCommands.TryRun(text)) return;   // "/help", "/netstats": this game's own, never sent
             if (text.Length == 0 || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
             NetState.Instance.SendChatRpc(text, Sending == Channel.Global);
         }
