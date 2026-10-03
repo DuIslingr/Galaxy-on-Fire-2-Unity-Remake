@@ -367,7 +367,7 @@ namespace GoF2Remake.UI
                 {
                     tex = ItemInfo.ShipIcon(row.ship);
                     name.text = ItemInfo.ShipName(row.ship);
-                    subText.text = ItemInfo.ShipRaceText(row.ship);
+                    subText.text = ItemInfo.ShipRaceText(row.ship) + (hangar.Stock.ModsOf(row.ship).Count > 0 ? "  (+)" : "");
                     int delta = hangar.ShipPrice(row.ship) - hangar.ShipPrice(Session.ShipIndex);   // trade-in difference
                     price.text = ItemInfo.Credits(delta);
                     price.EnableInClassList("row-price--expensive", delta > Session.Credits);
@@ -618,6 +618,7 @@ namespace GoF2Remake.UI
                 {
                     int delta = hangar.ShipPrice(selected.ship) - hangar.ShipPrice(Session.ShipIndex);
                     ShowAction($"{T(301).ToUpperInvariant()}   {ItemInfo.Credits(delta)}", true);
+                    foreach (int mod in hangar.Stock.ModsOf(selected.ship)) AddStat(ModName(mod), "(+)");   // a traded-in hull's mods
                 }
                 else if (selected.kind == RowKind.StoredShip)
                 {

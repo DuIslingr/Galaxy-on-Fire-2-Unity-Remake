@@ -290,6 +290,7 @@ namespace GoF2Remake.Data
                     if (rs == null || !Station(rs.station)) return "an unknown station in the shop memory";
                     if (Stacks(rs.items, "shop memory") is string e4) return e4;
                     if (rs.ships != null && rs.ships.Exists(x => !Ship(x))) return "an unknown ship in the shop memory";
+                    if (rs.shipMods != null && rs.shipMods.Exists(m => m == null || !Ship(m.ship))) return "an unknown modded ship in the shop memory";
                     if (rs.agents != null)
                         foreach (var a in rs.agents)
                             if (a == null || !StationOrNone(a.station) || a.sellItem != -1 && !Item(a.sellItem) || a.sellShip != -1 && !Ship(a.sellShip)

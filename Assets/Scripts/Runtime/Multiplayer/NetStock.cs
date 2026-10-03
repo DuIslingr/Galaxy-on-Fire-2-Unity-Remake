@@ -77,6 +77,7 @@ namespace GoF2Remake.Multiplayer
             // Nothing to trade until the host's list is here (Apply); the bar's agents stay.
             stock.items.Clear();
             stock.ships?.Clear();
+            stock.PruneShipMods();
             NetState.Instance.StockRequestRpc(stock.station);
         }
 
@@ -149,6 +150,7 @@ namespace GoF2Remake.Multiplayer
             if (stock.ships == null) stock.ships = new List<int>();
             stock.ships.Clear();
             stock.ships.AddRange(ships);
+            stock.PruneShipMods();   // the shared list carries no mods: a modded row only this player traded in keeps them
             Freelance.OnEnterStation(stock);   // a Stolen goods mission's documents (only its team's)
             Changed?.Invoke(station);
         }

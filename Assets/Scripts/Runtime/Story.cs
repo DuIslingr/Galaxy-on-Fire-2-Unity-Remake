@@ -749,6 +749,7 @@ namespace GoF2Remake.Data
         {
             var stock = Session.RecentStations.Find(r => r.station == Session.StationIndex);
             stock?.ships.Clear();
+            stock?.PruneShipMods();
         }
 
         /// <summary>Station::addShip on a station's dealer, once.</summary>
@@ -788,7 +789,7 @@ namespace GoF2Remake.Data
             }
             if (stock == null) return;
             // ModStation::OnInitialize, every docking: Thynome's VoidX for all gold medals ...
-            if (station == 10 && Achievements.GotAllGoldMedals && (stock.ships == null || !stock.ships.Contains(8))) stock.ships = new List<int> { 8 };
+            if (station == 10 && Achievements.GotAllGoldMedals && (stock.ships == null || !stock.ships.Contains(8))) { stock.ships = new List<int> { 8 }; stock.PruneShipMods(); }
             // ... after the game is won, Void Crystals (the Khador Drive blueprint's ingredient) when the player has no drive ...
             if (station == 10 && GameWon && CargoOf(85) == 0 && !Session.Equipment.Exists(e => e.item == 85)
                 && !stock.items.Exists(s => s.item == 85 || s.item == 164))
