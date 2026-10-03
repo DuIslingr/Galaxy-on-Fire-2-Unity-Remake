@@ -21,6 +21,10 @@ namespace GoF2Remake.UI
 
         public static InputKind Current { get; private set; }
 
+        /// <summary>A real keyboard was used this run (always on desktops): the key bindings' keyboard cells only take a
+        /// capture then. A phone without one waited for a key that never came.</summary>
+        public static bool KeyboardSeen { get; private set; }
+
         /// <summary>Raised on the main thread when Current changes.</summary>
         public static event Action Changed;
 
@@ -29,6 +33,7 @@ namespace GoF2Remake.UI
         {
             Current = Application.isMobilePlatform ? InputKind.Touch
                     : Gamepad.current != null ? InputKind.Gamepad : InputKind.KeyboardMouse;
+            KeyboardSeen = !Application.isMobilePlatform;
             InputSystem.onEvent -= OnEvent;   // domain reload may be off: never subscribe twice
             InputSystem.onEvent += OnEvent;
         }
@@ -46,9 +51,13 @@ namespace GoF2Remake.UI
                     if (!HasControlAbove(e, device, StickThreshold)) return;
                     kind = InputKind.Gamepad;
                     break;
-                case Keyboard _:
+                case Keyboard keyboard:
                     if (!HasControlAbove(e, device, 0.5f)) return;
                     kind = InputKind.KeyboardMouse;
+                    // Android's back button arrives as Escape: only another key shows a real keyboard.
+                    if (!KeyboardSeen)
+                        foreach (var c in e.EnumerateChangedControls(device, 0.5f))
+                            if (c != keyboard.escapeKey) { KeyboardSeen = true; break; }
                     break;
                 case Mouse mouse:
                     // Touches on some platforms also arrive as a simulated mouse: ignore those.

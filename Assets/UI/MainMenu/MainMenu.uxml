@@ -98,6 +98,7 @@
                         <ui:Button name="tabSound" class="tab-button gof-semibold" />
                         <ui:Button name="tabGraphics" class="tab-button gof-semibold" />
                         <ui:Button name="tabControls" class="tab-button gof-semibold" />
+                        <ui:Button name="tabBindings" class="tab-button gof-semibold" />
                         <ui:Button name="tabGameplay" class="tab-button gof-semibold" />
                         <ui:Button name="tabLanguage" class="tab-button gof-semibold" />
                     </ui:VisualElement>
@@ -105,6 +106,7 @@
                     <ui:ScrollView name="soundPage" class="tab-page options-scroll" />
                     <ui:ScrollView name="graphicsPage" class="tab-page options-scroll" />
                     <ui:ScrollView name="controlsPage" class="tab-page options-scroll" />
+                    <ui:ScrollView name="bindingsPage" class="tab-page options-scroll" />
                     <ui:ScrollView name="gameplayPage" class="tab-page options-scroll" />
                     <ui:VisualElement name="languagePage" class="tab-page">
                         <ui:VisualElement name="languageList" class="language-list" />

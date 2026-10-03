@@ -18,7 +18,7 @@ namespace GoF2Remake.UI
 {
     public sealed class OptionsView
     {
-        static readonly OptionPage[] PageOrder = { OptionPage.Sound, OptionPage.Graphics, OptionPage.Controls, OptionPage.Gameplay, OptionPage.Language };
+        static readonly OptionPage[] PageOrder = { OptionPage.Sound, OptionPage.Graphics, OptionPage.Controls, OptionPage.Bindings, OptionPage.Gameplay, OptionPage.Language };
 
         sealed class Tab
         {

@@ -1490,7 +1490,7 @@ namespace GoF2Remake.UI
 
         static readonly (string tab, string page)[] OptionPages =
         {
-            ("tabSound", "soundPage"), ("tabGraphics", "graphicsPage"), ("tabControls", "controlsPage"), ("tabGameplay", "gameplayPage"),
+            ("tabSound", "soundPage"), ("tabGraphics", "graphicsPage"), ("tabControls", "controlsPage"), ("tabBindings", "bindingsPage"), ("tabGameplay", "gameplayPage"),
             ("tabLanguage", "languagePage"),
         };
 
@@ -1499,6 +1499,7 @@ namespace GoF2Remake.UI
             OptionPage.Sound => "soundPage",
             OptionPage.Graphics => "graphicsPage",
             OptionPage.Controls => "controlsPage",
+            OptionPage.Bindings => "bindingsPage",   // remake: the key bindings on their own tab
             OptionPage.Language => "languagePage",   // under the language buttons
             _ => "gameplayPage",
         };
@@ -1728,6 +1729,7 @@ namespace GoF2Remake.UI
             Set("tabSound", OptionsCatalog.PageTitle(OptionPage.Sound).ToUpperInvariant());
             Set("tabGraphics", OptionsCatalog.PageTitle(OptionPage.Graphics).ToUpperInvariant());
             Set("tabControls", OptionsCatalog.PageTitle(OptionPage.Controls).ToUpperInvariant());
+            Set("tabBindings", OptionsCatalog.PageTitle(OptionPage.Bindings).ToUpperInvariant());
             Set("tabGameplay", OptionsCatalog.PageTitle(OptionPage.Gameplay).ToUpperInvariant());
             Set("tabLanguage", T(0));
             Set("optionsDefaults", T(497));

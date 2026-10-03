@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace GoF2Remake.UI
 {
-    public enum OptionPage { Sound, Graphics, Controls, Gameplay, Language }
+    public enum OptionPage { Sound, Graphics, Controls, Gameplay, Language, Bindings }
     public enum OptionKind { Slider, Toggle, Choice, Button, Binding }
 
     public sealed class OptionDef
@@ -61,6 +61,7 @@ namespace GoF2Remake.UI
             OptionPage.Sound => X("tabSound", "Sound"),
             OptionPage.Graphics => Localization.Get(502),
             OptionPage.Controls => Localization.Get(498),
+            OptionPage.Bindings => X("tabBindings", "Key bindings"),
             OptionPage.Language => Localization.Get(0),
             _ => X("tabGameplay", "Gameplay"),
         };
@@ -248,14 +249,14 @@ namespace GoF2Remake.UI
             // Remake: every flight control rebindable (GameControls): two keyboard / mouse keys and a controller button each.
             list.Add(new OptionDef
             {
-                id = "resetBindings", page = OptionPage.Controls, kind = OptionKind.Button,
+                id = "resetBindings", page = OptionPage.Bindings, kind = OptionKind.Button,
                 label = () => X("resetBindings", "Reset key bindings"),
                 description = () => X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc (or the controller's B, or a tap) cancels, Backspace clears; nothing pressed for 10 seconds cancels too. The menu keys stay fixed."),
                 action = Flight.GameControls.ResetToDefaults,
                 extra = BindingRow.Header,
             });
             foreach (var row in Flight.GameControls.Rows)
-                list.Add(new OptionDef { id = "bind_" + row.id, page = OptionPage.Controls, kind = OptionKind.Binding, label = row.label, control = row });
+                list.Add(new OptionDef { id = "bind_" + row.id, page = OptionPage.Bindings, kind = OptionKind.Binding, label = row.label, control = row });
 
             // ---- gameplay
             list.Add(Toggle("launchCamera", OptionPage.Gameplay, () => X("launchCamera", "Launch and arrival camera"),

@@ -634,7 +634,7 @@
 
 .tab-row {
     flex-direction: row;
-    flex-wrap: wrap;   /* five tabs: a second line on narrow panels rather than wrapped words */
+    flex-wrap: wrap;   /* six tabs: a second line on narrow panels rather than wrapped words */
     margin-bottom: 18px;
 }
 
@@ -707,7 +707,7 @@
 /* OptionsView: the panel itself, like the main menu's .panel (shown at once, no slide-in). */
 .options-panel {
     width: 90%;
-    max-width: 820px;
+    max-width: 1000px;   /* the six tabs on one line */
     max-height: 92%;
     padding: 36px 44px;
     background-color: var(--gof-panel);
