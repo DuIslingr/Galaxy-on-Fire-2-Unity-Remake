@@ -172,6 +172,8 @@ namespace GoF2Remake.Data
 
         /// <summary>The keyboard / controller hint rows of the HUDs (the touch controls always show).</summary>
         public static bool InputHints { get => GetBool("inputHints", true); set => SetBool("inputHints", value); }
+        /// <summary>Remake: the frame rate in the top-left corner (FpsCounter).</summary>
+        public static bool ShowFps { get => GetBool("showFps", false); set => SetBool("showFps", value); }
 
         /// <summary>Language code of Localization/text_{code}.json.</summary>
         public static string Language
