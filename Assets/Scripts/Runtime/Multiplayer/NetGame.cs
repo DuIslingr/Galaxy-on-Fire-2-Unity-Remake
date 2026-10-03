@@ -176,9 +176,12 @@ namespace GoF2Remake.Multiplayer
         }
         static int maxPlayers = DefaultMaxPlayers;
 
-        /// <summary>The game's version as the sessions compare it: only the exact same build plays together (the connection
-        /// approval, the server browser's filter). "editor" in the Editor.</summary>
+        /// <summary>The game's version as shown (the build's date and time, BuildVersion); "editor" in the Editor.</summary>
         public static string Version => Application.isEditor ? "editor" : Application.version;
+
+        /// <summary>What the sessions compare (the connection approval, the server browser): the code's fingerprint, the same
+        /// for every build of the same code whenever it was built (BuildVersion.Fingerprint); "editor" in the Editor.</summary>
+        public static string Protocol => GoF2Remake.UI.BuildVersion.Fingerprint;
 
         // The listing PrepareOnlineHost asked for (StartHost / StartServer publish it once running).
         static bool listPending;
@@ -712,7 +715,9 @@ namespace GoF2Remake.Multiplayer
         public static string JoinPassword { get; set; } = CommandLineValue("-mppassword") ?? "";   // -mppassword: testing with -mpjoin
 
         /// <summary>What a connecting game sends: its version, a line break, the password it joins with.</summary>
-        static byte[] Payload() => System.Text.Encoding.UTF8.GetBytes(Version + "\n" + CleanPassword(JoinPassword));
+        /// <summary>The connection data: the fingerprint, the password, the shown version (for the refusal's text). Builds from
+        /// before the fingerprint send their version first and their password: refused, their version is the first line.</summary>
+        static byte[] Payload() => System.Text.Encoding.UTF8.GetBytes(Protocol + "\n" + CleanPassword(JoinPassword) + "\n" + Version);
 
         public static string CleanPassword(string text)
         {
@@ -727,9 +732,10 @@ namespace GoF2Remake.Multiplayer
         {
             string payload = request.Payload != null && request.Payload.Length > 0 && request.Payload.Length <= 256
                 ? System.Text.Encoding.UTF8.GetString(request.Payload) : "";
-            int nl = payload.IndexOf('\n');
-            string theirs = nl < 0 ? payload : payload.Substring(0, nl);
-            string password = nl < 0 ? "" : payload.Substring(nl + 1);
+            var lines = payload.Split('\n');
+            string theirs = lines[0];
+            string password = lines.Length > 1 ? lines[1] : "";
+            string theirVersion = lines.Length > 2 && lines[2].Length > 0 ? lines[2] : theirs;
             response.CreatePlayerObject = false;   // NetGame spawns the NetPlayer itself
             response.Pending = false;
             response.Approved = true;
@@ -740,14 +746,17 @@ namespace GoF2Remake.Multiplayer
                 response.Reason = Localization.Extra("mpHostLeft", "The host ended the session.");
                 return;
             }
-            bool same = theirs == Version || Application.isEditor || theirs == "editor";   // the Editor always joins (testing)
+            bool same = theirs == Protocol || Application.isEditor || theirs == "editor";   // the Editor always joins (testing)
             if (!same)
             {
                 response.Approved = false;
-                response.Reason = string.Format(Localization.Extra("mpWrongVersion",
-                    "This game runs version {0}, yours is {1}. Both need the same version to play together."),
-                    Version, theirs.Length > 0 ? theirs : Localization.Extra("mpOlderVersion", "an older one"));
-                Debug.Log($"NetGame: turned away client {request.ClientNetworkId}, version '{theirs}' (this one {Version})");
+                response.Reason = theirVersion == Version
+                    ? string.Format(Localization.Extra("mpWrongBuild",
+                        "This game runs a different build of version {0}. Both need the same game files to play together."), Version)
+                    : string.Format(Localization.Extra("mpWrongVersion",
+                        "This game runs version {0}, yours is {1}. Both need the same version to play together."),
+                        Version, theirVersion.Length > 0 ? theirVersion : Localization.Extra("mpOlderVersion", "an older one"));
+                Debug.Log($"NetGame: turned away client {request.ClientNetworkId}, version '{theirVersion}' / '{theirs}' (this one {Version} / {Protocol})");
                 return;
             }
             string expected = CleanPassword(HostPassword);

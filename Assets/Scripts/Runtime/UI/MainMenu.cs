@@ -952,6 +952,7 @@ namespace GoF2Remake.UI
                 bottom.Add(infoLabel);
                 // The version: every row; another version's says it can't be joined from here.
                 var version = new Label(entry.SameVersion ? entry.version
+                    : entry.version == GoF2Remake.Multiplayer.NetGame.Version ? Localization.Extra("mpOtherBuild", "another build")
                     : string.Format(Localization.Extra("mpNeedsVersion", "needs {0}"), entry.version)) { pickingMode = PickingMode.Ignore };
                 version.AddToClassList("mp-server-version");
                 version.EnableInClassList("mp-server-version--other", !entry.SameVersion);
@@ -968,6 +969,8 @@ namespace GoF2Remake.UI
                     else if (joinable) WithName(() => StartCoroutine(LeaveForMultiplayer(entry.code)));
                     else if (mpStatus != null)
                         mpStatus.text = entry.Full ? Localization.Extra("mpGameFull", "That game is full.")
+                            : entry.version == GoF2Remake.Multiplayer.NetGame.Version
+                            ? string.Format(Localization.Extra("mpOtherBuildText", "That game runs a different build of version {0}: only the same game files can join."), entry.version)
                             : string.Format(Localization.Extra("mpOtherVersion", "That game runs version {0}, yours is {1}: only the same version can join."), entry.version, GoF2Remake.Multiplayer.NetGame.Version);
                 };
                 mpServerList.Add(row);

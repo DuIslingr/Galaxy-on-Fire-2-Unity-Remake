@@ -55,3 +55,7 @@ __pycache__/
 # The UWP test signing certificate (UnityEditor.EditorUtility.WSACreateTestCertificate): local only, never published
 /Assets/WSATestCertificate.pfx
 /Assets/WSATestCertificate.pfx.meta
+
+# The build fingerprint BuildVersionStamp writes for a build (deleted afterwards)
+/Assets/Resources/GoF2Build/
+/Assets/Resources/GoF2Build.meta

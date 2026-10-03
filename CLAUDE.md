@@ -650,8 +650,13 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   deleted with the session (a game that died drops out after Lobby's 30 s). Errors in plain words (`OnlineError`: no
   game with that code, no internet, else the service's message).
 - **Version check and passwords** (Netcode's connection approval, `NetGame.Approve`): every connecting game sends
-  `NetGame.Version` (`Application.version`, "editor" in the Editor) and its password (`ConnectionData`); only the exact
-  same version gets in ("This game runs version X, yours is Y..."; the Editor as server takes any version, and every build
+  `NetGame.Protocol` (the code's fingerprint, `BuildVersion.Fingerprint`: the Editor's `BuildFingerprint` hashes the runtime
+  scripts, `Resources/GoF2Net` prefabs, `Resources/GoF2Data` JSON and `Packages/manifest.json`, paths sorted, line endings
+  normalised, SHA-256's first 12 hex digits; `BuildVersionStamp` writes it into `Resources/GoF2Build/BuildFingerprint.txt`
+  for the build, git-ignored and deleted afterwards), its password and its shown version (`ConnectionData`); builds of the
+  same code play together whenever and for whichever platform they were built (verified: two Windows builds 2 minutes
+  apart), the server browser and its sort use the fingerprint too (lobby key `protocol`; "another build" for the same shown
+  version with other code); only the same fingerprint gets in ("This game runs version X, yours is Y..."; the Editor as server takes any version, and every build
   lets the Editor in, for testing: it skips only the version check, not the password), then the session's password if it has one (`HostPassword`: "needs a password" / "Wrong
   password."); the reason is the player's popup. The server checks it: the lobby's join code is public. Builds from
   before the check don't use approval, which is part of Netcode's config hash, so they fail its handshake. Verified with

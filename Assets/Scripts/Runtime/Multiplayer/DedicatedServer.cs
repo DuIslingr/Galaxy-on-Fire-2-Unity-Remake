@@ -138,7 +138,7 @@ namespace GoF2Remake.Multiplayer
         {
             OpenConsole();
             startedAt = Time.unscaledTime;
-            Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version}");
+            Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version} (code {NetGame.Protocol})");
             if (relay)
             {
                 Log("Reserving an online session (Unity Relay)...");
