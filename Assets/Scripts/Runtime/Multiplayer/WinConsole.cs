@@ -90,8 +90,19 @@ namespace GoF2Remake.Multiplayer
 
         public static void OnClose(Action action)
         {
-            handler = _ => { action(); return true; };
+            closeAction = action;
+            handler = OnCtrl;
             SetConsoleCtrlHandler(handler, true);
+        }
+
+        static Action closeAction;
+
+        // IL2CPP passes only static methods marked like this to native code (a lambda's closure can't be marshalled).
+        [AOT.MonoPInvokeCallback(typeof(CtrlHandler))]
+        static bool OnCtrl(uint ctrlType)
+        {
+            closeAction?.Invoke();
+            return true;
         }
 
         const uint EnableProcessedInput = 1, EnableLineInput = 2, EnableEchoInput = 4, EnableVirtualTerminalProcessing = 4, ShiftPressed = 0x10;
