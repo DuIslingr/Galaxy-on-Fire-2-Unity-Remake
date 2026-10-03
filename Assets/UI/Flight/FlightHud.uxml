@@ -12,6 +12,7 @@
             <ui:VisualElement name="arcBottom" class="hit-arc hit-arc--bottom" picking-mode="Ignore" />
         </ui:VisualElement>
         <ui:VisualElement name="safeArea" class="hud-safe" picking-mode="Ignore">
+            <ui:VisualElement name="radarEllipse" class="radar-ellipse" picking-mode="Ignore" />
             <ui:VisualElement name="combatMarkers" class="nav-markers" picking-mode="Ignore" />
             <ui:VisualElement name="navMarkers" class="nav-markers" picking-mode="Ignore" />
             <ui:VisualElement name="statusPanel" class="status-panel" picking-mode="Ignore">
@@ -86,9 +87,7 @@
                 </ui:VisualElement>
             </ui:VisualElement>
 
-            <ui:VisualElement name="speedPanel" class="speed-panel" picking-mode="Ignore">
-                <ui:Label name="secondaryLabel" class="secondary-label gof-semibold" />
-            </ui:VisualElement>
+            <ui:VisualElement name="speedPanel" class="speed-panel" picking-mode="Ignore" />
 
             <ui:VisualElement name="hints" class="hints" picking-mode="Ignore" />
         </ui:VisualElement>

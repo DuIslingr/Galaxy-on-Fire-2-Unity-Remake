@@ -26,7 +26,8 @@
     overflow: hidden;
 }
 
-.input-touch .touch-layer {
+.input-touch .touch-layer,
+.hud-cursor .touch-layer {
     display: flex;
 }
 
@@ -72,11 +73,6 @@
     font-size: 22px;
     color: #FFFFFF;
     -unity-text-align: upper-center;
-}
-
-/* Touch has the bottom plate instead of the label under the bars. */
-.input-touch .secondary-label--shown {
-    display: none;
 }
 
 /* ---- crosshair (screen projection of ship + forward * 22000 units) ---------------------------- */
@@ -182,27 +178,37 @@
     color: #FF6A4D;
 }
 
+/* Hud::drawEventQueue: one message on the plate 0x4c3 (392 x 44, size set in code) at the top centre, y -8, or 42 under
+   the lock plate; the text 12 px into it. */
 .hud-messages {
+    display: none;
     position: absolute;
-    top: 196px;
+    top: -8px;
     left: 50%;
-    width: 900px;
-    margin-left: -450px;
-    align-items: center;
+    margin-left: -196px;
+}
+
+.hud-messages--shown {
+    display: flex;
+}
+
+.hud-messages--low {
+    top: 42px;
 }
 
 .hud-message {
-    margin-top: 4px;
-    padding: 6px 16px;
+    position: absolute;
+    left: -200px;
+    right: -200px;
+    top: 10px;
     font-size: 20px;
     color: #FFFFFF;
-    background-color: rgba(4, 10, 18, 0.6);
-    border-radius: 3px;
-    transition-duration: 0.4s;
+    -unity-text-align: upper-center;
+    white-space: nowrap;
 }
 
-.hud-message--fade {
-    opacity: 0;
+.hud-message--orange {
+    color: rgb(255, 128, 0);
 }
 
 /* ---- navigation markers (NavigationView): brackets, names, distances, gate icons -------- */
@@ -358,7 +364,7 @@
     display: none;
 }
 
-/* ---- the selected secondary under the status bars (remake: no speed / throttle / boost readout) ----------- */
+/* ---- under the status bars: the remake's booster / cloak recharge (no speed / throttle / boost readout) ----------- */
 
 .speed-panel {
     position: absolute;
@@ -370,26 +376,6 @@
 /* Below the gamma row (supernova orbits: three status rows). */
 .speed-panel--low {
     top: 160px;
-}
-
-/* Hud::updateSecondaryWeaponString: "<name> (<amount>)" of the selected secondary; tap to switch (touch). */
-.secondary-label {
-    display: none;
-    padding: 8px 14px;
-    font-size: 17px;
-    color: var(--gof-amber);
-    white-space: normal;
-    background-color: rgba(4, 10, 18, 0.55);
-    border-left-width: 3px;
-    border-left-color: var(--gof-amber);
-}
-
-.secondary-label--shown {
-    display: flex;
-}
-
-.secondary-label--empty {
-    color: var(--gof-text-dim);
 }
 
 /* Remake: the booster's and the cloak's recharge for keys / controllers (CooldownView): their shop icons (180 x 88),
@@ -446,6 +432,11 @@
 .input-keyboard .hints,
 .input-gamepad .hints {
     display: flex;
+}
+
+/* The PC cursor mode: its buttons are the controls (the bottom left holds the autopilot pill and the boost). */
+.input-keyboard.hud-cursor .hints {
+    display: none;
 }
 
 /* Phones: a narrower secondary plate. */
@@ -573,6 +564,27 @@
 }
 
 .hud-orbit-info .status-panel {
+    display: none;
+}
+
+/* ---- the radar ellipse (Radar::draw: image 0x4c7 four times mirrored around the centre; quarters made in FlightHud) ---- */
+
+.radar-ellipse {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    overflow: visible;
+    opacity: 0.6;
+}
+
+.radar-quarter {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.hud-mining .radar-ellipse {
     display: none;
 }
 
@@ -981,8 +993,9 @@
     align-items: flex-end;
 }
 
-/* Touch: left of the pause button (0x4b8 at w - 121, 24). */
-.input-touch .hud-readout {
+/* Touch and the PC cursor mode: left of the pause button (0x4b8 at w - 121, 24). */
+.input-touch .hud-readout,
+.hud-cursor .hud-readout {
     right: 140px;
 }
 

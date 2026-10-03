@@ -39,6 +39,9 @@ namespace GoF2Remake.Flight
         const float BeamRangeUnits = 60000f, BeamObjectCubeUnits = 24000f;
 
         public bool useBuiltInInput = true;
+        /// <summary>The flight HUD's PC cursor mode: true while the mouse is over one of its buttons, so a click there (the
+        /// fire button's own, the boost, the menus...) isn't also the mouse's fire / missile binding.</summary>
+        [System.NonSerialized] public System.Func<bool> mouseOverControls;
         // The controls are GameControls' (rebindable): FirePrimary, FireSecondary, SwitchSecondary.
         static InputAction firePrimaryAction => GameControls.FirePrimary;
         static InputAction fireSecondaryAction => GameControls.FireSecondary;
@@ -360,6 +363,13 @@ namespace GoF2Remake.Flight
             bool primaryPressed = useBuiltInInput && firePrimaryAction.IsPressed();
             bool secondaryPressed = useBuiltInInput && fireSecondaryAction.IsPressed();
             if (halted) { primaryLatched |= primaryPressed; secondaryLatched |= secondaryPressed; }
+            var mouse = Mouse.current;
+            if (mouse != null && mouseOverControls != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)
+                && mouseOverControls())
+            {
+                if (mouse.leftButton.wasPressedThisFrame) primaryLatched |= primaryPressed;
+                if (mouse.rightButton.wasPressedThisFrame) secondaryLatched |= secondaryPressed;
+            }
             if (PrimaryBlocked) primaryLatched |= primaryPressed;
             if (!primaryPressed) primaryLatched = false;
             bool primaryHeld = !halted && !PrimaryBlocked && (touchPrimary || (primaryPressed && !primaryLatched));
