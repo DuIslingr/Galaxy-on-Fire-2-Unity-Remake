@@ -47,7 +47,7 @@ namespace GoF2Remake.Flight
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender }
 
         public class Target
         {
@@ -313,6 +313,14 @@ namespace GoF2Remake.Flight
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
             if (Cloak != null) list.Add(new Target { kind = Kind.Cloak, name = Cloak.ItemName, disabled = !Cloak.Rules.Available });
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
+            // Remake: the time extender too (the original has it only on its own touch slot), so one menu holds every
+            // device: secondaries, wingmen, cloak, Khador Drive and the time extender (half-transparent while recharging).
+            if (Extender != null)
+            {
+                var te = Shop.FirstMounted(db, 26);
+                list.Add(new Target { kind = Kind.TimeExtender, name = te != null ? Localization.Get(1274 + te.index) : "Time extender",
+                                      disabled = !Extender.Ready && !Extender.Running });
+            }
             return list;
         }
 
@@ -349,6 +357,7 @@ namespace GoF2Remake.Flight
             if (target == null || target.disabled) return;
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
             if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
+            if (target.kind == Kind.TimeExtender) { Extender?.Toggle(); return; }   // the game runs again: CloseMenu above
             if (target.kind == Kind.DockingTarget) { Docking?.Dock(target.dockingShip); return; }
             if (target.kind == Kind.Waypoint)
             {
