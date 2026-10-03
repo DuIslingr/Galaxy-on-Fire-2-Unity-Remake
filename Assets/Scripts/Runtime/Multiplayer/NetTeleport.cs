@@ -1,14 +1,15 @@
 // NetTeleport.cs
-// Admin teleports (/tp, /tphere, the dedicated server console's tp): a player is sent to another player (beside their
+// Admin teleports (/tp, /tphere, the dedicated server console's tp): players (names, client ids, @a / @s / @p / @r) are sent to another player (beside their
 // ship in their orbit, or into the hangar they are docked in), into an orbit (at the launch spot, or at game coordinates
 // about the station: /pos shows a player's own), or into a station's hangar ("dock"). Destinations:
-//   <player>                  where that player is now
+//   <player>                  where that player is now (a name, a client id, or @s / @p / @r)
 //   <station> [x y z | dock]  a station by index, by name or "void" (the Void's orbit); coordinates in game units
 // The server checks the rights (NetState.TeleportRpc) and tells that player's game, which moves its own ship (Go): within
 // the same orbit in place, else by loading the orbit / the station like a jump (Session.StationIndex), the pose taken by
 // SpaceLevel.SpawnPlayer (TakePose), no launch camera.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using GoF2Remake.Data;
 using GoF2Remake.World;
@@ -41,7 +42,7 @@ namespace GoF2Remake.Multiplayer
 
         static string X(string key, string english) => Localization.Extra(key, english);
 
-        public static string Usage => "[player] <player | station [x y z | dock]>";
+        public static string Usage => "[players] <player | station [x y z | dock]>";
 
         /// <summary>SpaceLevel.SpawnPlayer: the pose a teleport into this orbit asked for (once).</summary>
         public static bool TakePose(out Vector3 position, out Quaternion rotation)
@@ -55,30 +56,39 @@ namespace GoF2Remake.Multiplayer
 
         // ---- the command (server: NetCommands.RunOnServer, for the chat and the console alike) ----------------
 
-        /// <summary>tp / tphere on the server. tp: "[player] destination" (a chat player alone = themselves; the console
-        /// always names the player); tphere: the player comes to the issuer (a chat player). Returns the issuer's answer.</summary>
+        /// <summary>tp / tphere on the server. tp: "[players] destination" (a chat player alone = themselves; the console
+        /// always names the players); tphere: the players come to the issuer (a chat player). Players: names, client ids or
+        /// selectors (@a, @s, @p, @r: NetCommands.FindTargets); a destination player is one (@s, @p, @r or a name). Returns
+        /// the issuer's answer.</summary>
         public static string Command(string args, NetPlayer issuer, bool here)
         {
             Destination d;
-            NetPlayer who;
+            List<NetPlayer> who;
             string error = null;
             if (here)
             {
-                if (issuer == null) return X("mpTpHereConsole", "tphere needs a player to bring them to: tp <player> <player> instead.");
-                who = NetCommands.FindTarget(args, out _);
-                if (who == null) return string.Format(X("mpCmdNoPlayer", "No player \"{0}\". /players lists them."), args);
+                if (issuer == null) return X("mpTpHereConsole", "tphere needs a player to bring them to: tp <players> <player> instead.");
+                who = NetCommands.FindTargets(args, issuer, out _, out error);
+                if (who.Count == 0) return error;
                 d = new Destination { kind = Kind.Player, player = issuer.OwnerClientId };
             }
-            else if (issuer != null && Parse(args, out d, out error))
-                who = issuer;
+            else if (issuer != null && Parse(args, issuer, out d, out error))
+                who = new List<NetPlayer> { issuer };
             else
             {
-                who = NetCommands.FindTarget(args, out string rest);
-                if (who == null || rest.Length == 0)
-                    return (issuer != null ? error + " " : "") + "tp " + Usage;
-                if (!Parse(rest, out d, out string error2)) return error2 + " tp " + Usage;
+                who = NetCommands.FindTargets(args, issuer, out string rest, out string error1);
+                if (who.Count == 0 || rest.Length == 0) return (error ?? error1) + " tp " + Usage;
+                if (!Parse(rest, issuer, out d, out string error2)) return error2 + " tp " + Usage;
             }
-            return Send(who, d, NetCommands.IssuerName(issuer), issuer);
+            var by = NetCommands.IssuerName(issuer);
+            var answers = new List<string>();
+            foreach (var p in who)
+            {
+                if (who.Count > 1 && d.kind == Kind.Player && p.OwnerClientId == d.player) continue;   // @a to one of them
+                string a = Send(p, d, by, issuer);
+                if (!string.IsNullOrEmpty(a)) answers.Add(a);
+            }
+            return string.Join("\n", answers);
         }
 
         /// <summary>Server: checks and sends the order to the player's game; the issuer's answer.</summary>
@@ -99,14 +109,24 @@ namespace GoF2Remake.Multiplayer
 
         // ---- parsing ----------------------------------------------------------------------------------------
 
-        /// <summary>A destination: a whole player name, else a station (index, name or "void") with optional coordinates or
-        /// "dock". 'error' says what didn't parse.</summary>
-        public static bool Parse(string args, out Destination d, out string error)
+        /// <summary>A destination: one player (a whole name, a client id, or @s / @p / @r for 'issuer'), else a station
+        /// (index, name or "void") with optional coordinates or "dock". 'error' says what didn't parse.</summary>
+        public static bool Parse(string args, NetPlayer issuer, out Destination d, out string error)
         {
             d = default;
             error = null;
             args = (args ?? "").Trim();
-            var p = NetCommands.MatchPlayer(args, out string rest);
+            string rest;
+            if (args.StartsWith("@"))
+            {
+                var t = NetCommands.FindTarget(args, issuer, out rest, out error);
+                if (t == null) return false;
+                if (rest.Length > 0) { error = X("mpTpOneDestination", "Only one destination."); return false; }
+                d.kind = Kind.Player;
+                d.player = t.OwnerClientId;
+                return true;
+            }
+            var p = NetCommands.MatchPlayer(args, out rest);
             if (p != null && rest.Length == 0)
             {
                 d.kind = Kind.Player;

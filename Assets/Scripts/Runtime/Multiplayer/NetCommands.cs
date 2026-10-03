@@ -25,8 +25,9 @@
 //   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back
 // Admins: the host's own player always, else the players the host or the server console made admins (NetPlayer.IsAdmin,
 // for the session only: names aren't verified, so nothing is remembered by name).
-// Player names are matched whole and case-insensitively, the longest name the arguments start with ("Player 2 hi"), or a
-// client id as the first word.
+// Players are named whole and case-insensitively, the longest name the arguments start with ("Player 2 hi"), by a client
+// id as the first word, or by a selector like Minecraft's (FindTargets): @a everyone, @s yourself, @p the nearest other
+// player, @r a random other player; a command on several players runs for each ("/tp @a 78 dock", "/kick @r").
 
 using System;
 using System.Collections.Generic;
@@ -62,6 +63,14 @@ namespace GoF2Remake.Multiplayer
         }
 
         static bool Everyone() => true;
+
+        static readonly (string, Func<string>)[] Selectors =
+        {
+            ("@a", () => X("mpSelAll", "everyone")),
+            ("@s", () => X("mpSelSelf", "yourself")),
+            ("@p", () => X("mpSelNearest", "the nearest player")),
+            ("@r", () => X("mpSelRandom", "a random player")),
+        };
         static bool Anyone(NetPlayer p) => true;
 
         static readonly Command[] Commands =
@@ -205,30 +214,100 @@ namespace GoF2Remake.Multiplayer
             return best;
         }
 
-        /// <summary>A player named by the arguments' start (MatchPlayer) or by a client id as the first word.</summary>
-        public static NetPlayer FindTarget(string args, out string rest)
+        // ---- player arguments: names, client ids and selectors ---------------------------------------------
+
+        /// <summary>The players the arguments start with (Minecraft-style): a selector, @a everyone, @s the issuer, @p the
+        /// nearest other player (the same orbit by distance, else the same station, else anyone), @r a random other
+        /// player; else a whole name (MatchPlayer) or a client id. 'error' says why none.</summary>
+        public static List<NetPlayer> FindTargets(string args, NetPlayer issuer, out string rest, out string error)
         {
-            var p = MatchPlayer(args, out rest);
-            if (p != null) return p;
+            var list = new List<NetPlayer>();
+            error = null;
+            args = (args ?? "").Trim();
             int space = args.IndexOf(' ');
             string first = space < 0 ? args : args.Substring(0, space);
-            if (ulong.TryParse(first, out ulong id) && (p = NetSquad.Find(id)) != null)
+            rest = space < 0 ? "" : args.Substring(space + 1).Trim();
+            if (first.Length == 2 && first[0] == '@')
             {
-                rest = space < 0 ? "" : args.Substring(space + 1).Trim();
-                return p;
+                char k = char.ToLowerInvariant(first[1]);
+                var others = new List<NetPlayer>();
+                foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && p != issuer) others.Add(p);
+                switch (k)
+                {
+                    case 'a':
+                        foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned) list.Add(p);
+                        break;
+                    case 's':
+                        if (issuer == null) { error = X("mpSelNoSelf", "@s is the player typing the command: not for the console."); return list; }
+                        list.Add(issuer);
+                        break;
+                    case 'p':
+                        if (issuer == null) { error = X("mpSelNoNearest", "@p is nearest to the player typing the command: not for the console."); return list; }
+                        var near = Nearest(issuer, others);
+                        if (near != null) list.Add(near);
+                        break;
+                    case 'r':
+                        if (others.Count > 0) list.Add(others[UnityEngine.Random.Range(0, others.Count)]);
+                        break;
+                    default:
+                        error = string.Format(X("mpSelUnknown", "Unknown selector {0}: @a everyone, @s yourself, @p the nearest player, @r a random player."), first);
+                        return list;
+                }
+                if (list.Count == 0) error = X("mpSelNobody", "No player matches that.");
+                return list;
             }
-            rest = "";
-            return null;
+            var named = MatchPlayer(args, out rest);
+            if (named == null && ulong.TryParse(first, out ulong id) && (named = NetSquad.Find(id)) != null)
+                rest = space < 0 ? "" : args.Substring(space + 1).Trim();
+            if (named != null) list.Add(named);
+            else { rest = ""; error = NoPlayer(first.Length > 0 ? first : args); }
+            return list;
+        }
+
+        /// <summary>The one player the arguments start with (a selector that picks one, a name or a client id).</summary>
+        public static NetPlayer FindTarget(string args, NetPlayer issuer, out string rest, out string error)
+        {
+            var list = FindTargets(args, issuer, out rest, out error);
+            if (list.Count > 1) { error = X("mpSelOne", "Only one player here (not @a)."); return null; }
+            return list.Count == 1 ? list[0] : null;
+        }
+
+        /// <summary>The other player nearest to 'from': in the same orbit by distance, else docked at the same station, else
+        /// the first one.</summary>
+        static NetPlayer Nearest(NetPlayer from, List<NetPlayer> others)
+        {
+            NetPlayer best = null;
+            float bestD = float.MaxValue;
+            foreach (var p in others)
+            {
+                float d = from.InSpace && p.InSpace && p.Station == from.Station ? (p.Position - from.Position).sqrMagnitude
+                    : p.Station == from.Station ? 1e20f : 1e30f;
+                if (d < bestD) { bestD = d; best = p; }
+            }
+            return best;
         }
 
         static string NoPlayer(string args) => string.Format(X("mpCmdNoPlayer", "No player \"{0}\". /players lists them."), args);
 
-        /// <summary>The command's player argument (never the issuer), or why not in 'error'.</summary>
-        static NetPlayer OtherPlayer(string args, NetPlayer by, out string rest, out string error)
+        /// <summary>Runs 'each' for every player the arguments name (the rest of the line passed on) and joins the answers.
+        /// The issuer is left out of a selector's list; named alone, "Not on yourself." unless 'self'.</summary>
+        static string ForEachTarget(string args, NetPlayer by, bool self, Func<NetPlayer, string, string> each)
         {
-            var p = FindTarget(args, out rest);
-            error = p == null ? NoPlayer(args) : p == by ? X("mpCmdNotYourself", "Not on yourself.") : null;
-            return error == null ? p : null;
+            var targets = FindTargets(args, by, out string rest, out string error);
+            if (targets.Count == 0) return error;
+            bool selector = args.TrimStart().StartsWith("@");
+            var answers = new List<string>();
+            foreach (var t in targets)
+            {
+                if (t == by && !self)
+                {
+                    if (!selector || targets.Count == 1) answers.Add(X("mpCmdNotYourself", "Not on yourself."));
+                    continue;
+                }
+                string a = each(t, rest);
+                if (!string.IsNullOrEmpty(a)) answers.Add(a);
+            }
+            return string.Join("\n", answers);
         }
 
         static string Players(NetPlayer by)
@@ -272,26 +351,22 @@ namespace GoF2Remake.Multiplayer
             return "";
         }
 
-        static string Whisper(string args, NetPlayer by)
+        static string Whisper(string args, NetPlayer by) => ForEachTarget(args, by, false, (to, text) =>
         {
-            var to = OtherPlayer(args, by, out string text, out string error);
-            if (to == null) return error;
             text = NetChat.Clean(text);
             if (text.Length == 0) return Usage(Get("w"));
             NetState.Instance.Whisper(by, to, text);
             return "";
-        }
+        });
 
-        static string Invite(string args, NetPlayer by)
+        static string Invite(string args, NetPlayer by) => ForEachTarget(args, by, false, (to, _) =>
         {
-            var to = OtherPlayer(args, by, out _, out string error);
-            if (to == null) return error;
             if (NetSquad.Same(to, by)) return string.Format(X("mpCmdAlreadySquad", "{0} is already in your squad."), to.DisplayName);
             if (!by.InHangar || !to.InHangar || to.Station != by.Station)
-                return X("mpSquadHangarOnly", "Squads can only be formed while docked in the same hangar.");
+                return string.Format(X("mpCmdInviteHangar", "{0}: squads can only be formed while docked in the same hangar."), to.DisplayName);
             NetState.Instance.Invite(by, to);
             return string.Format(X("mpCmdInvited", "Invitation sent to {0}."), to.DisplayName);
-        }
+        });
 
         static string Leave(NetPlayer by)
         {
@@ -300,29 +375,26 @@ namespace GoF2Remake.Multiplayer
             return "";
         }
 
-        static string Kick(string args, NetPlayer by)
+        static string Kick(string args, NetPlayer by) => ForEachTarget(args, by, false, (to, reason) =>
         {
-            var to = OtherPlayer(args, by, out string reason, out string error);
-            if (to == null) return error;
-            if (IsHostPlayer(to) || (to.IsAdmin && by != null && !IsHostPlayer(by))) return X("mpKickRefused", "That player can't be kicked.");
             string name = to.DisplayName;
+            if (IsHostPlayer(to) || (to.IsAdmin && by != null && !IsHostPlayer(by)))
+                return string.Format(X("mpKickRefusedName", "{0} can't be kicked."), name);
             reason = NetChat.Clean(reason);
             string message = by == null && reason.Length == 0 ? X("mpKicked", "The server removed you from the session.")
                 : reason.Length > 0 ? string.Format(X("mpKickedBy", "{0} removed you from the session: {1}"), IssuerName(by), reason)
                 : string.Format(X("mpKickedByNoReason", "{0} removed you from the session."), IssuerName(by));
-            if (!NetGame.Kick(to.OwnerClientId, message)) return X("mpKickRefused", "That player can't be kicked.");
+            if (!NetGame.Kick(to.OwnerClientId, message)) return string.Format(X("mpKickRefusedName", "{0} can't be kicked."), name);
             Debug.Log($"Server: {IssuerName(by)} kicked {name} ({to.OwnerClientId}){(reason.Length > 0 ? ": " + reason : "")}");
             NetState.Instance.NoticeAll(string.Format(X("mpKickedNotice", "{0} was removed from the session by {1}."), name, IssuerName(by)));
             return "";
-        }
+        });
 
-        static string SetAdmin(string args, NetPlayer by, bool on)
+        static string SetAdmin(string args, NetPlayer by, bool on) => ForEachTarget(args, by, false, (to, _) =>
         {
-            var to = OtherPlayer(args, by, out _, out string error);
-            if (to == null) return error;
             NetState.Instance.SetAdmin(to, on);   // logged there
             return string.Format(on ? X("mpAdminGranted", "{0} is now an admin.") : X("mpAdminRevoked", "{0} is no longer an admin."), to.DisplayName);
-        }
+        });
 
         // ---- completion (ChatView) --------------------------------------------------------------------------
 
@@ -344,6 +416,9 @@ namespace GoF2Remake.Multiplayer
             var command = Get(line.Substring(1, space - 1).ToLowerInvariant());
             if (command == null || !command.available() || (command.arg != Arg.Player && command.arg != Arg.PlayerText)) return list;
             string typed = line.Substring(space + 1);
+            foreach (var (sel, what) in Selectors)
+                if (sel.StartsWith(typed, StringComparison.OrdinalIgnoreCase) && typed.IndexOf(' ') < 0)
+                    list.Add(new Completion { line = $"/{command.name} {sel}{(command.arg == Arg.PlayerText ? " " : "")}", label = sel, description = what() });
             foreach (var p in NetPlayer.All)
             {
                 if (p == null || !p.IsSpawned || (p.IsOwner && !command.self)) continue;

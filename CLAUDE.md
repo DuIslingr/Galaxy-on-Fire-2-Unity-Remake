@@ -786,7 +786,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   to Global / Local), `/w <player> <text>` (a private message to that player only, "[From X]" / "[To X]" in violet, not
   logged), `/invite <player>` (docked at the same station) and `/leave`; admins `/kick <player> [reason]` (never the host's
   player or the issuer, only the host / the console kicks another admin; everyone gets "X was removed from the session by
-  Y"), `/tp [player] <player | station [x y z | dock]>` (`NetTeleport`: a player (the chat: yourself by default) to another
+  Y"), `/tp [players] <player | station [x y z | dock]>` (`NetTeleport`: players (the chat: yourself by default) to another
   player (beside their ship, or into the hangar they are docked in), an orbit by station index, name or "void" (the launch
   spot, or game coordinates facing the station) or a station's hangar ("dock"); the server sends the order to that
   player's game, which moves its ship in place within the same orbit (`SpaceLevel.MoveForTeleport`; not while mining /
@@ -794,8 +794,10 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `NetTeleport.TakePose` in `SpawnPlayer`, no launch camera); refused while destroyed or leaving) and `/tphere <player>`;
   the host (and the console) `/admin` / `/unadmin <player>`. Admins: the host's own player, or players the host or the
   dedicated server's console made admins (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't
-  verified). Player names match whole, any case, the longest name the arguments start with, or a client id as the first
-  word. Typing "/" lists the matching commands over the line, after a command that
+  verified). Players are named whole, any case (the longest name the arguments start with), by a client id as the first
+  word, or by a Minecraft-style selector (`NetCommands.FindTargets`): @a everyone, @s yourself, @p the nearest other player
+  (same orbit by distance, else the same station), @r a random other player; a command on several players runs for each
+  ("/tp @a Player1", "/kick @r"); a destination is one player. Tab offers the selectors too. Typing "/" lists the matching commands over the line, after a command that
   takes a player the matching players; Tab completes the first and cycles through them (Shift+Tab back, "/" alone cycles
   all; before the channel key, Tab by default; `ChatView.Complete`, `NetCommands.Completions`);
   `/netstats` shows / hides the network stats (`NetStats`, PlayerPrefs `mp_netstats`, top left in the flight HUD, the
