@@ -66,6 +66,8 @@ namespace GoF2Remake.UI
 
         public static StarMap Current { get; private set; }
         public static bool IsOpen => Current != null;
+        /// <summary>The map's own camera (VR draws it into a texture on the floating screen).</summary>
+        public Camera MapCamera => cam;
 
         class Item
         {

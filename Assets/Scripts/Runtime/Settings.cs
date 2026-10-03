@@ -149,7 +149,8 @@ namespace GoF2Remake.Data
         // ---- gameplay ----------------------------------------------------------------------------------------
 
         /// <summary>The launch / arrival camera (LevelScript's start sequence); off = straight to the chase camera.</summary>
-        public static bool LaunchCamera { get => GetBool("launchCamera", true); set => SetBool("launchCamera", value); }
+        /// <summary>The launch / arrival fly-in camera (off in VR: a moving outside camera is a motion-sickness trigger).</summary>
+        public static bool LaunchCamera { get => GetBool("launchCamera", true) && !Vr.VrMode.Enabled; set => SetBool("launchCamera", value); }
 
         /// <summary>Remake: the ship flies into the hangar after docking and out of it when launching (HangarFlight).</summary>
         public static bool HangarFlights { get => GetBool("hangarFlights", true); set => SetBool("hangarFlights", value); }

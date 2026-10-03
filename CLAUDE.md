@@ -1025,6 +1025,37 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
 - Netcode for Entities' automatic bootstrap is replaced (`NoEntitiesBootstrap`): only an empty default world, no client /
   server worlds, nothing in the player loop, so single player runs as without the package.
 
+## VR (remake-only, PC VR through OpenXR; in progress)
+
+Packages `com.unity.xr.openxr` (+ XR Plug-in Management, XR Core Utils). **GoF2 > Configure VR (OpenXR)** (`VrSetup`,
+idempotent): the OpenXR loader for Standalone with Initialize on Startup off, the controller profiles (Oculus / Meta Touch,
+Index, Vive, WMR, Reverb G2, Khronos simple). Code in `Scripts/Runtime/Vr` (`GoF2Remake.Vr`).
+
+- **Only when asked for** (`VrMode`): `-vr` starts OpenXR before the first scene (`InitializeLoaderSync`, seated: tracking
+  origin Device, recentred); without a headset / runtime it logs why and runs flat. `-vrsim` is the same VR layout on the
+  desktop without a headset (right mouse drag looks around) for testing; in the Editor `GOF2_VR` = on / sim or PlayerPrefs
+  `debug_vr` 1 / 2. `VrMode.Enabled` / `Headset` / `Simulated`.
+- **Rig** (`VrRig`, one per scene, attached on sceneLoaded and after the first scene): the scene's camera stays the logical
+  camera (`Camera.main`: projections, HUD markers, cutscenes, the chase camera unchanged) but renders nothing (culling 0, no
+  post, desktop only, under the rest); the VR eye (`Camera.CopyFrom` of it, the eye's pose reset) on a rig that follows it
+  after every camera script (`DefaultExecutionOrder(10000)`): its whole pose in flight, its position and yaw elsewhere;
+  head (Input System `TrackedPoseDriver`, `<XRHMD>/centerEye*`), hands (`<XRController>{Left/RightHand}/pointer*`, small
+  handles), the AudioListener moves to the head.
+- **UI** (`VrPanels`): every PanelRenderer's PanelSettings renders into its own RenderTexture of the window's size (so the
+  UI's screen <-> panel math stays exact) on a quad of the floating screen (URP Unlit transparent, layer 29, stacked by
+  sorting order); assets get their target back when the scene ends. The screen: 1.9 m wide, 2 m ahead with a headset; in
+  flight and in the simulation it fills the logical camera's view at 2 m (the HUD markers sit on what they mark; the
+  desktop mouse lines up in the simulation). The star map's camera draws into a texture on the screen (the eye sees only the
+  VR layer meanwhile; StarMap switches every camera off).
+- **Controllers** (`VrPad`, a headset): the two controllers as one virtual Gamepad fed in `InputSystem.onBeforeUpdate`, so
+  every control, its rebinding and the menus' controller navigation work unchanged: sticks, triggers, grips = LB / RB,
+  right A / B, left X / Y, left menu = Menu, left stick click = View (autopilot menu), right stick click = D-pad left
+  (actions menu); the right controller's laser is a virtual Mouse placed where it hits the screen (trigger clicks).
+- In VR: the menu backdrop's camera doesn't turn and starts facing the station (`MenuCamera`), no launch / arrival camera
+  (`Settings.LaunchCamera`), no mouse steering.
+- To come: the cockpit (instruments on its displays, a canopy HUD), standing beside the hangar pad (grab the ship with the
+  laser to turn it), standing in the bar (visitors face you, picked by the laser), a grabbable stick and throttle option.
+
 ## Recovered facts already implemented
 
 - Flight (`FlightModel.cs`, from `PlayerEgo::handleShip / left / right / up / down / roll / update`):

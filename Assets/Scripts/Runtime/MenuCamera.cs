@@ -29,12 +29,18 @@ namespace GoF2Remake.Visuals
         {
             gameYaw = -Mathf.PI / 4f;
             transform.position = GoF2Remake.World.OrbitLayout.ToUnity(gamePosition);
+            // VR (no turning): facing the station at the orbit's origin from the start.
+            if (Vr.VrMode.Enabled && transform.position.sqrMagnitude > 1f)
+            {
+                var toStation = -transform.position;
+                gameYaw = -Mathf.Atan2(toStation.x, toStation.z);
+            }
             Apply();
         }
 
         void LateUpdate()
         {
-            gameYaw += Time.deltaTime * 1000f * yawPerMs;
+            if (!Vr.VrMode.Enabled) gameYaw += Time.deltaTime * 1000f * yawPerMs;   // VR: no turning under the player's head
             Apply();
         }
 
