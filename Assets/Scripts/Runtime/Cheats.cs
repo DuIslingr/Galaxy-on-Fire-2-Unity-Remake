@@ -35,6 +35,8 @@ namespace GoF2Remake.Data
         public static bool GodMode { get => On("godMode"); set => Set("godMode", value); }
         public static bool InfiniteAmmo { get => On("infiniteAmmo"); set => Set("infiniteAmmo", value); }
         public static bool NoSecondaryCooldown { get => On("noSecondaryCooldown"); set => Set("noSecondaryCooldown", value); }
+        /// <summary>The booster is ready again as soon as a boost ends (no recharge; a booster is still needed).</summary>
+        public static bool NoBoostCooldown { get => On("noBoostCooldown"); set => Set("noBoostCooldown", value); }
         public static bool OneHitKills { get => On("oneHitKills"); set => Set("oneHitKills", value); }
         public static bool InstantLocks { get => On("instantLocks"); set => Set("instantLocks", value); }
         public static bool FreeShopping { get => On("freeShopping"); set => Set("freeShopping", value); }

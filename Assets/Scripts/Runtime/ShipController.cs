@@ -143,6 +143,7 @@ namespace GoF2Remake.Flight
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
             if (externalControl)
             {
+                Model.TickBoost(dtMs);   // PlayerEgo::update: the boost and its recharge run on (the mining approach boosts)
                 SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
                 Maneuver.Cancel();
                 if (!modelTumbling && !modelHeld) UpdateVisualBank(0f, 0f);   // computer controlled: no stick, the model's bank and tilt level out
@@ -207,9 +208,9 @@ namespace GoF2Remake.Flight
             }
             transform.position += transform.forward * (r.forwardUnits * metersPerUnit)
                                 + transform.right * (r.sidePushUnits * metersPerUnit);
-            // The PC version's held strafe (bindings 3350 / 3351 "Strafe left / right"): not on the autopilot or while the
-            // controls are locked.
-            if (useBuiltInInput && !inputLocked && !steeringLocked && autopilotTarget == null)
+            // The PC version's held strafe (bindings 3350 / 3351 "Strafe left / right"): not while the controls are locked.
+            // Remake: on the autopilot too (it slides the ship sideways; the autopilot keeps correcting the heading).
+            if (useBuiltInInput && !inputLocked && !steeringLocked)
             {
                 int dir = (GameControls.StrafeRight.IsPressed() ? 1 : 0) - (GameControls.StrafeLeft.IsPressed() ? 1 : 0);
                 if (dir != 0) Model.Strafe(dir, dtMs);

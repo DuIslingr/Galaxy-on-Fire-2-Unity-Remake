@@ -29,7 +29,6 @@ namespace GoF2Remake.Flight
 
         const float M = 0.05f;
         const float CrosshairDistanceMeters = 22000f * M;   // same aim point as the HUD crosshair
-        const float BaseSpeed = 2f;                          // units per ms at full throttle
 
         public Phase State { get; private set; } = Phase.Idle;
         /// <summary>PlayerEgo::lostMiningGame (+0x39b): the last minigame failed (its energy ran out).</summary>
@@ -148,6 +147,9 @@ namespace GoF2Remake.Flight
                         Undock();
                         break;
                     }
+                    // MGame::OnTouchBegin key 2: the booster works until the minigame exists (PlayerEgo::isMining is the
+                    // MiningGame, +0x1e4), so on the way in and the landing too; the ship's own input is off meanwhile.
+                    if (!Navigation.InputHalted && GameControls.Boost.WasPressedThisFrame()) ship.Boost();
                     Approach(dtMs);
                     break;
                 case Phase.Mining: UpdateMining(dtMs); break;
@@ -246,7 +248,8 @@ namespace GoF2Remake.Flight
                 float turn = Mathf.Min(ship.stats.handling / 100f + 2.7f, 4f);
                 var dir = (tr.forward + (toTarget.normalized - tr.forward) * (dtMs * turn / 4096f)).normalized;
                 tr.rotation = Quaternion.LookRotation(dir, Vector3.up);
-                float step = Mathf.Min(dtMs * BaseSpeed, d - dockDistance + 1f) * M;
+                // moveToPosition: dt * throttle (+0xbc, full while docking) * speed (+0xb8: a boost raises it).
+                float step = Mathf.Min(dtMs * ship.Model.Throttle * ship.Model.CurrentSpeed, d - dockDistance + 1f) * M;
                 tr.position += tr.forward * step;
                 ship.ExternalSpeedMetersPerSecond = Time.deltaTime > 0f ? step / Time.deltaTime : 0f;
             }

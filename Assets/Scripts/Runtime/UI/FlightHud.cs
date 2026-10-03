@@ -212,7 +212,8 @@ namespace GoF2Remake.UI
                 FirePressed = OnTouchFire,
                 // MGame::OnTouchEnd: the secondary, boost and camera don't act while mining or docked at a point.
                 SecondaryReleased = () => { if (!MiningOrDocked) weapons?.FireSecondary(); },
-                BoostReleased = () => { if (!MiningOrDocked) ship?.Boost(); },
+                // The booster also on the way to an asteroid (refused only while drilling, PlayerEgo::isMining).
+                BoostReleased = () => { if (!Drilling && (docking == null || !docking.Busy)) ship?.Boost(); },
                 CameraReleased = () => { if (mining == null || mining.State == Mining.Phase.Idle) level?.FreeLook?.Cycle(); },
                 MenuReleased = OnActionsButton,
                 TurretReleased = () => level?.Turret?.Toggle(),
@@ -228,6 +229,7 @@ namespace GoF2Remake.UI
             };
         }
 
+        bool Drilling => mining != null && mining.State == Mining.Phase.Mining;
         bool MiningOrDocked => (mining != null && mining.State != Mining.Phase.Idle) || (docking != null && docking.Busy);
 
         /// <summary>MGame::OnTouchBegin on the fire button: with a landmark, planet or docking target locked the autopilot /
