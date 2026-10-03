@@ -126,7 +126,7 @@ can't. Type one and press Enter:
 | `status` | The join code (or port), uptime, players, world seed, whether the Debug menu is allowed. |
 | `list` | The players: client id, name, where they are, ship, squad. |
 | `say <text>` | A chat line to everyone, from "Server". |
-| `kick <id or name> [reason]` | Drops a player; they see the reason. |
+| `kick <id or name> [minutes] [reason]` | Drops a player; they see the reason. With profiles they can't rejoin for the minutes (default 5). |
 | `arenas` | The arena matches and queues. |
 | `crews`, `crew disband <TAG>`, `sieges` | The crews; end one; the sieges. |
 | `profiles` | The player profiles: id, name, devices, worth, who is online. |
@@ -160,6 +160,7 @@ GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -passwo
 | `-claimdays N` | Days without a member docking before a claim is lost (default 14). |
 | `-siegecost N` | What a crew pays from its bank for a siege (default 250 000). |
 | `-toll N` | The toll other crews' pilots pay at a crew's station (default 10 000, 0 = none). |
+| `-admintoken X` | The token for `/claimadmin` (default: a random one in `admin_token.txt`, logged at every start). |
 | `-noprofiles` | Don't keep player profiles (every session starts fresh, like before). |
 | `-maxprofiles N` | How many player profiles the server keeps (default 50). New devices past it play as guests. |
 | `-maxearn N` | Without `-allowdebug`: how much a profile's worth may grow per minute online (default 1 000 000). |
@@ -211,6 +212,30 @@ Its tag shows before its members' names.
 At a crew's station its members buy items 10 % cheaper and its fighters protect them. Pilots of other crews pay 5 % more
 (into the crew's bank) and are attacked by the station's fighters unless they pay the toll asked on arrival.
 | `/c <text>` | Talk to your crew. |
+
+**Moderation**
+
+**Become the master admin without a console**: the server writes an admin token to its log at every start (and to
+`admin_token.txt` next to its profiles; or set your own with `-admintoken X`). In the game, type `/claimadmin <token>`
+in the chat, or use the station's Crew · Arena window, Profile tab, "Claim this server". The master admin makes admins
+(`/admin <pilot>`, `/unadmin`), admins make ops (`/op <pilot>`, `/deop`). Ops and up get an **Admin** tab in the
+Crew · Arena window: kicks and bans, roles, and for admins the server status, announcements, every profile and the
+crews.
+
+| Command | Who | Meaning |
+|---|---|---|
+| `/kick <pilot> [minutes] [reason]` | ops | Drop a pilot; they can't come back for the minutes (default 5, 0 = at once). |
+| `/tempban <pilot> <minutes> [reason]` | ops | Ban for a while (ops at most 24 hours). |
+| `/ban <pilot> [reason]` | admins | Ban for good. |
+| `/unban <pilot or profile id>`, `/bans` | ops | Lift a ban; list them. |
+| `/say <text>`, `/disband <TAG>` | admins | An announcement to everyone; end a crew. |
+| `/admin <pilot>`, `/unadmin <pilot>`, `/deleteprofile <id>` | master | Admin roles; delete a profile. |
+| `/claimadmin <token>` | anyone | Become the master admin with the server's admin token. |
+| `/staff` | everyone | Who the masters, admins and ops are. |
+
+A ban covers the pilot's profile and every device it was used on. Nobody can act on someone of their own rank or
+higher. The console has all of these too (`kick`, `ban`, `tempban`, `unban`, `bans`, `op`, `deop`, `admin`, `unadmin`,
+`master`, `unmaster`, `staff`, `token`).
 
 **Arena matches**
 

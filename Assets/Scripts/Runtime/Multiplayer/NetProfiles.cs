@@ -60,6 +60,7 @@ namespace GoF2Remake.Multiplayer
             public long worth;     // at the last accepted upload (Worth)
             public float playSeconds;
             public int arenaKills, arenaDeaths, arenaWins;   // NetArena's matches (the leaderboard, /top)
+            public int role;   // NetAdmin: 0 player, 1 op, 2 admin
         }
 
         [Serializable] class AccountIndex { public string serverId; public List<Account> accounts = new List<Account>(); }
@@ -137,6 +138,7 @@ namespace GoF2Remake.Multiplayer
             if (string.IsNullOrEmpty(index.serverId)) index.serverId = RandomHex(16);
             SaveIndex();
             NetCrews.Load();
+            NetAdmin.Load();
             Debug.Log($"Server: player profiles on: {index.accounts.Count} / {MaxProfiles} in {folder}.");
         }
 
@@ -176,6 +178,61 @@ namespace GoF2Remake.Multiplayer
             SaveIndex();
         }
 
+        /// <summary>A profile's role (NetAdmin), 0 for none / a guest.</summary>
+        internal static int RoleOf(string id) => id == null ? 0 : index?.accounts.Find(x => x.id == id)?.role ?? 0;
+
+        internal static void SetRole(string id, int role)
+        {
+            var a = index?.accounts.Find(x => x.id == id);
+            if (a == null || a.role == role) return;
+            a.role = role;
+            SaveIndex();
+        }
+
+        /// <summary>A profile by its id or its last pilot name (null = none).</summary>
+        internal static string FindAccount(string idOrName)
+        {
+            if (index == null || string.IsNullOrEmpty(idOrName)) return null;
+            var a = index.accounts.Find(x => x.id == idOrName) ?? index.accounts.Find(x => string.Equals(x.name, idOrName, StringComparison.OrdinalIgnoreCase));
+            return a?.id;
+        }
+
+        /// <summary>The device labels a profile signed in from (a ban holds them all).</summary>
+        internal static List<string> DevicesOf(string id)
+        {
+            var a = index?.accounts.Find(x => x.id == id);
+            var list = new List<string>();
+            if (a != null) foreach (var d in a.devices) if (!string.IsNullOrEmpty(d.device) && !list.Contains(d.device)) list.Add(d.device);
+            return list;
+        }
+
+        /// <summary>The admins' window: every profile (the most recent first, at most 200).</summary>
+        internal static void FillProfiles(NetPanel.State s)
+        {
+            if (index == null) return;
+            var all = new List<Account>(index.accounts);
+            all.Sort((a, b) => string.CompareOrdinal(b.lastSeen ?? "", a.lastSeen ?? ""));
+            for (int i = 0; i < all.Count && i < 200; i++)
+            {
+                var a = all[i];
+                s.profiles.Add(new NetPanel.ProfileRow { id = a.id, name = a.name ?? "", role = a.role, devices = a.devices.Count, online = IsOnline(a.id),
+                                                         lastSeen = (a.lastSeen ?? "").Length >= 10 ? a.lastSeen.Substring(0, 10) : "" });
+            }
+        }
+
+        /// <summary>A connected game's device label (a guest's too).</summary>
+        internal static string DeviceOf(ulong client) => logins.TryGetValue(client, out var l) ? l.device : null;
+
+        /// <summary>The admins and ops: name, role, online.</summary>
+        internal static List<(string name, int role, bool online)> Staff()
+        {
+            var list = new List<(string, int, bool)>();
+            if (index != null)
+                foreach (var a in index.accounts)
+                    if (a.role > 0) list.Add((string.IsNullOrEmpty(a.name) ? a.id : a.name, a.role, IsOnline(a.id)));
+            return list;
+        }
+
         internal static bool IsOnline(string id)
         {
             foreach (var l in logins.Values) if (l.account != null && l.account.id == id) return true;
@@ -200,6 +257,13 @@ namespace GoF2Remake.Multiplayer
                 account = index.accounts.Find(a => a.devices.Exists(d => d.tokenHash == hash));
                 var entry = account?.devices.Find(d => d.tokenHash == hash);
                 if (entry != null) entry.device = device;   // a label only (the token proves it)
+            }
+            // A ban on this profile or this device (NetAdmin): dropped with the reason.
+            if (NetAdmin.BanReason(account?.id, device) is string banned)
+            {
+                Debug.Log($"Server: client {client} ({(account != null ? "profile " + account.id : "no profile")}) is banned; dropped.");
+                NetGame.Kick(client, banned);
+                return;
             }
             if (account == null)
             {
@@ -422,7 +486,7 @@ namespace GoF2Remake.Multiplayer
                     return string.Format(Localization.Extra("mpProfileInfo", "Profile {0}, {1} device(s); this one {2}."), login.account.id,
                         login.account.devices.Count, login.controller ? Localization.Extra("mpControls", "controls it") : Localization.Extra("mpWatches", "watches"));
                 default:
-                    return Localization.Extra("mpCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena, /top; /crew (help: /crew help), /c <text>; /link (a code for another device), /link CODE, /control, /profile.");
+                    return Localization.Extra("mpCommands", "Commands: /duel <name>, /accept, /decline, /ffa, /leave, /arena, /top; /crew (help: /crew help), /c <text>; /link (a code for another device), /link CODE, /control, /profile; /staff (ops: /kick, /tempban, /unban, /bans; admins: /ban, /op, /deop).");
             }
         }
 

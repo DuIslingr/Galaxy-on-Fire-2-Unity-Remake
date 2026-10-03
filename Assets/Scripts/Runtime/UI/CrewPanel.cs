@@ -1,5 +1,5 @@
 // CrewPanel.cs
-// Remake-only: the station's Crew / Arena / Profile window in a multiplayer session, the buttons for everything the chat
+// Remake-only: the station's Crew / Arena / Profile (/ Admin) window in a multiplayer session, the buttons for everything the chat
 // commands do (NetCrews, NetArena, NetProfiles). A "CREW · ARENA" plate under the station's information opens it (a
 // dot on it when a crew invitation or a duel challenge waits). Three tabs:
 //   Crew: invitations (Join), without a crew a Create form and the crews; in one: the bank (Deposit / Withdraw), the
@@ -7,7 +7,12 @@
 //     and for the station docked at: Claim / Make home / Unclaim / Siege), the sieges, Leave / Disband (asked twice);
 //   Arena: a challenge waiting (Accept / Decline), the Void fighters option, the pilots to Challenge, the free-for-all
 //     queue (Join / Leave), the matches, the leaderboard;
-//   Profile: the profile, Take control (another device controls it), Get a link code, Link with a code (+ force).
+//   Profile: the profile, Take control (another device controls it), Get a link code, Link with a code (+ force);
+//   Admin (only for the server's ops, admins and masters, NetAdmin): a reason and minutes field, every pilot online
+//     with Kick (the minutes as the cooldown), Ban for the minutes, Ban for good and the roles (admins: op; masters:
+//     admin), the bans with Unban; for admins also the server's status and an announcement, the staff, every profile
+//     (a filter; Ban / Unban, roles, Delete for masters, asked twice) and the crews (Disband, asked twice).
+// The Profile tab also has "Claim this server" (the server's admin token, /claimadmin) for its owner.
 // Every button sends the chat command (NetPanel.Command) and the window shows the server's answer (the next chat notice)
 // at its foot. The content comes from the server's snapshot (NetPanel.Latest, asked for every 2 s while open) and is
 // rebuilt only when it changed, so a text field keeps its focus. Esc / B closes it (StationMenu.Back); while it is open
@@ -25,7 +30,7 @@ namespace GoF2Remake.UI
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class CrewPanel : MonoBehaviour
     {
-        enum Tab { Crew, Arena, Profile }
+        enum Tab { Crew, Arena, Profile, Admin }
 
         static CrewPanel current;
 
@@ -40,7 +45,9 @@ namespace GoF2Remake.UI
         Label status;
         Tab tab;
         bool isOpen, voids, force, confirmLeave;
-        string tagText = "", nameText = "", amountText = "", linkText = "";
+        string tagText = "", nameText = "", amountText = "", linkText = "", reasonText = "", minutesText = "5";
+        string sayText = "", filterText = "", tokenText = "", confirmKey = "";
+        int shownRole = -1;
         float refresh, answerUntil;
         StyleSheet sheet;
 
@@ -141,10 +148,14 @@ namespace GoF2Remake.UI
         void BuildTabs()
         {
             tabs.Clear();
+            int role = NetPanel.Latest != null ? NetPanel.Latest.role : 0;
+            shownRole = role;
+            if (tab == Tab.Admin && role < NetAdmin.Op) tab = Tab.Crew;
             foreach (Tab t in Enum.GetValues(typeof(Tab)))
             {
+                if (t == Tab.Admin && role < NetAdmin.Op) continue;   // the moderation tab: ops and admins only
                 var name = t == Tab.Crew ? Localization.Extra("mpTabCrew", "Crew") : t == Tab.Arena ? Localization.Extra("mpTabArena", "Arena")
-                                                                                                   : Localization.Extra("mpTabProfile", "Profile");
+                         : t == Tab.Profile ? Localization.Extra("mpTabProfile", "Profile") : Localization.Extra("mpTabAdmin", "Admin");
                 var b = Btn(name, () => { tab = t; confirmLeave = false; BuildTabs(); Rebuild(); }, t == tab ? "squad-button--accept" : null);
                 b.style.marginRight = 8;
                 tabs.Add(b);
@@ -185,7 +196,11 @@ namespace GoF2Remake.UI
             if ((refresh -= Time.unscaledDeltaTime) <= 0f) { refresh = isOpen ? NetPanel.RefreshSeconds : NetPanel.RefreshSeconds * 3f; NetPanel.Request(); }
         }
 
-        void OnChanged() { if (isOpen) Rebuild(); }
+        void OnChanged()
+        {
+            if (NetPanel.Latest != null && NetPanel.Latest.role != shownRole && tabs != null) BuildTabs();   // made an op / admin, or no longer
+            if (isOpen) Rebuild();
+        }
 
         /// <summary>The server's answer to a button (the next notice), and invitations / challenges as they come.</summary>
         void OnChat(NetChat.Message m)
@@ -216,6 +231,7 @@ namespace GoF2Remake.UI
             {
                 case Tab.Crew: BuildCrew(s); break;
                 case Tab.Arena: BuildArena(s); break;
+                case Tab.Admin: BuildAdmin(s); break;
                 default: BuildProfile(s); break;
             }
             scroll.scrollOffset = new Vector2(0f, y);
@@ -408,6 +424,134 @@ namespace GoF2Remake.UI
             row.Add(f);
             row.Add(Btn(Localization.Extra("mpPanelLink", "Link"), () => Send($"/link {linkText.Trim()}{(force ? " force" : "")}"), "squad-button--accept"));
             body.Add(row);
+            if (!s.guest && s.role < NetAdmin.Master)
+            {
+                Section(Localization.Extra("mpPanelClaimServer", "Claim this server"));
+                body.Add(Text(Localization.Extra("mpPanelClaimHint", "For the server's owner: its admin token is in the server's log (and admin_token.txt beside its profiles)."), 14, Dim));
+                var claim = Row();
+                claim.Add(Field(Localization.Extra("mpPanelToken", "Admin token"), tokenText, 64, 260, v => tokenText = v));
+                claim.Add(Btn(Localization.Extra("mpPanelClaimButton", "Claim"), () => { Send($"/claimadmin {tokenText.Trim()}"); tokenText = ""; }, "squad-button--accept"));
+                body.Add(claim);
+            }
+        }
+
+        /// <summary>A dangerous button: the first press arms it ("Really?"), the second acts.</summary>
+        Button Confirm(string label, string key, string command)
+        {
+            bool armed = confirmKey == key;
+            return Btn(armed ? Localization.Extra("mpPanelReally", "Really?") + " " + label : label, () =>
+            {
+                if (confirmKey == key) { confirmKey = ""; Send(command); }
+                else { confirmKey = key; Rebuild(); }
+            }, "squad-button--leave");
+        }
+
+        static string RoleLabel(int role) => role >= NetAdmin.Master ? "  (master)" : role == NetAdmin.Admin ? "  (admin)" : role == NetAdmin.Op ? "  (op)" : "";
+
+        void BuildAdmin(NetPanel.State s)
+        {
+            if (s.role < NetAdmin.Op) return;
+            bool admin = s.role >= NetAdmin.Admin, master = s.role >= NetAdmin.Master;
+            body.Add(Text(master ? Localization.Extra("mpPanelYouMaster", "You are this server's master admin.") : admin ? Localization.Extra("mpPanelYouAdmin", "You are an admin of this server.")
+                                                                                                              : Localization.Extra("mpPanelYouOp", "You are an op of this server."), 15, Accent));
+            if (admin)
+            {
+                Section(Localization.Extra("mpPanelServer", "Server"));
+                if (s.serverStatus.Length > 0) body.Add(Text(s.serverStatus, 14, Color.white));
+                var say = Row();
+                say.Add(Field(Localization.Extra("mpPanelAnnounce", "Announcement to everyone"), sayText, 200, 480, v => sayText = v));
+                say.Add(Btn(Localization.Extra("mpPanelSend", "Send"), () => { Send($"/say {sayText.Trim()}"); sayText = ""; }, "squad-button--accept"));
+                body.Add(say);
+            }
+            var opts = Row();
+            opts.Add(Field(Localization.Extra("mpPanelReason", "Reason"), reasonText, 80, 320, v => reasonText = v));
+            opts.Add(Field(Localization.Extra("mpPanelMinutes", "Minutes"), minutesText, 6, 110, v => minutesText = v));
+            body.Add(opts);
+            body.Add(Text(string.Format(Localization.Extra("mpPanelAdminHint", "Kick: the pilot can't come back for the minutes (0 = at once). Ban: for the minutes{0}."),
+                                        admin ? Localization.Extra("mpPanelAdminHintAdmin", ", or for good") : string.Format(Localization.Extra("mpPanelAdminHintOp", " (ops: at most {0} hours)"), NetAdmin.MaxOpBanMinutes / 60)), 14, Dim));
+
+            Section(Localization.Extra("mpPanelPilotsOnline", "Pilots online"));
+            string minutes = int.TryParse(minutesText.Trim(), out int m) && m >= 0 ? m.ToString() : NetAdmin.KickMinutes.ToString();
+            string reason = reasonText.Trim();
+            foreach (var p in s.pilots)
+            {
+                string rank = RoleLabel(p.role);
+                var row = Line((p.tag.Length > 0 ? $"[{p.tag}] " : "") + p.name + rank + (p.self ? "  (" + Localization.Extra("mpPanelYou", "you") + ")" : ""), p.self ? Dim : Color.white);
+                if (!p.self && s.role > p.role)
+                {
+                    string target = "#" + p.client;
+                    row.Add(Btn(Localization.Extra("mpPanelKick", "Kick"), () => Send($"/kick {target} {minutes} {reason}"), "squad-button--leave"));
+                    row.Add(Btn(Localization.Extra("mpPanelTempBan", "Ban (minutes)"), () => Send($"/tempban {target} {Mathf.Max(1, int.Parse(minutes))} {reason}"), "squad-button--leave"));
+                    if (admin)
+                    {
+                        row.Add(Confirm(Localization.Extra("mpPanelBanForGood", "Ban for good"), "ban" + target, $"/ban {target} {reason}"));
+                        if (p.role == NetAdmin.Player) row.Add(Btn(Localization.Extra("mpPanelOp", "Make op"), () => Send($"/op {target}"), "squad-button--accept"));
+                        if (p.role == NetAdmin.Op) row.Add(Btn(Localization.Extra("mpPanelDeop", "Remove op"), () => Send($"/deop {target}"), null));
+                        if (master && p.role < NetAdmin.Admin) row.Add(Btn(Localization.Extra("mpPanelMakeAdmin", "Make admin"), () => Send($"/admin {target}"), "squad-button--accept"));
+                    }
+                }
+                body.Add(row);
+            }
+
+            Section(string.Format(Localization.Extra("mpPanelBans", "Bans ({0})"), s.bans.Count));
+            if (s.bans.Count == 0) body.Add(Text(Localization.Extra("mpAdminNoBans", "Nobody is banned."), 14, Dim));
+            foreach (var b in s.bans)
+            {
+                var row = Line($"{b.name}  ·  {b.left}  ·  {b.by}{(b.reason.Length > 0 ? ": " + b.reason : "")}", Color.white);
+                string key = b.account.Length > 0 ? b.account : b.name;
+                row.Add(Btn(Localization.Extra("mpPanelUnban", "Unban"), () => Send($"/unban {key}"), "squad-button--accept"));
+                body.Add(row);
+            }
+            if (!admin) return;
+
+            Section(Localization.Extra("mpPanelStaff", "Staff"));
+            if (s.staff.Count == 0) body.Add(Text(Localization.Extra("mpPanelNoStaff", "Nobody yet."), 14, Dim));
+            foreach (var st in s.staff)
+            {
+                var row = Line($"{(st.online ? "●" : "○")} {st.name}{RoleLabel(st.role)}", st.online ? Good : Dim);
+                if (s.role > st.role)
+                {
+                    if (st.role == NetAdmin.Op) row.Add(Btn(Localization.Extra("mpPanelDeop", "Remove op"), () => Send($"/deop {st.name}"), null));
+                    if (st.role == NetAdmin.Admin && master) row.Add(Btn(Localization.Extra("mpPanelUnadmin", "Remove admin"), () => Send($"/unadmin {st.name}"), null));
+                }
+                body.Add(row);
+            }
+
+            Section(string.Format(Localization.Extra("mpPanelProfiles", "Profiles ({0})"), s.profiles.Count));
+            var find = Row();
+            find.Add(Field(Localization.Extra("mpPanelFilter", "Filter by name or id"), filterText, 24, 300, v => filterText = v));
+            find.Add(Btn(Localization.Extra("mpPanelFilterButton", "Filter"), Rebuild, null));   // a rebuild per letter would lose the field's focus
+            body.Add(find);
+            string filter = filterText.Trim();
+            int shown = 0;
+            foreach (var pr in s.profiles)
+            {
+                if (filter.Length > 0 && pr.name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0 && pr.id.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
+                if (++shown > 60) { body.Add(Text(Localization.Extra("mpPanelMore", "More: narrow the filter."), 14, Dim)); break; }
+                var row = Line($"{(pr.online ? "●" : "○")} {(pr.name.Length > 0 ? pr.name : "?")}  ·  {pr.id}{RoleLabel(pr.role)}  ·  {pr.devices} dev.  ·  {pr.lastSeen}{(pr.banned ? "  ·  BANNED" : "")}",
+                               pr.banned ? Bad : pr.online ? Good : Color.white);
+                if (s.role > pr.role)
+                {
+                    string id = pr.id;
+                    if (pr.banned) row.Add(Btn(Localization.Extra("mpPanelUnban", "Unban"), () => Send($"/unban {id}"), "squad-button--accept"));
+                    else row.Add(Confirm(Localization.Extra("mpPanelBanForGood", "Ban for good"), "banp" + id, $"/ban {id} {reasonText.Trim()}"));
+                    if (pr.role == NetAdmin.Player) row.Add(Btn(Localization.Extra("mpPanelOp", "Make op"), () => Send($"/op {id}"), null));
+                    if (pr.role == NetAdmin.Op) row.Add(Btn(Localization.Extra("mpPanelDeop", "Remove op"), () => Send($"/deop {id}"), null));
+                    if (master && pr.role < NetAdmin.Admin) row.Add(Btn(Localization.Extra("mpPanelMakeAdmin", "Make admin"), () => Send($"/admin {id}"), null));
+                    if (master && pr.role == NetAdmin.Admin) row.Add(Btn(Localization.Extra("mpPanelUnadmin", "Remove admin"), () => Send($"/unadmin {id}"), null));
+                    if (master && !pr.online) row.Add(Confirm(Localization.Extra("mpPanelDelete", "Delete"), "del" + id, $"/deleteprofile {id}"));
+                }
+                body.Add(row);
+            }
+
+            Section(Localization.Extra("mpPanelCrews", "Crews"));
+            if (s.crews.Count == 0) body.Add(Text(Localization.Extra("mpPanelNoCrews", "No crews yet."), 14, Dim));
+            foreach (var c in s.crews)
+            {
+                var row = Line($"[{c.tag}] {c.name}  ·  {string.Format(Localization.Extra("mpPanelCrewRow", "{0} members, {1} stations"), c.members, c.claims)}", Color.white);
+                row.Add(Confirm(Localization.Extra("mpPanelDisband", "Disband"), "crew" + c.tag, $"/disband {c.tag}"));
+                body.Add(row);
+            }
         }
 
         // ---- small builders ---------------------------------------------------------------------------------

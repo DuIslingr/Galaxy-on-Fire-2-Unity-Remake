@@ -660,6 +660,27 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   server started with `-freepvp` (`NetState.FreePvp`, `NetGame.FreePvp`): elsewhere another player's ship is
   `playerProof` (shots pass) and the owner's `HitRpc` / `EmpRpc` drop a player's hit unless the sender is in the same
   orbit and may fight (`NetPlayer.PvpWith`).
+- **Moderation** (`NetAdmin`, a dedicated server with profiles): roles on the profile (`Account.role`: 0 player, 1 op,
+  2 admin, 3 master). The **master admin** (the owner) is claimed in the game: `/claimadmin <token>` (or the station
+  window's Profile tab, "Claim this server"), the token from `-admintoken` / `GOF2_ADMIN_TOKEN`, else
+  `admin_token.txt` beside the profiles (made at the first start; logged at every start; console `token`; a wrong try is
+  logged, one check per 5 s), so a server needs no console. Masters make admins (`/admin`, `/unadmin`) and delete
+  profiles (`/deleteprofile <id>`, not while online); admins make ops (`/op`, `/deop`), announce (`/say`, as
+  "[admin] Name") and end crews (`/disband <TAG>`); the console can do everything and makes masters (`master` /
+  `unmaster`). Nobody acts on a pilot of their own role or higher, or gives a role as high as their own. Ops: `/kick <pilot> [minutes] [reason]` (dropped; can't rejoin for the minutes, default 5, a
+  temporary ban), `/tempban <pilot> <minutes> [reason]` (ops at most 24 h), `/unban <name|profile>`, `/bans`; admins
+  also `/ban <pilot> [reason]` (for good). `/staff` for everyone. Nobody acts on their own rank or higher (the console
+  on anyone). A pilot: a name online, `#<client id>` (the window's buttons) or a profile's id / last name offline. A ban
+  holds the profile and every device label it signed in from (no new profile from the same device), checked in
+  `NetProfiles.OnLogin` (dropped with the reason and the time left); every device of a banned profile online is
+  dropped; kicks and bans are announced. `bans.json` beside the profiles; run-out bans are pruned. Console: `kick
+  <id|name> [minutes] [reason]`, `ban`, `tempban`, `unban`, `bans`, `op`, `deop`, `admin`, `unadmin`, `staff`. The
+  station window's Admin tab (ops and above: `NetPanel.State.role`, `bans`, each pilot's `role`): reason and minutes
+  fields, Kick / Ban (minutes) / Ban for good / Make op / Remove op / Make admin (masters) per pilot, Unban per ban; for
+  admins also the server's status line (`DedicatedServer.StatusText`) and an announcement field, the staff (remove op /
+  admin), every profile (`NetProfiles.FillProfiles`: at most 200, the most recent first; a filter; Ban / Unban, roles,
+  Delete for masters) and the crews (Disband). Dangerous buttons (Ban for good, Delete, Disband) ask twice. Not tested
+  in a build yet.
 - **Crews** (`NetCrews`, a dedicated server with profiles; phase 1 of home systems / territory): the lasting player
   groups, kept by profile in `crews.json` beside the profiles (squads stay the session's quick fly-together groups).
   A crew: name (24), tag (2-4 letters / digits, unique; `NetPlayer.CrewTag`, server-written, `TaggedName` "[TAG] Name"

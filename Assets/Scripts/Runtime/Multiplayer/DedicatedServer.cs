@@ -343,7 +343,9 @@ namespace GoF2Remake.Multiplayer
                            "  status              join code / port, uptime, players\n" +
                            "  list                the players: client id, name, where, ship, squad\n" +
                            "  say <text>          a chat line to everyone, from \"Server\"\n" +
-                           "  kick <id|name> [reason]  drops a player\n" +
+                           "  kick <id|name> [minutes] [reason]  drops a player (with profiles: can't rejoin for the minutes, default 5)\n" +
+                           "  tempban <name|profile> <minutes> [reason], ban <name|profile> [reason], unban <name|profile>, bans\n" +
+                           "  master / unmaster, admin / unadmin, op / deop <name|profile>   server roles; staff; token (the /claimadmin token)\n" +
                            "  arenas              the arena matches and queues\n" +
                            "  crews               the crews (tag, name, members, leader, bank)\n" +
                            "  crew disband <TAG>  ends a crew\n" +
@@ -363,7 +365,10 @@ namespace GoF2Remake.Multiplayer
                     NetState.Instance.ServerChat(ServerName, rest);
                     return "";   // the chat line itself is logged
                 case "kick":
-                    return Kick(rest);
+                    return NetProfiles.Enabled ? NetAdmin.ConsoleCommand("kick", rest) : Kick(rest);
+                case "ban": case "tempban": case "unban": case "bans": case "op": case "deop": case "admin": case "unadmin": case "staff":
+                case "master": case "unmaster": case "token":
+                    return NetAdmin.ConsoleCommand(cmd, rest);
                 case "arenas":
                     return NetArena.ConsoleList();
                 case "crews":
@@ -386,6 +391,12 @@ namespace GoF2Remake.Multiplayer
                     return $"Unknown command \"{cmd}\". Type \"help\".";
             }
         }
+
+        /// <summary>The admins' window: the server in one line.</summary>
+        public static string StatusText() =>
+            $"{(NetGame.JoinCode != null ? $"Online, join code {NetGame.JoinCode}" : $"Port {port}")}  ·  up {Duration(Time.unscaledTime - startedAt)}  ·  " +
+            $"{NetGame.ClientIds.Count} / {NetGame.MaxPlayers} players  ·  version {Application.version}  ·  Debug menu {(NetGame.HostAllowsDebug ? "on" : "off")}  ·  " +
+            $"{(NetGame.FreePvp ? "free PvP" : "PvP in arenas and sieges")}";
 
         static string List()
         {

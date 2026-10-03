@@ -47,12 +47,23 @@ namespace GoF2Remake.Multiplayer
             public bool inMatch;
             public List<string> matches = new List<string>();
             public string top = "";
+            // Moderation (NetAdmin).
+            public int role;                 // 0 player, 1 op, 2 admin
+            public List<BanRow> bans = new List<BanRow>();
+            // Admins (NetAdmin): the server, the staff, every profile.
+            public string serverStatus = "";
+            public List<StaffRow> staff = new List<StaffRow>();
+            public List<ProfileRow> profiles = new List<ProfileRow>();
         }
+
+        [Serializable] public class StaffRow { public string name = ""; public int role; public bool online; }
+        [Serializable] public class ProfileRow { public string id = "", name = "", lastSeen = ""; public int role, devices; public bool online, banned; }
 
         [Serializable] public class Member { public string name = ""; public int rank; public bool online; }
         [Serializable] public class ClaimRow { public int station; public string name = ""; public bool home; public float daysLeft; public bool sieged; }
         [Serializable] public class CrewRow { public string tag = "", name = ""; public int members, claims; }
-        [Serializable] public class Pilot { public long client; public string name = "", tag = ""; public bool docked, inMatch, self; }
+        [Serializable] public class Pilot { public long client; public string name = "", tag = ""; public bool docked, inMatch, self; public int role; }
+        [Serializable] public class BanRow { public string name = "", account = "", reason = "", by = "", left = ""; }
 
         public const float RefreshSeconds = 2f;
 
@@ -97,6 +108,7 @@ namespace GoF2Remake.Multiplayer
                     s.pilots.Add(new Pilot { client = (long)other.OwnerClientId, name = other.DisplayName, tag = other.CrewTag, docked = other.InHangar,
                                              inMatch = NetArena.IsArenaOrbit(other.Station), self = other.OwnerClientId == client });
             NetProfiles.FillPanel(client, s);
+            if (NetProfiles.Enabled) NetAdmin.FillPanel(client, s);
             if (NetProfiles.Enabled) NetCrews.FillPanel(client, s);
             NetArena.FillPanel(client, s);
             var parts = NetProfiles.Pack(JsonUtility.ToJson(s));
