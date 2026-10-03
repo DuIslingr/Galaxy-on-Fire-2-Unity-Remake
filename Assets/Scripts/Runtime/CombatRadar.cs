@@ -2,7 +2,9 @@
 // The ship and salvage part of Radar::draw 0x1554fc (Reference/research/ship_combat.md 5.4, 7.1-7.4), on the player:
 //   gate        only with a scanner (sort 17) mounted: without one no ship or crate locks at all
 //   ship lock   a living NPC on screen inside the +-w/16 box around the crosshair, when nothing else is locking (no
-//               autopilot, no landmark / planet / asteroid candidate); the ring fills over the scanner's attr 29 from
+//               autopilot, no landmark / planet candidate, no asteroid lock; an asteroid that is only a candidate never
+//               blocks a ship, Radar::draw 0x1574c0 skips the asteroid loop while a ship candidate exists, not the
+//               other way round); the ring fills over the scanner's attr 29 from
 //               t = 0; on lock sound 26 (when the target changes). The lock is sticky: kept after the ship leaves the box
 //               until it dies or another lock completes. Homing missiles fly at it (WeaponSystem.LockTarget).
 //   salvage     a crate in the box: ring after 500 ms, locked after the tractor beam's attr 24 (TractorBeam::update);
@@ -122,7 +124,7 @@ namespace GoF2Remake.Flight
             if (tractorMode == 2 && Salvaging == null && !nav.Jumping) AutoSalvage(Camera.main, false);
 
             bool blocked = nav.Autopilot || nav.Jumping || nav.Candidate != null || nav.Locked != null
-                           || (mining != null && (mining.State != Mining.Phase.Idle || mining.Candidate != null));
+                           || (mining != null && (mining.State != Mining.Phase.Idle || mining.Locked != null));
             Target best = null;
             Crate bestCrate = null;
             NpcShip bestSteal = null;
