@@ -53,7 +53,7 @@ namespace GoF2Remake.Multiplayer
             // Admins (NetModeration): the server, the staff, every profile.
             public string serverStatus = "";
             public List<StaffRow> staff = new List<StaffRow>();
-            public List<ProfileRow> profiles = new List<ProfileRow>();
+            public List<ProfileRow> profileRows = new List<ProfileRow>();   // every profile (admins; 'profiles' says whether the server keeps them)
             public List<SettingRow> settings = new List<SettingRow>();
         }
 

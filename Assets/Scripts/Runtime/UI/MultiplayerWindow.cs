@@ -604,14 +604,14 @@ namespace GoF2Remake.UI
                 body.Add(row);
             }
 
-            Section(string.Format(Localization.Extra("mpPanelProfiles", "Profiles ({0})"), s.profiles.Count));
+            Section(string.Format(Localization.Extra("mpPanelProfiles", "Profiles ({0})"), s.profileRows.Count));
             var find = Row();
             find.Add(Field(Localization.Extra("mpPanelFilter", "Filter by name or id"), filterText, 24, 300, v => filterText = v));
             find.Add(Btn(Localization.Extra("mpPanelFilterButton", "Filter"), Rebuild, null));   // a rebuild per letter would lose the field's focus
             body.Add(find);
             string filter = filterText.Trim();
             int shown = 0;
-            foreach (var pr in s.profiles)
+            foreach (var pr in s.profileRows)
             {
                 if (filter.Length > 0 && pr.name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0 && pr.id.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0) continue;
                 if (++shown > 60) { body.Add(Text(Localization.Extra("mpPanelMore", "More: narrow the filter."), 14, Dim)); break; }

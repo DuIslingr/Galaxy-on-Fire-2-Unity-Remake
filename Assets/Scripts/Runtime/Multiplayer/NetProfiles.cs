@@ -220,7 +220,7 @@ namespace GoF2Remake.Multiplayer
             for (int i = 0; i < all.Count && i < 200; i++)
             {
                 var a = all[i];
-                s.profiles.Add(new NetPanel.ProfileRow { id = a.id, name = a.name ?? "", role = a.role, devices = a.devices.Count, online = IsOnline(a.id),
+                s.profileRows.Add(new NetPanel.ProfileRow { id = a.id, name = a.name ?? "", role = a.role, devices = a.devices.Count, online = IsOnline(a.id),
                                                          lastSeen = (a.lastSeen ?? "").Length >= 10 ? a.lastSeen.Substring(0, 10) : "" });
             }
         }

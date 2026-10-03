@@ -439,7 +439,7 @@
     const body = h("div", {});
     const draw = () => {
       const f = profileFilter.toLowerCase();
-      const list = s.admin.profiles.filter((p) => !f || p.name.toLowerCase().includes(f) || p.id.toLowerCase().includes(f));
+      const list = s.admin.profileRows.filter((p) => !f || p.name.toLowerCase().includes(f) || p.id.toLowerCase().includes(f));
       body.replaceChildren(table(["Pilot", "Profile", "Role", "Devices", "Last seen", ""], list.map((p) => {
         const can = r > p.role;
         const b = [];
@@ -464,7 +464,7 @@
     };
     filter.addEventListener("input", () => { profileFilter = filter.value; draw(); });
     draw();
-    return card(`Profiles · ${s.admin.profiles.length}`, filter, body);
+    return card(`Profiles · ${s.admin.profileRows.length}`, filter, body);
   }
 
   function factions() {

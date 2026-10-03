@@ -426,7 +426,7 @@ namespace GoF2Remake.Multiplayer
                 s.serverStatus = DedicatedServer.StatusText();
                 foreach (var (name, role, online) in NetProfiles.Staff()) s.staff.Add(new NetPanel.StaffRow { name = name, role = role, online = online });
                 NetProfiles.FillProfiles(s);
-                foreach (var row in s.profiles) row.banned = list.bans.Exists(b => b.account == row.id);
+                foreach (var row in s.profileRows) row.banned = list.bans.Exists(b => b.account == row.id);
             }
             Prune();
             foreach (var b in list.bans)

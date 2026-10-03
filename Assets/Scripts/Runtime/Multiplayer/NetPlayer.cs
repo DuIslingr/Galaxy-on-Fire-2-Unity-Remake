@@ -165,8 +165,6 @@ namespace GoF2Remake.Multiplayer
         public void SetFactionTag(string tag) { if (IsServer && factionTag.Value.ToString() != (tag ?? "")) factionTag.Value = tag ?? ""; }
         /// <summary>This pilot calls their squad for help (NetDistress).</summary>
         public bool Distress => distress.Value;
-        /// <summary>The ship's position in its orbit (the owner's, as last sent).</summary>
-        public Vector3 Position => position.Value;
         /// <summary>Where this pilot paid the toll for the current visit (-1 = none): a held station's defence spares them.</summary>
         public int TollStation => tollStation.Value;
         /// <summary>The faction's home station (NetFactions; a destroyed member respawns there), -1 = none.</summary>
