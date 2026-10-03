@@ -19,7 +19,7 @@ namespace GoF2Remake.Multiplayer
     {
         public const int MaxLength = 160, Keep = 60;
 
-        public enum Channel { Local, Global, Notice }
+        public enum Channel { Local, Global, Notice, Whisper }
 
         public sealed class Message
         {
@@ -113,12 +113,19 @@ namespace GoF2Remake.Multiplayer
             Add(new Message { channel = global ? Channel.Global : Channel.Local, from = from, text = text, own = me != null && me.OwnerClientId == sender });
         }
 
+        /// <summary>NetState: a private message to this player ('own' = the copy of one this player sent; 'other' = the other
+        /// player's name).</summary>
+        public static void ReceiveWhisper(string other, string text, bool own) =>
+            Add(new Message { channel = Channel.Whisper, from = other, text = text, own = own });
+
         public static void Notice(string text) => Add(new Message { channel = Channel.Notice, text = text });
 
         static void Add(Message m)
         {
             m.time = Time.unscaledTime;
-            Debug.Log(m.channel == Channel.Notice ? $"[Chat] {m.text}" : $"[Chat {m.channel}] {m.from}: {m.text}");
+            // Private messages stay out of the log (it is shared in bug reports).
+            if (m.channel == Channel.Whisper) { }
+            else Debug.Log(m.channel == Channel.Notice ? $"[Chat] {m.text}" : $"[Chat {m.channel}] {m.from}: {m.text}");
             messages.Add(m);
             if (messages.Count > Keep) messages.RemoveAt(0);
             Added?.Invoke(m);

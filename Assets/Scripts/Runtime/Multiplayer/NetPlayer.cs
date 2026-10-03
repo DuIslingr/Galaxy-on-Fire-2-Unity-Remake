@@ -57,6 +57,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<byte> place = new NetworkVariable<byte>((byte)Place.None, Read, Write);
         readonly NetworkVariable<bool> authority = new NetworkVariable<bool>(false, Read, Write);
         readonly NetworkVariable<int> squad = new NetworkVariable<int>(0);   // the host's (NetSquad), 0 = none
+        readonly NetworkVariable<bool> admin = new NetworkVariable<bool>(false);   // the server's: admin commands (NetCommands)
         readonly NetworkVariable<bool> engine = new NetworkVariable<bool>(true, Read, Write);   // the engine glow shows
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
@@ -128,6 +129,11 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Shield / armor fractions, -1 = the ship has none.</summary>
         public float Shield => shield.Value;
         public float Armor => armor.Value;
+        /// <summary>Made an admin for the session by the host or the server console (the host's own player is one anyway,
+        /// NetCommands.IsAdmin).</summary>
+        public bool IsAdmin => admin.Value;
+        /// <summary>Server: admin rights on / off.</summary>
+        public void SetAdmin(bool on) { if (IsServer && admin.Value != on) admin.Value = on; }
         /// <summary>Host: into squad 'id' (0 = none).</summary>
         public void SetSquad(int id) { if (IsServer && squad.Value != id) squad.Value = id; }
         public string DisplayName
@@ -179,6 +185,9 @@ namespace GoF2Remake.Multiplayer
                 pilot.Value = NetGame.Clean(NetGame.PlayerName);
                 sender = new NetShotSender(ShotRpc, BlastRpc, () => level != null && level.Weapons != null ? level.Weapons.LockTarget : null);
                 SceneManager.sceneLoaded += OnSceneLoaded;
+                admin.OnValueChanged += (_, on) => NetChat.Notice(on
+                    ? Localization.Extra("mpYouAdmin", "You are now an admin: /kick is available (/help).")
+                    : Localization.Extra("mpYouNotAdmin", "You are no longer an admin."));
                 FindLevel();
                 return;
             }

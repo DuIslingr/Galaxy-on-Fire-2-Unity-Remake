@@ -43,7 +43,7 @@ namespace GoF2Remake.Multiplayer
         const string ServerName = "Server";
         const float TrackSeconds = 1f;
         /// <summary>The commands Tab completes in the console (ConsoleInput), in help's order.</summary>
-        static readonly string[] CommandNames = { "help", "status", "list", "say", "kick", "stop" };
+        static readonly string[] CommandNames = { "help", "status", "list", "say", "kick", "admin", "unadmin", "stop" };
 
         /// <summary>This process runs as a dedicated server (-server, or GOF2_SERVER set).</summary>
         public static bool Enabled { get; private set; } = Detect();
@@ -239,7 +239,7 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
-        static string StationName(int index)
+        internal static string StationName(int index)
         {
             if (index == Session.VoidOrbit) return "the Void";
             var s = NetGame.Db.Stations.Find(x => x.index == index);
@@ -270,6 +270,8 @@ namespace GoF2Remake.Multiplayer
                            "  list                the players: client id, name, where, ship, squad\n" +
                            "  say <text>          a chat line to everyone, from \"Server\"\n" +
                            "  kick <id|name> [reason]  drops a player\n" +
+                           "  admin [id|name]     makes a player an admin for this session (/kick in the chat); alone: lists the admins\n" +
+                           "  unadmin <id|name>   takes a player's admin rights away\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
                 case "status":
                     return $"{(NetGame.Active ? "Running" : "Not running")} {(NetGame.JoinCode != null ? $"online, join code {NetGame.JoinCode}" : $"on port {port}")}, up {Duration(Time.unscaledTime - startedAt)}, " +
@@ -284,6 +286,10 @@ namespace GoF2Remake.Multiplayer
                     return "";   // the chat line itself is logged
                 case "kick":
                     return Kick(rest);
+                case "admin":
+                    return rest.Length == 0 ? Admins() : SetAdmin(rest, true);
+                case "unadmin":
+                    return rest.Length == 0 ? "unadmin <id|name>" : SetAdmin(rest, false);
                 case "stop": case "quit": case "exit": case "shutdown":
                     Log("Stopping the server...");
                     NetGame.StopServer();
@@ -303,8 +309,37 @@ namespace GoF2Remake.Multiplayer
                 n++;
                 sb.Append($"\n  {p.OwnerClientId,3}  {p.DisplayName,-20}  {Where(p)}, {UI.ItemInfo.ShipName(p.ShipIndex)}");
                 if (p.SquadId != 0) sb.Append($", squad {p.SquadId}");
+                if (p.IsAdmin) sb.Append(", admin");
             }
             return n == 0 ? "No players online." : $"{n} player(s):" + sb;
+        }
+
+        /// <summary>The player 'who' names: a client id or a whole name (any case).</summary>
+        static NetPlayer FindPlayer(string who)
+        {
+            foreach (var p in NetPlayer.All)
+            {
+                if (p == null || !p.IsSpawned) continue;
+                if ((ulong.TryParse(who, out ulong id) && p.OwnerClientId == id) || string.Equals(p.DisplayName, who, StringComparison.OrdinalIgnoreCase))
+                    return p;
+            }
+            return null;
+        }
+
+        static string SetAdmin(string who, bool on)
+        {
+            var p = FindPlayer(who.Trim());
+            if (p == null) return $"No player \"{who}\" (see \"list\").";
+            if (NetState.Instance == null || !NetState.Instance.IsSpawned) return "The server isn't running.";
+            NetState.Instance.SetAdmin(p, on);
+            return "";   // logged by SetAdmin
+        }
+
+        static string Admins()
+        {
+            var names = new List<string>();
+            foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && p.IsAdmin) names.Add($"{p.DisplayName} ({p.OwnerClientId})");
+            return names.Count == 0 ? "No admins. admin <id|name> makes one." : "Admins: " + string.Join(", ", names);
         }
 
         static string Kick(string args)

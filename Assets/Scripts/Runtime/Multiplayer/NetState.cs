@@ -137,6 +137,73 @@ namespace GoF2Remake.Multiplayer
         void ChatRpc(ulong sender, string from, string text, bool global, int station, bool inSpace, bool inHangar)
             => NetChat.Receive(sender, from, text, global, station, inSpace, inHangar);
 
+        /// <summary>/w: a private message, passed on to that player only (and a copy back to the sender).</summary>
+        [Rpc(SendTo.Server)]
+        public void WhisperRpc(ulong target, string text, RpcParams rpc = default)
+        {
+            text = NetChat.Clean(text);
+            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            var to = NetSquad.Find(target);
+            if (from == null || text.Length == 0) return;
+            if (to == null || to == from) { NoticeToRpc(Localization.Extra("mpWhisperNobody", "That player isn't in the session."), RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp)); return; }
+            WhisperedRpc(from.DisplayName, text, false, RpcTarget.Single(to.OwnerClientId, RpcTargetUse.Temp));
+            WhisperedRpc(to.DisplayName, text, true, RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams)]
+        void WhisperedRpc(string other, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveWhisper(other, text, own);
+
+        // ---- admins (NetCommands) ---------------------------------------------------------------------------
+
+        /// <summary>/kick: an admin drops a player. The server checks the rights again (a changed game can call this too):
+        /// never the host's own player or the sender, and only the host removes another admin.</summary>
+        [Rpc(SendTo.Server)]
+        public void KickRpc(ulong target, string reason, RpcParams rpc = default)
+        {
+            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            var to = NetSquad.Find(target);
+            var reply = from != null ? RpcTarget.Single(from.OwnerClientId, RpcTargetUse.Temp) : null;
+            if (from == null || !NetCommands.IsAdmin(from)) { if (reply != null) NoticeToRpc(Localization.Extra("mpKickNoRights", "Only admins can kick."), reply); return; }
+            bool fromHost = NetworkManager.IsHost && from.OwnerClientId == NetworkManager.ServerClientId;
+            if (to == null || to == from || (to.OwnerClientId == NetworkManager.ServerClientId && NetworkManager.IsHost) || (to.IsAdmin && !fromHost))
+            {
+                NoticeToRpc(Localization.Extra("mpKickRefused", "That player can't be kicked."), reply);
+                return;
+            }
+            string name = to.DisplayName;
+            reason = NetChat.Clean(reason);
+            string message = reason.Length > 0
+                ? string.Format(Localization.Extra("mpKickedBy", "{0} removed you from the session: {1}"), from.DisplayName, reason)
+                : string.Format(Localization.Extra("mpKickedByNoReason", "{0} removed you from the session."), from.DisplayName);
+            if (!NetGame.Kick(to.OwnerClientId, message)) { NoticeToRpc(Localization.Extra("mpKickRefused", "That player can't be kicked."), reply); return; }
+            Debug.Log($"Server: {from.DisplayName} kicked {name} ({to.OwnerClientId}){(reason.Length > 0 ? ": " + reason : "")}");
+            NoticeRpc(string.Format(Localization.Extra("mpKickedNotice", "{0} was removed from the session by {1}."), name, from.DisplayName));
+        }
+
+        /// <summary>/admin, /unadmin: the host (only) makes a player an admin for the session or takes it back.</summary>
+        [Rpc(SendTo.Server)]
+        public void SetAdminRpc(ulong target, bool on, RpcParams rpc = default)
+        {
+            var reply = RpcTarget.Single(rpc.Receive.SenderClientId, RpcTargetUse.Temp);
+            if (!NetworkManager.IsHost || rpc.Receive.SenderClientId != NetworkManager.ServerClientId)
+            {
+                NoticeToRpc(Localization.Extra("mpAdminHostOnly", "Only the host can change admins."), reply);
+                return;
+            }
+            var to = NetSquad.Find(target);
+            if (to == null) return;
+            SetAdmin(to, on);
+            NoticeToRpc(string.Format(on ? Localization.Extra("mpAdminGranted", "{0} is now an admin.") : Localization.Extra("mpAdminRevoked", "{0} is no longer an admin."), to.DisplayName), reply);
+        }
+
+        /// <summary>Server: a player's admin rights (the host's /admin, the dedicated server's admin command).</summary>
+        public void SetAdmin(NetPlayer p, bool on)
+        {
+            if (!IsServer || p == null) return;
+            p.SetAdmin(on);
+            Debug.Log($"Server: {p.DisplayName} ({p.OwnerClientId}) is {(on ? "now an admin" : "no longer an admin")}.");
+        }
+
         // ---- squads (NetSquad) ------------------------------------------------------------------------------
 
         int nextSquad = 1;

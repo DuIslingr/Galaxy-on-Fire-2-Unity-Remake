@@ -8,9 +8,10 @@
 // Enter as submit) would otherwise move it to a menu button and end the typing. Local lines reach the players in this
 // orbit or docked here, global ones everyone. Another player's line plays the original's incoming-message sound (FMOD
 // event 125 Message_Inc, volume 0.241, one at a time; a copy of the clip in Resources/GoF2Net/ChatMessage).
-// A line starting with "/" is a command (NetCommands: /help, /netstats): while the line is "/" and a name (no space yet)
-// the matching commands show over it, and Tab completes the first, then cycles through them (Shift+Tab back; "/" alone
-// cycles every command); Tab then doesn't switch the channel. The network stats (NetStats) show top left while
+// A line starting with "/" is a command (NetCommands): the matching commands show over it, or after a command that takes a
+// player the matching players, and Tab completes the first, then cycles through them (Shift+Tab back; "/" alone cycles
+// every command; NetCommands.Completions); Tab then doesn't switch the channel. Private messages (/w) show as
+// "[From X]" / "[To X]" in violet. The network stats (NetStats) show top left while
 // /netstats has them on.
 // Styles: Resources/GoF2Net/Chat.uss.
 
@@ -32,10 +33,10 @@ namespace GoF2Remake.UI
 
         VisualElement box, log, suggest;
         Label stats;
-        // Tab completion: the prefix typed before the first Tab (null = not cycling) and the match shown.
-        string completionPrefix;
+        // Tab completion: the line typed before the first Tab (null = not cycling) and the completion shown.
+        string completionLine;
         int completionIndex = -1;
-        string completedText;   // the line Tab last wrote (its change event arrives later: not a new prefix)
+        string completedText;   // the line Tab last wrote (its change event arrives later: not newly typed)
         float nextStats;
         TextField field;
         Button channel;
@@ -88,7 +89,7 @@ namespace GoF2Remake.UI
             field.RegisterCallback<KeyDownEvent>(OnKey, TrickleDown.TrickleDown);
             field.RegisterValueChangedCallback(e =>
             {
-                if (e.newValue != completedText) { completionPrefix = null; completionIndex = -1; completedText = null; }   // typed: a new prefix
+                if (e.newValue != completedText) { completionLine = null; completionIndex = -1; completedText = null; }   // typed: start over
                 RefreshSuggestions();
             });
             // The UI's navigation keeps out of the line: no focus move (the arrows move the cursor, W A S D / Space type).
@@ -141,7 +142,7 @@ namespace GoF2Remake.UI
             // characters of the first frames after opening stay out (nobody types that fast).
             if (Time.frameCount - openFrame <= 2 && e.character != '\0') { Swallow(e); return; }
             // A command being typed: Tab completes / cycles it (before the channel key, Tab by default).
-            if (e.keyCode == KeyCode.Tab && CommandPrefix() != null)
+            if (e.keyCode == KeyCode.Tab && (completionLine != null || (field.value.Length > 0 && field.value[0] == '/')))
             {
                 swallowFrame = Time.frameCount;
                 Swallow(e);
@@ -164,49 +165,42 @@ namespace GoF2Remake.UI
             if (e.keyCode == KeyCode.Tab || e.character == '\t') Swallow(e);
         }
 
-        /// <summary>The command name typed so far (the line is "/" + letters, no space yet), null = not a command.</summary>
-        string CommandPrefix()
-        {
-            string text = field?.value ?? "";
-            return text.Length > 0 && text[0] == '/' && text.IndexOf(' ') < 0 ? text.Substring(1) : null;
-        }
-
-        /// <summary>Tab: the first command matching what was typed, then the next one each time (dir -1: back), wrapping.</summary>
+        /// <summary>Tab: the first completion of what was typed, then the next one each time (dir -1: back), wrapping.</summary>
         void Complete(int dir)
         {
-            string prefix = completionPrefix ?? CommandPrefix();
-            if (prefix == null) return;
-            var matches = NetCommands.Matching(prefix);
+            string typed = completionLine ?? field.value;
+            var matches = NetCommands.Completions(typed);
             if (matches.Count == 0) return;
-            if (completionPrefix == null)
+            if (completionLine == null)
             {
-                completionPrefix = prefix;
+                completionLine = typed;
                 completionIndex = dir > 0 ? 0 : matches.Count - 1;
             }
             else completionIndex = ((completionIndex + dir) % matches.Count + matches.Count) % matches.Count;
-            string text = "/" + matches[completionIndex].Key;
+            string text = matches[completionIndex].line;
             completedText = text;
             field.value = text;
             field.schedule.Execute(() => field.SelectRange(text.Length, text.Length));   // the cursor at the end
             RefreshSuggestions();
         }
 
-        /// <summary>The commands matching the line (the prefix typed before cycling), the one Tab picked highlighted.</summary>
+        /// <summary>The completions of the line (as typed before cycling), the one Tab picked highlighted.</summary>
         void RefreshSuggestions()
         {
             if (suggest == null) return;
             suggest.Clear();
-            string prefix = open ? completionPrefix ?? CommandPrefix() : null;
-            var matches = prefix != null ? NetCommands.Matching(prefix) : null;
+            string typed = open ? completionLine ?? field.value : null;
+            var matches = typed != null ? NetCommands.Completions(typed) : null;
             bool show = matches != null && matches.Count > 0;
             suggest.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (!show) return;
-            string picked = completionPrefix != null && completionIndex >= 0 && completionIndex < matches.Count ? matches[completionIndex].Key : null;
-            foreach (var m in matches)
+            int picked = completionLine != null ? completionIndex : -1;
+            for (int i = 0; i < matches.Count; i++)
             {
-                var line = new Label($"<b>/{m.Key}</b>   <color=#9fb3c0>{m.Value}</color>") { pickingMode = PickingMode.Ignore };
+                var m = matches[i];
+                var line = new Label($"<b>{m.label}</b>   <color=#9fb3c0>{m.description}</color>") { pickingMode = PickingMode.Ignore };
                 line.AddToClassList("chat-suggest-row");
-                line.EnableInClassList("chat-suggest-row--picked", m.Key == picked);
+                line.EnableInClassList("chat-suggest-row--picked", i == picked);
                 suggest.Add(line);
             }
             var hint = new Label(Localization.Extra("mpCmdTabHint", "Tab complete  ·  Enter run")) { pickingMode = PickingMode.Ignore };
@@ -325,6 +319,13 @@ namespace GoF2Remake.UI
                 {
                     line.AddToClassList("chat-line--notice");
                     line.text = m.text;
+                }
+                else if (m.channel == NetChat.Channel.Whisper)
+                {
+                    // A private message: from the other player, or the copy of one's own to them.
+                    string tag = string.Format(m.own ? Localization.Extra("mpWhisperTo", "To {0}") : Localization.Extra("mpWhisperFrom", "From {0}"), m.from);
+                    line.text = $"<color=#d6a2ff>[{tag}]</color> {m.text}";
+                    if (m.own) line.AddToClassList("chat-line--own");
                 }
                 else
                 {
