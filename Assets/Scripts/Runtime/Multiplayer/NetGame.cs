@@ -319,7 +319,25 @@ namespace GoF2Remake.Multiplayer
                 return string.Format(Localization.Extra("mpNoCode", "No game found with join code {0}."), code);
             if (e is RequestFailedException f && (f.ErrorCode == CommonErrorCodes.TransportError || f.ErrorCode == CommonErrorCodes.Timeout || f.ErrorCode == CommonErrorCodes.ServiceUnavailable))
                 return Localization.Extra("mpOffline", "Can't reach Unity's servers: online play needs an internet connection.");
-            return string.Format(Localization.Extra("mpOnlineFailed", "Online play failed: {0}"), e.Message);
+            return string.Format(Localization.Extra("mpOnlineFailed", "Online play failed: {0}"), Describe(e));
+        }
+
+        /// <summary>An exception's message with its inner ones (Unity Services' "Some services couldn't be initialized. Look
+        /// at inner exceptions" says nothing on its own).</summary>
+        static string Describe(Exception e)
+        {
+            var parts = new List<string>();
+            void Add(Exception x, int depth)
+            {
+                if (x == null || depth > 4) return;
+                string m = (x.Message ?? "").Trim();
+                if (m.Length > 0 && !parts.Contains(m)) parts.Add(m);
+                if (x is AggregateException agg) foreach (var inner in agg.InnerExceptions) Add(inner, depth + 1);
+                else Add(x.InnerException, depth + 1);
+            }
+            Add(e, 0);
+            string text = string.Join(" → ", parts);
+            return text.Length > 400 ? text.Substring(0, 400) + "…" : text;
         }
 
         /// <summary>Hosts: online when PrepareOnlineHost reserved an allocation just before, else on this device's port.</summary>
@@ -328,6 +346,7 @@ namespace GoF2Remake.Multiplayer
             var relay = hostAllocation;
             hostAllocation = null;
             PrepareSession();
+            SetUpHostedWorld();
             Seed = Environment.TickCount & 0x7fffffff;
             ushort port = HostPort;
             var m = EnsureManager();
@@ -347,8 +366,34 @@ namespace GoF2Remake.Multiplayer
             SpawnPlayer(NetworkManager.ServerClientId);
             if (JoinCode != null) GUIUtility.systemCopyBuffer = JoinCode;   // ready to paste to friends
             PublishIfListed(false);
-            EnterWorld();
+            // A persistent world: the host signs in to its own profile like any player (NetProfileClient: the world is
+            // entered once the profile has arrived), else a fresh game at once.
+            if (PersistentHost) NetProfileClient.Begin(NetProfiles.ServerId, Seed);
+            else EnterWorld();
             return true;
+        }
+
+        /// <summary>The Host card's World choice (PlayerPrefs "mp_persistent"): the hosted session keeps every player's profile,
+        /// the factions, bans, staff, news and server settings on this device (HostedWorldFolder), like a dedicated
+        /// server; else a fresh game nothing of which is kept.</summary>
+        public static bool HostWantsPersistent { get; set; }
+
+        /// <summary>The session this game hosts is a persistent world (StartHost with HostWantsPersistent).</summary>
+        public static bool PersistentHost { get; private set; }
+
+        /// <summary>Where a persistent hosted world keeps its files (the dedicated server's ServerProfiles layout).</summary>
+        public static string HostedWorldFolder => System.IO.Path.Combine(Application.persistentDataPath, "HostedWorld");
+
+        /// <summary>StartHost, before the NetState spawns: the persistent world's profiles and settings, or none.</summary>
+        static void SetUpHostedWorld()
+        {
+            PersistentHost = HostWantsPersistent;
+            NetProfiles.Configure(PersistentHost, NetProfiles.DefaultMaxProfiles, NetProfiles.DefaultEarnPerMinute, PersistentHost ? HostedWorldFolder : null);
+            if (!PersistentHost) return;
+            // The Host card's choices win over the saved settings (they are its "command line").
+            NetServerSettings.Load(option => option == "-password" || option == "-maxplayers" || option == "-allowdebug" || option == "-name");
+            NetProfiles.Start();   // the profiles, factions, bans and news (before NetState: it carries the world's id)
+            Debug.Log($"NetGame: hosting a persistent world in {HostedWorldFolder}.");
         }
 
         /// <summary>A dedicated server (DedicatedServer, the -server command line): the session's world without a player of
@@ -445,6 +490,8 @@ namespace GoF2Remake.Multiplayer
         {
             // Leaving a server that keeps profiles: the game as it is now goes up first (queued before the disconnect).
             if (manager != null && !manager.IsServer && manager.IsConnectedClient && !closing) NetProfileClient.Upload();
+            // A persistent hosted world: the host's own game straight into its profile (no network in between).
+            if (manager != null && manager.IsHost && PersistentHost && worldEntered && !closing) NetProfileClient.SaveHostNow();
             NetChat.Clear();
             NetSquad.Clear();
             worldEntered = false;
@@ -664,6 +711,7 @@ namespace GoF2Remake.Multiplayer
             closing = quitAfter = false;
             sessionGame = true;
             Dedicated = false;
+            PersistentHost = false;
             NetStock.Reset();
             NetArena.Reset();
             NetArenaClient.Reset();

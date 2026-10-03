@@ -793,6 +793,12 @@ namespace GoF2Remake.UI
             Bind("mpDebugOff", () => SetHostDebug(false));
             Bind("mpDebugOn", () => SetHostDebug(true));
             ApplyHostDebug();
+            // The hosted world (PlayerPrefs "mp_persistent", fresh by default): persistent keeps every player's progress, the
+            // factions, bans and news on this device (NetGame.HostWantsPersistent; the host is its master admin).
+            GoF2Remake.Multiplayer.NetGame.HostWantsPersistent = PlayerPrefs.GetInt("mp_persistent", 0) != 0;
+            Bind("mpWorldFresh", () => SetHostWorld(false));
+            Bind("mpWorldPersistent", () => SetHostWorld(true));
+            ApplyHostWorld();
             mpJoinPassword = root.Q<TextField>("mpJoinPassword");
             if (mpJoinPassword != null)
             {
@@ -847,6 +853,20 @@ namespace GoF2Remake.UI
             bool allowed = GoF2Remake.Multiplayer.NetGame.HostAllowsDebug;
             root.Q<Button>("mpDebugOff")?.EnableInClassList("choice-segment--active", !allowed);
             root.Q<Button>("mpDebugOn")?.EnableInClassList("choice-segment--active", allowed);
+        }
+
+        void SetHostWorld(bool persistent)
+        {
+            GoF2Remake.Multiplayer.NetGame.HostWantsPersistent = persistent;
+            PlayerPrefs.SetInt("mp_persistent", persistent ? 1 : 0);
+            ApplyHostWorld();
+        }
+
+        void ApplyHostWorld()
+        {
+            bool persistent = GoF2Remake.Multiplayer.NetGame.HostWantsPersistent;
+            root.Q<Button>("mpWorldFresh")?.EnableInClassList("choice-segment--active", !persistent);
+            root.Q<Button>("mpWorldPersistent")?.EnableInClassList("choice-segment--active", persistent);
         }
 
         void SetHostMode(HostMode mode)
@@ -1691,6 +1711,9 @@ namespace GoF2Remake.UI
             Set("mpDebugLabel", Localization.Extra("mpDebugMenu", "Debug menu").ToUpperInvariant());
             Set("mpDebugOff", Localization.Extra("mpDebugOff", "Off").ToUpperInvariant());
             Set("mpDebugOn", Localization.Extra("mpDebugAllowed", "Allowed").ToUpperInvariant());
+            Set("mpWorldLabel", Localization.Extra("mpWorld", "World").ToUpperInvariant());
+            Set("mpWorldFresh", Localization.Extra("mpWorldFresh", "Fresh").ToUpperInvariant());
+            Set("mpWorldPersistent", Localization.Extra("mpWorldPersistent", "Persistent").ToUpperInvariant());
             if (mpJoinPassword != null) mpJoinPassword.textEdition.placeholder = Localization.Extra("mpJoinPasswordHint", "Password");
             Set("mpPortLabel", Localization.Extra("mpPortLabel", "Port").ToUpperInvariant());
             Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());

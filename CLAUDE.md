@@ -1109,6 +1109,16 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   it): Tab completes and cycles the command names (Shift+Tab back, nothing typed: all), Up / Down the history, Esc clears;
   piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Verified: the Windows build headless with the Editor as the client (join, chat, say,
   kick, stop; over Relay, listed, with a password; the console window, no menu).
+- **Persistent hosted world** (the Host card's World Fresh / Persistent segments, `mp_persistent`,
+  `NetGame.HostWantsPersistent` -> `PersistentHost`): `StartHost` configures `NetProfiles` on
+  `persistentDataPath/HostedWorld` (`SetUpHostedWorld`: the saved `server_settings.json` too, the card's password / player
+  limit / Debug menu / name winning like a command line; `NetProfiles.Start` loads profiles, factions, bans, news), so
+  `NetProfiles.Enabled` (`Dedicated || PersistentHost`) turns on everything a dedicated server with profiles has. The host
+  signs in to its own profile (`NetProfileClient.Begin` instead of `EnterWorld`; its RPCs to itself run locally): always a
+  profile, made the master admin on every login, never banned, uploads never doubted (`NetProfiles.IsHostClient`); on
+  leaving its game is saved straight into the profile (`NetProfileClient.SaveHostNow` from `NetGame.Shutdown`). Fresh =
+  unchanged (nothing kept, no profiles, so no factions or Admin tab). Online errors now list the inner exceptions
+  (`NetGame.Describe`: Unity Services' "Some services couldn't be initialized" said nothing on its own). Not tested yet.
 - **Sector news** (`NetNews`): the station ticker's multiplayer items, before the game's own (`StationMenu.SetupTicker`;
   rebuilt when the strip wraps, `tickerNewsDirty`, and every minute for the ages). The server posts them and sends each to
   everyone (`NetState.NewsRpc`), a joining player gets the last 15 (`SendAll` from `NetPlayer.OnNetworkSpawn`); the last 40

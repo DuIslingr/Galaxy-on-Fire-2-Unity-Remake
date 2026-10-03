@@ -106,8 +106,13 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Without the Debug menu: how much worth a profile may gain per minute online (-maxearn), on top of EarnBurst.</summary>
         public static int EarnPerMinute { get; internal set; } = DefaultEarnPerMinute;
 
-        /// <summary>This process keeps profiles: a dedicated server started without -noprofiles.</summary>
-        public static bool Enabled => configured && NetGame.Dedicated;
+        /// <summary>This process keeps profiles: a dedicated server started without -noprofiles, or a persistent world hosted
+        /// from the menu (NetGame.PersistentHost: the host signs in to its own profile like any player).</summary>
+        public static bool Enabled => configured && (NetGame.Dedicated || NetGame.PersistentHost);
+
+        /// <summary>The hosting player's own game (a persistent hosted world): always a profile, always the master admin,
+        /// never banned, its uploads never doubted (it runs the world).</summary>
+        static bool IsHostClient(ulong client) => NetGame.PersistentHost && client == Unity.Netcode.NetworkManager.ServerClientId;
 
         /// <summary>This server's id (accounts.json), the key under which a client keeps its token; "" = none.</summary>
         public static string ServerId => index != null ? index.serverId : "";
@@ -258,8 +263,8 @@ namespace GoF2Remake.Multiplayer
                 var entry = account?.devices.Find(d => d.tokenHash == hash);
                 if (entry != null) entry.device = device;   // a label only (the token proves it)
             }
-            // A ban on this profile or this device (NetModeration): dropped with the reason.
-            if (NetModeration.BanReason(account?.id, device) is string banned)
+            // A ban on this profile or this device (NetModeration): dropped with the reason (never the host itself).
+            if (!IsHostClient(client) && NetModeration.BanReason(account?.id, device) is string banned)
             {
                 Debug.Log($"Server: client {client} ({(account != null ? "profile " + account.id : "no profile")}) is banned; dropped.");
                 NetGame.Kick(client, banned);
@@ -267,7 +272,7 @@ namespace GoF2Remake.Multiplayer
             }
             if (account == null)
             {
-                if (index.accounts.Count < MaxProfiles)
+                if (index.accounts.Count < MaxProfiles || IsHostClient(client))
                 {
                     account = new Account { id = NewAccountId(), created = Now() };
                     newToken = AddDevice(account, device);
@@ -294,6 +299,11 @@ namespace GoF2Remake.Multiplayer
             {
                 if (name.Length > 0) account.name = name;
                 account.lastSeen = Now();
+                if (IsHostClient(client) && account.role < NetModeration.Master)
+                {
+                    account.role = NetModeration.Master;   // the world's owner
+                    Debug.Log($"Server: the host ({account.name}) is this world's master admin.");
+                }
                 SaveIndex();
             }
             SetObserverFlag(client, !login.controller);
@@ -416,7 +426,7 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             long worth = Worth(save);
-            if (!NetGame.HostAllowsDebug && Implausible(login, save, worth) is string why)
+            if (!NetGame.HostAllowsDebug && !IsHostClient(client) && Implausible(login, save, worth) is string why)
             {
                 Reject(login, why);
                 return;
@@ -432,6 +442,13 @@ namespace GoF2Remake.Multiplayer
                 handovers.Remove(account.id);
                 if (logins.TryGetValue(handover.to, out var to)) Promote(to);
             }
+        }
+
+        /// <summary>A persistent hosted world: the host's own game saved straight into its profile (NetGame.Shutdown, so the
+        /// last minutes aren't lost when the host closes the session).</summary>
+        internal static void SaveHost(string json)
+        {
+            if (Enabled && !string.IsNullOrEmpty(json)) Receive(Unity.Netcode.NetworkManager.ServerClientId, json);
         }
 
         static void Reject(Login login, string why)

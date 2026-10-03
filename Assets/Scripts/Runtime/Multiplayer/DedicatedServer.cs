@@ -423,7 +423,8 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>The admins' window: the server in one line.</summary>
         public static string StatusText() =>
-            $"{(NetGame.JoinCode != null ? $"Online, join code {NetGame.JoinCode}" : $"Port {port}")}  ·  up {Duration(Time.unscaledTime - startedAt)}  ·  " +
+            $"{(NetGame.JoinCode != null ? $"Online, join code {NetGame.JoinCode}" : $"Port {(Enabled ? port : NetGame.HostPort)}")}  ·  " +
+            $"{(Enabled ? $"up {Duration(Time.unscaledTime - startedAt)}" : "hosted from the game, persistent world")}  ·  " +
             $"{NetGame.ClientIds.Count} / {NetGame.MaxPlayers} players  ·  version {Application.version}  ·  Debug menu {(NetGame.HostAllowsDebug ? "on" : "off")}  ·  " +
             $"{(NetGame.FreePvp ? "free PvP" : "PvP in arenas and sieges")}";
 

@@ -102,7 +102,11 @@ On the **Host a game** card, pick a mode:
   addresses (tap one to copy it) and the port, 7777 by default.
 
 Every mode can have a **password** and a **Max players** limit (2 to 100, you included). **Debug menu** (Off by
-default) decides whether the players may use the Debug menu (cheats, items, spawns) in your session. Press **Host**. In an online
+default) decides whether the players may use the Debug menu (cheats, items, spawns) in your session. **World**:
+**Fresh** (default) is a one-off session where nothing is kept; **Persistent** keeps every player's progress, the
+factions, bans, staff, news and server settings on your device (the `HostedWorld` folder in the game's data folder),
+like a dedicated server, and makes you the world's master admin (the Multiplayer window's Admin tab). Your own
+progress there is that world's, separate from your single-player saves. Press **Host**. In an online
 game the join code is copied to your clipboard and shown under the station's system information, with a Copy button.
 Online play goes through Unity Relay: no port forwarding, but it needs an internet connection. With a player host,
 all traffic goes through the host's connection, so for big sessions a dedicated server is better.

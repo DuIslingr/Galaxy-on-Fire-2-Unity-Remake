@@ -167,6 +167,13 @@ namespace GoF2Remake.Multiplayer
             for (int i = 0; i < parts.Count; i++) NetState.Instance.UploadChunkRpc(seq, i, parts.Count, parts[i]);
         }
 
+        /// <summary>A persistent hosted world's host leaving: its game straight into its profile (NetProfiles.SaveHost).</summary>
+        public static void SaveHostNow()
+        {
+            if (!Active || waiting || Guest || !Controller || NetArenaClient.InMatch) return;
+            NetProfiles.SaveHost(SaveGame.ProfileJson());
+        }
+
         /// <summary>NetPlayer (the owner, every frame): the periodic upload.</summary>
         public static void Tick()
         {
