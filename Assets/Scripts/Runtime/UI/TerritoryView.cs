@@ -4,7 +4,9 @@
 //     arrival camera is over, the HUD's ChoiceWindow asks for the toll (NetState.Toll; Traffic.Ask). Paid: the station's
 //     fighters spare this pilot for the visit (NetCrewsClient.TollStation, reset on the next orbit); refused: they
 //     attack (NetOrbit's territory rule). Not in an arena;
-//   the siege banner: in a besieged orbit, top centre: the two crews, the time to the start or the end, the control.
+//   the siege banner: in a besieged orbit, top centre: the two crews, the time to the start or the end, the control;
+//   otherwise a squadmate's distress call (NetDistress): who, where, and how to answer (the actions menu's Help, the
+//     squad window's Help or /assist); pulsing.
 // Built in code with inline styles.
 
 using GoF2Remake.Data;
@@ -59,7 +61,25 @@ namespace GoF2Remake.UI
             if (!NetGame.Active || level.Layout == null || NetArenaClient.InMatch) { Show(null); return; }
             int station = level.NetOrbitId;
             AskToll(station);
-            Show(BannerText(station));
+            string text = BannerText(station) ?? DistressText();
+            Show(text);
+            if (text != null && banner != null) banner.style.opacity = NetCrewsClient.SiegeAt(station) != null ? 1f : 0.65f + 0.35f * Mathf.Abs(Mathf.Sin(Time.unscaledTime * 3f));
+        }
+
+        /// <summary>The squadmates calling for help (the nearest first is not known: in squad order), null = none.</summary>
+        static string DistressText()
+        {
+            var me = NetPlayer.Local;
+            if (me == null || NetSquad.LocalSquad == 0) return null;
+            var db = NetGame.Db;
+            foreach (var m in NetSquad.Members())
+            {
+                if (m == null || m == me || !m.Distress) continue;
+                var st = db.Stations.Find(s => s.index == m.Station);
+                string where = st == null ? "?" : m.Station == me.Station && me.InSpace ? Localization.Extra("mpDistressHere", "in this orbit") : $"{st.name} ({st.systemName})";
+                return string.Format(Localization.Extra("mpDistressBanner", "⚠ {0} CALLS FOR HELP · {1} · actions menu: Help"), m.DisplayName, where);
+            }
+            return null;
         }
 
         void AskToll(int station)

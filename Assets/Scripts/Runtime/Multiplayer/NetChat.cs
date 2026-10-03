@@ -101,6 +101,17 @@ namespace GoF2Remake.Multiplayer
         {
             text = Clean(text);
             if (text.Length == 0 || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
+            // This game's own commands: the squad's distress call and answering one (NetDistress).
+            string lower = text.ToLowerInvariant();
+            if (lower == "/sos") { Notice(NetDistress.Toggle()); return; }
+            if (lower.StartsWith("/assist "))
+            {
+                string who = text.Substring(8).Trim();
+                var caller = NetPlayer.All.Find(p => p != null && p.IsSpawned && string.Equals(p.DisplayName, who, System.StringComparison.OrdinalIgnoreCase));
+                Notice(caller != null && NetSquad.Same(caller, NetPlayer.Local) ? NetDistress.Help(caller) ?? ""
+                                                                               : string.Format(Localization.Extra("mpHelpNoMate", "No squadmate called \"{0}\"."), who));
+                return;
+            }
             NetState.Instance.SendChatRpc(text, Sending == Channel.Global);
         }
 

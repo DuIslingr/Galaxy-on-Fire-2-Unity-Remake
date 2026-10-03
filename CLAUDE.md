@@ -987,6 +987,19 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   (set on `AcceptInviteRpc`, cleared on `LeaveSquadRpc`, kept through a disconnect); a controller signing in joins a
   squadmate online (`NetState.RestoreSquad`, anywhere, not only in a hangar). Server console: `profiles`,
   `profile delete <id>` (not while online), `list` marks observers. Not tested in a build yet.
+- **Distress calls** (`NetDistress`): a squad member in space calls for help (the squad window's own row: Distress call /
+  End the call, or `/sos`; `NetPlayer.Distress`, owner-written; ends on docking, after 10 min or leaving the squad);
+  the squadmates get a notice with where (`NetState.DistressRpc`), a red "⚠" name and a **Help** button in the squad
+  window (or `/assist <name>`, both handled in the player's own game, `NetChat.Send`). Help programs the caller's
+  station (`Session.ProgrammedStation`) and goes the fastest way: another system with a Khador Drive and the cells
+  (`GalaxyMap.EnergyCells`): an instant jump (`Session.InstantJump`, SystemJump charges by itself); else the autopilot
+  (`Navigation.ContinueToProgrammedStation`: the planet jump, or the gate route); docked: the launch first. Arriving in
+  that orbit by travel, the helper comes out 1.5 km from the caller facing them (`NetDistress.ArrivalNear`,
+  `SpaceLevel.SpawnPlayer`). The star map marks the squad when it opens (`StarMap.SquadMark`): a green "●N" by a
+  system, "● names" under a planet, red with "⚠" for a call. In flight also the quick (actions) menu (E / D-pad left /
+  the touch quick menu button; `Navigation.ActionEntries`, kinds `Distress` / `Assist`): "Distress call" / "End the
+  call" and "Help <name>" for each squadmate calling, the answer as a HUD message; and a pulsing banner at the top
+  (`TerritoryView`, under a siege's) with who calls for help and where. Not tested in a build yet.
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.
 - **Medals** are off in sessions (`Achievements.Check` / `Elite` award nothing, the Status window hides the medal column).

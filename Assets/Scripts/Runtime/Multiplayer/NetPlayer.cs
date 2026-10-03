@@ -59,6 +59,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<FixedString32Bytes> crewTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetCrews, "" = none
         readonly NetworkVariable<int> crewHome = new NetworkVariable<int>(-1);   // the server's: the crew's home station, -1 = none
         readonly NetworkVariable<int> tollStation = new NetworkVariable<int>(-1, Read, Write);   // NetCrewsClient.TollStation
+        readonly NetworkVariable<bool> distress = new NetworkVariable<bool>(false, Read, Write);  // NetDistress: calls for help
         readonly NetworkVariable<bool> engine = new NetworkVariable<bool>(true, Read, Write);   // the engine glow shows
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
@@ -139,6 +140,10 @@ namespace GoF2Remake.Multiplayer
         public string CrewTag => crewTag.Value.ToString();
         /// <summary>Server: NetCrews' tag for this player.</summary>
         public void SetCrewTag(string tag) { if (IsServer && crewTag.Value.ToString() != (tag ?? "")) crewTag.Value = tag ?? ""; }
+        /// <summary>This pilot calls their squad for help (NetDistress).</summary>
+        public bool Distress => distress.Value;
+        /// <summary>The ship's position in its orbit (the owner's, as last sent).</summary>
+        public Vector3 Position => position.Value;
         /// <summary>Where this pilot paid the toll for the current visit (-1 = none): a held station's defence spares them.</summary>
         public int TollStation => tollStation.Value;
         /// <summary>The crew's home station (NetCrews; a destroyed member respawns there), -1 = none.</summary>
@@ -425,6 +430,8 @@ namespace GoF2Remake.Multiplayer
             }
             NetProfileClient.Tick();   // the server profile's periodic upload
             if (tollStation.Value != NetCrewsClient.TollStation) tollStation.Value = NetCrewsClient.TollStation;
+            NetDistress.Tick(this);
+            if (distress.Value != NetDistress.Active) distress.Value = NetDistress.Active;
             if (ship.Value != Session.ShipIndex) ship.Value = Session.ShipIndex;   // bought another
             if (standing0.Value != Session.Standing[0]) standing0.Value = Session.Standing[0];
             if (standing1.Value != Session.Standing[1]) standing1.Value = Session.Standing[1];

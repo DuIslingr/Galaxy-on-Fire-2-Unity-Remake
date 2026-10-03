@@ -393,6 +393,22 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams)]
         void GrantRpc(int amount, RpcParams rpc = default) => NetCrewsClient.OnGrant(amount);
 
+        /// <summary>A pilot calls their squad for help ('on') or is safe again: a notice to the squadmates with where (NetDistress).</summary>
+        [Rpc(SendTo.Server)]
+        public void DistressRpc(bool on, RpcParams rpc = default)
+        {
+            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            if (from == null || from.SquadId == 0) return;
+            var st = NetGame.Db.Stations.Find(s => s.index == from.Station);
+            string text = on
+                ? string.Format(Localization.Extra("mpDistressNews", "⚠ {0} calls for help at {1} ({2})! The squad window's Help, or /assist {0}."),
+                                from.DisplayName, st?.name ?? "?", st?.systemName ?? "?")
+                : string.Format(Localization.Extra("mpDistressOver", "{0} is safe again."), from.DisplayName);
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.IsSpawned && p != from && p.SquadId == from.SquadId) Notify(p.OwnerClientId, text);
+            Debug.Log($"Server: {from.DisplayName} {(on ? "calls for help" : "is safe again")} at {st?.name}.");
+        }
+
         /// <summary>A pilot of another crew paid the toll at 'station' (their game took the credits).</summary>
         [Rpc(SendTo.Server)]
         public void TollPaidRpc(int station, RpcParams rpc = default) => NetCrews.OnTollPaid(rpc.Receive.SenderClientId, station);

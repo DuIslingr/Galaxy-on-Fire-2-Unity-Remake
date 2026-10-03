@@ -189,6 +189,15 @@ every time after; the progress is saved when docking, every minute and when leav
 | `/control` | Two devices of one profile online: the first one plays, the other watches from the station. This takes over once the playing one is docked. |
 | `/profile` | The profile's id and devices. |
 
+**Squads: the map and distress calls**
+
+The star map shows where your squad is (a green dot with the count by a system, the names under a station). In space,
+your own row in the squad window has **Distress call** (or type `/sos`): your squad gets a notice, sees you in red on
+the map and gets a **Help** button by your name (or `/assist <name>`). Help takes them to you the fastest way: the Khador
+Drive if they have one and the energy cells, else the autopilot. They arrive right next to you. In flight both are
+also in the actions menu (E, the controller's D-pad left, or the touch quick menu button), and a banner at the top
+shows who needs help.
+
 **Crews**
 
 Everything below is also in the station's **Crew · Arena** window (under the station's information), with buttons

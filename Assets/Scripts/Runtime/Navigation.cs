@@ -47,7 +47,8 @@ namespace GoF2Remake.Flight
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary,
+                           Distress, Assist }
 
         public class Target
         {
@@ -59,6 +60,7 @@ namespace GoF2Remake.Flight
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
             public NpcShip dockingShip;     // docking targets: the object
+            public ulong client;             // multiplayer Assist: the squadmate calling for help
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
 
@@ -306,6 +308,17 @@ namespace GoF2Remake.Flight
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
             if (Cloak != null) list.Add(new Target { kind = Kind.Cloak, name = Cloak.ItemName, disabled = !Cloak.Rules.Available });
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
+            // Multiplayer (remake): the squad's distress calls (NetDistress): this pilot's own call, and Help for every
+            // squadmate calling.
+            if (GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetSquad.LocalSquad != 0)
+            {
+                foreach (var m in GoF2Remake.Multiplayer.NetSquad.Members())
+                    if (m != null && !m.IsOwner && m.Distress)
+                        list.Add(new Target { kind = Kind.Assist, client = m.OwnerClientId,
+                                              name = string.Format(Localization.Extra("mpHelpEntry", "Help {0}"), m.DisplayName) });
+                list.Add(new Target { kind = Kind.Distress, name = GoF2Remake.Multiplayer.NetDistress.Active
+                    ? Localization.Extra("mpDistressEnd", "End the call") : Localization.Extra("mpDistressCall", "Distress call") });
+            }
             return list;
         }
 
@@ -342,6 +355,13 @@ namespace GoF2Remake.Flight
             if (target == null || target.disabled) return;
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
             if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
+            if (target.kind == Kind.Distress) { Say(GoF2Remake.Multiplayer.NetDistress.Toggle()); return; }
+            if (target.kind == Kind.Assist)
+            {
+                string msg = GoF2Remake.Multiplayer.NetDistress.Help(GoF2Remake.Multiplayer.NetSquad.Find(target.client));
+                if (!string.IsNullOrEmpty(msg)) Say(msg);
+                return;
+            }
             if (target.kind == Kind.DockingTarget) { Docking?.Dock(target.dockingShip); return; }
             if (target.kind == Kind.Waypoint)
             {
