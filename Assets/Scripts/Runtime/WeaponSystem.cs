@@ -443,7 +443,7 @@ namespace GoF2Remake.Flight
         void PlayShot(Rig r)
         {
             var clip = r.fx != null ? r.fx.Shot : null;
-            if (clip != null) shotSource.PlayOneShot(clip, shotVolume * Settings.SfxVolume);
+            if (clip != null) ShotVoices.Play(clip, shotVolume * Settings.SfxVolume);   // two voices per shot sound (FEV max_playbacks)
         }
 
         /// <summary>Radar::draw's auto-aim flag (KIPlayer+0x6f) for the beams: the nearest target (to the player) on screen,

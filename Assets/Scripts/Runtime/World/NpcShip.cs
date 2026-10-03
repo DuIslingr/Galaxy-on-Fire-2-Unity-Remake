@@ -688,7 +688,7 @@ namespace GoF2Remake.World
                 {
                     int shot = NpcTables.ShotSound(Race);
                     var clip = assets != null && assets.shots != null && shot < assets.shots.Length ? assets.shots[shot] : null;
-                    if (clip != null) sfx.PlayOneShot(clip, 0.8f * Settings.SfxVolume);
+                    if (clip != null) ShotVoices.PlayAt(clip, transform.position, 0.8f);
                 }
                 return;
             }
@@ -1191,7 +1191,7 @@ namespace GoF2Remake.World
                             var clip = firing == empGun ? WeaponFx.Load(18)?.Shot
                                      : firing == secondGun ? WeaponFx.Load(secondGun.itemIndex)?.Shot
                                      : assets != null && assets.shots != null && shot < assets.shots.Length ? assets.shots[shot] : null;
-                            if (clip != null) sfx.PlayOneShot(clip, 0.8f * Settings.SfxVolume);
+                            if (clip != null) ShotVoices.PlayAt(clip, transform.position, 0.8f);   // shared voices (FEV max_playbacks)
                         }
                     }
                 }
