@@ -464,6 +464,10 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
+        /// <summary>@survivors: a player alive in space who has been in this event's fight and never destroyed in it.</summary>
+        public static bool Survived(NetPlayer p) =>
+            Running && p != null && p.InSpace && p.Hull > 0f && alive.ContainsKey(p.OwnerClientId) && !outOfFight.Contains(p.OwnerClientId);
+
         static string Clock(float seconds)
         {
             int s = Mathf.FloorToInt(seconds);

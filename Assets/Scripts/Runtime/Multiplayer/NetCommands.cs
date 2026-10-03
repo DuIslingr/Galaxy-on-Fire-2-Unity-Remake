@@ -34,7 +34,9 @@
 // for the session only: names aren't verified, so nothing is remembered by name).
 // Players are named whole and case-insensitively, the longest name the arguments start with ("Player 2 hi"), by a client
 // id as the first word, or by a selector like Minecraft's (FindTargets): @a everyone, @s yourself, @p the nearest other
-// player, @r a random other player; a command on several players runs for each ("/tp @a 78 dock", "/kick @r").
+// player, @r a random other player, and by state @alive (in space, not destroyed), @space, @docked, @dead (destroyed in
+// space), @survivors (an event's players never destroyed since its fight began, NetEvents.Survived); a command on several
+// players runs for each ("/tp @a 78 dock", "/kick @r", "/reward @survivors 1000").
 
 using System;
 using System.Collections.Generic;
@@ -78,6 +80,11 @@ namespace GoF2Remake.Multiplayer
             ("@s", () => X("mpSelSelf", "yourself")),
             ("@p", () => X("mpSelNearest", "the nearest player")),
             ("@r", () => X("mpSelRandom", "a random player")),
+            ("@alive", () => X("mpSelAlive", "everyone alive in space")),
+            ("@survivors", () => X("mpSelSurvivors", "the event's players never destroyed")),
+            ("@space", () => X("mpSelSpace", "everyone in space")),
+            ("@docked", () => X("mpSelDocked", "everyone docked")),
+            ("@dead", () => X("mpSelDead", "everyone destroyed in space")),
         };
         static bool Anyone(NetPlayer p) => true;
 
@@ -278,6 +285,25 @@ namespace GoF2Remake.Multiplayer
             int space = args.IndexOf(' ');
             string first = space < 0 ? args : args.Substring(0, space);
             rest = space < 0 ? "" : args.Substring(space + 1).Trim();
+            if (first.Length > 2 && first[0] == '@')
+            {
+                // By state: everyone it holds for.
+                Func<NetPlayer, bool> holds;
+                switch (first.ToLowerInvariant())
+                {
+                    case "@alive": holds = p => p.InSpace && p.Hull > 0f; break;
+                    case "@space": holds = p => p.InSpace; break;
+                    case "@docked": holds = p => p.InHangar; break;
+                    case "@dead": holds = p => p.InSpace && p.Hull <= 0f; break;
+                    case "@survivors": holds = NetEvents.Survived; break;
+                    default:
+                        error = string.Format(X("mpSelUnknownMore", "Unknown selector {0}: @a, @s, @p, @r, @alive, @survivors, @space, @docked, @dead."), first);
+                        return list;
+                }
+                foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && holds(p)) list.Add(p);
+                if (list.Count == 0) error = X("mpSelNobody", "No player matches that.");
+                return list;
+            }
             if (first.Length == 2 && first[0] == '@')
             {
                 char k = char.ToLowerInvariant(first[1]);

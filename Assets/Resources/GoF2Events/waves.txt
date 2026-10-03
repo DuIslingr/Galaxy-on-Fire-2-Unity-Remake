@@ -25,6 +25,8 @@ repeat waves as wave
   end
   if wave < waves
     title @a Wave {wave} cleared | Next wave in 5 seconds for 4
+    # Everyone still alive since the fight began gets paid for the wave.
+    reward @survivors {wave * 1000} | Wave {wave} survived
     heal @a
     ammo @a
     wait 5
@@ -32,6 +34,6 @@ repeat waves as wave
 end
 
 title @a Victory! | All {waves} waves cleared for 5
-credits @a {waves * 5000}
+reward @survivors {waves * 5000} + Energy Cells 10 | All waves survived
 wait 5
 winner

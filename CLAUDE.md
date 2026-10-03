@@ -842,7 +842,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   dedicated server's console made admins (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't
   verified). Players are named whole, any case (the longest name the arguments start with), by a client id as the first
   word, or by a Minecraft-style selector (`NetCommands.FindTargets`): @a everyone, @s yourself, @p the nearest other player
-  (same orbit by distance, else the same station), @r a random other player; a command on several players runs for each
+  (same orbit by distance, else the same station), @r a random other player, and by state @alive (in space, not destroyed), @space, @docked, @dead, @survivors (an event's players never destroyed since its fight began, `NetEvents.Survived`: "reward @survivors {wave * 1000}"); a command on several players runs for each
   ("/tp @a Player1", "/kick @r"); a destination is one player. Tab offers the selectors too. Typing "/" lists the matching commands over the line, after a command that
   takes a player the matching players; Tab completes the first and cycles through them (Shift+Tab back, "/" alone cycles
   all; before the channel key, Tab by default; `ChatView.Complete`, `NetCommands.Completions`);

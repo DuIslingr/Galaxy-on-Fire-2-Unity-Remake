@@ -27,6 +27,6 @@ end
 timer @a stop
 title @a You survived! | {length / 60} minutes of pirates for 5
 heal @a
-credits @a 20000
+reward @survivors 20000 | Survived
 wait 5
 winner
