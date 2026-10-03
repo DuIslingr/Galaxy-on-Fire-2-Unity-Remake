@@ -9,10 +9,10 @@
 //   ModStation::OnInitialize 0x0e8080      OnDocked: step-specific station tweaks (Betty at index 1, free EMP bombs...)
 // State lives in Session (CampaignMission = the index, StoryMission = slot 0) and is saved by SaveGame.
 // Side effects built: the main campaign (0-45), the Valkyrie add-on (46-84: the loaner ships parked in Status+0x8c,
-// the systems it reveals, step 59's target stations, the Liberator / Disruptor blueprints, the mines, the jump drive) and
-// the Supernova add-on (85-162, cases 0x54-0xa1: the Luxury goods and the Gamma Shield I / repair beam / plasma kit
-// handed over, systems 27-31 revealed, the evacuation / hacking counters, the mutagen, the Gamma Shield II and Chromo
-// Plasma blueprints).
+// the systems it reveals, step 59's target stations, the Liberator / Disruptor blueprints, the mines, the Void Essence, the
+// jump drive) and the Supernova add-on (85-162, cases 0x54-0xa1: the Luxury goods and the Gamma Shield I / repair beam /
+// plasma kit handed over, systems 27-31 revealed, the evacuation / hacking counters, the mutagen, the Gamma Shield II and
+// Chromo Plasma blueprints).
 
 using System.Collections.Generic;
 using UnityEngine;
@@ -158,59 +158,187 @@ namespace GoF2Remake.Data
             Session.PlayerShield = -1f;
         }
 
-        /// <summary>Remake-only (the main menu's mission select): a new game that starts at story step 'target'. The step's
-        /// campaign starts as usual (main game, Valkyrie from 45, Supernova from 84), then every step up to the target is run
-        /// through Advance (its side effects: items, ships, revealed systems...) and its reward credited; past the rescue the
-        /// Phantom becomes Betty, past step 6 the tutorial's free Nirai Impulse EX 1 and E2 Exoclad are mounted, past the
-        /// tutorial its hints count as shown. The start: the step's story orbit (with the launch camera; the Void as an
-        /// arrival), else docked where the previous step ended. Returns the scene to load.</summary>
+        // ---- the mission select (remake-only, the main menu's debug panel) -----------------------------------------
+
+        /// <summary>The step the mission select starts for 'index': the steps that are never current on their own start at
+        /// the step that plays them. 53 / 129 are skipped (52 -> 54, 128 -> 130); 42 is the end of 41's level (Errkt
+        /// finished, the mother ship's explosion, the ride out: MainCampaignLevels builds it only as 41's continuation); 46
+        /// is passed straight through by the add-on entry call (45 -> 46 -> 47); 107 has no creating case (106's level
+        /// advances twice, to 108); 149 / 150 are only the brokers' dialogue slots (148's lounge at Kalun Amir sets 151).</summary>
+        public static int MissionSelectStart(int index) => index switch
+        {
+            42 => 41, 46 => 47, 53 => 54, 107 => 108, 129 => 130, 149 => 151, 150 => 151, _ => index,
+        };
+
+        /// <summary>How the player is in a place: docked, launched from its station (the launch camera), arrived from another
+        /// orbit (the travel fly-in: planet jump, gate, wormhole, Khador Drive) or just there (departStation without a camera).</summary>
+        enum Entry { Docked, Launch, Arrive, InOrbit }
+
+        struct Place
+        {
+            public int station, from;   // from: the orbit an arrival came from (Session.PreviousStationIndex)
+            public Entry how;
+            public static Place Docked(int s) => new Place { station = s, from = s, how = Entry.Docked };
+            public static Place Launch(int s) => new Place { station = s, from = s, how = Entry.Launch };
+            public static Place Arrive(int s, int from) => new Place { station = s, from = from, how = Entry.Arrive };
+            public static Place InOrbit(int s) => new Place { station = s, from = s, how = Entry.InOrbit };
+            /// <summary>Into the orbit of 'to' in space: launched when docked there, the same place when already flying there,
+            /// else an arrival from here.</summary>
+            public Place FlyTo(int to) => to == station ? (how == Entry.Docked ? Launch(to) : this) : Arrive(to, station);
+        }
+
+        /// <summary>Mission types completed docked at the mission's station (Status::missionCompleted with ModStation): the
+        /// player is still docked there when the next step begins.</summary>
+        static readonly HashSet<int> DockedTypes = new HashSet<int>
+        {
+            StoryType.DockedAny, StoryType.Dock, StoryType.Purchase, StoryType.WeaponAndArmor, StoryType.DeliverOrMount,
+            StoryType.Lounge, StoryType.LoungeWithGoods, StoryType.EquipCategory,
+        };
+
+        /// <summary>Where the player is when the step after 'm' begins, by m's type: docked at the station of a docked type;
+        /// in space after a call that comes after the launch (and the add-on entry calls, an empty mission); unchanged for the
+        /// types done anywhere (freelance count, cargo load, the delayed call, step 59's convoy list); else in the orbit the
+        /// level played in (the Void for -1, the attacked station for 0xa1).</summary>
+        static Place PlaceAfter(StoryMission m, Place cur)
+        {
+            if (m == null || m.IsEmpty || m.type == StoryType.CallAfterLaunch) return cur.how == Entry.Docked ? Place.Launch(cur.station) : cur;
+            switch (m.type)
+            {
+                case StoryType.FreelanceCount: case StoryType.CargoLoad: case StoryType.DelayedCall: case StoryType.TargetList: return cur;
+                case StoryType.VoidInvasion: return cur.FlyTo(Session.VoidInvasionStation);
+            }
+            return DockedTypes.Contains(m.type) ? Place.Docked(m.station) : cur.FlyTo(m.station);
+        }
+
+        /// <summary>Where the original moves the player as step 'n' begins, when that isn't simply where the previous step was
+        /// played (null): the moves after the success conversations (StorySpace.AfterSuccess: MGame::OnTouchEnd; StationMenu:
+        /// ModStation::OnTouchEnd's launches into a story orbit without a camera at 144 / 160) and the level scripts' own
+        /// (LevelScript: 14 arrested, 42's ride out of the Void, 81's dock at Kothar, 89's at Thynome).</summary>
+        static Place? ExitTo(int n, Place cur) => n switch
+        {
+            15 => Place.Docked(98),                                                  // arrested, taken to Alioth
+            22 => Place.Docked(55),                                                  // back into Kappa's station
+            43 => Place.Arrive(Session.VoidReturnStation, Session.VoidOrbit),       // the ride out of the Void (Status+0x84)
+            60 => Place.Arrive(22, cur.station),                                     // remake pick: the last convoy, at Dekato
+            65 => Place.Arrive(100, cur.station),                                    // Khador freed: on to Kothar
+            74 => Place.Docked(100),                                                 // the convoy taken: docked at Kothar
+            82 => Place.Docked(100),                                                 // Alice stranded: back at Kothar
+            90 => Place.Docked(10),                                                  // after the supernova: Thynome
+            100 => Place.Docked(120), 110 => Place.Docked(10), 120 => Place.Docked(126), 134 => Place.Docked(112),
+            144 => Place.InOrbit(112), 160 => Place.InOrbit(10),
+            155 => Place.Arrive(Session.VoidReturnStation, Session.VoidOrbit),      // out of the Void
+            162 => Place.Docked(93),
+            _ => null,
+        };
+
+        /// <summary>The player can be docked at 'station' at step 'n': a real station with a station in its orbit
+        /// (Status::inEmptyOrbit), and not one refusing docking at 49-54 (only Kanado takes the K'Suukk).</summary>
+        static bool Dockable(int station, int n) =>
+            station >= 0 && !World.OrbitLayout.IsEmptyOrbit(station, n) && !(n >= 49 && n <= 54 && station != 74);
+
+        /// <summary>Remake-only (the main menu's mission select): a new game that starts at story step 'target' (through
+        /// MissionSelectStart). The step's campaign starts as usual (main game, Valkyrie from 45, Supernova from 84), then
+        /// every step up to the target is replayed: what the player does during it (PlayStep), its reward, then Advance (the
+        /// side effects of nextCampaignMission: items, ships, revealed systems...), while following where the original's
+        /// flow puts the player (PlaceAfter, ExitTo; entering the Void remembers the station as Status+0x84). The start: the
+        /// step's story orbit (Status::departStation) when it has one, launched from its station when docked there, else
+        /// arriving from where the previous step left the player; otherwise that place itself: docked, or in that orbit when
+        /// the previous step ended in space or the station takes no ship (an empty orbit, 49-54). Returns the scene to load.</summary>
         public static string StartAtMission(Database db, int target)
         {
-            target = Mathf.Clamp(target, 0, LastIndex);
+            target = MissionSelectStart(Mathf.Clamp(target, 0, LastIndex));
             var campaign = target >= Dlc1WonIndex ? Campaign.Supernova : target >= GameWonIndex ? Campaign.Valkyrie : Campaign.GalaxyOnFire2;
             Session.Campaign = campaign;
             string scene = StartCampaign(db, campaign);
             if (Index >= target) return scene;
-            int lastStation = Session.StationIndex;
+            // The main game starts in the prologue's orbit, the add-ons docked (Dima, Dis).
+            var place = campaign == Campaign.GalaxyOnFire2 ? Place.InOrbit(78) : Place.Docked(Session.StationIndex);
             while (Index < target)
             {
                 var m = Mission;
-                if (m != null && !m.IsEmpty)
-                {
-                    Session.Credits += Mathf.Max(0, m.reward);   // the success dialogue's reward
-                    if (m.station >= 0) lastStation = m.station;
-                }
-                Advance(db);
-                if (Index == 1 && target > 1) { GiveBetty(); Advance(db); }   // docking after the rescue
+                PlayStep(db, Index);
+                if (m != null && !m.IsEmpty) Session.Credits += Mathf.Max(0, m.reward);   // the success dialogue's reward
+                var next = PlaceAfter(m, place);
+                int n = Advance(db);
+                next = ExitTo(n, next) ?? next;
+                if (next.station == Session.VoidOrbit && next.from >= 0) Session.VoidReturnStation = next.from;   // Status+0x84
+                place = next;
                 if (Index > target) break;   // 52 / 128 skip a step
             }
-            if (campaign == Campaign.GalaxyOnFire2 && Index > 6)
-            {
-                // Step 6 buys and mounts a weapon and armor: the free tutorial gear of Var Hastra.
-                if (!Session.Equipment.Exists(e => db.Item(e.item)?.categoryId == 0)) Session.Equipment.Add(new ItemStack(0, 1));
-                if (!Session.Equipment.Exists(e => db.Item(e.item)?.categoryId == 10)) Session.Equipment.Add(new ItemStack(55, 1));
-            }
-            if (campaign == Campaign.GalaxyOnFire2 && Index > 8)
-                foreach (int h in new[] { 0x17, 8, 9, 10, 0x1c, 0x15, 0xd, 0x13, 0xe, 0xf, 0x1d, 0x1e, 0x20, 0x21, 0x22, 0x23, 0x24, 0x38 })
-                    Session.Hints.Add(h);
             GiveStepRequirements(db);
             Session.PlayerHull = Session.PlayerArmor = -1;
             Session.PlayerShield = -1f;
-            Session.PreviousStationIndex = -1;
+            // Status::nextCampaignMission flags the chapter call at 93 / 111 / 143; the replay has passed the earlier ones.
+            Session.StoryRadioPending = Index == 93 || Index == 111 || Index == 143;
 
-            // Where the step plays: its story orbit (Status::departStation), the Void, or docked at the last station.
+            // Where the step plays: its story orbit (Status::departStation), else where the previous step left the player.
+            int n0 = Index;
             int orbit = Mission != null && Mission.type == StoryType.VoidInvasion ? Session.VoidInvasionStation : Mission != null ? Mission.station : -2;
             if (Mission != null && !Mission.IsEmpty && orbit >= -1 && IsLevelMission(orbit))
+                place = place.station == orbit && place.how == Entry.Docked && DockedTypes.Contains(Mission.type) ? place : place.FlyTo(orbit);
+            // A docked start needs a station that takes the ship, a launch a station to launch from: else in that orbit.
+            if ((place.how == Entry.Docked && !Dockable(place.station, n0))
+                || (place.how == Entry.Launch && (place.station < 0 || World.OrbitLayout.IsEmptyOrbit(place.station, n0))))
+                place = Place.Arrive(place.station, place.from != place.station ? place.from : -1);
+            if (place.station == Session.VoidOrbit && place.from >= 0) Session.VoidReturnStation = place.from;
+            Session.StationIndex = place.station;
+            Session.PreviousStationIndex = place.how == Entry.Arrive ? place.from : -1;
+            Session.LaunchedFromStation = place.how == Entry.Launch;
+            Session.ArrivedByTravel = place.how == Entry.Arrive;
+            // Out of the Void by the wormhole (comingFromAlienWorld): the main game's way back; the add-ons jump or travel.
+            Session.ComingFromVoid = place.how == Entry.Arrive && place.from == Session.VoidOrbit && n0 < GameWonIndex;
+            return place.how == Entry.Docked ? "Station" : "Space";
+        }
+
+        static readonly int[] TutorialHints = { 0x17, 8, 9, 10, 0x1c, 0x15, 0xd, 0x13, 0xe, 0xf, 0x1d, 0x1e, 0x20, 0x21, 0x22, 0x23, 0x24, 0x38 };
+
+        /// <summary>The mission select's replay: what the player does during step 'k' in the original before it completes
+        /// (bought, built, picked up, the level scripts' own changes), so the steps after it find it done. The
+        /// nextCampaignMission side effects come from Advance.</summary>
+        static void PlayStep(Database db, int k)
+        {
+            switch (k)
             {
-                Session.StationIndex = orbit;
-                bool alien = orbit == Session.VoidOrbit;
-                Session.LaunchedFromStation = !alien;
-                Session.ArrivedByTravel = alien;
-                return "Space";
+                case 1: GiveBetty(); break;                                         // docked after the rescue (ModStation::OnInitialize)
+                case 6: EnsureMounted(db, 0, 0); EnsureMounted(db, 10, 55); break; // Var Hastra's free Nirai Impulse EX 1 and E2 Exoclad
+                case 8: foreach (int h in TutorialHints) Session.Hints.Add(h); break;   // the tutorial's hints shown
+                case 20: EnsureMounted(db, 6, 41, 10); break;                       // Kappa's free EMP GL I (531: none, no launch at 21)
+                case 50: Session.Standing[0] = 100; break;                          // LevelScript 0x32: Standing::setStanding(0, 100), the Vossk hostile
+                case 58: Shop.AddToCargo(179, 10); break;                           // the 10 Liberators built (kept: 59's kill bonus)
+                case 77: TakeShip(db, 37, 100); break;                              // Khador's Cronus at Kothar (326: no launch in another ship)
+                case 91: Session.StoryCounter = 10; EnsureMounted(db, 20, 93); break;   // the 10 miners aboard, in a Large Cabin
+                case 92: Session.StoryCounter = 0; break;                           // dropped at the transporter
+                case 118: Shop.AddToCargo(209, 1); break;                           // the K'mirkk Toad Mutagen bought at Bak S'ondorr
             }
-            Session.StationIndex = lastStation >= 0 ? lastStation : Session.StationIndex >= 0 ? Session.StationIndex : 78;
-            Session.LaunchedFromStation = Session.ArrivedByTravel = false;
-            return "Station";
+        }
+
+        /// <summary>Mounted if the ship has nothing of that category (else at least 'amount' of it).</summary>
+        static void EnsureMounted(Database db, int category, int item, int amount = 1)
+        {
+            var have = Session.Equipment.Find(e => db.Item(e.item)?.categoryId == category);
+            if (have == null) Session.Equipment.Add(new ItemStack(item, amount));
+            else if (have.amount < amount) have.amount = amount;
+        }
+
+        /// <summary>A dealer ship bought at 'station' like Hangar.BuyShip: the old hull traded in at its price there, every
+        /// mounted item to the first free slot of its type, the rest to the hold; mods stay with the old hull.</summary>
+        static void TakeShip(Database db, int ship, int station)
+        {
+            if (Session.ShipIndex == ship || db.Ship(ship) == null) return;
+            Session.Credits += Mathf.Max(0, Shop.ShipPrice(db, Session.ShipIndex, station) - Shop.ShipPrice(db, ship, station));
+            var slots = db.Ship(ship).slots;
+            var mounted = Session.Equipment;
+            Session.ShipIndex = ship;
+            Session.ShipMods = new List<int>();
+            Session.Equipment = new List<ItemStack>();
+            Session.SelectedSecondary = -1;
+            foreach (var e in mounted)
+            {
+                int type = db.Item(e.item)?.TypeId ?? 4;
+                int max = slots == null ? 0 : type switch { 0 => slots.primary, 1 => slots.secondary, 2 => slots.turret, 3 => slots.equipment, _ => 0 };
+                if (Session.Equipment.FindAll(x => (db.Item(x.item)?.TypeId ?? 4) == type).Count < max) Session.Equipment.Add(e);
+                else Shop.AddToCargo(e.item, Mathf.Max(1, e.amount));
+            }
         }
 
         /// <summary>The debug start: the equipment the step's planet-jump checks ask for (RequirementRefusal, 532), so a jump
@@ -218,16 +346,11 @@ namespace GoF2Remake.Data
         /// stay for the salvage steps after it). Added as mounted if the ship has none of that kind.</summary>
         static void GiveStepRequirements(Database db)
         {
-            void Ensure(int category, int item, int amount = 1)
-            {
-                var have = Session.Equipment.Find(e => db.Item(e.item)?.categoryId == category);
-                if (have == null) Session.Equipment.Add(new ItemStack(item, amount));
-                else if (have.amount < amount) have.amount = amount;
-            }
+            void Ensure(int category, int item, int amount = 1) => EnsureMounted(db, category, item, amount);
             int n = Index;
             if (Session.Campaign == Campaign.GalaxyOnFire2 && n >= 24) { Ensure(17, 81); Ensure(13, 68); }   // Telta Quickscan, AB-1
             if (Session.Campaign != Campaign.Supernova) return;
-            if (n == 91 || n == 94) Ensure(20, 93);                     // Large Cabin
+            if (n >= 91 && n <= 94) Ensure(20, 93);                     // Large Cabin
             if (n >= 105) Ensure(38, 206);                              // Gamma Shield II
             if (n == 135) Ensure(19, 86);                               // IMT Extract 1.3
             if (n == 139)
@@ -483,7 +606,11 @@ namespace GoF2Remake.Data
                 case 28: Session.VoidInvasionSystem = 18; Session.VoidInvasionStation = 91; break;
                 case 34: Shop.RemoveFromCargo(164, 50); Blueprints.UnlockFromStory(db, n); break;   // the Void Crystals -> the Khador blueprint
                 case 58: Blueprints.UnlockFromStory(db, n); RestoreOwnShip(); break;              // Liberator; the own ship back
-                case 72: case 104: case 141: Blueprints.UnlockFromStory(db, n); break;              // Disruptor, Gamma II, Chromo Plasma
+                case 72:   // case 0x47: the Disruptor blueprint (0xb7) unlocked, a Void Essence (175) in the hold (Ship::addCargo)
+                    Blueprints.UnlockFromStory(db, n);
+                    Shop.AddToCargo(175, 1);
+                    break;
+                case 104: case 141: Blueprints.UnlockFromStory(db, n); break;                       // Gamma II, Chromo Plasma
                 case 42: Session.VoidInvasionSystem = Session.VoidInvasionStation = -10; break;
                 case 45:
                     Session.Credits += 40000;

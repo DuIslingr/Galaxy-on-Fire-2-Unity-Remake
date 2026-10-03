@@ -1294,7 +1294,9 @@ namespace GoF2Remake.UI
             List<VisualElement> sectionRows = null;
             for (int i = 0; i <= Story.LastIndex; i++)
             {
-                if (i == 53 || i == 129) continue;   // nextCampaignMission skips them (52 -> 54, 128 -> 130)
+                // Steps never current on their own (53 / 129 skipped, 42 inside 41's level, 46 / 107 passed through, 149 / 150
+                // dialogue slots): the step that plays them stands for them.
+                if (Story.MissionSelectStart(i) != i) continue;
                 var campaign = CampaignOf(i);
                 if (section != campaign)
                 {
