@@ -257,6 +257,11 @@
     border-radius: 4px;
 }
 
+#zoomButton {
+    margin-left: auto;
+    margin-right: 16px;
+}
+
 #keyButton {
     margin-left: auto;
 }

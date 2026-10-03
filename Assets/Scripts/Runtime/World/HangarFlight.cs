@@ -168,7 +168,8 @@ namespace GoF2Remake.World
             padYaw = finalRotation.HasValue ? finalRotation.Value.eulerAngles.y : laneYaw;
             startYaw = ship.eulerAngles.y;
 
-            if (asm != null) asm.SetExhaust(true, false);
+            // The NPC engine parts, or the engine glow for a ship without them (the Kaamo Club's 55-63 flew without flames).
+            if (asm != null) asm.SetExhaust(true, !asm.HasNpcExhaust);
             if (engine != null && engine.clip != null)
             {
                 engine.volume = arriving ? engineVolume : engineVolume * 0.25f;
@@ -485,7 +486,7 @@ namespace GoF2Remake.World
             else ship.gameObject.SetActive(false);
             if (arriving) ship.SetPositionAndRotation(pad, Quaternion.Euler(0f, padYaw, 0f));
             if (engine != null) engine.Stop();
-            if (arriving && asm != null) asm.SetExhaust(false, false);   // parked: exhaust off (createShip / setExhaustVisible)
+            if (arriving && asm != null) asm.SetExhaust(false, !asm.HasNpcExhaust);   // parked: exhaust off (createShip / setExhaustVisible)
         }
 
         /// <summary>The engine loop for a ship in the hangar: the player's own (PlayerEngine's pick) or a random NPC engine

@@ -191,6 +191,11 @@
     transition-timing-function: ease-out-cubic;
 }
 
+/* Options: wider than the other panels, so its six tabs fit on one line. */
+#optionsPanel {
+    max-width: 1000px;
+}
+
 .panel--wide {
     max-width: 1020px;
 }
@@ -473,8 +478,13 @@
     margin: 0 0 12px 0;
 }
 
+/* The password takes what is left and shrinks (min-width 0): its placeholder's width pushed the player limit out of the
+   card with the wider Serpentine font. */
 .mp-host-row .mp-host-password {
     flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: 0;
+    min-width: 0;
     margin: 0 14px 0 0;
 }
 
@@ -485,6 +495,7 @@
 }
 
 .mp-max-players {
+    flex-shrink: 0;
     width: 64px;
     margin: 0;
 }
@@ -796,6 +807,7 @@
 .card-row {
     flex-direction: row;
     justify-content: space-between;
+    flex-shrink: 0;   /* the cards keep their height (the New Game+ toggle goes under them) */
 }
 
 .campaign-card {
@@ -866,6 +878,21 @@
     background-color: var(--gof-cyan-faint);
     border-left-color: var(--gof-amber);
     translate: 8px 0;
+}
+
+/* The new game's Kaamo Club expansion toggle (under the economy choices; a choice, not a start button). */
+.choice-button--toggle {
+    margin-top: 22px;
+    flex-shrink: 0;
+    border-left-color: var(--gof-line);
+}
+
+.choice-button--toggle.choice-button--on {
+    border-left-color: var(--gof-amber);
+}
+
+.choice-button--on .choice-title {
+    color: var(--gof-amber);
 }
 
 .choice-title {
@@ -1048,6 +1075,12 @@
     color: var(--gof-text);
     margin-bottom: 26px;
     -unity-text-align: upper-left;
+}
+
+/* The pilot name prompt's field (MainMenu.NeedsName), hidden in the other dialogs. */
+.dialog-field {
+    display: none;
+    margin: -8px 0 26px 0;
 }
 
 .dialog-buttons {

@@ -10,7 +10,7 @@ release says how to install it.
 
 **Status:** the main campaign, the Valkyrie add-on and the Supernova add-on can be played from start to end. The
 Supernova opening and final battle have been rebuilt from the original scripts, but the add-on has not been fully played
-through yet. Multiplayer is experimental. A build's version is the date and time of its release (for example
+through yet. Multiplayer and VR are experimental. A build's version is the date and time of its release (for example
 `2026.10.01.1200`), the same on every platform, shown in the main menu.
 
 ## Features
@@ -29,18 +29,30 @@ through yet. Multiplayer is experimental. A build's version is the date and time
 - **Multiplayer (experimental):** a shared universe, online through a server browser or a join code, or over a local
   network. Players can host from the game or run a dedicated server. Players see each other in space and in the
   hangars, and can fight each other. Squads share bar missions and their rewards. Everyone shares the NPC traffic, the
-  crates, the asteroids and the shop stock. Local and global chat.
+  crates, the asteroids and the shop stock. Local and global chat, chat commands, admin tools and scripted event game
+  modes (waves of pirates, survival) with on-screen titles, timers, dialogs and rewards.
+- **VR (experimental):** PC VR through OpenXR with the `-vr` launch option: a cockpit in flight with the instruments on
+  its displays, standing in the hangars and the bars, the menus on a floating screen with a laser pointer.
 - **Remake extras:**
   - Arrival and take-off flights in the hangar, animated dialogue text, and the original-style bloom as an option.
+  - Pirate events: now and then an orbit holds a pirate outpost or a pirate boss with a bounty (an option).
+  - **New Game+:** with a finished game in your saves, start again with its credits, blueprints, medals and ships.
+  - The Kaamo Club expansion can be owned from the start of a new game.
+  - A full-map overview on the star map, new medals as a short toast instead of a window, tutorial popups as an option
+    (off by default; a new game asks).
   - Four difficulties (Easy, Normal, Hard, Extreme) that can be changed during a game, and a choice between the PC
     and Android economies for a new game.
-  - Other ships' engines like the player's (an option), upscaling (FSR 1, STP), photo mode and screenshots.
+  - Other ships' engines like the player's (an option), photo mode, screenshots, an FPS counter, and every weapon's
+    own shot sound (an option; the original only plays the first gun's).
+  - Upscaling: FSR 1 and STP everywhere they are supported, NVIDIA DLSS and AMD FSR 2 / 3 / 4 on Windows, MetalFX on
+    macOS and iOS.
   - Discord Rich Presence on Windows: your Discord status shows what you are doing in the game.
   - A Dutch translation, and a choice between German and English voices.
   - Debug tools (Options > Gameplay): jump to any story step, cheats, give items, spawn ships and objects.
   - Export and import of all save games as one file (Options > Gameplay in the main menu), to move your games to
     another PC or phone. Importing checks the file first and replaces every existing save.
-- **Controls and screens:** touch, tilt, keyboard and mouse, and controllers (shown with Xbox buttons), all rebindable.
+- **Controls and screens:** touch, tilt, keyboard and mouse (with the PC version's clickable on-screen buttons when
+  mouse steering is off), and controllers (shown with Xbox buttons), all rebindable.
   Gyro steering with a DualSense, DualShock 4 or Switch Pro Controller on Windows. Haptic feedback on controllers and
   Android phones (hits, collisions, explosions, weapons, boost, jumps and mining) with an intensity setting. Landscape
   screens from 4:3 up to 32:9, phones included.
@@ -158,6 +170,82 @@ Good to know:
   player who arrives there, so the server itself needs very little CPU.
 - Players on a different game version are turned away with a message saying which version the server runs.
 
+The console also runs every chat command below without the "/" (`list` and `say` are `players` and `g`). Tab completes
+command names, Up / Down go through the history.
+
+#### Chat commands
+
+Open the chat with **B** and type a line starting with `/`. Typing `/` lists the commands; **Tab** completes commands
+and player names. Everyone can use:
+
+| Command | What it does |
+|---|---|
+| `/help` | The commands you can use. |
+| `/players` | Who is playing, where, in which ship and squad. |
+| `/g <text>`, `/l <text>` | A line to the Global or Local channel. |
+| `/w <player> <text>` | A private message. |
+| `/invite <player>`, `/leave` | Invite a pilot docked at your station to your squad, or leave it. |
+| `/netstats` | Network statistics (ping, packet loss, data rates). |
+| `/pos` | Your orbit and position, in the coordinates `/tp` takes. |
+
+**Admin commands** are for the host's own player, the dedicated server's console, and the players the host makes
+admin with `/admin <player>` (`/unadmin` takes it back). They work on players by name, by client id, or with a
+selector: `@a` everyone, `@s` yourself, `@p` the nearest other player, `@r` a random one, and `@alive`, `@space`,
+`@docked`, `@dead`, `@survivors` (in an event: never destroyed since it began). In the chat, leaving out the players
+means yourself.
+
+| Command | What it does |
+|---|---|
+| `/kick <player> [reason]` | Removes a player; they see the reason. |
+| `/mute <players> [minutes]`, `/unmute` | Silences a player's chat. |
+| `/tp [players] <player \| station [x y z \| dock]>`, `/tphere <player>` | Teleports to a player, an orbit (by number or name) or into a station's hangar. |
+| `/kill`, `/heal`, `/ammo`, `/reveal`, `/peace [players]` | Destroys, repairs, refills secondaries, reveals the map, resets the standings. |
+| `/give [players] <item> [amount] [mount]` | Items into the hold (docked, `mount` also mounts them). |
+| `/credits [players] <amount>` | Gives (or with a minus, takes) credits. |
+| `/spawn [players] <ship \| object> [race] [count] [enemy \| friendly \| neutral] [at x y z]` | Ships (by number or name) or scenery near the players. |
+| `/ship [players] <ship \| own>` | Swaps the players' ship (any hull of the debug tools), or back to their own. |
+| `/cheat [players] <god \| ammo \| cooldown \| boost \| onehit \| locks \| shopping \| jumps> [on \| off]` | A cheat for those players, this session only. |
+| `/title [players] <text> [\| subtitle] [for <seconds>]` | A big title on their screen (`clear` removes it). |
+| `/timer [players] <seconds \| m:ss> [label]` | A countdown at the top of their screen (`stop` removes it). |
+| `/dialog [players] <speaker> : <text> [\| [speaker :] next page ...]` | A conversation window. The speaker is a story character ("Keith", "Keith as Bob"), a race and a name ("vossk K'ekki") or `player`; `%player%` is the reader's name. A page `reward: <rewards>` pays when it closes. |
+| `/reward [players] <credits \| item [amount]> [+ more] [\| title]` | Credits and items, shown in the mission reward box. |
+| `/event <name \| stop \| list>` | Starts or stops an event script. |
+
+#### Events
+
+An event is a small text script the server runs, for game modes like waves of pirates. Two come with the game:
+`/event waves` (more pirates every wave, the survivors paid per wave) and `/event survival`. To write your own, put a
+`<name>.txt` file in the `Events` folder next to the game (or the dedicated server) and start it with `/event <name>`.
+A script is a list of commands without the "/", plus `wait <seconds>`, `wait until <condition> [timeout <seconds>]`,
+`if` / `else` / `end`, `while` / `end`, `repeat <n> [as <variable>]` / `end`, `set <variable> = <value>`,
+`score <kills | time>`, `winner` and `stop`. `{...}` puts a value into a command. Conditions can use `enemies` (the
+event's living enemy ships), `ships`, `players`, `inspace`, `docked`, `dead` and `time`. An event ends by itself when
+nobody is left alive in its orbit, and announces the winner (the most kills, or the longest time alive).
+
+```
+title @a Wave 1 | Incoming for 4
+spawn @a Hiro 4 pirate enemy
+wait until enemies == 0 or inspace == 0
+reward @survivors 1000 | Wave 1 survived
+winner
+```
+
+## VR (experimental)
+
+Start the Windows build with `-vr` (for example a shortcut to `GoF2Remake.exe -vr`) with a PC VR headset connected and an
+OpenXR runtime active (SteamVR, Meta Quest Link, Windows Mixed Reality). Without a headset the game starts normally.
+
+- **Flight:** you sit in a cockpit. The shield, hull and cargo readouts are on its displays, the radar in the middle of
+  the dashboard, the rest of the HUD on the canopy. Cutscenes keep the horizon level and fade between shots.
+- **Stations:** you stand in the hangar beside your ship (grab it with the grip and pull to turn it) and in the bar
+  (point at a visitor and pull the trigger to talk).
+- **Menus** appear on a floating screen; point with the right controller and pull the trigger.
+- **Controls:** the controllers work as a gamepad (sticks, triggers, A / B / X / Y, the grips as LB / RB). With Options >
+  Controls > "VR flight: grab the stick and throttle" you fly with the cockpit's side-stick (right hand) and throttle
+  lever (left hand) instead.
+
+The cockpit is the same for every ship for now. VR has only been tested without a headset so far.
+
 ## Controls (keyboard)
 
 | Key | Action |
@@ -183,8 +271,12 @@ Good to know:
 | F12 | Screenshot |
 | Esc | Pause |
 
-Every flight control can be rebound in Options > Controls (two keyboard / mouse keys and a controller button each).
-Controllers and touch are fully supported. The in-game hints show the buttons for whichever input you last used.
+Every flight control can be rebound in Options > Key bindings (two keyboard / mouse keys and a controller button
+each). Controllers and touch are fully supported. The in-game hints show the buttons for whichever input you last used.
+
+**Controllers on Linux:** Xbox, PlayStation and Switch Pro controllers work directly. On a Steam Deck in desktop mode,
+or with a controller the game doesn't recognise, add the game to Steam (Add a Non-Steam Game) and start it from there:
+Steam Input then presents the controls as an Xbox controller.
 
 ## Project layout
 
@@ -210,5 +302,5 @@ The remake is built on the **FULL HD version and modifications made by KiritoJPK
 ABYSS® are registered trademarks of FISHLABS Entertainment GmbH. All rights reserved. This is an unofficial fan project,
 not affiliated with or endorsed by FISHLABS or Deep Silver.
 
-Fonts: Inter (SIL Open Font License). Controller gyro: [JoyShockLibrary](https://github.com/JibbSmart/JoyShockLibrary)
-by Julian Smart (MIT License). Built with Unity, the Universal Render Pipeline and Netcode for GameObjects.
+Fonts: the original game's interface typeface, and Inter (SIL Open Font License). Controller gyro: [JoyShockLibrary](https://github.com/JibbSmart/JoyShockLibrary)
+by Julian Smart (MIT License). Built with Unity, the Universal Render Pipeline, Netcode for GameObjects and OpenXR.

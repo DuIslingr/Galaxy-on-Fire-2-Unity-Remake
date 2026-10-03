@@ -33,7 +33,6 @@ namespace GoF2Remake.World
         const int CapitalStats = 14;
         /// <summary>Radius (m) above which a hull is "big": fighters are under 90 m, the freighters from 300 m.</summary>
         const float BigRadius = 150f;
-        const float DefaultFarClip = 300000f * M;
         const string HullPref = "cheat_hull", PreviousPref = "cheat_previousShip";
 
         public sealed class Hull
@@ -245,6 +244,7 @@ namespace GoF2Remake.World
             if (model == null) return;
             var h = Current(db);
             if (h != null && h.holdAfterOneOff) PartAnimation.HoldAllAfterOneOff(model);
+            else if (h != null && h.assembly == "v_station_battlestation_anim_mission_object") PartAnimation.HoldAllAtEnd(model);   // unfolded, like levels 80 / 154
         }
 
         /// <summary>The player's engine glow and exhaust particles belong to the ship's own model (the freighters and the
@@ -317,13 +317,13 @@ namespace GoF2Remake.World
         /// around its middle (the battleship's pivot is at its bow), the camera sits just behind the stern and above the
         /// deck, and the far plane reaches past the bow; any other ship gets the original's offsets (TargetFollowCamera:
         /// (0, 600, -1338) / (0, 600, -650) units) and the level's far plane.</summary>
-        public static void FitCamera(Transform root, Transform model, ChaseCamera chase)
+        public static void FitCamera(Transform root, Transform model, ChaseCamera chase, float levelFarClip)
         {
             var cam = chase != null ? chase.GetComponent<Camera>() : null;
             if (!Big || model == null)
             {
                 if (chase != null) { chase.offset = new Vector3(0f, 600f, -1338f) * M; chase.lookOffset = new Vector3(0f, 600f, -650f) * M; }
-                if (cam != null) cam.farClipPlane = DefaultFarClip;
+                if (cam != null) cam.farClipPlane = levelFarClip;
                 return;
             }
             var b = LocalBounds(root, model);
@@ -332,7 +332,7 @@ namespace GoF2Remake.World
             float halfLength = b.extents.z, halfHeight = b.extents.y;
             chase.offset = new Vector3(0f, halfHeight * 1.6f, -halfLength * 1.25f);
             chase.lookOffset = new Vector3(0f, halfHeight * 1.1f, halfLength * 0.1f);
-            if (cam != null) cam.farClipPlane = Mathf.Max(DefaultFarClip, chase.offset.magnitude + b.extents.magnitude * 2f + 2000f);
+            if (cam != null) cam.farClipPlane = Mathf.Max(levelFarClip, chase.offset.magnitude + b.extents.magnitude * 2f + 2000f);
         }
 
         /// <summary>The hangar's turntable: a big hull shrunk to a large ship's size so the hangar camera sees it.</summary>

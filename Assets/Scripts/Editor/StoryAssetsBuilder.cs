@@ -124,7 +124,8 @@ namespace GoF2Remake.EditorTools
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 string name = Path.GetFileNameWithoutExtension(path);
-                if (prefix.Length > 0 && name.StartsWith(prefix)) name = name.Substring(prefix.Length);
+                // "de_" (VOICE, DLC_VOICE, GENERIC, LOUNGE) or "DE_" (all of DLC2_VOICE_deu, the Supernova lines).
+                if (prefix.Length > 0 && name.StartsWith(prefix, System.StringComparison.OrdinalIgnoreCase)) name = name.Substring(prefix.Length);
                 names.Add(name);
                 clips.Add(AssetDatabase.LoadAssetAtPath<AudioClip>(path));
             }

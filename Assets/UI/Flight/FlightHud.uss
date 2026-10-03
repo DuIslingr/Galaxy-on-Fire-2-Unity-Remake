@@ -26,7 +26,8 @@
     overflow: hidden;
 }
 
-.input-touch .touch-layer {
+.input-touch .touch-layer,
+.hud-cursor .touch-layer {
     display: flex;
 }
 
@@ -72,11 +73,6 @@
     font-size: 22px;
     color: #FFFFFF;
     -unity-text-align: upper-center;
-}
-
-/* Touch has the bottom plate instead of the label under the bars. */
-.input-touch .secondary-label--shown {
-    display: none;
 }
 
 /* ---- crosshair (screen projection of ship + forward * 22000 units) ---------------------------- */
@@ -182,27 +178,37 @@
     color: #FF6A4D;
 }
 
+/* Hud::drawEventQueue: one message on the plate 0x4c3 (392 x 44, size set in code) at the top centre, y -8, or 42 under
+   the lock plate; the text 12 px into it. */
 .hud-messages {
+    display: none;
     position: absolute;
-    top: 196px;
+    top: -8px;
     left: 50%;
-    width: 900px;
-    margin-left: -450px;
-    align-items: center;
+    margin-left: -196px;
+}
+
+.hud-messages--shown {
+    display: flex;
+}
+
+.hud-messages--low {
+    top: 42px;
 }
 
 .hud-message {
-    margin-top: 4px;
-    padding: 6px 16px;
+    position: absolute;
+    left: -200px;
+    right: -200px;
+    top: 10px;
     font-size: 20px;
     color: #FFFFFF;
-    background-color: rgba(4, 10, 18, 0.6);
-    border-radius: 3px;
-    transition-duration: 0.4s;
+    -unity-text-align: upper-center;
+    white-space: nowrap;
 }
 
-.hud-message--fade {
-    opacity: 0;
+.hud-message--orange {
+    color: rgb(255, 128, 0);
 }
 
 /* ---- navigation markers (NavigationView): brackets, names, distances, gate icons -------- */
@@ -252,6 +258,16 @@
 
 .nav-button--autopilot {
     top: 180px;
+}
+
+/* VR (Vr.VrCockpit): the HUD's corners are on the cockpit's displays, the canopy shows its middle: the menu there. */
+.hud-vr .radar-ellipse {
+    display: none;
+}
+
+.hud-vr .autopilot-menu {
+    left: 50%;
+    translate: -50% 0;
 }
 
 /* Autopilot menu (Hud::initHudMenu(3)): next to the autopilot button; the game is paused while it is open. */
@@ -358,7 +374,7 @@
     display: none;
 }
 
-/* ---- the selected secondary under the status bars (remake: no speed / throttle / boost readout) ----------- */
+/* ---- under the status bars: the remake's booster / cloak recharge (no speed / throttle / boost readout) ----------- */
 
 .speed-panel {
     position: absolute;
@@ -372,24 +388,45 @@
     top: 160px;
 }
 
-/* Hud::updateSecondaryWeaponString: "<name> (<amount>)" of the selected secondary; tap to switch (touch). */
-.secondary-label {
+/* Remake: the booster's and the cloak's recharge for keys / controllers (CooldownView): their shop icons (180 x 88),
+   darkened from the top while recharging, a short flash when ready. Touch shows them on its own buttons. */
+.cooldowns {
+    flex-direction: row;
+    margin-top: 6px;
+}
+
+.input-touch .cooldowns {
     display: none;
-    padding: 8px 14px;
-    font-size: 17px;
-    color: var(--gof-amber);
-    white-space: normal;
+}
+
+.cooldown {
+    width: 90px;
+    height: 44px;
+    margin-right: 6px;
+    -unity-background-scale-mode: scale-to-fit;
     background-color: rgba(4, 10, 18, 0.55);
     border-left-width: 3px;
     border-left-color: var(--gof-amber);
+    opacity: 1;
+    transition-property: opacity, background-color;
+    transition-duration: 0.2s;
 }
 
-.secondary-label--shown {
-    display: flex;
+.cooldown--waiting {
+    opacity: 0.55;
+    border-left-color: var(--gof-text-dim);
 }
 
-.secondary-label--empty {
-    color: var(--gof-text-dim);
+.cooldown--flash {
+    background-color: rgba(255, 190, 90, 0.5);
+}
+
+.cooldown-shade {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.6);
 }
 
 /* ---- keyboard / controller hints -------------------------------------------------------- */
@@ -405,6 +442,11 @@
 .input-keyboard .hints,
 .input-gamepad .hints {
     display: flex;
+}
+
+/* The PC cursor mode: its buttons are the controls (the bottom left holds the autopilot pill and the boost). */
+.input-keyboard.hud-cursor .hints {
+    display: none;
 }
 
 /* Phones: a narrower secondary plate. */
@@ -532,6 +574,27 @@
 }
 
 .hud-orbit-info .status-panel {
+    display: none;
+}
+
+/* ---- the radar ellipse (Radar::draw: image 0x4c7 four times mirrored around the centre; quarters made in FlightHud) ---- */
+
+.radar-ellipse {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    overflow: visible;
+    opacity: 0.6;
+}
+
+.radar-quarter {
+    position: absolute;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.hud-mining .radar-ellipse {
     display: none;
 }
 
@@ -865,7 +928,11 @@
 }
 
 /* Action Freeze (PhotoMode): the HUD hidden, the logo 0x534 at the top-right, the footer with Back and Save (remake). */
-.hud-photo #hud {
+/* MGame::OnRender2D in cinematic mode draws only the menu window and the lens flare: the hacking game and the object
+   docking's transfer counter (on the root, outside #hud) go too. */
+.hud-photo #hud,
+.hud-photo .hacking-layer,
+.hud-photo .transfer-counter {
     display: none;
 }
 
@@ -936,8 +1003,9 @@
     align-items: flex-end;
 }
 
-/* Touch: left of the pause button (0x4b8 at w - 121, 24). */
-.input-touch .hud-readout {
+/* Touch and the PC cursor mode: left of the pause button (0x4b8 at w - 121, 24). */
+.input-touch .hud-readout,
+.hud-cursor .hud-readout {
     right: 140px;
 }
 

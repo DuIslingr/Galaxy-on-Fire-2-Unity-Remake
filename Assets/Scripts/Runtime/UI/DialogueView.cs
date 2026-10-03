@@ -25,8 +25,15 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class DialogueView
     {
+        /// <summary>The newest dialogue window (the flight HUD's or the station menu's): multiplayer's /dialog shows there.</summary>
+        public static DialogueView Latest;
+
+        /// <summary>It is on screen (its panel lives: a scene change leaves the old one behind).</summary>
+        public bool Usable => root != null && root.panel != null;
+
         public struct Page
         {
             public int speaker;
@@ -52,6 +59,12 @@ namespace GoF2Remake.UI
         int page;
         bool message;
         float pauseMs;
+        /// <summary>Remake: a conversation that opens while the player is busy (drilling with the arrows, firing with Space)
+        /// ignores its keys, buttons and taps this long, so they don't turn its pages unread (Gunant's pirate warning at the
+        /// end of step 4's mining was skipped that way).</summary>
+        const float InputGraceSeconds = 0.8f;
+        float openedAt = -10f;   // Time.unscaledTime (the real clock: every view that shows one runs on it, Tick or not)
+        bool InGrace => Time.unscaledTime - openedAt < InputGraceSeconds;
         readonly TextReveal reveal;
         bool narration;
         int seenUpTo = -1;
@@ -85,6 +98,7 @@ namespace GoF2Remake.UI
         {
             root = container.Q("dialogueRoot");
             if (root == null) { Debug.LogError("DialogueView: no dialogueRoot (Dialogue.uxml instance) in the UI"); return; }
+            Latest = this;
             voice = voiceSource;
             portrait = root.Q("dialoguePortrait");
             speaker = root.Q<Label>("dialogueSpeaker");
@@ -105,14 +119,14 @@ namespace GoF2Remake.UI
             confirmYes.text = Localization.Get(134).ToUpperInvariant();
             confirmNo.text = Localization.Get(135).ToUpperInvariant();
             reveal = new TextReveal(text);
-            scroll.RegisterCallback<PointerDownEvent>(_ => reveal.Finish());   // a tap on the text shows it all
+            scroll.RegisterCallback<PointerDownEvent>(_ => { if (!InGrace) reveal.Finish(); });   // a tap on the text shows it all
         }
 
         Button Bind(string name, Action action)
         {
             var b = root.Q<Button>(name);
             b.RegisterCallback<PointerDownEvent>(_ => ButtonSound?.Invoke(true), TrickleDown.TrickleDown);
-            b.clicked += () => { ButtonSound?.Invoke(false); action(); };
+            b.clicked += () => { if (InGrace) return; ButtonSound?.Invoke(false); action(); };
             return b;
         }
 
@@ -132,6 +146,7 @@ namespace GoF2Remake.UI
             closed = onClosed;
             message = false;
             page = 0;
+            openedAt = Time.unscaledTime;
             seenUpTo = -1;
             shownSpeaker = null;
             root.AddToClassList("dialogue-backdrop--shown");
@@ -264,6 +279,7 @@ namespace GoF2Remake.UI
         {
             if (!IsOpen || paused) return;
             TickAnimation(unscaledDtMs);
+            if (InGrace) return;   // the keys of whatever the player was doing
             var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
             var pad = Gamepad.current;
             bool Pressed(Func<Keyboard, bool> k, Func<Gamepad, bool> g) => (kb != null && k(kb)) || (pad != null && g(pad));

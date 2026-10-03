@@ -11,7 +11,10 @@
 // back (ItemRefused); a dealer ship is reserved with the host before the trade (ReserveShip). Until the host's list is
 // here the docked player's list is empty (no trade against a list of their own). The host's lists get the stations'
 // docking extras (HostExtras: Kappa's EMP GL I at free play, energy cells at the deep science stations). Lists arriving
-// are applied between frames (Flush), never in the middle of a trade.
+// are applied between frames (Flush), never in the middle of a trade. The host checks each trade (NetState: the trader is
+// docked there, one unit of an item that exists, a dealer row only as reserved: the reserved one back or the trader's old
+// hull), sends the list once per frame however many units changed, and caps a row (MaxRowAmount) and the dealer list
+// (MaxShips), so no client grows the list everyone docked there receives.
 
 using System;
 using System.Collections.Generic;
@@ -73,7 +76,7 @@ namespace GoF2Remake.Multiplayer
             if (!Ready || stock == null || !Shared(stock.station)) return;
             // Nothing to trade until the host's list is here (Apply); the bar's agents stay.
             stock.items.Clear();
-            stock.ships?.Clear();
+            stock.ships?.Clear();   // (a traded-in row's mods wait for the list: Apply prunes against it)
             NetState.Instance.StockRequestRpc(stock.station);
         }
 
@@ -146,6 +149,7 @@ namespace GoF2Remake.Multiplayer
             if (stock.ships == null) stock.ships = new List<int>();
             stock.ships.Clear();
             stock.ships.AddRange(ships);
+            stock.PruneShipMods();   // the shared list carries no mods: a modded row only this player traded in keeps them
             Freelance.OnEnterStation(stock);   // a Stolen goods mission's documents (only its team's)
             Changed?.Invoke(station);
         }
@@ -213,7 +217,7 @@ namespace GoF2Remake.Multiplayer
                 row.amount += delta;
                 if (row.amount <= 0) e.items.Remove(row);
             }
-            else if (row != null) row.amount += delta;
+            else if (row != null) row.amount = Math.Min(row.amount + delta, MaxRowAmount);   // a seller can't grow a row without end
             else
             {
                 int at = e.items.FindIndex(r => r.item > item);
@@ -229,9 +233,13 @@ namespace GoF2Remake.Multiplayer
             int row = removed >= 0 ? e.ships.IndexOf(removed) : -1;
             if (row >= 0 && added >= 0) e.ships[row] = added;
             else if (row >= 0) e.ships.RemoveAt(row);
-            else if (added >= 0) e.ships.Add(added);
+            else if (added >= 0 && e.ships.Count < MaxShips) e.ships.Add(added);
             return true;
         }
+
+        /// <summary>The most units of one item and the most dealer ships the host keeps for a station (the generator's are
+        /// far fewer; trades beyond them don't grow the list sent to everyone docked there).</summary>
+        const int MaxRowAmount = 100000, MaxShips = 32;
 
         /// <summary>NetState's sweep: every stock older than ResetSeconds is made again and sent to the players docked there.</summary>
         internal static void HostTick(NetState state)

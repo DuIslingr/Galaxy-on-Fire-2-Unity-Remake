@@ -290,6 +290,7 @@ namespace GoF2Remake.Data
                     if (rs == null || !Station(rs.station)) return "an unknown station in the shop memory";
                     if (Stacks(rs.items, "shop memory") is string e4) return e4;
                     if (rs.ships != null && rs.ships.Exists(x => !Ship(x))) return "an unknown ship in the shop memory";
+                    if (rs.shipMods != null && rs.shipMods.Exists(m => m == null || !Ship(m.ship))) return "an unknown modded ship in the shop memory";
                     if (rs.agents != null)
                         foreach (var a in rs.agents)
                             if (a == null || !StationOrNone(a.station) || a.sellItem != -1 && !Item(a.sellItem) || a.sellShip != -1 && !Ship(a.sellShip)
@@ -381,6 +382,9 @@ namespace GoF2Remake.Data
                 if (s.wingmanPortrait != null && s.wingmanPortrait.Length == 5) Session.WingmanPortrait = s.wingmanPortrait;
                 Session.WingmenHired = s.wingmenHired;
                 Session.UnlockedBlueprints = new HashSet<int>(s.unlockedBlueprints ?? new List<int>());
+                // Saves made while step 59 locked the Liberator blueprint again (the original's lock is a no-op): back,
+                // for every game past 58 (a Supernova campaign advances through 58 too: startSupernova's 0x54 steps).
+                if (Session.CampaignMission > 58) Session.UnlockedBlueprints.Add(179);
                 Session.StoryAgentsAccepted = new HashSet<int>(s.storyAgentsAccepted ?? new List<int>());
                 if (s.version < 11)   // older saves: a blueprint seller whose blueprint is owned was bought from
                     foreach (var sa in AgentData.StoryAgents)

@@ -130,10 +130,16 @@
 
 /* remake: the Ship tab's hold items (not mounted): a sub-header and an outlined, dimmer row */
 .list-header--sub {
-    font-size: 15px;
-    letter-spacing: 2px;
-    color: var(--gof-text-dim);
-    padding: 8px 20px 2px 34px;
+    font-size: 16px;
+    letter-spacing: 1px;
+    color: var(--gof-amber);
+    padding: 10px 20px 4px 34px;
+}
+
+/* remake: the Ship tab's mounted items: tinted, with a cyan edge (the hold's items below are outlined and dimmer) */
+.list-row--mounted {
+    background-color: rgba(62, 200, 255, 0.06);
+    border-left-color: var(--gof-cyan);
 }
 
 .list-row--cargo {
@@ -213,6 +219,11 @@
 
 .row-badge--mounted {
     background-color: var(--gof-cyan);
+}
+
+/* remake: a Ship tab item that is in the hold, not mounted */
+.row-badge--cargo {
+    background-color: var(--gof-amber);
 }
 
 /* remake: a blueprint ingredient this station sells */

@@ -90,13 +90,14 @@ namespace GoF2Remake.UI
             distance = Mathf.Clamp(d.magnitude / M, MinDistance, MaxDistance);
             float yaw = Mathf.Atan2(-d.x, -d.z);
             float pitch = Mathf.Asin(Mathf.Clamp(d.y / Mathf.Max(d.magnitude, 1e-3f), -1f, 1f));
-            px = -yaw / 0.005f;
-            py = Mathf.Clamp(pitch / 0.005f, -200f, 200f);
+            px = yaw / 0.005f;   // Place's inverse
+            py = Mathf.Clamp(-pitch / 0.005f, -200f, 200f);
             fling = Vector2.zero;
             wheel = 0f;
             messageMs = 0f;
             message.text = "";
             root.AddToClassList("hud-photo");
+            FpsCounter.Suppressed = true;   // not in the photos either
             overlay.AddToClassList("photo-overlay--shown");
             Place();
         }
@@ -106,6 +107,7 @@ namespace GoF2Remake.UI
             if (!Active) return;
             Active = false;
             root.RemoveFromClassList("hud-photo");
+            FpsCounter.Suppressed = false;
             overlay.RemoveFromClassList("photo-overlay--shown");
             if (cam != null) { cam.transform.position = savedPos; cam.transform.rotation = savedRot; }
             if (chase != null) chase.enabled = chaseWasEnabled;
@@ -169,21 +171,22 @@ namespace GoF2Remake.UI
                 fling *= Mathf.Pow(0.9f, frames);
                 if (fling.magnitude <= 1f) fling = Vector2.zero;
             }
-            // Arrow keys +-4 px per frame, the sticks 8 px, the triggers zoom.
+            // MGame::OnUpdate in cinematic mode: the arrows as touch moves of -+4 px per frame (right -4: the camera goes to the
+            // ship's right, up -4: up); the sticks (remake) the same way at 8 px, the triggers zoom.
             if (kb != null)
             {
-                delta.x += ((kb.rightArrowKey.isPressed ? 1 : 0) - (kb.leftArrowKey.isPressed ? 1 : 0)) * 4f * frames;
+                delta.x += ((kb.leftArrowKey.isPressed ? 1 : 0) - (kb.rightArrowKey.isPressed ? 1 : 0)) * 4f * frames;
                 delta.y += ((kb.downArrowKey.isPressed ? 1 : 0) - (kb.upArrowKey.isPressed ? 1 : 0)) * 4f * frames;
             }
             if (pad != null)
             {
                 var s = pad.rightStick.ReadValue() + pad.leftStick.ReadValue();
-                delta += new Vector2(s.x, -s.y) * 8f * frames;
+                delta += new Vector2(-s.x, -s.y) * 8f * frames;
                 distance += (pad.leftTrigger.ReadValue() - pad.rightTrigger.ReadValue()) * 200f * frames;
             }
             if (Mouse.current != null)
             {
-                float steps = Mouse.current.scroll.ReadValue().y / 120f;
+                float steps = Mathf.Clamp(Mouse.current.scroll.ReadValue().y, -1f, 1f);   // a notch reads 1 (uniform scroll) or 120 (raw)
                 if (Mathf.Abs(steps) > 0f) wheel += steps;
             }
             if (Mathf.Abs(wheel) > 0.01f) { distance += wheel * -50f * frames; wheel *= Mathf.Pow(0.9f, frames); } else wheel = 0f;
@@ -198,11 +201,13 @@ namespace GoF2Remake.UI
 
         bool OverFooter(Vector2 screen) => screen.y < Screen.height * 0.12f;
 
-        /// <summary>rotateAroundTarget(pitch = -0.005 py, yaw = -0.005 px) at the distance, looking at the ship.</summary>
+        /// <summary>rotateAroundTarget(-0.005 py, -0.005 px, 0) at the distance, looking at the ship (MGame::OnUpdate 0x1af324).
+        /// The game's ship frame has +x on the ship's left (Unity's is mirrored, (-x, y, z)), so in Unity the yaw is +0.005 px
+        /// and the pitch -0.005 py: a drag right takes the camera to the ship's left (the ship turns with the finger), a drag
+        /// up takes it up. Copied without the mirror, every axis was inverted.</summary>
         void Place()
         {
-            float yaw = -0.005f * px, pitch = -0.005f * py;
-            var rot = Quaternion.Euler(-pitch * Mathf.Rad2Deg, yaw * Mathf.Rad2Deg, 0f);
+            var rot = Quaternion.Euler(-0.005f * py * Mathf.Rad2Deg, 0.005f * px * Mathf.Rad2Deg, 0f);
             cam.transform.position = target.position + rot * new Vector3(0f, 0f, -distance * M);
             cam.transform.LookAt(target.position, Vector3.up);
         }

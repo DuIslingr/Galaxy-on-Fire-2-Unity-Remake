@@ -31,9 +31,11 @@ namespace GoF2Remake.Flight
         public Route route;    // null = the default patrol
         public bool startsDead;    // jumpers
         // Campaign levels (Level::createCampaignMission, campaign_levels_a.md 1.2):
-        public bool asleep;        // setToSleep: waits until the player is within +-25 000 or a target within +-50 000
+        public bool asleep;        // setToSleep: waits until the player comes within its detect range (NpcShip.UpdateSleep)
         public bool inactive;      // setInitActive(false): waits until the level script wakes it
         public bool alwaysEnemy, alwaysFriend;
+        public bool alwaysNeutral; // remake (/spawn, the debug spawner): neither hostile nor friendly, whatever the standing
+        public int eventTag;       // remake multiplayer: the event batch that spawned it (NetEvents counts them), 0 = none
         public int hitpoints = -1; // Player::setHitpoints / setMaxHitpoints override (-1 = the createShip formula)
         public bool noLoot;        // KIPlayer+0x4c / +0x48 = 0: no cargo, no crate
         public int nameText = -1;  // KIPlayer+0x18: the name the lock plate shows (text id)
@@ -47,6 +49,9 @@ namespace GoF2Remake.Flight
         public int collisionId = -1;  // Level::getBoundingVolume id (collision.json below 2000, else static_collisions.json)
         public float hitRadius = -1f; // Player+0x40, the bullet hit cube's half size (units)
         public GameObject wreckPrefab; // setWreckedMeshId: the wreck animation played on death, then the explosion
+        // PlayerFixedObject::setDeadButSelectable 0x180248 (the Supernova wrecks with a hidden blueprint): a fixedObject
+        // freighter ('ship' 13 / 15 of 'race') shown as its wreck held at the animation's end, invulnerable, still lockable.
+        public bool deadButSelectable;
         public float explosionScale = 1f;
         // Capital-ship turrets (PlayerTurret, npc_combat_specials.md 1): a static turret object.
         public string turretAssembly;  // turret_002_static (Terran) / turret_003_static (Vossk)
@@ -69,17 +74,20 @@ namespace GoF2Remake.Flight
         public int secondaryItem = -1;     // a second gun slot (the wanted flying ships 45-48: G'liissk rockets) ...
         public float secondaryFactor = 1f; // ... at x4
         public int hiddenBlueprint = -1;   // a Supernova wreck's hidden blueprint (TrafficPlan.HiddenBlueprints slot)
+        public int pirateEvent;            // remake: EventOutpost / EventBoss (TrafficPlan.AddPirateEvent), 0 = none
+        public const int EventOutpost = 1, EventBoss = 2;
     }
 
     public static class TrafficPlan
     {
         /// <summary>Station::stationHasHiddenBlueprint 0xb3ec8 (blueprints_mods.md 1.4 3): per slot the station
-        /// (DAT_0025273c), the blueprint (DAT_002521f0), the wreck's race (DAT_00253754) and position (DAT_00253768).</summary>
-        public static readonly (int station, int blueprint, int race, Vector3 position)[] HiddenBlueprints =
+        /// (DAT_0025273c), the blueprint (DAT_002521f0), the wreck's race (DAT_00253754), position (DAT_00253768) and docking
+        /// point set (DAT_002537a4: loadSpacePoints 11-14, one per race's freighter wreck).</summary>
+        public static readonly (int station, int blueprint, int race, Vector3 position, int points)[] HiddenBlueprints =
         {
-            (132, 226, 1, new Vector3(-20000, 30000, 80000)), (133, 221, 3, new Vector3(40000, -30000, 100000)),
-            (134, 223, 2, new Vector3(-80000, 80000, -90000)), (129, 225, 0, new Vector3(40000, 20000, 140000)),
-            (123, 227, 2, new Vector3(40000, 20000, 140000)),
+            (132, 226, 1, new Vector3(-20000, 30000, 80000), 14), (133, 221, 3, new Vector3(40000, -30000, 100000), 11),
+            (134, 223, 2, new Vector3(-80000, 80000, -90000), 12), (129, 225, 0, new Vector3(40000, 20000, 140000), 13),
+            (123, 227, 2, new Vector3(40000, 20000, 140000), 12),
         };
 
         static Vector3 Jitter() => new Vector3(Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000, Random.Range(0, 40000) - 20000);
@@ -254,16 +262,21 @@ namespace GoF2Remake.Flight
                                              position = playerGame + new Vector3(Random.Range(0, 160000) - 80000, Random.Range(0, 100000) - 50000, Random.Range(0, 160000) - 80000) });
             if (PirateBases.StationHasBase(station)) AddPirateBase(list, station, hardcore);
             // 8 a Supernova wreck with a hidden blueprint: dockable and hackable (docking type 3) until it is found.
-            // Remake: the damaged Midorian freighter stands in for every race's wreck (its docking points are known).
+            // Level::createMission (hidden-blueprint block): createShip(race DAT_00253754[k], 1, k == 0 ? 0xd : 0xf), the
+            // race's freighter (the Vossk one for slot 0), setDockingType(3), PlayerFixedObject::setDeadButSelectable (its
+            // wreck mesh at the animation's end, HP 1, invulnerable), placed at DAT_00253768[k], loadSpacePoints(
+            // DAT_002537a4[k]). A fixed object here (never moves, no engine or gun) showing the wreck (deadButSelectable).
             for (int k = 0; k < HiddenBlueprints.Length; k++)
             {
                 if (HiddenBlueprints[k].station != station) continue;
                 bool found = (Session.HiddenBlueprintsFound & (1 << k)) != 0;
+                int race = HiddenBlueprints[k].race;
                 list.Add(new SpawnSpec
                 {
-                    group = NpcGroup.Special, race = HiddenBlueprints[k].race, ship = -1, position = HiddenBlueprints[k].position,
-                    fixedObject = "sn_cargo_001_midorian_wrecked", stationary = true, alwaysFriend = true, hitpoints = 9999999, noLoot = true,
-                    nameText = 3211, dockingType = found ? 0 : 3, spacePoints = 3, hiddenBlueprint = k, hitRadius = 4000f,
+                    group = NpcGroup.Special, race = race, ship = k == 0 ? 13 : 15, position = HiddenBlueprints[k].position,
+                    fixedObject = NpcTables.FreighterAssembly(race), deadButSelectable = true, stationary = true, alwaysFriend = true,
+                    hitpoints = 9999999, noLoot = true, nameText = 3211, dockingType = found ? 0 : 3, spacePoints = HiddenBlueprints[k].points,
+                    hiddenBlueprint = k, hitRadius = 4000f,
                 });
             }
             // 7 Specters, always enemy: one point near the player, each at it + createShip's +-20000 jitter.
@@ -274,7 +287,72 @@ namespace GoF2Remake.Flight
                 for (int i = 0; i < specters; i++)
                     list.Add(new SpawnSpec { group = NpcGroup.Special, race = Standing.Specter, ship = 44, alwaysEnemy = true, position = sp + Jitter() });
             }
+            AddPirateEvent(list, db, station, system, secEff, story, cm, baseSystem);
             return list;
+        }
+
+        // ---- remake: pirate events (GitHub #6) ----------------------------------------------------------------------
+
+        /// <summary>The chance of an event per orbit entry by security level (secure systems rarely).</summary>
+        static readonly int[] EventChance = { 10, 7, 4, 2 };
+        static readonly int[] BossShips = { 60, 29, 32, 25 };       // Darkzov, Mantis, Wasp, Tyrion
+        static readonly int[] BossLoot = { 113, 108, 107, 102, 101 };   // Implants, Vossk Organs, Organs, Rare Plants / Animals
+
+        /// <summary>Remake (option "Pirate outposts and bosses", on by default): now and then (10 / 7 / 4 / 2 % by security) a
+        /// free-flight orbit holds a sleeping pirate outpost with its guards far out (the pirate bases' outpost: radio 435-437 when
+        /// a guard wakes, 438-440 when it falls) or a pirate boss (a Wanted-like hull and gun by the player's rank, speed 3.5,
+        /// a crate of rare goods) with 2-4 escorts in front of the station; either pays a bounty (Traffic.PirateEventDone). Not in
+        /// the tutorial, Mido or below rank 2, the special orbits (Loma, the empty ones, the supernova system, the pirates' own
+        /// systems), a pirate base's system or the Kaamo siege.</summary>
+        static void AddPirateEvent(List<SpawnSpec> list, Database db, int station, SystemData system, int secEff, bool story, int cm, bool baseSystem)
+        {
+            // Not for a beginner: Mido (the starting system) and below rank 2 stay as the original.
+            if (!Settings.PirateEvents || (story && cm < 0x10) || baseSystem || KaamoClub.SiegeAt(station) || system.index == 15 || Session.Rank < 2) return;
+            if (station == 100 || station == 101 || station == 108 || station == 10 || (station >= 102 && station <= 104)) return;
+            if (system.index == 25 || system.index == 27 || system.index == 32 || system.index == 33) return;
+            if (Random.Range(0, 100) >= EventChance[Mathf.Clamp(secEff, 0, 3)]) return;
+            int rank = Mathf.Min(Session.Rank, 20);
+            if (Random.value < 0.5f)
+            {
+                // The outpost, 70-110 km out in a random direction (flattened), guarded like a pirate base.
+                var dir = Random.onUnitSphere;
+                dir.y *= 0.3f;
+                var at = dir.normalized * Random.Range(70000f, 110000f);
+                var assets = CombatAssets.Load();
+                var loot = PirateBases.Loot[Random.Range(0, PirateBases.Loot.Length)];
+                list.Add(new SpawnSpec
+                {
+                    group = NpcGroup.Outpost, race = Standing.Pirate, ship = -1, position = at,
+                    fixedObject = "station_pirates", collisionId = 1002, hitRadius = 7500f, hitpoints = KaamoClub.OutpostHull(),
+                    wreckPrefab = assets != null ? assets.outpostWreck : null, explosionScale = 8f, stationary = true, asleep = true,
+                    nameText = 441, lootItem = loot.item, lootAmount = loot.amount, alwaysEnemy = true, pirateEvent = SpawnSpec.EventOutpost,
+                });
+                int guards = (int)((Session.Difficulty - 0.5f) * 5f + 5f);
+                for (int g = 0; g < guards; g++)
+                {
+                    float S() => Random.value < 0.5f ? -1f : 1f;
+                    list.Add(new SpawnSpec
+                    {
+                        group = NpcGroup.Guard, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate), asleep = true, guard = true,
+                        position = at + new Vector3(S() * Random.Range(0, 20000) + 10000, S() * Random.Range(0, 20000) + 10000, S() * Random.Range(0, 20000) + 10000),
+                    });
+                }
+                return;
+            }
+            // The boss and its escorts, in front of the station like a raider group (no raider waves: group Special).
+            var spawn = RaiderSpawn();
+            int hull = (int)((15 * rank + 1500 + 4 * 45) * Session.DifficultyFactor);
+            int gun = rank < 5 ? 23 : rank < 10 ? 15 : rank < 15 ? 26 : 21;   // Micro Gun MKII, H'nookk, Scram Cannon, Tyrfing
+            list.Add(new SpawnSpec
+            {
+                group = NpcGroup.Special, race = Standing.Pirate, ship = BossShips[Random.Range(0, BossShips.Length)], position = spawn,
+                hitpoints = hull, nameText = 1606, speed = 3.5f, gunItem = gun, gunFactor = 2f, alwaysEnemy = true,
+                lootItem = BossLoot[Random.Range(0, BossLoot.Length)], lootAmount = Random.Range(3, 9), pirateEvent = SpawnSpec.EventBoss,
+            });
+            int escorts = Random.Range(2, 5);
+            for (int i = 0; i < escorts; i++)
+                list.Add(new SpawnSpec { group = NpcGroup.Special, race = Standing.Pirate, ship = NpcTables.RandomFighter(Standing.Pirate),
+                                         position = spawn + Jitter(), alwaysEnemy = true });
         }
 
         // ---- the Most Wanted criminal (Level::createMission 0xbda70, wingmen_wanted.md 2.6) ---------------------------

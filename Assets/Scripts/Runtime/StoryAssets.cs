@@ -71,13 +71,16 @@ namespace GoF2Remake.Data
 
         /// <summary>A voice line by its event name; German when the voices are German (Settings.GermanVoices: the voice
         /// language option, by default the text language) and the line was recorded, else English (FMOD's language banks).</summary>
+        /// <summary>Re-recorded lines keep their event name but the wave is named "&lt;event&gt;_Alt2" (Brillo Lampeter's).</summary>
+        const string AltSuffix = "_Alt2";
+
         public AudioClip Voice(string name)
         {
             if (string.IsNullOrEmpty(name)) return null;
             eng ??= Map(voiceNamesEng, voiceClipsEng);
             deu ??= Map(voiceNamesDeu, voiceClipsDeu);
-            if (Settings.GermanVoices && deu.TryGetValue(name, out var d)) return d;
-            return eng.TryGetValue(name, out var e) ? e : null;
+            if (Settings.GermanVoices && (deu.TryGetValue(name, out var d) || deu.TryGetValue(name + AltSuffix, out d))) return d;
+            return eng.TryGetValue(name, out var e) || eng.TryGetValue(name + AltSuffix, out e) ? e : null;
         }
 
         /// <summary>A portrait part: its texture (the image sits in the top-left corner of the canvas) and image height.</summary>

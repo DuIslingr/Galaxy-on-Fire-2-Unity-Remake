@@ -39,6 +39,9 @@ namespace GoF2Remake.Flight
         const float BeamRangeUnits = 60000f, BeamObjectCubeUnits = 24000f;
 
         public bool useBuiltInInput = true;
+        /// <summary>The flight HUD's PC cursor mode: true while the mouse is over one of its buttons, so a click there (the
+        /// fire button's own, the boost, the menus...) isn't also the mouse's fire / missile binding.</summary>
+        [System.NonSerialized] public System.Func<bool> mouseOverControls;
         // The controls are GameControls' (rebindable): FirePrimary, FireSecondary, SwitchSecondary.
         static InputAction firePrimaryAction => GameControls.FirePrimary;
         static InputAction fireSecondaryAction => GameControls.FireSecondary;
@@ -190,6 +193,18 @@ namespace GoF2Remake.Flight
             GuidedRocket = null;
         }
 
+        /// <summary>Remake debug (SpaceLevel.SwapPlayerShip): the guns again on another hull's mounts, the old ones' visuals,
+        /// loops and pools gone (a swapped hull kept firing from the previous ship's mounts).</summary>
+        public void Rebuild(Database db, int shipIndex, IList<ItemStack> equipment)
+        {
+            StopLoops();
+            foreach (var r in rigs) if (r.loop != null) Destroy(r.loop);
+            rigs.Clear();
+            if (fxRoot != null) Destroy(fxRoot.gameObject);
+            Setup(db, shipIndex, equipment);
+            Owner = owner;
+        }
+
         /// <summary>Level::createPlayer: one gun per equipped primary/secondary item on the ship's mounts.</summary>
         public void Setup(Database db, int shipIndex, IList<ItemStack> equipment)
         {
@@ -247,7 +262,7 @@ namespace GoF2Remake.Flight
 
         Rig BuildRig(Gun gun)
         {
-            var rig = new Rig { visuals = new GunRig(gun, WeaponFx.Load(gun.itemIndex), fxRoot, transform) };
+            var rig = new Rig { visuals = new GunRig(gun, WeaponFx.Load(gun.itemIndex), fxRoot, FirePose) };
             rig.visuals.EnableTrails();   // RocketGun::setRadar: the player's rockets / missiles / thermo shots trail smoke
             var fx = rig.fx;
             if (fx != null && fx.shotLoops && fx.shot != null)
@@ -308,7 +323,7 @@ namespace GoF2Remake.Flight
                 if (!r.gun.isSecondary || r.gun.itemIndex != SelectedSecondary || r.stack == null || r.stack.amount <= 0) continue;
                 if (r.gun.kind == Gun.Kind.Sentry && !SentryGun.CanDeploy) return false;   // Level+0x6c > 2: refused, no cost
                 if (Cheats.NoSecondaryCooldown) r.gun.reloadAcc = r.gun.reloadMs + 1f;   // remake debug: reloaded at once
-                int b = r.gun.TryFire(transform);
+                int b = Fire(r.gun);
                 if (b < 0) continue;
                 if (r.gun.kind == Gun.Kind.Sentry)
                 {
@@ -348,6 +363,13 @@ namespace GoF2Remake.Flight
             bool primaryPressed = useBuiltInInput && firePrimaryAction.IsPressed();
             bool secondaryPressed = useBuiltInInput && fireSecondaryAction.IsPressed();
             if (halted) { primaryLatched |= primaryPressed; secondaryLatched |= secondaryPressed; }
+            var mouse = Mouse.current;
+            if (mouse != null && mouseOverControls != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)
+                && mouseOverControls())
+            {
+                if (mouse.leftButton.wasPressedThisFrame) primaryLatched |= primaryPressed;
+                if (mouse.rightButton.wasPressedThisFrame) secondaryLatched |= secondaryPressed;
+            }
             if (PrimaryBlocked) primaryLatched |= primaryPressed;
             if (!primaryPressed) primaryLatched = false;
             bool primaryHeld = !halted && !PrimaryBlocked && (touchPrimary || (primaryPressed && !primaryLatched));
@@ -360,21 +382,24 @@ namespace GoF2Remake.Flight
             if (liberator != null) UpdateLiberator(dtMs);
             var cam = Camera.main;
             var homing = HomingLock(cam);
-            // Player::calcWeaponSounds 0xb00b0: only the first primary gun makes the shot sound (Player+0x10c).
+            // Player::calcWeaponSounds 0xb00b0: only the first primary gun makes the shot sound (Player+0x10c). Remake option
+            // (Settings.EachWeaponSound): the first gun of every primary weapon item, so a mixed loadout sounds each weapon.
             Rig soundRig = rigs.Find(x => !x.gun.isSecondary);
+            bool each = Settings.EachWeaponSound;
+            bool Sounds(Rig x) => x == soundRig || (each && !x.gun.isSecondary && rigs.Find(y => !y.gun.isSecondary && y.gun.itemIndex == x.gun.itemIndex) == x);
             foreach (var r in rigs)
             {
                 var gun = r.gun;
                 if (!gun.isSecondary && primaryHeld)
                 {
-                    int b = gun.TryFire(transform);
-                    if (b >= 0) OnShot(r, r == soundRig);
+                    int b = Fire(gun);
+                    if (b >= 0) OnShot(r, Sounds(r));
                 }
                 gun.Update(dtMs, Target.All, homing);
                 r.visuals.UpdateVisuals(dtMs, cam, transform.forward);
                 if (r.loop != null)
                 {
-                    bool firing = primaryHeld && !gun.isSecondary && r == soundRig;
+                    bool firing = primaryHeld && !gun.isSecondary && Sounds(r);
                     if (firing)
                     {
                         // Held again while ending: it just carries on.
@@ -407,6 +432,28 @@ namespace GoF2Remake.Flight
             return v.z > 0f && v.x >= 0f && v.x <= 1f && v.y >= 0f && v.y <= 1f ? t : null;
         }
         FreeLookCamera freeLook;
+        ShipController shipController;
+        /// <summary>Where the shots leave: the banked, tilted model (ShipController.visualModel) when the ship has one, so
+        /// bullets and muzzle flashes follow the wings through a turn (the root never rolls); else the ship itself.</summary>
+        Transform FirePose
+        {
+            get
+            {
+                if (shipController == null) shipController = GetComponent<ShipController>();
+                return shipController != null && shipController.visualModel != null ? shipController.visualModel : transform;
+            }
+        }
+
+        /// <summary>A shot from the mount on the banked model (FirePose: the wings' muzzles through a turn), flying along the
+        /// ship's own heading: PlayerEgo::shoot -> Player::shoot passes the unbanked Player matrix to Gun::shootAt, so the
+        /// bullets keep to the crosshair (taking the tilted model's heading put them 8-16 deg off the nose while pitching).</summary>
+        int Fire(Gun g)
+        {
+            var pose = FirePose;
+            if (pose == transform) return g.TryFire(transform);
+            var origin = pose.position + pose.rotation * g.mountLocal - transform.rotation * g.mountLocal;
+            return g.TryFire(origin, transform.rotation);   // TryFire adds rotation * (mountLocal + the forward offset) again
+        }
 
         void OnShot(Rig r, bool sound = true)
         {
@@ -432,7 +479,7 @@ namespace GoF2Remake.Flight
         void PlayShot(Rig r)
         {
             var clip = r.fx != null ? r.fx.Shot : null;
-            if (clip != null) shotSource.PlayOneShot(clip, shotVolume * Settings.SfxVolume);
+            if (clip != null) ShotVoices.Play(clip, shotVolume * Settings.SfxVolume);   // two voices per shot sound (FEV max_playbacks)
         }
 
         /// <summary>Radar::draw's auto-aim flag (KIPlayer+0x6f) for the beams: the nearest target (to the player) on screen,

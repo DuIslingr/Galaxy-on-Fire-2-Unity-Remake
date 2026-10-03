@@ -21,10 +21,13 @@
 // unless its output is redirected to a file or pipe (or -noconsole); the log is mirrored into that window (Unity prints
 // its log only to a standard output it starts with). Linux uses the terminal's stdin / stdout (-logFile - prints the log
 // there). Ctrl+C or closing the window stops the server like "stop": the players hear why first (NetGame.StopServer).
+// In its own console window (Windows) or on a terminal (Linux) the input line is edited by ConsoleInput: Tab completes
+// and cycles the command names (CommandNames), Up / Down the lines run before; piped input is read line by line.
 
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -40,6 +43,8 @@ namespace GoF2Remake.Multiplayer
         public const string EnvironmentSwitch = "GOF2_SERVER";
         const string ServerName = "Server";
         const float TrackSeconds = 1f;
+        /// <summary>The commands Tab completes in the console (ConsoleInput), in help's order.</summary>
+        static readonly string[] CommandNames = new[] { "help", "status", "list", "say", "admin", "stop" }.Concat(NetCommands.ServerCommandNames).ToArray();
 
         /// <summary>This process runs as a dedicated server (-server, or GOF2_SERVER set).</summary>
         public static bool Enabled { get; private set; } = Detect();
@@ -134,7 +139,7 @@ namespace GoF2Remake.Multiplayer
         {
             OpenConsole();
             startedAt = Time.unscaledTime;
-            Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version}");
+            Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version} (code {NetGame.Protocol})");
             if (relay)
             {
                 Log("Reserving an online session (Unity Relay)...");
@@ -235,7 +240,7 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
-        static string StationName(int index)
+        internal static string StationName(int index)
         {
             if (index == Session.VoidOrbit) return "the Void";
             var s = NetGame.Db.Stations.Find(x => x.index == index);
@@ -263,63 +268,36 @@ namespace GoF2Remake.Multiplayer
                 case "help": case "?":
                     return "Commands:\n" +
                            "  status              join code / port, uptime, players\n" +
-                           "  list                the players: client id, name, where, ship, squad\n" +
-                           "  say <text>          a chat line to everyone, from \"Server\"\n" +
-                           "  kick <id|name> [reason]  drops a player\n" +
-                           "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)";
+                           "  list                the players (= players)\n" +
+                           "  say <text>          a chat line to everyone, from \"Server\" (= g)\n" +
+                           "  admin               lists the admins\n" +
+                           "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)\n" +
+                           "The chat's commands, run by the same code (players by name or client id):" + NetCommands.ServerCommandHelp();
                 case "status":
                     return $"{(NetGame.Active ? "Running" : "Not running")} {(NetGame.JoinCode != null ? $"online, join code {NetGame.JoinCode}" : $"on port {port}")}, up {Duration(Time.unscaledTime - startedAt)}, " +
                            $"{NetGame.ClientIds.Count} player(s), world seed {NetGame.Seed}, {Application.targetFrameRate} fps, " +
                            $"Debug menu {(NetGame.HostAllowsDebug ? "allowed" : "off")}.";
-                case "list": case "players": case "who":
-                    return List();
+                case "list": case "who":
+                    return NetCommands.RunOnServer("players", rest, null);
                 case "say":
-                    if (rest.Length == 0) return "say <text>";
-                    if (NetState.Instance == null || !NetState.Instance.IsSpawned) return "The server isn't running.";
-                    NetState.Instance.ServerChat(ServerName, rest);
-                    return "";   // the chat line itself is logged
-                case "kick":
-                    return Kick(rest);
+                    return NetCommands.RunOnServer("g", rest, null);   // the chat line itself is logged
+                case "admin" when rest.Length == 0:
+                    return Admins();
                 case "stop": case "quit": case "exit": case "shutdown":
                     Log("Stopping the server...");
                     NetGame.StopServer();
                     return "";
                 default:
-                    return $"Unknown command \"{cmd}\". Type \"help\".";
+                    // The chat's server commands (kick, tp, admin...): the same code as for an admin's chat line.
+                    return NetCommands.RunOnServer(cmd, rest, null) ?? $"Unknown command \"{cmd}\". Type \"help\".";
             }
         }
 
-        static string List()
+        static string Admins()
         {
-            var sb = new StringBuilder();
-            int n = 0;
-            foreach (var p in NetPlayer.All)
-            {
-                if (p == null || !p.IsSpawned) continue;
-                n++;
-                sb.Append($"\n  {p.OwnerClientId,3}  {p.DisplayName,-20}  {Where(p)}, {UI.ItemInfo.ShipName(p.ShipIndex)}");
-                if (p.SquadId != 0) sb.Append($", squad {p.SquadId}");
-            }
-            return n == 0 ? "No players online." : $"{n} player(s):" + sb;
-        }
-
-        static string Kick(string args)
-        {
-            if (args.Length == 0) return "kick <id|name> [reason]";
-            int space = args.IndexOf(' ');
-            string who = space < 0 ? args : args.Substring(0, space);
-            string reason = space < 0 ? "" : args.Substring(space + 1).Trim();
-            NetPlayer target = null;
-            foreach (var p in NetPlayer.All)
-            {
-                if (p == null || !p.IsSpawned) continue;
-                if ((ulong.TryParse(who, out ulong id) && p.OwnerClientId == id) || string.Equals(p.DisplayName, who, StringComparison.OrdinalIgnoreCase))
-                { target = p; break; }
-            }
-            if (target == null) return $"No player \"{who}\" (see \"list\").";
-            string name = target.DisplayName;
-            if (reason.Length == 0) reason = Localization.Extra("mpKicked", "The server removed you from the session.");
-            return NetGame.Kick(target.OwnerClientId, reason) ? $"Kicked {name}." : $"Could not kick {name}.";
+            var names = new List<string>();
+            foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && p.IsAdmin) names.Add($"{p.DisplayName} ({p.OwnerClientId})");
+            return names.Count == 0 ? "No admins. admin <id|name> makes one." : "Admins: " + string.Join(", ", names);
         }
 
         // ---- console ----------------------------------------------------------------------------------------
@@ -336,7 +314,12 @@ namespace GoF2Remake.Multiplayer
 
         static void Write(string text)
         {
-            try { lock (console) console.WriteLine(text); } catch (Exception) { }
+            try
+            {
+                if (ConsoleInput.Active) ConsoleInput.WriteLine(text);   // above the line being typed
+                else lock (console) console.WriteLine(text);
+            }
+            catch (Exception) { }
         }
 
         /// <summary>Every log message on the console, with its time (errors and exceptions with their first trace line).</summary>
@@ -350,6 +333,39 @@ namespace GoF2Remake.Multiplayer
             }
             Write(line);
         }
+
+        /// <summary>The console's own line editing (Tab completion): only in this server's console window (Windows) or on a
+        /// terminal (Linux), not with piped input or output; false = the plain line reader.</summary>
+        static bool StartLineEditing(bool ownWindow)
+        {
+            try
+            {
+#if UNITY_STANDALONE_WIN
+                if (!ownWindow || !WinConsole.RawInput()) return false;
+                ConsoleInput.Start(WinConsole.ReadKey, console, l => commands.Enqueue(l), CommandNames, WinConsole.EnableVt());
+#else
+                if (Console.IsInputRedirected || Console.IsOutputRedirected) return false;
+                _ = Console.KeyAvailable;   // throws without a terminal
+                ConsoleInput.Start(ReadTerminalKey, console, l => commands.Enqueue(l), CommandNames, true);
+#endif
+                return true;
+            }
+            catch (Exception) { return false; }
+        }
+
+#if !UNITY_STANDALONE_WIN
+        static ConsoleInput.Key? ReadTerminalKey()
+        {
+            var k = Console.ReadKey(true);
+            return new ConsoleInput.Key
+            {
+                character = k.KeyChar,
+                enter = k.Key == ConsoleKey.Enter, backspace = k.Key == ConsoleKey.Backspace, escape = k.Key == ConsoleKey.Escape,
+                tab = k.Key == ConsoleKey.Tab, up = k.Key == ConsoleKey.UpArrow, down = k.Key == ConsoleKey.DownArrow,
+                shift = (k.Modifiers & ConsoleModifiers.Shift) != 0,
+            };
+        }
+#endif
 
         void OpenConsole()
         {
@@ -396,6 +412,7 @@ namespace GoF2Remake.Multiplayer
                     Application.logMessageReceivedThreaded += Mirror;
                 }
             }
+            if (input != null && console != null && StartLineEditing(mirror)) return;
             if (input != null)
             {
                 var reader = new StreamReader(input, Encoding.UTF8);

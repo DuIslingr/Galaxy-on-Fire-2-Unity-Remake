@@ -37,6 +37,10 @@
                             <ui:VisualElement class="card-art card-art-hover card-supernova-hover" picking-mode="Ignore" />
                         </ui:Button>
                     </ui:VisualElement>
+                    <ui:Button name="ngPlusToggle" class="choice-button choice-button--toggle">
+                        <ui:Label name="ngPlusLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="ngPlusDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
                     <ui:Button name="campaignBack" class="menu-button back-button gof-semibold" />
                 </ui:VisualElement>
 
@@ -73,6 +77,10 @@
                         <ui:Label name="economyAndroidLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
                         <ui:Label name="economyAndroidDesc" class="choice-desc" picking-mode="Ignore" />
                     </ui:Button>
+                    <ui:Button name="kaamoToggle" class="choice-button choice-button--toggle">
+                        <ui:Label name="kaamoLabel" class="choice-title gof-semibold" picking-mode="Ignore" />
+                        <ui:Label name="kaamoDesc" class="choice-desc" picking-mode="Ignore" />
+                    </ui:Button>
                     <ui:Button name="economyBack" class="menu-button back-button gof-semibold" />
                 </ui:VisualElement>
 
@@ -90,6 +98,7 @@
                         <ui:Button name="tabSound" class="tab-button gof-semibold" />
                         <ui:Button name="tabGraphics" class="tab-button gof-semibold" />
                         <ui:Button name="tabControls" class="tab-button gof-semibold" />
+                        <ui:Button name="tabBindings" class="tab-button gof-semibold" />
                         <ui:Button name="tabGameplay" class="tab-button gof-semibold" />
                         <ui:Button name="tabLanguage" class="tab-button gof-semibold" />
                     </ui:VisualElement>
@@ -97,6 +106,7 @@
                     <ui:ScrollView name="soundPage" class="tab-page options-scroll" />
                     <ui:ScrollView name="graphicsPage" class="tab-page options-scroll" />
                     <ui:ScrollView name="controlsPage" class="tab-page options-scroll" />
+                    <ui:ScrollView name="bindingsPage" class="tab-page options-scroll" />
                     <ui:ScrollView name="gameplayPage" class="tab-page options-scroll" />
                     <ui:VisualElement name="languagePage" class="tab-page">
                         <ui:VisualElement name="languageList" class="language-list" />
@@ -196,6 +206,7 @@
                 <ui:Label name="dialogTitle" class="panel-title gof-semibold" />
                 <ui:VisualElement class="panel-accent" />
                 <ui:Label name="dialogText" class="dialog-text" />
+                <ui:TextField name="dialogField" class="debug-filter dialog-field" />
                 <ui:VisualElement class="dialog-buttons">
                     <ui:Button name="dialogYes" class="menu-button dialog-button gof-semibold" />
                     <ui:Button name="dialogNo" class="menu-button dialog-button gof-semibold" />

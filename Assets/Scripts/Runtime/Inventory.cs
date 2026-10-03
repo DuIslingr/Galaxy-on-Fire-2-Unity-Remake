@@ -28,6 +28,43 @@ namespace GoF2Remake.Data
         public List<ItemStack> items = new List<ItemStack>();   // Generator::getItemBuyList, in item index order
         public List<int> ships = new List<int>();               // Generator::getShipBuyList
         public List<Agent> agents = new List<Agent>();  // Generator::createAgents (the bar's visitors)
+
+        /// <summary>The Kaamo mods of dealer rows that carry any: a traded-in ship keeps its mods in the row that takes it
+        /// (HangarWindow::OnTouchEnd 0x176d94 adds the old ship's mods to the new row's Ship), and buying that row gives them
+        /// to the new ship (getMods of the bought row). One entry per modded row, by ship index (the rows are ship indexes);
+        /// entries whose ship has left the list are dropped (PruneShipMods).</summary>
+        public List<StoredShip> shipMods = new List<StoredShip>();
+
+        /// <summary>The mods of the dealer's 'ship' row (empty when it has none).</summary>
+        public List<int> ModsOf(int ship)
+        {
+            var m = ships != null && ships.Contains(ship) ? shipMods?.Find(x => x != null && x.ship == ship) : null;
+            return m != null && m.mods != null ? m.mods : new List<int>();
+        }
+
+        /// <summary>The 'ship' row is bought: its mods go with it.</summary>
+        public List<int> TakeMods(int ship)
+        {
+            var mods = new List<int>(ModsOf(ship));
+            int i = shipMods != null ? shipMods.FindIndex(x => x != null && x.ship == ship) : -1;
+            if (i >= 0) shipMods.RemoveAt(i);
+            return mods;
+        }
+
+        /// <summary>A traded-in 'ship' takes a row with its mods.</summary>
+        public void PutMods(int ship, List<int> mods)
+        {
+            if (mods == null || mods.Count == 0) return;
+            if (shipMods == null) shipMods = new List<StoredShip>();
+            shipMods.Add(new StoredShip(ship, 0, mods));
+        }
+
+        /// <summary>The dealer list changed outside a trade (a story step, the multiplayer host's list): mods of rows gone go.</summary>
+        public void PruneShipMods()
+        {
+            if (shipMods == null) { shipMods = new List<StoredShip>(); return; }
+            shipMods.RemoveAll(x => x == null || ships == null || !ships.Contains(x.ship));
+        }
     }
 
     /// <summary>Status+0x8c: the player's own ship while the story lends another (steps 48-54, 56-57): hull type, equipment,

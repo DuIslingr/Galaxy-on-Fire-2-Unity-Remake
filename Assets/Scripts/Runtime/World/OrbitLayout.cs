@@ -33,9 +33,15 @@ namespace GoF2Remake.World
         public int stationIndex, systemIndex;
         public int systemTexture, stationTexture;
         public int raceId;
+        /// <summary>A station to lock, fly to and dock at (not Status::inEmptyOrbit).</summary>
         public bool hasStation;
+        /// <summary>Level::createSpace builds the PlayerStation: wherever there is a station, and in the empty orbits of 27,
+        /// 110 and 111 too (only docking is off there: the wrecks of Valpatro and Luur stay).</summary>
+        public bool stationObject;
         /// <summary>Status::inAlienOrbit: the Void's home orbit (Session.VoidOrbit): Void station, sky 010, Void asteroids.</summary>
         public bool alienOrbit;
+        /// <summary>Status::inPlanetRingOrbit (stations 120 / 126 / 130 / 132): the orbit planet has no camera zoom.</summary>
+        public bool ringOrbit;
 
         // Level::createSpace
         public bool hasJumpgate;
@@ -79,6 +85,18 @@ namespace GoF2Remake.World
 
         static readonly int[] RingStations = { 120, 126, 130, 132 };
         static readonly int[] EmptyOrbits = { 102, 103, 104, 109, 110, 132, 133, 134 };   // Status::inEmptyOrbit (mission-independent part)
+        static readonly int[] StationObjectInEmptyOrbit = { 27, 110, 111 };              // Level::createSpace 0xbc0f6
+
+        /// <summary>Status::inEmptyOrbit 0xb8ee8 for a real station at campaign index 'mission' (free play and multiplayer: 20):
+        /// the orbit has no station to dock at (Level::collideStation, MGame::dockEvent), none in the autopilot menu
+        /// (AutoPilotList / Hud::initHudMenu). Always 102-104, 109, 110, 132-134; Var Hastra (78) at index 0 / 1 (the prologue
+        /// and the rescue); Luur (111) from 0x5e (after the evacuation, a wreck); Valkyrie (101) from 0x54 (gone with Alice
+        /// after the add-on). The alien orbit's rule (Status+0x78, the Void station gone at 43-83 and from 154) is Build's.</summary>
+        public static bool IsEmptyOrbit(int station, int mission)
+        {
+            if (System.Array.IndexOf(EmptyOrbits, station) >= 0) return true;
+            return (station == 78 && mission <= 1) || (station == 111 && mission > 0x5d) || (station == 101 && mission >= 0x54);
+        }
 
         static readonly string[] SunTextures =
         {
@@ -132,6 +150,7 @@ namespace GoF2Remake.World
             var st = db.Stations.Find(s => s.index == stationIndex);
             var sys = st != null ? db.Systems.Find(s => s.index == st.system) : null;
             bool alien = stationIndex == Session.VoidOrbit;
+            int mission = Session.FreePlay ? 20 : Session.CampaignMission;
             var o = new OrbitLayout
             {
                 stationIndex = stationIndex,
@@ -139,11 +158,12 @@ namespace GoF2Remake.World
                 systemTexture = sys != null ? sys.textureIndex : 10,
                 stationTexture = st != null ? st.textureIndex : 23,
                 raceId = sys != null ? sys.raceId : 0,
-                hasStation = st != null && System.Array.IndexOf(EmptyOrbits, stationIndex) < 0,
+                hasStation = st != null && !IsEmptyOrbit(stationIndex, mission),
                 alienOrbit = alien,
             };
+            o.stationObject = o.hasStation || (st != null && System.Array.IndexOf(StationObjectInEmptyOrbit, stationIndex) >= 0);
             // Status::inEmptyOrbit: the alien orbit has its Void station until the mother ship is destroyed (index 43..83).
-            if (alien) o.hasStation = Story.Index < 43 || Story.Index > 83 && Story.Index < 154;
+            if (alien) o.hasStation = o.stationObject = Story.Index < 43 || Story.Index > 83 && Story.Index < 154;
             o.BuildGates(sys);
             o.BuildSky();
             o.BuildStarSystem(db, sys);
@@ -212,21 +232,41 @@ namespace GoF2Remake.World
 
             if (sys == null)
             {
-                // The alien orbit: only its own planet (planet_void_big), sized like a normal orbit planet.
+                // The alien orbit (StarSystem::StarSystem's Void branch: Status::getSystem() is 0 there): the sun sun_010 straight
+                // ahead (moveForward(-20000), no rotation), planet_void_big at rotation (0, 5.2347097, 0) (60 deg right of it),
+                // unseeded size rand(20000) + 20000, no flip, no zoom (Backdrop).
                 if (alienOrbit)
-                    planets.Add(new Planet { station = stationIndex, isOrbitPlanet = true, scale = (rnd.NextInt(20000) + 20000) / 65536f,
-                                             flip = sunSlot >= 12, texture = PlanetTexture(23, true) });
+                {
+                    sunSlot = 0;
+                    sunPitch = 0f;
+                    lightDirection = -Direction(0f, 0f);
+                    planets.Add(new Planet { station = stationIndex, isOrbitPlanet = true, scale = (Random.Range(0, 20000) + 20000) / 65536f,
+                                             yaw = 5.2347097f, flip = false, texture = PlanetTexture(23, true) });
+                }
                 return;
             }
-            bool ringOrbit = System.Array.IndexOf(RingStations, stationIndex) >= 0;
-            foreach (int stIdx in sys.stations)
+            ringOrbit = System.Array.IndexOf(RingStations, stationIndex) >= 0;
+            // StarSystem::StarSystem picks "own planet or another" by the system's list order but takes the texture from the
+            // stations loaded in file order (FileRead::loadStationsBinary: ascending index) at the same position: K'ontrr
+            // (system 20, [62, 59, 58, 63, 64]) swaps 58's and 62's planet textures. The own planet's size still follows the
+            // real station's texture.
+            var byFileOrder = new List<int>(sys.stations);
+            byFileOrder.Sort();
+            // StarSystem::StarSystem 0x15c89a: mission 0 (the prologue and the main menu's backdrop, Status::resetGame) halves the
+            // orbit planet (before the size overrides by texture, which replace it).
+            bool missionZero = (Session.FreePlay ? 20 : Session.CampaignMission) == 0;
+            for (int i = 0; i < sys.stations.Count; i++)
             {
+                int stIdx = sys.stations[i];
                 var st = db.Stations.Find(s => s.index == stIdx);
+                var shown = db.Stations.Find(s => s.index == byFileOrder[i]);
                 int t = st != null ? st.textureIndex : 0;
+                int shownTexture = shown != null ? shown.textureIndex : t;
                 var p = new Planet { station = stIdx, ring = System.Array.IndexOf(RingStations, stIdx) >= 0 };
                 if (stIdx == stationIndex)
                 {
                     int s = rnd.NextInt(20000) + 20000;
+                    if (missionZero) s = (int)(s * 0.5f);
                     if (!ringOrbit)
                     {
                         if (t < 18 && ((1 << t) & 0x21840) != 0) s = rnd.NextInt(15000) + 35000;
@@ -237,7 +277,7 @@ namespace GoF2Remake.World
                     p.isOrbitPlanet = true;
                     p.scale = s / 65536f;
                     p.flip = sunSlot >= 12;
-                    p.texture = PlanetTexture(t, true);
+                    p.texture = PlanetTexture(shownTexture, true);
                     p.ring = false;   // the ring orbit shows the ring sky layer instead
                 }
                 else
@@ -251,7 +291,7 @@ namespace GoF2Remake.World
                     p.flip = slot > sunSlot;
                     p.pitch = Angle(rnd.NextInt(4096) - 2048);
                     p.yaw = Angle(slot * 0xAAA);
-                    p.texture = PlanetTexture(t, false);
+                    p.texture = PlanetTexture(shownTexture, false);
                 }
                 planets.Add(p);
             }

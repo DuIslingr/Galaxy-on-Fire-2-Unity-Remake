@@ -72,6 +72,9 @@ namespace GoF2Remake.Flight
         public RadioLine Visible => showing >= 0 && showMs >= DelayMs ? lines[showing] : null;
         public int VisibleIndex => Visible != null ? showing : -1;
         public bool Busy => showing >= 0;
+        /// <summary>Remake: the box stays up at least until the line's voice clip is over (the text formula undershoots a third
+        /// of the clips, by up to 5.7 s).</summary>
+        public void HoldFor(float ms) { if (showing >= 0) durationMs = Mathf.Max(durationMs, ms); }
 
         /// <summary>LevelScript::skipCutscene: the first 'n' lines count as shown.</summary>
         public void MarkShown(int n)

@@ -111,7 +111,9 @@ namespace GoF2Remake.Data
             var story = new List<StoryAgentData>();
             if (campaign > 16)
                 foreach (var s in AgentData.StoryAgents)
-                    if (s.station == station && s.station != 106) story.Add(s);   // 106: only after winning the DLC1 duel (not built)
+                    // Generator::createAgents: Sao Perula's (106, Miguel Parham, the Liberator blueprint) only once the
+                    // Valkyrie add-on is won (Status::dlc1Won).
+                    if (s.station == station && (s.station != 106 || Story.Dlc1Won)) story.Add(s);
 
             int n = story.Count;
             if (station != 108) n = R(2) + story.Count + 3 < 5 ? story.Count + 3 + R(2) : 5;

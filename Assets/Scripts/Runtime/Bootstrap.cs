@@ -61,6 +61,9 @@ namespace GoF2Remake
             UI.ScreenshotKey.Install();           // F12: a screenshot to the pictures library
             UI.DiscordPresence.Install();         // desktop: Discord Rich Presence
             Flight.Haptics.Install();             // controller rumble and phone vibration
+            UI.FpsCounter.Install();              // the frame rate option (Settings.ShowFps)
+            Vr.VrMode.Start();                    // -vr / -vrsim: OpenXR and the VR rig per scene
+            if (Vr.VrMode.Headset) Vr.VrPad.Install();   // the VR controllers as a gamepad, the laser as a mouse
             Settings.Changed -= ApplyAll;
             Settings.Changed += ApplyAll;
             SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -115,7 +118,7 @@ namespace GoF2Remake
 
         // ---- upscaler ----------------------------------------------------------------------------------------
 
-        /// <summary>The upscaler option and the MSAA it allows: with the upscaler framework (desktop) the framework's active
+        /// <summary>The upscaler option and the MSAA it allows: with the upscaler framework (desktop, iOS) the framework's active
         /// upscaler (UpscalerFramework, also called for every new pipeline), else the asset's upscaling filter.</summary>
         static void ApplyUpscaling()
         {
@@ -140,13 +143,16 @@ namespace GoF2Remake
             Settings.UpscalerStp => UpscalerFramework.Stp,
             Settings.UpscalerDlss => UpscalerFramework.Dlss,
             Settings.UpscalerFsrTemporal => UpscalerFramework.BestFsr ?? UpscalerFramework.Auto,
+            Settings.UpscalerMetalFxSpatial => UpscalerFramework.MetalFxSpatial,
+            Settings.UpscalerMetalFxTemporal => UpscalerFramework.MetalFxTemporal,
             _ => UpscalerFramework.Auto,
         };
 
-        /// <summary>STP, DLSS and FSR 2+: temporal (anti-aliasing included, MSAA off, the quality mode picks the resolution of
-        /// DLSS / FSR).</summary>
+        /// <summary>STP, DLSS, FSR 2+ and MetalFX Temporal: temporal (anti-aliasing included, MSAA off, the quality mode picks
+        /// the resolution of DLSS / FSR).</summary>
         public static bool IsTemporal(int upscaler) =>
-            upscaler == Settings.UpscalerStp || upscaler == Settings.UpscalerDlss || upscaler == Settings.UpscalerFsrTemporal;
+            upscaler == Settings.UpscalerStp || upscaler == Settings.UpscalerDlss || upscaler == Settings.UpscalerFsrTemporal
+            || upscaler == Settings.UpscalerMetalFxTemporal;
 
         /// <summary>NVIDIA DLSS on this device (desktop builds with the upscaler framework, an RTX GPU, Direct3D 11 / 12 or
         /// Vulkan; known once URP has made its pipeline).</summary>
@@ -154,6 +160,11 @@ namespace GoF2Remake
 
         /// <summary>AMD FSR 2 / 3 / 4 on this device (the newest it runs, UpscalerFramework.BestFsr).</summary>
         public static bool FsrTemporalSupported => UpscalerFramework.BestFsr != null;
+
+        /// <summary>Apple MetalFX Spatial / Temporal on this device (macOS / iOS builds on Metal, UpscalerFramework; known once URP has
+        /// made its pipeline).</summary>
+        public static bool MetalFxSpatialSupported => UpscalerFramework.MetalFxSpatialSupported;
+        public static bool MetalFxTemporalSupported => UpscalerFramework.MetalFxTemporalSupported;
 
         /// <summary>FSR 1 needs shader model 4.5 (FSRUtils); STP compute shaders and no OpenGL ES (STP.IsSupported), so on
         /// Android it runs on Vulkan only, and its compute shaders in the build (StpResourcesPresent).</summary>
@@ -196,6 +207,8 @@ namespace GoF2Remake
             Settings.UpscalerStp when StpSupported => Settings.UpscalerStp,
             Settings.UpscalerDlss when DlssSupported => Settings.UpscalerDlss,
             Settings.UpscalerFsrTemporal when FsrTemporalSupported => Settings.UpscalerFsrTemporal,
+            Settings.UpscalerMetalFxSpatial when MetalFxSpatialSupported => Settings.UpscalerMetalFxSpatial,
+            Settings.UpscalerMetalFxTemporal when MetalFxTemporalSupported => Settings.UpscalerMetalFxTemporal,
             _ => Settings.UpscalerOff,
         };
 
@@ -238,8 +251,14 @@ namespace GoF2Remake
 
         // ---- window ------------------------------------------------------------------------------------------
 
-        /// <summary>Window mode and resolution apply to desktop players only (the Editor's Game view keeps its own).</summary>
+        /// <summary>Window mode and resolution apply to desktop players only (the Editor's Game view keeps its own). Not UWP:
+        /// its window belongs to the app model, and Screen.mainWindowDisplayInfo throws there (NotSupportedException), which
+        /// stopped Bootstrap.Init and the main menu's options setup: a black screen after the splash.</summary>
+#if UNITY_WSA
+        public static bool HasDisplayOptions => false;
+#else
         public static bool HasDisplayOptions => !Application.isMobilePlatform && !Application.isEditor;
+#endif
 
         /// <summary>The display's resolutions, distinct sizes, smallest first.</summary>
         public static List<Vector2Int> Resolutions()
@@ -253,7 +272,13 @@ namespace GoF2Remake
 
         static Vector2Int NativeResolution
         {
-            get { var d = Screen.mainWindowDisplayInfo; return d.width > 0 ? new Vector2Int(d.width, d.height) : new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height); }
+            get
+            {
+                var current = new Vector2Int(Screen.currentResolution.width, Screen.currentResolution.height);
+                if (!HasDisplayOptions) return current;   // mainWindowDisplayInfo is Windows / macOS / Linux standalone only
+                var d = Screen.mainWindowDisplayInfo;
+                return d.width > 0 ? new Vector2Int(d.width, d.height) : current;
+            }
         }
 
         /// <summary>Launched with Unity's own window options (-screen-fullscreen / -screen-width / -screen-height /

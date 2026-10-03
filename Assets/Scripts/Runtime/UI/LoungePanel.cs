@@ -38,6 +38,7 @@ namespace GoF2Remake.UI
 
         public LoungePanel(StationMenu menu, StationLevel level, VisualElement root)
         {
+            if (level != null) level.VisitorPicked = i => { menu.PlayRelease(); OpenChat(i); };   // VR: the laser on a visitor
             this.menu = menu;
             this.level = level;
             this.root = root;

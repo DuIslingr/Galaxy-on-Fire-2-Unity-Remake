@@ -83,7 +83,9 @@ namespace GoF2Remake.UI
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
         VisualElement openPanel;
         readonly List<OptionControl> optionControls = new List<OptionControl>();
-        Action dialogYes;
+        Action dialogYes, dialogNo;
+        Func<bool> dialogCheck;   // the Yes button closes the dialog only when this passes (null = always)
+        TextField dialogField;
         MenuState screen = MenuState.Splash;
         bool skipRequested;
         Campaign pendingCampaign;
@@ -136,6 +138,17 @@ namespace GoF2Remake.UI
             splashLogo = root.Q("splashLogo");
             fade = root.Q("fade");
             dialog = root.Q("dialog");
+            dialogField = root.Q<TextField>("dialogField");
+            if (dialogField != null)
+            {
+                dialogField.maxLength = GoF2Remake.Multiplayer.NetGame.MaxNameLength;
+                dialogField.RegisterCallback<KeyDownEvent>(e =>
+                {
+                    if (e.keyCode != KeyCode.Return && e.keyCode != KeyCode.KeypadEnter) return;
+                    e.StopPropagation();
+                    ConfirmDialog();
+                }, TrickleDown.TrickleDown);
+            }
             mainColumn = root.Q("mainColumn");
             mainButtons = root.Q("mainButtons");
             pressAnyKey = root.Q<Label>("pressAnyKey");
@@ -203,8 +216,10 @@ namespace GoF2Remake.UI
                 () => PickDifficulty(Session.DifficultyExtreme)));
             Bind("economyDefaultButton", () => StartGame(Economy.Default));
             Bind("economyAndroidButton", () => StartGame(Economy.Android));
-            Bind("dialogYes", () => { var a = dialogYes; CloseDialog(); a?.Invoke(); });
-            Bind("dialogNo", CloseDialog);
+            Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
+            Bind("ngPlusToggle", () => { newGamePlus = !newGamePlus && ngPlusSave != null; RefreshNgPlus(false); });
+            Bind("dialogYes", ConfirmDialog);
+            Bind("dialogNo", () => { var a = dialogNo; CloseDialog(); a?.Invoke(); });
 
             foreach (var (tab, pg) in OptionPages) Bind(tab, () => SelectTab(pg));
             Bind("optionsDefaults", () => { Settings.ResetToDefaults(); RefreshTexts(); });   // 497
@@ -561,6 +576,7 @@ namespace GoF2Remake.UI
             SetFocusable(mainButtons, false);
             RefreshUpdateButton();
             p.schedule.Execute(() => FocusFirst(p)).ExecuteLater(30);
+            if (name == "campaignPanel") RefreshNgPlus(true);
             if (name == "multiplayerPanel")
             {
                 RefreshAddresses();   // the adapters may have changed
@@ -610,17 +626,76 @@ namespace GoF2Remake.UI
             OpenPanel("economyPanel");
         }
 
+        // Remake (GitHub #4, NewGamePlus): with a finished game in the save slots, the campaign panel offers New Game+.
+        bool newGamePlus;
+        SaveData ngPlusSave;
+
+        void RefreshNgPlus(bool rescan)
+        {
+            var b = root.Q<Button>("ngPlusToggle");
+            if (b == null) return;
+            if (rescan) { ngPlusSave = NewGamePlus.FindFinished(out _); newGamePlus = false; }
+            b.style.display = ngPlusSave != null ? DisplayStyle.Flex : DisplayStyle.None;
+            b.EnableInClassList("choice-button--on", newGamePlus);
+            var label = root.Q<Label>("ngPlusLabel");
+            if (label != null)
+                label.text = $"{Localization.Extra("ngPlus", "New Game+")}: {(newGamePlus ? Localization.Extra("on", "On") : Localization.Extra("off", "Off"))}".ToUpperInvariant();
+            var desc = root.Q<Label>("ngPlusDesc");
+            if (desc != null && ngPlusSave != null)
+                desc.text = string.Format(Localization.Extra("ngPlusDesc",
+                    "Start again with what you earned in your finished game ({0}, {1}): your credits, blueprints and medals, and the Kaamo Club with your ship, its equipment and cargo and everything stored there. Turn it on, then pick a campaign."),
+                    (Campaign)ngPlusSave.campaign switch { Campaign.Valkyrie => "Valkyrie", Campaign.Supernova => "Supernova", _ => "Galaxy on Fire 2" }, ItemInfo.Credits(ngPlusSave.credits));
+        }
+
+        /// <summary>Remake (GitHub #8): the original's Kaamo Club expansion (an in-app purchase, texts 78 / 88 / 93) as a new
+        /// game's choice: Status::resetGame sets the club's state to 3 (owned) while it is bought, so no siege, no purchase.
+        /// Remembered for the next new game (PlayerPrefs "newgame_kaamo").</summary>
+        static bool KaamoFromStart
+        {
+            get => PlayerPrefs.GetInt("newgame_kaamo", 0) == 1;
+            set { PlayerPrefs.SetInt("newgame_kaamo", value ? 1 : 0); PlayerPrefs.Save(); }
+        }
+
+        void RefreshKaamoToggle()
+        {
+            var b = root.Q<Button>("kaamoToggle");
+            if (b == null) return;
+            bool on = KaamoFromStart;
+            b.EnableInClassList("choice-button--on", on);
+            var label = root.Q<Label>("kaamoLabel");
+            if (label != null)
+                label.text = $"{Localization.Get(78)}: {(on ? Localization.Extra("kaamoOwned", "Owned from the start") : Localization.Extra("kaamoNotOwned", "Win it in the game"))}".ToUpperInvariant();
+            var desc = root.Q<Label>("kaamoDesc");
+            if (desc != null)
+                desc.text = Localization.Extra("kaamoDesc",
+                    "The original's Kaamo Club expansion: the club in the Shima system is yours from day one, without the siege or the 30 million; store as many ships and goods there as you like. Choose, then pick the economy.");
+        }
+
+        /// <summary>Remake: before a new game starts, the question whether to show the tutorial popups (Settings.TutorialHints,
+        /// also in Options > Gameplay); Yes / No set the option and start, Back cancels.</summary>
         void StartGame(Economy economy)
+        {
+            ShowDialog(Localization.Extra("tutorialTitle", "Tutorial popups"),
+                Localization.Extra("tutorialQuestion", "Show the tutorial popups that explain the controls, the hangar, the map and the missions the first time you meet them? You can change this any time in Options > Gameplay."),
+                () => { Settings.TutorialHints = true; BeginGame(economy); });
+            dialogNo = () => { Settings.TutorialHints = false; BeginGame(economy); };
+            Select(root.Q<Button>(Settings.TutorialHints ? "dialogYes" : "dialogNo"));
+        }
+
+        void BeginGame(Economy economy)
         {
             Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
             Session.Campaign = pendingCampaign;
             Session.Difficulty = pendingDifficulty;
             Session.Economy = economy;   // before the Database: it loads that economy's tables
+            if (KaamoFromStart) Session.KaamoState = 3;   // resetGame with the expansion bought: the club owned, its storage empty
             var db = Database.Load();
             // Remake: the mission select starts a new game at the chosen story step (Story.StartAtMission).
             if (pendingStartIndex >= 0) { StartCoroutine(Leave(Story.StartAtMission(db, pendingStartIndex))); return; }
             // MenuTouchWindow::startGOF2 / startValkyrie / startSupernova: the story's first step (Story).
-            StartCoroutine(Leave(Story.StartCampaign(db, pendingCampaign)));
+            string scene = Story.StartCampaign(db, pendingCampaign);
+            if (newGamePlus && ngPlusSave != null) NewGamePlus.Apply(ngPlusSave);   // remake: New Game+ carries over
+            StartCoroutine(Leave(scene));
         }
 
         // ---- multiplayer (remake-only MVP, NetGame: host or join by address, one shared orbit) ----
@@ -731,13 +806,13 @@ namespace GoF2Remake.UI
             Bind("mpModePrivate", () => SetHostMode(HostMode.Private));
             Bind("mpModeLocal", () => SetHostMode(HostMode.Local));
             ApplyHostMode();
-            Bind("mpHost", () => StartCoroutine(LeaveForMultiplayer(null)));
+            Bind("mpHost", () => WithName(() => StartCoroutine(LeaveForMultiplayer(null))));
             Bind("mpJoin", () =>
             {
                 string address = mpAddress != null ? mpAddress.value.Trim() : "";
                 if (address.Length == 0) return;
                 PlayerPrefs.SetString("mp_address", address);
-                StartCoroutine(LeaveForMultiplayer(address));
+                WithName(() => StartCoroutine(LeaveForMultiplayer(address)));
             });
         }
 
@@ -877,6 +952,7 @@ namespace GoF2Remake.UI
                 bottom.Add(infoLabel);
                 // The version: every row; another version's says it can't be joined from here.
                 var version = new Label(entry.SameVersion ? entry.version
+                    : entry.version == GoF2Remake.Multiplayer.NetGame.Version ? Localization.Extra("mpOtherBuild", "another build")
                     : string.Format(Localization.Extra("mpNeedsVersion", "needs {0}"), entry.version)) { pickingMode = PickingMode.Ignore };
                 version.AddToClassList("mp-server-version");
                 version.EnableInClassList("mp-server-version--other", !entry.SameVersion);
@@ -890,9 +966,11 @@ namespace GoF2Remake.UI
                         if (mpStatus != null) mpStatus.text = Localization.Extra("mpEnterPassword", "That game has a password: enter it under Join, then pick the game again.");
                         mpJoinPassword?.Focus();
                     }
-                    else if (joinable) StartCoroutine(LeaveForMultiplayer(entry.code));
+                    else if (joinable) WithName(() => StartCoroutine(LeaveForMultiplayer(entry.code)));
                     else if (mpStatus != null)
                         mpStatus.text = entry.Full ? Localization.Extra("mpGameFull", "That game is full.")
+                            : entry.version == GoF2Remake.Multiplayer.NetGame.Version
+                            ? string.Format(Localization.Extra("mpOtherBuildText", "That game runs a different build of version {0}: only the same game files can join."), entry.version)
                             : string.Format(Localization.Extra("mpOtherVersion", "That game runs version {0}, yours is {1}: only the same version can join."), entry.version, GoF2Remake.Multiplayer.NetGame.Version);
                 };
                 mpServerList.Add(row);
@@ -912,6 +990,38 @@ namespace GoF2Remake.UI
         {
             if (mpStatus != null) mpStatus.text = GoF2Remake.Multiplayer.NetGame.Status;   // why the last session ended
             OpenPanel("multiplayerPanel");
+            NeedsName(null);   // the first visit: the name first
+        }
+
+        /// <summary>Multiplayer needs a pilot name (the others see it on the lock plate, in the chat and the pilot lists):
+        /// without one (NetGame.PlayerName empty) a prompt asks for it, then runs 'then'. False = a name is set already.</summary>
+        bool NeedsName(Action then)
+        {
+            if (GoF2Remake.Multiplayer.NetGame.Clean(GoF2Remake.Multiplayer.NetGame.PlayerName).Length > 0 || dialogField == null) return false;
+            ShowDialog(Localization.Extra("mpNameTitle", "Pilot name"),
+                       Localization.Extra("mpNameText", "Choose the name the other pilots will see. You can change it later at the top of the Multiplayer panel."), then);
+            dialogField.value = "";
+            dialogField.textEdition.placeholder = Localization.Extra("mpNamePlaceholder", "Your pilot name");
+            dialogField.style.display = DisplayStyle.Flex;
+            root.Q<Button>("dialogYes").text = "OK";
+            root.Q<Button>("dialogNo").text = Localization.Get(170).ToUpperInvariant();   // Back
+            dialogCheck = () =>
+            {
+                string name = GoF2Remake.Multiplayer.NetGame.Clean(dialogField.value);
+                if (name.Length == 0) { dialogField.Focus(); return false; }
+                GoF2Remake.Multiplayer.NetGame.PlayerName = name;
+                if (mpName != null) mpName.SetValueWithoutNotify(GoF2Remake.Multiplayer.NetGame.PlayerName);
+                ApplyHostMode();   // the default game name is the pilot's
+                return true;
+            };
+            dialogField.Focus();
+            return true;
+        }
+
+        /// <summary>Hosting and joining: 'action' once there is a pilot name (asked first when there is none).</summary>
+        void WithName(Action action)
+        {
+            if (!NeedsName(action)) action();
         }
 
         /// <summary>The host card's addresses: one row per adapter (NetGame.LocalAddresses) with the port when it isn't the
@@ -1184,7 +1294,9 @@ namespace GoF2Remake.UI
             List<VisualElement> sectionRows = null;
             for (int i = 0; i <= Story.LastIndex; i++)
             {
-                if (i == 53 || i == 129) continue;   // nextCampaignMission skips them (52 -> 54, 128 -> 130)
+                // Steps never current on their own (53 / 129 skipped, 42 inside 41's level, 46 / 107 passed through, 149 / 150
+                // dialogue slots): the step that plays them stands for them.
+                if (Story.MissionSelectStart(i) != i) continue;
                 var campaign = CampaignOf(i);
                 if (section != campaign)
                 {
@@ -1332,16 +1444,27 @@ namespace GoF2Remake.UI
             Select(yes);
         }
 
+        void ConfirmDialog()
+        {
+            if (dialogCheck != null && !dialogCheck()) return;
+            var a = dialogYes;
+            CloseDialog();
+            a?.Invoke();
+        }
+
         void CloseDialog()
         {
             var no = root.Q<Button>("dialogNo");
-            if (no.style.display == DisplayStyle.None)
+            if (no.style.display == DisplayStyle.None || dialogField != null && dialogField.style.display == DisplayStyle.Flex)
             {
                 no.style.display = StyleKeyword.Null;
+                no.text = Localization.Get(135).ToUpperInvariant();
                 root.Q<Button>("dialogYes").text = Localization.Get(134).ToUpperInvariant();
             }
+            if (dialogField != null) dialogField.style.display = StyleKeyword.Null;
             dialog.RemoveFromClassList("dialog-backdrop--shown");
-            dialogYes = null;
+            dialogYes = dialogNo = null;
+            dialogCheck = null;
             if (openPanel != null) FocusFirst(openPanel); else Select(exitButton);
         }
 
@@ -1367,7 +1490,7 @@ namespace GoF2Remake.UI
 
         static readonly (string tab, string page)[] OptionPages =
         {
-            ("tabSound", "soundPage"), ("tabGraphics", "graphicsPage"), ("tabControls", "controlsPage"), ("tabGameplay", "gameplayPage"),
+            ("tabSound", "soundPage"), ("tabGraphics", "graphicsPage"), ("tabControls", "controlsPage"), ("tabBindings", "bindingsPage"), ("tabGameplay", "gameplayPage"),
             ("tabLanguage", "languagePage"),
         };
 
@@ -1376,6 +1499,7 @@ namespace GoF2Remake.UI
             OptionPage.Sound => "soundPage",
             OptionPage.Graphics => "graphicsPage",
             OptionPage.Controls => "controlsPage",
+            OptionPage.Bindings => "bindingsPage",   // remake: the key bindings on their own tab
             OptionPage.Language => "languagePage",   // under the language buttons
             _ => "gameplayPage",
         };
@@ -1597,6 +1721,7 @@ namespace GoF2Remake.UI
             Set("economyAndroidLabel", Session.EconomyName(Economy.Android).ToUpperInvariant());
             Set("economyAndroidDesc", Localization.Extra("economyAndroidDesc",
                 "The Android version's prices: commodities, tractor beams, shields and armor far dearer, blueprints need many more ingredients, ships cheaper."));
+            RefreshKaamoToggle();
             Set("extremeLabel", T(25));
             Set("extremeDesc", Localization.Extra("extremeDesc", "For veterans who finished the game: tougher enemies and a harsher economy."));
             Set("loadTitle", T(29));
@@ -1604,6 +1729,7 @@ namespace GoF2Remake.UI
             Set("tabSound", OptionsCatalog.PageTitle(OptionPage.Sound).ToUpperInvariant());
             Set("tabGraphics", OptionsCatalog.PageTitle(OptionPage.Graphics).ToUpperInvariant());
             Set("tabControls", OptionsCatalog.PageTitle(OptionPage.Controls).ToUpperInvariant());
+            Set("tabBindings", OptionsCatalog.PageTitle(OptionPage.Bindings).ToUpperInvariant());
             Set("tabGameplay", OptionsCatalog.PageTitle(OptionPage.Gameplay).ToUpperInvariant());
             Set("tabLanguage", T(0));
             Set("optionsDefaults", T(497));

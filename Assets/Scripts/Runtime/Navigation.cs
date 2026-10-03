@@ -47,7 +47,7 @@ namespace GoF2Remake.Flight
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender }
 
         public class Target
         {
@@ -59,6 +59,7 @@ namespace GoF2Remake.Flight
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
             public NpcShip dockingShip;     // docking targets: the object
+            public bool freelance;          // waypoints: a freelance mission's route (the white freelance icon, not the gold story one)
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
 
@@ -103,13 +104,13 @@ namespace GoF2Remake.Flight
         /// <summary>A campaign level's player route (Level+0x108, PlayerEgo::setRoute): its current waypoint is a landmark
         /// target named "Waypoint" (548): marked on the HUD, lockable, and the autopilot flies to it; "Waypoint reached."
         /// (543) / "Last waypoint reached." (544) as the route advances.</summary>
-        public void SetRoute(Route route)
+        public void SetRoute(Route route, bool freelance = false)
         {
             playerRoute = route;
             routeTarget = null;
             Targets.RemoveAll(t => t.kind == Kind.Waypoint);
             if (route == null) return;
-            routeTarget = new Target { kind = Kind.Waypoint, name = Localization.Get(548) };
+            routeTarget = new Target { kind = Kind.Waypoint, name = Localization.Get(548), freelance = freelance };
             routeIndex = route.index;
             UpdateRoute();
         }
@@ -247,8 +248,14 @@ namespace GoF2Remake.Flight
             if (layout.hasStation && st != null)
                 Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = st.index,
                                          name = st.index == 101 ? st.name : $"{st.name} {Localization.Get(136)}" });
-            else if (layout.hasStation && layout.alienOrbit)   // the Void station: 415 "Void", distance only, no autopilot
-                Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = Session.VoidOrbit, name = Localization.Get(415) });
+            else if (layout.hasStation && layout.alienOrbit)   // the Void station: distance only, no autopilot
+            {
+                // Radar::Radar: 415 "Void" + " Station" (the Void pseudo-station's index is -1, not 101); after the Valkyrie
+                // add-on the battlestation is there and landmark[0] carries station 101's name (Level::createSpace).
+                string name = Story.Dlc1Won ? db.Stations.Find(s => s.index == 101)?.name ?? Localization.Get(77)
+                                            : $"{Localization.Get(415)} {Localization.Get(136)}";
+                Targets.Add(new Target { kind = Kind.Station, fixedPosition = Vector3.zero, station = Session.VoidOrbit, name = name });
+            }
             if (layout.hasJumpgate)
                 Targets.Add(new Target { kind = Kind.Jumpgate, fixedPosition = OrbitLayout.ToUnity(layout.jumpgate), name = Localization.Get(547) });
             if (layout.systemIndex >= 0)
@@ -306,6 +313,14 @@ namespace GoF2Remake.Flight
             if (HasWingmen != null && HasWingmen()) list.Add(new Target { kind = Kind.Wingmen, name = Localization.Get(306) });
             if (Cloak != null) list.Add(new Target { kind = Kind.Cloak, name = Cloak.ItemName, disabled = !Cloak.Rules.Available });
             if (GalaxyMap.HasJumpDrive(db)) list.Add(new Target { kind = Kind.KhadorDrive, name = Localization.Get(1359) });
+            // Remake: the time extender too (the original has it only on its own touch slot), so one menu holds every
+            // device: secondaries, wingmen, cloak, Khador Drive and the time extender (half-transparent while recharging).
+            if (Extender != null)
+            {
+                var te = Shop.FirstMounted(db, 26);
+                list.Add(new Target { kind = Kind.TimeExtender, name = te != null ? Localization.Get(1274 + te.index) : "Time extender",
+                                      disabled = !Extender.Ready && !Extender.Running });
+            }
             return list;
         }
 
@@ -342,6 +357,7 @@ namespace GoF2Remake.Flight
             if (target == null || target.disabled) return;
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
             if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
+            if (target.kind == Kind.TimeExtender) { Extender?.Toggle(); return; }   // the game runs again: CloseMenu above
             if (target.kind == Kind.DockingTarget) { Docking?.Dock(target.dockingShip); return; }
             if (target.kind == Kind.Waypoint)
             {
@@ -577,7 +593,7 @@ namespace GoF2Remake.Flight
         /// a menu, conversation or map is open (the world goes on there).</summary>
         public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active);
 
-        void OnDestroy() => halted = false;
+        void OnDestroy() { halted = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
 
         void ApplyTimeScale()
         {
@@ -585,6 +601,9 @@ namespace GoF2Remake.Flight
             float scale = MenuOpen || paused || pauseMenuOpen ? 0f : FastForward ? FastForwardScale : TimeExtender.Active ? TimeExtender.WorldScale : 1f;
             if (GoF2Remake.Multiplayer.NetGame.Active) scale = 1f;   // multiplayer: one player's pause doesn't stop the shared world
             if (Time.timeScale != scale) Time.timeScale = scale;
+            // A halted clock also halts the sound, as PauseMenu does: the engine loops, a boost fired just before and every
+            // other source played on through a conversation. The voice, UI and star-map sources ignore the listener pause.
+            if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = scale == 0f;
         }
 
         void Say(string text) => Message?.Invoke(text);

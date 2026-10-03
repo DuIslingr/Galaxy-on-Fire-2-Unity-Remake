@@ -14,7 +14,8 @@
 //                              0x546 at bg + (160, -134)
 //   pause                      0x4b8 / 0x4b9 at (w - 121, 24), also during cutscenes (sounds 124 / 123)
 //   secondary plate            0x4c2 at the bottom centre, "<name> (<n>)" (Hud::updateSecondaryWeaponString; remake: a tap
-//                              switches to the next secondary)
+//                              switches to the next secondary), in every input mode (Hud::draw redraws it opaque while the PC
+//                              version's mouse steers)
 //   empty screen               an element behind the controls: a vertical drag sets the throttle after 160 px, 400 px =
 //                              0 -> 100 % (up = faster; the gauge 0x548 under the crosshair fills from the bottom with the
 //                              number, 2 s fade), a sideways flick dodges (MGame::maneuverTouchEnd), in free look it orbits
@@ -22,6 +23,9 @@
 // releases it. The secondary, boost, camera, menu, turret and pause act on release over the button (sliding off cancels,
 // like Hud::touchEnd); every control keeps its finger (pointer capture). Positions follow the safe area; the original's
 // Configure screen (dragging S and F) isn't built.
+// The PC version's cursor mode (Frame.cursor: keys and mouse, the mouse not steering; Hud::draw's Globals::iPad == 0 path and
+// the Full HD manual's screenshot): the same buttons clicked with the mouse, but no stick and no gestures; the cluster in the
+// bottom-right corner, the autopilot / fast-forward pill and the boost at the bottom left.
 
 using System;
 using System.Collections.Generic;
@@ -55,6 +59,7 @@ namespace GoF2Remake.UI
             public Vector2 crosshair;            // safe-area units
             public bool crosshairVisible;
             public bool gauge;                   // keyboard / controller flight: the throttle gauge without the touch controls
+            public bool cursor;                  // the PC cursor mode: the buttons without the stick and the gestures
         }
 
         // Actions (FlightHud).
@@ -65,6 +70,7 @@ namespace GoF2Remake.UI
         public Func<float> GetThrust;
         public Action<float> SetThrust;
         public Action<Vector2, bool> FreeLookDrag; // screen-pixel delta (y up), still held
+        public Action<float> FreeLookPinch;        // two-finger span change in screen pixels
 
         /// <summary>The stick, offset / 94 per axis (x right, y up), not squared.</summary>
         public Vector2 Stick { get; private set; }
@@ -144,13 +150,6 @@ namespace GoF2Remake.UI
             HookFire();
             arrow = Image(layer, Tex("touch_action"), false);
 
-            plate = Image(layer, Tex("touch_secondary_plate"));
-            plate.RegisterCallback<PointerDownEvent>(e => { CycleSecondary?.Invoke(); e.StopPropagation(); });
-            plateText = new Label { pickingMode = PickingMode.Ignore };
-            plateText.AddToClassList("touch-plate-text");
-            plateText.AddToClassList("gof-semibold");
-            plate.Add(plateText);
-
             // PlayerEgo::drawThrottle: the half ring 0x548 filling from the bottom, the number under the crosshair.
             // Its own layer beside the touch controls' (the same box), shown in every input mode: the keyboard / controller
             // throttle shows it too (the iPhone version's gauge; the remake's PC readout).
@@ -167,6 +166,13 @@ namespace GoF2Remake.UI
             gaugeText.AddToClassList("touch-gauge-text");
             gaugeText.AddToClassList("gof-semibold");
             gaugeLayer.Add(gaugeText);
+            // The secondary's plate: the gauge layer's too, so keyboard and controller flight show it.
+            plate = Image(gaugeLayer, Tex("touch_secondary_plate"));
+            plate.RegisterCallback<PointerDownEvent>(e => { CycleSecondary?.Invoke(); e.StopPropagation(); });
+            plateText = new Label { pickingMode = PickingMode.Ignore };
+            plateText.AddToClassList("touch-plate-text");
+            plateText.AddToClassList("gof-semibold");
+            plate.Add(plateText);
 
             pause = Button(Image(pauseHost, pauseOff), () => PausePressed?.Invoke(), () => PauseReleased?.Invoke());
             pause.AddToClassList("touch-pause");
@@ -322,6 +328,14 @@ namespace GoF2Remake.UI
             {
                 if (!gestures.TryGetValue(e.pointerId, out var g)) return;
                 var p = (Vector2)e.localPosition;
+                // Free look: two fingers pinch-zoom (as in PhotoMode), one orbits.
+                if (frame.freeLook && gestures.Count >= 2)
+                {
+                    float span0 = Span();
+                    g.last = p;
+                    FreeLookPinch?.Invoke(ToScreenDelta(new Vector2(Span() - span0, 0f)).x);
+                    return;
+                }
                 if (frame.freeLook) FreeLookDrag?.Invoke(ToScreenDelta(p - g.last), true);
                 g.last = p;
                 if (frame.freeLook) return;
@@ -342,6 +356,14 @@ namespace GoF2Remake.UI
             gestureZone.RegisterCallback<PointerUpEvent>(e => EndGesture(e.pointerId, e.localPosition, true));
             gestureZone.RegisterCallback<PointerCancelEvent>(e => EndGesture(e.pointerId, e.localPosition, false));
             gestureZone.RegisterCallback<PointerCaptureOutEvent>(e => gestures.Remove(e.pointerId));
+        }
+
+        float Span()
+        {
+            Vector2 a = Vector2.zero;
+            int n = 0;
+            foreach (var o in gestures.Values) { if (n++ == 0) a = o.last; else return (o.last - a).magnitude; }
+            return 0f;
         }
 
         float Width => layer.contentRect.width > 0f ? layer.contentRect.width : 1920f;
@@ -431,6 +453,14 @@ namespace GoF2Remake.UI
             float F = Mathf.Clamp(F0, 300f, Mathf.Max(300f, h - 311f));
             var bg = new Vector2(w - 321f, F);
             bool left = h - 401f < F;
+            if (frame.cursor)
+            {
+                // The PC cursor mode: the cluster's background drawn from the bottom-right corner (0x6aa, 397 x 406), the pill
+                // and the boost along the bottom left.
+                bg = new Vector2(w - 397f, h - 406f);
+                left = false;
+                boostPos = new Vector2(174f, h - 125f);
+            }
             SetImage(cluster, left ? clusterLeft : clusterBottom);
             var firePos = bg + new Vector2(200f, 200f);
 
@@ -446,7 +476,8 @@ namespace GoF2Remake.UI
             Place(secondary, bg + (left ? new Vector2(-2f, 189f) : new Vector2(144f, 298f)));
             Place(boost, boostPos);
             Place(plate, new Vector2(w / 2f - 187f, h - 37f));
-            if (navButtons != null) Place(navButtons, new Vector2(32f, Mathf.Max(0f, S - 180f)));   // FF at (40, S - 180), autopilot (40, S)
+            if (navButtons != null)   // FF at (40, S - 180), autopilot (40, S); the cursor mode's at the bottom left
+                Place(navButtons, frame.cursor ? new Vector2(32f, h - 309f) : new Vector2(32f, Mathf.Max(0f, S - 180f)));
             // The pause button sits in the HUD root, so it also shows while the safe area is hidden: follow the safe area.
             var lb = layer.worldBound;
             var hb = pauseHost.worldBound;
@@ -462,15 +493,15 @@ namespace GoF2Remake.UI
             SetImage(pause, held.Contains(pause) ? pauseOn : pauseOff);
 
             // Hud::draw 4: the stick (also under a HUD menu); dim (alpha 50) in tilt, autopilot, approaches, hacking.
-            bool stickShown = full || menuOpen;
-            Show(stickArea, full);
+            bool stickShown = (full || menuOpen) && !f.cursor;
+            Show(stickArea, full && !f.cursor);
             Show(stickBase, stickShown);
             Show(knob, stickShown);
             SetImage(knob, stickPointer >= 0 ? knobOn : knobOff);
             float stickAlpha = f.dimStick ? 50f / 255f : 1f;
             stickBase.style.opacity = stickAlpha;
             knob.style.opacity = stickAlpha;
-            Show(gestureZone, full);
+            Show(gestureZone, full && !f.cursor);
 
             // With a HUD menu open everything after the stick is invisible (alpha 0).
             bool rest = full && !f.steeringMissile;
@@ -489,7 +520,7 @@ namespace GoF2Remake.UI
             SetImage(secondary, held.Contains(secondary) ? secOn : secOff);
             secondary.style.width = 109;   // 0x4bd is 77 px (only in the phone atlas): scaled to the button
             secondary.style.height = 109;
-            bool plateShown = full && f.secondary && f.secondaryText != null;
+            bool plateShown = (full || f.gauge) && f.secondary && f.secondaryText != null;
             Show(plate, plateShown);
             if (plateShown && plateText.text != f.secondaryText) plateText.text = f.secondaryText;
 

@@ -6,7 +6,9 @@
 // One player gets it: the host keeps the claim (the first player whose beam starts pulling; Crate.PullStarted). The others'
 // crates are claimedByOther (their radar leaves it, a beam already on it lets go), and the claimant's capture waits until
 // the claim is confirmed (captureBlocked). Another player's capture destroys the owner's crate (and so everyone's); the
-// owner's own capture or the crate's expiry despawns it (NetOrbit). A claimant who leaves loses the claim.
+// owner's own capture or the crate's expiry despawns it (NetOrbit). A claimant who leaves loses the claim. Only a player
+// flying in the crate's orbit may claim it (NetGuard), the claims are rate limited (NetRateLimit), the copies take only
+// items that exist from the owner's loot, and only the server may tell the owner to remove it.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -55,7 +57,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>NetState: a squadmate took the mission over and built its own container: the owner's goes.</summary>
-        [Rpc(SendTo.Owner)]
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
         public void TakenOverRpc()
         {
             if (crate != null) Destroy(crate.gameObject);
@@ -113,6 +115,9 @@ namespace GoF2Remake.Multiplayer
         void ClaimRpc(RpcParams rpc = default)
         {
             ulong who = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(who, NetRateLimit.Kind.Claim)) return;
+            // Only a player flying in the crate's orbit (a claim from elsewhere would hold every crate of the session back).
+            if (!NetGuard.InOrbit(who, station.Value)) return;
             // Another player's mission loot: only the mission's team (the owner's squad) may claim it.
             if (missionLoot.Value && !NetSquad.SameClient(who, NetSquad.Find(OwnerClientId))) return;
             if (claimant.Value == NoClaim) claimant.Value = who;
@@ -122,17 +127,19 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Server)]
         void ReleaseRpc(RpcParams rpc = default)
         {
-            if (claimant.Value == rpc.Receive.SenderClientId) claimant.Value = NoClaim;
+            ulong who = rpc.Receive.SenderClientId;
+            if (NetRateLimit.Allow(who, NetRateLimit.Kind.Claim) && claimant.Value == who) claimant.Value = NoClaim;
         }
 
         /// <summary>The claimant's capture: the owner's crate is gone (and with it everyone's).</summary>
         [Rpc(SendTo.Server)]
         void CapturedRpc(RpcParams rpc = default)
         {
-            if (claimant.Value == rpc.Receive.SenderClientId) RemoveRpc();
+            ulong who = rpc.Receive.SenderClientId;
+            if (NetRateLimit.Allow(who, NetRateLimit.Kind.Claim) && claimant.Value == who) RemoveRpc();
         }
 
-        [Rpc(SendTo.Owner)]
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
         void RemoveRpc()
         {
             if (crate != null) Destroy(crate.gameObject);
@@ -239,14 +246,18 @@ namespace GoF2Remake.Multiplayer
             return sb.ToString();
         }
 
+        /// <summary>The owner's loot (its own game's word): only items that exist, at most MaxLootAmount each (a modified owner
+        /// can't hand out unknown item ids that break the taker's cargo code).</summary>
         static IEnumerable<ItemStack> Decode(string text)
         {
             foreach (var part in text.Split(','))
             {
                 var kv = part.Split(':');
-                if (kv.Length == 2 && int.TryParse(kv[0], out int item) && int.TryParse(kv[1], out int amount) && amount > 0)
-                    yield return new ItemStack(item, amount);
+                if (kv.Length == 2 && int.TryParse(kv[0], out int item) && int.TryParse(kv[1], out int amount) && amount > 0 && NetGuard.Item(item))
+                    yield return new ItemStack(item, Mathf.Min(amount, MaxLootAmount));
             }
         }
+
+        const int MaxLootAmount = 1000;
     }
 }

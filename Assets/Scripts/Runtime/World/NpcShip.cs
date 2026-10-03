@@ -79,6 +79,9 @@ namespace GoF2Remake.World
         public bool IsJumper => Spec.group == NpcGroup.Jumper;
 
         [System.NonSerialized] public bool alwaysEnemy, turnedEnemy, alwaysFriend;
+        /// <summary>Remake (/spawn, the debug spawner): neutral to every player whatever the standings, until it is turned
+        /// (friendly fire) or a player shoots it in multiplayer (aggressors).</summary>
+        [System.NonSerialized] public bool alwaysNeutral;
         /// <summary>Player::setShootingEnabled / removeAllGuns (level scripts): false = it still hunts, never fires.</summary>
         [System.NonSerialized] public bool shootingEnabled = true;
         /// <summary>KIPlayer+0x20 set by a level script (index 64: Khador sits still): no steering, no flying, no firing.</summary>
@@ -294,7 +297,9 @@ namespace GoF2Remake.World
         /// <summary>The shock blast: 'center' and 'radius' in Unity metres.</summary>
         public void InitPush(Vector3 center, float radius)
         {
-            if (IsFixed || IsFreighter || radius <= 0f) return;
+            // KIPlayer::initPush is empty and PlayerTurret inherits it; only PlayerFighter / PlayerAsteroid push. The turret
+            // assemblies on battleships and carriers stay mounted.
+            if (IsFixed || IsFreighter || IsTurret || radius <= 0f) return;
             var away = transform.position - center;
             float d = away.magnitude;
             pushTotalMs = pushMs = (1f - Mathf.Min(d / radius, 1f)) * PushMaxMs;
@@ -333,7 +338,8 @@ namespace GoF2Remake.World
             {
                 modelGo = Instantiate(prefab, transform, false);
                 var asm = modelGo.GetComponent<AssembledObject>();
-                playerEngines = Settings.NpcPlayerEngines && spec.fixedObject == null && spec.turretAssembly == null
+                // The option, or a model with no NPC engine part at all (the Kaamo Club's 55-63: only the engine glow).
+                playerEngines = (Settings.NpcPlayerEngines || (asm != null && !asm.HasNpcExhaust)) && spec.fixedObject == null && spec.turretAssembly == null
                                 && asm != null && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0 && asm.playerVariantParts[0] != null;
                 asm?.SetPlayerVariant(playerEngines);
                 model = modelGo.transform;
@@ -343,7 +349,7 @@ namespace GoF2Remake.World
                     var glow = asm.playerVariantParts[0];
                     Flight.ShipExhaust.AttachRemote(gameObject, database, model, spec.ship,
                         () => glow != null && glow.activeInHierarchy && Current == State.Fly && !Hp.empDisabled,
-                        () => Mathf.Clamp01((speed - baseSpeed) / Mathf.Max(0.01f, NpcTables.BoostSpeed - baseSpeed)),
+                        () => Mathf.Clamp01(((scriptedSpeed >= 0f ? scriptedSpeed : speed) - baseSpeed) / Mathf.Max(0.01f, NpcTables.BoostSpeed - baseSpeed)),
                         () => cloak != null ? cloak.Percentage : 0f);
                 }
             }
@@ -364,6 +370,7 @@ namespace GoF2Remake.World
             if (spec.speed > 0f) speed = baseSpeed = spec.speed;
             alwaysEnemy = spec.alwaysEnemy;
             alwaysFriend = spec.alwaysFriend;
+            alwaysNeutral = spec.alwaysNeutral;
             Asleep = spec.asleep || spec.inactive;
             inactive = spec.inactive;
             parked = spec.stationary;
@@ -380,6 +387,7 @@ namespace GoF2Remake.World
                 obstacle.projectFromVolume = false;
                 obstacle.volumes = CollisionVolume.ForStaticObject(spec.collisionId);
             }
+            if (spec.deadButSelectable) ShowWreckAtEnd();
             Target.Damaged += OnDamaged;
             Target.Died += OnDied;
             lastHull = Hp.hull;
@@ -677,13 +685,14 @@ namespace GoF2Remake.World
             if (parked || frozen) return;   // parked: a target that neither flies nor shoots
             if (scriptedSpeed >= 0f)
             {
+                // AEGeometry::moveForward never touches the fighter's speed (+0x1e0): released, the AI flies at its own
+                // speed again (keeping the scripted one left Harval at ~9 u/ms in 158 and 154's fighters at 0).
                 transform.position += transform.forward * scriptedSpeed * dtMs * M;
-                speed = scriptedSpeed;
                 if (scriptedFire && gun != null && gun.TryFire(transform) >= 0)
                 {
                     int shot = NpcTables.ShotSound(Race);
                     var clip = assets != null && assets.shots != null && shot < assets.shots.Length ? assets.shots[shot] : null;
-                    if (clip != null) sfx.PlayOneShot(clip, 0.8f * Settings.SfxVolume);
+                    if (clip != null) ShotVoices.PlayAt(clip, transform.position, 0.8f);
                 }
                 return;
             }
@@ -753,6 +762,7 @@ namespace GoF2Remake.World
             // PlayerFighter::update's order: always-enemy, then Loma's paid toll (pirates neither hostile nor friendly), then a
             // turned ship, and the always-friend flag last (setAlwaysEnemy doesn't clear it: a story ally stays one).
             if (alwaysEnemy) { hostile = true; friend = false; }
+            if (alwaysNeutral) { hostile = false; friend = false; }
             if (r == Standing.Pirate && traffic != null && traffic.LomaTollPaid) { hostile = false; friend = false; }
             if (turnedEnemy) { hostile = true; friend = false; }
             if (HostileToLocalBySquad != null && HostileToLocalBySquad(this)) { hostile = true; friend = false; }   // multiplayer
@@ -770,30 +780,77 @@ namespace GoF2Remake.World
 
         static bool Valid(Target t) => t != null && t.Targetable;
 
-        /// <summary>State 5 (sleeping): wakes when the player comes within +-25 000 per axis or any listed target within
-        /// +-50 000; hostile sleepers stay hidden after the tutorial (PlayerFighter, index &gt; 1). An inactive ship only
-        /// wakes by script.</summary>
+        /// <summary>State 5 (sleeping): a hostile sleeper wakes when the player (or the steered Liberator) comes within its
+        /// detect range per axis (+-50 000 by default, not while the player is cloaked) or within +-25 000 (cloaked too);
+        /// other ships never wake it. A non-hostile sleeper wakes when its target is within the detect range; fixed objects
+        /// and freighters on any enemy within +-50 000. Hostile sleepers stay hidden after the tutorial (PlayerFighter,
+        /// index &gt; 1). An inactive ship only wakes by script.</summary>
         void UpdateSleep()
         {
             bool hide = Hidden;
             if (modelGo != null && modelGo.activeSelf == hide) modelGo.SetActive(!hide);
             Target.untargetable = true;
             if (inactive) return;
-            // PlayerFighter::update state 5 (0xf2750): KIPlayer+0x124 is the detect range (50 000 by default; 0 = never by
-            // proximity). The player within +-25 000 per axis (or the steered Liberator) wakes it, and so does its target
-            // within the detect range; fixed objects any enemy within it.
+            bool Near(Vector3 p, float units) { var d = p - transform.position; float r = units * M; return Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r; }
+            // Freighters and fixed objects are PlayerFixedObjects: PlayerFixedObject::update (0x17f480) state 5 wakes them on
+            // the first active enemy within +-50 000 per axis (a constant: no detect range, and no cloak test, only
+            // Player::isActive).
+            if (IsFixed || IsFreighter)
+            {
+                foreach (var e in enemies)
+                    if (Valid(e) && Near(e.transform.position, NpcTables.DetectRange)) { Wake(); return; }
+                return;
+            }
+            // PlayerFighter::update: KIPlayer+0x124 is the detect range (50 000 by default; 0 = never by proximity).
             float dr = detectRange >= 0f ? detectRange : NpcTables.DetectRange;
             if (dr <= 0f) return;
-            bool Near(Vector3 p, float units) { var d = p - transform.position; float r = units * M; return Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r; }
-            // Freighters are PlayerFixedObjects: PlayerFixedObject::update wakes them on any enemy within the box too.
-            bool fixedObject = IsFixed || IsFreighter;
-            if (!fixedObject && WeaponSystem.GuidedRocket.HasValue && Near(WeaponSystem.GuidedRocket.Value, 25000f)) { Wake(); return; }
-            foreach (var e in enemies)
+            var sleepTarget = SleepTarget(dr);
+            if (Target.hostileToPlayer)
             {
-                if (!Valid(e) || e.cloaked) continue;   // no waking for a cloaked target
-                float r = fixedObject || e == target || !e.isPlayer ? dr : 25000f;
-                if (Near(e.transform.position, r)) { Wake(); return; }
+                // 0xf19b8: a hostile sleeper (Player+0x5c) has its target delta (+0x16c) overwritten by the player's position,
+                // or the steered rocket's (PlayerEgo::isInRocketControl), whatever its target is: within +-25 000 per axis it
+                // wakes at once (no cloak test), and state 5 (0xf2750) wakes it within the detect range unless its target
+                // (+0x144, the player unless another ship was picked) is cloaked (+0x5e). Other ships never wake it.
+                var player = traffic != null ? traffic.Player : null;
+                Vector3? at = WeaponSystem.GuidedRocket ?? (player != null ? player.transform.position : (Vector3?)null);
+                if (at.HasValue && (Near(at.Value, 25000f) || (sleepTarget != null && !sleepTarget.cloaked && Near(at.Value, dr)))) { Wake(); return; }
+                // Multiplayer: another player it is hostile to wakes it the same way.
+                var remote = RemotePlayers;
+                if (remote != null && HostileToRemote != null)
+                    foreach (var r in remote)
+                    {
+                        if (r == null || !r.Alive || !r.isActiveAndEnabled || !HostileToRemote(this, r)) continue;
+                        if (Near(r.transform.position, 25000f) || (!r.cloaked && Near(r.transform.position, dr))) { Wake(); return; }
+                    }
             }
+            // State 5: the delta to the target itself, within the detect range (not for a cloaked target).
+            else if (sleepTarget != null && !sleepTarget.cloaked && Near(sleepTarget.transform.position, dr)) { Wake(); return; }
+        }
+
+        /// <summary>PlayerFighter+0x144 while asleep: the TARGETING (§5.3) keeps running in state 5. The first enemy in the
+        /// box; a non-hostile ship's pick of the player moves on to index 1, and any pick but the player becomes the first
+        /// race-hostile ship at any range; with none (the sleeper is inactive, so the route branch fails Player::isActive)
+        /// enemy 0, the player. The 5 s re-roll's random picks are left out.</summary>
+        Target SleepTarget(float dr)
+        {
+            int n = enemies.Count, idx = -1;
+            bool pirate = Race == Standing.Pirate;
+            float r = dr * M;
+            for (int i = 0; i < n; i++)
+            {
+                var e = enemies[i];
+                if (!Valid(e)) continue;
+                var d = e.transform.position - transform.position;
+                if ((!pirate && turnedEnemy) || (Mathf.Abs(d.x) < r && Mathf.Abs(d.y) < r && Mathf.Abs(d.z) < r)) { idx = i; break; }
+            }
+            if (!Target.hostileToPlayer && idx == 0) idx = 1;
+            if (idx > 0)
+            {
+                idx = -1;
+                for (int i = 1; i < n; i++)
+                    if (Valid(enemies[i]) && Standing.RacesHostile(Race, enemies[i].race)) { idx = i; break; }
+            }
+            return idx >= 0 ? enemies[idx] : n > 0 ? enemies[0] : null;
         }
 
         /// <summary>KIPlayer vtable +0x0c: awake (visible, flying, attacking).</summary>
@@ -1139,7 +1196,7 @@ namespace GoF2Remake.World
                             var clip = firing == empGun ? WeaponFx.Load(18)?.Shot
                                      : firing == secondGun ? WeaponFx.Load(secondGun.itemIndex)?.Shot
                                      : assets != null && assets.shots != null && shot < assets.shots.Length ? assets.shots[shot] : null;
-                            if (clip != null) sfx.PlayOneShot(clip, 0.8f * Settings.SfxVolume);
+                            if (clip != null) ShotVoices.PlayAt(clip, transform.position, 0.8f);   // shared voices (FEV max_playbacks)
                         }
                     }
                 }
@@ -1373,8 +1430,7 @@ namespace GoF2Remake.World
             else if (IsFreighter)
             {
                 dyingMs = 10000f;
-                var wreckPrefab = assets != null && assets.wrecks != null && assets.wrecks.Length == 5
-                    ? assets.wrecks[Spec.ship == 14 ? 4 : Race == 1 ? 1 : Race == 2 ? 2 : Race == 3 ? 3 : 0] : null;
+                var wreckPrefab = WreckPrefab(assets, Spec.ship, Race);
                 if (wreckPrefab != null && model != null)
                 {
                     wreck = Instantiate(wreckPrefab, transform, false);
@@ -1398,6 +1454,42 @@ namespace GoF2Remake.World
                 spinAxis = new Vector3(Random.Range(0, 200) - 100, Random.Range(0, 200) - 100, Random.Range(0, 200) - 100).normalized;
             }
         }
+
+        /// <summary>A freighter's wreck (setWreckedMeshId: cargo_00N_(race)_explosion_anim by race, the battleship's for
+        /// ship 14; CombatAssets.wrecks), null when missing.</summary>
+        public static GameObject WreckPrefab(CombatAssets assets, int ship, int race) =>
+            assets != null && assets.wrecks != null && assets.wrecks.Length == 5 ? assets.wrecks[WreckIndex(ship, race)] : null;
+
+        /// <summary>The CombatAssets.wrecks index: Terran 0, Vossk 1, Nivelian 2, Midorian 3, the battleship 4.</summary>
+        public static int WreckIndex(int ship, int race) => ship == 14 ? 4 : race == 1 ? 1 : race == 2 ? 2 : race == 3 ? 3 : 0;
+
+        /// <summary>PlayerFixedObject::setDeadButSelectable 0x180248 (the Supernova wrecks with a hidden blueprint): the
+        /// hull's geometry is replaced by the wreck's (+0x120, setWreckedMeshId), SetAnimationRangeInTime puts its animation
+        /// at the end and nothing advances it; HP 1 and setVulnerable(false). Still lockable and dockable (docking type 3),
+        /// no explosion, no fire (WreckBurn is the dying state's). Its docking points (sets 11-14) fit the wreck's end pose.</summary>
+        void ShowWreckAtEnd()
+        {
+            Target.invulnerable = true;
+            var prefab = WreckPrefab(assets, Spec.ship, Race);
+            if (prefab == null) return;   // keeps the intact hull
+            var w = Instantiate(prefab, transform, false);
+            if (model != null)
+            {
+                // the wreck takes the hull's matrix, like the dying freighter's (AEGeometry::setMatrix)
+                w.transform.localRotation = model.localRotation;
+                w.transform.localScale = model.localScale;
+            }
+            PartAnimation.HoldAllAtEnd(w);
+            if (modelGo != null) Destroy(modelGo);
+            modelGo = w;
+            model = w.transform;
+            // Multiplayer: the other players' proxies load the wreck by this marker (NetProxy.BuildVisual).
+            ModelPath = WreckModelPrefix + WreckIndex(Spec.ship, Race);
+        }
+
+        /// <summary>NpcShip.ModelPath of a ship shown as a freighter wreck held at its end (setDeadButSelectable): the prefix
+        /// and the CombatAssets.wrecks index; NetProxy shows the same wreck.</summary>
+        public const string WreckModelPrefix = "wreck:";
 
         void UpdateDying(float dtMs)
         {

@@ -1,7 +1,7 @@
 // PauseMenu.cs
 // The in-flight pause menu (MenuTouchWindow mode 1, Reference/research/mainmenu_notes.md 2.4): header 40 "Pause", then
-// 41 Resume, 129 Missions (from campaign 16, not in the alien orbit), 166 Cargo hold (from 2), 31 Options, 59 Action Freeze
-// (PhotoMode), 395 Skip (LevelScript::canSkipCutsceneNow: the prologue / rescue, 154, 157, 158) and 522 Back to Main Menu
+// 41 Resume, 129 Missions (from campaign 16; remake: also in the alien orbit, and the Most Wanted criminals on the move),
+// 166 Cargo hold (from 2), 31 Options, 59 Action Freeze (PhotoMode), 395 Skip (LevelScript::canSkipCutsceneNow: the prologue / rescue, 154, 157, 158) and 522 Back to Main Menu
 // (confirm 523). The game and its sounds pause while it is open. Options is the main menu's Options panel (OptionsView:
 // the same tabs and rows, OptionsCatalog) but the text language. Also the ChoiceWindow (Ask: Loma's toll 448, the flight hints). The share buttons (60 / 61) are dead
 // code in the original (the remake's 60 saves the picture).
@@ -134,9 +134,10 @@ namespace GoF2Remake.UI
                 case Page.Main:
                     title.text = T(40);
                     Item(T(41), Close);
-                    // MenuTouchWindow mode 1: Missions from campaign 16 (not in the alien orbit), the cargo hold from 2.
+                    // MenuTouchWindow mode 1: Missions from campaign 16, the cargo hold from 2. The original leaves Missions
+                    // out in the alien orbit; the remake keeps it (the objective is needed there too).
                     int cm = Session.FreePlay ? 20 : Session.CampaignMission;
-                    if (cm >= 16 && (level == null || !level.Layout.alienOrbit)) Item(T(129), () => Show(Page.Missions));
+                    if (cm >= 16) Item(T(129), () => Show(Page.Missions));
                     if (cm >= 2) Item(T(166), () => Show(Page.Cargo));
                     Item(T(31), () => Show(Page.Options));
                     // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats); in multiplayer only
@@ -226,7 +227,7 @@ namespace GoF2Remake.UI
             var db = level != null ? level.Database : null;
             Scroll();
             Text(T(555), "pause-heading");
-            bool story = !Session.FreePlay && !Session.StoryMission.IsEmpty && Session.StoryMission.visible && db != null;
+            bool story = !Session.FreePlay && Story.Step != null && Story.Step.objectiveText >= 0 && db != null;   // as MissionsWindow
             Text(story ? Story.ObjectiveText(db) : Localization.Get(174));
             Text(T(556), "pause-heading");
             var m = Freelance.Mission;
@@ -237,6 +238,29 @@ namespace GoF2Remake.UI
                 Text(MissionsWindow.FreelanceText(db, m));
             }
             else Text(Localization.Get(174));
+            if (!Session.FreePlay && Session.CampaignMission >= WantedBoard.StorylineFirst && db != null) BuildWanted(db);
+        }
+
+        /// <summary>Remake: the Most Wanted criminals on the move (the board itself is only in the stations' Missions window,
+        /// WantedWindow): name, bounty, where last seen and where they travel to.</summary>
+        void BuildWanted(Database db)
+        {
+            Text(T(3219), "pause-heading");
+            string Place(int station)
+            {
+                var st = db.Stations.Find(x => x.index == station);
+                return st == null ? T(3229) : $"{st.name} ({st.systemName})";
+            }
+            int shown = 0;
+            foreach (var w in db.Wanted)
+            {
+                var state = WantedBoard.State(db, w.index);
+                if (state == null || !state.active || state.terminated) continue;
+                Text($"{w.name} · {T(3225)} {ItemInfo.Credits(w.reward)}", "pause-subheading");
+                Text($"{T(3223)} {Place(state.lastSeen)}\n{T(3224)} {Place(state.travelsTo)}");
+                shown++;
+            }
+            if (shown == 0) Text(Localization.Get(174));
         }
 
         /// <summary>The cargo hold: every cargo stack with its tonnage, and the load against the capacity.</summary>

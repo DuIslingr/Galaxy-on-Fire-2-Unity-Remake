@@ -1,3 +1,6 @@
+/* Remake: the lines (full width, no gaps), the tab and the input row are solid: the chat is drawn over the flight HUD's
+   key hints on the left and covers them while it shows (at even 95 % the bright hint text showed through). */
+
 .chat {
     position: absolute;
     left: 24px;
@@ -12,18 +15,18 @@
     font-size: 14px;
     letter-spacing: 1px;
     color: rgba(216, 236, 247, 0.75);
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgb(4, 8, 14);
     border-radius: 2px;
 }
 
 .chat-line {
-    align-self: flex-start;
-    margin-bottom: 2px;
-    padding: 2px 8px;
+    align-self: stretch;   /* the full width, no gaps: one block that covers the key hints under it */
+    margin-bottom: 0;
+    padding: 3px 8px;
     font-size: 17px;
     color: rgb(230, 240, 246);
     white-space: normal;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: rgb(4, 8, 14);
     border-radius: 2px;
 }
 
@@ -48,11 +51,13 @@
 
 .chat-channel {
     min-width: 96px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
     margin: 0;
     padding: 4px 10px;
     font-size: 14px;
     color: rgb(143, 216, 255);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgb(4, 8, 14);
     border-width: 1px;
     border-color: rgba(143, 216, 255, 0.5);
     border-radius: 2px;
@@ -65,26 +70,63 @@
 
 .chat-field {
     flex-grow: 1;
-    margin: 0 6px;
+    margin: 0 0 0 6px;
 }
 
 .chat-field .unity-base-text-field__input {
     padding: 5px 10px;
     font-size: 17px;
     color: rgb(255, 255, 255);
-    background-color: rgba(0, 0, 0, 0.6);
+    background-color: rgb(4, 8, 14);
     border-width: 1px;
     border-color: rgba(216, 236, 247, 0.3);
     border-radius: 2px;
 }
 
-.chat-send {
-    min-width: 44px;
-    margin: 0;
-    font-size: 20px;
-    color: rgb(255, 255, 255);
-    background-color: rgba(0, 0, 0, 0.6);
+/* Typing "/": the matching commands over the input line (ChatView.RefreshSuggestions), Tab's pick highlighted. */
+.chat-suggest {
+    margin-top: 6px;
+    background-color: rgb(4, 8, 14);
     border-width: 1px;
     border-color: rgba(216, 236, 247, 0.3);
     border-radius: 2px;
+}
+
+.chat-suggest-row {
+    padding: 4px 10px;
+    font-size: 16px;
+    color: rgb(230, 240, 246);
+    white-space: normal;
+}
+
+.chat-suggest-row--picked {
+    background-color: rgba(240, 179, 90, 0.25);
+    border-left-width: 2px;
+    border-left-color: rgb(240, 179, 90);
+}
+
+.chat-suggest-hint {
+    padding: 3px 10px 4px 10px;
+    font-size: 13px;
+    color: rgba(216, 236, 247, 0.5);
+}
+
+/* The /netstats overlay (NetStats), top left between the HUD's bars and the chat. */
+.netstats {
+    position: absolute;
+    left: 24px;
+    top: 21%;
+    padding: 6px 10px;
+    font-size: 15px;
+    color: rgb(216, 236, 247);
+    background-color: rgba(4, 8, 14, 0.85);
+    border-left-width: 2px;
+    border-left-color: rgb(240, 179, 90);
+    white-space: nowrap;
+}
+
+.netstats--station {
+    left: auto;
+    right: 24px;
+    top: 9%;
 }

@@ -2,7 +2,7 @@
 // Multiplayer chat: global (every player anywhere) and local (the players in the same orbit, or docked at the same
 // station). A message goes to the host (NetState.SendChatRpc), which stamps it with the sender's name and where they are
 // and sends it to everyone; each player keeps the global ones and the local ones from where they are themselves. Plus
-// the session's notices (a player joined / left). ChatView shows them in the flight HUD and the station menu.
+// the session's notices (a player joined / left). A line starting with "/" is a command for this game (NetCommands). ChatView shows them in the flight HUD and the station menu.
 // While a chat line is being typed (Typing) the game's key input is off: the code-made InputActions are disabled and the
 // direct keyboard reads go through Keys (null meanwhile); outside a session Keys is just Keyboard.current.
 
@@ -18,8 +18,10 @@ namespace GoF2Remake.Multiplayer
     public static class NetChat
     {
         public const int MaxLength = 160, Keep = 60;
+        /// <summary>A typed command may be longer (a /dialog conversation; the server's cap NetGuard.MaxCommandArgs).</summary>
+        public const int MaxCommandLength = 500;
 
-        public enum Channel { Local, Global, Notice }
+        public enum Channel { Local, Global, Notice, Whisper }
 
         public sealed class Message
         {
@@ -97,9 +99,16 @@ namespace GoF2Remake.Multiplayer
             return text.Length > MaxLength ? text.Substring(0, MaxLength) : text;
         }
 
+        static string CleanCommand(string text)
+        {
+            text = (text ?? "").Replace("<", "").Replace(">", "").Replace('\n', ' ').Trim();
+            return text.Length > MaxCommandLength ? text.Substring(0, MaxCommandLength) : text;
+        }
+
         public static void Send(string text)
         {
-            text = Clean(text);
+            text = (text ?? "").TrimStart().StartsWith("/") ? CleanCommand(text) : Clean(text);
+            if (NetCommands.TryRun(text)) return;   // "/help", "/netstats": this game's own, never sent
             if (text.Length == 0 || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
             NetState.Instance.SendChatRpc(text, Sending == Channel.Global);
         }
@@ -112,12 +121,19 @@ namespace GoF2Remake.Multiplayer
             Add(new Message { channel = global ? Channel.Global : Channel.Local, from = from, text = text, own = me != null && me.OwnerClientId == sender });
         }
 
+        /// <summary>NetState: a private message to this player ('own' = the copy of one this player sent; 'other' = the other
+        /// player's name).</summary>
+        public static void ReceiveWhisper(string other, string text, bool own) =>
+            Add(new Message { channel = Channel.Whisper, from = other, text = text, own = own });
+
         public static void Notice(string text) => Add(new Message { channel = Channel.Notice, text = text });
 
         static void Add(Message m)
         {
             m.time = Time.unscaledTime;
-            Debug.Log(m.channel == Channel.Notice ? $"[Chat] {m.text}" : $"[Chat {m.channel}] {m.from}: {m.text}");
+            // Private messages stay out of the log (it is shared in bug reports).
+            if (m.channel == Channel.Whisper) { }
+            else Debug.Log(m.channel == Channel.Notice ? $"[Chat] {m.text}" : $"[Chat {m.channel}] {m.from}: {m.text}");
             messages.Add(m);
             if (messages.Count > Keep) messages.RemoveAt(0);
             Added?.Invoke(m);

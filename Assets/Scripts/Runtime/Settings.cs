@@ -60,9 +60,11 @@ namespace GoF2Remake.Data
 
         /// <summary>Upscaler: 0 off (URP's automatic bilinear / point), 1 AMD FSR 1 (sharpening, also at 100 %), 2 Unity STP
         /// (temporal: anti-aliasing and upscaling, replaces MSAA), 3 NVIDIA DLSS and 4 AMD FSR 2 / 3 / 4 (temporal, the render
-        /// resolution by UpscalerQuality; desktop builds with the upscaler framework only, UpscalerFramework).</summary>
-        public static int Upscaler { get => Mathf.RoundToInt(Get("upscaler", 0f)); set => Set("upscaler", Mathf.Clamp(value, 0, 4)); }
-        public const int UpscalerOff = 0, UpscalerFsr = 1, UpscalerStp = 2, UpscalerDlss = 3, UpscalerFsrTemporal = 4;
+        /// resolution by UpscalerQuality; desktop builds with the upscaler framework only, UpscalerFramework), 5 Apple MetalFX
+        /// Spatial and 6 MetalFX Temporal (macOS / iOS on Metal, from the render scale; 6 temporal like STP).</summary>
+        public static int Upscaler { get => Mathf.RoundToInt(Get("upscaler", 0f)); set => Set("upscaler", Mathf.Clamp(value, 0, 6)); }
+        public const int UpscalerOff = 0, UpscalerFsr = 1, UpscalerStp = 2, UpscalerDlss = 3, UpscalerFsrTemporal = 4,
+            UpscalerMetalFxSpatial = 5, UpscalerMetalFxTemporal = 6;
 
         /// <summary>DLSS / FSR 2+ quality mode (UpscalerFramework.Quality*): 0 native (DLAA / native AA), 1 quality (default),
         /// 2 balanced, 3 performance, 4 ultra performance.</summary>
@@ -147,10 +149,23 @@ namespace GoF2Remake.Data
         // ---- gameplay ----------------------------------------------------------------------------------------
 
         /// <summary>The launch / arrival camera (LevelScript's start sequence); off = straight to the chase camera.</summary>
-        public static bool LaunchCamera { get => GetBool("launchCamera", true); set => SetBool("launchCamera", value); }
+        /// <summary>VR flight: the cockpit's grabbable stick and throttle (Vr.VrControls) instead of only the controllers as a gamepad.</summary>
+        public static bool VrGrabControls { get => GetBool("vrGrabControls", false); set => SetBool("vrGrabControls", value); }
+
+        /// <summary>The launch / arrival fly-in camera (off in VR: a moving outside camera is a motion-sickness trigger).</summary>
+        public static bool LaunchCamera { get => GetBool("launchCamera", true) && !Vr.VrMode.Enabled; set => SetBool("launchCamera", value); }
 
         /// <summary>Remake: the ship flies into the hangar after docking and out of it when launching (HangarFlight).</summary>
         public static bool HangarFlights { get => GetBool("hangarFlights", true); set => SetBool("hangarFlights", value); }
+
+        /// <summary>Remake: the tutorial popups (the flight hints, the stations' first-visit help, the map and hangar hints;
+        /// FlightHints, StationMenu, HangarWindow). Off by default; a new game asks (MainMenu.StartGame). While off, a hint is
+        /// not marked as shown, so turning it on later still shows it once.</summary>
+        public static bool TutorialHints { get => GetBool("tutorialHints", false); set => SetBool("tutorialHints", value); }
+
+        /// <summary>Remake (GitHub #6): now and then a free-flight orbit holds a pirate outpost or a pirate boss with escorts
+        /// (TrafficPlan.AddPirateEvent), each with a bounty.</summary>
+        public static bool PirateEvents { get => GetBool("pirateEvents", true); set => SetBool("pirateEvents", value); }
 
         /// <summary>DialogueWindow::update: with voice, turn the page once the line has ended.</summary>
         public static bool AutoAdvanceDialogue { get => GetBool("autoAdvanceDialogue", true); set => SetBool("autoAdvanceDialogue", value); }
@@ -161,6 +176,10 @@ namespace GoF2Remake.Data
 
         /// <summary>The keyboard / controller hint rows of the HUDs (the touch controls always show).</summary>
         public static bool InputHints { get => GetBool("inputHints", true); set => SetBool("inputHints", value); }
+        /// <summary>Remake: every primary weapon item sounds its own shots (the original: only the first primary gun).</summary>
+        public static bool EachWeaponSound { get => GetBool("eachWeaponSound", false); set => SetBool("eachWeaponSound", value); }
+        /// <summary>Remake: the frame rate at the top centre (FpsCounter).</summary>
+        public static bool ShowFps { get => GetBool("showFps", false); set => SetBool("showFps", value); }
 
         /// <summary>Language code of Localization/text_{code}.json.</summary>
         public static string Language
@@ -188,6 +207,7 @@ namespace GoF2Remake.Data
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
                          "frameRate", "renderScale", "upscaler", "upscalerQuality", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "gyroSteering", "gyroSensitivity", "haptics", "stickDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
+                         "pirateEvents", "tutorialHints",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);
             PlayerPrefs.Save();

@@ -3,7 +3,9 @@
 // PlayerSettings.bundleVersion before the build (Application.version, Android's versionName) and put back once the build
 // has finished or failed (EditorApplication.delayCall runs after BuildPipeline.BuildPlayer returns), so the project
 // settings keep their own value. UWP builds also get it as their package version (yyyy.M.d.HHmm). A release's builds
-// share one version through GOF2_BUILD_VERSION (OverrideVariable).
+// share one version through GOF2_BUILD_VERSION (OverrideVariable). The build also gets the code's fingerprint
+// (BuildFingerprint, what multiplayer compares: builds of the same code play together whenever they were built) as
+// Resources/GoF2Build/BuildFingerprint.txt, deleted again afterwards.
 
 using UnityEditor;
 using UnityEditor.Build;
@@ -28,7 +30,11 @@ namespace GoF2Remake.EditorTools
             if (string.IsNullOrWhiteSpace(stamp))
                 stamp = System.DateTime.Now.ToString(GoF2Remake.UI.BuildVersion.Format, System.Globalization.CultureInfo.InvariantCulture);
             PlayerSettings.bundleVersion = stamp;
-            UnityEngine.Debug.Log($"GoF2: build version {stamp}");
+            string fingerprint = BuildFingerprint.Compute();
+            System.IO.Directory.CreateDirectory(BuildFingerprint.Folder);
+            System.IO.File.WriteAllText(BuildFingerprint.FilePath, fingerprint);
+            AssetDatabase.ImportAsset(BuildFingerprint.FilePath, ImportAssetOptions.ForceSynchronousImport);
+            UnityEngine.Debug.Log($"GoF2: build version {stamp}, fingerprint {fingerprint}");
             // UWP: the package version is four numbers up to 65535 each: yyyy.M.d.HHmm (2026.10.02.0008 -> 2026.10.2.8).
             var savedWsa = PlayerSettings.WSA.packageVersion;
             bool wsa = report.summary.platform == BuildTarget.WSAPlayer;
@@ -43,6 +49,7 @@ namespace GoF2Remake.EditorTools
             {
                 PlayerSettings.bundleVersion = saved;
                 if (wsa) PlayerSettings.WSA.packageVersion = savedWsa;
+                AssetDatabase.DeleteAsset(BuildFingerprint.Folder);   // only in the build (git-ignored meanwhile)
                 AssetDatabase.SaveAssets();
             };
         }

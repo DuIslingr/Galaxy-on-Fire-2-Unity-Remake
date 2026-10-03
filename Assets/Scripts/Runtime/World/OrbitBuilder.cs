@@ -26,14 +26,15 @@ namespace GoF2Remake.World
 
         // ---- sky, light, fog ---------------------------------------------------------------------------------
 
-        public static void SetupSky(OrbitLayout layout, float ambientIntensity = 1f)
+        public static void SetupSky(OrbitLayout layout, float ambientIntensity = 1f, int nebulaOverride = -1)
         {
             var template = Resources.Load<Material>("GoF2Sky/SpaceSky");
             if (template == null) { Debug.LogWarning("OrbitBuilder: run GoF2 > Bake Space Skies"); return; }
             var sky = new Material(template) { name = "SpaceSky (runtime)" };
             int stars = layout.systemIndex >= 0 ? layout.systemIndex % 3 : 2;   // alien/void: stars_002
             sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{stars:000}"));
-            sky.SetTexture("_Nebula", Resources.Load<Cubemap>($"GoF2Sky/nebula_{layout.systemTexture:000}"));
+            int nebula = nebulaOverride >= 0 ? nebulaOverride : layout.systemTexture;   // the prologue's belt: nebula 3
+            sky.SetTexture("_Nebula", Resources.Load<Cubemap>($"GoF2Sky/nebula_{nebula:000}"));
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
             sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(SkyRotation(layout))));
             RenderSettings.skybox = sky;
@@ -123,15 +124,18 @@ namespace GoF2Remake.World
         /// <summary>Level::createSpace / PlayerStation: at the origin, rotation (0, pi, 0) (= identity in Unity).</summary>
         public static GameObject SpawnStation(Database db, OrbitLayout layout, Transform parent = null)
         {
-            if (!layout.hasStation && layout.stationIndex != 110) return null;   // 110 keeps its wreck in the empty orbit
+            if (!layout.stationObject) return null;   // Level::createSpace: the empty orbits 27 / 110 / 111 keep their PlayerStation
             string name = StationAssembly(db, layout);
             if (name == null) { Debug.LogWarning($"OrbitBuilder: no station assembly for {layout.stationIndex}"); return null; }
             var go = Spawn(db, name, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), "Station", parent);
             // PlayerStation::update advances the station's animation every frame except at 101 and in the alien orbit: the
-            // battlestation's arms hold their first frame there. The Void station holds the pose after its one-off first
+            // battlestation's arms hold their first frame there, or their last once step 78 unfolded them (the ctor's
+            // Transform::Update(the length): station 0x65 from campaign 0x50 0x1473c2, the alien orbit after the Valkyrie
+            // add-on 0x146e90). The Void station holds the pose after its one-off first
             // key: at t 0 every part is at scale 1, from 50 ms the hull is x10.065 (about 10 km across), the size its
             // collision volumes (1001: spheres out to +-100 000 units) and the arrival 170 000-220 000 units out are made for.
             if (name == "station_void") PartAnimation.HoldAllAfterOneOff(go);
+            else if ((layout.stationIndex == 101 && Session.CampaignMission >= 0x50) || (layout.alienOrbit && Story.Dlc1Won)) PartAnimation.HoldAllAtEnd(go);
             else if (layout.stationIndex == 101 || layout.alienOrbit) PartAnimation.HoldAll(go);
             return go;
         }
@@ -147,10 +151,19 @@ namespace GoF2Remake.World
                 var o = station.AddComponent<GoF2Remake.Flight.Obstacle>();
                 o.landmark = o.isStation = true;
                 o.volumes = GoF2Remake.Flight.CollisionVolume.ForStation(layout.stationIndex, layout.systemIndex < 0);
-                // PlayerStation+0x150: the transform's bounding radius + 5000 units.
-                var b = new Bounds(station.transform.position, Vector3.zero);
+                // PlayerStation+0x150: the transform's bounding radius (Transform+0xe0, about the station's own origin)
+                // + 5000 units. A radius from the origin, not the bounds' half size: a lopsided station (Tornard, 57,
+                // towers 3.4 km out on one side) had its far tower outside the cube, so nothing collided there.
+                var pos = station.transform.position;
+                var b = new Bounds(pos, Vector3.zero);
                 foreach (var r in station.GetComponentsInChildren<Renderer>()) b.Encapsulate(r.bounds);
-                o.cubeHalf = Mathf.Max(b.extents.x, b.extents.y, b.extents.z) + 5000f * M;
+                float radius = 0f;
+                for (int c = 0; c < 8; c++)
+                {
+                    var corner = new Vector3((c & 1) != 0 ? b.max.x : b.min.x, (c & 2) != 0 ? b.max.y : b.min.y, (c & 4) != 0 ? b.max.z : b.min.z);
+                    radius = Mathf.Max(radius, (corner - pos).magnitude);
+                }
+                o.cubeHalf = radius + 5000f * M;
             }
             if (jumpgate != null)
             {

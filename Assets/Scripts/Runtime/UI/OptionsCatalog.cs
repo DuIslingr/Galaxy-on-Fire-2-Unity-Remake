@@ -14,7 +14,7 @@ using UnityEngine;
 
 namespace GoF2Remake.UI
 {
-    public enum OptionPage { Sound, Graphics, Controls, Gameplay, Language }
+    public enum OptionPage { Sound, Graphics, Controls, Gameplay, Language, Bindings }
     public enum OptionKind { Slider, Toggle, Choice, Button, Binding }
 
     public sealed class OptionDef
@@ -61,6 +61,7 @@ namespace GoF2Remake.UI
             OptionPage.Sound => X("tabSound", "Sound"),
             OptionPage.Graphics => Localization.Get(502),
             OptionPage.Controls => Localization.Get(498),
+            OptionPage.Bindings => X("tabBindings", "Key bindings"),
             OptionPage.Language => Localization.Get(0),
             _ => X("tabGameplay", "Gameplay"),
         };
@@ -79,6 +80,9 @@ namespace GoF2Remake.UI
                 Slider("music", OptionPage.Sound, () => Localization.Get(34), 0f, 1f, () => Settings.MusicVolume, v => Settings.MusicVolume = v, Percent),
                 Slider("sfx", OptionPage.Sound, () => Localization.Get(35), 0f, 1f, () => Settings.SfxVolume, v => Settings.SfxVolume = v, Percent),
                 Slider("voice", OptionPage.Sound, () => Localization.Get(36), 0f, 1f, () => Settings.VoiceVolume, v => Settings.VoiceVolume = v, Percent),
+                // Remake: the original sounds only the first primary gun (Player::calcWeaponSounds).
+                Toggle("eachWeaponSound", OptionPage.Sound, () => X("eachWeaponSound", "Every weapon's own shot sound"),
+                    () => Settings.EachWeaponSound, v => Settings.EachWeaponSound = v),
                 // Remake: the voices apart from the text language (only English and German were recorded); on the Language tab.
                 Choice("voiceLanguage", OptionPage.Language, () => X("voiceLanguage", "Voice language"), true,
                     () => new[] { X("voiceAuto", "As text"), "English", "Deutsch" },
@@ -106,6 +110,7 @@ namespace GoF2Remake.UI
                 () => Settings.Quality, i => Settings.Quality = i,
                 () => QualityDescription(Settings.Quality)));
             // DLSS / FSR 2+ pick their own render resolution (the Upscaler quality below): no render scale while one is on.
+            // MetalFX keeps the render scale (its input resolution; URP clamps it into MetalFX Temporal's supported range).
             bool DlssOrFsrOn() => Bootstrap.ActiveUpscaler == Settings.UpscalerDlss || Bootstrap.ActiveUpscaler == Settings.UpscalerFsrTemporal;
             var renderScale = Choice("renderScale", OptionPage.Graphics, () => X("renderScale", "Render scale"), false,
                 () => RenderScales.Select(Percent).ToArray(),
@@ -114,7 +119,7 @@ namespace GoF2Remake.UI
             renderScale.visible = () => !DlssOrFsrOn();
             list.Add(renderScale);
             // Only the upscalers this device runs (Android: FSR 1 needs GLES 3.1 / Vulkan, STP Vulkan; DLSS / FSR 2+: Windows
-            // builds with the upscaler framework, the GPU and graphics API they need, UpscalerFramework). Asked again on every
+            // builds with the upscaler framework, the GPU and graphics API they need; MetalFX: macOS / iOS on Metal, UpscalerFramework). Asked again on every
             // refresh: DLSS / FSR are only known once URP has made its pipeline (the first frame), and the main menu builds
             // its rows before that.
             List<int> Upscalers()
@@ -124,6 +129,8 @@ namespace GoF2Remake.UI
                 if (Bootstrap.StpSupported) l.Add(Settings.UpscalerStp);
                 if (Bootstrap.DlssSupported) l.Add(Settings.UpscalerDlss);
                 if (Bootstrap.FsrTemporalSupported) l.Add(Settings.UpscalerFsrTemporal);
+                if (Bootstrap.MetalFxSpatialSupported) l.Add(Settings.UpscalerMetalFxSpatial);
+                if (Bootstrap.MetalFxTemporalSupported) l.Add(Settings.UpscalerMetalFxTemporal);
                 return l;
             }
             var upscalers = Upscalers();
@@ -133,6 +140,8 @@ namespace GoF2Remake.UI
                 Settings.UpscalerStp => "STP",
                 Settings.UpscalerDlss => "DLSS",
                 Settings.UpscalerFsrTemporal => UpscalerFramework.BestFsrLabel ?? "FSR",
+                Settings.UpscalerMetalFxSpatial => "MetalFX",
+                Settings.UpscalerMetalFxTemporal => "MetalFX Temporal",
                 _ => X("off", "Off"),
             };
             if (upscalers.Count > 1 || UpscalerFramework.Compiled)
@@ -147,6 +156,8 @@ namespace GoF2Remake.UI
                         Settings.UpscalerDlss => X("upscalerDlss", "NVIDIA DLSS: AI upscaling and anti-aliasing (DLAA at Native), replaces MSAA; the quality sets its resolution"),
                         Settings.UpscalerFsrTemporal => string.Format(X("upscalerFsrTemporal", "AMD {0}: temporal upscaling and anti-aliasing, replaces MSAA; the quality sets its resolution"),
                             UpscalerFramework.BestFsrLabel ?? "FSR"),
+                        Settings.UpscalerMetalFxSpatial => X("upscalerMetalFxSpatial", "Apple MetalFX Spatial: sharp upscaling from the render scale"),
+                        Settings.UpscalerMetalFxTemporal => X("upscalerMetalFxTemporal", "Apple MetalFX Temporal: temporal anti-aliasing and upscaling from the render scale, replaces MSAA"),
                         _ => X("upscalerOff", "Plain scaling from the render scale"),
                     }));
             // DLSS / FSR 2+: the render resolution by quality mode, in place of the render scale; only while one of them is on (in
@@ -161,7 +172,7 @@ namespace GoF2Remake.UI
                 quality.visible = DlssOrFsrOn;
                 list.Add(quality);
             }
-            // MSAA with a temporal upscaler on (STP, DLSS, FSR 2+): its anti-aliasing takes the place (shown as off); picking MSAA
+            // MSAA with a temporal upscaler on (STP, DLSS, FSR 2+, MetalFX Temporal): its anti-aliasing takes the place (shown as off); picking MSAA
             // turns the upscaler off.
             list.Add(Choice("msaa", OptionPage.Graphics, () => X("antiAliasing", "Anti-aliasing"), true,
                 () => new[] { X("off", "Off"), "MSAA 2×", "MSAA 4×", "MSAA 8×" },
@@ -186,6 +197,7 @@ namespace GoF2Remake.UI
                 () => Settings.FieldOfView, v => Settings.FieldOfView = Mathf.Round(v), v => $"{Mathf.RoundToInt(v)}°"));
             list.Add(Slider("cameraShake", OptionPage.Graphics, () => X("cameraShake", "Camera shake"), 0f, 1f,
                 () => Settings.CameraShake, v => Settings.CameraShake = v, Percent));
+            list.Add(Toggle("showFps", OptionPage.Graphics, () => X("showFps", "Show FPS"), () => Settings.ShowFps, v => Settings.ShowFps = v));
 
             // ---- controls
             // MenuTouchWindow state 8: 490 Touch / 491 Accelerometer pictures (options[0x11]), 492 Steering Calibration
@@ -224,6 +236,11 @@ namespace GoF2Remake.UI
             }
             if (!Application.isMobilePlatform)
                 list.Add(Toggle("mouseSteering", OptionPage.Controls, () => X("mouseSteering", "Mouse steering"), () => Settings.MouseSteering, v => Settings.MouseSteering = v));
+            // Remake VR: the cockpit's grabbable stick (right grip) and throttle lever (left grip), else the controllers as a gamepad.
+            var vrGrab = Toggle("vrGrabControls", OptionPage.Controls, () => X("vrGrabControls", "VR flight: grab the stick and throttle"),
+                () => Settings.VrGrabControls, v => Settings.VrGrabControls = v);
+            vrGrab.visible = () => Vr.VrMode.Enabled;
+            list.Add(vrGrab);
             // Remake: haptic feedback (Haptics), the controller's rumble and the phone's vibration; moving it plays a sample.
             var haptics = Slider("haptics", OptionPage.Controls, () => X("haptics", "Vibration"), 0f, 1f,
                 () => Settings.HapticsIntensity, v => { Settings.HapticsIntensity = v; Flight.Haptics.Preview(); },
@@ -237,20 +254,26 @@ namespace GoF2Remake.UI
             // Remake: every flight control rebindable (GameControls): two keyboard / mouse keys and a controller button each.
             list.Add(new OptionDef
             {
-                id = "resetBindings", page = OptionPage.Controls, kind = OptionKind.Button,
+                id = "resetBindings", page = OptionPage.Bindings, kind = OptionKind.Button,
                 label = () => X("resetBindings", "Reset key bindings"),
-                description = () => X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc cancels, Backspace clears. The menu keys stay fixed."),
+                description = () => X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc (or the controller's B, or a tap) cancels, Backspace clears; nothing pressed for 10 seconds cancels too. The menu keys stay fixed."),
                 action = Flight.GameControls.ResetToDefaults,
                 extra = BindingRow.Header,
             });
             foreach (var row in Flight.GameControls.Rows)
-                list.Add(new OptionDef { id = "bind_" + row.id, page = OptionPage.Controls, kind = OptionKind.Binding, label = row.label, control = row });
+                list.Add(new OptionDef { id = "bind_" + row.id, page = OptionPage.Bindings, kind = OptionKind.Binding, label = row.label, control = row });
 
             // ---- gameplay
             list.Add(Toggle("launchCamera", OptionPage.Gameplay, () => X("launchCamera", "Launch and arrival camera"),
                 () => Settings.LaunchCamera, v => Settings.LaunchCamera = v));
             list.Add(Toggle("hangarFlights", OptionPage.Gameplay, () => X("hangarFlights", "Hangar arrival and take-off"),
                 () => Settings.HangarFlights, v => Settings.HangarFlights = v));
+            list.Add(Toggle("tutorialHints", OptionPage.Gameplay, () => X("tutorialHints", "Tutorial popups"),
+                () => Settings.TutorialHints, v => Settings.TutorialHints = v));
+            var pirateEvents = Toggle("pirateEvents", OptionPage.Gameplay, () => X("pirateEvents", "Pirate outposts and bosses"),
+                () => Settings.PirateEvents, v => Settings.PirateEvents = v);
+            pirateEvents.description = () => X("pirateEventsHelp", "Now and then an orbit holds a pirate outpost with its guards or a pirate boss with escorts; destroying them pays a bounty. Not in the original.");
+            list.Add(pirateEvents);
             list.Add(Toggle("autoAdvance", OptionPage.Gameplay, () => X("autoAdvance", "Turn voiced dialogue pages automatically"),
                 () => Settings.AutoAdvanceDialogue, v => Settings.AutoAdvanceDialogue = v));
             list.Add(Toggle("animatedDialogue", OptionPage.Gameplay, () => X("animatedDialogue", "Animated dialogue"),

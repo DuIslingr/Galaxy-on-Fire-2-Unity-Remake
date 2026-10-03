@@ -21,17 +21,18 @@ namespace GoF2Remake.Multiplayer
     public static class NetLobby
     {
         const float HeartbeatSeconds = 15f, CountSeconds = 5f;
-        const string KeyVersion = "version", KeyCode = "code", KeyHost = "host", KeyPlayers = "players", KeyServer = "server", KeyPassword = "password";
+        const string KeyVersion = "version", KeyProtocol = "protocol", KeyCode = "code", KeyHost = "host", KeyPlayers = "players", KeyServer = "server", KeyPassword = "password";
 
         /// <summary>One listed session in the browser.</summary>
         public sealed class Entry
         {
-            public string name, host, code, version;
+            public string name, host, code, version, protocol;
             public int players, maxPlayers;
             public bool dedicated, password;
             public bool Full => players >= maxPlayers;
-            /// <summary>The same version as this game (the only ones it can join; the Editor joins any, for testing).</summary>
-            public bool SameVersion => version == NetGame.Version || Application.isEditor;
+            /// <summary>The same code as this game (the fingerprint: the only ones it can join, whenever they were built; the
+            /// Editor joins any, for testing). A listing from before the fingerprint has only its version.</summary>
+            public bool SameVersion => (string.IsNullOrEmpty(protocol) ? version : protocol) == NetGame.Protocol || Application.isEditor;
         }
 
         static string lobbyId;
@@ -64,6 +65,7 @@ namespace GoF2Remake.Multiplayer
                     Data = new Dictionary<string, DataObject>
                     {
                         [KeyVersion] = Public(NetGame.Version, DataObject.IndexOptions.S1),
+                        [KeyProtocol] = Public(NetGame.Protocol),
                         [KeyCode] = Public(code),
                         [KeyHost] = Public(Trim(host, NetGame.MaxNameLength)),
                         [KeyPlayers] = Public(PlayerCount().ToString(), DataObject.IndexOptions.N1),
@@ -156,13 +158,13 @@ namespace GoF2Remake.Multiplayer
                     int.TryParse(Get(l, KeyPlayers), out int players);
                     list.Add(new Entry
                     {
-                        name = l.Name, host = Get(l, KeyHost), code = code, version = Get(l, KeyVersion),
+                        name = l.Name, host = Get(l, KeyHost), code = code, version = Get(l, KeyVersion), protocol = Get(l, KeyProtocol),
                         players = players, maxPlayers = l.MaxPlayers, dedicated = Get(l, KeyServer) == "1", password = Get(l, KeyPassword) == "1",
                     });
                 }
                 // This version's first (the query's order, the fullest first, within each).
-                var ordered = list.FindAll(x => x.version == NetGame.Version);
-                ordered.AddRange(list.FindAll(x => x.version != NetGame.Version));
+                var ordered = list.FindAll(x => x.SameVersion);
+                ordered.AddRange(list.FindAll(x => !x.SameVersion));
                 return ordered;
             }
             catch (Exception e)

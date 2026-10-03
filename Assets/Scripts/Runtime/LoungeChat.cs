@@ -277,7 +277,17 @@ namespace GoF2Remake.Data
             return "";
         }
 
-        string StoryLine(Agent a) => a.storyIndex >= 0 ? T(886 + a.storyIndex) : "";
+        /// <summary>The story agent's own line (886 + index). The mechanics' lines (907-910) name the ship and the mod's gain:
+        /// SpaceLounge::startChat fills #SHIP_NAME with the current ship and #N from the table DAT_00254400 (mod, value):
+        /// armor +40, cargo +30 (t), 1 slot, handling +20.</summary>
+        string StoryLine(Agent a)
+        {
+            if (a.storyIndex < 0) return "";
+            string s = T(886 + a.storyIndex).Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex));
+            return a.sellMod >= 0 && a.sellMod < ModGain.Length ? s.Replace("#N", ModGain[a.sellMod].ToString()) : s;
+        }
+
+        static readonly int[] ModGain = { 40, 30, 1, 20 };
 
         static string BlueprintName(int bp)
         {
