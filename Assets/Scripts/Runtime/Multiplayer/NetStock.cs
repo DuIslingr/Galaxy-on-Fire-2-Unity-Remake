@@ -76,8 +76,7 @@ namespace GoF2Remake.Multiplayer
             if (!Ready || stock == null || !Shared(stock.station)) return;
             // Nothing to trade until the host's list is here (Apply); the bar's agents stay.
             stock.items.Clear();
-            stock.ships?.Clear();
-            stock.PruneShipMods();
+            stock.ships?.Clear();   // (a traded-in row's mods wait for the list: Apply prunes against it)
             NetState.Instance.StockRequestRpc(stock.station);
         }
 
