@@ -286,7 +286,9 @@ namespace GoF2Remake.UI
                     for (int n = mounted.Count; n < slots; n++) AddRow(new Row { kind = RowKind.Slot, type = type, equipment = -1 - n });
                     // Remake: the hold's candidates under their own sub-header (284 "Available in cargo"), styled apart from
                     // the mounted slots.
-                    if (cargo.Count > 0) AddHeader(Localization.Get(284), true);
+                    if (cargo.Count > 0)
+                        AddHeader(Localization.Get(284) + (InputMode.Current == InputKind.Touch ? Localization.Extra("shopDoubleTapMount", "  ·  double-tap to mount")
+                                                         : InputMode.Current == InputKind.KeyboardMouse ? Localization.Extra("shopDoubleClickMount", "  ·  double-click to mount") : ""), true);
                     foreach (int i in cargo) AddRow(new Row { kind = RowKind.CargoItem, item = i, type = type });
                 }
             }
@@ -317,6 +319,7 @@ namespace GoF2Remake.UI
             var e = new VisualElement();
             e.AddToClassList("list-row");
             if (row.kind == RowKind.CargoItem) e.AddToClassList("list-row--cargo");
+            if (row.kind == RowKind.Slot && row.equipment >= 0) e.AddToClassList("list-row--mounted");   // remake: tinted, a cyan edge
             var icon = new VisualElement { pickingMode = PickingMode.Ignore };
             icon.AddToClassList("row-icon");
             var texts = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -397,6 +400,7 @@ namespace GoF2Remake.UI
                     int n = hangar.CargoOf(row.item);
                     name.text = ItemInfo.ItemName(row.item) + (n > 1 ? $" ({n})" : "");
                     subText.text = ItemInfo.Category(db.Item(row.item));   // the sub-header says "Available in cargo"
+                    sub.Insert(0, Badge(Localization.Extra("shopInCargo", "IN CARGO"), "row-badge--cargo"));
                     break;
                 }
                 case RowKind.Blueprint:
@@ -472,7 +476,15 @@ namespace GoF2Remake.UI
                 info.AddToClassList("gof-semibold");
                 e.Add(info);
             }
-            e.RegisterCallback<ClickEvent>(_ => Select(row, true));
+            e.RegisterCallback<ClickEvent>(ev =>
+            {
+                Select(row, true);
+                // Remake: a double click / double tap on the Ship tab mounts a hold item or demounts a mounted one (the action
+                // button's Mount 281 / Demount 282, when it is enabled).
+                if (ev.clickCount >= 2 && selected == row && (row.kind == RowKind.CargoItem || (row.kind == RowKind.Slot && row.equipment >= 0))
+                    && !actionButton.ClassListContains("detail-action--hidden") && !actionButton.ClassListContains("detail-action--disabled"))
+                    Action();
+            });
             row.element = e;
             list.Add(e);
             rows.Add(row);
