@@ -406,6 +406,9 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   - 3-4 generic visitors (the race and gender rules of `Generator::createAgent`) on random slots, as camera-facing billboards with a glow and a floor shadow.
   - Camera: a 3 s intro on the first visit (a tap skips it), then a slow sway.
   - Lighting: the system's sun, with skybox ambient.
+  - Anti-aliasing (remake, `StationLevel.ApplyAntialiasing`, both rooms): URP's TAA on the station camera, SMAA when a temporal
+    upscaler (DLSS / FSR 2+ / STP) is active or MSAA is on; the thin glossy parts (the Nivelian bar stools, the Midorian
+    window frames) shimmered under SMAA as the camera swayed. Flight keeps SMAA.
   - The Terran bot loops; the Midorian prop replays at random.
   - Remake (`BarFlybys`): every 6-20 s a ship (30 % a small formation) flies past outside the windows. Once per visit, from the
     camera's rest pose, two tiny renders against different background colours find the see-through pixels and one with
@@ -430,7 +433,7 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   hulls in the Midorian pads' raised rims (the H'Soc's wings 1.9 m), everything inside the raised pedestals of Midorian /
   deep science slot 2. `HangarFlight` also scales its bank and pitch down near the floor (the Vossk bays are flown into 5 m
   up: a banked H'Soc's wing dipped ~3 m into it), keeping the hull 0.4 m above its parked bottom.
-- The room's animations all run (`CutScene::process` updates every geometry, not only the `_anim` meshes), skipping their one-off first key (`PartAnimation.OneOffStartMs`: every part at the origin for 33 / 50 ms, which parked the Terran gutter lights on the player's pad and made the loops jump); rotations swing back and forth (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by their `extra` channel (the Vossk portal light).
+- The room's animations all run (`CutScene::process` updates every geometry, not only the `_anim` meshes), skipping their one-off first key (the bars' too, and the Midorian prop's replays: `PartAnimation.Restart` starts at `loopStartMs`; played, the key flashed the Nivelian bar and the Midorian bar for a frame on every wrap; `PartAnimation.OneOffStartMs`: every part at the origin for 33 / 50 ms, which parked the Terran gutter lights on the player's pad and made the loops jump); rotations swing back and forth (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by their `extra` channel (the Vossk portal light).
 - The Kaamo Club parks its stored hulls: see "Kaamo Club".
 
 ## Shop
