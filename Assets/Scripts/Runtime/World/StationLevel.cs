@@ -196,6 +196,9 @@ namespace GoF2Remake.World
             OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
             BuildHangar();
             BuildBar();
+            // Remake: ships now and then flying past outside the bar's windows.
+            gameObject.AddComponent<BarFlybys>().Setup(this, barRoot, barPosB, barRotB, BarRace == 1, RandomParkedShip,
+                                                       ship => SpawnShip(ship, Vector3.zero, Quaternion.identity, barRoot, "Flyby"));
             Debug.Log($"StationLevel: station {station} {Station?.name} ({Station?.systemName}), hangar {HangarIndex}, " +
                       $"bar {BarRace}, ship {shipIndex}, {VisitorCount} visitors");
 
