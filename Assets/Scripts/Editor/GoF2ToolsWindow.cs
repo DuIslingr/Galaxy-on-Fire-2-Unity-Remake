@@ -52,6 +52,7 @@ namespace GoF2Remake.EditorTools
                     T("GoF2/Build/Supernova Assets", "Resources/GoF2Story/SupernovaAssets: the Supernova add-on's sounds, music and the supernova sky."),
                     T("GoF2/Build/Star Map Assets", "Resources/GoF2StarMap: what the star map can't load by name (its overlay, sun materials, Khador effects, sounds)."),
                     T("GoF2/Build/Network Prefabs", "Resources/GoF2Net: the multiplayer prefabs. Existing ones are kept so their network ids stay the same. Also turns on Android's internet permission."),
+                    T("GoF2/Build/Linux Dedicated Server", "Build/LinuxServer: a headless Linux server without the game's textures, sound and shaders (Unity's Dedicated Server build; needs the Hub module \"Linux Dedicated Server Build Support\"). Starts as a server by itself; start-server.sh beside it."),
                     T("GoF2/Build/Event Audio", "Resources/GoF2Net/EventAudio: the sounds and music multiplayer events and /sound, /music play, from the original's FMOD events."),
                     T("GoF2/Build/Hangar Heights", "Resources/GoF2Data/hangar_heights.json: how far each ship is lifted on each hangar pad so its hull doesn't cut into it. Run after changing a hangar or a ship model."),
                     T("GoF2/Build/HUD Images", "Resources/GoF2Hud: the HUD, star map, medal and touch-control images and the alien font, cut from the original interface atlases."),

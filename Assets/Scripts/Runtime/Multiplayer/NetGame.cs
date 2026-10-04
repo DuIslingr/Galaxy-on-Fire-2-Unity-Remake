@@ -875,7 +875,7 @@ namespace GoF2Remake.Multiplayer
             if (manager == null || wasHost || !Dedicated) return;
             Debug.LogError("NetGame: the server stopped (network error).");
             ShutdownNow();
-            if (!DedicatedServer.ConnectionLost()) Application.Quit(1);
+            if (!DedicatedServer.ConnectionLost()) DedicatedServer.Quit(1);
         }
 
         /// <summary>The session is over while playing: out of it, back to the Multiplayer panel with the reason.</summary>

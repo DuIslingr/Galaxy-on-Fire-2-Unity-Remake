@@ -1,7 +1,9 @@
 # Running a dedicated server
 
 A dedicated server hosts a Galaxy on Fire 2 Unity Remake multiplayer session without anyone playing on that machine.
-It is the normal Windows or Linux build of the game, started with `-server`. No extra download is needed.
+It is the normal Windows or Linux build of the game, started with `-server`. No extra download is needed. For Linux
+there is also a server-only build without the game's graphics and sound (see
+[Linux server-only build](#linux-server-only-build)).
 
 This guide covers setting the server up, its command-line options, the settings you can change while it runs, the
 server console, the files it keeps, and running it as a Linux service. For what players can do in a session (factions,
@@ -10,6 +12,7 @@ arenas, distress calls and their chat commands), see the [README](README.md).
 ## Contents
 
 - [Quick start](#quick-start)
+- [Linux server-only build](#linux-server-only-build)
 - [Online or local network](#online-or-local-network)
 - [Command-line options](#command-line-options)
 - [Settings you can change while the server runs](#settings-you-can-change-while-the-server-runs)
@@ -59,6 +62,20 @@ GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -passwo
 
 `-batchmode -nographics` runs it with no window, rendering or sound. On Linux, `-logFile -` prints the log to the
 terminal.
+
+## Linux server-only build
+
+A smaller Linux build that can only be a server: Unity's Dedicated Server build with the game's textures, sound and
+shaders left out. It runs the same server code as the full game's `-server` mode, keeps the same files and serves the
+same game builds (players see no difference).
+
+Making it (in the Unity Editor, once the Unity Hub module **Linux Dedicated Server Build Support** is installed for the
+Editor version): **GoF2 > Build > Linux Dedicated Server**. It builds into `Build/LinuxServer/` with
+`GoF2Server.x86_64` and a `start-server.sh` beside it; the Editor switches to the Linux server target for the build and
+back afterwards. Copy the folder to the server machine.
+
+Running it is as above: edit and run `start-server.sh`, or start `./GoF2Server.x86_64` with the same options. It starts
+as a server without `-server`; `-batchmode -nographics` are implied.
 
 ## Online or local network
 

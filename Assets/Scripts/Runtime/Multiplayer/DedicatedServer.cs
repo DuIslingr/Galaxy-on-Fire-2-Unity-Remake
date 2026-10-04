@@ -62,7 +62,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The commands Tab completes in the console (ConsoleInput), in help's order.</summary>
         static readonly string[] CommandNames = new[] { "help", "status", "list", "say", "admin", "stop" }.Concat(NetCommands.ServerCommandNames).ToArray();
 
-        /// <summary>This process runs as a dedicated server (-server, or GOF2_SERVER set).</summary>
+        /// <summary>This process runs as a dedicated server (-server, GOF2_SERVER set, or a Dedicated Server build).</summary>
         public static bool Enabled { get; private set; } = Detect();
 
         static readonly ConcurrentQueue<string> commands = new ConcurrentQueue<string>();
@@ -83,7 +83,11 @@ namespace GoF2Remake.Multiplayer
         }
 
         static bool Detect() =>
+#if UNITY_SERVER
+            true;   // the Linux Dedicated Server build (GoF2 > Build > Linux Dedicated Server): always a server
+#else
             HasFlag("-server") || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentSwitch));
+#endif
 
         static bool HasFlag(string flag) =>
             Array.Exists(Environment.GetCommandLineArgs(), a => string.Equals(a, flag, StringComparison.OrdinalIgnoreCase));
@@ -115,6 +119,10 @@ namespace GoF2Remake.Multiplayer
             NetServerSettings.Load(HasFlag);
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
+#if UNITY_STANDALONE_LINUX && !UNITY_EDITOR
+            SaveTerminal();
+            Application.quitting += ExitNow;
+#endif
 #if !UNITY_EDITOR
             // The log (-logFile -: the terminal) without a call stack under every info line and warning ("NetLobby: listed
             // ..." came with ~100 lines of async frames); errors and exceptions keep theirs.
@@ -257,8 +265,65 @@ namespace GoF2Remake.Multiplayer
         static void Fail()
         {
             Debug.LogError("Server: " + NetGame.Status);
-            Application.Quit(1);
+            Quit(1);
         }
+
+        /// <summary>The exit code of the quit under way (ExitNow).</summary>
+        static int exitCode;
+
+        /// <summary>Quits with 'code' (0 = stopped on purpose, 1 = failed).</summary>
+        public static void Quit(int code)
+        {
+            exitCode = code;
+            Application.Quit(code);
+        }
+
+#if UNITY_STANDALONE_LINUX && !UNITY_EDITOR
+        // glibc's real file name: IL2CPP has no Mono-style "libc" mapping, and libc.so is only a linker script on most distros.
+        const string LibC = "libc.so.6";
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "_exit")]
+        static extern void LibcExit(int status);
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "fflush")]
+        static extern int LibcFlush(IntPtr stream);
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "tcgetattr")]
+        static extern int TcGetAttr(int fd, byte[] termios);
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "tcsetattr")]
+        static extern int TcSetAttr(int fd, int optionalActions, byte[] termios);
+
+        /// <summary>The terminal's settings at the start (struct termios, 60 bytes on glibc; the buffer is roomier), put back
+        /// before the hard exit: Console.ReadKey switches echo and line mode off and only its own exit handler restores them.</summary>
+        static byte[] savedTerminal;
+
+        static void SaveTerminal()
+        {
+            try
+            {
+                var t = new byte[256];
+                if (TcGetAttr(0, t) == 0) savedTerminal = t;
+            }
+            catch (Exception) { }
+        }
+
+        /// <summary>Linux: the process ends here. Unity's own teardown never finished: the console thread sits in
+        /// Console.ReadKey (a blocking read of the terminal) and the runtime waited for it for good after "CodeReloadManager
+        /// destroyed". What the server keeps is already on disk (profiles, factions, settings are written as they change), so
+        /// the network goes down, the log is flushed, the terminal gets its settings back (SaveTerminal) and the process exits
+        /// at once.</summary>
+        static void ExitNow()
+        {
+            try { WebAdmin.Stop(); } catch (Exception) { }
+            try { NetGame.ShutdownNow(); } catch (Exception) { }
+            Debug.Log($"Server: exiting ({exitCode}).");
+            try { Console.Out.Flush(); Console.Error.Flush(); } catch (Exception) { }
+            try { LibcFlush(IntPtr.Zero); } catch (Exception) { }   // the native log's buffered stdout (_exit skips it)
+            try { if (savedTerminal != null) TcSetAttr(0, 0, savedTerminal); } catch (Exception) { }   // TCSANOW: echo back
+            LibcExit(exitCode);
+        }
+#endif
 
         void Update()
         {
