@@ -98,8 +98,9 @@ namespace GoF2Remake.World
 
             SetupLoma();
             SetupVoidChatter();
-            // Level+0x18a: back at a station whose race the player attacked.
-            if (Session.AttackedStations.Contains(StationIndex))
+            // Level+0x18a: back at a station whose race the player attacked. Not in an Informer orbit: its branch of
+            // Level::createMission skips the hasAttackedFriends block (the locals, the spy among them, start calm).
+            if (Session.AttackedStations.Contains(StationIndex) && !TrafficPlan.InformerOrbit(StationIndex))
             {
                 AlarmAllFriends(SystemRace, false);
                 Radio(445, 447, SystemRace);

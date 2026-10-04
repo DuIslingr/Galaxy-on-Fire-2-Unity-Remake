@@ -200,10 +200,12 @@ namespace GoF2Remake.Flight
         /// <summary>Radar::draw 0x1574c0 skips the asteroid loop on a landmark (+0x24) or planet (+0x14) lock, a ship / crate
         /// candidate (+8, and local_f8 in the candidate test), a crate on the tractor beam (+0x1c) or the autopilot; a
         /// landmark or planet that is only a candidate (+0x28 / +0x18) doesn't stop it (both rings fill).</summary>
-        public bool BlocksAsteroidLock => Locked != null || Autopilot || Jumping || ShipLockActive;
-        /// <summary>A landmark (station, jumpgate, docking target, waypoint) is locked: Radar+0x24, which stops the ship lock's
-        /// timer (Radar::draw 0x1558ae); a planet lock (+0x14) doesn't.</summary>
-        public bool LandmarkLocked => Locked != null && Locked.kind != Kind.Planet;
+        /// The remake's lockable route waypoint blocks nothing (the original can't lock it, #28).</summary>
+        public bool BlocksAsteroidLock => (Locked != null && Locked.kind != Kind.Waypoint) || Autopilot || Jumping || ShipLockActive;
+        /// <summary>A landmark (station, jumpgate, docking target) is locked: Radar+0x24, which stops the ship lock's timer
+        /// (Radar::draw 0x1558ae); a planet lock (+0x14) doesn't, nor the remake's waypoint (the junk of a Junk removal lies
+        /// around it: its lock wiped every junk candidate, #28).</summary>
+        public bool LandmarkLocked => Locked != null && Locked.kind != Kind.Planet && Locked.kind != Kind.Waypoint;
         /// <summary>CombatRadar has a ship / crate candidate this frame or a crate on the tractor beam.</summary>
         [NonSerialized] public bool ShipLockActive;
         /// <summary>Radar+0x54: hostile ships around (Traffic): no fast-forward.</summary>
@@ -466,6 +468,7 @@ namespace GoF2Remake.Flight
                     foreach (var t in Targets)
                     {
                         if (t.kind == Kind.Planet || t.kind == Kind.Wormhole || t.kind == Kind.Marker || t.hidden || Autopilot) continue;
+                        if (t.kind == Kind.Waypoint && ShipLockActive) continue;   // remake: a ship / junk / crate in the box wins
                         var p = cam.WorldToScreenPoint(t.Position);
                         if (p.z <= 0f || p.x < 0f || p.y < 0f || p.x > w || p.y > h) continue;
                         if (Mathf.Abs(p.x - w / 2f) >= centre || Mathf.Abs(p.y - h / 2f) >= centre) continue;
@@ -491,6 +494,7 @@ namespace GoF2Remake.Flight
             if (Locked != null && Locked == AutopilotTarget && Locked.kind == Kind.Planet)
             {
                 if (PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) { SetAutopilot(null); return; }
+                if (JumpsBlocked != null && JumpsBlocked()) { Refuse(); return; }   // Radar::draw: 525 instead of the jump
                 StartJump(Locked);
             }
         }
@@ -515,21 +519,22 @@ namespace GoF2Remake.Flight
             return true;
         }
 
-        /// <summary>The action prompt / Enter / controller X.</summary>
-        public void Interact()
+        /// <summary>The action prompt / Enter / controller X; false when nothing happened (a refused jump, nothing locked),
+        /// so the touch fire button shoots instead.</summary>
+        public bool Interact()
         {
-            if (Jumping) return;
+            if (Jumping) return false;
             if (Autopilot)
             {
                 Say(Localization.Get(571) + " " + Localization.Get(39));   // Autopilot Off
                 Play(sounds?.autopilotOff);
                 SetAutopilot(null);
-                return;
+                return true;
             }
-            if (Locked == null) return;
-            if (Locked.kind != Kind.Planet && layout.alienOrbit) return;
-            if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(Localization.Get(525)); return; }
-            if (Locked.kind == Kind.Planet && PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) return;
+            if (Locked == null) return false;
+            if (Locked.kind != Kind.Planet && layout.alienOrbit) return false;
+            if (Locked.kind == Kind.Planet && JumpsBlocked != null && JumpsBlocked()) { Say(Localization.Get(525)); return false; }
+            if (Locked.kind == Kind.Planet && PlanetJumpRefused != null && PlanetJumpRefused(Locked.station)) return false;
             if (Locked.kind == Kind.Planet) StartJump(Locked);
             else if (Locked.kind == Kind.DockingTarget) { var s = Locked.dockingShip; SetAutopilot(null); Docking?.Dock(s); }
             else
@@ -538,6 +543,7 @@ namespace GoF2Remake.Flight
                 Play(sounds?.autopilotOn);
                 SetAutopilot(Locked);
             }
+            return true;
         }
 
         /// <summary>PlayerEgo::setAutoPilot: throttle to 100 % when turning on; turning off clears the locks.</summary>

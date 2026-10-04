@@ -212,14 +212,15 @@ namespace GoF2Remake.Flight
             wasLocked = Locked != null;
         }
 
-        /// <summary>The HUD action button / Enter / controller X (the original's fire button while locked or mining).</summary>
-        public void Interact()
+        /// <summary>The HUD action button / Enter / controller X (the original's fire button while locked or mining); false
+        /// when nothing happened (no lock, a full hold), so the touch fire button shoots instead.</summary>
+        public bool Interact()
         {
             switch (State)
             {
                 case Phase.Idle:
-                    if (Locked == null) return;
-                    if (Shop.FreeCargo(db) < 1) { Say(Localization.Get(322)); return; }   // Cargo hold is full.
+                    if (Locked == null) return false;
+                    if (Shop.FreeCargo(db) < 1) { Say(Localization.Get(322)); return false; }   // Cargo hold is full.
                     Say(Localization.Get(546) + ": " + Localization.Get(550));            // Target: Asteroid
                     Play(sounds?.autopilotOn);
                     StartApproach(Locked);
@@ -233,6 +234,7 @@ namespace GoF2Remake.Flight
                     Undock();
                     break;
             }
+            return true;
         }
 
         // ---- approach (PlayerEgo::dockToAsteroid 0xab9b4 / approachAsteroid 0xaba90) --------------------------

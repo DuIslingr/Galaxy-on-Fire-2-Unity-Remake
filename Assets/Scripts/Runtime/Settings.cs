@@ -182,6 +182,12 @@ namespace GoF2Remake.Data
         public static bool InputHints { get => GetBool("inputHints", true); set => SetBool("inputHints", value); }
         /// <summary>Remake: every primary weapon item sounds its own shots (the original: only the first primary gun).</summary>
         public static bool EachWeaponSound { get => GetBool("eachWeaponSound", false); set => SetBool("eachWeaponSound", value); }
+        /// <summary>Remake: the touch fire button's double-press autofire latch on the keyboard / mouse / controller fire
+        /// binding (the PC version had none).</summary>
+        public static bool KeyAutofire { get => GetBool("keyAutofire", false); set => SetBool("keyAutofire", value); }
+        /// <summary>Remake (desktop): no sound while the window isn't focused (Bootstrap; the volume, not AudioListener.pause,
+        /// which the pause menu uses).</summary>
+        public static bool MuteInBackground { get => GetBool("muteInBackground", false); set => SetBool("muteInBackground", value); }
         /// <summary>Remake: the frame rate at the top centre (FpsCounter).</summary>
         public static bool ShowFps { get => GetBool("showFps", false); set => SetBool("showFps", value); }
 

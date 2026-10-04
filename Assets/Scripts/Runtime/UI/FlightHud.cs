@@ -276,8 +276,10 @@ namespace GoF2Remake.UI
         {
             if (mining != null && mining.State != Mining.Phase.Idle) return false;
             if (docking != null && docking.PromptText != null) { docking.Interact(); return true; }
-            if (nav != null && nav.Locked != null && nav.PromptText != null) { nav.Interact(); return true; }
-            if (mining != null && mining.Locked != null && mining.PromptText != null) { mining.Interact(); return true; }
+            // Remake: a refused action (a full hold, 525) doesn't use the press up: the original's did, so the autofire
+            // latch could neither be set nor cleared while the lock lasted (#27).
+            if (nav != null && nav.Locked != null && nav.PromptText != null && nav.Interact()) return true;
+            if (mining != null && mining.Locked != null && mining.PromptText != null && mining.Interact()) return true;
             return false;
         }
 

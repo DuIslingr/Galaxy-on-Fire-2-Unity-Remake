@@ -259,7 +259,10 @@ namespace GoF2Remake.UI
             {
                 lockPlate.EnableInClassList("lock-plate--shown", true);
                 lockOre.text = locked.name;
-                var icon = locked.kind == Navigation.Kind.Planet ? null : RaceIcon(systemRace);
+                // The remake's lockable waypoint shows its own marker, not the system's race icon (#28).
+                var icon = locked.kind == Navigation.Kind.Planet ? null
+                         : locked.kind == Navigation.Kind.Waypoint ? Tex(locked.freelance ? "map_freelance" : "map_story")
+                         : RaceIcon(systemRace);
                 lockClass.style.display = icon != null ? DisplayStyle.Flex : DisplayStyle.None;
                 Image(lockClass, icon);
             }

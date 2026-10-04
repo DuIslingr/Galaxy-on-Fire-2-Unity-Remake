@@ -90,6 +90,11 @@ namespace GoF2Remake.UI
                     i => Settings.VoiceLanguage = VoiceCodes[i]),
             };
 
+            // Remake (desktop; phones pause in the background): silent while the window isn't focused.
+            if (!Application.isMobilePlatform)
+                list.Add(Toggle("muteInBackground", OptionPage.Sound, () => X("muteInBackground", "Mute in background"),
+                    () => Settings.MuteInBackground, v => Settings.MuteInBackground = v));
+
             // ---- graphics
             if (Bootstrap.HasDisplayOptions)
             {
@@ -222,6 +227,9 @@ namespace GoF2Remake.UI
             }
             list.Add(Slider("sensitivity", OptionPage.Controls, () => Localization.Get(499), 0.2f, 2.2f,
                 () => Settings.Sensitivity, v => Settings.Sensitivity = v, v => v.ToString("0.0")));
+            // Remake: the touch fire button's double-press autofire for the keys, the mouse and the controller.
+            list.Add(Toggle("keyAutofire", OptionPage.Controls, () => X("keyAutofire", "Double-press fire for auto-fire"),
+                () => Settings.KeyAutofire, v => Settings.KeyAutofire = v));
             // options[0x10] "Invert controls" (500), split per axis; the mining drill has its own pair.
             list.Add(Toggle("invert", OptionPage.Controls, () => X("invertY", "Invert up / down"), () => Settings.InvertPitch, v => Settings.InvertPitch = v));
             list.Add(Toggle("invertYaw", OptionPage.Controls, () => X("invertX", "Invert left / right"), () => Settings.InvertYaw, v => Settings.InvertYaw = v));

@@ -95,7 +95,7 @@
 .lounge-row--selected {
     border-left-color: var(--gof-amber);
     background-color: var(--gof-cyan-faint);
-    translate: -10px 0;
+    margin-left: -10px;   /* grows left; the right edge stays (a translated box slid away from the cursor) */
 }
 
 .lounge-row-titles {

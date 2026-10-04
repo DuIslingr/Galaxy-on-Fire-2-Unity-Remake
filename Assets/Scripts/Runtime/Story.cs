@@ -772,8 +772,9 @@ namespace GoF2Remake.Data
             Session.OreStreak = Session.BlindKills = 0;
             // Index 1: the prologue's Phantom becomes Betty with Gunant's Drill and a Telta Quickscan, both unsaleable.
             if (Index == 1 && Session.ShipIndex != 0) GiveBetty();
-            // Index 20 at Kappa: EMP GL I (41) free and 10 more in stock.
-            if (Index == 20 && station == 55 && stock != null)
+            // Index 20 at Kappa: EMP GL I (41) free and 10 more in stock. Only on a docking from space: a load opens the
+            // Station scene too, and the saved stock already holds them (each reload added another 10 free bombs).
+            if (Index == 20 && station == 55 && stock != null && Session.DockedFromSpace)
             {
                 var row = stock.items.Find(s => s.item == 41);
                 if (row != null) row.amount += 10; else Shop.InsertStock(stock, new ItemStack(41, 10));
