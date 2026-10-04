@@ -146,9 +146,11 @@ namespace GoF2Remake.Flight
             int local = (mido ? Random.Range(0, 2) : secEff) + x + freighters / 4;
             // The "big battle" (npc_traffic_ai.md 2.2): raiders on, campaign > 0x1f, 8 %: 9 raiders against 9 locals.
             if (raidersOn && cm > 0x1f && Random.Range(0, 100) < 8) raiders = local = 9;
-            // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier and Passenger missions (types 0, 0xb).
+            // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier, Passenger and Ore Mining missions (types 0,
+            // 0xb, 0xf; Ore Mining is only rolled in multiplayer). The station 100 / 101 / 108 / 10 rule below leaves them too.
             var fm = Session.FreelanceMission;
-            int escorts = fm != null && (fm.type == MissionType.Courier || fm.type == MissionType.Passenger) ? (int)(fm.difficulty / 10f * 5f) : 0;
+            int escorts = fm != null && (fm.type == MissionType.Courier || fm.type == MissionType.Passenger || fm.type == MissionType.OreMining)
+                ? (int)(fm.difficulty / 10f * 5f) : 0;
             // A pirate-base system (npc_combat_specials.md 3.2): no raider group; instead 2 (Extreme 4-6) pirates near the player.
             bool baseSystem = PirateBases.SystemHasBase(db, system.index);
             int baseEscorts = 0;

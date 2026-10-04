@@ -873,9 +873,10 @@ namespace GoF2Remake.World
             if (anyBack) raiderWaves++;
         }
 
-        /// <summary>Level::updateAlienAttackers 0xd5ce0: every 45 000 ms (10 000 at index 41) the dead Void ships come back, at
-        /// the wormhole +-10 000 while it is open, else around the player (+-40 000, +-30 000, 40 000 ahead: the fixed z offset
-        /// is assumed).</summary>
+        /// <summary>Level::updateAlienAttackers 0xd5ce0: every 45 000 ms (10 000 at index 41) the dead Void ships come back: at
+        /// the wormhole +-10 000 only at a station the Void attacks (!inAlienOrbit && Station::isAttackedByAliens), else (the
+        /// alien orbit, coming out of the Void) around the player (+-40 000, +-30 000, a world z of +-40 000; #35: they came
+        /// out of the wormhole in the alien orbit too).</summary>
         void UpdateAlienAttackers(float dtMs)
         {
             if (!VoidAttack) return;
@@ -890,7 +891,8 @@ namespace GoF2Remake.World
                 if (!s.Gone || s.Race != Standing.Void || s.IsWingman) continue;
                 Vector3 at;
                 float R(float r) => UnityEngine.Random.Range(-r, r);
-                if (Wormhole != null && Wormhole.Visible) at = Wormhole.transform.position + new Vector3(R(10000f), R(10000f), R(10000f)) * M;
+                if (Wormhole != null && !Wormhole.alienOrbit && Wormhole.attackedStation)
+                    at = Wormhole.transform.position + new Vector3(R(10000f), R(10000f), R(10000f)) * M;
                 else if (Player != null)   // the player's x / y +- 40000 / 30000 and a world z of +-40000 (DAT_000d5fbc / c0)
                     at = new Vector3(Player.transform.position.x + R(40000f) * M, Player.transform.position.y + R(30000f) * M, (UnityEngine.Random.Range(0, 2) == 0 ? 40000f : -40000f) * M);
                 else continue;
