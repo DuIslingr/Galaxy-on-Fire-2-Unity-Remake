@@ -559,8 +559,8 @@ namespace GoF2Remake.UI
                 safeArea.Add(mouseReticle);
             }
             if (mouseReticle == null) return;
-            // Only once the mouse steers away from the centre (beyond ~4 % of the half screen height).
-            bool show = on && ship.MouseOffset.magnitude > Screen.height * 0.02f;
+            // Only once the mouse steers away from the centre (beyond ~4 % of the half screen height and the dead zone).
+            bool show = on && !ship.MouseInDeadzone && ship.MouseOffset.magnitude > Screen.height * 0.02f;
             mouseReticle.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (!show || root.panel == null) return;
             var centre = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f) + ship.MouseOffset;
