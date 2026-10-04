@@ -25,7 +25,7 @@
     .btn-danger { @apply border-red-500/30 bg-red-500/10 text-red-300 hover:border-red-400/60 hover:bg-red-500/20; }
     .btn-xs { @apply px-2 py-1 text-xs; }
     .field { @apply w-full rounded-lg border border-line bg-ink/70 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none transition focus:border-accent/60 focus:ring-2 focus:ring-accent/20; }
-    .pill { @apply inline-flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-xs font-medium; }
+    .pill { @apply inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border border-line px-2 py-0.5 text-xs font-medium; }
     .tab { @apply whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-slate-400 transition hover:bg-white/5 hover:text-slate-100; }
     .tab-on { @apply bg-accent/15 text-accent hover:bg-accent/20 hover:text-accent; }
     .th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-slate-500; }
@@ -125,6 +125,8 @@
       el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
     return el;
   }
+  // replaceChildren with h()'s rule: null / undefined / false children are left out (the DOM writes them as "null").
+  const put = (el, ...kids) => el.replaceChildren(...kids.flat().filter((k) => k !== null && k !== undefined && k !== false));
   const ROLE = ["player", "op", "admin", "master", "console"];
   const ROLE_CLASS = ["border-line text-slate-400", "border-sky-400/30 text-sky-300", "border-violet-400/30 text-violet-300", "border-accent/40 text-accent", "border-accent/40 text-accent"];
   const roleBadge = (r) => r > 0 ? h("span", { class: `pill ${ROLE_CLASS[r]}`, text: ROLE[r] }) : null;
@@ -229,7 +231,7 @@
   }
 
   function setOffline(text) {
-    $("serverLine").replaceChildren(h("span", { class: "pill border-red-500/40 text-red-300", text: text }));
+    put($("serverLine"), h("span", { class: "pill border-red-500/40 text-red-300", text: text }));
   }
 
   async function run(line, quiet) {
@@ -252,7 +254,7 @@
       $("dialogText").textContent = text || "";
       $("dialogText").hidden = !text;
       const inputs = {};
-      $("dialogFields").replaceChildren(...fields.map((f) => {
+      put($("dialogFields"), ...fields.map((f) => {
         const input = h("input", { class: "field", type: f.type || "text", placeholder: f.placeholder || "", min: f.min, max: f.max,
                                    value: f.value ?? "", required: f.required, maxlength: f.maxlength || 140 });
         inputs[f.key] = input;
@@ -301,7 +303,7 @@
     const s = state;
     $("serverName").textContent = s.serverName || "Galaxy on Fire 2 server";
     const flag = (on, text, cls) => on ? h("span", { class: `pill ${cls}`, text }) : null;
-    $("serverLine").replaceChildren(
+    put($("serverLine"),
       h("span", { class: `pill ${s.running ? "border-emerald-500/40 text-emerald-300" : "border-red-500/40 text-red-300"}` },
         h("span", { class: `size-1.5 rounded-full ${s.running ? "bg-emerald-400" : "bg-red-400"}` }), s.running ? "Running" : "Offline"),
       h("span", { text: `v${s.version}` }), "·", h("span", { text: `up ${s.uptime}` }), "·",
@@ -310,7 +312,7 @@
       flag(s.debug, "debug menu", "border-amber-500/40 text-amber-300"),
       flag(s.freePvp, "free PvP", "border-red-500/40 text-red-300"),
       flag(!s.profiles, "no profiles", "border-line text-slate-400"));
-    $("whoami").replaceChildren(h("span", { text: s.me }), roleBadge(s.role));
+    put($("whoami"), h("span", { text: s.me }), roleBadge(s.role));
   }
 
   function tabsFor(s) {
@@ -327,7 +329,7 @@
   function renderTabs() {
     const list = tabsFor(state);
     if (!list.some(([k]) => k === tab)) tab = "overview";
-    $("tabs").replaceChildren(...list.map(([k, label]) =>
+    put($("tabs"), ...list.map(([k, label]) =>
       h("button", { class: `tab ${k === tab ? "tab-on" : ""}`, type: "button", text: label,
                     onclick: () => { tab = k; sessionStorage.setItem("gof2tab", k); renderTabs(); renderView(true); } })));
   }
@@ -340,7 +342,7 @@
     const fn = { overview, players, bans, profiles, factions, settings, console: consoleView, log: logView }[tab] || overview;
     if (tab === "log" && !force && view.firstChild) { renderLogLines(); return; }
     if (tab === "console" && !force && view.firstChild) { renderConsoleOut(); return; }
-    view.replaceChildren(...[].concat(fn()));
+    put(view, ...[].concat(fn()));
   }
 
   const card = (title, actions, ...body) =>
@@ -440,7 +442,7 @@
     const draw = () => {
       const f = profileFilter.toLowerCase();
       const list = s.admin.profileRows.filter((p) => !f || p.name.toLowerCase().includes(f) || p.id.toLowerCase().includes(f));
-      body.replaceChildren(table(["Pilot", "Profile", "Role", "Devices", "Last seen", ""], list.map((p) => {
+      put(body, table(["Pilot", "Profile", "Role", "Devices", "Last seen", ""], list.map((p) => {
         const can = r > p.role;
         const b = [];
         if (can && !p.banned) b.push(btn("Temp ban", () => tempban(p.id, p.name), "btn-danger"));
@@ -541,8 +543,8 @@
   }
   function renderConsoleOut() {
     if (!consoleOut) return;
-    if (consoleLines.length === 0) { consoleOut.replaceChildren(h("span", { class: "muted", text: "The server console: every command it takes. Up / Down for the lines run before." })); return; }
-    consoleOut.replaceChildren(...consoleLines.slice(-200).map((l) => h("div", { class: "mb-2" },
+    if (consoleLines.length === 0) { put(consoleOut, h("span", { class: "muted", text: "The server console: every command it takes. Up / Down for the lines run before." })); return; }
+    put(consoleOut, ...consoleLines.slice(-200).map((l) => h("div", { class: "mb-2" },
       h("div", { class: "text-accent", text: `> ${l.cmd}` }), h("div", { class: "whitespace-pre-wrap text-slate-300", text: l.text }))));
     consoleOut.scrollTop = consoleOut.scrollHeight;
   }
@@ -576,7 +578,7 @@
     const shown = logLines.filter((l) => (logFilter === "all" || (logFilter === "warning" ? l.kind !== "info" : l.kind === "error"))
       && (!f || l.text.toLowerCase().includes(f))).slice(-800);
     const color = { info: "text-slate-300", warning: "text-amber-300", error: "text-red-300" };
-    logOut.replaceChildren(...shown.map((l) => h("div", { class: "whitespace-pre-wrap" },
+    put(logOut, ...shown.map((l) => h("div", { class: "whitespace-pre-wrap" },
       h("span", { class: "muted", text: `${l.time} ` }), h("span", { class: color[l.kind] || "", text: l.text }))));
     if (logFollow) logOut.scrollTop = logOut.scrollHeight;
   }

@@ -115,6 +115,12 @@ namespace GoF2Remake.Multiplayer
             NetServerSettings.Load(HasFlag);
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
+#if !UNITY_EDITOR
+            // The log (-logFile -: the terminal) without a call stack under every info line and warning ("NetLobby: listed
+            // ..." came with ~100 lines of async frames); errors and exceptions keep theirs.
+            Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+            Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
+#endif
 #if UNITY_EDITOR
             int editorVSync = QualitySettings.vSyncCount;
             Application.quitting += () => QualitySettings.vSyncCount = editorVSync;   // QualitySettings.asset keeps its own
