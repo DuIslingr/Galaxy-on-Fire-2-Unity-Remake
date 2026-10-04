@@ -115,6 +115,9 @@ namespace GoF2Remake.Flight
         /// <summary>A fire button pressed while the game was paused or the guns blocked (e.g. the mouse click on a dialogue's
         /// Next): ignored until it is released, so it neither fires when the game resumes nor launches a missile on release.</summary>
         bool primaryLatched, secondaryLatched;
+        // Remake (Settings.KeyAutofire): the touch fire button's double-press autofire latch on the fire binding.
+        bool keyAutofire;
+        float lastKeyFirePress = -10f;
 
         /// <summary>The selected secondary item (-1 = none); the HUD shows it with its ammo.</summary>
         public int SelectedSecondary { get; private set; } = -1;
@@ -303,6 +306,7 @@ namespace GoF2Remake.Flight
         public void SwallowPrimaryPress()
         {
             primaryLatched = true;
+            keyAutofire = false;
             touchPrimary = false;
         }
 
@@ -371,8 +375,14 @@ namespace GoF2Remake.Flight
                 if (mouse.rightButton.wasPressedThisFrame) secondaryLatched |= secondaryPressed;
             }
             if (PrimaryBlocked) primaryLatched |= primaryPressed;
+            // Remake option: a double press latches autofire, the next press releases it (and doesn't fire); a pause,
+            // a dialogue, mining or a cutscene ends it. A click on a HUD button (latched above) doesn't count.
+            if (halted || PrimaryBlocked || !Settings.KeyAutofire) keyAutofire = false;
+            else if (useBuiltInInput && firePrimaryAction.WasPressedThisFrame() && !primaryLatched
+                     && !AutofireLatch.Press(ref keyAutofire, ref lastKeyFirePress, Time.unscaledTime))
+                primaryLatched = true;   // the releasing press is ignored until the button goes up
             if (!primaryPressed) primaryLatched = false;
-            bool primaryHeld = !halted && !PrimaryBlocked && (touchPrimary || (primaryPressed && !primaryLatched));
+            bool primaryHeld = !halted && !PrimaryBlocked && (touchPrimary || keyAutofire || (primaryPressed && !primaryLatched));
             FireHeld = primaryHeld;
             if (TurretView) primaryHeld = false;
             if (!halted && !TurretView && useBuiltInInput && fireSecondaryAction.WasReleasedThisFrame() && !secondaryLatched) FireSecondary();

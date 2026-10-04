@@ -121,6 +121,13 @@ namespace GoF2Remake.Data
             return t != MissionType.Purchase && t != MissionType.StolenGoods && t != MissionType.Passenger && t != MissionType.Informer;
         }
 
+        /// <summary>MGame::dockEvent / Radar::draw / MGame::UseKhadorDrive: the level mission (Status+400, set by
+        /// Status::departStation on arrival) refuses docking, the jumpgate, planet jumps and the Khador Drive (525) unless its
+        /// type is 0 (Courier: delivered by docking) or 11 (a return trip). Lifts once the mission is won, failed or gone.
+        /// The original never fails a mission for leaving: coming back rebuilt it from scratch (#32).</summary>
+        public static bool BlocksTravel(int station) =>
+            IsMissionOrbit(station) && Mission.type != MissionType.Courier && !Mission.won && !Mission.failed;
+
         /// <summary>Recovery / Salvage won in space: the container is aboard (unsaleable), take it to the client.</summary>
         public static void ToReturnTrip()
         {

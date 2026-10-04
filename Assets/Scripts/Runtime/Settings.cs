@@ -169,6 +169,10 @@ namespace GoF2Remake.Data
 
         /// <summary>Remake (GitHub #6): now and then a free-flight orbit holds a pirate outpost or a pirate boss with escorts
         /// (TrafficPlan.AddPirateEvent), each with a bounty.</summary>
+        /// <summary>Informer missions (#28): false = the remake's rule (once the spy is dead, other deaths in its orbit no
+        /// longer spoil the mission); true = the original's (PlayerFighter::update 0xf1c8c: any other ship dying before the
+        /// docking fails it, even after the spy).</summary>
+        public static bool InformerOriginalRule { get => GetBool("informerOriginalRule", false); set => SetBool("informerOriginalRule", value); }
         public static bool PirateEvents { get => GetBool("pirateEvents", true); set => SetBool("pirateEvents", value); }
 
         /// <summary>DialogueWindow::update: with voice, turn the page once the line has ended.</summary>
@@ -182,6 +186,12 @@ namespace GoF2Remake.Data
         public static bool InputHints { get => GetBool("inputHints", true); set => SetBool("inputHints", value); }
         /// <summary>Remake: every primary weapon item sounds its own shots (the original: only the first primary gun).</summary>
         public static bool EachWeaponSound { get => GetBool("eachWeaponSound", false); set => SetBool("eachWeaponSound", value); }
+        /// <summary>Remake: the touch fire button's double-press autofire latch on the keyboard / mouse / controller fire
+        /// binding (the PC version had none).</summary>
+        public static bool KeyAutofire { get => GetBool("keyAutofire", false); set => SetBool("keyAutofire", value); }
+        /// <summary>Remake (desktop): no sound while the window isn't focused (Bootstrap; the volume, not AudioListener.pause,
+        /// which the pause menu uses).</summary>
+        public static bool MuteInBackground { get => GetBool("muteInBackground", false); set => SetBool("muteInBackground", value); }
         /// <summary>Remake: the frame rate at the top centre (FpsCounter).</summary>
         public static bool ShowFps { get => GetBool("showFps", false); set => SetBool("showFps", value); }
 

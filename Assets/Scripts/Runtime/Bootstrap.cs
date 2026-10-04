@@ -72,6 +72,8 @@ namespace GoF2Remake
             Settings.Changed += ApplyAll;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             SceneManager.sceneLoaded += OnSceneLoaded;
+            Application.focusChanged -= OnFocusChanged;
+            Application.focusChanged += OnFocusChanged;
             // URP resolves the framework's upscaler once per pipeline instance (UpscalerFramework): again for each new one.
             RenderPipelineManager.activeRenderPipelineCreated -= ApplyUpscaling;
             RenderPipelineManager.activeRenderPipelineCreated += ApplyUpscaling;
@@ -84,6 +86,7 @@ namespace GoF2Remake
             {
                 Settings.Changed -= ApplyAll;
                 SceneManager.sceneLoaded -= OnSceneLoaded;
+                Application.focusChanged -= OnFocusChanged;
                 RenderPipelineManager.activeRenderPipelineCreated -= ApplyUpscaling;
                 QualitySettings.vSyncCount = editorVSync;
                 QualitySettings.lodBias = defaultLodBias;
@@ -105,11 +108,23 @@ namespace GoF2Remake
 
         static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => ApplyPostProcessing();
 
+        static bool focused = true;
+
+        static void OnFocusChanged(bool focus)
+        {
+            focused = focus;
+            ApplyVolume();
+        }
+
+        /// <summary>The master volume, or silence while the window is in the background with "Mute in background" on.</summary>
+        static void ApplyVolume() =>
+            AudioListener.volume = Settings.MuteInBackground && !focused && !Application.isMobilePlatform ? 0f : Settings.MasterVolume;
+
         static void ApplyAll()
         {
             if (!Application.isPlaying) return;
             ApplyFrameRate();
-            AudioListener.volume = Settings.MasterVolume;
+            ApplyVolume();
             if (urp != null) urp.renderScale = Settings.RenderScale > 0f ? Settings.RenderScale : defaultRenderScale;
             ApplyUpscaling();
             QualitySettings.lodBias = defaultLodBias * (Settings.Quality >= 2 ? 1f : Settings.Quality == 1 ? 0.6f : 0.35f);

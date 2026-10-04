@@ -97,8 +97,12 @@ namespace GoF2Remake.World
         public PlayerCloak Cloak { get; private set; }
         public TimeExtender Extender { get; private set; }
         /// <summary>MGame::dockEvent: 525 while a mission holds the player here (the story's blocks, the Kaamo siege).</summary>
-        public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
+        public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active) || FreelanceBlocks
                                       || Multiplayer.NetEventRules.NoDocking;   // an event's Restrict Travel
+        bool freelanceMissionOrbit;
+        /// <summary>The orbit was built around the freelance mission (Status::departStation put it in Status+400) and it holds
+        /// the player here until it is won or failed (Freelance.BlocksTravel).</summary>
+        bool FreelanceBlocks => freelanceMissionOrbit && Layout != null && Freelance.BlocksTravel(Layout.stationIndex);
         /// <summary>The orbit was built as the story's (Status::departStation put the campaign mission in Status+400).</summary>
         public bool IsStoryOrbit { get; private set; }
         /// <summary>A story conversation is open (the game is paused).</summary>
@@ -240,6 +244,7 @@ namespace GoF2Remake.World
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
             // Multiplayer: not when a squadmate here already runs this mission (their ships are shown here, NetMissions).
             bool missionHere = !storyOrbit && arena == null && Freelance.IsMissionOrbit(station);
+            freelanceMissionOrbit = missionHere;
             bool freelanceOrbit = missionHere && NetMissions.ShouldRun(station);
             bool missionFollower = missionHere && !freelanceOrbit;   // a squadmate here runs it: its briefing, route, timer, score
             // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
@@ -311,6 +316,7 @@ namespace GoF2Remake.World
             Hints = gameObject.AddComponent<FlightHints>();
             Hints.Setup(this);
             Navigation.JumpsBlocked = () => NetArenaClient.InMatch || !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
+                                            || FreelanceBlocks   // a freelance mission's orbit (#32)
                                             || Multiplayer.NetEventRules.NoJumps   // an event's Restrict Travel
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100);   // escorting Khador (MGame::UseKhadorDrive)
             // MGame::UseKhadorDrive 0x1a9480 has no Void rule of its own: the mission gate above (Story.BlocksJumps, 525) is the
@@ -318,7 +324,9 @@ namespace GoF2Remake.World
             // through the main story).
             Navigation.SetWormhole(Wormhole);
             Navigation.PlanetJumpRefused = st => StorySpace != null && StorySpace.RefusePlanetJump(st);
-            SystemJump.GateBlocked = () => (Siege != null && Siege.Active) || Multiplayer.NetEventRules.NoJumps;
+            // MGame::dockEvent refuses the gate on the same mission check as docking: the story's level missions too.
+            SystemJump.GateBlocked = () => Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || FreelanceBlocks
+                                           || (Siege != null && Siege.Active) || Multiplayer.NetEventRules.NoJumps;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
             Traffic.LockedTarget = () => Radar != null ? Radar.Locked : null;   // locking a Most Wanted criminal uncovers it

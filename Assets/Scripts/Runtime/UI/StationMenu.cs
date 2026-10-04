@@ -69,7 +69,9 @@ namespace GoF2Remake.UI
         MissionsWindow missions;
         Label tickerText;
         float tickerX, tickerUnitWidth;
-        bool tickerReady;
+        bool tickerReady, tickerHooked;
+        int tickerPointer = -1;
+        float tickerLastX;
         string tickerSingle = "";
         string tickerBase;          // the game's own items, rolled once per docking
         bool tickerNewsDirty;       // the session's news changed: rebuilt when the strip wraps (no jump)
@@ -317,6 +319,7 @@ namespace GoF2Remake.UI
         void SetupTicker(bool newsOnly = false)
         {
             tickerText = root.Q<Label>("tickerText");
+            HookTickerDrag();
             var st = level != null ? level.Station : null;
             bool shown = st != null && NewsTicker.ShownAt(st.index, st.system);
             root.EnableInClassList("ticker-off", !shown);
@@ -329,6 +332,51 @@ namespace GoF2Remake.UI
             tickerX = 0f;
             tickerReady = false;
             if (!newsOnly) tickerText.style.visibility = Visibility.Hidden;   // until it starts at the strip's right edge
+        }
+
+        /// <summary>NewsTicker::OnTouchBegin / OnTouchMove / OnTouchEnd: a press on the strip holds it (no auto-scroll) and it
+        /// follows the pointer 1:1, back to reread or forward to skip; no inertia. The press is the ticker's, not the
+        /// turntable's (ModStation::OnTouchBegin returns once the ticker took it).</summary>
+        void HookTickerDrag()
+        {
+            if (tickerHooked || tickerText == null) return;
+            tickerHooked = true;
+            var strip = tickerText.parent;
+            strip.RegisterCallback<PointerDownEvent>(e =>
+            {
+                if (tickerPointer >= 0 || !tickerReady || e.button != 0) return;
+                tickerPointer = e.pointerId;
+                tickerLastX = e.position.x;
+                strip.CapturePointer(e.pointerId);
+                e.StopPropagation();
+            });
+            strip.RegisterCallback<PointerMoveEvent>(e =>
+            {
+                if (e.pointerId != tickerPointer) return;
+                if (e.pressedButtons == 0) { EndTickerDrag(strip); return; }
+                tickerX += e.position.x - tickerLastX;
+                tickerLastX = e.position.x;
+                WrapTicker();
+                tickerText.style.left = tickerX;
+            });
+            strip.RegisterCallback<PointerUpEvent>(e => { if (e.pointerId == tickerPointer) EndTickerDrag(strip); });
+            strip.RegisterCallback<PointerCancelEvent>(e => { if (e.pointerId == tickerPointer) EndTickerDrag(strip); });
+            strip.RegisterCallback<PointerCaptureOutEvent>(e => { if (e.pointerId == tickerPointer) EndTickerDrag(strip); });
+        }
+
+        void EndTickerDrag(VisualElement strip)
+        {
+            int id = tickerPointer;
+            tickerPointer = -1;   // first: releasing the capture sends PointerCaptureOut back here
+            if (id >= 0 && strip.HasPointerCapture(id)) strip.ReleasePointer(id);
+        }
+
+        /// <summary>The repeated copies cover the strip while x stays in (-one copy, 0], in either direction.</summary>
+        void WrapTicker()
+        {
+            if (tickerUnitWidth <= 0f) return;
+            while (tickerX > 0f) tickerX -= tickerUnitWidth;
+            while (tickerX <= -tickerUnitWidth) tickerX += tickerUnitWidth;
         }
 
         /// <summary>NewsTicker::update: x -= dt * 50 px/s. Remake: the strip is never empty: the news (one copy = the items +
@@ -355,16 +403,15 @@ namespace GoF2Remake.UI
                 tickerText.style.visibility = StyleKeyword.Null;
                 return;
             }
+            if (tickerPointer >= 0) return;   // held: NewsTicker::update skips the scroll while dragged
             tickerX -= Time.unscaledDeltaTime * NewsTicker.ScrollPxPerSecond;
-            if (tickerX <= -tickerUnitWidth)
+            bool wrapped = tickerX <= -tickerUnitWidth;
+            WrapTicker();
+            // Multiplayer: new news, or the items' ages ("5 min ago") a minute old: rebuilt as the copy wraps.
+            if (wrapped && (tickerNewsDirty || (GoF2Remake.Multiplayer.NetGame.Active && Time.unscaledTime - tickerBuiltAt > 60f)))
             {
-                tickerX += tickerUnitWidth;
-                // Multiplayer: new news, or the items' ages ("5 min ago") a minute old: rebuilt as the copy wraps.
-                if (tickerNewsDirty || (GoF2Remake.Multiplayer.NetGame.Active && Time.unscaledTime - tickerBuiltAt > 60f))
-                {
-                    SetupTicker(true);
-                    return;
-                }
+                SetupTicker(true);
+                return;
             }
             tickerText.style.left = tickerX;
         }
@@ -1428,6 +1475,7 @@ namespace GoF2Remake.UI
             dragZone.RegisterCallback<PointerMoveEvent>(e =>
             {
                 if (e.pointerId != dragPointer) return;
+                if (e.pressedButtons == 0) { EndDrag(e.pointerId, false); return; }   // released where we didn't hear it
                 float rad = (e.position.x - dragLastX) / UnitsPerRadian;
                 level.RotateShip(rad);
                 dragFrameRadians += rad;
@@ -1436,13 +1484,15 @@ namespace GoF2Remake.UI
             });
             dragZone.RegisterCallback<PointerUpEvent>(e => EndDrag(e.pointerId, true));
             dragZone.RegisterCallback<PointerCancelEvent>(e => EndDrag(e.pointerId, false));
+            // The zone hidden mid-drag (the map, a window) loses the capture and never hears the release.
+            dragZone.RegisterCallback<PointerCaptureOutEvent>(e => EndDrag(e.pointerId, false));
         }
 
         void EndDrag(int pointerId, bool fling)
         {
-            if (pointerId != dragPointer) return;
-            if (dragZone.HasPointerCapture(dragPointer)) dragZone.ReleasePointer(dragPointer);
-            dragPointer = -1;
+            if (pointerId != dragPointer || pointerId < 0) return;
+            dragPointer = -1;   // first: releasing the capture sends PointerCaptureOut back here
+            if (dragZone.HasPointerCapture(pointerId)) dragZone.ReleasePointer(pointerId);
             // OnTouchEnd: fling only if the finger was still moving (the original: last dx > 3 px).
             bool moving = Time.unscaledTime - dragLastTime < 0.08f;
             float minSpeed = 3f / StationTables.TurntablePixelsPerRadian / 0.02f;
@@ -1748,9 +1798,11 @@ namespace GoF2Remake.UI
             if (DialogOpen || SystemMenuOpen) return;
             if (missions != null && missions.IsOpen) return;
             if (status != null && status.IsOpen) return;
-            if (kb != null && kb.digit5Key.wasPressedThisFrame) { Play(buttonRelease); OpenStatus(); return; }
+            // The PC version's "Menu button 1 - 9" (3356) tap Globals::sub_menu_buttons: the main view's Hangar / Lounge / Map /
+            // Missions / Status, the hangar window's three tabs (HangarWindow::initialize): 4 / 5 do nothing there.
+            if (kb != null && kb.digit5Key.wasPressedThisFrame && !HangarOpen) { Play(buttonRelease); OpenStatus(); return; }
             if (lounge != null && lounge.ChatOpen) return;
-            if ((kb != null && kb.digit4Key.wasPressedThisFrame) || (pad != null && pad.selectButton.wasPressedThisFrame))
+            if ((kb != null && kb.digit4Key.wasPressedThisFrame && !HangarOpen) || (pad != null && pad.selectButton.wasPressedThisFrame))
             {
                 Play(buttonRelease);
                 OpenMissions();
@@ -1790,7 +1842,10 @@ namespace GoF2Remake.UI
                     Play(buttonPush);
                     hangarWindow.NextTab();
                 }
-                else if (kb != null && kb.digit2Key.wasPressedThisFrame) OpenLounge();
+                // 1 / 2 / 3 = Ship / Shop (the Kaamo Club's Store) / Blueprints (#30, the PC version's menu buttons).
+                else if (kb != null && kb.digit1Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Ship); }
+                else if (kb != null && kb.digit2Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Shop); }
+                else if (kb != null && kb.digit3Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Blueprints); }
                 else if ((kb != null && kb.iKey.wasPressedThisFrame) || (pad != null && pad.buttonNorth.wasPressedThisFrame))
                     hangarWindow.OpenInfo();   // remake keys for the row's info button
                 return;

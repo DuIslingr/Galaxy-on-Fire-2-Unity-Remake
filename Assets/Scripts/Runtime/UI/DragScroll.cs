@@ -6,6 +6,8 @@
 // PointerActive: a pointer pressed, moved or wheeled over a list in this or the last frame. Focus changes then come
 // from the pointer (a tap, the hover focus), and the menus don't scroll the focused row into view for them
 // (ScrollTo against the layout of a list that is moving snapped it back).
+// The capture only starts past the threshold, so a release outside the list before that never reaches OnUp: a move with
+// no button held (or the list losing the capture or its panel) ends the press, else the next hover dragged the list.
 
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -46,6 +48,8 @@ namespace GoF2Remake.UI
             target.RegisterCallback<PointerMoveEvent>(OnMove, TrickleDown.TrickleDown);
             target.RegisterCallback<PointerUpEvent>(OnUp, TrickleDown.TrickleDown);
             target.RegisterCallback<PointerCancelEvent>(OnCancel);
+            target.RegisterCallback<PointerCaptureOutEvent>(OnCaptureOut);
+            target.RegisterCallback<DetachFromPanelEvent>(OnDetach);
             target.RegisterCallback<WheelEvent>(_ => { lastPointerFrame = Time.frameCount; inertia?.Pause(); }, TrickleDown.TrickleDown);
         }
 
@@ -55,6 +59,8 @@ namespace GoF2Remake.UI
             target.UnregisterCallback<PointerMoveEvent>(OnMove, TrickleDown.TrickleDown);
             target.UnregisterCallback<PointerUpEvent>(OnUp, TrickleDown.TrickleDown);
             target.UnregisterCallback<PointerCancelEvent>(OnCancel);
+            target.UnregisterCallback<PointerCaptureOutEvent>(OnCaptureOut);
+            target.UnregisterCallback<DetachFromPanelEvent>(OnDetach);
         }
 
         float MaxOffset => Mathf.Max(0f, scroll.contentContainer.layout.height - scroll.contentViewport.layout.height);
@@ -62,7 +68,8 @@ namespace GoF2Remake.UI
         void OnDown(PointerDownEvent e)
         {
             lastPointerFrame = Time.frameCount;
-            if (pointerId >= 0 || e.pointerType == UnityEngine.UIElements.PointerType.touch) return;
+            if (e.pointerType == UnityEngine.UIElements.PointerType.touch || e.button != 0) return;
+            if (pointerId >= 0 && pointerId != e.pointerId) return;   // another pointer's press is running
             inertia?.Pause();
             pointerId = e.pointerId;
             startPos = lastPos = e.position;
@@ -75,6 +82,7 @@ namespace GoF2Remake.UI
         {
             lastPointerFrame = Time.frameCount;
             if (e.pointerId != pointerId) return;
+            if (e.pressedButtons == 0) { EndPress(); return; }   // released where the list didn't hear it
             Vector2 p = e.position;
             if (!dragging)
             {
@@ -104,8 +112,23 @@ namespace GoF2Remake.UI
 
         void OnCancel(PointerCancelEvent e)
         {
-            if (e.pointerId != pointerId) return;
-            if (target.HasPointerCapture(pointerId)) target.ReleasePointer(pointerId);
+            if (e.pointerId == pointerId) EndPress();
+        }
+
+        void OnCaptureOut(PointerCaptureOutEvent e)
+        {
+            if (e.pointerId == pointerId && dragging) EndPress();
+        }
+
+        void OnDetach(DetachFromPanelEvent e)
+        {
+            inertia?.Pause();
+            EndPress();
+        }
+
+        void EndPress()
+        {
+            if (pointerId >= 0 && target.HasPointerCapture(pointerId)) target.ReleasePointer(pointerId);
             pointerId = -1;
             dragging = false;
         }

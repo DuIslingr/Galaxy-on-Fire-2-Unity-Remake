@@ -98,8 +98,9 @@ namespace GoF2Remake.World
 
             SetupLoma();
             SetupVoidChatter();
-            // Level+0x18a: back at a station whose race the player attacked.
-            if (Session.AttackedStations.Contains(StationIndex))
+            // Level+0x18a: back at a station whose race the player attacked. Not in an Informer orbit: its branch of
+            // Level::createMission skips the hasAttackedFriends block (the locals, the spy among them, start calm).
+            if (Session.AttackedStations.Contains(StationIndex) && !TrafficPlan.InformerOrbit(StationIndex))
             {
                 AlarmAllFriends(SystemRace, false);
                 Radio(445, 447, SystemRace);
@@ -580,11 +581,16 @@ namespace GoF2Remake.World
             var fm = Session.FreelanceMission;
             if (fm != null && fm.type == MissionType.Informer && fm.target == StationIndex)
             {
-                // PlayerFighter::update 0xf1c8c: any other ship dying first (whoever killed it) spoils it (+0xf1), and after
-                // that the spy's death no longer counts.
+                // PlayerFighter::update 0xf1c8c: any other ship dying (whoever killed it) spoils it (+0xf1 = 1, +0xf0 = 0),
+                // and after that the spy's death no longer counts. The original checks only +0xf1, so a death after the
+                // spy's fails it too; the remake's default stops counting once the spy is dead (Settings.InformerOriginalRule).
                 bool killed = Session.InformerKilled, failed = Session.InformerFailed;
                 if (ship.Spec.nameText == 1663) { if (!Session.InformerFailed) Session.InformerKilled = true; }
-                else if (!Session.InformerKilled) Session.InformerFailed = true;
+                else if (!Session.InformerFailed && (!Session.InformerKilled || Settings.InformerOriginalRule))
+                {
+                    Session.InformerFailed = true;
+                    Session.InformerKilled = false;
+                }
                 // Multiplayer: the squad's mission (NetMissions.OnStatus: 1 = the spy dead, 1000 = spoiled).
                 if (Session.InformerKilled && !killed) GoF2Remake.Multiplayer.NetMissions.AddStatus(fm, 1);
                 if (Session.InformerFailed && !failed) GoF2Remake.Multiplayer.NetMissions.AddStatus(fm, 1000);

@@ -94,6 +94,14 @@ namespace GoF2Remake.Flight
 
         /// <summary>'playerGame': the player's start (game units), where freelance escorts gather.</summary>
         /// <param name="wormholeGame">The orbit's visible wormhole (game units), where a Void raid comes from; null = none.</param>
+        /// <summary>Level::createMission's Informer layout: an Informer mission at its target station while it isn't spoiled
+        /// (status[0xf1] == 0; a spoiled one gets the normal traffic).</summary>
+        public static bool InformerOrbit(int station)
+        {
+            var fm = Session.FreelanceMission;
+            return fm != null && fm.type == MissionType.Informer && fm.target == station && !Session.InformerFailed;
+        }
+
         public static List<SpawnSpec> Build(Database db, int station, SystemData system, Vector3 playerGame = default, Vector3? wormholeGame = null)
         {
             var list = new List<SpawnSpec>();
@@ -162,7 +170,7 @@ namespace GoF2Remake.Flight
             // An Informer mission at its target station: only 7 local fighters (6 once the informer is dead), the first
             // named "Informer" (1663); no jumpers, freighters or raiders. Otherwise an attacked station has at least 7, and an
             // orbit with nothing at all gets 4 (before the special orbits below empty theirs again).
-            bool informer = fm != null && fm.type == MissionType.Informer && fm.target == station;
+            bool informer = InformerOrbit(station);
             if (informer) { local = Session.InformerKilled ? 6 : 7; jumpers = freighters = raiders = escorts = baseEscorts = 0; raidersOn = false; }
             else
             {
