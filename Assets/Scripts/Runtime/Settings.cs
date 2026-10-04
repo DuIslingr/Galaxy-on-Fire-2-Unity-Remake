@@ -169,6 +169,10 @@ namespace GoF2Remake.Data
 
         /// <summary>Remake (GitHub #6): now and then a free-flight orbit holds a pirate outpost or a pirate boss with escorts
         /// (TrafficPlan.AddPirateEvent), each with a bounty.</summary>
+        /// <summary>Informer missions (#28): false = the remake's rule (once the spy is dead, other deaths in its orbit no
+        /// longer spoil the mission); true = the original's (PlayerFighter::update 0xf1c8c: any other ship dying before the
+        /// docking fails it, even after the spy).</summary>
+        public static bool InformerOriginalRule { get => GetBool("informerOriginalRule", false); set => SetBool("informerOriginalRule", value); }
         public static bool PirateEvents { get => GetBool("pirateEvents", true); set => SetBool("pirateEvents", value); }
 
         /// <summary>DialogueWindow::update: with voice, turn the page once the line has ended.</summary>

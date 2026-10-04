@@ -289,6 +289,11 @@ namespace GoF2Remake.UI
                 () => Settings.PirateEvents, v => Settings.PirateEvents = v);
             pirateEvents.description = () => X("pirateEventsHelp", "Now and then an orbit holds a pirate outpost with its guards or a pirate boss with escorts; destroying them pays a bounty. Not in the original.");
             list.Add(pirateEvents);
+            // #28: the Informer mission's rule for other ships dying after the spy.
+            list.Add(Choice("informerRule", OptionPage.Gameplay, () => X("informerRule", "Informer missions"), true,
+                () => new[] { X("informerRemake", "Remake"), X("informerOriginal", "Original") },
+                () => Settings.InformerOriginalRule ? 1 : 0, i => Settings.InformerOriginalRule = i == 1,
+                () => X("informerRuleHelp", "Original: any other ship destroyed in the spy's orbit before you dock fails the mission, even after the spy is dead. Remake: once the spy is dead, other kills no longer count.")));
             list.Add(Toggle("autoAdvance", OptionPage.Gameplay, () => X("autoAdvance", "Turn voiced dialogue pages automatically"),
                 () => Settings.AutoAdvanceDialogue, v => Settings.AutoAdvanceDialogue = v));
             list.Add(Toggle("animatedDialogue", OptionPage.Gameplay, () => X("animatedDialogue", "Animated dialogue"),
