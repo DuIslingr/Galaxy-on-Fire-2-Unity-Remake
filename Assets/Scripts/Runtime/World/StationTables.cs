@@ -36,7 +36,7 @@ namespace GoF2Remake.World
 
         public static float ShipY(int ship) => ship >= 0 && ship < ShipHeight.Length ? ShipHeight[ship] : 250f;
 
-        // ---- remake: lifted off the pad where the hull would cut into it (hangar_heights.json, GoF2 > Build Hangar Heights) ----
+        // ---- remake: lifted off the pad where the hull would cut into it (hangar_heights.json, GoF2 > Build > Hangar Heights) ----
 
         public const int LiftBins = 24;   // headings, 15 deg apart (Unity yaw)
         [System.Serializable] public class HangarLift { public int hangar, slot, ship; public float[] lift; }

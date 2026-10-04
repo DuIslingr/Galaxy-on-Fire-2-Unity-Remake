@@ -1096,7 +1096,9 @@ namespace GoF2Remake.UI
         {
             gameOverMs = 0f;
             gameOver.AddToClassList("game-over--shown");
-            gameOverText.text = GoF2Remake.Multiplayer.NetGame.Active
+            gameOverText.text = GoF2Remake.Multiplayer.NetEventRespawn.Active
+                ? Localization.Extra("mpRespawnEvent", "Respawning in space...")      // an event's respawn point (NetEventRespawn)
+                : GoF2Remake.Multiplayer.NetGame.Active
                 ? Localization.Extra("mpRespawn", "Tap to respawn at the station.")   // multiplayer: no saves, docked again
                 : Localization.Get(Session.HasAutosave ? 196 : 199);
         }
