@@ -251,11 +251,9 @@ namespace GoF2Remake.UI
                 fire.CapturePointer(firePointer);
                 fireSwallowed = false;
                 e.StopPropagation();
-                if (FirePressed != null && FirePressed()) { fireSwallowed = true; return; }
-                float now = Time.unscaledTime;
-                if (now - lastFirePress <= 0.249f) autofire = true;
-                else if (autofire) { autofire = false; fireSwallowed = true; }   // the press that unlatches doesn't fire
-                lastFirePress = now;
+                // An action (autopilot, jump, approach) also ends autofire (remake: it resumed by itself afterwards).
+                if (FirePressed != null && FirePressed()) { fireSwallowed = true; autofire = false; lastFirePress = -10f; return; }
+                if (!Flight.AutofireLatch.Press(ref autofire, ref lastFirePress, Time.unscaledTime)) fireSwallowed = true;
             });
             void Up(int id)
             {

@@ -140,7 +140,6 @@
     font-size: 26px;
     letter-spacing: 5px;
     color: var(--gof-text-dim);
-    translate: 0 0;
     transition-duration: 0.18s;
     transition-timing-function: ease-out-cubic;
 }
@@ -156,7 +155,9 @@
     color: #FFFFFF;
     border-left-color: var(--gof-amber);
     background-color: var(--gof-cyan-faint);
-    translate: 14px 0;
+    /* Hover moves the label, not the box: a translated box slid out from under the cursor on its edge, which then
+       un-hovered and slid back (flicker, missed clicks). */
+    padding-left: 34px;
 }
 
 .station-button:active {

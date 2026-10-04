@@ -877,7 +877,7 @@
 .choice-button:active {
     background-color: var(--gof-cyan-faint);
     border-left-color: var(--gof-amber);
-    translate: 8px 0;
+    padding-left: 30px;   /* the content moves, not the box (a translated box slid away from the cursor) */
 }
 
 /* The new game's Kaamo Club expansion toggle (under the economy choices; a choice, not a start button). */

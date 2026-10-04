@@ -1056,16 +1056,19 @@ namespace GoF2Remake.UI
             });
             arrow.RegisterCallback<PointerUpEvent>(e => { if (e.pointerId == heldPointer) ReleaseArrow(); });
             arrow.RegisterCallback<PointerCancelEvent>(e => { if (e.pointerId == heldPointer) ReleaseArrow(); });
+            // A lost capture (the window closed or rebuilt mid-press) never sends the release: the arrow kept trading.
+            arrow.RegisterCallback<PointerCaptureOutEvent>(e => { if (e.pointerId == heldPointer) ReleaseArrow(); });
         }
 
         void ReleaseArrow()
         {
-            if (heldPointer >= 0)
+            int id = heldPointer;
+            heldPointer = -1;   // first: releasing the capture sends PointerCaptureOut back here
+            if (id >= 0)
             {
-                if (sellButton.HasPointerCapture(heldPointer)) sellButton.ReleasePointer(heldPointer);
-                if (buyButton.HasPointerCapture(heldPointer)) buyButton.ReleasePointer(heldPointer);
+                if (sellButton.HasPointerCapture(id)) sellButton.ReleasePointer(id);
+                if (buyButton.HasPointerCapture(id)) buyButton.ReleasePointer(id);
             }
-            heldPointer = -1;
             heldDirection = 0;
             sellButton.RemoveFromClassList("trade-arrow--pressed");
             buyButton.RemoveFromClassList("trade-arrow--pressed");

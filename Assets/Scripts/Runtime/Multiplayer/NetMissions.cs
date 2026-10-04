@@ -126,7 +126,10 @@ namespace GoF2Remake.Multiplayer
             if (Freelance.Mission.type == MissionType.Informer)
             {
                 // The spy's owner saw it die (1) or another ship die first (1000): the same for the whole squad.
-                if (delta >= 1000) { if (!Session.InformerKilled) Session.InformerFailed = true; }
+                if (delta >= 1000)
+                {
+                    if (!Session.InformerKilled || Settings.InformerOriginalRule) { Session.InformerFailed = true; Session.InformerKilled = false; }
+                }
                 else if (!Session.InformerFailed) Session.InformerKilled = true;
                 return;
             }

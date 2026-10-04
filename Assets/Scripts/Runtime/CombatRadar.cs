@@ -116,7 +116,9 @@ namespace GoF2Remake.Flight
         void Update()
         {
             float dtMs = Time.deltaTime * 1000f;
-            if (Locked != null && !Locked.Alive) Locked = null;
+            // KIPlayer::isDying / isDead clear the ship lock (+4); a jumper flying off (KIPlayer::setDead) counts too: the
+            // remake only switches it off, hull intact, and its "<race> 100%" plate stayed with no ship (#28).
+            if (Locked != null && (!Locked.Alive || !Locked.gameObject.activeInHierarchy)) Locked = null;
             if (weapons != null) weapons.LockTarget = Locked;
             // PlayerEgo::isInTurretMode: the turret view neither locks ships nor keeps the tractor beam pulling.
             bool turretView = weapons != null && weapons.TurretView;
@@ -142,10 +144,15 @@ namespace GoF2Remake.Flight
                 float box = Screen.width / 16f, bestD = float.MaxValue, stealD = float.MaxValue;
                 if (c.z > 0f)
                 {
+                    // PlayerJunk objects: Level::createMission (Junk removal) puts them in the ship list before the pirates,
+                    // so the first in the box is the junk, not a ship behind it (#28).
+                    foreach (var o in Target.RadarObjects)
+                        if (o != null && o.Alive && !o.untargetable && InBox(cam, c, box, o.transform.position, out float dj)) { best = o; break; }
+                    // The ship loop skips inactive players (Player::isActive): no lock on a sleeper, which has no marker.
                     if (traffic != null)
                         foreach (var s in traffic.Ships)
                         {
-                            if (s.Gone || !s.Target.Alive || s.Hidden || s.RadarHidden || s.DockingType > 0) continue;
+                            if (s.Gone || !s.Target.Alive || s.Hidden || s.RadarHidden || s.DockingType > 0 || s.Asleep) continue;
                             if (!InBox(cam, c, box, s.transform.position, out float d)) continue;
                             // KIPlayer+0x20: a disabled ship with cargo is salvage (it wins over the ship locks).
                             if (s.Hp.empDisabled && s.HasCargo) { if (d < stealD && (Salvaging == null || Salvaging.stolenFrom != s)) { stealD = d; bestSteal = s; } }
@@ -155,10 +162,6 @@ namespace GoF2Remake.Flight
                     if (best == null && bestSteal == null)
                         foreach (var o in Target.NetShips)
                             if (o != null && o.Alive && !o.untargetable && InBox(cam, c, box, o.transform.position, out float dn)) { best = o; break; }
-                    // PlayerJunk objects are in the original's ship list too: lockable after the ships.
-                    if (best == null && bestSteal == null)
-                        foreach (var o in Target.RadarObjects)
-                            if (o != null && o.Alive && !o.untargetable && InBox(cam, c, box, o.transform.position, out float dj)) { best = o; break; }
                     if (bestSteal != null) best = null;
                     if (best == null && bestSteal == null)
                     {

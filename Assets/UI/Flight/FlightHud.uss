@@ -179,7 +179,8 @@
 }
 
 /* Hud::drawEventQueue: one message on the plate 0x4c3 (392 x 44, size set in code) at the top centre, y -8, or 42 under
-   the lock plate; the text 12 px into it. */
+   the lock plate; the text 12 px into it. The remake's lock plate sits 14 px lower than the original's (top 6), so the low
+   position is 42 + 14 (at 42 its top edge cut into the lock plate). */
 .hud-messages {
     display: none;
     position: absolute;
@@ -193,7 +194,7 @@
 }
 
 .hud-messages--low {
-    top: 42px;
+    top: 56px;
 }
 
 .hud-message {
