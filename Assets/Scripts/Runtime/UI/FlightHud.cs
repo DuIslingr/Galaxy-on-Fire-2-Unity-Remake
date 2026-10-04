@@ -622,21 +622,22 @@ namespace GoF2Remake.UI
             }
 
             if (pauseMenu.IsOpen) { pauseMenu.Tick(); return; }
-            // Multiplayer: the multiplayer window (N or its button): Esc / B close it; meanwhile the flight keys wait
-            // (Navigation.InputHalted), and N in one of its text fields is a letter.
+            // Multiplayer: the multiplayer window (its button, or the "Multiplayer window" binding, N): Esc / B close it;
+            // meanwhile the flight keys wait (Navigation.InputHalted), and in one of its text fields every key is typing
+            // (NetChat.SetTyping: the binding's key is a letter there).
             if (MultiplayerWindow.IsOpenAny)
             {
                 var k = GoF2Remake.Multiplayer.NetChat.Keys;
                 if ((k != null && k.escapeKey.wasPressedThisFrame) || (Gamepad.current != null && (Gamepad.current.buttonEast.wasPressedThisFrame || Gamepad.current.startButton.wasPressedThisFrame))
-                    || (k != null && k.nKey.wasPressedThisFrame && !MultiplayerWindow.TypingAny))
+                    || (!MultiplayerWindow.TypingAny && GameControls.MultiplayerWindow.WasPressedThisFrame()))
                     MultiplayerWindow.CloseAny();
                 return;
             }
-            if (GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.nKey.wasPressedThisFrame
-                && (health == null || !health.Dead))
+            if (GoF2Remake.Multiplayer.NetGame.Active && !GoF2Remake.Multiplayer.NetChat.Typing && (health == null || !health.Dead))
             {
-                MultiplayerWindow.ToggleAny();
-                return;
+                if (GameControls.MultiplayerWindow.WasPressedThisFrame()) { MultiplayerWindow.ToggleAny(); return; }
+                // The distress call: only its button or its own binding (unbound by default), never a menu key.
+                if (GameControls.DistressCall.WasPressedThisFrame()) MultiplayerWindow.ToggleDistressAny();
             }
             if ((GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame))

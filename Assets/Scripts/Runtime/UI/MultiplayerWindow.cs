@@ -47,6 +47,7 @@ namespace GoF2Remake.UI
         public static void CloseAny() { if (current != null) current.Close(); }
 
         VisualElement plate, window, tabs, body, chatPane;
+        Button sosButton;
         ScrollView scroll, chatScroll;
         TextField chatField;
         Button chatChannel, menuButton;
@@ -59,6 +60,9 @@ namespace GoF2Remake.UI
         readonly Dictionary<string, string> settingEdits = new Dictionary<string, string>();
         int shownRole = -1;
         float refresh, answerUntil;
+        bool typing;              // one of the window's text fields has the focus: the game's keys are off (NetChat.SetTyping)
+        bool pendingRebuild;      // a snapshot came while a field had the focus or a finger / button was down
+        float pressedSince = -1f; // a pointer went down on the window (unscaled time), -1 = none
         StyleSheet sheet;
 
         static readonly Color Panel = new Color(0.02f, 0.04f, 0.07f, 0.93f), Accent = new Color(0.56f, 0.85f, 1f),
@@ -81,7 +85,7 @@ namespace GoF2Remake.UI
         public static void ToggleAny() { if (current != null) current.Toggle(); }
 
         /// <summary>A text field of the window has the focus (its keys aren't the game's: FlightHud leaves N alone).</summary>
-        public static bool TypingAny => current != null && current.isOpen && current.window?.focusController?.focusedElement is TextField;
+        public static bool TypingAny => current != null && current.isOpen && TextFieldKeys.InTextField(current.window?.focusController?.focusedElement);
 
         void OnEnable()
         {
@@ -99,6 +103,8 @@ namespace GoF2Remake.UI
 
         void OnDestroy()
         {
+            if (typing) { typing = false; NetChat.DropTyping(); }   // the scene's actions go with it (ChatView does the same)
+            sosButton?.RemoveFromHierarchy();
             plate?.RemoveFromHierarchy();
             window?.RemoveFromHierarchy();
         }
@@ -107,6 +113,8 @@ namespace GoF2Remake.UI
 
         void Build(VisualElement parent)
         {
+            sosButton?.RemoveFromHierarchy();
+            sosButton = null;
             plate?.RemoveFromHierarchy();
             window?.RemoveFromHierarchy();
             sheet = Resources.Load<StyleSheet>("GoF2Net/Squad");
@@ -126,6 +134,18 @@ namespace GoF2Remake.UI
                 plateButton.style.marginLeft = 0;
                 plate = plateButton;
                 parent.Add(plateButton);
+                // The squad's distress call (NetDistress) under it: shown in a squad in space. A click / tap or the
+                // "Distress call" binding (unbound by default) only: like the button above it never takes the focus, so
+                // Space / Enter / a controller's A can't press it by accident.
+                sosButton = Btn(Localization.Extra("mpDistressCall", "Distress call"), ToggleDistress, "squad-button--leave");
+                if (sheet != null) sosButton.styleSheets.Add(sheet);
+                sosButton.focusable = false;
+                sosButton.style.position = Position.Absolute;
+                sosButton.style.right = 24;
+                sosButton.style.top = new Length(22, LengthUnit.Percent);
+                sosButton.style.marginLeft = 0;
+                sosButton.style.display = DisplayStyle.None;
+                parent.Add(sosButton);
             }
             else if (menu != null && menu.parent != null)
             {
@@ -158,6 +178,10 @@ namespace GoF2Remake.UI
                 }
             }
 
+            // A click / tap (or the "Multiplayer window" binding, N) opens it; never the focus (Space or a controller's A on a
+            // focused button pressed it again in flight).
+            if (plateButton != null) plateButton.focusable = false;
+
             window = new VisualElement { name = "factionWindow" };
             if (sheet != null) window.styleSheets.Add(sheet);
             var w = window.style;
@@ -171,6 +195,11 @@ namespace GoF2Remake.UI
             w.borderTopColor = w.borderBottomColor = w.borderLeftColor = w.borderRightColor = new Color(Accent.r, Accent.g, Accent.b, 0.45f);
             w.paddingTop = w.paddingBottom = 12; w.paddingLeft = w.paddingRight = 18;
             w.display = DisplayStyle.None;
+            // A press on the window holds a new snapshot back until it is released (a rebuild under the finger dropped the
+            // button being pressed: "Claim" did nothing).
+            window.RegisterCallback<PointerDownEvent>(_ => pressedSince = Time.unscaledTime, TrickleDown.TrickleDown);
+            window.RegisterCallback<PointerUpEvent>(_ => pressedSince = -1f, TrickleDown.TrickleDown);
+            window.RegisterCallback<PointerCancelEvent>(_ => pressedSince = -1f, TrickleDown.TrickleDown);
 
             var head = Row();
             head.style.justifyContent = Justify.SpaceBetween;
@@ -238,6 +267,7 @@ namespace GoF2Remake.UI
         void Close()
         {
             isOpen = false;
+            pressedSince = -1f;
             if (window != null) window.style.display = DisplayStyle.None;
             if (window?.focusController?.focusedElement is VisualElement f) f.Blur();
         }
@@ -245,6 +275,12 @@ namespace GoF2Remake.UI
         void Update()
         {
             if (plate == null) return;
+            // The window's text fields: the game's own keys (the station's 1 / 2 / M / L, the flight controls, the hangar's
+            // A / D) are off while one has the focus.
+            bool fieldFocused = TypingAny;
+            if (fieldFocused != typing) { typing = fieldFocused; NetChat.SetTyping(fieldFocused); }
+            if (pendingRebuild && !Busy) { pendingRebuild = false; Rebuild(); }
+            UpdateSos();
             bool session = NetGame.Active;
             plate.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
             // In the top bar: the new button takes the bar's free space on its left while it shows.
@@ -264,7 +300,39 @@ namespace GoF2Remake.UI
         void OnChanged()
         {
             if (NetPanel.Latest != null && NetPanel.Latest.role != shownRole && tabs != null) BuildTabs();   // made an op / admin, or no longer
-            if (isOpen && tab != Tab.Squad) Rebuild();   // the Squad tab follows the players, not the snapshot
+            if (!isOpen || tab == Tab.Squad) return;   // the Squad tab follows the players, not the snapshot
+            // Not under a finger or a text field being typed into (a rebuild made new fields: the focus and Android's keyboard
+            // went, and a pressed button was gone before its release): once they are done (Update).
+            if (Busy) pendingRebuild = true;
+            else Rebuild();
+        }
+
+        /// <summary>A pointer is down on the window (at most 5 s: a release lost elsewhere) or one of its text fields has the
+        /// focus: the content stays as it is meanwhile.</summary>
+        bool Busy => (pressedSince >= 0f && Time.unscaledTime - pressedSince < 5f)
+                     || TextFieldKeys.InTextField(window?.focusController?.focusedElement) && body != null
+                        && body.Contains(window.focusController.focusedElement as VisualElement);
+
+        /// <summary>The flight button: in a squad in space (or while a call runs), its text the call's state.</summary>
+        void UpdateSos()
+        {
+            if (sosButton == null) return;
+            var me = NetPlayer.Local;
+            bool show = NetGame.Active && (NetDistress.Active || (me != null && me.InSpace && NetSquad.LocalSquad != 0 && !NetArena.IsArenaOrbit(me.Station)));
+            sosButton.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!show) return;
+            string text = (NetDistress.Active ? Localization.Extra("mpDistressEnd", "End the call") : Localization.Extra("mpDistressCall", "Distress call")).ToUpperInvariant();
+            if (sosButton.text != text) sosButton.text = text;
+            sosButton.EnableInClassList("squad-button--leave", !NetDistress.Active);
+        }
+
+        /// <summary>FlightHud: the "Distress call" binding (unbound by default) or the button.</summary>
+        public static void ToggleDistressAny() { if (current != null && current.flight) current.ToggleDistress(); }
+
+        void ToggleDistress()
+        {
+            string msg = NetDistress.Toggle();
+            if (!string.IsNullOrEmpty(msg)) NetChat.Notice(msg);
         }
 
         /// <summary>The server's answer to a button (the next notice), and invitations / challenges as they come.</summary>
@@ -290,6 +358,7 @@ namespace GoF2Remake.UI
 
         void Rebuild()
         {
+            pendingRebuild = false;
             if (body == null) return;
             float y = scroll.scrollOffset.y;
             body.Clear();
@@ -341,7 +410,7 @@ namespace GoF2Remake.UI
             Section(Localization.Extra("mpPanelBank", "Bank"));
             var bank = Row();
             bank.Add(Text($"{s.bank:N0} " + Localization.Extra("mpCredits", "credits"), 18, Color.white));
-            bank.Add(Field(Localization.Extra("mpPanelAmount", "Amount"), amountText, 12, 150, v => amountText = v));
+            bank.Add(Field(Localization.Extra("mpPanelAmount", "Amount"), amountText, 12, 150, v => amountText = v, TouchScreenKeyboardType.NumberPad));
             bank.Add(Btn(Localization.Extra("mpPanelDeposit", "Deposit"), () => Send($"/faction deposit {amountText.Trim()}"), "squad-button--accept"));
             if (officer) bank.Add(Btn(Localization.Extra("mpPanelWithdraw", "Withdraw"), () => Send($"/faction withdraw {amountText.Trim()}"), null));
             body.Add(bank);
@@ -804,6 +873,7 @@ namespace GoF2Remake.UI
             }, TrickleDown.TrickleDown);
             chatField.RegisterCallback<NavigationSubmitEvent>(e => { e.StopPropagation(); chatField.focusController?.IgnoreEvent(e); }, TrickleDown.TrickleDown);
             chatField.RegisterCallback<NavigationMoveEvent>(e => { e.StopPropagation(); chatField.focusController?.IgnoreEvent(e); }, TrickleDown.TrickleDown);
+            TextFieldKeys.Guard(chatField);   // Esc drops the focus (the next Esc closes the window)
             row.Add(chatField);
             row.Add(Btn(Localization.Extra("mpChatSend", "Send"), SendChat, "squad-button--accept"));
             chatPane.Add(row);
@@ -952,10 +1022,12 @@ namespace GoF2Remake.UI
             return b;
         }
 
-        static TextField Field(string label, string value, int max, int width, Action<string> changed)
+        static TextField Field(string label, string value, int max, int width, Action<string> changed,
+                                TouchScreenKeyboardType keyboard = TouchScreenKeyboardType.Default)
         {
-            var f = new TextField { value = value, maxLength = max };
+            var f = new TextField { value = value, maxLength = max, keyboardType = keyboard };
             f.textEdition.placeholder = label;
+            TextFieldKeys.Guard(f);   // typed keys stay in the field (no menu navigation, no game keys)
             f.style.width = width;
             f.style.marginLeft = 6;
             f.RegisterValueChangedCallback(e => changed(e.newValue));

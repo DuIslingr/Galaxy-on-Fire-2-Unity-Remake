@@ -544,11 +544,13 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void ChargeRpc(int token, int amount, RpcParams rpc = default) => NetFactionsClient.OnCharge(token, amount);
 
-        /// <summary>The player's game paid the deposit 'token' (or had too few credits).</summary>
+        /// <summary>The player's game paid the deposit 'token' (or had too few credits). Its own bucket (Mission), not the
+        /// panel's Request one: the window's snapshots share that, and a dropped answer lost credits the game had already
+        /// taken. Only a token the server made does anything.</summary>
         [Rpc(SendTo.Server)]
         public void ChargedRpc(int token, bool paid, RpcParams rpc = default)
         {
-            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetFactions.OnCharged(rpc.Receive.SenderClientId, token, paid);
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Mission)) NetFactions.OnCharged(rpc.Receive.SenderClientId, token, paid);
         }
 
         /// <summary>Server: credits from the faction bank to the player's game.</summary>

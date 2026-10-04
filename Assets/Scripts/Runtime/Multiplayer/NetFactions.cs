@@ -52,7 +52,7 @@ namespace GoF2Remake.Multiplayer
     public static class NetFactions
     {
         public const int MaxNameLength = 24, MaxMembers = 50;
-        const float InviteSeconds = 300f, ClaimTickSeconds = 60f, ChargeSeconds = 30f;
+        const float InviteSeconds = 300f, ClaimTickSeconds = 60f, ChargeSeconds = 300f;   // a deposit's answer may lag (a phone in the background)
         public const int DefaultClaimCost = 500_000, DefaultMaxClaims = 3, DefaultLapseDays = 14;
         public const int DefaultSiegeCost = 250_000, DefaultToll = 10_000;
         public const int MemberDiscountPercent = 10, TaxPercent = 5;
@@ -451,7 +451,11 @@ namespace GoF2Remake.Multiplayer
         /// <summary>NetState.ChargedRpc: the player's game paid a deposit (or couldn't: not enough credits).</summary>
         public static void OnCharged(ulong client, int token, bool paid)
         {
-            if (!charges.TryGetValue(token, out var c) || c.account != NetProfiles.AccountOf(client)) return;
+            if (!charges.TryGetValue(token, out var c) || c.account != NetProfiles.AccountOf(client))
+            {
+                if (paid) Debug.LogWarning($"Server: client {client} paid an unknown or expired faction deposit ({token}): nothing banked.");
+                return;
+            }
             charges.Remove(token);
             var faction = list?.factions.Find(x => x.id == c.faction);
             if (!paid) { NetState.Instance?.Notify(client, Localization.Extra("mpFactionNoCredits", "You don't have that many credits.")); return; }

@@ -138,7 +138,7 @@ namespace GoF2Remake.UI
         {
             var panel = new VisualElement();
             panel.AddToClassList("squad-panel");
-            header = new Button(toggle);
+            header = new Button(toggle) { focusable = false };   // clicks / taps only: Space or a controller's A in flight never press it
             header.AddToClassList("squad-header");
             panel.Add(header);
             body = new VisualElement();
@@ -149,7 +149,7 @@ namespace GoF2Remake.UI
 
         static Button MakeButton(string text, System.Action onClick, string cls)
         {
-            var b = new Button(onClick) { text = text.ToUpperInvariant() };
+            var b = new Button(onClick) { text = text.ToUpperInvariant(), focusable = false };   // the distress call too: never by a stray key
             b.AddToClassList("squad-button");
             if (cls != null) b.AddToClassList(cls);
             return b;

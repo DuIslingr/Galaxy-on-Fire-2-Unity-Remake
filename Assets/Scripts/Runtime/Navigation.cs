@@ -323,16 +323,14 @@ namespace GoF2Remake.Flight
                 list.Add(new Target { kind = Kind.TimeExtender, name = te != null ? Localization.Get(1274 + te.index) : "Time extender",
                                       disabled = !Extender.Ready && !Extender.Running });
             }
-            // Multiplayer (remake): the squad's distress calls (NetDistress): this pilot's own call, and Help for every
-            // squadmate calling.
+            // Multiplayer (remake): Help for every squadmate calling for help (NetDistress). The pilot's own call isn't here
+            // (a menu key picked it by accident): the flight HUD's Distress call button or its own binding.
             if (GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetSquad.LocalSquad != 0)
             {
                 foreach (var m in GoF2Remake.Multiplayer.NetSquad.Members())
                     if (m != null && !m.IsOwner && m.Distress)
                         list.Add(new Target { kind = Kind.Assist, client = m.OwnerClientId,
                                               name = string.Format(Localization.Extra("mpHelpEntry", "Help {0}"), m.DisplayName) });
-                list.Add(new Target { kind = Kind.Distress, name = GoF2Remake.Multiplayer.NetDistress.Active
-                    ? Localization.Extra("mpDistressEnd", "End the call") : Localization.Extra("mpDistressCall", "Distress call") });
             }
             return list;
         }

@@ -229,6 +229,8 @@ namespace GoF2Remake.UI
             root.RegisterCallback<NavigationMoveEvent>(OnNavigate, TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationSubmitEvent>(e =>
             {
+                // Space typed into a field is a space, not a press of the menu's button.
+                if (TextFieldKeys.IsTyping(e, root.focusController?.focusedElement as VisualElement)) { e.StopPropagation(); root.focusController?.IgnoreEvent(e); return; }
                 if (screen == MenuState.Menu && root.focusController?.focusedElement is ChoiceRow row) { row.Cycle(); e.StopPropagation(); }
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
@@ -405,11 +407,11 @@ namespace GoF2Remake.UI
         {
             DragScroll.NotePointer();
             if (e.pointerType == PointerType.mouse) { SetTouchMode(false); return; }
+            // Don't focus what the finger presses, except a text field (the address, the code, the debug search): it needs
+            // the focus for the on-screen keyboard. Touch mode without the blur there: tapping the focused field again blurred
+            // it first, which closed the keyboard.
+            if (TextFieldKeys.InTextField(e.target)) { touchMode = true; root.EnableInClassList("can-hover", false); return; }
             SetTouchMode(true);
-            // Don't focus what the finger presses, except a text field (the address, the debug search): it needs the focus
-            // for the on-screen keyboard.
-            for (var v = e.target as VisualElement; v != null; v = v.parent)
-                if (v is TextField) return;
             root.focusController?.IgnoreEvent(e);
         }
 
@@ -1778,8 +1780,15 @@ namespace GoF2Remake.UI
         void OnNavigate(NavigationMoveEvent e)
         {
             if (screen != MenuState.Menu) return;
-            SetTouchMode(false);
             var focused = root.focusController?.focusedElement as VisualElement;
+            // Typing into a field (the address, the code, a name): W A S D and the side arrows are letters and the cursor.
+            if (TextFieldKeys.IsTyping(e, focused))
+            {
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+                return;
+            }
+            SetTouchMode(false);
             bool vertical = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Down;
             bool horizontal = e.direction == NavigationMoveEvent.Direction.Left || e.direction == NavigationMoveEvent.Direction.Right;
             if (!vertical && !horizontal) return;

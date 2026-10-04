@@ -504,9 +504,9 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   control is rebindable (see **Key bindings**).
 - **Key bindings** (remake, `GameControls` + `BindingRow`; their own Options tab "Key bindings" (`OptionPage.Bindings`) in the main, pause and station menus, the panels wide enough for its six tabs): the flight
   controls are one code-made InputActionMap ("Flight", always enabled; chat typing and a capture suspend it,
-  `GameControls.Suspend`) of 29 rows (steer, throttle, brake, boost, roll, level out, strafe left / right, dodge left / right (no keyboard default), fire, fire secondary,
+  `GameControls.Suspend`) of 31 rows (steer, throttle, brake, boost, roll, level out, strafe left / right, dodge left / right (no keyboard default), fire, fire secondary,
   switch secondary, camera / turret view, auto turret, action, autopilot menu, actions menu, fast-forward, wingmen, Khador Drive, cloak,
-  time extender, mouse steering, mining drill (read only while drilling, so its keys may overlap the flight's), chat, chat send, chat channel, screenshot), each with two keyboard / mouse slots and a controller slot (binding
+  time extender, mouse steering, mining drill (read only while drilling, so its keys may overlap the flight's), chat, chat send, chat channel, screenshot, multiplayer window (N), distress call (unbound)), each with two keyboard / mouse slots and a controller slot (binding
   groups Keyboard / Gamepad; steer's controller slot is a whole stick or the D-pad so the stick keeps its radial dead zone,
   the other controller slots also take a stick pushed one way past half way, "RS ↑";
   steer, throttle and roll are composites captured part by part). Defaults: the PC keys above and the controller buttons
@@ -767,9 +767,14 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   the server banks the tax from `StockItemRpc`'s price, `NetFactions.OnPurchase`; the list shows the plain price; ships
   aren't cut). Not yet: shared storage at the home. Not tested in a build yet.
   UI: the **multiplayer window** (`MultiplayerWindow`, code-built, Squad.uss buttons; in the station a "MULTIPLAYER" button in
-  the top bar left of Menu; in flight its own button on the right under the HUD readout and N (`FlightHud`: Esc / B / N
-  close it, the flight controls and the mouse-steering cursor wait meanwhile, `Navigation.InputHalted`); the Squad tab
-  has Distress call / End the call in space; both lists scroll by mouse drag too (`DragScroll`) and the chat follows new
+  the top bar left of Menu; in flight its own button on the right under the HUD readout and the "Multiplayer window"
+  binding, N (`FlightHud`: Esc / B / the binding close it, the flight controls and the mouse-steering cursor wait
+  meanwhile, `Navigation.InputHalted`); under it in flight a Distress call / End the call button (in a squad in space,
+  `MultiplayerWindow.UpdateSos`; or the unbound "Distress call" binding); these buttons and the squad window's never take
+  the focus, so Space / Enter / a controller's A can't press them; the Squad tab has Distress call / End the call in
+  space; its text fields (`TextFieldKeys.Guard`) keep their typed keys (no menu navigation or submit, Esc drops the
+  focus) and turn the game's keys off while focused (`NetChat.SetTyping`); a snapshot waits while a field has the focus
+  or a pointer is down on the window (a rebuild under the finger dropped the pressed button and Android's keyboard); both lists scroll by mouse drag too (`DragScroll`) and the chat follows new
   lines only while at its end; the Admin tab also on a session without profiles for its host (master) and session admins
   (`NetModeration.RoleOfClient`): kick, mute, session admins, settings, announcements (`NetCommands.ModerateWithoutProfiles`); a dot when an invitation, a challenge or an unread chat line waits; Esc / B closes it, the station
   menu's keys wait while it is open). Tabs Chat (the whole chat: lines, Local / Global, the line, Send; Enter sends,
@@ -1065,8 +1070,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
 - **Debug menu in multiplayer** (`NetGame.HostAllowsDebug` → `NetState.DebugAllowed`, a NetworkVariable set when the
   world spawns, fixed for the session): off by default. The Host card's **Debug menu** Off / Allowed segments
   (`mp_allow_debug`), a dedicated server's `-allowdebug` (the launchers' `ALLOWDEBUG=1`; `status` and the startup log
-  say which). `Cheats.Allowed` = no session, or the session allows it: otherwise the pause / station Debug pages are
-  gone (`Cheats.PageShown`), the Options "Debug tools" row is hidden, and every cheat flag reads off (`Cheats.On`), so
+  say which). `Cheats.Allowed` = no session, or the session allows it: then every player's pause / station menu has the
+  Debug page, whether that device ever opened the main menu's Debug panel or not (`Cheats.PageShown`; the station's
+  entry follows a change while docked); otherwise the pages are gone, the Options "Debug tools" row is hidden, and every cheat flag reads off (`Cheats.On`), so
   toggles left on in single player don't carry into a session (their saved values are kept). Client-side only: a
   modified client can still cheat.
 - **Server checks** (`NetGuard`, `NetRateLimit`): every client request goes through the server, which checks it and limits
@@ -1183,9 +1189,10 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   (`Navigation.ContinueToProgrammedStation`: the planet jump, or the gate route); docked: the launch first. Arriving in
   that orbit by travel, the helper comes out 1.5 km from the caller facing them (`NetDistress.ArrivalNear`,
   `SpaceLevel.SpawnPlayer`). The star map marks the squad when it opens (`StarMap.SquadMark`): a green "●N" by a
-  system, "● names" under a planet, red with "⚠" for a call. In flight also the quick (actions) menu (E / D-pad left /
-  the touch quick menu button; `Navigation.ActionEntries`, kinds `Distress` / `Assist`): "Distress call" / "End the
-  call" and "Help <name>" for each squadmate calling, the answer as a HUD message; and a pulsing banner at the top
+  system, "● names" under a planet, red with "⚠" for a call. In flight the Distress call button under the Multiplayer
+  button (or the unbound "Distress call" binding; not in the quick menu, where a menu key picked it by accident), and
+  the quick (actions) menu (E / D-pad left / the touch quick menu button; `Navigation.ActionEntries`, kind `Assist`):
+  "Help <name>" for each squadmate calling, the answer as a HUD message; and a pulsing banner at the top
   (`TerritoryView`, under a siege's) with who calls for help and where. Not tested in a build yet.
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.

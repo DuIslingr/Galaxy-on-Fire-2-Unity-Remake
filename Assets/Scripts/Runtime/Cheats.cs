@@ -10,9 +10,10 @@
 //   Free shopping    items and ships cost nothing
 //   Free jumps       Khador jumps and the cloak need no energy cells
 // Multiplayer: only when the session allows it (the Host card's Debug menu switch, a dedicated server's -allowdebug; off
-// by default): otherwise the Debug pages are gone and every cheat flag reads off (Allowed), so toggles left on in single
-// player don't follow a player into a session. The toggles themselves stay saved for single player. An admin's /cheat
-// (NetAdmin) grants a flag to one player for the session (Grant: not saved, whatever the session allows).
+// by default; then every player gets the Debug pages, unlocked or not): otherwise the Debug pages are gone and every
+// cheat flag reads off (Allowed), so toggles left on in single player don't follow a player into a session. The toggles
+// themselves stay saved for single player. An admin's /cheat (NetAdmin) grants a flag to one player for the session
+// (Grant: not saved, whatever the session allows).
 // Plain C#: the hooks read the flags (Target, PlayerHealth, VolatileCargo, WeaponSystem, CombatRadar, Mining,
 // Navigation, Hangar, GalaxyMap, PlayerCloak).
 
@@ -56,8 +57,10 @@ namespace GoF2Remake.Data
         /// dedicated server allows them (NetGame.DebugAllowed).</summary>
         public static bool Allowed => !GoF2Remake.Multiplayer.NetGame.Active || GoF2Remake.Multiplayer.NetGame.DebugAllowed;
 
-        /// <summary>The pause menu and the station's system menu show their Debug page.</summary>
-        public static bool PageShown => Unlocked && Allowed;
+        /// <summary>The pause menu and the station's system menu show their Debug page: in single player once the Debug panel
+        /// has been opened (Unlocked); in a multiplayer session whenever the session allows it, for every player and device
+        /// (a phone that never opened the main menu's Debug panel had no page, only the host's own device did).</summary>
+        public static bool PageShown => GoF2Remake.Multiplayer.NetGame.Active ? Allowed : Unlocked;
 
         public static bool GodMode { get => On("godMode"); set => Set("godMode", value); }
         public static bool InfiniteAmmo { get => On("infiniteAmmo"); set => Set("infiniteAmmo", value); }

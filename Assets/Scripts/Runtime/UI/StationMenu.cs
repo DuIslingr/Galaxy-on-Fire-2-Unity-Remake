@@ -1145,9 +1145,10 @@ namespace GoF2Remake.UI
             loadGameButton = SystemButton(Localization.Get(29), 1, () => ShowSystemPage(SysPage.Load), systemMain);
             optionsButton = SystemButton(Localization.Get(31), 3, () => ShowSystemPage(SysPage.Options), systemMain);
             aboutButton = SystemButton(Localization.Get(43), 4, () => { ShowDialog(AboutText.Get(), null, true); AboutText.Hook(root.Q<Label>("dialogText")); }, systemMain);
-            // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats); in multiplayer only when
-            // the session allows it.
-            if (Cheats.PageShown) debugButton = SystemButton(Localization.Extra("debugTitle", "Debug"), 5, () => ShowSystemPage(SysPage.Debug), systemMain);
+            // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats); in multiplayer whenever the
+            // session allows it (made in every session: a server's admin may switch it on or off meanwhile, ShowSystemPage).
+            if (Cheats.PageShown || GoF2Remake.Multiplayer.NetGame.Active)
+                debugButton = SystemButton(Localization.Extra("debugTitle", "Debug"), 5, () => ShowSystemPage(SysPage.Debug), systemMain);
             // Multiplayer: a session's game is never saved, and no single-player save is loaded into it.
             if (GoF2Remake.Multiplayer.NetGame.Active)
                 foreach (var b in new[] { loadGameButton, saveGameButton }) if (b != null) b.style.display = DisplayStyle.None;
@@ -1320,6 +1321,8 @@ namespace GoF2Remake.UI
             root.Q<Label>("systemMenuTitle").text = page == SysPage.Debug ? Localization.Extra("debugTitle", "Debug").ToUpperInvariant()
                                                                           : Localization.Get(title).ToUpperInvariant();
             if (slots) BuildSaveSlots();
+            if (debugButton != null) debugButton.style.display = Cheats.PageShown ? StyleKeyword.Null : DisplayStyle.None;
+            if (page == SysPage.Debug && !Cheats.PageShown) { ShowSystemPage(SysPage.Main); return; }   // switched off meanwhile
             if (page == SysPage.Debug) BuildStationOptions();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             Select(page == SysPage.Save ? saveSlotList.contentContainer.ElementAt(1)     // slot 1: the first manual slot
@@ -1461,9 +1464,13 @@ namespace GoF2Remake.UI
         void OnPointerDown(PointerDownEvent e)
         {
             if (e.pointerType == PointerType.mouse) { SetTouchMode(false); return; }
+            // Don't focus what the finger presses, except a text field (the chat line, the multiplayer window's codes, amounts
+            // and names): it needs the focus for the on-screen keyboard (MainMenu does the same).
+            if (TextFieldKeys.InTextField(e.target)) { touchMode = true; root.EnableInClassList("can-hover", false); return; }
             SetTouchMode(true);
             root.focusController?.IgnoreEvent(e);
         }
+
 
         void Select(VisualElement e)
         {
