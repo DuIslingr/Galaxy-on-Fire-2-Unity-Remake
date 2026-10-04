@@ -1,5 +1,7 @@
 // BuildVersionStamp.cs
-// Every player build gets its date and time as its version (BuildVersion.Format, e.g. 2026.09.29.2315): set into
+// Every player build gets the date and time of the git commit it is built from as its version (BuildVersion.Format, UTC,
+// e.g. 2026.09.29.2315; the build's own time without git): every platform built from one commit (Windows, Linux, Android)
+// shows the same version, wherever and whenever it was built (fork change: upstream stamps the build time). Set into
 // PlayerSettings.bundleVersion before the build (Application.version, Android's versionName) and put back once the build
 // has finished or failed (EditorApplication.delayCall runs after BuildPipeline.BuildPlayer returns), so the project
 // settings keep their own value. UWP builds also get it as their package version (yyyy.M.d.HHmm). A release's builds
@@ -28,6 +30,7 @@ namespace GoF2Remake.EditorTools
             // A release's builds share one version: the Editor process's GOF2_BUILD_VERSION environment variable (it outlives
             // the domain reloads of switching platforms) wins over the build's own date and time.
             string stamp = System.Environment.GetEnvironmentVariable(OverrideVariable);
+            if (string.IsNullOrWhiteSpace(stamp)) stamp = CommitStamp();
             if (string.IsNullOrWhiteSpace(stamp))
                 stamp = System.DateTime.Now.ToString(GoF2Remake.UI.BuildVersion.Format, System.Globalization.CultureInfo.InvariantCulture);
             PlayerSettings.bundleVersion = stamp;
@@ -59,27 +62,37 @@ namespace GoF2Remake.EditorTools
             };
         }
 
+        /// <summary>A git command's output in the project folder; null when git isn't there or it failed.</summary>
+        static string Run(string args)
+        {
+            try
+            {
+                var info = new System.Diagnostics.ProcessStartInfo("git", args)
+                {
+                    RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
+                    WorkingDirectory = System.IO.Directory.GetCurrentDirectory(),
+                };
+                using (var p = System.Diagnostics.Process.Start(info))
+                {
+                    string output = p.StandardOutput.ReadToEnd();
+                    if (!p.WaitForExit(5000) || p.ExitCode != 0) return null;
+                    return output.Trim();
+                }
+            }
+            catch (System.Exception) { return null; }
+        }
+
+        /// <summary>The HEAD commit's time in UTC as yyyy.MM.dd.HHmm (the same on every machine and time zone); null without git.</summary>
+        static string CommitStamp()
+        {
+            if (!long.TryParse(Run("log -1 --format=%ct"), out long seconds)) return null;
+            return System.DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime
+                .ToString(GoF2Remake.UI.BuildVersion.Format, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         /// <summary>"branch@abc1234" (+dirty with uncommitted changes) of the project's git checkout; "" without git.</summary>
         static string GitCommit()
         {
-            string Run(string args)
-            {
-                try
-                {
-                    var info = new System.Diagnostics.ProcessStartInfo("git", args)
-                    {
-                        RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true,
-                        WorkingDirectory = System.IO.Directory.GetCurrentDirectory(),
-                    };
-                    using (var p = System.Diagnostics.Process.Start(info))
-                    {
-                        string output = p.StandardOutput.ReadToEnd();
-                        if (!p.WaitForExit(5000) || p.ExitCode != 0) return null;
-                        return output.Trim();
-                    }
-                }
-                catch (System.Exception) { return null; }
-            }
             string hash = Run("rev-parse --short HEAD");
             if (string.IsNullOrEmpty(hash)) return "";
             string branch = Run("rev-parse --abbrev-ref HEAD") ?? "";

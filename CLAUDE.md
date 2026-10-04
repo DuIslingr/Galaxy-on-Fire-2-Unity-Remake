@@ -646,7 +646,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   <heart sprite> by JoppieToppie · <version>-b<branch>@<commit>" (`BuildVersion.Full`; the commit, "+dirty" with uncommitted
   changes under Assets/Scripts / Resources / UI, from git at build time into `Resources/GoF2Build/BuildCommit.txt` by
   `BuildVersionStamp`; also `/version` in the chat, the multiplayer window's foot and the dedicated server's first log
-  line); the version is the build's date and time (`yyyy.MM.dd.HHmm`), stamped into
+  line); the version is the date and time of the git commit the build comes from (`yyyy.MM.dd.HHmm`, UTC; fork change, upstream
+  uses the build's own time, still the fallback without git), so Windows, Linux and Android builds of one commit match; stamped into
   `PlayerSettings.bundleVersion` for each build by `BuildVersionStamp` (Editor) and put back afterwards, so
   `Application.version` and Android's versionName carry it; "editor" in the Editor.
 - **Update check** (remake, `UpdateCheck`): entering the main menu (after the title screen) asks GitHub once per run for the

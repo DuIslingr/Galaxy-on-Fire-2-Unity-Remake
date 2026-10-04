@@ -1,6 +1,6 @@
 // BuildVersion.cs
-// The version shown in the main menu's credit line: the date and time the player was built (yyyy.MM.dd.HHmm, local
-// time), stamped into PlayerSettings.bundleVersion by the Editor's BuildVersionStamp for each build, so Application.version
+// The version shown in the main menu's credit line: the date and time of the git commit the player was built from
+// (yyyy.MM.dd.HHmm, UTC; the build's own local time without git), so every platform of one commit shows the same, stamped into PlayerSettings.bundleVersion by the Editor's BuildVersionStamp for each build, so Application.version
 // (and Android's versionName) carries it. In the Editor: "editor".
 // Fingerprint: what multiplayer compares instead (two builds of the same code play together, whenever they were built):
 // the hash of the code and data the Editor's BuildFingerprint wrote into Resources/GoF2Build for the build; a build
