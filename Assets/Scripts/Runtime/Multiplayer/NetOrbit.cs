@@ -184,11 +184,13 @@ namespace GoF2Remake.Multiplayer
             return me == null ? 0 : Territory(ship, me.Station, me.FactionTag, NetFactionsClient.TollStation);
         }
 
-        /// <summary>Another member of the local player's squad shot it.</summary>
+        /// <summary>Another member of the local player's squad shot it, or an event turned it on the local player (/provoke).</summary>
         static bool HostileToLocalBySquad(NpcShip ship)
         {
             var me = NetPlayer.Local;
-            if (me == null || me.SquadId == 0) return false;
+            if (me == null) return false;
+            if (ship.aggressors.Contains(me.OwnerClientId)) return true;
+            if (me.SquadId == 0) return false;
             foreach (var id in ship.aggressors) if (id != me.OwnerClientId && NetSquad.SameClient(id, me)) return true;
             return false;
         }

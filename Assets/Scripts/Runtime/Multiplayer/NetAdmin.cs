@@ -7,7 +7,7 @@
 //   /give [players] <item> [amount] [mount] items into the hold (an item index or name; 1..1000, default 1); "mount" docked:
 //                                           mounted like the hangar does (Cheats.GiveAndMount)
 //   /credits [players] <amount>             credits added (negative: taken, never below 0)
-//   /spawn [players] <ship | object> [race] [count] [enemy | friendly | neutral | standing] [at x y z]
+//   /spawn [players] <ship | object> [race] [count] [enemy | friendly | neutral | standing] [named <name>] [at x y z]
 //                                           NPC ships 400 m ahead of each player as their orbit's traffic (DebugSpawner):
 //                                           a ship index or name, a race (terran, vossk, nivelian, midorian, pirate, void,
 //                                           specter; default the ship's maker, else pirates), 1..10 of them, enemy by
@@ -15,7 +15,10 @@
 //                                           by the race's standing; "at x y z": there in that player's orbit (game
 //                                           coordinates, what /pos shows), else 400 m ahead of them; a name that is no
 //                                           ship is an assembled object (assemblies.json: station_083_terran, ...) placed
-//                                           as scenery, ahead of them (far enough out for its size) or there
+//                                           as scenery, ahead of them (far enough out for its size) or there;
+//                                           "named <name>" (to the end, or up to "at x y z"; quotes optional): the ships'
+//                                           name on the lock plate (numbered "Name 1", "Name 2"... for several; the other
+//                                           players see it too, NetProxy's label), an object's name as a HUD marker
 //   /mute <players> [minutes], /unmute <players>   their chat and whispers dropped on the server (default: the session)
 // The debug panel's tools (Cheats, PlayerHull, DebugSpawner), for one player:
 //   /ship [players] <ship | own>            fly any hull of the Ships tab (a ship's number or name, the capital ships by
@@ -42,6 +45,7 @@
 // named. Every order is logged on the server and the target gets a notice naming the admin.
 
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using GoF2Remake.Data;
 using GoF2Remake.Flight;
@@ -53,9 +57,12 @@ namespace GoF2Remake.Multiplayer
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class NetAdmin
     {
-        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14, Reward = 15 }
+        public enum Order : byte { Kill = 1, Heal = 2, Give = 3, Credits = 4, Spawn = 5, Ship = 6, Ammo = 7, Reveal = 8, Peace = 9, Cheat = 10, Object = 11, Title = 12, Timer = 13, Dialog = 14, Reward = 15, Scoreboard = 16, Sound = 17, Music = 18, Respawn = 19, Rules = 20, Ask = 21, Provoke = 22, Radio = 23, Waypoint = 24 }
 
         const int MaxGive = 1000, MaxSpawn = 10, MaxCredits = 999999999;
+        /// <summary>A /spawn name's length, and its separator in the order's text (taken out of names).</summary>
+        const int MaxSpawnName = 32;
+        const char NameSeparator = '|';
 
         static string X(string key, string english) => Localization.Extra(key, english);
 
@@ -175,7 +182,9 @@ namespace GoF2Remake.Multiplayer
         public static string Spawn(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
         {
             if (!t.InSpace) return NotInSpace(t);
+            if (!TakeName(ref rest, out string name)) return Usage("spawn");
             if (!TakeAt(ref rest, out string at)) return Usage("spawn");
+            string named = name != null ? NameSeparator + name : "";
             // From the end: the behaviour, the count and the race, in any order; the rest is the ship.
             var words = new List<string>(rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
             if (words.Count == 0) return Usage("spawn");
@@ -198,7 +207,8 @@ namespace GoF2Remake.Multiplayer
                 // Not a ship: an assembled object (the whole name, before any words were taken as a race or a count).
                 var asm = FindAssembly(rest.Trim(), out string objectError);
                 if (asm == null) return ship == -2 ? error : objectError ?? error;
-                Send(t, Order.Object, 0, 0, 0, by, $"spawned object {asm.name}{(at != null ? " at " + at : "")}", at != null ? asm.name + "@" + at : asm.name);
+                Send(t, Order.Object, 0, 0, 0, by, $"spawned object {asm.name}{(at != null ? " at " + at : "")}{(name != null ? " named " + name : "")}",
+                    (at != null ? asm.name + "@" + at : asm.name) + named);
                 return string.Format(X("mpAdmObject", "Spawning {0} at {1}."), asm.name, t.DisplayName);
             }
             if (race < 0)
@@ -208,7 +218,8 @@ namespace GoF2Remake.Multiplayer
             }
             int tag = NetEvents.NewBatch(count, behaviour == DebugSpawner.Behaviour.Hostile);   // an event's spawn: counted (enemies / ships)
             Send(t, Order.Spawn, ship, race, tag << 12 | count << 8 | (int)behaviour, by,
-                $"spawned {count} x ship {ship} (race {race}, {behaviour}{(at != null ? ", at " + at : "")}{(tag != 0 ? ", event batch " + tag : "")})", at);
+                $"spawned {count} x ship {ship} (race {race}, {behaviour}{(at != null ? ", at " + at : "")}{(name != null ? ", named " + name : "")}{(tag != 0 ? ", event batch " + tag : "")})",
+                (at ?? "") + named);
             return string.Format(X("mpAdmSpawned", "Spawning {0} x {1} at {2}."), count, DebugSpawner.ShipName(NetGame.Db, ship), t.DisplayName);
         });
 
@@ -359,7 +370,7 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>A page's speaker as "id\u001fname\u001fface" (NetAdmin.Apply), null = not a speaker: "player", a story
         /// speaker ("Keith", "Keith as Bob"), or "&lt;race&gt; [female | male] [name]" with a face made once per dialog.</summary>
-        static string ResolveSpeaker(string who, Dictionary<string, string> faces)
+        internal static string ResolveSpeaker(string who, Dictionary<string, string> faces)
         {
             if (who.Length == 0) return null;
             if (who.Equals("player", StringComparison.OrdinalIgnoreCase) || who.Equals("you", StringComparison.OrdinalIgnoreCase))
@@ -422,6 +433,163 @@ namespace GoF2Remake.Multiplayer
             return "";
         });
 
+        /// <summary>/pvp &lt;on | off&gt;: free for all, every player an enemy of every other (squadmates excepted).</summary>
+        public static string Pvp(string args, NetPlayer by)
+        {
+            string a = (args ?? "").Trim().ToLowerInvariant();
+            if (a != "on" && a != "off") return Usage("pvp");
+            NetState.Instance.SetFreeForAll(a == "on");
+            NetEvents.NoteFreeForAll(a == "on");
+            NetState.Instance.NoticeAll(a == "on" ? X("mpPvpOn", "Free for all: every pilot is your enemy.") : X("mpPvpOff", "The free for all is over."));
+            Debug.Log($"Server: {NetCommands.IssuerName(by)} turned free for all {a}");
+            return "";
+        }
+
+        /// <summary>/respawn [players] &lt;station [x y z] [spread &lt;units&gt;] [delay &lt;s&gt;] | off&gt;: where their ship comes back
+        /// after being destroyed: in that orbit (at x y z, else 3 km in front of its station, spread around it), not docked.</summary>
+        public static string Respawn(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            rest = rest.Trim();
+            if (string.Equals(rest, "off", StringComparison.OrdinalIgnoreCase))
+            {
+                Send(t, Order.Respawn, -1, 0, 0, by, "respawn off", "off");
+                return "";
+            }
+            if (!NetTeleport.ParseStation(rest, out int station, out string after)) return Usage("respawn");
+            var words = new List<string>(after.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            float spread = 2000f, delay = 5f;
+            for (int i = words.Count - 2; i >= 0; i--)
+            {
+                string w = words[i].ToLowerInvariant();
+                if ((w == "spread" || w == "delay") && float.TryParse(words[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out float v))
+                {
+                    if (w == "spread") spread = Mathf.Clamp(v, 0f, 100000f); else delay = Mathf.Clamp(v, 1f, 120f);
+                    words.RemoveRange(i, 2);
+                }
+            }
+            string pos = "";
+            if (words.Count == 3)
+            {
+                foreach (var w in words) if (!float.TryParse(w, NumberStyles.Float, CultureInfo.InvariantCulture, out float c) || Mathf.Abs(c) > 1e7f) return Usage("respawn");
+                pos = string.Join(" ", words);
+            }
+            else if (words.Count != 0) return Usage("respawn");
+            string payload = string.Join("|", station.ToString(CultureInfo.InvariantCulture), pos,
+                spread.ToString(CultureInfo.InvariantCulture), delay.ToString(CultureInfo.InvariantCulture));
+            Send(t, Order.Respawn, station, 0, 0, by, $"respawn point {payload}", payload);
+            NetEvents.NoteRespawnSet();
+            return "";
+        });
+
+        /// <summary>/restrict [players] &lt;jumps | docking | off&gt; ...: no jumps (planet, gate, Khador) and / or no docking for them.</summary>
+        public static string Restrict(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            int flags = 0;
+            foreach (string w in rest.ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (w == "jumps" || w == "jump") flags |= NetEventRules.Jumps;
+                else if (w == "docking" || w == "dock") flags |= NetEventRules.Docking;
+                else if (w == "all") flags |= NetEventRules.Jumps | NetEventRules.Docking;
+                else if (w != "off") return Usage("restrict");
+            }
+            Send(t, Order.Rules, flags, 0, 0, by, $"travel restricted ({flags})");
+            if (flags != 0) NetEvents.NoteRulesSet();
+            return "";
+        });
+
+        /// <summary>/provoke [players] [race] [within &lt;m&gt;]: the NPC ships around them (that race; within that many metres,
+        /// else the whole orbit) turn on them and their squad, like ships they shot (NpcShip.aggressors); sent to each ship's
+        /// own game (the orbit's authority, or whoever spawned it) by its NetProxy.</summary>
+        public static string Provoke(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            if (!t.InSpace) return NotInSpace(t);
+            int race = -1;
+            float within = 0f;
+            var words = new List<string>(rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            for (int i = 0; i < words.Count; i++)
+            {
+                if (words[i].Equals("within", StringComparison.OrdinalIgnoreCase) && i + 1 < words.Count
+                    && float.TryParse(words[i + 1], NumberStyles.Float, CultureInfo.InvariantCulture, out float m)) { within = Mathf.Max(0f, m); i++; }
+                else if (RaceWord(words[i]) >= 0) race = RaceWord(words[i]);
+                else return Usage("provoke");
+            }
+            var byOwner = new Dictionary<ulong, List<int>>();
+            foreach (var p in UnityEngine.Object.FindObjectsByType<NetProxy>())
+            {
+                if (p == null || !p.IsSpawned || !p.FlyingNow || p.IsWingman || p.Station != t.Station) continue;
+                if (race >= 0 && p.Race != race) continue;
+                if (within > 0f && (p.WorldPosition - t.Position).magnitude > within) continue;
+                if (!byOwner.TryGetValue(p.OwnerClientId, out var ids)) byOwner[p.OwnerClientId] = ids = new List<int>();
+                ids.Add(p.LocalId);
+            }
+            int count = 0;
+            foreach (var kv in byOwner)
+            {
+                string payload = t.OwnerClientId.ToString(CultureInfo.InvariantCulture) + ":" + string.Join(",", kv.Value);
+                NetState.Instance.SendAdmin(kv.Key, Order.Provoke, 0, 0, 0, payload, NetCommands.IssuerName(by));
+                count += kv.Value.Count;
+            }
+            Debug.Log($"Server: {NetCommands.IssuerName(by)} turned {count} ship(s) on {t.DisplayName}");
+            return string.Format(X("mpAdmProvoked", "{0} ship(s) turned on {1}."), count, t.DisplayName);
+        });
+
+        /// <summary>/radio [players] &lt;speaker&gt; : &lt;text&gt;: a line in their flight HUD's radio box (a face and a name, gone by
+        /// itself; docked: a chat line). The speakers as /dialog's (ResolveSpeaker).</summary>
+        public static string Radio(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            int colon = rest.IndexOf(':');
+            if (colon <= 0) return Usage("radio");
+            string spec = ResolveSpeaker(rest.Substring(0, colon).Trim(), new Dictionary<string, string>());
+            if (spec == null) return string.Format(X("mpAdmNoSpeaker", "No speaker \"{0}\": a story character's name (Keith as Bob renames), a race and a name (vossk K'ekki), or player."), rest.Substring(0, colon).Trim());
+            string line = NetChat.Clean(rest.Substring(colon + 1)).Replace("\u001f", " ");
+            if (line.Length == 0) return Usage("radio");
+            Send(t, Order.Radio, 0, 0, 0, by, "radio", spec + "\u001f" + line);
+            return "";
+        });
+
+        /// <summary>/waypoint [players] &lt;station x y z | off&gt;: a lockable "Waypoint" at those game coordinates in that orbit
+        /// (NetEventWaypoint), the autopilot flies there; reaching it clears it.</summary>
+        public static string Waypoint(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            rest = rest.Trim();
+            if (string.Equals(rest, "off", StringComparison.OrdinalIgnoreCase))
+            {
+                Send(t, Order.Waypoint, 0, 0, 0, by, "waypoint off", "off");
+                return "";
+            }
+            if (!NetTeleport.ParseStation(rest, out int station, out string after)) return Usage("waypoint");
+            var c = after.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (c.Length != 3) return Usage("waypoint");
+            foreach (var w in c) if (!float.TryParse(w, NumberStyles.Float, CultureInfo.InvariantCulture, out float v) || Mathf.Abs(v) > 1e7f) return Usage("waypoint");
+            Send(t, Order.Waypoint, station, 0, 0, by, "waypoint", station.ToString(CultureInfo.InvariantCulture) + " " + string.Join(" ", c));
+            NetEvents.NoteWaypointSet();
+            return "";
+        });
+
+        /// <summary>/sound [players] &lt;sound&gt;: an event sound (NetEventAudio) on their game.</summary>
+        public static string Sound(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            if (!NetEventAudio.TryParse(rest.Trim(), out EventSound sound))
+                return string.Format(X("mpAdmNoSound", "Sounds: {0}."), NetEventAudio.Names<EventSound>());
+            Send(t, Order.Sound, (int)sound, 0, 0, by, $"sound {sound}");
+            return "";
+        });
+
+        /// <summary>/music [players] &lt;track | stop&gt;: an event track looped instead of their scene's music.</summary>
+        public static string Music(string args, NetPlayer by) => ForTargets(args, by, true, (t, rest) =>
+        {
+            rest = rest.Trim();
+            if (string.Equals(rest, "stop", StringComparison.OrdinalIgnoreCase))
+            {
+                Send(t, Order.Music, -1, 0, 0, by, "music stop");
+                return "";
+            }
+            if (!NetEventAudio.TryParse(rest, out EventMusic track))
+                return string.Format(X("mpAdmNoMusic", "Music: {0}, or stop."), NetEventAudio.Names<EventMusic>());
+            Send(t, Order.Music, (int)track, 0, 0, by, $"music {track}");
+            return "";
+        });
+
         public static string Mute(string args, NetPlayer by, bool on) => ForTargets(args, by, false, (t, rest) =>
         {
             if (!on)
@@ -449,6 +617,43 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>Takes a trailing "at x y z" (game coordinates) off 'rest': 'at' = "x y z" (invariant), null without one;
         /// false = an "at" without three finite numbers.</summary>
+        /// <summary>/spawn's "named &lt;name&gt;": the words after it (up to a trailing "at x y z", which stays in 'rest'), quotes
+        /// stripped, cleaned (no rich text, no separator), at most MaxSpawnName characters; null when not given; false =
+        /// "named" with no name.</summary>
+        static bool TakeName(ref string rest, out string name)
+        {
+            name = null;
+            var words = new List<string>(rest.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries));
+            int i = words.FindIndex(w => string.Equals(w, "named", StringComparison.OrdinalIgnoreCase));
+            if (i < 0) return true;
+            var tail = words.GetRange(i + 1, words.Count - i - 1);
+            var keep = words.GetRange(0, i);
+            if (tail.Count >= 4 && string.Equals(tail[tail.Count - 4], "at", StringComparison.OrdinalIgnoreCase)
+                && tail.GetRange(tail.Count - 3, 3).TrueForAll(w => float.TryParse(w, NumberStyles.Float, CultureInfo.InvariantCulture, out _)))
+            {
+                keep.AddRange(tail.GetRange(tail.Count - 4, 4));
+                tail.RemoveRange(tail.Count - 4, 4);
+            }
+            string n = NetChat.Clean(string.Join(" ", tail)).Replace(NameSeparator.ToString(), "").Replace("@", "").Trim().Trim('"', '\'').Trim();
+            if (n.Length == 0) return false;
+            name = n.Length > MaxSpawnName ? n.Substring(0, MaxSpawnName).TrimEnd() : n;
+            rest = string.Join(" ", keep);
+            return true;
+        }
+
+        /// <summary>An order's text and the /spawn name after its NameSeparator (null when none).</summary>
+        static string SplitName(string text, out string name)
+        {
+            name = null;
+            if (string.IsNullOrEmpty(text)) return text;
+            int i = text.IndexOf(NameSeparator);
+            if (i < 0) return text;
+            name = text.Substring(i + 1).Trim();
+            if (name.Length == 0) name = null;
+            else if (name.Length > MaxSpawnName) name = name.Substring(0, MaxSpawnName);
+            return text.Substring(0, i);
+        }
+
         static bool TakeAt(ref string rest, out string at)
         {
             at = null;
@@ -495,7 +700,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>An item by its index, its whole name or the one name it starts (any case); -1 with the reason.</summary>
-        static int FindItem(string spec, out string error)
+        internal static int FindItem(string spec, out string error)
         {
             error = null;
             var db = NetGame.Db;
@@ -516,7 +721,7 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>An assembled object (assemblies.json) by its whole name or the one name it starts (any case); null with
         /// the reason.</summary>
-        static AssemblyData FindAssembly(string spec, out string error)
+        internal static AssemblyData FindAssembly(string spec, out string error)
         {
             error = null;
             var all = NetGame.Db.Assemblies;
@@ -532,7 +737,7 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>A ship of ships.json by its index, its whole name or the one name it starts; -1 with the reason (-2: the
         /// name fits several ships).</summary>
-        static int FindShip(string spec, out string error)
+        internal static int FindShip(string spec, out string error)
         {
             error = null;
             var db = NetGame.Db;
@@ -550,7 +755,7 @@ namespace GoF2Remake.Multiplayer
             return matches > 1 ? -2 : -1;
         }
 
-        static string HullName(PlayerHull.Hull h)
+        internal static string HullName(PlayerHull.Hull h)
         {
             int i = h.label.IndexOf(" · ");
             return i >= 0 ? h.label.Substring(i + 3) : h.label;
@@ -558,7 +763,7 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>A hull of the debug Ships tab by its ship number, its key, its whole name or the one name it starts; null
         /// with the reason.</summary>
-        static PlayerHull.Hull FindHull(string spec, out string error)
+        internal static PlayerHull.Hull FindHull(string spec, out string error)
         {
             error = null;
             var all = PlayerHull.All(NetGame.Db);
@@ -600,7 +805,7 @@ namespace GoF2Remake.Multiplayer
             return null;
         }
 
-        static int RaceWord(string w)
+        internal static int RaceWord(string w)
         {
             switch (w.ToLowerInvariant())
             {
@@ -653,10 +858,13 @@ namespace GoF2Remake.Multiplayer
                         by, Math.Abs(a)));
                     break;
                 case Order.Spawn:
+                {
                     if (level == null || NetGame.Db.Ship(a) == null) return;
+                    string at = SplitName(text, out string shipName);
                     Notice(by, DebugSpawner.SpawnShip(level, b, a, (DebugSpawner.Behaviour)Mathf.Clamp(c & 0xff, 0, 3), Mathf.Clamp((c >> 8) & 0xf, 1, MaxSpawn),
-                        ParseAt(text), c >> 12));
+                        ParseAt(at), c >> 12, shipName));
                     break;
+                }
                 case Order.Ship:
                     if (a < 0) { Notice(by, PlayerHull.Restore(level, docked)); break; }
                     var hull = PlayerHull.All(NetGame.Db).Find(h => h.key == text);
@@ -688,6 +896,65 @@ namespace GoF2Remake.Multiplayer
                 }
                 case Order.Timer:
                     NetScreen.ShowTimer(a, text);
+                    break;
+                case Order.Scoreboard:
+                    NetScreen.ShowScoreboard(text);
+                    break;
+                case Order.Sound:
+                    NetScreen.PlaySound(a);
+                    break;
+                case Order.Respawn:
+                    NetEventRespawn.Apply(text);
+                    break;
+                case Order.Rules:
+                    NetEventRules.Apply(a);
+                    break;
+                case Order.Waypoint:
+                    NetEventWaypoint.Apply(text);
+                    break;
+                case Order.Radio:
+                {
+                    // "id US name US face US text": a story speaker (a name = renamed), a generated face (-1) or the reader (-2).
+                    var f = (text ?? "").Split('\u001f');
+                    if (f.Length < 4 || !int.TryParse(f[0], out int id)) return;
+                    string me = NetPlayer.Local != null ? NetPlayer.Local.DisplayName : "";
+                    var line = new Traffic.Chatter { text = f[3].Replace("%player%", me), speaker = f[1].Replace("%player%", me) };
+                    if (id == -1)
+                    {
+                        var parts = f[2].Split(',');
+                        line.portrait = new int[parts.Length];
+                        for (int k = 0; k < parts.Length; k++) int.TryParse(parts[k], out line.portrait[k]);
+                    }
+                    else
+                    {
+                        if (id == -2) { id = 0; line.speaker = me; }
+                        line.speakerId = id >= 0 && id < StoryTable.SpeakerCount ? id : 0;
+                        if (string.IsNullOrEmpty(line.speaker)) line.speaker = StoryTable.SpeakerName(line.speakerId);
+                    }
+                    if (level != null && level.Traffic != null) level.Traffic.Say(line);
+                    else NetChat.Notice($"[{line.speaker}] {line.text}");   // docked: no radio box
+                    break;
+                }
+                case Order.Provoke:
+                {
+                    // "client:id,id,...": this game's traffic ships by index turn on that player (and their squad).
+                    var traffic = level != null ? level.Traffic : null;
+                    int colon = (text ?? "").IndexOf(':');
+                    if (traffic == null || colon <= 0 || !ulong.TryParse(text.Substring(0, colon), out ulong client)) return;
+                    foreach (string idText in text.Substring(colon + 1).Split(','))
+                    {
+                        if (!int.TryParse(idText, out int id) || id < 0 || id >= traffic.Ships.Count) continue;
+                        var ship = traffic.Ships[id];
+                        if (ship != null) ship.aggressors.Add(client);
+                    }
+                    break;
+                }
+                case Order.Ask:
+                    if (a < 0) NetScreen.CloseQuestion(-a);
+                    else NetScreen.ShowQuestion(text);
+                    break;
+                case Order.Music:
+                    NetScreen.PlayMusic(a);
                     break;
                 case Order.Dialog:
                 {
@@ -723,10 +990,13 @@ namespace GoF2Remake.Multiplayer
                     break;
                 }
                 case Order.Object:
+                {
                     if (level == null || string.IsNullOrEmpty(text)) return;
-                    int sep = text.IndexOf('@');
-                    Notice(by, DebugSpawner.SpawnObject(level, sep < 0 ? text : text.Substring(0, sep), sep < 0 ? null : ParseAt(text.Substring(sep + 1))));
+                    string spec = SplitName(text, out string objectName);
+                    int sep = spec.IndexOf('@');
+                    Notice(by, DebugSpawner.SpawnObject(level, sep < 0 ? spec : spec.Substring(0, sep), sep < 0 ? null : ParseAt(spec.Substring(sep + 1)), objectName));
                     break;
+                }
             }
         }
     }

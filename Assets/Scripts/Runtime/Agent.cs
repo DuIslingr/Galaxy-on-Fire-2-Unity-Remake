@@ -20,7 +20,8 @@ namespace GoF2Remake.Data
     public static class AgentOffer
     {
         public const int Mission = 0, SmallTalk = 1, SellItem = 2, SellBlueprint = 3, SellSystem = 4, Purchase = 5,
-                         Wingmen = 6, Diplomat = 7, SellMod = 8, KaamoSpecial = 9, ShipDealer = 10;
+                         Wingmen = 6, Diplomat = 7, SellMod = 8, KaamoSpecial = 9, ShipDealer = 10,
+                         EventMission = 11;   // remake multiplayer: an event graph's bar mission (NetEventMissions)
     }
 
     /// <summary>Mission types (Mission::getName = text 354 + type).</summary>

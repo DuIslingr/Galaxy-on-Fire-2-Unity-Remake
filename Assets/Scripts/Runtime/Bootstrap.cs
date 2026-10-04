@@ -56,12 +56,16 @@ namespace GoF2Remake
 
             ApplyAll();
             ApplyDisplay();
+#if UNITY_WSA && ENABLE_WINMD_SUPPORT && !UNITY_EDITOR
+            UwpDisplay.Install();                 // UWP: the display's real pixel size (a 4K TV, an Xbox), not its view pixels
+#endif
             Visuals.ClassicBloomPass.Install();   // the "Original" bloom option
             HitchLogger.Install();                // development builds: frame hitches to hitches.log
             UI.ScreenshotKey.Install();           // F12: a screenshot to the pictures library
             UI.DiscordPresence.Install();         // desktop: Discord Rich Presence
             Flight.Haptics.Install();             // controller rumble and phone vibration
             UI.FpsCounter.Install();              // the frame rate option (Settings.ShowFps)
+            UI.StoryStepLabel.Install();          // the story step and station, bottom right (for bug screenshots)
             Vr.VrMode.Start();                    // -vr / -vrsim: OpenXR and the VR rig per scene
             if (Vr.VrMode.Headset) Vr.VrPad.Install();   // the VR controllers as a gamepad, the laser as a mouse
             Settings.Changed -= ApplyAll;

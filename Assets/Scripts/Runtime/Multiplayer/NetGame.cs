@@ -20,7 +20,7 @@
 //   player-versus-player damage, NPCs attacking other players than the authority. The players can't die (game over
 //   would load a save), nothing is saved to the single-player slots (SaveGame), and the game never pauses
 //   (Time.timeScale stays 1). A dedicated server keeps player profiles instead (NetProfiles / NetProfileClient).
-// Network prefabs: Resources/GoF2Net (GoF2 > Build Network Prefabs).
+// Network prefabs: Resources/GoF2Net (GoF2 > Build > Network Prefabs).
 
 using System;
 using System.Collections.Generic;
@@ -750,7 +750,7 @@ namespace GoF2Remake.Multiplayer
             {
                 var prefab = Resources.Load<GameObject>($"{PrefabFolder}/{name}");
                 if (prefab != null) manager.AddNetworkPrefab(prefab);
-                else Debug.LogError($"NetGame: missing network prefab Resources/{PrefabFolder}/{name} (GoF2 > Build Network Prefabs)");
+                else Debug.LogError($"NetGame: missing network prefab Resources/{PrefabFolder}/{name} (GoF2 > Build > Network Prefabs)");
             }
             manager.OnClientConnectedCallback += OnClientConnected;
             manager.OnClientDisconnectCallback += OnClientDisconnect;

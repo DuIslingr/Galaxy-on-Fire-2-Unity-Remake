@@ -1,6 +1,5 @@
 // CombatAssets.cs
-// What ship combat needs that can't be loaded by name (Resources/GoF2Combat/CombatAssets, made by GoF2 > Build Combat
-// Assets; Reference/research/ship_combat.md 5, 8 and npc_traffic_ai.md 8):
+// What ship combat needs that can't be loaded by name (Resources/GoF2Combat/CombatAssets, made by GoF2 > Build > Combat Assets; Reference/research/ship_combat.md 5, 8 and npc_traffic_ai.md 8):
 //   crates      container_003_terran / 004_vossk / 002_nivelian / 001_midorian / 005_void (KIPlayer::createCrate)
 //   wrecks      cargo_003_terran / 004_vossk / 002_nivelian / 001_midorian _explosion_anim, battleship_terran_explosion_anim
 //   explosion   Explosion type 0: explosion_anim_lookat_alpha (+ _add child), 3..9 explosion_debris streaks
@@ -71,6 +70,9 @@ namespace GoF2Remake.Flight
         public AudioClip invincibility;
         [Tooltip("The shield injector (2258 init, 2257 loop, 2259 end) and the gamma shield loops (2260 / 2261).")]
         public AudioClip injectorInit, injectorLoop, injectorEnd, gammaShield1, gammaShield2;
+        [Tooltip("The gamma shield's blaze around the ship in the supernova system (meshes 18803 sn_ship_blaze_flames_anim_add " +
+                 "and 18802 sn_ship_blaze_glow_anim_add, PlayerEgo::PlayerEgo).")]
+        public GameObject gammaBlazeFlames, gammaBlazeGlow;
         [Tooltip("The cloak (sound 30 Cloak_02) and the time extender (1120 TimeShift_Start, 1119 TimeShift_01b at the end).")]
         public AudioClip cloak, timeShift, timeShiftEnd;
         [Tooltip("The cloak's shader (GoF2/Cloak) and dissolve map (Textures/main/fx/cloak_map.png).")]

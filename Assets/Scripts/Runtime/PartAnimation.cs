@@ -1,6 +1,6 @@
 // PartAnimation.cs
 // Plays the original keyframe animation stored in each model's .gof2mesh.json sidecar
-// (station rings, rotating parts, animated FX). Attached automatically by "GoF2/Build Materials And Prefabs".
+// (station rings, rotating parts, animated FX). Attached automatically by "GoF2/Build/Materials And Prefabs".
 //
 // Keyframe times are milliseconds. The original stores position in a Z-up layout that the engine swaps
 // to Y-up (engine = (c0, c2, -c1)); engine -> Unity is (x, y, -z) once the import step has turned the
@@ -152,10 +152,11 @@ namespace GoF2Remake.Visuals
         /// <summary>Length of the animation in ms (0 if it has no keyframes).</summary>
         public float LengthMs => lengthMs;
 
-        /// <summary>Starts the animation over (muzzle flashes and impacts restart with every shot).</summary>
+        /// <summary>Starts the animation over (muzzle flashes and impacts restart with every shot), at loopStartMs (0 unless
+        /// a one-off first key is skipped: the Midorian bar prop).</summary>
         public void Restart()
         {
-            timeMs = 0f;
+            timeMs = Mathf.Clamp(loopStartMs, 0f, Mathf.Max(0f, lengthMs - 1f));
             play = true;
             if (enabled) Update();
         }
