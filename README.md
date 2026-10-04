@@ -74,6 +74,28 @@ renders black, so the editor script `BuildTargetGuard` refuses such builds. `Bui
 date and time as its version; for a release, set the Editor process's `GOF2_BUILD_VERSION` environment variable so all
 platforms get the same one.
 
+Windows builds use IL2CPP, which needs Visual Studio 2022 (or newer) with the **Desktop development with C++** workload
+and a Windows 10 / 11 SDK. Android and Linux builds don't need it.
+
+#### Scene lighting (environment reflections)
+
+The game builds its levels at runtime, but each scene's sky reflection comes from the scene's baked lighting data.
+Without it, a player build reflects whatever default sky the building editor has cached. On a fresh checkout that is
+Unity's light-blue default sky: floors look like grey plastic and hulls get a blue-grey sheen. The Editor's Play mode
+looks right either way, so the problem only shows in builds.
+
+If `Assets/Scenes/<Scene>/LightingData.asset` is missing for a scene, bake it once:
+
+1. Pull the LFS files first (`git lfs pull`) and let Unity finish importing.
+2. Open the scene (`Space`, `Station` and `MainMenu`, one after the other).
+3. Window > Rendering > **Lighting**, **Scene** tab: if there is no Lighting Settings asset, click **New Lighting
+   Settings**, then untick **Realtime Global Illumination** and **Baked Global Illumination** (only the environment is
+   needed).
+4. **Environment** tab: the Skybox Material is `SpaceSky`, Environment Reflections Source **Skybox**.
+5. **Generate Lighting**, then save the scene.
+6. Commit the new `Assets/Scenes/<Scene>/` folder (`LightingData.asset`, `ReflectionProbe-0.exr`), the Lighting
+   Settings asset and the changed `.unity` file, so other checkouts build the same.
+
 ### Multiplayer
 
 Multiplayer is experimental. Everyone in a session shares one universe: you see each other in space and in the hangars,
