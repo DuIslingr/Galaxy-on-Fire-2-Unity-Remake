@@ -84,17 +84,17 @@ Without it, a player build reflects whatever default sky the building editor has
 Unity's light-blue default sky: floors look like grey plastic and hulls get a blue-grey sheen. The Editor's Play mode
 looks right either way, so the problem only shows in builds.
 
-If `Assets/Scenes/<Scene>/LightingData.asset` is missing for a scene, bake it once:
+The baked data is in the repository (`Assets/Scenes/<Scene>/LightingData.asset` and `ReflectionProbe-0.exr`). Bake it
+again after changing a scene's skybox or environment settings, or if a scene's data is missing:
 
 1. Pull the LFS files first (`git lfs pull`) and let Unity finish importing.
 2. Open the scene (`Space`, `Station` and `MainMenu`, one after the other).
-3. Window > Rendering > **Lighting**, **Scene** tab: if there is no Lighting Settings asset, click **New Lighting
-   Settings**, then untick **Realtime Global Illumination** and **Baked Global Illumination** (only the environment is
-   needed).
+3. Window > Rendering > **Lighting**, **Scene** tab: Lighting Settings Asset `Assets/Scenes/SceneLighting.lighting`
+   (shared by the three scenes; Realtime and Baked Global Illumination off, only the environment is needed).
 4. **Environment** tab: the Skybox Material is `SpaceSky`, Environment Reflections Source **Skybox**.
 5. **Generate Lighting**, then save the scene.
-6. Commit the new `Assets/Scenes/<Scene>/` folder (`LightingData.asset`, `ReflectionProbe-0.exr`), the Lighting
-   Settings asset and the changed `.unity` file, so other checkouts build the same.
+6. Commit the `Assets/Scenes/<Scene>/` folder (`LightingData.asset`, `ReflectionProbe-0.exr` and their `.meta` files)
+   and the changed `.unity` file, so other checkouts build the same.
 
 ### Multiplayer
 
