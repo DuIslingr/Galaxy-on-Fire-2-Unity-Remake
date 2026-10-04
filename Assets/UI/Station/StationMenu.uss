@@ -235,11 +235,13 @@
     display: flex;
 }
 
+/* Opaque: the panel colour's 7 % shows far more than that in the linear-space UI (the lounge chat's text read through
+   the confirmation and its buttons, #31). */
 .station-dialog {
     width: 90%;
     max-width: 700px;
     padding: 36px 44px;
-    background-color: var(--gof-panel);
+    background-color: rgb(4, 10, 18);
     border-width: 1px;
     border-color: var(--gof-line);
     border-top-width: 3px;

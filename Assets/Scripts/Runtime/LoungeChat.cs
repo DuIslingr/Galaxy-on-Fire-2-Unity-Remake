@@ -379,9 +379,15 @@ namespace GoF2Remake.Data
             }
         }
 
+        /// <summary>Remake: the confirmation only asks when it says something the offer didn't (the current mission discarded,
+        /// the Extreme up-front costs, the squad taking it); otherwise "Okay." is the decision (the original asked 865 etc.
+        /// again in a ChoiceWindow after it, #31).</summary>
+        public bool ConfirmWarning { get; private set; }
+
         Outcome Accept()
         {
             var a = Agent;
+            ConfirmWarning = false;
             Outcome Refuse(string text) { RefusalText = text; return Outcome.Refused; }
             switch (a.offer)
             {
@@ -393,7 +399,7 @@ namespace GoF2Remake.Data
                     if (refusal != null) return Refuse(refusal);
                     ConfirmText = o.reward > 0 ? T(865).Replace("#M", o.title).Replace("#C", C(o.reward))
                         : string.Format(Localization.Extra("mpEventMissionConfirm", "Take the mission {0}?"), o.title);
-                    if (NetSquad.InSquad) ConfirmText += " " + Localization.Extra("mpEventMissionSquad", "Your whole squad takes it.");
+                    if (NetSquad.InSquad) { ConfirmText += " " + Localization.Extra("mpEventMissionSquad", "Your whole squad takes it."); ConfirmWarning = true; }
                     return Outcome.Confirm;
                 }
                 case AgentOffer.Mission:
@@ -409,9 +415,9 @@ namespace GoF2Remake.Data
                     else
                     {
                         ConfirmText = T(865).Replace("#M", m.Name).Replace("#C", C(m.Total));
-                        if (Session.IsExtreme && upFront > 0) ConfirmText += $"\n{T(27)}: {C(upFront)}";
+                        if (Session.IsExtreme && upFront > 0) { ConfirmText += $"\n{T(27)}: {C(upFront)}"; ConfirmWarning = true; }
                     }
-                    if (Freelance.Active) ConfirmText += " " + T(864);
+                    if (Freelance.Active) { ConfirmText += " " + T(864); ConfirmWarning = true; }
                     return Outcome.Confirm;
                 }
                 case AgentOffer.Wingmen:

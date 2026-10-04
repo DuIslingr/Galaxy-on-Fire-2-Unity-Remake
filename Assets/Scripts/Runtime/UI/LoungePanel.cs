@@ -231,7 +231,10 @@ namespace GoF2Remake.UI
                 case LoungeChat.Outcome.Confirm:
                 {
                     var current = chat;
-                    menu.ShowDialog(current.ConfirmText, () => { current.Confirm(); if (current.BoughtShip) level.RefreshParkedShips(); AfterDeal(current); });
+                    void Deal() { current.Confirm(); if (current.BoughtShip) level.RefreshParkedShips(); AfterDeal(current); }
+                    // Remake: "Okay." already is the choice; the confirmation only when it warns (LoungeChat.ConfirmWarning).
+                    if (current.ConfirmWarning) menu.ShowDialog(current.ConfirmText, Deal);
+                    else Deal();
                     return;
                 }
                 case LoungeChat.Outcome.ShowMap:
