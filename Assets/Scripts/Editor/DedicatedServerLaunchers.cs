@@ -96,10 +96,10 @@ namespace GoF2Remake.EditorTools
             "WEBBIND=127.0.0.1  # 127.0.0.1 = this machine only; 0.0.0.0 = the network (plain HTTP: put a TLS proxy in front)\n" +
             "# Add -unlisted to keep it out of the server browser (players then join with the join code shown here).\n" +
             "cd \"$(dirname \"$0\")\"\n" +
-            $"chmod +x ./{exe} 2>/dev/null\n" +
+            $"chmod +x \"./{exe}\" 2>/dev/null\n" +   // quoted: the product name has spaces ("Galaxy on Fire 2.x86_64")
             "if [ -n \"$PASSWORD\" ]; then set -- -password \"$PASSWORD\"; else set --; fi\n" +
             "if [ \"$ALLOWDEBUG\" = \"1\" ]; then set -- \"$@\" -allowdebug; fi\n" +
             "if [ -n \"$WEBPORT\" ]; then set -- \"$@\" -webport \"$WEBPORT\" -webbind \"$WEBBIND\"; fi\n" +
-            $"exec ./{exe} -batchmode -nographics -server -relay -name \"$NAME\" \"$@\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
+            $"exec \"./{exe}\" -batchmode -nographics -server -relay -name \"$NAME\" \"$@\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
     }
 }
