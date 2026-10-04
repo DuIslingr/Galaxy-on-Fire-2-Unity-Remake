@@ -1742,9 +1742,11 @@ namespace GoF2Remake.UI
             if (DialogOpen || SystemMenuOpen) return;
             if (missions != null && missions.IsOpen) return;
             if (status != null && status.IsOpen) return;
-            if (kb != null && kb.digit5Key.wasPressedThisFrame) { Play(buttonRelease); OpenStatus(); return; }
+            // The PC version's "Menu button 1 - 9" (3356) tap Globals::sub_menu_buttons: the main view's Hangar / Lounge / Map /
+            // Missions / Status, the hangar window's three tabs (HangarWindow::initialize): 4 / 5 do nothing there.
+            if (kb != null && kb.digit5Key.wasPressedThisFrame && !HangarOpen) { Play(buttonRelease); OpenStatus(); return; }
             if (lounge != null && lounge.ChatOpen) return;
-            if ((kb != null && kb.digit4Key.wasPressedThisFrame) || (pad != null && pad.selectButton.wasPressedThisFrame))
+            if ((kb != null && kb.digit4Key.wasPressedThisFrame && !HangarOpen) || (pad != null && pad.selectButton.wasPressedThisFrame))
             {
                 Play(buttonRelease);
                 OpenMissions();
@@ -1784,7 +1786,10 @@ namespace GoF2Remake.UI
                     Play(buttonPush);
                     hangarWindow.NextTab();
                 }
-                else if (kb != null && kb.digit2Key.wasPressedThisFrame) OpenLounge();
+                // 1 / 2 / 3 = Ship / Shop (the Kaamo Club's Store) / Blueprints (#30, the PC version's menu buttons).
+                else if (kb != null && kb.digit1Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Ship); }
+                else if (kb != null && kb.digit2Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Shop); }
+                else if (kb != null && kb.digit3Key.wasPressedThisFrame) { Play(buttonPush); hangarWindow.SetTab(HangarWindow.Tab.Blueprints); }
                 else if ((kb != null && kb.iKey.wasPressedThisFrame) || (pad != null && pad.buttonNorth.wasPressedThisFrame))
                     hangarWindow.OpenInfo();   // remake keys for the row's info button
                 return;

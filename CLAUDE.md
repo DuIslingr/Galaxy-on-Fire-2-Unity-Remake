@@ -419,7 +419,7 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
     so its flybys (layer 27) are drawn by an overlay camera stacked on the bar camera (its depth kept) with the fog off.
 - **Menu:**
   - Layout: header; system, tech level and race; Hangar (opens the shop window, see "Shop"), Space Lounge and Map (the star map, see "Star map and system travel") buttons; **Launch**, refused while the cargo hold is overloaded (204); the original's "Depart the station?" (397) is left out (remake: it launches at once).
-  - Input modes work like the flight HUD: touch; keyboard 1 / 2 / M / L / Esc; controller LB / RB / Y / X / B / Menu. No hint row on the main view (the buttons say it); toasts sit at the bottom, above the ticker.
+  - Input modes work like the flight HUD: touch; keyboard 1 / 2 / M / L / Esc; controller LB / RB / Y / X / B / Menu. The number keys are the PC version's "Menu button 1 - 9" (3356, its key table is still in the Android binary: a tap on `Globals::sub_menu_buttons`): on the main view 1 Hangar, 2 Lounge, 3 Map, 4 Missions, 5 Status; in the hangar window 1 / 2 / 3 = Ship / Shop (Store) / Blueprints (`HangarWindow::initialize`), 4 / 5 nothing; Q / E (LB / RB) cycle the tabs. No hint row on the main view (the buttons say it); toasts sit at the bottom, above the ticker.
   - Esc or B steps back: dialog, then lounge, then the system menu (Save game, Back to Main Menu).
   - Music per race and station; ambience per screen as the FMOD cycle events (`CycleSound`): 122 Mainview, 95 Hangar while the hangar window is open (`StationLevel.SetHangarWindowOpen`, `ModStation::OnKeyPress`), 108 Lounge.
 - Missions (129, unlocks with the Map) and Status (169): see "Bar and freelance".
