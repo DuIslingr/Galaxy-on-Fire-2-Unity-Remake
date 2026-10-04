@@ -4,7 +4,8 @@
 //   Radar::draw 0x1554fc          landmarks (station, jumpgate): on screen, within +-w/6 of the centre and +-w/16 of the
 //                                 crosshair; planets (not the current station's own): +-w/32 of the crosshair, also during
 //                                 the autopilot. Lock after the scanner's lock time (attr 29, 8000 ms without), sound 26.
-//                                 Landmarks beat planets, planets beat asteroids (Mining asks BlocksAsteroidLock).
+//                                 Landmarks beat planets, planets beat asteroids (Mining asks BlocksAsteroidLock): a lock
+//                                 of one kind stops the others, a candidate doesn't.
 //   MGame::OnTouchBegin 0x1a838c  action: landmark locked -> autopilot ("Target: Var Hastra Station", sound 28);
 //                                 planet locked -> planet jump, no confirmation
 //   PlayerEgo::update / setAutoPilot  steering by moveToPosition (ShipController.autopilotTarget), throttle reset to
@@ -47,7 +48,10 @@ namespace GoF2Remake.Flight
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Navigation : MonoBehaviour
     {
-        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender }
+        public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender,
+            /// <summary>Remake multiplayer: a named object (/spawn ... named, DebugSpawner.SpawnObject): its name and distance
+            /// near the crosshair like a landmark's, never locked or flown to.</summary>
+            Marker }
 
         public class Target
         {
@@ -193,9 +197,14 @@ namespace GoF2Remake.Flight
         public bool FastForward { get; private set; }
         /// <summary>Lock ring frame 0..23 (no 500 ms delay for landmarks and planets), -1 = none.</summary>
         public int LockFrame => Candidate == null ? -1 : Locked != null ? 23 : Mathf.Min(23, (int)(23f * LockTimer / Mathf.Max(1, LockTimeMs)));
-        /// <summary>Radar: the asteroid lock needs no landmark / planet candidate or lock and no autopilot.</summary>
-        public bool BlocksAsteroidLock => Candidate != null || Locked != null || Autopilot || Jumping || ShipLockActive;
-        /// <summary>CombatRadar has a ship / crate candidate this frame.</summary>
+        /// <summary>Radar::draw 0x1574c0 skips the asteroid loop on a landmark (+0x24) or planet (+0x14) lock, a ship / crate
+        /// candidate (+8, and local_f8 in the candidate test), a crate on the tractor beam (+0x1c) or the autopilot; a
+        /// landmark or planet that is only a candidate (+0x28 / +0x18) doesn't stop it (both rings fill).</summary>
+        public bool BlocksAsteroidLock => Locked != null || Autopilot || Jumping || ShipLockActive;
+        /// <summary>A landmark (station, jumpgate, docking target, waypoint) is locked: Radar+0x24, which stops the ship lock's
+        /// timer (Radar::draw 0x1558ae); a planet lock (+0x14) doesn't.</summary>
+        public bool LandmarkLocked => Locked != null && Locked.kind != Kind.Planet;
+        /// <summary>CombatRadar has a ship / crate candidate this frame or a crate on the tractor beam.</summary>
         [NonSerialized] public bool ShipLockActive;
         /// <summary>Radar+0x54: hostile ships around (Traffic): no fast-forward.</summary>
         [NonSerialized] public bool HostilesPresent;
@@ -456,7 +465,7 @@ namespace GoF2Remake.Flight
                     // Landmarks first (not during the autopilot), then planets (also during the autopilot).
                     foreach (var t in Targets)
                     {
-                        if (t.kind == Kind.Planet || t.kind == Kind.Wormhole || t.hidden || Autopilot) continue;
+                        if (t.kind == Kind.Planet || t.kind == Kind.Wormhole || t.kind == Kind.Marker || t.hidden || Autopilot) continue;
                         var p = cam.WorldToScreenPoint(t.Position);
                         if (p.z <= 0f || p.x < 0f || p.y < 0f || p.x > w || p.y > h) continue;
                         if (Mathf.Abs(p.x - w / 2f) >= centre || Mathf.Abs(p.y - h / 2f) >= centre) continue;
@@ -591,9 +600,27 @@ namespace GoF2Remake.Flight
 
         /// <summary>The player's flight controls (steering, dodge, guns, mining) are off: the game is paused, or in multiplayer
         /// a menu, conversation or map is open (the world goes on there).</summary>
-        public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active);
+        public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active)
+                                          || GoF2Remake.Multiplayer.NetScreen.QuestionOpen;   // an event's question (multiplayer)
 
-        void OnDestroy() { halted = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
+        void OnDestroy() { halted = false; MusicPaused = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
+
+        /// <summary>MGame::pauseSounds 0x1a8304: a conversation, hint or map pauses only the sound effects and the engines
+        /// (FModSound::pauseAllPlayingSoundFXEvents: the events of the effects category); only the pause menu stops
+        /// everything (MGame::OnTouchEnd: FModSound::pauseAllPlaying). The music sources ignore the listener pause and
+        /// follow this instead (SyncMusic).</summary>
+        public static bool MusicPaused { get; private set; }
+
+        /// <summary>A music source keeps playing through the listener pause and pauses with the pause menu only.</summary>
+        public static void SyncMusic(AudioSource music, ref bool held)
+        {
+            if (music == null) return;
+            music.ignoreListenerPause = true;
+            if (MusicPaused == held) return;
+            held = MusicPaused;
+            if (held) music.Pause();
+            else music.UnPause();
+        }
 
         void ApplyTimeScale()
         {
@@ -604,6 +631,7 @@ namespace GoF2Remake.Flight
             // A halted clock also halts the sound, as PauseMenu does: the engine loops, a boost fired just before and every
             // other source played on through a conversation. The voice, UI and star-map sources ignore the listener pause.
             if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = scale == 0f;
+            MusicPaused = pauseMenuOpen && !GoF2Remake.Multiplayer.NetGame.Active;
         }
 
         void Say(string text) => Message?.Invoke(text);
