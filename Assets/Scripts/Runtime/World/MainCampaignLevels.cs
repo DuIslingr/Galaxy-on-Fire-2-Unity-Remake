@@ -332,7 +332,9 @@ namespace GoF2Remake.World
                 case 16: if (index == 16) Tick16(); break;
                 case 21: if (index == 21) Tick21(); break;
                 case 24: if (index == 24) Tick24(dtMs); break;
-                case 25: if (index == 26 && Step == 0 && Triggered(1)) { Hole?.ResetTimer(false); Hole?.SetVisible(true); Step = 1; } break;
+                // LevelScript::process: Carla's "it's closing!" (radio 1) -> PlayerWormHole::reset(true): the timer at 59 000, so
+                // the hole shrinks a second later and, in the alien orbit, reopens elsewhere ("another one opening", #35).
+                case 25: if (index == 26 && Step == 0 && Triggered(1)) { Hole?.ResetTimer(true); Hole?.SetVisible(true); Step = 1; } break;
                 case 29: if (index == 29) Tick29(dtMs); break;
                 case 40: if (index == 40) Tick40(dtMs); break;
                 case 41: if (index == 41) Tick41(dtMs); else if (index == 42) Tick42(dtMs); break;

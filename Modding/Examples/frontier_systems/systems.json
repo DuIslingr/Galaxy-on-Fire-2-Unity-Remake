@@ -1,0 +1,31 @@
+[
+    {
+        "id": "kepler",
+        "name": "Kepler",
+        "race": 0,
+        "security": 2,
+        "visible": true,
+        "position": [
+            8,
+            27,
+            83
+        ],
+        "sky": 4,
+        "gates": [
+            4,
+            17
+        ],
+        "gateStation": "frontier_systems:rho_freeport",
+        "sunTexture": "textures/kepler_sun.png",
+        "sunColor": [
+            1.0,
+            0.8,
+            0.55
+        ],
+        "skybox": {
+            "nebula": "sky/kepler_nebula.png",
+            "stars": 1,
+            "nebulaBrightness": 0.8
+        }
+    }
+]

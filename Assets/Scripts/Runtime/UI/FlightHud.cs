@@ -328,8 +328,10 @@ namespace GoF2Remake.UI
                 f.nextCamera = fl != null ? (int)fl.Next : -1;
                 f.freeLook = fl != null && fl.FreeLookActive;
                 f.standardCamera = fl == null || fl.Current == FreeLookCamera.Mode.Standard;
-                f.turret = turret != null && turret.IsAuto;
-                f.turretOn = f.turret && turret.AutoEnabled;
+                // Remake: with several turrets the button is the auto-fire switch whenever any of them is an auto turret.
+                var autoTurret = FirstAuto();
+                f.turret = autoTurret != null;
+                f.turretOn = f.turret && autoTurret.AutoEnabled;
                 f.actionArrow = phase == Mining.Phase.Idle && !dockBusy && !turretView
                                 && ((nav != null && nav.Locked != null && nav.PromptText != null) || (mining != null && mining.Locked != null));
                 bool tilt = TiltSteering.Active && (Session.FreePlay || Session.CampaignMission != 48);
@@ -426,6 +428,22 @@ namespace GoF2Remake.UI
             ChooseMenuTarget(menuButtons[i].target);
         }
 
+        /// <summary>The ship's first auto turret (remake: one of several), null without one.</summary>
+        PlayerTurret FirstAuto()
+        {
+            if (level == null || level.Turrets == null) return null;
+            foreach (var t in level.Turrets) if (t != null && t.IsAuto) return t;
+            return null;
+        }
+
+        /// <summary>Any turret with a turret view (a manual turret or a plasma collector).</summary>
+        bool HasManualTurret()
+        {
+            if (level == null || level.Turrets == null) return false;
+            foreach (var t in level.Turrets) if (t != null && !t.IsAuto) return true;
+            return false;
+        }
+
         void BuildHints(InputKind kind)
         {
             hints.Clear();
@@ -497,9 +515,9 @@ namespace GoF2Remake.UI
             Hint(T("hudDodge", "DODGE"), GameControls.DodgeLeft, GameControls.DodgeRight);   // left out while unbound
             Hint(T("hudRoll", "ROLL"), GameControls.Roll);
             Hint(T("hudLevel", "LEVEL"), GameControls.LevelOut);
-            if (level != null && level.Turret != null)
-                Hint(level.Turret.IsAuto ? Localization.Get(37).ToUpperInvariant() : T("hudTurretView", "TURRET VIEW"),
-                     level.Turret.IsAuto ? GameControls.AutoTurret : GameControls.Camera);
+            // Remake: a ship may carry an auto turret and a manual one at once: a hint for each kind it has.
+            if (FirstAuto() != null) Hint(Localization.Get(37).ToUpperInvariant(), GameControls.AutoTurret);
+            if (HasManualTurret()) Hint(T("hudTurretView", "TURRET VIEW"), GameControls.Camera);
             Hint(Localization.Get(571).ToUpperInvariant(), GameControls.AutopilotMenu);
             if (nav != null && nav.MenuEntries(true).Count > 0) Hint(T("hudActions", "ACTIONS"), GameControls.ActionsMenu);
             Hint(T("hudMenu", "MENU"), menuKey);
@@ -534,6 +552,9 @@ namespace GoF2Remake.UI
         /// <summary>Globals::mouseCursorActivated: with the option on, the keyboard and mouse in use and the ship flyable, the
         /// cursor is captured and the mouse steers (ShipController.mouseSteering); a ring marks the mouse crosshair
         /// (PlayerEgo+0x94, the centre + the offset), the normal crosshair keeps showing the aim (+0xa0).</summary>
+        /// <summary>A line on the HUD's message plate (single player's event notices, EventHost).</summary>
+        public void ShowMessage(string text) => miningView?.ShowMessage(text);
+
         void UpdateMouseSteering()
         {
             if (ship == null || level == null) return;
@@ -554,6 +575,7 @@ namespace GoF2Remake.UI
             var wantLock = cursor ? CursorLockMode.Locked : CursorLockMode.None;
             if (UnityEngine.Cursor.lockState != wantLock) UnityEngine.Cursor.lockState = wantLock;
             if (UnityEngine.Cursor.visible == cursor) UnityEngine.Cursor.visible = !cursor;
+            if (mouseReticle != null && mouseReticle.parent == null) mouseReticle = null;   // a UI reload rebuilt the tree
             if (mouseReticle == null && safeArea != null)
             {
                 mouseReticle = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -742,7 +764,8 @@ namespace GoF2Remake.UI
             if (phase != lastPhase || autopilot != lastAutopilot) { lastPhase = phase; lastAutopilot = autopilot; BuildHints(InputMode.Current); }
             // The turret: the touch button (turret view / auto-fire) and the hints of the turret view.
             var turret = level != null ? level.Turret : null;
-            bool tv = turret != null && turret.InTurretView, ta = turret != null && turret.AutoEnabled;
+            var autoT = FirstAuto();
+            bool tv = turret != null && turret.InTurretView, ta = autoT != null ? autoT.AutoEnabled : turret != null && turret.AutoEnabled;
             if (tv != lastTurretView || ta != lastTurretAuto) { lastTurretView = tv; lastTurretAuto = ta; BuildHints(InputMode.Current); }
             root.EnableInClassList("hud-cinematic", (nav != null && nav.Jumping) || (jump != null && jump.Cinematic));   // jumps: no HUD
             // The Khador Drive's charge bar, shared with the cloak's "Cloak charging" (317, Hud::draw 0x1933f6).
@@ -835,15 +858,16 @@ namespace GoF2Remake.UI
                 shownChatter = chatter;
                 radioShown = -1;
                 radioSpeaker.text = chatter.speaker.ToUpperInvariant();
-                bool chatterAlien = chatter.portrait == null && StoryTable.UsesAlienFont(chatter.speakerId);
+                bool chatterAlien = chatter.portrait == null && chatter.character == null && StoryTable.UsesAlienFont(chatter.speakerId);
                 AlienText.Set(radioText, chatter.text, chatterAlien);
-                if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
+                if (chatter.character != null) Portrait.ShowCharacter(radioPortrait, Modding.ModCharacters.Find(chatter.character), false);
+                else if (chatter.portrait != null) Portrait.Show(radioPortrait, chatter.portrait, false);
                 else Portrait.ShowSpeaker(radioPortrait, chatter.speakerId, false);
                 var voiceClip = StoryAssets.Load()?.Voice(chatter.voice);
                 if (voiceClip != null) level.Traffic.HoldChatter(voiceClip.length * 1000f + 500f);
                 if (chatter.portrait == null && StoryTable.IsNarration(chatter.speakerId)) radioReveal.Clear();
                 else radioReveal.Begin(chatter.text, chatterAlien, voiceClip);
-                if (voiceClip != null && voiceSource != null) { voiceSource.clip = voiceClip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
+                if (voiceClip != null && voiceSource != null) { voiceSource.clip = GoF2Remake.Modding.ModSounds.Get(voiceClip); voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
                 return;
             }
             shownChatter = null;
@@ -863,7 +887,7 @@ namespace GoF2Remake.UI
             if (clip != null) radio.HoldFor(clip.length * 1000f + 500f);
             if (StoryTable.IsNarration(line.speaker)) radioReveal.Clear();
             else radioReveal.Begin(lineText, lineAlien, clip);
-            if (clip != null && voiceSource != null) { voiceSource.clip = clip; voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
+            if (clip != null && voiceSource != null) { voiceSource.clip = GoF2Remake.Modding.ModSounds.Get(clip); voiceSource.volume = Settings.VoiceVolume; voiceSource.Play(); }
         }
 
         /// <summary>The action prompt sits under the radio box while a radio line shows (remake layout: both are centred at
@@ -1098,8 +1122,8 @@ namespace GoF2Remake.UI
         {
             gameOverMs = 0f;
             gameOver.AddToClassList("game-over--shown");
-            gameOverText.text = GoF2Remake.Multiplayer.NetEventRespawn.Active
-                ? Localization.Extra("mpRespawnEvent", "Respawning in space...")      // an event's respawn point (NetEventRespawn)
+            gameOverText.text = GoF2Remake.Events.EventRespawn.Active
+                ? Localization.Extra("mpRespawnEvent", "Respawning in space...")      // an event's respawn point (EventRespawn)
                 : GoF2Remake.Multiplayer.NetGame.Active
                 ? Localization.Extra("mpRespawn", "Tap to respawn at the station.")   // multiplayer: no saves, docked again
                 : Localization.Get(Session.HasAutosave ? 196 : 199);
@@ -1173,7 +1197,13 @@ namespace GoF2Remake.UI
         {
             var cam = Camera.main;
             if (cam == null || crosshair.panel == null) return;
-            var aim = ship.transform.position + ship.transform.forward * CrosshairDistanceMeters;
+            // Hud::draw at crosshairPos: in the turret view (PlayerEgo::setTurretMode) where the turret's gun points, the
+            // plasma collectors with their own crosshair (0x1f5d, GoF2Hud/plasma_crosshair); else the ship's nose.
+            var viewTurret = level != null ? level.Turret : null;
+            bool turretView = viewTurret != null && viewTurret.InTurretView;
+            var aim = turretView ? viewTurret.GunPosition + viewTurret.AimForward * CrosshairDistanceMeters
+                                 : ship.transform.position + ship.transform.forward * CrosshairDistanceMeters;
+            crosshair.EnableInClassList("crosshair--plasma", turretView && viewTurret.IsCollector);
             bool visible = Vector3.Dot(aim - cam.transform.position, cam.transform.forward) > 0f;
             crosshair.EnableInClassList("crosshair--hidden", !visible);
             if (!visible) return;
@@ -1283,7 +1313,7 @@ namespace GoF2Remake.UI
                 uiSource.spatialBlend = 0f;
                 uiSource.ignoreListenerPause = true;   // the pause menu pauses the listener
             }
-            uiSource.PlayOneShot(clip, Settings.SfxVolume);
+            uiSource.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
         }
 
         /// <summary>Every button inside this container clicks: push on pointer down, release on the click.</summary>

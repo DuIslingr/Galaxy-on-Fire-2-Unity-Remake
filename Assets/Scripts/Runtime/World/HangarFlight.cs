@@ -512,7 +512,7 @@ namespace GoF2Remake.World
             var src = ship.AddComponent<AudioSource>();
             src.playOnAwake = false;
             src.loop = true;
-            src.clip = clip;
+            src.clip = GoF2Remake.Modding.ModSounds.Get(clip);
             // As the engines in space (EngineVoices: the events' linear rolloff to 500 m from the listener), not 40-1500 m:
             // a ship leaving the room fades with the distance instead of staying loud until it is cut off.
             GoF2Remake.Flight.EngineVoices.Setup3D(src);

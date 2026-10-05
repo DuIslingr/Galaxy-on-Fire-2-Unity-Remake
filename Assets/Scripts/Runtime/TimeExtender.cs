@@ -81,13 +81,13 @@ namespace GoF2Remake.Flight
             {
                 state = durationMs;
                 Active = true;
-                if (assets != null && assets.timeShift != null) sfx.PlayOneShot(assets.timeShift, Settings.SfxVolume);
+                if (assets != null && assets.timeShift != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.timeShift), Settings.SfxVolume);
                 SetPitch(true);
             }
             else if (Running) { Stop(true); PlayEnd(); }
         }
 
-        void PlayEnd() { if (assets != null && assets.timeShiftEnd != null) sfx.PlayOneShot(assets.timeShiftEnd, Settings.SfxVolume); }
+        void PlayEnd() { if (assets != null && assets.timeShiftEnd != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.timeShiftEnd), Settings.SfxVolume); }
 
         /// <summary>A cinematic (MGame::OnUpdate 0x1af162), a jump or the player's death cancels it.</summary>
         public void Cancel() { if (Running) Stop(true); }

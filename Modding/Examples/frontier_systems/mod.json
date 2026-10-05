@@ -1,0 +1,11 @@
+{
+    "id": "frontier_systems",
+    "name": "Frontier: Kepler",
+    "version": "1.0",
+    "author": "JoppieToppie",
+    "description": {
+        "en": "An example mod: the Terran frontier system Kepler beside Eanya, reached by jumpgate from Eanya and Nesla, with two stations: Kepler Prime, a high-tech shipyard world, and the Rho Freeport.",
+        "de": "Ein Beispiel-Mod: das terranische Grenzsystem Kepler neben Eanya, per Sprungtor von Eanya und Nesla aus erreichbar, mit zwei Stationen: Kepler Prime, eine Hightech-Werftwelt, und der Freihafen Rho."
+    },
+    "preview": "preview.png"
+}

@@ -97,6 +97,16 @@
     display: none;
 }
 
+/* the plasma collectors' turret view: 0x1f5d (gof2_interface3.png, 214 px) */
+.crosshair--plasma,
+.crosshair--plasma.crosshair--hit {
+    width: 214px;
+    height: 214px;
+    margin-left: -107px;
+    margin-top: -107px;
+    background-image: url("project://database/Assets/Resources/GoF2Hud/plasma_crosshair.png");
+}
+
 /* ---- dock prompt (inside the station's dock range, SpaceLevel.CanDock) ---------------- */
 
 .dock-prompt {

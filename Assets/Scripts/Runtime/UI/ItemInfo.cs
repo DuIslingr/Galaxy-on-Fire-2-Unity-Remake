@@ -14,8 +14,11 @@ namespace GoF2Remake.UI
     {
         static readonly Dictionary<string, Texture2D> icons = new Dictionary<string, Texture2D>();
 
-        public static Texture2D ItemIcon(int item) => Icon($"item_{item:000}");
-        public static Texture2D ShipIcon(int ship) => Icon($"ship_{ship:000}");
+        /// <summary>The item's shop icon; a mod's item shows its base item's (Modding.ModContent.ItemLook).</summary>
+        public static Texture2D ItemIcon(int item) => Icon($"item_{Modding.ModContent.ItemLook(item):000}");
+        /// <summary>The ship's shop icon; a mod's ship its own ("icon" in ships.json), else the Phantom's.</summary>
+        public static Texture2D ShipIcon(int ship) =>
+            Modding.ModContent.IsModShip(ship) ? Modding.ModShips.Icon(ship) ?? Icon("ship_010") : Icon($"ship_{ship:000}");
 
         static Texture2D Icon(string name)
         {
@@ -31,8 +34,8 @@ namespace GoF2Remake.UI
             return (value < 0 ? "-" : "") + digits + "$";
         }
 
-        public static string ItemName(int item) => Localization.Get(1274 + item);
-        public static string ShipName(int ship) => Localization.Get(913 + ship);
+        public static string ItemName(int item) => GameNames.Item(item);
+        public static string ShipName(int ship) => GameNames.Ship(ship);
 
         /// <summary>The ship's race under its name ("" = none, Shop.ShipMakerRace): the four races, Grey and pirates.</summary>
         public static string ShipRaceText(int ship)
@@ -136,7 +139,7 @@ namespace GoF2Remake.UI
         /// <summary>Item description (1041 + index) and "Known price range:" with the lowest and highest price seen.</summary>
         public static string ItemText(Database db, ItemData it, int currentSystem)
         {
-            string text = Localization.Get(1041 + it.index);
+            string text = GameNames.ItemDescription(it.index);
             bool lo = Session.LowestKnownPrice.TryGetValue(it.index, out var low);
             bool hi = Session.HighestKnownPrice.TryGetValue(it.index, out var high);
             if (!lo && !hi) return text;

@@ -137,7 +137,7 @@ namespace GoF2Remake.Flight
             if (assets != null && assets.invincibility != null)
             {
                 if (invincibleLoop == null) { invincibleLoop = gameObject.AddComponent<AudioSource>(); invincibleLoop.loop = true; invincibleLoop.spatialBlend = 0f; invincibleLoop.playOnAwake = false; }
-                invincibleLoop.clip = assets.invincibility;
+                invincibleLoop.clip = GoF2Remake.Modding.ModSounds.Get(assets.invincibility);
                 invincibleLoop.volume = Settings.SfxVolume;
                 invincibleLoop.Play();
             }
@@ -200,11 +200,11 @@ namespace GoF2Remake.Flight
                 Shop.RemoveFromCargo(202, injectorCost);
                 injecting = true;
                 Message?.Invoke($"-{injectorCost}t {Localization.Get(1476)}");
-                if (assets != null && assets.injectorInit != null) sfx.PlayOneShot(assets.injectorInit, Settings.SfxVolume);
+                if (assets != null && assets.injectorInit != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.injectorInit), Settings.SfxVolume);
                 if (assets != null && assets.injectorLoop != null)
                 {
                     if (injectorLoop == null) { injectorLoop = gameObject.AddComponent<AudioSource>(); injectorLoop.loop = true; injectorLoop.spatialBlend = 0f; }
-                    injectorLoop.clip = assets.injectorLoop;
+                    injectorLoop.clip = GoF2Remake.Modding.ModSounds.Get(assets.injectorLoop);
                     injectorLoop.volume = Settings.SfxVolume;
                     injectorLoop.Play();
                 }
@@ -217,7 +217,7 @@ namespace GoF2Remake.Flight
             }
             injecting = false;
             if (injectorLoop != null) injectorLoop.Stop();
-            if (assets != null && assets.injectorEnd != null) sfx.PlayOneShot(assets.injectorEnd, Settings.SfxVolume);
+            if (assets != null && assets.injectorEnd != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.injectorEnd), Settings.SfxVolume);
         }
 
         // ---- gamma (Status::getGammaRayDamagePerSecond 0xba160, Level::update) ------------------------------------
@@ -238,7 +238,7 @@ namespace GoF2Remake.Flight
             {
                 // The gamma shield's loop takes the engine sound's slot (PlayerEgo+0x1c): event volume 0.09.
                 var loop = gameObject.AddComponent<AudioSource>();
-                loop.clip = clip; loop.loop = true; loop.spatialBlend = 0f; loop.volume = 0.09f * Sfx.EventGain * Settings.SfxVolume; loop.Play();
+                loop.clip = GoF2Remake.Modding.ModSounds.Get(clip); loop.loop = true; loop.spatialBlend = 0f; loop.volume = 0.09f * Sfx.EventGain * Settings.SfxVolume; loop.Play();
                 GammaLoopActive = true;
             }
         }
@@ -352,7 +352,7 @@ namespace GoF2Remake.Flight
             // Remake: haptics by the deepest layer hit, like the sound.
             Haptics.Play(Hp.hullHit ? Haptics.HitHull : Hp.armorHit ? Haptics.HitArmor : Haptics.HitShield);
             Hp.shieldHit = Hp.armorHit = Hp.hullHit = false;
-            if (clip != null) sfx.PlayOneShot(clip, Settings.SfxVolume);
+            if (clip != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
 
             // Hit direction: where the shot came from, seen from the camera (left / right off screen, else top / bottom).
             var cam = Camera.main;
@@ -419,12 +419,12 @@ namespace GoF2Remake.Flight
                 if (ship.visualModel != null) ship.visualModel.gameObject.SetActive(false);
                 ship.ExternalSpeedMetersPerSecond = 0f;
             }
-            // Remake multiplayer: an event's respawn point brings the ship back in space after its delay (NetEventRespawn).
-            if (exploded && Multiplayer.NetEventRespawn.Due(deathMs)) { Multiplayer.NetEventRespawn.Go(); return; }
+            // Remake multiplayer: an event's respawn point brings the ship back in space after its delay (EventRespawn).
+            if (exploded && Events.EventRespawn.Due(deathMs)) { Events.EventRespawn.Go(); return; }
             if (!GameOver && deathMs >= 8000f)
             {
                 GameOver = true;
-                if (assets != null && assets.gameOver != null) sfx.PlayOneShot(assets.gameOver, Settings.SfxVolume);
+                if (assets != null && assets.gameOver != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.gameOver), Settings.SfxVolume);
                 GameOverStarted?.Invoke();
             }
         }

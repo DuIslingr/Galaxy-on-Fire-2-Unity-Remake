@@ -42,6 +42,13 @@ namespace GoF2Remake.Data
         /// <summary>Original attribute pairs (Item+0x30), from item_attributes.json; see Reference/research/shop.md 2.4.</summary>
         [System.NonSerialized] public int[] attrKeys = new int[0], attrValues = new int[0];
 
+        /// <summary>A mod's item (Modding.ModContent): its "mod:id" key, and the original item it looks and behaves like
+        /// (icon, weapon fx, sounds, the special rules the code keys on the item's number). Not modded = its own.</summary>
+        [System.NonSerialized] public bool modded;
+        [System.NonSerialized] public string modKey;
+        [System.NonSerialized] public int lookIndex;
+        public int Look => modded ? lookIndex : index;
+
         public bool HasAttr(int id) => System.Array.IndexOf(attrKeys, id) >= 0;
         public int Attr(int id, int fallback = 0)
         {
@@ -87,8 +94,78 @@ namespace GoF2Remake.Data
 
     /// <summary>Weapon mounts of one ship (weapons_hd.json). slotType 0 = primary, 1 = secondary, 2 = turret,
     /// 3 = engine exhaust points (not a turret, see weapons.md). position_engine is game space, ship-relative.</summary>
-    [System.Serializable] public class WeaponMount { public int slotType; public int[] position_engine; public float[] turretAngles; }
+    /// <remarks>upsideDown (remake, turret mounts only): the turret hangs under the hull, turned 180 deg about the ship's
+    /// length (PlayerTurret); none of the original's mounts set it.</remarks>
+    [System.Serializable] public class WeaponMount { public int slotType; public int[] position_engine; public float[] turretAngles; public bool upsideDown; }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
+
+    /// <summary>A mod's ship (a ships.json entry, Modding.ModContent; the format of PR #34's custom_ships.json): a ships.json
+    /// entry plus what the original keeps in its fixed tables (race, hangar height), the weapon mounts and how to build its
+    /// model at run time (Modding.ModShipBuilder). Paths are inside the mod.</summary>
+    [System.Serializable] public class CustomShipData : ShipData
+    {
+        public int race = -1;              // 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirate, 9 void (Shop.ShipRace)
+        public int priceDefault;           // the Default Economy's price (0 = the same as 'price')
+        public int hangarHeight = 250;     // StationTables.ShipY: pivot height above the hangar floor, game units
+        public string assembly;            // set by ModContent: "ship_NNN_mod" (Database.ShipAssembly finds it by number)
+        public List<WeaponMount> mounts;   // like weapons_hd.json: slotType 0 primary, 1 secondary, 2 turret, 3 exhaust
+        public string model;               // the glTF / GLB file in the mod
+        public string icon;                // the shop icon (PNG, 180 x 88 like the originals); none = the Phantom's
+        public float modelLength = 1000f;  // nose to tail in game units (0.05 m each) after scaling
+        public float modelYaw;             // degrees about Unity y, when the model's nose doesn't face +Z
+        public float engineGlowRadius = 24f;   // game units, the glow disc at each exhaust mount
+        public List<CustomShipMaterial> materials;   // replace the model's materials on the renderers / submeshes they name
+        public CustomThrottleGlow throttleGlow;   // a glow on part of the hull that follows the throttle (no mask = none)
+        public List<CustomThrottleGlow> extraGlows;   // more of them (each its own mask, colour, levels and trail)
+        public CustomLoungeSeller lounge;  // a lounge visitor who sells it (AgentGenerator.AddCustomShipSellers); null = none
+    }
+
+    /// <summary>When a lounge may have a visitor selling a custom ship (AgentOffer.SellShip): each time a station's bar is
+    /// generated (Generator::createAgents: a station not among the last 3 visited), 'chance' % in systems of 'systemRace'
+    /// (-1 = any), from campaign step 'minCampaign' (free play: from rank 'minRank'), unless the player flies or stores it.</summary>
+    [System.Serializable] public class CustomLoungeSeller
+    {
+        public int systemRace = -1;
+        public int minCampaign;
+        public int minRank;
+        public int chance = 10;
+    }
+
+    /// <summary>A URP Lit material for the renderers whose name contains 'mesh' (empty = any) and, when 'submesh' >= 0,
+    /// only for that submesh (one mesh with several materials); paths inside the mod. 'color' (RGB) tints the
+    /// diffuse (or is the colour without one); 'metallic' >= 0 sets the metalness without a mask. 'emission' is an
+    /// emission map and / or 'emissionColor' (RGB) its colour, x emissionIntensity (> 1 blooms); 'alphaClip' > 0 cuts the
+    /// diffuse's alpha below it (decals). 'detailAlbedo' (linear, 0.5 = neutral) / 'detailNormal' are URP's detail maps,
+    /// tiled 'detailTiling' times over the UVs (e.g. brushed metal).</summary>
+    [System.Serializable] public class CustomShipMaterial
+    {
+        public string mesh, diffuse, normal, metallicSmoothness, emission, detailAlbedo, detailNormal;
+        public int submesh = -1;
+        public float[] color, emissionColor;
+        public float smoothness = 1f, metallic = -1f, emissionIntensity = 1f, alphaClip, normalScale = 1f;
+        public float detailTiling = 1f, detailNormalScale = 1f;
+        public float opacity;   // 0 / 1 = opaque; below 1 a see-through surface (glass: premultiplied, so reflections stay bright)
+        public bool doubleSided;   // both faces drawn (models with one-sided panels the camera can see from behind)
+    }
+
+    /// <summary>A mod ship's throttle-driven glow (Modding.ModShipBuilder, ThrottleGlow): the
+    /// hull triangles of the renderers whose name contains 'mesh' (empty = any) and of 'submesh' (-1 = all) whose UVs
+    /// touch the lit part of 'mask' (a PNG in the mod; a plain white mask takes them all), copied
+    /// 'offset' game units out along their normals and drawn additive with the mask, tinted 'color' (RGB); the glow
+    /// intensity runs from 'idle' (throttle 0) to 'full' (throttle 100 %) and up to 'boost' while boosting.</summary>
+    [System.Serializable] public class CustomThrottleGlow
+    {
+        public int submesh = -1;
+        public string mask, mesh;
+        public float[] color;
+        public float idle = 0.35f, full = 4f, boost = 7f, offset = 0.5f;
+        public float trailWidth;          // game units; > 0: a trail in the glow's colour from the glow's rear ends while
+        public float trailTime = 0.6f;    // boosting or travelling (planet jump, jumpgate, Khador Drive), 'trailTime' s long
+        public float trailBrightness = 0.3f;   // the trail x the glow's level
+        public int trailCount;            // 0 = one trail at each side's rear end; > 0 = that many along the glow's whole
+                                          // rear edge, shaped like an ellipse across it: 'trailWidth' / 'trailTime' /
+                                          // brightness in the middle, less toward the ends (the Millennium Falcon's band)
+    }
 
     /// <summary>One assembled prefab (assemblies.json): Resources/Assembled/{pack}/{category}/{name}.prefab.</summary>
     [System.Serializable] public class AssemblyData
@@ -207,7 +284,10 @@ namespace GoF2Remake.Data
                 var item = db.Items.Find(i => i.index == a.index);
                 if (item != null && a.keys != null) { item.attrKeys = a.keys; item.attrValues = a.values; }
             }
+            Modding.ModContent.NoteOriginalCounts(db);
             if (Session.Economy == Economy.Default) db.ApplyDefaultEconomy(resourceFolder);
+            // The active mods' new and changed entries (Modding.ModContent), after the economy so their prices stand.
+            if (resourceFolder == "GoF2Data") Modding.ModContent.Apply(db);
             return db;
         }
 

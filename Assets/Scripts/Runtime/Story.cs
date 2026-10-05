@@ -504,6 +504,7 @@ namespace GoF2Remake.Data
             {
                 int s = db.Systems[i].index;
                 if (s == 10 || s == 15) continue;
+                if (Modding.ModWorld.IsModSystem(s) || Modding.ModWorld.IsMissingSystem(s)) continue;   // the story stays in the original galaxy
                 if (Session.SystemVisible != null && s < Session.SystemVisible.Length && !Session.SystemVisible[s]) continue;
                 if (db.Systems[i].stations == null || db.Systems[i].stations.Count == 0) continue;
                 systems.Add(i);

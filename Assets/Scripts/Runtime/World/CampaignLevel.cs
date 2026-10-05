@@ -242,7 +242,7 @@ namespace GoF2Remake.World
         public void PlayMusic(AudioClip clip, bool loop)
         {
             music.Stop();
-            music.clip = clip;
+            music.clip = clip = Modding.ModMusic.Replace(clip);   // a mod's track of the same name
             music.loop = loop;
             music.volume = Settings.MusicVolume;
             if (clip != null) music.Play();
@@ -259,7 +259,7 @@ namespace GoF2Remake.World
                 loops[slot].spatialBlend = 0f;
             }
             loops[slot].loop = loop;
-            loops[slot].clip = clip;
+            loops[slot].clip = GoF2Remake.Modding.ModSounds.Get(clip);
             loops[slot].volume = Mathf.Min(1f, eventVolume * Sfx.EventGain) * Settings.SfxVolume;
             if (clip != null) loops[slot].Play();
         }

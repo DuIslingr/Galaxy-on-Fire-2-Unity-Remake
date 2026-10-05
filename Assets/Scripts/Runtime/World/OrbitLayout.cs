@@ -203,7 +203,7 @@ namespace GoF2Remake.World
         // StarSystem::StarSystem: sun at index 0, then one planet per station of the system (seed 300*station).
         void BuildStarSystem(Database db, SystemData sys)
         {
-            sunTexture = SunTextures[Mathf.Clamp(systemTexture, 0, SunTextures.Length - 1)];
+            sunTexture = Modding.ModWorld.SunTexture(systemIndex) ?? SunTextures[Mathf.Clamp(systemTexture, 0, SunTextures.Length - 1)];   // remake mods: a system's own sun
             flareColor = systemIndex >= 0 && systemIndex < FlareColors.Length ? FlareColors[systemIndex] : 3;
             // StarSystem::StarSystem in the supernova system (Status::inSupernovaSystem: system 27 before 0x9e): the sun
             // billboard at 0.99182 (1.37329 from campaign 0x6a), its streak layer drawn with sn_sun_011 (0x2dde). At 0x59
@@ -277,7 +277,7 @@ namespace GoF2Remake.World
                     p.isOrbitPlanet = true;
                     p.scale = s / 65536f;
                     p.flip = sunSlot >= 12;
-                    p.texture = PlanetTexture(shownTexture, true);
+                    p.texture = Modding.ModWorld.PlanetTexture(shown != null ? shown.index : stIdx) ?? PlanetTexture(shownTexture, true);   // remake mods: a station's own planet
                     p.ring = false;   // the ring orbit shows the ring sky layer instead
                 }
                 else
@@ -291,7 +291,7 @@ namespace GoF2Remake.World
                     p.flip = slot > sunSlot;
                     p.pitch = Angle(rnd.NextInt(4096) - 2048);
                     p.yaw = Angle(slot * 0xAAA);
-                    p.texture = PlanetTexture(shownTexture, false);
+                    p.texture = Modding.ModWorld.PlanetTexture(shown != null ? shown.index : stIdx) ?? PlanetTexture(shownTexture, false);
                 }
                 planets.Add(p);
             }
@@ -311,6 +311,7 @@ namespace GoF2Remake.World
         {
             int s = Mathf.Clamp(systemTexture, 0, 18) * 3;
             sunColor = new Color(SunColors[s], SunColors[s + 1], SunColors[s + 2]);
+            if (Modding.ModWorld.SunColor(systemIndex, out var modSun)) sunColor = modSun / 15f * 1.5f;   // remake mods: 1 = a bright light (x15 below, clamped at 2)
             int p = Mathf.Clamp(stationTexture, 0, 26) * 3;
             planetLightColor = new Color(PlanetLightColors[p], PlanetLightColors[p + 1], PlanetLightColors[p + 2]) * 1.5f;
             dustFogTint = new Color32((byte)(DustFogTints[s] * 0.6f), (byte)(DustFogTints[s + 1] * 0.6f), (byte)(DustFogTints[s + 2] * 0.6f), 0xbb);

@@ -12,6 +12,7 @@ using GoF2Remake.Multiplayer;
 using Unity.GraphToolkit.Editor;
 using UnityEditor;
 using UnityEngine;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.EditorTools
 {
@@ -153,7 +154,7 @@ namespace GoF2Remake.EditorTools
             if (Application.isPlaying)
             {
                 context.AppendAction("Event/Run In Play Mode", () => Run(graph, name));
-                if (NetEvents.Running) context.AppendAction("Event/Stop The Running Event", () => Debug.Log("Event graph: " + NetEvents.Command("stop", null)));
+                if (EventRunner.Running) context.AppendAction("Event/Stop The Running Event", () => Debug.Log("Event graph: " + EventRunner.Command("stop", null)));
             }
         }
 
@@ -164,7 +165,7 @@ namespace GoF2Remake.EditorTools
         {
             var problems = new System.Collections.Generic.List<EventGraphScript.Problem>();
             string text = EventGraphCompiler.Compile(graph, problems);
-            string error = NetEvents.Check(text);
+            string error = EventRunner.Check(text);
             if (logProblems)
             {
                 foreach (var p in problems.Where(p => !p.warning)) Debug.LogError($"Event graph {graph.Name}: {(p.node != null ? p.node + ": " : "")}{p.message}");
@@ -209,7 +210,7 @@ namespace GoF2Remake.EditorTools
         {
             string text = Script(graph);
             if (text == null) return;
-            Debug.Log($"Event graph {graph.Name}: {NetEvents.StartText(name, text)}");
+            Debug.Log($"Event graph {graph.Name}: {EventRunner.StartText(name, text)}");
         }
     }
 }

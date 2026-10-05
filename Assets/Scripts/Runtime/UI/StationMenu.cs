@@ -456,7 +456,7 @@ namespace GoF2Remake.UI
                     var st = WantedBoard.State(db, bosses[k]);
                     if ((Session.WantedHints & bit) != 0 || st == null || !st.terminated || bosses[k] >= db.Wanted.Count) continue;
                     Session.WantedHints |= bit;
-                    note = Localization.Get(3232).Replace("#WANTED_NAME", db.Wanted[bosses[k]].name).Replace("#SHIP_NAME", Localization.Get(913 + 45 + k));
+                    note = Localization.Get(3232).Replace("#WANTED_NAME", db.Wanted[bosses[k]].name).Replace("#SHIP_NAME", GameNames.Ship(45 + k));
                 }
             }
             if (note == null) return false;
@@ -614,7 +614,7 @@ namespace GoF2Remake.UI
             if (voiceSource == null) return;
             voiceSource.Stop();
             if (clip == null) return;
-            voiceSource.clip = clip;
+            voiceSource.clip = GoF2Remake.Modding.ModSounds.Get(clip);
             voiceSource.volume = Settings.VoiceVolume;
             voiceSource.Play();
         }
@@ -776,12 +776,12 @@ namespace GoF2Remake.UI
             if (level.musicSource != null)
             {
                 level.musicSource.Stop();
-                level.musicSource.clip = story.voidBattle;
+                level.musicSource.clip = Modding.ModMusic.Replace(story.voidBattle);
                 level.musicSource.loop = true;
                 if (story.voidBattle != null) level.musicSource.Play();
             }
             if (alarm == null) { alarm = gameObject.AddComponent<AudioSource>(); alarm.playOnAwake = false; alarm.loop = true; alarm.spatialBlend = 0f; }
-            alarm.clip = story.alert;
+            alarm.clip = GoF2Remake.Modding.ModSounds.Get(story.alert);
             alarm.volume = 0.198f * GoF2Remake.Flight.Sfx.EventGain * Settings.SfxVolume;
             if (alarm.clip != null) { alarm.Stop(); alarm.Play(); }
         }
@@ -1360,7 +1360,11 @@ namespace GoF2Remake.UI
         void PickLoadSlot(int slot, bool used)
         {
             if (!used) return;
-            ShowDialog(Localization.Get(523), () => { if (SaveGame.Load(slot)) SceneManager.LoadScene(gameObject.scene.name); });
+            // A save made with mods that aren't on now says so too (Modding.ModSaves: their items are removed and refunded).
+            var missing = Modding.ModSaves.MissingMods(SaveGame.Preview(slot));
+            string text = missing.Count == 0 ? Localization.Get(523) : Localization.Get(523) + "\n\n" + string.Format(Localization.Extra("modsMissingShort",
+                "Saved with mods that aren't on: {0}. Their items will be removed and refunded."), string.Join(", ", missing));
+            ShowDialog(text, () => { if (SaveGame.Load(slot)) SceneManager.LoadScene(gameObject.scene.name); });
         }
 
         /// <summary>MenuTouchWindow::OnTouchEnd save mode: slot 0 is reserved, a used slot asks before overwriting.</summary>
@@ -1835,7 +1839,7 @@ namespace GoF2Remake.UI
 
         void Play(AudioClip clip)
         {
-            if (sfxSource != null && clip != null) sfxSource.PlayOneShot(clip, Settings.SfxVolume);
+            if (sfxSource != null && clip != null) sfxSource.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
         }
 
         // ---- layout (same scaling and safe-area handling as the flight HUD) ---------------------------------

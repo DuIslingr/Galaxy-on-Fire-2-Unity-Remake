@@ -178,7 +178,12 @@ namespace GoF2Remake.World
             shipIndex = shipOverride >= 0 ? shipOverride : Session.ShipIndex;
             Station = db.Stations.Find(s => s.index == station);
             Layout = OrbitLayout.Build(db, station);
-            HangarIndex = StationTables.HangarIndex(station, Layout.raceId);
+            // Remake mods: a station may name the race of its hangar and bar ("interior", ModWorld).
+            int interior = Modding.ModWorld.InteriorRace(station);
+            HangarIndex = StationTables.HangarIndex(station, interior >= 0 ? interior : Layout.raceId);
+            // Remake mods: a custom hangar / bar room (interiors.json, ModInteriors); the race's tables stay for the rest.
+            customHangar = Modding.ModInteriors.HangarOf(station);
+            customBar = Modding.ModInteriors.BarOf(station);
             Session.VisitedStations.Add(station);   // Galaxy::setVisited: the star map's "Already visited"
             // Docking repairs the ship (the original launches with Status hull / shield / armor = -1, "full", StarMap::
             // depart; assumed for every launch) and autosaves (ModStation::autosave).
@@ -189,7 +194,7 @@ namespace GoF2Remake.World
             Session.PlayerHull = Session.PlayerArmor = -1;
             Session.PlayerShield = -1f;
             if (Story.AutosaveAllowed(station)) Session.Autosave();
-            BarRace = StationTables.BarRace(Layout.raceId);
+            BarRace = StationTables.BarRace(interior >= 0 ? interior : Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
             ApplyAntialiasing();
             Settings.Changed -= ApplyAntialiasing;
@@ -211,9 +216,10 @@ namespace GoF2Remake.World
                 // Globals::playMusicAndFadeOutCurrent(0): station 10 at campaign 0x9f plays 144 OutroSong.
                 if (station == 10 && !Session.FreePlay && Session.CampaignMission == 0x9f && StoryAssets.Load()?.outroSong != null) clip = StoryAssets.Load().outroSong;
                 if (clip == null && music != null && music.Length > 0) clip = music[0];
+                clip = Modding.ModWorld.StationMusic(station) ?? Modding.ModMusic.Replace(clip);   // remake mods: a station's / system's own, a replaced track
                 musicSource.clip = clip;
                 musicSource.loop = true;
-                musicSource.volume = Settings.MusicVolume * Multiplayer.NetScreen.SceneMusic;
+                musicSource.volume = Settings.MusicVolume * Events.EventScreen.SceneMusic;
                 if (clip != null) musicSource.Play();
             }
             SetView(StationView.Hangar, true);
@@ -231,14 +237,56 @@ namespace GoF2Remake.World
             }
         }
 
-        StationTables.HangarLane Lane => HangarIndex >= 0 && HangarIndex < StationTables.HangarLanes.Length ? StationTables.HangarLanes[HangarIndex] : null;
+        StationTables.HangarLane Lane => customHangar != null ? CustomLane
+            : HangarIndex >= 0 && HangarIndex < StationTables.HangarLanes.Length ? StationTables.HangarLanes[HangarIndex] : null;
+
+        // ---- remake mods: a custom hangar / bar (ModInteriors) ----
+
+        Modding.ModInteriors.Room customHangar, customBar;
+        StationTables.HangarLane customLane;
+
+        /// <summary>The custom hangar's way in and out: through its "gate" marker toward "gate_out", passable at gateSpan (default
+        /// the gate's height +-30 m), crossing the room at 'cruise' metres above the pad (default 40); none without the markers.</summary>
+        StationTables.HangarLane CustomLane
+        {
+            get
+            {
+                if (customLane != null || customHangar == null || !customHangar.hasGate || !customHangar.def.flights) return customLane;
+                var outward = customHangar.gateOut - customHangar.gate;
+                outward.y = 0f;
+                if (outward.sqrMagnitude < 1e-4f) return null;
+                float gy = customHangar.gate.y;
+                customLane = new StationTables.HangarLane
+                {
+                    gate = customHangar.gate, outward = outward.normalized,
+                    gateSpan = customHangar.def.gateSpan ?? new Vector2(gy - 30f, gy + 30f),
+                    cruise = customHangar.pad.y + (float.IsNaN(customHangar.def.cruise) ? 40f : customHangar.def.cruise),
+                };
+                return customLane;
+            }
+        }
+
+        /// <summary>The player's (and a parked ship's) pivot on a pad: the original's table, or a custom hangar's marker plus the
+        /// ship's own height (StationTables.ShipY).</summary>
+        Vector3 PadPosition(int ship) => customHangar != null
+            ? customHangar.pad + Vector3.up * (StationTables.ShipY(ship) * M)
+            : OrbitLayout.ToUnity(new Vector3(0f, StationTables.PadPivotY(HangarIndex, -1, ship, Quaternion.identity) / M, 0f));
+
+        int ParkedSlotCount => customHangar != null ? customHangar.parked.Count : StationTables.ParkedSlots[HangarIndex]?.Length ?? 0;
+        int ParkedMaxCount => customHangar != null ? (customHangar.def.parkedMax >= 0 ? Mathf.Min(customHangar.def.parkedMax, customHangar.parked.Count) : customHangar.parked.Count)
+                                                   : StationTables.ParkedMax[HangarIndex];
+
+        int VisitorSlotCount => customBar != null ? customBar.visitors.Count : StationTables.VisitorSlots[BarRace].Length;
+        Vector3 SlotFeet(int slot) => customBar != null ? customBar.visitors[slot] : OrbitLayout.ToUnity(StationTables.VisitorSlots[BarRace][slot]);
 
         void BuildHangar()
         {
             hangarRoot = new GameObject("Hangar").transform;
             string room = StationTables.HangarRoom[HangarIndex];
-            // Level::createScene: PlayerStatic + setRotation(0, pi, 0) = Unity identity.
-            var roomGo = Spawn(room, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), hangarRoot, "Room");
+            // Level::createScene: PlayerStatic + setRotation(0, pi, 0) = Unity identity. Remake mods: a custom room as it is.
+            GameObject roomGo;
+            if (customHangar != null) { roomGo = Instantiate(customHangar.template, Vector3.zero, Quaternion.identity, hangarRoot); roomGo.name = "Room (" + customHangar.def.key + ")"; }
+            else roomGo = Spawn(room, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), hangarRoot, "Room");
             // CutScene::process updates every geometry of the scene each frame, so the room's animated layers all run,
             // not only the *_anim meshes (the Terran hangar_terran_add lights run along the side gutters; at frame 0 they
             // sat on the player's pad). The loops skip their one-off first key (every part at the origin for 33 / 50 ms,
@@ -253,23 +301,30 @@ namespace GoF2Remake.World
                     if (a.gameObject.name.Contains("_anim")) a.applyMaterialChannels = true;
                 }
 
-            float y = StationTables.PadPivotY(HangarIndex, -1, shipIndex, Quaternion.identity) / M;   // clear of the pad (remake)
-            shipPivot = OrbitLayout.ToUnity(new Vector3(0f, y, 0f));
-            var ship = SpawnShip(shipIndex, new Vector3(0f, y, 0f), 0f, hangarRoot, "Player ship");
+            shipPivot = PadPosition(shipIndex);   // clear of the pad (remake)
+            var ship = SpawnShip(shipIndex, shipPivot, Quaternion.identity, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
             if (playerShip != null) PlayerHull.FitHangar(playerShip);   // remake debug: a freighter / capital ship shrunk
             RefreshTurret(true);
             shipYaw = StationTables.StartYaw(HangarIndex);
+            if (customHangar != null)
+            {
+                // Unity degrees: "startYaw", else the ship's nose 35 deg off the camera's line (game yaw: Unity yaw = 180 - it).
+                var toCam = customHangar.camera - customHangar.pad;
+                float unityYaw = !float.IsNaN(customHangar.def.startYaw) ? customHangar.def.startYaw
+                               : Mathf.Atan2(toCam.x, toCam.z) * Mathf.Rad2Deg + 35f;
+                shipYaw = (180f - unityYaw) * Mathf.Deg2Rad;
+            }
             ApplyShipYaw();
             // Multiplayer: another player docked here runs the hangar's NPC ships: theirs come with its snapshot (NetHangar).
             bool hangarFollower = GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetHangar.OtherDockedHere(Layout.stationIndex);
             if (!hangarFollower) SpawnParkedShips();
             // The others come and go (remake), except the club's stored hulls. Multiplayer: the other players docked here park
             // on the slots too (NetHangar), with or without the NPC traffic and the flights.
-            bool slots = StationTables.ParkedSlots[HangarIndex] != null && StationTables.ParkedMax[HangarIndex] > 0;
+            bool slots = ParkedSlotCount > 0 && ParkedMaxCount > 0;
             bool npcTraffic = Settings.HangarFlights && Lane != null && slots && !KaamoClub.StorageAt(Layout.stationIndex);
             if (npcTraffic || (slots && GoF2Remake.Multiplayer.NetGame.Active))
-                traffic = new HangarTraffic(Lane, StationTables.ParkedSlots[HangarIndex].Length, StationTables.ParkedMax[HangarIndex],
+                traffic = new HangarTraffic(Lane, ParkedSlotCount, ParkedMaxCount,
                                             parkedShips, db, NewParkedShip, ParkedPosition,
                                             (ship, pos, rot) => SpawnShip(ship, pos, rot, hangarRoot, "Visiting ship"),
                                             npcTraffic, Settings.HangarFlights);
@@ -281,7 +336,7 @@ namespace GoF2Remake.World
             if (GoF2Remake.Multiplayer.NetGame.Active) gameObject.AddComponent<GoF2Remake.Multiplayer.NetHangar>().Setup(this);
 
             // Camera: ModStation::OnInitialize state 0x14 (phone table), rotation order 2 with roll -0.03.
-            hangarCamBase = StationTables.HangarCameraPos[HangarIndex];
+            hangarCamBase = customHangar != null ? Vector3.zero : StationTables.HangarCameraPos[HangarIndex];   // a custom room drifts about its marker
             for (int i = 0; i < 3; i++) { driftSign[i] = Random.Range(0, 20) < 10; NextDriftLeg(i, Base(i)); }
         }
 
@@ -291,7 +346,7 @@ namespace GoF2Remake.World
         {
             if (playerShip != null) Destroy(playerShip.gameObject);
             shipIndex = index;
-            var ship = SpawnShip(index, new Vector3(0f, StationTables.PadPivotY(HangarIndex, -1, index, Quaternion.identity) / M, 0f), 0f, hangarRoot, "Player ship");
+            var ship = SpawnShip(index, PadPosition(index), Quaternion.identity, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
             if (playerShip != null) PlayerHull.FitHangar(playerShip);   // remake debug: a freighter / capital ship shrunk
             RefreshTurret(true);
@@ -299,15 +354,15 @@ namespace GoF2Remake.World
         }
 
         GameObject turret;
-        int turretItem = -1;
+        string turretItems = "";
 
         /// <summary>CutScene::checkForTurret 0xa4594: the mounted turret on the turntable ship, rebuilt whenever the turret
-        /// item changes (the original re-runs it after every equipment change).</summary>
+        /// item changes (the original re-runs it after every equipment change). Remake: every turret, each on its mount.</summary>
         void RefreshTurret(bool force)
         {
-            int item = GoF2Remake.Flight.PlayerTurret.TurretItem(db, Session.Equipment);
-            if (!force && item == turretItem) return;
-            turretItem = item;
+            string items = string.Join(",", GoF2Remake.Flight.PlayerTurret.TurretItems(db, Session.Equipment));
+            if (!force && items == turretItems) return;
+            turretItems = items;
             if (turret != null) Destroy(turret);
             turret = playerShip != null ? GoF2Remake.Flight.PlayerTurret.BuildStatic(db, shipIndex, Session.Equipment, playerShip) : null;
         }
@@ -328,24 +383,23 @@ namespace GoF2Remake.World
         /// parks the first min(stored, max) hulls of its storage instead, in list order.</summary>
         void SpawnParkedShips()
         {
-            var slots = StationTables.ParkedSlots[HangarIndex];
-            int max = StationTables.ParkedMax[HangarIndex];
-            if (slots == null || max <= 0) return;
+            int slotCount = ParkedSlotCount;
+            int max = ParkedMaxCount;
+            if (slotCount <= 0 || max <= 0) return;
             bool club = KaamoClub.StorageAt(Layout.stationIndex);
-            int count = Mathf.Min(club ? Mathf.Min(Session.KaamoShips.Count, max) : Random.Range(0, max + 1), slots.Length);
-            if (GoF2Remake.Multiplayer.NetGame.Active && !club) count = Mathf.Min(count, slots.Length - 1);   // a pad for another player
-            var taken = new bool[slots.Length];
+            int count = Mathf.Min(club ? Mathf.Min(Session.KaamoShips.Count, max) : Random.Range(0, max + 1), slotCount);
+            if (GoF2Remake.Multiplayer.NetGame.Active && !club) count = Mathf.Min(count, slotCount - 1);   // a pad for another player
+            var taken = new bool[slotCount];
             for (int n = 0; n < count; n++)
             {
                 int ship = club ? Session.KaamoShips[n].ship : NewParkedShip();
-                int slot = Random.Range(0, slots.Length), tries = 0;
-                while (taken[slot] && ++tries < 100) slot = Random.Range(0, slots.Length);
+                int slot = Random.Range(0, slotCount), tries = 0;
+                while (taken[slot] && ++tries < 100) slot = Random.Range(0, slotCount);
                 if (taken[slot]) break;
                 taken[slot] = true;
                 float yaw = Random.Range(0, 300) / 100f;
-                var pos = new Vector3(slots[slot].x,
-                    StationTables.PadPivotY(HangarIndex, slot, ship, OrbitLayout.RotationToUnity(new Vector3(0f, yaw, 0f))) / M, slots[slot].z);
-                var parked = SpawnShip(ship, pos, yaw, hangarRoot, $"Parked ship {n}");
+                var rot = OrbitLayout.RotationToUnity(new Vector3(0f, yaw, 0f));
+                var parked = SpawnShip(ship, ParkedPosition(slot, ship, rot), rot, hangarRoot, $"Parked ship {n}");
                 if (parked != null) parkedShips.Add(new HangarTraffic.Parked { go = parked, slot = slot, ship = ship, yaw = yaw });
             }
         }
@@ -354,9 +408,10 @@ namespace GoF2Remake.World
 
         /// <summary>The Unity pivot of 'ship' parked on 'slot' at 'rotation' (the slot plus the ship's height, lifted where the
         /// hull would cut into the pad: StationTables.PadPivotY).</summary>
-        Vector3 ParkedPosition(int slot, int ship, Quaternion rotation) =>
-            new Vector3(0f, StationTables.PadPivotY(HangarIndex, slot, ship, rotation), 0f)
-            + Vector3.Scale(OrbitLayout.ToUnity(StationTables.ParkedSlots[HangarIndex][slot]), new Vector3(1f, 0f, 1f));
+        Vector3 ParkedPosition(int slot, int ship, Quaternion rotation) => customHangar != null
+            ? customHangar.parked[slot] + Vector3.up * (StationTables.ShipY(ship) * M)   // a custom hangar's marker
+            : new Vector3(0f, StationTables.PadPivotY(HangarIndex, slot, ship, rotation), 0f)
+              + Vector3.Scale(OrbitLayout.ToUnity(StationTables.ParkedSlots[HangarIndex][slot]), new Vector3(1f, 0f, 1f));
 
         int RandomParkedShip()
         {
@@ -370,13 +425,15 @@ namespace GoF2Remake.World
         {
             barRoot = new GameObject("Space Lounge").transform;
             // createScene branch 4: rooms with no rotation (game identity = Unity yaw 180).
-            var room = Spawn(StationTables.BarRoom[BarRace], Vector3.zero, OrbitLayout.RotationToUnity(Vector3.zero), barRoot, "Room");
+            GameObject room;
+            if (customBar != null) { room = Instantiate(customBar.template, Vector3.zero, Quaternion.identity, barRoot); room.name = "Room (" + customBar.def.key + ")"; }
+            else room = Spawn(StationTables.BarRoom[BarRace], Vector3.zero, OrbitLayout.RotationToUnity(Vector3.zero), barRoot, "Room");
             // As in the hangar: the loops (and the Midorian prop's replays) skip their one-off first key, where every part
             // sits at the origin for 33 / 50 ms; played, it flashed for a frame on every wrap (the Nivelian bar's 6.5 s
             // bar_nivelian_anim_add, the Midorian prop each time it replayed).
             if (room != null)
                 foreach (var a in room.GetComponentsInChildren<PartAnimation>(true)) a.loopStartMs = a.OneOffStartMs;
-            if (room != null && BarRace == 3)
+            if (room != null && BarRace == 3 && customBar == null)
             {
                 // CutScene::initialize (mode 4): bar_midorian_alpha_anim is a one-shot, restarted with 30 % every 2 s.
                 foreach (var a in room.GetComponentsInChildren<PartAnimation>(true))
@@ -387,17 +444,24 @@ namespace GoF2Remake.World
             // the mesh by the agent's race (Level::createScene 0xc2b3e: a Midorian with a Nivelian face uses the Nivelian
             // mesh, female Terrans their own).
             var agents = Stock != null ? Stock.agents : new List<Agent>();
-            var slots = StationTables.VisitorSlots[BarRace];
-            slotTaken = new bool[slots.Length];
-            VisitorCount = Mathf.Min(agents.Count, slots.Length);
+            slotTaken = new bool[VisitorSlotCount];
+            VisitorCount = Mathf.Min(agents.Count, VisitorSlotCount);
             for (int i = 0; i < VisitorCount; i++) SpawnVisitor(agents[i]);
-            // Remake multiplayer: the event graphs' bar missions offered here (NetEventMissions) join as they arrive.
-            Multiplayer.NetEventMissions.RequestOffers(Station != null ? Station.index : Session.StationIndex, AddVisitor);
+            // Remake multiplayer: the event graphs' bar missions offered here (EventMissions) join as they arrive.
+            Events.EventMissions.RequestOffers(Station != null ? Station.index : Session.StationIndex, AddVisitor);
 
             barPosA = OrbitLayout.ToUnity(StationTables.BarCameraStart[BarRace]);
             barPosB = OrbitLayout.ToUnity(StationTables.BarCameraRest[BarRace]);
             barRotA = CameraRotation(0f, StationTables.BarCameraStartYaw[BarRace], 0f);
             barRotB = CameraRotation(0f, StationTables.BarCameraRestYaw[BarRace], 0f);
+            if (customBar != null)
+            {
+                // A custom bar's markers: the resting view, and the first visit's glide from "camera_start" (else no glide).
+                barPosB = customBar.camera;
+                barRotB = Quaternion.LookRotation(customBar.cameraTarget - customBar.camera, Vector3.up);
+                barPosA = customBar.hasStart ? customBar.cameraStart : barPosB;
+                barRotA = customBar.hasStart ? Quaternion.LookRotation(customBar.cameraStartTarget - customBar.cameraStart, Vector3.up) : barRotB;
+            }
             swayYaw.Start(0f, 5f);
         }
 
@@ -416,17 +480,16 @@ namespace GoF2Remake.World
         /// until free) with its glow and floor shadow.</summary>
         bool SpawnVisitor(Agent agent)
         {
-            var slots = StationTables.VisitorSlots[BarRace];
             if (System.Array.IndexOf(slotTaken, false) < 0) return false;
             int slot;
-            do slot = Random.Range(0, slots.Length); while (slotTaken[slot]);
+            do slot = Random.Range(0, slotTaken.Length); while (slotTaken[slot]);
             slotTaken[slot] = true;
             int i = visitors.Count;
             {
                 int race = agent.race == 3 && agent.portrait != null && agent.portrait[0] == 2 ? 2 : agent.race;
                 var prefab = VisitorPrefab(StationTables.VisitorFor(race, !agent.male));
                 if (prefab == null) return false;
-                var feet = OrbitLayout.ToUnity(slots[slot]);
+                var feet = SlotFeet(slot);
                 var v = new Visitor { feet = feet, agent = agent };
                 v.body = Instantiate(prefab, feet, Quaternion.identity, barRoot).transform;
                 v.body.name = $"Visitor {i} ({prefab.name})";
@@ -545,13 +608,17 @@ namespace GoF2Remake.World
             if (keyLight != null)
             {
                 keyLight.transform.rotation = Quaternion.LookRotation(-OrbitLayout.DirToUnity(StationTables.HangarTowardLight).normalized);
+                if (customHangar != null && customHangar.hasLight && (customHangar.pad - customHangar.light).sqrMagnitude > 1e-4f)
+                    keyLight.transform.rotation = Quaternion.LookRotation((customHangar.pad - customHangar.light).normalized);   // its "light" marker
                 keyLight.color = Color.white;
-                keyLight.intensity = hangarLightIntensity;
+                keyLight.intensity = customHangar != null && customHangar.def.lightIntensity >= 0f ? customHangar.def.lightIntensity : hangarLightIntensity;
             }
             var amb = (StationTables.HangarAmbient(Layout.raceId) + new Color(0.2f, 0.2f, 0.2f)) * 0.7f * hangarAmbientScale;
+            if (customHangar?.def.ambient is Color customAmb) amb = customAmb;
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(amb.r, amb.g, amb.b);
-            SetFog(HangarIndex == 1, StationTables.HangarFogEnd);
+            if (customHangar != null) SetCustomFog(customHangar.def);
+            else SetFog(HangarIndex == 1, StationTables.HangarFogEnd);
         }
 
         void ApplyLoungeLighting()
@@ -559,7 +626,29 @@ namespace GoF2Remake.World
             OrbitBuilder.SetupLights(Layout, keyLight, null, sunIntensityAt2);
             RenderSettings.ambientMode = AmbientMode.Skybox;
             DynamicGI.UpdateEnvironment();
+            if (customBar != null)
+            {
+                // A custom bar: its "light" marker shines toward the resting view's target; its own ambient and fog.
+                if (keyLight != null && customBar.hasLight && (customBar.cameraTarget - customBar.light).sqrMagnitude > 1e-4f)
+                    keyLight.transform.rotation = Quaternion.LookRotation((customBar.cameraTarget - customBar.light).normalized);
+                if (keyLight != null && customBar.def.lightIntensity >= 0f) keyLight.intensity = customBar.def.lightIntensity;
+                if (customBar.def.ambient is Color a) { RenderSettings.ambientMode = AmbientMode.Flat; RenderSettings.ambientLight = a; }
+                SetCustomFog(customBar.def);
+                return;
+            }
             SetFog(BarRace == 1, StationTables.BarFogEnd);
+        }
+
+        /// <summary>A custom room's fog ("fog": colour and end in metres), else none.</summary>
+        static void SetCustomFog(Modding.ModInteriors.Def d)
+        {
+            bool on = d.fogColor.HasValue && d.fogEnd > 0f;
+            Bootstrap.SetSceneFog(on);
+            if (!on) return;
+            RenderSettings.fogMode = FogMode.Linear;
+            RenderSettings.fogStartDistance = 0f;
+            RenderSettings.fogEndDistance = d.fogEnd;
+            RenderSettings.fogColor = d.fogColor.Value;
         }
 
         static void SetFog(bool on, float end)
@@ -687,7 +776,7 @@ namespace GoF2Remake.World
             }
 
             if (View == StationView.Hangar) RefreshTurret(false);
-            if (musicSource != null) musicSource.volume = Settings.MusicVolume * Multiplayer.NetScreen.SceneMusic;
+            if (musicSource != null) musicSource.volume = Settings.MusicVolume * Events.EventScreen.SceneMusic;
             float atmoMs = Time.unscaledDeltaTime * 1000f;
             mainViewAtmo?.Update(atmoMs); loungeAtmo?.Update(atmoMs); hangarAtmo?.Update(atmoMs);
         }
@@ -713,9 +802,19 @@ namespace GoF2Remake.World
                     if (Mathf.Abs(drift[i].Value - drift[i].Target) < 5f) NextDriftLeg(i, drift[i].Value);
                     p[i] = drift[i].Value;
                 }
-                var r = StationTables.HangarCameraRot[HangarIndex];
-                cam.SetPositionAndRotation(shipPivot + OrbitLayout.ToUnity(p), CameraRotation(r.x, r.y, StationTables.HangarCameraRoll));
-                SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar);
+                if (customHangar != null)
+                {
+                    // A custom hangar: its "camera" marker, drifting a few metres, looking at "camera_target" (else the pad).
+                    var at = customHangar.camera + OrbitLayout.ToUnity(p);
+                    cam.SetPositionAndRotation(at, Quaternion.LookRotation(customHangar.cameraTarget - at, Vector3.up));
+                    SetCustomLens(customHangar.def, StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar);
+                }
+                else
+                {
+                    var r = StationTables.HangarCameraRot[HangarIndex];
+                    cam.SetPositionAndRotation(shipPivot + OrbitLayout.ToUnity(p), CameraRotation(r.x, r.y, StationTables.HangarCameraRoll));
+                    SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar);
+                }
             }
             else
             {
@@ -743,11 +842,13 @@ namespace GoF2Remake.World
                     // Phase step 0.05..0.12 per 20 ms frame in the original (normalised); bob at most 3.5 units.
                     bobPhase += Mathf.Clamp(dtMs * 0.0025f, 0f, 0.12f);
                     var yaw = Quaternion.Euler(0f, -swayYaw.Value / 35f * Mathf.Rad2Deg, 0f);
-                    pos = yaw * barPosB + new Vector3(0f, Mathf.Sin(bobPhase) * 3.5f * M, 0f);
+                    // The original turns the view about the room's origin; a custom bar about its own camera spot.
+                    pos = (customBar != null ? barPosB : yaw * barPosB) + new Vector3(0f, Mathf.Sin(bobPhase) * 3.5f * M, 0f);
                     rot = yaw * barRotB;
                 }
                 cam.SetPositionAndRotation(pos, rot);
-                SetLens(StationTables.BarFov, StationTables.BarNear, StationTables.BarFar);
+                if (customBar != null) SetCustomLens(customBar.def, StationTables.BarFov, StationTables.BarNear, StationTables.BarFar);
+                else SetLens(StationTables.BarFov, StationTables.BarNear, StationTables.BarFar);
             }
         }
 
@@ -770,7 +871,7 @@ namespace GoF2Remake.World
                     vrShipBounds = bounds;
                 }
                 else if (vrShipBounds.size != Vector3.zero) bounds = vrShipBounds;
-                var original = shipPivot + OrbitLayout.ToUnity(hangarCamBase);
+                var original = customHangar != null ? customHangar.camera : shipPivot + OrbitLayout.ToUnity(hangarCamBase);
                 var away = original - bounds.center;
                 away.y = 0f;
                 if (away.sqrMagnitude < 0.01f) away = Vector3.back;
@@ -799,6 +900,12 @@ namespace GoF2Remake.World
             int min = axis == 0 ? 18 : axis == 1 ? 30 : 50, range = axis == 0 ? 131 : axis == 1 ? 120 : 100;
             float offset = (min + Random.Range(0, range)) * (driftSign[axis] ? 1f : -1f);
             drift[axis].Start(from, Base(axis) + offset);
+        }
+
+        /// <summary>A custom room's lens: "fov" (vertical degrees), "near" / "far" (metres); the original's otherwise.</summary>
+        void SetCustomLens(Modding.ModInteriors.Def d, float fovRad, float near, float far)
+        {
+            SetLens(d.fov > 0f ? d.fov * Mathf.Deg2Rad : fovRad, d.near > 0f ? d.near / M : near, d.far > 0f ? d.far / M : far);
         }
 
         void SetLens(float fovRad, float near, float far)

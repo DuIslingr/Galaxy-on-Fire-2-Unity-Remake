@@ -71,7 +71,7 @@ namespace GoF2Remake.UI
             if (item != s.item)
             {
                 s.item = item;
-                var tex = Resources.Load<Texture2D>($"GoF2Icons/item_{item:000}");
+                var tex = ItemInfo.ItemIcon(item);
                 s.root.style.backgroundImage = tex != null ? new StyleBackground(tex) : new StyleBackground();
                 s.wasReady = ready;
             }

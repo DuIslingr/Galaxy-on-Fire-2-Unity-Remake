@@ -133,8 +133,9 @@ namespace GoF2Remake.UI
                     layer.Add(m.icon);
                 }
                 // Radar::draw: the gold story icon 0x454 next to the campaign target's planet (visible missions only); remake:
-                // step 59's convoy stations too, like the map (Story.MapMarks; the original only marks the mission's own station).
-                if (t.kind == Navigation.Kind.Planet && !Session.FreePlay && Story.Mission.visible && Story.MapMarks(t.station))
+                // step 59's convoy stations too, like the map (Story.MapMarks; the original only marks the mission's own station),
+                // and an event graph quest's target (EventRunner.IsQuestTarget; it may change in the orbit: shown per frame).
+                if (t.kind == Navigation.Kind.Planet)
                 {
                     m.story = new VisualElement { pickingMode = PickingMode.Ignore };
                     m.story.AddToClassList("nav-abs");
@@ -162,10 +163,16 @@ namespace GoF2Remake.UI
         /// <summary>Status::getFreelanceMission's target (Mission::getTargetStation; type 0xe Stolen goods: the agent's station).</summary>
         static bool IsFreelanceTarget(int station)
         {
+            // Remake: a single-player event graph bar mission's target ("target" line).
+            if (Events.EventMissions.Active != null && Events.EventRunner.LocalMissionTarget == station) return true;
             if (!Freelance.Active) return false;
             var f = Freelance.Mission;
             return station == (f.type == MissionType.StolenGoods ? f.clientStation : f.target);
         }
+
+        /// <summary>The gold story icon: the campaign target (visible missions only, Story.MapMarks) or an event graph quest's.</summary>
+        static bool IsStoryTarget(int station) =>
+            (!Session.FreePlay && Story.Mission.visible && Story.MapMarks(station)) || Events.EventRunner.IsQuestTarget(station);
 
         /// <param name="race">The system's race (plate icon for landmarks).</param>
         public void Update(Navigation nav, Camera cam, bool touch, Mining.Phase miningPhase, int race, int jumpgateStation, int techLevel)
@@ -211,10 +218,11 @@ namespace GoF2Remake.UI
                     // pixels: the HD icons are 26 px wide, so 28 here, or the name covers the icon).
                     float ix = p.x + (m.icon != null ? 24f : 10f);
                     bool freelanceHere = m.freelance != null && IsFreelanceTarget(t.station);
-                    if (m.story != null) { m.story.style.display = onScreen ? DisplayStyle.Flex : DisplayStyle.None; Place(m.story, ix, p.y - 10f); }
+                    bool storyHere = m.story != null && IsStoryTarget(t.station);
+                    if (m.story != null) { m.story.style.display = onScreen && storyHere ? DisplayStyle.Flex : DisplayStyle.None; Place(m.story, ix, p.y - 10f); }
                     if (m.freelance != null) { m.freelance.style.display = onScreen && freelanceHere ? DisplayStyle.Flex : DisplayStyle.None; Place(m.freelance, ix, p.y - 10f); }
                     m.name.style.display = onScreen && inBox ? DisplayStyle.Flex : DisplayStyle.None;
-                    Place(m.name, ix + (m.story != null || freelanceHere ? 28f : 0f), p.y - 10f);
+                    Place(m.name, ix + (storyHere || freelanceHere ? 28f : 0f), p.y - 10f);
                     continue;
                 }
 

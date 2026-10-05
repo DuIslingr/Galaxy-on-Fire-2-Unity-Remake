@@ -15,6 +15,7 @@ using GoF2Remake.Data;
 using GoF2Remake.World;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.Multiplayer
 {
@@ -60,10 +61,10 @@ namespace GoF2Remake.Multiplayer
         /// always names the players); tphere: the players come to the issuer (a chat player). Players: names, client ids or
         /// selectors (@a, @s, @p, @r: NetCommands.FindTargets); a destination player is one (@s, @p, @r or a name). Returns
         /// the issuer's answer.</summary>
-        public static string Command(string args, NetPlayer issuer, bool here)
+        public static string Command(string args, IPilot issuer, bool here)
         {
             Destination d;
-            List<NetPlayer> who;
+            List<IPilot> who;
             string error = null;
             if (here)
             {
@@ -73,7 +74,7 @@ namespace GoF2Remake.Multiplayer
                 d = new Destination { kind = Kind.Player, player = issuer.OwnerClientId };
             }
             else if (issuer != null && Parse(args, issuer, out d, out error))
-                who = new List<NetPlayer> { issuer };
+                who = new List<IPilot> { issuer };
             else
             {
                 who = NetCommands.FindTargets(args, issuer, out string rest, out string error1);
@@ -92,17 +93,17 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>Server: checks and sends the order to the player's game; the issuer's answer.</summary>
-        static string Send(NetPlayer who, Destination d, string by, NetPlayer issuer)
+        static string Send(IPilot who, Destination d, string by, IPilot issuer)
         {
             if (d.kind == Kind.Player)
             {
-                var t = NetSquad.Find(d.player);
+                var t = EventHost.Find(d.player);
                 if (t == null) return X("mpWhisperNobody", "That player isn't in the session.");
                 if (t == who) return X("mpTpSelf", "A player can't be teleported to themselves.");
                 if (t.Where == NetPlayer.Place.None) return string.Format(X("mpTpTargetLoading", "{0} is loading, try again."), t.DisplayName);
             }
             if (who.Where == NetPlayer.Place.None) return string.Format(X("mpTpTargetLoading", "{0} is loading, try again."), who.DisplayName);
-            NetState.Instance.SendTeleport(who.OwnerClientId, d, by);
+            EventHost.Teleport(who.OwnerClientId, d, by);
             Debug.Log($"Server: {by} teleported {who.DisplayName} ({who.OwnerClientId}) to {Describe(d)}");
             return who == issuer ? "" : string.Format(X("mpTpSent", "Teleporting {0} to {1}."), who.DisplayName, Describe(d));
         }
@@ -111,7 +112,7 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>A destination: one player (a whole name, a client id, or @s / @p / @r for 'issuer'), else a station
         /// (index, name or "void") with optional coordinates or "dock". 'error' says what didn't parse.</summary>
-        public static bool Parse(string args, NetPlayer issuer, out Destination d, out string error)
+        public static bool Parse(string args, IPilot issuer, out Destination d, out string error)
         {
             d = default;
             error = null;
@@ -169,6 +170,9 @@ namespace GoF2Remake.Multiplayer
             string first = space < 0 ? args : args.Substring(0, space);
             string after = space < 0 ? "" : args.Substring(space + 1).Trim();
             if (first.Equals("void", StringComparison.OrdinalIgnoreCase)) { station = Session.VoidOrbit; rest = after; return true; }
+            // A mod's station by its key ("mod:id"), the same whatever number it got here.
+            if (first.IndexOf(':') > 0 && Modding.ModWorld.TryResolveStation(first, out int modStation) && NetGame.Db.Stations.Exists(s => s.index == modStation))
+            { station = modStation; rest = after; return true; }
             if (int.TryParse(first, NumberStyles.Integer, CultureInfo.InvariantCulture, out int n))
             {
                 if (!NetGame.Db.Stations.Exists(s => s.index == n)) return false;
@@ -197,7 +201,7 @@ namespace GoF2Remake.Multiplayer
             switch (d.kind)
             {
                 case Kind.Player:
-                    var p = NetSquad.Find(d.player);
+                    var p = EventHost.Find(d.player);
                     return p != null ? p.DisplayName : X("mpTpAPlayer", "a player");
                 case Kind.Hangar:
                     return string.Format(X("mpTpHangarOf", "the hangar of {0}"), station);
@@ -240,7 +244,7 @@ namespace GoF2Remake.Multiplayer
             Quaternion rot = Quaternion.identity;
             if (d.kind == Kind.Player)
             {
-                var p = NetSquad.Find(d.player);
+                var p = EventHost.Find(d.player);
                 if (p == null || p.Where == NetPlayer.Place.None) { Refused(X("mpTpTargetGone", "that player isn't in an orbit or a station")); return; }
                 d.station = p.Station;
                 if (p.InHangar) d.kind = Kind.Hangar;
@@ -281,7 +285,7 @@ namespace GoF2Remake.Multiplayer
             // An orbit: in place when already there, else the orbit loads with the pose.
             if (level != null && here == d.station)
             {
-                if (!hasPose) { pose = OrbitLayout.ToUnity(OrbitLayout.UndockPosition); rot = level.Player != null ? level.Player.transform.rotation : Quaternion.identity; }
+                if (!hasPose) { pose = OrbitLayout.ToUnity(level.UndockPoint); rot = level.Player != null ? level.Player.transform.rotation : Quaternion.identity; }
                 if (level.MoveForTeleport(pose, rot)) { Arrived(by, where); return; }
             }
             pending = hasPose;
@@ -304,7 +308,7 @@ namespace GoF2Remake.Multiplayer
             Arrived(by, where);
         }
 
-        /// <summary>An event's respawn (NetEventRespawn): the ship repaired and the orbit loaded with it at 'gamePos' (null:
+        /// <summary>An event's respawn (EventRespawn): the ship repaired and the orbit loaded with it at 'gamePos' (null:
         /// RespawnSpot, 3 km in front of the station: the launch spot is within the bigger stations' hulls) moved up to
         /// 'spread' game units away, facing the station; also while destroyed.</summary>
         public static void Respawn(int station, Vector3? gamePos, float spread)

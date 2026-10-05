@@ -1,0 +1,41 @@
+[
+    // A new blaster, made from the N'saan (item 12): its icon, shots and sound, with its own numbers.
+    {
+        "id": "plasma_lance",
+        "base": 12,
+        "name": { "en": "Plasma Lance", "de": "Plasmalanze" },
+        "description": "A Terran rebuild of the Vossk blaster: a hotter plasma charge that hits harder and flies further, at the cost of a slower reload.",
+        "techLevel": 3,
+        "occurrence": 40,
+        "price": [24000, 26500],
+        "vosskOnly": false,
+        "alwaysSoldAt": 78,
+        "stats": { "damage": 14, "reloadMs": 700, "lifetimeMs": 1800, "speed": 16 },
+        // Its own look and sound: violet bolts stretched along their flight, a flash at the gun, a ring where they hit.
+        "fx": {
+            "projectile": { "sprite": "fx/lance_bolt.png", "size": 450, "stretch": 4, "alongFlight": true, "color": [0.75, 0.45, 1.0], "glow": 3 },
+            "muzzle": { "sprite": "fx/lance_flash.png", "size": 500, "lifetime": 90, "grow": 1.4, "color": [0.8, 0.6, 1.0], "glow": 3 },
+            "impact": { "sprite": "fx/lance_impact.png", "size": 2400, "lifetime": 280, "grow": 2.2, "color": [0.8, 0.5, 1.0], "glow": 2.5 },
+            "shot": "fx/lance_shot.wav"
+        }
+    },
+    // A new missile, made from the Edo (item 36).
+    {
+        "id": "hornet_swarm",
+        "base": 36,
+        "name": { "en": "Hornet Swarm", "de": "Hornissenschwarm" },
+        "description": { "en": "A light homing missile that reloads quickly. Sold in packs like any missile." },
+        "techLevel": 4,
+        "occurrence": 30,
+        "price": [260, 300],
+        "alwaysSoldAt": 78,
+        "stats": { "damage": 95, "reloadMs": 1400 },
+        "defaultEconomy": { "price": [520, 600] }
+    },
+    // A change to an original item: the Targe Shield (item 50) holds more.
+    {
+        "override": 50,
+        "stats": { "shieldCapacity": 65 },
+        "maxPrice": 4600
+    }
+]

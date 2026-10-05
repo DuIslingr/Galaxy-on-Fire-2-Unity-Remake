@@ -86,7 +86,7 @@ namespace GoF2Remake.Flight
             if (!r.releasing)
             {
                 r.releasing = true;
-                var (playToEnd, fadeMs) = LoopRelease.TryGetValue(r.gun.itemIndex, out var rule) ? rule : (true, 100f);
+                var (playToEnd, fadeMs) = LoopRelease.TryGetValue(r.gun.lookIndex, out var rule) ? rule : (true, 100f);
                 src.loop = !playToEnd;   // play to end: this pass is the last one
                 r.fadeLeft = playToEnd ? -1f : fadeMs;
                 r.fadeTotal = Mathf.Max(1f, fadeMs);
@@ -271,7 +271,7 @@ namespace GoF2Remake.Flight
             if (fx != null && fx.shotLoops && fx.shot != null)
             {
                 rig.loop = gameObject.AddComponent<AudioSource>();
-                rig.loop.clip = fx.Shot;
+                rig.loop.clip = GoF2Remake.Modding.ModSounds.Get(fx.Shot);
                 rig.loop.loop = true;
                 rig.loop.playOnAwake = false;
                 rig.loop.spatialBlend = 0f;
@@ -625,7 +625,7 @@ namespace GoF2Remake.Flight
                     liberatorLoop.playOnAwake = false;
                     liberatorLoop.spatialBlend = 0f;
                 }
-                liberatorLoop.clip = r.fx.engineLoop;
+                liberatorLoop.clip = GoF2Remake.Modding.ModSounds.Get(r.fx.engineLoop);
                 liberatorLoop.volume = LiberatorVolume;
                 liberatorLoop.Play();
                 if (liberatorExtra == null)
@@ -635,7 +635,7 @@ namespace GoF2Remake.Flight
                     liberatorExtra.playOnAwake = false;
                     liberatorExtra.spatialBlend = 0f;
                 }
-                liberatorExtra.clip = r.fx.engineLoopExtra;
+                liberatorExtra.clip = GoF2Remake.Modding.ModSounds.Get(r.fx.engineLoopExtra);
                 liberatorBank = 0f;   // PlayerEgo::setRocketControl: +0x198 = 0
                 UpdateLiberatorSound(0f);
             }

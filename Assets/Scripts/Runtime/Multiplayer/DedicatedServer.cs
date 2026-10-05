@@ -8,6 +8,7 @@
 //   -password X      players need it to join (NetGame's connection approval)
 //   -maxplayers N    the player limit (default 16, 2..100: Relay's connections, the browser, the approval)
 //   -allowdebug      the players may use the Debug menu (cheats, items, spawns); off by default (NetGame.HostAllowsDebug)
+//   -allowmods       the session runs every mod in this game's Mods folders (NetMods); off by default
 //   -port N          the local port (default 7777); -fps N the server's frame rate (default 60)
 // Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
@@ -83,6 +84,7 @@ namespace GoF2Remake.Multiplayer
             NetGame.MaxPlayers = int.TryParse(Value("-maxplayers"), out int mp) ? mp : NetGame.DefaultMaxPlayers;   // 2..100
             NetGame.HostPassword = NetGame.CleanPassword(Value("-password"));
             NetGame.HostAllowsDebug = HasFlag("-allowdebug");
+            NetMods.HostAllowsMods = HasFlag("-allowmods");
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
 #if UNITY_EDITOR
@@ -157,6 +159,9 @@ namespace GoF2Remake.Multiplayer
             Log($"Up to {NetGame.MaxPlayers} players (-maxplayers).");
             if (NetGame.HasPassword) Log("Players need the password (-password) to join.");
             Log(NetGame.HostAllowsDebug ? "The Debug menu is allowed (-allowdebug)." : "The Debug menu is off (-allowdebug allows it).");
+            Log(NetMods.HostAllowsMods
+                ? (NetMods.SessionList.Length > 0 ? $"Mods (-allowmods): {NetMods.SessionNames}." : "Mods are allowed (-allowmods), but the Mods folder has none.")
+                : "No mods (-allowmods runs every mod in the Mods folder).");
             Log("Type \"help\" for the commands.");
         }
 
@@ -276,7 +281,7 @@ namespace GoF2Remake.Multiplayer
                 case "status":
                     return $"{(NetGame.Active ? "Running" : "Not running")} {(NetGame.JoinCode != null ? $"online, join code {NetGame.JoinCode}" : $"on port {port}")}, up {Duration(Time.unscaledTime - startedAt)}, " +
                            $"{NetGame.ClientIds.Count} player(s), world seed {NetGame.Seed}, {Application.targetFrameRate} fps, " +
-                           $"Debug menu {(NetGame.HostAllowsDebug ? "allowed" : "off")}.";
+                           $"Debug menu {(NetGame.HostAllowsDebug ? "allowed" : "off")}, mods {(NetMods.SessionList.Length > 0 ? NetMods.SessionNames : "none")}.";
                 case "list": case "who":
                     return NetCommands.RunOnServer("players", rest, null);
                 case "say":

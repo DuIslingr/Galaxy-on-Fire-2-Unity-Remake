@@ -185,7 +185,8 @@ namespace GoF2Remake.Flight
             // Remake: a motion controller's gyro (ControllerGyro); Level out re-centres it.
             if (useBuiltInInput && !inputLocked && GameControls.LevelOut.WasPressedThisFrame()) ControllerGyro.Recenter();
             var gyroSteer = useBuiltInInput && !inputLocked && autopilotTarget == null ? ControllerGyro.Steer(Time.timeScale > 0f ? Time.unscaledDeltaTime : 0f) : Vector2.zero;
-            if (gyroSteer.sqrMagnitude > steer.sqrMagnitude) steer = gyroSteer;
+            // Added to the other steering (it was the stronger of the two: a tilted controller held the stick off).
+            if (gyroSteer != Vector2.zero) steer = new Vector2(Mathf.Clamp(steer.x + gyroSteer.x, -1f, 1f), Mathf.Clamp(steer.y + gyroSteer.y, -1f, 1f));
             SteerInput = steer;
             if (autopilotTarget != null || steeringLocked) steer = Vector2.zero;
 

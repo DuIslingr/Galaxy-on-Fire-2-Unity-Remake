@@ -43,7 +43,7 @@ namespace GoF2Remake.Flight
             if (s == null) return null;
             s.playOnAwake = false;
             s.loop = true;
-            s.clip = clip;
+            s.clip = GoF2Remake.Modding.ModSounds.Get(clip);
             return s;
         }
 
@@ -75,7 +75,7 @@ namespace GoF2Remake.Flight
             Loop(add2, v >= 2f, vol, 1f);
             int now = Region(v), was = before < 0f ? -1 : Region(before);
             if (now >= 0 && now != was && switchSource != null && switchClip != null)
-                switchSource.PlayOneShot(switchClip, vol * Envelope(SwitchVolume, v));
+                switchSource.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(switchClip), vol * Envelope(SwitchVolume, v));
         }
 
         static void Loop(AudioSource s, bool on, float volume, float pitch)

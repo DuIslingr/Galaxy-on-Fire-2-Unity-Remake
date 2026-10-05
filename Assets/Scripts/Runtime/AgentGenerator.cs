@@ -154,7 +154,39 @@ namespace GoF2Remake.Data
                 var a = agents.Find(x => x.offer == AgentOffer.Mission && x.HasMission && x.mission.reward < 50000);
                 if (a != null) a.mission.reward = Math.Min(a.mission.reward * 10, 50000);
             }
+            AddCustomShipSellers(db, station, agents);
             return agents;
+        }
+
+        /// <summary>Remake: a mod ship's lounge seller (ships.json "lounge", AgentOffer.SellShip). A visitor of the
+        /// ship's race (Terran rules for gender) takes the place of the last generic visitor that offers neither a diplomat's
+        /// nor the bar's wingmen deal, or joins a bar with room. Not at the Kaamo Club, the battlestation or in the evacuated
+        /// supernova system.</summary>
+        static void AddCustomShipSellers(Database db, int station, List<Agent> agents)
+        {
+            if (!CustomShips.Available) return;   // (always: a mod ship is there whenever its mod is on)
+            if (station == 108 || station == 101 || Shop.InSupernovaSystem(SystemOf(db, station), station)) return;
+            int systemRace = Sys(db, SystemOf(db, station))?.raceId ?? -1;
+            foreach (var c in CustomShips.All)
+            {
+                var l = c.lounge;
+                if (l == null || db.Ship(c.index) == null) continue;
+                if (l.systemRace >= 0 && l.systemRace != systemRace) continue;
+                if (Session.FreePlay ? Session.Rank < l.minRank : Session.CampaignMission < l.minCampaign) continue;
+                if (Session.ShipIndex == c.index || KaamoClub.HasShip(c.index)) continue;
+                if (R(100) >= l.chance) continue;
+                int race = c.race >= 0 && c.race <= 7 ? c.race : 0;
+                bool male = race == 0 ? R(100) < 60 : true;   // only Terrans can be female
+                var seller = new Agent
+                {
+                    name = RandomName(race, male), race = race, male = male, station = station, offer = AgentOffer.SellShip,
+                    portrait = CreatePortrait(male, race), sellShip = c.index, sellPrice = Shop.ShipPrice(db, c.index, station),
+                };
+                // Not another custom ship's seller either (two in one bar: both stay).
+                int i = agents.FindLastIndex(x => !x.IsStory && x.offer != AgentOffer.Diplomat && x.offer != AgentOffer.Wingmen && x.offer != AgentOffer.SellShip);
+                if (agents.Count >= 5 && i >= 0) agents[i] = seller;
+                else if (agents.Count < 5) agents.Add(seller);
+            }
         }
 
         /// <summary>SpaceLounge::startChat, diplomat: int(|standing axis| / 100 * 16000).</summary>
@@ -216,8 +248,10 @@ namespace GoF2Remake.Data
             else if (offer == AgentOffer.SellItem)
             {
                 ItemData it;
+                int tries = 0;
                 do it = db.Items[R(db.Items.Count)];
-                while (NotForSale.Contains(it.index) || it.blueprint.Count > 0 || SinglePrice(it) == 0 || it.occurrence == 0);
+                while ((NotForSale.Contains(it.index) || it.blueprint.Count > 0 || SinglePrice(it) == 0 || it.occurrence == 0
+                        || !Modding.ModCampaigns.ItemAllowed(db, it.index)) && ++tries < 5000);   // remake mods: a campaign's own items
                 a.sellItem = it.index;
                 a.sellQuantity = it.TypeId <= 3 && it.TypeId != 1 ? 1 : R(15) + 5;   // primary, turret, equipment: 1
                 a.sellPrice = (int)((R(120) + 40) / 100f * SinglePrice(it)) * a.sellQuantity;
@@ -238,7 +272,7 @@ namespace GoF2Remake.Data
                 int st;
                 if (R(100) < 20) st = agentStation;
                 else if (R(100) < 40) st = cur.stations[R(cur.stations.Count)];
-                else st = R(135);
+                else st = Modding.ModCampaigns.ModGalaxy ? Modding.ModCampaigns.RandomStation(db) : R(135);   // remake mods: a campaign's own galaxy
                 if (curSys == 15) st = cur.stations[R(cur.stations.Count)];   // Mido: always a station of Mido
                 int sys = SystemOf(db, st);
                 var sd = Sys(db, sys);

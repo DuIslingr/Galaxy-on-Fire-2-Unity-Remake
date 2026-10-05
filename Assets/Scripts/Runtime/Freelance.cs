@@ -52,6 +52,10 @@ namespace GoF2Remake.Data
         {
             string squad = GoF2Remake.Multiplayer.NetMissions.AcceptRefusal();   // multiplayer: the whole squad docked here
             if (squad != null) return squad;
+            // Remake single player: an event graph's bar mission is the player's one mission too.
+            var eventMission = GoF2Remake.Events.EventMissions.Active;
+            if (eventMission != null && !GoF2Remake.Multiplayer.NetGame.Active)
+                return string.Format(Localization.Extra("mpEventMissionActive", "You are already on the mission {0}."), eventMission.title);
             if (m.type == MissionType.Courier)
             {
                 int free = Shop.FreeCargo(db) + (Active ? ContainersAboard() : 0);

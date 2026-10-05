@@ -329,7 +329,7 @@ namespace GoF2Remake.Flight
             if (Extender != null)
             {
                 var te = Shop.FirstMounted(db, 26);
-                list.Add(new Target { kind = Kind.TimeExtender, name = te != null ? Localization.Get(1274 + te.index) : "Time extender",
+                list.Add(new Target { kind = Kind.TimeExtender, name = te != null ? GameNames.Item(te.index) : "Time extender",
                                       disabled = !Extender.Ready && !Extender.Running });
             }
             return list;
@@ -607,7 +607,7 @@ namespace GoF2Remake.Flight
         /// <summary>The player's flight controls (steering, dodge, guns, mining) are off: the game is paused, or in multiplayer
         /// a menu, conversation or map is open (the world goes on there).</summary>
         public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active)
-                                          || GoF2Remake.Multiplayer.NetScreen.QuestionOpen;   // an event's question (multiplayer)
+                                          || GoF2Remake.Events.EventScreen.QuestionOpen;   // an event's question (multiplayer)
 
         void OnDestroy() { halted = false; MusicPaused = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }
 
@@ -644,7 +644,7 @@ namespace GoF2Remake.Flight
 
         void Play(AudioClip clip)
         {
-            if (clip != null) sfx.PlayOneShot(clip, Settings.SfxVolume);
+            if (clip != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
         }
 
         /// <summary>Radar::calcDistance 0x15827c: M = 8 * floor(d / 128); "624m" below 1000, else "6.2km".</summary>

@@ -88,6 +88,10 @@ namespace GoF2Remake.Data
         /// in Status (Status::getAgents, saved by RecordHandler::writeAgent) with Agent+0x74 set, so a blueprint or
         /// coordinate seller never offers again (Generator::createAgents only resets offers 9 and 10).</summary>
         public static HashSet<int> StoryAgentsAccepted = new HashSet<int>();
+        /// <summary>Remake: the single-player event graph quests and bar missions under way, as of their last checkpoint
+        /// (EventRunner), and the quests finished (by graph name).</summary>
+        public static List<GraphQuestState> GraphQuests = new List<GraphQuestState>();
+        public static HashSet<string> GraphQuestsDone = new HashSet<string>();
         /// <summary>Status+0x18: each touched blueprint's progress (Blueprints); +0x1c products waiting at a station;
         /// +0x1d4 goods produced (completed runs).</summary>
         public static List<BlueprintState> Blueprints = new List<BlueprintState>();
@@ -188,6 +192,8 @@ namespace GoF2Remake.Data
         /// drill and energy cells). Saves from before the story load as free play.
         /// </summary>
         public static bool FreePlay;
+        /// <summary>Remake mods: the mod whose campaign this game is (Modding.ModCampaigns; "": a GoF2 game).</summary>
+        public static string ModCampaign = "";
         public const int FreePlayMission = 20;
 
         /// <summary>Current station (Status::getStation): one flight level = one station orbit.</summary>
@@ -341,6 +347,10 @@ namespace GoF2Remake.Data
             WingmanShowEmp = true;
             UnlockedBlueprints = new HashSet<int>();
             StoryAgentsAccepted = new HashSet<int>();
+            GraphQuests = new List<GraphQuestState>();
+            ModCampaign = "";
+            GraphQuestsDone = new HashSet<string>();
+            GoF2Remake.Events.EventRunner.ResetLocal();   // single player's graph runs go with the game
             Blueprints = new List<BlueprintState>();
             PendingProducts = new List<PendingProduct>();
             GoodsProduced = 0;

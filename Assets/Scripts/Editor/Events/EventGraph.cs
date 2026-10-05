@@ -1,8 +1,8 @@
 // EventGraph.cs
-// The multiplayer events (NetEvents: /event <name>) as node graphs in Unity's Graph Toolkit. A .gof2netevent asset
+// The multiplayer events (EventRunner: /event <name>) as node graphs in Unity's Graph Toolkit. A .gof2event asset
 // opens in the graph window (double click; Assets > Create > GoF2 > Event Graph makes one with its Start node). The graph
 // file is the event: the server reads it itself (EventGraphFile + EventGraphScript, the game's compiler) from its Events
-// folder or Resources/GoF2Net/Events (EventGraphImporter keeps the file's text). The right-click menu exports the graph (the
+// folder or Resources/GoF2Events (EventGraphImporter keeps the file's text). The right-click menu exports the graph (the
 // game's Events folder) and runs it in a hosted Play-mode session.
 // Wiring: the white arrows run the steps one after another from Start (If / While / Repeat run their branch, then Next);
 // the data wires carry numbers and conditions (the script's expressions), a number wired into a text field becomes
@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using GoF2Remake.Multiplayer;
 using Unity.GraphToolkit.Editor;
 using UnityEngine;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.EditorTools
 {
@@ -20,7 +21,7 @@ namespace GoF2Remake.EditorTools
     [Serializable]
     public class EventGraph : Graph
     {
-        public const string Extension = NetEvents.GraphExtension;   // "gof2netevent"
+        public const string Extension = EventRunner.GraphExtension;   // "gof2event"
 
         protected override IEnumerable<Type> BuildAvailableVariableTypes(IReadOnlyCollection<Type> baseSupportedTypes)
         {
@@ -44,7 +45,7 @@ namespace GoF2Remake.EditorTools
         {
             var problems = new List<EventGraphScript.Problem>();
             string text = EventGraphCompiler.Compile(this, problems, out var nodes);
-            if (problems.Count == 0 && NetEvents.Check(text) is string error)
+            if (problems.Count == 0 && EventRunner.Check(text) is string error)
                 problems.Add(new EventGraphScript.Problem { message = "Script: " + error });
             foreach (var p in problems)
             {

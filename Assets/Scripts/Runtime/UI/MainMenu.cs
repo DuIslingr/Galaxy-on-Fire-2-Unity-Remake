@@ -77,7 +77,8 @@ namespace GoF2Remake.UI
 
         VisualElement root, logo, splash, splashLogo, fade, dialog, mainColumn, mainButtons;
         Label pressAnyKey, versionLabel, hintLabel;
-        Button resumeButton, newGameButton, multiplayerButton, loadButton, optionsButton, aboutButton, debugButton, exitButton;
+        Button resumeButton, newGameButton, multiplayerButton, loadButton, optionsButton, modsButton, aboutButton, debugButton, exitButton;
+        ModBrowser modBrowser;
         VisualElement updateRow;
         Button updateButton;
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
@@ -89,6 +90,64 @@ namespace GoF2Remake.UI
         MenuState screen = MenuState.Splash;
         bool skipRequested;
         Campaign pendingCampaign;
+        /// <summary>Remake mods: the mod campaign picked (null: one of the three GoF2 campaigns).</summary>
+        Modding.ModCampaigns.Def pendingModCampaign;
+        VisualElement modCampaignList;
+
+        /// <summary>The mods' campaigns (Modding.ModCampaigns) as entries under the three campaign cards, built anew each time
+        /// the panel opens (the mods change in the menu).</summary>
+        void RefreshModCampaigns()
+        {
+            var panel = panels["campaignPanel"];
+            if (modCampaignList == null)
+            {
+                modCampaignList = new VisualElement();
+                modCampaignList.AddToClassList("mod-campaigns");
+                var anchor = panel.Q<Button>("ngPlusToggle");
+                if (anchor != null) panel.Insert(panel.IndexOf(anchor), modCampaignList);
+                else panel.Add(modCampaignList);
+            }
+            modCampaignList.Clear();
+            var all = Modding.ModCampaigns.All();
+            modCampaignList.style.display = all.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            foreach (var c in all)
+            {
+                var def = c;
+                var b = new Button();
+                b.AddToClassList("choice-button");
+                b.AddToClassList("mod-campaign");
+                var tex = Modding.ModCampaigns.Image(def);
+                if (tex != null)
+                {
+                    var img = new VisualElement { pickingMode = PickingMode.Ignore };
+                    img.AddToClassList("mod-campaign__image");
+                    img.style.backgroundImage = new StyleBackground(tex);
+                    b.Add(img);
+                }
+                var text = new VisualElement { pickingMode = PickingMode.Ignore };
+                text.AddToClassList("mod-campaign__text");
+                var title = new Label(def.Name.ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                title.AddToClassList("choice-title");
+                title.AddToClassList("gof-semibold");
+                var desc = new Label(def.Description + "  ·  " + string.Format(Localization.Extra("modCampaignBy", "a mod: {0}"), def.mod.Name)) { pickingMode = PickingMode.Ignore };
+                desc.AddToClassList("choice-desc");
+                text.Add(title);
+                text.Add(desc);
+                b.Add(text);
+                b.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
+                b.clicked += () => { Play(buttonRelease); PickModCampaign(def); };
+                HookFocusSound(b);
+                modCampaignList.Add(b);
+            }
+        }
+
+        void PickModCampaign(Modding.ModCampaigns.Def c)
+        {
+            pendingModCampaign = c;
+            pendingCampaign = Campaign.GalaxyOnFire2;
+            pendingStartIndex = -1;
+            OpenPanel("difficultyPanel");
+        }
         IVisualElementScheduledItem pulse;
         IDisposable anyKey;
         PanelSettings runtimePanel;
@@ -137,6 +196,9 @@ namespace GoF2Remake.UI
             splash = root.Q("splash");
             splashLogo = root.Q("splashLogo");
             fade = root.Q("fade");
+            // Remake mods: the loading screen while the mods load (on the startup splash, and on the fade before a game).
+            splashLoading = new ModLoadingView(splash);
+            leaveLoading = new ModLoadingView(fade);
             dialog = root.Q("dialog");
             dialogField = root.Q<TextField>("dialogField");
             if (dialogField != null)
@@ -166,6 +228,7 @@ namespace GoF2Remake.UI
                 OpenPanel("optionsPanel");
                 SelectTab(OptionPages[0].page);
             });
+            modsButton = Bind("modsButton", () => { modBrowser?.Open(); OpenPanel("modsPanel"); });
             aboutButton = Bind("aboutButton", () => OpenPanel("aboutPanel"));
             debugButton = Bind("debugButton", OpenDebug);
             UpdateDebugButton();
@@ -208,6 +271,12 @@ namespace GoF2Remake.UI
             Bind("cardSupernova", () => PickCampaign(Campaign.Supernova));
             BuildDebugPanel();
             UpdateDebugButton();
+            // The mod browser (remake, ModBrowser): built in code next to the other panels.
+            if (root.Q("panelHost") is VisualElement modHost)
+            {
+                modBrowser = new ModBrowser(modHost, Back, HookFocusSound, () => Play(buttonRelease));
+                panels["modsPanel"] = modBrowser.Panel;
+            }
             SetupMultiplayerPanel();
             Bind("easyButton", () => PickDifficulty(Session.DifficultyEasy));
             Bind("normalButton", () => PickDifficulty(Session.DifficultyNormal));
@@ -442,15 +511,51 @@ namespace GoF2Remake.UI
 
         // ---- flow ------------------------------------------------------------------------------
 
+        /// <summary>Remake mods: a mod's menu theme that finished loading takes over from the original (ModMusic).</summary>
+        void SwapModMusic()
+        {
+            if (this == null || musicSource == null || menuMusic == null || musicSource.clip != menuMusic) return;
+            var mod = Modding.ModMusic.Replace(menuMusic);
+            if (mod == menuMusic) return;
+            musicSource.clip = mod;
+            musicSource.Play();
+        }
+
+        ModLoadingView splashLoading, leaveLoading;
+
+        /// <summary>Remake mods: waits on the loading screen in 'view' while the mods that are on load (at most 'limit' s).</summary>
+        IEnumerator WaitForMods(ModLoadingView view, float limit)
+        {
+            if (!Modding.ModLoading.Busy) yield break;
+            view.Show(true);
+            for (float t = 0f; t < limit && Modding.ModLoading.Busy; t += Time.unscaledDeltaTime)
+            {
+                view.Update();
+                yield return null;
+            }
+            view.Update();
+            yield return new WaitForSecondsRealtime(0.35f);   // the full bar for a moment
+            view.Show(false);
+            yield return new WaitForSecondsRealtime(0.3f);
+        }
+
         IEnumerator Run()
         {
             // Whatever the last scene left: never a muted listener here (a pause menu open when a multiplayer session
             // ended loads the menu without closing it), and a finished session's game is gone.
             AudioListener.pause = false;
             GoF2Remake.Multiplayer.NetGame.OnMainMenu();
+            Modding.ModShips.Preload();   // the active mods' ship models, built while the menu shows
+            Modding.ModStations.Preload();   // their station models and planet / sun textures
+            Modding.ModWeapons.Preload();   // their weapons' own fx and sounds
+            Modding.ModSounds.Preload();   // their sound effects
+            Modding.ModCharacters.Preload();   // their characters' portraits
+            Modding.ModMusic.Preload();   // and their music (a replaced menu theme swaps in when it has loaded)
+            Modding.ModMusic.Changed -= SwapModMusic;
+            Modding.ModMusic.Changed += SwapModMusic;
             if (musicSource != null && menuMusic != null)
             {
-                musicSource.clip = menuMusic;
+                musicSource.clip = Modding.ModMusic.Replace(menuMusic);
                 musicSource.loop = true;
                 musicSource.volume = 0f;
                 musicSource.Play();      // MTitle starts the menu theme with the first logo
@@ -505,6 +610,9 @@ namespace GoF2Remake.UI
                     yield return Wait(1f);                        // 1 s fade out
                 }
             }
+            // Remake mods: everything they bring loads at once in the background since the menu opened; the black splash
+            // shows the loading screen until it is done, then the title comes.
+            yield return WaitForMods(splashLoading, 60f);
             splash.AddToClassList("splash--gone");
             screen = MenuState.Title;
             yield return new WaitForSeconds(0.2f);
@@ -538,7 +646,7 @@ namespace GoF2Remake.UI
             var p = logo.parent.layout;
             var el = logo.layout;
             if (el.width <= 0f || el.height <= 0f || p.width <= 0f) return;
-            const float aspect = 670f / 207f;                           // logo_gof2.png
+            const float aspect = 449f / 155f;                           // logo_gof2_remake.png (the remake's title logo)
             float imgW = Mathf.Min(el.width, el.height * aspect);     // scale-to-fit, left aligned
             var imgCenter = new Vector2(el.x + imgW * 0.5f, el.y + el.height * 0.5f);
             float targetW = Mathf.Min(p.width * 0.56f, p.height * 0.34f * aspect);
@@ -598,7 +706,7 @@ namespace GoF2Remake.UI
             SetFocusable(mainButtons, false);
             RefreshUpdateButton();
             p.schedule.Execute(() => FocusFirst(p)).ExecuteLater(30);
-            if (name == "campaignPanel") RefreshNgPlus(true);
+            if (name == "campaignPanel") { RefreshNgPlus(true); RefreshModCampaigns(); }
             if (name == "multiplayerPanel")
             {
                 RefreshAddresses();   // the adapters may have changed
@@ -629,12 +737,14 @@ namespace GoF2Remake.UI
             var target = closing == panels["campaignPanel"] || panels.TryGetValue("debugPanel", out var ap) && closing == ap ? newGameButton
                 : closing == panels["loadPanel"] ? loadButton
                 : closing == panels["optionsPanel"] ? optionsButton
-                : closing == panels["multiplayerPanel"] ? multiplayerButton : aboutButton;
+                : closing == panels["multiplayerPanel"] ? multiplayerButton
+                : panels.TryGetValue("modsPanel", out var mp) && closing == mp ? modsButton : aboutButton;
             Select(target);
         }
 
         void PickCampaign(Campaign c)
         {
+            pendingModCampaign = null;
             pendingCampaign = c;
             pendingStartIndex = -1;
             OpenPanel("difficultyPanel");
@@ -712,6 +822,14 @@ namespace GoF2Remake.UI
             Session.Economy = economy;   // before the Database: it loads that economy's tables
             if (KaamoFromStart) Session.KaamoState = 3;   // resetGame with the expansion bought: the club owned, its storage empty
             var db = Database.Load();
+            // Remake mods: a mod's campaign (Modding.ModCampaigns): its start, docked at its station; no GoF2 story.
+            if (pendingModCampaign != null)
+            {
+                string modScene = Modding.ModCampaigns.Start(db, pendingModCampaign, out string error);
+                if (modScene == null) { ShowNotice(pendingModCampaign.Name, error); return; }
+                StartCoroutine(Leave(modScene));
+                return;
+            }
             // Remake: the mission select starts a new game at the chosen story step (Story.StartAtMission).
             if (pendingStartIndex >= 0) { StartCoroutine(Leave(Story.StartAtMission(db, pendingStartIndex))); return; }
             // MenuTouchWindow::startGOF2 / startValkyrie / startSupernova: the story's first step (Story).
@@ -815,6 +933,11 @@ namespace GoF2Remake.UI
             Bind("mpDebugOff", () => SetHostDebug(false));
             Bind("mpDebugOn", () => SetHostDebug(true));
             ApplyHostDebug();
+            // Modded content in the hosted session (PlayerPrefs "mp_allow_mods", off by default; NetMods.HostAllowsMods).
+            GoF2Remake.Multiplayer.NetMods.HostAllowsMods = PlayerPrefs.GetInt("mp_allow_mods", 0) != 0;
+            Bind("mpModsOff", () => SetHostMods(false));
+            Bind("mpModsOn", () => SetHostMods(true));
+            ApplyHostMods();
             mpJoinPassword = root.Q<TextField>("mpJoinPassword");
             if (mpJoinPassword != null)
             {
@@ -869,6 +992,27 @@ namespace GoF2Remake.UI
             bool allowed = GoF2Remake.Multiplayer.NetGame.HostAllowsDebug;
             root.Q<Button>("mpDebugOff")?.EnableInClassList("choice-segment--active", !allowed);
             root.Q<Button>("mpDebugOn")?.EnableInClassList("choice-segment--active", allowed);
+        }
+
+        void SetHostMods(bool allowed)
+        {
+            GoF2Remake.Multiplayer.NetMods.HostAllowsMods = allowed;
+            PlayerPrefs.SetInt("mp_allow_mods", allowed ? 1 : 0);
+            ApplyHostMods();
+        }
+
+        void ApplyHostMods()
+        {
+            bool allowed = GoF2Remake.Multiplayer.NetMods.HostAllowsMods;
+            root.Q<Button>("mpModsOff")?.EnableInClassList("choice-segment--active", !allowed);
+            root.Q<Button>("mpModsOn")?.EnableInClassList("choice-segment--active", allowed);
+            var label = root.Q<Label>("mpModsLabel");
+            if (label != null)
+            {
+                int n = Modding.ModManager.SinglePlayerActive.Count;
+                label.text = (n == 0 ? Localization.Extra("mpMods", "Mods")
+                    : string.Format(Localization.Extra("mpModsCount", "Mods ({0} on)"), n)).ToUpperInvariant();
+            }
         }
 
         void SetHostMode(HostMode mode)
@@ -936,7 +1080,7 @@ namespace GoF2Remake.UI
             if (list.Count == 0) { ServerListNote(Localization.Extra("mpNoGames", "No public games right now. Host one, or join with a code.")); yield break; }
             // Unchanged since the last refresh: the rows stay (a controller's focus on one too).
             var key = new System.Text.StringBuilder();
-            foreach (var e in list) key.Append(e.code).Append(e.name).Append(e.players).Append('/').Append(e.maxPlayers).Append(e.password).Append('|');
+            foreach (var e in list) key.Append(e.code).Append(e.name).Append(e.players).Append('/').Append(e.maxPlayers).Append(e.password).Append(e.mods).Append('|');
             if (key.ToString() == serverListKey) yield break;
             serverListKey = key.ToString();
             mpServerList.Clear();
@@ -947,7 +1091,8 @@ namespace GoF2Remake.UI
                 var row = new Button { focusable = true };
                 row.AddToClassList("mp-address-row");
                 row.AddToClassList("mp-server-row");
-                bool joinable = !entry.Full && entry.SameVersion;
+                var missingMods = entry.MissingMods;   // a modded game: the mods this game lacks (NetMods)
+                bool joinable = !entry.Full && entry.SameVersion && missingMods.Count == 0;
                 row.EnableInClassList("mp-server-row--full", !joinable);
                 var top = new VisualElement { pickingMode = PickingMode.Ignore };
                 top.AddToClassList("mp-server-line");
@@ -964,11 +1109,14 @@ namespace GoF2Remake.UI
                 }
                 if (entry.dedicated) Tag(Localization.Extra("mpServerTag", "Server"), null);
                 if (entry.password) Tag(Localization.Extra("mpPasswordTag", "Password"), "mp-server-tag--password");
+                if (entry.Modded) Tag(Localization.Extra("mpModdedTag", "Modded"), "mp-server-tag--mods");
                 row.Add(top);
                 var bottom = new VisualElement { pickingMode = PickingMode.Ignore };
                 bottom.AddToClassList("mp-server-line");
                 string info = (entry.dedicated ? "" : entry.host + "  ·  ") + $"{entry.players} / {entry.maxPlayers}"
-                              + (entry.Full ? "  ·  " + Localization.Extra("mpFull", "full") : "");
+                              + (entry.Full ? "  ·  " + Localization.Extra("mpFull", "full") : "")
+                              + (missingMods.Count > 0 ? "  ·  " + string.Format(Localization.Extra("mpNeedsModsShort", "needs mods: {0}"), string.Join(", ", missingMods))
+                                 : entry.Modded ? "  ·  " + entry.modNames : "");
                 var infoLabel = new Label(info) { pickingMode = PickingMode.Ignore };
                 infoLabel.AddToClassList("mp-server-info");
                 bottom.Add(infoLabel);
@@ -991,6 +1139,8 @@ namespace GoF2Remake.UI
                     else if (joinable) WithName(() => StartCoroutine(LeaveForMultiplayer(entry.code)));
                     else if (mpStatus != null)
                         mpStatus.text = entry.Full ? Localization.Extra("mpGameFull", "That game is full.")
+                            : entry.SameVersion && missingMods.Count > 0 ? string.Format(Localization.Extra("mpNeedsMods",
+                                "This game uses mods you don't have, or have another version of: {0}. Install the same files in your Mods folder, then join again."), string.Join(", ", missingMods))
                             : entry.version == GoF2Remake.Multiplayer.NetGame.Version
                             ? string.Format(Localization.Extra("mpOtherBuildText", "That game runs a different build of version {0}: only the same game files can join."), entry.version)
                             : string.Format(Localization.Extra("mpOtherVersion", "That game runs version {0}, yours is {1}: only the same version can join."), entry.version, GoF2Remake.Multiplayer.NetGame.Version);
@@ -1412,7 +1562,17 @@ namespace GoF2Remake.UI
         /// <summary>GameRecord::load: the saved (docked) state, then the station.</summary>
         void LoadSlot(int slot)
         {
-            if (slot < 0 || !SaveGame.Load(slot)) return;
+            if (slot < 0) return;
+            // A save made with mods that aren't on now: say what happens to their items first (Modding.ModSaves).
+            var missing = Modding.ModSaves.MissingMods(SaveGame.Preview(slot));
+            if (missing.Count > 0)
+            {
+                ShowDialog(Localization.Extra("modsMissingTitle", "Mods missing"), string.Format(Localization.Extra("modsMissingText",
+                    "This game was saved with mods that aren't on: {0}.\nTheir items will be removed and refunded. Turn the mods on in Mods to keep them.\n\nLoad anyway?"),
+                    string.Join(", ", missing)), () => { if (SaveGame.Load(slot)) StartCoroutine(Leave("Station")); });
+                return;
+            }
+            if (!SaveGame.Load(slot)) return;
             StartCoroutine(Leave("Station"));
         }
 
@@ -1423,6 +1583,9 @@ namespace GoF2Remake.UI
             fade.AddToClassList("fade--on");
             StartCoroutine(FadeMusic(0f, 1.2f));
             yield return new WaitForSeconds(1.3f);
+            // The mods (Modding.ModLoading: ship models, music; loading since the menu opened or the mods changed), at most
+            // 60 s more, with the loading screen on the black fade.
+            yield return WaitForMods(leaveLoading, 60f);
             if (Application.CanStreamedLevelBeLoaded(scene)) SceneManager.LoadScene(scene);
             else
             {
@@ -1691,6 +1854,7 @@ namespace GoF2Remake.UI
             Set("newGameButton", T(28));
             Set("loadButton", T(29));
             Set("optionsButton", T(31));
+            Set("modsButton", Localization.Extra("modsButton", "Mods").ToUpperInvariant());
             Set("aboutButton", T(43));
             Set("exitButton", T(33));
             Set("debugButton", Localization.Extra("debugButton", "Debug").ToUpperInvariant());
@@ -1713,6 +1877,9 @@ namespace GoF2Remake.UI
             Set("mpDebugLabel", Localization.Extra("mpDebugMenu", "Debug menu").ToUpperInvariant());
             Set("mpDebugOff", Localization.Extra("mpDebugOff", "Off").ToUpperInvariant());
             Set("mpDebugOn", Localization.Extra("mpDebugAllowed", "Allowed").ToUpperInvariant());
+            Set("mpModsOff", Localization.Extra("mpDebugOff", "Off").ToUpperInvariant());
+            Set("mpModsOn", Localization.Extra("mpDebugAllowed", "Allowed").ToUpperInvariant());
+            ApplyHostMods();
             if (mpJoinPassword != null) mpJoinPassword.textEdition.placeholder = Localization.Extra("mpJoinPasswordHint", "Password");
             Set("mpPortLabel", Localization.Extra("mpPortLabel", "Port").ToUpperInvariant());
             Set("mpHost", Localization.Extra("mpHost", "Host").ToUpperInvariant());
@@ -1890,14 +2057,14 @@ namespace GoF2Remake.UI
                 ? voicePreviewGerman : voicePreviewEnglish;
             if (voiceSource == null || clips == null || clips.Length == 0) return;
             voiceSource.Stop();   // one line at a time, a new release restarts it
-            voiceSource.clip = clips[voicePreviewIndex++ % clips.Length];
+            voiceSource.clip = GoF2Remake.Modding.ModSounds.Get(clips[voicePreviewIndex++ % clips.Length]);
             voiceSource.volume = Settings.VoiceVolume;
             voiceSource.Play();
         }
 
         void Play(AudioClip clip, float volume = 1f)
         {
-            if (clip != null && sfxSource != null) sfxSource.PlayOneShot(clip, volume);
+            if (clip != null && sfxSource != null) sfxSource.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), volume);
         }
     }
 }
