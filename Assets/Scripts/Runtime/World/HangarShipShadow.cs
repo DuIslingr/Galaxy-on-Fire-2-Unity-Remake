@@ -7,9 +7,13 @@
 // whatever is under the hull: the pads, the Terran cradles (the hull sits below their rims), the raised rims and
 // pedestals, the crates. The box sits in the hangar, not on the ship: it only turns with the ship's heading. Shown while
 // the ship stands on its pad (the turntable, the parked ships), fading out as it lifts off (gone 15 m up) and staying on
-// the pad as it flies away; an arriving ship's appears once it has landed.
+// the pad as it flies away; an arriving ship's appears once it has landed. The "Hangar ship shadows" option
+// (Settings.HangarShadows: off / player ship only / all ships) hides them live; off also gives the station camera its
+// own depth texture setting back (the shadows' depth prepass / copy is most of their cost on phones).
 
+using GoF2Remake.Data;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace GoF2Remake.World
 {
@@ -22,6 +26,10 @@ namespace GoF2Remake.World
         const float Below = 6f, Above = 8f;
 
         static Mesh boxMesh;
+        /// <summary>The camera the shadows switched the depth texture on for, and its own setting before (restored when the
+        /// option is off).</summary>
+        static Camera depthCamera;
+        static CameraOverrideOption depthBefore;
 
         GameObject box;
         MeshRenderer boxRenderer;
@@ -31,13 +39,29 @@ namespace GoF2Remake.World
         float size, bottom, heightRange = 1f;
         float floorY = float.NaN, restTime, alpha;
         Vector3 lastPos;
+        bool player;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() => boxMesh = null;
+        static void ResetStatics() { boxMesh = null; depthCamera = null; }
+
+        /// <summary>The option lets this ship's shadow show (off: none; player ship only: the turntable's).</summary>
+        bool Allowed => Settings.HangarShadows == Settings.HangarShadowsAll || (player && Settings.HangarShadows == Settings.HangarShadowsPlayer);
+
+        /// <summary>The station camera's depth texture: on while the option shows any shadow, else back to its own setting.</summary>
+        static void ApplyDepth()
+        {
+            var cam = Camera.main;
+            if (cam == null) return;
+            var data = cam.GetUniversalAdditionalCameraData();
+            if (depthCamera != cam) { depthCamera = cam; depthBefore = data.requiresDepthOption; }
+            var want = Settings.HangarShadows == Settings.HangarShadowsOff ? depthBefore : CameraOverrideOption.On;
+            if (data.requiresDepthOption != want) data.requiresDepthOption = want;
+        }
 
         /// <summary>A shadow for a hangar ship (StationLevel.SpawnShip); 'resting': it stands on its pad now (else it shows
-        /// once the ship has come to rest).</summary>
-        public static HangarShipShadow Attach(GameObject ship, string assembly, bool resting)
+        /// once the ship has come to rest); 'player': the player's own ship (the option's "Player ship only"). Attached
+        /// whatever the option, hidden while it doesn't allow it, so changing it while docked takes effect at once.</summary>
+        public static HangarShipShadow Attach(GameObject ship, string assembly, bool resting, bool player = false)
         {
             var set = ShipShadowSet.Load();
             if (ship == null || set == null || set.material == null) return null;
@@ -62,9 +86,9 @@ namespace GoF2Remake.World
                 s.bottom = b.min.y;
             }
             if (tex == null || s.size <= 0f) { Destroy(s); return null; }
-            // The projection reads the scene's depth: the station camera renders its depth texture.
-            var cam = Camera.main;
-            if (cam != null) UnityEngine.Rendering.Universal.CameraExtensions.GetUniversalAdditionalCameraData(cam).requiresDepthTexture = true;
+            s.player = player;
+            // The projection reads the scene's depth: the station camera renders its depth texture (unless the option is off).
+            ApplyDepth();
             s.box = new GameObject("Shadow (" + ship.name + ")");
             s.box.transform.SetParent(ship.transform.parent, false);
             s.box.AddComponent<MeshFilter>().sharedMesh = Box();
@@ -142,7 +166,7 @@ namespace GoF2Remake.World
 
         void Place()
         {
-            bool show = alpha > 0.005f && !float.IsNaN(floorY);
+            bool show = alpha > 0.005f && !float.IsNaN(floorY) && Allowed;
             if (boxRenderer.enabled != show) boxRenderer.enabled = show;
             if (!show) return;
             var fwd = transform.forward;
@@ -159,8 +183,17 @@ namespace GoF2Remake.World
             boxRenderer.SetPropertyBlock(block);
         }
 
-        void OnEnable() { if (box != null) box.SetActive(true); }
-        void OnDisable() { if (box != null) box.SetActive(false); }
+        void OnEnable()
+        {
+            if (box != null) box.SetActive(true);
+            Settings.Changed += ApplyDepth;
+        }
+
+        void OnDisable()
+        {
+            if (box != null) box.SetActive(false);
+            Settings.Changed -= ApplyDepth;
+        }
         void OnDestroy() { if (box != null) Destroy(box); }
     }
 }

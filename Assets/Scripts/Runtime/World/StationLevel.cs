@@ -543,8 +543,9 @@ namespace GoF2Remake.World
                 asm.SetPlayerVariant(false);
                 if (asm.npcVariantParts != null) foreach (var p in asm.npcVariantParts) if (p != null) p.SetActive(false);   // exhaust off
             }
-            // Remake: a soft shadow on the floor under every hangar ship (not the bar's flybys); it shows once the ship rests.
-            if (go != null && hangarRoot != null && parent == hangarRoot) HangarShipShadow.Attach(go, entry.name, false);
+            // Remake: a soft shadow on the floor under every hangar ship (not the bar's flybys); it shows once the ship rests
+            // (the "Hangar ship shadows" option: off, the player's own ship only, every ship).
+            if (go != null && hangarRoot != null && parent == hangarRoot) HangarShipShadow.Attach(go, entry.name, false, label == "Player ship");
             return go;
         }
 
