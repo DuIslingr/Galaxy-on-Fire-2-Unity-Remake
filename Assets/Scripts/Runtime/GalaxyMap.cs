@@ -51,6 +51,10 @@ namespace GoF2Remake.Data
                 if (LomaSystem < n) v[LomaSystem] = true;
                 Session.SystemVisible = v;
             }
+            // Remake multiplayer: the finished game's map, every system the campaigns reveal (Story.RevealedSystems).
+            if (Session.CompletedWorld)
+                foreach (int s in Story.RevealedSystems)
+                    if (s < Session.SystemVisible.Length) Session.SystemVisible[s] = true;
             // Remake mods: a mod campaign with its own galaxy hides every other system (Modding.ModCampaigns).
             if (Modding.ModCampaigns.ModGalaxy)
                 foreach (var s in db.Systems)

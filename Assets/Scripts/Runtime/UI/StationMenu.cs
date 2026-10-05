@@ -73,6 +73,9 @@ namespace GoF2Remake.UI
         int tickerPointer = -1;
         float tickerLastX;
         string tickerSingle = "";
+        string tickerBase;          // the game's own items, rolled once per docking
+        bool tickerNewsDirty;       // the session's news changed: rebuilt when the strip wraps (no jump)
+        float tickerBuiltAt;
         VisualElement systemMenu, systemMain, systemSave;
         ScrollView saveSlotList;
         Button saveGameButton, mainMenuButton, systemClose, saveBack;
@@ -136,6 +139,7 @@ namespace GoF2Remake.UI
             {
                 ChatView.Attach(gameObject, safeArea ?? root);   // multiplayer chat
                 SquadView.Attach(gameObject, safeArea ?? root, level != null && level.Layout != null ? level.Layout.stationIndex : -1);   // squad, pilots here
+                MultiplayerWindow.Attach(gameObject, safeArea ?? root);   // the Faction / Arena / Profile window
             }
 
             InputGlyph.TrackHintsOption(hints);
@@ -155,6 +159,8 @@ namespace GoF2Remake.UI
             hangarWindow = new HangarWindow(this, level, root);
             GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
             GoF2Remake.Multiplayer.NetStock.Changed += OnSharedStock;
+            GoF2Remake.Multiplayer.NetNews.Changed -= OnNews;
+            GoF2Remake.Multiplayer.NetNews.Changed += OnNews;
             infoWindow = new ItemInfoWindow(this, root);
             lounge = new LoungePanel(this, level, root);
             SetupTicker();
@@ -189,6 +195,9 @@ namespace GoF2Remake.UI
             root.Q<Label>("stationTitle").text = st == null ? "" :
                 (st.index == 101 ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101
             root.Q<Label>("systemName").text = st == null ? "" : $"{st.systemName} {T(137)}";
+            // Multiplayer: the faction holding this station (NetFactions).
+            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetFactionsClient.OwnerText(st.index);
+            if (holder.Length > 0) root.Q<Label>("systemName").text += $"  ·  {holder}";
             root.Q<Label>("techLevel").text = st == null ? "" : $"{T(133)}: {st.techLevel}";
             int race = level != null ? level.Layout.raceId : -1;
             var raceLabel = root.Q<Label>("raceName");
@@ -266,6 +275,7 @@ namespace GoF2Remake.UI
         void OpenHangar()
         {
             if (HangarOpen || level == null || !Story.HangarUnlocked) return;
+            if (RefuseObserver()) return;
             if (level.View != StationView.Hangar) level.SetView(StationView.Hangar);
             FirstVisitHint(8, 622);   // before the first row's selection hint
             hangarWindow.Open();
@@ -303,8 +313,10 @@ namespace GoF2Remake.UI
             Select(hangarButton);
         }
 
-        /// <summary>NewsTicker: built once per docking (ModStation::OnInitialize state 0x3c), main view only.</summary>
-        void SetupTicker()
+        /// <summary>NewsTicker: built once per docking (ModStation::OnInitialize state 0x3c), main view only. Multiplayer
+        /// (remake): the sector's own news first (NetNews: claims, sieges, raids, arena results ...); 'newsOnly' keeps
+        /// the game's items already rolled.</summary>
+        void SetupTicker(bool newsOnly = false)
         {
             tickerText = root.Q<Label>("tickerText");
             HookTickerDrag();
@@ -312,11 +324,14 @@ namespace GoF2Remake.UI
             bool shown = st != null && NewsTicker.ShownAt(st.index, st.system);
             root.EnableInClassList("ticker-off", !shown);
             if (!shown) return;
-            tickerSingle = NewsTicker.Build(level.Database, st.system, level.Layout.raceId) ?? "";
+            if (!newsOnly || tickerBase == null) tickerBase = NewsTicker.Build(level.Database, st.system, level.Layout.raceId) ?? "";
+            tickerSingle = GoF2Remake.Multiplayer.NetNews.Ticker(st.index) + tickerBase;
+            tickerNewsDirty = false;
+            tickerBuiltAt = Time.unscaledTime;
             tickerText.text = tickerSingle;
             tickerX = 0f;
             tickerReady = false;
-            tickerText.style.visibility = Visibility.Hidden;   // until it starts at the strip's right edge
+            if (!newsOnly) tickerText.style.visibility = Visibility.Hidden;   // until it starts at the strip's right edge
         }
 
         /// <summary>NewsTicker::OnTouchBegin / OnTouchMove / OnTouchEnd: a press on the strip holds it (no auto-scroll) and it
@@ -390,7 +405,14 @@ namespace GoF2Remake.UI
             }
             if (tickerPointer >= 0) return;   // held: NewsTicker::update skips the scroll while dragged
             tickerX -= Time.unscaledDeltaTime * NewsTicker.ScrollPxPerSecond;
+            bool wrapped = tickerX <= -tickerUnitWidth;
             WrapTicker();
+            // Multiplayer: new news, or the items' ages ("5 min ago") a minute old: rebuilt as the copy wraps.
+            if (wrapped && (tickerNewsDirty || (GoF2Remake.Multiplayer.NetGame.Active && Time.unscaledTime - tickerBuiltAt > 60f)))
+            {
+                SetupTicker(true);
+                return;
+            }
             tickerText.style.left = tickerX;
         }
 
@@ -628,6 +650,7 @@ namespace GoF2Remake.UI
         void OpenLounge()
         {
             if (level == null || !Story.LoungeUnlocked(level.Station != null ? level.Station.index : -1)) return;
+            if (RefuseObserver()) return;
             CloseHangar();
             level?.SetView(StationView.Lounge);
             FirstVisitHint(0xd, 627);
@@ -639,6 +662,7 @@ namespace GoF2Remake.UI
         void OpenMap()
         {
             if (level == null || StarMap.IsOpen || !Story.MapUnlocked) return;
+            if (RefuseObserver()) return;
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
             if (Story.MapRefusal is string refusal) { ShowDialog(refusal, null, true); return; }   // index 77: take the Cronus
             CloseHangar();
@@ -646,7 +670,7 @@ namespace GoF2Remake.UI
             root.AddToClassList("station-map-open");
             var map = StarMap.Open(level.Database, StarMapMode.Station, GalaxyMap.HasJumpDrive(level.Database), OnMapClosed);
             if (map == null) { root.RemoveFromClassList("station-map-open"); return; }
-            int cm = Session.FreePlay ? 20 : Session.CampaignMission;
+            int cm = Session.WorldIndex;
             if (!Settings.TutorialHints) { }   // the tutorial popups option
             else if (cm > 15 && Session.Hints.Add(0xe)) map.ShowHint(HintText(628, true));
             else if (cm < 16 && Session.Hints.Add(0xf)) map.ShowHint(HintText(631, true));
@@ -684,10 +708,20 @@ namespace GoF2Remake.UI
             return true;
         }
 
+        /// <summary>Multiplayer: another device of this player's server profile controls it, so this one stays on the main
+        /// view (NetProfileClient.Refusal): no hangar, lounge, map or launch.</summary>
+        bool RefuseObserver()
+        {
+            if (!(GoF2Remake.Multiplayer.NetProfileClient.Refusal is string text)) return false;
+            ShowToast(text);
+            return true;
+        }
+
         /// <summary>ModStation::leaveStation: refused while the cargo hold is overloaded (204). Remake: launches at once, without
         /// the original's "Depart the station?" (397).</summary>
         void AskLaunch()
         {
+            if (RefuseObserver()) return;
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
             if (RefuseLaunchForStory()) return;
             level.Launch();
@@ -767,7 +801,21 @@ namespace GoF2Remake.UI
             if (level != null && level.Stock != null && level.Stock.station == station) hangarWindow?.StockChanged();
         }
 
-        void OnDestroy() => GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
+        void OnDestroy()
+        {
+            GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
+            GoF2Remake.Multiplayer.NetNews.Changed -= OnNews;
+            if (runtimePanel != null) Destroy(runtimePanel);   // the per-scene clone: its panel (atlas, GPU buffers) goes with it
+        }
+
+        /// <summary>Multiplayer: the sector's news changed (NetNews): at once while the strip has nothing yet, else when it
+        /// wraps.</summary>
+        void OnNews()
+        {
+            if (tickerText == null) return;
+            if (tickerReady) tickerNewsDirty = true;
+            else SetupTicker(true);
+        }
 
         void StartVoidAlarm()
         {
@@ -797,6 +845,7 @@ namespace GoF2Remake.UI
         void Back()
         {
             if (infoWindow != null && infoWindow.IsOpen) { Play(buttonRelease); infoWindow.Close(); }
+            else if (MultiplayerWindow.IsOpenAny) { Play(buttonRelease); MultiplayerWindow.CloseAny(); }   // multiplayer: the faction window
             else if (DialogOpen)
             {
                 // The original's ChoiceWindow can't be dismissed (ModStation::OnKeyPress ignores every key while it is open):
@@ -1155,9 +1204,10 @@ namespace GoF2Remake.UI
             loadGameButton = SystemButton(Localization.Get(29), 1, () => ShowSystemPage(SysPage.Load), systemMain);
             optionsButton = SystemButton(Localization.Get(31), 3, () => ShowSystemPage(SysPage.Options), systemMain);
             aboutButton = SystemButton(Localization.Get(43), 4, () => { ShowDialog(AboutText.Get(), null, true); AboutText.Hook(root.Q<Label>("dialogText")); }, systemMain);
-            // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats); in multiplayer only when
-            // the session allows it.
-            if (Cheats.PageShown) debugButton = SystemButton(Localization.Extra("debugTitle", "Debug"), 5, () => ShowSystemPage(SysPage.Debug), systemMain);
+            // Remake: the Debug page once the main menu's Debug panel has been opened (Cheats); in multiplayer whenever the
+            // session allows it (made in every session: a server's admin may switch it on or off meanwhile, ShowSystemPage).
+            if (Cheats.PageShown || GoF2Remake.Multiplayer.NetGame.Active)
+                debugButton = SystemButton(Localization.Extra("debugTitle", "Debug"), 5, () => ShowSystemPage(SysPage.Debug), systemMain);
             // Multiplayer: a session's game is never saved, and no single-player save is loaded into it.
             if (GoF2Remake.Multiplayer.NetGame.Active)
                 foreach (var b in new[] { loadGameButton, saveGameButton }) if (b != null) b.style.display = DisplayStyle.None;
@@ -1330,6 +1380,8 @@ namespace GoF2Remake.UI
             root.Q<Label>("systemMenuTitle").text = page == SysPage.Debug ? Localization.Extra("debugTitle", "Debug").ToUpperInvariant()
                                                                           : Localization.Get(title).ToUpperInvariant();
             if (slots) BuildSaveSlots();
+            if (debugButton != null) debugButton.style.display = Cheats.PageShown ? StyleKeyword.Null : DisplayStyle.None;
+            if (page == SysPage.Debug && !Cheats.PageShown) { ShowSystemPage(SysPage.Main); return; }   // switched off meanwhile
             if (page == SysPage.Debug) BuildStationOptions();
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             Select(page == SysPage.Save ? saveSlotList.contentContainer.ElementAt(1)     // slot 1: the first manual slot
@@ -1478,9 +1530,13 @@ namespace GoF2Remake.UI
         void OnPointerDown(PointerDownEvent e)
         {
             if (e.pointerType == PointerType.mouse) { SetTouchMode(false); return; }
+            // Don't focus what the finger presses, except a text field (the chat line, the multiplayer window's codes, amounts
+            // and names): it needs the focus for the on-screen keyboard (MainMenu does the same).
+            if (TextFieldKeys.InTextField(e.target)) { touchMode = true; root.EnableInClassList("can-hover", false); return; }
             SetTouchMode(true);
             root.focusController?.IgnoreEvent(e);
         }
+
 
         void Select(VisualElement e)
         {
@@ -1736,6 +1792,7 @@ namespace GoF2Remake.UI
             var pad = Gamepad.current;
             if ((kb != null && kb.escapeKey.wasPressedThisFrame) || (pad != null && pad.buttonEast.wasPressedThisFrame)) { Back(); return; }
             if (infoWindow != null && infoWindow.IsOpen) { infoWindow.Tick(); return; }   // it takes all input
+            if (MultiplayerWindow.IsOpenAny) return;   // the faction window's buttons and text fields take the input
             if (pad != null && pad.startButton.wasPressedThisFrame && !DialogOpen)
             {
                 Play(buttonRelease);

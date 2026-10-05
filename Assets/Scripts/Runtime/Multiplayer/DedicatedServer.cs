@@ -10,10 +10,26 @@
 //   -allowdebug      the players may use the Debug menu (cheats, items, spawns); off by default (NetGame.HostAllowsDebug)
 //   -allowmods       the session runs every mod in this game's Mods folders (NetMods); off by default
 //   -port N          the local port (default 7777); -fps N the server's frame rate (default 60)
+//   -freepvp         players may fight anywhere (else only in arena matches, NetArena)
+//   -noprofiles      no player profiles (NetProfiles; on by default: credits, ships, cargo, Kaamo Club, squad kept
+//                    per player between sessions); -maxprofiles N (default 50), -maxearn N (worth a profile may gain
+//                    per minute online without -allowdebug, default 1 000 000), -profiledir PATH (default
+//                    <persistentDataPath>/ServerProfiles)
+//   -claimcost N     a faction's station claim from its bank (default 500 000); -maxclaims N per faction (default 3);
+//   -claimdays N     the days without a member docking before a claim lapses (default 14) (NetFactions)
+//   -siegecost N     a siege on another faction's station, from the bank (default 250 000); -toll N what another faction's
+//                    pilot pays to be spared by a held station's defence (default 10 000, 0 = no toll)
+//   -web [port]      the web admin (WebAdmin: a browser page for the console, players, bans, settings, the log), default
+//                    port 8080 (-webport N too); -webbind ADDRESS what it listens on (default 127.0.0.1, this machine only;
+//                    0.0.0.0 every adapter: then put it behind a TLS reverse proxy)
 // Bootstrap calls Boot before the first scene wakes and swaps in an empty scene. The main menu scene never runs: in the
 // Editor its objects are already loaded and are switched off at once; in a player the scene is still loading then, so
 // MainMenu / MenuBackground call ShutOff as they wake (the scene's objects off before the rest wake: no menu, music or
 // live orbit backdrop), and the scene is unloaded once loaded. The process is muted (AudioListener volume 0, paused).
+// Losing the network (the router restarting, the Relay connection gone) stops Netcode's server: instead of quitting, the
+// server starts its session again (Reconnect: after 5 s, then 10, 20, 40 and every 60 s until it is back), online with a
+// new Relay allocation, join code and listing, the world seed kept. The players were dropped with the connection; they
+// join again (from the server browser, or with the new code) and the profiles bring their progress back.
 // Then NetGame.StartServer runs the session's world (NetState: the seed, the shared stock, squads, missions, crate
 // claims, the chat relay) without a player of its own; every player's game runs its orbits as with a host (the first
 // player in an orbit runs its NPCs).
@@ -32,6 +48,7 @@ using System.Linq;
 using System.IO;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using GoF2Remake.Data;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -42,12 +59,11 @@ namespace GoF2Remake.Multiplayer
     public sealed class DedicatedServer : MonoBehaviour
     {
         public const string EnvironmentSwitch = "GOF2_SERVER";
-        const string ServerName = "Server";
         const float TrackSeconds = 1f;
         /// <summary>The commands Tab completes in the console (ConsoleInput), in help's order.</summary>
         static readonly string[] CommandNames = new[] { "help", "status", "list", "say", "admin", "stop" }.Concat(NetCommands.ServerCommandNames).ToArray();
 
-        /// <summary>This process runs as a dedicated server (-server, or GOF2_SERVER set).</summary>
+        /// <summary>This process runs as a dedicated server (-server, GOF2_SERVER set, or a Dedicated Server build).</summary>
         public static bool Enabled { get; private set; } = Detect();
 
         static readonly ConcurrentQueue<string> commands = new ConcurrentQueue<string>();
@@ -64,10 +80,15 @@ namespace GoF2Remake.Multiplayer
             Enabled = Detect();
             while (commands.TryDequeue(out _)) { }
             instance = null;
+            reconnecting = false;
         }
 
         static bool Detect() =>
+#if UNITY_SERVER
+            true;   // the Linux Dedicated Server build (GoF2 > Build > Linux Dedicated Server): always a server
+#else
             HasFlag("-server") || !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(EnvironmentSwitch));
+#endif
 
         static bool HasFlag(string flag) =>
             Array.Exists(Environment.GetCommandLineArgs(), a => string.Equals(a, flag, StringComparison.OrdinalIgnoreCase));
@@ -85,8 +106,31 @@ namespace GoF2Remake.Multiplayer
             NetGame.HostPassword = NetGame.CleanPassword(Value("-password"));
             NetGame.HostAllowsDebug = HasFlag("-allowdebug");
             NetMods.HostAllowsMods = HasFlag("-allowmods");
+            NetGame.FreePvp = HasFlag("-freepvp");
+            NetProfiles.Configure(!HasFlag("-noprofiles"),
+                int.TryParse(Value("-maxprofiles"), out int profiles) ? profiles : NetProfiles.DefaultMaxProfiles,
+                int.TryParse(Value("-maxearn"), out int earn) ? earn : NetProfiles.DefaultEarnPerMinute,
+                Value("-profiledir"));
+            NetFactions.Configure(int.TryParse(Value("-claimcost"), out int cost) ? cost : NetFactions.DefaultClaimCost,
+                int.TryParse(Value("-maxclaims"), out int maxClaims) ? maxClaims : NetFactions.DefaultMaxClaims,
+                int.TryParse(Value("-claimdays"), out int days) ? days : NetFactions.DefaultLapseDays,
+                int.TryParse(Value("-siegecost"), out int siegeCost) ? siegeCost : NetFactions.DefaultSiegeCost,
+                int.TryParse(Value("-toll"), out int toll) ? toll : NetFactions.DefaultToll);
+            ListName = Value("-name") ?? DefaultListName;
+            // The settings saved by the admins (server_settings.json) for whatever the command line didn't give.
+            NetServerSettings.Load(HasFlag);
             relay = HasFlag("-relay") || Environment.GetEnvironmentVariable(EnvironmentSwitch) == "relay";
             Application.runInBackground = true;
+#if UNITY_STANDALONE_LINUX && !UNITY_EDITOR
+            SaveTerminal();
+            Application.quitting += ExitNow;
+#endif
+#if !UNITY_EDITOR
+            // The log (-logFile -: the terminal) without a call stack under every info line and warning ("NetLobby: listed
+            // ..." came with ~100 lines of async frames); errors and exceptions keep theirs.
+            Application.SetStackTraceLogType(LogType.Log, StackTraceLogType.None);
+            Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.None);
+#endif
 #if UNITY_EDITOR
             int editorVSync = QualitySettings.vSyncCount;
             Application.quitting += () => QualitySettings.vSyncCount = editorVSync;   // QualitySettings.asset keeps its own
@@ -141,20 +185,14 @@ namespace GoF2Remake.Multiplayer
         {
             OpenConsole();
             startedAt = Time.unscaledTime;
-            Log($"Galaxy on Fire 2 Unity Remake dedicated server, version {Application.version} (code {NetGame.Protocol})");
-            if (relay)
+            Log($"Galaxy on Fire 2 Unity Remake dedicated server, build {UI.BuildVersion.Full} (fingerprint {NetGame.Protocol})");
+            if (!await StartSession(false))
             {
-                Log("Reserving an online session (Unity Relay)...");
-                string listed = HasFlag("-unlisted") ? null : (Value("-name") ?? "Galaxy on Fire 2 server");
-                if (!await NetGame.PrepareOnlineHost(listed)) { Fail(); return; }
-            }
-            if (!NetGame.StartServer(port)) { Fail(); return; }
-            if (NetGame.JoinCode != null)
-                Log($"Online through Unity Relay. Join code: {NetGame.JoinCode}");
-            else
-            {
-                Log($"Listening on port {port} (UDP, every network adapter). Players join on this machine's address{(port != NetGame.DefaultPort ? ":" + port : "")}.");
-                foreach (var (name, address) in NetGame.LocalAddresses()) Log($"  {name}: {address}");
+                // Online without a network yet (the machine came up before its router): keep trying, like after a lost
+                // connection. A local server's failure (the port in use) won't go away by waiting.
+                if (!relay) { Fail(); return; }
+                Debug.LogWarning("Server: " + NetGame.Status);
+                Reconnect();
             }
             Log($"Up to {NetGame.MaxPlayers} players (-maxplayers).");
             if (NetGame.HasPassword) Log("Players need the password (-password) to join.");
@@ -162,14 +200,135 @@ namespace GoF2Remake.Multiplayer
             Log(NetMods.HostAllowsMods
                 ? (NetMods.SessionList.Length > 0 ? $"Mods (-allowmods): {NetMods.SessionNames}." : "Mods are allowed (-allowmods), but the Mods folder has none.")
                 : "No mods (-allowmods runs every mod in the Mods folder).");
+            if (!HasFlag("-noprofiles"))
+                Log(NetGame.HostAllowsDebug ? "Player profiles: uploads are taken as the players' games send them (-allowdebug)."
+                                            : $"Player profiles: uploads are checked (at most {NetProfiles.EarnPerMinute:N0} worth gained per minute: -maxearn).");
+            else Log("Player profiles are off (-noprofiles): nothing is saved.");
+            Log(NetGame.FreePvp ? "Players may fight anywhere (-freepvp)." : "Players fight only in arena matches (/duel, /ffa; -freepvp allows it anywhere).");
+            WebAdmin.StartFromCommandLine();
             Log("Type \"help\" for the commands.");
+        }
+
+        /// <summary>Starts the session (online: a Relay allocation and listing first); 'again' = after a lost connection, the
+        /// world seed kept. False = NetGame.Status says why.</summary>
+        static async Task<bool> StartSession(bool again)
+        {
+            if (relay)
+            {
+                Log("Reserving an online session (Unity Relay)...");
+                string listed = HasFlag("-unlisted") ? null : ListName;
+                if (!await NetGame.PrepareOnlineHost(listed)) return false;
+            }
+            if (!NetGame.StartServer(port, again)) return false;
+            if (NetGame.JoinCode != null)
+                Log($"Online through Unity Relay. Join code: {NetGame.JoinCode}");
+            else
+            {
+                Log($"Listening on port {port} (UDP, every network adapter). Players join on this machine's address{(port != NetGame.DefaultPort ? ":" + port : "")}.");
+                foreach (var (name, address) in NetGame.LocalAddresses()) Log($"  {name}: {address}");
+            }
+            return true;
+        }
+
+        static bool reconnecting;
+
+        public const string DefaultListName = "Galaxy on Fire 2 server";
+
+        /// <summary>The server browser's name (-name, NetServerSettings' "name"; used at the next listing).</summary>
+        public static string ListName { get; set; } = DefaultListName;
+
+        /// <summary>NetGame: Netcode's server stopped by itself (the network went). True = the server starts again
+        /// (Reconnect); false = no server here, the caller quits.</summary>
+        public static bool ConnectionLost()
+        {
+            if (instance == null) return false;
+            if (!reconnecting) instance.Reconnect();
+            return true;
+        }
+
+        async void Reconnect()
+        {
+            reconnecting = true;
+            float delay = 5f;   // the old NetworkManager is destroyed a moment after the stop (NetGame.ShutdownNow)
+            Log($"Offline; starting the session again in {delay:0} s.");
+            while (instance == this)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(delay));   // Unity's synchronisation context: back on the main thread
+                if (instance != this || NetGame.Active) break;
+                if (await StartSession(true))
+                {
+                    Log(NetGame.JoinCode != null ? "Back online. The players need to join again (the server browser, or the new join code)."
+                                                 : "Back online. The players need to join again.");
+                    break;
+                }
+                delay = Mathf.Min(delay * 2f, 60f);
+                Log($"Still offline ({NetGame.Status}); trying again in {delay:0} s.");
+            }
+            reconnecting = false;
         }
 
         static void Fail()
         {
             Debug.LogError("Server: " + NetGame.Status);
-            Application.Quit(1);
+            Quit(1);
         }
+
+        /// <summary>The exit code of the quit under way (ExitNow).</summary>
+        static int exitCode;
+
+        /// <summary>Quits with 'code' (0 = stopped on purpose, 1 = failed).</summary>
+        public static void Quit(int code)
+        {
+            exitCode = code;
+            Application.Quit(code);
+        }
+
+#if UNITY_STANDALONE_LINUX && !UNITY_EDITOR
+        // glibc's real file name: IL2CPP has no Mono-style "libc" mapping, and libc.so is only a linker script on most distros.
+        const string LibC = "libc.so.6";
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "_exit")]
+        static extern void LibcExit(int status);
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "fflush")]
+        static extern int LibcFlush(IntPtr stream);
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "tcgetattr")]
+        static extern int TcGetAttr(int fd, byte[] termios);
+
+        [System.Runtime.InteropServices.DllImport(LibC, EntryPoint = "tcsetattr")]
+        static extern int TcSetAttr(int fd, int optionalActions, byte[] termios);
+
+        /// <summary>The terminal's settings at the start (struct termios, 60 bytes on glibc; the buffer is roomier), put back
+        /// before the hard exit: Console.ReadKey switches echo and line mode off and only its own exit handler restores them.</summary>
+        static byte[] savedTerminal;
+
+        static void SaveTerminal()
+        {
+            try
+            {
+                var t = new byte[256];
+                if (TcGetAttr(0, t) == 0) savedTerminal = t;
+            }
+            catch (Exception) { }
+        }
+
+        /// <summary>Linux: the process ends here. Unity's own teardown never finished: the console thread sits in
+        /// Console.ReadKey (a blocking read of the terminal) and the runtime waited for it for good after "CodeReloadManager
+        /// destroyed". What the server keeps is already on disk (profiles, factions, settings are written as they change), so
+        /// the network goes down, the log is flushed, the terminal gets its settings back (SaveTerminal) and the process exits
+        /// at once.</summary>
+        static void ExitNow()
+        {
+            try { WebAdmin.Stop(); } catch (Exception) { }
+            try { NetGame.ShutdownNow(); } catch (Exception) { }
+            Debug.Log($"Server: exiting ({exitCode}).");
+            try { Console.Out.Flush(); Console.Error.Flush(); } catch (Exception) { }
+            try { LibcFlush(IntPtr.Zero); } catch (Exception) { }   // the native log's buffered stdout (_exit skips it)
+            try { if (savedTerminal != null) TcSetAttr(0, 0, savedTerminal); } catch (Exception) { }   // TCSANOW: echo back
+            LibcExit(exitCode);
+        }
+#endif
 
         void Update()
         {
@@ -178,6 +337,7 @@ namespace GoF2Remake.Multiplayer
                 string answer = Run(line);
                 if (!string.IsNullOrEmpty(answer)) Answer(answer);
             }
+            WebAdmin.Pump();   // the web admin's requests, on the main thread
             if ((trackTimer -= Time.unscaledDeltaTime) <= 0f)
             {
                 trackTimer = TrackSeconds;
@@ -187,7 +347,7 @@ namespace GoF2Remake.Multiplayer
 
         void OnDestroy()
         {
-            if (instance == this) instance = null;
+            if (instance == this) { instance = null; WebAdmin.Stop(); }
             if (consoleLog) Application.logMessageReceivedThreaded -= Mirror;
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
@@ -233,8 +393,9 @@ namespace GoF2Remake.Multiplayer
             return n == 1 ? "1 player online." : $"{n} players online.";
         }
 
-        static string Where(NetPlayer p)
+        internal static string Where(NetPlayer p)
         {
+            if (NetArena.IsArenaOrbit(p.Station) && p.InSpace) return $"in arena match {p.Station - NetArena.OrbitBase}";
             string station = StationName(p.Station);
             switch (p.Where)
             {
@@ -275,9 +436,18 @@ namespace GoF2Remake.Multiplayer
                            "  status              join code / port, uptime, players\n" +
                            "  list                the players (= players)\n" +
                            "  say <text>          a chat line to everyone, from \"Server\" (= g)\n" +
-                           "  admin               lists the admins\n" +
+                           "  admin               lists the admins (with profiles: the staff)\n" +
+                           "  master / unmaster <name|profile>   the master admin role; token (the /claimadmin token)\n" +
+                           "  arenas              the arena matches and queues\n" +
+                           "  settings, set <key> <value>   the settings that change while running (saved; the command line wins at a start)\n" +
+                           "  factions               the factions (tag, name, members, leader, bank)\n" +
+                           "  faction disband <TAG>  ends a faction\n" +
+                           "  sieges              the factions' sieges\n" +
+                           "  profiles            the player profiles (id, name, devices, worth, who is online)\n" +
+                           "  profile delete <id> deletes a profile (not while it is online; its file is kept as .bak)\n" +
                            "  stop                tells the players and shuts the server down (also quit, exit, Ctrl+C)\n" +
-                           "The chat's commands, run by the same code (players by name or client id):" + NetCommands.ServerCommandHelp();
+                           "The chat's commands, run by the same code (players by name or client id; with profiles kick, tempban, ban, unban,\n" +
+                           "bans, op, deop, admin, unadmin take a profile's id or name too):" + NetCommands.ServerCommandHelp();
                 case "status":
                     return $"{(NetGame.Active ? "Running" : "Not running")} {(NetGame.JoinCode != null ? $"online, join code {NetGame.JoinCode}" : $"on port {port}")}, up {Duration(Time.unscaledTime - startedAt)}, " +
                            $"{NetGame.ClientIds.Count} player(s), world seed {NetGame.Seed}, {Application.targetFrameRate} fps, " +
@@ -287,7 +457,30 @@ namespace GoF2Remake.Multiplayer
                 case "say":
                     return NetCommands.RunOnServer("g", rest, null);   // the chat line itself is logged
                 case "admin" when rest.Length == 0:
-                    return Admins();
+                    return NetProfiles.Enabled ? NetModeration.ConsoleCommand("staff", "") : Admins();
+                case "master": case "unmaster": case "token":
+                    return NetModeration.ConsoleCommand(cmd, rest);
+                case "arenas":
+                    return NetArena.ConsoleList();
+                case "settings":
+                    return NetServerSettings.ListText();
+                case "set":
+                {
+                    int sp = rest.IndexOf(' ');
+                    return sp < 0 ? "set <key> <value> (\"settings\" lists them)" : NetServerSettings.Set(rest.Substring(0, sp), rest.Substring(sp + 1), "Server");
+                }
+                case "factions":
+                    return NetFactions.ConsoleList();
+                case "sieges":
+                    return NetFactions.ConsoleSieges();
+                case "faction":
+                    if (rest.StartsWith("disband ", StringComparison.OrdinalIgnoreCase)) return NetFactions.ConsoleDisband(rest.Substring(8).Trim());
+                    return "faction disband <TAG>";
+                case "profiles":
+                    return NetProfiles.ConsoleList();
+                case "profile":
+                    if (rest.StartsWith("delete ", StringComparison.OrdinalIgnoreCase)) return NetProfiles.ConsoleDelete(rest.Substring(7).Trim());
+                    return "profile delete <id>";
                 case "stop": case "quit": case "exit": case "shutdown":
                     Log("Stopping the server...");
                     NetGame.StopServer();
@@ -297,6 +490,19 @@ namespace GoF2Remake.Multiplayer
                     return NetCommands.RunOnServer(cmd, rest, null) ?? $"Unknown command \"{cmd}\". Type \"help\".";
             }
         }
+
+        /// <summary>How long the server has run ("2h 05m").</summary>
+        internal static string Uptime => Duration(Time.unscaledTime - startedAt);
+
+        /// <summary>The local port (-port).</summary>
+        internal static ushort Port => port;
+
+        /// <summary>The admins' window: the server in one line.</summary>
+        public static string StatusText() =>
+            $"{(NetGame.JoinCode != null ? $"Online, join code {NetGame.JoinCode}" : $"Port {(Enabled ? port : NetGame.HostPort)}")}  ·  " +
+            $"{(Enabled ? $"up {Duration(Time.unscaledTime - startedAt)}" : NetGame.PersistentHost ? "hosted from the game, persistent world" : "hosted from the game, fresh world")}  ·  " +
+            $"{NetGame.ClientIds.Count} / {NetGame.MaxPlayers} players  ·  version {Application.version}  ·  Debug menu {(NetGame.HostAllowsDebug ? "on" : "off")}  ·  " +
+            $"{(NetGame.FreePvp ? "free PvP" : "PvP in arenas and sieges")}";
 
         static string Admins()
         {

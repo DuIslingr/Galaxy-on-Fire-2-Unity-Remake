@@ -73,6 +73,7 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 - **GoF2 > Build > Combat Assets**: `Resources/GoF2Combat/CombatAssets` (`CombatAssets`). Also run by Create Space Scene.
 - **GoF2 > Build > Star Map Assets**: `Resources/GoF2StarMap/StarMapAssets` (`StarMapAssets`). Also run by Create Space Scene, and by Create Station Scene when missing.
 - **GoF2 > Build > Network Prefabs**: `Resources/GoF2Net`, the multiplayer network prefabs (see "Multiplayer").
+- **GoF2 > Build > Linux Dedicated Server** (`LinuxServerBuild`): `Build/LinuxServer/GoF2Server.x86_64`, Unity's Dedicated Server build (Linux, subtarget Server, IL2CPP, the dedicated server optimizations on: no texture / audio / shader data), only the first scene; it starts as a server by itself (`UNITY_SERVER` in `DedicatedServer.Enabled`), `start-server.sh` beside it. Needs the Hub module "Linux Dedicated Server Build Support"; switches the active target for the build and back.
 - **GoF2 > Build > Event Audio**: `Resources/GoF2Events/EventAudio`, the sounds and music the event graphs play (see "Multiplayer", Events).
 - **GoF2 > Build > Hangar Heights**: `Resources/GoF2Data/hangar_heights.json`, how far each ship is lifted off each hangar pad (see "Station scene"). Run it again after changing a hangar room or a ship model.
 - **GoF2 > Build > Hangar Shadows**: `Resources/GoF2Station/ShipShadows` (+ `ShipShadows.asset`, `HangarShipShadow.mat`), each ship's contact shadow in the hangars (see "Station scene"). Run it again after changing a ship model.
@@ -150,7 +151,7 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Empty orbits** (`OrbitLayout.IsEmptyOrbit`, `Status::inEmptyOrbit` 0xb8ee8; no docking, no station target): 102-104, 109, 110, 132-134 always, 111 (Luur) above index 0x5d, 101 (Herjaza, the Valkyrie's orbit) from 0x54 (the battlestation is in the Void then), 78 at index 0 / 1 (the prologue, the rescue, a menu backdrop rolled there); the station's model stays in 27 / 110 / 111 (`Level::createSpace` 0xbc0f6, `OrbitLayout.stationObject`). Free play and sessions read index 20.
 - **Stable layout:** the original's RNG is `java.util.Random` (`JavaRandom`), seeded per station: jumpgates and sky rotation `2 * station` (separate sequences), sun/planets `300 * station`, asteroid count/centre `station`. `OrbitLayout` reproduces the research tables exactly. Everything the original randomises per visit uses `UnityEngine.Random`.
 - **Rotations:** game `setRotation(x, y, z)` = Rx*Ry*Rz; `OrbitLayout.RotationToUnity` mirrors it and undoes the import's 180 deg yaw, so game (0, pi, 0) (stations, gates) = identity and an undocking player faces Unity -Z.
-- **Sky:** stars `systemIndex % 3` + nebula `system textureIndex`, rotated per station (`_SkyRotation`); it is `RenderSettings.skybox`, so it also gives ambient light.
+- **Sky:** stars `systemIndex % 3` + nebula `system textureIndex`, rotated per station (`_SkyRotation`); it is `RenderSettings.skybox`, so it also gives ambient light. The environment reflection is the scenes' baked lighting data (Window > Rendering > Lighting > Generate Lighting on Space / Station / MainMenu, committed): without it a player reflected the default sky of whatever editor built it (a fresh checkout: Unity's light-blue default sky, grey plastic floors and blue-grey hulls; `DynamicGI.UpdateEnvironment` only refreshes the ambient light in a player).
 - **Sun/planets:** quads 1000 m from the camera, drawn at the far plane (`GoF2/Backdrop`; with the sky layers drawn by
   `BackdropPass` right after the skybox, LightMode `GoF2Backdrop`, so they are in the opaque texture the cloak and the shield
   bubble refract: in URP's transparent pass the cloak showed black over a planet); the sun at the texture's own brightness (additive, like the original), only its near-white core lifted into HDR (×1.6, `_CoreGlow`) under the remake's bloom; sun swells + streak near the screen centre (the supernova system, system 27 before 0x9e: the sun keeps game +x as its up and its size, and a sn_sun_011 glow of 0.3 × the sun + the swell rolls with the camera and makes the streak; `StarSystem::render` with +0xc); planets mirrored so their lit rim faces the sun. Mission 0 (the prologue and the main menu's backdrop after `Status::resetGame`) halves the orbit planet unless a texture size rule replaces it; no camera zoom on the orbit planet in the planet ring orbits and the alien orbit; the alien orbit has its sun straight ahead and `planet_void_big` at yaw 5.2347 (60 deg to the right), unseeded size; K'ontrr (system 20) swaps 58's and 62's planet textures like the original (textures by the stations' file order, roles by the system's list).
@@ -557,9 +558,9 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   control is rebindable (see **Key bindings**).
 - **Key bindings** (remake, `GameControls` + `BindingRow`; their own Options tab "Key bindings" (`OptionPage.Bindings`) in the main, pause and station menus, the panels wide enough for its six tabs): the flight
   controls are one code-made InputActionMap ("Flight", always enabled; chat typing and a capture suspend it,
-  `GameControls.Suspend`) of 29 rows (steer, throttle, brake, boost, roll, level out, strafe left / right, dodge left / right (no keyboard default), fire, fire secondary,
+  `GameControls.Suspend`) of 31 rows (steer, throttle, brake, boost, roll, level out, strafe left / right, dodge left / right (no keyboard default), fire, fire secondary,
   switch secondary, camera / turret view, auto turret, action, autopilot menu, actions menu, fast-forward, wingmen, Khador Drive, cloak,
-  time extender, mouse steering, mining drill (read only while drilling, so its keys may overlap the flight's), chat, chat send, chat channel, screenshot), each with two keyboard / mouse slots and a controller slot (binding
+  time extender, mouse steering, mining drill (read only while drilling, so its keys may overlap the flight's), chat, chat send, chat channel, screenshot, multiplayer window (N), distress call (unbound)), each with two keyboard / mouse slots and a controller slot (binding
   groups Keyboard / Gamepad; steer's controller slot is a whole stick or the D-pad so the stick keeps its radial dead zone,
   the other controller slots also take a stick pushed one way past half way, "RS ↑";
   steer, throttle and roll are composites captured part by part). Defaults: the PC keys above and the controller buttons
@@ -674,7 +675,11 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   multiplayer panel's name field), panels open on their first non-text item, and on UWP the text typed while the system keyboard
   was open is kept when it closes with B (`KeepKeyboardText`; closing counts as Cancel and put the old text back).
 - **Version** (`BuildVersion`): the menu's credit line and the About page show "Galaxy on Fire 2 Unity Remake created with
-  <heart sprite> by JoppieToppie · <version>"; the version is the build's date and time (`yyyy.MM.dd.HHmm`), stamped into
+  <heart sprite> by JoppieToppie · <version>-b<branch>@<commit>" (`BuildVersion.Full`; the commit, "+dirty" with uncommitted
+  changes under Assets/Scripts / Resources / UI, from git at build time into `Resources/GoF2Build/BuildCommit.txt` by
+  `BuildVersionStamp`; also `/version` in the chat, the multiplayer window's foot and the dedicated server's first log
+  line); the version is the date and time of the git commit the build comes from (`yyyy.MM.dd.HHmm`, UTC; fork change, upstream
+  uses the build's own time, still the fallback without git), so Windows, Linux and Android builds of one commit match; stamped into
   `PlayerSettings.bundleVersion` for each build by `BuildVersionStamp` (Editor) and put back afterwards, so
   `Application.version` and Android's versionName carry it; "editor" in the Editor.
 - **Update check** (remake, `UpdateCheck`): entering the main menu (after the title screen) asks GitHub once per run for the
@@ -716,11 +721,23 @@ NetworkObject; it re-saves them so each gets its own GlobalObjectIdHash, and swi
 Single player is untouched: every multiplayer path runs only while `NetGame.Active`.
 
 - **One shared world, no scene synchronisation** (`EnableSceneManagement = false`): every player starts a fresh free-play
-  game (`Session.FreePlay`, index 20) docked at Var Hastra (78) and plays it like single player, their own scenes, economy, map,
+  game in the finished game's world (below) docked at Dis (70) and plays it like single player, their own scenes, economy, map,
   jumps and docking. The network objects live in DontDestroyOnLoad and each player shows only what is where they are.
   The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
-  (`SaveGame.Save` refuses), so it never touches the single-player saves.
+  (`SaveGame.Save` refuses), so it never touches the single-player saves; a dedicated server keeps player profiles
+  instead (see **Player profiles**).
+- **The finished game's world** (`Session.UseCompletedWorld`, `Session.CompletedWorld`; set by `NetGame.PrepareSession` and
+  `SaveGame.ApplyProfile`): free play (no story steps) at campaign index 162, so everything that reads the index sees the
+  won game: the full shop stock and dealer ships (Kothar's 37 / 38 / 40, the Vossk 39 / 41, the carrier and Vossk battleship
+  in traffic, Mido's dealers), and the medal / Most Wanted gates count as met (Thynome's VoidX, Katashán's Specter,
+  Quineros' 45-48); the add-ons' revealed systems on the map (`Story.RevealedSystems`, `GalaxyMap.Visibility`); Ginoya after
+  the supernova (normal sun, no flares, its traffic and shops); no wormhole, Void invasion or Kappa's free EMP GL I. Remake
+  picks: no storms anywhere (`SkyLayers`); Naneroh, Valpatro and Luur intact and open for docking (`OrbitLayout.IsRebuiltGinoya`;
+  Luur its pre-supernova model, Naneroh / Valpatro borrow Midantha's / Tergalon's model and volumes, `OrbitBuilder.StationLook`);
+  sessions start docked at Dis (70, `NetGame.Station`), whose shop always sells the Khador Drive (85). The world's look and menus read `Session.WorldIndex` (free play's 20, else the index);
+  NPC hulls / reloads and the Kaamo outposts use the won game's capped 45 / 180. Remake: no gamma rays and no gamma blaze
+  at all (the original keeps 1/s at Naneroh after the story).
 - **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (a fixed 84 %
   high panel: the title with the "Experimental" badge and the pilot name `mp_name`, a one-line intro, then the server
   browser and the host column). **Pilot name required**: without one (`NetGame.PlayerName` empty, no `-mpname`) opening
@@ -776,7 +793,116 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   NPC shots from the authority's side) go to their game (`NetPlayer.HitRpc`, `Target.RemoteDamage` with the NPC flag),
   which applies them to its own ship. Destroyed by a player: "X was destroyed by Y." for everyone
   (`NetState.DestroyedByRpc`). A destroyed player's game over says "Tap to respawn at the station." and docks them at the
-  orbit's station, repaired (no save is loaded).
+  orbit's station, repaired (no save is loaded). Players can only hurt each other in an arena match (below) or on a
+  server started with `-freepvp` (`NetState.FreePvp`, `NetGame.FreePvp`): elsewhere another player's ship is
+  `playerProof` (shots pass) and the owner's `HitRpc` / `EmpRpc` drop a player's hit unless the sender is in the same
+  orbit and may fight (`NetPlayer.PvpWith`).
+- **Server settings while running** (`NetServerSettings`; the operator guide is `SERVER.md`, keep it in step with the
+  server's options and commands): name, password, maxplayers, allowdebug, freepvp, maxprofiles, maxearn, claimcost,
+  maxclaims, claimdays, siegecost, toll. Changed by admins (`/set <key> <value>`, `/settings`, the Admin tab's Server
+  settings: a field or switch with Save each) or the console (`set`, `settings`); applied at once where possible
+  (allowdebug / freepvp through `NetState.SetDebugAllowed` / `SetFreePvp`, the toll through `SetToll`; the name at the
+  next listing, `DedicatedServer.ListName`; a higher player limit online after a restart) and saved to
+  `server_settings.json` beside the profiles. A start applies the defaults, then the file, then the command line (an
+  option given there wins: `FromCommandLine`, the window says "set by the launcher"). The password is never sent.
+- **Moderation** (`NetModeration`, a dedicated server with profiles; its commands are `NetCommands` rows, so they show in /help and Tab completion; a profile's role is on `NetPlayer.StaffRole`, and admins / masters also get `NetCommands`' admin commands; on such a server `/kick` and `/admin` / `/unadmin` are this system's, elsewhere the session-only ones): roles on the profile (`Account.role`: 0 player, 1 op,
+  2 admin, 3 master). The **master admin** (the owner) is claimed in the game: `/claimadmin <token>` (or the station
+  window's Profile tab, "Claim this server"), the token from `-admintoken` / `GOF2_ADMIN_TOKEN`, else
+  `admin_token.txt` beside the profiles (made at the first start; logged at every start; console `token`; a wrong try is
+  logged, one check per 5 s), so a server needs no console. Masters make admins (`/admin`, `/unadmin`) and delete
+  profiles (`/deleteprofile <id>`, not while online); admins make ops (`/op`, `/deop`), announce (`/say`, as
+  "[admin] Name") and end factions (`/disband <TAG>`); the console can do everything and makes masters (`master` /
+  `unmaster`). Nobody acts on a pilot of their own role or higher, or gives a role as high as their own. Ops: `/kick <pilot> [minutes] [reason]` (dropped; can't rejoin for the minutes, default 5, a
+  temporary ban), `/tempban <pilot> <minutes> [reason]` (ops at most 24 h), `/unban <name|profile>`, `/bans`; admins
+  also `/ban <pilot> [reason]` (for good). `/staff` for everyone. Nobody acts on their own rank or higher (the console
+  on anyone). A pilot: a name online, `#<client id>` (the window's buttons) or a profile's id / last name offline. A ban
+  holds the profile and every device label it signed in from (no new profile from the same device), checked in
+  `NetProfiles.OnLogin` (dropped with the reason and the time left); every device of a banned profile online is
+  dropped; kicks and bans are announced. `bans.json` beside the profiles; run-out bans are pruned. Console: `kick
+  <id|name> [minutes] [reason]`, `ban`, `tempban`, `unban`, `bans`, `op`, `deop`, `admin`, `unadmin`, `staff`. The
+  station window's Admin tab (ops and above: `NetPanel.State.role`, `bans`, each pilot's `role`): reason and minutes
+  fields, Kick / Ban (minutes) / Ban for good / Make op / Remove op / Make admin (masters) per pilot, Unban per ban; for
+  admins also the server's status line (`DedicatedServer.StatusText`) and an announcement field, the staff (remove op /
+  admin), every profile (`NetProfiles.FillProfiles`: at most 200, the most recent first; a filter; Ban / Unban, roles,
+  Delete for masters) and the factions (Disband). Dangerous buttons (Ban for good, Delete, Disband) ask twice. Not tested
+  in a build yet.
+- **Factions** (`NetFactions`, a dedicated server with profiles; phase 1 of home systems / territory): the lasting player
+  groups, kept by profile in `factions.json` beside the profiles (squads stay the session's quick fly-together groups).
+  A faction: name (24), tag (2-4 letters / digits, unique; `NetPlayer.FactionTag`, server-written, `TaggedName` "[TAG] Name"
+  on the lock plate and in chat), leader, officers, members (profile ids, at most 50), bank and home station (for the
+  next phases). Chat commands (private answers): `/faction create TAG Name`, `invite <pilot>` (officers; 5 min),
+  `join TAG`, `leave` (the leader only by handing over or as the last member), `kick <pilot>` (officers: members;
+  the leader: officers too), `promote` / `demote <pilot>`, `leader <pilot>`, `disband` (leader), `info [TAG]`, `list`;
+  `/f <text>` to the faction's online members. A deleted profile leaves its faction; a leaderless faction passes to its first
+  officer, else first member; an empty one ends. Console: `factions`, `faction disband <TAG>`.
+  Phase 2, territory (`NetFactionsClient` on the player's side): the **bank** (`/faction deposit N`: the server asks the
+  player's game to pay, `ChargeRpc` / `ChargedRpc` with a server token; `/faction withdraw N`, officers: `GrantRpc`; both
+  move the profile's recorded worth, `NetProfiles.AdjustWorth`, so the upload check fits them; a game lying about
+  paying is only caught by that check); **claims** (`/faction claim`, officers, docked there: `-claimcost` (500 000) from the
+  bank, `-maxclaims` (3) per faction, not 108 or system 25; `/faction unclaim`, `/faction home`, `/faction claims [TAG]`; the first
+  claim is the home; a claim no member docked at for `-claimdays` (14) lapses, `NetFactions.Tick` once a minute; a claim
+  is announced to everyone); `NetState.Claims` ("station|TAG|Name" lines, a 4 KB FixedString) shows the holder on the
+  star map (planet "[TAG] Name", system "Name [TAG]"), the station header's system line and the orbit information.
+  **Home**: a member's game starts docked at the faction's home (`ProfileHeaderRpc`'s home), and a destroyed member
+  respawns there (`NetPlayer.FactionHome`, `FlightHud.LoadLastSave`). Disbanding frees the faction's claims (the bank is
+  lost).
+  Phase 3, contest and benefits: **sieges** (`/faction siege`, officers of another faction in the orbit or docked there:
+  `-siegecost` (250 000) from the bank, one per faction, the faction needs room for a claim, not within 24 h of the station's
+  last siege; announced, starts 10 min later, lasts 15 min; meanwhile the two factions' pilots may fire at each other in
+  that orbit (`NetFactionsClient.SiegePvp` in `NetPlayer.PvpWith`); every 5 s the side with more pilots there moves the
+  control by 100/300 % per pilot more and second, 100 % = taken (the claim changes hands), the end = held; 24 h
+  protection either way; `NetState.Sieges` lines, `/faction sieges`, console `sieges`; `TerritoryView`'s banner);
+  **defence** (in a held orbit the fighters of the system's race treat the holder's members as friends and other factions'
+  pilots as enemies unless they paid the toll this visit: `NpcShip.TerritoryToLocal`, `NetOrbit.HostileToRemote`,
+  `NetFactionsClient.Relation`; pilots without a faction as always); **toll** (`-toll`, 10 000; `TerritoryView` asks on
+  arrival through `Traffic.Ask`, `NetFactionsClient.PayToll` -> `TollPaidRpc`, the holder's bank, `NetPlayer.TollStation`
+  for the others' NPCs); **trade cut** (`Hangar.Buy` through `NetFactionsClient.BuyPrice`: members -10 %, other factions +5 %;
+  the server banks the tax from `StockItemRpc`'s price, `NetFactions.OnPurchase`; the list shows the plain price; ships
+  aren't cut). Not yet: shared storage at the home. Not tested in a build yet.
+  UI: the **multiplayer window** (`MultiplayerWindow`, code-built, Squad.uss buttons; in the station a "MULTIPLAYER" button in
+  the top bar left of Menu; in flight its own button on the right under the HUD readout and the "Multiplayer window"
+  binding, N (`FlightHud`: Esc / B / the binding close it, the flight controls and the mouse-steering cursor wait
+  meanwhile, `Navigation.InputHalted`); under it in flight a Distress call / End the call button (in a squad in space,
+  `MultiplayerWindow.UpdateSos`; or the unbound "Distress call" binding); these buttons and the squad window's never take
+  the focus, so Space / Enter / a controller's A can't press them; the Squad tab has Distress call / End the call in
+  space; its text fields (`TextFieldKeys.Guard`) keep their typed keys (no menu navigation or submit, Esc drops the
+  focus) and turn the game's keys off while focused (`NetChat.SetTyping`); a snapshot waits while a field has the focus
+  or a pointer is down on the window (a rebuild under the finger dropped the pressed button and Android's keyboard); both lists scroll by mouse drag too (`DragScroll`) and the chat follows new
+  lines only while at its end; the Admin tab also on a session without profiles for its host (master) and session admins
+  (`NetModeration.RoleOfClient`): kick, mute, session admins, settings, announcements (`NetCommands.ModerateWithoutProfiles`); a dot when an invitation, a challenge or an unread chat line waits; Esc / B closes it, the station
+  menu's keys wait while it is open). Tabs Chat (the whole chat: lines, Local / Global, the line, Send; Enter sends,
+  "/" commands; built once so the line keeps focus and draft; `ChatView` hides meanwhile), Squad (invitations, members
+  with where / distress and Help, Leave, the pilots docked here to Invite; distress itself is called in space), Faction,
+  Arena, Profile, Admin. Every chat command is listed in /help everywhere (on a session without profiles the faction /
+  profile / moderation ones answer that they need a dedicated server with profiles); `/squad [invite <p> | accept |
+  decline | leave]` and `/sos` say why not when they can't. The tabs give
+  every chat command as buttons and fields (faction create / join / bank / members by
+  rank / invite / territory with Claim, Make home, Give up, Siege at the docked station / leave and disband asked
+  twice; arena challenge, accept / decline, the Voids option, the free-for-all queue, matches, leaderboard; profile,
+  take control, link codes). `NetPanel`: the window asks for a snapshot (`PanelRequestRpc`, every 2 s open, 6 s closed
+  for the dot), the server fills a `NetPanel.State` (`NetProfiles` / `NetFactions` / `NetArena .FillPanel`) and sends it
+  gzipped in chunks (`PanelChunkRpc`); buttons send the chat commands (`NetPanel.Command`) and the window shows the
+  answering notice. The chat commands still work.
+- **Arena matches** (`NetArena` server, `NetArenaClient` player, `ArenaView` HUD panel; chat commands, answered
+  privately): `/duel <name> [voids]` (both docked; `/accept` / `/decline` within 60 s; first to 3 kills or 5 min) and
+  `/ffa [voids]` (a queue per option, docked; starts 30 s after the 2nd pilot or at once with 8; first to 15 kills or
+  10 min), `/leave`, `/arena`,
+  `/top` (the profiles' leaderboard: wins, kills / deaths, `NetProfiles.AddArenaStats`). A match is a private copy of
+  the Void's home orbit (`NetArena.Template` = `Session.VoidOrbit`: its sky, fog, music, Void crystal asteroids): its own orbit id `NetArena.OrbitBase` (100000) + the match, which
+  `SpaceLevel.NetOrbitId` gives NetPlayer / NetOrbit, so the same-orbit checks keep it to its players (asteroids seeded
+  by that id). SpaceLevel's arena mode: no station or gate (no docking, no jumps: `JumpsBlocked`), no traffic (passive)
+  unless the match has the Void fighters (`voids`: the orbit's own traffic, run by the first player in the match's
+  orbit like any orbit's NPCs, the dead ones back every 45 s by `Traffic.UpdateAlienAttackers`; a Void kill scores
+  nothing, dying to one is a respawn), no wingmen, no mission / siege / spy, the asteroids at the centre, the player on a ring of 8 spawn points 2 km out
+  facing the centre (a duel's two opposite; a respawn the point farthest from the others), no mining (`Mining.UpdateLock`).
+  Flow: `ArenaStartRpc` (the profile uploaded, the equipment noted, the take-off, the arena loads) -> `ArenaReadyRpc`
+  (all in, or 20 s: the missing ones sent home) -> 5 s countdown (controls and guns locked by `NetArenaClient.Tick`) ->
+  the fight (`ArenaStateRpc`: phase, time left, kills, a kill-feed line; kills from `DestroyedByRpc`) -> the end
+  (`ArenaEndRpc`: winner or draw and everyone's kills / deaths, shown 6 s) -> docked where the match began. Destroyed:
+  no game over, the arena reloads 3.5 s later (repaired, the equipment and ammo as at the start). Nothing is at stake:
+  no uploads during a match (`NetProfileClient.Upload`), the loadout and the cargo (Void loot) restored at the end. Leaving / disconnecting: out;
+  a duel goes to the one who stays, a free-for-all ends below 2 players. Server console `arenas`; `list` shows
+  "in arena match N". Not tested in a build yet.
 - **Squads** (`NetSquad`, the host's `NetPlayer.SquadId`, NetState's RPCs): the station's pilot list (players docked
   there, the local player first as "(you)") has Invite; the invited player gets an Accept / Decline popup (45 s); accepting joins the inviter's squad (a new
   one if needed, leaving the old one); squads form only in a hangar (the popup shows only while docked, and the host
@@ -877,7 +1003,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`GameControls.PressedNow`: the flight map is off while typing), and their key events and characters stay out of the
   line. The field keeps the focus: the project-wide UI map's Navigate (arrows, W A S D), Tab and Submit (Space / Enter)
   are swallowed there (`StopPropagation` + `focusController.IgnoreEvent`: stopping alone still moved the focus to a menu
-  button, which ended the typing). No send button (the key sends). Another player's line plays the original's
+  button, which ended the typing). Enter / keypad Enter always send, read from the key event (the rebindable send key is
+  read from the device and could miss the UI event's frame: the TextField then took Enter as its submit, lost the focus,
+  and the line was only hidden by `Suspend`); a Send button after the line (touch, mouse). Another player's line plays the original's
   incoming-message sound (FMOD 125 Message_Inc, volume 0.241 × `Sfx.EventGain` × the FX volume, one at a time; a copy
   of the clip in `Resources/GoF2Net/ChatMessage.ogg`). Lines fade 12 s after arriving (full width on a solid background: drawn over the flight HUD's key hints, it covers them); join / leave notices; every line
   is also in the player log (`[Chat ...]`). **Chat commands** (`NetCommands`): a line starting with "/" is a command, never
@@ -885,7 +1013,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`NetState.ServerCommandRpc`), the server checks the sender's rights (`allowed`) and runs it, the answer is a notice for
   the sender; the dedicated server's console runs the very same table (`NetCommands.RunOnServer` with no issuer: every
   right, named "Server"; `list` = players, `say` = g). Only what changes or reads this game stays local: `/help` (the
-  commands this player can run, `available`), `/netstats`, `/pos` (the orbit and the game coordinates /tp takes). Server
+  commands this player can run, `available`), `/netstats`, `/pos` (the orbit and the game coordinates /tp takes), `/sos` and `/assist` (`NetDistress`). The arena (`/duel` ..., `/leave` leaves a queue or match before the squad), profile (`/link` ...), faction (`/faction`, `/c`) and moderation commands are rows of the same table calling their own handlers; the station window's buttons send them as chat lines, which `SendChatRpc` runs through `NetCommands.RunOnServer`. Server
   commands: `/players` (where, ship, squad, admin; admins and the console see the client ids), `/g` / `/l <text>` (one line
   to Global / Local), `/w <player> <text>` (a private message to that player only, "[From X]" / "[To X]" in violet, not
   logged), `/invite <player>` (docked at the same station) and `/leave`; admins `/kick <player> [reason]` (never the host's
@@ -1216,8 +1344,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
 - **Debug menu in multiplayer** (`NetGame.HostAllowsDebug` → `NetState.DebugAllowed`, a NetworkVariable set when the
   world spawns, fixed for the session): off by default. The Host card's **Debug menu** Off / Allowed segments
   (`mp_allow_debug`), a dedicated server's `-allowdebug` (the launchers' `ALLOWDEBUG=1`; `status` and the startup log
-  say which). `Cheats.Allowed` = no session, or the session allows it: otherwise the pause / station Debug pages are
-  gone (`Cheats.PageShown`), the Options "Debug tools" row is hidden, and every cheat flag reads off (`Cheats.On`), so
+  say which). `Cheats.Allowed` = no session, or the session allows it: then every player's pause / station menu has the
+  Debug page, whether that device ever opened the main menu's Debug panel or not (`Cheats.PageShown`; the station's
+  entry follows a change while docked); otherwise the pages are gone, the Options "Debug tools" row is hidden, and every cheat flag reads off (`Cheats.On`), so
   toggles left on in single player don't carry into a session (their saved values are kept). Client-side only: a
   modified client can still cheat.
 - **Server checks** (`NetGuard`, `NetRateLimit`): every client request goes through the server, which checks it and limits
@@ -1250,7 +1379,11 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   the screenshot key); vsync off at the frame cap.
   `NetGame.StartServer` = StartHost's world without a player of its own (no NetPlayer, no EnterWorld); clients ids start
   at 1 (`NetState.Dedicated`: "Player N" counts from 1); the session-ending checks count the others, not the host
-  (`OthersConnected`); `OnServerStopped` quits; the others' NetPlayers build no model there. The console (Windows: its
+  (`OthersConnected`); `OnServerStopped` (a transport failure: the network or the Relay connection lost) no longer
+  quits: `DedicatedServer.ConnectionLost` starts the session again (`Reconnect`: 5 s, then 10, 20, 40 and every 60 s;
+  a new Relay allocation, join code and listing, the world seed kept, `StartServer(port, keepSeed)`; the players join
+  again), also when an online server starts without a network; an expired anonymous sign-in is signed out (session
+  token kept) and in again (`SignInForOnline`); the others' NetPlayers build no model there. The console (Windows: its
   own window through `WinConsole` unless stdout is redirected to a file or pipe (a terminal's inherited console handle
   doesn't count: a GUI program isn't attached to it) or `-noconsole`; with `-logFile` the window still opens (Unity's
   stdout is then that file); the log is mirrored into the window, Unity prints it only to a stdout it starts with;
@@ -1261,8 +1394,83 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   and closing the window too). In its own console window (Windows) or on a terminal (Linux) the input line is edited by
   `ConsoleInput` (keys one at a time: `WinConsole.RawInput` / `ReadKey`, `Console.ReadKey`; a "> " prompt, log lines above
   it): Tab completes and cycles the command names (Shift+Tab back, nothing typed: all), Up / Down the history, Esc clears;
-  piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Verified: the Windows build headless with the Editor as the client (join, chat, say,
+  piped input stays line by line. Verified on Windows; the Linux terminal path is untested. Linux quits hard (`DedicatedServer.ExitNow` on `Application.quitting`: the
+  web admin and Netcode down, the log flushed, the terminal's settings from the start put back with `tcsetattr`, then libc
+  `_exit`): the key reader blocked in `Console.ReadKey` kept Unity's teardown from ever ending after "CodeReloadManager
+  destroyed"; the exit code is `DedicatedServer.Quit`'s (1 = failed). Verified: the Windows build headless with the Editor as the client (join, chat, say,
   kick, stop; over Relay, listed, with a password; the console window, no menu).
+- **Persistent hosted world** (the Host card's World Fresh / Persistent segments, `mp_persistent`,
+  `NetGame.HostWantsPersistent` -> `PersistentHost`): `StartHost` configures `NetProfiles` on
+  `persistentDataPath/HostedWorld` (`SetUpHostedWorld`: the saved `server_settings.json` too, the card's password / player
+  limit / Debug menu / name winning like a command line; `NetProfiles.Start` loads profiles, factions, bans, news), so
+  `NetProfiles.Enabled` (`Dedicated || PersistentHost`) turns on everything a dedicated server with profiles has. The host
+  signs in to its own profile (`NetProfileClient.Begin` instead of `EnterWorld`; its RPCs to itself run locally): always a
+  profile, made the master admin on every login, never banned, uploads never doubted (`NetProfiles.IsHostClient`); on
+  leaving its game is saved straight into the profile (`NetProfileClient.SaveHostNow` from `NetGame.Shutdown`). Fresh =
+  unchanged (nothing kept, no profiles, so no factions or Admin tab). Online errors now list the inner exceptions
+  (`NetGame.Describe`: Unity Services' "Some services couldn't be initialized" said nothing on its own). Not tested yet.
+- **Sector news** (`NetNews`): the station ticker's multiplayer items, before the game's own (`StationMenu.SetupTicker`;
+  rebuilt when the strip wraps, `tickerNewsDirty`, and every minute for the ages). The server posts them and sends each to
+  everyone (`NetState.NewsRpc`), a joining player gets the last 15 (`SendAll` from `NetPlayer.OnNetworkSpawn`); the last 40
+  (3 days) kept in `news.json` with profiles. Kinds with a coloured "+++ KIND +++" kicker (BREAKING under 15 minutes old),
+  the item at the docked station in bold, its age: territory (claims, give-ups, lapses), war (siege declared / begun,
+  held), BREAKING a station taken, factions founded / disbanded, arena (a duel's score, a free-for-all's winner; no draws or
+  forfeits), defence (`NetOrbit` counts the raiders the players downed, `Target.remoteKiller`; when none is left the orbit's
+  authority sends `DefenseReportRpc`, 3+ kills, checked and once per orbit per 10 minutes; the Kaamo siege broken), new
+  pilots, and an admin's `/news <text | clear>` (GalNet). Player text is made tag-free (`NetNews.Safe`). Not tested in a
+  build yet.
+- **Web admin** (`WebAdmin`, a dedicated server started with `-web [port]` / `-webport N`, `-webbind ADDRESS` default
+  127.0.0.1; the launchers' `WEBPORT` / `WEBBIND`; the operator guide in `SERVER.md`): a minimal HTTP/1.1 server on a
+  `TcpListener` (works in the IL2CPP player) serving one page (`Resources/GoF2Server/WebAdmin.html`: Tailwind CSS 4's
+  browser build from jsDelivr, the script inline with a per-response CSP nonce, every server text set as textContent) and
+  a JSON API (`/api/login`, `/logout`, `/state`, `/command`, `/log`) run on the main thread (`WebAdmin.Pump` from
+  `DedicatedServer.Update`). Login like in the game: the admin token (`NetModeration.TokenMatches`, also without profiles:
+  `EnsureToken`) = the console (`DedicatedServer.Run`), or a one-time code from `/web` (ops and up, 5 minutes, bound to the
+  profile) = that profile's role, re-checked every request (`NetModeration.WebCommand`: moderation commands only). Session
+  cookie HttpOnly / SameSite=Strict (12 h, 2 h idle, memory only), POSTs need the `X-GoF2-Admin` header, 5 wrong logins per
+  address then 5 minutes' wait, every command logged. The state reuses `NetPanel.State` (`NetModeration.FillFor`,
+  `NetFactions.FillPanel`); the log tab is a 1000-line ring of `logMessageReceivedThreaded`. Not tested in a build yet.
+- **Player profiles** (`NetProfiles` server, `NetProfileClient` player; a dedicated server only, on unless `-noprofiles`;
+  `-maxprofiles N` default 50, `-maxearn N` default 1 000 000, `-profiledir`): `<persistentDataPath>/ServerProfiles`
+  holds `accounts.json` (the server's id, each account's devices with their token hashes, name, squad key, worth) and
+  one `<account>.json` per profile, a `SaveData` without the shop memory (`SaveGame.ProfileJson`; loaded with
+  `SaveGame.ApplyProfile`: the session's rules, no squad mission or Courier containers, docked where it was, an orbit
+  without a station = Var Hastra). Files are written through `.tmp` with the previous one as `.bak`. Signing in: NetState
+  carries `ProfilesOn` / the server id; a joining game doesn't enter the world at once but sends `LoginRpc` (its token
+  for that server from PlayerPrefs `mp_token_<server>` (+ a -mpname hash), and a SHA-256 label of
+  `SystemInfo.deviceUniqueIdentifier`), the server answers with a header (new token, role) and the gzipped profile in
+  4000-byte chunks (Unity Transport's 6144-byte payload limit), then the game enters the world. No known token = a new
+  profile while under the limit, else a guest (nothing saved). Uploads (gzipped chunks, `UploadChunkRpc`): on every
+  docking (`SaveGame.AutoSave`), every 60 s, when leaving (`NetGame.Shutdown`); each is checked like an imported save
+  (`SaveGame.TryParse`), and without `-allowdebug` also turned away when the profile's worth (credits + ship prices +
+  items at `minPrice`, `NetProfiles.Worth`) grew more than 2 000 000 + `-maxearn` per minute online since the last
+  accepted one, or for hulls 13 / 14 / 15 (the player gets "The server didn't save your progress: ..."). Not a server
+  authority: the client still runs the economy (the plan's phase 2: server-priced trades, claimed rewards). Devices: one
+  connection per device (signing in again drops the older one); several devices of one profile = the first controls it,
+  the others are observers (`NetPlayer.Observer`, server-written; `NetProfileClient.Refusal`: the station menu's
+  Hangar / Lounge / Map / Launch refused; their uploads ignored); a controller leaving promotes the next device online
+  (it gets the latest profile and reloads the station). Chat commands (answered privately, never relayed): `/link` (a
+  6-letter code for 5 minutes, controller only), `/link CODE [force]` (this device joins that profile with its own token;
+  its own profile is deleted when it was the only device, `force` needed past 5 minutes of play), `/control` (an observer
+  takes over once the controller is docked: the controller is demoted and uploads once more (`RequestUploadRpc`), then
+  the observer gets the profile; 5 s timeout = the last saved one), `/profile`. Squads: the account keeps a squad key
+  (set on `AcceptInviteRpc`, cleared on `LeaveSquadRpc`, kept through a disconnect); a controller signing in joins a
+  squadmate online (`NetState.RestoreSquad`, anywhere, not only in a hangar). Server console: `profiles`,
+  `profile delete <id>` (not while online), `list` marks observers. Not tested in a build yet.
+- **Distress calls** (`NetDistress`): a squad member in space calls for help (the squad window's own row: Distress call /
+  End the call, or `/sos`; `NetPlayer.Distress`, owner-written; ends on docking, after 10 min or leaving the squad);
+  the squadmates get a notice with where (`NetState.DistressRpc`), a red "⚠" name and a **Help** button in the squad
+  window (or `/assist <name>`, both handled in the player's own game, `NetChat.Send`). Help programs the caller's
+  station (`Session.ProgrammedStation`) and goes the fastest way: another system with a Khador Drive and the cells
+  (`GalaxyMap.EnergyCells`): an instant jump (`Session.InstantJump`, SystemJump charges by itself); else the autopilot
+  (`Navigation.ContinueToProgrammedStation`: the planet jump, or the gate route); docked: the launch first. Arriving in
+  that orbit by travel, the helper comes out 1.5 km from the caller facing them (`NetDistress.ArrivalNear`,
+  `SpaceLevel.SpawnPlayer`). The star map marks the squad when it opens (`StarMap.SquadMark`): a green "●N" by a
+  system, "● names" under a planet, red with "⚠" for a call. In flight the Distress call button under the Multiplayer
+  button (or the unbound "Distress call" binding; not in the quick menu, where a menu key picked it by accident), and
+  the quick (actions) menu (E / D-pad left / the touch quick menu button; `Navigation.ActionEntries`, kind `Assist`):
+  "Help <name>" for each squadmate calling, the answer as a HUD message; and a pulsing banner at the top
+  (`TerritoryView`, under a siege's) with who calls for help and where. Not tested in a build yet.
 - **Joining**: the menu stays up while connecting ("Connecting to ..."), it fades only once connected; `-mpjoin`
   clients open the Multiplayer panel and keep retrying quietly.
 - **Medals** are off in sessions (`Achievements.Check` / `Elite` award nothing, the Status window hides the medal column).

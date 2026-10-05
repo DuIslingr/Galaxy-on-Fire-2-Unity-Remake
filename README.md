@@ -80,6 +80,28 @@ renders black, so the editor script `BuildTargetGuard` refuses such builds. `Bui
 date and time as its version; for a release, set the Editor process's `GOF2_BUILD_VERSION` environment variable so all
 platforms get the same one.
 
+Windows builds use IL2CPP, which needs Visual Studio 2022 (or newer) with the **Desktop development with C++** workload
+and a Windows 10 / 11 SDK. Android and Linux builds don't need it.
+
+#### Scene lighting (environment reflections)
+
+The game builds its levels at runtime, but each scene's sky reflection comes from the scene's baked lighting data.
+Without it, a player build reflects whatever default sky the building editor has cached. On a fresh checkout that is
+Unity's light-blue default sky: floors look like grey plastic and hulls get a blue-grey sheen. The Editor's Play mode
+looks right either way, so the problem only shows in builds.
+
+The baked data is in the repository (`Assets/Scenes/<Scene>/LightingData.asset` and `ReflectionProbe-0.exr`). Bake it
+again after changing a scene's skybox or environment settings, or if a scene's data is missing:
+
+1. Pull the LFS files first (`git lfs pull`) and let Unity finish importing.
+2. Open the scene (`Space`, `Station` and `MainMenu`, one after the other).
+3. Window > Rendering > **Lighting**, **Scene** tab: Lighting Settings Asset `Assets/Scenes/SceneLighting.lighting`
+   (shared by the three scenes; Realtime and Baked Global Illumination off, only the environment is needed).
+4. **Environment** tab: the Skybox Material is `SpaceSky`, Environment Reflections Source **Skybox**.
+5. **Generate Lighting**, then save the scene.
+6. Commit the `Assets/Scenes/<Scene>/` folder (`LightingData.asset`, `ReflectionProbe-0.exr` and their `.meta` files)
+   and the changed `.unity` file, so other checkouts build the same.
+
 ### Multiplayer
 
 Multiplayer is experimental. Everyone in a session shares one universe: you see each other in space and in the hangars,
@@ -108,7 +130,11 @@ On the **Host a game** card, pick a mode:
   addresses (tap one to copy it) and the port, 7777 by default.
 
 Every mode can have a **password** and a **Max players** limit (2 to 100, you included). **Debug menu** (Off by
-default) decides whether the players may use the Debug menu (cheats, items, spawns) in your session. Press **Host**. In an online
+default) decides whether the players may use the Debug menu (cheats, items, spawns) in your session. **World**:
+**Fresh** (default) is a one-off session where nothing is kept; **Persistent** keeps every player's progress, the
+factions, bans, staff, news and server settings on your device (the `HostedWorld` folder in the game's data folder),
+like a dedicated server, and makes you the world's master admin (the Multiplayer window's Admin tab). Your own
+progress there is that world's, separate from your single-player saves. Press **Host**. In an online
 game the join code is copied to your clipboard and shown under the station's system information, with a Copy button.
 Online play goes through Unity Relay: no port forwarding, but it needs an internet connection. With a player host,
 all traffic goes through the host's connection, so for big sessions a dedicated server is better.
@@ -116,65 +142,99 @@ all traffic goes through the host's connection, so for big sessions a dedicated 
 #### Running a dedicated server
 
 A dedicated server hosts a session without anyone playing on that machine. It uses the normal Windows or Linux
-download; no extra files are needed.
+download: edit and run `Start Dedicated Server.bat` (Windows) or `start-server.sh` (Linux) in the game folder. Its
+options, the console, the settings admins can change while it runs, becoming its admin, its files and running it as a
+Linux service are in **[SERVER.md](SERVER.md)**.
 
-**Windows**
+**Player profiles**
 
-1. Open `Start Dedicated Server.bat` in the game folder with a text editor (Notepad), and set:
-   - `NAME`: the game's name in the server browser.
-   - `PASSWORD`: leave it empty for none.
-   - `MAXPLAYERS`: the player limit, at most 100.
-   - `ALLOWDEBUG`: `1` lets the players use the Debug menu (cheats, items, spawns); `0` (the default) turns it off.
-2. Save the file and double-click it. A console window opens; the game itself runs without a window and without sound.
-3. The console shows the **join code**, and the game appears in everyone's server browser.
+A dedicated server keeps each player's progress: credits, ship and its mods, equipment, cargo, the Kaamo Club and its
+storage, and their squad. A player's game gets a secret key from the server on its first visit and signs in with it
+every time after; the progress is saved when docking, every minute and when leaving. Players type these in the chat:
 
-**Linux**
-
-1. Edit `NAME`, `PASSWORD`, `MAXPLAYERS` and `ALLOWDEBUG` at the top of `start-server.sh` in the game folder.
-2. Run it in a terminal: `sh start-server.sh`. The terminal shows the join code and the log.
-
-**The console**
-
-The console shows who joins and leaves, where each player is, and the chat. Only the server can run commands; players
-can't. Type one and press Enter:
-
-| Command | What it does |
+| Command | Meaning |
 |---|---|
-| `help` | Lists the commands. |
-| `status` | The join code (or port), uptime, players, world seed, whether the Debug menu is allowed. |
-| `list` | The players: client id, name, where they are, ship, squad. |
-| `say <text>` | A chat line to everyone, from "Server". |
-| `kick <id or name> [reason]` | Drops a player; they see the reason. |
-| `stop` | Tells the players and shuts the server down. Ctrl+C or closing the window does the same. |
+| `/link` | A 6-letter code for 5 minutes, to use the profile on another device. |
+| `/link CODE` | On the other device: use the profile the code belongs to. `/link CODE force` if this device has progress of its own (it is deleted). |
+| `/control` | Two devices of one profile online: the first one plays, the other watches from the station. This takes over once the playing one is docked. |
+| `/profile` | The profile's id and devices. |
 
-**Starting it by hand**
+**Squads: the map and distress calls**
 
-The launchers only start the game with these options, which you can also use yourself:
+The star map shows where your squad is (a green dot with the count by a system, the names under a station). In space,
+your own row in the squad window has **Distress call** (or type `/sos`): your squad gets a notice, sees you in red on
+the map and gets a **Help** button by your name (or `/assist <name>`). Help takes them to you the fastest way: the Khador
+Drive if they have one and the energy cells, else the autopilot. They arrive right next to you. In flight both are
+also in the actions menu (E, the controller's D-pad left, or the touch quick menu button), and a banner at the top
+shows who needs help.
 
-```
-GoF2Remake.exe -batchmode -nographics -server -relay -name "My universe" -password secret -maxplayers 32
-./GoF2Remake.x86_64 -batchmode -nographics -server -relay -name "My universe" -logFile -
-```
+**Factions**
 
-| Option | Meaning |
+Everything below is also in the station's **Multiplayer** window (the button left of Menu, top right), with buttons
+instead of commands.
+
+A faction is a lasting group of players on a server with profiles: a tag before its members' names, a bank, claimed
+stations and sieges. Not to be confused with your **squad** (the friends you invited to fly with you this session) or
+your **wingmen** (the NPC pilots you hire in a bar).
+
+| Command | Meaning |
 |---|---|
-| `-batchmode -nographics` | No window, no rendering, no sound. |
-| `-server` | Run as a dedicated server. |
-| `-relay` | Host online with a join code (Unity Relay). Without it, players join on the server machine's address. |
-| `-name "..."` | The name in the server browser (online). |
-| `-unlisted` | Keep the game out of the server browser; players join with the join code. |
-| `-password X` | Players need this password to join. |
-| `-maxplayers N` | The player limit, 2 to 100 (default 16). |
-| `-allowdebug` | The players may use the Debug menu (cheats, items, spawns). Off without it. |
-| `-port N` | The port for local network play (default 7777, UDP). |
-| `-fps N` | The server's frame rate (default 60). |
+| `/faction create TAG Name` | Start a faction: a tag of 2-4 letters or digits, then its name. |
+| `/faction invite <pilot>` | Invite a pilot (leader and officers). They type `/faction join TAG` within 5 minutes. |
+| `/faction leave`, `/faction kick <pilot>` | Leave, or remove a member (officers remove members, the leader anyone). |
+| `/faction promote <pilot>`, `/faction demote <pilot>`, `/faction leader <pilot>` | Ranks (leader only). |
+| `/faction info [TAG]`, `/faction list`, `/faction disband` | About a faction, all factions, end yours (leader). |
+| `/faction deposit N`, `/faction withdraw N` | Put credits into the faction bank; take them out (leader and officers). |
+| `/faction claim`, `/faction unclaim`, `/faction home` | Docked at a station: claim it for the faction (paid from the bank), give it up, or make it the faction's home (leader and officers). Members start and respawn at the home. |
+| `/faction claims [TAG]` | A faction's stations. A station no member docks at for 14 days is lost. |
+| `/f <text>` | Talk to your faction. |
+| `/faction siege`, `/faction sieges` | In another faction's orbit (leader and officers): besiege it, paid from the bank. It starts 10 minutes later and lasts 15; meanwhile the two factions may fight there, and the side with more pilots in the orbit takes control. At 100 % the station changes hands; otherwise the defenders keep it. |
 
-Good to know:
+At a faction's station its members buy items 10 % cheaper and its fighters protect them. Pilots of other factions pay 5 % more
+(into the faction's bank) and are attacked by the station's fighters unless they pay the toll asked on arrival.
 
-- A local network server (without `-relay`) needs UDP port 7777 open in the firewall for the other players.
-- The server keeps the shared world: the shop stock, squads, missions and chat. Each orbit's NPCs are run by the first
-  player who arrives there, so the server itself needs very little CPU.
-- Players on a different game version are turned away with a message saying which version the server runs.
+**Moderation**
+
+**Become the master admin**: the server writes an admin token to its log at every start (see [SERVER.md](SERVER.md)).
+In the game, type `/claimadmin <token>` in the chat, or use the station's Multiplayer window, Profile tab, "Claim this
+server". The master admin makes admins
+(`/admin <pilot>`, `/unadmin`), admins make ops (`/op <pilot>`, `/deop`). Ops and up get an **Admin** tab in the
+Multiplayer window: kicks and bans, roles, and for admins the server status, announcements, every profile and the
+factions.
+
+| Command | Who | Meaning |
+|---|---|---|
+| `/kick <pilot> [minutes] [reason]` | ops | Drop a pilot; they can't come back for the minutes (default 5, 0 = at once). |
+| `/tempban <pilot> <minutes> [reason]` | ops | Ban for a while (ops at most 24 hours). |
+| `/ban <pilot> [reason]` | admins | Ban for good. |
+| `/unban <pilot or profile id>`, `/bans` | ops | Lift a ban; list them. |
+| `/say <text>`, `/disband <TAG>` | admins | An announcement to everyone; end a faction. |
+| `/admin <pilot>`, `/unadmin <pilot>`, `/deleteprofile <id>` | master | Admin roles; delete a profile. |
+| `/claimadmin <token>` | anyone | Become the master admin with the server's admin token. |
+| `/staff` | everyone | Who the masters, admins and ops are. |
+
+A ban covers the pilot's profile and every device it was used on. Nobody can act on someone of their own rank or
+higher. Admins also change the server's settings while it runs (`/settings`, `/set <key> <value>`, or the Admin tab;
+see [SERVER.md](SERVER.md)).
+
+**Arena matches**
+
+Players can only fight each other in arena matches (unless the server runs with `-freepvp`). A match takes its players
+from their station into a private copy of the Void's home system (empty, or with its Void fighters attacking everyone),
+and back when it ends. Nothing is at stake: ships, equipment and ammo come back
+as they were, and only the match's statistics are kept.
+
+| Command | Meaning |
+|---|---|
+| `/duel <name> [voids]` | Challenge a pilot to a duel: first to 3 kills, or the most kills after 5 minutes. Both must be docked. Add `voids` to fight among the Void's own fighters. |
+| `/accept`, `/decline` | Answer a challenge (within 60 seconds). |
+| `/ffa [voids]` | Join the free-for-all queue (docked): it starts 30 seconds after a second pilot joins, or at once with 8. First to 15 kills, or the most after 10 minutes. `voids` joins the queue for matches with the Void fighters. |
+| `/leave` | Leave the queue or the match (leaving a duel loses it). |
+| `/arena` | The matches running and their scores. |
+| `/top` | The arena leaderboard (needs player profiles). |
+
+Without `-allowdebug` the server turns away progress that can't be right (worth growing faster than `-maxearn`, ships
+nobody can own). The players' games still run the economy, so this isn't proof against a modified game.
 
 The console also runs every chat command below without the "/" (`list` and `say` are `players` and `g`). Tab completes
 command names, Up / Down go through the history.

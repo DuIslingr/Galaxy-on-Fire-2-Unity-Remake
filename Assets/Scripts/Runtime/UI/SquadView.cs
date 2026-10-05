@@ -2,7 +2,8 @@
 // Multiplayer squad UI (NetSquad) in the flight HUD and the station menu, while a session runs:
 //   the squad window (right side, only while in a squad; the header collapses it): every member with where they are
 //     (an orbit or docked, by station name), a shield bar and a hull bar with the armor over it (like the HUD's; a pool the
-//     ship lacks: not shown), and Leave;
+//     ship lacks: not shown), and Leave; a member calling for help shows a red "⚠ HELP" and a Help button (NetDistress:
+//     the Khador Drive or the autopilot to them); the local player's own row has Distress call / End the call in space;
 //   in the station, the pilot list (collapsible too, only with other players docked here): each with Invite (or "In your
 //     squad" / "Invited");
 //   an invitation popup (only while docked: squads form in a hangar): "<name> invites you to their squad", and when this
@@ -137,7 +138,7 @@ namespace GoF2Remake.UI
         {
             var panel = new VisualElement();
             panel.AddToClassList("squad-panel");
-            header = new Button(toggle);
+            header = new Button(toggle) { focusable = false };   // clicks / taps only: Space or a controller's A in flight never press it
             header.AddToClassList("squad-header");
             panel.Add(header);
             body = new VisualElement();
@@ -148,7 +149,7 @@ namespace GoF2Remake.UI
 
         static Button MakeButton(string text, System.Action onClick, string cls)
         {
-            var b = new Button(onClick) { text = text.ToUpperInvariant() };
+            var b = new Button(onClick) { text = text.ToUpperInvariant(), focusable = false };   // the distress call too: never by a stray key
             b.AddToClassList("squad-button");
             if (cls != null) b.AddToClassList(cls);
             return b;
@@ -187,7 +188,8 @@ namespace GoF2Remake.UI
             squadPanel.style.display = members.Count > 1 ? DisplayStyle.Flex : DisplayStyle.None;
             if (members.Count <= 1) { squadKey = ""; return; }
             var sb = new StringBuilder(squadCollapsed ? "c" : "o");
-            foreach (var m in members) sb.Append('|').Append(m.OwnerClientId).Append(m.DisplayName).Append(Where(m));
+            foreach (var m in members) sb.Append('|').Append(m.OwnerClientId).Append(m.DisplayName).Append(Where(m)).Append(m.Distress);
+            sb.Append('|').Append(NetDistress.Active).Append(NetPlayer.Local != null && NetPlayer.Local.InSpace);
             string key = sb.ToString();
             if (key != squadKey)
             {
@@ -200,9 +202,17 @@ namespace GoF2Remake.UI
                 {
                     var row = new VisualElement();
                     row.AddToClassList("squad-member");
-                    var name = new Label(m.DisplayName + (m.IsOwner ? $"  ({Localization.Extra("mpYou", "you")})" : ""));
+                    var name = new Label((m.Distress ? "⚠ " : "") + m.DisplayName + (m.IsOwner ? $"  ({Localization.Extra("mpYou", "you")})" : ""));
                     name.AddToClassList("squad-name");
+                    if (m.Distress) name.style.color = new Color(1f, 0.4f, 0.35f);
                     row.Add(name);
+                    // A call for help: the others' Help (the fastest way there), the local player's own call / end.
+                    var caller = m;
+                    if (!m.IsOwner && m.Distress)
+                        row.Add(MakeButton(Localization.Extra("mpHelpButton", "Help"), () => { string msg = NetDistress.Help(caller); if (!string.IsNullOrEmpty(msg)) NetChat.Notice(msg); squadKey = ""; }, "squad-button--accept"));
+                    if (m.IsOwner && (m.InSpace || NetDistress.Active))
+                        row.Add(MakeButton(NetDistress.Active ? Localization.Extra("mpDistressEnd", "End the call") : Localization.Extra("mpDistressCall", "Distress call"),
+                                           () => { NetChat.Notice(NetDistress.Toggle()); squadKey = ""; }, NetDistress.Active ? null : "squad-button--leave"));
                     var where = new Label(Where(m));
                     where.AddToClassList("squad-where");
                     row.Add(where);

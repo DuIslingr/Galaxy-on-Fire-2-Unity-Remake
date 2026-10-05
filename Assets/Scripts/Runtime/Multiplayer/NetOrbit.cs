@@ -45,7 +45,7 @@ namespace GoF2Remake.Multiplayer
         bool applyingRemote, requestedList;
         float scanTimer;
 
-        public int Station => level != null && level.Layout != null ? level.Layout.stationIndex : -1;
+        public int Station => level != null && level.Layout != null ? level.NetOrbitId : -1;   // an arena: the match's own id
         /// <summary>The orbit's system race (a remote kill's standing, Standing.ApplyKill).</summary>
         public int SystemRace => level != null && level.Traffic != null ? level.Traffic.SystemRace : -1;
         bool Authority => level != null && level.NetAuthority;
@@ -78,6 +78,40 @@ namespace GoF2Remake.Multiplayer
         {
             if (Current == this) Current = null;
             ClearNpcHooks();
+            if (watchedTraffic != null) watchedTraffic.ShipDied -= OnShipDied;
+        }
+
+        // ---- the raid news (NetNews) -------------------------------------------------------------------------
+
+        Traffic watchedTraffic;
+        readonly HashSet<ulong> raidKillers = new HashSet<ulong>();
+        int raidKills, raidRace = -1;
+
+        /// <summary>The orbit's traffic (made after Setup, or anew on a takeover): its deaths watched.</summary>
+        void WatchTraffic()
+        {
+            var t = level != null ? level.Traffic : null;
+            if (t == watchedTraffic) return;
+            if (watchedTraffic != null) watchedTraffic.ShipDied -= OnShipDied;
+            watchedTraffic = t;
+            if (t != null) t.ShipDied += OnShipDied;
+        }
+
+        /// <summary>A raider went down: who downed it (this player, or another one: Target.remoteKiller). Once none of the
+        /// orbit's raiders is left, the authority reports the raid's defenders to the server for the news.</summary>
+        void OnShipDied(NpcShip ship, bool byPlayer)
+        {
+            if (!Authority || ship == null || ship.Spec.group != NpcGroup.Raider || watchedTraffic == null) return;
+            if (byPlayer && NetPlayer.Local != null) raidKillers.Add(NetPlayer.Local.OwnerClientId);
+            else if (ship.Target.killedByRemote && ship.Target.remoteKiller != ulong.MaxValue) raidKillers.Add(ship.Target.remoteKiller);
+            else return;   // an NPC's kill (the station's fighters): theirs, not the players'
+            raidKills++;
+            raidRace = ship.Race;
+            if (watchedTraffic.Ships.Exists(s => s != ship && s.Spec.group == NpcGroup.Raider && !s.Gone && s.Target != null && s.Target.Alive)) return;
+            if (raidKills >= NetNews.MinDefenseKills && NetState.Instance != null && NetState.Instance.IsSpawned)
+                NetState.Instance.DefenseReportRpc(Station, raidRace, raidKills, new List<ulong>(raidKillers).ToArray());
+            raidKills = 0;   // a new wave is a new raid
+            raidKillers.Clear();
         }
 
         // ---- the NPCs and the other players (the authority's NpcShip hooks) --------------------------------------
@@ -96,6 +130,7 @@ namespace GoF2Remake.Multiplayer
             NpcShip.RemotePlayers = remotePlayers;
             NpcShip.HostileToRemote = HostileToRemote;
             NpcShip.HostileToLocalBySquad = HostileToLocalBySquad;
+            NpcShip.TerritoryToLocal = TerritoryToLocal;
             NpcShip.RemoteDockedAtObject = t => t != null && t.GetComponent<NetPlayer>() is NetPlayer p && p.DockedAtObject;
         }
 
@@ -104,6 +139,7 @@ namespace GoF2Remake.Multiplayer
             NpcShip.RemotePlayers = null;
             NpcShip.HostileToRemote = null;
             NpcShip.HostileToLocalBySquad = null;
+            NpcShip.TerritoryToLocal = null;
             NpcShip.RemoteDockedAtObject = null;
         }
 
@@ -126,9 +162,26 @@ namespace GoF2Remake.Multiplayer
                 return false;
             }
             if (r == Standing.Pirate || r == Standing.Void || r == Standing.Specter) return true;
+            // A faction's held station: its own race's fighters spare its members and attack other factions' pilots without the toll.
+            int territory = Territory(ship, p.Station, p.FactionTag, p.TollStation);
+            if (territory != 0) return territory < 0;
             if (Standing.IsEnemyWith(r, p.Standing0, p.Standing1, p.Signature)) return true;   // their own standing toward the race
             foreach (var id in ship.aggressors) if (NetSquad.SameClient(id, p)) return true;
             return ship.Target != null && ship.Target.hostileToPlayer && NetSquad.Same(p, NetPlayer.Local);
+        }
+
+        /// <summary>NetFactions' station defence: a fighter of the held station's race (the system's), toward a pilot.</summary>
+        static int Territory(NpcShip ship, int station, string tag, int tollAt)
+        {
+            var orbit = Current;
+            if (orbit == null || orbit.level == null || orbit.level.Layout == null || ship.Race != orbit.level.Layout.raceId) return 0;
+            return NetFactionsClient.Relation(station, tag, tollAt);
+        }
+
+        static int TerritoryToLocal(NpcShip ship)
+        {
+            var me = NetPlayer.Local;
+            return me == null ? 0 : Territory(ship, me.Station, me.FactionTag, NetFactionsClient.TollStation);
         }
 
         /// <summary>Another member of the local player's squad shot it, or an event turned it on the local player (/provoke).</summary>
@@ -297,6 +350,7 @@ namespace GoF2Remake.Multiplayer
             var state = NetState.Instance;
             if (state == null || !state.IsSpawned) return;
             if (!requestedList) { requestedList = true; state.RequestDestroyedRpc(Station); }
+            WatchTraffic();
             UpdateHeldAsteroids();
             // Two players arriving at once both found the orbit empty and built its traffic: the higher client id stands
             // down (its ships go, the other's stay), early in the visit only.

@@ -36,7 +36,7 @@ namespace GoF2Remake.UI
         /// <summary>The credit line under the menu and on the About page (the heart is the text icons' sprite, the version
         /// the build's date and time, BuildVersion).</summary>
         static string VersionText =>
-            "Galaxy on Fire 2 Unity Remake created with <sprite=\"gof2_text_icons\" name=\"heart\"> by JoppieToppie  ·  " + BuildVersion.Text;
+            "Galaxy on Fire 2 Unity Remake created with <sprite=\"gof2_text_icons\" name=\"heart\"> by JoppieToppie  ·  " + BuildVersion.Full;
 
         [Tooltip("Editor only: pretend this build version (e.g. 2026.09.29.2200) so the update check runs; empty = no check.")]
         public string editorTestVersion = "";
@@ -298,6 +298,8 @@ namespace GoF2Remake.UI
             root.RegisterCallback<NavigationMoveEvent>(OnNavigate, TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationSubmitEvent>(e =>
             {
+                // Space typed into a field is a space, not a press of the menu's button.
+                if (TextFieldKeys.IsTyping(e, root.focusController?.focusedElement as VisualElement)) { e.StopPropagation(); root.focusController?.IgnoreEvent(e); return; }
                 if (screen == MenuState.Menu && root.focusController?.focusedElement is ChoiceRow row) { row.Cycle(); e.StopPropagation(); }
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
@@ -440,6 +442,13 @@ namespace GoF2Remake.UI
             }).ExecuteLater(1);
         }
 
+        void OnDestroy()
+        {
+            // The per-scene PanelSettings clone: left alive, every menu entry kept another UI Toolkit panel (its atlas and
+            // GPU buffers) for the rest of the run.
+            if (runtimePanel != null) Destroy(runtimePanel);
+        }
+
         void OnDisable()
         {
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
@@ -496,11 +505,11 @@ namespace GoF2Remake.UI
         {
             DragScroll.NotePointer();
             if (e.pointerType == PointerType.mouse) { SetTouchMode(false); return; }
+            // Don't focus what the finger presses, except a text field (the address, the code, the debug search): it needs
+            // the focus for the on-screen keyboard. Touch mode without the blur there: tapping the focused field again blurred
+            // it first, which closed the keyboard.
+            if (TextFieldKeys.InTextField(e.target)) { touchMode = true; root.EnableInClassList("can-hover", false); return; }
             SetTouchMode(true);
-            // Don't focus what the finger presses, except a text field (the address, the debug search): it needs the focus
-            // for the on-screen keyboard.
-            for (var v = e.target as VisualElement; v != null; v = v.parent)
-                if (v is TextField) return;
             root.focusController?.IgnoreEvent(e);
         }
 
@@ -933,6 +942,12 @@ namespace GoF2Remake.UI
             Bind("mpDebugOff", () => SetHostDebug(false));
             Bind("mpDebugOn", () => SetHostDebug(true));
             ApplyHostDebug();
+            // The hosted world (PlayerPrefs "mp_persistent", fresh by default): persistent keeps every player's progress, the
+            // factions, bans and news on this device (NetGame.HostWantsPersistent; the host is its master admin).
+            GoF2Remake.Multiplayer.NetGame.HostWantsPersistent = PlayerPrefs.GetInt("mp_persistent", 0) != 0;
+            Bind("mpWorldFresh", () => SetHostWorld(false));
+            Bind("mpWorldPersistent", () => SetHostWorld(true));
+            ApplyHostWorld();
             // Modded content in the hosted session (PlayerPrefs "mp_allow_mods", off by default; NetMods.HostAllowsMods).
             GoF2Remake.Multiplayer.NetMods.HostAllowsMods = PlayerPrefs.GetInt("mp_allow_mods", 0) != 0;
             Bind("mpModsOff", () => SetHostMods(false));
@@ -992,6 +1007,20 @@ namespace GoF2Remake.UI
             bool allowed = GoF2Remake.Multiplayer.NetGame.HostAllowsDebug;
             root.Q<Button>("mpDebugOff")?.EnableInClassList("choice-segment--active", !allowed);
             root.Q<Button>("mpDebugOn")?.EnableInClassList("choice-segment--active", allowed);
+        }
+
+        void SetHostWorld(bool persistent)
+        {
+            GoF2Remake.Multiplayer.NetGame.HostWantsPersistent = persistent;
+            PlayerPrefs.SetInt("mp_persistent", persistent ? 1 : 0);
+            ApplyHostWorld();
+        }
+
+        void ApplyHostWorld()
+        {
+            bool persistent = GoF2Remake.Multiplayer.NetGame.HostWantsPersistent;
+            root.Q<Button>("mpWorldFresh")?.EnableInClassList("choice-segment--active", !persistent);
+            root.Q<Button>("mpWorldPersistent")?.EnableInClassList("choice-segment--active", persistent);
         }
 
         void SetHostMods(bool allowed)
@@ -1877,6 +1906,9 @@ namespace GoF2Remake.UI
             Set("mpDebugLabel", Localization.Extra("mpDebugMenu", "Debug menu").ToUpperInvariant());
             Set("mpDebugOff", Localization.Extra("mpDebugOff", "Off").ToUpperInvariant());
             Set("mpDebugOn", Localization.Extra("mpDebugAllowed", "Allowed").ToUpperInvariant());
+            Set("mpWorldLabel", Localization.Extra("mpWorld", "World").ToUpperInvariant());
+            Set("mpWorldFresh", Localization.Extra("mpWorldFresh", "Fresh").ToUpperInvariant());
+            Set("mpWorldPersistent", Localization.Extra("mpWorldPersistent", "Persistent").ToUpperInvariant());
             Set("mpModsOff", Localization.Extra("mpDebugOff", "Off").ToUpperInvariant());
             Set("mpModsOn", Localization.Extra("mpDebugAllowed", "Allowed").ToUpperInvariant());
             ApplyHostMods();
@@ -1944,8 +1976,15 @@ namespace GoF2Remake.UI
         void OnNavigate(NavigationMoveEvent e)
         {
             if (screen != MenuState.Menu) return;
-            SetTouchMode(false);
             var focused = root.focusController?.focusedElement as VisualElement;
+            // Typing into a field (the address, the code, a name): W A S D and the side arrows are letters and the cursor.
+            if (TextFieldKeys.IsTyping(e, focused))
+            {
+                e.StopPropagation();
+                root.focusController?.IgnoreEvent(e);
+                return;
+            }
+            SetTouchMode(false);
             bool vertical = e.direction == NavigationMoveEvent.Direction.Up || e.direction == NavigationMoveEvent.Direction.Down;
             bool horizontal = e.direction == NavigationMoveEvent.Direction.Left || e.direction == NavigationMoveEvent.Direction.Right;
             if (!vertical && !horizontal) return;

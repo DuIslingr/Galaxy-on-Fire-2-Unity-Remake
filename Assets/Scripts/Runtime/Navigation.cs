@@ -49,6 +49,7 @@ namespace GoF2Remake.Flight
     public class Navigation : MonoBehaviour
     {
         public enum Kind { Station, Jumpgate, Planet, AsteroidField, Destination, KhadorDrive, Waypoint, Wingmen, Cloak, Wormhole, DockingTarget, Secondary, TimeExtender,
+                           Distress, Assist,
             /// <summary>Remake multiplayer: a named object (/spawn ... named, DebugSpawner.SpawnObject): its name and distance
             /// near the crosshair like a landmark's, never locked or flown to.</summary>
             Marker }
@@ -63,6 +64,7 @@ namespace GoF2Remake.Flight
             public bool hidden;              // not drawn and not lockable now (the wormhole while invisible)
             public string name;
             public NpcShip dockingShip;     // docking targets: the object
+            public ulong client;             // multiplayer Assist: the squadmate calling for help
             public bool freelance;          // waypoints: a freelance mission's route (the white freelance icon, not the gold story one)
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
@@ -332,6 +334,15 @@ namespace GoF2Remake.Flight
                 list.Add(new Target { kind = Kind.TimeExtender, name = te != null ? GameNames.Item(te.index) : "Time extender",
                                       disabled = !Extender.Ready && !Extender.Running });
             }
+            // Multiplayer (remake): Help for every squadmate calling for help (NetDistress). The pilot's own call isn't here
+            // (a menu key picked it by accident): the flight HUD's Distress call button or its own binding.
+            if (GoF2Remake.Multiplayer.NetGame.Active && GoF2Remake.Multiplayer.NetSquad.LocalSquad != 0)
+            {
+                foreach (var m in GoF2Remake.Multiplayer.NetSquad.Members())
+                    if (m != null && !m.IsOwner && m.Distress)
+                        list.Add(new Target { kind = Kind.Assist, client = m.OwnerClientId,
+                                              name = string.Format(Localization.Extra("mpHelpEntry", "Help {0}"), m.DisplayName) });
+            }
             return list;
         }
 
@@ -368,6 +379,13 @@ namespace GoF2Remake.Flight
             if (target == null || target.disabled) return;
             if (target.kind == Kind.Destination) { ContinueToProgrammedStation(); return; }
             if (target.kind == Kind.Cloak) { Cloak?.Use(); return; }
+            if (target.kind == Kind.Distress) { Say(GoF2Remake.Multiplayer.NetDistress.Toggle()); return; }
+            if (target.kind == Kind.Assist)
+            {
+                string msg = GoF2Remake.Multiplayer.NetDistress.Help(GoF2Remake.Multiplayer.NetSquad.Find(target.client));
+                if (!string.IsNullOrEmpty(msg)) Say(msg);
+                return;
+            }
             if (target.kind == Kind.TimeExtender) { Extender?.Toggle(); return; }   // the game runs again: CloseMenu above
             if (target.kind == Kind.DockingTarget) { Docking?.Dock(target.dockingShip); return; }
             if (target.kind == Kind.Waypoint)
@@ -606,7 +624,7 @@ namespace GoF2Remake.Flight
 
         /// <summary>The player's flight controls (steering, dodge, guns, mining) are off: the game is paused, or in multiplayer
         /// a menu, conversation or map is open (the world goes on there).</summary>
-        public static bool InputHalted => Time.timeScale <= 0f || (halted && GoF2Remake.Multiplayer.NetGame.Active)
+        public static bool InputHalted => Time.timeScale <= 0f || (GoF2Remake.Multiplayer.NetGame.Active && (halted || GoF2Remake.UI.MultiplayerWindow.IsOpenAny))
                                           || GoF2Remake.Events.EventScreen.QuestionOpen;   // an event's question (multiplayer)
 
         void OnDestroy() { halted = false; MusicPaused = false; if (!GoF2Remake.Multiplayer.NetGame.Active) AudioListener.pause = false; }

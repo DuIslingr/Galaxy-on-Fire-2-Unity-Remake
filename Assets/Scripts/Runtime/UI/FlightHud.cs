@@ -110,6 +110,13 @@ namespace GoF2Remake.UI
             GameControls.Changed += ApplyInputMode;   // a rebound key: the hints show it
         }
 
+        void OnDestroy()
+        {
+            // The per-scene PanelSettings clone: left alive, every Space load (jumps, launches) kept another UI Toolkit
+            // panel (its atlas and GPU buffers) for the rest of the run.
+            if (runtimePanel != null) Destroy(runtimePanel);
+        }
+
         void OnDisable()
         {
             pauseMenu?.Close();   // the scene is going: sounds and time back to normal
@@ -140,6 +147,9 @@ namespace GoF2Remake.UI
             {
                 ChatView.Attach(gameObject, safeArea ?? root);    // multiplayer chat
                 SquadView.Attach(gameObject, safeArea ?? root);   // the squad window, invitations
+                ArenaView.Attach(gameObject, safeArea ?? root);   // an arena match: score, timer, respawn, result
+                TerritoryView.Attach(gameObject, safeArea ?? root);   // a faction station's toll, a siege's banner
+                MultiplayerWindow.Attach(gameObject, safeArea ?? root, true);   // the multiplayer window (N): chat, squad, distress, admin
             }
 
             InputGlyph.TrackHintsOption(hints);
@@ -641,7 +651,8 @@ namespace GoF2Remake.UI
                       && !pauseMenu.IsOpen && !(nav != null && nav.MenuOpen) && !StarMap.IsOpen && !storyDialogue.IsOpen
                       && !level.Cutscene && level.LaunchCameraOver && Time.timeScale > 0f && (health == null || !health.Dead)
                       && (weapons == null || !weapons.SteeringMissile) && (level.Docking == null || !level.Docking.Busy)
-                      && !GoF2Remake.Multiplayer.NetChat.Typing;   // multiplayer: the cursor free for the chat
+                      && !GoF2Remake.Multiplayer.NetChat.Typing   // multiplayer: the cursor free for the chat
+                      && !MultiplayerWindow.IsOpenAny;            // and for the multiplayer window
             // PlayerEgo::right etc. forward to the MiningGame while drilling (0xacd48): the mouse steers the drill then (the PC
             // version's mining); approaching and landing it does nothing, the cursor stays locked.
             bool idle = mining == null || mining.State == Mining.Phase.Idle;
@@ -723,6 +734,23 @@ namespace GoF2Remake.UI
             }
 
             if (pauseMenu.IsOpen) { pauseMenu.Tick(); return; }
+            // Multiplayer: the multiplayer window (its button, or the "Multiplayer window" binding, N): Esc / B close it;
+            // meanwhile the flight keys wait (Navigation.InputHalted), and in one of its text fields every key is typing
+            // (NetChat.SetTyping: the binding's key is a letter there).
+            if (MultiplayerWindow.IsOpenAny)
+            {
+                var k = GoF2Remake.Multiplayer.NetChat.Keys;
+                if ((k != null && k.escapeKey.wasPressedThisFrame) || (Gamepad.current != null && (Gamepad.current.buttonEast.wasPressedThisFrame || Gamepad.current.startButton.wasPressedThisFrame))
+                    || (!MultiplayerWindow.TypingAny && GameControls.MultiplayerWindow.WasPressedThisFrame()))
+                    MultiplayerWindow.CloseAny();
+                return;
+            }
+            if (GoF2Remake.Multiplayer.NetGame.Active && !GoF2Remake.Multiplayer.NetChat.Typing && (health == null || !health.Dead))
+            {
+                if (GameControls.MultiplayerWindow.WasPressedThisFrame()) { MultiplayerWindow.ToggleAny(); return; }
+                // The distress call: only its button or its own binding (unbound by default), never a menu key.
+                if (GameControls.DistressCall.WasPressedThisFrame()) MultiplayerWindow.ToggleDistressAny();
+            }
             if ((GoF2Remake.Multiplayer.NetChat.Keys != null && GoF2Remake.Multiplayer.NetChat.Keys.escapeKey.wasPressedThisFrame)
                 || (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame))
             {
@@ -1200,6 +1228,7 @@ namespace GoF2Remake.UI
 
         void OnGameOver()
         {
+            if (GoF2Remake.Multiplayer.NetArenaClient.InMatch) return;   // an arena match respawns the ship instead
             gameOverMs = 0f;
             gameOver.AddToClassList("game-over--shown");
             gameOverText.text = GoF2Remake.Events.EventRespawn.Active
@@ -1228,8 +1257,16 @@ namespace GoF2Remake.UI
         {
             if (gameOverMs < 7000f) return;
             gameOverMs = -1f;
-            // Multiplayer: back in this orbit's station, repaired (docking repairs), everything else kept.
-            if (GoF2Remake.Multiplayer.NetGame.Active) { Session.DockedFromSpace = false; SceneManager.LoadScene("Station"); return; }
+            // Multiplayer: back in this orbit's station (a faction member: the faction's home, NetFactions), repaired (docking
+            // repairs), everything else kept.
+            if (GoF2Remake.Multiplayer.NetGame.Active)
+            {
+                int home = GoF2Remake.Multiplayer.NetFactionsClient.Home;
+                if (home >= 0 && home < GoF2Remake.Multiplayer.NetGame.Db.Stations.Count) Session.StationIndex = home;
+                Session.DockedFromSpace = false;
+                SceneManager.LoadScene("Station");
+                return;
+            }
             if (Session.LoadAutosave() && Application.CanStreamedLevelBeLoaded("Station")) SceneManager.LoadScene("Station");
             else BackToMenu();
         }
@@ -1251,6 +1288,8 @@ namespace GoF2Remake.UI
             if (tex != null) { logo.style.backgroundImage = new StyleBackground(tex); logo.style.width = tex.width; logo.style.height = tex.height; }
             orbitInfo.Q<Label>("orbitStation").text = st == null ? "" : st.index == 101 ? st.name : $"{st.name} {Localization.Get(136)}";
             orbitInfo.Q<Label>("orbitSystem").text = st == null ? "" : $"{st.systemName} {Localization.Get(137)}";
+            string holder = st == null ? "" : GoF2Remake.Multiplayer.NetFactionsClient.OwnerText(st.index);   // a faction's station (NetFactions)
+            if (holder.Length > 0) orbitInfo.Q<Label>("orbitSystem").text += $"  ·  {holder}";
             int sec = Mathf.Clamp(GalaxyMap.SecurityOf(level.Database.Systems.Find(s => s.index == system)), 0, 3);
             var secLabel = orbitInfo.Q<Label>("orbitSecurity");
             secLabel.text = Localization.Get(402 + sec);

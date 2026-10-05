@@ -155,6 +155,8 @@ namespace GoF2Remake.Data
         /// <summary>ModStation::autosave: slot 0, not for a game without playing time.</summary>
         public static void AutoSave()
         {
+            // Multiplayer: a server that keeps profiles gets the docked game instead (NetProfileClient; a no-op without).
+            if (GoF2Remake.Multiplayer.NetGame.SessionGame) { GoF2Remake.Multiplayer.NetProfileClient.Upload(); return; }
             if (Session.PlaySeconds <= 0f) return;
             Save(AutoSaveSlot);
         }
@@ -167,6 +169,35 @@ namespace GoF2Remake.Data
             Modding.ModSaves.Fix(s);   // modded items moved to their numbers now, or removed and refunded (mods turned off)
             Apply(s);
             return true;
+        }
+
+        /// <summary>Multiplayer (NetProfileClient): the game as a server profile: a save without the shop memory (the session's
+        /// stock is the host's, NetStock; the bar visitors come again), compact.</summary>
+        public static string ProfileJson()
+        {
+            var s = Capture();
+            s.recentStations = null;
+            return JsonUtility.ToJson(s, false);
+        }
+
+        /// <summary>Multiplayer: a server profile into the session's game (already checked by TryParse), under the session's
+        /// rules (NetGame.PrepareSession: free play on Normal, the Android economy). A squad mission, its Courier containers
+        /// and passengers don't outlive the session they belonged to; the game starts docked where the profile was (an orbit
+        /// that isn't a station: Var Hastra).</summary>
+        public static void ApplyProfile(SaveData s)
+        {
+            Apply(s);
+            Session.Difficulty = Session.DifficultyNormal;
+            Session.Economy = Economy.Android;
+            Session.UseCompletedWorld();   // the session's world, whatever index the profile was saved with
+            Session.FreelanceMission = new FreelanceMission();
+            Session.Passengers = 0;
+            Session.Cargo.RemoveAll(c => c.item == Freelance.SecureContainer);   // a Courier's containers (unsaleable)
+            if (Session.StationIndex < 0 || Session.StationIndex >= GoF2Remake.Multiplayer.NetGame.Db.Stations.Count)
+                Session.StationIndex = GoF2Remake.Multiplayer.NetGame.Station;
+            Session.ProgrammedStation = -1;
+            Session.LaunchedFromStation = false;
+            Session.DockedFromSpace = false;
         }
 
         static SaveData Capture()
@@ -334,6 +365,7 @@ namespace GoF2Remake.Data
 
         static void Apply(SaveData s)
         {
+            Session.CompletedWorld = false;   // a save is its own world (ApplyProfile sets the session's again)
             static Dictionary<int, (int, int)> Prices(List<SaveData.KnownPrice> l)
             {
                 var d = new Dictionary<int, (int, int)>();

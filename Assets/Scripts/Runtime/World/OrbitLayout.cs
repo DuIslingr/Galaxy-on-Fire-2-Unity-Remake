@@ -87,6 +87,10 @@ namespace GoF2Remake.World
         static readonly int[] EmptyOrbits = { 102, 103, 104, 109, 110, 132, 133, 134 };   // Status::inEmptyOrbit (mission-independent part)
         static readonly int[] StationObjectInEmptyOrbit = { 27, 110, 111 };              // Level::createSpace 0xbc0f6
 
+        /// <summary>Remake multiplayer (Session.CompletedWorld): Ginoya's Naneroh, Valpatro and Luur, empty or wrecked after
+        /// the supernova in the original, stand intact with their shops (OrbitBuilder.StationLook / StationAssembly).</summary>
+        public static bool IsRebuiltGinoya(int station) => station >= 109 && station <= 111;
+
         /// <summary>Status::inEmptyOrbit 0xb8ee8 for a real station at campaign index 'mission' (free play and multiplayer: 20):
         /// the orbit has no station to dock at (Level::collideStation, MGame::dockEvent), none in the autopilot menu
         /// (AutoPilotList / Hud::initHudMenu). Always 102-104, 109, 110, 132-134; Var Hastra (78) at index 0 / 1 (the prologue
@@ -94,6 +98,7 @@ namespace GoF2Remake.World
         /// after the add-on). The alien orbit's rule (Status+0x78, the Void station gone at 43-83 and from 154) is Build's.</summary>
         public static bool IsEmptyOrbit(int station, int mission)
         {
+            if (Session.CompletedWorld && IsRebuiltGinoya(station)) return false;   // remake multiplayer: intact and open
             if (System.Array.IndexOf(EmptyOrbits, station) >= 0) return true;
             return (station == 78 && mission <= 1) || (station == 111 && mission > 0x5d) || (station == 101 && mission >= 0x54);
         }
@@ -150,7 +155,7 @@ namespace GoF2Remake.World
             var st = db.Stations.Find(s => s.index == stationIndex);
             var sys = st != null ? db.Systems.Find(s => s.index == st.system) : null;
             bool alien = stationIndex == Session.VoidOrbit;
-            int mission = Session.FreePlay ? 20 : Session.CampaignMission;
+            int mission = Session.WorldIndex;
             var o = new OrbitLayout
             {
                 stationIndex = stationIndex,
@@ -211,7 +216,7 @@ namespace GoF2Remake.World
             // longer the supernova system, so the sun has the normal size and look.
             if (systemIndex == 27)
             {
-                int mission = Session.FreePlay ? 20 : Session.CampaignMission;
+                int mission = Session.WorldIndex;
                 if (mission < 0x9e)
                 {
                     sunScale = mission < 0x6a ? 0.9918212890625f : 1.373291015625f;
@@ -254,7 +259,7 @@ namespace GoF2Remake.World
             byFileOrder.Sort();
             // StarSystem::StarSystem 0x15c89a: mission 0 (the prologue and the main menu's backdrop, Status::resetGame) halves the
             // orbit planet (before the size overrides by texture, which replace it).
-            bool missionZero = (Session.FreePlay ? 20 : Session.CampaignMission) == 0;
+            bool missionZero = Session.WorldIndex == 0;
             for (int i = 0; i < sys.stations.Count; i++)
             {
                 int stIdx = sys.stations[i];
@@ -321,7 +326,7 @@ namespace GoF2Remake.World
                 case 11: fog = true; fogColor = new Color32(0xdb, 0x69, 0x23, 255); fogEnd = 50000f; break;
                 case 12: fog = true; fogColor = new Color32(0x16, 0x3e, 0x7c, 255); fogEnd = 50000f; break;
                 // StarSystem::initLight case 0xf returns before the fog at campaign 0x59 (89's supernova cutscene: no haze).
-                case 15: fog = (Session.FreePlay ? 20 : Session.CampaignMission) != 89; fogColor = new Color32(0x82, 0x44, 0x1f, 255); fogEnd = 100000f; break;
+                case 15: fog = Session.WorldIndex != 89; fogColor = new Color32(0x82, 0x44, 0x1f, 255); fogEnd = 100000f; break;
                 case 16: fog = true; fogColor = new Color32(0x47, 0x66, 0x5e, 255); fogEnd = 150000f; break;
                 case 17: fog = true; fogColor = new Color32(0x73, 0x8d, 0x95, 255); fogEnd = 150000f; break;
                 case 18: fog = true; fogColor = new Color32(0xab, 0xa0, 0x75, 255); fogEnd = 150000f; break;

@@ -3,7 +3,7 @@
 // through Unity Relay (Multiplayer Services: the host gets a join code, the others join with it, no address or port
 // forwarding; anonymous Unity Authentication), listed in the server browser unless the host keeps it to its code
 // (NetLobby, Unity Lobby); local ones by direct IP, port 7777.
-// The main menu's Multiplayer panel hosts or joins; every player starts a fresh free-play game docked at Var Hastra (78) and then
+// The main menu's Multiplayer panel hosts or joins; every player starts a fresh free-play game docked at Dis (70) and then
 // plays it like single player: their own scenes (Space for their orbit, Station for their hangar), economy, jumps and
 // docking. No scene synchronisation: the network objects live in DontDestroyOnLoad and each player shows only what is
 // where they are.
@@ -18,7 +18,8 @@
 //   Shots, hits on proxies and crate claims go between the players in the same orbit (NetShotSender / NetShotMirror,
 //   NetProxy, NetCrate). Not yet: handing an orbit's NPCs over when its authority leaves (they go with it),
 //   player-versus-player damage, NPCs attacking other players than the authority. The players can't die (game over
-//   would load a save), nothing is saved (SaveGame), and the game never pauses (Time.timeScale stays 1).
+//   would load a save), nothing is saved to the single-player slots (SaveGame), and the game never pauses
+//   (Time.timeScale stays 1). A dedicated server keeps player profiles instead (NetProfiles / NetProfileClient).
 // Network prefabs: Resources/GoF2Net (GoF2 > Build > Network Prefabs).
 
 using System;
@@ -50,7 +51,9 @@ namespace GoF2Remake.Multiplayer
             get { int p = PlayerPrefs.GetInt("mp_port", DefaultPort); return p >= 1024 && p <= 65535 ? (ushort)p : DefaultPort; }
             set => PlayerPrefs.SetInt("mp_port", value);
         }
-        public const int Station = 78;
+        /// <summary>Where every session game starts docked (and a profile without a station goes): Dis (70), the
+        /// Supernova add-on's start.</summary>
+        public const int Station = 70;
         public const string PrefabFolder = "GoF2Net";
         public static readonly string[] PrefabNames = { "NetPlayer", "NetProxy", "NetState", "NetCrate" };
         const string StationScene = "Station", MenuScene = "MainMenu";
@@ -216,6 +219,9 @@ namespace GoF2Remake.Multiplayer
                 await UnityServices.InitializeAsync(options);
             }
             while (UnityServices.State == ServicesInitializationState.Initializing) await Task.Yield();
+            // A sign-in that expired while offline (its refresh failed): signed out first, the cached session token kept,
+            // so the same anonymous player signs in again (a dedicated server starting again after a lost connection).
+            if (AuthenticationService.Instance.IsExpired) AuthenticationService.Instance.SignOut(false);
             if (!AuthenticationService.Instance.IsSignedIn) await AuthenticationService.Instance.SignInAnonymouslyAsync();
         }
 
@@ -318,7 +324,25 @@ namespace GoF2Remake.Multiplayer
                 return string.Format(Localization.Extra("mpNoCode", "No game found with join code {0}."), code);
             if (e is RequestFailedException f && (f.ErrorCode == CommonErrorCodes.TransportError || f.ErrorCode == CommonErrorCodes.Timeout || f.ErrorCode == CommonErrorCodes.ServiceUnavailable))
                 return Localization.Extra("mpOffline", "Can't reach Unity's servers: online play needs an internet connection.");
-            return string.Format(Localization.Extra("mpOnlineFailed", "Online play failed: {0}"), e.Message);
+            return string.Format(Localization.Extra("mpOnlineFailed", "Online play failed: {0}"), Describe(e));
+        }
+
+        /// <summary>An exception's message with its inner ones (Unity Services' "Some services couldn't be initialized. Look
+        /// at inner exceptions" says nothing on its own).</summary>
+        static string Describe(Exception e)
+        {
+            var parts = new List<string>();
+            void Add(Exception x, int depth)
+            {
+                if (x == null || depth > 4) return;
+                string m = (x.Message ?? "").Trim();
+                if (m.Length > 0 && !parts.Contains(m)) parts.Add(m);
+                if (x is AggregateException agg) foreach (var inner in agg.InnerExceptions) Add(inner, depth + 1);
+                else Add(x.InnerException, depth + 1);
+            }
+            Add(e, 0);
+            string text = string.Join(" → ", parts);
+            return text.Length > 400 ? text.Substring(0, 400) + "…" : text;
         }
 
         /// <summary>Hosts: online when PrepareOnlineHost reserved an allocation just before, else on this device's port.</summary>
@@ -327,6 +351,7 @@ namespace GoF2Remake.Multiplayer
             var relay = hostAllocation;
             hostAllocation = null;
             PrepareSession();
+            SetUpHostedWorld();
             NetMods.BeginHost();   // the host's mods when modded content is allowed, else none
             Seed = Environment.TickCount & 0x7fffffff;
             ushort port = HostPort;
@@ -347,21 +372,48 @@ namespace GoF2Remake.Multiplayer
             SpawnPlayer(NetworkManager.ServerClientId);
             if (JoinCode != null) GUIUtility.systemCopyBuffer = JoinCode;   // ready to paste to friends
             PublishIfListed(false);
-            EnterWorld();
+            // A persistent world: the host signs in to its own profile like any player (NetProfileClient: the world is
+            // entered once the profile has arrived), else a fresh game at once.
+            if (PersistentHost) NetProfileClient.Begin(NetProfiles.ServerId, Seed);
+            else EnterWorld();
             return true;
+        }
+
+        /// <summary>The Host card's World choice (PlayerPrefs "mp_persistent"): the hosted session keeps every player's profile,
+        /// the factions, bans, staff, news and server settings on this device (HostedWorldFolder), like a dedicated
+        /// server; else a fresh game nothing of which is kept.</summary>
+        public static bool HostWantsPersistent { get; set; }
+
+        /// <summary>The session this game hosts is a persistent world (StartHost with HostWantsPersistent).</summary>
+        public static bool PersistentHost { get; private set; }
+
+        /// <summary>Where a persistent hosted world keeps its files (the dedicated server's ServerProfiles layout).</summary>
+        public static string HostedWorldFolder => System.IO.Path.Combine(Application.persistentDataPath, "HostedWorld");
+
+        /// <summary>StartHost, before the NetState spawns: the persistent world's profiles and settings, or none.</summary>
+        static void SetUpHostedWorld()
+        {
+            PersistentHost = HostWantsPersistent;
+            NetProfiles.Configure(PersistentHost, NetProfiles.DefaultMaxProfiles, NetProfiles.DefaultEarnPerMinute, PersistentHost ? HostedWorldFolder : null);
+            if (!PersistentHost) return;
+            // The Host card's choices win over the saved settings (they are its "command line").
+            NetServerSettings.Load(option => option == "-password" || option == "-maxplayers" || option == "-allowdebug" || option == "-name");
+            NetProfiles.Start();   // the profiles, factions, bans and news (before NetState: it carries the world's id)
+            Debug.Log($"NetGame: hosting a persistent world in {HostedWorldFolder}.");
         }
 
         /// <summary>A dedicated server (DedicatedServer, the -server command line): the session's world without a player of
         /// its own: no NetPlayer, no scene, listening on every adapter. The host's bookkeeping (NetState, the shared stock,
         /// squads, missions, crate claims, the chat relay) runs as with a host; the orbits are run by the players in them.</summary>
-        public static bool StartServer(ushort port)
+        public static bool StartServer(ushort port, bool keepSeed = false)
         {
             var relay = hostAllocation;
             hostAllocation = null;
             PrepareSession();
             NetMods.BeginHost();
             Dedicated = true;
-            Seed = Environment.TickCount & 0x7fffffff;
+            NetProfiles.Start();   // the player profiles (before NetState: it carries the server's id)
+            if (!keepSeed || Seed == 0) Seed = Environment.TickCount & 0x7fffffff;   // a restart keeps the world's asteroid fields
             var m = EnsureManager();
             if (relay != null) Transport.SetRelayServerData(relay.ToRelayServerData(RelayConnection));
             else { JoinCode = null; Transport.SetConnectionData("0.0.0.0", port, "0.0.0.0"); }
@@ -426,7 +478,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The world's state is here (the host at once, a client when NetState spawns): the seed, then the game
-        /// starts docked at Var Hastra (no fly-in: the others see the ship appear on a pad), a new free-play game.</summary>
+        /// starts docked at Dis (no fly-in: the others see the ship appear on a pad), a new free-play game.</summary>
         internal static void EnterWorld(int seed = -1)
         {
             if (worldEntered) return;
@@ -444,6 +496,10 @@ namespace GoF2Remake.Multiplayer
         /// them why first and closes a moment later (NetDelayedShutdown), so the reason reaches them.</summary>
         public static void Shutdown()
         {
+            // Leaving a server that keeps profiles: the game as it is now goes up first (queued before the disconnect).
+            if (manager != null && !manager.IsServer && manager.IsConnectedClient && !closing) NetProfileClient.Upload();
+            // A persistent hosted world: the host's own game straight into its profile (no network in between).
+            if (manager != null && manager.IsHost && PersistentHost && worldEntered && !closing) NetProfileClient.SaveHostNow();
             NetChat.Clear();
             NetSquad.Clear();
             worldEntered = false;
@@ -654,7 +710,7 @@ namespace GoF2Remake.Multiplayer
 
         static UnityTransport Transport => (UnityTransport)manager.NetworkConfig.NetworkTransport;
 
-        /// <summary>Status::resetGame as free play (no story), at Var Hastra, with the launch camera.</summary>
+        /// <summary>Status::resetGame as free play (no story) in the finished game's world, docked at Dis (Station).</summary>
         static void PrepareSession()
         {
             Status = "";
@@ -663,14 +719,17 @@ namespace GoF2Remake.Multiplayer
             closing = quitAfter = false;
             sessionGame = true;
             Dedicated = false;
+            PersistentHost = false;
             NetMods.BeginClient();   // no mods until the session's arrive (NetState) or the host picks its own (BeginHost)
             NetStock.Reset();
+            NetArena.Reset();
+            NetArenaClient.Reset();
             NetStats.Reset();
+            NetNews.Reset();
             Session.ResetNewGame();
             Session.Difficulty = Session.DifficultyNormal;   // every session plays on Normal (the shared stock, NPCs, rewards)
             Session.Economy = Economy.Android;               // and on one economy (the shared stock's prices)
-            Session.FreePlay = true;
-            Session.CampaignMission = Session.FreePlayMission;
+            Session.UseCompletedWorld();   // free play in the finished game's world (every dealer ship, Ginoya after the supernova)
             Session.StationIndex = Station;
             Session.LaunchedFromStation = false;   // the session starts docked (EnterWorld)
         }
@@ -721,7 +780,6 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The password this game joins with (the Join card), empty = none.</summary>
         public static string JoinPassword { get; set; } = CommandLineValue("-mppassword") ?? "";   // -mppassword: testing with -mpjoin
 
-        /// <summary>What a connecting game sends: its version, a line break, the password it joins with.</summary>
         /// <summary>The connection data: the fingerprint, the password, the shown version (for the refusal's text). Builds from
         /// before the fingerprint send their version first and their password: refused, their version is the first line.</summary>
         static byte[] Payload() => System.Text.Encoding.UTF8.GetBytes(Protocol + "\n" + CleanPassword(JoinPassword) + "\n" + Version + "\n" + NetMods.InstalledList);
@@ -802,6 +860,10 @@ namespace GoF2Remake.Multiplayer
         /// session nothing restricts it (Cheats.Allowed).</summary>
         public static bool DebugAllowed => NetState.Instance != null && NetState.Instance.DebugAllowed;
 
+        /// <summary>Players may shoot each other anywhere, not only in arena matches (a dedicated server's -freepvp; off by
+        /// default). NetState carries it to every player.</summary>
+        public static bool FreePvp { get; set; }
+
         /// <summary>The session has a password (the server browser's tag).</summary>
         internal static bool HasPassword => CleanPassword(HostPassword).Length > 0;
 
@@ -822,13 +884,14 @@ namespace GoF2Remake.Multiplayer
             OnClientDisconnect(manager.LocalClientId);
         }
 
-        /// <summary>A dedicated server stopped by itself (a host's own stop comes through OnStopped): nothing to go back to.</summary>
+        /// <summary>A dedicated server stopped by itself (a transport failure: the network or the Relay connection went; a
+        /// host's own stop comes through OnStopped): it starts again (DedicatedServer.ConnectionLost), else quits.</summary>
         static void OnServerStopped(bool wasHost)
         {
             if (manager == null || wasHost || !Dedicated) return;
             Debug.LogError("NetGame: the server stopped (network error).");
             ShutdownNow();
-            Application.Quit(1);
+            if (!DedicatedServer.ConnectionLost()) DedicatedServer.Quit(1);
         }
 
         /// <summary>The session is over while playing: out of it, back to the Multiplayer panel with the reason.</summary>
@@ -858,6 +921,8 @@ namespace GoF2Remake.Multiplayer
                 // That player's ship goes at once (NGO removes a player object with its owner; this also covers a late one),
                 // and so does what they showed of their orbit (NGO destroys the objects a leaving client owns).
                 playersSpawned.Remove(clientId);
+                NetProfiles.OnDisconnect(clientId);   // its profile's control goes to its next device online
+                NetArena.OnDisconnect(clientId);      // out of their queue or match
                 NetRateLimit.Forget(clientId);
                 // (Netcode has usually despawned the player object already: its mission cargo is handed over in
                 // NetPlayer.OnNetworkDespawn.)

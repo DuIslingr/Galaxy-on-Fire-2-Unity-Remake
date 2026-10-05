@@ -11,7 +11,13 @@
 //   squads (NetSquad): invitations, joining and leaving, a squad of one dissolved; the players' kill notices;
 //   squad missions (NetMissions): the shared missions, their progress and results, a disconnecting carrier's cargo;
 //   the shared shop stock (NetStock): the host's list per station, the players' trades, the reset;
-//   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed).
+//   whether the session allows the Debug menu (NetGame.HostAllowsDebug, Cheats.Allowed);
+//   a dedicated server's player profiles (NetProfiles / NetProfileClient): signing in, the profile to the player, their
+//     uploads, handing control between a profile's devices (the chat's /link /control /profile: NetCommands);
+//   moderation (NetModeration, through NetCommands): /kick /tempban /ban /unban /bans /op /deop /staff;
+//   factions (NetFactions): the chat's /faction and /f commands, the claims (Claims), bank deposits and payouts;
+//   arena matches (NetArena / NetArenaClient): the chat's /duel /accept /decline /ffa /leave /arena /top, a match's
+//     start, state, end and kills; whether players may fight outside them (FreePvp, -freepvp).
 // The server trusts no client further than its own game: every request is limited per client (NetRateLimit) and checked
 // (NetGuard): the sender exists and acts where it is (spawns, asteroids and claims in its own orbit, trades and hangar
 // ships at the station it is docked at), only on its own objects (despawns) or those it is entitled to (a takeover in its
@@ -22,6 +28,7 @@
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using GoF2Remake.Events;
@@ -43,9 +50,15 @@ namespace GoF2Remake.Multiplayer
 
         readonly NetworkVariable<int> seed = new NetworkVariable<int>();
         readonly NetworkVariable<bool> dedicated = new NetworkVariable<bool>();
-        readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice, fixed for the session
-        readonly NetworkVariable<bool> freeForAll = new NetworkVariable<bool>();
-        readonly NetworkVariable<Unity.Collections.FixedString4096Bytes> sessionMods = new NetworkVariable<Unity.Collections.FixedString4096Bytes>();   // NetMods.SessionList     // /pvp, an event's Free For All: every player an enemy
+        readonly NetworkVariable<bool> debugAllowed = new NetworkVariable<bool>();   // the host's / server's choice (a server's admins may change it)
+        readonly NetworkVariable<bool> profilesOn = new NetworkVariable<bool>();     // the server keeps player profiles (NetProfiles)
+        readonly NetworkVariable<bool> freePvp = new NetworkVariable<bool>();        // players may fight anywhere (else only in arenas)
+        readonly NetworkVariable<FixedString4096Bytes> claims = new NetworkVariable<FixedString4096Bytes>();   // NetFactions' territory
+        readonly NetworkVariable<FixedString4096Bytes> sieges = new NetworkVariable<FixedString4096Bytes>();   // NetFactions' sieges
+        readonly NetworkVariable<int> toll = new NetworkVariable<int>();   // NetFactions.Toll
+        readonly NetworkVariable<FixedString64Bytes> serverId = new NetworkVariable<FixedString64Bytes>();   // their key on the client
+        readonly NetworkVariable<bool> freeForAll = new NetworkVariable<bool>();     // /pvp, an event's Free For All: every player an enemy
+        readonly NetworkVariable<Unity.Collections.FixedString4096Bytes> sessionMods = new NetworkVariable<Unity.Collections.FixedString4096Bytes>();   // NetMods.SessionList
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
         int pendingSeed;
@@ -66,6 +79,53 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The session allows the Debug menu (NetGame.HostAllowsDebug when it started; off by default).</summary>
         public bool DebugAllowed => debugAllowed.Value;
 
+        /// <summary>The server keeps player profiles: a joining game signs in and waits for its profile (NetProfileClient).</summary>
+        public bool ProfilesOn => profilesOn.Value;
+
+        /// <summary>Players may shoot each other anywhere (NetGame.FreePvp, -freepvp); else only in an arena match.</summary>
+        public bool FreePvp => freePvp.Value;
+
+        /// <summary>Server (NetServerSettings): the Debug menu / free PvP changed while running.</summary>
+        internal void SetDebugAllowed(bool on) { if (IsServer && debugAllowed.Value != on) debugAllowed.Value = on; }
+        internal void SetFreePvp(bool on) { if (IsServer && freePvp.Value != on) freePvp.Value = on; }
+
+        /// <summary>The factions' claimed stations, "station|TAG|Name" per line (NetFactions, NetFactionsClient).</summary>
+        public string Claims => claims.Value.ToString();
+
+        /// <summary>Server: the claims (cut at a whole line to fit the network variable's 4 KB).</summary>
+        internal void SetClaims(string text)
+        {
+            if (!IsServer) return;
+            text = Fit(text);
+            if (claims.Value.ToString() != text) claims.Value = text;
+        }
+
+        /// <summary>The sieges, "station|attacker|defender|started|seconds left|control" per line (NetFactions).</summary>
+        public string Sieges => sieges.Value.ToString();
+
+        internal void SetSieges(string text)
+        {
+            if (!IsServer) return;
+            text = Fit(text);
+            if (sieges.Value.ToString() != text) sieges.Value = text;
+        }
+
+        /// <summary>The toll a pilot of another faction pays at a held station (NetFactions.Toll; 0 = none).</summary>
+        public int Toll => toll.Value;
+
+        internal void SetToll(int value) { if (IsServer && toll.Value != value) toll.Value = value; }
+
+        static string Fit(string text)
+        {
+            text ??= "";
+            while (System.Text.Encoding.UTF8.GetByteCount(text) > 4000)
+            {
+                int cut = text.LastIndexOf('\n', text.Length - 2);
+                text = cut < 0 ? "" : text.Substring(0, cut + 1);
+            }
+            return text;
+        }
+
         /// <summary>Free for all (/pvp, an event): every other player is an enemy (NetAggression.IsHostile), squadmates excepted.</summary>
         public static bool FreeForAll => Instance != null && Instance.IsSpawned && Instance.freeForAll.Value;
 
@@ -83,9 +143,14 @@ namespace GoF2Remake.Multiplayer
             {
                 NetAdmin.Reset();
                 EventRunner.Reset();
+                NetNews.ServerStart();   // the saved news (a dedicated server with profiles)
                 seed.Value = pendingSeed;
                 dedicated.Value = pendingDedicated;
                 debugAllowed.Value = NetGame.HostAllowsDebug;
+                profilesOn.Value = NetProfiles.Enabled;
+                serverId.Value = NetProfiles.ServerId;
+                freePvp.Value = NetGame.FreePvp;
+                NetFactions.OnStateSpawned();   // the claims, now that this object exists
                 sessionMods.Value = NetMods.SessionList;
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
@@ -94,7 +159,9 @@ namespace GoF2Remake.Multiplayer
             else
             {
                 NetMods.ApplyFromServer(sessionMods.Value.ToString());   // the session's mods before the world is built
-                NetGame.EnterWorld(seed.Value);
+                // A server with profiles: the world waits for this player's profile (NetProfileClient.Begin -> EnterWorld).
+                if (profilesOn.Value) NetProfileClient.Begin(serverId.Value.ToString(), seed.Value);
+                else NetGame.EnterWorld(seed.Value);
             }
         }
 
@@ -179,7 +246,20 @@ namespace GoF2Remake.Multiplayer
             text = NetChat.Clean(text);
             if (text.Length == 0) return;
             var sender = NetSquad.Find(client);
-            if (sender != null) Chat(sender, text, global);
+            if (sender == null) return;
+            // A command (the station window's buttons send them as chat lines, NetPanel.Command): run like a typed one
+            // (NetCommands), answered to the sender only, never shown to the others.
+            if (text[0] == '/')
+            {
+                string body = text.Substring(1).Trim();
+                int space = body.IndexOf(' ');
+                string name = space < 0 ? body : body.Substring(0, space);
+                string reply = NetCommands.RunOnServer(name, space < 0 ? "" : body.Substring(space + 1), sender)
+                               ?? string.Format(Localization.Extra("mpCmdUnknown", "Unknown command /{0}. Type /help for the commands you can use."), name);
+                if (reply.Length > 0) NoticeTo(sender, reply);
+                return;
+            }
+            Chat(sender, text, global);
         }
 
         /// <summary>Server: a chat line from 'sender' (null = the server itself, always global), stamped with its name and
@@ -190,7 +270,7 @@ namespace GoF2Remake.Multiplayer
             if (!IsServer || text.Length == 0) return;
             if (sender != null && NetAdmin.IsMuted(sender.OwnerClientId, out string mutedText)) { NoticeTo(sender, mutedText); return; }   // /mute
             if (sender == null) ServerChat(NetCommands.IssuerName(null), text);
-            else ChatRpc(sender.OwnerClientId, sender.DisplayName, text, global, sender.Station, sender.InSpace, sender.InHangar);
+            else ChatRpc(sender.OwnerClientId, sender.TaggedName, text, global, sender.Station, sender.InSpace, sender.InHangar);
         }
 
         /// <summary>Server: a global chat line from the server itself (the dedicated server's say command).</summary>
@@ -327,6 +407,13 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             invites.Remove((inviter, client));
+            JoinSquad(leader, joiner);
+            NetProfiles.SquadJoined(leader.OwnerClientId, joiner.OwnerClientId);   // both profiles remember it
+        }
+
+        /// <summary>'joiner' into 'leader''s squad (a new one if the leader has none).</summary>
+        void JoinSquad(NetPlayer leader, NetPlayer joiner)
+        {
             if (leader.SquadId == 0) leader.SetSquad(nextSquad++);
             joiner.SetSquad(leader.SquadId);
             DissolveSingles();
@@ -338,6 +425,14 @@ namespace GoF2Remake.Multiplayer
                     if (p != null && p != joiner && p.IsSpawned && p.SquadId == leader.SquadId && p.MissionHeld != 0) { holder = p; break; }
             if (holder != null) SendMissionToRpc(joiner.OwnerClientId, RpcTarget.Single(holder.OwnerClientId, RpcTargetUse.Temp));
             SquadNoticeRpc(leader.SquadId, string.Format(Localization.Extra("mpSquadJoined", "{0} joined the squad."), joiner.DisplayName));
+        }
+
+        /// <summary>NetProfiles: a player signing in goes back into the squad their profile remembers ('mate' is online and
+        /// in it). Unlike an invitation this works anywhere, docked or not.</summary>
+        internal void RestoreSquad(NetPlayer mate, NetPlayer joiner)
+        {
+            if (!IsServer || mate == null || joiner == null || mate == joiner || NetSquad.Same(mate, joiner)) return;
+            JoinSquad(mate, joiner);
         }
 
         [Rpc(SendTo.Server)]
@@ -353,6 +448,7 @@ namespace GoF2Remake.Multiplayer
             if (!IsServer || p == null || p.SquadId == 0) return;
             int id = p.SquadId;
             p.SetSquad(0);
+            NetProfiles.SquadLeft(p.OwnerClientId);
             LeftSquadRpc(RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));   // the squad's mission leaves with them
             SquadNoticeRpc(id, string.Format(Localization.Extra("mpSquadLeft", "{0} left the squad."), p.DisplayName));
             DissolveSingles();
@@ -384,6 +480,7 @@ namespace GoF2Remake.Multiplayer
             var victim = NetSquad.Find(client);
             var by = NetSquad.Find(killer);
             if (victim == null || by == null || !HitRecently(victim.NetworkObjectId, killer, 30f)) return;
+            NetArena.OnKill(victim.OwnerClientId, by.OwnerClientId);   // an arena match's score
             NoticeRpc(string.Format(Localization.Extra("mpDestroyedBy", "{0} was destroyed by {1}."), victim.DisplayName, by.DisplayName));
             EventRunner.OnPlayerKilled(by, victim);   // an event's "on pvpkill"
         }
@@ -404,6 +501,188 @@ namespace GoF2Remake.Multiplayer
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void NoticeToRpc(string text, RpcParams rpc = default) => NetChat.Notice(text);
+
+        /// <summary>Server: a notice in one player's chat.</summary>
+        internal void Notify(ulong client, string text)
+        {
+            if (IsServer && !string.IsNullOrEmpty(text)) NoticeToRpc(text, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        // ---- player profiles (NetProfiles / NetProfileClient) ----------------------------------------------
+
+        int profileSeq;
+
+        /// <summary>A joining game on a server with profiles: its token for this server ("" = none) and device label.</summary>
+        [Rpc(SendTo.Server)]
+        public void LoginRpc(string token, string device, string name, RpcParams rpc = default)
+        {
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetProfiles.OnLogin(rpc.Receive.SenderClientId, token, device, name);
+        }
+
+        /// <summary>Server: a profile to one player: the header (its new token, if any; its role), then the gzipped chunks
+        /// (none = a fresh start). Reliable RPCs to one client arrive in order.</summary>
+        internal void SendProfile(ulong client, string token, bool controller, bool guest, string json, int home)
+        {
+            if (!IsServer) return;
+            var parts = NetProfiles.Pack(json);
+            int seq = ++profileSeq;
+            ProfileHeaderRpc(seq, parts.Count, token ?? "", controller, guest, home, RpcTarget.Single(client, RpcTargetUse.Temp));
+            for (int i = 0; i < parts.Count; i++) ProfileChunkRpc(seq, i, parts[i], RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void ProfileHeaderRpc(int seq, int count, string token, bool controller, bool guest, int home, RpcParams rpc = default)
+            => NetProfileClient.OnProfileHeader(seq, count, token, controller, guest, home);
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void ProfileChunkRpc(int seq, int part, byte[] data, RpcParams rpc = default) => NetProfileClient.OnProfileChunk(seq, part, data);
+
+        /// <summary>A player's profile, a chunk at a time (NetProfileClient.Upload).</summary>
+        [Rpc(SendTo.Server)]
+        public void UploadChunkRpc(int seq, int part, int count, byte[] data, RpcParams rpc = default)
+            => NetProfiles.OnUploadChunk(rpc.Receive.SenderClientId, seq, part, count, data);
+
+        /// <summary>Server: this player's device controls its profile now, or watches.</summary>
+        internal void SendRole(ulong client, bool controller)
+        {
+            if (IsServer) RoleRpc(controller, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void RoleRpc(bool controller, RpcParams rpc = default) => NetProfileClient.OnRole(controller);
+
+        /// <summary>Server: the old controller sends its profile once more before another device takes over (/control).</summary>
+        internal void RequestUpload(ulong client)
+        {
+            if (IsServer) RequestUploadRpc(RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void RequestUploadRpc(RpcParams rpc = default) => NetProfileClient.Upload(true);
+
+        // ---- factions (NetFactions / NetFactionsClient) -------------------------------------------------------------
+
+        /// <summary>Server: the player's game is asked to pay a faction deposit ('token' answers it).</summary>
+        internal void Charge(ulong client, int token, int amount)
+        {
+            if (IsServer) ChargeRpc(token, amount, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void ChargeRpc(int token, int amount, RpcParams rpc = default) => NetFactionsClient.OnCharge(token, amount);
+
+        /// <summary>The player's game paid the deposit 'token' (or had too few credits). Its own bucket (Mission), not the
+        /// panel's Request one: the window's snapshots share that, and a dropped answer lost credits the game had already
+        /// taken. Only a token the server made does anything.</summary>
+        [Rpc(SendTo.Server)]
+        public void ChargedRpc(int token, bool paid, RpcParams rpc = default)
+        {
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Mission)) NetFactions.OnCharged(rpc.Receive.SenderClientId, token, paid);
+        }
+
+        /// <summary>Server: credits from the faction bank to the player's game.</summary>
+        internal void Grant(ulong client, int amount)
+        {
+            if (IsServer) GrantRpc(amount, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void GrantRpc(int amount, RpcParams rpc = default) => NetFactionsClient.OnGrant(amount);
+
+        /// <summary>A pilot calls their squad for help ('on') or is safe again: a notice to the squadmates with where (NetDistress).</summary>
+        [Rpc(SendTo.Server)]
+        public void DistressRpc(bool on, RpcParams rpc = default)
+        {
+            if (!NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) return;
+            var from = NetSquad.Find(rpc.Receive.SenderClientId);
+            if (from == null || from.SquadId == 0) return;
+            var st = NetGame.Db.Stations.Find(s => s.index == from.Station);
+            string text = on
+                ? string.Format(Localization.Extra("mpDistressNews", "⚠ {0} calls for help at {1} ({2})! The squad window's Help, or /assist {0}."),
+                                from.DisplayName, st?.name ?? "?", st?.systemName ?? "?")
+                : string.Format(Localization.Extra("mpDistressOver", "{0} is safe again."), from.DisplayName);
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.IsSpawned && p != from && p.SquadId == from.SquadId) Notify(p.OwnerClientId, text);
+            Debug.Log($"Server: {from.DisplayName} {(on ? "calls for help" : "is safe again")} at {st?.name}.");
+        }
+
+        /// <summary>A pilot of another faction paid the toll at 'station' (their game took the credits).</summary>
+        [Rpc(SendTo.Server)]
+        public void TollPaidRpc(int station, RpcParams rpc = default)
+        {
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetFactions.OnTollPaid(rpc.Receive.SenderClientId, station);
+        }
+
+        /// <summary>Server: a notice for everyone (a claim).</summary>
+        internal void Announce(string text)
+        {
+            if (IsServer && !string.IsNullOrEmpty(text)) NoticeRpc(text);
+        }
+
+        // ---- the station's Faction / Arena / Profile window (NetPanel) ----------------------------------------
+
+        /// <summary>The window asks for its snapshot.</summary>
+        [Rpc(SendTo.Server)]
+        public void PanelRequestRpc(RpcParams rpc = default)
+        {
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetPanel.Send(rpc.Receive.SenderClientId);
+        }
+
+        /// <summary>Server: a chunk of the snapshot to one player.</summary>
+        internal void PanelChunk(ulong client, int seq, int part, int count, byte[] data)
+        {
+            if (IsServer) PanelChunkRpc(seq, part, count, data, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void PanelChunkRpc(int seq, int part, int count, byte[] data, RpcParams rpc = default) => NetPanel.OnChunk(seq, part, count, data);
+
+        // ---- arena matches (NetArena / NetArenaClient) -----------------------------------------------------
+
+        /// <summary>Server: the player goes into match 'id' (their game loads the arena).</summary>
+        internal void ArenaStart(ulong client, int id, byte kind, int orbitId, int template, bool voids, int slot, int killLimit, float seconds)
+        {
+            if (IsServer) ArenaStartRpc(id, kind, orbitId, template, voids, slot, killLimit, seconds, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void ArenaStartRpc(int id, byte kind, int orbitId, int template, bool voids, int slot, int killLimit, float seconds, RpcParams rpc = default)
+            => NetArenaClient.OnStart(id, kind, orbitId, template, voids, slot, killLimit, seconds);
+
+        /// <summary>A player's game has the arena loaded.</summary>
+        [Rpc(SendTo.Server)]
+        public void ArenaReadyRpc(int id, RpcParams rpc = default)
+        {
+            if (NetRateLimit.Allow(rpc.Receive.SenderClientId, NetRateLimit.Kind.Request)) NetArena.OnReady(rpc.Receive.SenderClientId, id);
+        }
+
+        /// <summary>Server: the match's phase, seconds left, scores and a kill-feed line ("" = none) to one player.</summary>
+        internal void ArenaState(ulong client, int id, byte phase, float left, ulong[] players, int[] kills, string feed)
+        {
+            if (IsServer) ArenaStateRpc(id, phase, left, players, kills, feed, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void ArenaStateRpc(int id, byte phase, float left, ulong[] players, int[] kills, string feed, RpcParams rpc = default)
+            => NetArenaClient.OnState(id, phase, left, players, kills, feed);
+
+        /// <summary>Server: the match is over (the result's text); the player's game goes home after showing it.</summary>
+        internal void ArenaEnd(ulong client, int id, string text)
+        {
+            if (IsServer) ArenaEndRpc(id, text, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void ArenaEndRpc(int id, string text, RpcParams rpc = default) => NetArenaClient.OnEnd(id, text);
+
+        /// <summary>Server: the player left their match (/leave): home at once.</summary>
+        internal void ArenaLeave(ulong client)
+        {
+            if (IsServer) ArenaLeaveRpc(RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void ArenaLeaveRpc(RpcParams rpc = default) => NetArenaClient.OnLeave();
 
         // ---- the event graphs' bar missions (EventMissions) ----
 
@@ -686,6 +965,7 @@ namespace GoF2Remake.Multiplayer
             }
             if (!NetStock.HostItem(station, item, delta))
                 ItemRefusedRpc(station, item, Mathf.Max(0, price), RpcTarget.Single(client, RpcTargetUse.Temp));
+            else if (delta < 0 && NetProfiles.Enabled) NetFactions.OnPurchase(client, station, Mathf.Max(0, price));   // a faction station's tax
             dirtyStock.Add(station);
         }
 
@@ -926,6 +1206,12 @@ namespace GoF2Remake.Multiplayer
             ulong client = rpc.Receive.SenderClientId;
             if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Siege)) return;
             if (station != KaamoClub.Station || !NetGuard.InOrbit(client, station)) { NetRateLimit.Reject(client, $"a siege won at {station}"); return; }
+            // The news: everyone fighting there broke it.
+            var heroes = new List<string>();
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.IsSpawned && p.InSpace && p.Station == station) heroes.Add(p.DisplayName);
+            NetNews.Post(NetNews.Kind.Defense, $"{NetNews.Names(heroes)} {(heroes.Count == 1 ? "breaks" : "break")} the pirate siege of the Kaamo Club ({NetNews.Place(station)})",
+                         station, "kaamo", 1800f);
             foreach (var p in NetPlayer.All)
                 if (p != null && p.IsSpawned && p.OwnerClientId != client && p.InSpace && p.Station == station)
                     SiegeWonToRpc(RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
@@ -933,6 +1219,49 @@ namespace GoF2Remake.Multiplayer
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void SiegeWonToRpc(RpcParams rpc = default) => World.KaamoSiege.Current?.OnRemoteWin();
+
+        // ---- the sector's news (NetNews) ----------------------------------------------------------------------
+
+        /// <summary>Server: a news item for everyone.</summary>
+        internal void BroadcastNews(string packed)
+        {
+            if (IsServer) NewsRpc(packed);
+        }
+
+        [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
+        void NewsRpc(string packed) => NetNews.OnReceive(packed, false);
+
+        /// <summary>Server: a news item to one player ('reset': their list starts over first).</summary>
+        internal void SendNews(ulong client, string packed, bool reset)
+        {
+            if (IsServer) NewsToRpc(packed ?? "", reset, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void NewsToRpc(string packed, bool reset, RpcParams rpc = default) => NetNews.OnReceive(packed, reset);
+
+        /// <summary>An orbit's authority: its raiders are all down, 'killers' downed them (NetOrbit). Checked: the sender runs
+        /// that orbit, the pilots exist and are there, the numbers are sane; one item per orbit and raid (NetNews).</summary>
+        [Rpc(SendTo.Server)]
+        public void DefenseReportRpc(int station, int race, int kills, ulong[] killers, RpcParams rpc = default)
+        {
+            ulong client = rpc.Receive.SenderClientId;
+            if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Kill)) return;
+            var from = NetSquad.Find(client);
+            if (from == null || !from.OrbitAuthority || !NetGuard.InOrbit(client, station) || NetArena.IsArenaOrbit(station)) return;
+            if (kills < NetNews.MinDefenseKills || kills > 60 || killers == null || killers.Length == 0 || killers.Length > 16)
+            {
+                NetRateLimit.Reject(client, $"a defence report of {kills} kills");
+                return;
+            }
+            var names = new List<string>();
+            foreach (ulong k in killers)
+            {
+                var p = NetSquad.Find(k);
+                if (p != null && p.Station == station && !names.Contains(p.DisplayName)) names.Add(p.DisplayName);
+            }
+            if (names.Count > 0) NetNews.Defended(station, race, kills, names);
+        }
 
         /// <summary>Its owner is done with a NetProxy / NetCrate (the ship left or died for good, the crate was taken). Only
         /// those: a client's own player object (or anything else) isn't its to remove.</summary>
@@ -951,6 +1280,9 @@ namespace GoF2Remake.Multiplayer
         {
             NetStock.Flush();   // the shared stock that arrived, applied between frames (every player)
             if (!IsServer || !IsSpawned) return;
+            NetProfiles.Tick();   // link codes and handovers that ran out
+            NetArena.Tick();      // queues, countdowns, time limits
+            if (NetProfiles.Enabled) NetFactions.Tick();   // claims kept by docking members, lapses, stale deposits
             // The stations traded at this frame: their stock once for everyone docked there.
             if (dirtyStock.Count > 0)
             {
