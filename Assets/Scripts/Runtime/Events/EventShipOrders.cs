@@ -22,6 +22,7 @@ using UnityEngine;
 
 namespace GoF2Remake.Events
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class EventShipOrders
     {
         public sealed class Parsed

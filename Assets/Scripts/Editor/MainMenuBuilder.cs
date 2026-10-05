@@ -301,7 +301,17 @@ namespace GoF2Remake.EditorTools
                 foreach (var (scale, k) in new[] { (PlayerSettings.WSAImageScale._100, 1), (PlayerSettings.WSAImageScale._200, 2) })
                 {
                     string path = $"{uwp}/{type}_{k * 100}.png";
-                    File.WriteAllBytes(path, Compose(w * k, h * k, artSize).EncodeToPNG());
+                    var png = Compose(w * k, h * k, artSize).EncodeToPNG();
+                    // The UWP packager refuses a logo over 200 KB (APPX3207): the detailed art at 200 % (the 310 x 310 and
+                    // wide tiles) is left out, so Windows scales the 100 % image.
+                    if (png.Length > 204800 && k > 1)
+                    {
+                        if (File.Exists(path)) AssetDatabase.DeleteAsset(path);
+                        PlayerSettings.WSA.SetVisualAssetsImage("", type, scale);
+                        Debug.Log($"GoF2: {type} at {k * 100} % is {png.Length / 1024} KB, over UWP's 200 KB: left out");
+                        continue;
+                    }
+                    File.WriteAllBytes(path, png);
                     made.Add((type, scale, path));
                 }
             AssetDatabase.Refresh();

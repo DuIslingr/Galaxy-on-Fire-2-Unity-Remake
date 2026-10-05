@@ -1,0 +1,431 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c350a87e508b8a948aa7529a206eeddb, type: 3}
+  m_Name: ShipShadows
+  m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.World.ShipShadowSet
+  material: {fileID: 2100000, guid: a56ef3341f5192d45b84daa72b7964a9, type: 2}
+  oval: {fileID: 2800000, guid: d8b2812a37f7d654dabd69a8de1965e0, type: 3}
+  entries:
+  - assembly: battleship_terran
+    texture: {fileID: 2800000, guid: ef6f3cb6f35047047b75c58e5dd8b8fc, type: 3}
+    center: {x: 0, y: 16.419983}
+    size: 4634.124
+    bottom: -300.715
+    heightRange: 372.8303
+  - assembly: cargo_001_midorian
+    texture: {fileID: 2800000, guid: e6b8c658e334cd241bfdfc225b3b1a45, type: 3}
+    center: {x: 0, y: 17.779984}
+    size: 1062.7562
+    bottom: -42.04155
+    heightRange: 54.599567
+  - assembly: cargo_002_nivelian
+    texture: {fileID: 2800000, guid: 12913afc173c1d649b2250bced093460, type: 3}
+    center: {x: 0.002784729, y: -7.9184875}
+    size: 1295.0653
+    bottom: -45.20948
+    heightRange: 115.10974
+  - assembly: cargo_003_terran
+    texture: {fileID: 2800000, guid: ad7a610adeb3eb74b804fccd5e3524b1, type: 3}
+    center: {x: -0.0000038146973, y: -4.0367737}
+    size: 1164.6833
+    bottom: -73.658005
+    heightRange: 96.170586
+  - assembly: cargo_004_vossk
+    texture: {fileID: 2800000, guid: a63adcb59a44ad64c85a4fbd4002628c, type: 3}
+    center: {x: 0, y: -33.45697}
+    size: 1721.6628
+    bottom: -65.7615
+    heightRange: 128.06152
+  - assembly: ship_000_midorian
+    texture: {fileID: 2800000, guid: 033382292388dbc4a99df5beb962b4d8, type: 3}
+    center: {x: 0, y: -0.03129959}
+    size: 86.01405
+    bottom: -8.3080015
+    heightRange: 12.9613495
+  - assembly: ship_001_terran
+    texture: {fileID: 2800000, guid: 1f653b90d6603ce479941af4a92cb6f8, type: 3}
+    center: {x: 0, y: -0.013320923}
+    size: 146.42667
+    bottom: -7.694286
+    heightRange: 6.4084454
+  - assembly: ship_002_pirates
+    texture: {fileID: 2800000, guid: 0b503985b34c201449f395934ee76394, type: 3}
+    center: {x: 0, y: -0.78600216}
+    size: 126.51959
+    bottom: -10.860102
+    heightRange: 9.014192
+  - assembly: ship_003_midorian
+    texture: {fileID: 2800000, guid: e8cfdc0b9102d8e45ae12326226cb4fc, type: 3}
+    center: {x: 0.0000019073486, y: -1.5119438}
+    size: 136.8201
+    bottom: -14.939303
+    heightRange: 20.694468
+  - assembly: ship_004_nivelian
+    texture: {fileID: 2800000, guid: e94a89e3568f3704fb723a125a41ca4d, type: 3}
+    center: {x: 0, y: 1.1089115}
+    size: 177.96478
+    bottom: -8.00475
+    heightRange: 15.648537
+  - assembly: ship_005_terran
+    texture: {fileID: 2800000, guid: 1ca578ec8b98237419364b166f45fb5d, type: 3}
+    center: {x: 0, y: 0.6277647}
+    size: 103.52071
+    bottom: -5.9316797
+    heightRange: 5.5439405
+  - assembly: ship_006_midorian
+    texture: {fileID: 2800000, guid: b1df457b332a8894584f781f90920bde, type: 3}
+    center: {x: 0, y: -4.288478}
+    size: 114.77002
+    bottom: -9.287355
+    heightRange: 16.685621
+  - assembly: ship_007_terran
+    texture: {fileID: 2800000, guid: afcb88af01021424e8d52d11f8802e76, type: 3}
+    center: {x: 0, y: 1.3969784}
+    size: 153.02089
+    bottom: -10.787976
+    heightRange: 14.645809
+  - assembly: ship_008_void
+    texture: {fileID: 2800000, guid: b07b81a7fb7e3134faca40ebf037fb19, type: 3}
+    center: {x: 0, y: 17.756908}
+    size: 189.73586
+    bottom: -4.9431195
+    heightRange: 8.790315
+  - assembly: ship_009_vossk
+    texture: {fileID: 2800000, guid: bef0fff551e7f20489a06b4a0ba554b5, type: 3}
+    center: {x: 0, y: -1.144001}
+    size: 174.99551
+    bottom: -5.9612
+    heightRange: 7.3365307
+  - assembly: ship_010_terran
+    texture: {fileID: 2800000, guid: 9d11aec450407cc428e0f43d945a178a, type: 3}
+    center: {x: 0, y: 0.81123924}
+    size: 103.17077
+    bottom: -12.74625
+    heightRange: 12.245523
+  - assembly: ship_011_pirates
+    texture: {fileID: 2800000, guid: 3217686976003924d8da7a37c6065b14, type: 3}
+    center: {x: 0, y: 0.27972603}
+    size: 170.91637
+    bottom: -9.994627
+    heightRange: 18.13313
+  - assembly: ship_012_nivelian
+    texture: {fileID: 2800000, guid: bbdb9700d7cdefc4098122adf2d486b0, type: 3}
+    center: {x: 0, y: 0.016374588}
+    size: 159.29945
+    bottom: -9.760119
+    heightRange: 17.335402
+  - assembly: ship_016_nivelian
+    texture: {fileID: 2800000, guid: debcd5a985333a0408d2f80caad057f8, type: 3}
+    center: {x: -0.0000009536743, y: 0.078136444}
+    size: 180.4507
+    bottom: -10.367484
+    heightRange: 18.340725
+  - assembly: ship_017_terran
+    texture: {fileID: 2800000, guid: 40c9010b2e402bd43b8f347b3f703b34, type: 3}
+    center: {x: 0, y: 4.070225}
+    size: 144.88718
+    bottom: -8.256774
+    heightRange: 9.234018
+  - assembly: ship_018_nivelian
+    texture: {fileID: 2800000, guid: 00df5e865a3299342bf1abe17693078b, type: 3}
+    center: {x: 0, y: 0.045947075}
+    size: 125.15051
+    bottom: -10.509471
+    heightRange: 16.567404
+  - assembly: ship_019_midorian
+    texture: {fileID: 2800000, guid: 6955d5bd082e3ab4e9b72737c7f18ec7, type: 3}
+    center: {x: 0, y: 1.3452702}
+    size: 175.16463
+    bottom: -22.517956
+    heightRange: 31.818104
+  - assembly: ship_020_midorian
+    texture: {fileID: 2800000, guid: dd98d4dc0f0ce5f4fb141f11ec8f4d03, type: 3}
+    center: {x: 0, y: 0.9716501}
+    size: 75.47541
+    bottom: -8.4411
+    heightRange: 21.980667
+  - assembly: ship_021_nivelian
+    texture: {fileID: 2800000, guid: 2173950fd7a834a4289ec2dca805cf84, type: 3}
+    center: {x: 0.0006713867, y: -1.6673565}
+    size: 203.32678
+    bottom: -9.998826
+    heightRange: 17.025845
+  - assembly: ship_022_terran
+    texture: {fileID: 2800000, guid: 1d33fed7756600d418a71e87e4888b46, type: 3}
+    center: {x: 0, y: 0}
+    size: 135.46439
+    bottom: -7.6219783
+    heightRange: 14.756319
+  - assembly: ship_023_pirates
+    texture: {fileID: 2800000, guid: a69a4ef4a729e2e4dbd4ef2429e932be, type: 3}
+    center: {x: -0.000002861023, y: -0.71723366}
+    size: 129.3534
+    bottom: -10.427452
+    heightRange: 16.632982
+  - assembly: ship_024_pirates
+    texture: {fileID: 2800000, guid: 076675b3ffd01244db9b54f8e2d2dc7f, type: 3}
+    center: {x: 0, y: -1.792284}
+    size: 161.67705
+    bottom: -9.495486
+    heightRange: 17.727215
+  - assembly: ship_025_pirates
+    texture: {fileID: 2800000, guid: bba0f6a79e06e20419c4a42a18133c78, type: 3}
+    center: {x: 0, y: -1.1916609}
+    size: 154.3763
+    bottom: -10.3284025
+    heightRange: 19.829899
+  - assembly: ship_026_terran
+    texture: {fileID: 2800000, guid: c77d91ed3760cf84bbc8d75444f4b1e9, type: 3}
+    center: {x: 0, y: 0.6434727}
+    size: 142.9627
+    bottom: -9.573302
+    heightRange: 14.2699
+  - assembly: ship_027_terran
+    texture: {fileID: 2800000, guid: b94b0788ce7da79479065e2561a937e5, type: 3}
+    center: {x: 0, y: 0}
+    size: 152.20985
+    bottom: -10.474151
+    heightRange: 20.009834
+  - assembly: ship_028_terran
+    texture: {fileID: 2800000, guid: 5e6b5c7125548b64cb8d6d8214f37c90, type: 3}
+    center: {x: 0, y: 5.997612}
+    size: 217.37766
+    bottom: -10.689282
+    heightRange: 16.35512
+  - assembly: ship_029_pirates
+    texture: {fileID: 2800000, guid: ce31be05bf1651249a5b6b0fe27b0664, type: 3}
+    center: {x: 0, y: 0.6644192}
+    size: 179.489
+    bottom: -13.656516
+    heightRange: 21.286036
+  - assembly: ship_030_midorian
+    texture: {fileID: 2800000, guid: 25a26215d8833844b8bbad27044da21f, type: 3}
+    center: {x: 0, y: 7.536378}
+    size: 114.72803
+    bottom: -9.57182
+    heightRange: 20.315933
+  - assembly: ship_031_nivelian
+    texture: {fileID: 2800000, guid: 9b351330099195e4294f1f125ae64f3b, type: 3}
+    center: {x: 0, y: 1.8378448}
+    size: 198.75624
+    bottom: -10.77592
+    heightRange: 7.6127205
+  - assembly: ship_032_pirates
+    texture: {fileID: 2800000, guid: 1725e584320991843b1a0f7ebfcde818, type: 3}
+    center: {x: 0, y: -0.038674355}
+    size: 121.97768
+    bottom: -7.7657
+    heightRange: 12.017333
+  - assembly: ship_033_terran
+    texture: {fileID: 2800000, guid: 2ca6c7d1f8d20e549b8b6a0f84782634, type: 3}
+    center: {x: 0, y: 3.699401}
+    size: 136.48558
+    bottom: -7.4781504
+    heightRange: 11.356817
+  - assembly: ship_034_terran
+    texture: {fileID: 2800000, guid: eb328bfa5a49b174296eb343f791971a, type: 3}
+    center: {x: 0.0000009536743, y: 0.7524996}
+    size: 116.04208
+    bottom: -9.613302
+    heightRange: 12.889273
+  - assembly: ship_035_nivelian
+    texture: {fileID: 2800000, guid: a618727c0e08ff84b8360aab6d8c7111, type: 3}
+    center: {x: -0.0000047683716, y: 0.48673248}
+    size: 74.34676
+    bottom: -7.2664413
+    heightRange: 13.756862
+  - assembly: ship_036_terran
+    texture: {fileID: 2800000, guid: b4fff0117d8797d4e81df5ae0544feeb, type: 3}
+    center: {x: 0, y: 0.22310829}
+    size: 220.90298
+    bottom: -15.055445
+    heightRange: 16.53254
+  - assembly: ship_042_retro
+    texture: {fileID: 2800000, guid: 11e0f13271d72a64ab165cda4b39e2ae, type: 3}
+    center: {x: 0, y: 3.172432}
+    size: 184.85478
+    bottom: -6.1713142
+    heightRange: 8.870174
+  - assembly: ship_043_retro
+    texture: {fileID: 2800000, guid: d7faecf66ef047b43a7a2305c267966d, type: 3}
+    center: {x: 0, y: 9.803183}
+    size: 148.03131
+    bottom: -6.926595
+    heightRange: 12.206482
+  - assembly: ship_061_elite_nivelian_prototype
+    texture: {fileID: 2800000, guid: 70687386e5346a543b1d9c1e50fd3ad5, type: 3}
+    center: {x: 0, y: 0}
+    size: 191.17717
+    bottom: -11.51527
+    heightRange: 22.603329
+  - assembly: ship_062_prototype
+    texture: {fileID: 2800000, guid: 3a01cb425173da9429bc9d524aa8deed, type: 3}
+    center: {x: 0, y: -1.4752064}
+    size: 181.85178
+    bottom: -15.156969
+    heightRange: 23.692797
+  - assembly: ship_063_vossk_prototype
+    texture: {fileID: 2800000, guid: 44f26c069a3685946b1834c3d14d38f7, type: 3}
+    center: {x: 0, y: -5.4324703}
+    size: 181.82603
+    bottom: -4.156681
+    heightRange: 11.977335
+  - assembly: ship_064_mod
+    texture: {fileID: 2800000, guid: 79df3a2ed0ccddc4b93ab9b958a07ba3, type: 3}
+    center: {x: 0, y: 0.81123924}
+    size: 103.17077
+    bottom: -12.74625
+    heightRange: 12.245523
+  - assembly: ship_065_mod
+    texture: {fileID: 2800000, guid: e097875d5c65a6c41bb4bfa679e7968d, type: 3}
+    center: {x: 0, y: 0.81123924}
+    size: 103.17077
+    bottom: -12.74625
+    heightRange: 12.245523
+  - assembly: ship_066_mod
+    texture: {fileID: 2800000, guid: 75052c90498e0234385bdb3edf14da35, type: 3}
+    center: {x: 0, y: 0.81123924}
+    size: 103.17077
+    bottom: -12.74625
+    heightRange: 12.245523
+  - assembly: ship_067_mod
+    texture: {fileID: 2800000, guid: 56b571bec59997c4c8c5840afc127894, type: 3}
+    center: {x: 0, y: 0.81123924}
+    size: 103.17077
+    bottom: -12.74625
+    heightRange: 12.245523
+  - assembly: ship_068_mod
+    texture: {fileID: 2800000, guid: 6802932207bef0f4ba0b3062d7ba63cb, type: 3}
+    center: {x: 0, y: 0.81123924}
+    size: 103.17077
+    bottom: -12.74625
+    heightRange: 12.245523
+  - assembly: sn_ship_044_elite_nivelian
+    texture: {fileID: 2800000, guid: cfdfda2b15dc4ec4d81b4811e20584a3, type: 3}
+    center: {x: 0, y: 0.3373642}
+    size: 203.36295
+    bottom: -10.47736
+    heightRange: 18.80318
+  - assembly: sn_ship_045_most_wanted
+    texture: {fileID: 2800000, guid: f4499676a35dabc48b3db2fdd6cef999, type: 3}
+    center: {x: -0.01036644, y: 9.990982}
+    size: 206.56458
+    bottom: -17.514475
+    heightRange: 22.17904
+  - assembly: sn_ship_046_most_wanted
+    texture: {fileID: 2800000, guid: 8e60cb9da7fc1a3459e00c690d6fdb61, type: 3}
+    center: {x: 0, y: 9.470171}
+    size: 217.95546
+    bottom: -21.30907
+    heightRange: 37.25203
+  - assembly: sn_ship_047_most_wanted
+    texture: {fileID: 2800000, guid: 06fcc56331a40a845b50f0f3167fb9e6, type: 3}
+    center: {x: 0.030849457, y: 10.008759}
+    size: 194.08081
+    bottom: -14.885892
+    heightRange: 23.621376
+  - assembly: sn_ship_048_most_wanted
+    texture: {fileID: 2800000, guid: 4458114d3bc039748ba4e9b95d675b86, type: 3}
+    center: {x: -0.0000019073486, y: 1.2491426}
+    size: 112.63367
+    bottom: -19.74237
+    heightRange: 35.893387
+  - assembly: sn_ship_049_boss_nivelian
+    texture: {fileID: 2800000, guid: d181bf85dba39144e921a6812afb1099, type: 3}
+    center: {x: 0.0000019073486, y: -6.6537037}
+    size: 263.20926
+    bottom: -15.9068985
+    heightRange: 27.981827
+  - assembly: sn_ship_051_dropship_terran
+    texture: {fileID: 2800000, guid: 564124ac0b5f223448bb2c8b00874a63, type: 3}
+    center: {x: 0, y: 2.5429554}
+    size: 279.49924
+    bottom: -26.940037
+    heightRange: 42.48787
+  - assembly: sn_ship_052_retro
+    texture: {fileID: 2800000, guid: d7e019e7c7a2dfc41a217952eeab984e, type: 3}
+    center: {x: 0, y: 0.011425018}
+    size: 216.47366
+    bottom: -3.9635437
+    heightRange: 19.011915
+  - assembly: sn_ship_054_vossk
+    texture: {fileID: 2800000, guid: e6cb8be1183b9a247957ecea293c3343, type: 3}
+    center: {x: -0.00040245056, y: 0.1330471}
+    size: 173.40865
+    bottom: -4.3037815
+    heightRange: 10.248386
+  - assembly: sn_ship_055_modified
+    texture: {fileID: 2800000, guid: 16a8609fb76d3a04fabec6c90261e7ba, type: 3}
+    center: {x: 0, y: 2.028841}
+    size: 135.11653
+    bottom: -12.5908985
+    heightRange: 17.169851
+  - assembly: sn_ship_056_modified
+    texture: {fileID: 2800000, guid: ae897c1fd33ad954eb85325a5d7daed2, type: 3}
+    center: {x: 0, y: 7.536378}
+    size: 114.72803
+    bottom: -9.57182
+    heightRange: 21.565855
+  - assembly: sn_ship_057_modified
+    texture: {fileID: 2800000, guid: 78421f28ee4998643b64184e1bb89986, type: 3}
+    center: {x: -0.0000009536743, y: 0.07813835}
+    size: 180.4507
+    bottom: -10.367484
+    heightRange: 12.464676
+  - assembly: sn_ship_058_modified
+    texture: {fileID: 2800000, guid: 1e24befd76cf1e248a9e768120bc07f2, type: 3}
+    center: {x: 0, y: 0.54201794}
+    size: 106.278625
+    bottom: -10.957865
+    heightRange: 11.367717
+  - assembly: sn_ship_059_modified
+    texture: {fileID: 2800000, guid: af5d29af73bb7f74b892248260b61a1d, type: 3}
+    center: {x: 0, y: -0.013320923}
+    size: 146.15796
+    bottom: -13.236693
+    heightRange: 13.537058
+  - assembly: sn_ship_060_modified
+    texture: {fileID: 2800000, guid: fe9ca72a01c50b04cbd7d1e907fe60e9, type: 3}
+    center: {x: -0.000002861023, y: -0.71723366}
+    size: 129.3534
+    bottom: -8.925308
+    heightRange: 15.130838
+  - assembly: v_ship_037_deep_science
+    texture: {fileID: 2800000, guid: 7ad1715eca955c04598de445a71b6e18, type: 3}
+    center: {x: 0, y: -2.8911467}
+    size: 131.09286
+    bottom: -19.287947
+    heightRange: 29.397411
+  - assembly: v_ship_038_deep_science
+    texture: {fileID: 2800000, guid: d7bb92a155923cc40a486f5adf957927, type: 3}
+    center: {x: 0.024765015, y: -0.559165}
+    size: 124.50649
+    bottom: -23.494295
+    heightRange: 30.936176
+  - assembly: v_ship_039_vossk
+    texture: {fileID: 2800000, guid: f4a0089f9aa09724db55418c3ad018c7, type: 3}
+    center: {x: 0, y: -3.4950619}
+    size: 223.46054
+    bottom: -6.400272
+    heightRange: 12.085651
+  - assembly: v_ship_040_deep_science
+    texture: {fileID: 2800000, guid: 22c1a3baf5dad6d418c44e568701fa9d, type: 3}
+    center: {x: 0, y: 6.18874}
+    size: 223.8134
+    bottom: -10.01897
+    heightRange: 29.62577
+  - assembly: v_ship_041_vossk
+    texture: {fileID: 2800000, guid: cef5f75b2683cd2428d88792a333dda6, type: 3}
+    center: {x: 0, y: -2.7688751}
+    size: 177.53261
+    bottom: -9.388023
+    heightRange: 12.440773
