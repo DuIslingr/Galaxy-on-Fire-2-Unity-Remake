@@ -21,12 +21,18 @@ namespace GoF2Remake.Multiplayer
     public static class NetLobby
     {
         const float HeartbeatSeconds = 15f, CountSeconds = 5f;
-        const string KeyVersion = "version", KeyProtocol = "protocol", KeyCode = "code", KeyHost = "host", KeyPlayers = "players", KeyServer = "server", KeyPassword = "password";
+        const string KeyVersion = "version", KeyProtocol = "protocol", KeyCode = "code", KeyHost = "host", KeyPlayers = "players", KeyServer = "server", KeyPassword = "password",
+            KeyMods = "mods", KeyModNames = "modnames";
 
         /// <summary>One listed session in the browser.</summary>
         public sealed class Entry
         {
             public string name, host, code, version, protocol;
+            /// <summary>The session's mods (NetMods.SessionList) and their names for showing; empty = none.</summary>
+            public string mods = "", modNames = "";
+            public bool Modded => !string.IsNullOrEmpty(mods);
+            /// <summary>The mods this game lacks to join (names), empty = it has them all.</summary>
+            public List<string> MissingMods => Modded ? NetMods.MissingForListing(mods) : new List<string>();
             public int players, maxPlayers;
             public bool dedicated, password;
             public bool Full => players >= maxPlayers;
@@ -71,6 +77,8 @@ namespace GoF2Remake.Multiplayer
                         [KeyPlayers] = Public(PlayerCount().ToString(), DataObject.IndexOptions.N1),
                         [KeyServer] = Public(dedicated ? "1" : "0"),
                         [KeyPassword] = Public(NetGame.HasPassword ? "1" : "0"),
+                        [KeyMods] = Public(Trim(NetMods.SessionList, 2000)),
+                        [KeyModNames] = Public(Trim(NetMods.SessionNames, 300)),
                     },
                 });
                 if (gen != generation || !NetGame.Active)
@@ -160,6 +168,7 @@ namespace GoF2Remake.Multiplayer
                     {
                         name = l.Name, host = Get(l, KeyHost), code = code, version = Get(l, KeyVersion), protocol = Get(l, KeyProtocol),
                         players = players, maxPlayers = l.MaxPlayers, dedicated = Get(l, KeyServer) == "1", password = Get(l, KeyPassword) == "1",
+                        mods = Get(l, KeyMods) ?? "", modNames = Get(l, KeyModNames) ?? "",
                     });
                 }
                 // This version's first (the query's order, the fullest first, within each).

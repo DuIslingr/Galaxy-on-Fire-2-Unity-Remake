@@ -24,7 +24,7 @@ namespace GoF2Remake.Flight
             var go = new GameObject("Sfx " + clip.name);
             go.transform.position = position;
             var src = go.AddComponent<AudioSource>();
-            src.clip = clip;
+            src.clip = GoF2Remake.Modding.ModSounds.Get(clip);
             src.volume = v;
             src.spatialBlend = 0f;
             src.Play();

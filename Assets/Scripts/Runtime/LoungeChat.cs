@@ -15,7 +15,7 @@
 //              785, shown as a message) and the confirmation (865 (+ 864), 866 / 868-873 / 885)
 //   Confirm    "Yes": 850-852 then the deal (mission 853-855 / Challenge 856); a single "Okay." closes the chat
 //   Voice      SpaceLounge::getSoundId 0x19fdb4: one lounge greeting per chat start by offer, race and gender
-// Remake multiplayer: AgentOffer.EventMission, an event graph's bar mission (NetEventMissions): a greeting, the offer text
+// Remake multiplayer: AgentOffer.EventMission, an event graph's bar mission (EventMissions): a greeting, the offer text
 // with the reward and the pilots it needs, the question; Okay checks the squad and asks to confirm, the server starts it.
 // The original's single random generator isn't reproducible; UnityEngine.Random picks the text variants.
 
@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using GoF2Remake.Flight;
 using GoF2Remake.Multiplayer;
 using GoF2Remake.UI;
+using GoF2Remake.Events;
 using Random = UnityEngine.Random;
 
 namespace GoF2Remake.Data
@@ -32,7 +33,9 @@ namespace GoF2Remake.Data
     public class LoungeChat
     {
         public enum Choice { Okay, NoThanks, Repeat, Map, Risk }
-        public enum Outcome { None, Confirm, Refused, ShowMap, Closed }
+        /// <summary>ConfirmShip (remake, AgentOffer.SellShip): ConfirmText, then (Kaamo Club owned) 327 Sell / Keep, then
+        /// ConfirmShipTrade.</summary>
+        public enum Outcome { None, Confirm, Refused, ShowMap, Closed, ConfirmShip }
 
         /// <summary>The single "Okay." closes the chat (small talk, closing lines).</summary>
         bool closing;
@@ -83,10 +86,10 @@ namespace GoF2Remake.Data
             Choices.Clear();
             if (a.offer == AgentOffer.EventMission)
             {
-                var o = NetEventMissions.OfferOf(a);
+                var o = EventMissions.OfferOf(a);
                 a.known = true;
                 closing = a.accepted || o == null;
-                Text = closing ? T(858) : T(750 + Random.Range(0, 6)) + " " + NetEventMissions.ChatText(o) + "\n" + T(841 + Random.Range(0, 3));
+                Text = closing ? T(858) : T(750 + Random.Range(0, 6)) + " " + EventMissions.ChatText(o) + "\n" + T(841 + Random.Range(0, 3));
                 SetChoices();
                 return;
             }
@@ -121,6 +124,15 @@ namespace GoF2Remake.Data
                 SetChoices();
                 return;
             }
+            if (a.offer == AgentOffer.SellShip && (a.sellShip < 0 || a.sellShip == Session.ShipIndex || !CustomShips.Offered(a.sellShip)))
+            {
+                // remake: the ship on offer is the one the player flies (bought here, or elsewhere), or custom ships were
+                // switched off since this bar was generated
+                Text = T(858);
+                closing = true;
+                SetChoices();
+                return;
+            }
             if (a.offer == AgentOffer.SellMod && Session.HasMod(a.sellMod))
             {
                 Text = T(858);   // the mod is already on this hull
@@ -145,7 +157,7 @@ namespace GoF2Remake.Data
                     case AgentOffer.Diplomat: return Standing.IsEnemy(a.race);
                     case AgentOffer.Mission: case AgentOffer.Purchase: return a.HasMission;
                     case AgentOffer.SellMod: return !Session.HasMod(a.sellMod);   // installed on this hull: 858
-                    case AgentOffer.EventMission: return NetEventMissions.OfferOf(a) != null;
+                    case AgentOffer.EventMission: return EventMissions.OfferOf(a) != null;
                     default: return true;
                 }
             }
@@ -153,7 +165,7 @@ namespace GoF2Remake.Data
 
         bool IsMissionOffer => Agent.offer == AgentOffer.Mission || Agent.offer == AgentOffer.Purchase;
         bool IsSeller => Agent.offer == AgentOffer.SellItem || Agent.offer == AgentOffer.SellBlueprint || Agent.offer == AgentOffer.SellMod
-                         || Agent.offer == AgentOffer.KaamoSpecial || Agent.offer == AgentOffer.ShipDealer;
+                         || Agent.offer == AgentOffer.KaamoSpecial || Agent.offer == AgentOffer.ShipDealer || Agent.offer == AgentOffer.SellShip;
 
         /// <summary>drawLounge: which answer buttons show (lounge_ui.md 1.3).</summary>
         void SetChoices()
@@ -164,7 +176,7 @@ namespace GoF2Remake.Data
             Choices.Add(Choice.NoThanks);
             var a = Agent;
             bool seller = a.offer == AgentOffer.SellItem || a.offer == AgentOffer.SellBlueprint
-                          || a.offer == AgentOffer.KaamoSpecial || a.offer == AgentOffer.ShipDealer;
+                          || a.offer == AgentOffer.KaamoSpecial || a.offer == AgentOffer.ShipDealer || a.offer == AgentOffer.SellShip;
             if (seller) Choices.Add(Choice.Map);
             else if (a.offer == AgentOffer.Mission && a.HasMission && a.mission.type != MissionType.Challenge)
             {
@@ -202,7 +214,8 @@ namespace GoF2Remake.Data
             {
                 case AgentOffer.Mission: reward = 764 + Random.Range(0, 3); break;
                 case AgentOffer.SmallTalk: body = PickSmallTalk(a); break;
-                case AgentOffer.SellItem: body = 768 + Random.Range(0, 5); reward = 773 + Random.Range(0, 2); break;
+                case AgentOffer.SellItem:
+                case AgentOffer.SellShip: body = 768 + Random.Range(0, 5); reward = 773 + Random.Range(0, 2); break;
                 case AgentOffer.Purchase: body = 777 + Random.Range(0, 2); break;
             }
             if (a.offer != AgentOffer.SmallTalk && a.offer != AgentOffer.Diplomat) question = 841 + Random.Range(0, 3);
@@ -248,7 +261,7 @@ namespace GoF2Remake.Data
                 case AgentOffer.SmallTalk:
                 {
                     int line = Id(3) >= 0 ? Id(3) : 824;
-                    var stations = db.Stations;
+                    var stations = db.Stations.FindAll(s => s.system >= 0);   // not a mod's missing station
                     return T(line).Replace("#S", stations[Random.Range(0, stations.Count)].name).Replace("#N", a.name)
                                   .Replace("#ORE", T(1428 + Random.Range(0, 10)));
                 }
@@ -283,6 +296,18 @@ namespace GoF2Remake.Data
                 case AgentOffer.SellMod:
                     return StoryLine(a) + " " + T(879).Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex)).Replace("#N", a.name)
                                                       .Replace("#C", C(ModPrice(a)));
+                case AgentOffer.SellShip:
+                {
+                    // Remake: a seller's lines (768-772, 773 / 774) with the ship, and what it costs with the current ship
+                    // traded in (the dealer's rule, Hangar.CanBuyShipFor).
+                    int intro = Id(3) >= 0 ? Id(3) : 768, line = Id(4) >= 0 ? Id(4) : 773;
+                    int net = a.sellPrice - Shop.ShipPrice(db, Session.ShipIndex, station);
+                    string trade = net >= 0
+                        ? Localization.Extra("loungeShipTradeIn", "With your #SHIP_NAME traded in, that's #C.")
+                        : Localization.Extra("loungeShipTradeInBack", "With your #SHIP_NAME traded in, you get #C back.");
+                    return T(intro) + "\n" + T(line).Replace("#Q", "1").Replace("#P", ItemInfo.ShipName(a.sellShip)).Replace("#C", C(a.sellPrice))
+                         + " " + trade.Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex)).Replace("#C", C(Math.Abs(net)));
+                }
                 case AgentOffer.ShipDealer:
                     // 912 "I have a very unique ship on offer." + (remake) the ship and its price in the item line.
                     return StoryLine(a) + " " + T(773).Replace("#Q", "1").Replace("#P", ItemInfo.ShipName(a.sellShip)).Replace("#C", C(a.sellPrice));
@@ -393,9 +418,9 @@ namespace GoF2Remake.Data
             {
                 case AgentOffer.EventMission:
                 {
-                    var o = NetEventMissions.OfferOf(a);
+                    var o = EventMissions.OfferOf(a);
                     if (o == null) return Outcome.Closed;
-                    string refusal = NetEventMissions.AcceptRefusal(o);
+                    string refusal = EventMissions.AcceptRefusal(o);
                     if (refusal != null) return Refuse(refusal);
                     ConfirmText = o.reward > 0 ? T(865).Replace("#M", o.title).Replace("#C", C(o.reward))
                         : string.Format(Localization.Extra("mpEventMissionConfirm", "Take the mission {0}?"), o.title);
@@ -430,6 +455,16 @@ namespace GoF2Remake.Data
                     if (a.costs > Session.Credits) return Refuse(T(203).Replace("#C", C(a.costs - Session.Credits)));
                     ConfirmText = T(885).Replace("#C", C(a.costs));
                     return Outcome.Confirm;
+                case AgentOffer.SellShip:
+                {
+                    // Remake: the dealer's checks (336 / 329 / 203) at the trade-in price; 873 "Buy ship for #C?".
+                    var r = TradeHangar().CanBuyShipFor(a.sellShip, a.sellPrice, out int need);
+                    if (r == Hangar.Result.Passengers) return Refuse(T(336));
+                    if (r == Hangar.Result.SameShip) return Refuse(T(329));
+                    if (r == Hangar.Result.NoCredits) return Refuse(T(203).Replace("#C", C(need)));
+                    ConfirmText = T(873).Replace("#C", C(a.sellPrice));
+                    return Outcome.ConfirmShip;
+                }
             }
             int price = Price(a);
             if (price > Session.Credits) return Refuse(T(203).Replace("#C", C(price - Session.Credits)));
@@ -446,6 +481,30 @@ namespace GoF2Remake.Data
 
         int Price(Agent a) => a.offer == AgentOffer.SellMod ? ModPrice(a) : a.sellPrice;
 
+        /// <summary>The trades of this station (Hangar, as the hangar window opens it).</summary>
+        Hangar TradeHangar() => new Hangar(db, Session.RecentStations.Find(s => s.station == station) ?? new StationStock { station = station });
+
+        /// <summary>Remake, AgentOffer.SellShip after the confirmation: 'keep' = 331 (the old hull to the Kaamo Club, the full
+        /// price), else the trade-in (the seller takes the old hull). Null when bought, else the refusal (328 / 203 / 336).</summary>
+        public string ConfirmShipTrade(bool keep)
+        {
+            var a = Agent;
+            var h = TradeHangar();
+            int need;
+            var r = keep ? h.CanKeepAndBuyShipFor(a.sellShip, a.sellPrice, out need) : h.CanBuyShipFor(a.sellShip, a.sellPrice, out need);
+            if (r == Hangar.Result.AlreadyStored) return T(328);
+            if (r == Hangar.Result.Passengers) return T(336);
+            if (r == Hangar.Result.SameShip) return T(329);
+            if (r == Hangar.Result.NoCredits) return T(203).Replace("#C", C(need));
+            if (!(keep ? h.KeepAndBuyShipFor(a.sellShip, a.sellPrice) : h.BuyShipFor(a.sellShip, a.sellPrice))) return T(858);
+            a.accepted = true;
+            BoughtShip = true;
+            Text = T(850 + Random.Range(0, 3));
+            closing = true;
+            SetChoices();
+            return null;
+        }
+
         /// <summary>"Yes" on the confirmation: 850-852 and the deal.</summary>
         public void Confirm()
         {
@@ -454,7 +513,7 @@ namespace GoF2Remake.Data
             switch (a.offer)
             {
                 case AgentOffer.EventMission:
-                    NetEventMissions.Accept(NetEventMissions.OfferOf(a));   // the server starts it (or says why not)
+                    EventMissions.Accept(EventMissions.OfferOf(a));   // the server starts it (or says why not)
                     thanks += " " + T(853 + Random.Range(0, 3));
                     break;
                 case AgentOffer.Mission:
@@ -539,7 +598,7 @@ namespace GoF2Remake.Data
                     break;
                 case AgentOffer.SmallTalk: kind = "GENERIC"; count = 2; break;
                 case AgentOffer.SellItem: case AgentOffer.SellBlueprint: case AgentOffer.SellMod:
-                case AgentOffer.KaamoSpecial: case AgentOffer.ShipDealer: kind = "BLUEPRINT"; count = 2; break;
+                case AgentOffer.KaamoSpecial: case AgentOffer.ShipDealer: case AgentOffer.SellShip: kind = "BLUEPRINT"; count = 2; break;
                 case AgentOffer.SellSystem: kind = "COORDINATES"; count = 2; break;
                 case AgentOffer.Purchase: kind = "PRODUCTION"; count = 4; break;
                 case AgentOffer.Wingmen: kind = "WINGMAN"; count = 4; break;
@@ -561,10 +620,11 @@ namespace GoF2Remake.Data
         /// agents, the role (the mission type, 306 Wingmen, 305 Merchant, 884 Diplomat).</summary>
         public static (string name, string role) Plate(Agent a)
         {
-            if (a.offer == AgentOffer.EventMission) return (a.name, NetEventMissions.OfferOf(a)?.title ?? "");   // always says what it offers
+            if (a.offer == AgentOffer.EventMission) return (a.name, EventMissions.OfferOf(a)?.title ?? "");   // always says what it offers
             if (!a.known && !a.IsStory) return (T(406 + a.race), "");
             if (!a.known) return (a.name, "");
-            string role = a.HasMission ? a.mission.Name : a.offer == AgentOffer.Wingmen ? T(306) : a.offer == AgentOffer.SellItem ? T(305)
+            string role = a.HasMission ? a.mission.Name : a.offer == AgentOffer.Wingmen ? T(306)
+                        : a.offer == AgentOffer.SellItem || a.offer == AgentOffer.SellShip ? T(305)
                         : a.offer == AgentOffer.Diplomat ? T(884) : "";
             return (a.name, role);
         }

@@ -67,7 +67,7 @@ namespace GoF2Remake.World
             layout = orbit;
             cam = camera;
             var sunDir = OrbitLayout.DirToUnity(orbit.lightDirection).normalized;
-            var sunMat = Load(orbit.sunTexture);
+            var sunMat = Load(orbit.sunTexture, true);
             sun = Make("Sun", sunMat, 2900, sunDir, Quaternion.identity, orbit.sunScale);
             // StarSystem::renderSunStreak: the supernova system draws its streak with sn_sun_011 (StarSystem+0x10, 0x2dde).
             var streakMat = orbit.supernovaSun ? Load("sn_sun_011") ?? sunMat : sunMat;
@@ -177,8 +177,10 @@ namespace GoF2Remake.World
             t.GetComponent<MeshRenderer>().SetPropertyBlock(block);
         }
 
-        static Material Load(string texture)
+        static Material Load(string texture, bool sun = false)
         {
+            // Remake mods: a mod's planet / sun PNG ("mod:<id>|<path>", ModBackdrop).
+            if (Modding.ModBackdrop.IsMod(texture)) return Modding.ModBackdrop.Material(texture, sun);
             var m = Resources.Load<Material>($"{MaterialFolder}/{texture}");
             if (m == null) Debug.LogWarning($"Backdrop: missing material Resources/{MaterialFolder}/{texture}");
             return m;

@@ -80,7 +80,8 @@ namespace GoF2Remake.Data
             eng ??= Map(voiceNamesEng, voiceClipsEng);
             deu ??= Map(voiceNamesDeu, voiceClipsDeu);
             if (Settings.GermanVoices && (deu.TryGetValue(name, out var d) || deu.TryGetValue(name + AltSuffix, out d))) return d;
-            return eng.TryGetValue(name, out var e) || eng.TryGetValue(name + AltSuffix, out e) ? e : null;
+            // Remake mods: a mod's own clip (Modding.ModVoices, loaded when its page arrived).
+            return eng.TryGetValue(name, out var e) || eng.TryGetValue(name + AltSuffix, out e) ? e : Modding.ModVoices.Get(name);
         }
 
         /// <summary>A portrait part: its texture (the image sits in the top-left corner of the canvas) and image height.</summary>

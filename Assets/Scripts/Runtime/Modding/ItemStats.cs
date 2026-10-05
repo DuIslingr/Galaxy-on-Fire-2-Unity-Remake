@@ -1,0 +1,60 @@
+// ItemStats.cs
+// The item attribute numbers (Item+0x30, Reference/research/shop.md 2.4) by name, for mods' "stats": the readable names
+// (Modding/README.md lists them), and items.json's own statList keys, which ItemData.Stat reads and which
+// ModContent keeps in step with the attribute.
+
+using System;
+using System.Collections.Generic;
+
+namespace GoF2Remake.Modding
+{
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+    public static class ItemStats
+    {
+        /// <summary>The names a mod may use (the readable ones first; items.json's statList names work too).</summary>
+        static readonly Dictionary<string, int> Ids = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["damage"] = 9, ["empDamage"] = 10, ["reloadMs"] = 11, ["lifetimeMs"] = 12, ["speed"] = 13, ["blastRadius"] = 14,
+            ["guided"] = 15, ["automatic"] = 16, ["turretTurnSpeed"] = 17, ["shieldCapacity"] = 18, ["shieldRegenMs"] = 19, ["armor"] = 20,
+            ["cargoBonus"] = 22, ["tractorAuto"] = 23, ["tractorLockMs"] = 24, ["boostSpeed"] = 25, ["boostRechargeMs"] = 26,
+            ["boostDurationMs"] = 27, ["agility"] = 28, ["lockTimeMs"] = 29, ["showClassAAsteroids"] = 30, ["radarShowsCargo"] = 31,
+            ["drillSpeed"] = 32, ["miningYield"] = 33, ["cabins"] = 34, ["cloakDurationMs"] = 35, ["cloakChargeMs"] = 36,
+            ["energyCells"] = 38, ["fireRateFactor"] = 39, ["damageFactor"] = 40, ["emergencyMs"] = 41, ["timeExtenderMs"] = 42,
+            ["timeExtenderCooldownMs"] = 43, ["collectorSpeed"] = 49, ["collectorMagnitude"] = 50, ["collectorRange"] = 51,
+            ["gammaShielding"] = 52, ["beamRange"] = 53, ["beamStrength"] = 54, ["beamTargets"] = 55,
+            // items.json's statList names
+            ["steerable"] = 15, ["handling"] = 17,
+            ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,
+            ["automatic_2"] = 23, ["timeToLock"] = 24, ["timeToLock_2"] = 29, ["handling_2"] = 32, ["cabinSize"] = 34,
+            ["effect_35"] = 35, ["loadingSpeed_36"] = 36, ["loadingSpeed_37"] = 37, ["energyConsumption"] = 38, ["effect_41"] = 41,
+            ["effect_42"] = 42, ["loadingSpeed_43"] = 43, ["speed_49"] = 49, ["magnitude_50"] = 50, ["range_51"] = 51,
+            ["range_53"] = 53, ["effect_54"] = 54, ["count"] = 55, ["effect_56"] = 56, ["showInfo"] = 57, ["showOnRadar_58"] = 58,
+            ["plasmaConsumption"] = 59,
+        };
+
+        /// <summary>items.json's statList key for an attribute (the one ItemData.Stat reads), null = none.</summary>
+        static readonly Dictionary<int, string> StatKeys = new Dictionary<int, string>
+        {
+            [9] = "damage", [10] = "empDamage", [11] = "loadingTimeMs", [12] = "range", [13] = "projectileSpeed", [14] = "magnitude",
+            [15] = "steerable", [16] = "automatic", [17] = "handling", [18] = "shieldCapacity", [19] = "shieldRegenTime", [20] = "armor",
+            [22] = "cargoBonus", [23] = "automatic_2", [24] = "timeToLock", [25] = "boostSpeed", [26] = "boostRechargeMs",
+            [27] = "boostDurationMs", [28] = "agility", [29] = "timeToLock_2", [30] = "showClassAAsteroids", [31] = "radarShowsCargo",
+            [32] = "handling_2", [33] = "miningYield", [34] = "cabinSize", [35] = "effect_35", [36] = "loadingSpeed_36",
+            [37] = "loadingSpeed_37", [38] = "energyConsumption", [39] = "fireRateFactor", [40] = "damageFactor", [41] = "effect_41",
+            [42] = "effect_42", [43] = "loadingSpeed_43", [49] = "speed_49", [50] = "magnitude_50", [51] = "range_51",
+            [52] = "gammaShielding", [53] = "range_53", [54] = "effect_54", [55] = "count", [56] = "effect_56", [57] = "showInfo",
+            [58] = "showOnRadar_58", [59] = "plasmaConsumption", [60] = "raceSpecific_guess", [61] = "iconIndex_guess",
+        };
+
+        /// <summary>The attribute number of a stat name, -1 = unknown.</summary>
+        public static int IdOf(string name) => name != null && Ids.TryGetValue(name, out int id) ? id : -1;
+
+        public static string StatKeyOf(int id) => StatKeys.TryGetValue(id, out var k) ? k : null;
+
+        /// <summary>The readable names, for the docs and error messages.</summary>
+        public static IEnumerable<KeyValuePair<string, int>> Readable()
+        {
+            foreach (var kv in Ids) { if (kv.Key == "loadingTimeMs") yield break; yield return kv; }
+        }
+    }
+}

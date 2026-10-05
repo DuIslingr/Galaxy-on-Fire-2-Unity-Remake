@@ -56,7 +56,18 @@ namespace GoF2Remake.World
         Vector3 sparkBaseScale = Vector3.one;
         Database db;
         ShipController ship;
+        /// <summary>The collector the player looks through (remake: one of several turrets), refreshed once a frame (Update).</summary>
         PlayerTurret turret;
+
+        /// <summary>The one in the turret view, else the first plasma collector, else the first turret; looked up on the player,
+        /// so a hull swap's turrets are found.</summary>
+        PlayerTurret FindTurret()
+        {
+            var all = PlayerTurret.On(ship != null ? ship.gameObject : null);
+            foreach (var t in all) if (t.InTurretView) return t;
+            foreach (var t in all) if (t.IsCollector) return t;
+            return all.Count > 0 ? all[0] : null;
+        }
         AudioSource sfx;
         AudioClip[] collected;
 
@@ -201,6 +212,7 @@ namespace GoF2Remake.World
         {
             float dtMs = Time.deltaTime * 1000f;
             if (dtMs <= 0f) return;
+            turret = FindTurret();
             FlushMessage(dtMs);
             bool collecting = turret != null && turret.IsCollector && turret.InTurretView;
             var gun = turret != null ? turret.GunPosition : ship != null ? ship.transform.position : Vector3.zero;
@@ -261,7 +273,7 @@ namespace GoF2Remake.World
         /// (FModSound::stop + play 0x8d0): one at a time however many sparks arrive together.</summary>
         void Collect()
         {
-            if (collected != null && collected.Length > 0) { sfx.Stop(); sfx.clip = collected[UnityEngine.Random.Range(0, collected.Length)]; sfx.volume = Settings.SfxVolume; sfx.Play(); }
+            if (collected != null && collected.Length > 0) { sfx.Stop(); sfx.clip = GoF2Remake.Modding.ModSounds.Get(collected[UnityEngine.Random.Range(0, collected.Length)]); sfx.volume = Settings.SfxVolume; sfx.Play(); }
             if (Shop.FreeCargo(db) < 1) { if (!fullShown) Message?.Invoke(Localization.Get(322)); fullShown = true; return; }   // Cargo hold is full.
             fullShown = false;
             Shop.AddToCargo(PlasmaItem, 1);
@@ -278,7 +290,7 @@ namespace GoF2Remake.World
             if (pendingTons == 0) { pendingMs = 0f; return; }
             pendingMs += dtMs;
             if (pendingMs < 600f) return;
-            Message?.Invoke($"+{pendingTons}t {Localization.Get(1274 + PlasmaItem)}");
+            Message?.Invoke($"+{pendingTons}t {GameNames.Item(PlasmaItem)}");
             pendingTons = 0;
             pendingMs = 0f;
         }

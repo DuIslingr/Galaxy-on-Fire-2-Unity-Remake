@@ -1,8 +1,8 @@
 // EventGraphLiveView.cs
-// The event graphs' live view in Play mode: while an event runs (NetEvents.RunningName), its graph (the .gof2netevent asset
+// The event graphs' live view in Play mode: while an event runs (EventRunner.RunningName), its graph (the .gof2event asset
 // of that name) shows where each of its flows is, with Graph Toolkit's visualization API: the running step's accent animates,
-// a wait fills its bar as it goes (NetEvents.ActiveSteps: the steps carry their node's id), and each blackboard variable node
-// shows the variable's current value on its port (NetEvents.Variables). Cleared when the event ends or Play mode stops.
+// a wait fills its bar as it goes (EventRunner.ActiveSteps: the steps carry their node's id), and each blackboard variable node
+// shows the variable's current value on its port (EventRunner.Variables). Cleared when the event ends or Play mode stops.
 
 using System.Collections.Generic;
 using GoF2Remake.Multiplayer;
@@ -10,6 +10,7 @@ using Unity.GraphToolkit.Editor;
 using Unity.GraphToolkit.Editor.GraphVisualization;
 using UnityEditor;
 using UnityEngine;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.EditorTools
 {
@@ -36,7 +37,7 @@ namespace GoF2Remake.EditorTools
             if (!EditorApplication.isPlaying) { if (context != null) Clear(); return; }
             if (EditorApplication.timeSinceStartup < next) return;
             next = EditorApplication.timeSinceStartup + Interval;
-            string running = NetEvents.RunningName;
+            string running = EventRunner.RunningName;
             if (running != shownEvent)
             {
                 Clear();
@@ -65,7 +66,7 @@ namespace GoF2Remake.EditorTools
         static void Refresh()
         {
             var now = new HashSet<Hash128>();
-            foreach (var (node, progress) in NetEvents.ActiveSteps())
+            foreach (var (node, progress) in EventRunner.ActiveSteps())
             {
                 if (string.IsNullOrEmpty(node)) continue;
                 var id = Hash128.Parse(node);
@@ -80,7 +81,7 @@ namespace GoF2Remake.EditorTools
             lit.Clear();
             lit.UnionWith(now);
 
-            var values = NetEvents.Variables();
+            var values = EventRunner.Variables();
             foreach (var n in graph.GetNodes())
             {
                 if (!(n is IVariableNode v) || v.Variable == null) continue;

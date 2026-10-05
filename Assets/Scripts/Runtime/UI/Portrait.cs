@@ -4,6 +4,8 @@
 // {body, part0..part3} drawn in the order part2, part1, part0, part3 (each 160 px wide at its native height, placed top-
 // or bottom-anchored at the body's IMAGE_OFFSETS_IPAD_LARGE y), then the frame 0x511. Keith's portrait is mirrored in the
 // dialogue window. Styles: .portrait* in UI/Dialogue/Dialogue.uss.
+// Remake mods: a mod's character (Modding.ModCharacters) is one PNG covering the box, over the background and under the
+// frame (each optional); one that "replaces" a story speaker is drawn wherever that speaker's portrait is.
 
 using GoF2Remake.Data;
 using UnityEngine;
@@ -18,6 +20,8 @@ namespace GoF2Remake.UI
         /// <summary>A story speaker's portrait (its layers resolved through the image ids, StoryTable).</summary>
         public static void ShowSpeaker(VisualElement box, int speaker, bool mirrored)
         {
+            var replacement = Modding.ModCharacters.ReplacementFor(speaker);
+            if (replacement != null) { ShowCharacter(box, replacement, mirrored); return; }
             box.Clear();
             box.EnableInClassList("portrait--mirrored", mirrored);
             var assets = StoryAssets.Load();
@@ -39,6 +43,41 @@ namespace GoF2Remake.UI
                 layers.Add(e);
             }
             if (assets.portraitFrame != null)
+            {
+                var frame = new VisualElement { pickingMode = PickingMode.Ignore };
+                frame.AddToClassList("portrait-frame");
+                frame.style.backgroundImage = assets.portraitFrame;
+                box.Add(frame);
+            }
+        }
+
+        /// <summary>A mod's character (ModCharacters): its PNG covering the 160 x 200 box (its top kept), the game's background
+        /// under it and frame over it unless the character turns them off; mirrored as asked or as the character says.</summary>
+        public static void ShowCharacter(VisualElement box, Modding.ModCharacters.Def character, bool mirrored)
+        {
+            box.Clear();
+            box.EnableInClassList("portrait--mirrored", mirrored != (character != null && character.mirrored));
+            var assets = StoryAssets.Load();
+            box.style.backgroundImage = character != null && !character.background || assets == null || assets.portraitBackground == null
+                ? new StyleBackground(StyleKeyword.None) : new StyleBackground(assets.portraitBackground);
+            var layers = new VisualElement { pickingMode = PickingMode.Ignore };
+            layers.AddToClassList("portrait-layers");
+            box.Add(layers);
+            var tex = Modding.ModCharacters.Portrait(character);
+            if (tex != null)
+            {
+                var e = new VisualElement { pickingMode = PickingMode.Ignore };
+                e.AddToClassList("portrait-part");
+                e.style.backgroundImage = tex;
+                e.style.top = 0;
+                e.style.width = 160;
+                e.style.height = 200;
+                e.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+                e.style.backgroundPositionX = new BackgroundPosition(BackgroundPositionKeyword.Center);
+                e.style.backgroundPositionY = new BackgroundPosition(BackgroundPositionKeyword.Top);
+                layers.Add(e);
+            }
+            if (assets != null && assets.portraitFrame != null && (character == null || character.frame))
             {
                 var frame = new VisualElement { pickingMode = PickingMode.Ignore };
                 frame.AddToClassList("portrait-frame");

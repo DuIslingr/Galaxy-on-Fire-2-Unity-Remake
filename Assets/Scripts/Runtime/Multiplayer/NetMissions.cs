@@ -23,6 +23,7 @@ using GoF2Remake.Data;
 using GoF2Remake.Flight;
 using GoF2Remake.UI;
 using UnityEngine;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.Multiplayer
 {
@@ -95,7 +96,7 @@ namespace GoF2Remake.Multiplayer
             ShowCard(m, from);
         }
 
-        /// <summary>The squad mission a squadmate took, on this player's screen (NetScreen's mission card): its name, who took
+        /// <summary>The squad mission a squadmate took, on this player's screen (EventScreen's mission card): its name, who took
         /// it, the client's face and name, the target and the reward.</summary>
         static void ShowCard(FreelanceMission m, string from)
         {
@@ -107,7 +108,7 @@ namespace GoF2Remake.Multiplayer
             if (station != null)
                 lines.Add(string.Format(Localization.Extra("mpMissionCardTarget", "Target: {0}"), system != null ? $"{station.name} ({system.name})" : station.name));
             if (m.Total > 0) lines.Add(string.Format(Localization.Extra("mpMissionCardReward", "Reward: {0}, shared by the squad"), ItemInfo.Credits(m.Total)));
-            NetScreen.ShowMissionCard(null, m.Name, string.Format(Localization.Extra("mpMissionCardBy", "Accepted by {0}"), from),
+            EventScreen.ShowMissionCard(null, m.Name, string.Format(Localization.Extra("mpMissionCardBy", "Accepted by {0}"), from),
                 string.Join("\n", lines), m.clientPortrait);
         }
 

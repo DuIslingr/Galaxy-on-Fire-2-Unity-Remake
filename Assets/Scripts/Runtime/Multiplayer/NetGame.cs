@@ -72,7 +72,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The main menu opened: a session that has ended leaves nothing behind.</summary>
         public static void OnMainMenu()
         {
-            if (!Active) sessionGame = false;
+            if (!Active) { sessionGame = false; NetMods.End(); }   // single player's mods back
         }
 
         // Play mode without a domain reload keeps statics: a fresh start (also builds, where it changes nothing).
@@ -95,6 +95,9 @@ namespace GoF2Remake.Multiplayer
         static Database db;
         /// <summary>The game data, loaded once for the multiplayer code's look-ups (turrets, models).</summary>
         internal static Database Db => db ??= Database.Load();
+
+        /// <summary>The session's mods changed (NetMods): the tables are read again on next use.</summary>
+        internal static void ResetDb() => db = null;
 
         /// <summary>The world's seed (the host picks it, NetState carries it to the clients).</summary>
         public static int Seed { get; private set; }
@@ -324,6 +327,7 @@ namespace GoF2Remake.Multiplayer
             var relay = hostAllocation;
             hostAllocation = null;
             PrepareSession();
+            NetMods.BeginHost();   // the host's mods when modded content is allowed, else none
             Seed = Environment.TickCount & 0x7fffffff;
             ushort port = HostPort;
             var m = EnsureManager();
@@ -355,6 +359,7 @@ namespace GoF2Remake.Multiplayer
             var relay = hostAllocation;
             hostAllocation = null;
             PrepareSession();
+            NetMods.BeginHost();
             Dedicated = true;
             Seed = Environment.TickCount & 0x7fffffff;
             var m = EnsureManager();
@@ -428,7 +433,8 @@ namespace GoF2Remake.Multiplayer
             worldEntered = true;
             if (seed >= 0) Seed = seed;
             Session.DockedFromSpace = false;
-            SceneManager.LoadScene(StationScene);
+            // The session's mods' ship models first (NetMods: a joining game has just turned the session's mods on).
+            Modding.ModShips.WhenReady(() => { if (Active) SceneManager.LoadScene(StationScene); });
         }
 
         static bool closing, quitAfter, lostHandled;
@@ -657,6 +663,7 @@ namespace GoF2Remake.Multiplayer
             closing = quitAfter = false;
             sessionGame = true;
             Dedicated = false;
+            NetMods.BeginClient();   // no mods until the session's arrive (NetState) or the host picks its own (BeginHost)
             NetStock.Reset();
             NetStats.Reset();
             Session.ResetNewGame();
@@ -717,7 +724,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>What a connecting game sends: its version, a line break, the password it joins with.</summary>
         /// <summary>The connection data: the fingerprint, the password, the shown version (for the refusal's text). Builds from
         /// before the fingerprint send their version first and their password: refused, their version is the first line.</summary>
-        static byte[] Payload() => System.Text.Encoding.UTF8.GetBytes(Protocol + "\n" + CleanPassword(JoinPassword) + "\n" + Version);
+        static byte[] Payload() => System.Text.Encoding.UTF8.GetBytes(Protocol + "\n" + CleanPassword(JoinPassword) + "\n" + Version + "\n" + NetMods.InstalledList);
 
         public static string CleanPassword(string text)
         {
@@ -730,7 +737,7 @@ namespace GoF2Remake.Multiplayer
         /// their popup. The host's own client always gets in.</summary>
         static void Approve(NetworkManager.ConnectionApprovalRequest request, NetworkManager.ConnectionApprovalResponse response)
         {
-            string payload = request.Payload != null && request.Payload.Length > 0 && request.Payload.Length <= 256
+            string payload = request.Payload != null && request.Payload.Length > 0 && request.Payload.Length <= 512 + NetMods.MaxListLength
                 ? System.Text.Encoding.UTF8.GetString(request.Payload) : "";
             var lines = payload.Split('\n');
             string theirs = lines[0];
@@ -767,6 +774,14 @@ namespace GoF2Remake.Multiplayer
                     ? Localization.Extra("mpNeedsPassword", "This game has a password: enter it under Join, then join again.")
                     : Localization.Extra("mpWrongPassword", "Wrong password.");
                 Debug.Log($"NetGame: turned away client {request.ClientNetworkId}: {(password.Length == 0 ? "no password" : "wrong password")}");
+                return;
+            }
+            // Mods (NetMods): the session's mods, the same files; the 4th line lists what the joining game has.
+            if (NetMods.Refusal(lines.Length > 3 ? lines[3] : "") is string modsMissing)
+            {
+                response.Approved = false;
+                response.Reason = modsMissing;
+                Debug.Log($"NetGame: turned away client {request.ClientNetworkId}: missing mods");
                 return;
             }
             // Full: the players in the session (a host's own included) at MaxPlayers.

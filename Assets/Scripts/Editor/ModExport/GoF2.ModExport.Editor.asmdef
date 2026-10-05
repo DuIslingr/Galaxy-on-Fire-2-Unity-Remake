@@ -1,0 +1,19 @@
+{
+    "name": "GoF2.ModExport.Editor",
+    "rootNamespace": "GoF2Remake.EditorTools",
+    "references": [
+        "glTFast",
+        "glTFast.Export"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

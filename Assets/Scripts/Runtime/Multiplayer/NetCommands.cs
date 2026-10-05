@@ -25,17 +25,17 @@
 //   /kill, /heal, /give, /credits, /spawn, /mute, /unmute, /ship, /ammo, /reveal, /peace, /cheat, /title, /timer
 //                              admins: NetAdmin (destroy, repair, items, credits, NPC ships and objects, chat muting, the
 //                              debug panel's tools for one player: fly any hull, refill, reveal the map, make peace, a
-//                              cheat toggle for the session; a title and a countdown on screen, NetScreen)
+//                              cheat toggle for the session; a title and a countdown on screen, EventScreen)
 //   /dialog [players] <speaker> : <text> [| page ...]   admins: the dialogue window with a story speaker's or a race's face
 //   /reward [players] <credits | item [amount]> [+ ...] [| title]   admins: a payout in the mission reward box
-//   /event <name | stop | list>  admins: runs an event graph (NetEvents: game modes such as waves of enemies)
+//   /event <name | stop | list>  admins: runs an event graph (EventRunner: game modes such as waves of enemies)
 //   /admin, /unadmin <player>  the host: makes a player an admin for the session / takes it back
-// Admins: the host's own player always, else the players the host or the server console made admins (NetPlayer.IsAdmin,
+// Admins: the host's own player always, else the players the host or the server console made admins (IPilot.IsAdmin,
 // for the session only: names aren't verified, so nothing is remembered by name).
 // Players are named whole and case-insensitively, the longest name the arguments start with ("Player 2 hi"), by a client
 // id as the first word, or by a selector like Minecraft's (FindTargets): @a everyone, @s yourself, @p the nearest other
 // player, @r a random other player, and by state @alive (in space, not destroyed), @space, @docked, @dead (destroyed in
-// space), @survivors (an event's players never destroyed since its fight began, NetEvents.Survived), @team (the event's
+// space), @survivors (an event's players never destroyed since its fight began, EventRunner.Survived), @team (the event's
 // players: a bar mission's team; while a mission's event runs a line, every selector only finds its team: Scope), any of them narrowed
 // to one orbit by [orbit=<station>] (in its space or docked at its station: "@alive[orbit=78]", "@r[orbit=Var Hastra]");
 // a command on several players runs for each ("/tp @a 78 dock", "/kick @r", "/reward @survivors 1000").
@@ -46,6 +46,7 @@ using System.Text;
 using GoF2Remake.Data;
 using Unity.Netcode;
 using UnityEngine;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.Multiplayer
 {
@@ -68,8 +69,8 @@ namespace GoF2Remake.Multiplayer
             public Func<string> description;
             public Func<bool> available;                   // this game: listed by /help and the suggestions
             public Action<string> local;                   // runs on this game; null = a server command
-            public Func<NetPlayer, bool> allowed;          // the server: the issuer may run it (null issuer = the console)
-            public Func<string, NetPlayer, string> run;    // the server: args, issuer -> the answer
+            public Func<IPilot, bool> allowed;          // the server: the issuer may run it (null issuer = the console)
+            public Func<string, IPilot, string> run;    // the server: args, issuer -> the answer
             public bool needsPlayer;                       // only a player can run it (not the console)
             public bool optional;                          // the argument may be left out (the chat: yourself)
         }
@@ -89,7 +90,7 @@ namespace GoF2Remake.Multiplayer
             ("@docked", () => X("mpSelDocked", "everyone docked")),
             ("@dead", () => X("mpSelDead", "everyone destroyed in space")),
         };
-        static bool Anyone(NetPlayer p) => true;
+        static bool Anyone(IPilot p) => true;
 
         static readonly Command[] Commands =
         {
@@ -150,7 +151,7 @@ namespace GoF2Remake.Multiplayer
                 description = () => X("mpCmdTimer", "admins: a countdown on screen (\"stop\" removes it)") },
             new Command { name = "dialog", usage = "[players] <speaker> : <text> [| [speaker :] next page ...]", arg = Arg.PlayerText, self = true,
                 available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Dialog,
-                description = () => X("mpCmdDialog", "admins: a conversation; speakers: a story character (Keith as Bob), a race and a name (vossk K'ekki), or player; %player% = the reader") },
+                description = () => X("mpCmdDialog", "admins: a conversation; speakers: a story character (Keith as Bob), a mod's character (mod_id:vega), a race and a name (vossk K'ekki), or player; %player% = the reader") },
             new Command { name = "reward", usage = "[players] <credits | item [amount]> [+ more ...] [| title]", arg = Arg.PlayerText, self = true,
                 available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Reward,
                 description = () => X("mpCmdReward", "admins: a mission payout (credits and / or items) in the reward box") },
@@ -171,6 +172,21 @@ namespace GoF2Remake.Multiplayer
             new Command { name = "waypoint", usage = "[players] <station x y z | off>", arg = Arg.PlayerText, self = true,
                 available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Waypoint,
                 description = () => X("mpCmdWaypoint", "admins: a waypoint to fly to (game coordinates in a station's orbit; /pos shows yours)") },
+            new Command { name = "cutscene", usage = "[players] <start [nobars] [freeze] [invulnerable] | end>", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Cutscene,
+                description = () => X("mpCmdCutscene", "admins: cinematic mode in flight (no HUD or controls, letterbox bars; freeze holds the ship) until end") },
+            new Command { name = "camera", usage = "[players] <place [to place] [over s] [look place] [follow] [fov deg] [shake 0-1] | chase>", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Camera,
+                description = () => X("mpCmdCamera", "admins: a camera shot; places: player [right up forward], station [x y z], x y z, ship <name> [x y z]; chase ends it") },
+            new Command { name = "npc", usage = "[players] <ship> <goto place | route place / place ... [loop] | follow | escort | attack <player | ship \"name\"> | flee | dock | hold | resume | jump | speed n> [speed n] [radius r] [fight] [then hold | resume | vanish | jump]",
+                arg = Arg.PlayerText, self = true, available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Npc,
+                description = () => X("mpCmdNpc", "admins: orders for spawned ships by name: fly somewhere, follow / escort, attack, flee, dock, hold, resume") },
+            new Command { name = "fade", usage = "[players] <out | in> [seconds] [rrggbb colour] | clear", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Fade,
+                description = () => X("mpCmdFade", "admins: fades the screen to a colour (out, held) or back (in)") },
+            new Command { name = "letterbox", usage = "[players] <on | off>", arg = Arg.PlayerText, self = true,
+                available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Letterbox,
+                description = () => X("mpCmdLetterbox", "admins: the cinema bars at the top and bottom of the screen") },
             new Command { name = "sound", usage = "[players] <sound>", arg = Arg.PlayerText, self = true,
                 available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Sound,
                 description = () => X("mpCmdSound", "admins: plays a sound (alarm, warning, success, explosion...)") },
@@ -178,7 +194,7 @@ namespace GoF2Remake.Multiplayer
                 available = () => LocalIsAdmin, allowed = IsAdmin, run = NetAdmin.Music,
                 description = () => X("mpCmdMusic", "admins: plays a music track instead of the game's (battle, boss, void...), stop ends it") },
             new Command { name = "event", usage = "<name [setting=value ...] | stop | list>", arg = Arg.Text, optional = true, available = () => LocalIsAdmin, allowed = IsAdmin,
-                run = NetEvents.Command, description = () => X("mpCmdEvent", "admins: runs an event (game modes like waves), stops it or lists them") },
+                run = EventRunner.Command, description = () => X("mpCmdEvent", "admins: runs an event (game modes like waves), stops it or lists them") },
             new Command { name = "mute", usage = "<players> [minutes]", arg = Arg.PlayerText, available = () => LocalIsAdmin, allowed = IsAdmin,
                 run = (a, by) => NetAdmin.Mute(a, by, true), description = () => X("mpCmdMute", "admins: blocks a player's chat (for the session or some minutes)") },
             new Command { name = "unmute", usage = "<players>", arg = Arg.Player, available = () => LocalIsAdmin, allowed = IsAdmin,
@@ -197,9 +213,9 @@ namespace GoF2Remake.Multiplayer
         public static bool LocalIsAdmin => LocalIsHost || (NetPlayer.Local != null && NetPlayer.Local.IsAdmin);
 
         /// <summary>Server: 'p' has admin rights (the host's own player, or made an admin).</summary>
-        public static bool IsAdmin(NetPlayer p) => p != null && (p.IsAdmin || IsHostPlayer(p));
+        public static bool IsAdmin(IPilot p) => p != null && (p.IsAdmin || IsHostPlayer(p));
 
-        internal static bool IsHostPlayer(NetPlayer p) =>
+        internal static bool IsHostPlayer(IPilot p) =>
             p != null && NetworkManager.Singleton != null && NetworkManager.Singleton.IsHost && p.OwnerClientId == NetworkManager.ServerClientId;
 
         static bool Ready => NetState.Instance != null && NetState.Instance.IsSpawned;
@@ -266,11 +282,11 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>Server: runs command 'name' for 'issuer' (null = the dedicated server's console) after checking its
         /// rights; the answer for the issuer, null when 'name' is no server command.</summary>
-        public static string RunOnServer(string name, string args, NetPlayer issuer)
+        public static string RunOnServer(string name, string args, IPilot issuer)
         {
             var c = Get((name ?? "").ToLowerInvariant());
             if (c == null || c.run == null) return null;
-            if (!Ready || !NetState.Instance.IsServer) return X("mpCmdNoServer", "The server isn't running.");
+            if (!EventHost.ServerReady) return X("mpCmdNoServer", "The server isn't running.");
             if (issuer == null && c.needsPlayer) return string.Format(X("mpCmdPlayersOnly", "/{0} is for players in the chat."), c.name);
             if (issuer != null && !c.allowed(issuer)) return X("mpCmdNoRights", "You don't have the rights for that command.");
             args = (args ?? "").Trim();
@@ -279,14 +295,14 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The issuer's name in notices and the log ("Server" for the console).</summary>
-        public static string IssuerName(NetPlayer issuer) => issuer != null ? issuer.DisplayName : X("mpServerName", "Server");
+        public static string IssuerName(IPilot issuer) => issuer != null ? issuer.DisplayName : X("mpServerName", "Server");
 
         /// <summary>The player whose name 'args' starts with (whole name, any case, the longest one), the rest after it.</summary>
-        internal static NetPlayer MatchPlayer(string args, out string rest)
+        internal static IPilot MatchPlayer(string args, out string rest)
         {
-            NetPlayer best = null;
+            IPilot best = null;
             rest = "";
-            foreach (var p in NetPlayer.All)
+            foreach (var p in EventHost.Pilots)
             {
                 if (p == null || !p.IsSpawned) continue;
                 string n = p.DisplayName;
@@ -305,15 +321,15 @@ namespace GoF2Remake.Multiplayer
         /// player; else a whole name (MatchPlayer) or a client id. A selector may carry a filter in brackets:
         /// [orbit=&lt;station&gt;] (a number, a name or "void") keeps the players in that orbit or docked at its station
         /// ("@alive[orbit=78]", "@r[orbit=Var Hastra]"). 'error' says why none.</summary>
-        public static List<NetPlayer> FindTargets(string args, NetPlayer issuer, out string rest, out string error)
+        public static List<IPilot> FindTargets(string args, IPilot issuer, out string rest, out string error)
         {
-            var list = new List<NetPlayer>();
+            var list = new List<IPilot>();
             error = null;
             args = (args ?? "").Trim();
             int space = args.IndexOf(' ');
             string first = space < 0 ? args : args.Substring(0, space);
             rest = space < 0 ? "" : args.Substring(space + 1).Trim();
-            Func<NetPlayer, bool> where = p => true;
+            Func<IPilot, bool> where = p => true;
             int open = args.StartsWith("@") ? args.IndexOf('[') : -1;
             if (open > 0 && (space < 0 || open < space))
             {
@@ -325,7 +341,7 @@ namespace GoF2Remake.Multiplayer
             }
             if (Scope != null && first.StartsWith("@"))
             {
-                // A bar mission's event (NetEvents): its selectors only find its own players.
+                // A bar mission's event (EventRunner): its selectors only find its own players.
                 var filter = where;
                 var scope = Scope;
                 where = p => filter(p) && scope(p);
@@ -333,32 +349,32 @@ namespace GoF2Remake.Multiplayer
             if (first.Length > 2 && first[0] == '@')
             {
                 // By state: everyone it holds for.
-                Func<NetPlayer, bool> holds;
+                Func<IPilot, bool> holds;
                 switch (first.ToLowerInvariant())
                 {
                     case "@alive": holds = p => p.InSpace && p.Hull > 0f; break;
                     case "@space": holds = p => p.InSpace; break;
                     case "@docked": holds = p => p.InHangar; break;
                     case "@dead": holds = p => p.InSpace && p.Hull <= 0f; break;
-                    case "@survivors": holds = NetEvents.Survived; break;
+                    case "@survivors": holds = EventRunner.Survived; break;
                     case "@team": holds = p => true; break;   // the event's players (a mission's team: Scope)
                     default:
                         error = string.Format(X("mpSelUnknownMore", "Unknown selector {0}: @a, @s, @p, @r, @alive, @survivors, @team, @space, @docked, @dead."), first);
                         return list;
                 }
-                foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && holds(p) && where(p)) list.Add(p);
+                foreach (var p in EventHost.Pilots) if (p != null && p.IsSpawned && holds(p) && where(p)) list.Add(p);
                 if (list.Count == 0) error = NobodyMatches;
                 return list;
             }
             if (first.Length == 2 && first[0] == '@')
             {
                 char k = char.ToLowerInvariant(first[1]);
-                var others = new List<NetPlayer>();
-                foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && p != issuer && where(p)) others.Add(p);
+                var others = new List<IPilot>();
+                foreach (var p in EventHost.Pilots) if (p != null && p.IsSpawned && p != issuer && where(p)) others.Add(p);
                 switch (k)
                 {
                     case 'a':
-                        foreach (var p in NetPlayer.All) if (p != null && p.IsSpawned && where(p)) list.Add(p);
+                        foreach (var p in EventHost.Pilots) if (p != null && p.IsSpawned && where(p)) list.Add(p);
                         break;
                     case 's':
                         if (issuer == null) { error = X("mpSelNoSelf", "@s is the player typing the command: not for the console."); return list; }
@@ -380,21 +396,21 @@ namespace GoF2Remake.Multiplayer
                 return list;
             }
             var named = MatchPlayer(args, out rest);
-            if (named == null && ulong.TryParse(first, out ulong id) && (named = NetSquad.Find(id)) != null)
+            if (named == null && ulong.TryParse(first, out ulong id) && (named = EventHost.Find(id)) != null)
                 rest = space < 0 ? "" : args.Substring(space + 1).Trim();
             if (named != null) list.Add(named);
             else { rest = ""; error = NoPlayer(first.Length > 0 ? first : args); }
             return list;
         }
 
-        /// <summary>While a bar mission's event runs a line (NetEvents.Tick): the players its selectors may find (null: all).</summary>
-        internal static Func<NetPlayer, bool> Scope;
+        /// <summary>While a bar mission's event runs a line (EventRunner.Tick): the players its selectors may find (null: all).</summary>
+        internal static Func<IPilot, bool> Scope;
 
         /// <summary>FindTargets' error when the selector is fine but nobody matches (count() and points take it as none).</summary>
         public static string NobodyMatches => X("mpSelNobody", "No player matches that.");
 
         /// <summary>A selector's bracket filter: "orbit=&lt;station&gt;" (comma-separated, all must hold).</summary>
-        static bool SelectorFilter(string text, out Func<NetPlayer, bool> where, out string error)
+        static bool SelectorFilter(string text, out Func<IPilot, bool> where, out string error)
         {
             where = p => true;
             error = null;
@@ -421,7 +437,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The one player the arguments start with (a selector that picks one, a name or a client id).</summary>
-        public static NetPlayer FindTarget(string args, NetPlayer issuer, out string rest, out string error)
+        public static IPilot FindTarget(string args, IPilot issuer, out string rest, out string error)
         {
             var list = FindTargets(args, issuer, out rest, out error);
             if (list.Count > 1) { error = X("mpSelOne", "Only one player here (not @a)."); return null; }
@@ -430,9 +446,9 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>The other player nearest to 'from': in the same orbit by distance, else docked at the same station, else
         /// the first one.</summary>
-        static NetPlayer Nearest(NetPlayer from, List<NetPlayer> others)
+        static IPilot Nearest(IPilot from, List<IPilot> others)
         {
-            NetPlayer best = null;
+            IPilot best = null;
             float bestD = float.MaxValue;
             foreach (var p in others)
             {
@@ -447,7 +463,7 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>Runs 'each' for every player the arguments name (the rest of the line passed on) and joins the answers.
         /// The issuer is left out of a selector's list; named alone, "Not on yourself." unless 'self'.</summary>
-        static string ForEachTarget(string args, NetPlayer by, bool self, Func<NetPlayer, string, string> each)
+        static string ForEachTarget(string args, IPilot by, bool self, Func<IPilot, string, string> each)
         {
             var targets = FindTargets(args, by, out string rest, out string error);
             if (targets.Count == 0) return error;
@@ -466,12 +482,12 @@ namespace GoF2Remake.Multiplayer
             return string.Join("\n", answers);
         }
 
-        static string Players(NetPlayer by)
+        static string Players(IPilot by)
         {
             bool ids = by == null || IsAdmin(by);
             var sb = new StringBuilder();
             int n = 0;
-            foreach (var p in NetPlayer.All)
+            foreach (var p in EventHost.Pilots)
             {
                 if (p == null || !p.IsSpawned) continue;
                 n++;
@@ -480,14 +496,14 @@ namespace GoF2Remake.Multiplayer
                 sb.Append(p.DisplayName);
                 if (p == by) sb.Append(' ').Append(X("mpCmdYou", "(you)"));
                 sb.Append(": ").Append(WhereText(p)).Append(", ").Append(UI.ItemInfo.ShipName(p.ShipIndex));
-                if (p.SquadId != 0) sb.Append(", ").Append(p != by && NetSquad.Same(p, by) ? X("mpCmdYourSquad", "your squad") : X("mpCmdInSquad", "in a squad"));
+                if (p.SquadId != 0) sb.Append(", ").Append(p != by && NetSquad.Same(p as NetPlayer, by as NetPlayer) ? X("mpCmdYourSquad", "your squad") : X("mpCmdInSquad", "in a squad"));
                 if (IsAdmin(p)) sb.Append(", ").Append(X("mpCmdAdminTag", "admin"));
             }
             return n == 0 ? X("mpCmdNoPlayers", "No players online.") : string.Format(X("mpCmdPlayerCount", "{0} player(s):"), n) + sb;
         }
 
         /// <summary>Where a player is, for /players (and the suggestions).</summary>
-        public static string WhereText(NetPlayer p)
+        public static string WhereText(IPilot p)
         {
             string station = DedicatedServer.StationName(p.Station);
             switch (p.Where)
@@ -499,39 +515,39 @@ namespace GoF2Remake.Multiplayer
             }
         }
 
-        static string Say(string text, NetPlayer by, bool global)
+        static string Say(string text, IPilot by, bool global)
         {
             text = NetChat.Clean(text);
             if (text.Length == 0) return Usage(Get(global ? "g" : "l"));
-            NetState.Instance.Chat(by, text, global);
+            NetState.Instance.Chat(by as NetPlayer, text, global);
             return "";
         }
 
-        static string Whisper(string args, NetPlayer by) => ForEachTarget(args, by, false, (to, text) =>
+        static string Whisper(string args, IPilot by) => ForEachTarget(args, by, false, (to, text) =>
         {
             text = NetChat.Clean(text);
             if (text.Length == 0) return Usage(Get("w"));
-            NetState.Instance.Whisper(by, to, text);
+            NetState.Instance.Whisper(by as NetPlayer, to as NetPlayer, text);
             return "";
         });
 
-        static string Invite(string args, NetPlayer by) => ForEachTarget(args, by, false, (to, _) =>
+        static string Invite(string args, IPilot by) => ForEachTarget(args, by, false, (to, _) =>
         {
-            if (NetSquad.Same(to, by)) return string.Format(X("mpCmdAlreadySquad", "{0} is already in your squad."), to.DisplayName);
+            if (NetSquad.Same(to as NetPlayer, by as NetPlayer)) return string.Format(X("mpCmdAlreadySquad", "{0} is already in your squad."), to.DisplayName);
             if (!by.InHangar || !to.InHangar || to.Station != by.Station)
                 return string.Format(X("mpCmdInviteHangar", "{0}: squads can only be formed while docked in the same hangar."), to.DisplayName);
-            NetState.Instance.Invite(by, to);
+            NetState.Instance.Invite(by as NetPlayer, to as NetPlayer);
             return string.Format(X("mpCmdInvited", "Invitation sent to {0}."), to.DisplayName);
         });
 
-        static string Leave(NetPlayer by)
+        static string Leave(IPilot by)
         {
             if (by.SquadId == 0) return X("mpCmdNoSquad", "You're not in a squad.");
-            NetState.Instance.LeaveSquad(by);
+            NetState.Instance.LeaveSquad(by as NetPlayer);
             return "";
         }
 
-        static string Kick(string args, NetPlayer by) => ForEachTarget(args, by, false, (to, reason) =>
+        static string Kick(string args, IPilot by) => ForEachTarget(args, by, false, (to, reason) =>
         {
             string name = to.DisplayName;
             if (IsHostPlayer(to) || (to.IsAdmin && by != null && !IsHostPlayer(by)))
@@ -546,9 +562,9 @@ namespace GoF2Remake.Multiplayer
             return "";
         });
 
-        static string SetAdmin(string args, NetPlayer by, bool on) => ForEachTarget(args, by, false, (to, _) =>
+        static string SetAdmin(string args, IPilot by, bool on) => ForEachTarget(args, by, false, (to, _) =>
         {
-            NetState.Instance.SetAdmin(to, on);   // logged there
+            NetState.Instance.SetAdmin(to as NetPlayer, on);   // logged there
             return string.Format(on ? X("mpAdminGranted", "{0} is now an admin.") : X("mpAdminRevoked", "{0} is no longer an admin."), to.DisplayName);
         });
 
@@ -575,7 +591,7 @@ namespace GoF2Remake.Multiplayer
             foreach (var (sel, what) in Selectors)
                 if (sel.StartsWith(typed, StringComparison.OrdinalIgnoreCase) && typed.IndexOf(' ') < 0)
                     list.Add(new Completion { line = $"/{command.name} {sel}{(command.arg == Arg.PlayerText ? " " : "")}", label = sel, description = what() });
-            foreach (var p in NetPlayer.All)
+            foreach (var p in EventHost.Pilots)
             {
                 if (p == null || !p.IsSpawned || (p.IsOwner && !command.self)) continue;
                 string n = p.DisplayName;

@@ -1,0 +1,13 @@
+[
+    {
+        "id": "kepler_prime", "system": "frontier_systems:kepler", "name": "Kepler Prime", "techLevel": 7, "planet": 12,
+        "looksLike": 40,
+        "model": "models/kepler_station.glb", "modelSize": 50000, "collision": "box",
+        "hangar": "kepler_hangar", "bar": "kepler_bar",
+        "planetTexture": "textures/kepler_prime_planet.png"
+    },
+    {
+        "id": "rho_freeport", "system": "frontier_systems:kepler", "name": { "en": "Rho Freeport", "de": "Freihafen Rho" }, "techLevel": 4, "planet": 6,
+        "looksLike": 41, "interior": "nivelian"
+    }
+]

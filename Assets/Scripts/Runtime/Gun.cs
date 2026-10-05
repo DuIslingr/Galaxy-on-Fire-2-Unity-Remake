@@ -54,6 +54,8 @@ namespace GoF2Remake.Flight
         const float ShockBlastRadiusUnits = 80000f;
 
         public readonly int itemIndex;
+        /// <summary>The original item this gun looks and works like (a mod's item: its base; Modding.ModContent.ItemLook).</summary>
+        public readonly int lookIndex;
         public readonly Kind kind;
         public readonly int categoryId;
         public float damage;
@@ -114,10 +116,12 @@ namespace GoF2Remake.Flight
         public Gun(ItemData item, Vector3 mountLocal, bool secondary)
         {
             itemIndex = item.index;
+            lookIndex = item.Look;
             categoryId = item.categoryId;
             kind = (Kind)item.categoryId;
             isSecondary = secondary;
-            isBeam = item.index == 9 || item.index == 10 || item.index == 11 || item.index == 228;
+            int look = item.Look;   // a mod's item works like its base (Modding.ModContent)
+            isBeam = look == 9 || look == 10 || look == 11 || look == 228;
             damage = item.Attr(9);
             emp = item.Attr(10);
             reloadMs = Mathf.Max(1, item.Attr(11, 500));
@@ -130,7 +134,7 @@ namespace GoF2Remake.Flight
             {
                 Kind.AutoCannon or Kind.ScatterGun or Kind.Turret => kind == Kind.Turret ? 15 : 25,
                 Kind.Rocket or Kind.Missile => 5,
-                Kind.ClusterMissile => Mathf.Max(1, item.index - 211),   // Shesha 3, Garuda 4, Patala 5
+                Kind.ClusterMissile => Mathf.Max(1, look - 211),   // Shesha 3, Garuda 4, Patala 5
                 Kind.EmpBomb or Kind.Nuke or Kind.Ionizing or Kind.ShockBlast => 1,
                 Kind.Mine => 10,
                 Kind.Sentry => 3,
@@ -146,6 +150,7 @@ namespace GoF2Remake.Flight
         public Gun(ItemData visualItem, float damage, float reloadMs, int pool, float lifetimeMs, float speedUnitsPerMs)
         {
             itemIndex = visualItem.index;
+            lookIndex = visualItem.Look;
             categoryId = visualItem.categoryId;
             kind = (Kind)visualItem.categoryId;
             this.damage = damage;

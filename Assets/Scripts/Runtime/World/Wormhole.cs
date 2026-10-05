@@ -63,7 +63,7 @@ namespace GoF2Remake.World
             w.loop = go.AddComponent<AudioSource>();
             w.loop.playOnAwake = false;
             w.loop.loop = true;
-            w.loop.clip = assets != null ? assets.wormholeSound : null;
+            w.loop.clip = GoF2Remake.Modding.ModSounds.Get(assets != null ? assets.wormholeSound : null);
             w.loop.spatialBlend = 1f;
             w.loop.rolloffMode = AudioRolloffMode.Linear;
             w.loop.minDistance = 100f;

@@ -91,7 +91,7 @@ namespace GoF2Remake.Flight
             beamLoop = gameObject.AddComponent<AudioSource>();
             beamLoop.playOnAwake = false;
             beamLoop.loop = true;
-            beamLoop.clip = assets != null ? assets.tractorLoop : null;
+            beamLoop.clip = GoF2Remake.Modding.ModSounds.Get(assets != null ? assets.tractorLoop : null);
             var beamPrefab = assets != null && tractorItem >= 0 ? assets.Tractor(tractorItem) : null;
             if (beamPrefab != null)
             {
@@ -184,7 +184,7 @@ namespace GoF2Remake.Flight
                 if (timer > lockTimeMs && Locked != Candidate)
                 {
                     Locked = Candidate;
-                    if (assets != null && assets.targetLock != null) sfx.PlayOneShot(assets.targetLock, Settings.SfxVolume);
+                    if (assets != null && assets.targetLock != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.targetLock), Settings.SfxVolume);
                     Haptics.Play(Haptics.TargetLock);   // remake
                     if (cargoScan) ReadCargo(Locked);
                 }
@@ -220,7 +220,7 @@ namespace GoF2Remake.Flight
             var cargo = ship.CargoList;
             if (cargo == null || cargo.Count == 0) { Message?.Invoke(Localization.Get(542), 0); return; }
             for (int i = 0; i < cargo.Count; i++)
-                if (cargo[i].amount > 0) { Message?.Invoke($"{cargo[i].amount}t {Localization.Get(1274 + cargo[i].item)}", 0); return; }
+                if (cargo[i].amount > 0) { Message?.Invoke($"{cargo[i].amount}t {GameNames.Item(cargo[i].item)}", 0); return; }
         }
 
         void StartSalvage(Crate crate)
@@ -307,7 +307,7 @@ namespace GoF2Remake.Flight
         {
             Salvaging = null;
             if (beamLoop.isPlaying) beamLoop.Stop();
-            if (assets != null && assets.tractorClose != null) sfx.PlayOneShot(assets.tractorClose, Settings.SfxVolume);
+            if (assets != null && assets.tractorClose != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.tractorClose), Settings.SfxVolume);
             var entry = crate.loot.Find(s => s.amount > 0);
             if (entry == null) { Destroy(crate.gameObject); return; }
             int free = Shop.FreeCargo(db);
@@ -341,7 +341,7 @@ namespace GoF2Remake.Flight
             // A Void crate counts for Alien Hunter (Status+0xcc), another race's booze for Barkeeper.
             if (crate.race == Standing.Void) Session.AlienRemainsCollected += n;
             else if (Session.IsBooze(entry.item)) Session.BoozeTypes.Add(entry.item);
-            Message?.Invoke($"{n}t {Localization.Get(1274 + entry.item)}", 2);
+            Message?.Invoke($"{n}t {GameNames.Item(entry.item)}", 2);
             crate.CapturedHere?.Invoke();   // multiplayer: the capture reaches the crate's owner (NetCrate)
             Destroy(crate.gameObject);
         }

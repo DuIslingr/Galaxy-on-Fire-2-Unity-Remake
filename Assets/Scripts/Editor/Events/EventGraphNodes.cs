@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using GoF2Remake.Multiplayer;
 using Unity.GraphToolkit.Editor;
 using UnityEngine;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.EditorTools
 {
@@ -78,20 +79,27 @@ namespace GoF2Remake.EditorTools
     {
         public const string Description = "Description", MissionTitle = "MissionTitle", MissionOffer = "MissionOffer",
             MissionClient = "MissionClient", MissionReward = "MissionReward", MissionStations = "MissionStations",
-            MinPlayers = "MinPlayers", MaxPlayers = "MaxPlayers";
+            MinPlayers = "MinPlayers", MaxPlayers = "MaxPlayers", Kind = "Kind", StartsWhen = "StartsWhen";
         protected override bool HasIn => false;
 
         protected override void OnDefineOptions(IOptionDefinitionContext context)
         {
             context.AddOption<string>(Description).WithTooltip("What the event is (written as # lines at the top of the script).")
                 .AsTextArea(2, 8).Delayed().Build();
+            context.AddOption<EventKind>(Kind).WithTooltip("Event: started by /event (with a Mission title it is offered as a bar mission, as " +
+                "before). Bar Mission: offered by a Space Lounge visitor (multiplayer squads and single player). Quest: single player, like the " +
+                "story: starts by itself when Starts when holds, lasts across saves (Checkpoint), shows its Mission title and objective in the " +
+                "Missions window; Mission Complete finishes it for good, Mission Failed loads the last save.").Build();
+            context.AddOption<string>(StartsWhen).WithDisplayName("Starts when").WithTooltip("A quest: the condition that starts it, checked " +
+                "every second in a game (an expression: \"campaign >= 20\", \"visited(Kepler Prime)\", \"quest(first_contact) == 2\", " +
+                "\"credits > 50000\"). Empty: at once; \"never\": only by another graph's Start Quest.").Delayed().Build();
             context.AddOption<string>(MissionTitle).WithDisplayName("Mission title").WithTooltip("Set it to offer this event as a bar " +
                 "mission: a visitor in the multiplayer Space Lounge offers it, and it runs for the squad that takes it (its selectors, " +
                 "counts, triggers and scoreboard cover only them). Empty: only /event starts it, for everyone.").Delayed().Build();
             context.AddOption<string>(MissionOffer).WithDisplayName("Offer text").WithTooltip("What the visitor says about the job.")
                 .AsTextArea(2, 8).Delayed().Build();
             context.AddOption<string>(MissionClient).WithDisplayName("Client").WithTooltip("Who offers it: a story character (Keith, " +
-                "\"Keith as Bob\"), or a race and a name (\"vossk K'ekki\", \"terran female Jane\"). Empty: someone of the station's race.")
+                "\"Keith as Bob\"), a mod's character (\"vega\", \"frontier_systems:vega\"), or a race and a name (\"vossk K'ekki\", \"terran female Jane\"). Empty: someone of the station's race.")
                 .Delayed().Build();
             context.AddOption<float>(MissionReward).WithDisplayName("Reward").WithTooltip("Credits for Mission Complete, split evenly " +
                 "across the team.").Delayed().Build();
@@ -100,6 +108,57 @@ namespace GoF2Remake.EditorTools
             context.AddOption<float>(MinPlayers).WithDisplayName("Min pilots").WithDefaultValue(1f).WithTooltip("The squad needs at least this many pilots.").Delayed().Build();
             context.AddOption<float>(MaxPlayers).WithDisplayName("Max pilots").WithDefaultValue(4f).WithTooltip("And at most this many.").Delayed().Build();
         }
+    }
+
+    [Serializable]
+    [Node("Flow", null, "Checkpoint")]
+    public class EventCheckpointNode : EventFlowNode
+    {
+        public const string Name = "Name";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<string>(Name).WithTooltip("Optional: the checkpoint's name (one word; empty: the node's id). A save keeps the quest " +
+                "as it is here (its variables, objective, target, quest orbits); loading it goes on from here: the On handlers and the Run In " +
+                "Parallel / Every blocks before it start again, so do their music, waypoint, respawn and travel commands. Only on the main " +
+                "flow from Start (not inside a block). Renaming it later sends old saves back to the start.").Delayed().Build();
+    }
+
+    [Serializable]
+    [Node("Event", null, "Set Objective")]
+    public class EventSetObjectiveNode : EventFlowNode
+    {
+        public const string Text = "Text", OrbitIn = "Orbit";
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            TextIn(context, Text, "", "The objective in the Missions window (\\n = a new line; empty: none).");
+            context.AddInputPort<Orbit>(OrbitIn).WithTooltip("Optional: the target station (wire Get Orbit in): the gold story icon on the map and the HUD, " +
+                "and the window's Show on map. Not wired: no target.").Build();
+        }
+    }
+
+    [Serializable]
+    [Node("Event", null, "Quest Orbit")]
+    public class EventQuestOrbitNode : EventFlowNode
+    {
+        public const string OrbitIn = "Orbit", On = "On";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<bool>(On).WithDefaultValue(true).WithTooltip("On: the orbit is the quest's from the next arrival, no normal traffic " +
+                "is built there (like a story orbit), until off or the quest's end. Off: normal again.").Build();
+
+        protected override void DefineInputs(IPortDefinitionContext context) =>
+            context.AddInputPort<Orbit>(OrbitIn).WithTooltip("The orbit (wire Get Orbit in).").Build();
+    }
+
+    [Serializable]
+    [Node("Event", null, "Start Quest")]
+    public class EventStartQuestNode : EventFlowNode
+    {
+        public const string Quest = "Quest";
+
+        protected override void DefineInputs(IPortDefinitionContext context) =>
+            TextIn(context, Quest, "", "The quest to start beside this one (its graph's file name), unless it is under way or done. Single player.");
     }
 
     [Serializable]
@@ -260,7 +319,7 @@ namespace GoF2Remake.EditorTools
         protected override void DefineInputs(IPortDefinitionContext context)
         {
             TextIn(context, EventCommandNode.Players, "@a", "Who is asked (a selector, or wire Get Players in).");
-            TextIn(context, "Speaker", "", "Optional: who asks, with a portrait (a story character like Keith, a race and a name like \"vossk K'ekki\", or player).");
+            TextIn(context, "Speaker", "", "Optional: who asks, with a portrait (a story character like Keith, a mod's character like \"frontier_systems:vega\", a race and a name like \"vossk K'ekki\", or player).");
             TextIn(context, Question, "", "The question on their screens (%player% = the reader's name).");
             for (int k = 1; k <= 4; k++)
                 TextIn(context, "Answer " + k, "", k <= 2 ? "An answer (2 at least)." : "Optional: another answer.");
@@ -280,7 +339,7 @@ namespace GoF2Remake.EditorTools
         protected override void DefineInputs(IPortDefinitionContext context)
         {
             TextIn(context, EventCommandNode.Players, "@a", "Who votes (a selector, or wire Get Players in).");
-            TextIn(context, "Speaker", "", "Optional: who asks, with a portrait (a story character like Keith, a race and a name like \"vossk K'ekki\", or player).");
+            TextIn(context, "Speaker", "", "Optional: who asks, with a portrait (a story character like Keith, a mod's character like \"frontier_systems:vega\", a race and a name like \"vossk K'ekki\", or player).");
             TextIn(context, Question, "", "The question on their screens (%player% = the reader's name).");
             for (int k = 1; k <= 4; k++)
                 TextIn(context, "Answer " + k, "", k <= 2 ? "An answer (2 at least)." : "Optional: another answer.");
@@ -633,8 +692,9 @@ namespace GoF2Remake.EditorTools
         protected override void DefineInputs(IPortDefinitionContext context)
         {
             PlayersIn(context);
-            TextIn(context, Speaker, "pirate Boss", "Who calls (a story character like Keith, a race and a name like \"vossk K'ekki\", or player).");
-            TextIn(context, Text, "", "The call: in the flight HUD's radio box with the face, gone by itself (docked: a chat line). %player% = the reader.");
+            TextIn(context, Speaker, "pirate Boss", "Who calls (a story character like Keith, a mod's character like \"frontier_systems:vega\", a race and a name like \"vossk K'ekki\", or player).");
+            TextIn(context, Text, "", "The call: in the flight HUD's radio box with the face, gone by itself (docked: a chat line). %player% = the reader; " +
+                "\"[voice <clip>]\" plays its voice-over (an original line, or a mod's voices/<clip>.ogg).");
         }
     }
 
@@ -654,10 +714,210 @@ namespace GoF2Remake.EditorTools
         public const string Pages = "Pages";
 
         protected override void OnDefineOptions(IOptionDefinitionContext context) =>
-            context.AddOption<string>(Pages).WithTooltip("One page per line: \"speaker : text\" (a story speaker, \"vossk K'ekki\", \"terran female Jane\" or \"player\"; " +
-                "a line without a speaker keeps the last one); \"reward [title]: <rewards>\" pays when it closes; %player% = the reader's name.")
+            context.AddOption<string>(Pages).WithTooltip("One page per line: \"speaker : text\" (a story speaker, a mod's character, \"vossk K'ekki\", \"terran female Jane\" or \"player\"; " +
+                "a line without a speaker keeps the last one); \"reward [title]: <rewards>\" pays when it closes; %player% = the reader's name; " +
+                "\"[voice <clip>]\" in a page plays its voice-over: an original voice line by its name, or a mod's voices/<clip>.ogg (.wav, .mp3; " +
+                "voices/de/<clip>.ogg for the German voices).")
                 .AsTextArea(3, 12).Delayed().Build();
 
+        protected override void DefineInputs(IPortDefinitionContext context) => PlayersIn(context);
+    }
+
+    // ---- ship orders (EventShipOrders) ---------------------------------------------------------------------------------
+
+    /// <summary>A ship order: the ship by the name its Spawn node gave it (a numbered group "Name 1".. all take it).</summary>
+    [Serializable]
+    public abstract class EventShipOrderNode : EventCommandNode
+    {
+        public const string Ship = "Ship";
+        protected const string Places = "A place: \"x y z\" or \"station x y z\" (game coordinates of the orbit, /pos shows yours), " +
+            "\"player right up forward\" (from the player's ship: 0 0 5000 ahead of it), \"ship <name> [x y z]\".";
+
+        protected static void ShipIn(IPortDefinitionContext c) =>
+            TextIn(c, Ship, "", "The ship: the name its Spawn node gave it (all of a numbered group, \"Name 1\", \"Name 2\"...).");
+    }
+
+    [Serializable]
+    [Node("Ships", null, "Fly To")]
+    public class EventFlyToNode : EventShipOrderNode
+    {
+        public const string To = "To", Then = "Then", Speed = "Speed", Radius = "Radius", Fight = "Fight";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context)
+        {
+            context.AddOption<EventShipThen>(Then).WithTooltip("When it is there: Resume its own flying and fighting, Hold still (a target " +
+                "that neither flies nor shoots), Vanish, or Jump Out.").Build();
+            context.AddOption<bool>(Fight).WithTooltip("It fights the enemies it meets on the way, then goes on.").Build();
+        }
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            ShipIn(context);
+            TextIn(context, To, "", "Where it flies. " + Places);
+            NumberIn(context, Speed, 0f, "Units per ms (0 = its own: a fighter 2, a freighter 1; boosting about 8).");
+            NumberIn(context, Radius, 0f, "How close counts as there, in game units (0 = 2500: ships can't turn on the spot).");
+        }
+    }
+
+    [Serializable]
+    [Node("Ships", null, "Fly Route")]
+    public class EventFlyRouteNode : EventShipOrderNode
+    {
+        public const string Route = "Route", Loop = "Loop", Then = "Then", Speed = "Speed", Radius = "Radius", Fight = "Fight";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context)
+        {
+            context.AddOption<bool>(Loop).WithTooltip("Round and round (a patrol); Then never comes.").Build();
+            context.AddOption<EventShipThen>(Then).WithTooltip("At the last point: Resume, Hold, Vanish or Jump Out.").Build();
+            context.AddOption<bool>(Fight).WithTooltip("It fights the enemies it meets on the way, then goes on.").Build();
+        }
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            ShipIn(context);
+            TextIn(context, Route, "", "The places it flies through, / between them (\"0 0 20000 / 8000 0 30000 / station 0 0 5000\"). " + Places);
+            NumberIn(context, Speed, 0f, "Units per ms (0 = its own).");
+            NumberIn(context, Radius, 0f, "How close counts as there (0 = 2500 game units).");
+        }
+    }
+
+    [Serializable]
+    [Node("Ships", null, "Follow")]
+    public class EventFollowNode : EventShipOrderNode
+    {
+        public const string Leader = "Leader", Offset = "Offset", Speed = "Speed", Fight = "Fight";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<bool>(Fight).WithDisplayName("Escort").WithTooltip("It fights the enemies it meets, then comes back to its place.").Build();
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            ShipIn(context);
+            TextIn(context, Leader, "player", "Whom it follows: player, or ship <name>.");
+            TextIn(context, Offset, "", "Its place beside the leader, \"right up forward\" in game units (empty: 0 0 -1500, behind). A group spreads out from it.");
+            NumberIn(context, Speed, 0f, "Its top speed (0 = keeps up by itself).");
+        }
+    }
+
+    [Serializable]
+    [Node("Ships", null, "Attack")]
+    public class EventAttackNode : EventShipOrderNode
+    {
+        public const string TargetIn = "Target";
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            ShipIn(context);
+            TextIn(context, TargetIn, "player", "What it attacks: player, or ship <name> (whoever's side it is on). When that is gone it resumes.");
+        }
+    }
+
+    [Serializable]
+    [Node("Ships", null, "Ship Action")]
+    public class EventShipActionNode : EventShipOrderNode
+    {
+        public const string Action = "Action", Seconds = "Seconds";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<EventShipAction>(Action).WithTooltip("Hold: stays where it is (neither flies nor shoots). Resume: its own flying " +
+                "and fighting again. Jump Out: accelerates away and is gone. Dock: flies into the station and is gone. Flee: away from " +
+                "the player at full speed, then jumps out.").Build();
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            ShipIn(context);
+            NumberIn(context, Seconds, 6f, "Flee: how long it runs before it jumps out.");
+        }
+    }
+
+    // ---- cutscenes (EventCutscene) ---------------------------------------------------------------------------------
+
+    [Serializable]
+    [Node("Cutscene", null, "Start Cutscene")]
+    public class EventStartCutsceneNode : EventCommandNode
+    {
+        public const string Letterbox = "Letterbox", Freeze = "Freeze", Invulnerable = "Invulnerable";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context)
+        {
+            context.AddOption<bool>(Letterbox).WithDefaultValue(true).WithTooltip("The cinema bars slide in at the top and bottom.").Build();
+            context.AddOption<bool>(Freeze).WithDisplayName("Freeze ship").WithTooltip("The player's ship holds still (else it flies on, straight).").Build();
+            context.AddOption<bool>(Invulnerable).WithDefaultValue(true).WithTooltip("The player takes no damage during the cutscene.").Build();
+        }
+
+        protected override void DefineInputs(IPortDefinitionContext context) => PlayersIn(context);
+    }
+
+    [Serializable]
+    [Node("Cutscene", null, "End Cutscene")]
+    public class EventEndCutsceneNode : EventCommandNode
+    {
+        protected override void DefineInputs(IPortDefinitionContext context) => PlayersIn(context);
+    }
+
+    [Serializable]
+    [Node("Cutscene", null, "Camera Shot")]
+    public class EventCameraShotNode : EventCommandNode
+    {
+        public const string From = "From", To = "To", LookAt = "LookAt", Seconds = "Seconds", Follow = "Follow", Fov = "Fov", Shake = "Shake";
+        const string Places = "A place: \"player right up forward\" (game units in the ship's own frame: 0 600 -1338 is the chase " +
+            "spot, 0 0 3000 in front), \"station x y z\" or \"x y z\" (game coordinates of the orbit, /pos shows yours), \"ship <name> " +
+            "[x y z]\" (a ship Spawn named).";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<bool>(Follow).WithTooltip("The places that move (the player, a ship) are followed every frame; off: read " +
+                "once when the shot starts.").Build();
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            TextIn(context, From, "player 0 600 -2500", "Where the camera is. " + Places);
+            TextIn(context, To, "", "Optional: where it moves to over Seconds (eased). " + Places);
+            TextIn(context, LookAt, "player", "What it looks at every frame (default the player's ship). " + Places);
+            NumberIn(context, Seconds, 4f, "How long the move takes (the shot itself lasts until the next one, Chase Camera or End Cutscene; " +
+                "add a Wait to hold it).");
+            NumberIn(context, Fov, 0f, "Field of view in degrees (0 = the game's 70).");
+            NumberIn(context, Shake, 0f, "Camera shake, 0 to 1.");
+        }
+    }
+
+    [Serializable]
+    [Node("Cutscene", null, "Chase Camera")]
+    public class EventChaseCameraNode : EventCommandNode
+    {
+        protected override void DefineInputs(IPortDefinitionContext context) => PlayersIn(context);
+    }
+
+    [Serializable]
+    [Node("Cutscene", null, "Fade")]
+    public class EventFadeNode : EventCommandNode
+    {
+        public const string Direction = "Direction", Seconds = "Seconds", Colour = "Colour";
+
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<EventFade>(Direction).WithTooltip("Out: to the colour, then held. In: from the colour back to the " +
+                "game. Clear: gone at once.").Build();
+
+        protected override void DefineInputs(IPortDefinitionContext context)
+        {
+            PlayersIn(context);
+            NumberIn(context, Seconds, 1f, "How long the fade takes.");
+            TextIn(context, Colour, "000000", "The colour as rrggbb (000000 black, ffffff white). Conversations and the radio stay readable over it.");
+        }
+    }
+
+    [Serializable]
+    [Node("Cutscene", null, "Letterbox")]
+    public class EventLetterboxNode : EventCommandNode
+    {
+        public const string On = "On";
+        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+            context.AddOption<bool>(On).WithDefaultValue(true).WithTooltip("The cinema bars on (or off), without a cutscene's other effects.").Build();
         protected override void DefineInputs(IPortDefinitionContext context) => PlayersIn(context);
     }
 
@@ -674,10 +934,14 @@ namespace GoF2Remake.EditorTools
     [Node("Commands", null, "Play Music")]
     public class EventPlayMusicNode : EventCommandNode
     {
-        public const string Music = "Music";
+        public const string Music = "Music", Track = "Track";
 
-        protected override void OnDefineOptions(IOptionDefinitionContext context) =>
+        protected override void OnDefineOptions(IOptionDefinitionContext context)
+        {
             context.AddOption<EventMusic>(Music).WithTooltip("Looped instead of the game's music until Stop Music or the event's end.").Build();
+            context.AddOption<string>(Track).WithDisplayName("Mod track").WithTooltip("Optional: a mod's track instead (its music/<name>.ogg file's " +
+                "name, a mod that is on); empty: the Music above.").Delayed().Build();
+        }
 
         protected override void DefineInputs(IPortDefinitionContext context) => PlayersIn(context);
     }
@@ -756,7 +1020,8 @@ namespace GoF2Remake.EditorTools
         protected override void OnDefineOptions(IOptionDefinitionContext context) =>
             context.AddOption<EventGameValue>(State).WithTooltip("Enemies / Ships: this event's living spawned ships (enemies only / all); Players: in the session; " +
                 "In Space: alive in space; Docked; Dead: destroyed in space; Time: seconds since the event started; Top Points; Mission Station: " +
-                "where a bar mission was taken (-1 in an /event; wire it into Get Orbit).").Build();
+                "where a bar mission was taken (-1 in an /event; wire it into Get Orbit). This game's own: Campaign (the story step, -1 in free play), " +
+                "Credits, Rank, Station (where the player is), System, Ship, Kills.").Build();
 
         protected override void OnDefinePorts(IPortDefinitionContext context) => context.AddOutputPort<float>(Value).Build();
     }

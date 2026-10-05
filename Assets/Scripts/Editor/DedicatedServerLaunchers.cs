@@ -38,7 +38,7 @@ namespace GoF2Remake.EditorTools
             }
         }
 
-        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS", "ALLOWDEBUG" };
+        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS", "ALLOWDEBUG", "ALLOWMODS" };
 
         /// <summary>A launcher already there keeps its edited settings (the name, password, player limit, Debug menu) in the new
         /// one; a setting it doesn't have yet (an older launcher) gets the default.</summary>
@@ -68,13 +68,17 @@ namespace GoF2Remake.EditorTools
             "set MAXPLAYERS=16\n" +
             "rem 1 = the players may use the Debug menu (cheats, items, spawns); 0 = off.\n" +
             "set ALLOWDEBUG=0\n" +
+            "rem 1 = the session runs every mod in the Mods folder next to the game (players need the same files); 0 = none.\n" +
+            "set ALLOWMODS=0\n" +
             "rem Add -unlisted to keep it out of the server browser (players then join with the join code from the console).\n" +
             // Only a set password goes on the command line (Unity drops an empty "" argument).
             "set PASSWORDARG=\n" +
             "if defined PASSWORD set PASSWORDARG=-password \"%PASSWORD%\"\n" +
             "set DEBUGARG=\n" +
             "if \"%ALLOWDEBUG%\"==\"1\" set DEBUGARG=-allowdebug\n" +
-            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS% %DEBUGARG%\n";
+            "set MODSARG=\n" +
+            "if \"%ALLOWMODS%\"==\"1\" set MODSARG=-allowmods\n" +
+            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS% %DEBUGARG% %MODSARG%\n";
 
         static string LinuxLauncher(string exe) =>
             "#!/bin/sh\n" +
@@ -85,11 +89,13 @@ namespace GoF2Remake.EditorTools
             "PASSWORD=\"\"        # empty = none\n" +
             "MAXPLAYERS=16      # at most 100\n" +
             "ALLOWDEBUG=0       # 1 = the players may use the Debug menu (cheats, items, spawns)\n" +
+            "ALLOWMODS=0        # 1 = the session runs every mod in the Mods folder (players need the same files)\n" +
             "# Add -unlisted to keep it out of the server browser (players then join with the join code shown here).\n" +
             "cd \"$(dirname \"$0\")\"\n" +
             $"chmod +x ./{exe} 2>/dev/null\n" +
             "if [ -n \"$PASSWORD\" ]; then set -- -password \"$PASSWORD\"; else set --; fi\n" +
             "if [ \"$ALLOWDEBUG\" = \"1\" ]; then set -- \"$@\" -allowdebug; fi\n" +
+            "if [ \"$ALLOWMODS\" = \"1\" ]; then set -- \"$@\" -allowmods; fi\n" +
             $"exec ./{exe} -batchmode -nographics -server -relay -name \"$NAME\" \"$@\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
     }
 }

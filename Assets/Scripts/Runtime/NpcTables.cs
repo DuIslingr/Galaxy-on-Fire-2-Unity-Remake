@@ -37,7 +37,9 @@ namespace GoF2Remake.Flight
         };
 
         /// <summary>Globals::getRandomEnemyFighter.</summary>
-        public static int RandomFighter(int race)
+        public static int RandomFighter(int race) => Modding.ModCampaigns.TrafficShip(race, RandomFighterOriginal(race));   // remake mods: a campaign's own ships
+
+        static int RandomFighterOriginal(int race)
         {
             // Valkyrie won: the Vossk also fly the K'Suukk (41) and the S'Kanarr (39).
             if (race == 1 && Story.Dlc1Won) { int r = Random.Range(0, 100); return r < 60 ? 9 : r < 85 ? 41 : 39; }

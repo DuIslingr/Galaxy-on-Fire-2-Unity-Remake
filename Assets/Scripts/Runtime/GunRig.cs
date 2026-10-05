@@ -116,7 +116,7 @@ namespace GoF2Remake.Flight
         {
             float l = 0f;
             foreach (var a in go.GetComponentsInChildren<PartAnimation>(true)) l = Mathf.Max(l, a.LengthMs);
-            return l;
+            return Mathf.Max(l, Modding.ModFxPart.MaxLength(go));
         }
 
         /// <summary>The part animations apply their `extra` channel as opacity (PartAnimation.applyMaterialChannels).</summary>

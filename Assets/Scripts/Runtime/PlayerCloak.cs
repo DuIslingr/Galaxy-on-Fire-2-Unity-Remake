@@ -45,7 +45,7 @@ namespace GoF2Remake.Flight
             if (item == null) return null;
             var c = player.AddComponent<PlayerCloak>();
             c.Rules = new Cloak(item.index, item.Attr(35, 10000), item.Attr(36, 2000), item.Attr(38, 1), Session.Difficulty);
-            c.ItemName = Localization.Get(1274 + item.index);
+            c.ItemName = GameNames.Item(item.index);
             c.target = target;
             c.Setup(model);
             return c;
@@ -101,7 +101,7 @@ namespace GoF2Remake.Flight
             }
             if (free) return;
             Shop.RemoveFromCargo(Cloak.EnergyCellItem, Rules.cells);
-            Message?.Invoke($"-{Rules.cells}t {Localization.Get(1274 + Cloak.EnergyCellItem)}");
+            Message?.Invoke($"-{Rules.cells}t {GameNames.Item(Cloak.EnergyCellItem)}");
         }
 
         void Update()
@@ -150,7 +150,7 @@ namespace GoF2Remake.Flight
 
         void Play()
         {
-            if (assets != null && assets.cloak != null) sfx.PlayOneShot(assets.cloak, Settings.SfxVolume);
+            if (assets != null && assets.cloak != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.cloak), Settings.SfxVolume);
         }
     }
 }

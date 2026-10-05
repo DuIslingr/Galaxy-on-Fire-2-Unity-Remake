@@ -416,15 +416,17 @@ namespace GoF2Remake.UI
                 var lowerWords = LowerCaseWords();
                 for (int i = 0; i < db.Items.Count; i++)
                 {
-                    string item = Localization.Get(1274 + i);
+                    string item = GameNames.Item(i);
                     bool single = item.IndexOf(' ') < 0;
                     if (item.Length < 4 || single && lowerWords.Contains(item.ToLowerInvariant())) continue;
-                    Add(item, $"item_{db.Items[i].index:000}", !single);
+                    if (Modding.ModContent.IsMissingItem(i)) continue;
+                    Add(item, $"item_{db.Items[i].Look:000}", !single);   // a mod's item: its base's icon
                 }
-                for (int i = 0; i < db.Ships.Count && i < 64; i++) Add(Localization.Get(913 + i), $"ship_{i:000}", false);
+                for (int i = 0; i < db.Ships.Count && i < 64; i++) Add(GameNames.Ship(i), $"ship_{i:000}", false);
+                foreach (var c in CustomShips.All) Add(GameNames.Ship(c.index), null, false);   // mods' ships: no icon in the sprite atlas
                 // Equipment categories: the icon of a first item of the category (not the commodities; ore cores = "core").
                 var firstOf = new Dictionary<int, int>();
-                foreach (var it in db.Items) if (!firstOf.ContainsKey(it.categoryId)) firstOf[it.categoryId] = it.index;
+                foreach (var it in db.Items) if (!it.modded && !firstOf.ContainsKey(it.categoryId)) firstOf[it.categoryId] = it.index;
                 foreach (var kv in firstOf)
                 {
                     if (kv.Key == 22) continue;
@@ -512,8 +514,9 @@ namespace GoF2Remake.UI
             var db = Database.Load();
             if (db != null)
             {
-                for (int i = 0; i < db.Items.Count; i++) Scan(Localization.Get(1274 + i));
-                for (int i = 0; i < db.Ships.Count && i < 64; i++) Scan(Localization.Get(913 + i));
+                for (int i = 0; i < db.Items.Count; i++) Scan(GameNames.Item(i));
+                for (int i = 0; i < db.Ships.Count && i < 64; i++) Scan(GameNames.Ship(i));
+                foreach (var c in CustomShips.All) Scan(GameNames.Ship(c.index));
                 foreach (var st in db.Stations) Scan(st.name);
                 foreach (var sy in db.Systems) Scan(sy.name);
             }
@@ -600,9 +603,14 @@ namespace GoF2Remake.UI
         /// <summary>Story speakers with proper names (and their first / last names), races, stations and systems (places),
         /// ships and items (things; a one-word item only when the texts never write it in lower case, so "Gold" and
         /// "Drugs" stay plain), and the lore names; longest first. Rebuilt when the language changes.</summary>
+        static int namesRevision = -1;
+
         static List<(string, int)> Names()
         {
-            if (names != null) return names;
+            if (names != null && namesRevision == Modding.ModManager.Revision) return names;   // the mods' ships, items and characters too
+            namesRevision = Modding.ModManager.Revision;
+            nameCaps = null;
+            iconRules = null;
             Hook();
             var set = new Dictionary<string, int>();
             void Add(string n, int kind)
@@ -621,16 +629,25 @@ namespace GoF2Remake.UI
                     if (part.Length >= 4 && !part.EndsWith(".") && char.IsUpper(part[0])) Add(part, Person);
             }
             foreach (var (n, kind) in LoreNames) Add(n, kind);
+            // Remake mods: the mods' characters (ModCharacters) are people too.
+            foreach (var c in Modding.ModCharacters.All())
+            {
+                string full = c.Name;
+                Add(full, Person);
+                foreach (var part in (full ?? "").Split(' '))
+                    if (part.Length >= 4 && !part.EndsWith(".") && char.IsUpper(part[0])) Add(part, Person);
+            }
             var db = Database.Load();
             if (db != null)
             {
                 foreach (var st in db.Stations) Add(st.name, Place);
                 foreach (var sy in db.Systems) Add(sy.name, Place);
-                for (int i = 0; i < db.Ships.Count && i < 64; i++) Add(Localization.Get(913 + i), Thing);   // 977+ = descriptions
+                for (int i = 0; i < db.Ships.Count && i < 64; i++) Add(GameNames.Ship(i), Thing);   // 977+ = descriptions
+                foreach (var c in CustomShips.All) Add(GameNames.Ship(c.index), Thing);
                 var lower = LowerCaseWords();
                 for (int i = 0; i < db.Items.Count; i++)
                 {
-                    string item = Localization.Get(1274 + i);
+                    string item = GameNames.Item(i);
                     if (item.Length < 4 || item.IndexOf(' ') < 0 && lower.Contains(item.ToLowerInvariant())) continue;
                     Add(item, Thing);
                 }

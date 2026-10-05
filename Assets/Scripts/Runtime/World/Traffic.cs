@@ -251,6 +251,7 @@ namespace GoF2Remake.World
             public string text, speaker;
             public int[] portrait;      // a generic face, or null with speakerId
             public int speakerId = -1;  // a story speaker (9 Pirate Boss)
+            public string character;    // a mod's character ("mod_id:id", Modding.ModCharacters): its portrait
             public string voice;        // Globals::getDialogueSoundId (the story's radio calls)
         }
 
@@ -847,7 +848,7 @@ namespace GoF2Remake.World
             if (jumperMs > 10000f)
             {
                 jumperMs = 0f;
-                var j = Ships.Find(s => s.IsJumper && s.Gone);
+                var j = Ships.Find(s => s.IsJumper && s.Gone && s.Spec.eventTag == 0);
                 if (j != null) j.Revive(StationPosition);
             }
             if (respawnMs < 45001f) return;
@@ -857,7 +858,7 @@ namespace GoF2Remake.World
             bool anyBack = false;
             foreach (var s in Ships)
             {
-                if (!s.Gone) continue;
+                if (!s.Gone || s.Spec.eventTag != 0) continue;   // an event's ships never come back by themselves (remake)
                 if (s.Spec.group == NpcGroup.Local && s.Spec.wantedIndex < 0) { s.Revive(StationPosition); continue; }   // not the criminal
                 if (s.Spec.group == NpcGroup.Raider && deadRaiders > 1 && raiderWaves < 2 && Player != null
                     && (s.Race == Standing.Void || Security == 0 || (Security == 1 && raidersRespawned <= 2)))
@@ -888,7 +889,7 @@ namespace GoF2Remake.World
             alienMs = 0f;
             foreach (var s in Ships)
             {
-                if (!s.Gone || s.Race != Standing.Void || s.IsWingman) continue;
+                if (!s.Gone || s.Race != Standing.Void || s.IsWingman || s.Spec.eventTag != 0) continue;
                 Vector3 at;
                 float R(float r) => UnityEngine.Random.Range(-r, r);
                 if (Wormhole != null && !Wormhole.alienOrbit && Wormhole.attackedStation)
@@ -910,7 +911,8 @@ namespace GoF2Remake.World
         bool SupernovaCalm => !Session.FreePlay && Session.CampaignMission < 0x9e && (db.Stations.Find(s => s.index == StationIndex)?.system ?? -1) == 27;
 
         /// <summary>DAT_00252010[race]: the system race's space track (Globals::playMusicAndFadeOutCurrent(1)).</summary>
-        public AudioClip RaceSpaceMusic() => assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null;
+        public AudioClip RaceSpaceMusic() => Modding.ModWorld.SpaceMusic(StationIndex)   // remake mods: a system's own space music
+            ?? (assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null);
 
         /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
         /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before
@@ -940,10 +942,10 @@ namespace GoF2Remake.World
             if (MusicMuted) { if (music.isPlaying) music.Stop(); musicCategory = pendingCategory = -1; return; }
             // MGame::OnRender2D skips Radar::draw while LevelScript's cutscene flag is set, so nothing switches the music
             // during a story cutscene (index 14's arrest: the pirates vanish, the battle track plays on).
-            if (RadarHidden != null && RadarHidden() && musicCategory >= 0) { music.volume = fade * Settings.MusicVolume * Multiplayer.NetScreen.SceneMusic; return; }
+            if (RadarHidden != null && RadarHidden() && musicCategory >= 0) { music.volume = fade * Settings.MusicVolume * Events.EventScreen.SceneMusic; return; }
             // Radar::draw 0x157c6c: while 143 IntroAtmo plays nothing switches.
             var introAtmo = StoryAssets.Load()?.introAtmo;
-            if (introAtmo != null && music.clip == introAtmo && music.isPlaying) { music.volume = fade * Settings.MusicVolume * Multiplayer.NetScreen.SceneMusic; return; }
+            if (introAtmo != null && music.clip == introAtmo && music.isPlaying) { music.volume = fade * Settings.MusicVolume * Events.EventScreen.SceneMusic; return; }
             int cat = HostileCount <= 0 ? 0 : HostileCount <= 2 ? 1 : HostileCount <= 4 ? 2 : 3;
             // At campaign 0x91 (the plasma array's destruction) a calm orbit never brings the calm track back.
             if (cat == 0 && musicCategory > 0 && !Session.FreePlay && Session.CampaignMission == 0x91) cat = musicCategory;
@@ -971,12 +973,12 @@ namespace GoF2Remake.World
                              : musicCategory == 5 ? sn?.stealthMusic1
                              : musicCategory == 6 ? sn?.stealthMusic2
                              : (assets.battleMusic != null && assets.battleMusic.Length == 3 ? assets.battleMusic[musicCategory - 1] : null);
-                    music.clip = clip;
+                    music.clip = clip = Modding.ModMusic.Replace(clip);   // a mod's track of the same name
                     if (clip != null) music.Play();
                 }
             }
             else fade = Mathf.Min(1f, fade + dt / 1.5f);
-            music.volume = fade * Settings.MusicVolume * Multiplayer.NetScreen.SceneMusic;
+            music.volume = fade * Settings.MusicVolume * Events.EventScreen.SceneMusic;
         }
     }
 }

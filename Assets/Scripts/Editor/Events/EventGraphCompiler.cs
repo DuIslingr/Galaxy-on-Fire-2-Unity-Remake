@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using GoF2Remake.Multiplayer;
 using Unity.GraphToolkit.Editor;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.EditorTools
 {

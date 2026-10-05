@@ -43,11 +43,18 @@ namespace GoF2Remake.Data
             foreach (var s in db.Systems) n = Mathf.Max(n, s.index + 1);
             if (Session.SystemVisible == null || Session.SystemVisible.Length < n)
             {
+                // A save made with fewer systems (a mod's systems added since) keeps what it had revealed; only the new
+                // systems start from initiallyVisible (before, the whole map was rebuilt and the story's reveals were lost).
+                var old = Session.SystemVisible;
                 var v = new bool[n];
-                foreach (var s in db.Systems) v[s.index] = s.initiallyVisible;
+                foreach (var s in db.Systems) v[s.index] = old != null && s.index < old.Length ? old[s.index] : s.initiallyVisible;
                 if (LomaSystem < n) v[LomaSystem] = true;
                 Session.SystemVisible = v;
             }
+            // Remake mods: a mod campaign with its own galaxy hides every other system (Modding.ModCampaigns).
+            if (Modding.ModCampaigns.ModGalaxy)
+                foreach (var s in db.Systems)
+                    if (s.index < Session.SystemVisible.Length && !Modding.ModCampaigns.SystemAllowed(s.index)) Session.SystemVisible[s.index] = false;
             return Session.SystemVisible;
         }
 

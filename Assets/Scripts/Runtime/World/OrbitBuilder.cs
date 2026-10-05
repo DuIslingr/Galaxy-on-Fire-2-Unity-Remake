@@ -35,8 +35,20 @@ namespace GoF2Remake.World
             sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{stars:000}"));
             int nebula = nebulaOverride >= 0 ? nebulaOverride : layout.systemTexture;   // the prologue's belt: nebula 3
             sky.SetTexture("_Nebula", Resources.Load<Cubemap>($"GoF2Sky/nebula_{nebula:000}"));
+            var rotation = SkyRotation(layout);
+            // Remake mods: a system's own sky (systems.json "skybox": panorama / cube-strip images, the star layer, a turn).
+            var mod = layout.systemIndex >= 0 && nebulaOverride < 0 ? Modding.ModWorld.SkyOf(layout.systemIndex) : null;
+            if (mod != null)
+            {
+                SetModLayer(sky, mod.nebula, "_NebulaMap", "_NEBULA_PANORAMA", "_NEBULA_STRIP");
+                if (mod.stars != null) SetModLayer(sky, mod.stars, "_StarsMap", "_STARS_PANORAMA", "_STARS_STRIP");
+                else if (mod.starsLayer >= 0) sky.SetTexture("_Stars", Resources.Load<Cubemap>($"GoF2Sky/stars_{mod.starsLayer:000}"));
+                sky.SetFloat("_NebulaGain", mod.nebulaBrightness);
+                sky.SetFloat("_StarsGain", mod.starsLayer == -2 ? 0f : mod.starsBrightness);
+                if (mod.rotation.HasValue) rotation = Quaternion.Euler(mod.rotation.Value);
+            }
             // The shader maps world directions into the baked cube: the inverse of the sky's Unity rotation.
-            sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(SkyRotation(layout))));
+            sky.SetMatrix("_SkyRotation", Matrix4x4.Rotate(Quaternion.Inverse(rotation)));
             RenderSettings.skybox = sky;
             RenderSettings.ambientMode = AmbientMode.Skybox;
             RenderSettings.ambientIntensity = ambientIntensity;
@@ -51,6 +63,26 @@ namespace GoF2Remake.World
                 RenderSettings.fogEndDistance = layout.fogEnd * M;
                 RenderSettings.fogColor = layout.fogColor;
             }
+        }
+
+        /// <summary>A mod's sky image on a GoF2/SpaceSky layer: 2:1 = a panorama, 6:1 = a strip of cube faces (else a warning
+        /// and the game's layer stays).</summary>
+        static void SetModLayer(Material sky, string name, string property, string panorama, string strip)
+        {
+            if (name == null) return;
+            var tex = Modding.ModBackdrop.Texture(name);
+            if (tex == null) return;
+            float aspect = tex.width / (float)Mathf.Max(1, tex.height);
+            bool isStrip = Mathf.Abs(aspect - 6f) < 0.05f, isPanorama = Mathf.Abs(aspect - 2f) < 0.05f;
+            if (!isStrip && !isPanorama)
+            {
+                Debug.LogWarning($"OrbitBuilder: the skybox image {name} is {tex.width} x {tex.height}: a panorama is 2:1, a strip of cube faces 6:1");
+                return;
+            }
+            tex.wrapMode = isPanorama ? TextureWrapMode.Repeat : TextureWrapMode.Clamp;
+            tex.wrapModeV = TextureWrapMode.Clamp;
+            sky.SetTexture(property, tex);
+            sky.EnableKeyword(isPanorama ? panorama : strip);
         }
 
         /// <summary>R_sky in Unity (the baked cubemaps are the sky meshes at identity, after the import's 180 deg yaw).</summary>
@@ -115,7 +147,11 @@ namespace GoF2Remake.World
                 case 111: return Session.CampaignMission <= 0x5d ? "sn_burning_station_luur"
                                : Session.CampaignMission == 0x5e ? "station_111_luur_mission_94" : "sn_station_midorian_wrecked";
             }
-            string prefix = $"station_{layout.stationIndex:000}_";
+            // A mod's own station model (ModStations), once built; else (and for the rest) the original it names ("looksLike",
+            // Modding.ModWorld.StationLook).
+            var own = Modding.ModWorld.ModelOf(layout.stationIndex);
+            if (own != null && Modding.ModStations.Built(own.station)) return own.Assembly;
+            string prefix = $"station_{Modding.ModWorld.StationLook(layout.stationIndex):000}_";
             var entry = db.Assemblies.Find(a => a.category == "stations" && (a.name.StartsWith(prefix)
                                                   || a.name.StartsWith("v_" + prefix) || a.name.StartsWith("sn_" + prefix)));
             return entry != null ? entry.name : layout.raceId == 1 ? "station_vossk" : null;   // Vossk: no collision entry
@@ -150,7 +186,9 @@ namespace GoF2Remake.World
             {
                 var o = station.AddComponent<GoF2Remake.Flight.Obstacle>();
                 o.landmark = o.isStation = true;
-                o.volumes = GoF2Remake.Flight.CollisionVolume.ForStation(layout.stationIndex, layout.systemIndex < 0);
+                var own = Modding.ModWorld.ModelOf(layout.stationIndex);
+                o.volumes = own != null && Modding.ModStations.Built(own.station) ? Modding.ModStations.Volumes(own, station)   // a mod's model
+                          : GoF2Remake.Flight.CollisionVolume.ForStation(Modding.ModWorld.StationLook(layout.stationIndex), layout.systemIndex < 0);
                 // PlayerStation+0x150: the transform's bounding radius (Transform+0xe0, about the station's own origin)
                 // + 5000 units. A radius from the origin, not the bounds' half size: a lopsided station (Tornard, 57,
                 // towers 3.4 km out on one side) had its far tower outside the cube, so nothing collided there.

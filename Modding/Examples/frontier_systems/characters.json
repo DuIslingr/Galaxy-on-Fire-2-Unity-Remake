@@ -1,0 +1,12 @@
+[
+    // Kepler Prime's harbour master: a speaker for dialogues, radio calls, questions and bar missions ("vega",
+    // "frontier_systems:vega" or "Captain Vega"). Her portrait is a 320 x 400 PNG, transparent around her so the game's
+    // portrait background shows; the race and gender pick her figure in the Space Lounge.
+    {
+        "id": "vega",
+        "name": { "en": "Captain Vega", "de": "Kapitänin Vega" },
+        "portrait": "portraits/vega.png",
+        "race": "terran",
+        "gender": "female"
+    }
+]

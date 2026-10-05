@@ -106,7 +106,7 @@ namespace GoF2Remake.World
 
         public static string ShipName(Database db, int ship)
         {
-            string name = Localization.Get(913 + ship);
+            string name = GameNames.Ship(ship);
             return string.IsNullOrEmpty(name) ? db.Ship(ship)?.name ?? ("#" + ship) : name;
         }
     }

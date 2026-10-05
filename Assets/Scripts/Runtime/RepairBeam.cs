@@ -73,7 +73,7 @@ namespace GoF2Remake.Flight
             if (clip != null)
             {
                 loop = gameObject.AddComponent<AudioSource>();
-                loop.clip = clip;
+                loop.clip = GoF2Remake.Modding.ModSounds.Get(clip);
                 loop.loop = true;
                 loop.playOnAwake = false;
                 loop.spatialBlend = 0f;

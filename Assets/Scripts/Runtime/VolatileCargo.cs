@@ -44,7 +44,7 @@ namespace GoF2Remake.Flight
             v.health = player.GetComponent<PlayerHealth>();
             var booster = Shop.FirstMounted(db, 14);
             v.boostRate = booster != null && booster.index == 195 ? 0.17f : 0.13f;
-            v.clip = SupernovaAssets.Load()?.selfDestruct;
+            v.clip = GoF2Remake.Modding.ModSounds.Get(SupernovaAssets.Load()?.selfDestruct);
             v.beep = player.AddComponent<AudioSource>();
             v.beep.playOnAwake = false;
             v.beep.spatialBlend = 0f;
@@ -80,7 +80,7 @@ namespace GoF2Remake.Flight
                 sinceBeepMs = 0f;
                 float v = p < 0.184486f ? 0.5f : Mathf.Lerp(0.5f, 0.53125f, (p - 0.184486f) / (1f - 0.184486f));
                 beep.pitch = Mathf.Pow(2f, 8f * v - 4f) * TimeExtender.SoundPitch;
-                beep.PlayOneShot(clip, EventVolume * Sfx.EventGain * Settings.SfxVolume);
+                beep.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), EventVolume * Sfx.EventGain * Settings.SfxVolume);
             }
         }
     }

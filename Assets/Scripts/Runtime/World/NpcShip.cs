@@ -417,8 +417,8 @@ namespace GoF2Remake.World
             engine.playOnAwake = false;
             EngineVoices.Setup3D(engine);   // the engine events' rolloff (0.05 .. 500 m), at most 3 of each event at once
             engine.loop = true;
-            engine.clip = assets == null || spec.fixedObject != null || spec.turretAssembly != null || spec.ship == 14 ? null
-                        : CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines);
+            engine.clip = GoF2Remake.Modding.ModSounds.Get(assets == null || spec.fixedObject != null || spec.turretAssembly != null || spec.ship == 14 ? null
+                        : CombatAssets.Pick(spec.freighter ? assets.freighterEngines : assets.enemyEngines));
             EngineVoices.Register(engine, spec.freighter ? 47 : 46, (spec.freighter ? 0.195f : 0.0759f) * Sfx.EventGain);   // event volumes 47 / 46
             if (engine.clip != null) engine.Play();
 
@@ -697,6 +697,7 @@ namespace GoF2Remake.World
                 return;
             }
             if (Current == State.JumpingOut) { UpdateJumpOut(dtMs); return; }
+            if (order != null && UpdateOrder(dtMs)) return;   // an event graph's order (NpcOrder)
             if (IsFreighter)
             {
                 if (!Hp.empDisabled) transform.position += transform.forward * NpcTables.FreighterSpeed * dtMs * M;
@@ -1234,6 +1235,180 @@ namespace GoF2Remake.World
             if (levelling) Roll(dtMs);
 
             if (!Hp.empDisabled) transform.position += transform.forward * speed * dtMs * M;
+        }
+
+        // ---- scripted orders (remake: the event graphs' ship nodes, NpcOrder) ------------------------------------------------
+
+        NpcOrder order;
+        float orderMs;
+        Vector3 leaderLast;
+        bool leaderSeen;
+
+        /// <summary>The event order it is carrying out (null: its own AI).</summary>
+        public NpcOrder Order => order;
+
+        /// <summary>Gives the ship an order (null: back to its own AI). Wakes a sleeper, lets a parked ship fly; "hold" is
+        /// SetHold, "jump" JumpOut.</summary>
+        public void SetOrder(NpcOrder o)
+        {
+            order = o;
+            orderMs = 0f;
+            leaderSeen = false;
+            speed = baseSpeed;
+            if (o == null) return;
+            if (Asleep) Wake();
+            parked = frozen = false;
+            scriptedSpeed = -1f;
+        }
+
+        /// <summary>Holds still where it is (a target that neither flies nor shoots) until another order or "resume".</summary>
+        public void SetHold() { order = null; parked = true; }
+
+        /// <summary>Back to its own AI (its route, its targets), flying.</summary>
+        public void Resume() { order = null; parked = false; speed = baseSpeed; }
+
+        /// <summary>State 6: accelerates away and is gone (the jumpers' exit). Nobody's kill (an event counts it as gone).</summary>
+        public void JumpOut()
+        {
+            order = null;
+            parked = false;
+            Target.killedByNpc = true;
+            if (Current == State.Fly) Current = State.JumpingOut;
+        }
+
+        /// <summary>Gone without a fight (an order's dock / vanish): nobody's kill.</summary>
+        void LeaveQuietly()
+        {
+            order = null;
+            Target.killedByNpc = true;
+            Vanish();
+        }
+
+        void FinishOrder()
+        {
+            var then = order != null ? order.then : NpcOrder.Then.Resume;
+            order = null;
+            speed = baseSpeed;
+            switch (then)
+            {
+                case NpcOrder.Then.Hold: parked = true; break;
+                case NpcOrder.Then.Vanish: LeaveQuietly(); break;
+                case NpcOrder.Then.Jump: JumpOut(); break;
+            }
+        }
+
+        /// <summary>One frame of the order; false = nothing done (the order ended: the ship's own update goes on).</summary>
+        bool UpdateOrder(float dtMs)
+        {
+            orderMs += dtMs;
+            var o = order;
+            var pos = transform.position;
+            float own = IsFreighter ? NpcTables.FreighterSpeed : baseSpeed;
+            float fly = o.speed > 0f ? o.speed : own;
+            Vector3 goal;
+            switch (o.kind)
+            {
+                case NpcOrder.Kind.Move:
+                {
+                    if (o.points.Count == 0) { FinishOrder(); return false; }
+                    goal = o.points[Mathf.Clamp(o.index, 0, o.points.Count - 1)];
+                    if ((goal - pos).sqrMagnitude < (o.radius * M) * (o.radius * M))
+                    {
+                        o.index++;
+                        if (o.index >= o.points.Count)
+                        {
+                            if (!o.loop) { FinishOrder(); return order != null || parked; }
+                            o.index = 0;
+                        }
+                        goal = o.points[o.index];
+                    }
+                    break;
+                }
+                case NpcOrder.Kind.Follow:
+                {
+                    var leader = o.leader;
+                    if (leader == null || !leader.gameObject.activeInHierarchy) { FinishOrder(); return false; }
+                    var slot = leader.position + leader.rotation * (o.offset * M);
+                    // The leader's speed (units / ms) from its movement; aim ahead along its heading so the ship lines up with
+                    // it, and close the gap along that heading by the speed.
+                    float leaderSpeed = leaderSeen && dtMs > 0f ? (leader.position - leaderLast).magnitude / M / dtMs : own;
+                    leaderLast = leader.position;
+                    leaderSeen = true;
+                    var lead = leader.forward;
+                    goal = slot + lead * (3000f * M);
+                    float behind = Vector3.Dot(slot - pos, lead) / M;   // units the ship trails its slot by
+                    float far = (slot - pos).magnitude / M;
+                    fly = far > 6000f ? Mathf.Max(own, NpcTables.BoostSpeed)
+                        : Mathf.Clamp(leaderSpeed + behind * 0.002f, 0.2f, Mathf.Max(NpcTables.BoostSpeed, leaderSpeed * 1.5f));
+                    if (far > 6000f) goal = slot;
+                    break;
+                }
+                case NpcOrder.Kind.Attack:
+                {
+                    var t = o.target;
+                    if (t == null || !t.Alive || !t.gameObject.activeInHierarchy) { FinishOrder(); return false; }
+                    target = t;
+                    targetPos = t.transform.position;
+                    attacking = true;
+                    followingWaypoint = false;
+                    drift = false;
+                    speed = fly;
+                    UpdateBoost(dtMs);
+                    Steer(dtMs);
+                    Avoid(true, dtMs);
+                    Avoid(false, dtMs);
+                    return true;
+                }
+                case NpcOrder.Kind.Flee:
+                {
+                    if (orderMs >= o.seconds * 1000f) { order = null; JumpOut(); return Current == State.JumpingOut; }
+                    var away = pos - o.from;
+                    if (away.sqrMagnitude < 1e-6f) away = transform.forward;
+                    goal = pos + away.normalized * (100000f * M);
+                    fly = Mathf.Max(fly, NpcTables.BoostSpeed);
+                    break;
+                }
+                case NpcOrder.Kind.Dock:
+                {
+                    goal = Vector3.zero;   // the station sits at the orbit's origin
+                    bool inside = false;
+                    foreach (var ob in Obstacle.All)
+                        if (ob != null && ob.landmark && ob.Active && ob.Touches(pos, out _)) { inside = true; break; }
+                    if (inside || pos.sqrMagnitude < (o.radius * M) * (o.radius * M)) { LeaveQuietly(); return true; }
+                    break;
+                }
+                default:
+                    FinishOrder();
+                    return false;
+            }
+            // An escort fights what it meets (its own targeting), then goes on with the order.
+            if (o.fight && !IsFreighter && gun != null)
+            {
+                UpdateTargeting();
+                if (attacking && target != null && !followingWaypoint)
+                {
+                    UpdateBoost(dtMs);
+                    Steer(dtMs);
+                    Avoid(true, dtMs);
+                    Avoid(false, dtMs);
+                    return true;
+                }
+            }
+            target = null;
+            attacking = false;
+            followingWaypoint = true;
+            drift = false;   // the AI's 5 s "drift" (no steering) left over from its own targeting
+            targetPos = goal;
+            // Remake: slower while facing away from the goal, so the turn (the original's fixed turn rate: a circle of
+            // speed / 0.00073 units) stays tight; full speed once lined up.
+            var toGoal = goal - pos;
+            float align = toGoal.sqrMagnitude > 1e-6f ? Vector3.Dot(transform.forward, toGoal.normalized) : 1f;
+            fly = Mathf.Max(Mathf.Min(fly, 0.6f), fly * Mathf.Lerp(0.35f, 1f, Mathf.Clamp01((align + 0.2f) / 0.9f)));
+            speed = fly;
+            Steer(dtMs);
+            if (o.kind != NpcOrder.Kind.Dock) Avoid(true, dtMs);   // docking flies into the station on purpose
+            Avoid(false, dtMs);
+            return true;
         }
 
         /// <summary>PlayerFighter::roll: brings right.y to 0 with up.y > 0 at 0.00075 rad/ms (0.00025 near level).</summary>

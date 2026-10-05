@@ -13,9 +13,10 @@
                     <ui:Button name="multiplayerButton" class="menu-button gof-semibold delay-3" />
                     <ui:Button name="loadButton" class="menu-button gof-semibold delay-4" />
                     <ui:Button name="optionsButton" class="menu-button gof-semibold delay-5" />
-                    <ui:Button name="aboutButton" class="menu-button gof-semibold delay-6" />
-                    <ui:Button name="debugButton" class="menu-button gof-semibold delay-7" />
-                    <ui:Button name="exitButton" class="menu-button gof-semibold delay-8" />
+                    <ui:Button name="modsButton" class="menu-button gof-semibold delay-6" />
+                    <ui:Button name="aboutButton" class="menu-button gof-semibold delay-7" />
+                    <ui:Button name="debugButton" class="menu-button gof-semibold delay-8" />
+                    <ui:Button name="exitButton" class="menu-button gof-semibold delay-9" />
                 </ui:VisualElement>
             </ui:VisualElement>
 
@@ -177,6 +178,13 @@
                                 <ui:VisualElement class="choice-segments mp-debug-segments">
                                     <ui:Button name="mpDebugOff" class="choice-segment gof-semibold" />
                                     <ui:Button name="mpDebugOn" class="choice-segment gof-semibold" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="mp-debug-row">
+                                <ui:Label name="mpModsLabel" class="mp-label mp-debug-label gof-semibold" />
+                                <ui:VisualElement class="choice-segments mp-debug-segments">
+                                    <ui:Button name="mpModsOff" class="choice-segment gof-semibold" />
+                                    <ui:Button name="mpModsOn" class="choice-segment gof-semibold" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:Button name="mpHost" class="mp-action gof-semibold" />
