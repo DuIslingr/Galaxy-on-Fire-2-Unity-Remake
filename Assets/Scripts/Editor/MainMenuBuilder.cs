@@ -159,14 +159,18 @@ namespace GoF2Remake.EditorTools
         }
 
         /// <summary>
-        /// App icon: the GoF2 logo on a dark nebula (skybox_003). Android gets an adaptive icon (logo inside the
-        /// 66% safe zone on a separate background layer) plus legacy/round icons; other platforms the flat one.
+        /// App icon: the remake's icon art (AppIcon/icon_source.png, a square with rounded corners) as it is for the flat
+        /// icon (Windows / Linux / UWP / iOS, Android's legacy and round icons); Android's adaptive icon gets it inside the
+        /// 66 % safe zone over a blurred, enlarged copy of itself (the launcher's mask, circle or squircle, then shows the
+        /// art's matching colours past its rounded corners) and a white mask of its bright parts for the themed icon.
+        /// Without the art: the old icon, the GoF2 logo on a dark nebula (skybox_003).
         /// </summary>
         public static void BuildAppIcons()
         {
             string dir = UiDir + "/AppIcon";
             Directory.CreateDirectory(dir);
             const int S = 1024;
+            if (File.Exists($"{dir}/icon_source.png")) { BuildAppIconsFromArt(dir, S); return; }
             var logo = Load($"{ImageDir}/logo_gof2.png");
             var sky = Load($"{ImportSettings.Root}/Textures/main/skyboxes/skybox_003.png");
 
@@ -192,6 +196,125 @@ namespace GoF2Remake.EditorTools
             var flat = new Texture2D(S, S, TextureFormat.RGBA32, false);
             flat.SetPixels(bg.GetPixels());
             Stamp(flat, logo, 0.84f);                    // legacy / round / other platforms
+            WriteAndApplyIcons(dir, bg, fg, flat, mono);
+        }
+
+        /// <summary>The icons from the art (BuildAppIcons).</summary>
+        static void BuildAppIconsFromArt(string dir, int S)
+        {
+            var art = Load($"{dir}/icon_source.png");
+            Texture2D Resample(float scale, bool opaqueOnly)
+            {
+                // The art centred at 'scale' of the icon's size; outside it transparent.
+                var t = new Texture2D(S, S, TextureFormat.RGBA32, false);
+                var px = new Color[S * S];
+                float size = S * scale, x0 = (S - size) * 0.5f;
+                for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++)
+                {
+                    float u = (x + 0.5f - x0) / size, v = (y + 0.5f - x0) / size;
+                    var c = u < 0f || v < 0f || u > 1f || v > 1f ? Color.clear : art.GetPixelBilinear(u, v);
+                    if (opaqueOnly) c.a = 1f;
+                    px[y * S + x] = c;
+                }
+                t.SetPixels(px);
+                t.Apply();
+                return t;
+            }
+            var flat = Resample(1f, false);
+            // The background: the art scaled up past the edges and blurred (down to 32 px, then bilinear), opaque.
+            var small = new Texture2D(32, 32, TextureFormat.RGBA32, false);
+            var smallPx = new Color[32 * 32];
+            for (int y = 0; y < 32; y++)
+            for (int x = 0; x < 32; x++)
+            {
+                // The middle 70 % of the art (its rounded corners left out), averaged over a 4 x 4 grid per pixel.
+                Color sum = Color.clear;
+                for (int j = 0; j < 4; j++)
+                for (int i = 0; i < 4; i++)
+                    sum += art.GetPixelBilinear(0.15f + (x + (i + 0.5f) / 4f) / 32f * 0.7f, 0.15f + (y + (j + 0.5f) / 4f) / 32f * 0.7f);
+                var c = sum / 16f;
+                smallPx[y * 32 + x] = new Color(c.r * 0.8f, c.g * 0.8f, c.b * 0.8f, 1f);
+            }
+            small.SetPixels(smallPx);
+            small.Apply();
+            var bg = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            var bgPx = new Color[S * S];
+            for (int y = 0; y < S; y++)
+            for (int x = 0; x < S; x++)
+                bgPx[y * S + x] = small.GetPixelBilinear((x + 0.5f) / S, (y + 0.5f) / S);
+            bg.SetPixels(bgPx);
+            bg.Apply();
+            var fg = Resample(0.62f, false);   // the adaptive icon shows the middle 66.7 %; a circle mask keeps the title
+            // The themed icon: white where the art is bright (the title, the engines, the sun).
+            var mono = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            var fgPx = fg.GetPixels();
+            for (int i = 0; i < fgPx.Length; i++)
+            {
+                var c = fgPx[i];
+                float lum = 0.2126f * c.r + 0.7152f * c.g + 0.0722f * c.b;
+                fgPx[i] = new Color(1f, 1f, 1f, Mathf.Clamp01((lum - 0.55f) * 3f) * c.a);
+            }
+            mono.SetPixels(fgPx);
+            mono.Apply();
+            WriteAndApplyIcons(dir, bg, fg, flat, mono);
+            BuildUwpImages(dir, art, small);
+        }
+
+        /// <summary>UWP's Start menu tiles, store logo and splash (PlayerSettings.WSA visual assets, scales 100 and 200 %): the
+        /// art on the square ones, the art centred on its blurred colours (the adaptive background) on the wide ones.</summary>
+        static void BuildUwpImages(string dir, Texture2D art, Texture2D blurred)
+        {
+            string uwp = dir + "/UWP";
+            Directory.CreateDirectory(uwp);
+            Texture2D Compose(int w, int h, float artHeight)
+            {
+                var t = new Texture2D(w, h, TextureFormat.RGBA32, false);
+                var px = new Color[w * h];
+                float size = h * artHeight, x0 = (w - size) * 0.5f, y0 = (h - size) * 0.5f;
+                for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    var b = w == h && artHeight >= 1f ? Color.clear : blurred.GetPixelBilinear((x + 0.5f) / w, (y + 0.5f) / h);
+                    float u = (x + 0.5f - x0) / size, v = (y + 0.5f - y0) / size;
+                    var c = u < 0f || v < 0f || u > 1f || v > 1f ? Color.clear : art.GetPixelBilinear(u, v);
+                    float a = c.a + b.a * (1f - c.a);
+                    var rgb = a > 0f ? (new Color(c.r, c.g, c.b) * c.a + new Color(b.r, b.g, b.b) * b.a * (1f - c.a)) / a : Color.clear;
+                    px[y * w + x] = new Color(rgb.r, rgb.g, rgb.b, a);
+                }
+                t.SetPixels(px);
+                t.Apply();
+                return t;
+            }
+            var images = new (PlayerSettings.WSAImageType type, int w, int h, float art)[]
+            {
+                (PlayerSettings.WSAImageType.PackageLogo, 50, 50, 1f),
+                (PlayerSettings.WSAImageType.UWPSquare44x44Logo, 44, 44, 1f),
+                (PlayerSettings.WSAImageType.UWPSquare71x71Logo, 71, 71, 1f),
+                (PlayerSettings.WSAImageType.UWPSquare150x150Logo, 150, 150, 1f),
+                (PlayerSettings.WSAImageType.UWPSquare310x310Logo, 310, 310, 1f),
+                (PlayerSettings.WSAImageType.UWPWide310x150Logo, 310, 150, 0.9f),
+                (PlayerSettings.WSAImageType.SplashScreenImage, 620, 300, 0.9f),
+            };
+            var made = new System.Collections.Generic.List<(PlayerSettings.WSAImageType type, PlayerSettings.WSAImageScale scale, string path)>();
+            foreach (var (type, w, h, artSize) in images)
+                foreach (var (scale, k) in new[] { (PlayerSettings.WSAImageScale._100, 1), (PlayerSettings.WSAImageScale._200, 2) })
+                {
+                    string path = $"{uwp}/{type}_{k * 100}.png";
+                    File.WriteAllBytes(path, Compose(w * k, h * k, artSize).EncodeToPNG());
+                    made.Add((type, scale, path));
+                }
+            AssetDatabase.Refresh();
+            foreach (var (type, scale, path) in made)
+            {
+                var ti = (TextureImporter)AssetImporter.GetAtPath(path);
+                if (ti != null) { ti.mipmapEnabled = false; ti.textureCompression = TextureImporterCompression.Uncompressed; ti.SaveAndReimport(); }
+                PlayerSettings.WSA.SetVisualAssetsImage(path, type, scale);
+            }
+        }
+
+        static void WriteAndApplyIcons(string dir, Texture2D bg, Texture2D fg, Texture2D flat, Texture2D mono)
+        {
             File.WriteAllBytes($"{dir}/icon_background.png", bg.EncodeToPNG());
             File.WriteAllBytes($"{dir}/icon_foreground.png", fg.EncodeToPNG());
             File.WriteAllBytes($"{dir}/icon.png", flat.EncodeToPNG());
