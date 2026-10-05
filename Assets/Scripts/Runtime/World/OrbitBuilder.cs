@@ -53,7 +53,7 @@ namespace GoF2Remake.World
             RenderSettings.ambientMode = AmbientMode.Skybox;
             RenderSettings.ambientIntensity = ambientIntensity;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Skybox;
-            DynamicGI.UpdateEnvironment();
+            SkyReflection.Update();   // the ambient light and, in builds too, the reflection
 
             Bootstrap.SetSceneFog(layout.fog);   // off below Quality High
             if (layout.fog)

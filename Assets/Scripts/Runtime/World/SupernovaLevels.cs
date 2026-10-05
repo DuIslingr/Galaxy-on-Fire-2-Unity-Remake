@@ -209,7 +209,7 @@ namespace GoF2Remake.World
         // 89: "Meanwhile in Midorian space..." (campaign_levels_b.md mission 89).
         void Build89()
         {
-            if (sn != null && sn.supernovaIntroSky != null) { RenderSettings.skybox = sn.supernovaIntroSky; DynamicGI.UpdateEnvironment(); }
+            if (sn != null && sn.supernovaIntroSky != null) { RenderSettings.skybox = sn.supernovaIntroSky; SkyReflection.Update(); }
             var friend = new Route(true); friend.points.Add(new Vector3(-63000, 0, 75000)); friend.points.Add(new Vector3(-60000, 0, 110000));
             var enemy = new Route(true); enemy.points.Add(new Vector3(-63000, -5000, 75000)); enemy.points.Add(new Vector3(-60000, -5000, 110000));
             // [0] the container that becomes the "beam" target, [1] intact Luur, [2] burning Luur (hidden).
