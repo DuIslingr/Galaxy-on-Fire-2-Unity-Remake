@@ -123,7 +123,7 @@ namespace GoF2Remake.Visuals
                 t.colorGradient = p >= 1f ? gradient : Scaled(gradient, p);
                 t.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 t.receiveShadows = false;
-                t.numCapVertices = 2;
+                t.numCapVertices = 0;   // a rounded cap reaches half the width past the glow: a band-wide trail covered the hull
                 t.emitting = false;
                 trails[i] = t;
             }
