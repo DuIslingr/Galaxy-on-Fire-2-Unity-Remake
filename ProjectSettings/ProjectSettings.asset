@@ -898,7 +898,7 @@ PlayerSettings:
     65636: Assets/UI/AppIcon/UWP/PackageLogo_100.png
     65736: Assets/UI/AppIcon/UWP/PackageLogo_200.png
     131172: Assets/UI/AppIcon/UWP/SplashScreenImage_100.png
-    131272: Assets/UI/AppIcon/UWP/SplashScreenImage_200.png
+    131272: 
     2031716: Assets/UI/AppIcon/UWP/UWPSquare44x44Logo_100.png
     2031816: Assets/UI/AppIcon/UWP/UWPSquare44x44Logo_200.png
     2097252: Assets/UI/AppIcon/UWP/UWPSquare71x71Logo_100.png
@@ -906,9 +906,9 @@ PlayerSettings:
     2162788: Assets/UI/AppIcon/UWP/UWPSquare150x150Logo_100.png
     2162888: Assets/UI/AppIcon/UWP/UWPSquare150x150Logo_200.png
     2228324: Assets/UI/AppIcon/UWP/UWPSquare310x310Logo_100.png
-    2228424: Assets/UI/AppIcon/UWP/UWPSquare310x310Logo_200.png
+    2228424: 
     2293860: Assets/UI/AppIcon/UWP/UWPWide310x150Logo_100.png
-    2293960: Assets/UI/AppIcon/UWP/UWPWide310x150Logo_200.png
+    2293960: 
   metroTileShortName: GoF2 Remake
   metroTileShowName: 0
   metroMediumTileShowName: 0
