@@ -291,33 +291,6 @@ namespace GoF2Remake.Data
             return db;
         }
 
-        /// <summary>The remake's own ships (custom_ships.json) after the original 64: their stats (the Default Economy
-        /// price when that economy is on), assembled prefab entry and weapon mounts.</summary>
-        void AddCustomShips(string folder)
-        {
-            foreach (var c in ReadCustomShips(folder))
-            {
-                if (c == null) continue;
-                if (Ship(c.index) != null) { Debug.LogWarning($"Database: custom ship {c.index} ({c.name}) clashes with an existing ship"); continue; }
-                if (Economy == Economy.Default && c.priceDefault > 0) c.price = c.priceDefault;
-                c.handlingMultiplier = c.handling / 100f;
-                if (c.slots == null) c.slots = new ShipSlots();
-                Ships.Add(c);
-                if (!string.IsNullOrEmpty(c.assembly) && AssemblyByName(c.assembly) == null)
-                    Assemblies.Add(new AssemblyData { name = c.assembly, pack = "custom", category = "ships", origin = "custom_ships.json" });
-                if (c.mounts != null && c.mounts.Count > 0)
-                    WeaponMounts.Add(new WeaponMountSet { ship = c.index, shipName = c.name, mounts = c.mounts });
-            }
-        }
-
-        /// <summary>custom_ships.json, a fresh copy per call (Load changes the prices by economy).</summary>
-        public static List<CustomShipData> ReadCustomShips(string folder = "GoF2Data")
-        {
-            var ta = Resources.Load<TextAsset>(folder + "/" + CustomShips.FileName);
-            if (ta == null) return new List<CustomShipData>();
-            return JsonUtility.FromJson<Wrapper<List<CustomShipData>>>("{\"list\":" + ta.text + "}").list ?? new List<CustomShipData>();
-        }
-
         public ItemData Item(int index) => index >= 0 && index < Items.Count && Items[index].index == index ? Items[index] : Items.Find(i => i.index == index);
         public ShipData Ship(int index) => index >= 0 && index < Ships.Count && Ships[index].index == index ? Ships[index] : Ships.Find(s => s.index == index);
 
