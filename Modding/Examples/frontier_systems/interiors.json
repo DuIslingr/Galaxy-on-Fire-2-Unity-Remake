@@ -1,0 +1,10 @@
+[
+    {
+        "id": "kepler_hangar", "type": "hangar", "model": "models/kepler_hangar.glb",
+        "fov": 46, "parkedMax": 3, "ambient": [0.32, 0.34, 0.38], "lightIntensity": 1.1
+    },
+    {
+        "id": "kepler_bar", "type": "bar", "model": "models/kepler_bar.glb",
+        "fov": 60, "ambient": [0.25, 0.27, 0.32]
+    }
+]

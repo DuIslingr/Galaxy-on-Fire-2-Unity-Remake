@@ -111,7 +111,7 @@ namespace GoF2Remake.World
                 if (a == null) continue;   // 50, 53: no model
                 string name = i == 13 ? string.Format(X("debugHullFreighter", "{0} freighter"), RaceName(1))
                             : i == 14 ? X("cheatBattleship", "Terran battleship")
-                            : Localization.Get(913 + i);
+                            : GameNames.Ship(i);
                 if (string.IsNullOrEmpty(name) || name == "-") name = ship.name;
                 // Every ship with a model is the player's somewhere (dealers, the story's loaners, Kaamo) but the freighter 13 and
                 // the battleship 14 (and 15 above).
@@ -166,9 +166,13 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The Ships tab's types in order: the races, Other, then the hulls the player can't normally own.</summary>
+        /// <summary>The hulls the debug Ships tab and the admin commands offer: All without the custom ships while they
+        /// aren't Available (the gameplay option off, or multiplayer).</summary>
+        public static List<Hull> Offered(Database db) => CustomShips.Available ? All(db) : All(db).FindAll(h => !CustomShips.IsCustom(h.stats));
+
         public static List<string> Categories(Database db)
         {
-            var all = All(db);
+            var all = Offered(db);
             var order = new List<string>();
             foreach (int race in new[] { 0, 1, 2, 3, Standing.Pirate, Standing.Void }) order.Add(RaceName(race));
             order.Add(OtherCategory);
@@ -178,7 +182,7 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The hulls of one Ships tab type, by ship number (the capital ships after the numbered ones).</summary>
-        public static List<Hull> OfCategory(Database db, string category) => All(db).FindAll(h => h.category == category);
+        public static List<Hull> OfCategory(Database db, string category) => Offered(db).FindAll(h => h.category == category);
 
         static string OtherCategory => X("debugHullOther", "Other");
         static string NotFlyableCategory => X("debugHullNotFlyable", "Not normally flyable");

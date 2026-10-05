@@ -280,7 +280,7 @@ namespace GoF2Remake.UI
                 var tex = ItemInfo.ItemIcon(s.item);
                 if (tex != null) icon.style.backgroundImage = new StyleBackground(tex);
                 row.Add(icon);
-                var name = new Label(Localization.Get(1274 + s.item)) { pickingMode = PickingMode.Ignore };
+                var name = new Label(GameNames.Item(s.item)) { pickingMode = PickingMode.Ignore };
                 name.AddToClassList("pause-cargo-name");
                 row.Add(name);
                 var amount = new Label($"{s.amount} t") { pickingMode = PickingMode.Ignore };

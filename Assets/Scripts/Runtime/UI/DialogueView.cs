@@ -44,6 +44,8 @@ namespace GoF2Remake.UI
             /// <summary>A bar agent instead of a story speaker (freelance briefings / results): its name and portrait parts.</summary>
             public string agentName;
             public int[] agentPortrait;
+            /// <summary>A mod's character ("mod_id:character_id", Modding.ModCharacters) instead: its portrait.</summary>
+            public string character;
             public static Page From(DialoguePage p) => new Page { speaker = p.speaker, text = Localization.Get(p.text), textId = p.text, voice = p.voice };
         }
 
@@ -192,7 +194,8 @@ namespace GoF2Remake.UI
             speaker.style.opacity = fade ? 0f : 1f;
             next.RemoveFromClassList("dialogue-button--ready");
             pulseMs = 0f;
-            if (p.agentPortrait != null) Portrait.Show(portrait, p.agentPortrait, false);
+            if (p.character != null) Portrait.ShowCharacter(portrait, Modding.ModCharacters.Find(p.character), false);
+            else if (p.agentPortrait != null) Portrait.Show(portrait, p.agentPortrait, false);
             else Portrait.ShowSpeaker(portrait, p.speaker, p.speaker == 0);
             bool last = page == pages.Count - 1;
             back.EnableInClassList("dialogue-button--hidden", message || page == 0);
@@ -205,7 +208,7 @@ namespace GoF2Remake.UI
                 voice.Stop();
                 if (clip != null)
                 {
-                    voice.clip = clip;
+                    voice.clip = GoF2Remake.Modding.ModSounds.Get(clip);
                     voice.volume = Settings.VoiceVolume;
                     voice.Play();
                 }

@@ -89,13 +89,13 @@ namespace GoF2Remake.Flight
             self.displayName = Localization.Get(1666);
             self.Died += OnDied;
 
-            int look = item.index == 211 ? 2 : item.index == 212 ? 20 : 14;
+            int look = item.Look == 211 ? 2 : item.Look == 212 ? 20 : 14;
             var lookItem = db.Item(look);
             lookFx = WeaponFx.Load(look);
             gun = new Gun(lookItem, item.Attr(9), item.Attr(11, 430), 4, item.Attr(12, 1000), item.Attr(13, 22)) { owner = self, Ignores = t => t.playerProof };
             muzzle = new GameObject("muzzle").transform;
             muzzle.SetParent(pitchNode, false);
-            muzzle.localPosition = new Vector3(0f, 0f, item.index == 213 ? 300f : 250f) * M;
+            muzzle.localPosition = new Vector3(0f, 0f, item.Look == 213 ? 300f : 250f) * M;
             fxRoot = new GameObject("Sentry fx").transform;
             rig = new GunRig(gun, lookFx, fxRoot, muzzle);
             gun.Hit += (b, t, p) => { t.Damage(gun.damage, true, gun.bullets[b].velocity); rig.ShowImpact(p); };

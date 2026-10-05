@@ -35,7 +35,7 @@ namespace GoF2Remake.Flight
         public bool inactive;      // setInitActive(false): waits until the level script wakes it
         public bool alwaysEnemy, alwaysFriend;
         public bool alwaysNeutral; // remake (/spawn, the debug spawner): neither hostile nor friendly, whatever the standing
-        public int eventTag;       // remake multiplayer: the event batch that spawned it (NetEvents counts them), 0 = none
+        public int eventTag;       // remake multiplayer: the event batch that spawned it (EventRunner counts them), 0 = none
         public int hitpoints = -1; // Player::setHitpoints / setMaxHitpoints override (-1 = the createShip formula)
         public bool noLoot;        // KIPlayer+0x4c / +0x48 = 0: no cargo, no crate
         public int nameText = -1;  // KIPlayer+0x18: the name the lock plate shows (text id)
@@ -146,9 +146,11 @@ namespace GoF2Remake.Flight
             int local = (mido ? Random.Range(0, 2) : secEff) + x + freighters / 4;
             // The "big battle" (npc_traffic_ai.md 2.2): raiders on, campaign > 0x1f, 8 %: 9 raiders against 9 locals.
             if (raidersOn && cm > 0x1f && Random.Range(0, 100) < 8) raiders = local = 9;
-            // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier and Passenger missions (types 0, 0xb).
+            // Freelance cargo attracts pirates: int(d / 10 * 5) escorts for Courier, Passenger and Ore Mining missions (types 0,
+            // 0xb, 0xf; Ore Mining is only rolled in multiplayer). The station 100 / 101 / 108 / 10 rule below leaves them too.
             var fm = Session.FreelanceMission;
-            int escorts = fm != null && (fm.type == MissionType.Courier || fm.type == MissionType.Passenger) ? (int)(fm.difficulty / 10f * 5f) : 0;
+            int escorts = fm != null && (fm.type == MissionType.Courier || fm.type == MissionType.Passenger || fm.type == MissionType.OreMining)
+                ? (int)(fm.difficulty / 10f * 5f) : 0;
             // A pirate-base system (npc_combat_specials.md 3.2): no raider group; instead 2 (Extreme 4-6) pirates near the player.
             bool baseSystem = PirateBases.SystemHasBase(db, system.index);
             int baseEscorts = 0;

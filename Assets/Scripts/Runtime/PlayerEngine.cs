@@ -57,7 +57,7 @@ namespace GoF2Remake.Flight
             boostSource = gameObject.AddComponent<AudioSource>();
             boostSource.playOnAwake = false;
             boostSource.spatialBlend = 0f;
-            boostSource.clip = Pick(audio.boosters, boost);
+            boostSource.clip = GoF2Remake.Modding.ModSounds.Get(Pick(audio.boosters, boost));
         }
 
         /// <summary>PlayerEgo::PlayerEgo 0xa5940: ships 42 / 43 / 40 their DLC engines, else by handling.</summary>
@@ -86,7 +86,7 @@ namespace GoF2Remake.Flight
             s.playOnAwake = false;
             s.loop = true;
             s.spatialBlend = 0f;
-            s.clip = clip;
+            s.clip = GoF2Remake.Modding.ModSounds.Get(clip);
             return s;
         }
 
@@ -114,7 +114,7 @@ namespace GoF2Remake.Flight
 
             bool boosting = ship.Model != null && ship.Model.IsBoosting;
             if (boosting && !wasBoosting && boostSource != null && boostSource.clip != null)
-                boostSource.PlayOneShot(boostSource.clip, BoostVolume[boost] * Sfx.EventGain * Settings.SfxVolume);
+                boostSource.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(boostSource.clip), BoostVolume[boost] * Sfx.EventGain * Settings.SfxVolume);
             wasBoosting = boosting;
         }
 

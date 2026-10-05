@@ -89,6 +89,8 @@ namespace GoF2Remake.Data
         {
             if (s.IndexOf('#') < 0) return s;
             var station = db.Stations[Random.Range(0, db.Stations.Count)];
+            for (int tries = 0; (station.system < 0 || !Modding.ModCampaigns.StationAllowed(db, station.index)) && tries < 500; tries++)
+                station = db.Stations[Random.Range(0, db.Stations.Count)];   // not a mod's missing station, not outside a campaign's galaxy
             if (s.Contains("#DRINK_NAME"))
             {
                 // A drink of this system (1406 + system), else a random drink system's.
@@ -103,13 +105,13 @@ namespace GoF2Remake.Data
                 int sp = n.IndexOf(' ');
                 s = s.Replace("#CHILD_NAME", sp > 0 ? n.Substring(0, sp) : n);
             }
-            if (s.Contains("#SHIP_NAME")) s = s.Replace("#SHIP_NAME", T(913 + Flight.NpcTables.RandomFighter(Random.Range(0, 4))));
+            if (s.Contains("#SHIP_NAME")) s = s.Replace("#SHIP_NAME", GameNames.Ship(Flight.NpcTables.RandomFighter(Random.Range(0, 4))));
             s = s.Replace("#PLATFORM_NUMBER", $"{(char)('A' + Random.Range(0, 6))}{Random.Range(0, 10)}")
                  .Replace("#CATASTROPHE", T(3237 + Random.Range(0, 5)))
                  .Replace("#VICTIMS", (Random.Range(0, 99000) + 1000).ToString("#,0"))
                  .Replace("#BERGER_LASER", T(1279 + Random.Range(0, 4)));
             if (s.Contains("#VOSSK_SHIP_OR_ITEM"))
-                s = s.Replace("#VOSSK_SHIP_OR_ITEM", Random.Range(0, 100) < 50 ? T(922) : T(1274 + Random.Range(0, 60)))
+                s = s.Replace("#VOSSK_SHIP_OR_ITEM", Random.Range(0, 100) < 50 ? T(922) : GameNames.Item(Random.Range(0, 60)))
                      .Replace("#VOSSK_REVENUE", $"{Random.Range(2, 99)} {T(3242)}");
             s = s.Replace("#PROFESSION", T(3243 + Random.Range(0, 4)))
                  .Replace("#NAME", AgentGenerator.RandomName(Random.Range(0, 8), true))

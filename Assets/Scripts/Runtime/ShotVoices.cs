@@ -46,7 +46,7 @@ namespace GoF2Remake.Flight
                     s = v.sources[i] = host.AddComponent<AudioSource>();
                     s.playOnAwake = false;
                     s.spatialBlend = 0f;
-                    s.clip = clip;
+                    s.clip = GoF2Remake.Modding.ModSounds.Get(clip);
                 }
                 if (pick < 0 && !s.isPlaying) pick = i;
                 if (v.started[i] > v.started[newest]) newest = i;

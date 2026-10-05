@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 11;
+        public const int CurrentVersion = 14;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -86,6 +86,14 @@ namespace GoF2Remake.Data
         public int economy;
         // version 11: the story agents whose offer was taken (Agent+0x74)
         public List<int> storyAgentsAccepted;
+        // version 12: the mods that were on and the numbers of their content (Modding.ModSaves)
+        public List<Modding.SaveMod> mods;
+        public List<Modding.SaveModKey> modKeys;
+        // version 13: the event graph quests and bar missions under way, the quests finished (Session.GraphQuests)
+        public List<GraphQuestState> graphQuests;
+        public List<string> graphQuestsDone;
+        // version 14: a mod's campaign (Session.ModCampaign, Modding.ModCampaigns)
+        public string modCampaign;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -131,6 +139,7 @@ namespace GoF2Remake.Data
             // after its connection went, while its game is still loaded).
             if (GoF2Remake.Multiplayer.NetGame.SessionGame) return false;
             var s = Capture();
+            Modding.ModSaves.Record(s, Database.Load());
             try
             {
                 Directory.CreateDirectory(Dir);
@@ -157,6 +166,7 @@ namespace GoF2Remake.Data
             if (GoF2Remake.Multiplayer.NetGame.Active) return false;   // multiplayer: no single-player save into the session
             var s = Preview(slot);
             if (s == null) return false;
+            Modding.ModSaves.Fix(s);   // modded items moved to their numbers now, or removed and refunded (mods turned off)
             Apply(s);
             return true;
         }
@@ -207,6 +217,9 @@ namespace GoF2Remake.Data
                 difficulty = Session.Difficulty,
                 economy = (int)Session.Economy,
                 storyAgentsAccepted = new List<int>(Session.StoryAgentsAccepted),
+                graphQuests = new List<GraphQuestState>(Session.GraphQuests),
+                graphQuestsDone = new List<string>(Session.GraphQuestsDone),
+                modCampaign = Session.ModCampaign ?? "",
                 campaignMission = Session.CampaignMission,
                 station = Session.StationIndex,
                 previousStation = Session.PreviousStationIndex,
@@ -288,10 +301,10 @@ namespace GoF2Remake.Data
         static string Check(SaveData s, Database db)
         {
             int stations = db.Stations.Count, ships = db.Ships.Count, items = db.Items.Count, systems = db.Systems.Count;
-            bool Station(int i) => i >= 0 && i < stations;
+            bool Station(int i) => i >= 0 && i < stations || Modding.ModSaves.NamesStation(s, i);   // a mod's station: put right on loading
             bool StationOrNone(int i) => i == -1 || Station(i);
-            bool Ship(int i) => i >= 0 && i < ships;
-            bool Item(int i) => i >= 0 && i < items;
+            bool Ship(int i) => i >= 0 && i < ships || Modding.ModSaves.NamesShip(s, i);   // a mod's ship: put right on loading
+            bool Item(int i) => i >= 0 && i < items || Modding.ModSaves.Names(s, i);   // a modded item: put right on loading
             bool Finite(float f) => !float.IsNaN(f) && !float.IsInfinity(f);
             string Stacks(List<ItemStack> l, string what)
             {
@@ -372,6 +385,12 @@ namespace GoF2Remake.Data
             Session.Equipment = s.equipment ?? new List<ItemStack>();
             Session.Cargo = s.cargo ?? new List<ItemStack>();
             Session.RecentStations = s.recentStations ?? new List<StationStock>();
+            // Saves from before the multiplayer event missions took offer 11: a lounge ship seller was 11 then (event
+            // mission agents are never saved and never sell a ship).
+            foreach (var rs in Session.RecentStations)
+                if (rs?.agents != null)
+                    foreach (var a in rs.agents)
+                        if (a != null && a.offer == 11 && a.sellShip >= 0) a.offer = AgentOffer.SellShip;
             Session.SeenItems = new HashSet<int>(s.seenItems ?? new List<int>());
             Session.VisitedStations = new HashSet<int>(s.visitedStations ?? new List<int> { s.station });
             Session.AttackedStations = new HashSet<int>(s.attackedStations ?? new List<int>());
@@ -393,6 +412,7 @@ namespace GoF2Remake.Data
                 return;
             }
             Session.FreePlay = s.freePlay;
+            Session.ModCampaign = s.modCampaign ?? "";
             Session.StoryMission = s.storyMission ?? new StoryMission();
             Session.StoryStepStart = s.storyStepStart;
             Session.StoryRadioPending = s.storyRadioPending;
@@ -418,6 +438,9 @@ namespace GoF2Remake.Data
                 // for every game past 58 (a Supernova campaign advances through 58 too: startSupernova's 0x54 steps).
                 if (Session.CampaignMission > 58) Session.UnlockedBlueprints.Add(179);
                 Session.StoryAgentsAccepted = new HashSet<int>(s.storyAgentsAccepted ?? new List<int>());
+                Session.GraphQuests = s.graphQuests ?? new List<GraphQuestState>();
+                Session.GraphQuestsDone = new HashSet<string>(s.graphQuestsDone ?? new List<string>());
+                GoF2Remake.Events.EventRunner.RestorePending = Session.GraphQuests.Count > 0;   // they run again from their checkpoints
                 if (s.version < 11)   // older saves: a blueprint seller whose blueprint is owned was bought from
                     foreach (var sa in AgentData.StoryAgents)
                         if (sa.sellBlueprint >= 0 && Session.UnlockedBlueprints.Contains(sa.sellBlueprint)) Session.StoryAgentsAccepted.Add(sa.index);

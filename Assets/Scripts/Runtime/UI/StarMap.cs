@@ -91,7 +91,7 @@ namespace GoF2Remake.UI
         // 3D
         GameObject world;
         Camera cam;
-        readonly Transform[] suns = new Transform[64];
+        Transform[] suns = new Transform[64];   // by system number (more with mods' systems: BuildGalaxy grows it)
         float sunScale = 0.012f;
         /// <summary>StarMap::StarMap: the early-warning wormhole at the system the Void attack (index > 0x1f).</summary>
         Transform wormhole;
@@ -348,8 +348,9 @@ namespace GoF2Remake.UI
         /// (Status::getCampaignMission / getFreelanceMission), in mission mode too: the map's mission only gets the route.</summary>
         bool StoryShown => Session.StoryMission != null && Session.StoryMission.visible && !Session.FreePlay;
         /// <summary>The story icon on this station (step 59: every convoy target still to do, Story.MapMarks).</summary>
-        bool StoryMarked(int station) => StoryShown && Story.MapMarks(station);
-        int FreelanceTarget => Freelance.Active ? Freelance.Mission.target : -1;
+        bool StoryMarked(int station) => (StoryShown && Story.MapMarks(station)) || Events.EventRunner.IsQuestTarget(station);   // remake: event graph quests' targets too
+        int FreelanceTarget => Freelance.Active ? Freelance.Mission.target
+                             : Events.EventMissions.Active != null ? Events.EventRunner.LocalMissionTarget : -1;
 
         // ---- 3D --------------------------------------------------------------------------------------------
 
@@ -405,6 +406,9 @@ namespace GoF2Remake.UI
             var bg = Spawn("galaxymap_background", world.transform);
             if (bg != null) bg.transform.localPosition = U(new Vector3(-3000f, -2500f, 0f));
 
+            int systemCount = 0;
+            foreach (var s in db.Systems) systemCount = Mathf.Max(systemCount, s.index + 1);
+            if (suns.Length < systemCount) suns = new Transform[systemCount];
             foreach (var s in db.Systems)
             {
                 if (s.index >= suns.Length || !visible[s.index]) continue;
@@ -1094,7 +1098,7 @@ namespace GoF2Remake.UI
 
         void PlayClick()
         {
-            if (assets.mapClick != null) Source().PlayOneShot(assets.mapClick, Settings.SfxVolume * WhooshVolume);
+            if (assets.mapClick != null) Source().PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.mapClick), Settings.SfxVolume * WhooshVolume);
         }
 
         void Back()
@@ -1597,7 +1601,7 @@ namespace GoF2Remake.UI
         void Play(AudioClip clip)
         {
             if (clip == null) return;
-            Source().PlayOneShot(clip, Settings.SfxVolume);
+            Source().PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
         }
 
         AudioSource Source()
@@ -1614,7 +1618,7 @@ namespace GoF2Remake.UI
             var go = new GameObject("Sound " + clip.name);
             var src = go.AddComponent<AudioSource>();
             src.spatialBlend = 0f;
-            src.PlayOneShot(clip, Settings.SfxVolume);
+            src.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
             Destroy(go, clip.length + 0.5f);
         }
     }

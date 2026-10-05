@@ -376,7 +376,7 @@ namespace GoF2Remake.Flight
 
         void Play(AudioClip clip)
         {
-            if (clip != null) sfx.PlayOneShot(clip, Settings.SfxVolume);
+            if (clip != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
         }
     }
 }

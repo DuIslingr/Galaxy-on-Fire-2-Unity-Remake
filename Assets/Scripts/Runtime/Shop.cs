@@ -46,8 +46,11 @@ namespace GoF2Remake.Data
                 case 45: case 46: return -1;
                 case 48: return 8;
             }
-            return ship >= 0 && ship < ShipRace.Length ? ShipRace[ship] : -1;
+            return ship >= 0 && ship < ShipRace.Length ? ShipRace[ship] : CustomShips.Get(ship)?.race ?? -1;
         }
+
+        /// <summary>ShipRace for every ship: the original table, then the custom ships' own race (-1 = none).</summary>
+        public static int RaceOfShip(int ship) => ship >= 0 && ship < ShipRace.Length ? ShipRace[ship] : CustomShips.Get(ship)?.race ?? -1;
 
         /// <summary>DAT_00254930 (Item::canBeInstalledMultipleTimes): categories a ship can mount only once.</summary>
         static readonly HashSet<int> OnePerShip = new HashSet<int> { 8, 9, 10, 13, 14, 15, 16, 17, 18, 19, 21, 26, 27, 28, 29, 33, 35, 37, 38, 41 };
@@ -185,7 +188,7 @@ namespace GoF2Remake.Data
             var s = db.Ship(ship);
             if (s == null) return 0;
             int race = RaceOfSystem(db, SystemOf(db, station));
-            return ship < ShipRace.Length && ShipRace[ship] == race ? (int)(s.price * 0.99f) : s.price;
+            return RaceOfShip(ship) == race ? (int)(s.price * 0.99f) : s.price;
         }
 
         // ---- docking: stock kept for the last 3 stations ------------------------------------------------------
@@ -213,6 +216,8 @@ namespace GoF2Remake.Data
                 }
             }
             if (stock.agents == null || (stock.agents.Count == 0 && station != 108)) stock.agents = AgentGenerator.CreateAgents(db, station);   // saves from before the bar
+            // The Kaamo Club never has a dealer (getShipBuyList); a save from a test build that gave it one is cleared.
+            if (station == 108 && stock.ships != null) stock.ships.Clear();
             // Status::departStation: at the owned club the storage is the station's stock (one shared list here).
             if (KaamoClub.StorageAt(station)) stock.items = Session.KaamoItems;
             Freelance.OnEnterStation(stock);
@@ -221,7 +226,15 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>Generator::getItemBuyList 0xa05c4 (see shop.md 4.3).</summary>
+        /// <summary>The station's stock (getItemBuyList); remake mods: a campaign with only mods' items drops the rest.</summary>
         public static List<ItemStack> GenerateItems(Database db, int station)
+        {
+            var list = GenerateItemsOriginal(db, station);
+            list.RemoveAll(s => !Modding.ModCampaigns.ItemAllowed(db, s.item));
+            return list;
+        }
+
+        static List<ItemStack> GenerateItemsOriginal(Database db, int station)
         {
             var list = new List<ItemStack>();
             int mission = Session.CampaignMission;
@@ -248,8 +261,8 @@ namespace GoF2Remake.Data
                 bool exclusive = it.Attr(61, -1) == station && !((idx == 196 || (idx >= 198 && idx <= 200)) && mission < 142);
                 if (station == 106 && !(SaoPerulaGoods.Contains(idx) || specialty)) continue;
 
-                // Owned add-ons give items without an occurrence one (Valkyrie for idx < 196, Supernova above).
-                if (occ == 0 && !exclusive && type != 4 && idx != 85 && it.blueprint.Count == 0 && !(idx == 181 && mission < 59)
+                // Owned add-ons give items without an occurrence one (Valkyrie for idx < 196, Supernova above); a mod item's 0 means never.
+                if (occ == 0 && !it.modded && !exclusive && type != 4 && idx != 85 && it.blueprint.Count == 0 && !(idx == 181 && mission < 59)
                     && !((sort >= 33 && sort <= 35 || sort == 43) && mission < 142) && sort != 36 && (sort != 29 || system == 25)   // signatures: only the black market
                     && idx != 209 && idx != 210 && idx != 217 && idx != 218 && !(idx == 205 && mission < 94) && !KaamoSpecials.Contains(idx))
                     occ = Random.Range(0, 30) + (int)((1f - techI / 10f) * 30f);
@@ -308,7 +321,15 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>Generator::getShipBuyList 0xa0eb8 (shop.md 4.4, without the DLC-won and supernova extras).</summary>
+        /// <summary>The station's dealer ships (getShipBuyList); remake mods: a campaign with only mods' ships drops the rest.</summary>
         public static List<int> GenerateShips(Database db, int station)
+        {
+            var ships = GenerateShipsOriginal(db, station);
+            ships.RemoveAll(s => !Modding.ModCampaigns.ShipAllowed(s));
+            return ships;
+        }
+
+        static List<int> GenerateShipsOriginal(Database db, int station)
         {
             var ships = new List<int>();
             int system = SystemOf(db, station);

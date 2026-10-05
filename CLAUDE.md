@@ -26,6 +26,11 @@ Assets/
                      story: StorySpace, CampaignLevel, IntroCutscenes (0 / 1), MainCampaignLevels (14-42),
                      ValkyrieLevels (48-81), SupernovaLevels (87-158), GasCloudField, NpcCloak;
                      docked station: StationLevel + StationTables
+  Scripts/Runtime/Events/  the event graphs (single player quests / bar missions and multiplayer events alike):
+                     EventRunner (runs them), EventGraphFile + EventGraphScript (read / compile a .gof2event),
+                     EventHost / IPilot / LocalPilot / LocalEvents (session or single player), EventMissions, EventScreen
+                     (titles, dialogues, rewards, questions), EventCutscene, EventWaypoint, EventRespawn, EventRules,
+                     EventAudio, EventNames; the commands they run stay in Multiplayer (NetCommands, NetAdmin)
   Scripts/Editor/    import settings, prefab builder, asset pack installer, menu items
   Models/            1,125 converted .fbx meshes, each with a .gof2mesh.json sidecar (pivots, keyframes)
   Textures/          1,281 .png (diffuse, *_normal_specular = normal map, *_metallic_smoothness generated)
@@ -54,6 +59,8 @@ Assets/
   Scenes/            MainMenu, Space (flight level), Station (docked: hangar + bar)
   Settings/          URP assets, GoF2_VolumeProfile (bloom)
 Reference/           decompiled original code, binaries and conversion tools (see Reference/README.md)
+Modding/             the modders' guide (README.md) and example mods (Examples/plasma_arsenal); Scripts/Runtime/Modding the loader
+Mods/                the mods the Editor loads (git-ignored)
 ```
 
 Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview** (`GoF2ToolsWindow`) lists them all with what each makes and a Run button (keep its table in step when adding or renaming a tool):
@@ -66,7 +73,7 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 - **GoF2 > Build > Star Map Assets**: `Resources/GoF2StarMap/StarMapAssets` (`StarMapAssets`). Also run by Create Space Scene, and by Create Station Scene when missing.
 - **GoF2 > Build > Network Prefabs**: `Resources/GoF2Net`, the multiplayer network prefabs (see "Multiplayer").
 - **GoF2 > Build > Linux Dedicated Server** (`LinuxServerBuild`): `Build/LinuxServer/GoF2Server.x86_64`, Unity's Dedicated Server build (Linux, subtarget Server, IL2CPP, the dedicated server optimizations on: no texture / audio / shader data), only the first scene; it starts as a server by itself (`UNITY_SERVER` in `DedicatedServer.Enabled`), `start-server.sh` beside it. Needs the Hub module "Linux Dedicated Server Build Support"; switches the active target for the build and back.
-- **GoF2 > Build > Event Audio**: `Resources/GoF2Net/EventAudio`, the sounds and music of multiplayer events (see "Multiplayer", Events).
+- **GoF2 > Build > Event Audio**: `Resources/GoF2Events/EventAudio`, the sounds and music the event graphs play (see "Multiplayer", Events).
 - **GoF2 > Build > Hangar Heights**: `Resources/GoF2Data/hangar_heights.json`, how far each ship is lifted off each hangar pad (see "Station scene"). Run it again after changing a hangar room or a ship model.
 - **GoF2 > Build > HUD Images**: `Resources/GoF2Hud`, the HUD / star map images and the alien font glyphs cut from the original interface atlases (rects in `Reference/research/mining.md`, `autopilot_travel.md`, `starmap_travel.md`). Also run by Create Space Scene.
 - **GoF2 > Build > Item Icons**: `Resources/GoF2Icons`, one icon per item and ship cut from the original atlases per `Reference/research/item_icons.json` (see "Shop").
@@ -85,7 +92,7 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 
 ## Conventions
 
-- Namespaces: `GoF2Remake.Flight`, `GoF2Remake.Data`, `GoF2Remake.Visuals`, `GoF2Remake.World` (flight level), `GoF2Remake.UI`, `GoF2Remake.EditorTools`. Never a namespace segment that shadows a Unity type (`GoF2Remake.Space` broke `Space.Self`).
+- Namespaces: `GoF2Remake.Flight`, `GoF2Remake.Data`, `GoF2Remake.Visuals`, `GoF2Remake.World` (flight level), `GoF2Remake.UI`, `GoF2Remake.Events` (the event graphs), `GoF2Remake.Multiplayer`, `GoF2Remake.Modding`, `GoF2Remake.EditorTools`. Never a namespace segment that shadows a Unity type (`GoF2Remake.Space` broke `Space.Self`).
 - **One MonoBehaviour/ScriptableObject per file, and the file name must equal the class name.** Otherwise prefabs save it as a missing script.
 - Gameplay logic is a clean C# reimplementation of the behaviour in the decompiled code, not a line-by-line transliteration. Comment the original function names and constants you based it on.
 - Keep game-logic classes plain C# where possible (like `FlightModel`) so they can be unit-tested. MonoBehaviours adapt them to Unity.
@@ -155,7 +162,7 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Extra sky layers** (`SkyLayers`, `GoF2/SkyLayer` far-plane shader, assets in `Resources/GoF2Backdrop/SkyLayerAssets` from **GoF2 > Build > Sky Layers**): camera-centred, world-aligned meshes in the original's order: planet ring sky (stations 120 / 126 / 130 / 132, before the sun and planets), supernova flares (system 27, mission ≠ 89 and < 158, turned by the nebula's sun-aligned R_sky so the fire streams out of the supernova, the nasty texture from 106, ×1.5 speed above 106), storms (mission ≥ 90 in system 27 or nebula 16 / 18, a new random rotation each loop), asteroid belt (systems 24-26, lit by LIGHT0, clamped to LDR). The storm / flare parts use `PartAnimation.applyMaterialChannels`: `extra` = opacity (`_Fade`), `v5_0` = UV scroll (`_UVOffset`, 100 = one texture width, assumed).
 - **Wormhole** (`Wormhole`, landmark 3, `PlayerWormHole::update` / `PlayerEgo::calcCollision`, decoded this time, not in the research files): exists until the game is won; visible when coming out of the Void, at the station the Void attack (`Session.VoidInvasionStation`) or in the alien orbit, index < 43; random spot (rand(80000) − 40000, rand(40000) − 20000, rand(40000) + 40000), radius 40000, turned to the camera (+0.5 on the direction's x, a slight tilt); its two layers spin clockwise about the facing axis (a turn per 20 s / 10 s; the old rotation map turned it backwards). Timer: grows 3 s, open 60 s, shrinks 3 s, then gone or (alien orbit / attacked station) reopens elsewhere (alien orbit x ±(30000..90000), y 20000..60000, z −60000..−100000; else ±(20000..60000) per axis; index 29 / 41: that × 2.7 from the player); the mission lock keeps it open at index 40 (not alien) and 42 (alien). Pull (`PlayerCollision`): visible, not shrinking, within 40000: loop sound 34, the ship moves toward it by (40000 − d) / 256 units per 30 fps frame, camera hit; within 1000 = inside. The ride (`SpaceLevel`, `MGame::OnUpdate`): an active campaign mission advances first (index < 41, not 29 / 40; 40 only after Errkt's freighter went through, its hull carried into 41), entering early at 29 / 40 / 41 kills the player, 42 in the alien orbit is the level script's; then into the alien orbit (this station remembered as `Session.VoidReturnStation`, Status+0x84) or back out to it, arrival as a stream-out with the wormhole 10000 behind the player closing after a second (`LevelScript` ctor 0x16056c). HUD: 545 "Wormhole" near the centre, icon 0x450 (`GoF2Hud/wormhole_icon`) elsewhere, never locked.
 - **Alien orbit** (`Session.VoidOrbit` = station −1, the Void's home, `OrbitLayout.alienOrbit`): the Void station (`station_void`, collision 1001; battlestation after the Valkyrie add-on; none at index 43-83 / ≥ 154), sky `nebula_010` + `stars_002`, the orbit planet `planet_void_big`, Void asteroids around (−30000, 0, 30000) (Void Crystals), fog tint 0x9274d4, arrival at (0, rand(20000) − 10000, rand(50000) + 170000) facing the station; the station is lockable as 415 "Void" (distance only, no autopilot, not in the menu), no docking, the Khador Drive straight back to `Session.VoidReturnStation` unless a mission blocks jumps (`MGame::UseKhadorDrive` 0x1a9480 has no Void rule; the remake refused it through the main story until #26); traffic 2+ Void fighters (`TrafficPlan`); music 145 / 136 (`StoryAssets.voidMusic` / `voidBattle`).
-- **Void invasion** (Status+0x7c / +0x80): at the attacked station (and coming out of the Void, not at index 42) 2-5 Void raiders from the wormhole and ≥ 2 freighters; every 45 s (10 s at index 41) dead Void ships come back at the wormhole (`Traffic.UpdateAlienAttackers`); from index 32 to 44 every 10th departure elsewhere re-rolls the attacked station (`Story.OnDepart`, a random visible system, not 10 / 15); −10 from 42 / 45. Void ships drop 1-3 t Alien Remains.
+- **Void invasion** (Status+0x7c / +0x80): at the attacked station (and coming out of the Void, not at index 42) 2-5 Void raiders from the wormhole and ≥ 2 freighters; every 45 s (10 s at index 41) dead Void ships come back, at the wormhole at the attacked station, around the player in the alien orbit and coming out of the Void (`Traffic.UpdateAlienAttackers`); from index 32 to 44 every 10th departure elsewhere re-rolls the attacked station (`Story.OnDepart`, a random visible system, not 10 / 15); −10 from 42 / 45. Void ships drop 1-3 t Alien Remains.
 - The index-43 menu backdrop (the ending's) adds the beer / bra statics 0x37d0 / 0x37d1 (`MenuBackground.SpawnStatics`, `StoryAssets.menuStatics`). The original puts them at the origin (`Level::createScene`: the PlayerStatic position args are 0 in the machine code; `PlayerStatic::update` moves nothing), inside the station and too small to see (the beer ~11 m, the bra ~26 m, the camera km away); remake pick (`EndingDrift`): they tumble across the camera's view on a camera-relative path, 45-70 m out, 22 s per crossing, the beer from 6 s, the bra 11 s later, again and again. The only prologue sky exception is index 0 in a story level (`Level::createSpace`), already built.
 
 ## Navigation (locks, autopilot, planet jump, fast-forward)
@@ -341,7 +348,7 @@ against the FEV's LGCY data, see "Sound").
 Research: `Reference/research/freelance_missions.md` (agents, offers, mission generation, chat texts, missions in space, delivery), `lounge_ui.md` (the HD lounge UI, portraits, lounge voices, ticker, Missions and Status windows, medals), `blueprints_mods.md` (+ `Reference/tools/blueprints/blueprint_table.py`), `wingmen_wanted.md` (+ `Reference/tools/wingmen/wingmen_wanted.py`); `Reference/tools/missions/mission_tables.py` (Python port of the generator).
 
 - **Agents** (`Agent`, `AgentGenerator`): `Generator::createAgents` per station when it isn't among the last 3 visited, kept on `StationStock.agents` and saved: 3-5 visitors (story agents from `agents.json` once campaign > 16, generic ones: 20 % any of 8 races, offers mission 46 % / small talk / item / purchase / wingmen, one wingman offer per bar, 35 % diplomats for hostile races, 1 % a 10x mission), names from `names.json`, portraits `ImageFactory::createChar` (the generic sets draw through `Portrait.Show`). Missions: `createMission` (target rules, every type once before repeats, difficulty, reward `(int(d/10*5500)+1500)*(dist/1200+1)` per type + `10*level^3`, standing bonus recomputed at every chat).
-- **Lounge** (`LoungePanel`, `UI/Station/Lounge.uss`): one visitor billboard per agent; plates over them (race until talked to, then name + role; remake: always shown) and a visitor list (remake, for keys / controller); tapping opens the chat (`LoungeChat`): the original's texts (greeting, intro, offer, reward line, question), HD answers (green Okay / red No thanks + Let me see it or Show it on the map + What's the risk?; No thanks closes; a single Okay for closing lines), deals through the station dialog (865 / 866-873 / 885, checks 337 / 338 / 203 / 785 as messages), one lounge voice greeting per chat (`LOUNGE_eng/deu` in the story assets). Diplomats rehabilitate (±35), coordinate sellers reveal the system (the map opens on it), blueprint sellers unlock, mod sellers mod the hull.
+- **Lounge** (`LoungePanel`, `UI/Station/Lounge.uss`): one visitor billboard per agent; plates over them (race until talked to, then name + role; remake: always shown) and a visitor list (remake, for keys / controller); tapping opens the chat (`LoungeChat`): the original's texts (greeting, intro, offer, reward line, question), HD answers (green Okay / red No thanks + Let me see it or Show it on the map + What's the risk?; No thanks closes; a single Okay for closing lines), deals: the original asks again in a ChoiceWindow (865 / 866-873 / 885); remake: Okay is the deal, the station dialog only asks when it warns (864 the current mission discarded, the Extreme up-front costs, the multiplayer squad; `LoungeChat.ConfirmWarning`; the dialog is opaque: the 0.93 panel let the chat text read through it), checks 337 / 338 / 203 / 785 as messages, one lounge voice greeting per chat (`LOUNGE_eng/deu` in the story assets). Diplomats rehabilitate (±35), coordinate sellers reveal the system (the map opens on it), blueprint sellers unlock, mod sellers mod the hull.
 - **Freelance** (`Freelance`, one mission at a time, `Session.FreelanceMission`): Courier loads Secure Containers (116, unsaleable), Passenger needs cabins; docking delivers Courier / Passenger / Purchase / Stolen goods / Informer (the client's message, payout with the 1 000 001 guard, standing +5, missions completed +1, sound 36). The target orbit of a space mission is built by `FreelanceOrbit` instead of the traffic: Defense, Protection, Recovery / Salvage (EMP the Hijacker: its container drops for the tractor beam, then deliver it), Pirate hunting, Wanted, Junk removal (121 s, HUD countdown), Escort, Intercept, Challenge (score vs the rival; an odd number of pirates, i + 3 or i + 4, so the kills never tie: a tie is the rival's); briefing, success / failure messages; remake waypoint to the enemies (lockable, its own marker on the lock plate; it blocks no other lock). A mission orbit (the level mission Status+400) refuses docking, the gate, planet jumps (the autopilot's too) and the Khador Drive with 525 until the mission is won or failed, except Courier (`Freelance.BlocksTravel`, `MGame::dockEvent` / `Radar::draw` / `MGame::UseKhadorDrive`); the story's level missions refuse the gate too. Informer orbits skip the "He's back!" alarm (`TrafficPlan.InformerOrbit`; a spoiled Informer gets the normal traffic). Killing the spy alarms its race like any friendly fire (the original). Options > Gameplay "Informer missions" (`Settings.InformerOriginalRule`): Remake (default) = other deaths after the spy's no longer count; Original = any other death before docking fails it (`PlayerFighter::update` 0xf1c8c checks only +0xf1). Escort attackers (case 9) are always-enemy at a random waypoint of the route, the freighters of the client's race (Terran past race 3); without it they showed as friends while killing the convoy. **Sleepers** (`NpcShip.UpdateSleep`, `PlayerFighter::update` 0xf19b8 / 0xf2750): a hostile one wakes only on the player (or the steered Liberator) within +-25 000, or within +-detectRange (default 50 000) unless the player is cloaked; other ships never wake it (the rival, the convoy and wingmen woke them early); a non-hostile one on its target within +-detectRange; fixed objects and freighters on any enemy within +-50 000 (`PlayerFixedObject::update`). Courier / Passenger cargo draws pirate escorts; the Informer orbit has its spy (1663). Story step 13 is completed by a freelance mission. EMP weapons now drain NPC EMP.
 - **Missions window** (`MissionsWindow`): Story and Freelance side by side, Show on map (`StarMapMode.Mission`: view only, centred on the target, story / freelance icons; like the original it doesn't program the autopilot: the station's Map does), Discard (418). The story text is every step's objective (`MissionsWindow::init` 0x17a604: DAT_00258f68[index] below 0xa4), hidden and empty missions too (step 13's "find work in the Space Lounge" before the convoy); the map button only for a visible mission with a target. The pause menu's Missions page the same.
 - **Blueprints** (`Blueprints`, the hangar's Blueprints tab 272): 25 products keyed by item (items.json ingredients), per-ingredient progress, production station (first investment; 212), 200 $ per unit shipping from another station (288; volatile 204 / 209 refused, 289), 210 / 223 need gate routes (528), Autocomplete `int(qty*maxPrice*1.25)` (210: 2 000 000 + the rest's value), a finished run to the hold (211) or waiting at the production station (210, collected on docking, 213). Unlocks: lounge sellers, campaign steps 34 / 58 / 72 / 104 / 141 with pre-invested ingredients.
@@ -569,7 +576,7 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
 - **Free look with the mouse** (remake): with mouse steering the cursor stays captured in free look and plain mouse movement
   orbits the camera (`FreeLookCamera.mouseLook`, the mouse delta), the ship's mouse steering pauses; the middle button held
   works without mouse steering. Hangar tabs: Q / LB left, E / RB right (both used to go right).
-- **Controller gyro** (remake option, Windows, off by default; `ControllerGyro`, Options > Controls "Controller gyro" + "Gyro sensitivity"): DualSense / DualShock 4 / Switch Pro / Joy-Cons through JoyShockLibrary 3.0 (MIT, `Assets/Plugins/JoyShockLibrary/x86_64`, Editor + Windows x64 only; its notice on the About page): player gyro space and automatic calibration, the turn rate moves a steering offset like the mouse (a full offset for 20 deg / sensitivity), Level out re-centres it, the stronger of it and the other steering wins. Steam Input on for the game hides the gyro (only a virtual pad reaches it). Not tested with a real controller yet.
+- **Controller gyro** (remake option, Windows, off by default; `ControllerGyro`, Options > Controls "Controller gyro" + "Gyro sensitivity"): DualSense / DualShock 4 / Switch Pro / Joy-Cons through JoyShockLibrary 3.0 (MIT, `Assets/Plugins/JoyShockLibrary/x86_64`, Editor + Windows x64 only; its notice on the About page): tilt steering from the accelerometer (gravity, like the phone's `TiltSteering`): tilting forward / back pitches, rolling like a steering wheel steers sideways, by the angle from the rest pose taken on connecting and on Level out (pitch in the Y-Z plane, roll as gravity's lean toward X, so any grip angle works; both reading conventions cancel against the rest pose), a full offset at 20 deg / sensitivity, a 2 deg dead zone, added to the other steering. The first version integrated the gyro's turn rate in player space: the uncalibrated bias walked the pitch while the controller lay still and the max-of-both rule held the stick off (#35). Steam Input / DS4Windows on for the game hides the motion data (a reading without gravity is logged once). Not tested with a real controller yet (the axis signs come from JSL's documented frame; the invert options cover a flipped axis).
 - **Haptics** (remake option, Options > Controls "Vibration", `Settings.HapticsIntensity` 0..1, 0 = off, default 100 %; the
   original has none: `Engine::Vibrate` is an empty stub and `Globals::init` calls `VibrateEnable(false)`): `Haptics` (created
   by `Bootstrap`, kept for the run) sends to the controller last used while `InputMode` is Gamepad (the Input System's
@@ -600,7 +607,7 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   7000 / 9000 / 12000 ms; Loma's toll 2 / 5 / 10 / 20 %. `Session.IsExtreme` (`Status::hardCoreMode`, == 1.5) keeps the
   Extreme-only rules (economy, stock, mining, standing, energy cells, hit cube 650, medals, fines, self-damage). The save
   slot rows show the difficulty. Remake: the pause and station menus' Options > Gameplay has a Difficulty row (`OptionDef.inGameOnly`, not in the main menu or multiplayer) that changes the game in progress; spawns and the Extreme rules follow from the next orbit or docking.
-- **Save games** (`SaveGame`, the original's RecordHandler slots): one JSON file per slot in `Application.persistentDataPath/Saves` (remake format, `SaveData`, versioned); slot 0 = auto-save on docking (`ModStation::autosave`), 1..11 manual. Only saved while docked, so loading opens the Station scene. The main menu's Resume loads the newest slot, Load lists the slots with the original's preview fields; game over reloads slot 0. Manual saves: the station's system menu (Menu 172 via the Menu button, Esc on the main view or the controller's Menu: Save game 30 with the slot list, slot 0 refused with 487, overwrite asks 49, then 50; Back to Main Menu 522 / 523).
+- **Save games** (`SaveGame`, the original's RecordHandler slots; v12 records the mods, see "Mods"): one JSON file per slot in `Application.persistentDataPath/Saves` (remake format, `SaveData`, versioned); slot 0 = auto-save on docking (`ModStation::autosave`), 1..11 manual. Only saved while docked, so loading opens the Station scene. The main menu's Resume loads the newest slot, Load lists the slots with the original's preview fields; game over reloads slot 0. Manual saves: the station's system menu (Menu 172 via the Menu button, Esc on the main view or the controller's Menu: Save game 30 with the slot list, slot 0 refused with 487, overwrite asks 49, then 50; Back to Main Menu 522 / 523).
 - **Save export / import** (remake, `SaveTransfer`, main menu Options > Gameplay only): Export writes every slot's file unchanged into one `.gof2saves` JSON (format tag, format version, game version, the slots). Import replaces every slot: the file is read and checked whole first (`SaveTransfer.Check`: format, at most 12 unique slots 0-11, each save through `SaveGame.TryParse`: version 1..current, campaign, economy, finite times, difficulty 0-2, story index 0-162, and every station / ship / item / system index it names, cargo, equipment, Kaamo storage, the parked ship, shop memory and bar visitors, blueprints, production, the Wanted board, against the game's tables), then a warning that it overwrites ALL saves (the auto-save too); only Yes writes, after checking again: the new slots to `.import` files, the old ones moved to `Saves/BeforeImport` (put back if writing fails), then the new ones into place. Windows and the Editor pick the file with the system dialog (`FileDialog`: comdlg32 / EditorUtility); Linux and Android use a Transfer folder (`~/Documents/GoF2 Remake`; on Android the app's `files/Transfer`, reachable over USB) and import the newest `.gof2saves` there.
 - **New Game+** (remake, GitHub #4, `NewGamePlus`): with a finished game in the slots (main game past 44, Valkyrie past 83, Supernova at 162; the newest one) the campaign panel shows a "New Game+" toggle (off each time it opens). Turned on, the new game (after the campaign's first step) gets the old credits added, the unlocked blueprints and the medals (the better grade of each), the Kaamo Club owned with the old storage plus the old ship (its mods), its equipment and cargo (not the story's unsaleable items) parked in it; story, map, standings and the starting ship are new.
 - Text comes from the original table via `Localization.Get(textId)`; remake-only strings via `Extra(key, english)`. Settings in `Settings` (PlayerPrefs), menu choices in `Session`.
@@ -613,6 +620,12 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
 - Frame rate option (`Settings.FrameRate`: 30 / 60 / 120 / Uncapped / V-Sync, default V-Sync) is applied by `Bootstrap.ApplyFrameRate`. Mobile is always display-synced: V-Sync there means `targetFrameRate` = display refresh rate.
 - Main menu research (flow, text IDs, image rects, camera, sounds): `Reference/research/mainmenu_notes.md`.
 - **Discord Rich Presence** (remake, desktop; Windows so far): `DiscordPresence` + `DiscordIpc` (the desktop app's local pipe, no SDK) for the Discord application "Galaxy on Fire 2 Unity Remake" (1555054317155647571); details / state from the scene (docked, flying, mining, combat, cutscene; the freelance mission or the story step's title, multiplayer squad), the campaign art large and the system's race emblem small (assets from `Reference/tools/discord/make_assets.py`), the timer from the game's start; Options > Gameplay "Show what I'm doing in Discord".
+- **App icon** (`MainMenuBuilder.BuildAppIcons`, run by Main Menu Scene; the art `UI/AppIcon/icon_source.png`, 2000 x 2000
+  with rounded corners): `icon.png` the default icon (Windows / Linux / iOS, Android legacy and round), Android's adaptive
+  icon = `icon_foreground.png` (the art at 62 % inside the 66.7 % visible area, so a circle mask keeps the title) over
+  `icon_background.png` (the art's middle blurred and enlarged) + `icon_monochrome.png` (its bright parts in white, the
+  themed icon); UWP's tiles, store logo and splash at 100 / 200 % in `UI/AppIcon/UWP` (`PlayerSettings.WSA` visual assets:
+  squares = the art, wide / splash = the art on its blur). Without the art the old icon (the GoF2 logo on skybox_003).
 - **Android name**: package `com.joppietoppie.gof2remake`, launcher label "GoF2 Remake" (`AndroidAppLabel` rewrites the Gradle project's app_name); the product name stays "Galaxy on Fire 2" so the desktop save folder and PlayerPrefs don't move.
 - **UWP** (Universal Windows Platform, no build profile: `EditorUserBuildSettings.SwitchActiveBuildTarget(WSA, WSAPlayer)`
   first, then `BuildPipeline.BuildPlayer` to a folder; IL2CPP, x64, D3D): package `JoppieToppie.GoF2Remake`, Start menu
@@ -1001,19 +1014,28 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   cooldown | boost | onehit | locks | shopping | jumps> [on | off]` (`Cheats.Grant`: that player's flag for the session, not
   saved, whatever the session allows), `/mute <players> [minutes]` / `/unmute` (the server drops their chat and whispers;
   never the host's player, only the host / console mutes an admin), `/title [players] <text> [| subtitle] [for <seconds>]`
-  ("clear") and `/timer [players] <seconds | m:ss> [label]` ("stop"): `NetScreen`, its own panel over every scene, a big
+  ("clear") and `/timer [players] <seconds | m:ss> [label]` ("stop"): `EventScreen`, its own panel over every scene, a big
   title with a subtitle in the upper middle (4 s by default, fades) and a countdown at the top centre (the last 10 s amber),
   cleared when the session ends. `/dialog [players] <speaker> : <text> [| [speaker :] page ...]`: the scene's dialogue window
-  (`DialogueView.Latest`, queued behind one already open, `NetScreen.QueueDialog`), each page with its speaker (a page
+  (`DialogueView.Latest`, queued behind one already open, `EventScreen.QueueDialog`), each page with its speaker (a page
   without one keeps the last): a story speaker by name (`StoryTable.SpeakerName`; "Keith as Bob" renames it), a race and a
   name ("vossk K'ekki", "terran female Jane": one `AgentGenerator.CreatePortrait` face made on the server, the same for
   everyone and every page), or "player" (the reader: speaker 0's face with their pilot name); %player% in a text or name is
-  the reader's name; a page `reward [title]: <rewards>` pays when the dialogue closes (like a single-player mission's success page). `/reward [players] <credits | item [amount]> [+ ...] [| title]`: credits and / or up to 8 items into the hold, shown in the reward box (`NetScreen.ShowReward`, `Layout::showMissionRewardMessage` / `drawMissionRewardMessage` 0xe7684: the title, default 216 "Mission accomplished!", over "+ credits" and each item with its shop icon, centred, fades in 2 s, holds until 5 s, fades out until 7 s, sound 36). Typed commands may be 500 characters (`NetChat.MaxCommandLength`; chat lines stay 160).
-- **Events** (`NetEvents`, `/event <name [setting=value ...] | stop | list>`, admins and the console only): node graphs run
-  on the server: `<name>.gof2netevent` (see Event graphs below) in an Events folder (`persistentDataPath/Events`,
-  or next to the game / dedicated server's executable), else a built-in one (`Resources/GoF2Net/Events`: waves, survival,
-  the bar mission pirate_hideout); one global event at a time (/event: everyone) and any number of bar missions beside it
-  (each run its own `NetEvents.EventRun`: threads, handlers, questions, batches, points, scoreboard, what it turned on);
+  the reader's name; a page `reward [title]: <rewards>` pays when the dialogue closes (like a single-player mission's success page). `/reward [players] <credits | item [amount]> [+ ...] [| title]`: credits and / or up to 8 items into the hold, shown in the reward box (`EventScreen.ShowReward`, `Layout::showMissionRewardMessage` / `drawMissionRewardMessage` 0xe7684: the title, default 216 "Mission accomplished!", over "+ credits" and each item with its shop icon, centred, fades in 2 s, holds until 5 s, fades out until 7 s, sound 36). Typed commands may be 500 characters (`NetChat.MaxCommandLength`; chat lines stay 160).
+- **Where the event graphs live** (they began as multiplayer events and now run single player's quests and bar missions too):
+  `Scripts/Runtime/Events`, namespace `GoF2Remake.Events` (was `Multiplayer`: `NetEvents` is `EventRunner`, the `NetEvent*`
+  helpers `Event*`, `NetScreen` `EventScreen`); graph files `.gof2event` (the old `.gof2netevent` is still read by the game:
+  `EventRunner.LegacyExtension`, the Events folders and mods' `events/`; imported into the project, `EventGraphUpgrade`
+  renames one with `AssetDatabase.MoveAsset` (its GUID kept) and rewrites its enum option types `GoF2Remake.Multiplayer.Event*`
+  -> `GoF2Remake.Events.Event*`, which Graph Toolkit stores by name; the game's reader ignores them); the built-ins and the
+  event audio in `Resources/GoF2Events`. The chat command layer they run (`NetCommands`, `NetAdmin`, `NetTeleport`) stays in
+  Multiplayer. Verified: every graph re-imported without a reader / Graph Toolkit mismatch, a template opened and compiled by
+  Graph Toolkit, an old-format graph converted on import, a mod's old .gof2netevent and the built-ins loaded at runtime.
+- **Events** (`EventRunner`, `/event <name [setting=value ...] | stop | list>`, admins and the console only): node graphs run
+  on the server: `<name>.gof2event` (see Event graphs below) in an Events folder (`persistentDataPath/Events`,
+  or next to the game / dedicated server's executable), else a mod's (`events/`, the mods that are on), else a built-in one
+  (`Resources/GoF2Events`: waves, survival, the bar mission pirate_hideout); one global event at a time (/event: everyone) and any number of bar missions beside it
+  (each run its own `EventRunner.EventRun`: threads, handlers, questions, batches, points, scoreboard, what it turned on);
   `/event list` shows each one's settings. There are no script files: the graph compiles to an internal line form, which is
   what runs. Its lines: any server command without the "/" (run as the server, "{expression}" parts filled in), `wait <s>`,
   `wait until <condition> [timeout <s>]`, `if` / `else` / `end`, `while` / `end`, `repeat <n> [as <var>]` / `end`,
@@ -1026,7 +1048,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   answers or the time), `vote ...` with `choice <k>` / `end` blocks (the most picked answer's block, a tie at random, `choice 0`
   when nobody voted), `startevent <name> [setting=value ...]` (ends this event, starts that one with the same starter; 5 a
   second at most), `points <players> <n>`,
-  `scoreboard on [title] / off` (every player's screen, `NetAdmin.Order.Scoreboard` -> `NetScreen`, the top 10 by the score
+  `scoreboard on [title] / off` (every player's screen, `NetAdmin.Order.Scoreboard` -> `EventScreen`, the top 10 by the score
   mode, sent when it changes and every 5 s), `stop`, `score <kills | time | points>`, `winner [kills | time | points]` ("The
   winner is X with N kills" on screen and in the chat). Each line may end in `#@<node id>` (the live view). Expressions:
   numbers, variables, arithmetic, comparisons, and / or / not, random(a, b), min, max, floor, count(<players>) (a selector's
@@ -1038,34 +1060,76 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   Once it has spawned ships, an event ends by itself when no player has been alive in space in its ships' orbits for 3 s
   ("Event over" with the winner; `set autostop = 0` turns it off); its music, free for all, respawn points and travel
   restrictions end with it. Ticked by `NetState.Update` on the server; reset per session.
-  **Questions** (ask / vote; `NetAdmin.Order.Ask` -> `NetScreen`): the Space Lounge chat's look (header with the speaker's name
+  **Questions** (ask / vote; `NetAdmin.Order.Ask` -> `EventScreen`): the Space Lounge chat's look (header with the speaker's name
   and the seconds left, the portrait beside the text, the answers as stacked station buttons; inline styles, the speaker
   resolved on the server as /dialog's, `NetAdmin.ResolveSpeaker`); answered by a click / tap, 1-4, a controller's A B X Y, Esc /
-  View skips (`NetState.AnswerRpc` -> `NetEvents.OnAnswer`); while it shows `NetScreen.QuestionOpen` rests the flight controls
+  View skips (`NetState.AnswerRpc` -> `EventRunner.OnAnswer`); while it shows `EventScreen.QuestionOpen` rests the flight controls
   (`Navigation.InputHalted`), the keys (`NetChat.Keys`) and the menus (`GameControls.BlocksMenus`).
   **Free for all** (`/pvp on | off`, admins; the Free For All node): `NetState.FreeForAll` (a NetworkVariable) makes every
   other player an enemy (`NetAggression.IsHostile`; squadmates excepted). **Respawn points** (`/respawn [players] <station
   [x y z] [spread <units>] [delay <s>] | off>`; Set / Clear Respawn Point): a destroyed ship comes back in space, repaired,
-  after the delay (`NetEventRespawn`, `PlayerHealth` after the explosion, `NetTeleport.Respawn`; default 3 km in front of the
+  after the delay (`EventRespawn`, `PlayerHealth` after the explosion, `NetTeleport.Respawn`; default 3 km in front of the
   station, `NetTeleport.RespawnSpot`: the launch spot is inside the bigger stations) instead of "Tap to respawn at the
-  station". **Travel restrictions** (`/restrict [players] <jumps | docking | all | off>`; Restrict Travel): `NetEventRules`,
+  station". **Travel restrictions** (`/restrict [players] <jumps | docking | all | off>`; Restrict Travel): `EventRules`,
   in `Navigation.JumpsBlocked` (planet jumps, Khador Drive), `SystemJump.GateBlocked` and `SpaceLevel.DockingBlocked` (525).
   **Make Hostile** (`/provoke [players] [race] [within <m>]`): the NPC ships around each player (NetProxy positions on the
   server) turn on that player and their squad: the ship's own game adds them to `NpcShip.aggressors` (neutral spawns too;
   `NetOrbit.HostileToLocalBySquad` counts the local player's own id). **Radio** (`/radio [players] <speaker> : <text>`):
   a line in the flight HUD's radio box (`Traffic.Say`, queued after the waiting ones), speakers as /dialog's; docked: a chat
-  line. **Waypoints** (`/waypoint [players] <station x y z | off>`; Set / Clear Waypoint): `NetEventWaypoint`, a one-point
+  line. **Waypoints** (`/waypoint [players] <station x y z | off>`; Set / Clear Waypoint): `EventWaypoint`, a one-point
   `Route` through `Navigation.SetRoute` (lockable "Waypoint", the autopilot), applied whenever the player is in that orbit,
   cleared on reaching it and at the event's end; the On node's Player Arrives (`on near <station> <x y z> <metres>`) fires
   when a player alive in space comes that close (server-side, NetPlayer positions). Spawned objects get collision
   (`DebugSpawner.SpawnObject`: `station_pirates` the original's volumes 1002 unrotated, others a box around the model) and
   exist only in the games they were sent to: spawn scenery for `@a[orbit=...]` at fixed coordinates.
+  **Ship orders** (`EventShipOrders`, `NpcOrder`; NetAdmin order Npc 29, `/npc [players] <ship> <order>`; the server checks
+  the text with `EventShipOrders.TryParse`, each target's game applies it to its own traffic ships of that name (Target.
+  displayName, "Name N" of a numbered spawn too; proxies just mirror)): goto / route (places "/"-separated, loop), follow /
+  escort (leader player | ship, offset right up forward in the leader's frame), attack (player | ship, regardless of
+  standing), flee (from the player, then jump out), dock (into the station, vanish), hold (parked), resume, jump, speed;
+  options speed / radius / fight / then hold | resume | vanish | jump / seconds; places through `EventCutscene.ParsePlace` /
+  `ResolvePlace` (read when the order arrives; follow / attack keep their Transform / Target). `NpcShip.SetOrder` /
+  `UpdateOrder` (before the freighter and targeting branches, after the story's scriptedSpeed): steering through the AI's own
+  `Steer` / `Avoid` (Dock skips the landmark avoidance), `drift` cleared; a group spreads (`Spread`: 900 to the side, 600 back
+  per rank); Follow aims 3000 units ahead along the leader's heading and closes the gap by speed (boost beyond 6000);
+  remake: slower while facing away from the goal (x0.35..1 by alignment, not under 0.6 u/ms) so the original's fixed turn
+  rate (a circle of speed / 0.00073 units) stays tight; escorts run `UpdateTargeting` and fight first. Exits by order
+  (`JumpOut`, `LeaveQuietly`) set `Target.killedByNpc`, so no event credits a kill; `Traffic.UpdateOrbit` /
+  `UpdateAlienAttackers` / the jumpers never revive a ship with an `eventTag`. Expressions `alive(name)` and
+  `distance(name, x, y, z)` (`EventRunner.ShipState`) read `EventHost.Ship.name` / `position` (game units; NetProxy's label
+  and pose in a session). Graph nodes (category Ships): Fly To, Fly Route, Follow (Escort), Attack, Ship Action
+  (`EventShipThen`, `EventShipAction`; base `EventShipOrderNode`: "EventShipNode" is Change Ship's saved name). Verified in
+  Play mode (single player): a pair flown ahead of the player and held, following in formation, docking (gone, no kill, not
+  relaunched), a drone fleeing and jumping out, the expressions.
+  **Cutscenes** (`EventCutscene`, its own DontDestroyOnLoad singleton; NetAdmin orders Cutscene 25 / Camera 26 / Fade 27 /
+  Letterbox 28; commands `/cutscene [players] <start [nobars] [freeze] [invulnerable] | end>`, `/camera [players] <place [to
+  place] [over s] [look place] [follow] [fov deg] [shake 0-1] | chase>`, `/fade [players] <out | in> [seconds] [rrggbb] | clear`,
+  `/letterbox [players] <on | off>`; the server checks the text with `EventCutscene.TryParseShot`): places `player [right up
+  forward]` (game units in the ship's own frame, unscaled), `station [x y z]` / `x y z` (orbit game coordinates), `ship <name>
+  [x y z]` (a `Target.displayName` from Spawn's "named", "Name 1" numbering accepted; "quoted" names with spaces). Cinematic
+  mode: `SpaceLevel.Cutscene` is also `EventCutscene.Cinematic` (the HUD's `hud-cinematic`, touch PauseOnly, no free look /
+  photo mode), `Health.invulnerable` with "invulnerable", the player's `inputLocked` and `Weapons.Blocked` (released only when
+  it set them and the launch camera is over), "freeze" = `externalControl` at speed 0, the autopilot off once; it survives a
+  scene change (re-applied to the new level), a shot doesn't (bound to the scene it was sent in). The shot runs in LateUpdate
+  (`DefaultExecutionOrder(5000)`: after the chase camera, before `VrRig`) with the ChaseCamera off (`scriptCamera`): position
+  lerped from / to with smoothstep over the seconds, LookRotation to the look place every frame (world up), FOV through
+  `Aspect.VerticalFov`, shake = look-point jitter × `Settings.CameraShake` + `Haptics.Rumble`; `camera chase` / `cutscene
+  end` snap the chase camera back. Fade and bars (11 % of the height each, 0.6 s, smoothstep) on a panel of their own at the
+  shared panel settings' sorting − 1, under the HUD, so the radio and conversations show over a black screen; docked too.
+  All of it is cleared when `EventHost.ScreensActive` goes false; a run that sent one (`NoteCutsceneSet` / `NoteFadeSet`)
+  sends `cutscene end` / `fade clear` at its End. Graph nodes (category Cutscene): Start Cutscene (Letterbox, Freeze ship,
+  Invulnerable), Camera Shot (From / To / Look At text, Seconds, Fov, Shake, Follow; the compiler quotes a ship name with
+  spaces, `EventGraphScript.Place`, and reports a bad shot on the node), Chase Camera, End Cutscene, Fade (`EventFade` Out /
+  In / Clear, Seconds, Colour: the "#" is dropped, it starts a comment in the line form), Letterbox. Verified in Play mode
+  (single player, line-form runs): the bars, the hidden HUD, the fades, a moving followed shot around the player, a station
+  shot, a shot on a spawned "Pirate Boss", freeze and invulnerable, everything restored at the end; the nodes through
+  `EventGraphScript.Compile` on an in-memory graph.
   **Sound and music** (`/sound [players] <sound>`, `/music [players] <track | stop>`, admins; the graphs' Play Sound / Play
-  Music / Stop Music): `NetEventAudio` (`Resources/GoF2Net/EventAudio`, **GoF2 > Build > Event Audio**, the original FMOD
+  Music / Stop Music): `EventAudio` (`Resources/GoF2Events/EventAudio`, **GoF2 > Build > Event Audio**, the original FMOD
   events: alarm 162, warning 35, success 36, explosions, jumpgate, Khador...; tracks battle, boss 151, void, specters, intro,
-  outro, the race themes...); a track loops on `NetScreen`'s own source and the scene's music fades out meanwhile
-  (`NetScreen.SceneMusic` in `Traffic` and `StationLevel`).
-  **Event graphs** (`.gof2netevent`, Unity's Graph Toolkit module, built in since 6000.4; Editor side in
+  outro, the race themes...); a track loops on `EventScreen`'s own source and the scene's music fades out meanwhile
+  (`EventScreen.SceneMusic` in `Traffic` and `StationLevel`).
+  **Event graphs** (`.gof2event`, Unity's Graph Toolkit module, built in since 6000.4; Editor side in
   `Scripts/Editor/Events`): the only form of an event. Assets > Create > GoF2 > Event Graph, or Event Graph From Template
   (King of the Hill, Boss Fight, Free For All, Pirate Base, Pirate Hideout (a bar mission), Quiz, Race, Vote For The Next
   Event, Waves, Survival in
@@ -1076,7 +1140,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   Event (Score, Winner, Add Points, Scoreboard, Mission Complete, Mission Failed, Start Event (with a picker of the project's
   events), Free For All, Set / Clear
   Respawn Point, Restrict Travel, Make Hostile, Set / Clear Waypoint), Commands (one per event command, Radio, Play Sound /
-  Music, Stop Music, Command for any other line),
+  Music, Stop Music, Command for any other line), Ships (Fly To, Fly Route, Follow, Attack, Ship Action), Cutscene (Start / End Cutscene, Camera Shot, Chase Camera, Fade, Letterbox),
   Players (Get Orbit: a station by number, name, void or a wired number -> Get Players (who, optionally in that orbit) -> any
   command's Players, written as `@alive[orbit=Var Hastra]`; Count Players), values (Game State, Math, Random, Floor, Compare,
   Logic, Not, Expression), the blackboard's Number variables (set to their defaults at the start; Input ones are the event's
@@ -1087,21 +1151,21 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`EventGraphPickers`, NodeViews with searchable lists of the server's names, `EventNames`); typed names the server wouldn't
   know are warnings on the node. The live view (`EventGraphLiveView`, Play mode): the running event's graph (by name) shows
   each flow's current step (Graph Toolkit's GraphVisualization: an animated accent, a wait's progress as the fill) and the
-  variables' values on their nodes (`NetEvents.ActiveSteps` / `Variables`). The server reads the file itself:
+  variables' values on their nodes (`EventRunner.ActiveSteps` / `Variables`). The server reads the file itself:
   `EventGraphFile` (a small reader of Graph Toolkit's serialized model, Unity YAML: nodes with their port / option values,
   wires, variables (m_Modifiers 0 local / 1 input / 2 output), local sub-graphs; node ids as Graph Toolkit's Hash128) and
   `EventGraphScript` (the one compiler, graph -> the line form above; the Editor's checks and Run In Play Mode feed it the
-  live graph through `EventGraphCompiler`). The importer keeps the file's text as its TextAsset (so `Resources/GoF2Net/Events`
+  live graph through `EventGraphCompiler`). The importer keeps the file's text as its TextAsset (so `Resources/GoF2Events`
   graphs are the built-ins) and reads every graph both ways, warning if the game's reader disagrees with Graph Toolkit (a
   Unity update changing the format), and about a name with spaces (/event takes one word). Node kinds, port and option names
   are the Editor classes' (`EventGraphNodes`), the option enums the game's. The right-click "Event" menu (and Assets > GoF2 >
   Event Graph): export the graph (a file or the game's Events folder), run it in a hosted Play-mode session
-  (`NetEvents.StartText`, server only). Graph Toolkit's toolbar API isn't public, hence the right-click menu.
+  (`EventRunner.StartText`, server only). Graph Toolkit's toolbar API isn't public, hence the right-click menu.
   Admins: the host's own player, or players the host or the
   dedicated server's console made admins (`NetPlayer.IsAdmin`, server-written, for the session only: names aren't
   verified). Players are named whole, any case (the longest name the arguments start with), by a client id as the first
   word, or by a Minecraft-style selector (`NetCommands.FindTargets`): @a everyone, @s yourself, @p the nearest other player
-  (same orbit by distance, else the same station), @r a random other player, and by state @alive (in space, not destroyed), @space, @docked, @dead, @survivors (an event's players never destroyed since its fight began, `NetEvents.Survived`: "reward @survivors {wave * 1000}"), each narrowed to one orbit by `[orbit=<station>]` (in its space or docked at its station: `@alive[orbit=78]`, `@r[orbit=Var Hastra]`); a command on several players runs for each
+  (same orbit by distance, else the same station), @r a random other player, and by state @alive (in space, not destroyed), @space, @docked, @dead, @survivors (an event's players never destroyed since its fight began, `EventRunner.Survived`: "reward @survivors {wave * 1000}"), each narrowed to one orbit by `[orbit=<station>]` (in its space or docked at its station: `@alive[orbit=78]`, `@r[orbit=Var Hastra]`); a command on several players runs for each
   ("/tp @a Player1", "/kick @r"); a destination is one player. Tab offers the selectors too. Typing "/" lists the matching commands over the line, after a command that
   takes a player the matching players; Tab completes the first and cycles through them (Shift+Tab back, "/" alone cycles
   all; before the channel key, Tab by default; `ChatView.Complete`, `NetCommands.Completions`);
@@ -1183,18 +1247,48 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   by the team member when another player built the orbit's traffic (`SpaceLevel.SpawnInformerSpy`, not with a squadmate
   here, `NetMissions.TeamHere`), and its death (or a spoiling kill) reaches the squad (status 1 / 1000). An old
   invitation from a squadmate is dropped (accepting it would drop the squad's mission). The squadmates of the one who took
-  a mission see which one was activated: the mission card (`NetScreen.ShowMissionCard`, `NetMissions.ShowCard`; a box in the
+  a mission see which one was activated: the mission card (`EventScreen.ShowMissionCard`, `NetMissions.ShowCard`; a box in the
   upper middle: "New squad mission", its name, "Accepted by X", the client's face and name, the target, the reward; 9 s, a
   tap closes it, the message sound), besides the chat notice.
-- **Event graph bar missions** (`NetEventMissions`): an event graph whose Start node has a Mission title (its Mission
+- **Event graph quests** (single player; `EventHost`, `LocalPilot`, `LocalEvents`, `Session.GraphQuests`; later the main and
+  add-on stories are to become graphs too, so quests behave like the story): the event system runs without a session through
+  `EventHost` (`IPilot`: NetPlayer in a session, the one `LocalPilot` (id 0, Keith T. Maxwell, `%player%`) without;
+  orders applied at once with `NetAdmin.Apply`, the local traffic's ships as `EventHost.EventShips`, notices as a HUD
+  message / station toast, a clock that stops while the game is paused) and `LocalEvents` (DontDestroyOnLoad, made after
+  the first scene) ticks it. The Start node's **Kind** (`EventKind`: Event, Bar Mission, Quest; "mission kind" line; old
+  graphs = Event, a bar mission when titled) and **Starts when** ("mission starts <expr>"; empty = at once, "never" = only
+  `startquest`). Quests start by themselves in a game scene (Space / Station, not a session's game, not the ending; while
+  not paused) once their condition holds (`EventRunner.CheckQuestStarts`, every second; not the built-in graphs, which are
+  multiplayer examples) and are lasting runs: a `GraphQuestState` record (save v13 `graphQuests` / `graphQuestsDone`)
+  written at the start and at each `checkpoint <name>` (top level only, `Step.depth`; the variables, objective, target, quiet
+  orbits), restored after a load from its last checkpoint (`EventRunner.RestorePending` → `RestoreLocal` →
+  `EventRun.Resume`: the top-level handlers and parallel / every blocks before it again, the music / waypoint / respawn /
+  restrict commands before it again). New lines: `objective [text]`, `target <station | off>` (the gold story icon on the
+  map and the HUD: `EventRunner.IsQuestTarget`, the Missions window's Show on map), `questorbit <station> [off]` (no normal
+  traffic there: `SpaceLevel` passes it as a story orbit), `startquest <name>`; nodes Checkpoint, Set Objective, Quest
+  Orbit, Start Quest. `complete` in a quest pays and marks it done (`Session.GraphQuestsDone`); `fail` is the story's
+  failure (`EventHost.QuestFailed` → `StorySpace.FailQuest` / the station dialog → the auto-save). The Missions window's Story
+  panel lists the quests (title + objective) after the campaign's objective (`EventRunner.Quests`). Expressions gained this
+  game's state (after the variables): campaign, credits, rank, station, system, ship, kills; cargo(item), has(item),
+  visited(station), quest(name). `Session.ResetNewGame` ends single player's runs (`EventRunner.ResetLocal`).
+  Single-player bar missions: `EventMissions.RequestOffers` builds the offers locally (mods' / Events folder graphs for
+  one pilot, not the built-ins), Okay starts a lasting run (`AcceptLocal`, record kind Mission with the offer); it is the
+  player's one mission (`Freelance.AcceptRefusal` refuses a freelance mission meanwhile and vice versa), shows in the
+  Missions window's Freelance panel (client, offer, objective, Show on map for its target, Discard =
+  `EventRunner.AbandonLocalMission`), a success counts like a freelance one (`OnEnded` success flag: missions +1, standing
+  +5). Verified in Play mode: a mod quest starting after a load (Keith's dialogue with a mod voice clip), the Missions window,
+  a save at its checkpoint restored without repeating the dialogue, docking at the target completing it (+5000, done); a mod
+  bar mission offered, accepted, saved, restored and discarded; a mod's replacement station theme and a new track by
+  /music; hosting and /event waves after the refactor.
+- **Event graph bar missions** (`EventMissions`): an event graph whose Start node has a Mission title (its Mission
   settings: offer text, client (a story character or "race name" like /dialog's speakers; empty: someone of the station's
   race), reward, offered at (stations; empty: every one), min / max pilots; compiled to `mission <key> <value>` lines) is
   offered in the multiplayer Space Lounges: the docking game asks the server (`NetState.RequestEventOffers`, from
   `StationLevel.BuildBar`) and each offer becomes a visitor on a free slot (`StationLevel.AddVisitor`; `LoungePanel` rebuilds its
   plates; `AgentOffer.EventMission` = 11 in `LoungeChat`: the offer, the reward, the pilots; Okay checks the whole squad docked
   here and the pilot count, confirms, `NetState.AcceptEventMission`). The server checks again and runs the event for that team
-  (`NetEvents.StartMission`, the run's `team`: while it ticks `NetCommands.Scope` limits every selector to the team, @team names
-  them; its counts, triggers, scoreboard and notices cover only them); every member holds it (`NetEventMissions.Active`: the
+  (`EventRunner.StartMission`, the run's `team`: while it ticks `NetCommands.Scope` limits every selector to the team, @team names
+  them; its counts, triggers, scoreboard and notices cover only them); every member holds it (`EventMissions.Active`: the
   Missions window's left panel shows it in a session), the others get the mission card. Mission Complete (`complete [reward] [|
   title]`: the reward (else the mission's) split evenly across the team in the reward box) and Mission Failed (`fail [title]`)
   end it; so do the team leaving its ships' orbits for 3 s (failed) or the session. One mission per player at a time.
@@ -1379,6 +1473,232 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   equal to the number of message type indices"): `NetPlayModeReset` (Editor only) clears it at SubsystemRegistration.
 - Netcode for Entities' automatic bootstrap is replaced (`NoEntitiesBootstrap`): only an empty default world, no client /
   server worlds, nothing in the player loop, so single player runs as without the package.
+
+## Mods (remake-only)
+
+Player-made content as data (no code: the game is IL2CPP), in `Scripts/Runtime/Modding` (`GoF2Remake.Modding`); the modders'
+guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/plasma_arsenal` (items) and `frontier_systems`
+(systems / stations). Items, ships, systems and stations, quests and bar missions (event graphs), voice-over, music.
+
+- **A mod** = a folder or a `.zip` / `.gof2mod` (files at its root or in one top folder, `ZipSource`) with `mod.json`
+  (`ModManifest`: id (a-z 0-9 _ -, the lasting name), name / description (a string or per language), version, author,
+  website, preview image (default preview.png), dependencies). Mod JSON is read with Newtonsoft's JToken (`ModJson`: comments
+  allowed, errors with file and line), not JsonUtility. Folders (`ModManager.Folders`): `persistentDataPath/Mods` everywhere,
+  `<exe dir>/Mods` on desktop players, `<project>/Mods` in the Editor (git-ignored).
+- **On / off** (`ModManager`): PlayerPrefs `mods_enabled` (the ids in load order); new mods start off; `Active` = enabled,
+  unbroken, dependencies on, dependencies first; `Revision` bumps on every change. A broken mod.json or content file makes the
+  mod unusable (`ModInfo.Errors`), unknown fields are warnings. `ModInfo.Hash` = SHA-256 of every path + file (first 12 hex).
+- **Items** (`ModContent`, items.json): `{ "id", "base": n | "mod:id", fields }` adds an item (a copy of the base: type,
+  category and *look* kept, `ItemData.modded` / `modKey` / `Look`), `{ "override": n | "mod:id", fields }` changes one;
+  fields: name, description, techLevel, occurrence, prices (`price` n or [min, max]), price systems, `vosskOnly` (attr 60),
+  `alwaysSoldAt` (attr 61), `stats` by name (`ItemStats`: readable names + items.json's statList keys, kept in step with the
+  attribute), raw `attributes`, `defaultEconomy` (the same, for the Default Economy). Texts inline or `text/<lang>.json`
+  (`items.<id>.name`). `Database.Load` merges after the economy overlay (`ModContent.Apply`, only for the GoF2Data folder).
+  A mod item's 0 occurrence means never (the add-on items' random roll in `Shop.GenerateItems` skips them).
+- **Ships** (ships.json; the format of PR #34's custom_ships.json, `CustomShipData` in Database.cs): `{ "id", "model": glb,
+  stats, slots, race, hangarHeight, mounts (slotType 0-3, `upsideDown` turrets), icon, modelLength / modelYaw,
+  engineGlowRadius, materials, throttleGlow / extraGlows, lounge }` adds a ship (numbered after the original 64,
+  `ModRegistry.Kind.Ship`, assembly "ship_NNN_mod", pack "mod"); `{ "override", armor, cargo, price, priceDefault, slots,
+  handling }` changes one. `ModContent.ApplyShips` merges them into Ships / Assemblies / WeaponMounts; `CustomShips` (the PR's
+  API, now over the mods) serves race, hangar height and the lounge sellers; `GameNames.Ship` the texts (`ships.<id>.name`).
+  A ship whose mod is off is a placeholder (never sold); `ModSaves.FixShips` puts a save flying one into a Phantom (refunded,
+  its equipment in the hold) and drops stored / dealer / seller rows.
+- **Ship models** (`ModShips`, `ModShipBuilder`, `ModMaterials`, `ModGltfMaterials`; glTFast 6.20, `com.unity.cloud.gltfast`):
+  each new ship's GLB loads with glTFast (asynchronous: `Preload` from the main menu, the menu's Leave and `NetGame.EnterWorld`
+  wait for `Ready` / `WhenReady`, at most 30 s) into an AssembledObject template under a hidden DontDestroyOnLoad holder
+  (the run-time port of PR #34's CustomShipBuilder: hull turned by modelYaw and scaled to modelLength, engine glow discs at the
+  slot-3 mounts on mat_34813, throttle glows from their masks (`ThrottleGlow` with its trails), one LOD culled at 80000);
+  `AssembledObject.LoadPrefab` hands it out for pack "mod" (the Phantom stands in while loading), `NetProxy` for an
+  "Assembled/mod/..." path. Materials are always copies of the URP Lit templates in `Resources/GoF2Mods/ModAssets`
+  (**GoF2 > Build > Mod Assets**, `ModAssetsBuilder`: opaque / cutout / transparent, with and without detail maps; the
+  templates hold placeholder textures and a faint emission so URP keeps their keywords and a build keeps the variants): the
+  GLB's own glTF materials (`ModGltfMaterials`; metallic-roughness converted by `Hidden/GoF2/MetallicRoughnessToGloss`) or
+  the entry's `materials` (`ModMaterials.FromSpec`: the PR's fields plus `doubleSided`). Textures load from the mod's PNGs,
+  compressed with mipmaps. Shop icon: the entry's PNG (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
+  ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
+  `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
+  NetState applies them) is built again on `ModShips.ModelsChanged`.
+- **From PR #34, now general** (for any ship with the data): several turret mounts (`PlayerTurret.AttachAll`, one item per
+  mount in equipment order, `upsideDown` mounts; `FreeLookCamera` visits Turret 1, 2...; the HUD's auto-fire and turret-view
+  hints for each kind; `Hangar` takes a second turret into a second slot), `ThrottleGlow`, lounge ship sellers
+  (`AgentGenerator.AddCustomShipSellers`, `AgentOffer.SellShip`, `LoungeChat` / `LoungePanel` ConfirmShip: "Okay." buys, with
+  the Kaamo Club owned 327 Sell / Keep; `Hangar.BuyShipFor` / `KeepAndBuyShipFor`), `Shop.RaceOfShip`, `StationTables.ShipY`.
+  The turret view's crosshair follows the gun (`FlightHud.UpdateCrosshair`; collectors 0x1f5d `GoF2Hud/plasma_crosshair`,
+  `.crosshair--plasma`); before, it stayed on the nose for every manual turret.
+- **PR #34's ships as mods** (not in the repository: third-party models): `Mods/starwars_ships` (Jedi Starfighter,
+  Millennium Falcon), `startrek_ships` (Enterprise-E, Enterprise-D), `halo_ships` (Space Banshee); GLBs exported with
+  `ModModelExporter` (Project window, **GoF2 > Export Model As GLB (Mods)**; its own Editor assembly `GoF2.ModExport.Editor`,
+  glTFast.Export isn't auto-referenced; the plain-materials mode for ships whose ships.json materials replace them all),
+  the PR's textures (above 2048 px shrunk to 2048, the PR's import size), icons, previews, CREDITS.txt / mod.json credits
+  (the Falcon's and the Banshee's sources aren't stated in the PR).
+- **The look** (`ModContent.ItemLook`, `ItemData.Look`, `Gun.lookIndex`): the original item a mod item is based on supplies
+  the icon (`ItemInfo.ItemIcon`), the weapon fx (`WeaponFx.Load`), the text sprite, the turret models, trails, loop-release
+  rules and the index-keyed behaviour (beams 9-11 / 228, cluster pools, sentry looks). Code keyed on an item's number for a
+  *behaviour* should use `Look`; story / rule checks keep the real index.
+- **Names** (`GameNames`): every item / ship name and description goes through it (the original's text blocks 1274 / 1041 /
+  913 / 977 + index sit back to back: item 233's name would be the first medal's); never `Localization.Get(1274 + i)`.
+- **Numbers** (`ModRegistry`, `persistentDataPath/mod_registry.json`, outside the Mods folder): single player gives each "mod:id" key the next free
+  number after the original table (233+) for good; a key whose mod is off gets a placeholder (`ModContent.IsMissingItem`:
+  commodity 22, no price, never stocked) so the table stays 0..N-1 and saves keep their numbers. Sessions number afresh in the
+  session's order (the same on every game) and never touch the registry.
+- **Saves** (v12, `ModSaves`): `mods` (id, name, version) and `modKeys` (kind, key, number, price). `MissingMods` → the main
+  menu's and the station's load dialogs warn; `Fix` (before `SaveGame.Apply`) moves keys to their current numbers (a save
+  from another device; `ModRegistry.Adopt` takes the save's number when free) and removes a missing mod's items (equipment,
+  cargo, Kaamo storage, the parked ship refunded at the saved price; shop rows, bar sellers, records, blueprints, a Purchase
+  mission dropped). Imports accept a modded number the save names (`ModSaves.Names`).
+- **Systems and stations** (`ModWorld`, systems.json / stations.json): new systems after the original 34 (a race template,
+  map position, sky, gates both ways, `gateStation`), new stations after the 135 (at most 7 per system, `looksLike` = the
+  original station whose model / collision it uses, `StationLook` in `OrbitBuilder`), overrides; registry kinds System /
+  Station; placeholders for a mod that is off (`ModSaves.FixWorld` docks a save there at Var Hastra). The Void's invasions,
+  the ticker and random lounge stations skip mod / placeholder systems.
+- **Station models, planets, suns** (`ModStations`, `ModBackdrop`; stations.json `model` / `modelSize` (largest extent, game
+  units, default 40000) / `modelYaw` / `modelCentre` / `materials`, `collision` box | sphere | none or `volumes`, `interior`,
+  `planetTexture`; systems.json `sunTexture` / `sunColor`; new or override, `ModWorld.StationModel`): the GLB loads with the
+  ships in the background (`ModStations.LoadAll`, its own `TimeBudgetPerFrameDeferAgent`, textures through
+  `ModMaterials.PreloadTexture`, the planet / sun PNGs too; `ModLoading` waits for it) into an always-visible AssembledObject
+  template "modstation_NNN" (pack "mod", registered in `db.Assemblies`; `AssembledObject.LoadPrefab` hands it out); scaled to
+  modelSize, turned, its bounds' centre at the origin. `OrbitBuilder.StationAssembly` / `AddObstacles` use it once built
+  (`ModStations.Built`; else the looksLike original and its collision.json volumes): volumes from the placed model's bounds
+  (`ModStations.Volumes`, axis-aligned) or the listed ones. `SpaceLevel.StationDockRange` = max(16000, radius + 6000) and
+  `UndockPoint` z = max(10000, radius + 3000) game units for a mod model (radius = the obstacle's cubeHalf − 5000; NetTeleport
+  uses it too). `StationLevel`: `ModWorld.InteriorRace` picks the hangar and bar. Backdrop: texture names "mod:<id>|<path>"
+  (`ModWorld.PlanetTexture` / `SunTexture` in `OrbitLayout.BuildStarSystem`) make copies of planet_000_big / sun_000 with the
+  PNG (`ModBackdrop.Material`); `sunColor` 1 = LIGHT0 1.5. `ModMaterials` clears its cache itself when the mods change
+  (`Check`: ships, stations and backdrops share it). Example: `Modding/Examples/frontier_systems` (Kepler Prime's GLB from
+  primitives, its banded planet, a Nivelian interior, the sun). Verified in Play mode: the model in its orbit at 2.5 km, the
+  planet behind it, the sun, a ship placed inside pushed out to the box face, Dock offered there, the Nivelian hangar docked.
+  A sun PNG with a bright glow out to its edge blows up when the sun swells near the screen centre: the originals fade to black
+  well inside the edge (the guide says so).
+- **Weapon fx** (`ModWeapons`, items.json `"fx"` on a new item or an override; `ModFxPart`): projectile / muzzle / impact
+  each the base item's, `false` (none), a `sprite` (PNG on a two-sided 1 x 1 quad, white vertex colours: the GoF2 Shader
+  Graphs keep `_USEVERTEXCOLOR_ON` in every game material, so it stays on) or a `model` (glTF; with `texture` every
+  renderer gets the fx material and white vertex colours, else its own glTF materials); fields size (game units: the
+  sprite's width / the model's largest extent; the N'saan's own bolt is ~1600 units, its impact ~6300), color, glow,
+  additive (copies of `ModAssets.fxAdditive` = mat_27250 sprite_fire / `fxAlpha` = mat_20101 sprite_smoke, **GoF2 > Build >
+  Mod Assets**), lifetime (muzzle 100 / impact 300 ms), grow, fade, spin, alongFlight + stretch (axial billboard about the
+  flight direction, taken from its own movement: GunRig turns blaster roots to the camera), rotate; `shot` / `explosionSound`
+  (files or lists, loaded decoded), `shotLoops`. Each item gets a WeaponFx of its own (`Instantiate` of the base item's with
+  the parts / clips replaced); `WeaponFx.Load` returns `ModWeapons.Fx(item)` first (null while loading: the base look
+  meanwhile), so every gun (player, NPCs, turrets, sentries, `NetShotMirror`) uses it. `ModFxPart` (on the sprite / model
+  under the part's root, since GunRig sets the root's scale and rotation): camera facing, lifetime growth and fade through
+  `_Color` (rgb additive, alpha otherwise); `PartAnimation.PlayOnce` restarts it (`ModFxPart.RestartAll`, also turning it
+  to the camera at once) and `GunRig.MaxLength` counts its lifetime. Loaded in the background with the rest
+  (`ModLoading`, the menu's `Preload`). Verified in Play mode: the example's Plasma Lance (fired: violet bolts stretched
+  along their flight, the flash at the gun, the ring impact, its own shot sound).
+- **Sound effects** (`ModSounds`, a mod's `sounds/<clip name>.ogg | .wav | .mp3`): replaces the game's clip of that name
+  everywhere; `ModSounds.Get(clip)` wraps every `PlayOneShot` and `.clip =` site (57, not the music sources: ModMusic's),
+  memoised per clip (AudioClip.name allocates), a no-op without mod sounds; later mods win; loaded decoded
+  (`ModAudio.Load(..., compressed: false)`). Verified: `Target_Lock_v08` replaced.
+- **Mod campaigns** (`ModCampaigns`, a mod's `campaign.json`: name, description, image, startStation, startShip, credits,
+  equipment, cargo, standing, quest, galaxy mod | all, items mod | all, ships mod | all, trafficShips per race): an entry under
+  the campaign cards (`MainMenu.RefreshModCampaigns` / `PickModCampaign`, `.mod-campaign*` in MainMenu.uss) → difficulty →
+  economy → `BeginGame` → `ModCampaigns.Start`: Session.ResetNewGame's state, then `Session.ModCampaign` (save v14
+  `modCampaign`), `FreePlay` (no GoF2 story, index 20), the start station / ship / credits / equipment / cargo / standing, the
+  quest as a pending `GraphQuestState` (`EventRunner.RestorePending`: started once the station is up; the record takes the
+  graph's title). `ModCampaigns.Current` while its mod is on. "galaxy": "mod" = the campaign mod and its dependencies'
+  systems only (`ModWorld.SystemOwner`): `GalaxyMap.Visibility` forces the rest hidden on every call (the map draws no sun
+  for them, so no route or jump reaches them), `AgentGenerator.GenerateStationIndex` picks `ModCampaigns.RandomStation`
+  instead of R(135), the news ticker skips them; "items" / "ships": "mod" filter `Shop.GenerateItems` / `GenerateShips` (the
+  originals renamed *Original) and the bar's item sellers; `NpcTables.RandomFighter` → `ModCampaigns.TrafficShip`. Verified
+  in Play mode with a local test campaign (Mods/test_campaign: Kepler, the Jedi Starfighter, the plasma weapons): the entry,
+  the start (station, ship, credits, equipment), only Kepler visible, mod-only dealers, Jedi / Banshee traffic, missions
+  inside Kepler, the quest running, save / load keeping it.
+- **Custom hangars and bars** (`ModInteriors`, a mod's `interiors.json`: id, type hangar | bar, model, scale, materials, fov
+  (degrees), near / far (metres), ambient, lightIntensity, fog [r, g, b, end m]; hangar startYaw (Unity degrees), parkedMax,
+  flights, cruise, gateSpan; stations.json `hangar` / `bar` = an interior key, `interior` still the race): the GLB loads with the
+  station models (`ModStations.LoadInterior`), its glTF cameras / lights removed; marker nodes by name, positions only (room-root
+  space, Unity metres): hangar `pad` (required), `camera` (required), `camera_target` (default the pad), `parked_N`, `gate` +
+  `gate_out` (the flights' lane: `StationLevel.CustomLane`, gateSpan default gate y ± 30, cruise pad + 40), `light`; bar
+  `camera` + `camera_target` (required), `camera_start` + `camera_start_target`, `visitor_N` (at least one), `light`. A missing
+  required marker = a warning and the race's room. `StationLevel`: `customHangar` / `customBar` replace the room, the pads
+  (`PadPosition` / `ParkedPosition`: marker + `StationTables.ShipY`, no lift table), the parked slots / max (`HangarTraffic`),
+  the lane, the camera (drift around the marker, LookRotation to the target, `SetCustomLens`), the key light / ambient / fog
+  (`SetCustomFog`), the visitor slots (`SlotFeet`) and the bar camera (A / B from the markers; the sway turns about the camera
+  spot, not the room's origin); HangarIndex / BarRace stay the race's for the parked fighters, glows, billboards and music.
+  Example: frontier_systems' kepler_hangar / kepler_bar (primitives at the originals' scale: hangar 600 x 200 x 600 m, bar
+  300 x 70 x 300 m). Verified in Play mode: both rooms built, docked in the custom hangar (the pad, a parked ship, the camera),
+  the fly-in through its gate, the custom bar (visitors on the markers with their plates, the windows showing space); the
+  visitors read as backlit figures as in the original bars.
+- **Skies** (systems.json `"skybox"`: nebula / stars images, stars 0-2 or "none", nebulaBrightness / starsBrightness,
+  rotation [x, y, z] Unity degrees; `ModWorld.Skybox` / `SkyOf`): `OrbitBuilder.SetupSky` (not for a nebula override such as the
+  prologue's) sets GoF2/SpaceSky's `_NebulaMap` / `_StarsMap` with the keywords `_NEBULA_PANORAMA` / `_NEBULA_STRIP` /
+  `_STARS_*` (`multi_compile_local`, so a build keeps all nine variants) by the image's aspect (2:1 panorama, 6:1 cube-face
+  strip; else a warning and the game's layer), `_NebulaGain` / `_StarsGain`, and a fixed `_SkyRotation` when given (else
+  the per-station R_sky). The shader samples the images directly at mip 0 (no baking; no seam at the panorama's wrap, the
+  strip's faces kept half a texel in): panorama u = atan2(x, z) / 2π + 0.5 (+Z in the middle, +X at 0.75), v =
+  asin(y) / π + 0.5; strip order +X, -X, +Y, -Y, +Z, -Z, each as seen from inside (up face: front at its bottom, down face:
+  at its top). Images through `ModBackdrop.Texture` / `ModMaterials` (preloaded with the backdrops, `ModWorld.BackdropTextures`).
+  Example: frontier_systems' 2048 x 1024 Kepler nebula (generated, seamless) over the game's star layer 1. Verified in Play
+  mode: a labelled debug strip with a zero rotation (each face on its axis, upright, the up / down faces as documented), the
+  panorama with the per-station turn, no seam.
+- **Characters** (`ModCharacters`, a mod's `characters.json`: id, name (per language), portrait PNG, race, gender, mirrored,
+  background, frame, replaces): `NetAdmin.ResolveSpeaker` takes a character by key "mod_id:id" (before the story speakers),
+  else after them by id or name (any language), "x as Name" renaming; the spec is "-3 US rename US key" (`Events.SpeakerSpec`,
+  which also parses the others: -1 face, -2 reader, ≥ 0 story). `NetAdmin.SplitSpeaker` finds the speaker's colon by trying
+  each colon in turn (a key holds one). Drawn by `Portrait.ShowCharacter` (the PNG covering the 160 x 200 layers, background
+  cover, top-centred; the game's background under it and frame over it unless off; `mirrored` flips): DialogueView
+  (`Page.character`), the radio box (`Traffic.Chatter.character`), EventScreen's question and mission card, the lounge
+  client and the Missions window (`EventMissions.Offer.character`; the character's race / gender pick the bar figure).
+  `replaces` (a story speaker by name / first name / number): `Portrait.ShowSpeaker` draws the character instead, story
+  included. `TextReveal.Names` tints character names as people (rebuilt when `ModManager.Revision` changes). Portraits
+  through `ModMaterials` (Preload from the main menu). Example: frontier_systems' Captain Vega. Verified in Play mode: a
+  dialogue page by id, one by key with a rename, a replaced story speaker (mirrored), a radio call in flight.
+- **Dependencies** (`ModManifest.dependencies`, "id" or "id>=version" → `dependencyVersions`, `VersionAtLeast`): `Active`
+  drops a mod whose dependency is missing, broken, off or too old (`InactiveReason` says which); `SetEnabled` on turns the
+  dependencies on (recursively), off turns the mods that need it off (`NeededBy`); the browser lists each dependency's state
+  and "Needed by". Another mod's content by key "mod:id": items.json / ships.json `base` / `override`, systems / stations
+  refs, and the event graphs' names (`NetAdmin.FindShip` / `FindItem` / `FindHull`, `NetTeleport.ParseStation`).
+- **Quests and bar missions** (event graphs in a mod's `events/*.gof2event`, found by `EventRunner.Load` / `List` after the
+  Events folders, the later mod in the load order winning; then the built-ins): see "Event graph quests" in Multiplayer.
+- **Voice-over** (`ModVoices`, `ModAudio`): "[voice <clip>]" in a Dialog page or a Radio line (`ModVoices.Take` in
+  `NetAdmin.Apply`'s Dialog / Radio orders); the clip is an original voice line by its event name or a mod's
+  `voices/<de|en>/<clip>.ogg|wav|mp3`, else `voices/<clip>.*`; loaded in the background (`Preload` when the order arrives;
+  `ModAudio.Load`: UnityWebRequestMultimedia from the folder, a zip's file copied to temporaryCachePath/ModAudio first);
+  `StoryAssets.Voice` falls back to `ModVoices.Get`, so the dialogue window and the radio box play it; `EventScreen` holds a
+  queued dialogue up to 3 s while its clips load.
+- **Music** (`ModMusic`): a mod's `music/<name>.*` named like an original clip (the asset names in Audio/MUSIC, DLC_MUSIC,
+  DLC2_MUSIC) replaces it at every music start (`ModMusic.Replace` in Traffic, CampaignLevel.PlayMusic, StationLevel,
+  MainMenu (swapped in when it loads, `ModMusic.Changed`), EndingCredits, StationMenu's Void alarm, EventScreen.PlayMusic);
+  other names are new tracks: `/music <name>` (Order.Music a = -2, `EventScreen.PlayModMusic`), the Play Music node's Mod
+  track, systems.json `spaceMusic` / `stationMusic` and stations.json `music` (`ModWorld.SpaceMusic` via
+  `Traffic.RaceSpaceMusic`, `ModWorld.StationMusic`). All tracks load (kept compressed) when the mods change; the menu's
+  Leave waits for `ModMusic.Ready` too.
+- **Loading** (startup lag, `ModLoading`, `UI.ModLoadingView`): everything the mods bring loads at once in the background
+  from the main menu's start (and again when the mods change): every ship together (`ModShips.LoadShip`: the files read on
+  worker threads, the textures decoded by UnityWebRequestTexture off the main thread (`ModMaterials.PreloadTexture`, into
+  the cache `ModMaterials.Texture` reads; zip files copied out once by `ModInfo.LocalFile`, cache folder by the zip's date and
+  size), glTFast's main-thread work for all of them in one `TimeBudgetPerFrameDeferAgent` (0.6 of a frame; the old
+  `UninterruptedDeferAgent` built each model in one go), the stations and rooms (`ModStations`), the weapon fx
+  (`ModWeapons`), the music tracks and sound effects (`ModAudio`, `ModMusic`, `ModSounds`). Textures are compressed to DXT1 /
+  DXT5 with their mipmaps by a Burst job (`ModTextureEncoder`, van Waveren's real-time encoder, native buffers: Texture2D.Compress
+  took 110-145 ms per 2048 px texture on the main thread, a managed encoder's garbage a 2 s collection) where the GPU reads
+  DXT; elsewhere (phones) Texture2D.Compress, one texture per frame. The startup splash shows "Loading mods" with a progress
+  bar and the ship / track in progress until it is done (`MainMenu.WaitForMods`, then the title), so does the fade before a
+  game scene when the mods changed in the menu (Leave). Measured in the Editor with the five PR ships: 5.3 s with frames of
+  100-180 ms before, 0.9-1.9 s after with smooth frames (two of 83 / 164 ms right after the menu scene's load).
+- **Mod browser** (`ModBrowser`, the main menu's Mods button and `modsPanel`; styles `.mods-*` in MainMenu.uss): the list in
+  load order (thumbnail, name, version · author, On / Off / Error / Can't load), the selected mod's preview, name, meta,
+  description and credits (mod.json `credits`), where it is installed, errors and warnings, Turn on / off, Earlier / Later, Open mods folder (the selected
+  mod's folder, else `ModManager.MainFolder`: the user folder, the project's Mods in the Editor; desktop only, phones show
+  the path), Refresh.
+  Mods change only in the menu: the tables are rebuilt when a game starts or loads.
+- **Multiplayer** (`NetMods`): the Host card's "Mods (N on)" Off / Allowed (`mp_allow_mods`, off by default; a dedicated
+  server's `-allowmods` / `ALLOWMODS=1` = every usable mod in its Mods folders). Every session starts without mods
+  (`PrepareSession` → `BeginClient`); the host's `BeginHost` sets `ModManager.BeginSession` and `NetMods.SessionList`
+  ("id@version#hash;..."), NetState carries it (`sessionMods`, FixedString4096) and a joining game turns exactly those on
+  (`ApplyFromServer`) before `EnterWorld`. The connection data's 4th line lists the joiner's installed mods ("id#hash;...");
+  `NetMods.Refusal` turns away a game lacking one (same files, on or off doesn't matter) with their names. Lobby keys `mods` /
+  `modnames`: the browser tags such games "Modded", shows the mods and "needs mods: ..." when this game lacks some (not
+  joinable). `NetGame.OnMainMenu` → `NetMods.End` (single player's mods back); `NetGame.ResetDb` on every change.
+- Verified in Play mode (ships): the three PR mods load without warnings; every ship on the turntable and the Falcon in flight
+  (engine band, two turrets with the auto one under the hull, the turret crosshair); four lounge sellers at Var Hastra, the
+  Falcon bought ("Okay.", trade-in); a Windows development build joining an Editor host with mods allowed: the session's
+  four mods turned on, the five models built in the IL2CPP build, the host's Falcon parked in the client's hangar and seen in
+  flight; the item window's 3D view. Not yet: a client refused for missing mods in a build (the check itself is verified).
+- Verified in Play mode: the browser (folder, zip, broken mod with its line, toggling), the example's items in Var Hastra's shop
+  with their texts / stats / icon, bought, mounted and fired with the N'saan's fx, a save with the mod turned off (the warning,
+  removal, refund, placeholder), hosting with mods allowed (the session list, NetState, the join check both ways) and off (the
+  original tables), the Host card row. Not yet: the server browser's Modded tag against a real listed game, a client build.
 
 ## VR (remake-only, PC VR through OpenXR; in progress)
 

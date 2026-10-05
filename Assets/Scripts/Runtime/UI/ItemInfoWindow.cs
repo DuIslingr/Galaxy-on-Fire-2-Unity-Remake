@@ -216,8 +216,8 @@ namespace GoF2Remake.UI
             Row(T(269), (s.slots.equipment + (mine && Session.HasMod(2) ? 1 : 0)) + Plus(2), Cmp(s.slots.equipment, cur?.slots.equipment ?? 0));
             Row(T(164), (Mathf.RoundToInt(s.handling) + (mine && Session.HasMod(3) ? 20 : 0)) + Plus(3), Cmp(s.handling, cur?.handling ?? 0));
             if (showPrice) Row(T(132), ItemInfo.Credits(price));
-            text.text = T(977 + ship);
-            ShowPreview(db, ship, ship < Shop.ShipRace.Length ? Shop.ShipRace[ship] : 0);   // the model by the original's race (freighters)
+            text.text = GameNames.ShipDescription(ship);
+            ShowPreview(db, ship, Mathf.Max(0, Shop.RaceOfShip(ship)));   // the model by the original's race (freighters)
         }
 
         public void Close()
@@ -256,7 +256,9 @@ namespace GoF2Remake.UI
             cam.nearClipPlane = 200f * M;
             cam.farClipPlane = 30000f * M;
             var bounds = new Bounds(stage.transform.position, Vector3.zero);
-            foreach (var r in go.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
+            // Meshes only: a trail or particle renderer (a mod ship's ThrottleGlow trails) is empty at the world origin, far
+            // from the stage, and framed the ship from kilometres away.
+            foreach (var r in go.GetComponentsInChildren<Renderer>()) if (r is MeshRenderer || r is SkinnedMeshRenderer) bounds.Encapsulate(r.bounds);
             // Remake: the original's direction, at the distance that frames this ship (its offset was made for the
             // original's model scale, the remake's ships sat tiny in the box).
             float radius = Mathf.Max(bounds.extents.magnitude, 1f);

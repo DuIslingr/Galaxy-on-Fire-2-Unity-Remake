@@ -98,7 +98,7 @@ namespace GoF2Remake.UI
 
             music = musicSource != null ? musicSource : gameObject.AddComponent<AudioSource>();
             music.Stop();
-            music.clip = assets.outroSong;
+            music.clip = Modding.ModMusic.Replace(assets.outroSong);
             music.loop = true;   // 144 OutroSong loops (72 s in the 136 s sequence)
             music.volume = Settings.MusicVolume;
             if (music.clip != null) music.Play();
@@ -164,7 +164,7 @@ namespace GoF2Remake.UI
             radioReveal ??= new TextReveal(radioText);
             if (StoryTable.IsNarration(line.speaker)) radioReveal.Clear();
             else radioReveal.Begin(lineText, alien, clip);
-            if (clip != null) { voice.clip = clip; voice.volume = Settings.VoiceVolume; voice.Play(); }
+            if (clip != null) { voice.clip = GoF2Remake.Modding.ModSounds.Get(clip); voice.volume = Settings.VoiceVolume; voice.Play(); }
         }
 
         static bool TappedAnything()

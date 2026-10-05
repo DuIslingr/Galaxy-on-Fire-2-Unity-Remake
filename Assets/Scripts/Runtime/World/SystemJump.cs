@@ -67,6 +67,8 @@ namespace GoF2Remake.World
         /// <summary>The HUD is hidden: docked to the gate or a jump scene running.</summary>
         public bool Cinematic => state == State.AtGate || state == State.GateScene || state == State.KhadorScene;
         public bool Charging => state == State.Charging;
+        /// <summary>Remake: the ship is on its way through a jumpgate or the Khador Drive (the jump scenes; ThrottleGlow).</summary>
+        public bool Traveling => state == State.GateScene || state == State.KhadorScene;
         /// <summary>PlayerEgo::getDriveChargeRate: 0..1 while charging.</summary>
         public float ChargeRate => Mathf.Clamp01(chargeMs / GalaxyMap.ChargeMs);
         public event Action<string> Message;
@@ -388,7 +390,7 @@ namespace GoF2Remake.World
 
         void Play(AudioClip clip)
         {
-            if (clip != null) sfx.PlayOneShot(clip, Settings.SfxVolume);
+            if (clip != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), Settings.SfxVolume);
         }
     }
 }

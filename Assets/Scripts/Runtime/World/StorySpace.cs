@@ -253,6 +253,14 @@ namespace GoF2Remake.World
             return true;
         }
 
+        /// <summary>Remake: an event graph quest failed (EventRunner): the story's failure note, then the last save.</summary>
+        public void FailQuest(string title)
+        {
+            if (failed) return;
+            failed = true;
+            OpenText(title + "\n\n" + Localization.Get(319), 16, () => level.LoadLastSave());
+        }
+
         void Fail()
         {
             failed = true;

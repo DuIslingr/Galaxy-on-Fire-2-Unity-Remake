@@ -38,7 +38,7 @@ namespace GoF2Remake.EditorTools
             }
         }
 
-        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS", "ALLOWDEBUG", "WEBPORT", "WEBBIND" };
+        static readonly string[] Settings = { "NAME", "PASSWORD", "MAXPLAYERS", "ALLOWDEBUG", "WEBPORT", "WEBBIND", "ALLOWMODS" };
 
         /// <summary>A launcher already there keeps its edited settings (the name, password, player limit, Debug menu) in the new
         /// one; a setting it doesn't have yet (an older launcher) gets the default.</summary>
@@ -73,6 +73,8 @@ namespace GoF2Remake.EditorTools
             "set WEBPORT=\n" +
             "rem 127.0.0.1 = this PC only; 0.0.0.0 = the network too (plain HTTP: not on the open internet).\n" +
             "set WEBBIND=127.0.0.1\n" +
+            "rem 1 = the session runs every mod in the Mods folder next to the game (players need the same files); 0 = none.\n" +
+            "set ALLOWMODS=0\n" +
             "rem Add -unlisted to keep it out of the server browser (players then join with the join code from the console).\n" +
             // Only a set password goes on the command line (Unity drops an empty "" argument).
             "set PASSWORDARG=\n" +
@@ -81,7 +83,9 @@ namespace GoF2Remake.EditorTools
             "if \"%ALLOWDEBUG%\"==\"1\" set DEBUGARG=-allowdebug\n" +
             "set WEBARG=\n" +
             "if defined WEBPORT set WEBARG=-webport %WEBPORT% -webbind %WEBBIND%\n" +
-            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS% %DEBUGARG% %WEBARG%\n";
+            "set MODSARG=\n" +
+            "if \"%ALLOWMODS%\"==\"1\" set MODSARG=-allowmods\n" +
+            $"start \"\" \"%~dp0{exe}\" -batchmode -nographics -server -relay -name \"%NAME%\" %PASSWORDARG% -maxplayers %MAXPLAYERS% %DEBUGARG% %WEBARG% %MODSARG%\n";
 
         static string LinuxLauncher(string exe) =>
             "#!/bin/sh\n" +
@@ -94,12 +98,14 @@ namespace GoF2Remake.EditorTools
             "ALLOWDEBUG=0       # 1 = the players may use the Debug menu (cheats, items, spawns)\n" +
             "WEBPORT=           # the web admin's port (e.g. 8080), empty = off; log in with the admin token or /web's code\n" +
             "WEBBIND=127.0.0.1  # 127.0.0.1 = this machine only; 0.0.0.0 = the network (plain HTTP: put a TLS proxy in front)\n" +
+            "ALLOWMODS=0        # 1 = the session runs every mod in the Mods folder (players need the same files)\n" +
             "# Add -unlisted to keep it out of the server browser (players then join with the join code shown here).\n" +
             "cd \"$(dirname \"$0\")\"\n" +
             $"chmod +x \"./{exe}\" 2>/dev/null\n" +   // quoted: the product name has spaces ("Galaxy on Fire 2.x86_64")
             "if [ -n \"$PASSWORD\" ]; then set -- -password \"$PASSWORD\"; else set --; fi\n" +
             "if [ \"$ALLOWDEBUG\" = \"1\" ]; then set -- \"$@\" -allowdebug; fi\n" +
             "if [ -n \"$WEBPORT\" ]; then set -- \"$@\" -webport \"$WEBPORT\" -webbind \"$WEBBIND\"; fi\n" +
+            "if [ \"$ALLOWMODS\" = \"1\" ]; then set -- \"$@\" -allowmods; fi\n" +
             $"exec \"./{exe}\" -batchmode -nographics -server -relay -name \"$NAME\" \"$@\" -maxplayers \"$MAXPLAYERS\" -logFile -\n";
     }
 }

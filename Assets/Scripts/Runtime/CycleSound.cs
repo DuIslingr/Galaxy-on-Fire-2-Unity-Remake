@@ -40,7 +40,7 @@ namespace GoF2Remake.World
             for (int i = 0; i < loops.Length; i++)
             {
                 var s = host.AddComponent<AudioSource>();
-                s.playOnAwake = false; s.loop = true; s.spatialBlend = 0f; s.clip = loops[i].clip;
+                s.playOnAwake = false; s.loop = true; s.spatialBlend = 0f; s.clip = GoF2Remake.Modding.ModSounds.Get(loops[i].clip);
                 loopSources[i] = s;
                 loopGains[i] = loops[i].gain;
             }
@@ -94,7 +94,7 @@ namespace GoF2Remake.World
             nextAdd = (nextAdd + 1) % adds.Length;
             float vol = a.minVolume > 0f && a.minVolume < 1f ? Random.Range(a.minVolume, 1f) : 1f;
             src.pitch = a.pitchOctaves > 0f ? Mathf.Pow(2f, Random.Range(-a.pitchOctaves, a.pitchOctaves)) : 1f;
-            src.PlayOneShot(clip, a.gain * vol * Volume);
+            src.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), a.gain * vol * Volume);
         }
 
         static Add[] At(AudioClip[] clips, float gain, params float[] at) =>

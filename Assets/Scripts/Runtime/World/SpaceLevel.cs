@@ -42,6 +42,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.World
 {
@@ -91,14 +92,30 @@ namespace GoF2Remake.World
         public FreelanceOrbit FreelanceOrbit { get; private set; }
         /// <summary>The Kaamo Club's pirate siege (station 108 before it's freed), null elsewhere.</summary>
         public KaamoSiege Siege { get; private set; }
-        /// <summary>The player's turret (null without a turret item / mount).</summary>
-        public PlayerTurret Turret { get; private set; }
+        /// <summary>The ship's turrets, in mount order (remake: more than one on a custom ship with several turret mounts).</summary>
+        public System.Collections.Generic.IReadOnlyList<PlayerTurret> Turrets => turrets;
+        readonly System.Collections.Generic.List<PlayerTurret> turrets = new System.Collections.Generic.List<PlayerTurret>();
+        /// <summary>The turret the HUD and the level scripts talk to: the one in the turret view, else the first (null: none).</summary>
+        public PlayerTurret Turret
+        {
+            get
+            {
+                PlayerTurret first = null;
+                foreach (var t in turrets)
+                {
+                    if (t == null) continue;
+                    if (t.InTurretView) return t;
+                    if (first == null) first = t;
+                }
+                return first;
+            }
+        }
         public FreeLookCamera FreeLook { get; private set; }
         public PlayerCloak Cloak { get; private set; }
         public TimeExtender Extender { get; private set; }
         /// <summary>MGame::dockEvent: 525 while a mission holds the player here (the story's blocks, the Kaamo siege).</summary>
         public bool DockingBlocked => Story.BlocksDocking(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active) || FreelanceBlocks
-                                      || Multiplayer.NetEventRules.NoDocking;   // an event's Restrict Travel
+                                      || Events.EventRules.NoDocking;   // an event's Restrict Travel
         bool freelanceMissionOrbit;
         /// <summary>The orbit was built around the freelance mission (Status::departStation put it in Status+400) and it holds
         /// the player here until it is won or failed (Freelance.BlocksTravel).</summary>
@@ -111,8 +128,9 @@ namespace GoF2Remake.World
         /// cutscene script decides).</summary>
         public bool StartSequenceOver => launchCameraMs <= 0f && (Campaign == null || Campaign.StartSequenceOver);
         public bool LaunchCameraOver => launchCameraMs <= 0f;
-        /// <summary>A LevelScript cutscene owns the camera (MGame+0x5f): no HUD, no player control.</summary>
-        public bool Cutscene => Campaign != null && Campaign.Cutscene;
+        /// <summary>A LevelScript cutscene owns the camera (MGame+0x5f): no HUD, no player control. Also an event graph's
+        /// cutscene (Events.EventCutscene, "cutscene start").</summary>
+        public bool Cutscene => (Campaign != null && Campaign.Cutscene) || Events.EventCutscene.Cinematic;
         public Transform Asteroids { get; private set; }
         public Backdrop Backdrop { get; private set; }
         public GameObject Station { get; private set; }
@@ -127,6 +145,14 @@ namespace GoF2Remake.World
 
         /// <summary>PlayerEgo::collidesWithStation / calcCollision 0xab550: |pos| &lt; 16000 units.</summary>
         public const float DockRange = 16000f;
+
+        /// <summary>This orbit's dock range in game units: 16000, or for a mod's own station model (ModStations) its bounding
+        /// radius + 6000, so the range reaches past its collision (a bigger model kept the player out of the 16000).</summary>
+        public float StationDockRange { get; private set; } = DockRange;
+
+        /// <summary>Where a launch starts (Level::init 0xbb7a8: (10, 10, 10000) game units; a mod's station model: its bounding
+        /// radius + 3000 out along game +z, at least 10000).</summary>
+        public Vector3 UndockPoint { get; private set; } = OrbitLayout.UndockPosition;
         const float LaunchCameraMs = 7000f;
 
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
@@ -134,7 +160,7 @@ namespace GoF2Remake.World
         public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
                                && !DockingBlocked && PlayerHull.PlayerShip   // remake debug: no hangar for a freighter / capital ship
                                && (Mining == null || Mining.State == Mining.Phase.Idle);
-        bool InDockRange => Player.transform.position.sqrMagnitude < DockRange * M * DockRange * M;
+        bool InDockRange => Player.transform.position.sqrMagnitude < StationDockRange * M * StationDockRange * M;
 
         Database db;
         public Database Database => db;
@@ -249,6 +275,8 @@ namespace GoF2Remake.World
             bool missionFollower = missionHere && !freelanceOrbit;   // a squadmate here runs it: its briefing, route, timer, score
             // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
             bool siege = !storyOrbit && !missionHere && arena == null && KaamoClub.SiegeAt(station);
+            // Remake: an event graph quest's orbit (questorbit): no normal traffic, like a story orbit (single player).
+            bool questOrbit = !storyOrbit && !missionHere && !siege && arena == null && !NetGame.Active && EventRunner.QuietOrbit(station);
             // Level::assignGuns reads the level mission (Status+400): a campaign level or a freelance mission's type.
             NpcTables.InCampaignLevel = storyOrbit;
             NpcTables.LevelFreelanceType = freelanceOrbit ? Freelance.Mission.type : -1;
@@ -257,7 +285,7 @@ namespace GoF2Remake.World
             // ships (NetOrbit) and take them over if it leaves, never building new ones.
             // An arena: no NPCs, or with the Void fighters the alien orbit's own (run by the first player in the match's orbit).
             NetAuthority = NetGame.Active && (arena == null || arena.voids) && NetState.OrbitEmpty(NetOrbitId);
-            ownPassive = storyOrbit || freelanceOrbit || siege || (arena != null && !arena.voids);
+            ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || (arena != null && !arena.voids);
             Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
@@ -317,7 +345,7 @@ namespace GoF2Remake.World
             Hints.Setup(this);
             Navigation.JumpsBlocked = () => NetArenaClient.InMatch || !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
                                             || FreelanceBlocks   // a freelance mission's orbit (#32)
-                                            || Multiplayer.NetEventRules.NoJumps   // an event's Restrict Travel
+                                            || Events.EventRules.NoJumps   // an event's Restrict Travel
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100);   // escorting Khador (MGame::UseKhadorDrive)
             // MGame::UseKhadorDrive 0x1a9480 has no Void rule of its own: the mission gate above (Story.BlocksJumps, 525) is the
             // only refusal, and in the alien orbit the drive returns to Status+0x84 (#26: the remake used to refuse it there
@@ -326,7 +354,7 @@ namespace GoF2Remake.World
             Navigation.PlanetJumpRefused = st => StorySpace != null && StorySpace.RefusePlanetJump(st);
             // MGame::dockEvent refuses the gate on the same mission check as docking: the story's level missions too.
             SystemJump.GateBlocked = () => Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || FreelanceBlocks
-                                           || (Siege != null && Siege.Active) || Multiplayer.NetEventRules.NoJumps;
+                                           || (Siege != null && Siege.Active) || Events.EventRules.NoJumps;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
             Traffic.LockedTarget = () => Radar != null ? Radar.Locked : null;   // locking a Most Wanted criminal uncovers it
@@ -406,7 +434,8 @@ namespace GoF2Remake.World
             if (Session.Wingmen.Count > 0 && Session.WingmanContractMs > 0f) Session.WingmanContractMs = Mathf.Max(0f, Session.WingmanContractMs - Time.deltaTime * 1000f);
             if (Health == null) return;
             Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic)
-                                  || (Campaign != null && Campaign.PlayerInvulnerable) || (StorySpace != null && StorySpace.SuccessPending);
+                                  || (Campaign != null && Campaign.PlayerInvulnerable) || (StorySpace != null && StorySpace.SuccessPending)
+                                  || Events.EventCutscene.Invulnerable;
             Collision.off = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic)
                             || (Campaign != null && Campaign.CollisionOff);   // PlayerEgo+0x144
             Collision.ignoreGate = Navigation.GoingToGate;
@@ -546,7 +575,19 @@ namespace GoF2Remake.World
         }
 
         /// <summary>The station's volumes (collision.json) and the visible jumpgate's sphere (see Obstacle).</summary>
-        void AddObstacles() => OrbitBuilder.AddObstacles(Layout, Station, Jumpgate);
+        void AddObstacles()
+        {
+            OrbitBuilder.AddObstacles(Layout, Station, Jumpgate);
+            // Remake mods: a station of its own model sizes the dock range and the launch point.
+            var own = Modding.ModWorld.ModelOf(Layout.stationIndex);
+            var obstacle = Station != null ? Station.GetComponent<Obstacle>() : null;
+            if (own != null && Modding.ModStations.Built(own.station) && obstacle != null)
+            {
+                float radius = obstacle.cubeHalf / M - 5000f;   // AddObstacles: the bounding radius + 5000 units
+                StationDockRange = Mathf.Max(DockRange, radius + 6000f);
+                UndockPoint = new Vector3(OrbitLayout.UndockPosition.x, OrbitLayout.UndockPosition.y, Mathf.Max(OrbitLayout.UndockPosition.z, radius + 3000f));
+            }
+        }
 
         float farClip = 300000f * M;   // the level's far plane (m), see SetupCamera
 
@@ -600,8 +641,9 @@ namespace GoF2Remake.World
             if (Cloak != null) Destroy(Cloak);
             Cloak = PlayerCloak.Attach(root, db, shipIndex, Health.Target, model.transform);
             if (Navigation != null) Navigation.Cloak = Cloak;
-            if (Turret != null) Destroy(Turret);
-            Turret = PlayerTurret.Attach(root, db, shipIndex, Session.Equipment, chase);
+            PlayerTurret.RemoveAll(turrets);
+            turrets.Clear();
+            turrets.AddRange(PlayerTurret.AttachAll(root, db, shipIndex, Session.Equipment, chase));
 
             PlayerHull.AttachTurrets(this);
         }
@@ -620,7 +662,7 @@ namespace GoF2Remake.World
             }
             else
                 root.transform.SetPositionAndRotation(
-                    OrbitLayout.ToUnity(OrbitLayout.UndockPosition),
+                    OrbitLayout.ToUnity(UndockPoint),
                     OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
             // Multiplayer: players launching together sit side by side, 80 m apart by client id; an arena's spawn ring.
             if (NetArenaClient.InMatch) { var spawn = NetArenaClient.SpawnPose(); root.transform.SetPositionAndRotation(spawn.position, spawn.rotation); }
@@ -685,8 +727,9 @@ namespace GoF2Remake.World
             chase.positionCoefficient = 0.006f;         // TargetFollowCamera::resetShipHandling: position / look-at
             chase.rotationCoefficient = 0.005f;
             chase.Snap();
-            // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount.
-            Turret = PlayerTurret.Attach(root, db, Session.ShipIndex, Session.Equipment, chase);
+            // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount (remake: each on its own mount).
+            turrets.Clear();
+            turrets.AddRange(PlayerTurret.AttachAll(root, db, Session.ShipIndex, Session.Equipment, chase));
             // MGame::switchCamera: the camera button's modes (standard / turret / free look).
             FreeLook = FreeLookCamera.Attach(root, chase, Turret);
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).

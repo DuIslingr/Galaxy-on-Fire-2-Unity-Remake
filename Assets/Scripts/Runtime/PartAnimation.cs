@@ -205,7 +205,7 @@ namespace GoF2Remake.Visuals
                 a.Restart();
                 longest = Mathf.Max(longest, a.LengthMs);
             }
-            return longest;
+            return Mathf.Max(longest, Modding.ModFxPart.RestartAll(root));   // a mod weapon's sprites / models
         }
 
         static float Eval(AnimationKey[] k, float t, float fallback)

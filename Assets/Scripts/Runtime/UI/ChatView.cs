@@ -388,7 +388,7 @@ namespace GoF2Remake.UI
                 sound.spatialBlend = 0f;
             }
             if (sound.isPlaying) return;   // max_playbacks 1
-            sound.clip = messageClip;
+            sound.clip = GoF2Remake.Modding.ModSounds.Get(messageClip);
             sound.volume = Mathf.Clamp01(MessageVolume * GoF2Remake.Flight.Sfx.EventGain * Settings.SfxVolume);
             sound.Play();
         }

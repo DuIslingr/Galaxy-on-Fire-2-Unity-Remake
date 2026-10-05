@@ -42,6 +42,9 @@ namespace GoF2Remake.Flight
         static AudioClip Pick(AudioClip[] list, AudioClip fallback) =>
             list != null && list.Length > 0 ? list[Random.Range(0, list.Length)] : fallback;
 
-        public static WeaponFx Load(int item) => Resources.Load<WeaponFx>($"{ResourcesFolder}/item_{item:000}");
+        /// <summary>The item's fx: a mod item's own (items.json "fx", Modding.ModWeapons), else its base item's
+        /// (Modding.ModContent.ItemLook).</summary>
+        public static WeaponFx Load(int item) =>
+            Modding.ModWeapons.Fx(item) ?? Resources.Load<WeaponFx>($"{ResourcesFolder}/item_{Modding.ModContent.ItemLook(item):000}");
     }
 }

@@ -11,6 +11,7 @@ using Unity.GraphToolkit.Editor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
 using UnityEngine.UIElements;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.EditorTools
 {
@@ -55,21 +56,40 @@ namespace GoF2Remake.EditorTools
     {
         public override void OnViewBuilt() => EventGraphPickers.Add(this, "Pick event...", EventStartEventNode.Event, () =>
         {
-            // The project's event graphs (the built-ins under Resources/GoF2Net/Events first; templates aren't events).
+            // The project's event graphs (the built-ins under Resources/GoF2Events first; templates aren't events).
             var list = new List<(string, string)>();
             foreach (string guid in UnityEditor.AssetDatabase.FindAssets("", new[] { "Assets" }))
             {
                 string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
                 if (!path.EndsWith("." + EventGraph.Extension) || path.Contains("/Editor/Events/Templates/")) continue;
                 string name = System.IO.Path.GetFileNameWithoutExtension(path);
-                list.Add((path.Contains("/Resources/GoF2Net/Events/") ? "Built in/" + name : "Project/" + name, name));
+                list.Add((path.Contains("/Resources/GoF2Events/") ? "Built in/" + name : "Project/" + name, name));
             }
             return list;
         });
     }
 
+    public class EventStartQuestNodeView : NodeView<EventStartQuestNode>
+    {
+        public override void OnViewBuilt() => EventGraphPickers.Add(this, "Pick quest...", EventStartQuestNode.Quest, EventGraphPickers.ProjectGraphs);
+    }
+
     public static class EventGraphPickers
     {
+        /// <summary>The project's event graphs (the built-ins under Resources/GoF2Events first; templates aren't events).</summary>
+        public static List<(string, string)> ProjectGraphs()
+        {
+            var list = new List<(string, string)>();
+            foreach (string guid in UnityEditor.AssetDatabase.FindAssets("", new[] { "Assets" }))
+            {
+                string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+                if (!path.EndsWith("." + EventGraph.Extension) || path.Contains("/Editor/Events/Templates/")) continue;
+                string name = System.IO.Path.GetFileNameWithoutExtension(path);
+                list.Add((path.Contains("/Resources/GoF2Events/") ? "Built in/" + name : "Project/" + name, name));
+            }
+            return list;
+        }
+
         public static List<(string, string)> Items() => EventNames.Items().ConvertAll(i => (i, i));
 
         /// <summary>A picker button under the node: the list (labels may hold "Group/" folders) sets the port's field.</summary>

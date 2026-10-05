@@ -31,6 +31,7 @@ using GoF2Remake.Data;
 using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using GoF2Remake.Events;
 
 namespace GoF2Remake.Multiplayer
 {
@@ -57,6 +58,7 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<int> toll = new NetworkVariable<int>();   // NetFactions.Toll
         readonly NetworkVariable<FixedString64Bytes> serverId = new NetworkVariable<FixedString64Bytes>();   // their key on the client
         readonly NetworkVariable<bool> freeForAll = new NetworkVariable<bool>();     // /pvp, an event's Free For All: every player an enemy
+        readonly NetworkVariable<Unity.Collections.FixedString4096Bytes> sessionMods = new NetworkVariable<Unity.Collections.FixedString4096Bytes>();   // NetMods.SessionList
         readonly Dictionary<int, HashSet<int>> destroyed = new Dictionary<int, HashSet<int>>();
         GameObject proxyPrefab, cratePrefab;
         int pendingSeed;
@@ -140,7 +142,7 @@ namespace GoF2Remake.Multiplayer
             if (IsServer)
             {
                 NetAdmin.Reset();
-                NetEvents.Reset();
+                EventRunner.Reset();
                 NetNews.ServerStart();   // the saved news (a dedicated server with profiles)
                 seed.Value = pendingSeed;
                 dedicated.Value = pendingDedicated;
@@ -149,13 +151,18 @@ namespace GoF2Remake.Multiplayer
                 serverId.Value = NetProfiles.ServerId;
                 freePvp.Value = NetGame.FreePvp;
                 NetFactions.OnStateSpawned();   // the claims, now that this object exists
+                sessionMods.Value = NetMods.SessionList;
                 proxyPrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetProxy");
                 cratePrefab = Resources.Load<GameObject>($"{NetGame.PrefabFolder}/NetCrate");
                 NetRateLimit.Reset();
             }
-            // A server with profiles: the world waits for this player's profile (NetProfileClient.Begin -> EnterWorld).
-            else if (profilesOn.Value) NetProfileClient.Begin(serverId.Value.ToString(), seed.Value);
-            else NetGame.EnterWorld(seed.Value);
+            else
+            {
+                NetMods.ApplyFromServer(sessionMods.Value.ToString());   // the session's mods before the world is built
+                // A server with profiles: the world waits for this player's profile (NetProfileClient.Begin -> EnterWorld).
+                if (profilesOn.Value) NetProfileClient.Begin(serverId.Value.ToString(), seed.Value);
+                else NetGame.EnterWorld(seed.Value);
+            }
         }
 
         public override void OnNetworkDespawn()
@@ -475,13 +482,13 @@ namespace GoF2Remake.Multiplayer
             if (victim == null || by == null || !HitRecently(victim.NetworkObjectId, killer, 30f)) return;
             NetArena.OnKill(victim.OwnerClientId, by.OwnerClientId);   // an arena match's score
             NoticeRpc(string.Format(Localization.Extra("mpDestroyedBy", "{0} was destroyed by {1}."), victim.DisplayName, by.DisplayName));
-            NetEvents.OnPlayerKilled(by, victim);   // an event's "on pvpkill"
+            EventRunner.OnPlayerKilled(by, victim);   // an event's "on pvpkill"
         }
 
         [Rpc(SendTo.Everyone, InvokePermission = RpcInvokePermission.Server)]
         void NoticeRpc(string text) => NetChat.Notice(text);
 
-        /// <summary>A player's answer to an event's question (NetScreen): checked and run by the server (NetEvents.OnAnswer).</summary>
+        /// <summary>A player's answer to an event's question (EventScreen): checked and run by the server (EventRunner.OnAnswer).</summary>
         internal void SendAnswer(int ask, int choice) => AnswerRpc(ask, choice);
 
         [Rpc(SendTo.Server)]
@@ -489,7 +496,7 @@ namespace GoF2Remake.Multiplayer
         {
             ulong client = rpc.Receive.SenderClientId;
             if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Command) || choice < 0 || choice > 4) return;
-            NetEvents.OnAnswer(client, ask, choice);
+            EventRunner.OnAnswer(client, ask, choice);
         }
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
@@ -677,7 +684,7 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void ArenaLeaveRpc(RpcParams rpc = default) => NetArenaClient.OnLeave();
 
-        // ---- the event graphs' bar missions (NetEventMissions) ----
+        // ---- the event graphs' bar missions (EventMissions) ----
 
         /// <summary>This player docked at 'station': the event missions offered there.</summary>
         internal void RequestEventOffers(int station) => EventOffersUpRpc(station);
@@ -687,12 +694,12 @@ namespace GoF2Remake.Multiplayer
         {
             ulong client = rpc.Receive.SenderClientId;
             if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Command) || !NetGuard.Station(station)) return;
-            string offers = NetEventMissions.Offers(station);
+            string offers = EventMissions.Offers(station);
             if (offers.Length > 0 && offers.Length < 16000) EventOffersRpc(station, offers, RpcTarget.Single(client, RpcTargetUse.Temp));
         }
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
-        void EventOffersRpc(int station, string offers, RpcParams rpc = default) => NetEventMissions.ReceiveOffers(station, offers);
+        void EventOffersRpc(int station, string offers, RpcParams rpc = default) => EventMissions.ReceiveOffers(station, offers);
 
         /// <summary>The lounge's Okay on an event mission: the server starts it for the squad.</summary>
         internal void AcceptEventMission(string name, int station) => AcceptEventMissionRpc(name ?? "", station);
@@ -702,7 +709,7 @@ namespace GoF2Remake.Multiplayer
         {
             ulong client = rpc.Receive.SenderClientId;
             if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Command) || name.Length == 0 || name.Length > 64 || !NetGuard.Station(station)) return;
-            NetEventMissions.OnAccept(client, name, station);
+            EventMissions.OnAccept(client, name, station);
         }
 
         /// <summary>Server: a team member's mission started ('payload': the offer and who took it) or ended ('payload': its name).</summary>
@@ -712,8 +719,8 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void EventMissionRpc(bool started, string payload, RpcParams rpc = default)
         {
-            if (started) NetEventMissions.OnStarted(payload);
-            else NetEventMissions.OnEnded(payload);
+            if (started) EventMissions.OnStarted(payload);
+            else EventMissions.OnEnded(payload);
         }
 
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
@@ -1283,7 +1290,7 @@ namespace GoF2Remake.Multiplayer
                 dirtyStock.Clear();
             }
             UpdatePendingSpawns();   // their senders' places arrived
-            NetEvents.Tick();   // a running event
+            EventRunner.Tick();   // a running event
             if ((sweepTimer -= Time.unscaledDeltaTime) > 0f) return;
             sweepTimer = SweepSeconds;
             NetRateLimit.Tick();   // the clients that kept flooding go

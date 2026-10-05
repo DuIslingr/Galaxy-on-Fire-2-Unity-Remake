@@ -485,7 +485,10 @@ namespace GoF2Remake.World
                         Vector3 at = rocks.Length > 0 ? ToGame(rocks[Mathf.Min(rocks.Length - 1, i + rocks.Length / 2)].transform.position) + new Vector3(0, 2000, 0)
                                                       : Jitter();
                         var miner = Spawn(systemRace, at, s => { s.alwaysFriend = true; s.stationary = true; s.noLoot = true; }, false);
-                        miner.Target.hitpoints.hull *= 3;   // Player::setHitpoints(max * 3)
+                        // Player::setHitpoints(max * 3) raises the maximum too (+0x84): the friendly-fire thresholds of
+                        // Player::damage are fractions of it. Only the hull tripled, a fifth of it in stray hits alarmed the
+                        // whole station race (#33: the bribe at Carme).
+                        miner.SetHull(miner.Hp.maxHull * 3);
                     }
                     break;
                 }

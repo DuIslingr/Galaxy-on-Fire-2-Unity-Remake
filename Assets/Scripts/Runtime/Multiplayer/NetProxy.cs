@@ -67,8 +67,8 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<bool> missionShip = new NetworkVariable<bool>(false, Read, Owner);   // a freelance mission's (NpcShip.MissionShip)
         readonly NetworkVariable<int> roleFlags = new NetworkVariable<int>(0, Read, Owner);    // its mission role (FreelanceOrbit.RoleFlags)
         readonly NetworkVariable<int> specHull = new NetworkVariable<int>(-1, Read, Owner);    // its max hull (a takeover keeps it)
-        readonly NetworkVariable<int> eventFlags = new NetworkVariable<int>(0, Read, Owner);   // an event's batch tag << 1 | spawned as an enemy (NetEvents)
-        readonly NetworkVariable<ulong> killer = new NetworkVariable<ulong>(ulong.MaxValue, Read, Owner);   // the player who destroyed it (NetEvents' kills)
+        readonly NetworkVariable<int> eventFlags = new NetworkVariable<int>(0, Read, Owner);   // an event's batch tag << 1 | spawned as an enemy (EventRunner)
+        readonly NetworkVariable<ulong> killer = new NetworkVariable<ulong>(ulong.MaxValue, Read, Owner);   // the player who destroyed it (EventRunner' kills)
         readonly NetworkVariable<ulong> creator = new NetworkVariable<ulong>(ulong.MaxValue);  // server-written at spawn: whose ship
 
         readonly NetSmoothing smoothing = new NetSmoothing();
@@ -99,7 +99,7 @@ namespace GoF2Remake.Multiplayer
         public bool IsMissionShip => missionShip.Value;
         /// <summary>A player's hired wingman (their game's NPC).</summary>
         public bool IsWingman => (NpcGroup)specGroup.Value == NpcGroup.Wingman;
-        /// <summary>The event batch that spawned it (NetEvents), 0 = none.</summary>
+        /// <summary>The event batch that spawned it (EventRunner), 0 = none.</summary>
         public int EventTag => eventFlags.Value >> 1;
         /// <summary>The client id of the player who destroyed it (their own game's player, or another player's hit), MaxValue =
         /// none yet or an NPC.</summary>
@@ -123,7 +123,7 @@ namespace GoF2Remake.Multiplayer
                 position = gamePosition, hitpoints = specHull.Value,
                 alwaysEnemy = (f & FreelanceOrbit.RoleAlwaysEnemy) != 0, alwaysFriend = (f & FreelanceOrbit.RoleAlwaysFriend) != 0,
                 stationary = (f & FreelanceOrbit.RoleStationary) != 0, noLoot = (f & FreelanceOrbit.RoleNoLoot) != 0,
-                eventTag = eventFlags.Value >> 1,   // an event's ship stays one (NetEvents counts it on)
+                eventTag = eventFlags.Value >> 1,   // an event's ship stays one (EventRunner counts it on)
             };
         }
         public Vector3 WorldPosition => position.Value;
@@ -430,6 +430,9 @@ namespace GoF2Remake.Multiplayer
                 prefab = assets != null && assets.wrecks != null && wreck >= 0 && wreck < assets.wrecks.Length ? assets.wrecks[wreck] : null;
             }
             // Only an assembled prefab (the owner's word: no other Resources asset loaded into the others' games).
+            // A mod's ship ("Assembled/mod/ships/ship_NNN_mod": the session runs the same mods, NetMods) is built at run time.
+            else if (path.StartsWith($"{AssembledObject.ResourcesFolder}/{Modding.ModShips.Pack}/"))
+                prefab = Modding.ModShips.Template(path.Substring(path.LastIndexOf('/') + 1));
             else prefab = path.StartsWith(AssembledObject.ResourcesFolder + "/") ? Resources.Load<GameObject>(path) : null;
             visual = prefab != null ? Instantiate(prefab, transform, false) : new GameObject("(no model)");
             if (wreck >= 0) PartAnimation.HoldAllAtEnd(visual);

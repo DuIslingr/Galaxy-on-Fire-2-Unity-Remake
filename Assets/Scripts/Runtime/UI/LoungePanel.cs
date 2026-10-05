@@ -178,8 +178,10 @@ namespace GoF2Remake.UI
             var (plateName, plateRole) = LoungeChat.Plate(a);
             chatName.text = plateName.ToUpperInvariant();
             chatSub.text = plateRole.Length > 0 ? plateRole : T(406 + a.race);
-            var eventOffer = GoF2Remake.Multiplayer.NetEventMissions.OfferOf(a);
-            if (eventOffer != null && eventOffer.face == null && eventOffer.speakerId >= 0)
+            var eventOffer = GoF2Remake.Events.EventMissions.OfferOf(a);
+            if (eventOffer?.character != null)
+                Portrait.ShowCharacter(portrait, Modding.ModCharacters.Find(eventOffer.character), false);   // a mod's character as the client
+            else if (eventOffer != null && eventOffer.face == null && eventOffer.speakerId >= 0)
                 Portrait.ShowSpeaker(portrait, eventOffer.speakerId, eventOffer.speakerId == 0);   // a story character as the client
             else Portrait.Show(portrait, a.portrait, false);
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
@@ -231,7 +233,30 @@ namespace GoF2Remake.UI
                 case LoungeChat.Outcome.Confirm:
                 {
                     var current = chat;
-                    menu.ShowDialog(current.ConfirmText, () => { current.Confirm(); if (current.BoughtShip) level.RefreshParkedShips(); AfterDeal(current); });
+                    void Deal() { current.Confirm(); if (current.BoughtShip) level.RefreshParkedShips(); AfterDeal(current); }
+                    // Remake: "Okay." already is the choice; the confirmation only when it warns (LoungeChat.ConfirmWarning).
+                    if (current.ConfirmWarning) menu.ShowDialog(current.ConfirmText, Deal);
+                    else Deal();
+                    return;
+                }
+                case LoungeChat.Outcome.ConfirmShip:
+                {
+                    // Remake (AgentOffer.SellShip, a mod's ship sold in the lounge): like the dealer's trade-in; "Okay." is the
+                    // choice (#31), only with the Kaamo Club owned 327 asks "sell your old ship or keep it" (330 / 331); the
+                    // turntable's ship swapped, toast 303.
+                    var current = chat;
+                    void Trade(bool keep)
+                    {
+                        string refusal = current.ConfirmShipTrade(keep);
+                        if (refusal != null) { menu.ShowDialog(refusal, null, true); return; }
+                        level.ReplacePlayerShip(Session.ShipIndex);
+                        if (keep) level.RefreshParkedShips();
+                        menu.ShowToast(Localization.Get(303).Replace("#N", ItemInfo.ShipName(Session.ShipIndex)));
+                        AfterDeal(current);
+                    }
+                    if (KaamoClub.Owned)
+                        menu.ShowChoice(Localization.Get(327), Localization.Get(330), Localization.Get(331), () => Trade(false), () => Trade(true));
+                    else Trade(false);
                     return;
                 }
                 case LoungeChat.Outcome.ShowMap:
@@ -272,7 +297,7 @@ namespace GoF2Remake.UI
         {
             var a = chat.Agent;
             // "Let me see it" (776): ListItemWindow::set(..., showPrice = false), the full-screen details.
-            if (a.offer == AgentOffer.ShipDealer && a.sellShip >= 0) { menu.InfoWindow?.ShowShip(Db, a.sellShip, 0, false); return; }
+            if ((a.offer == AgentOffer.ShipDealer || a.offer == AgentOffer.SellShip) && a.sellShip >= 0) { menu.InfoWindow?.ShowShip(Db, a.sellShip, 0, false); return; }
             int item = a.offer == AgentOffer.SellBlueprint ? LoungeChat.BlueprintProduct(a.sellBlueprint) : a.sellItem;
             var it = item >= 0 ? Db.Item(item) : null;
             if (it == null) { chatText.text = chat.Text; return; }

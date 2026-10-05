@@ -109,7 +109,7 @@ namespace GoF2Remake.Flight
             brokenLoop = gameObject.AddComponent<AudioSource>();
             brokenLoop.playOnAwake = false;
             brokenLoop.loop = true;
-            brokenLoop.clip = sounds?.miningDrillBroken;
+            brokenLoop.clip = GoF2Remake.Modding.ModSounds.Get(sounds?.miningDrillBroken);
             drillSound = new DrillSound(gameObject.AddComponent<AudioSource>(), gameObject.AddComponent<AudioSource>(),
                                         gameObject.AddComponent<AudioSource>(), gameObject.AddComponent<AudioSource>(),
                                         sounds?.miningDrillSlow, sounds?.miningDrill, sounds?.miningDrillAdd2, sounds?.miningDrillSwitch);
@@ -442,7 +442,7 @@ namespace GoF2Remake.Flight
                         Shop.AddToCargo(core, 1);
                         Session.CoresMined++;
                         Session.CoreTypesMined.Add(core);
-                        Say($"1t {Localization.Get(1274 + core)}");
+                        Say($"1t {GameNames.Item(core)}");
                         n = Mathf.Min(n, Shop.FreeCargo(db));
                     }
                     if (n > 0)
@@ -450,7 +450,7 @@ namespace GoF2Remake.Flight
                         Shop.AddToCargo(ore, n);
                         Session.OreMined += n;
                         Session.OreTypesMined.Add(ore);
-                        Say($"{n}t {Localization.Get(1274 + ore)}");
+                        Say($"{n}t {GameNames.Item(ore)}");
                     }
                     if (Shop.FreeCargo(db) <= 0) Say(Localization.Get(322));
                 }
@@ -513,7 +513,7 @@ namespace GoF2Remake.Flight
 
         void Play(AudioClip clip, float volume = 1f)
         {
-            if (clip != null) sfx.PlayOneShot(clip, volume * Settings.SfxVolume);
+            if (clip != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(clip), volume * Settings.SfxVolume);
         }
     }
 }

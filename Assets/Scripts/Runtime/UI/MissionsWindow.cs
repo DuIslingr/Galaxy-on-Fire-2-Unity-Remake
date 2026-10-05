@@ -11,6 +11,9 @@
 // the portrait, name, "3226 Status: 3228 Alive / 3227 Deceased", "3225 Bounty: N$" and "3223 Departed from" /
 // "3224 Travelling to" (3229 N/A while inactive, " --" once dead) with its description (3174 + index); 424 Show on map
 // for an active one (the star map centred on where it is travelling to).
+// Remake: the event graph quests under way (EventRunner.Quests: title and objective) follow the story's objective in the
+// Story panel, Show on map for the story's target, else the first quest's; a single-player event graph bar mission
+// (EventMissions.Active) fills the Freelance panel when there is no freelance mission, its Discard ends it.
 // Plain class driven by StationMenu.
 
 using System.Collections.Generic;
@@ -52,8 +55,8 @@ namespace GoF2Remake.UI
             storyScroll = Scroll("storyScroll");
             freelanceScroll = Scroll("freelanceScroll");
             close = Bind("missionsClose", Close);
-            storyMap = Bind("storyMap", () => ShowOnMap(Story.MapTarget, storyMap));
-            freelanceMap = Bind("freelanceMap", () => ShowOnMap(Freelance.Mission.target, freelanceMap));
+            storyMap = Bind("storyMap", () => ShowOnMap(storyMapTarget, storyMap));
+            freelanceMap = Bind("freelanceMap", () => ShowOnMap(Freelance.Active ? Freelance.Mission.target : GoF2Remake.Events.EventRunner.LocalMissionTarget, freelanceMap));
             discard = Bind("freelanceDiscard", AskDiscard);
             root.Q<Label>("missionsTitle").text = T(129).ToUpperInvariant();
             root.Q<Label>("storyHeading").text = T(555).ToUpperInvariant();
@@ -137,29 +140,57 @@ namespace GoF2Remake.UI
             // hidden and empty missions too: step 13's "find work in the Space Lounge" before the convoy); the map button only
             // for a mission with a target to show.
             bool story = !Session.FreePlay && Story.Step != null && Story.Step.objectiveText >= 0;
-            storyText.text = story ? Story.ObjectiveText(db) : T(174);
-            // Remake multiplayer (no story there): the event graph mission the squad is on (NetEventMissions).
-            var eventMission = GoF2Remake.Multiplayer.NetEventMissions.Active;
-            if (!story && eventMission != null)
+            var parts = new List<string>();
+            if (story) parts.Add(Story.ObjectiveText(db));
+            var quests = GoF2Remake.Events.EventRunner.Quests();
+            foreach (var q in quests) parts.Add(q.title.ToUpperInvariant() + (q.objective.Length > 0 ? "\n" + q.objective : ""));
+            storyText.text = parts.Count > 0 ? string.Join("\n\n", parts) : T(174);
+            // Remake multiplayer (no story there): the event graph mission the squad is on (EventMissions).
+            var eventMission = GoF2Remake.Events.EventMissions.Active;
+            bool inSession = GoF2Remake.Multiplayer.NetGame.Active;
+            if (!story && quests.Count == 0 && eventMission != null && inSession)
                 storyText.text = eventMission.title.ToUpperInvariant() + "\n" + string.Format(Localization.Extra("mpMissionCardBy", "Accepted by {0}"), eventMission.by)
-                                 + "\n\n" + GoF2Remake.Multiplayer.NetEventMissions.ActiveText;
-            Show(storyMap, story && !Session.StoryMission.IsEmpty && Session.StoryMission.visible && Story.MapTarget >= 0);
+                                 + "\n\n" + GoF2Remake.Events.EventMissions.ActiveText;
+            storyMapTarget = story && !Session.StoryMission.IsEmpty && Session.StoryMission.visible ? Story.MapTarget : -1;
+            if (storyMapTarget < 0) { int k = quests.FindIndex(q => q.target >= 0); storyMapTarget = k >= 0 ? quests[k].target : -1; }
+            Show(storyMap, storyMapTarget >= 0);
 
             var m = Freelance.Mission;
             bool active = Freelance.Active;
-            portrait.EnableInClassList("portrait-hidden", !active);
+            // Remake single player: an event graph's bar mission in the panel when there is no freelance mission.
+            var graphMission = !active && !inSession ? eventMission : null;
+            portrait.EnableInClassList("portrait-hidden", !active && graphMission?.face == null && graphMission?.character == null && (graphMission == null || graphMission.speakerId < 0));
             if (active) Portrait.Show(portrait, m.clientPortrait, false);
-            freelanceClient.text = active ? m.clientName.ToUpperInvariant() : "";
-            string station = active ? db.Stations.Find(s => s.index == m.clientStation)?.name ?? "" : "";
-            freelanceWhere.text = active ? $"{station}\n{m.Name}" : "";
-            freelanceText.text = active ? FreelanceText(db, m) : T(174);
-            Show(freelanceMap, active);
-            Show(discard, active);
+            else if (graphMission?.character != null) Portrait.ShowCharacter(portrait, Modding.ModCharacters.Find(graphMission.character), false);
+            else if (graphMission?.face != null) Portrait.Show(portrait, graphMission.face, false);
+            else if (graphMission != null && graphMission.speakerId >= 0) Portrait.ShowSpeaker(portrait, graphMission.speakerId, graphMission.speakerId == 0);
+            if (graphMission != null)
+            {
+                freelanceClient.text = graphMission.clientName.ToUpperInvariant();
+                freelanceWhere.text = (db.Stations.Find(s => s.index == graphMission.station)?.name ?? "") + "\n" + graphMission.title;
+                string objective = GoF2Remake.Events.EventRunner.LocalMissionObjective;
+                freelanceText.text = (objective.Length > 0 ? objective + "\n\n" : "") + GoF2Remake.Events.EventMissions.ActiveText;
+                Show(freelanceMap, GoF2Remake.Events.EventRunner.LocalMissionTarget >= 0);
+                Show(discard, true);
+            }
+            else
+            {
+                freelanceClient.text = active ? m.clientName.ToUpperInvariant() : "";
+                string station = active ? db.Stations.Find(s => s.index == m.clientStation)?.name ?? "" : "";
+                freelanceWhere.text = active ? $"{station}\n{m.Name}" : "";
+                freelanceText.text = active ? FreelanceText(db, m) : T(174);
+                Show(freelanceMap, active);
+                Show(discard, active);
+            }
+            active |= graphMission != null;
             storyScroll.scrollOffset = freelanceScroll.scrollOffset = Vector2.zero;
             menu.Focus(active ? freelanceMap : story ? storyMap : close);
         }
 
         static void Show(VisualElement e, bool on) => e.style.display = on ? DisplayStyle.Flex : DisplayStyle.None;
+
+        /// <summary>Show on map in the Story panel: the campaign's target, else the first event graph quest's (-1: none).</summary>
+        int storyMapTarget = -1;
 
         /// <summary>Globals::getAgentMissionText: the offer text rebuilt from the stored ids with the current values.</summary>
         public static string FreelanceText(Database db, FreelanceMission m)
@@ -188,6 +219,11 @@ namespace GoF2Remake.UI
         void AskDiscard()
         {
             string warning = GoF2Remake.Multiplayer.NetMissions.DiscardWarning();   // multiplayer: ends it for the squad
+            if (!Freelance.Active && GoF2Remake.Events.EventMissions.Active != null && !GoF2Remake.Multiplayer.NetGame.Active)
+            {
+                menu.ShowDialog(T(418), () => { GoF2Remake.Events.EventRunner.AbandonLocalMission(); Fill(); });   // an event graph's bar mission
+                return;
+            }
             menu.ShowDialog(T(418) + warning, () => { GoF2Remake.Multiplayer.NetMissions.Abandon(); Freelance.Discard(); Fill(); menu.RefreshCredits(); });
         }
 
