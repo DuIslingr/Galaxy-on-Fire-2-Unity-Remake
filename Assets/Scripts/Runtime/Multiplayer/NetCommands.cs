@@ -407,7 +407,7 @@ namespace GoF2Remake.Multiplayer
                 }
                 case "invite":
                 {
-                    var p = MatchPlayer(rest, out _);
+                    var p = MatchPlayer(rest, out _) as NetPlayer;   // squads are session players
                     if (p == null) { NetChat.Notice(string.Format(X("mpSquadNoPilot", "No pilot called \"{0}\" online."), rest)); return; }
                     if (p.IsOwner) { NetChat.Notice(X("mpSquadSelf", "That's you.")); return; }
                     if (NetSquad.Same(p, NetPlayer.Local)) { NetChat.Notice(string.Format(X("mpSquadAlready", "{0} is in your squad already."), p.DisplayName)); return; }
@@ -449,7 +449,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>/assist: help a squadmate calling (NetDistress).</summary>
         static void Assist(string who)
         {
-            var caller = MatchPlayer(who, out _);
+            var caller = MatchPlayer(who, out _) as NetPlayer;
             NetChat.Notice(caller != null && NetSquad.Same(caller, NetPlayer.Local) ? NetDistress.Help(caller) ?? ""
                 : string.Format(X("mpHelpNoMate", "No squadmate called \"{0}\"."), who));
         }
