@@ -31,10 +31,15 @@ through yet. Multiplayer and VR are experimental. A build's version is the date 
   hangars, and can fight each other. Squads share bar missions and their rewards. Everyone shares the NPC traffic, the
   crates, the asteroids and the shop stock. Local and global chat, chat commands, admin tools and scripted event game
   modes (waves of pirates, survival) with on-screen titles, timers, dialogs and rewards.
+- **Mods:** new and changed items (with their own weapon effects and sounds), ships from 3D models, star systems and
+  stations with their own models, planets, suns, skies, hangars and bars, characters with portraits, voice-over, music
+  and sound effects, quests and bar missions, and whole campaigns that show up under New Game. See [Mods](#mods).
 - **VR (experimental):** PC VR through OpenXR with the `-vr` launch option: a cockpit in flight with the instruments on
   its displays, standing in the hangars and the bars, the menus on a floating screen with a laser pointer.
 - **Remake extras:**
-  - Arrival and take-off flights in the hangar, animated dialogue text, and the original-style bloom as an option.
+  - Arrival and take-off flights in the hangar, soft shadows under the ships there, animated dialogue text, and the
+    original-style bloom as an option.
+  - Story cutscenes can be skipped by holding the action key (F, or X on a controller).
   - Pirate events: now and then an orbit holds a pirate outpost or a pirate boss with a bounty (an option).
   - **New Game+:** with a finished game in your saves, start again with its credits, blueprints, medals and ships.
   - The Kaamo Club expansion can be owned from the start of a new game.
@@ -214,22 +219,36 @@ means yourself.
 
 #### Events
 
-An event is a small text script the server runs, for game modes like waves of pirates. Two come with the game:
-`/event waves` (more pirates every wave, the survivors paid per wave) and `/event survival`. To write your own, put a
-`<name>.txt` file in the `Events` folder next to the game (or the dedicated server) and start it with `/event <name>`.
-A script is a list of commands without the "/", plus `wait <seconds>`, `wait until <condition> [timeout <seconds>]`,
-`if` / `else` / `end`, `while` / `end`, `repeat <n> [as <variable>]` / `end`, `set <variable> = <value>`,
-`score <kills | time>`, `winner` and `stop`. `{...}` puts a value into a command. Conditions can use `enemies` (the
-event's living enemy ships), `ships`, `players`, `inspace`, `docked`, `dead` and `time`. An event ends by itself when
-nobody is left alive in its orbit, and announces the winner (the most kills, or the longest time alive).
+An event is a node graph the server runs, for game modes like waves of pirates, a race or a quiz. Two come with the
+game: `/event waves` (more pirates every wave, the survivors paid per wave) and `/event survival`. Graphs are made in
+the Unity Editor (Assets > Create > GoF2 > Event Graph, or Event Graph From Template: King of the Hill, Boss Fight, Free
+For All, Pirate Base, Quiz, Race, Vote, Waves, Survival and more) and saved as `<name>.gof2event`. Put one in the
+`Events` folder next to the game (or the dedicated server), or ship it in a mod, and start it with `/event <name>`.
+A graph can spawn ships and give them orders (fly to, follow, attack, flee, dock), run cutscenes with camera shots and
+fades, ask questions and hold votes, keep a scoreboard and pay rewards. A graph with a mission title is offered as a bar
+mission in the Space Lounge instead, for the squad that takes it.
 
-```
-title @a Wave 1 | Incoming for 4
-spawn @a Hiro 4 pirate enemy
-wait until enemies == 0 or inspace == 0
-reward @survivors 1000 | Wave 1 survived
-winner
-```
+## Mods
+
+Mods add or change the game's content as data, no code needed: items (with their own weapon effects and sounds), ships
+from GLB models, star systems and stations (with their own models, planets, suns, skies, hangars and bars), characters
+with portraits, voice-over, music and sound effects, quests and bar missions (event graphs), and whole campaigns that
+appear under New Game.
+
+Put a mod (a folder or its `.zip`) in the Mods folder and turn it on in the main menu's **Mods** screen:
+
+| Platform | Mods folder |
+|---|---|
+| Windows | `%USERPROFILE%\AppData\LocalLow\JoppieToppie\Galaxy on Fire 2\Mods`, or a `Mods` folder next to `GoF2Remake.exe` |
+| Linux | `~/.config/unity3d/JoppieToppie/Galaxy on Fire 2/Mods`, or a `Mods` folder next to the game |
+| Android | `Android/data/com.joppietoppie.gof2remake/files/Mods` (reachable over USB) |
+
+The Mods screen's **Open mods folder** button opens it. A save made with mods remembers them, and loading it without
+them removes their items (refunded). In multiplayer the host decides whether mods are allowed; joining players need the
+same mods installed.
+
+To make a mod, see the modders' guide [Modding/README.md](Modding/README.md), with two example mods in
+[Modding/Examples](Modding/Examples).
 
 ## VR (experimental)
 
