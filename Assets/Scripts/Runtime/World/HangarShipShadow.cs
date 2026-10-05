@@ -1,0 +1,166 @@
+// HangarShipShadow.cs
+// Remake (the original's hangars have no shadows): a soft shadow under a hangar ship, its hull's silhouette from above
+// (ShipShadowSet, baked in the Editor: the silhouette, a soft halo around it and the hull's underside; a soft oval of its
+// bounds for ships without one). The hangar's light comes from the
+// camera's side, so a real shadow falls behind the ship, out of view; this is the contact shadow under it. Projected like
+// a decal (GoF2/HangarShadow on a box around the footprint, reading the station camera's depth texture), so it lies on
+// whatever is under the hull: the pads, the Terran cradles (the hull sits below their rims), the raised rims and
+// pedestals, the crates. The box sits in the hangar, not on the ship: it only turns with the ship's heading. Shown while
+// the ship stands on its pad (the turntable, the parked ships), fading out as it lifts off (gone 15 m up) and staying on
+// the pad as it flies away; an arriving ship's appears once it has landed.
+
+using UnityEngine;
+
+namespace GoF2Remake.World
+{
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
+    public sealed class HangarShipShadow : MonoBehaviour
+    {
+        const float FadeHeight = 15f, RestSeconds = 0.3f;
+        /// <summary>The projector box, metres around the resting hull's lowest point: down to the floor under a raised hull or a sunk pad centre (the Vossk turntable's disc is ~2 m below it),
+        /// up past the pads' rims and recesses (full over its lower part, gone at its top).</summary>
+        const float Below = 6f, Above = 8f;
+
+        static Mesh boxMesh;
+
+        GameObject box;
+        MeshRenderer boxRenderer;
+        MaterialPropertyBlock block;
+        Color baseColour;
+        Vector2 center;
+        float size, bottom, heightRange = 1f;
+        float floorY = float.NaN, restTime, alpha;
+        Vector3 lastPos;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => boxMesh = null;
+
+        /// <summary>A shadow for a hangar ship (StationLevel.SpawnShip); 'resting': it stands on its pad now (else it shows
+        /// once the ship has come to rest).</summary>
+        public static HangarShipShadow Attach(GameObject ship, string assembly, bool resting)
+        {
+            var set = ShipShadowSet.Load();
+            if (ship == null || set == null || set.material == null) return null;
+            var s = ship.AddComponent<HangarShipShadow>();
+            var entry = set.Find(assembly);
+            Texture2D tex;
+            if (entry != null && entry.texture != null)
+            {
+                tex = entry.texture;
+                s.center = entry.center;
+                s.size = entry.size;
+                s.bottom = entry.bottom;
+                s.heightRange = entry.heightRange;
+            }
+            else
+            {
+                // A soft oval of the hull's bounds (in the ship's own space, at scale 1).
+                tex = set.oval;
+                var b = LocalBounds(ship);
+                s.center = new Vector2(b.center.x, b.center.z);
+                s.size = Mathf.Max(b.size.x, b.size.z) * 1.25f;
+                s.bottom = b.min.y;
+            }
+            if (tex == null || s.size <= 0f) { Destroy(s); return null; }
+            // The projection reads the scene's depth: the station camera renders its depth texture.
+            var cam = Camera.main;
+            if (cam != null) UnityEngine.Rendering.Universal.CameraExtensions.GetUniversalAdditionalCameraData(cam).requiresDepthTexture = true;
+            s.box = new GameObject("Shadow (" + ship.name + ")");
+            s.box.transform.SetParent(ship.transform.parent, false);
+            s.box.AddComponent<MeshFilter>().sharedMesh = Box();
+            s.boxRenderer = s.box.AddComponent<MeshRenderer>();
+            s.boxRenderer.sharedMaterial = set.material;
+            s.boxRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            s.boxRenderer.receiveShadows = false;
+            s.baseColour = set.material.HasProperty("_Color") ? set.material.GetColor("_Color") : new Color(0f, 0f, 0f, 0.7f);
+            s.block = new MaterialPropertyBlock();
+            s.block.SetTexture("_MainTex", tex);
+            s.lastPos = ship.transform.position;
+            if (resting)
+            {
+                s.floorY = s.HullBottom();
+                s.alpha = 1f;
+                s.restTime = RestSeconds;
+            }
+            s.Place();
+            return s;
+        }
+
+        /// <summary>The ship's mesh bounds in its own space at scale 1 (not the additive glow layers or the trails).</summary>
+        static Bounds LocalBounds(GameObject ship)
+        {
+            var root = ship.transform;
+            var b = new Bounds();
+            bool any = false;
+            foreach (var mf in ship.GetComponentsInChildren<MeshFilter>())
+            {
+                if (mf.sharedMesh == null || mf.name.Contains("_add") || !mf.gameObject.activeInHierarchy) continue;
+                var m = root.worldToLocalMatrix * mf.transform.localToWorldMatrix;
+                var mb = mf.sharedMesh.bounds;
+                for (int i = 0; i < 8; i++)
+                {
+                    var p = m.MultiplyPoint3x4(mb.center + Vector3.Scale(mb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1)));
+                    if (!any) { b = new Bounds(p, Vector3.zero); any = true; } else b.Encapsulate(p);
+                }
+            }
+            return b;
+        }
+
+        /// <summary>The unit cube (-0.5..0.5), the projector's volume.</summary>
+        static Mesh Box()
+        {
+            if (boxMesh != null) return boxMesh;
+            boxMesh = new Mesh { name = "hangar shadow box" };
+            var v = new Vector3[8];
+            for (int i = 0; i < 8; i++) v[i] = new Vector3((i & 1) == 0 ? -0.5f : 0.5f, (i & 2) == 0 ? -0.5f : 0.5f, (i & 4) == 0 ? -0.5f : 0.5f);
+            boxMesh.vertices = v;
+            boxMesh.triangles = new[]
+            {
+                0, 2, 3, 0, 3, 1,   4, 5, 7, 4, 7, 6,   0, 4, 6, 0, 6, 2,
+                1, 3, 7, 1, 7, 5,   0, 1, 5, 0, 5, 4,   2, 6, 7, 2, 7, 3,
+            };
+            boxMesh.RecalculateBounds();
+            return boxMesh;
+        }
+
+        float Scale => transform.lossyScale.x;
+        float HullBottom() => transform.position.y + bottom * Scale;
+
+        void LateUpdate()
+        {
+            if (box == null) return;
+            var pos = transform.position;
+            float dt = Time.deltaTime;
+            restTime = (pos - lastPos).sqrMagnitude < 1e-6f ? restTime + dt : 0f;
+            lastPos = pos;
+            if (restTime >= RestSeconds) floorY = HullBottom();   // standing on a pad: the hull's lowest point is at the floor
+            float target = 0f;
+            if (!float.IsNaN(floorY)) target = Mathf.Clamp01(1f - (HullBottom() - floorY) / FadeHeight);
+            alpha = Mathf.MoveTowards(alpha, target, dt * 3f);
+            Place();
+        }
+
+        void Place()
+        {
+            bool show = alpha > 0.005f && !float.IsNaN(floorY);
+            if (boxRenderer.enabled != show) boxRenderer.enabled = show;
+            if (!show) return;
+            var fwd = transform.forward;
+            fwd.y = 0f;
+            var yaw = fwd.sqrMagnitude > 1e-6f ? Quaternion.LookRotation(fwd.normalized, Vector3.up) : Quaternion.identity;
+            float scale = Scale;
+            float height = Mathf.Max(0f, HullBottom() - floorY);
+            float side = size * scale * (1f + height / 40f);   // a lifting ship's shadow spreads
+            var c = yaw * new Vector3(center.x, 0f, center.y) * scale;
+            box.transform.SetPositionAndRotation(new Vector3(transform.position.x + c.x, floorY + (Above - Below) * 0.5f, transform.position.z + c.z), yaw);
+            box.transform.localScale = new Vector3(side, Below + Above, side);
+            block.SetColor("_Color", new Color(baseColour.r, baseColour.g, baseColour.b, baseColour.a * alpha));
+            block.SetVector("_Hull", new Vector4(HullBottom(), heightRange * scale, 0f, 0f));
+            boxRenderer.SetPropertyBlock(block);
+        }
+
+        void OnEnable() { if (box != null) box.SetActive(true); }
+        void OnDisable() { if (box != null) box.SetActive(false); }
+        void OnDestroy() { if (box != null) Destroy(box); }
+    }
+}

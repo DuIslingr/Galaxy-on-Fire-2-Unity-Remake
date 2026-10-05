@@ -40,7 +40,8 @@ Assets/
                      whole table; the remake's own `Localization.Extra` texts stay English in every language)
   Shaders/           Shader Graphs (URP Unlit): GoF2/Unlit, Additive, AlphaBlend, AlphaTest; _Glow > 1 = HDR for bloom.
                      Hand-written HLSL where Shader Graph can't: GoF2/SpaceSky (skybox), Backdrop (far-plane quads), SpaceDust,
-                     Cloak and ShieldBubble (screen refraction: they switch the camera's opaque texture on, `OpaqueTexture`)
+                     Cloak and ShieldBubble (screen refraction: they switch the camera's opaque texture on, `OpaqueTexture`),
+                     HangarShadow (the hangar ships' contact shadows, projected from the camera depth texture)
   UI/                UI Toolkit: GoF2Theme.tss + GoF2Common.uss (tokens, control styles), GoF2InputGlyphs.uss (hint rows,
                      keycaps, Xbox buttons), GoF2PanelSettings, fonts: Serpentine ICG Light (the original's interface typeface, font 1111's bitmap glyphs; the default and, with the asset's faux bold, `.gof-semibold`) falling back to Inter (OFL) for Cyrillic and Latin Extended-A, MainMenu/ (UXML, USS, cut images,
                      menu post-processing profile), Flight/ (HUD), Station/ (station menu), StarMap/ (star map overlay)
@@ -74,6 +75,7 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 - **GoF2 > Build > Network Prefabs**: `Resources/GoF2Net`, the multiplayer network prefabs (see "Multiplayer").
 - **GoF2 > Build > Event Audio**: `Resources/GoF2Events/EventAudio`, the sounds and music the event graphs play (see "Multiplayer", Events).
 - **GoF2 > Build > Hangar Heights**: `Resources/GoF2Data/hangar_heights.json`, how far each ship is lifted off each hangar pad (see "Station scene"). Run it again after changing a hangar room or a ship model.
+- **GoF2 > Build > Hangar Shadows**: `Resources/GoF2Station/ShipShadows` (+ `ShipShadows.asset`, `HangarShipShadow.mat`), each ship's contact shadow in the hangars (see "Station scene"). Run it again after changing a ship model.
 - **GoF2 > Build > HUD Images**: `Resources/GoF2Hud`, the HUD / star map images and the alien font glyphs cut from the original interface atlases (rects in `Reference/research/mining.md`, `autopilot_travel.md`, `starmap_travel.md`). Also run by Create Space Scene.
 - **GoF2 > Build > Item Icons**: `Resources/GoF2Icons`, one icon per item and ship cut from the original atlases per `Reference/research/item_icons.json` (see "Shop").
 - **GoF2 > Build > Text Icons**: `Resources/Sprite Assets/gof2_text_icons` (a TextCore sprite asset + its 64 px atlas, `TextIconsBuilder`): the dialogue's inline icons: a remake-drawn coin (and a heart, last in the atlas, for the main menu's credit line), the race emblems (GoF2Hud race_0/1/2/3/8/9, trimmed to their opaque part), the jumpgate / wormhole / blueprint (map_products) / ore core / container (crate_off) / autopilot icons, every item and ship shop icon (the centre square of the plate). The runtime panel text settings find it by name under `Sprite Assets/`, so no PanelTextSettings asset exists.
@@ -441,6 +443,20 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   hulls in the Midorian pads' raised rims (the H'Soc's wings 1.9 m), everything inside the raised pedestals of Midorian /
   deep science slot 2. `HangarFlight` also scales its bank and pitch down near the floor (the Vossk bays are flown into 5 m
   up: a banked H'Soc's wing dipped ~3 m into it), keeping the hull 0.4 m above its parked bottom.
+- **Ship shadows** (remake; the original's hangars have none, and the hangar light comes from the camera's side, so a real
+  shadow falls behind the ship and out of URP's 50 m shadow distance): `HangarShipShadow` on every ship `SpawnShip` puts in
+  the hangar (the turntable, the parked ships, the flights, other players' ships) projects a soft contact shadow like a decal:
+  `GoF2/HangarShadow` on a box around the footprint (only the ship's yaw, 6 m below to 8 m above the resting hull's lowest
+  point, a little wider as it lifts) rebuilds each pixel's scene point from the station camera's depth texture (switched on
+  by it) and darkens it by the ship's map from **GoF2 > Build > Hangar Shadows** (`ShipShadowSet`, `HangarShadowsBuilder`:
+  the hull's triangles rasterised from above into 128 x 128 over a square 2.2 x the hull, linear, uncompressed; R the
+  underside's height over each texel (spread outward), G the silhouette, A a wide soft halo): under the silhouette and in
+  the halo around it (the part a camera looking down past the hull sees), only below the hull's underside there (so the
+  hull never shades itself; 3 m above it past the hull, the rims around a sunk hull), only on surfaces facing up (normals
+  from the depth's derivatives), full over the box's lower 60 %. Shown once the ship has stood still for 0.3 s, fading out
+  over 15 m as it lifts off and staying on the pad; ships without a map (mods', the debug capital hulls) get a soft oval of
+  their bounds (the meshes are imported non-readable, so a build can't rasterise them). Verified in Play mode in the Terran,
+  Nivelian, Vossk, Midorian and deep science hangars.
 - The room's animations all run (`CutScene::process` updates every geometry, not only the `_anim` meshes), skipping their one-off first key (the bars' too, and the Midorian prop's replays: `PartAnimation.Restart` starts at `loopStartMs`; played, the key flashed the Nivelian bar and the Midorian bar for a frame on every wrap; `PartAnimation.OneOffStartMs`: every part at the origin for 33 / 50 ms, which parked the Terran gutter lights on the player's pad and made the loops jump); rotations swing back and forth (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by their `extra` channel (the Vossk portal light).
 - The Kaamo Club parks its stored hulls: see "Kaamo Club".
 
