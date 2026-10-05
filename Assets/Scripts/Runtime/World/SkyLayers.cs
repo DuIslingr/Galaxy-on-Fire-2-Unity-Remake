@@ -44,7 +44,7 @@ namespace GoF2Remake.World
             cam = camera;
             var a = SkyLayerAssets.Load();
             if (a == null) { Debug.LogWarning($"SkyLayers: missing Resources/{SkyLayerAssets.ResourcePath}"); return; }
-            int mission = Session.FreePlay ? 20 : Session.CampaignMission;
+            int mission = Session.WorldIndex;
             bool supernova = layout.systemIndex == 27;
 
             if (InPlanetRingOrbit(layout.stationIndex)) Add(a.ringSky, a.ringSkyMaterial, RingQueue, 1f);
@@ -63,7 +63,8 @@ namespace GoF2Remake.World
                 if (f1 != null) f1.rotation = skyRotation;
                 if (f2 != null) f2.rotation = skyRotation;
             }
-            if (mission >= 90 && (supernova || layout.systemTexture == 16 || layout.systemTexture == 18))
+            // Remake multiplayer: no storms in the completed world (Session.CompletedWorld).
+            if (mission >= 90 && !Session.CompletedWorld && (supernova || layout.systemTexture == 16 || layout.systemTexture == 18))
             {
                 stormRoot = Add(a.storms, a.stormsMaterial, StormsQueue, 1f, 33f);   // every part at 100 in its first 33 ms
                 stormAnim = stormRoot != null ? stormRoot.GetComponentInChildren<PartAnimation>() : null;

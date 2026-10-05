@@ -189,8 +189,7 @@ namespace GoF2Remake.Data
             Apply(s);
             Session.Difficulty = Session.DifficultyNormal;
             Session.Economy = Economy.Android;
-            Session.FreePlay = true;
-            Session.CampaignMission = Session.FreePlayMission;
+            Session.UseCompletedWorld();   // the session's world, whatever index the profile was saved with
             Session.FreelanceMission = new FreelanceMission();
             Session.Passengers = 0;
             Session.Cargo.RemoveAll(c => c.item == Freelance.SecureContainer);   // a Courier's containers (unsaleable)
@@ -366,6 +365,7 @@ namespace GoF2Remake.Data
 
         static void Apply(SaveData s)
         {
+            Session.CompletedWorld = false;   // a save is its own world (ApplyProfile sets the session's again)
             static Dictionary<int, (int, int)> Prices(List<SaveData.KnownPrice> l)
             {
                 var d = new Dictionary<int, (int, int)>();

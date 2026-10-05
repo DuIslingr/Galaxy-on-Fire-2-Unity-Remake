@@ -310,6 +310,10 @@ namespace GoF2Remake.Data
             if (Session.FreePlay && station == 78 && !list.Any(s => db.Item(s.item)?.categoryId == 19)) InsertSorted(list, new ItemStack(86, 1));
             if (Session.FreePlay && station == 78 && !list.Any(s => s.item == GalaxyMap.EnergyCellItem))
                 InsertSorted(list, new ItemStack(GalaxyMap.EnergyCellItem, Random.Range(0, 15) + 5));
+            // Remake multiplayer: the completed world's start station (Dis) sells the Khador Drive (85; never in a normal
+            // stock: the blueprint makes it).
+            if (Session.CompletedWorld && station == GoF2Remake.Multiplayer.NetGame.Station && !list.Exists(s => s.item == 85))
+                InsertSorted(list, new ItemStack(85, Random.Range(0, 3) + 2));
             return list;
         }
 
@@ -343,10 +347,10 @@ namespace GoF2Remake.Data
                 // ... and a criminal's ship once its Most Wanted entry 6 / 12 / 18 / 24 is terminated.
                 int[] entries = { 6, 12, 18, 24 };
                 for (int k = 0; k < 4; k++)
-                    if (entries[k] < Session.Wanted.Count && Session.Wanted[entries[k]].terminated) ships.Add(45 + k);
+                    if (Session.CompletedWorld || (entries[k] < Session.Wanted.Count && Session.Wanted[entries[k]].terminated)) ships.Add(45 + k);
                 return ships;
             }
-            if (station == 10 && Achievements.GotAllGoldMedals) return new List<int> { 8 };   // Thynome: the VoidX
+            if (station == 10 && (Achievements.GotAllGoldMedals || Session.CompletedWorld)) return new List<int> { 8 };   // Thynome: the VoidX
             int race = RaceOfSystem(db, system);
             int n = Random.Range(0, 6) + (station == 41 ? 1 : 0);
             if (n == 0) return ships;   // getShipBuyList: no rolls, no extras either
@@ -372,7 +376,7 @@ namespace GoF2Remake.Data
             // Katashán (120) after the Supernova story: the Specter (Extreme or every medal) and the Scimitar.
             if (station == 120 && mission > 158)
             {
-                if (Session.IsExtreme || Achievements.GotAllSupernovaMedals) ships.Add(44);
+                if (Session.IsExtreme || Achievements.GotAllSupernovaMedals || Session.CompletedWorld) ships.Add(44);
                 ships.Add(49);
             }
             if (race == 0 && Random.Range(0, 8) == 0) ships.Add(51);

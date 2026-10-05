@@ -64,6 +64,9 @@ namespace GoF2Remake.Data
     {
         public const int GameWonIndex = 45, Dlc1WonIndex = 84, LastIndex = 162;
 
+        /// <summary>Every system a step reveals (Advance's RevealSystem calls): the finished game's map.</summary>
+        public static readonly int[] RevealedSystems = { 6, 22, 23, 24, 25, 27, 28, 29, 30, 31 };
+
         public static int Index => Session.CampaignMission;
         public static StoryMission Mission => Session.StoryMission;
         public static StoryStep Step => StoryTable.Step(Index);

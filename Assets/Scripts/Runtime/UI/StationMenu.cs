@@ -670,7 +670,7 @@ namespace GoF2Remake.UI
             root.AddToClassList("station-map-open");
             var map = StarMap.Open(level.Database, StarMapMode.Station, GalaxyMap.HasJumpDrive(level.Database), OnMapClosed);
             if (map == null) { root.RemoveFromClassList("station-map-open"); return; }
-            int cm = Session.FreePlay ? 20 : Session.CampaignMission;
+            int cm = Session.WorldIndex;
             if (!Settings.TutorialHints) { }   // the tutorial popups option
             else if (cm > 15 && Session.Hints.Add(0xe)) map.ShowHint(HintText(628, true));
             else if (cm < 16 && Session.Hints.Add(0xf)) map.ShowHint(HintText(631, true));

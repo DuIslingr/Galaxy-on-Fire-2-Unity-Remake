@@ -3,7 +3,7 @@
 // through Unity Relay (Multiplayer Services: the host gets a join code, the others join with it, no address or port
 // forwarding; anonymous Unity Authentication), listed in the server browser unless the host keeps it to its code
 // (NetLobby, Unity Lobby); local ones by direct IP, port 7777.
-// The main menu's Multiplayer panel hosts or joins; every player starts a fresh free-play game docked at Var Hastra (78) and then
+// The main menu's Multiplayer panel hosts or joins; every player starts a fresh free-play game docked at Dis (70) and then
 // plays it like single player: their own scenes (Space for their orbit, Station for their hangar), economy, jumps and
 // docking. No scene synchronisation: the network objects live in DontDestroyOnLoad and each player shows only what is
 // where they are.
@@ -51,7 +51,9 @@ namespace GoF2Remake.Multiplayer
             get { int p = PlayerPrefs.GetInt("mp_port", DefaultPort); return p >= 1024 && p <= 65535 ? (ushort)p : DefaultPort; }
             set => PlayerPrefs.SetInt("mp_port", value);
         }
-        public const int Station = 78;
+        /// <summary>Where every session game starts docked (and a profile without a station goes): Dis (70), the
+        /// Supernova add-on's start.</summary>
+        public const int Station = 70;
         public const string PrefabFolder = "GoF2Net";
         public static readonly string[] PrefabNames = { "NetPlayer", "NetProxy", "NetState", "NetCrate" };
         const string StationScene = "Station", MenuScene = "MainMenu";
@@ -476,7 +478,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The world's state is here (the host at once, a client when NetState spawns): the seed, then the game
-        /// starts docked at Var Hastra (no fly-in: the others see the ship appear on a pad), a new free-play game.</summary>
+        /// starts docked at Dis (no fly-in: the others see the ship appear on a pad), a new free-play game.</summary>
         internal static void EnterWorld(int seed = -1)
         {
             if (worldEntered) return;
@@ -708,7 +710,7 @@ namespace GoF2Remake.Multiplayer
 
         static UnityTransport Transport => (UnityTransport)manager.NetworkConfig.NetworkTransport;
 
-        /// <summary>Status::resetGame as free play (no story), at Var Hastra, with the launch camera.</summary>
+        /// <summary>Status::resetGame as free play (no story) in the finished game's world, docked at Dis (Station).</summary>
         static void PrepareSession()
         {
             Status = "";
@@ -727,8 +729,7 @@ namespace GoF2Remake.Multiplayer
             Session.ResetNewGame();
             Session.Difficulty = Session.DifficultyNormal;   // every session plays on Normal (the shared stock, NPCs, rewards)
             Session.Economy = Economy.Android;               // and on one economy (the shared stock's prices)
-            Session.FreePlay = true;
-            Session.CampaignMission = Session.FreePlayMission;
+            Session.UseCompletedWorld();   // free play in the finished game's world (every dealer ship, Ginoya after the supernova)
             Session.StationIndex = Station;
             Session.LaunchedFromStation = false;   // the session starts docked (EnterWorld)
         }

@@ -703,12 +703,23 @@ NetworkObject; it re-saves them so each gets its own GlobalObjectIdHash, and swi
 Single player is untouched: every multiplayer path runs only while `NetGame.Active`.
 
 - **One shared world, no scene synchronisation** (`EnableSceneManagement = false`): every player starts a fresh free-play
-  game (`Session.FreePlay`, index 20) docked at Var Hastra (78) and plays it like single player, their own scenes, economy, map,
+  game in the finished game's world (below) docked at Dis (70) and plays it like single player, their own scenes, economy, map,
   jumps and docking. The network objects live in DontDestroyOnLoad and each player shows only what is where they are.
   The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
   (`SaveGame.Save` refuses), so it never touches the single-player saves; a dedicated server keeps player profiles
   instead (see **Player profiles**).
+- **The finished game's world** (`Session.UseCompletedWorld`, `Session.CompletedWorld`; set by `NetGame.PrepareSession` and
+  `SaveGame.ApplyProfile`): free play (no story steps) at campaign index 162, so everything that reads the index sees the
+  won game: the full shop stock and dealer ships (Kothar's 37 / 38 / 40, the Vossk 39 / 41, the carrier and Vossk battleship
+  in traffic, Mido's dealers), and the medal / Most Wanted gates count as met (Thynome's VoidX, Katashán's Specter,
+  Quineros' 45-48); the add-ons' revealed systems on the map (`Story.RevealedSystems`, `GalaxyMap.Visibility`); Ginoya after
+  the supernova (normal sun, no flares, its traffic and shops); no wormhole, Void invasion or Kappa's free EMP GL I. Remake
+  picks: no storms anywhere (`SkyLayers`); Naneroh, Valpatro and Luur intact and open for docking (`OrbitLayout.IsRebuiltGinoya`;
+  Luur its pre-supernova model, Naneroh / Valpatro borrow Midantha's / Tergalon's model and volumes, `OrbitBuilder.StationLook`);
+  sessions start docked at Dis (70, `NetGame.Station`), whose shop always sells the Khador Drive (85). The world's look and menus read `Session.WorldIndex` (free play's 20, else the index);
+  NPC hulls / reloads and the Kaamo outposts use the won game's capped 45 / 180. Remake: no gamma rays and no gamma blaze
+  at all (the original keeps 1/s at Naneroh after the story).
 - **Menu**: the main menu's Multiplayer button (between New game and Load) opens the Multiplayer panel (a fixed 84 %
   high panel: the title with the "Experimental" badge and the pilot name `mp_name`, a one-line intro, then the server
   browser and the host column). **Pilot name required**: without one (`NetGame.PlayerName` empty, no `-mpname`) opening

@@ -196,6 +196,26 @@ namespace GoF2Remake.Data
         public static string ModCampaign = "";
         public const int FreePlayMission = 20;
 
+        /// <summary>
+        /// Remake multiplayer: the session's world is the finished game (every campaign won, index 162) while the player
+        /// still plays free (no story steps): full shop stock and dealer ships, the add-ons' revealed systems, Ginoya after
+        /// the supernova. Set by UseCompletedWorld, cleared by a new game or a loaded save.
+        /// </summary>
+        public static bool CompletedWorld;
+
+        /// <summary>The campaign index the world's look and rules read: free play's 20, else the campaign index (162 in a
+        /// completed world).</summary>
+        public static int WorldIndex => FreePlay && !CompletedWorld ? FreePlayMission : CampaignMission;
+
+        /// <summary>Remake multiplayer: free play in the finished game's world (CompletedWorld). Medals and the Most Wanted
+        /// board stay off (free play); the gates that need them (the VoidX, the Specter, the criminals' ships) count as met.</summary>
+        public static void UseCompletedWorld()
+        {
+            FreePlay = true;
+            CompletedWorld = true;
+            CampaignMission = Story.LastIndex;
+        }
+
         /// <summary>Current station (Status::getStation): one flight level = one station orbit.</summary>
         public static int StationIndex = 78;
 
@@ -392,6 +412,7 @@ namespace GoF2Remake.Data
             EndingPending = false;
             Unsaleable = new HashSet<int>();
             FreePlay = false;
+            CompletedWorld = false;
             RecentStations = new List<StationStock>();
             LastDepartureTime = -1f;
             SeenItems = new HashSet<int>();
