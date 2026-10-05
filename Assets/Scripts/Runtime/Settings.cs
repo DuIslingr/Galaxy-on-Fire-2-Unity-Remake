@@ -100,6 +100,11 @@ namespace GoF2Remake.Data
         /// <summary>The sun's lens flare in flight (LensFlareView).</summary>
         public static bool LensFlare { get => GetBool("lensFlare", true); set => SetBool("lensFlare", value); }
 
+        /// <summary>Remake: the hangar ships' contact shadows (HangarShipShadow): 0 off, 1 only the player's own ship, 2 every
+        /// ship (default). Off also drops the station camera's depth texture they read.</summary>
+        public static int HangarShadows { get => Mathf.Clamp(Mathf.RoundToInt(Get("hangarShadows", HangarShadowsAll)), 0, 2); set => Set("hangarShadows", Mathf.Clamp(value, 0, 2)); }
+        public const int HangarShadowsOff = 0, HangarShadowsPlayer = 1, HangarShadowsAll = 2;
+
         /// <summary>Remake: NPC ships fly with the player's engine system (the *_engine_glow_add mesh and the exhaust
         /// particles) instead of the original's *_engine_add mesh; from the next spawn.</summary>
         public static bool NpcPlayerEngines { get => GetBool("npcPlayerEngines", true); set => SetBool("npcPlayerEngines", value); }

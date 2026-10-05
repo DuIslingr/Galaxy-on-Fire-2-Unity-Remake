@@ -195,6 +195,10 @@ namespace GoF2Remake.UI
             list.Add(Choice("bloom", OptionPage.Graphics, () => X("bloom", "Bloom"), true,
                 () => new[] { X("off", "Off"), X("bloomRemake", "Remake"), X("bloomOriginal", "Original") },
                 () => Mathf.Clamp(Settings.BloomStyle, 0, 2), i => Settings.BloomStyle = i));
+            // Remake: the hangar ships' contact shadows (HangarShipShadow); fewer for slower devices.
+            list.Add(Choice("hangarShadows", OptionPage.Graphics, () => X("hangarShadows", "Hangar ship shadows"), true,
+                () => new[] { X("off", "Off"), X("hangarShadowsPlayer", "Player ship only"), X("hangarShadowsAll", "All ships") },
+                () => Settings.HangarShadows, i => Settings.HangarShadows = i));
             list.Add(Toggle("lensFlare", OptionPage.Graphics, () => X("lensFlare", "Lens flare"), () => Settings.LensFlare, v => Settings.LensFlare = v));
             list.Add(Toggle("npcPlayerEngines", OptionPage.Graphics, () => X("npcPlayerEngines", "Other ships' engines like yours"),
                 () => Settings.NpcPlayerEngines, v => Settings.NpcPlayerEngines = v));
