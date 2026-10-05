@@ -373,6 +373,13 @@ namespace GoF2Remake.UI
             }).ExecuteLater(1);
         }
 
+        void OnDestroy()
+        {
+            // The per-scene PanelSettings clone: left alive, every menu entry kept another UI Toolkit panel (its atlas and
+            // GPU buffers) for the rest of the run.
+            if (runtimePanel != null) Destroy(runtimePanel);
+        }
+
         void OnDisable()
         {
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);

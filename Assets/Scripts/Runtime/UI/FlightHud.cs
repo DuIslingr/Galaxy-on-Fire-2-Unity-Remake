@@ -104,6 +104,13 @@ namespace GoF2Remake.UI
             GameControls.Changed += ApplyInputMode;   // a rebound key: the hints show it
         }
 
+        void OnDestroy()
+        {
+            // The per-scene PanelSettings clone: left alive, every Space load (jumps, launches) kept another UI Toolkit
+            // panel (its atlas and GPU buffers) for the rest of the run.
+            if (runtimePanel != null) Destroy(runtimePanel);
+        }
+
         void OnDisable()
         {
             pauseMenu?.Close();   // the scene is going: sounds and time back to normal

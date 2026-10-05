@@ -805,6 +805,7 @@ namespace GoF2Remake.UI
         {
             GoF2Remake.Multiplayer.NetStock.Changed -= OnSharedStock;
             GoF2Remake.Multiplayer.NetNews.Changed -= OnNews;
+            if (runtimePanel != null) Destroy(runtimePanel);   // the per-scene clone: its panel (atlas, GPU buffers) goes with it
         }
 
         /// <summary>Multiplayer: the sector's news changed (NetNews): at once while the strip has nothing yet, else when it
