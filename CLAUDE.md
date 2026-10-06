@@ -695,8 +695,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   hold; docked also "Add and mount", `Cheats.GiveAndMount` through `Hangar.Mount` / `Swap`); in flight **Spawn** (`DebugSpawner`):
   any ship by race / model / behaviour (hostile, by standing, friendly) 400 m ahead as ordinary traffic, and any assembly of
   `assemblies.json` by category as scenery ahead of the player, far enough out for its size; **Ships** tab (`PlayerHull`, `CheatsCatalog.Hulls`, `SpaceLevel.SwapPlayerShip`): fly any of the
-  game's 68 hulls where the player is, picked like Give items by Ship type (the races from the model names, Other, and Not
-  normally flyable) and Ship: ships 0-63 with a model (50 / 53 have none), the Vossk freighter 13, the three race
+  game's 68 hulls where the player is, picked like Give items by Ship type (the races from the model names, Other, Modded (the mods' ships.json
+  ships; the list is made again when the mods change, `PlayerHull.CheckMods`) and Not normally flyable) and Ship: ships 0-63 with a model (50 / 53 have none), the Vossk freighter 13, the three race
   freighters 15 (`Database.ShipAssembly` now resolves 13 / 15 like `Globals::getShipGroup`), the Terran battleship 14, and
   the capital ships outside ships.json flying with ship 14's stats: the Terran carrier, the Vossk battleship, the Valkyrie
   battlestation and the Void mother ship (held at its full-size pose like the alien orbit, `PlayerHull.PrepareModel`). The

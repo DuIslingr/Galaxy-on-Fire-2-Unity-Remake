@@ -113,7 +113,7 @@ namespace GoF2Remake.UI
 
         static int hullCategory = -1, hullPick;
 
-        /// <summary>The Ships tab, like Give items: the ship type (the races, Other, Not normally flyable), the ship, then
+        /// <summary>The Ships tab, like Give items: the ship type (the races, Other, Modded, Not normally flyable), the ship, then
         /// "Fly this ship" and "Back to your own ship". In flight the hull swaps where the player is ('flight'); docked
         /// ('docked') only a ship the player can normally own.</summary>
         public static List<OptionDef> Hulls(Database db, World.SpaceLevel flight, World.StationLevel docked, Action<string> notify)

@@ -56,6 +56,7 @@ namespace GoF2Remake.World
 
         static List<Hull> hulls;
         static Database hullsDb;
+        static int hullsRevision = -1;   // ModManager.Revision the list was built for (the mods' ships come and go)
         static string pickedKey;   // PlayerPrefs HullPref, read once (the docking check asks every frame)
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -63,12 +64,29 @@ namespace GoF2Remake.World
         {
             hulls = null;
             hullsDb = null;
+            hullsRevision = -1;
             pickedKey = null;
             bigCache.Clear();
         }
 
-        /// <summary>The tables the list was built from (Database.Load reads every file: once).</summary>
-        static Database Db => hullsDb ??= Database.Load();
+        /// <summary>The tables the list was built from (Database.Load reads every file: once per set of mods).</summary>
+        static Database Db
+        {
+            get
+            {
+                CheckMods();
+                return hullsDb ??= Database.Load();
+            }
+        }
+
+        /// <summary>The mods changed: their ships are other ones now, so the list and its tables are made again.</summary>
+        static void CheckMods()
+        {
+            if (hullsRevision == Modding.ModManager.Revision) return;
+            hulls = null;
+            hullsDb = null;
+            hullsRevision = Modding.ModManager.Revision;
+        }
 
         static string PickedKey => pickedKey ??= PlayerPrefs.GetString(HullPref, "");
 
@@ -87,10 +105,12 @@ namespace GoF2Remake.World
             return string.IsNullOrEmpty(n) ? "#" + race : n;
         }
 
-        /// <summary>Every hull the player can fly: the ships by index, then the capital ships.</summary>
+        /// <summary>Every hull the player can fly: the ships by index (the mods' after the original 64), then the capital
+        /// ships.</summary>
         public static List<Hull> All(Database db)
         {
-            if (hulls != null) return hulls;   // the same for every economy: built once
+            CheckMods();
+            if (hulls != null) return hulls;   // the same for every economy: built once per set of mods
             hullsDb ??= db;
             hulls = new List<Hull>();
             foreach (var ship in db.Ships)
@@ -107,6 +127,7 @@ namespace GoF2Remake.World
                         });
                     continue;
                 }
+                if (Modding.ModContent.IsMissingShip(i)) continue;   // a mod that is off: its placeholder
                 var a = db.ShipAssembly(i);
                 if (a == null) continue;   // 50, 53: no model
                 string name = i == 13 ? string.Format(X("debugHullFreighter", "{0} freighter"), RaceName(1))
@@ -165,17 +186,18 @@ namespace GoF2Remake.World
             return hulls;
         }
 
-        /// <summary>The Ships tab's types in order: the races, Other, then the hulls the player can't normally own.</summary>
         /// <summary>The hulls the debug Ships tab and the admin commands offer: All without the custom ships while they
         /// aren't Available (the gameplay option off, or multiplayer).</summary>
         public static List<Hull> Offered(Database db) => CustomShips.Available ? All(db) : All(db).FindAll(h => !CustomShips.IsCustom(h.stats));
 
+        /// <summary>The Ships tab's types in order: the races, Other, Modded, then the hulls the player can't normally own.</summary>
         public static List<string> Categories(Database db)
         {
             var all = Offered(db);
             var order = new List<string>();
             foreach (int race in new[] { 0, 1, 2, 3, Standing.Pirate, Standing.Void }) order.Add(RaceName(race));
             order.Add(OtherCategory);
+            order.Add(ModdedCategory);
             order.Add(NotFlyableCategory);
             order.RemoveAll(c => !all.Exists(h => h.category == c));
             return order;
@@ -185,14 +207,16 @@ namespace GoF2Remake.World
         public static List<Hull> OfCategory(Database db, string category) => Offered(db).FindAll(h => h.category == category);
 
         static string OtherCategory => X("debugHullOther", "Other");
+        static string ModdedCategory => X("debugHullModded", "Modded");
         static string NotFlyableCategory => X("debugHullNotFlyable", "Not normally flyable");
 
-        /// <summary>A hull's type: not normally flyable (the freighters, the battleship, the capital ships), else the race in
-        /// its model's name (ship_001_terran, sn_ship_044_elite_nivelian, ship_063_vossk_prototype...), else Other (the deep
-        /// science, retro, Most Wanted, modified and prototype ships).</summary>
+        /// <summary>A hull's type: not normally flyable (the freighters, the battleship, the capital ships), Modded (the mods'
+        /// ships, ships.json), else the race in its model's name (ship_001_terran, sn_ship_044_elite_nivelian,
+        /// ship_063_vossk_prototype...), else Other (the deep science, retro, Most Wanted, modified and prototype ships).</summary>
         static string CategoryOf(Hull h)
         {
             if (!h.playerShip) return NotFlyableCategory;
+            if (CustomShips.IsCustom(h.stats)) return ModdedCategory;
             string n = h.assembly;
             if (n.Contains("terran")) return RaceName(0);
             if (n.Contains("vossk")) return RaceName(1);
