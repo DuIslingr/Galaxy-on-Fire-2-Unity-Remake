@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: ModAssets
   m_EditorClassIdentifier: Assembly-CSharp::GoF2Remake.Modding.ModAssets
   engineGlow: {fileID: 2100000, guid: 6db2231b678bb3647bc4f87d62d4b6a4, type: 2}
+  engineGlowTint: {fileID: 2100000, guid: 24b487aea77209532b10408d9270ff3c, type: 2}
   litOpaque: {fileID: 2100000, guid: 5a2c5ca8cec819a419cf969de9e66e28, type: 2}
   litOpaqueDetail: {fileID: 2100000, guid: 22016498c9c95df47ac0b14eeecbad14, type: 2}
   litCutout: {fileID: 2100000, guid: 16c48317ee03e5c4381bcf62e2f9c203, type: 2}
