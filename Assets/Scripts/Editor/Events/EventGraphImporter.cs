@@ -19,8 +19,15 @@ namespace GoF2Remake.EditorTools
     [ScriptedImporter(2, new[] { EventGraph.Extension, EventRunner.LegacyExtension })]
     public class EventGraphImporter : ScriptedImporter
     {
+        // The files Database.Load reads.
+        static readonly string[] DataFiles =
+            { "ships", "items", "systems", "stations", "assemblies", "weapons_hd", "wanted", "item_attributes", "economy_default" };
+
         public override void OnImportAsset(AssetImportContext ctx)
         {
+            // The checks look names up in the game data (EventNames -> Database.Load): import those files first, or a
+            // fresh Library (a Unity upgrade) checked every graph against empty tables.
+            foreach (string data in DataFiles) ctx.DependsOnArtifact("Assets/Resources/GoF2Data/" + data + ".json");
             string file = File.ReadAllText(ctx.assetPath);
             string name = Path.GetFileName(ctx.assetPath);
             var graph = GraphDatabase.LoadGraphForImporter<EventGraph>(ctx.assetPath);

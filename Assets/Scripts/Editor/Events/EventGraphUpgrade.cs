@@ -30,9 +30,10 @@ namespace GoF2Remake.EditorTools
             if (!File.Exists(path)) return;
             string text = File.ReadAllText(path);
             string target = AssetDatabase.GenerateUniqueAssetPath(Path.ChangeExtension(path, "." + EventGraph.Extension).Replace('\\', '/'));
+            // The new type names first: MoveAsset imports the file at its new path at once.
+            File.WriteAllText(path, text.Replace("GoF2Remake.Multiplayer.Event", "GoF2Remake.Events.Event"));
             string error = AssetDatabase.MoveAsset(path, target);
             if (!string.IsNullOrEmpty(error)) { Debug.LogWarning($"GoF2: couldn't rename {path} to {target}: {error}"); return; }
-            File.WriteAllText(target, text.Replace("GoF2Remake.Multiplayer.Event", "GoF2Remake.Events.Event"));
             AssetDatabase.ImportAsset(target);
             Debug.Log($"GoF2: event graph {path} renamed to {target} (the .gof2event format)");
         }

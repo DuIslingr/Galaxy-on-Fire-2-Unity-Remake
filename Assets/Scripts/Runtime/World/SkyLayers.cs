@@ -103,7 +103,6 @@ namespace GoF2Remake.World
                 r.receiveShadows = false;
                 r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
                 r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-                r.allowOcclusionWhenDynamic = false;
             }
             foreach (var lg in go.GetComponentsInChildren<LODGroup>(true)) lg.enabled = false;
             foreach (var anim in go.GetComponentsInChildren<PartAnimation>(true))

@@ -4,14 +4,15 @@ A remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in 
 
 ## Environment
 
-- Unity **6.7**, **URP 17.7**, Windows.
+- Unity **7000.0** (alpha 7000.0.0a7, from 6000.7.0b3 on 2026-10-06; .NET CoreCLR instead of Mono), **URP 17.7**, Windows.
 - **Scripting backend:** IL2CPP for Windows / Linux (Standalone; the Editor modules "Windows / Linux Build Support (IL2CPP)";
   Linux builds from Windows use `com.unity.toolchain.win-x86_64-linux` + `com.unity.sdk.linux-x86_64`, which the first Linux
   IL2CPP build added) and Android; native callbacks must be static `[AOT.MonoPInvokeCallback]` methods (`WinConsole`). A
   build folder made with Mono needs clearing before an IL2CPP build. Never ship the `*_BackUpThisFolder_ButDontShipItWithYourGame`
   folder (IL2CPP's debug data) in a release.
 - **Input System package only.** Active Input Handling is set to the new system. Never use `UnityEngine.Input` or the legacy Input Manager.
-- Packages include `com.unity.pipeline` (Unity CLI bridge). `com.unity.ai.assistant` was removed (its AI Generators logged
+- Packages include `com.unity.pipeline` (Unity CLI bridge; 0.8.0-exp.1 or later: 0.7 listened on `http://+:<port>/`, which
+  CoreCLR's HttpListener on Windows refuses without admin rights, "No available ports in range 7800-7849"). `com.unity.ai.assistant` was removed (its AI Generators logged
   "NoSubscription" errors), so there is no Unity MCP server.
 - Driving the Editor: if the `unity` CLI is available, use it to read the Console, run menu items, enter Play mode and inspect the scene. Check with `unity status` first. When an Editor is connected, don't hand-edit `.unity` / `.prefab` / `.asset` YAML.
 
@@ -1061,7 +1062,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `EventGraphFile` (a small reader of Graph Toolkit's serialized model, Unity YAML: nodes with their port / option values,
   wires, variables (m_Modifiers 0 local / 1 input / 2 output), local sub-graphs; node ids as Graph Toolkit's Hash128) and
   `EventGraphScript` (the one compiler, graph -> the line form above; the Editor's checks and Run In Play Mode feed it the
-  live graph through `EventGraphCompiler`). The importer keeps the file's text as its TextAsset (so `Resources/GoF2Events`
+  live graph through `EventGraphCompiler`). The importer depends on the GoF2Data JSON files `Database.Load` reads (`ctx.DependsOnArtifact`: in a fresh Library the
+  graphs were checked against empty tables) and keeps the file's text as its TextAsset (so `Resources/GoF2Events`
   graphs are the built-ins) and reads every graph both ways, warning if the game's reader disagrees with Graph Toolkit (a
   Unity update changing the format), and about a name with spaces (/event takes one word). Node kinds, port and option names
   are the Editor classes' (`EventGraphNodes`), the option enums the game's. The right-click "Event" menu (and Assets > GoF2 >
@@ -1628,6 +1630,8 @@ Useful field offsets in the decompiled code:
 - `PartAnimation`: Scale keys are in the mesh's own (engine) axis order, not the Z-up swap of the position keys (the explosion debris streaks stretch sclZ 45x lengthwise; swapped they were km-long lines); every other animated mesh with uneven scale follows this too, only the explosion was checked in Play mode. The UV scrolls `v5_0` (u) / `v5_1` (v), 100 = one texture, run on every mesh (`_UVOffset` on GoF2/SkyLayer, else `_MainTex_ST`, which the Shader Graphs add: the remake subtracts the original's offsets, its textures are flipped; the burning stations' fire and smoke, plasma beams / streams, projectiles, gas clouds, the clamped fx atlases too: their scrolling cells stay inside the texture, the beam strips of sn_projectiles repeat every scroll period) and count toward the animation's length. The `extra` channel (0 to 100, opacity; `_Fade`, else the Shader Graphs' `_Color`) is only applied where `applyMaterialChannels` is on (the sky layers, explosions, gun projectiles / muzzle flashes / impacts via `GunRig.EnableFades`: an impact's 3600-unit glow is meant at 20 % for 267 ms; the hyper_drive, khador_jump, the gates' `_jump_anim_add` and the Void station explosion, which all fade to 0 by it); `v5_2`..`v5_6` aren't applied.
 - The default steering sensitivity is a guess (1.0); the original's touch / tilt sliders run 0..1 with 1.0 the maximum, the remake's touch slider 0.2-2.2.
 - 13 resources referenced by the code aren't in the OBB (dev leftovers).
+- Unity 7000.0.0a7 hands `ModelOrientationPostprocessor` part11 of `sn_cargo_001_midorian_wrecked` unreadable, so that
+  60-vertex piece isn't turned 180 deg (a warning names it on import).
 
 ## Roadmap (suggested order)
 

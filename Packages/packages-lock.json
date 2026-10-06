@@ -14,7 +14,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ai.navigation": {
-      "version": "2.0.14",
+      "version": "2.0.15",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -52,15 +52,10 @@
       "version": "6.7.0",
       "depth": 1,
       "source": "builtin",
-      "dependencies": {
-        "com.unity.burst": "1.8.25",
-        "com.unity.nuget.mono-cecil": "1.11.6",
-        "com.unity.test-framework": "1.4.6",
-        "com.unity.test-framework.performance": "3.2.0"
-      }
+      "dependencies": {}
     },
     "com.unity.dt.app-ui": {
-      "version": "2.1.13",
+      "version": "2.2.4",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -90,7 +85,7 @@
       }
     },
     "com.unity.ext.nunit": {
-      "version": "2.1.1",
+      "version": "2.1.2",
       "depth": 1,
       "source": "builtin",
       "dependencies": {}
@@ -134,22 +129,22 @@
       "dependencies": {}
     },
     "com.unity.netcode": {
-      "version": "7.0.0",
+      "version": "7.1.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {
         "com.unity.entities": "6.7.0",
-        "com.unity.transport": "6.5.0",
+        "com.unity.transport": "6.7.0",
         "com.unity.modules.animation": "1.0.0"
       },
       "url": "https://packages.unity.com"
     },
     "com.unity.netcode.gameobjects": {
-      "version": "3.0.0",
+      "version": "3.1.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.netcode": "7.0.0",
+        "com.unity.netcode": "7.1.0",
         "com.unity.transport": "6.7.0",
         "com.unity.nuget.mono-cecil": "1.11.4"
       },
@@ -170,7 +165,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.pipeline": {
-      "version": "0.7.0-exp.1",
+      "version": "0.8.0-exp.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -303,7 +298,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.services.qos": {
-      "version": "1.4.1",
+      "version": "1.5.1",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -354,7 +349,7 @@
     },
     "com.unity.test-framework.performance": {
       "version": "6.7.0",
-      "depth": 2,
+      "depth": 3,
       "source": "builtin",
       "dependencies": {
         "com.unity.test-framework": "1.1.33",
@@ -392,7 +387,7 @@
       }
     },
     "com.unity.ugui": {
-      "version": "2.7.0",
+      "version": "7.0.0",
       "depth": 0,
       "source": "builtin",
       "dependencies": {
@@ -401,7 +396,7 @@
       }
     },
     "com.unity.xr.core-utils": {
-      "version": "6.0.0",
+      "version": "7.0.0",
       "depth": 1,
       "source": "builtin",
       "dependencies": {
@@ -417,7 +412,7 @@
       }
     },
     "com.unity.xr.management": {
-      "version": "6.0.0",
+      "version": "7.0.0",
       "depth": 1,
       "source": "builtin",
       "dependencies": {
