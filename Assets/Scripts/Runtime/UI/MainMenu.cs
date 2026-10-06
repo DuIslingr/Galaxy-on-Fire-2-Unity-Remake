@@ -383,6 +383,10 @@ namespace GoF2Remake.UI
                 if (debugHoldTime >= 1f && debugHoldTime - Time.unscaledDeltaTime < 1f) OpenDebug();
             }
             else debugHoldTime = 0f;
+            // Remake mods: the controller's X turns the selected mod on or off while the mod browser is open (no dialog over it).
+            if (pad != null && pad.buttonWest.wasPressedThisFrame && modBrowser != null && openPanel == modBrowser.Panel
+                && !dialog.ClassListContains("dialog-backdrop--shown"))
+                modBrowser.ToggleSelected();
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
         }
 

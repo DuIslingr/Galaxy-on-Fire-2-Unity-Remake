@@ -219,6 +219,7 @@ namespace GoF2Remake.UI
             tabShop.EnableInClassList("hangar-tab--active", tab == Tab.Shop);
             tabBlueprints.EnableInClassList("hangar-tab--active", tab == Tab.Blueprints);
             var keep = selected;
+            int keepIndex = keep != null ? rows.IndexOf(keep) : -1;
             float scroll = list.scrollOffset.y;
             rows.Clear();
             list.Clear();
@@ -294,11 +295,22 @@ namespace GoF2Remake.UI
                 }
             }
 
-            selected = rows.FirstOrDefault(r => r.Same(keep)) ?? rows.FirstOrDefault(r => r.Selectable);
+            // The same row again; when it is gone (its last unit bought or sold) the row that took its place, or the one
+            // before it at the end of the list, so the list stays where it was instead of jumping to the top.
+            selected = rows.FirstOrDefault(r => r.Same(keep)) ?? NearestSelectable(keepIndex) ?? rows.FirstOrDefault(r => r.Selectable);
             foreach (var r in rows) r.element.EnableInClassList("list-row--selected", r == selected);
             list.schedule.Execute(() => { list.scrollOffset = new Vector2(0f, scroll); ScrollToSelected(); });
             ShowDetails();
             UpdateFooter();
+        }
+
+        /// <summary>The first selectable row from 'index' on, else the last one before it (null: none, or index &lt; 0).</summary>
+        Row NearestSelectable(int index)
+        {
+            if (index < 0) return null;
+            for (int i = index; i < rows.Count; i++) if (rows[i].Selectable) return rows[i];
+            for (int i = Mathf.Min(index, rows.Count) - 1; i >= 0; i--) if (rows[i].Selectable) return rows[i];
+            return null;
         }
 
         void AddHeader(string text, bool sub = false)

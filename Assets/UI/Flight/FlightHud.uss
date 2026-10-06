@@ -142,59 +142,6 @@
     color: #FFFFFF;
 }
 
-/* ---- "Hold to skip" during a skippable story cutscene (FlightHud.UpdateSkipPrompt) ------ */
-
-.skip-prompt {
-    position: absolute;
-    right: 72px;
-    bottom: 64px;
-    padding: 12px 22px 10px 22px;
-    background-color: rgba(4, 10, 18, 0.55);
-    border-width: 2px;
-    border-color: rgba(120, 220, 255, 0.45);
-    border-radius: 4px;
-    opacity: 0.75;
-    transition-property: opacity, border-color;
-    transition-duration: 0.25s;
-}
-
-.skip-prompt--hidden {
-    display: none;
-}
-
-.skip-prompt--held {
-    opacity: 1;
-    border-color: var(--gof-amber);
-}
-
-.skip-row {
-    flex-direction: row;
-    align-items: center;
-}
-
-.skip-glyph {
-    flex-direction: row;
-    margin-right: 10px;
-}
-
-.skip-label {
-    font-size: 20px;
-    letter-spacing: 4px;
-    color: #FFFFFF;
-}
-
-.skip-track {
-    height: 4px;
-    margin-top: 8px;
-    background-color: rgba(255, 255, 255, 0.15);
-}
-
-.skip-fill {
-    width: 0;
-    height: 100%;
-    background-color: var(--gof-amber);
-}
-
 /* ---- asteroid lock (MiningView) and HUD messages ------------------------------------ */
 
 .lock-ring {

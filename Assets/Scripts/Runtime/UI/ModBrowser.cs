@@ -66,6 +66,9 @@ namespace GoF2Remake.UI
             problems = Add(descScroll, new Label(), "mods-problems");
             var actions = Add(detail, new VisualElement(), "mods-actions");
             toggle = ActionButton(actions, "", Toggle, "mods-toggle");
+            // The controller's X toggles the selected mod from anywhere in the panel (MainMenu: ToggleSelected); its
+            // glyph on the button shows while a controller is in use (.input-gamepad).
+            Add(toggle, new Label("X") { pickingMode = PickingMode.Ignore }, "mods-pad-x", "gof-semibold");
             earlier = ActionButton(actions, T("modsEarlier", "Earlier"), () => Move(-1));
             later = ActionButton(actions, T("modsLater", "Later"), () => Move(1));
 
@@ -119,8 +122,12 @@ namespace GoF2Remake.UI
                 Add(text, new Label(m.Name) { pickingMode = PickingMode.Ignore }, "mods-row-name");
                 Add(text, new Label(Sub(m)) { pickingMode = PickingMode.Ignore }, "mods-row-sub");
                 Add(row, new Label { pickingMode = PickingMode.Ignore }, "mods-badge");
+                // Keyboard / controller focus selects the mod; the mouse's hover focus (hookFocus) doesn't, or passing over
+                // the rows on the way to Turn on changed the mod it acts on. A click selects (the button's action).
+                int hoverFrame = -10;
+                row.RegisterCallback<PointerEnterEvent>(_ => hoverFrame = Time.frameCount);   // before hookFocus's own
                 hookFocus(row);
-                row.RegisterCallback<FocusInEvent>(_ => Select(m.Id));
+                row.RegisterCallback<FocusInEvent>(_ => { if (Time.frameCount - hoverFrame > 1) Select(m.Id); });
                 list.Add(row);
                 rows[m.Id] = row;
             }
@@ -208,6 +215,15 @@ namespace GoF2Remake.UI
             int i = ids.IndexOf(mod.Id);
             earlier.SetEnabled(i > 0);
             later.SetEnabled(i >= 0 && i < ids.Count - 1);
+        }
+
+        /// <summary>The controller's X: turns the selected mod on or off, like its Turn on / off button (not a broken mod
+        /// that is off).</summary>
+        public void ToggleSelected()
+        {
+            if (selected == null || !toggle.enabledSelf) return;
+            click();
+            Toggle();
         }
 
         void Toggle()

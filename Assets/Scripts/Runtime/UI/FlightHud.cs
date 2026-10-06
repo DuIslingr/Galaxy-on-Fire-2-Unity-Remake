@@ -41,12 +41,6 @@ namespace GoF2Remake.UI
         bool lastTurretView, lastTurretAuto;
         VisualElement root, safeArea, hints;
         VisualElement crosshair, dockPrompt, dockGlyph;
-        // Remake: "Hold to skip" during a skippable story cutscene (the original's only skip is the pause menu's 395).
-        VisualElement skipPrompt, skipGlyph, skipFill;
-        float skipHold;           // 0..1 of SkipHoldSeconds
-        bool skipArmed, skipPointerDown;
-        int skipFrame = -1;       // the last frame the prompt was shown (LateUpdate hides it otherwise)
-        const float SkipHoldSeconds = 1f;
         Label dockLabel;
         SpaceLevel level;
         Mining mining;
@@ -184,7 +178,6 @@ namespace GoF2Remake.UI
             pauseMenu.InfoSound = () => PlayUi(CombatAudio.Load()?.messageInfo);
             pauseMenu.Photo = new PhotoMode(root, this);
             radioBox = root.Q("radio");
-            BuildSkipPrompt(radioBox != null ? radioBox.parent : root);
             screenFade = root.Q("screenFade");
             radioPortrait = root.Q("radioPortrait");
             radioSpeaker = root.Q<Label>("radioSpeaker");
@@ -417,78 +410,6 @@ namespace GoF2Remake.UI
         {
             dockGlyph.Clear();
             foreach (var g in InputGlyph.For(GameControls.Action, kind)) dockGlyph.Add(g);
-            if (skipGlyph != null)
-            {
-                skipGlyph.Clear();
-                if (kind != InputKind.Touch) foreach (var g in InputGlyph.For(GameControls.Action, kind)) skipGlyph.Add(g);
-            }
-        }
-
-        /// <summary>Remake (GitHub #16): the story cutscenes the pause menu's Skip (395) can end (LevelScript::canSkipCutsceneNow:
-        /// the prologue / rescue, 154, 157, 158) also end by holding the action key (F / Enter, the controller's X, as bound)
-        /// or pressing and holding this plate (touch, the mouse) for a second; nothing said the pause menu could skip them,
-        /// while any key skips the launch fly-in. Outside the safe area like the radio box (the cutscene hides that).</summary>
-        void BuildSkipPrompt(VisualElement parent)
-        {
-            skipPrompt = new VisualElement { name = "skipPrompt" };
-            skipPrompt.AddToClassList("skip-prompt");
-            skipPrompt.AddToClassList("skip-prompt--hidden");
-            var row = new VisualElement { pickingMode = PickingMode.Ignore };
-            row.AddToClassList("skip-row");
-            skipGlyph = new VisualElement { pickingMode = PickingMode.Ignore };
-            skipGlyph.AddToClassList("skip-glyph");
-            row.Add(skipGlyph);
-            var label = new Label(Localization.Extra("holdToSkip", "HOLD TO SKIP")) { pickingMode = PickingMode.Ignore };
-            label.AddToClassList("skip-label");
-            label.AddToClassList("gof-semibold");
-            row.Add(label);
-            skipPrompt.Add(row);
-            var track = new VisualElement { pickingMode = PickingMode.Ignore };
-            track.AddToClassList("skip-track");
-            skipFill = new VisualElement { pickingMode = PickingMode.Ignore };
-            skipFill.AddToClassList("skip-fill");
-            track.Add(skipFill);
-            skipPrompt.Add(track);
-            skipPrompt.RegisterCallback<PointerDownEvent>(e => { skipPointerDown = true; skipArmed = true; skipPrompt.CapturePointer(e.pointerId); e.StopPropagation(); });
-            skipPrompt.RegisterCallback<PointerUpEvent>(e => { skipPointerDown = false; skipPrompt.ReleasePointer(e.pointerId); e.StopPropagation(); });
-            skipPrompt.RegisterCallback<PointerCaptureOutEvent>(_ => skipPointerDown = false);
-            parent.Add(skipPrompt);
-        }
-
-        /// <summary>Called every frame a LevelScript cutscene holds the HUD.</summary>
-        void UpdateSkipPrompt()
-        {
-            var campaign = level != null ? level.Campaign : null;
-            if (skipPrompt == null || campaign == null || !campaign.CanSkipCutscene) return;
-            skipFrame = Time.frameCount;
-            skipPrompt.RemoveFromClassList("skip-prompt--hidden");
-            // A press that began before the prompt showed (a key still held from flying) doesn't count.
-            if (GameControls.Action.WasPressedThisFrame()) skipArmed = true;
-            bool held = skipArmed && (GameControls.Action.IsPressed() || skipPointerDown);
-            if (!held) skipArmed = skipPointerDown;
-            float dt = Time.unscaledDeltaTime;
-            skipHold = held ? skipHold + dt / SkipHoldSeconds : Mathf.Max(0f, skipHold - dt * 3f / SkipHoldSeconds);
-            skipPrompt.EnableInClassList("skip-prompt--held", held);
-            skipFill.style.width = Length.Percent(Mathf.Clamp01(skipHold) * 100f);
-            if (skipHold < 1f) return;
-            ResetSkipPrompt();
-            PlayButton(false);
-            campaign.SkipCutscene();
-        }
-
-        void ResetSkipPrompt()
-        {
-            skipHold = 0f;
-            skipArmed = skipPointerDown = false;
-            if (skipPrompt == null) return;
-            skipPrompt.AddToClassList("skip-prompt--hidden");
-            skipPrompt.RemoveFromClassList("skip-prompt--held");
-            skipFill.style.width = Length.Percent(0f);
-        }
-
-        void LateUpdate()
-        {
-            if (skipFrame != Time.frameCount && skipPrompt != null && !skipPrompt.ClassListContains("skip-prompt--hidden")) ResetSkipPrompt();
         }
 
         /// <summary>A menu entry straight from its key (V Wingmen, K Khador Drive): the autopilot menu opens on it; nothing
@@ -821,7 +742,6 @@ namespace GoF2Remake.UI
                 combatView.Update(radar, traffic, health, Camera.main, true, false);
                 UpdateRadio();
                 UpdateFade();
-                UpdateSkipPrompt();
                 return;
             }
 

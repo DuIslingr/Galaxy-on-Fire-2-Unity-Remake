@@ -585,6 +585,32 @@
     background-color: var(--gof-amber);
 }
 
+.input-gamepad .mods-toggle {
+    padding-left: 44px;
+    padding-right: 44px;
+}
+
+/* The controller's X on the Turn on / off button (MainMenu toggles the selected mod with it); only with a controller. */
+.mods-pad-x {
+    display: none;
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    width: 26px;
+    height: 26px;
+    margin-top: -13px;
+    border-radius: 13px;
+    font-size: 15px;
+    letter-spacing: 0;
+    color: #0B1016;
+    background-color: #3F8FE8;
+    -unity-text-align: middle-center;
+}
+
+.input-gamepad .mods-pad-x {
+    display: flex;
+}
+
 .mods-footer {
     flex-direction: row;
     align-items: center;

@@ -477,10 +477,25 @@ namespace GoF2Remake.UI
             if (navButtons != null)   // FF at (40, S - 180), autopilot (40, S); the cursor mode's at the bottom left
                 Place(navButtons, frame.cursor ? new Vector2(32f, h - 309f) : new Vector2(32f, Mathf.Max(0f, S - 180f)));
             // The pause button sits in the HUD root, so it also shows while the safe area is hidden: follow the safe area.
+            // A cutscene hides the safe area (display: none), which lays this layer out at zero size (Width then fell back
+            // to 1920 and pushed the button off the right edge of a narrower HUD: phones, 16:10): keep where it last was,
+            // or (a level that opens in a cutscene) the HUD root's own top right.
             var lb = layer.worldBound;
             var hb = pauseHost.worldBound;
-            if (!float.IsNaN(lb.x) && !float.IsNaN(hb.x)) Place(pause, new Vector2(lb.x - hb.x + w - 121f, lb.y - hb.y + 24f));
+            if (Laid(lb) && Laid(hb) && layer.contentRect.width > 0f)
+            {
+                pausePos = new Vector2(lb.x - hb.x + w - 121f, lb.y - hb.y + 24f);
+                pausePlaced = true;
+            }
+            else if (!pausePlaced && Laid(hb)) pausePos = new Vector2(pauseHost.contentRect.width - 121f, 24f);
+            else if (!pausePlaced) return;
+            Place(pause, pausePos);
         }
+
+        Vector2 pausePos;
+        bool pausePlaced;
+
+        static bool Laid(Rect r) => !float.IsNaN(r.x) && !float.IsNaN(r.width) && r.width > 0f && r.height > 0f;
 
         void Draw(float dtMs)
         {
