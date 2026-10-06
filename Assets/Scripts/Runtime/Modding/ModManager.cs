@@ -90,6 +90,7 @@ namespace GoF2Remake.Modding
             ModContent.ClearParsed();
             foreach (var m in installed) if (!m.Broken) ModContent.Parse(m);   // a broken content file shows in the browser
             SortInstalled();
+            World.ShipShadowBaker.PruneCache(installed.Where(m => m.Manifest != null).Select(m => m.Id));   // removed mods' hangar shadows
             Debug.Log($"Mods: {installed.Count} installed ({string.Join(", ", installed.Select(m => m.Id + (IsEnabled(m.Id) ? " on" : "")))})");
             Invalidate();
         }

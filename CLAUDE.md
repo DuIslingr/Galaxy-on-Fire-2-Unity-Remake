@@ -458,9 +458,20 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   the halo around it (the part a camera looking down past the hull sees), only below the hull's underside there (so the
   hull never shades itself; 3 m above it past the hull, the rims around a sunk hull), only on surfaces facing up (normals
   from the depth's derivatives), full over the box's lower 60 %. Shown once the ship has stood still for 0.3 s, fading out
-  over 15 m as it lifts off and staying on the pad. The bake is `ShipShadowBaker` (shared by the builder): the mods' ships
+  over 15 m as it lifts off and staying on the pad; an arriving ship's fades in the same way as it comes down
+  (`HangarFlight.Arrival` -> `ExpectLanding`: the pad's floor is known from the start, the hover over the pad isn't
+  taken for the landing; verified: none during the approach at 32 m, 16 % at 12.6 m, full at touch-down). The bake is `ShipShadowBaker` (shared by the builder): the mods' ships
   are baked by it at run time (glTFast keeps their meshes readable; once per assembly and set of mods, the rasterising on a
-  worker thread, the shadow hidden until it is done; their engine / throttle glows left out) and never take the set's
+  worker thread, the shadow hidden until it is done; their engine / throttle glows left out; kept for later plays in
+  `persistentDataPath/ModCache/ShipShadows/<mod id>/<hull hash>.shadow` (the hull's triangles are its identity, no mod
+  hash: hashing every file of a mod was most of the cached load), read and written on the worker thread: the loading
+  screen's pass keeps only the files its ships used in their mods' folders (`PruneUnused`: a new version's old maps go),
+  `ModManager.Scan` deletes an uninstalled mod's folder,
+  `PruneCache`; `CacheVersion` re-bakes them all after a change to the bake; verified: 5 PR ships cached, read back
+  identical in 0-30 ms, both clean-ups; made on the main menu's loading screen, `ModShipsBaked` polled by
+  `ModLoading`: once the models are built every template's map is read or baked, one hull read per frame, "Hangar shadows
+  N / M: <ship>"; the templates' inactive holder is why `Collect` ignores the root's own active state; measured: 0.25 s
+  baking all five PR ships, 0.03 s from the cache) and never take the set's
   map (their "ship_NNN_mod" numbers differ between games: stale maps of other ships under those names gave the Falcon a
   wrong shadow; the builder skips pack "mod"); the debug capital hulls get a soft oval of their bounds (the game's
   meshes are imported non-readable, so a build can't rasterise them). Verified in Play mode in the Terran,
@@ -1506,7 +1517,8 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   the cache `ModMaterials.Texture` reads; zip files copied out once by `ModInfo.LocalFile`, cache folder by the zip's date and
   size), glTFast's main-thread work for all of them in one `TimeBudgetPerFrameDeferAgent` (0.6 of a frame; the old
   `UninterruptedDeferAgent` built each model in one go), the stations and rooms (`ModStations`), the weapon fx
-  (`ModWeapons`), the music tracks and sound effects (`ModAudio`, `ModMusic`, `ModSounds`). Textures are compressed to DXT1 /
+  (`ModWeapons`), the music tracks and sound effects (`ModAudio`, `ModMusic`, `ModSounds`), then the ships' hangar shadows
+  (`World.ShipShadowBaker.ModShipsBaked`, see "Station scene"). Textures are compressed to DXT1 /
   DXT5 with their mipmaps by a Burst job (`ModTextureEncoder`, van Waveren's real-time encoder, native buffers: Texture2D.Compress
   took 110-145 ms per 2048 px texture on the main thread, a managed encoder's garbage a 2 s collection) where the GPU reads
   DXT; elsewhere (phones) Texture2D.Compress, one texture per frame. The startup splash shows "Loading mods" with a progress

@@ -27,6 +27,7 @@ namespace GoF2Remake.Modding
 
         static readonly Dictionary<int, GameObject> templates = new Dictionary<int, GameObject>();
         static readonly Dictionary<int, Texture2D> icons = new Dictionary<int, Texture2D>();
+        static readonly Dictionary<int, string> names = new Dictionary<int, string>();
         static readonly List<GLTFast.GltfImport> imports = new List<GLTFast.GltfImport>();
         static GameObject holder;
         static GLTFast.TimeBudgetPerFrameDeferAgent agent;
@@ -52,7 +53,7 @@ namespace GoF2Remake.Modding
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics()
         {
-            templates.Clear(); icons.Clear(); imports.Clear();
+            templates.Clear(); icons.Clear(); imports.Clear(); names.Clear();
             holder = null; agent = null; loading = null; ModelsChanged = null;
             loadingRevision = loadedRevision = -1;
             steps = stepsDone = 0; current.Clear(); Count = Done = 0;
@@ -167,6 +168,7 @@ namespace GoF2Remake.Modding
                 var template = ModShipBuilder.Build(c, mod, scene);
                 template.transform.SetParent(holder.transform, false);
                 templates[c.index] = template;
+                names[c.index] = c.name;
                 Debug.Log($"Mods: {mod.Id}: ship {c.index} \"{c.name}\" built from {c.model}");
             }
             catch (System.Exception e) { Warn(mod, $"{c.model}: {e.Message}"); Debug.LogException(e); }
@@ -193,6 +195,7 @@ namespace GoF2Remake.Modding
             foreach (var t in templates.Values) if (t != null) Object.Destroy(t);
             templates.Clear();
             icons.Clear();
+            names.Clear();
             foreach (var i in imports) i.Dispose();
             imports.Clear();
             if (holder != null) foreach (Transform child in holder.transform) Object.Destroy(child.gameObject);
@@ -215,6 +218,17 @@ namespace GoF2Remake.Modding
 
         /// <summary>Runs the action once the models are built (at most 'timeoutSeconds' later).</summary>
         public static void WhenReady(System.Action action, float timeoutSeconds = 30f) => ModShipsWaiter.Run(action, timeoutSeconds);
+
+        /// <summary>The built templates (ship number, name, template), for the loading screen's hangar shadows
+        /// (World.ShipShadowBaker); only complete once Ready.</summary>
+        public static IEnumerable<(int ship, string name, GameObject template)> Built
+        {
+            get
+            {
+                foreach (var kv in templates)
+                    if (kv.Value != null) yield return (kv.Key, names.TryGetValue(kv.Key, out var n) ? n : kv.Value.name, kv.Value);
+            }
+        }
 
         /// <summary>A mod ship's shop icon, null = none.</summary>
         public static Texture2D Icon(int ship) => icons.TryGetValue(ship, out var t) ? t : null;

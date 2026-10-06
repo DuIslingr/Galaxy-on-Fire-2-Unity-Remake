@@ -1,8 +1,9 @@
 // ModLoading.cs
 // Remake mods: what the main menu's loading screen shows (UI.ModLoadingView) while the mods that are on load in the
 // background: their ship models (ModShips, all at once), stations and rooms (ModStations), weapon fx (ModWeapons), music
-// (ModMusic) and sound effects (ModSounds). Busy until all are done; Progress weighs each ship as four steps, each
-// station three, each weapon two and each track or sound one.
+// (ModMusic) and sound effects (ModSounds), then the ships' hangar shadows (World.ShipShadowBaker: read from the cache
+// or baked, once the models are built). Busy until all are done; Progress weighs each ship as four steps, each station
+// three, each weapon two and each track, sound or hangar shadow one.
 
 using System.Collections.Generic;
 
@@ -11,7 +12,8 @@ namespace GoF2Remake.Modding
     public static class ModLoading
     {
         /// <summary>Something of the mods is still loading.</summary>
-        public static bool Busy => !ModShips.Ready || !ModStations.Ready || !ModWeapons.Ready || !ModMusic.Ready || !ModSounds.Ready;
+        public static bool Busy => !ModShips.Ready || !ModStations.Ready || !ModWeapons.Ready || !ModMusic.Ready || !ModSounds.Ready
+                                   || !World.ShipShadowBaker.ModShipsBaked;
 
         /// <summary>How far it is, 0..1.</summary>
         public static float Progress
@@ -20,12 +22,13 @@ namespace GoF2Remake.Modding
             {
                 float shipWeight = ModShips.Count * 4f, stationWeight = ModStations.Count * 3f + 1f, weaponWeight = ModWeapons.Count * 2f;
                 float musicWeight = ModMusic.Count, soundWeight = ModSounds.Count;
-                float total = shipWeight + stationWeight + weaponWeight + musicWeight + soundWeight;
+                float shadowWeight = World.ShipShadowBaker.PrebakeWanted ? ModShips.Count : 0f;
+                float total = shipWeight + stationWeight + weaponWeight + musicWeight + soundWeight + shadowWeight;
                 float music = ModMusic.Count > 0 ? (ModMusic.Count - ModMusic.Loading) / (float)ModMusic.Count : 1f;
                 float sounds = ModSounds.Count > 0 ? (ModSounds.Count - ModSounds.Loading) / (float)ModSounds.Count : 1f;
                 float weapons = ModWeapons.Count > 0 ? ModWeapons.Done / (float)ModWeapons.Count : 1f;
                 return (ModShips.Progress * shipWeight + ModStations.Progress * stationWeight + weapons * weaponWeight
-                        + music * musicWeight + sounds * soundWeight) / total;
+                        + music * musicWeight + sounds * soundWeight + World.ShipShadowBaker.PrebakeProgress * shadowWeight) / total;
             }
         }
 
@@ -47,6 +50,10 @@ namespace GoF2Remake.Modding
                     parts.Add(string.Format(Data.Localization.Extra("modsLoadingSounds", "Sounds {0} / {1}"), ModSounds.Count - ModSounds.Loading, ModSounds.Count));
                 if (!ModMusic.Ready && ModMusic.Count > 0)
                     parts.Add(string.Format(Data.Localization.Extra("modsLoadingMusic", "Music {0} / {1}"), ModMusic.Count - ModMusic.Loading, ModMusic.Count));
+                var shadows = World.ShipShadowBaker.PrebakeCurrent;
+                if (ModShips.Ready && shadows != null && World.ShipShadowBaker.PrebakeDone < World.ShipShadowBaker.PrebakeCount)
+                    parts.Add(string.Format(Data.Localization.Extra("modsLoadingShadows", "Hangar shadows {0} / {1}"),
+                                            World.ShipShadowBaker.PrebakeDone, World.ShipShadowBaker.PrebakeCount) + ": " + shadows);
                 return string.Join("   ·   ", parts);
             }
         }

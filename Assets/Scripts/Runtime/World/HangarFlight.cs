@@ -91,6 +91,7 @@ namespace GoF2Remake.World
             float restMin = 0f;
             for (int i = 0; i < hull.Length; i++) restMin = Mathf.Min(restMin, hull[i].y * ship.localScale.y);
             floorY = pad.y + restMin;
+            if (arriving && ship.TryGetComponent<HangarShipShadow>(out var shadow)) shadow.ExpectLanding(pad.y);   // fades in on the way down
 
             // The lane's control points, from space to the point over the pad ('over'), level through the forcefield.
             var outward = lane.outward.normalized;

@@ -8,7 +8,8 @@
 // whatever is under the hull: the pads, the Terran cradles (the hull sits below their rims), the raised rims and
 // pedestals, the crates. The box sits in the hangar, not on the ship: it only turns with the ship's heading. Shown while
 // the ship stands on its pad (the turntable, the parked ships), fading out as it lifts off (gone 15 m up) and staying on
-// the pad as it flies away; an arriving ship's appears once it has landed. The "Hangar ship shadows" option
+// the pad as it flies away; an arriving ship's fades in the same way as it comes down onto its pad (ExpectLanding: the
+// flight names the pad, so the shadow knows the floor before the ship gets there). The "Hangar ship shadows" option
 // (Settings.HangarShadows: off / player ship only / all ships) hides them live; off also gives the station camera its
 // own depth texture setting back (the shadows' depth prepass / copy is most of their cost on phones).
 
@@ -39,6 +40,7 @@ namespace GoF2Remake.World
         Vector2 center;
         float size, bottom, heightRange = 1f;
         float floorY = float.NaN, restTime, alpha;
+        float landingPadY = float.NaN;   // an arriving ship's pad (its pivot's height there), until it has landed
         Vector3 lastPos;
         bool player;
         string baking;   // the assembly ShipShadowBaker is baking for this ship (hidden meanwhile)
@@ -119,6 +121,11 @@ namespace GoF2Remake.World
             return s;
         }
 
+        /// <summary>The ship is flying in to land with its pivot at height 'padY' (HangarFlight.Arrival): its shadow lies on
+        /// that floor from now on and fades in as the ship comes down, the reverse of a take-off. A hover on the way
+        /// (the turn over the pad) isn't taken for the landing.</summary>
+        public void ExpectLanding(float padY) { landingPadY = padY; restTime = 0f; }
+
         /// <summary>Takes a baked map; its texture.</summary>
         Texture2D Use(ShipShadowSet.Entry entry)
         {
@@ -178,7 +185,13 @@ namespace GoF2Remake.World
             float dt = Time.deltaTime;
             restTime = (pos - lastPos).sqrMagnitude < 1e-6f ? restTime + dt : 0f;
             lastPos = pos;
-            if (restTime >= RestSeconds) floorY = HullBottom();   // standing on a pad: the hull's lowest point is at the floor
+            if (!float.IsNaN(landingPadY)) floorY = landingPadY + bottom * Scale;   // coming in: the pad's floor
+            // Standing on a pad: the hull's lowest point is at the floor (coming in: only once down on it).
+            if (restTime >= RestSeconds && (float.IsNaN(landingPadY) || HullBottom() <= floorY + 1f))
+            {
+                floorY = HullBottom();
+                landingPadY = float.NaN;
+            }
             float target = 0f;
             if (!float.IsNaN(floorY)) target = Mathf.Clamp01(1f - (HullBottom() - floorY) / FadeHeight);
             alpha = Mathf.MoveTowards(alpha, target, dt * 3f);
@@ -200,7 +213,7 @@ namespace GoF2Remake.World
                 bottom = b.min.y;
             }
             alpha = 0f;
-            if (restTime >= RestSeconds) floorY = HullBottom();
+            if (restTime >= RestSeconds && float.IsNaN(landingPadY)) floorY = HullBottom();
         }
 
         void Place()

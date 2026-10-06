@@ -7,8 +7,18 @@
 // whose meshes are readable (the mods' ships: glTFast keeps its meshes readable), once per assembly and set of mods, the
 // rasterising on a worker thread (Request / Bake). The game's own meshes are imported non-readable, so the debug capital
 // hulls keep the soft oval.
+// A mod ship's map is kept on disk for later plays (persistentDataPath/ModCache/ShipShadows/<mod id>/<hull hash>.shadow,
+// read and written on the worker thread): the hull hash is the ship's identity (its triangles: a changed model is another
+// file; their "ship_NNN_mod" numbers differ between games). The loading screen's pass keeps only the files its ships used
+// in their mods' folders (a new version's old maps go), and ModManager.Scan deletes the folders of the mods no longer
+// installed (PruneCache).
+// The mods' ships are prepared on the main menu's loading screen (ModShipsBaked, polled by ModLoading): once their models
+// are built, every template's map is read from the cache or baked, one hull read per frame, so a hangar never waits.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -20,6 +30,9 @@ namespace GoF2Remake.World
         public const int N = 128;
         const int HaloRadius = 13, HaloPasses = 3;
         const float Margin = 2.2f;
+        /// <summary>Bumped when the bake's output changes: older cached maps are then baked again.</summary>
+        const int CacheVersion = 1;
+        const int CacheMagic = 0x31485347;   // "GSH1"
 
         /// <summary>A baked map: the pixels (linear RGBA) and where they lie in the ship's space (Unity metres, scale 1).</summary>
         public sealed class Result
@@ -33,10 +46,16 @@ namespace GoF2Remake.World
 
         static readonly Dictionary<string, Task<Result>> pending = new Dictionary<string, Task<Result>>();
         static readonly Dictionary<string, ShipShadowSet.Entry> baked = new Dictionary<string, ShipShadowSet.Entry>();
+        /// <summary>The cache file each assembly's map came from or went to (written by the worker threads).</summary>
+        static readonly ConcurrentDictionary<string, string> cacheFiles = new ConcurrentDictionary<string, string>();
         static int revision = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { pending.Clear(); baked.Clear(); revision = -1; }
+        static void ResetStatics()
+        {
+            pending.Clear(); baked.Clear(); cacheFiles.Clear(); revision = -1;
+            prebake.Clear(); prebakeRevision = -1; prebakeNext = 0; PrebakeDone = 0; PrebakeCurrent = null;
+        }
 
         /// <summary>The mods changed: a ship type's model may be another one now.</summary>
         static void Check()
@@ -45,6 +64,7 @@ namespace GoF2Remake.World
             foreach (var e in baked.Values) if (e?.texture != null) Object.Destroy(e.texture);
             baked.Clear();
             pending.Clear();
+            cacheFiles.Clear();
             revision = Modding.ModManager.Revision;
         }
 
@@ -75,8 +95,200 @@ namespace GoF2Remake.World
             }
             var tris = new List<Vector3>();
             if (!Collect(ship, tris, out float bottom, false)) { baked[assembly] = null; return false; }
-            pending[assembly] = Task.Run(() => Rasterise(tris, bottom));
+            var mod = ModOf(ship);
+            string dir = mod != null ? Path.Combine(CacheRoot, mod.Id) : null;
+            pending[assembly] = Task.Run(() => BakeCached(assembly, tris, bottom, mod, dir));
             return true;
+        }
+
+        // ---- the loading screen: every mod ship prepared before a game starts --------------------------------------
+
+        static readonly List<(string assembly, string name, GameObject template)> prebake = new List<(string, string, GameObject)>();
+        static int prebakeRevision = -1, prebakeNext;
+
+        /// <summary>The mod ships whose maps are ready (ModLoading's progress and line).</summary>
+        public static int PrebakeDone { get; private set; }
+        public static int PrebakeCount => prebake.Count;
+        /// <summary>The ship whose map is being made now (null: none).</summary>
+        public static string PrebakeCurrent { get; private set; }
+
+        /// <summary>The loading screen has hangar shadows to make: the option shows them, and this isn't a server.</summary>
+        public static bool PrebakeWanted => Data.Settings.HangarShadows != Data.Settings.HangarShadowsOff && !Application.isBatchMode;
+
+        /// <summary>How far the mod ships' maps are, 0..1 (0 until their models are built).</summary>
+        public static float PrebakeProgress =>
+            prebakeRevision != Modding.ModManager.Revision ? 0f : prebake.Count == 0 ? 1f : PrebakeDone / (float)prebake.Count;
+
+        /// <summary>Every active mod ship's map is ready (read from the cache or baked). Polled each frame while the
+        /// loading screen shows (ModLoading.Busy): starts once the models are built, then reads one more hull per call and
+        /// collects the finished bakes.</summary>
+        public static bool ModShipsBaked
+        {
+            get
+            {
+                if (!Modding.ModShips.Ready) return false;
+                if (prebakeRevision != Modding.ModManager.Revision) StartPrebake();
+                if (PrebakeDone >= prebake.Count) return true;
+                TickPrebake();
+                return PrebakeDone >= prebake.Count;
+            }
+        }
+
+        static void StartPrebake()
+        {
+            prebakeRevision = Modding.ModManager.Revision;
+            prebake.Clear();
+            prebakeNext = 0;
+            PrebakeDone = 0;
+            PrebakeCurrent = null;
+            if (!PrebakeWanted) return;
+            foreach (var (_, name, template) in Modding.ModShips.Built) prebake.Add((template.name, name, template));
+        }
+
+        static void TickPrebake()
+        {
+            // The hull read (main thread) one ship per frame; the bakes run on worker threads meanwhile.
+            if (prebakeNext < prebake.Count)
+            {
+                var next = prebake[prebakeNext++];
+                if (next.template != null) Request(next.assembly, next.template, out _);
+            }
+            int done = 0;
+            string current = null;
+            for (int i = 0; i < prebakeNext; i++)
+            {
+                var p = prebake[i];
+                if (p.template == null || !Request(p.assembly, p.template, out var entry) || entry != null) done++;
+                else current ??= p.name;
+            }
+            PrebakeDone = done;
+            PrebakeCurrent = current ?? (prebakeNext < prebake.Count ? prebake[prebakeNext].name : null);
+            if (PrebakeDone >= prebake.Count && prebake.Count > 0)
+            {
+                Debug.Log($"Hangar shadows: {prebake.Count} mod ship(s) ready");
+                PruneUnused();
+            }
+        }
+
+        /// <summary>The pass is done: in each of its mods' folders only the files its ships used stay (an older version's
+        /// maps, other files and folders go).</summary>
+        static void PruneUnused()
+        {
+            var used = new HashSet<string>(cacheFiles.Values, System.StringComparer.OrdinalIgnoreCase);
+            var dirs = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (var p in prebake)
+            {
+                var mod = p.template != null ? ModOf(p.template) : null;
+                if (mod != null) dirs.Add(Path.GetFullPath(Path.Combine(CacheRoot, mod.Id)));
+            }
+            int removed = 0;
+            foreach (var dir in dirs)
+                try
+                {
+                    if (!Directory.Exists(dir)) continue;
+                    foreach (var f in Directory.GetFiles(dir))
+                        if (!used.Contains(Path.GetFullPath(f))) { File.Delete(f); removed++; }
+                    foreach (var d in Directory.GetDirectories(dir)) { Directory.Delete(d, true); removed++; }
+                }
+                catch (System.Exception e) { Debug.LogWarning($"Hangar shadow cache: {e.Message}"); }
+            if (removed > 0) Debug.Log($"Hangar shadows: removed {removed} unused cached map(s)");
+        }
+
+        // ---- the disk cache of the mods' ships ------------------------------------------------------------------------
+
+        /// <summary>persistentDataPath/ModCache/ShipShadows (main thread only: persistentDataPath).</summary>
+        static string CacheRoot => Path.Combine(Application.persistentDataPath, "ModCache", "ShipShadows");
+
+        /// <summary>The installed mod a ship comes from (its template's origin "mod &lt;id&gt;"), else null.</summary>
+        static Modding.ModInfo ModOf(GameObject ship)
+        {
+            if (!IsModShip(ship)) return null;
+            var mod = Modding.ModManager.Find(ship.GetComponent<Visuals.AssembledObject>().origin.Substring(4).Trim());
+            return mod != null && mod.Manifest != null && !string.IsNullOrEmpty(mod.Id) ? mod : null;
+        }
+
+        /// <summary>The map from the cache, else baked and saved there (a worker thread; 'mod' null: not cached).</summary>
+        static Result BakeCached(string assembly, List<Vector3> tris, float bottom, Modding.ModInfo mod, string dir)
+        {
+            if (mod == null || dir == null) return Rasterise(tris, bottom);
+            string file = null;
+            try
+            {
+                file = Path.GetFullPath(Path.Combine(dir, HullHash(tris, bottom) + ".shadow"));
+                var cached = Read(file);
+                if (cached != null) { cacheFiles[assembly] = file; return cached; }
+            }
+            catch (System.Exception e) { Debug.LogWarning($"Hangar shadow cache ({mod.Id}): {e.Message}"); }
+            var r = Rasterise(tris, bottom);
+            if (r != null && file != null)
+                try
+                {
+                    Directory.CreateDirectory(dir);
+                    Write(file, r);
+                    cacheFiles[assembly] = file;
+                }
+                catch (System.Exception e) { Debug.LogWarning($"Hangar shadow cache ({mod.Id}): {e.Message}"); }
+            return r;
+        }
+
+        /// <summary>The hull's identity: SHA-256 of its triangles, its bottom, the map size and CacheVersion (first 16 hex).</summary>
+        static string HullHash(List<Vector3> tris, float bottom)
+        {
+            var bytes = new byte[(tris.Count * 3 + 3) * 4];
+            int o = 0;
+            void Put(float f) { System.BitConverter.TryWriteBytes(new System.Span<byte>(bytes, o, 4), f); o += 4; }
+            foreach (var p in tris) { Put(p.x); Put(p.y); Put(p.z); }
+            Put(bottom); Put(N); Put(CacheVersion);
+            using var sha = SHA256.Create();
+            var h = sha.ComputeHash(bytes);
+            var sb = new System.Text.StringBuilder(16);
+            for (int i = 0; i < 8; i++) sb.Append(h[i].ToString("x2"));
+            return sb.ToString();
+        }
+
+        static Result Read(string file)
+        {
+            if (!File.Exists(file)) return null;
+            using var r = new BinaryReader(File.OpenRead(file));
+            if (r.BaseStream.Length != 4 * 8 + N * N * 4 || r.ReadInt32() != CacheMagic || r.ReadInt32() != CacheVersion || r.ReadInt32() != N) return null;
+            var result = new Result { center = new Vector2(r.ReadSingle(), r.ReadSingle()), size = r.ReadSingle(), bottom = r.ReadSingle(), heightRange = r.ReadSingle() };
+            var bytes = r.ReadBytes(N * N * 4);
+            result.pixels = new Color32[N * N];
+            for (int i = 0; i < result.pixels.Length; i++)
+                result.pixels[i] = new Color32(bytes[i * 4], bytes[i * 4 + 1], bytes[i * 4 + 2], bytes[i * 4 + 3]);
+            return result.size > 0f ? result : null;
+        }
+
+        static void Write(string file, Result r)
+        {
+            string tmp = file + ".tmp";
+            using (var w = new BinaryWriter(File.Create(tmp)))
+            {
+                w.Write(CacheMagic); w.Write(CacheVersion); w.Write(N);
+                w.Write(r.center.x); w.Write(r.center.y); w.Write(r.size); w.Write(r.bottom); w.Write(r.heightRange);
+                foreach (var c in r.pixels) { w.Write(c.r); w.Write(c.g); w.Write(c.b); w.Write(c.a); }
+            }
+            if (File.Exists(file)) File.Delete(file);
+            File.Move(tmp, file);
+        }
+
+        /// <summary>Deletes the cached maps of the mods no longer installed (ModManager.Scan: 'installedIds' every mod id
+        /// found, on or off).</summary>
+        public static void PruneCache(IEnumerable<string> installedIds)
+        {
+            try
+            {
+                string root = CacheRoot;
+                if (!Directory.Exists(root)) return;
+                var keep = new HashSet<string>(installedIds, System.StringComparer.OrdinalIgnoreCase);
+                foreach (var dir in Directory.GetDirectories(root))
+                    if (!keep.Contains(Path.GetFileName(dir)))
+                    {
+                        Directory.Delete(dir, true);
+                        Debug.Log($"Hangar shadows: removed the cached maps of {Path.GetFileName(dir)} (no longer installed)");
+                    }
+            }
+            catch (System.Exception e) { Debug.LogWarning($"Hangar shadow cache: {e.Message}"); }
         }
 
         static ShipShadowSet.Entry ToEntry(string assembly, Result r)
@@ -110,10 +322,12 @@ namespace GoF2Remake.World
             var root = ship.transform.worldToLocalMatrix;
             var vertices = new List<Vector3>();
             var triangles = new List<int>();
-            foreach (var mf in ship.GetComponentsInChildren<MeshFilter>())
+            // The parts switched on under the ship's root, whatever the root's own state: the mods' templates sit under an
+            // inactive holder (ModShips) and are baked there on the loading screen.
+            foreach (var mf in ship.GetComponentsInChildren<MeshFilter>(true))
             {
                 var mesh = mf.sharedMesh;
-                if (mesh == null || !mf.gameObject.activeInHierarchy) continue;
+                if (mesh == null || !ActiveUnder(mf.transform, ship.transform)) continue;
                 string n = mf.name;
                 if (n.Contains("_add") || n.Contains("_lod") || n.StartsWith("engine_glow") || n.StartsWith("throttle_glow")) continue;
                 var mr = mf.GetComponent<MeshRenderer>();
@@ -132,6 +346,13 @@ namespace GoF2Remake.World
                 for (int i = start; i < tris.Count; i++) bottom = Mathf.Min(bottom, tris[i].y);
             }
             return tris.Count > 0;
+        }
+
+        /// <summary>'t' and its parents up to (not including) 'root' are all switched on.</summary>
+        static bool ActiveUnder(Transform t, Transform root)
+        {
+            for (; t != null && t != root; t = t.parent) if (!t.gameObject.activeSelf) return false;
+            return true;
         }
 
         /// <summary>The map of the triangles (thread-safe: no Unity objects).</summary>
