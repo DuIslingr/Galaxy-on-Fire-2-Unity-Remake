@@ -36,11 +36,13 @@ namespace GoF2Remake.Modding
         static void ResetStatics()
         {
             templates.Clear(); imports.Clear(); current.Clear();
-            holder = null; agent = null; loadingRevision = loadedRevision = -1; steps = stepsDone = 0; Count = Done = 0;
+            holder = null; agent = null; loadingRevision = loadedRevision = -1; steps = stepsDone = 0; Count = Done = Backdrops = 0;
         }
 
         public static int Count { get; private set; }
         public static int Done { get; private set; }
+        /// <summary>The planet, sun and sky images being loaded with them (ModLoading.HasWork).</summary>
+        public static int Backdrops { get; private set; }
         public static float Progress => steps == 0 ? 1f : Mathf.Clamp01((float)stepsDone / steps);
         public static string Current => current.Count > 0 ? current[current.Count - 1] : null;
 
@@ -88,6 +90,7 @@ namespace GoF2Remake.Modding
             var interiors = new List<ModInteriors.Def>(ModInteriors.All());
             var backdrops = new List<string>(ModWorld.BackdropTextures());
             Count = models.Count + interiors.Count;
+            Backdrops = backdrops.Count;
             Done = 0;
             steps = (models.Count + interiors.Count) * 3 + backdrops.Count;
             stepsDone = 0;

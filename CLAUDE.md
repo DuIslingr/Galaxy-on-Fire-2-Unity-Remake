@@ -1525,7 +1525,8 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   DXT5 with their mipmaps by a Burst job (`ModTextureEncoder`, van Waveren's real-time encoder, native buffers: Texture2D.Compress
   took 110-145 ms per 2048 px texture on the main thread, a managed encoder's garbage a 2 s collection) where the GPU reads
   DXT; elsewhere (phones) Texture2D.Compress, one texture per frame. The startup splash shows "Loading mods" with a progress
-  bar and the ship / track in progress until it is done (`MainMenu.WaitForMods`, then the title), so does the fade before a
+  bar and the ship / track in progress until it is done (`MainMenu.WaitForMods`, then the title; not shown when
+  the mods that are on bring nothing to load, `ModLoading.HasWork`: no mods or only quests), so does the fade before a
   game scene when the mods changed in the menu (Leave). Measured in the Editor with the five PR ships: 5.3 s with frames of
   100-180 ms before, 0.9-1.9 s after with smooth frames (two of 83 / 164 ms right after the menu scene's load).
 - **Mod browser** (`ModBrowser`, the main menu's Mods button and `modsPanel`; styles `.mods-*` in MainMenu.uss): the list in

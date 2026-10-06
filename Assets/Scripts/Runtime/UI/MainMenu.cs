@@ -530,7 +530,13 @@ namespace GoF2Remake.UI
         /// <summary>Remake mods: waits on the loading screen in 'view' while the mods that are on load (at most 'limit' s).</summary>
         IEnumerator WaitForMods(ModLoadingView view, float limit)
         {
-            if (!Modding.ModLoading.Busy) yield break;
+            if (!Modding.ModLoading.Busy) yield break;   // (this first check starts every loader)
+            if (!Modding.ModLoading.HasWork)
+            {
+                // Nothing to load (no mods, or only quests): the loaders finish within a frame or two, without the screen.
+                for (float t = 0f; t < limit && Modding.ModLoading.Busy; t += Time.unscaledDeltaTime) yield return null;
+                yield break;
+            }
             view.Show(true);
             for (float t = 0f; t < limit && Modding.ModLoading.Busy; t += Time.unscaledDeltaTime)
             {
