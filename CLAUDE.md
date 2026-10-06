@@ -457,8 +457,12 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   the halo around it (the part a camera looking down past the hull sees), only below the hull's underside there (so the
   hull never shades itself; 3 m above it past the hull, the rims around a sunk hull), only on surfaces facing up (normals
   from the depth's derivatives), full over the box's lower 60 %. Shown once the ship has stood still for 0.3 s, fading out
-  over 15 m as it lifts off and staying on the pad; ships without a map (mods', the debug capital hulls) get a soft oval of
-  their bounds (the meshes are imported non-readable, so a build can't rasterise them). Verified in Play mode in the Terran,
+  over 15 m as it lifts off and staying on the pad. The bake is `ShipShadowBaker` (shared by the builder): the mods' ships
+  are baked by it at run time (glTFast keeps their meshes readable; once per assembly and set of mods, the rasterising on a
+  worker thread, the shadow hidden until it is done; their engine / throttle glows left out) and never take the set's
+  map (their "ship_NNN_mod" numbers differ between games: stale maps of other ships under those names gave the Falcon a
+  wrong shadow; the builder skips pack "mod"); the debug capital hulls get a soft oval of their bounds (the game's
+  meshes are imported non-readable, so a build can't rasterise them). Verified in Play mode in the Terran,
   Nivelian, Vossk, Midorian and deep science hangars. The Graphics option **Hangar ship shadows** (`Settings.HangarShadows`:
   Off / Player ship only / All ships, default All; performance complaints on phones): every hangar ship still gets its
   `HangarShipShadow` (`Attach(..., player)`: `SpawnShip`'s "Player ship", the turntable's), the box is just hidden while the

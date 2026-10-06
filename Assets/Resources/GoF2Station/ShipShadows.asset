@@ -17,10 +17,10 @@ MonoBehaviour:
   entries:
   - assembly: battleship_terran
     texture: {fileID: 2800000, guid: ef6f3cb6f35047047b75c58e5dd8b8fc, type: 3}
-    center: {x: 0, y: 16.419983}
-    size: 4634.124
-    bottom: -300.715
-    heightRange: 372.8303
+    center: {x: 0, y: 8.209991}
+    size: 2317.062
+    bottom: -150.3575
+    heightRange: 186.41515
   - assembly: cargo_001_midorian
     texture: {fileID: 2800000, guid: e6b8c658e334cd241bfdfc225b3b1a45, type: 3}
     center: {x: 0, y: 17.779984}
@@ -279,36 +279,6 @@ MonoBehaviour:
     size: 181.82603
     bottom: -4.156681
     heightRange: 11.977335
-  - assembly: ship_064_mod
-    texture: {fileID: 2800000, guid: 79df3a2ed0ccddc4b93ab9b958a07ba3, type: 3}
-    center: {x: 0, y: 0.81123924}
-    size: 103.17077
-    bottom: -12.74625
-    heightRange: 12.245523
-  - assembly: ship_065_mod
-    texture: {fileID: 2800000, guid: e097875d5c65a6c41bb4bfa679e7968d, type: 3}
-    center: {x: 0, y: 0.81123924}
-    size: 103.17077
-    bottom: -12.74625
-    heightRange: 12.245523
-  - assembly: ship_066_mod
-    texture: {fileID: 2800000, guid: 75052c90498e0234385bdb3edf14da35, type: 3}
-    center: {x: 0, y: 0.81123924}
-    size: 103.17077
-    bottom: -12.74625
-    heightRange: 12.245523
-  - assembly: ship_067_mod
-    texture: {fileID: 2800000, guid: 56b571bec59997c4c8c5840afc127894, type: 3}
-    center: {x: 0, y: 0.81123924}
-    size: 103.17077
-    bottom: -12.74625
-    heightRange: 12.245523
-  - assembly: ship_068_mod
-    texture: {fileID: 2800000, guid: 6802932207bef0f4ba0b3062d7ba63cb, type: 3}
-    center: {x: 0, y: 0.81123924}
-    size: 103.17077
-    bottom: -12.74625
-    heightRange: 12.245523
   - assembly: sn_ship_044_elite_nivelian
     texture: {fileID: 2800000, guid: cfdfda2b15dc4ec4d81b4811e20584a3, type: 3}
     center: {x: 0, y: 0.3373642}

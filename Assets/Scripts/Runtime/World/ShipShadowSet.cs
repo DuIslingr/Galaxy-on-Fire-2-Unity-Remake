@@ -3,8 +3,9 @@
 // (HangarShadowsBuilder) into Resources/GoF2Station/ShipShadows: per ship assembly its hull seen from above (R the
 // underside's height, G the silhouette, A a wide soft halo), the square it covers in the ship's own space (centre x / z and
 // side, Unity metres at scale 1), the hull's lowest point and R's range, plus the shadow material (GoF2/HangarShadow, black). The meshes are
-// imported non-readable, so a build can't rasterise them itself; ships without an entry (mods' ships, the debug capital
-// hulls) get a soft oval of their bounds.
+// imported non-readable, so a build can't rasterise them itself; the mods' ships (glTFast keeps their meshes readable)
+// are baked at run time (ShipShadowBaker), the rest without an entry (the debug capital hulls) get a soft oval of their
+// bounds.
 
 using System.Collections.Generic;
 using UnityEngine;

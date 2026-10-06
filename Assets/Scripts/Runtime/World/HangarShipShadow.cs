@@ -1,7 +1,8 @@
 // HangarShipShadow.cs
 // Remake (the original's hangars have no shadows): a soft shadow under a hangar ship, its hull's silhouette from above
-// (ShipShadowSet, baked in the Editor: the silhouette, a soft halo around it and the hull's underside; a soft oval of its
-// bounds for ships without one). The hangar's light comes from the
+// (ShipShadowSet, baked in the Editor: the silhouette, a soft halo around it and the hull's underside; the mods' ships
+// baked the same way at run time by ShipShadowBaker, hidden until it is done; a soft oval of its bounds for ships that
+// can't be, the debug capital hulls). The hangar's light comes from the
 // camera's side, so a real shadow falls behind the ship, out of view; this is the contact shadow under it. Projected like
 // a decal (GoF2/HangarShadow on a box around the footprint, reading the station camera's depth texture), so it lies on
 // whatever is under the hull: the pads, the Terran cradles (the hull sits below their rims), the raised rims and
@@ -40,6 +41,7 @@ namespace GoF2Remake.World
         float floorY = float.NaN, restTime, alpha;
         Vector3 lastPos;
         bool player;
+        string baking;   // the assembly ShipShadowBaker is baking for this ship (hidden meanwhile)
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { boxMesh = null; depthCamera = null; }
@@ -66,15 +68,22 @@ namespace GoF2Remake.World
             var set = ShipShadowSet.Load();
             if (ship == null || set == null || set.material == null) return null;
             var s = ship.AddComponent<HangarShipShadow>();
-            var entry = set.Find(assembly);
-            Texture2D tex;
-            if (entry != null && entry.texture != null)
+            // A mod's ship never takes the set's map: its assembly name is a number this game's mod registry gave it, which
+            // another game (or this one before) gave another ship.
+            var entry = ShipShadowBaker.IsModShip(ship) ? null : set.Find(assembly);
+            Texture2D tex = null;
+            if (entry != null && entry.texture != null) tex = s.Use(entry);
+            else if (ShipShadowBaker.Request(assembly, ship, out entry))
             {
-                tex = entry.texture;
-                s.center = entry.center;
-                s.size = entry.size;
-                s.bottom = entry.bottom;
-                s.heightRange = entry.heightRange;
+                // Its hull baked here (a mod's ship): the map now, or once the worker thread is done.
+                if (entry != null) tex = s.Use(entry);
+                else
+                {
+                    s.baking = assembly;
+                    s.size = 1f;
+                    s.bottom = LocalBounds(ship).min.y;
+                    tex = set.oval;
+                }
             }
             else
             {
@@ -110,6 +119,16 @@ namespace GoF2Remake.World
             return s;
         }
 
+        /// <summary>Takes a baked map; its texture.</summary>
+        Texture2D Use(ShipShadowSet.Entry entry)
+        {
+            center = entry.center;
+            size = entry.size;
+            bottom = entry.bottom;
+            heightRange = entry.heightRange;
+            return entry.texture;
+        }
+
         /// <summary>The ship's mesh bounds in its own space at scale 1 (not the additive glow layers or the trails).</summary>
         static Bounds LocalBounds(GameObject ship)
         {
@@ -118,7 +137,8 @@ namespace GoF2Remake.World
             bool any = false;
             foreach (var mf in ship.GetComponentsInChildren<MeshFilter>())
             {
-                if (mf.sharedMesh == null || mf.name.Contains("_add") || !mf.gameObject.activeInHierarchy) continue;
+                if (mf.sharedMesh == null || mf.name.Contains("_add") || mf.name.StartsWith("engine_glow") || mf.name.StartsWith("throttle_glow")
+                    || !mf.gameObject.activeInHierarchy) continue;
                 var m = root.worldToLocalMatrix * mf.transform.localToWorldMatrix;
                 var mb = mf.sharedMesh.bounds;
                 for (int i = 0; i < 8; i++)
@@ -153,6 +173,7 @@ namespace GoF2Remake.World
         void LateUpdate()
         {
             if (box == null) return;
+            if (baking != null) PollBake();
             var pos = transform.position;
             float dt = Time.deltaTime;
             restTime = (pos - lastPos).sqrMagnitude < 1e-6f ? restTime + dt : 0f;
@@ -164,9 +185,27 @@ namespace GoF2Remake.World
             Place();
         }
 
+        /// <summary>The run-time bake done: its map (fading in), or the oval when it failed.</summary>
+        void PollBake()
+        {
+            bool bakeable = ShipShadowBaker.Request(baking, gameObject, out var entry);
+            if (bakeable && entry == null) return;   // still on the worker thread
+            baking = null;
+            if (entry != null) block.SetTexture("_MainTex", Use(entry));
+            else
+            {
+                var b = LocalBounds(gameObject);
+                center = new Vector2(b.center.x, b.center.z);
+                size = Mathf.Max(b.size.x, b.size.z) * 1.25f;
+                bottom = b.min.y;
+            }
+            alpha = 0f;
+            if (restTime >= RestSeconds) floorY = HullBottom();
+        }
+
         void Place()
         {
-            bool show = alpha > 0.005f && !float.IsNaN(floorY) && Allowed;
+            bool show = alpha > 0.005f && !float.IsNaN(floorY) && Allowed && baking == null;
             if (boxRenderer.enabled != show) boxRenderer.enabled = show;
             if (!show) return;
             var fwd = transform.forward;
