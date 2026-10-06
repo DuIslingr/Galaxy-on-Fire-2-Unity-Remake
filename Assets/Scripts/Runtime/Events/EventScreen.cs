@@ -524,17 +524,26 @@ namespace GoF2Remake.Events
             StylePortrait(questionPortrait, 160, 200);
         }
 
+        /// <summary>A background's scale mode as the background-* properties (-unity-background-scale-mode is deprecated).</summary>
+        static void Scale(IStyle style, ScaleMode mode)
+        {
+            style.backgroundPositionX = BackgroundPropertyHelper.ConvertScaleModeToBackgroundPosition(mode);
+            style.backgroundPositionY = BackgroundPropertyHelper.ConvertScaleModeToBackgroundPosition(mode);
+            style.backgroundRepeat = BackgroundPropertyHelper.ConvertScaleModeToBackgroundRepeat(mode);
+            style.backgroundSize = BackgroundPropertyHelper.ConvertScaleModeToBackgroundSize(mode);
+        }
+
         /// <summary>The dialogue's .portrait-* styles, inline (this panel doesn't load Dialogue.uss).</summary>
         static void StylePortrait(VisualElement portrait, float width, float height)
         {
-            portrait.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+            Scale(portrait.style, ScaleMode.StretchToFill);
             foreach (var child in portrait.Children())
             {
                 child.style.position = Position.Absolute;
                 child.style.left = 0;
                 child.style.top = 0;
                 if (child.ClassListContains("portrait-frame") || child.ClassListContains("portrait-layers")) { child.style.width = width; child.style.height = height; }
-                if (child.ClassListContains("portrait-frame")) child.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+                if (child.ClassListContains("portrait-frame")) Scale(child.style, ScaleMode.StretchToFill);
                 if (child.ClassListContains("portrait-layers"))
                 {
                     if (portrait.ClassListContains("portrait--mirrored")) child.style.scale = new Scale(new Vector3(-1f, 1f, 1f));
@@ -542,7 +551,7 @@ namespace GoF2Remake.Events
                     {
                         part.style.position = Position.Absolute;
                         part.style.left = 0;
-                        part.style.unityBackgroundScaleMode = ScaleMode.StretchToFill;
+                        Scale(part.style, ScaleMode.StretchToFill);
                     }
                 }
             }
@@ -709,7 +718,7 @@ namespace GoF2Remake.Events
                     icon.style.marginRight = 12;
                     var tex = GoF2Remake.UI.ItemInfo.ItemIcon(item);
                     if (tex != null) icon.style.backgroundImage = new StyleBackground(tex);
-                    icon.style.unityBackgroundScaleMode = ScaleMode.ScaleToFit;
+                    Scale(icon.style, ScaleMode.ScaleToFit);
                     row.Add(icon);
                     var label = Text(row, 24, Color.white, 1);
                     label.text = amount > 1 ? $"{amount} x {ItemInfo.ItemName(item)}" : ItemInfo.ItemName(item);

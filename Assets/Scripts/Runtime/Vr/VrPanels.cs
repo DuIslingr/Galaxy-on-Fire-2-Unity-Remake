@@ -12,6 +12,7 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.Vr
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public sealed class VrPanels
     {
         sealed class Entry

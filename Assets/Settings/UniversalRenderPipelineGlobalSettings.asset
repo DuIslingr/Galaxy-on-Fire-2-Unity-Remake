@@ -1,3 +1,4 @@
+%UNITY 7.0
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
@@ -79,31 +80,10 @@ MonoBehaviour:
       - rid: 3196867971078422534
       - rid: 7146566248358215680
       - rid: 7146566248358215681
+      - rid: 2994102259275005952
     m_RuntimeSettings:
-      m_List:
-      - rid: 6852985685364965378
-      - rid: 6852985685364965380
-      - rid: 6852985685364965381
-      - rid: 6852985685364965384
-      - rid: 6852985685364965387
-      - rid: 6852985685364965392
-      - rid: 6852985685364965394
-      - rid: 8712630790384254976
-      - rid: 4284062438471237637
-      - rid: 5747374308340793346
-      - rid: 5747374308340793347
-      - rid: 5747374308340793348
-      - rid: 6588237625532874753
-      - rid: 6588237625532874757
-      - rid: 6588237625532874759
-      - rid: 6588237625532874761
-      - rid: 3196867971078422529
-      - rid: 3196867971078422530
-      - rid: 3196867971078422532
-      - rid: 3196867971078422533
-      - rid: 7146566248358215680
-      - rid: 7146566248358215681
-  m_AssetVersion: 14
+      m_List: []
+  m_AssetVersion: 16
   m_ObsoleteDefaultVolumeProfile: {fileID: 0}
   m_RenderingLayerNames:
   - Light Layer default
@@ -133,6 +113,11 @@ MonoBehaviour:
   references:
     version: 2
     RefIds:
+    - rid: 2994102259275005952
+      type: {class: URPLightFalloffSettings, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.Runtime}
+      data:
+        m_Version: 1
+        m_LightFalloffMode: 0
     - rid: 3196867971078422529
       type: {class: Shadow2DGeometrySettings, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.2D.Runtime}
       data:
@@ -162,6 +147,7 @@ MonoBehaviour:
       data:
         m_Version: 1
         m_DepthBiasMode: 0
+        m_NormalBiasMode: 0
     - rid: 3196867971078422533
       type: {class: RenderingCapabilitiesSettings, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.Runtime}
       data:
@@ -234,6 +220,7 @@ MonoBehaviour:
       data:
         m_RasterizationShader: {fileID: 4800000, guid: 0849e84e3d62649e8882e9d6f056a017, type: 3}
         m_GTAOComputeShader: {fileID: 7200000, guid: 0e79c0fbcc6ffc642834ff60779ad086, type: 3}
+        m_GTAODepthPrefilterComputeShader: {fileID: 7200000, guid: 42244eac3d92497eb7dd4ad591a29e19, type: 3}
         m_Version: 0
     - rid: 5747374308340793348
       type: {class: UniversalRenderPipelineRuntimeXRResources, ns: UnityEngine.Rendering.Universal, asm: Unity.RenderPipelines.Universal.Runtime}

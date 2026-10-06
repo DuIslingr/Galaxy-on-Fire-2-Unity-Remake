@@ -133,7 +133,14 @@ namespace GoF2Remake.EditorTools
             foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
             {
                 var m = mf.sharedMesh;
-                if (m == null) continue;
+                if (m == null || m.vertexCount == 0) continue;   // empty parts (sn_ship_047_most_wanted_engine_add_part0)
+                if (!m.isReadable)
+                {
+                    // Unity 7 alpha handed one part of sn_cargo_001_midorian_wrecked over unreadable: it keeps its
+                    // file orientation (the transforms below still turn).
+                    Debug.LogWarning($"{assetPath}: mesh '{m.name}' isn't readable during import, not turned 180 deg");
+                    continue;
+                }
                 var v = m.vertices; for (int i = 0; i < v.Length; i++) v[i] = new Vector3(-v[i].x, v[i].y, -v[i].z);
                 m.vertices = v;
                 var n = m.normals; for (int i = 0; i < n.Length; i++) n[i] = new Vector3(-n[i].x, n[i].y, -n[i].z);
