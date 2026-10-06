@@ -1,6 +1,7 @@
 // ModAssetsBuilder.cs  (Editor only)
 // "GoF2 > Build > Mod Assets": Resources/GoF2Mods/ModAssets (Modding.ModAssets) and its URP Lit template materials
-// (Resources/GoF2Mods/ModLit_*.mat): what the game builds mods' ships from at run time.
+// (Resources/GoF2Mods/ModLit_*.mat), and the tintable engine glow (ModEngineGlowWhite.png + ModEngineGlowTint.mat): what
+// the game builds mods' ships from at run time.
 
 using System.IO;
 using GoF2Remake.Modding;
@@ -26,6 +27,7 @@ namespace GoF2Remake.EditorTools
             if (a == null) { a = ScriptableObject.CreateInstance<ModAssets>(); AssetDatabase.CreateAsset(a, path); }
             a.engineGlow = AssetDatabase.LoadAssetAtPath<Material>(EngineGlow);
             if (a.engineGlow == null) Debug.LogWarning($"GoF2: {EngineGlow} missing (Build Materials And Prefabs)");
+            a.engineGlowTint = a.engineGlow != null ? EngineGlowTint(a.engineGlow) : null;
             a.fxAdditive = AssetDatabase.LoadAssetAtPath<Material>(FxAdditive);
             a.fxAlpha = AssetDatabase.LoadAssetAtPath<Material>(FxAlpha);
             if (a.fxAdditive == null || a.fxAlpha == null) Debug.LogWarning($"GoF2: {FxAdditive} / {FxAlpha} missing (Build Materials And Prefabs)");
@@ -43,6 +45,100 @@ namespace GoF2Remake.EditorTools
             EditorUtility.SetDirty(a);
             AssetDatabase.SaveAssets();
             Debug.Log("GoF2: Resources/GoF2Mods/ModAssets built.");
+        }
+
+        /// <summary>The engine glow on a white copy of its texture (each texel's brightest channel, alpha kept; the glow sprite
+        /// itself made round and soft, SmoothGlow), so a mod ship's
+        /// exhaust can take any colour through the vertex colours (GoF2/Additive with _USEVERTEXCOLOR_ON multiplies them).
+        /// The copy takes the original texture's import settings.</summary>
+        static Material EngineGlowTint(Material glow)
+        {
+            var src = (glow.HasProperty("_MainTex") ? glow.GetTexture("_MainTex") : glow.mainTexture) as Texture2D;
+            string srcPath = src != null ? AssetDatabase.GetAssetPath(src) : null;
+            if (string.IsNullOrEmpty(srcPath) || !File.Exists(srcPath)) { Debug.LogWarning("GoF2: the engine glow's texture is missing"); return null; }
+            var t = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+            t.LoadImage(File.ReadAllBytes(srcPath));
+            var px = t.GetPixels32();
+            for (int i = 0; i < px.Length; i++)
+            {
+                byte v = (byte)Mathf.Max(px[i].r, Mathf.Max(px[i].g, px[i].b));
+                px[i] = new Color32(v, v, v, px[i].a);
+            }
+            SmoothGlow(px, t.width, t.height);
+            t.SetPixels32(px);
+            string texPath = Dir + "/ModEngineGlowWhite.png";
+            File.WriteAllBytes(texPath, t.EncodeToPNG());
+            Object.DestroyImmediate(t);
+            AssetDatabase.ImportAsset(texPath);
+            var srcImp = (TextureImporter)AssetImporter.GetAtPath(srcPath);
+            var imp = (TextureImporter)AssetImporter.GetAtPath(texPath);
+            if (srcImp != null && imp != null)
+            {
+                var settings = new TextureImporterSettings();
+                srcImp.ReadTextureSettings(settings);
+                imp.SetTextureSettings(settings);
+                imp.textureCompression = srcImp.textureCompression;
+                imp.maxTextureSize = srcImp.maxTextureSize;
+                imp.SaveAndReimport();
+            }
+            string matPath = Dir + "/ModEngineGlowTint.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(matPath);
+            if (m == null) { m = new Material(glow) { name = "ModEngineGlowTint" }; AssetDatabase.CreateAsset(m, matPath); }
+            else m.CopyPropertiesFromMaterial(glow);
+            var white = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+            foreach (var p in m.GetTexturePropertyNames())
+                if (m.GetTexture(p) == src) m.SetTexture(p, white);
+            m.EnableKeyword("_USEVERTEXCOLOR_ON");
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>The glow sprite (centre uv (0.46, 0.947), out to the flared ring's uv radius 0.048, ModShipBuilder) made round
+        /// and soft: each ring of texels takes the mean of its brightness and alpha, the profile never rises going out and is
+        /// blurred (the sprite's ring of dashes between radius 0.012 and 0.026 showed through a tinted exhaust as a "marker").</summary>
+        static void SmoothGlow(Color32[] px, int w, int h)
+        {
+            float cx = 0.46f * w, cy = 0.947f * h, radius = 0.05f * w;
+            int bins = Mathf.CeilToInt(radius * 2f) + 1;
+            var sumV = new double[bins]; var sumA = new double[bins]; var n = new int[bins];
+            int x0 = Mathf.Max(0, (int)(cx - radius)), x1 = Mathf.Min(w - 1, (int)(cx + radius));
+            int y0 = Mathf.Max(0, (int)(cy - radius)), y1 = Mathf.Min(h - 1, (int)(cy + radius));
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    float r = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+                    if (r >= radius) continue;
+                    int b = (int)(r * 2f); var p = px[y * w + x];
+                    sumV[b] += p.r; sumA[b] += p.a; n[b]++;
+                }
+            var v = new float[bins]; var a = new float[bins];
+            float maxV = 0f, maxA = 0f;
+            for (int b = bins - 1; b >= 0; b--)   // from the rim in: never darker than further out
+            {
+                if (n[b] > 0) { maxV = Mathf.Max(maxV, (float)(sumV[b] / n[b])); maxA = Mathf.Max(maxA, (float)(sumA[b] / n[b])); }
+                v[b] = maxV; a[b] = maxA;
+            }
+            // then a soft fall-off instead of the old ring's edge (a box blur of +-6 bins, 3 texels, twice)
+            for (int pass = 0; pass < 2; pass++)
+            {
+                var sv = new float[bins]; var sa = new float[bins];
+                for (int b = 0; b < bins; b++)
+                {
+                    float tv = 0f, ta = 0f; int c = 0;
+                    for (int k = -6; k <= 6; k++) { int j = Mathf.Clamp(b + k, 0, bins - 1); tv += v[j]; ta += a[j]; c++; }
+                    sv[b] = tv / c; sa[b] = ta / c;
+                }
+                v = sv; a = sa;
+            }
+            for (int y = y0; y <= y1; y++)
+                for (int x = x0; x <= x1; x++)
+                {
+                    float r = Mathf.Sqrt((x - cx) * (x - cx) + (y - cy) * (y - cy));
+                    if (r >= radius) continue;
+                    int b = (int)(r * 2f);
+                    byte vv = (byte)Mathf.Clamp(Mathf.RoundToInt(v[b]), 0, 255);
+                    px[y * w + x] = new Color32(vv, vv, vv, (byte)Mathf.Clamp(Mathf.RoundToInt(a[b]), 0, 255));
+                }
         }
 
         /// <summary>A URP Lit template with the keywords every mod material uses (normal map, metallic map, emission) and the

@@ -5,7 +5,9 @@
 //     replaces the model's material on the renderers (name contains 'mesh') / submeshes it names (ModMaterials.FromSpec);
 //   - the player's engine glow at every exhaust mount (slotType 3; playerVariantParts like *_engine_glow_add): the
 //     Phantom's glow shape (a 12-segment disc and a flared ring 0.87 r behind it, radius x1.31) on the shared glow
-//     sprite (mat_34813, centre uv (0.46, 0.947)); no exhaust mounts = no flame (ShipExhaust uses the same mounts);
+//     sprite (mat_34813, centre uv (0.46, 0.947)); no exhaust mounts = no flame (ShipExhaust uses the same mounts); a
+//     mount's glowSize makes it an ellipse with its own flame length, a glowColor / the ship's engineGlowColor tints it
+//     (engineGlowTint: the sprite in white, the colour in the vertex colours);
 //   - each "throttleGlow" / "extraGlows" entry: the hull triangles under the lit part of its mask, pushed 'offset' out,
 //     additive, driven by ThrottleGlow (with its trails), plus an empty engine_state player part;
 //   - no NPC engine parts; one LOD level culled at 80000 units like the generic ships.
@@ -124,36 +126,53 @@ namespace GoF2Remake.Modding
             return any >= 0 ? mats[any] : null;
         }
 
+        /// <summary>The engine glow at every exhaust mount: the Phantom's shape, a disc and a flared ring behind it. A mount's
+        /// glowSize (half width, half height, flame length in game units) makes it an ellipse with its own length, its
+        /// glowColor (else the ship's engineGlowColor) tints it: then the whole glow uses engineGlowTint (the white sprite)
+        /// with vertex colours, white-hot at the centre, the colour at the rim and the ring; uncoloured mounts stay white.</summary>
         static GameObject BuildEngineGlow(CustomShipData c)
         {
             var exhausts = c.mounts?.Where(m => m.slotType == 3).ToList();
-            var mat = ModAssets.Get()?.engineGlow;
-            if (exhausts == null || exhausts.Count == 0 || mat == null) return null;
+            var assets = ModAssets.Get();
+            if (exhausts == null || exhausts.Count == 0 || assets?.engineGlow == null) return null;
+            Color? ColourOf(WeaponMount m)
+            {
+                var g = m.glowColor != null && m.glowColor.Length >= 3 ? m.glowColor
+                      : c.engineGlowColor != null && c.engineGlowColor.Length >= 3 ? c.engineGlowColor : null;
+                return g != null ? new Color(g[0], g[1], g[2], 1f) : (Color?)null;
+            }
+            bool tinted = assets.engineGlowTint != null && exhausts.Any(m => ColourOf(m) != null);
+            var mat = tinted ? assets.engineGlowTint : assets.engineGlow;
             const int Segments = 12;
             var uvCentre = new Vector2(0.46f, 0.947f);
             const float UvDisc = 0.0254f, UvRing = 0.048f;
-            float r = c.engineGlowRadius * M, ringR = r * 1.31f, back = r * 0.87f;
             var verts = new List<Vector3>();
             var uvs = new List<Vector2>();
+            var colours = new List<Color>();
             var tris = new List<int>();
             foreach (var m in exhausts)
             {
+                float rx = c.engineGlowRadius * M, ry = rx;
+                if (m.glowSize != null && m.glowSize.Length >= 2) { rx = m.glowSize[0] * M; ry = m.glowSize[1] * M; }
+                float back = m.glowSize != null && m.glowSize.Length >= 3 ? m.glowSize[2] * M : 0.87f * 0.5f * (rx + ry);
+                var tint = ColourOf(m) ?? Color.white;
+                var core = Color.Lerp(tint, Color.white, 0.55f);
                 var o = WeaponSystem.MountToLocal(m);
                 int centre = verts.Count;
-                verts.Add(o); uvs.Add(uvCentre);
+                verts.Add(o); uvs.Add(uvCentre); colours.Add(core);
                 int disc = verts.Count;
                 for (int i = 0; i < Segments; i++)
                 {
                     float a = i * Mathf.PI * 2f / Segments;
                     var d = new Vector2(Mathf.Sin(a), Mathf.Cos(a));
-                    verts.Add(o + new Vector3(d.x * r, d.y * r, 0f)); uvs.Add(uvCentre + d * UvDisc);
+                    verts.Add(o + new Vector3(d.x * rx, d.y * ry, 0f)); uvs.Add(uvCentre + d * UvDisc); colours.Add(tint);
                 }
                 int ring = verts.Count;
                 for (int i = 0; i < Segments; i++)
                 {
                     float a = i * Mathf.PI * 2f / Segments;
                     var d = new Vector2(Mathf.Sin(a), Mathf.Cos(a));
-                    verts.Add(o + new Vector3(d.x * ringR, d.y * ringR, -back)); uvs.Add(uvCentre + d * UvRing);
+                    verts.Add(o + new Vector3(d.x * rx * 1.31f, d.y * ry * 1.31f, -back)); uvs.Add(uvCentre + d * UvRing); colours.Add(tint);
                 }
                 for (int i = 0; i < Segments; i++)
                 {
@@ -165,6 +184,7 @@ namespace GoF2Remake.Modding
             var mesh = new Mesh { name = c.assembly + "_engine_glow" };
             mesh.SetVertices(verts);
             mesh.SetUVs(0, uvs);
+            if (tinted) mesh.SetColors(colours);
             mesh.SetTriangles(tris, 0);
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();

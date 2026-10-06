@@ -9,6 +9,9 @@
 //                               over its last
 //   PlayerEgo::setExhaustVisible 0xa637c   off with the engine glow (mining, object docking, cutscenes, death)
 //   Level::setPlayerEngineColor            the start colour grey clamp(221 - 2.01 x cloak %)
+// Remake: a mod ship's exhaust mount with a glowColor (else the ship's engineGlowColor, ships.json) gets that colour as its
+// start colour, multiplied onto the cell (CellColour, measured from the texture: orange, blue, teal, green, red, purple)
+// whose product comes closest to it: six cells alone can't show a yellow-green or a pale orange.
 
 using System;
 using System.Collections.Generic;
@@ -27,12 +30,20 @@ namespace GoF2Remake.Flight
             8, 0, 0, 2, 0, 0, 0, 1, 0, 1, 1, 2, 1, 3, 3, 3, 3, 1, 1, 0, 8, 1, 1, 0, 3, 2, 0, 0, 8, 1, 3, 1,
         };
 
+        // particles.png cells 0..5, their brightness-weighted mean colours (max channel 1)
+        static readonly Color[] CellColour =
+        {
+            new Color(1f, 0.761f, 0.363f), new Color(0.373f, 0.495f, 1f), new Color(0.368f, 0.862f, 1f),
+            new Color(0.362f, 1f, 0.701f), new Color(1f, 0.374f, 0.458f), new Color(0.708f, 0.378f, 1f),
+        };
+
         ShipController ship;
         PlayerHealth health;
         PlayerCloak cloak;
         GameObject glow;
         readonly List<ParticleSystem> systems = new List<ParticleSystem>();
         readonly List<float> baseSizes = new List<float>();
+        readonly List<Color> tints = new List<Color>();
         bool on;
 
         public static ShipExhaust Attach(GameObject player, Database db, ShipController ship, int shipIndex)
@@ -61,13 +72,18 @@ namespace GoF2Remake.Flight
 
         void Setup(Database db, Transform parent, int shipIndex)
         {
-            var mat = CombatAssets.Load()?.particlesMaterial;
+            var mat = ExhaustMaterial(CombatAssets.Load()?.particlesMaterial);
             int value = shipIndex >= 0 && shipIndex < ShipCell.Length ? ShipCell[shipIndex] : 0;
             int cell = value switch { 3 => 0, 2 => 1, 1 => 3, 8 => 4, 9 => 5, _ => 2 };
             var asm = parent.GetComponent<Visuals.AssembledObject>();
             if (asm != null && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0) glow = asm.playerVariantParts[0];
+            var custom = CustomShips.Get(shipIndex);
             foreach (var m in db.MountsOf(shipIndex, 3))
             {
+                var want = m.glowColor != null && m.glowColor.Length >= 3 ? m.glowColor : custom?.engineGlowColor;
+                int mountCell = cell;
+                var tint = Color.white;
+                if (want != null && want.Length >= 3) mountCell = CellFor(new Color(want[0], want[1], want[2]), out tint);
                 float s = m.turretAngles != null && m.turretAngles.Length > 0 ? m.turretAngles[0] : 1f;
                 float k = Mathf.Min(1.5f * s, 1f);
                 var go = new GameObject("Exhaust");
@@ -118,19 +134,63 @@ namespace GoF2Remake.Flight
                 // purple / red line under every particle: lines behind the thrusters).
                 var r = go.GetComponent<ParticleSystemRenderer>();
                 r.renderMode = ParticleSystemRenderMode.Mesh;
-                r.mesh = CellQuad(cell);
+                r.mesh = CellQuad(mountCell);
                 r.alignment = ParticleSystemRenderSpace.View;
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 r.receiveShadows = false;
                 if (mat != null) r.sharedMaterial = mat;
                 systems.Add(ps);
                 baseSizes.Add(size * M);
+                tints.Add(tint);
             }
+        }
+
+        /// <summary>The particles.png cell whose colour, multiplied by the start colour 'tint' ('c' with its brightest channel
+        /// at 1; particle colours clamp at 1), comes closest to 'c' (both scaled to a brightest channel of 1), favouring
+        /// bright products.</summary>
+        static int CellFor(Color c, out Color tint)
+        {
+            float peak = Mathf.Max(c.r, Mathf.Max(c.g, c.b));
+            tint = peak > 1e-4f ? new Color(c.r / peak, c.g / peak, c.b / peak, 1f) : Color.white;
+            var want = new Vector3(tint.r, tint.g, tint.b);
+            int best = 0; float bestD = float.MaxValue;
+            for (int i = 0; i < CellColour.Length; i++)
+            {
+                var k = CellColour[i];
+                var got = new Vector3(k.r * tint.r, k.g * tint.g, k.b * tint.b);
+                float m = Mathf.Max(got.x, Mathf.Max(got.y, got.z));
+                if (m <= 1e-4f) continue;
+                float d = (got / m - want).sqrMagnitude + 0.5f * (1f - m);   // and not a dim one (a blue cell for yellow-green)
+                if (d < bestD) { bestD = d; best = i; }
+            }
+            return best;
+        }
+
+        // Remake, matched to a screenshot of the original (the Inflict from behind on the chase camera, the same framing): the
+        // original's particle quads are wider than a unit quad of 'size' (ParticleSystemMesh::setParticle's billboard reads
+        // as centre +- size, twice as wide, but that measured too wide on screen; 1.3 x matched), and its additive blending
+        // in gamma space saturates the overlapping particles to white, which the remake's linear HDR pipeline doesn't: the
+        // exhaust gets its own copy of the particles material at _Glow 7 (the shared one is 2.5). So bright, the plume also
+        // covers the engine glow's dashed ring the way the original's does.
+        const float QuadScale = 1.3f;
+        const float ExhaustGlow = 7f;
+        static Material exhaustMaterial;
+
+        static Material ExhaustMaterial(Material particles)
+        {
+            if (particles == null) return null;
+            if (exhaustMaterial == null || exhaustMaterial.shader != particles.shader)
+            {
+                exhaustMaterial = new Material(particles) { name = particles.name + " (exhaust)" };
+                exhaustMaterial.SetFloat("_Glow", ExhaustGlow);
+            }
+            return exhaustMaterial;
         }
 
         static readonly Mesh[] cellQuads = new Mesh[64];
 
-        /// <summary>A unit quad (a billboard's size) mapping cell 'cell' of the 8 x 8, 1024 px particles.png, inset half a texel.</summary>
+        /// <summary>A quad of QuadScale x the particle's size mapping cell 'cell' of the 8 x 8, 1024 px particles.png, inset half
+        /// a texel.</summary>
         static Mesh CellQuad(int cell)
         {
             if (cellQuads[cell] != null) return cellQuads[cell];
@@ -139,7 +199,8 @@ namespace GoF2Remake.Flight
             float u0 = cx * step + 0.5f * px, u1 = (cx + 1) * step - 0.5f * px;
             float v1 = 1f - cy * step - 0.5f * px, v0 = 1f - (cy + 1) * step + 0.5f * px;
             var m = new Mesh { name = $"ExhaustCell{cell}" };
-            m.vertices = new[] { new Vector3(-0.5f, -0.5f, 0f), new Vector3(0.5f, -0.5f, 0f), new Vector3(0.5f, 0.5f, 0f), new Vector3(-0.5f, 0.5f, 0f) };
+            const float h = 0.5f * QuadScale;
+            m.vertices = new[] { new Vector3(-h, -h, 0f), new Vector3(h, -h, 0f), new Vector3(h, h, 0f), new Vector3(-h, h, 0f) };
             m.uv = new[] { new Vector2(u0, v0), new Vector2(u1, v0), new Vector2(u1, v1), new Vector2(u0, v1) };
             m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
             m.RecalculateBounds();
@@ -171,7 +232,8 @@ namespace GoF2Remake.Flight
             {
                 var main = systems[i].main;
                 main.startSize = baseSizes[i] * (1f + 0.5f * boost);
-                main.startColor = new Color(grey, grey, grey, 1f);
+                var t = tints[i];
+                main.startColor = new Color(grey * t.r, grey * t.g, grey * t.b, 1f);
             }
         }
     }
