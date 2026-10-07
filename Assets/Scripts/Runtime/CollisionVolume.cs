@@ -12,7 +12,13 @@
 // stored Z-up):
 //   PlayerStation::PlayerStation 0x146cf0      collision.json by station index (no entry: Vossk 1000; 109 / 110: static
 //                                              2002): centre (-a, c, b) (the station's (0, pi, 0) turn is baked in),
-//                                              box half (|d|, |f|, |e|), sphere r = |d| / 2; in the alien orbit x0.9 / x0.4
+//                                              box half (|d|, |f|, |e|), sphere r = |d| / 2; in the alien orbit x0.9 / x0.4,
+//                                              there 1001 for the Void station and 1003 for the battlestation after the
+//                                              Valkyrie add-on (0x147130; the remake gave the battlestation 1001).
+//                                              Remake (#37): the Void station's 1001 spheres reach +-5.5 km of its 13.6 km
+//                                              (its held full-size pose), so its outer blades and lower spire had nothing:
+//                                              void_station_extra.json (GoF2 > Build > Void Station Collision) adds boxes
+//                                              for the hull cells (400 m) the original's volumes miss.
 //   PlayerFixedObject::setWreckedMeshId 0x17f318 / Globals::getWreckCollision 0xf9210   wreck_collisions.json: battleship 0
 //                                              (everything x2), Midorian freighter 1, Nivelian 2, Terran 3, Vossk 4;
 //                                              centre (-a, c, b), box half 1.1 (|d|, |f|, |e|), sphere r = 0.6 |d|
@@ -104,16 +110,39 @@ namespace GoF2Remake.Flight
 
         static Vector3 ToUnity(float x, float y, float z) => new Vector3(x, y, -z) * M;
 
-        /// <summary>A station's volumes (PlayerStation::PlayerStation), relative to the station at the origin.</summary>
-        public static List<CollisionVolume> ForStation(int stationIndex, bool alienOrbit)
+        /// <summary>A station's volumes (PlayerStation::PlayerStation), relative to the station at the origin.
+        /// 'battlestation': the alien orbit after the Valkyrie add-on (collision 1003).</summary>
+        public static List<CollisionVolume> ForStation(int stationIndex, bool alienOrbit, bool battlestation = false)
         {
             station ??= Load("collision");
             staticVolumes ??= Load("static_collisions");
             int[] v;
             if (stationIndex == 109 || stationIndex == 110) staticVolumes.TryGetValue(2002, out v);
-            else if (alienOrbit) station.TryGetValue(1001, out v);   // the Void station
+            else if (alienOrbit) station.TryGetValue(battlestation ? 1003 : 1001, out v);   // the battlestation / the Void station
             else if (!station.TryGetValue(stationIndex, out v)) station.TryGetValue(1000, out v);   // Vossk
-            return Parse(v, alienOrbit ? 0.9f : 1f, alienOrbit ? 0.4f : 0.5f, 1f);
+            var list = Parse(v, alienOrbit ? 0.9f : 1f, alienOrbit ? 0.4f : 0.5f, 1f);
+            if (alienOrbit && !battlestation) list.AddRange(VoidStationExtras());
+            return list;
+        }
+
+        [Serializable] class Extras { public float cell; public float[] boxes; }
+        static List<CollisionVolume> voidExtras;
+
+        /// <summary>Editor (VoidStationCollisionBuilder): read the file again next time.</summary>
+        public static void ClearVoidStationExtras() => voidExtras = null;
+
+        /// <summary>Remake (#37): the Void station's hull cells outside the 1001 volumes (void_station_extra.json, boxes as
+        /// centre and half size in Unity metres, flat).</summary>
+        public static List<CollisionVolume> VoidStationExtras()
+        {
+            if (voidExtras != null) return voidExtras;
+            voidExtras = new List<CollisionVolume>();
+            var text = Resources.Load<TextAsset>("GoF2Data/void_station_extra");
+            var e = text != null ? JsonUtility.FromJson<Extras>(text.text) : null;
+            if (e?.boxes == null) return voidExtras;
+            for (int i = 0; i + 5 < e.boxes.Length; i += 6)
+                voidExtras.Add(Box(new Vector3(e.boxes[i], e.boxes[i + 1], e.boxes[i + 2]), new Vector3(e.boxes[i + 3], e.boxes[i + 4], e.boxes[i + 5])));
+            return voidExtras;
         }
 
         /// <summary>A static object's volumes (Level::getBoundingVolume), relative to the object.</summary>

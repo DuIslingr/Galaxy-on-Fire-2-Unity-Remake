@@ -57,6 +57,7 @@ namespace GoF2Remake.EditorTools
                     T("GoF2/Build/Event Audio", "Resources/GoF2Events/EventAudio: the sounds and music the event graphs (quests, bar missions, multiplayer events) and /sound, /music play, from the original's FMOD events."),
                     T("GoF2/Build/Hangar Shadows", "Resources/GoF2Station/ShipShadows: each ship's soft contact shadow in the hangars (its hull seen from above: silhouette, halo, underside heights) and the projector material. Run after changing a ship model."),
                     T("GoF2/Build/Hangar Heights", "Resources/GoF2Data/hangar_heights.json: how far each ship is lifted on each hangar pad so its hull doesn't cut into it. Run after changing a hangar or a ship model."),
+                    T("GoF2/Build/Void Station Collision", "Resources/GoF2Data/void_station_extra.json: collision boxes for the Void station's outer blades and lower spire, which the original's volumes miss. Run after changing the station's model or animation."),
                     T("GoF2/Build/HUD Images", "Resources/GoF2Hud: the HUD, star map, medal and touch-control images and the alien font, cut from the original interface atlases."),
                     T("GoF2/Build/Item Icons", "Resources/GoF2Icons: the shop icon of every item and ship."),
                     T("GoF2/Build/Text Icons", "The dialogue's inline icons (coin, race emblems, item and ship icons) as one sprite asset. Uses the HUD images and item icons, so build those first."),

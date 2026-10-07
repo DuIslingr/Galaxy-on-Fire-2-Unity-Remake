@@ -201,7 +201,8 @@ namespace GoF2Remake.World
                 o.landmark = o.isStation = true;
                 var own = Modding.ModWorld.ModelOf(layout.stationIndex);
                 o.volumes = own != null && Modding.ModStations.Built(own.station) ? Modding.ModStations.Volumes(own, station)   // a mod's model
-                          : GoF2Remake.Flight.CollisionVolume.ForStation(StationLook(layout.stationIndex), layout.systemIndex < 0);
+                          : GoF2Remake.Flight.CollisionVolume.ForStation(StationLook(layout.stationIndex), layout.systemIndex < 0,
+                                                                         layout.alienOrbit && Story.Dlc1Won);
                 // PlayerStation+0x150: the transform's bounding radius (Transform+0xe0, about the station's own origin)
                 // + 5000 units. A radius from the origin, not the bounds' half size: a lopsided station (Tornard, 57,
                 // towers 3.4 km out on one side) had its far tower outside the cube, so nothing collided there.
