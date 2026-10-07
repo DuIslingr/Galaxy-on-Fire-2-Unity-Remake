@@ -51,7 +51,25 @@ namespace GoF2Remake.World
         float stepMs, playerSpeed;   // u/ms while the script flies the ship
         bool loading, won41, objectivesRemoved;
         EmpSparks playerSparks;
-        ShipSmoke freighterSmoke;
+        WreckBurn freighterFire, freighterTrail;
+
+        /// <summary>A oneshot FMOD event from a ship: a 3D source on it, linear rolloff from 1 game unit to 'maxUnits', at
+        /// the event volume x Sfx.EventGain x the FX volume (paused with the other sound effects).</summary>
+        static void PlayFromShip(GameObject ship, AudioClip clip, float eventVolume, float maxUnits)
+        {
+            if (ship == null || clip == null) return;
+            var s = ship.AddComponent<AudioSource>();
+            s.playOnAwake = false;
+            s.spatialBlend = 1f;
+            s.rolloffMode = AudioRolloffMode.Linear;
+            s.minDistance = 0.05f;
+            s.maxDistance = maxUnits * 0.05f;
+            s.dopplerLevel = 0f;
+            s.clip = Modding.ModSounds.Get(clip);
+            s.volume = Mathf.Min(1f, eventVolume * Sfx.EventGain) * Settings.SfxVolume;
+            s.Play();
+            Object.Destroy(s, clip.length + 1f);
+        }
         GameObject probe;
         GameObject[] explosion;
         Route friendRoute;
@@ -651,7 +669,10 @@ namespace GoF2Remake.World
                             s.Wake();
                             s.SetOnlyEnemy(f.Target);
                         }
-                        cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(-7000, 2500, -9000)), f.transform);
+                        // The camera (0x166618-0x16664e): setTarget(freighter), setPosition(its position), translate(-38000,
+                        // 0, -30200): among the three Void ships (a couple of thousand units nearer Errkt), which fly
+                        // past it at him and open fire. (The remake had guessed (-7000, 2500, -9000).)
+                        cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(-38000, 0, -30200)), f.transform);
                         Step = 1;
                     }
                     break;
@@ -659,13 +680,23 @@ namespace GoF2Remake.World
                     if (Triggered(5))
                     {
                         // The engine hit: fire and smoke, unkillable, stopped, Errkt's music.
-                        freighterSmoke = new ShipSmoke(f.transform);
-                        freighterSmoke.SetEmitting(true);
+                        // Records 40 / 41 on enemy 0 (LevelScript 0x29 at msg 5): the burning freighter (#46: the fighters'
+                        // damage smoke stood in, a small puff at its centre).
+                        freighterFire ??= new WreckBurn(f.transform, WreckBurn.VosskCargo);
+                        freighterTrail ??= new WreckBurn(f.transform, WreckBurn.VosskFreighterSmoke);
+                        freighterFire.SetEmitting(true);
+                        freighterTrail.SetEmitting(true);
+                        // setRotationAroundTarget(false), then (0x163cc8-0x163d02) the camera on the freighter again:
+                        // setPosition(its position), translate(-3000, -2000, 12000): ahead of it and below, as it drifts past
+                        // and sinks.
+                        cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(-3000, -2000, 12000)), f.transform);
                         f.SetHull(9999999);   // Player::setHitpoints only: the bar shows full meanwhile
                         f.SetMoving(false);
                         f.SetEngineSound(false);
-                        // 0x9b Errkt_CutSeq_01 is an FMOD cutscene event: it plays over the orbit's music (not stopped).
-                        c.PlayMusic(assets?.errktCutscene, false);
+                        // 0x9b Errkt_CutSeq_01 (FModSound::play 0x163d1a): the broken ship's sound effects, an sfx event over
+                        // the orbit's music (not stopped). The original plays it without a position; remake: from the freighter,
+                        // with the event's linear rolloff (1..40000 units) and volume 0.54325 (#46).
+                        PlayFromShip(f.gameObject, assets?.errktCutscene, 0.54325f, 40000f);
                         Step = 2;
                     }
                     break;
@@ -689,7 +720,7 @@ namespace GoF2Remake.World
                     Step = 4;
                     break;
                 case 4:
-                    cam.SetDolly(new Vector3(1f, 0f, -2f));
+                    cam.SetDolly(new Vector3(1f, 1f, -2f));   // translate(dt, dt, -2 dt) per frame (0x16c578)
                     if (stepMs >= 15000f)
                     {
                         // Player::setHitpoints(100) keeps the maximum: the bar shows the ~5 % he has left (#46: the 9 999 999

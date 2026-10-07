@@ -65,7 +65,11 @@ namespace GoF2Remake.Visuals
         public void SetExhaust(bool on, bool player)
         {
             var parts = player ? playerVariantParts : npcVariantParts;
-            if (parts != null) foreach (var g in parts) if (g != null) g.SetActive(on);
+            if (parts != null && parts.Length > 0) { foreach (var g in parts) if (g != null) g.SetActive(on); return; }
+            // Assemblies without engine variants (the freighters: one *_engine_add part): that part (#46: step 41's crashed
+            // Errkt kept his engines lit, PlayerFixedObject::setExhaustVisible(false) did nothing).
+            foreach (Transform child in transform)
+                if (child.name.EndsWith("_engine_add")) child.gameObject.SetActive(on);
         }
 
         /// <summary>Switches between the player and NPC parts (engine meshes etc.).</summary>
