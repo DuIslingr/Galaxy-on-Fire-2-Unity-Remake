@@ -171,7 +171,7 @@ namespace GoF2Remake.UI
 
         // ---- spawn any ship or object (the pause menu, in flight) ---------------------------------------------------
 
-        static int shipRace, shipPick, behaviourPick, objectCategory, objectPick;
+        static int shipRace, shipPick, behaviourPick, objectCategory, objectPick, capitalPick;
         static readonly int[] Races = { 0, 1, 2, 3, Flight.Standing.Pirate, Flight.Standing.Void, Flight.Standing.Specter };
 
         static string RaceName(int race)
@@ -215,6 +215,15 @@ namespace GoF2Remake.UI
                 Button("debugSpawnShip", () => X("debugSpawnShip", "Spawn ship"), () =>
                     notify?.Invoke(World.DebugSpawner.SpawnShip(level, Races[shipRace], ships[Math.Clamp(shipPick, 0, ships.Count - 1)],
                                                                 (World.DebugSpawner.Behaviour)behaviourPick))),
+                // Remake (World.CapitalShips): a capital ship with its enhancements, or a whole fleet battle, to test them.
+                Choice("debugCapital", () => X("debugCapital", "Capital ship"), false,
+                    () => new[] { World.DebugSpawner.CapitalName(Flight.SpawnSpec.CapitalBattleship), World.DebugSpawner.CapitalName(Flight.SpawnSpec.CapitalCarrier),
+                                  World.DebugSpawner.CapitalName(Flight.SpawnSpec.CapitalVossk) },
+                    () => capitalPick, i => capitalPick = i),
+                Button("debugSpawnCapital", () => X("debugSpawnCapital", "Spawn capital ship"), () =>
+                    notify?.Invoke(World.DebugSpawner.SpawnCapital(level, capitalPick + 1))),
+                Button("debugSpawnBattle", () => X("debugSpawnBattle", "Spawn fleet battle"), () =>
+                    notify?.Invoke(World.DebugSpawner.SpawnFleetBattle(level))),
                 Choice("debugObjectCategory", () => X("debugObjectCategory", "Object type"), false,
                     () => categories.ToArray(), () => objectCategory, i => { objectCategory = i; objectPick = 0; }),
                 Choice("debugObject", () => X("debugObject", "Object"), false,

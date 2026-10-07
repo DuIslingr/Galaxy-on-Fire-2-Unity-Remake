@@ -860,6 +860,10 @@ namespace GoF2Remake.UI
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == Mining.Phase.Idle);
             miningView.UpdateGame(mining, Time.deltaTime * 1000f);
             hackingView?.Update(docking);
+            // Remake (CapitalShips): docked at the carrier, its resupply menu opens (closing it undocks).
+            bool atCarrier = docking != null && docking.IsDocked && docking.Target != null && docking.Target.DockingType == ObjectDocking.Resupply;
+            if (atCarrier && !resupplyShown && nav != null && !nav.MenuOpen) { resupplyShown = true; OpenResupplyMenu(); }
+            else if (docking == null || !docking.Busy) resupplyShown = false;
             if (transferCounter != null)
             {
                 bool on = docking != null && docking.TransferLabel != null;
@@ -1022,6 +1026,71 @@ namespace GoF2Remake.UI
         {
             nav?.CloseMenu();
             HideAutopilotMenu();
+            if (resupplyMenu)
+            {
+                // Leaving the carrier's resupply menu undocks; the guns stay blocked until the controls come back
+                // (ObjectDocking.Release), so nothing is fired into the carrier's deck on the way out.
+                resupplyMenu = false;
+                root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();
+                docking?.Undock();
+                if (weapons != null) weapons.Blocked = true;
+            }
+        }
+
+        bool resupplyMenu, resupplyShown;
+
+        /// <summary>Remake (CapitalShips): the carrier's resupply menu while docked at it: repairs, five more of each mounted
+        /// secondary, energy cells (the station's prices x1.25), then Undock; it stays open after a purchase.</summary>
+        void OpenResupplyMenu()
+        {
+            if (nav == null || level == null) return;
+            if (!nav.MenuOpen)
+            {
+                nav.OpenMenu(false, true);
+                if (!nav.MenuOpen) return;
+                touch?.ReleaseAll();
+                weapons?.SetPrimaryHeld(false);
+                menuIndex = 0;
+                lastMenuMove = 0;
+                menuOpenedFrame = Time.frameCount;
+                autopilotMenu.AddToClassList("autopilot-menu--shown");
+            }
+            resupplyMenu = true;
+            autopilotMenuItems.Clear();
+            menuButtons.Clear();
+            menuActions.Clear();
+            root.Q<Label>("autopilotMenuTitle").text =
+                $"{Localization.Get(1512)}  ·  {ItemInfo.Credits(Session.Credits)}".ToUpperInvariant();
+            void Add(string text, bool disabled, System.Action act)
+            {
+                var b = new Button { text = MenuLabel(menuButtons.Count, text) };
+                b.AddToClassList("autopilot-menu-item");
+                b.AddToClassList("gof-semibold");
+                if (disabled) b.AddToClassList("autopilot-menu-item--disabled");
+                b.focusable = false;
+                b.clicked += act;
+                autopilotMenuItems.Add(b);
+                menuButtons.Add((b, null));
+                menuActions.Add(act);
+            }
+            foreach (var offer in GoF2Remake.World.CapitalShips.ResupplyOffers(level.Database, health))
+            {
+                var o = offer;
+                Add(o.label, o.disabled, () =>
+                {
+                    if (o.disabled) return;
+                    int keep = menuIndex;
+                    string msg = o.buy();
+                    if (!string.IsNullOrEmpty(msg)) miningView?.ShowMessage(msg);
+                    OpenResupplyMenu();   // the prices, amounts and credits again
+                    menuIndex = Mathf.Clamp(keep, 0, menuButtons.Count - 1);
+                    HighlightMenu();
+                });
+            }
+            Add(Localization.Extra("hudUndock", "UNDOCK"), false, CloseAutopilotMenu);
+            menuIndex = Mathf.Clamp(menuIndex, 0, menuButtons.Count - 1);
+            HighlightMenu();
+            BuildHints(InputMode.Current);
         }
 
         void HideAutopilotMenu()
