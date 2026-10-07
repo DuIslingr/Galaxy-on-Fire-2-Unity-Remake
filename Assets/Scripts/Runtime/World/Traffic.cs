@@ -354,14 +354,20 @@ namespace GoF2Remake.World
         bool bossCalled;
         float eventMs;
 
-        /// <summary>The event's outpost or boss destroyed (whoever did it): the pirates' "Nooooo!" for an outpost, and the bounty
-        /// (outpost 10 000 + 1500 per rank, boss 4000 + 1500 per rank).</summary>
+        /// <summary>The event's outpost or boss destroyed (whoever did it): the pirates' "Nooooo!" for an outpost and its turrets
+        /// going with it, and the bounty (outpost 10 000 + 1500 per rank, boss 4000 + 1500 per rank; x1.5 in a Dangerous
+        /// system).</summary>
         public void PirateEventDone(NpcShip ship)
         {
             int rank = Mathf.Min(Session.Rank, 20);
             bool outpost = ship.Spec.pirateEvent == SpawnSpec.EventOutpost;
-            if (outpost) Radio(438, 440, Standing.Pirate);
+            if (outpost)
+            {
+                Radio(438, 440, Standing.Pirate);
+                foreach (var s in Ships.ToArray()) if (s.Spec.pirateEvent == SpawnSpec.EventTurret) s.DestroyAsTurret();
+            }
             int reward = (outpost ? 10000 : 4000) + 1500 * rank;
+            if (ship.Spec.eventDangerous) reward = reward * 3 / 2;
             Session.Credits += reward;
             BountyCollected?.Invoke(reward);
         }
@@ -600,7 +606,7 @@ namespace GoF2Remake.World
             }
             // PlayerFighter::update's death: a Most Wanted criminal pays its bounty whoever killed it; no standing hit.
             if (ship.Spec.wantedIndex >= 0) { WantedKilled(ship); if (byPlayer && ship.Target.hostileToPlayer) CountKill(); return; }
-            if (ship.Spec.pirateEvent != 0) PirateEventDone(ship);   // remake: the event's bounty, whoever killed it
+            if (ship.Spec.pirateEvent == SpawnSpec.EventOutpost || ship.Spec.pirateEvent == SpawnSpec.EventBoss) PirateEventDone(ship);   // remake: the event's bounty, whoever killed it
             if (!byPlayer) return;
             // Player::damage: the convoy freighter ("Arms delivery") destroyed by the Liberator (0xb3) -> step 59's bonus.
             if (ship.Spec.convoyRole == SpawnSpec.ConvoyFreighter && ship.Target.lastPlayerWeapon == 179 && Session.StoryMission != null)
