@@ -195,6 +195,12 @@ namespace GoF2Remake.Modding
                     if (!mod.Source.Exists(model)) throw new ModJsonException($"{where}: the model \"{model}\" isn't in the mod");
                     d.key = mod.Id + ":" + d.localId;
                 }
+                else if (ModJson.Has(o, "model"))
+                {
+                    // An override with a model replaces an original ship's model (ModelOverrides).
+                    string model = ModJson.Str(o, "model");
+                    if (string.IsNullOrEmpty(model) || !mod.Source.Exists(model)) throw new ModJsonException($"{where}: the model \"{model}\" isn't in the mod");
+                }
                 // The rest as CustomShipData (JsonUtility reads it; the texts and ids are the mod's own).
                 var data = (JObject)o.DeepClone();
                 foreach (var k in new[] { "id", "override", "name", "description" }) data.Remove(k);
@@ -302,6 +308,41 @@ namespace GoF2Remake.Modding
             c.slots ??= new ShipSlots();
             return c;
         }
+
+        /// <summary>Original ships whose model a mod replaces (an "override" with "model", e.g. the Groza from Manticore): their
+        /// entries as CustomShipData for ModShips to build (assembly "ship_NNN_mod", which Database.ShipAssembly then hands out
+        /// instead of the original's); the original's weapon and exhaust mounts unless the entry has its own "mounts". The
+        /// later mod in the load order wins. Not new ships: CustomShips doesn't see them (no lounge sellers, the stats stay the
+        /// original's plus the override's).</summary>
+        public static List<(ModInfo mod, CustomShipData ship)> ModelOverrides()
+        {
+            EnsureMapping();
+            var l = new List<(ModInfo, CustomShipData)>();
+            if (originalShips < 0) return l;
+            var byShip = new SortedDictionary<int, ShipDef>();
+            foreach (var mod in ModManager.Active)
+                foreach (var d in Parse(mod).ships)
+                    if (d.overrideRef != null && ModJson.Has(d.json, "model") && TryResolveShip(d.overrideRef, out int t) && t < originalShips)
+                        byShip[t] = d;
+            if (byShip.Count == 0) return l;
+            var db = Database.Load();
+            foreach (var kv in byShip)
+            {
+                var c = JsonUtility.FromJson<CustomShipData>(kv.Value.data);
+                c.index = kv.Key;
+                c.assembly = ModelOverrideAssembly(kv.Key);
+                c.name = db.Ship(kv.Key)?.name ?? c.assembly;
+                c.lounge = null;
+                if (c.throttleGlow != null && string.IsNullOrEmpty(c.throttleGlow.mask)) c.throttleGlow = null;
+                if (c.mounts == null || c.mounts.Count == 0)
+                    c.mounts = db.WeaponMounts.Find(w => w.ship == kv.Key)?.mounts ?? new List<WeaponMount>();
+                l.Add((kv.Value.mod, c));
+            }
+            return l;
+        }
+
+        /// <summary>The assembly of a mod's model for an original ship (ModelOverrides).</summary>
+        public static string ModelOverrideAssembly(int ship) => $"ship_{ship:000}_mod";
 
         /// <summary>The active mods' new ships with their numbers (ModShips builds their models, CustomShips serves them).</summary>
         public static List<(ModInfo mod, CustomShipData ship)> ActiveShips()
@@ -507,6 +548,19 @@ namespace GoF2Remake.Modding
                                 cs.hangarHeight = ModJson.Int(o, "hangarHeight", cs.hangarHeight, ShipsFile);
                             }
                             if (ShipText(t, false, out var n)) s.name = n;
+                            if (ModJson.Has(o, "model") && t < originalShips)
+                            {
+                                // A new model for an original ship (ModelOverrides; Database.ShipAssembly takes this first).
+                                string asm = ModelOverrideAssembly(t);
+                                if (db.AssemblyByName(asm) == null)
+                                    db.Assemblies.Add(new AssemblyData { name = asm, pack = ModShips.Pack, category = "ships", origin = "mod " + mod.Id });
+                                var own = JsonUtility.FromJson<CustomShipData>(d.data);
+                                if (own.mounts != null && own.mounts.Count > 0)
+                                {
+                                    db.WeaponMounts.RemoveAll(w => w.ship == t);
+                                    db.WeaponMounts.Add(new WeaponMountSet { ship = t, shipName = s.name, mounts = own.mounts });
+                                }
+                            }
                             continue;
                         }
                         int index = shipIndex[d.key];

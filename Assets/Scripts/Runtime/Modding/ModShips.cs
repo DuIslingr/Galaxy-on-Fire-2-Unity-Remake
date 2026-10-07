@@ -65,7 +65,7 @@ namespace GoF2Remake.Modding
             get
             {
                 if (loadedRevision == ModManager.Revision) return true;
-                if (ModContent.ActiveShips().Count == 0 && templates.Count == 0) return true;
+                if (ModContent.ActiveShips().Count == 0 && ModContent.ModelOverrides().Count == 0 && templates.Count == 0) return true;
                 Preload();
                 return false;
             }
@@ -100,6 +100,7 @@ namespace GoF2Remake.Modding
             }
             agent.SetFrameBudget(0.6f);   // of a frame: the loading screen only animates a bar meanwhile
             var ships = ModContent.ActiveShips();
+            ships.AddRange(ModContent.ModelOverrides());   // the originals whose model a mod replaces
             Count = ships.Count;
             Done = 0;
             steps = ships.Count * StepsPerShip;

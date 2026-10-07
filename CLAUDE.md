@@ -1569,7 +1569,11 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   handling }` changes one. `ModContent.ApplyShips` merges them into Ships / Assemblies / WeaponMounts; `CustomShips` (the PR's
   API, now over the mods) serves race, hangar height and the lounge sellers; `GameNames.Ship` the texts (`ships.<id>.name`).
   A ship whose mod is off is a placeholder (never sold); `ModSaves.FixShips` puts a save flying one into a Phantom (refunded,
-  its equipment in the hold) and drops stored / dealer / seller rows.
+  its equipment in the hold) and drops stored / dealer / seller rows. An `override` of an original ship with `"model"`
+  replaces its model (`ModContent.ModelOverrides`: built by `ModShips` like a new ship, assembly "ship_NNN_mod" added by
+  `ApplyShips`, which `Database.ShipAssembly` returns before the original's; the original's mounts unless the entry has
+  its own; not a CustomShips ship: no sellers, the stats stay). Verified in Play mode: the Groza (22) with its Galaxy on
+  Fire 3: Manticore model (`Mods/groza`, converted from the .aem / .aei pack; git-ignored) in the hangar and in flight.
 - **Ship models** (`ModShips`, `ModShipBuilder`, `ModMaterials`, `ModGltfMaterials`; glTFast 6.20, `com.unity.cloud.gltfast`):
   each new ship's GLB loads with glTFast (asynchronous: `Preload` from the main menu, the menu's Leave and `NetGame.EnterWorld`
   wait for `Ready` / `WhenReady`, at most 30 s) into an AssembledObject template under a hidden DontDestroyOnLoad holder

@@ -12,7 +12,7 @@ What mods can do so far:
   your own shot and explosion sounds.
 - **Add new ships**: your own 3D model (glTF / GLB) with its stats, weapon mounts, turrets, engine glows and textures, sold
   by visitors in the Space Lounges.
-- **Change existing ships**: armour, cargo, price, slots, handling.
+- **Change existing ships**: armour, cargo, price, slots, handling, and their model.
 - **Add star systems and stations**: on the star map, linked by jumpgates, with their own orbits, shops and bars, their own
   station models (glTF / GLB), planets and suns, and their own hangars and bars to dock in.
 - **Add quests and bar missions**: story chains and side jobs made as event graphs in the Unity Editor, with dialogue,
@@ -328,6 +328,21 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 
 `override`: an original ship's number or another mod's `"mod_id:ship_id"`, with any of `armor`, `cargo`, `price`,
 `priceDefault`, `slots`, `handling`, `name`, `description` (and for mod ships `race`, `hangarHeight`).
+
+An override of an original ship can also give it a new **model**: `model` with `modelLength`, `modelYaw`, `materials`,
+`engineGlowRadius` / `engineGlowColor` and the glows, as for a new ship. Every ship of that number then uses it (yours, the
+NPCs', the hangar's). Its guns and exhausts stay at the original's mounts unless the entry has its own `mounts`.
+
+```json
+[
+    {
+        "override": 22,
+        "model": "models/groza.glb",
+        "modelLength": 1000, "modelYaw": 0,
+        "materials": [ { "diffuse": "maps/groza_diffuse.png", "normal": "maps/groza_normal.png" } ]
+    }
+]
+```
 
 ## systems.json and stations.json
 

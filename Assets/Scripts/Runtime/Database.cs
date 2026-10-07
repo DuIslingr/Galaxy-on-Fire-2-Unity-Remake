@@ -204,6 +204,10 @@ namespace GoF2Remake.Data
         /// "v_ship_NNN_*" / "sn_ship_NNN_*" (ships 39-41 and 44+); the variant ending in 'raceName' when there is one.</summary>
         public AssemblyData ShipAssembly(int ship, string raceName = null)
         {
+            // A mod's model for this ship (a new mod ship, or an original's replaced: ModContent.ModelOverrides).
+            string modName = $"ship_{ship:000}_mod";
+            var modded = Assemblies.Find(a => a.pack == "mod" && a.name == modName);
+            if (modded != null) return modded;
             string p = $"ship_{ship:000}_";
             bool Match(AssemblyData a, bool main) =>
                 a.category == "ships" && (main ? a.name.StartsWith(p) : a.name.StartsWith("v_" + p) || a.name.StartsWith("sn_" + p));
