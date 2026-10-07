@@ -214,7 +214,10 @@ namespace GoF2Remake.World
             valkyrie?.Tick(Story.Index, dtMs);
             supernova?.Tick(Story.Index, dtMs);
             Script(Story.Index);
-            if (!level.Dialogue && level.LaunchCameraOver) Radio?.Update(dtMs, this);   // not during the launch / arrival camera
+            // Not during the launch / arrival camera, nor (remake, #46) a gate / Khador / planet jump's scene: Cornelius' call came
+            // in the middle of the jumpgate's transition.
+            bool jumping = (level.SystemJump != null && level.SystemJump.Cinematic) || (level.Navigation != null && level.Navigation.Jumping);
+            if (!level.Dialogue && level.LaunchCameraOver && !jumping) Radio?.Update(dtMs, this);
         }
 
         void LateUpdate()

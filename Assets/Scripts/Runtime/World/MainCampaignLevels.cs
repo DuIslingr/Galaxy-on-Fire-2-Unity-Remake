@@ -637,12 +637,17 @@ namespace GoF2Remake.World
                     {
                         EnterCutscene();
                         Vector3[] at = { new Vector3(-40000, 500, -30000), new Vector3(-41000, -200, -31000), new Vector3(-42000, 100, -32000) };
+                        // LevelScript 0x29 (0x16c776): revive, put on the freighter (vtable +0x44 with its position), then
+                        // moved BY the offset (vtable +0x20, the translate the drift uses below): the three come in from
+                        // its side, inside the fighters' attack box. Placed at the offsets as absolute positions they were
+                        // ~70 000 units off, never fired at it, and took on the player instead (#46).
                         for (int i = 1; i <= 3; i++)
                         {
                             var s = S(i);
                             if (s == null) continue;
-                            if (!s.Target.Alive || s.Gone) s.Revive(ToUnity(at[i - 1]));
-                            s.Place(ToUnity(at[i - 1]), (f.transform.position - ToUnity(at[i - 1])).normalized);
+                            var spot = f.transform.position + ToUnity(at[i - 1]);
+                            if (!s.Target.Alive || s.Gone) s.Revive(spot);
+                            s.Place(spot, (f.transform.position - spot).normalized);
                             s.Wake();
                             s.SetOnlyEnemy(f.Target);
                         }
@@ -656,7 +661,7 @@ namespace GoF2Remake.World
                         // The engine hit: fire and smoke, unkillable, stopped, Errkt's music.
                         freighterSmoke = new ShipSmoke(f.transform);
                         freighterSmoke.SetEmitting(true);
-                        f.SetHull(9999999);
+                        f.SetHull(9999999);   // Player::setHitpoints only: the bar shows full meanwhile
                         f.SetMoving(false);
                         f.SetEngineSound(false);
                         // 0x9b Errkt_CutSeq_01 is an FMOD cutscene event: it plays over the orbit's music (not stopped).
@@ -687,7 +692,11 @@ namespace GoF2Remake.World
                     cam.SetDolly(new Vector3(1f, 0f, -2f));
                     if (stepMs >= 15000f)
                     {
-                        f.SetHull(100);   // the player has to finish him
+                        // Player::setHitpoints(100) keeps the maximum: the bar shows the ~5 % he has left (#46: the 9 999 999
+                        // had become the maximum and SetHull(100) made 100 the maximum, so it read 100 %).
+                        f.SetHull(5 * Session.Rank + 1800);
+                        f.SetHull(100, false);   // the player has to finish him
+                        f.noFriendlyFire = true;
                         won41 = true;
                         LeaveCutscene();
                         Step = 5;
@@ -731,7 +740,9 @@ namespace GoF2Remake.World
                         var look = station + Player.position.normalized * 5000f * M;
                         cam.LookAtUnity(Player.position, null, look);
                         Hole?.FreeMissionLock();
-                        Hole?.ResetTimer(false);
+                        // Remake (#46): it closes behind the player (reset(true): shrinking after 1 s); reset(false) opened
+                        // it for another minute, still there as the mother ship blew up.
+                        Hole?.ResetTimer(true);
                         Sfx.PlayAt(assets?.mothershipCutscene, Player.position);   // 154
                         SpawnExplosion(station);
                         Step = 7;
@@ -744,7 +755,14 @@ namespace GoF2Remake.World
                     if (explosion != null && cam.Camera != null)
                         for (int i = 1; i < explosion.Length && i <= 2; i++)
                             if (explosion[i] != null) explosion[i].transform.rotation = Quaternion.LookRotation(cam.Camera.forward, Vector3.up);
-                    if (stepMs >= 4000f && level.Station != null && level.Station.activeSelf) level.Station.SetActive(false);
+                    if (stepMs >= 4000f && level.Station != null && level.Station.activeSelf)
+                    {
+                        level.Station.SetActive(false);
+                        // Remake (#46): Errkt's freighter (or its wreck) lies on the mother ship's arm: it goes with it (it hung
+                        // in empty space after the station vanished when the player hadn't finished him).
+                        var errkt = S(0);
+                        if (errkt != null) { errkt.Deactivate(); errkt.gameObject.SetActive(false); }
+                    }
                     if (stepMs >= 15000f)
                     {
                         // this+0xa8 cleared: the explosion meshes stop animating (frozen) and the fade starts.

@@ -79,6 +79,9 @@ namespace GoF2Remake.World
         public bool IsJumper => Spec.group == NpcGroup.Jumper;
 
         [System.NonSerialized] public bool alwaysEnemy, turnedEnemy, alwaysFriend;
+        /// <summary>Remake: a friend the level expects the player to destroy (step 42's Errkt): no friendly-fire rules, so no
+        /// "We need backup!" chatter or a turned race for it (#46).</summary>
+        [System.NonSerialized] public bool noFriendlyFire;
         /// <summary>Remake (/spawn, the debug spawner): neutral to every player whatever the standings, until it is turned
         /// (friendly fire) or a player shoots it in multiplayer (aggressors).</summary>
         [System.NonSerialized] public bool alwaysNeutral;
@@ -1521,7 +1524,7 @@ namespace GoF2Remake.World
             if (!byNpc && Spec.wantedIndex >= 0) { traffic.AttackWanted(this, dmg); return; }
             // Player::damage 0xafd80: hitting a pirate in Loma arms and alarms them all and revokes the toll.
             if (!byNpc && Race == Standing.Pirate) traffic.LomaPirateHit();
-            if (byNpc || alwaysEnemy || IsWingman || Race == Standing.Void || Race == Standing.Specter) return;
+            if (byNpc || alwaysEnemy || noFriendlyFire || IsWingman || Race == Standing.Void || Race == Standing.Specter) return;
             if (Target.hostileToPlayer && !turnedEnemy) return;
             if (Race != traffic.SystemRace && Race != traffic.AttackRace) return;
             damageByPlayer += dmg;
