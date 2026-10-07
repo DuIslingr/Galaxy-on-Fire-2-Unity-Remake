@@ -572,6 +572,31 @@
     display: flex;
 }
 
+/* With a controller the info button shows the controller's Y instead of the "i" (StationMenu opens the details with
+   it), like the hint row's glyph. */
+.row-info-pad {
+    display: none;
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    width: 36px;
+    height: 36px;
+    border-radius: 18px;
+    font-size: 18px;
+    letter-spacing: 0;
+    color: #0B1016;
+    background-color: #F2C230;
+    -unity-text-align: middle-center;
+}
+
+.input-gamepad .row-info-pad {
+    display: flex;
+}
+
+.input-gamepad .row-info {
+    color: rgba(0, 0, 0, 0);
+}
+
 /* ListItemWindow: the full-screen details (1300 x 800 box, full screen on phones). */
 .info-backdrop {
     display: none;

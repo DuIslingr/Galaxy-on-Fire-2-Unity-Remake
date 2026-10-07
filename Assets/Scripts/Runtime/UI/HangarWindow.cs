@@ -493,6 +493,11 @@ namespace GoF2Remake.UI
                 var info = new Button(() => { Select(row, false); OpenInfo(); }) { text = "i", focusable = false };
                 info.AddToClassList("row-info");
                 info.AddToClassList("gof-semibold");
+                // Remake: with a controller the button shows its Y (StationMenu opens the info with it) instead of the "i".
+                var padY = new Label("Y") { pickingMode = PickingMode.Ignore };
+                padY.AddToClassList("row-info-pad");
+                padY.AddToClassList("gof-semibold");
+                info.Add(padY);
                 e.Add(info);
             }
             e.RegisterCallback<ClickEvent>(ev =>

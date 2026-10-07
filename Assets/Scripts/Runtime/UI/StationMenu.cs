@@ -1725,12 +1725,14 @@ namespace GoF2Remake.UI
                                                                         : $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";   // ingredients: ADD
                 string tabs = $"{Localization.Get(183)} / {Localization.Get(store ? 186 : 185)} / {Localization.Get(272)}".ToUpperInvariant(), confirm = T("hudConfirm", "CONFIRM");
                 string sellShip = T("kaamoSellShip", "SELL SHIP");
+                string info = Localization.Get(390).ToUpperInvariant();   // the details window's "Info" (ItemInfoWindow)
                 if (kind == InputKind.KeyboardMouse)
                 {
                     Hint(select, InputGlyph.Key("W"), InputGlyph.Key("S"));
                     Hint(trade, InputGlyph.Key("A"), InputGlyph.Key("D"));
                     Hint(confirm, InputGlyph.Key("ENTER", true));
                     Hint(tabs, InputGlyph.Key("Q"), InputGlyph.Key("E"));
+                    Hint(info, InputGlyph.Key("I"));
                     if (store) Hint(sellShip, InputGlyph.Key("X"));
                     Hint(T("hudBack", "BACK"), InputGlyph.Key("ESC"));
                 }
@@ -1740,6 +1742,7 @@ namespace GoF2Remake.UI
                     Hint(confirm, InputGlyph.Pad(PadButton.A));
                     Hint(trade, InputGlyph.Pad(PadButton.X), InputGlyph.Pad(PadButton.A));   // a shop row: X sells, A buys
                     Hint(tabs, InputGlyph.Pad(PadButton.LeftBumper), InputGlyph.Pad(PadButton.RightBumper));
+                    Hint(info, InputGlyph.Pad(PadButton.Y));
                     if (store) Hint(sellShip, InputGlyph.Pad(PadButton.X));
                     Hint(T("hudBack", "BACK"), InputGlyph.Pad(PadButton.B));
                 }
