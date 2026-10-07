@@ -135,6 +135,7 @@ namespace GoF2Remake.UI
             safeArea = root.Q("safeArea");
             dragZone = root.Q("dragZone");
             hints = root.Q("hints");
+            SetupUiAnimation();
             if (GoF2Remake.Multiplayer.NetGame.Active)
             {
                 ChatView.Attach(gameObject, safeArea ?? root);   // multiplayer chat
@@ -1781,6 +1782,115 @@ namespace GoF2Remake.UI
             return CheckWanted() || CheckWingmenContract();
         }
 
+        // ---- remake: the menu flies / fades out for the hangar take-off and back in after the landing ----
+
+        // The original cuts straight between space and the parked ship, so its menu never moves; the remake's hangar flights
+        // hid it at once (display: none) and showed it again the same way. Now the top bar slides up, Launch right and the
+        // ticker down while the safe area fades, and the side panel's entries (the station information, then each shown
+        // button) come in one by one like the main menu's buttons (MainMenu.uss .menu-button--hidden / .delay-N: 40 px from
+        // the left and faded, 180 ms ease-out cubic each, 50 ms apart; going away the same run backwards, the last entry
+        // first). Nothing takes input meanwhile (a blocker over the panel, the navigation events stopped, Update returns
+        // early). The state at the station's first frame is taken as it is: a fly-in starts with the menu away, a ship that
+        // is simply on its pad (a load, a new game, the flights off) shows it at once.
+        const float UiAnimMs = 450f;
+        const float UiTopOffset = 90f, UiLaunchOffset = 220f, UiTickerOffset = 60f;   // panel px
+        const float UiItemOffset = 40f, UiItemMs = 180f, UiItemStepMs = 50f;            // the main menu's buttons
+        float uiShown = 1f;   // 0 away .. 1 in place
+        bool uiStateTaken;
+        VisualElement uiTop, uiTicker, uiBlocker, uiInfo, uiButtons;
+        readonly System.Collections.Generic.List<VisualElement> uiItems = new System.Collections.Generic.List<VisualElement>();
+
+        /// <summary>The menu is away or on its way in / out: no input.</summary>
+        bool UiBlocked => uiShown < 1f;
+
+        void SetupUiAnimation()
+        {
+            if (safeArea == null) return;
+            uiTop = safeArea.Q(className: "top-bar");
+            uiTicker = safeArea.Q("ticker");
+            uiInfo = safeArea.Q(className: "station-info");
+            uiButtons = safeArea.Q(className: "station-buttons");
+            uiBlocker = new VisualElement { name = "uiBlocker", pickingMode = PickingMode.Position };
+            uiBlocker.style.position = Position.Absolute;
+            uiBlocker.style.left = 0; uiBlocker.style.right = 0; uiBlocker.style.top = 0; uiBlocker.style.bottom = 0;
+            uiBlocker.style.display = DisplayStyle.None;
+            root.Add(uiBlocker);   // last: over everything, the drag zone included
+            EventCallback<NavigationSubmitEvent> submit = e => StopWhileBlocked(e);
+            EventCallback<NavigationMoveEvent> move = e => StopWhileBlocked(e);
+            EventCallback<NavigationCancelEvent> cancel = e => StopWhileBlocked(e);
+            root.RegisterCallback(submit, TrickleDown.TrickleDown);
+            root.RegisterCallback(move, TrickleDown.TrickleDown);
+            root.RegisterCallback(cancel, TrickleDown.TrickleDown);
+        }
+
+        void StopWhileBlocked(EventBase e)
+        {
+            if (!UiBlocked) return;
+            e.StopPropagation();
+            root.focusController?.IgnoreEvent(e);
+        }
+
+        void UpdateUiAnimation(bool flying)
+        {
+            if (safeArea == null) return;
+            float target = flying ? 0f : 1f;
+            if (!uiStateTaken) { uiStateTaken = true; uiShown = target; ApplyUiAnimation(); return; }
+            if (uiShown == target) return;
+            uiShown = Mathf.MoveTowards(uiShown, target, Time.unscaledDeltaTime * 1000f / UiAnimMs);
+            ApplyUiAnimation();
+        }
+
+        /// <summary>1 - easeOutCubic(t): the share of the way still to go.</summary>
+        static float UiRemaining(float t)
+        {
+            t = Mathf.Clamp01(t);
+            return (1f - t) * (1f - t) * (1f - t);
+        }
+
+        void ApplyUiAnimation()
+        {
+            bool away = uiShown <= 0f, still = uiShown >= 1f;
+            // Away: no inline value back in place, so the stylesheet's own rules (.station-map-open hides the menu under the
+            // star map) apply again; an inline Flex here kept the station HUD over the map.
+            if (away != safeAreaHidden)
+            {
+                safeAreaHidden = away;
+                safeArea.style.display = away ? DisplayStyle.None : StyleKeyword.Null;
+            }
+            if (uiBlocker != null) uiBlocker.style.display = still ? DisplayStyle.None : DisplayStyle.Flex;
+            // The side panel's entries in their order, the hidden buttons left out (a locked Map or Lounge takes no turn).
+            uiItems.Clear();
+            if (uiInfo != null) uiItems.Add(uiInfo);
+            if (uiButtons != null)
+                foreach (var b in uiButtons.Children())
+                    if (b.resolvedStyle.display != DisplayStyle.None) uiItems.Add(b);
+            if (still)
+            {
+                safeArea.style.opacity = StyleKeyword.Null;
+                foreach (var el in new[] { uiTop, launchButton, uiTicker, uiInfo }) if (el != null) el.style.translate = StyleKeyword.Null;
+                if (uiInfo != null) uiInfo.style.opacity = StyleKeyword.Null;
+                if (uiButtons != null)
+                    foreach (var b in uiButtons.Children()) { b.style.translate = StyleKeyword.Null; b.style.opacity = StyleKeyword.Null; }
+                return;
+            }
+            // Ease out coming in (and so ease in going away: the same curve run backwards).
+            float t = Mathf.Clamp01(uiShown);
+            float k = UiRemaining(t);
+            // The safe area fades over the first 40 %: the side entries do their own fade after that, the rest is in by then.
+            safeArea.style.opacity = Mathf.SmoothStep(0f, 1f, t / 0.4f);
+            if (uiTop != null) uiTop.style.translate = new Translate(0f, -UiTopOffset * k);
+            if (launchButton != null) launchButton.style.translate = new Translate(UiLaunchOffset * k, 0f);
+            if (uiTicker != null) uiTicker.style.translate = new Translate(0f, UiTickerOffset * k);
+            float ms = t * UiAnimMs;
+            for (int i = 0; i < uiItems.Count; i++)
+            {
+                float p = Mathf.Clamp01((ms - i * UiItemStepMs) / UiItemMs);
+                float r = UiRemaining(p);
+                uiItems[i].style.translate = new Translate(-UiItemOffset * r, 0f);
+                uiItems[i].style.opacity = 1f - r;
+            }
+        }
+
         void Update()
         {
             if (root == null || level == null) return;
@@ -1789,17 +1899,17 @@ namespace GoF2Remake.UI
             // Remake hangar flights: the menu hides while the ship flies in or out; the conversations, windows and hints
             // wait until it has landed. Any key / tap / button skips the flight.
             bool flying = level.PlayerFlying;
-            // Not flying: no inline value at all, so the stylesheet's own rules (.station-map-open hides the menu under the
-            // star map) apply again; an inline Flex here kept the station HUD over the map.
-            if (safeArea != null && flying != safeAreaHidden)
-            {
-                safeAreaHidden = flying;
-                safeArea.style.display = flying ? DisplayStyle.None : StyleKeyword.Null;
-            }
+            UpdateUiAnimation(flying);
             if (flying)
             {
                 if (World.SpaceLevel.PlayerTriedToFly()) level.SkipPlayerFlight();
                 settleMs = ArrivalSettleMs;
+                return;
+            }
+            if (UiBlocked)
+            {
+                // The menu still flying in after the landing: no input yet; the settle runs on meanwhile.
+                if (settleMs > 0f) settleMs -= Time.unscaledDeltaTime * 1000f;
                 return;
             }
             UpdateMedalToast();
