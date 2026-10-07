@@ -33,6 +33,10 @@ namespace GoF2Remake.Flight
         public bool TouchingStation { get; private set; }
         /// <summary>The orbit's wormhole (landmark 3), null = none.</summary>
         [NonSerialized] public GoF2Remake.World.Wormhole wormhole;
+        /// <summary>Set by the level: the wormhole neither pulls nor takes the player now (SpaceLevel.WormholeHeld).</summary>
+        [NonSerialized] public Func<bool> wormholeHeld;
+        /// <summary>Set by the level: the wormhole doesn't pull, but entering it still counts (SpaceLevel.WormholeNoPull).</summary>
+        [NonSerialized] public Func<bool> wormholeNoPull;
         /// <summary>PlayerEgo::isInWormhole: pulled within 1000 units (and alive).</summary>
         public bool InWormhole { get; private set; }
 
@@ -101,14 +105,18 @@ namespace GoF2Remake.Flight
             var w = wormhole;
             if (w == null) return;
             if (!w.Visible || w.Shrinking) { w.SetSound(false); return; }
+            if (wormholeHeld != null && wormholeHeld()) return;
             var d = w.transform.position - transform.position;
             float units = d.magnitude / GoF2Remake.World.OrbitLayout.MetersPerUnit;
             float pull = GoF2Remake.World.Wormhole.RadiusUnits - units;
             if (pull < 1f) { w.SetSound(false); return; }
             w.SetSound(true);
-            transform.position += d.normalized * ((int)pull >> 8) * (Time.deltaTime * 1000f / 33.3f) * GoF2Remake.World.OrbitLayout.MetersPerUnit;
-            Hit();
-            Haptics.Rumble(0.1f + 0.6f * pull / GoF2Remake.World.Wormhole.RadiusUnits);   // remake: stronger closer in
+            if (wormholeNoPull == null || !wormholeNoPull())
+            {
+                transform.position += d.normalized * ((int)pull >> 8) * (Time.deltaTime * 1000f / 33.3f) * GoF2Remake.World.OrbitLayout.MetersPerUnit;
+                Hit();
+                Haptics.Rumble(0.1f + 0.6f * pull / GoF2Remake.World.Wormhole.RadiusUnits);   // remake: stronger closer in
+            }
             if (units < GoF2Remake.World.Wormhole.InsideUnits) InWormhole = true;
         }
 

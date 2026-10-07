@@ -95,8 +95,8 @@ namespace GoF2Remake.World
             if (!s.shootingEnabled) f |= RoleNoFire;
             return f;
         }
-        /// <summary>Junk removal: time left (ms), -1 = no limit.</summary>
-        public float TimeLeftMs => mission.type == MissionType.JunkRemoval ? Mathf.Max(0f, JunkTimeMs - missionMs) : -1f;
+        /// <summary>Junk removal: time left (ms), -1 = no limit or the mission over (#46: the clock stayed on the HUD after it).</summary>
+        public float TimeLeftMs => mission.type == MissionType.JunkRemoval && !done ? Mathf.Max(0f, JunkTimeMs - missionMs) : -1f;
         /// <summary>Multiplayer: this game builds and runs the orbit (false = a squadmate's view of theirs).</summary>
         public bool Running { get; private set; }
         /// <summary>Multiplayer: the route for the squadmates ("x,y,z;..." game units) and the mission clock (ms).</summary>

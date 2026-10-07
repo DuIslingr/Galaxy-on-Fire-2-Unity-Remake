@@ -683,10 +683,13 @@ namespace GoF2Remake.UI
             // The PC version's keys (its help texts 1731 / 1732, 638, 18 and the default list), rebindable (GameControls):
             // Q Autopilot (the target list, again = off) and E Actions (the quick menu), V Wingmen, K Khador Drive, M or the middle mouse button: mouse control (not the mouse while it orbits the
             // free-look camera).
-            if (nav != null && GameControls.AutopilotMenu.WasPressedThisFrame()) OnAutopilotButton();
-            else if (nav != null && GameControls.ActionsMenu.WasPressedThisFrame()) OnActionsButton();
-            else if (nav != null && GameControls.Wingmen.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.Wingmen);
-            else if (nav != null && GameControls.KhadorDrive.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.KhadorDrive);
+            // Not during a level's cutscene (#46: Q opened the autopilot menu over it, which pauses the game, or turned a
+            // scripted autopilot leg off); the touch buttons are hidden then anyway.
+            bool menuKeys = nav != null && (level == null || !level.Cutscene);
+            if (menuKeys && GameControls.AutopilotMenu.WasPressedThisFrame()) OnAutopilotButton();
+            else if (menuKeys && GameControls.ActionsMenu.WasPressedThisFrame()) OnActionsButton();
+            else if (menuKeys && GameControls.Wingmen.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.Wingmen);
+            else if (menuKeys && GameControls.KhadorDrive.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.KhadorDrive);
             bool freeLookNow = level != null && level.FreeLook != null && level.FreeLook.FreeLookActive;
             if (!Application.isMobilePlatform && GameControls.MouseSteering.WasPressedThisFrame()
                 && !(freeLookNow && GameControls.MouseSteering.activeControl?.device is Mouse))

@@ -137,7 +137,9 @@ namespace GoF2Remake.World
             var entry = spec.turretAssembly != null ? db.AssemblyByName(spec.turretAssembly)
                       : spec.ship == 14 ? db.AssemblyByName("battleship_terran")
                       : spec.fixedObject != null ? db.AssemblyByName(spec.fixedObject)
-                      : spec.freighter ? db.AssemblyByName(NpcTables.FreighterAssembly(spec.race))
+                      // Ship 13 is the Vossk freighter whatever the race (Globals::getShipGroup; its boxes too): step 40's
+                      // Errkt flies it as race 0 until it appears (createShip(0, 1, 0xd)) and showed the Terran model.
+                      : spec.freighter ? db.AssemblyByName(NpcTables.FreighterAssembly(spec.ship == 13 ? 1 : spec.race))
                                        : ShipAssembly(spec.ship, spec.race);
             var prefab = AssembledObject.LoadPrefab(entry);
             var go = new GameObject($"NPC {spec.group} {spec.race}/{spec.ship}");

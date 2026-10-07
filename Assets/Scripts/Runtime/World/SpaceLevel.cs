@@ -264,6 +264,8 @@ namespace GoF2Remake.World
             Collision = Player.gameObject.AddComponent<PlayerCollision>();
             Collision.Setup(Health, chase, Mining);
             Collision.wormhole = Wormhole;
+            Collision.wormholeHeld = () => WormholeHeld;
+            Collision.wormholeNoPull = () => WormholeNoPull;
             VolatileCargo.Attach(Player.gameObject, db, Player);   // PlayerEgo+0x398: volatile goods, sound 35
             bool storyOrbit = !Session.FreePlay && Story.IsLevelMission(station);
             IsStoryOrbit = storyOrbit;
@@ -477,6 +479,27 @@ namespace GoF2Remake.World
         /// <summary>The level is being left (wormhole ride, docking): the story checks stop.</summary>
         public bool Leaving { get; private set; }
 
+        /// <summary>Entering the wormhole now kills the player (MGame::OnUpdate: 29 / 41, and 40 until Errkt's freighter has
+        /// gone through).</summary>
+        bool WormholeKills
+        {
+            get
+            {
+                int index = Story.Index;
+                return !Session.FreePlay && Campaign != null && Story.IsLevelMission(Layout.stationIndex)
+                       && (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3));
+            }
+        }
+
+        /// <summary>Remake: during a level's cutscene, while entering would kill, the wormhole neither pulls nor takes the
+        /// player, who has no control then (step 40: Errkt's call comes 40 s in wherever the player is, and the cutscene
+        /// following his freighter drew a player already near the wormhole into it, dead before the scene ended). And at
+        /// step 40 until his freighter has gone through it doesn't pull at all: its pull near the centre is faster than a
+        /// ship, so a player near it when he called was dragged in the moment the scene gave the controls back; flying into
+        /// it still kills (the original's rule).</summary>
+        bool WormholeHeld => Campaign != null && Campaign.Cutscene && WormholeKills;
+        bool WormholeNoPull => WormholeKills && Story.Index == 40;
+
         /// <summary>MGame::OnUpdate, PlayerEgo::isInWormhole (see the header).</summary>
         void UpdateWormholeRide()
         {
@@ -495,7 +518,7 @@ namespace GoF2Remake.World
                 && (rideHoldMs += Time.deltaTime * 1000f) < 8000f) return;
             if (active)
             {
-                if (index == 29 || index == 41 || (index == 40 && Campaign.Event <= 3)) { Health.Kill(); riding = Health.Dead; return; }   // the original sets HP 0 every frame: an emergency system or god mode tries again
+                if (WormholeKills) { if (!WormholeHeld) { Health.Kill(); riding = Health.Dead; } return; }   // the original sets HP 0 every frame: an emergency system or god mode tries again
                 if (index == 40) Session.LastFreighterHull = Campaign.FreighterHull;
                 if (index < 41) Story.Advance(db);
             }

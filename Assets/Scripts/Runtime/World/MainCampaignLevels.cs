@@ -571,7 +571,9 @@ namespace GoF2Remake.World
                         f.SetVisible(true);
                         f.Wake();
                         f.SetMoving(true);
-                        EnterCutscene();
+                        // Remake: the player holds still meanwhile (the original keeps its speed): a player already at the
+                        // wormhole flew into it during the scene (SpaceLevel.WormholeHeld keeps it from pulling).
+                        EnterCutscene(keepSpeed: false);
                         cam.LookAtUnity(f.transform.position + ToUnity(new Vector3(-9000, 3000, -14000)), f.transform);
                         cam.SetDolly(new Vector3(0f, 0f, -2f));
                         Step = 1;
