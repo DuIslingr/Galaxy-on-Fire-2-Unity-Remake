@@ -12,9 +12,23 @@ import dialogue_tables as D, radio_tables as R, portrait as P, fev_events as F
 from binary import text
 
 
+def event_waves():
+    """FEV event name -> the base name of its first converted .ogg (fmod_event_ids.txt), for voice events whose wave is
+    named otherwise."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'research', 'fmod_event_ids.txt')
+    out = {}
+    for line in open(path, encoding='utf-8'):
+        f = line.rstrip('\r\n').split('\t')
+        if len(f) < 5 or line.startswith('#') or f[4].startswith('?'):
+            continue
+        out[f[2]] = os.path.splitext(os.path.basename(f[4].split(' | ')[0]))[0]
+    return out
+
+
 def build():
     ev, oggs = F.events()
     voice = dict(F.voice_table())
+    waves = event_waves()
 
     def vo(t):
         sid = voice.get(t)
@@ -26,6 +40,11 @@ def build():
             # Re-recorded lines keep the event name but their waves are named <event>_Alt2 (Brillo Lampeter's 11 Supernova
             # lines, MISSION_END_95_8_Alt2 ...); StoryAssets.Voice finds them by the event name too.
             files = next((oggs[k] for k in oggs if k.lower() in (n.lower() + '_alt2', n.lower() + '_alt')), [])
+        if n and not files and n in waves:
+            # An event whose wave has another name (MISSION_END_58_9 plays MISSION_END_58_8_1.ogg): the remake loads
+            # voices by file name, so the page names that wave (the FEV's LGCY data, fmod_event_ids.txt).
+            n = waves[n]
+            files = oggs.get(n, [])
         return {'event': sid, 'name': n,
                 'eng': next((f for f in files if '_eng/' in f), None),
                 'deu': next((f for f in files if '_deu/' in f), None)}

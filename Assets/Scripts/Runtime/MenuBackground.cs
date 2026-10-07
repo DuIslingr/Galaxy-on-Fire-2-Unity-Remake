@@ -42,7 +42,7 @@ namespace GoF2Remake.Visuals
         [Tooltip("-1 = a random station 0..99 like the original (Galaxy::getStation(nextInt(100))).")]
         public int forceStation = -1;
 
-        [Tooltip("Asteroids are kept this far (metres) from the camera (remake: nothing fills the whole view).")]
+        [Tooltip("Asteroids are kept this far (metres) from the camera, from their surface (remake: nothing fills the whole view).")]
         public float cameraKeepOut = 150f;
 
         public GameObject Station { get; private set; }
@@ -82,7 +82,10 @@ namespace GoF2Remake.Visuals
             }
             if (menuCamera != null) menuCamera.Place(camGame);
             var camPos = OrbitLayout.ToUnity(camGame);
-            OrbitBuilder.SpawnAsteroids(db, Layout, transform, p => (p - camPos).sqrMagnitude < cameraKeepOut * cameraKeepOut);
+            // Measured from the asteroid's surface: the biggest (scale 2.2) reach 390 m from their centre (Void crystals 670 m),
+            // so a centre 150 m out still put the camera inside a rock.
+            float keepOut = cameraKeepOut + Layout.AsteroidMeshRadius * 2.2f * OrbitLayout.MetersPerUnit;
+            OrbitBuilder.SpawnAsteroids(db, Layout, transform, p => (p - camPos).sqrMagnitude < keepOut * keepOut);
 
             SpawnTraffic(db);
             OrbitBuilder.SpawnDust(Layout, transform);
