@@ -298,6 +298,10 @@ namespace GoF2Remake.UI
                 () => new[] { X("informerRemake", "Remake"), X("informerOriginal", "Original") },
                 () => Settings.InformerOriginalRule ? 1 : 0, i => Settings.InformerOriginalRule = i == 1,
                 () => X("informerRuleHelp", "Original: any other ship destroyed in the spy's orbit before you dock fails the mission, even after the spy is dead. Remake: once the spy is dead, other kills no longer count.")));
+            list.Add(Choice("targetLock", OptionPage.Gameplay, () => X("targetLock", "Target lock"), true,
+                () => new[] { X("targetLockSmart", "Smart"), X("targetLockOriginal", "Original") },
+                () => Settings.OriginalTargetLock ? 1 : 0, i => Settings.OriginalTargetLock = i == 1,
+                () => X("targetLockHelp", "Smart: hostile ships are locked first, then the one nearest the crosshair, and a neutral or friendly ship passing through can't take over a hostile lock (your missiles stay on your target). Original: the first ship in the box is locked, whoever it is.")));
             list.Add(Toggle("autoAdvance", OptionPage.Gameplay, () => X("autoAdvance", "Turn voiced dialogue pages automatically"),
                 () => Settings.AutoAdvanceDialogue, v => Settings.AutoAdvanceDialogue = v));
             list.Add(Toggle("animatedDialogue", OptionPage.Gameplay, () => X("animatedDialogue", "Animated dialogue"),

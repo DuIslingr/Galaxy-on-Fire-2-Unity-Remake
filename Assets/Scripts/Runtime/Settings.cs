@@ -178,6 +178,9 @@ namespace GoF2Remake.Data
         /// longer spoil the mission); true = the original's (PlayerFighter::update 0xf1c8c: any other ship dying before the
         /// docking fails it, even after the spy).</summary>
         public static bool InformerOriginalRule { get => GetBool("informerOriginalRule", false); set => SetBool("informerOriginalRule", value); }
+        /// <summary>The ship lock as the original picks it (Radar::draw: the first ship of the list in the box, any faction,
+        /// and any completed lock replaces the old one); off (default) = the remake's smarter lock (CombatRadar).</summary>
+        public static bool OriginalTargetLock { get => GetBool("originalTargetLock", false); set => SetBool("originalTargetLock", value); }
         public static bool PirateEvents { get => GetBool("pirateEvents", true); set => SetBool("pirateEvents", value); }
 
         /// <summary>DialogueWindow::update: with voice, turn the page once the line has ended.</summary>
