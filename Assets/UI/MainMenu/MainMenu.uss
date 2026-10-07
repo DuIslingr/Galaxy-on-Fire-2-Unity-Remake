@@ -1225,6 +1225,38 @@
     color: var(--gof-amber);
 }
 
+/* Start game: the Game options panel's one action, amber like the station's Launch (the toggles above it are choices). */
+.choice-button--start {
+    margin-top: 26px;
+    flex-shrink: 0;
+    align-items: center;
+    background-color: rgba(255, 166, 48, 0.16);
+    border-width: 2px;
+    border-left-width: 2px;
+    border-color: var(--gof-amber);
+    border-radius: 4px;
+}
+
+.choice-button--start .choice-title {
+    font-size: 28px;
+    letter-spacing: 6px;
+    -unity-text-align: middle-center;
+}
+
+.choice-button--start .choice-desc {
+    color: rgba(255, 255, 255, 0.75);
+    -unity-text-align: middle-center;
+}
+
+.can-hover .choice-button--start:hover,
+.choice-button--start:focus,
+.choice-button--start:active {
+    background-color: rgba(255, 166, 48, 0.38);
+    border-left-color: var(--gof-amber);
+    padding-left: 22px;   /* centred: no slide like the choices */
+    scale: 1.02 1.02;
+}
+
 /* ---- options ------------------------------------------------------------------------ */
 
 .section-header {

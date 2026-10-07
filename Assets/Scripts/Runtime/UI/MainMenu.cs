@@ -285,7 +285,8 @@ namespace GoF2Remake.UI
                 () => PickDifficulty(Session.DifficultyExtreme)));
             Bind("economyDefaultButton", () => PickEconomy(Economy.Default));
             Bind("economyAndroidButton", () => PickEconomy(Economy.Android));
-            Bind("gameOptionsStart", () => StartGame(pendingEconomy));
+            Bind("gameOptionsStart", () => BeginGame(pendingEconomy));
+            Bind("tutorialToggle", () => { Settings.TutorialHints = !Settings.TutorialHints; RefreshTutorialToggle(); });
             Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
             Bind("hardcoreToggle", () => { hardcoreNext = !hardcoreNext; RefreshHardcoreToggle(); });
             Bind("ngPlusToggle", () => { newGamePlus = !newGamePlus && ngPlusSave != null; RefreshNgPlus(false); });
@@ -789,6 +790,7 @@ namespace GoF2Remake.UI
         void PickEconomy(Economy economy)
         {
             pendingEconomy = economy;
+            RefreshTutorialToggle();   // the option may have changed in Options meanwhile
             var desc = root.Q<Label>("gameOptionsStartDesc");
             if (desc != null) desc.text = $"{Session.DifficultyName(pendingDifficulty)}  ·  {Session.EconomyName(economy)}";
             OpenPanel("gameOptionsPanel");
@@ -856,15 +858,21 @@ namespace GoF2Remake.UI
                     "The original's Kaamo Club expansion: the club in the Shima system is yours from day one, without the siege or the 30 million; store as many ships and goods there as you like.");
         }
 
-        /// <summary>Remake: before a new game starts, the question whether to show the tutorial popups (Settings.TutorialHints,
-        /// also in Options > Gameplay); Yes / No set the option and start, Back cancels.</summary>
-        void StartGame(Economy economy)
+        /// <summary>Remake: the tutorial popups (Settings.TutorialHints, also in Options > Gameplay) as a game option before the
+        /// start (it was a question after the economy).</summary>
+        void RefreshTutorialToggle()
         {
-            ShowDialog(Localization.Extra("tutorialTitle", "Tutorial popups"),
-                Localization.Extra("tutorialQuestion", "Show the tutorial popups that explain the controls, the hangar, the map and the missions the first time you meet them? You can change this any time in Options > Gameplay."),
-                () => { Settings.TutorialHints = true; BeginGame(economy); });
-            dialogNo = () => { Settings.TutorialHints = false; BeginGame(economy); };
-            Select(root.Q<Button>(Settings.TutorialHints ? "dialogYes" : "dialogNo"));
+            var b = root.Q<Button>("tutorialToggle");
+            if (b == null) return;
+            bool on = Settings.TutorialHints;
+            b.EnableInClassList("choice-button--on", on);
+            var label = root.Q<Label>("tutorialLabel");
+            if (label != null)
+                label.text = $"{Localization.Extra("tutorialTitle", "Tutorial popups")}: {(on ? Localization.Extra("tutorialOn", "On") : Localization.Extra("tutorialOff", "Off"))}".ToUpperInvariant();
+            var desc = root.Q<Label>("tutorialDesc");
+            if (desc != null)
+                desc.text = Localization.Extra("tutorialDesc",
+                    "Popups that explain the controls, the hangar, the map and the missions the first time you meet them. Also in Options > Gameplay.");
         }
 
         void BeginGame(Economy economy)
@@ -2033,6 +2041,7 @@ namespace GoF2Remake.UI
                 "The Android version's prices: commodities, tractor beams, shields and armor far dearer, blueprints need many more ingredients, ships cheaper."));
             RefreshKaamoToggle();
             RefreshHardcoreToggle();
+            RefreshTutorialToggle();
             Set("extremeLabel", T(25));
             Set("extremeDesc", Localization.Extra("extremeDesc", "For veterans who finished the game: tougher enemies and a harsher economy."));
             Set("loadTitle", T(29));
