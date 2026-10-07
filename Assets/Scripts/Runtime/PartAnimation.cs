@@ -45,9 +45,13 @@ namespace GoF2Remake.Visuals
         public TextAsset meta;
         public bool play = true;
         public bool loop = true;
-        /// <summary>A looping animation skips its keys before this time (ms), at the start and at every wrap: the sky layers'
-        /// first key is a one-off flash (the supernova flares 100 -> 50 over the first second, the storm parts all at 100
-        /// for 33 ms) that looped from 0 blinked the whole sky.</summary>
+        /// <summary>Where the animation starts and every loop wraps back to (ms). Awake sets it to the original's range start:
+        /// MeshCreateFromFile 0x75c60 / Transform::InitAnimationRangeInTime 0x7e31c start every mesh at timeBetweenFrames
+        /// (LoadPoseMs, the smallest positive key), SetAnimationState(3) restarts there and Transform::Update 0x7e388 wraps a
+        /// loop to it, so a file's t 0 keys never show. 226 of the 243 animated files open with such a one-off key (t 0, the
+        /// animation from 33 / 50 / 100 ms; in 125 the t 0 pose differs: parts at the origin or elsewhere, the sky layers'
+        /// flashes), which played from 0 jumped on every wrap (the bars, the hangars, the gates, the sky). Code may set
+        /// another start after Awake (an absolute time, so it never stacks on the default).</summary>
         public float loopStartMs;
         /// <summary>A looping rotation swings back on every other loop instead of snapping back to its start (the Vossk
         /// hangar's ring lights sweep ~57 deg per 2.5 s loop, clear of the portal: looped as keyed they jumped back;
@@ -117,6 +121,9 @@ namespace GoF2Remake.Visuals
                 tracks.Add(tk);
             }
             enabled = tracks.Count > 0 && lengthMs > 0f;
+            // The original's range start (see loopStartMs); kept when something set one before (a prefab's own value).
+            if (loopStartMs <= 0f) loopStartMs = Mathf.Min(LoadPoseMs, lengthMs);
+            timeMs = loopStartMs;
         }
 
         static void InitMaterialTrack(Track tk)
@@ -152,8 +159,8 @@ namespace GoF2Remake.Visuals
         /// <summary>Length of the animation in ms (0 if it has no keyframes).</summary>
         public float LengthMs => lengthMs;
 
-        /// <summary>Starts the animation over (muzzle flashes and impacts restart with every shot), at loopStartMs (0 unless
-        /// a one-off first key is skipped: the Midorian bar prop).</summary>
+        /// <summary>Starts the animation over (muzzle flashes and impacts restart with every shot), at loopStartMs (the
+        /// original's range start: SetAnimationState(3)).</summary>
         public void Restart()
         {
             timeMs = Mathf.Clamp(loopStartMs, 0f, Mathf.Max(0f, lengthMs - 1f));
@@ -195,7 +202,8 @@ namespace GoF2Remake.Visuals
             foreach (var a in root.GetComponentsInChildren<PartAnimation>(true)) a.Hold(a.OneOffStartMs);
         }
 
-        /// <summary>Plays every part animation under 'root' once from the start; returns the longest length in ms.</summary>
+        /// <summary>Plays every part animation under 'root' once from its start (loopStartMs); returns the longest playing
+        /// time in ms (from the start to the end).</summary>
         public static float PlayOnce(GameObject root)
         {
             float longest = 0f;
@@ -203,7 +211,7 @@ namespace GoF2Remake.Visuals
             {
                 a.loop = false;
                 a.Restart();
-                longest = Mathf.Max(longest, a.LengthMs);
+                longest = Mathf.Max(longest, a.LengthMs - Mathf.Clamp(a.loopStartMs, 0f, a.LengthMs));
             }
             return Mathf.Max(longest, Modding.ModFxPart.RestartAll(root));   // a mod weapon's sprites / models
         }
@@ -261,11 +269,15 @@ namespace GoF2Remake.Visuals
         {
             if (!play) return;
             timeMs += Time.deltaTime * 1000f * speed;
-            float start = loop ? Mathf.Clamp(loopStartMs, 0f, lengthMs - 1f) : 0f;
+            // Transform::Update 0x7e388: past the end a loop goes on from the range start, a one-shot stops at the end; a
+            // one-shot never shows the keys before its start either. A range that starts at its end (one key only: the
+            // magma asteroid, the wrecked freighter's lights) holds that pose.
+            float start = Mathf.Clamp(loopStartMs, 0f, lengthMs);
             if (timeMs > lengthMs)
             {
                 if (loop) Loops++;
-                timeMs = loop ? start + (timeMs - lengthMs) % Mathf.Max(1f, lengthMs - start) : lengthMs;
+                float span = lengthMs - start;
+                timeMs = loop && span > 0f ? start + (timeMs - lengthMs) % span : lengthMs;
             }
             if (timeMs < start) timeMs = start;
             Apply();

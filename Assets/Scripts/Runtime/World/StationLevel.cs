@@ -290,13 +290,12 @@ namespace GoF2Remake.World
             // CutScene::process updates every geometry of the scene each frame, so the room's animated layers all run,
             // not only the *_anim meshes (the Terran hangar_terran_add lights run along the side gutters; at frame 0 they
             // sat on the player's pad). The loops skip their one-off first key (every part at the origin for 33 / 50 ms,
-            // a jump on every wrap), the rotations swing back and forth (the Vossk ring lights' 57 deg sweep, clear of the
+            // a jump on every wrap: PartAnimation's default start), the rotations swing back and forth (the Vossk ring lights' 57 deg sweep, clear of the
             // portal, instead of snapping back), and the Vossk portal's light fades out as it moves (its `extra` channel).
             if (roomGo != null)
                 foreach (var a in roomGo.GetComponentsInChildren<PartAnimation>(true))
                 {
                     a.play = true;
-                    a.loopStartMs = a.OneOffStartMs;
                     a.pingPongRotation = true;
                     if (a.gameObject.name.Contains("_anim")) a.applyMaterialChannels = true;
                 }
@@ -431,8 +430,6 @@ namespace GoF2Remake.World
             // As in the hangar: the loops (and the Midorian prop's replays) skip their one-off first key, where every part
             // sits at the origin for 33 / 50 ms; played, it flashed for a frame on every wrap (the Nivelian bar's 6.5 s
             // bar_nivelian_anim_add, the Midorian prop each time it replayed).
-            if (room != null)
-                foreach (var a in room.GetComponentsInChildren<PartAnimation>(true)) a.loopStartMs = a.OneOffStartMs;
             if (room != null && BarRace == 3 && customBar == null)
             {
                 // CutScene::initialize (mode 4): bar_midorian_alpha_anim is a one-shot, restarted with 30 % every 2 s.

@@ -58,14 +58,14 @@ namespace GoF2Remake.World
                 // supernova), so the fire streams out of the supernova; only the ring sky and the storms reset to the bare
                 // camera rotation.
                 var skyRotation = OrbitBuilder.SkyRotation(layout);
-                var f1 = Add(a.flares1, mat, FlaresQueue, speed, 1000f);
-                var f2 = Add(a.flares2, mat, FlaresQueue + 1, speed, 1000f);
+                var f1 = Add(a.flares1, mat, FlaresQueue, speed);   // from 1000 ms: their first positive key (the default)
+                var f2 = Add(a.flares2, mat, FlaresQueue + 1, speed);
                 if (f1 != null) f1.rotation = skyRotation;
                 if (f2 != null) f2.rotation = skyRotation;
             }
             if (mission >= 90 && (supernova || layout.systemTexture == 16 || layout.systemTexture == 18))
             {
-                stormRoot = Add(a.storms, a.stormsMaterial, StormsQueue, 1f, 33f);   // every part at 100 in its first 33 ms
+                stormRoot = Add(a.storms, a.stormsMaterial, StormsQueue, 1f);   // from 33 ms (the default): every part at 100 before
                 stormAnim = stormRoot != null ? stormRoot.GetComponentInChildren<PartAnimation>() : null;
                 if (stormRoot != null) stormRoot.rotation = RandomRotation();
             }
@@ -85,6 +85,7 @@ namespace GoF2Remake.World
             }
         }
 
+        /// <summary>'loopStartMs' 0 = the animation's own start (PartAnimation's default, the original's range start).</summary>
         Transform Add(GameObject prefab, Material mat, int queue, float speed, float loopStartMs = 0f)
         {
             if (prefab == null || mat == null) return null;
@@ -109,7 +110,7 @@ namespace GoF2Remake.World
             {
                 anim.speed = speed;
                 anim.loop = true;
-                anim.loopStartMs = loopStartMs;
+                if (loopStartMs > 0f) anim.loopStartMs = loopStartMs;
                 anim.applyMaterialChannels = true;
             }
             return go.transform;
