@@ -29,6 +29,7 @@ namespace GoF2Remake.Flight
         static readonly int[] handles = new int[8];
         static int device = -1;
         static float nextScan;
+        static System.Threading.Tasks.Task<int> scan;   // a device scan in progress
         static bool failed, quitHooked, recenterPending = true, gravityWarned;
         static Vector3 gravity, rest;
 
@@ -63,13 +64,28 @@ namespace GoF2Remake.Flight
                 if (device >= 0 && !JslStillConnected(device)) device = -1;
                 if (device < 0)
                 {
-                    if (Time.unscaledTime < nextScan) return Offset = Vector2.zero;
-                    nextScan = Time.unscaledTime + RescanSeconds;
-                    if (!quitHooked) { quitHooked = true; Application.quitting += () => { try { JslDisconnectAndDisposeAll(); } catch { } }; }
-                    int n = JslConnectDevices();
-                    if (n <= 0) return Offset = Vector2.zero;
-                    JslGetConnectedDeviceHandles(handles, handles.Length);
-                    device = handles[0];
+                    // The device scan (JslConnectDevices, HID enumeration) blocks for tens to hundreds of ms: on a worker
+                    // thread (#37: every 3 s while steering by hand without a motion controller, the main thread stalled,
+                    // a stutter the FPS counter's average hid; the autopilot skips the gyro, so it never stuttered).
+                    if (scan == null)
+                    {
+                        if (Time.unscaledTime < nextScan) return Offset = Vector2.zero;
+                        nextScan = Time.unscaledTime + RescanSeconds;
+                        if (!quitHooked) { quitHooked = true; Application.quitting += () => { try { JslDisconnectAndDisposeAll(); } catch { } }; }
+                        scan = System.Threading.Tasks.Task.Run(() =>
+                        {
+                            if (JslConnectDevices() <= 0) return -1;
+                            JslGetConnectedDeviceHandles(handles, handles.Length);
+                            return handles[0];
+                        });
+                        return Offset = Vector2.zero;
+                    }
+                    if (!scan.IsCompleted) return Offset = Vector2.zero;
+                    var done = scan;
+                    scan = null;
+                    if (done.IsFaulted) throw done.Exception?.InnerException ?? done.Exception;
+                    if (done.Result < 0) return Offset = Vector2.zero;
+                    device = done.Result;
                     JslSetAutomaticCalibration(device, true);
                     Debug.Log($"ControllerGyro: controller {device} connected (type {JslGetControllerType(device)})");
                     gravity = Vector3.zero;
