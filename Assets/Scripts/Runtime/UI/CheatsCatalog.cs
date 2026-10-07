@@ -18,6 +18,8 @@ namespace GoF2Remake.UI
         {
             Toggle("cheatGod", () => X("cheatGodMode", "God mode"), () => Cheats.GodMode, v => Cheats.GodMode = v),
             Toggle("cheatAmmo", () => X("cheatInfiniteAmmo", "Infinite ammo"), () => Cheats.InfiniteAmmo, v => Cheats.InfiniteAmmo = v),
+            Toggle("cheatPrimaryCooldown", () => X("cheatNoPrimaryCooldown", "No primary weapon cooldown"),
+                   () => Cheats.NoPrimaryCooldown, v => Cheats.NoPrimaryCooldown = v),
             Toggle("cheatSecondaryCooldown", () => X("cheatNoSecondaryCooldown", "No secondary weapon cooldown"),
                    () => Cheats.NoSecondaryCooldown, v => Cheats.NoSecondaryCooldown = v),
             Toggle("cheatBoostCooldown", () => X("cheatNoBoostCooldown", "No boost cooldown"),
