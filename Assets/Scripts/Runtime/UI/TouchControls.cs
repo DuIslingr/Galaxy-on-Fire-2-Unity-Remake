@@ -537,15 +537,19 @@ namespace GoF2Remake.UI
             Show(plate, plateShown);
             if (plateShown && plateText.text != f.secondaryText) plateText.text = f.secondaryText;
 
-            // Hud::draw 18: the boost's alpha shows the charge; a 2 s blink (one lit frame per 80 ms) once it is ready again.
+            // Hud::draw 18: the boost's alpha shows the charge; a 2 s blink once it is ready again (+0x420 = 2000, +0x424 = 80:
+            // one lit frame each time the 80 ms timer runs out, which then restarts at 80). That is tied to the frame rate:
+            // at the phone's 120 Hz the remake runs at, it was an 8 ms flash 12 times a second, a strobe. Remake: the
+            // original's rhythm at its ~30 fps, in time: lit for the last 33 ms of every 100 ms, at any frame rate.
+            const float BlinkPeriodMs = 100f, BlinkLitMs = 100f / 3f;
             if (f.boostReady && !boostWasReady && f.hasBooster) boostFlashMs = 2000f;
             boostWasReady = f.boostReady;
             bool lit = false;
             if (boostFlashMs > 0f)
             {
-                float before = boostFlashMs;
                 boostFlashMs -= dtMs;
-                lit = Mathf.FloorToInt(before / 80f) != Mathf.FloorToInt(Mathf.Max(0f, boostFlashMs) / 80f);
+                float since = 2000f - boostFlashMs;
+                lit = boostFlashMs > 0f && since % BlinkPeriodMs >= BlinkPeriodMs - BlinkLitMs;
             }
             Show(boost, rest && f.hasBooster && !(f.mining && f.boostReady));
             float alpha = f.boosting ? 55f : f.boostReady ? 255f : 55f + (int)(75f * Mathf.Clamp01(f.boostRate));
