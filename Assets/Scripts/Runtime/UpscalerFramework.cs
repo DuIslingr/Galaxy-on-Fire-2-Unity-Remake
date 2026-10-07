@@ -103,6 +103,30 @@ namespace GoF2Remake
             return true;
         }
 
+        static CommandBuffer cleanupCmd;
+
+        /// <summary>Destroys the upscaler contexts URP has given up on, after every camera. The framework keeps one DLSS / FSR
+        /// context per camera (~190 MB of VRAM at 3440 x 1440 for DLSS: its feature and history) and drops it once the camera
+        /// hasn't rendered for 400 frames, or when the resolution or quality changes; UniversalRenderPipeline.Render records
+        /// those DestroyFeature calls into a command buffer after the frame's last Submit and never submits again, so they
+        /// never ran: every new camera (the star map, the item window, each scene's) and every camera switched off for 400
+        /// frames (the level's behind the map) left its context in VRAM for good (a player build reached 7 GB in 20 map
+        /// visits; reported on 50-series cards, measured on a 4080). Run here, the cleanup finds them first and its
+        /// commands are submitted at once; URP's own call then has nothing left to do. Bootstrap hooks it.</summary>
+        public static void FlushContexts(ScriptableRenderContext context, Camera camera)
+        {
+            var instance = Instance;
+            if (instance == null) return;
+            cleanupCmd ??= new CommandBuffer { name = "Upscaler context cleanup (remake)" };
+            instance.CleanupExpiredContexts(cleanupCmd);
+            if (cleanupCmd.sizeInBytes > 0)
+            {
+                context.ExecuteCommandBuffer(cleanupCmd);
+                context.Submit();
+            }
+            cleanupCmd.Clear();
+        }
+
         /// <summary>The quality mode on the upscaler's options (the framework's global options; a changed mode recreates the
         /// upscaler's context).</summary>
         static void SetQuality(Upscaling instance, string id, int q)
@@ -140,6 +164,7 @@ namespace GoF2Remake
         public static string ActiveId => "";
         public static bool Ready => false;
         public static bool Apply(string id, int quality) => false;
+        public static void FlushContexts(ScriptableRenderContext context, Camera camera) { }
 #endif
     }
 }

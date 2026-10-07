@@ -77,6 +77,9 @@ namespace GoF2Remake
             // URP resolves the framework's upscaler once per pipeline instance (UpscalerFramework): again for each new one.
             RenderPipelineManager.activeRenderPipelineCreated -= ApplyUpscaling;
             RenderPipelineManager.activeRenderPipelineCreated += ApplyUpscaling;
+            // The upscaler contexts URP drops are destroyed for real (UpscalerFramework.FlushContexts: a VRAM leak otherwise).
+            RenderPipelineManager.endCameraRendering -= UpscalerFramework.FlushContexts;
+            RenderPipelineManager.endCameraRendering += UpscalerFramework.FlushContexts;
 #if UNITY_EDITOR
             // Leaving Play mode (Application.quitting in the Editor): restore the Editor's values, or the Play-mode ones would
             // stick to QualitySettings.asset and the URP asset, and unhook, because with domain reload off the subscriptions
@@ -88,6 +91,7 @@ namespace GoF2Remake
                 SceneManager.sceneLoaded -= OnSceneLoaded;
                 Application.focusChanged -= OnFocusChanged;
                 RenderPipelineManager.activeRenderPipelineCreated -= ApplyUpscaling;
+                RenderPipelineManager.endCameraRendering -= UpscalerFramework.FlushContexts;
                 QualitySettings.vSyncCount = editorVSync;
                 QualitySettings.lodBias = defaultLodBias;
                 if (urp != null)
