@@ -6,8 +6,8 @@
 //   Cloaked: Target.cloaked (Player+0x5e): NPCs keep chasing but don't fire, turrets don't aim, sleepers don't wake;
 //     medal 19 counts the time (Status+0xc0). Sound 30 (Cloak_02) on and off.
 //   Look (BumpShaderCloak, shader type 0xe): the hull renderers switch to GoF2/Cloak (dissolve by cloak_map.png into the
-//     refracted screen behind, light-blue edge); the lights / engine glow parts hide from 25 % (the original fades
-//     them to alpha 50 and hides the glow). Needs the camera's opaque texture, switched on while cloaked.
+//     refracted screen behind, light-blue edge); the lights keep glowing and animating, the engine glow hides from 25 %
+//     (CloakGlow). Needs the camera's opaque texture, switched on while cloaked.
 
 using System;
 using System.Collections.Generic;
@@ -32,8 +32,8 @@ namespace GoF2Remake.Flight
         AudioSource sfx;
         static InputAction action => GameControls.Cloak;   // rebindable (C / right stick press)
         readonly List<(Renderer r, Material[] original, Material[] cloak)> hull = new List<(Renderer, Material[], Material[])>();
-        readonly List<Renderer> glow = new List<Renderer>();
-        bool swapped, glowHidden;
+        readonly CloakGlow glow = new CloakGlow();
+        bool swapped;
 
         public static bool HasCloak(Database db, int ship) =>
             ship == 44 || ship == 49 || Shop.FirstMounted(db, 21) != null;
@@ -64,7 +64,7 @@ namespace GoF2Remake.Flight
                 if (r is ParticleSystemRenderer) continue;
                 var mats = r.sharedMaterials;
                 bool lit = mats.Length > 0 && mats[0] != null && mats[0].shader != null && mats[0].shader.name.Contains("Lit");
-                if (!lit) { glow.Add(r); continue; }
+                if (!lit) { glow.Add(r, model); continue; }
                 if (shader == null) continue;
                 var cloak = new Material[mats.Length];
                 for (int i = 0; i < mats.Length; i++)
@@ -131,12 +131,7 @@ namespace GoF2Remake.Flight
             float pct = Rules.Percentage;
             foreach (var h in hull)
                 foreach (var m in h.cloak) { m.SetFloat(AnimValueId, pct / 100f); m.SetFloat(CloakRateId, Rules.Timer * 0.001f); }
-            bool hide = pct >= 25f;
-            if (hide != glowHidden)
-            {
-                glowHidden = hide;
-                foreach (var r in glow) if (r != null) r.forceRenderingOff = hide;
-            }
+            glow.Apply(pct);
         }
 
         void Swap(bool on)
@@ -144,7 +139,7 @@ namespace GoF2Remake.Flight
             if (swapped == on) return;
             swapped = on;
             foreach (var h in hull) if (h.r != null) h.r.sharedMaterials = on ? h.cloak : h.original;
-            if (!on) { glowHidden = false; foreach (var r in glow) if (r != null) r.forceRenderingOff = false; }
+            if (!on) glow.Restore();
             OpaqueTexture.Request(this, on);
         }
 

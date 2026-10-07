@@ -1,8 +1,8 @@
 // NpcCloak.cs
 // An NPC's cloak (PlayerFighter::handleCloaking / cloak, Reference/research/npc_traffic_ai.md 5.5): the Specters (race 10)
 // and Trunt Harval's Scimitar. Cloaked for a time with 2000 ms fades in and out; while more than a quarter faded in the
-// ship is off the radar and can't be locked (KIPlayer+0x70) and its exhaust and lights hide. The look is the player's
-// (GoF2/Cloak, PlayerCloak): the hull dissolves into the refracted screen.
+// ship is off the radar and can't be locked (KIPlayer+0x70) and its engine glow hides (its lights keep glowing,
+// CloakGlow). The look is the player's (GoF2/Cloak, PlayerCloak): the hull dissolves into the refracted screen.
 //   handleCloaking   when panicking a 50 % chance, otherwise every 8000 ms a 30 % chance, for 9000 + rnd(5000) ms
 //   level scripts    cloak(ms) (the ambush fly-ins), setCloakingPossible(false) (asleep / cutscene Specters)
 // Plain class run by NpcShip.
@@ -41,10 +41,10 @@ namespace GoF2Remake.World
         }
 
         readonly List<(Renderer r, Material[] original, Material[] cloak)> hull = new List<(Renderer, Material[], Material[])>();
-        readonly List<Renderer> glow = new List<Renderer>();
+        readonly CloakGlow glow = new CloakGlow();
         readonly object owner = new object();
         float totalMs, elapsedMs, rollMs;
-        bool swapped, glowHidden;
+        bool swapped;
 
         public NpcCloak(Transform model)
         {
@@ -56,7 +56,7 @@ namespace GoF2Remake.World
                 if (r is ParticleSystemRenderer) continue;
                 var mats = r.sharedMaterials;
                 bool lit = mats.Length > 0 && mats[0] != null && mats[0].shader != null && mats[0].shader.name.Contains("Lit");
-                if (!lit) { glow.Add(r); continue; }
+                if (!lit) { glow.Add(r, model); continue; }
                 if (shader == null) continue;
                 var cloak = new Material[mats.Length];
                 for (int i = 0; i < mats.Length; i++)
@@ -123,12 +123,7 @@ namespace GoF2Remake.World
             Swap(true);
             foreach (var h in hull)
                 foreach (var m in h.cloak) { m.SetFloat(AnimValueId, pct / 100f); m.SetFloat(CloakRateId, ms * 0.001f); }
-            bool hide = pct >= 25f;
-            if (hide != glowHidden)
-            {
-                glowHidden = hide;
-                foreach (var r in glow) if (r != null) r.forceRenderingOff = hide;
-            }
+            glow.Apply(pct);
         }
 
         void Swap(bool on)
@@ -136,7 +131,7 @@ namespace GoF2Remake.World
             if (swapped == on) return;
             swapped = on;
             foreach (var h in hull) if (h.r != null) h.r.sharedMaterials = on ? h.cloak : h.original;
-            if (!on) { glowHidden = false; foreach (var r in glow) if (r != null) r.forceRenderingOff = false; }
+            if (!on) glow.Restore();
             OpaqueTexture.Request(owner, on);
         }
 
