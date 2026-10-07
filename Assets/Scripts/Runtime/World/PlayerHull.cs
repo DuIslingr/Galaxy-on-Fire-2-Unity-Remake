@@ -5,9 +5,9 @@
 // battleship (ship 14, TrafficPlan: 30 % of the Terran orbits with freighters), the Terran carrier and the Vossk battleship
 // (Level::createStaticObject 0x4974 / 0x4a6b), the Valkyrie battlestation (level 80) and the Void's mother ship
 // (station_void). The capital ships keep their turrets (TrafficPlan.BattleshipTurrets / CarrierTurrets / VosskTurrets,
-// ValkyrieLevels.StationTurrets with its shield generators as scenery), and ships 45 / 51 their fighter turret
-// (Traffic.AttachFighterTurret), riding on the hull as the player's own auto turrets: they shoot whatever is hostile to the
-// player and never hit the player (NpcShip.MakePlayerTurret).
+// ValkyrieLevels.StationTurrets with its shield generators as scenery), riding on the hull as the player's own auto turrets:
+// they shoot whatever is hostile to the player and never hit the player (NpcShip.MakePlayerTurret). Not the fighter turret of
+// ships 45 / 51 (Level::createFighterTurrets is the NPCs' only: the player's Bloodstar and Rhino have a turret slot, #45).
 // The hull is Session.ShipIndex (its ships.json stats, weapon mounts, save) plus, for the hulls that aren't that ship's own
 // model (the race freighters and the objects outside ships.json, which fly with the battleship's stats: 100 hull, handling
 // 50), the picked hull's key in PlayerPrefs; a ship bought or swapped another way drops it. Hulls the player can't normally
@@ -138,15 +138,6 @@ namespace GoF2Remake.World
                 // the battleship 14 (and 15 above).
                 var h = new Hull { key = "ship_" + i, assembly = a.name, stats = i, label = $"{i} · {name}", own = i != 13, playerShip = i != 13 && i != 14 };
                 if (i == 14) { h.turrets = TrafficPlan.BattleshipTurrets; h.turretAssembly = "turret_002_static"; h.turretScale = 6f; }
-                // Level::createFighterTurrets: ships 45 / 51 carry turret_002_static, gun 22 x0.5 (ship-relative (-x, y, z) =
-                // these host offsets).
-                if (i == 45 || i == 51)
-                {
-                    h.turrets = new[] { (i == 45 ? new Vector3(0f, 172.25f, -460.7f) : new Vector3(0f, 470f, -83f), Vector3.zero) };
-                    h.turretAssembly = "turret_002_static";
-                    h.turretGun = 22;
-                    h.turretDamage = 0.5f;
-                }
                 hulls.Add(h);
             }
             hulls.Add(new Hull

@@ -1033,7 +1033,9 @@ namespace GoF2Remake.UI
         bool baseChecked;
 
         /// <summary>ModStation::OnInitialize / checkHints (npc_combat_specials.md 3.6, 3.7): a pirate base's station is unmanned
-        /// (434 from Security, closing it relaunches at once); after an outpost kill the next docking pays 20000 (442).</summary>
+        /// (434 from Security, closing it relaunches at once); after an outpost kill the next docking pays 20000 (442). Both
+        /// voiced (434: getDialogueSoundId(0x1b2, a Nivelian agent) MSG_PIRATE_STATION_NO_ENTRANCE; 442: sound 0x24d
+        /// MSG_PIRATE_STATION_REWARD; #45: they were silent).</summary>
         bool CheckPirateBase()
         {
             if (baseChecked || level == null || level.Station == null) return false;
@@ -1042,7 +1044,8 @@ namespace GoF2Remake.UI
             if (PirateBases.StationHasBase(st))
             {
                 CloseHangar();
-                storyDialogue.ShowAgentMessage(Localization.Get(434), Localization.Get(PirateBases.SecurityName), PirateBases.Portrait, level.Launch);
+                storyDialogue.ShowAgentMessage(Localization.Get(434), Localization.Get(PirateBases.SecurityName), PirateBases.Portrait, level.Launch,
+                                               GenericVoice.For(434, 2));
                 return true;
             }
             if (!Session.PirateBaseRewardPending) return false;
@@ -1053,7 +1056,7 @@ namespace GoF2Remake.UI
                 RefreshCredits();
                 ShowToast($"+{ItemInfo.Credits(PirateBases.Reward)}");
                 Session.Autosave();
-            });
+            }, GenericVoice.For(442, 2));
             return true;
         }
 

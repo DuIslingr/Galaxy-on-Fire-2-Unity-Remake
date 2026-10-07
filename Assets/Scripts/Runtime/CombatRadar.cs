@@ -69,6 +69,10 @@ namespace GoF2Remake.Flight
         bool cargoScan;
         float timer;
         bool noTractorShown;
+        // Remake (#45, like Mining's "No drill installed."): salvage refused for want of a tractor beam; ignored until it leaves
+        // the crosshair box.
+        Crate refusedCrate;
+        NpcShip refusedSteal;
         Transform beam;
         float beamLength = M;
 
@@ -198,6 +202,8 @@ namespace GoF2Remake.Flight
                     }
                 }
             }
+            if (bestCrate != null && bestCrate == refusedCrate) bestCrate = null; else refusedCrate = null;
+            if (bestSteal != null && bestSteal == refusedSteal) bestSteal = null; else refusedSteal = null;
             if (best != Candidate || bestCrate != CrateCandidate || bestSteal != StealCandidate)
             {
                 Candidate = best; CrateCandidate = bestCrate; StealCandidate = bestSteal; timer = 0f; noTractorShown = false;
@@ -223,7 +229,17 @@ namespace GoF2Remake.Flight
                 if (timer > SalvageRingDelay) LockFrame = Mathf.Min(23, (int)(23f * (timer - SalvageRingDelay) / (lt - SalvageRingDelay)));
                 if (timer > lt)
                 {
-                    if (tractorItem < 0) { if (!noTractorShown) { noTractorShown = true; Message?.Invoke(Localization.Get(540), 0); } }
+                    if (tractorItem < 0)
+                    {
+                        // Radar::draw: 540 "No tractor beam."; remake: once, and the salvage lock is dropped (the ring goes)
+                        // instead of staying full.
+                        if (!noTractorShown) { noTractorShown = true; Message?.Invoke(Localization.Get(540), 0); }
+                        refusedCrate = CrateCandidate;
+                        refusedSteal = StealCandidate;
+                        CrateCandidate = null;
+                        StealCandidate = null;
+                        LockFrame = -1;
+                    }
                     else if (Salvaging == null)
                     {
                         var crate = CrateCandidate != null ? CrateCandidate : StealCandidate.CreateStealCrate();
