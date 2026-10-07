@@ -157,9 +157,11 @@ namespace GoF2Remake.World
 
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
-        public bool CanDock => Layout.hasStation && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
+        public bool CanDock => Layout.hasStation && StationShown && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
                                && !DockingBlocked && PlayerHull.PlayerShip   // remake debug: no hangar for a freighter / capital ship
                                && (Mining == null || Mining.State == Mining.Phase.Idle);
+        /// <summary>The station is there (a level script may hide it: 78's Valkyrie jumping away); nothing docks at a hidden one.</summary>
+        bool StationShown => Station == null || Station.activeInHierarchy;
         bool InDockRange => Player.transform.position.sqrMagnitude < StationDockRange * M * StationDockRange * M;
 
         Database db;
@@ -254,6 +256,7 @@ namespace GoF2Remake.World
             // Locks on the station, the jumpgate and the other stations' planets; autopilot, planet jump, fast-forward.
             Navigation = Player.gameObject.AddComponent<Navigation>();
             Navigation.Setup(db, Layout, backdrop, Player, Mining, chase, Weapons);
+            Navigation.StationObject = Station;
             Mining.navigation = Navigation;
             SystemJump = Player.gameObject.AddComponent<SystemJump>();
             SystemJump.Setup(db, Navigation, Player, Weapons, chase, Jumpgate);
@@ -870,7 +873,7 @@ namespace GoF2Remake.World
             if (!InDockRange) leftDockRange = true;
             // MGame::dockEvent: the autopilot to the station docks within 16000 units or on touching the station (collision
             // is off during the launch).
-            if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation)
+            if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation && StationShown)
             {
                 if (DockingBlocked) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
                 if (!PlayerHull.PlayerShip)   // remake debug: no hangar takes a freighter / capital ship

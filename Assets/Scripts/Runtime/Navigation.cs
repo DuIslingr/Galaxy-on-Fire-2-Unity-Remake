@@ -301,7 +301,7 @@ namespace GoF2Remake.Flight
             {
                 if (AsteroidField != null) list.Add(AsteroidField);
                 var station = Targets.Find(t => t.kind == Kind.Station);
-                if (station != null) list.Add(station);
+                if (station != null && !station.hidden) list.Add(station);
                 var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
                 if (gate != null) list.Add(gate);
                 // 573 "Waypoint": the player route's last waypoint isn't reached (Route::getLastWaypoint +300).
@@ -456,6 +456,26 @@ namespace GoF2Remake.Flight
             if (cam != null) cam.transform.rotation = Quaternion.LookRotation(ship.transform.position - cam.transform.position, ship.transform.up);
         }
 
+        /// <summary>The orbit's station object (SpaceLevel): a level script that hides it (78: the Valkyrie jumps away) takes
+        /// its landmark with it.</summary>
+        public GameObject StationObject;
+
+        /// <summary>Level::getLandmarks' station hidden with its object (#49: the autopilot menu still offered the Valkyrie
+        /// after it had jumped away, and flew to an empty spot): no lock, marker, menu entry or autopilot to it.</summary>
+        void UpdateStationShown()
+        {
+            if (StationObject == null) return;
+            bool gone = !StationObject.activeInHierarchy;
+            foreach (var t in Targets)
+            {
+                if (t.kind != Kind.Station || t.hidden == gone) continue;
+                t.hidden = gone;
+                if (!gone) continue;
+                if (Locked == t || Candidate == t) { Locked = Candidate = null; LockTimer = 0f; }
+                if (AutopilotTarget == t) SetAutopilot(null);
+            }
+        }
+
         /// <summary>Radar::draw, landmark and planet blocks.</summary>
         void UpdateLock(float dtMs)
         {
@@ -463,6 +483,7 @@ namespace GoF2Remake.Flight
             UpdateDockingTargets();
             if (Docking != null && Docking.Busy) { Candidate = Locked = null; LockTimer = 0f; wasLocked = false; return; }
             if (wormholeTarget != null) wormholeTarget.hidden = !wormhole.Visible;
+            UpdateStationShown();
             // Radar::draw's planet block runs only above campaign mission 1 and outside the alien orbit: no planet locks,
             // names or icons in the prologue and the rescue (autopilot_travel.md 1.4).
             bool planets = Session.CampaignMission > 1 && !(layout != null && layout.alienOrbit);

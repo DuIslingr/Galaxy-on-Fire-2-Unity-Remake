@@ -55,6 +55,7 @@ namespace GoF2Remake.World
         /// <summary>A Khador jump without the map (the Void in or out, Story.ForcedKhadorTarget): charging, then the jump, to
         /// this station (-1 = the Void), for jumpCells energy cells; a story-forced one is never refused for missing cells.</summary>
         int? storyTarget;
+        bool advanceOnJump;   // index 78's nextCampaignMission, done as the Khador scene starts (#49)
         int jumpCells;
         bool storyForced;
 
@@ -282,8 +283,11 @@ namespace GoF2Remake.World
             if (forced.HasValue || inVoid)
             {
                 // MGame::UseKhadorDrive: in the Void straight back to Status+0x84 (100 at index 80); index 78: programmedStation =
-                // the Void, startChargingJumpDrive, nextCampaignMission (-> 79). No map.
-                if (Story.Index == 78 && !inVoid) Story.Advance(db);
+                // the Void, startChargingJumpDrive, nextCampaignMission (-> 79). No map. Remake (#49): the step advances when
+                // the jump itself starts (StartKhadorScene): the remake charges only once the level is 5 s old and nothing is
+                // paused, and meanwhile 79 let the autopilot dock at the Valkyrie (no level mission there any more), stranding
+                // the player at 79 outside the Void.
+                advanceOnJump = Story.Index == 78 && !inVoid;
                 storyTarget = forced ?? Session.VoidReturnStation;
                 jumpCells = VoidCells(!inVoid);
                 storyForced = forced.HasValue;
@@ -353,6 +357,7 @@ namespace GoF2Remake.World
             if (station < 0 && !storyTarget.HasValue) { state = State.None; return; }
             BeginScene(station);
             state = State.KhadorScene;
+            if (advanceOnJump) { advanceOnJump = false; if (Story.Index == 78) Story.Advance(db); }
             var fxPos = ship.transform.position + ship.transform.forward * 3000f * M;
             fx = SpawnKhadorFx(assets, fxPos, ship.transform.rotation, out animLength);
             JumpFxStarted?.Invoke(false, fxPos, ship.transform.rotation);

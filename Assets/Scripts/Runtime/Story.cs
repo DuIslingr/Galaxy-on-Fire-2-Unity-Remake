@@ -394,7 +394,9 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>GameRecord::load 0x180dc4: a save taken inside an in-space chain restarts at the chain's first step
-        /// (25 -> 24, 29 -> 28, 41 -> 39; 35 with another target -> Ga'kkrr).</summary>
+        /// (25 -> 24, 29 -> 28, 41 -> 39; 35 with another target -> Ga'kkrr). Remake (#49): 79 completes on reaching the Void
+        /// (where nothing docks), so a save at 79 is one the old step-78 Khador advance stranded (docked at the Valkyrie
+        /// before the jump): back to 78, the escape from the Valkyrie.</summary>
         public static void RepairCheckpoint()
         {
             StoryMission M(int type, int station) => new StoryMission { type = type, station = station };
@@ -409,6 +411,7 @@ namespace GoF2Remake.Data
                     Session.VoidInvasionSystem = 18; Session.VoidInvasionStation = 91;
                     break;
                 case 41: Session.CampaignMission = 39; Session.StoryMission = M(0x0b, 30); break;
+                case 79: if (!Session.FreePlay) { Session.CampaignMission = 78; Session.StoryMission = M(0x04, 101); } break;
                 case 35: if (Mission.station != 29) Session.StoryMission = M(0x0b, 29); break;
             }
         }
