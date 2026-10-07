@@ -109,7 +109,7 @@ namespace GoF2Remake.Multiplayer
         public static void Send(string text)
         {
             text = (text ?? "").TrimStart().StartsWith("/") ? CleanCommand(text) : Clean(text);
-            if (NetCommands.TryRun(text)) return;   // "/help", "/netstats": this game's own, never sent
+            if (NetCommands.TryRun(text)) return;   // "/help", "/sos": this game's own; the rest to the server, never as chat
             if (text.Length == 0 || NetState.Instance == null || !NetState.Instance.IsSpawned) return;
             NetState.Instance.SendChatRpc(text, Sending == Channel.Global);
         }

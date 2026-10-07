@@ -52,7 +52,8 @@ namespace GoF2Remake.Flight
 
         public static readonly InputAction Steer, Throttle, Brake, Boost, LevelOut, Roll, StrafeLeft, StrafeRight, DodgeLeft, DodgeRight, Drill,
             FirePrimary, FireSecondary, SwitchSecondary, Action, AutopilotMenu, ActionsMenu, Wingmen, KhadorDrive, FastForward,
-            Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, ChatSend, ChatChannel, Screenshot;
+            Camera, AutoTurret, Cloak, TimeExtender, MouseSteering, Chat, ChatSend, ChatChannel, Screenshot,
+            MultiplayerWindow, DistressCall;
 
         static string X(string key, string english) => Localization.Extra(key, english);
 
@@ -115,6 +116,11 @@ namespace GoF2Remake.Flight
             ChatSend = Button("chatSend", () => X("ctlChatSend", "Chat: send message"), "<Keyboard>/enter", "<Keyboard>/numpadEnter", null, padSlot: false);
             ChatChannel = Button("chatChannel", () => X("ctlChatChannel", "Chat: switch Local / Global"), "<Keyboard>/tab", null, null, padSlot: false);
             Screenshot = Button("screenshot", () => X("ctlScreenshot", "Screenshot"), "<Keyboard>/f12", null, null);
+            // Multiplayer (remake): the multiplayer window in flight (N, no controller default) and the squad's distress call
+            // (unbound: an accidental call brings the squad over, so it takes a click / tap on its button unless bound here).
+            // Added last: the saved overrides are by action and binding index.
+            MultiplayerWindow = Button("multiplayerWindow", () => X("ctlMultiplayerWindow", "Multiplayer window"), "<Keyboard>/n", null, null);
+            DistressCall = Button("distressCall", () => X("ctlDistressCall", "Distress call (multiplayer)"), null, null, null);
         }
 
         static InputAction Button(string id, Func<string> label, string key1, string key2, string pad, bool padSlot = true)

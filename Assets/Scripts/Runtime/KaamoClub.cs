@@ -97,7 +97,7 @@ namespace GoF2Remake.Data
         public static int OutpostHull()
         {
             int rank = Session.Rank;
-            float f = 5f * ((Story.GameWon && !Session.FreePlay ? 180 : 4 * Session.CampaignMission) + (rank < 21 ? 15 * rank + 20 : 320));
+            float f = 5f * ((Story.GameWon && (!Session.FreePlay || Session.CompletedWorld) ? 180 : 4 * Session.CampaignMission) + (rank < 21 ? 15 * rank + 20 : 320));
             return (int)(f * Session.DifficultyFactor);
         }
     }

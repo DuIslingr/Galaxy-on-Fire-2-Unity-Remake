@@ -93,6 +93,15 @@
     margin: 0 0 0 6px;
 }
 
+/* The Send button after the line (touch, mouse; Enter sends too). */
+.chat-send {
+    min-width: 72px;
+    margin-left: 6px;
+    color: rgb(4, 10, 18);
+    background-color: rgb(240, 179, 90);
+    border-color: rgb(240, 179, 90);
+}
+
 .chat-field .unity-base-text-field__input {
     padding: 5px 10px;
     font-size: 17px;

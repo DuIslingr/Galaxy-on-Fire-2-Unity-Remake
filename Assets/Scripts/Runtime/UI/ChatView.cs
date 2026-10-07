@@ -13,6 +13,11 @@
 // every command; NetCommands.Completions); Tab then doesn't switch the channel. Private messages (/w) show as
 // "[From X]" / "[To X]" in violet. The network stats (NetStats) show top left while
 // /netstats has them on.
+// Enter (and keypad Enter) always sends, read from the key event itself: the rebindable send key is read from the device
+// (GameControls.PressedNow), which can miss the frame the UI's key event arrives in, and the TextField then took the
+// Enter as its own submit, lost the focus and the line was only hidden (Suspend), never sent. The row also has a Send
+// button (touch, mouse). While the station's multiplayer window (MultiplayerWindow) is open, its Chat tab is the chat: this
+// panel hides and the chat key doesn't open it.
 // Phones (TouchScreenKeyboard): the chat opens the on-screen keyboard itself instead of the field's own (hideSoftKeyboard),
 // so it can tell the keyboard's Done / checkmark (sends the line) from Back or a tap outside it (closes, the draft kept);
 // the field's own keyboard only closed and blurred on Done, so the line was never sent.
@@ -42,7 +47,7 @@ namespace GoF2Remake.UI
         string completedText;   // the line Tab last wrote (its change event arrives later: not newly typed)
         float nextStats;
         TextField field;
-        Button channel;
+        Button channel, sendButton;
         Button tab;
         TouchScreenKeyboard keyboard;   // phones: the on-screen keyboard the chat opened (null when none)
         int keyboardFrame = -10;        // the frame it was opened (it may not report Visible straight away)
@@ -107,11 +112,15 @@ namespace GoF2Remake.UI
             // typing ends, the draft stays; otherwise the game's keys would stay off.
             field.RegisterCallback<FocusOutEvent>(e =>
             {
-                if (e.relatedTarget is VisualElement to && to == channel) return;
+                if (e.relatedTarget is VisualElement to && (to == channel || to == sendButton)) return;
                 if (focusTries > 0) return;   // still opening
                 Suspend();
             });
             row.Add(field);
+            sendButton = new Button(SendLine) { text = Localization.Extra("mpChatSend", "Send").ToUpperInvariant() };
+            sendButton.AddToClassList("chat-channel");
+            sendButton.AddToClassList("chat-send");
+            row.Add(sendButton);
             box.Add(row);
             parent.Add(box);
             stats = new Label { name = "netstats", pickingMode = PickingMode.Ignore };
@@ -207,9 +216,10 @@ namespace GoF2Remake.UI
                 return;
             }
             // The send / channel keys (rebindable): their key events, and the character the key would type, stay out of the line.
-            bool send = GoF2Remake.Flight.GameControls.PressedNow(GoF2Remake.Flight.GameControls.ChatSend);
+            bool send = e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter || e.character == '\n'
+                        || GoF2Remake.Flight.GameControls.PressedNow(GoF2Remake.Flight.GameControls.ChatSend);
             bool channelKey = !send && GoF2Remake.Flight.GameControls.PressedNow(GoF2Remake.Flight.GameControls.ChatChannel);
-            if (e.keyCode != KeyCode.None && (send || channelKey) && swallowFrame != Time.frameCount)
+            if ((e.keyCode != KeyCode.None || e.character == '\n') && (send || channelKey) && swallowFrame != Time.frameCount)
             {
                 swallowFrame = Time.frameCount;
                 Swallow(e);
@@ -298,8 +308,24 @@ namespace GoF2Remake.UI
 
         void SendLine()
         {
-            NetChat.Send(field.value);
+            string line = field.value;
             Close();
+            if (!string.IsNullOrWhiteSpace(line)) NetChat.Send(line);
+        }
+
+        /// <summary>A chat line as rich text (this panel and the multiplayer window's Chat tab).</summary>
+        internal static string Format(NetChat.Message m)
+        {
+            if (m.channel == NetChat.Channel.Notice) return m.text;
+            if (m.channel == NetChat.Channel.Whisper)
+            {
+                // A private message: from the other player, or the copy of one's own to them.
+                string w = string.Format(m.own ? Localization.Extra("mpWhisperTo", "To {0}") : Localization.Extra("mpWhisperFrom", "From {0}"), m.from);
+                return $"<color=#d6a2ff>[{w}]</color> {m.text}";
+            }
+            string tag = m.channel == NetChat.Channel.Global ? Localization.Extra("mpChatGlobal", "Global") : Localization.Extra("mpChatLocal", "Local");
+            string color = m.channel == NetChat.Channel.Global ? "#f0b35a" : "#8fd8ff";
+            return $"<color={color}>[{tag}]</color> <b>{m.from}</b>: {m.text}";
         }
 
         /// <summary>The field lost the focus: no more typing (the game's keys back), the draft kept for the next Open.</summary>
@@ -375,27 +401,10 @@ namespace GoF2Remake.UI
             for (int i = Mathf.Max(0, all.Count - Lines); i < all.Count; i++)
             {
                 var m = all[i];
-                var line = new Label { pickingMode = PickingMode.Ignore, userData = m };
+                var line = new Label { pickingMode = PickingMode.Ignore, userData = m, text = Format(m) };
                 line.AddToClassList("chat-line");
-                if (m.channel == NetChat.Channel.Notice)
-                {
-                    line.AddToClassList("chat-line--notice");
-                    line.text = m.text;
-                }
-                else if (m.channel == NetChat.Channel.Whisper)
-                {
-                    // A private message: from the other player, or the copy of one's own to them.
-                    string tag = string.Format(m.own ? Localization.Extra("mpWhisperTo", "To {0}") : Localization.Extra("mpWhisperFrom", "From {0}"), m.from);
-                    line.text = $"<color=#d6a2ff>[{tag}]</color> {m.text}";
-                    if (m.own) line.AddToClassList("chat-line--own");
-                }
-                else
-                {
-                    string tag = m.channel == NetChat.Channel.Global ? Localization.Extra("mpChatGlobal", "Global") : Localization.Extra("mpChatLocal", "Local");
-                    string color = m.channel == NetChat.Channel.Global ? "#f0b35a" : "#8fd8ff";
-                    line.text = $"<color={color}>[{tag}]</color> <b>{m.from}</b>: {m.text}";
-                    if (m.own) line.AddToClassList("chat-line--own");
-                }
+                if (m.channel == NetChat.Channel.Notice) line.AddToClassList("chat-line--notice");
+                else if (m.own) line.AddToClassList("chat-line--own");
                 log.Add(line);
             }
         }
@@ -417,9 +426,10 @@ namespace GoF2Remake.UI
             NetChat.KeepGameKeysOff();
             if (box == null) return;
             bool session = NetGame.Active;
-            box.style.display = session ? DisplayStyle.Flex : DisplayStyle.None;
+            bool window = MultiplayerWindow.IsOpenAny;   // the station's multiplayer window: its Chat tab is the chat meanwhile
+            box.style.display = session && !window ? DisplayStyle.Flex : DisplayStyle.None;
             UpdateStats(session);
-            if (!session) { if (open) Close(); return; }
+            if (!session || window) { if (open) Suspend(); return; }
             PollKeyboard();
             if (!open && !NetChat.Typing && GoF2Remake.Flight.GameControls.Chat.WasPressedThisFrame()) Open();   // rebindable (B)
             // Opening: the cursor goes into the line as soon as the row can take the focus.

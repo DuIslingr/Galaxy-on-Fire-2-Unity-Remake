@@ -68,7 +68,7 @@ namespace GoF2Remake.Flight
 
         /// <summary>The campaign index the NPC formulas use: capped at 45 once the main story is won (Level::createShip's
         /// "gameWon ? 180 : 4 * campaign", assignGuns' 600 - 2 * 45).</summary>
-        static int StatCampaign => !Session.FreePlay && Session.CampaignMission >= Story.GameWonIndex ? Story.GameWonIndex : Session.CampaignMission;
+        static int StatCampaign => (!Session.FreePlay || Session.CompletedWorld) && Session.CampaignMission >= Story.GameWonIndex ? Story.GameWonIndex : Session.CampaignMission;
 
         /// <summary>Level::createShip hull. kind: 0 fighter, 1 fixed object (freighter / battleship 14).</summary>
         public static int Hull(int kind, int ship)

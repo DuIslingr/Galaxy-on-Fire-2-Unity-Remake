@@ -194,6 +194,9 @@ namespace GoF2Remake.World
             savedMaxDelta = Time.maximumDeltaTime;
             if (Time.maximumDeltaTime > 0.15f) Time.maximumDeltaTime = 0.15f;
             int station = stationOverride >= 0 ? stationOverride : Session.StationIndex;
+            // Multiplayer arena match (NetArenaClient): the template orbit's sky, sun and planets, its own orbit id.
+            var arena = NetArenaClient.Current;
+            if (arena != null) { station = arena.template; Session.ArrivedByTravel = Session.ArrivedBySystemJump = false; }
             ComingFromVoid = Session.ComingFromVoid;
             // Status::departStation: the Void-invasion re-roll counter (index 32-44).
             Story.OnDepart(db, station);
@@ -216,6 +219,12 @@ namespace GoF2Remake.World
             bool prologue = station == 78 && !Session.FreePlay && Story.Index <= 1;
             if (prologue) Layout.hasStation = false;
             if (prologue && Story.Index == 0) Layout.asteroidCentre = Vector3.zero;
+            // An arena (the Void's home orbit): no station or gate (no docking, no jumps); the asteroids around the centre.
+            if (arena != null)
+            {
+                Layout.hasStation = Layout.hasJumpgate = false;
+                Layout.asteroidCentre = Vector3.zero;
+            }
             var snCentre = SupernovaLevels.AsteroidCentre(Story.Index, station, station == Session.VoidOrbit);
             if (snCentre.HasValue && Story.IsLevelMission(station)) Layout.asteroidCentre = snCentre.Value;
             Station = OrbitBuilder.SpawnStation(db, Layout);
@@ -224,7 +233,7 @@ namespace GoF2Remake.World
             AddObstacles();
             // Multiplayer (NetGame): the orbit's field from the world seed, the same for every player here (NetOrbit).
             if (!NetGame.Active) Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
-            else SpawnNetworkAsteroids(NetGame.OrbitSeed(station));
+            else SpawnNetworkAsteroids(NetGame.OrbitSeed(NetOrbitId));
             if (prologue && Story.Index == 0)
             {
                 // Level::createSpace: the belt's sky is nebula 3 (skybox_003) under the orbit's stars and sky rotation;
@@ -260,22 +269,23 @@ namespace GoF2Remake.World
             IsStoryOrbit = storyOrbit;
             // Status::departStation: the freelance mission's target orbit is built around it (not over a story orbit).
             // Multiplayer: not when a squadmate here already runs this mission (their ships are shown here, NetMissions).
-            bool missionHere = !storyOrbit && Freelance.IsMissionOrbit(station);
+            bool missionHere = !storyOrbit && arena == null && Freelance.IsMissionOrbit(station);
             freelanceMissionOrbit = missionHere;
             bool freelanceOrbit = missionHere && NetMissions.ShouldRun(station);
             bool missionFollower = missionHere && !freelanceOrbit;   // a squadmate here runs it: its briefing, route, timer, score
             // Level::createMission: the Kaamo Club under siege (kaamo_club.md 3).
-            bool siege = !storyOrbit && !missionHere && KaamoClub.SiegeAt(station);
+            bool siege = !storyOrbit && !missionHere && arena == null && KaamoClub.SiegeAt(station);
             // Remake: an event graph quest's orbit (questorbit): no normal traffic, like a story orbit (single player).
-            bool questOrbit = !storyOrbit && !missionHere && !siege && !NetGame.Active && EventRunner.QuietOrbit(station);
+            bool questOrbit = !storyOrbit && !missionHere && !siege && arena == null && !NetGame.Active && EventRunner.QuietOrbit(station);
             // Level::assignGuns reads the level mission (Status+400): a campaign level or a freelance mission's type.
             NpcTables.InCampaignLevel = storyOrbit;
             NpcTables.LevelFreelanceType = freelanceOrbit ? Freelance.Mission.type : -1;
             Traffic = new GameObject("Traffic").AddComponent<Traffic>();
             // Multiplayer: only the first player in an empty orbit builds its traffic and runs it; the others show that player's
             // ships (NetOrbit) and take them over if it leaves, never building new ones.
-            NetAuthority = NetGame.Active && NetState.OrbitEmpty(station);
-            ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit;
+            // An arena: no NPCs, or with the Void fighters the alien orbit's own (run by the first player in the match's orbit).
+            NetAuthority = NetGame.Active && (arena == null || arena.voids) && NetState.OrbitEmpty(NetOrbitId);
+            ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || (arena != null && !arena.voids);
             Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (NetGame.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
@@ -317,7 +327,7 @@ namespace GoF2Remake.World
             }
             // Multiplayer: an Informer mission's spy is this player's when another player built the orbit's traffic (theirs
             // has it only for their own mission) and no squadmate here has one already.
-            if (NetGame.Active && !NetAuthority && !storyOrbit && Freelance.Active && Freelance.Mission.type == MissionType.Informer
+            if (NetGame.Active && !NetAuthority && !storyOrbit && arena == null && Freelance.Active && Freelance.Mission.type == MissionType.Informer
                 && Freelance.Mission.target == station && !Session.InformerKilled && !Session.InformerFailed && !NetMissions.TeamHere(station))
                 SpawnInformerSpy();
             // Step 59's arms convoy: its point is the player's route until the freighter is gone.
@@ -327,13 +337,13 @@ namespace GoF2Remake.World
                 Traffic.ConvoyDone += () => { Navigation.SetAutopilot(null); Navigation.SetRoute(null); };
             }
             // Level::createWingmen: after the mission's ships (Challenge: unarmed).
-            Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
+            if (arena == null) Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
             Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             StorySpace = gameObject.AddComponent<StorySpace>();
             StorySpace.Setup(this, Campaign);
             Hints = gameObject.AddComponent<FlightHints>();
             Hints.Setup(this);
-            Navigation.JumpsBlocked = () => !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
+            Navigation.JumpsBlocked = () => NetArenaClient.InMatch || !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
                                             || FreelanceBlocks   // a freelance mission's orbit (#32)
                                             || Events.EventRules.NoJumps   // an event's Restrict Travel
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100);   // escorting Khador (MGame::UseKhadorDrive)
@@ -356,7 +366,12 @@ namespace GoF2Remake.World
             RepairBeam.AttachAll(Player.gameObject, db, Health.Target, Traffic);
             Session.ComingFromVoid = false;   // Level::init / LevelScript have used it (the Void raid, the closing wormhole)
             if (NetGame.Active) gameObject.AddComponent<NetOrbit>().Setup(this);   // multiplayer: the shared orbit
+            if (arena != null) NetArenaClient.OnLevelReady();
         }
+
+        /// <summary>Multiplayer: the orbit as the other players see it: the station's index, or an arena match's own id
+        /// (NetArena.OrbitBase + the match), so a match is a private copy of its template orbit.</summary>
+        public int NetOrbitId => NetArenaClient.Current != null ? NetArenaClient.Current.orbitId : (Layout != null ? Layout.stationIndex : -1);
 
         /// <summary>Multiplayer: this player runs the orbit's NPC traffic (the first one here), see NetOrbit.</summary>
         public bool NetAuthority { get; private set; }
@@ -649,8 +664,12 @@ namespace GoF2Remake.World
                 root.transform.SetPositionAndRotation(
                     OrbitLayout.ToUnity(UndockPoint),
                     OrbitLayout.RotationToUnity(new Vector3(0f, (Random.value < 0.5f ? 1 : -1) * OrbitLayout.UndockYaw / 65536f * 2f * Mathf.PI, 0f)));
-            // Multiplayer: players launching together sit side by side, 80 m apart by client id.
-            if (NetGame.Active) root.transform.position += root.transform.right * (NetGame.LocalId * 80f);
+            // Multiplayer: players launching together sit side by side, 80 m apart by client id; an arena's spawn ring.
+            if (NetArenaClient.InMatch) { var spawn = NetArenaClient.SpawnPose(); root.transform.SetPositionAndRotation(spawn.position, spawn.rotation); }
+            else if (NetGame.Active) root.transform.position += root.transform.right * (NetGame.LocalId * 80f);
+            // Multiplayer: answering a squadmate's distress call, next to them (NetDistress).
+            if (NetGame.Active && Session.ArrivedByTravel && NetDistress.ArrivalNear(Layout.stationIndex, out var near, out var nearFacing))
+                root.transform.SetPositionAndRotation(near, nearFacing);
             // LevelScript::LevelScript 0x160380: at Coromesk (103) from campaign 0x55 on (or at 0x87), outside the Void, every
             // start is at (70000, 0, 100000) facing the station (the mining plant stands at the origin from then on).
             int cm = Session.CampaignMission;

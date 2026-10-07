@@ -128,6 +128,16 @@ namespace GoF2Remake.World
             return go;
         }
 
+        /// <summary>The station whose model and volumes a station uses: a mod's "looksLike" (Modding.ModWorld.StationLook);
+        /// remake multiplayer's intact Naneroh / Valpatro (no model of their own) borrow Midantha's / Tergalon's, the
+        /// Supernova add-on's Midorian stations next door (OrbitLayout.IsRebuiltGinoya).</summary>
+        public static int StationLook(int station)
+        {
+            if (Session.CompletedWorld && station == 109) return 114;
+            if (Session.CompletedWorld && station == 110) return 115;
+            return Modding.ModWorld.StationLook(station);
+        }
+
         /// <summary>Assembly name of a station (PlayerStation::PlayerStation, assemblies_stations_notes.md), null if none.</summary>
         public static string StationAssembly(Database db, OrbitLayout layout)
         {
@@ -141,17 +151,20 @@ namespace GoF2Remake.World
                                : Story.Dlc1Won ? "v_station_deep_science_damaged" : "v_station_deep_science";
                 case 101: return "v_station_battlestation_anim";
                 case 108: return "station_kaamo_club";
-                case 109: case 110: return "sn_station_midorian_wrecked";
+                case 109: case 110:
+                    if (Session.CompletedWorld) break;   // remake multiplayer: intact (StationLook)
+                    return "sn_station_midorian_wrecked";
                 // Luur (PlayerStation::PlayerStation): burning up to campaign 0x5d, the bare hull at 0x5e (its level adds the
-                // burning platform), the wreck after.
-                case 111: return Session.CampaignMission <= 0x5d ? "sn_burning_station_luur"
+                // burning platform), the wreck after. Remake multiplayer: intact (its model before the supernova, step 89).
+                case 111: return Session.CompletedWorld ? "station_111_luur_intact_mission_89"
+                               : Session.CampaignMission <= 0x5d ? "sn_burning_station_luur"
                                : Session.CampaignMission == 0x5e ? "station_111_luur_mission_94" : "sn_station_midorian_wrecked";
             }
             // A mod's own station model (ModStations), once built; else (and for the rest) the original it names ("looksLike",
             // Modding.ModWorld.StationLook).
             var own = Modding.ModWorld.ModelOf(layout.stationIndex);
             if (own != null && Modding.ModStations.Built(own.station)) return own.Assembly;
-            string prefix = $"station_{Modding.ModWorld.StationLook(layout.stationIndex):000}_";
+            string prefix = $"station_{StationLook(layout.stationIndex):000}_";
             var entry = db.Assemblies.Find(a => a.category == "stations" && (a.name.StartsWith(prefix)
                                                   || a.name.StartsWith("v_" + prefix) || a.name.StartsWith("sn_" + prefix)));
             return entry != null ? entry.name : layout.raceId == 1 ? "station_vossk" : null;   // Vossk: no collision entry
@@ -188,7 +201,7 @@ namespace GoF2Remake.World
                 o.landmark = o.isStation = true;
                 var own = Modding.ModWorld.ModelOf(layout.stationIndex);
                 o.volumes = own != null && Modding.ModStations.Built(own.station) ? Modding.ModStations.Volumes(own, station)   // a mod's model
-                          : GoF2Remake.Flight.CollisionVolume.ForStation(Modding.ModWorld.StationLook(layout.stationIndex), layout.systemIndex < 0);
+                          : GoF2Remake.Flight.CollisionVolume.ForStation(StationLook(layout.stationIndex), layout.systemIndex < 0);
                 // PlayerStation+0x150: the transform's bounding radius (Transform+0xe0, about the station's own origin)
                 // + 5000 units. A radius from the origin, not the bounds' half size: a lopsided station (Tornard, 57,
                 // towers 3.4 km out on one side) had its far tower outside the cube, so nothing collided there.

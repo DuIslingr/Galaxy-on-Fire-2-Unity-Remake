@@ -70,6 +70,8 @@ namespace GoF2Remake.Flight
         /// <summary>Multiplayer: the killing hit came from another player (NetProxy): counts as the player's for a freelance
         /// mission (FreelanceOrbit), though the game takes it as an NPC's hit (killedByNpc: no standing change here).</summary>
         [NonSerialized] public bool killedByRemote;
+        /// <summary>Multiplayer: the client id of the player whose hit killed it (with killedByRemote; NetOrbit's raid news).</summary>
+        [NonSerialized] public ulong remoteKiller = ulong.MaxValue;
         /// <summary>Multiplayer: a squadmate's ship: the players' weapons don't affect it (NPCs still do).</summary>
         [NonSerialized] public bool playerProof;
         /// <summary>The player's cloak (Player+0x5e set by PlayerEgo::toggleCloaking): NPCs keep it as their target but don't
@@ -202,6 +204,8 @@ namespace GoF2Remake.Flight
             }
             else hp = maxHp;
             killedByNpc = false;
+            killedByRemote = false;
+            remoteKiller = ulong.MaxValue;
             crate = null;
             if (isActiveAndEnabled && !All.Contains(this)) All.Add(this);
         }

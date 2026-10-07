@@ -71,7 +71,7 @@ namespace GoF2Remake.World
         void Check()
         {
             var db = level.Database;
-            int cm = Session.FreePlay ? 20 : Session.CampaignMission;
+            int cm = Session.WorldIndex;
             bool levelMission = level.Campaign != null || level.FreelanceOrbit != null;
             var mining = level.Mining;
             bool isMining = mining != null && mining.State == Mining.Phase.Mining;

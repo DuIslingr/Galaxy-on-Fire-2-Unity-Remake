@@ -175,8 +175,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>Story.OnDocked's stock extras that aren't about one player, in the shared list (a player's own copy would be
-        /// replaced by it): at free play Kappa's 10 EMP GL I (index 20, the tutorial's gift), and the deep science stations'
-        /// and the battlestation's energy cells (the single-player rule gives them for a nearly empty hold: here always, so
+        /// replaced by it): the deep science stations' and the battlestation's energy cells (the single-player rule gives them for a nearly empty hold: here always, so
         /// nobody is stranded in a gateless system).</summary>
         static void HostExtras(int station, List<ItemStack> items)
         {
@@ -187,7 +186,6 @@ namespace GoF2Remake.Multiplayer
                 int at = items.FindIndex(r => r.item > item);
                 items.Insert(at < 0 ? items.Count : at, new ItemStack(item, amount));
             }
-            if (Session.CampaignMission == 20 && station == 55) Add(41, 10);
             if ((station == 10 || station == 100 || station == 101) && !items.Exists(r => r.item == GalaxyMap.EnergyCellItem)) Add(GalaxyMap.EnergyCellItem, 10);
         }
 

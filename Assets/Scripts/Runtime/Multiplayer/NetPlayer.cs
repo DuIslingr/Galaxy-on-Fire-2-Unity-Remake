@@ -60,7 +60,13 @@ namespace GoF2Remake.Multiplayer
         readonly NetworkVariable<byte> place = new NetworkVariable<byte>((byte)Place.None, Read, Write);
         readonly NetworkVariable<bool> authority = new NetworkVariable<bool>(false, Read, Write);
         readonly NetworkVariable<int> squad = new NetworkVariable<int>(0);   // the host's (NetSquad), 0 = none
+        readonly NetworkVariable<bool> observer = new NetworkVariable<bool>(false);   // the server's: another device controls the profile
+        readonly NetworkVariable<FixedString32Bytes> factionTag = new NetworkVariable<FixedString32Bytes>();   // the server's: NetFactions, "" = none
+        readonly NetworkVariable<int> factionHome = new NetworkVariable<int>(-1);   // the server's: the faction's home station, -1 = none
+        readonly NetworkVariable<int> tollStation = new NetworkVariable<int>(-1, Read, Write);   // NetFactionsClient.TollStation
+        readonly NetworkVariable<bool> distress = new NetworkVariable<bool>(false, Read, Write);  // NetDistress: calls for help
         readonly NetworkVariable<bool> admin = new NetworkVariable<bool>(false);   // the server's: admin commands (NetCommands)
+        readonly NetworkVariable<byte> staffRole = new NetworkVariable<byte>(0);   // the server's: the profile's role (NetModeration)
         readonly NetworkVariable<bool> engine = new NetworkVariable<bool>(true, Read, Write);   // the engine glow shows
         readonly NetworkVariable<float> boost = new NetworkVariable<float>(0f, Read, Write);    // 0..1 (FlightModel.BoostVisualPercent)
         readonly NetworkVariable<float> cloak = new NetworkVariable<float>(0f, Read, Write);    // 0..100
@@ -170,8 +176,31 @@ namespace GoF2Remake.Multiplayer
         public bool IsAdmin => admin.Value;
         /// <summary>Server: admin rights on / off.</summary>
         public void SetAdmin(bool on) { if (IsServer && admin.Value != on) admin.Value = on; }
+        /// <summary>The profile's server role on a dedicated server with profiles (NetModeration: 0 player, 1 op, 2 admin,
+        /// 3 master); admins and masters get the admin commands too (NetCommands.IsAdmin).</summary>
+        public int StaffRole => staffRole.Value;
+        /// <summary>Server: NetModeration's role for this player.</summary>
+        public void SetStaffRole(int role) { if (IsServer && staffRole.Value != role) staffRole.Value = (byte)Mathf.Clamp(role, 0, 3); }
         /// <summary>Host: into squad 'id' (0 = none).</summary>
         public void SetSquad(int id) { if (IsServer && squad.Value != id) squad.Value = id; }
+        /// <summary>Another device of this player's profile controls it: this one stays docked (NetProfiles).</summary>
+        public bool Observer => observer.Value;
+        /// <summary>Server: NetProfiles' role for this device.</summary>
+        public void SetObserver(bool on) { if (IsServer && observer.Value != on) observer.Value = on; }
+        /// <summary>The player's faction tag (NetFactions), "" = no faction.</summary>
+        public string FactionTag => factionTag.Value.ToString();
+        /// <summary>Server: NetFactions' tag for this player.</summary>
+        public void SetFactionTag(string tag) { if (IsServer && factionTag.Value.ToString() != (tag ?? "")) factionTag.Value = tag ?? ""; }
+        /// <summary>This pilot calls their squad for help (NetDistress).</summary>
+        public bool Distress => distress.Value;
+        /// <summary>Where this pilot paid the toll for the current visit (-1 = none): a held station's defence spares them.</summary>
+        public int TollStation => tollStation.Value;
+        /// <summary>The faction's home station (NetFactions; a destroyed member respawns there), -1 = none.</summary>
+        public int FactionHome => factionHome.Value;
+        /// <summary>Server: NetFactions' home for this player.</summary>
+        public void SetFactionHome(int station) { if (IsServer && factionHome.Value != station) factionHome.Value = station; }
+        /// <summary>The name with the faction's tag before it ("[TAG] Name"): the lock plate and the chat.</summary>
+        public string TaggedName => FactionTag.Length > 0 ? $"[{FactionTag}] {DisplayName}" : DisplayName;
         public string DisplayName
         {
             get
@@ -214,6 +243,8 @@ namespace GoF2Remake.Multiplayer
             All.Add(this);
             name = $"NetPlayer {OwnerClientId}";
             if (IsServer) ship.OnValueChanged += (old, _) => PreviousShip = old;
+            if (IsServer) SetStaffRole(NetModeration.RoleOfClient(OwnerClientId));   // signed in before the ship spawned
+            if (IsServer) NetNews.SendAll(OwnerClientId);   // the sector's recent news for their ticker
             if (IsOwner)
             {
                 Local = this;
@@ -243,6 +274,7 @@ namespace GoF2Remake.Multiplayer
             target.RemoteEmp = emp => { NetAggression.Hit(OwnerClientId, emp); EmpUpRpc(emp); };
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
+            factionTag.OnValueChanged += (_, _) => ApplyName();
             Target.NetShips.Add(target);
             obstacle = gameObject.AddComponent<Obstacle>();
             obstacle.projectFromVolume = false;
@@ -287,6 +319,13 @@ namespace GoF2Remake.Multiplayer
             turretModel = PlayerTurret.BuildStatic(NetGame.Db, ship.Value, TurretStacks(turretItem.Value), model.transform);
         }
 
+        /// <summary>The local player and 'other' (in the same orbit) may shoot each other: in an arena match (its own orbit
+        /// id), during a siege between their two factions there (NetFactions), or anywhere on a server started with -freepvp
+        /// (NetState.FreePvp). Squadmates never (NetSquad).</summary>
+        static bool PvpWith(NetPlayer other) =>
+            other != null && ((NetState.Instance != null && NetState.Instance.FreePvp) || NetArena.IsArenaOrbit(other.Station)
+                              || (Local != null && NetFactionsClient.SiegePvp(other.Station, Local.FactionTag, other.FactionTag)));   // a faction siege
+
         /// <summary>This player's shots pass through their squadmates (the local player's ship included).</summary>
         bool ThroughSquad(Target t)
         {
@@ -297,7 +336,7 @@ namespace GoF2Remake.Multiplayer
 
         void ApplyName()
         {
-            target.displayName = DisplayName;
+            target.displayName = TaggedName;
             name = $"NetPlayer {OwnerClientId} ({target.displayName})";
         }
 
@@ -324,6 +363,13 @@ namespace GoF2Remake.Multiplayer
         {
             var own = level != null && level.Health != null ? level.Health.Target : null;
             if (own == null) return;
+            // A player's hit counts only where players may fight (an arena match, or a -freepvp server) and from the same
+            // orbit: a modified game can't hurt anyone in free roam.
+            if (!byNpc)
+            {
+                var from = NetSquad.Find(shooter);
+                if (from == null || from.Station != Station || !PvpWith(from)) return;
+            }
             bool alive = own.Alive;
             if (alive && !byNpc) NetAggression.Hit(shooter, amount);   // an attack makes them an enemy here (NetAggression)
             own.Damage(amount, byNpc, hitVector);
@@ -451,6 +497,8 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
         void EmpRpc(int emp, ulong shooter)
         {
+            var from = NetSquad.Find(shooter);
+            if (from == null || from.Station != Station || !PvpWith(from)) return;   // only where players may fight
             var hp = level != null && level.Health != null && level.Health.Target != null ? level.Health.Target.hitpoints : null;
             if (hp == null || !hp.Alive) return;
             NetAggression.Hit(shooter, emp);
@@ -547,14 +595,18 @@ namespace GoF2Remake.Multiplayer
                     target.hp = hull.Value * target.maxHp;   // 0 = destroyed: no marker, no lock, no NPC after it
                     bool mate = NetSquad.Same(this, Local);   // squadmates: green, out of each other's line of fire
                     target.friendToPlayer = mate;
-                    target.playerProof = mate;
+                    target.playerProof = mate || !PvpWith(this);   // free roam: no player hurts another (NetArena)
                     // An enemy after attacking this player, until one of them is destroyed (NetAggression): a red marker, the
-                    // turrets and sentries fire at them.
-                    target.hostileToPlayer = !mate && NetAggression.IsHostile(OwnerClientId);
+                    // turrets and sentries fire at them (only where players may fight).
+                    target.hostileToPlayer = !mate && PvpWith(this) && NetAggression.IsHostile(OwnerClientId);
                 }
                 mirror?.Update(Time.deltaTime * 1000f);
                 return;
             }
+            NetProfileClient.Tick();   // the server profile's periodic upload
+            if (tollStation.Value != NetFactionsClient.TollStation) tollStation.Value = NetFactionsClient.TollStation;
+            NetDistress.Tick(this);
+            if (distress.Value != NetDistress.Active) distress.Value = NetDistress.Active;
             if (ship.Value != Session.ShipIndex) ship.Value = Session.ShipIndex;   // bought another
             if (standing0.Value != Session.Standing[0]) standing0.Value = Session.Standing[0];
             if (standing1.Value != Session.Standing[1]) standing1.Value = Session.Standing[1];
@@ -574,7 +626,7 @@ namespace GoF2Remake.Multiplayer
             }
             // Where the local player is: the scene they are in.
             Place now = level != null ? Place.Space : dock != null ? (dock.PlayerDeparting ? Place.Departing : Place.Hangar) : Place.None;
-            int at = level != null && level.Layout != null ? level.Layout.stationIndex : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
+            int at = level != null && level.Layout != null ? level.NetOrbitId : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
             if (place.Value != (byte)now) place.Value = (byte)now;
             if (station.Value != at) station.Value = at;
             bool runs = level != null && level.NetAuthority;
