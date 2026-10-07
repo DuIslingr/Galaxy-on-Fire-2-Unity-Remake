@@ -192,7 +192,9 @@ namespace GoF2Remake.Multiplayer
             string kind = type == LogType.Log ? "info" : type == LogType.Warning ? "warning" : "error";
             lock (log)
             {
-                log.Add(new LogLine { seq = ++logSeq, time = DateTime.Now.ToString("HH:mm:ss"), kind = kind, text = message });
+                // The admin token never reaches the web log: NetModeration logs it at every start (and after a reconnect, once
+                // this handler is on), and /api/log is open to the Admin role, which could have read it and claimed master.
+                log.Add(new LogLine { seq = ++logSeq, time = DateTime.Now.ToString("HH:mm:ss"), kind = kind, text = NetModeration.Redact(message) });
                 if (log.Count > LogKeep) log.RemoveRange(0, log.Count - LogKeep);
             }
         }

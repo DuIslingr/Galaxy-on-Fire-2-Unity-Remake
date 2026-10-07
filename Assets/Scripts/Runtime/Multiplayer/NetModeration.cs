@@ -107,6 +107,15 @@ namespace GoF2Remake.Multiplayer
                       + (WebAdmin.Running ? ", or log in to the web admin with it." : "."));
         }
 
+        /// <summary>'text' with the admin token hidden (WebAdmin's log: readable by admins, who mustn't see it). Called on any
+        /// thread (Application.logMessageReceivedThreaded).</summary>
+        internal static string Redact(string text)
+        {
+            var t = token;
+            return string.IsNullOrEmpty(text) || string.IsNullOrEmpty(t) || text.IndexOf(t, StringComparison.Ordinal) < 0
+                ? text : text.Replace(t, "[admin token]");
+        }
+
         internal static bool TokenMatches(string given)
         {
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(given) || given.Length != token.Length) return false;
