@@ -131,6 +131,32 @@ namespace GoF2Remake.Data
             }
         }
 
+        /// <summary>The Kaamo Club owned (no siege or purchase) and stocked: one of every item the storage takes (50 of each
+        /// secondary, so they come with ammo; not the story's unsaleable ones, which the storage refuses, 323) and one hull of
+        /// every ship a player can own (one per type, like Station::addShip; not the freighters 13 / 15, the battleship 14 or
+        /// the ship flown now). Items already stored are topped up. The result text.</summary>
+        public static string FillKaamoClub(Database db)
+        {
+            Session.KaamoState = 3;
+            int items = 0, ships = 0;
+            foreach (var it in db.Items)
+            {
+                int i = it.index;
+                if (Modding.ModContent.IsMissingItem(i) || !Hangar.IsSaleable(i)) continue;
+                int want = it.TypeId == 1 ? 50 : 1;
+                var s = Session.KaamoItems.Find(x => x.item == i);
+                if (s == null) { Session.KaamoItems.Add(new ItemStack(i, want)); items++; }
+                else if (s.amount < want) s.amount = want;
+            }
+            for (int i = 0; i < db.Ships.Count; i++)
+            {
+                if (i == 13 || i == 14 || i == 15 || i == Session.ShipIndex) continue;
+                if (Modding.ModContent.IsMissingShip(i) || db.ShipAssembly(i) == null) continue;   // a mod that is off; 50 / 53 have no model
+                if (KaamoClub.Store(i, Shop.RaceOfShip(i), new List<int>())) ships++;
+            }
+            return string.Format(Localization.Extra("cheatKaamoFilled", "Kaamo Club owned: {0} items and {1} ships added to its storage (Shima system)."), items, ships);
+        }
+
         /// <summary>'amount' more Energy Cells (122) in the hold.</summary>
         public static void AddEnergyCells(int amount) => Shop.AddToCargo(GalaxyMap.EnergyCellItem, amount);
 

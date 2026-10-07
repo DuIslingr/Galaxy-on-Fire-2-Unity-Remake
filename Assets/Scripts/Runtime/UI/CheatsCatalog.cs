@@ -37,6 +37,7 @@ namespace GoF2Remake.UI
             Button("cheatCells", () => X("cheatEnergyCells", "+20 energy cells"), () => { Cheats.AddEnergyCells(20); notify?.Invoke(X("cheatCellsAdded", "20 energy cells added to the hold.")); }),
             Button("cheatReveal", () => X("cheatRevealMap", "Reveal all systems"), () => { Cheats.RevealAllSystems(); notify?.Invoke(X("cheatRevealed", "Every system is on the star map.")); }),
             Button("cheatPeace", () => X("cheatMakePeace", "Make peace with all races"), () => { Cheats.MakePeace(); notify?.Invoke(X("cheatPeaceMade", "Standing neutral with every race.")); }),
+            Button("cheatKaamo", () => X("cheatFillKaamo", "Fill the Kaamo Club (every item and ship)"), () => notify?.Invoke(Cheats.FillKaamoClub(db))),
         };
 
         static string Credits() => $"{X("cheatCreditsNow", "Credits")}: {Session.Credits:N0}";
