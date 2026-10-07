@@ -233,7 +233,8 @@ namespace GoF2Remake.Flight
             toRot = Quaternion.LookRotation(nose.sqrMagnitude > 1e-6f ? nose : ship.transform.forward, q * upLocal);
             if (chase != null) chase.enabled = false;
             SetExhaust(false);
-            Play(dockSound);
+            // Remake: no sound at the carrier (Docking_Landing sounded like mining there; nothing fitting yet).
+            if (Target.DockingType != Resupply) Play(dockSound);
         }
 
         void UpdateEntering(float dtMs)

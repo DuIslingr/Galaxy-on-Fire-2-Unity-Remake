@@ -471,6 +471,30 @@
     display: none;
 }
 
+/* ---- the carrier's resupply window (CarrierShopWindow, the hangar shop's HangarWindow.uss): the flight HUD's markings
+   out of its way, the key hints in one row under it like the station's ---------------------------------------------- */
+
+.hud-shop .radar-ellipse,
+.hud-shop .nav-markers,
+.hud-shop .crosshair,
+.hud-shop .lock-ring,
+.hud-shop .dock-prompt,
+.hud-shop .lock-plate,
+.hud-shop .nav-buttons,
+.hud-shop .speed-panel,
+.hud-shop .orbit-info {
+    display: none;
+}
+
+.hud-shop .hints {
+    flex-direction: row;
+    align-items: center;
+}
+
+.hud-shop .hints .hint {
+    margin-right: 10px;
+}
+
 /* ---- Khador Drive / cloak charge (Hud::draw 0x1933f6, #48): the frame 0x53a (GoF2Hud/charge_frame, 408 x 69), the
    striped fill 0x539 (charge_fill, 388 x 14: blue in the middle, yellow at the ends) revealed from the centre outward
    (jumpChargeFill clips, jumpChargeStripes holds the whole image still under it), the text in the frame's lower panel. */

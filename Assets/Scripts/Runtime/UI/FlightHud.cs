@@ -136,6 +136,7 @@ namespace GoF2Remake.UI
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");
             hints = root.Q("hints");
+            carrierShop = null;   // its elements went with the old tree (made again when the carrier is docked at)
             InputGlyph.TrackHintsOption(hints);   // Options > Gameplay: "Button hints in flight"
             if (GoF2Remake.Multiplayer.NetGame.Active)
             {
@@ -320,7 +321,8 @@ namespace GoF2Remake.UI
             {
                 f.cursor = cursorMode;
                 bool cinematic = level.Cutscene || !level.LaunchCameraOver || (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
-                f.mode = cinematic ? TouchControls.Mode.PauseOnly : nav != null && nav.MenuOpen ? TouchControls.Mode.MenuOpen : TouchControls.Mode.Full;
+                f.mode = cinematic || (carrierShop != null && carrierShop.IsOpen) ? TouchControls.Mode.PauseOnly
+                       : nav != null && nav.MenuOpen ? TouchControls.Mode.MenuOpen : TouchControls.Mode.Full;
                 var phase = mining != null ? mining.State : Mining.Phase.Idle;
                 bool dockBusy = docking != null && docking.Busy;
                 var turret = level.Turret;
@@ -469,6 +471,25 @@ namespace GoF2Remake.UI
             string T(string key, string english) => Localization.Extra(key, english);
             // The menus' own keys are fixed (arrows / D-pad, Enter / A, Esc / B / Menu); the rest are GameControls' bindings.
             var menuKey = pad ? InputGlyph.Pad(PadButton.Menu) : InputGlyph.Key("ESC");
+            if (carrierShop != null && carrierShop.IsOpen)
+            {
+                // The carrier's resupply window (CarrierShopWindow): its own keys.
+                if (!pad)
+                {
+                    Hint(T("hudSelect", "SELECT"), InputGlyph.Key("↑"), InputGlyph.Key("↓"));
+                    Hint(T("shopBuy", "BUY"), InputGlyph.Key("→"), InputGlyph.Key("ENTER", true));
+                    Hint(T("shopBuyAll", "BUY ALL"), InputGlyph.Key("SHIFT", true), InputGlyph.Key("→"));
+                    Hint(T("hudUndock", "UNDOCK"), InputGlyph.Key("ESC"));
+                }
+                else
+                {
+                    Hint(T("hudSelect", "SELECT"), InputGlyph.Pad(PadButton.DPad));
+                    Hint(T("shopBuy", "BUY"), InputGlyph.Pad(PadButton.A));
+                    Hint(T("shopBuyAll", "BUY ALL"), InputGlyph.Pad(PadButton.X));
+                    Hint(T("hudUndock", "UNDOCK"), InputGlyph.Pad(PadButton.B));
+                }
+                return;
+            }
             if (nav != null && nav.MenuOpen)
             {
                 if (!pad)
@@ -629,6 +650,7 @@ namespace GoF2Remake.UI
 
             bool mapOpen = StarMap.IsOpen;
             root.EnableInClassList("hud-map", mapOpen);
+            root.EnableInClassList("hud-shop", carrierShop != null && carrierShop.IsOpen);   // the carrier's resupply window
             if (mapOpen) return;   // the map has its own input
 
             // MGame::OnUpdate: DialogueWindow::update runs only while the player lives; a conversation open at the death waits.
@@ -654,6 +676,18 @@ namespace GoF2Remake.UI
 
             if (volatileCargo == null && level != null && level.Player != null) volatileCargo = level.Player.GetComponent<VolatileCargo>();
             readout?.Update(level, true, volatileCargo != null ? volatileCargo.Force : 0f);
+            if (carrierShop != null && carrierShop.IsOpen)
+            {
+                // The docking ended another way (the carrier destroyed, a level script): the window goes without an undock.
+                if (docking == null || !docking.IsDocked)
+                {
+                    carrierShop.Hide();
+                    if (shopAmbience != null) shopAmbience.Stop();
+                    nav?.CloseMenu();
+                    BuildHints(InputMode.Current);
+                }
+                else { carrierShop.Tick(); return; }
+            }
             if (nav != null && nav.MenuOpen)
             {
                 UpdateAutopilotMenu();
@@ -860,9 +894,9 @@ namespace GoF2Remake.UI
             miningView.UpdateLock(mining, crosshair.style.left, crosshair.style.top, !crosshair.ClassListContains("crosshair--hidden") && phase == Mining.Phase.Idle);
             miningView.UpdateGame(mining, Time.deltaTime * 1000f);
             hackingView?.Update(docking);
-            // Remake (CapitalShips): docked at the carrier, its resupply menu opens (closing it undocks).
+            // Remake (CapitalShips): docked at the carrier, its resupply window opens (closing it undocks).
             bool atCarrier = docking != null && docking.IsDocked && docking.Target != null && docking.Target.DockingType == ObjectDocking.Resupply;
-            if (atCarrier && !resupplyShown && nav != null && !nav.MenuOpen) { resupplyShown = true; OpenResupplyMenu(); }
+            if (atCarrier && !resupplyShown && nav != null && !nav.MenuOpen) { resupplyShown = true; OpenCarrierShop(); }
             else if (docking == null || !docking.Busy) resupplyShown = false;
             if (transferCounter != null)
             {
@@ -1026,70 +1060,52 @@ namespace GoF2Remake.UI
         {
             nav?.CloseMenu();
             HideAutopilotMenu();
-            if (resupplyMenu)
+        }
+
+        bool resupplyShown;
+        CarrierShopWindow carrierShop;
+
+        /// <summary>Remake (CapitalShips): the carrier's resupply window (CarrierShopWindow, the hangar shop's look) while
+        /// docked at it; the game waits under it like under a menu (Navigation.OpenMenu(force)).</summary>
+        void OpenCarrierShop()
+        {
+            if (nav == null || level == null) return;
+            nav.OpenMenu(false, true);
+            if (!nav.MenuOpen) return;
+            touch?.ReleaseAll();
+            weapons?.SetPrimaryHeld(false);
+            carrierShop ??= new CarrierShopWindow(safeArea ?? root, level.Database, health, PlayButton, PlayUi,
+                                                  text => miningView?.ShowMessage(text), OnCarrierShopClosed);
+            carrierShop.Open();
+            BuildHints(InputMode.Current);
+            // Inside the carrier: the station hangar's ambience under the window (it plays through the paused game).
+            var atmo = CombatAudio.Load()?.hangarAtmo;
+            if (atmo != null)
             {
-                // Leaving the carrier's resupply menu undocks; the guns stay blocked until the controls come back
-                // (ObjectDocking.Release), so nothing is fired into the carrier's deck on the way out.
-                resupplyMenu = false;
-                root.Q<Label>("autopilotMenuTitle").text = Localization.Get(571).ToUpperInvariant();
-                docking?.Undock();
-                if (weapons != null) weapons.Blocked = true;
+                if (shopAmbience == null)
+                {
+                    shopAmbience = gameObject.AddComponent<AudioSource>();
+                    shopAmbience.playOnAwake = false;
+                    shopAmbience.loop = true;
+                    shopAmbience.spatialBlend = 0f;
+                    shopAmbience.ignoreListenerPause = true;
+                }
+                shopAmbience.clip = GoF2Remake.Modding.ModSounds.Get(atmo);
+                shopAmbience.volume = Mathf.Min(1f, 0.331f * Sfx.EventGain) * Settings.SfxVolume;   // event 95's volume (CycleSound.Hangar)
+                shopAmbience.Play();
             }
         }
 
-        bool resupplyMenu, resupplyShown;
+        AudioSource shopAmbience;
 
-        /// <summary>Remake (CapitalShips): the carrier's resupply menu while docked at it: repairs, five more of each mounted
-        /// secondary, energy cells (the station's prices x1.25), then Undock; it stays open after a purchase.</summary>
-        void OpenResupplyMenu()
+        /// <summary>Leaving the resupply window undocks; the guns stay blocked until the controls come back
+        /// (ObjectDocking.Release), so nothing is fired into the carrier's deck on the way out.</summary>
+        void OnCarrierShopClosed()
         {
-            if (nav == null || level == null) return;
-            if (!nav.MenuOpen)
-            {
-                nav.OpenMenu(false, true);
-                if (!nav.MenuOpen) return;
-                touch?.ReleaseAll();
-                weapons?.SetPrimaryHeld(false);
-                menuIndex = 0;
-                lastMenuMove = 0;
-                menuOpenedFrame = Time.frameCount;
-                autopilotMenu.AddToClassList("autopilot-menu--shown");
-            }
-            resupplyMenu = true;
-            autopilotMenuItems.Clear();
-            menuButtons.Clear();
-            menuActions.Clear();
-            root.Q<Label>("autopilotMenuTitle").text =
-                $"{Localization.Get(1512)}  ·  {ItemInfo.Credits(Session.Credits)}".ToUpperInvariant();
-            void Add(string text, bool disabled, System.Action act)
-            {
-                var b = new Button { text = MenuLabel(menuButtons.Count, text) };
-                b.AddToClassList("autopilot-menu-item");
-                b.AddToClassList("gof-semibold");
-                if (disabled) b.AddToClassList("autopilot-menu-item--disabled");
-                b.focusable = false;
-                b.clicked += act;
-                autopilotMenuItems.Add(b);
-                menuButtons.Add((b, null));
-                menuActions.Add(act);
-            }
-            foreach (var offer in GoF2Remake.World.CapitalShips.ResupplyOffers(level.Database, health))
-            {
-                var o = offer;
-                Add(o.label, o.disabled, () =>
-                {
-                    if (o.disabled) return;
-                    int keep = menuIndex;
-                    string msg = o.buy();
-                    if (!string.IsNullOrEmpty(msg)) miningView?.ShowMessage(msg);
-                    OpenResupplyMenu();   // the prices, amounts and credits again
-                    menuIndex = Mathf.Clamp(keep, 0, menuButtons.Count - 1);
-                    HighlightMenu();
-                });
-            }
-            Add(Localization.Extra("hudUndock", "UNDOCK"), false, CloseAutopilotMenu);
-            menuIndex = Mathf.Clamp(menuIndex, 0, menuButtons.Count - 1);
-            HighlightMenu();
+            if (shopAmbience != null) shopAmbience.Stop();
+            nav?.CloseMenu();
+            docking?.Undock();
+            if (weapons != null) weapons.Blocked = true;
             BuildHints(InputMode.Current);
         }
 

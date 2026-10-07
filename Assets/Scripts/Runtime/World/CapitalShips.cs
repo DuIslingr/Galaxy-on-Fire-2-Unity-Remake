@@ -15,8 +15,9 @@
 //   Inflicts    the carrier launches 5 Inflicts (ship 5) from its deck pads every 20 s, 15 in all, while it was attacked
 //               (by NPCs, or by the player once provoked) in the last 20 s; they share its hostility
 //   resupply    the carrier is a docking target (ObjectDocking.Resupply, the deck pads of step 102's docking set 5) for a
-//               pilot the Terrans trust (standing 71+) flying a Terran ship, or anyone with a Terran signature; docked, a menu
-//               sells repairs and five more of each mounted secondary and of energy cells at the station's prices x1.25
+//               pilot the Terrans trust (standing 71+) flying a Terran ship, or anyone with a Terran signature; docked, a shop
+//               window like the hangar's (UI.CarrierShopWindow) sells the repair of hull and armor, rounds for each mounted
+//               secondary (up to 50) and energy cells (the hold's room) at the station's prices x1.25
 //   fleet battle 3 % of the free-flight orbits in Terran and Vossk systems past step 103 (TrafficPlan.AddFleetBattle): a
 //               Terran carrier or battleship and the Vossk battleship side by side 80 000 units apart, each with its turrets
 //               and escorts and a wing of 4 + rank / 5 fighters looping round the other; the two close in at 0.2 u/ms to
@@ -58,7 +59,7 @@ namespace GoF2Remake.World
         public const float BattleRadioMs = 6000f;
         public static int BattleBounty => 30000 + 3000 * Rank;
         const float ResupplyMarkup = 1.25f;
-        const int ResupplyUnits = 5, RepairPerPoint = 10;
+        const int RepairPerPoint = 10;
 
         static int Rank => Mathf.Min(Session.Rank, 20);
 
@@ -160,76 +161,85 @@ namespace GoF2Remake.World
             return c != null && c.InBattle;
         }
 
+        public enum OfferKind { Repair, Ammo, Cargo }
+
+        /// <summary>One row of the carrier's resupply window (UI.CarrierShopWindow).</summary>
         public class Offer
         {
-            public string label;
-            public bool disabled;
-            public System.Func<string> buy;   // the HUD message
+            public OfferKind kind;
+            public int item = -1;          // a mounted secondary or energy cells; -1 = the repair
+            public int have;               // mounted (ammo) / in the hold (cargo)
+            public int unitPrice;          // per unit; the repair: its whole price
+            public int room;               // units it can take now (the hold's room, up to AmmoCap mounted; the repair 1 or 0)
+            public int missingHull, missingArmor;
         }
+
+        /// <summary>A mounted secondary is topped up to at most this many (the hold's room limits energy cells).</summary>
+        public const int AmmoCap = 50;
 
         static int Price(Database db, int item) => db.Item(item) == null ? 0 : Shop.PriceList(db, Session.StationIndex, new[] { item })[0];
 
-        static string NotEnough => Localization.Extra("notEnoughCredits", "Not enough credits.");
+        public static string NotEnough => Localization.Extra("notEnoughCredits", "Not enough credits.");
 
-        /// <summary>The resupply menu: repairs, five more of each mounted secondary, energy cells.</summary>
+        /// <summary>The resupply window's rows: the repair, each mounted secondary (once per item), energy cells; the station's
+        /// prices x1.25.</summary>
         public static List<Offer> ResupplyOffers(Database db, PlayerHealth health)
         {
             var list = new List<Offer>();
             var hp = health != null ? health.Hp : null;
             if (hp != null)
             {
-                int missing = Mathf.Max(0, hp.maxHull - hp.hull) + Mathf.Max(0, hp.maxArmor - hp.armor);
-                int price = missing * RepairPerPoint;
-                list.Add(new Offer
-                {
-                    label = missing > 0 ? $"{Localization.Extra("resupplyRepair", "Repair hull and armor")}  {ItemInfo.Credits(price)}"
-                                        : Localization.Extra("resupplyRepaired", "Hull and armor intact"),
-                    disabled = missing == 0,
-                    buy = () =>
-                    {
-                        if (Session.Credits < price) return NotEnough;
-                        Session.Credits -= price;
-                        hp.hull = hp.maxHull;
-                        hp.armor = hp.maxArmor;
-                        health.Target.hp = hp.hull;
-                        return Localization.Extra("resupplyRepairDone", "Repaired.");
-                    },
-                });
+                int mh = Mathf.Max(0, hp.maxHull - hp.hull), ma = Mathf.Max(0, hp.maxArmor - hp.armor);
+                list.Add(new Offer { kind = OfferKind.Repair, missingHull = mh, missingArmor = ma, unitPrice = (mh + ma) * RepairPerPoint, room = mh + ma > 0 ? 1 : 0 });
             }
             foreach (var e in Session.Equipment)
             {
                 var it = db.Item(e.item);
-                if (it == null || it.TypeId != 1) continue;
-                var stack = e;
-                int price = Mathf.RoundToInt(Price(db, it.index) * ResupplyUnits * ResupplyMarkup);
-                list.Add(new Offer
-                {
-                    label = $"+{ResupplyUnits} {GameNames.Item(it.index)} ({stack.amount})  {ItemInfo.Credits(price)}",
-                    buy = () =>
-                    {
-                        if (Session.Credits < price) return NotEnough;
-                        Session.Credits -= price;
-                        stack.amount += ResupplyUnits;   // the gun rigs share the mounted stack (Cheats.RefillAmmo)
-                        return $"+{ResupplyUnits} {GameNames.Item(it.index)}";
-                    },
-                });
+                if (it == null || it.TypeId != 1 || list.Exists(o => o.item == e.item)) continue;
+                int have = 0;
+                foreach (var x in Session.Equipment) if (x.item == e.item) have += Mathf.Max(0, x.amount);
+                list.Add(new Offer { kind = OfferKind.Ammo, item = e.item, have = have, unitPrice = UnitPrice(db, e.item), room = Mathf.Max(0, AmmoCap - have) });
             }
-            int cells = Mathf.Min(ResupplyUnits, Shop.FreeCargo(db));
-            int cellPrice = Mathf.RoundToInt(Price(db, GalaxyMap.EnergyCellItem) * Mathf.Max(1, cells) * ResupplyMarkup);
-            list.Add(new Offer
-            {
-                label = cells > 0 ? $"+{cells}t {GameNames.Item(GalaxyMap.EnergyCellItem)}  {ItemInfo.Credits(cellPrice)}"
-                                  : $"{GameNames.Item(GalaxyMap.EnergyCellItem)}: {Localization.Extra("resupplyHoldFull", "the hold is full")}",
-                disabled = cells <= 0,
-                buy = () =>
-                {
-                    if (Session.Credits < cellPrice) return NotEnough;
-                    Session.Credits -= cellPrice;
-                    Shop.AddToCargo(GalaxyMap.EnergyCellItem, cells);
-                    return $"+{cells}t {GameNames.Item(GalaxyMap.EnergyCellItem)}";
-                },
-            });
+            int cells = GalaxyMap.EnergyCellItem;
+            list.Add(new Offer { kind = OfferKind.Cargo, item = cells, have = Shop.CargoOf(cells), unitPrice = UnitPrice(db, cells), room = Mathf.Max(0, Shop.FreeCargo(db)) });
             return list;
+        }
+
+        public static int UnitPrice(Database db, int item) => Mathf.Max(1, Mathf.RoundToInt(Price(db, item) * ResupplyMarkup));
+
+        /// <summary>Buys up to 'units' of the offer, as many as its room and the credits allow; 'bought' = the units bought
+        /// (the repair: 1); the HUD message (the reason when nothing was bought).</summary>
+        public static string Buy(PlayerHealth health, Offer o, int units, out int bought)
+        {
+            bought = 0;
+            if (o.kind == OfferKind.Repair)
+            {
+                var hp = health != null ? health.Hp : null;
+                if (hp == null || o.room <= 0) return Localization.Extra("resupplyRepaired", "Hull and armor intact");
+                if (Session.Credits < o.unitPrice) return NotEnough;
+                Session.Credits -= o.unitPrice;
+                hp.hull = hp.maxHull;
+                hp.armor = hp.maxArmor;
+                health.Target.hp = hp.hull;
+                bought = 1;
+                return Localization.Extra("resupplyRepairDone", "Repaired.");
+            }
+            if (o.room <= 0)
+                return o.kind == OfferKind.Cargo ? Localization.Extra("resupplyHoldFull", "The hold is full.")
+                     : string.Format(Localization.Extra("resupplyAmmoFull", "Topped up: {0} is the most the carrier hands out."), AmmoCap);
+            int n = Mathf.Min(units, o.room, Session.Credits / Mathf.Max(1, o.unitPrice));
+            if (n <= 0) return NotEnough;
+            Session.Credits -= n * o.unitPrice;
+            if (o.kind == OfferKind.Ammo)
+            {
+                var stack = Session.Equipment.Find(e => e.item == o.item);   // the gun rigs share the mounted stack
+                if (stack != null) stack.amount += n;
+            }
+            else Shop.AddToCargo(o.item, n);
+            o.have += n;
+            o.room -= n;
+            bought = n;
+            return o.kind == OfferKind.Cargo ? $"+{n}t {GameNames.Item(o.item)}" : $"+{n} {GameNames.Item(o.item)}";
         }
     }
 }
