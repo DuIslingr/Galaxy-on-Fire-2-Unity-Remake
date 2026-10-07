@@ -197,6 +197,7 @@ namespace GoF2Remake.World
             BarRace = StationTables.BarRace(interior >= 0 ? interior : Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
             ApplyAntialiasing();
+            SetupDepthOfField();
             Settings.Changed -= ApplyAntialiasing;
             Settings.Changed += ApplyAntialiasing;
 
@@ -557,7 +558,59 @@ namespace GoF2Remake.World
         /// camera swayed: SMAA works within one frame. The station camera takes URP's temporal AA instead (its slow camera
         /// and still rooms are where TAA has nothing to smear), unless a temporal upscaler (DLSS, FSR 2+, STP) already
         /// anti-aliases or MSAA is on (URP's TAA needs it off); then SMAA as before. Again when the options change.</summary>
-        void OnDestroy() => Settings.Changed -= ApplyAntialiasing;
+        void OnDestroy()
+        {
+            Settings.Changed -= ApplyAntialiasing;
+            if (dofProfile != null) Destroy(dofProfile);
+        }
+
+        // ---- depth of field (remake option "Hangar depth of field", Settings.HangarDepthOfField) ---------------------------
+
+        /// <summary>The volumes' layer only the station camera listens to (the star map's and the item window's cameras,
+        /// which share the scene, keep their default mask): the turntable's focus distance would blur them.</summary>
+        const int DofLayer = 26;
+        Volume dofVolume;
+        VolumeProfile dofProfile;
+        UnityEngine.Rendering.Universal.DepthOfField dof;
+
+        /// <summary>URP's depth of field focused on the player's ship in the hangar view: Bokeh (a 300 mm lens at f/2: at the
+        /// ~130 m the hangar cameras keep from the turntable the ~60 m ship stays sharp, the room behind it goes soft),
+        /// Gaussian on phones (cheaper; the background only). The focus follows the ship (the camera drifts, the hangar
+        /// flights move it).</summary>
+        void SetupDepthOfField()
+        {
+            if (mainCamera == null) return;
+            var go = new GameObject("Hangar depth of field") { layer = DofLayer };
+            go.transform.SetParent(transform, false);
+            dofVolume = go.AddComponent<Volume>();
+            dofVolume.isGlobal = true;
+            dofVolume.priority = 50f;
+            dofProfile = ScriptableObject.CreateInstance<VolumeProfile>();
+            dof = dofProfile.Add<UnityEngine.Rendering.Universal.DepthOfField>(true);
+            bool bokeh = !Application.isMobilePlatform;
+            dof.mode.Override(bokeh ? UnityEngine.Rendering.Universal.DepthOfFieldMode.Bokeh : UnityEngine.Rendering.Universal.DepthOfFieldMode.Gaussian);
+            dof.focalLength.Override(300f);
+            dof.aperture.Override(2f);
+            dof.gaussianMaxRadius.Override(1f);
+            dof.highQualitySampling.Override(false);
+            dofVolume.profile = dofProfile;   // an instance, not a shared profile: Bootstrap.ApplyPostProcessing leaves it alone
+            dofVolume.enabled = false;
+            var data = UnityEngine.Rendering.Universal.CameraExtensions.GetUniversalAdditionalCameraData(mainCamera);
+            if (data != null) data.volumeLayerMask |= 1 << DofLayer;
+        }
+
+        void UpdateDepthOfField()
+        {
+            if (dofVolume == null) return;
+            bool on = Settings.HangarDepthOfField && View == StationView.Hangar && playerShip != null && mainCamera != null
+                      && !Vr.VrMode.Enabled && !UI.StarMap.IsOpen;
+            if (dofVolume.enabled != on) dofVolume.enabled = on;
+            if (!on) return;
+            float focus = Mathf.Max(1f, Vector3.Distance(mainCamera.transform.position, playerShip.position));
+            dof.focusDistance.value = focus;
+            dof.gaussianStart.value = focus + 25f;
+            dof.gaussianEnd.value = focus + 140f;
+        }
 
         void ApplyAntialiasing()
         {
@@ -784,6 +837,7 @@ namespace GoF2Remake.World
         void LateUpdate()
         {
             UpdateCamera(Time.deltaTime * 1000f);
+            UpdateDepthOfField();
             if (View == StationView.Lounge) UpdateBillboards();
         }
 

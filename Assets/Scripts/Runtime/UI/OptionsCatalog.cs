@@ -199,6 +199,10 @@ namespace GoF2Remake.UI
             list.Add(Choice("hangarShadows", OptionPage.Graphics, () => X("hangarShadows", "Hangar ship shadows"), true,
                 () => new[] { X("off", "Off"), X("hangarShadowsPlayer", "Player ship only"), X("hangarShadowsAll", "All ships") },
                 () => Settings.HangarShadows, i => Settings.HangarShadows = i));
+            var hangarDof = Toggle("hangarDof", OptionPage.Graphics, () => X("hangarDof", "Hangar depth of field"),
+                () => Settings.HangarDepthOfField, v => Settings.HangarDepthOfField = v);
+            hangarDof.description = () => X("hangarDofHelp", "In the hangar the camera focuses on your ship and the room behind it goes soft. Not in the original.");
+            list.Add(hangarDof);
             list.Add(Toggle("lensFlare", OptionPage.Graphics, () => X("lensFlare", "Lens flare"), () => Settings.LensFlare, v => Settings.LensFlare = v));
             list.Add(Toggle("npcPlayerEngines", OptionPage.Graphics, () => X("npcPlayerEngines", "Other ships' engines like yours"),
                 () => Settings.NpcPlayerEngines, v => Settings.NpcPlayerEngines = v));
