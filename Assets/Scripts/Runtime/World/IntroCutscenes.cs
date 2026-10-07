@@ -174,7 +174,10 @@ namespace GoF2Remake.World
         public void LateTick(float dtMs)
         {
             cam.LateTick(dtMs);
-            if (fx != null && cam.Camera != null) fx.transform.rotation = cam.Camera.rotation;   // billboarded to the camera
+            // LevelScript state 7: setDirection(MatrixGetDir(the camera), (0, 1, 0)). The engine's camera looks down its -z
+            // (MatrixGetLookAt: dir = eye - target), so the fx's +z points at the viewer; the camera's own rotation (+z away)
+            // showed it mirrored, spinning the wrong way.
+            if (fx != null && cam.Camera != null) fx.transform.rotation = cam.Camera.rotation * Quaternion.Euler(0f, 180f, 0f);
         }
 
         /// <summary>Remake: the room the pirates' hiding place keeps clear of asteroids, past the farthest pirate (150 m; the
@@ -452,7 +455,7 @@ namespace GoF2Remake.World
         {
             HideFx();
             if (assets == null || assets.hyperDrive == null) { fxLength = 2000f; fxMs = 0f; return; }
-            fx = Object.Instantiate(assets.hyperDrive, at, cam.Camera != null ? cam.Camera.rotation : Quaternion.identity);
+            fx = Object.Instantiate(assets.hyperDrive, at, (cam.Camera != null ? cam.Camera.rotation : Quaternion.identity) * Quaternion.Euler(0f, 180f, 0f));   // +z at the viewer (LateTick)
             GunRig.EnableFades(fx);   // its parts fade out by their `extra` channel (0 at 3000 ms); without it the fx froze, then vanished
             float len = PartAnimation.PlayOnce(fx);
             fxLength = len > 0f ? len : 3000f;

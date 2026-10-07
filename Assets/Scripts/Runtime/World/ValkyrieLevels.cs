@@ -490,7 +490,8 @@ namespace GoF2Remake.World
             if (fx != null) Object.Destroy(fx);
             fx = null;
             if (assets == null || assets.hyperDrive == null) return;
-            fx = Object.Instantiate(assets.hyperDrive, ToUnity(gamePos), cam.Camera != null ? cam.Camera.rotation : Quaternion.identity);
+            // +z at the viewer, like FaceCamera (the camera's own rotation had it mirrored for its first frame).
+            fx = Object.Instantiate(assets.hyperDrive, ToUnity(gamePos), (cam.Camera != null ? cam.Camera.rotation : Quaternion.identity) * Quaternion.Euler(0f, 180f, 0f));
             fx.transform.localScale *= scale;
             GunRig.StripForFx(fx);
             GunRig.EnableFades(fx);   // the parts' `extra` fade-out
@@ -500,6 +501,8 @@ namespace GoF2Remake.World
             Sfx.PlayAt(assets.timeJump, cam.Camera != null ? cam.Camera.position : Player.position);   // 160
         }
 
+        /// <summary>LevelScript: setDirection(MatrixGetDir(the camera), (0, 1, 0)); the engine's camera looks down its -z
+        /// (MatrixGetLookAt: dir = eye - target), so the fx's +z points at the viewer.</summary>
         void FaceCamera(GameObject go)
         {
             if (go != null && cam.Camera != null)
