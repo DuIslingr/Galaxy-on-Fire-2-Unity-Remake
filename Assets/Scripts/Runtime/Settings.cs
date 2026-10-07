@@ -199,6 +199,9 @@ namespace GoF2Remake.Data
         /// <summary>Remake: the touch fire button's double-press autofire latch on the keyboard / mouse / controller fire
         /// binding (the PC version had none).</summary>
         public static bool KeyAutofire { get => GetBool("keyAutofire", false); set => SetBool("keyAutofire", value); }
+        /// <summary>Remake (#37): Level out also brings the nose to the horizon (FlightModel.LevelPitch); off = the original's
+        /// roll only.</summary>
+        public static bool LevelPitch { get => GetBool("levelPitch", true); set => SetBool("levelPitch", value); }
         /// <summary>Remake (desktop): no sound while the window isn't focused (Bootstrap; the volume, not AudioListener.pause,
         /// which the pause menu uses).</summary>
         public static bool MuteInBackground { get => GetBool("muteInBackground", false); set => SetBool("muteInBackground", value); }
@@ -233,7 +236,7 @@ namespace GoF2Remake.Data
                          "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
                          "frameRate", "renderScale", "upscaler", "upscalerQuality", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
                          "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "gyroSteering", "gyroSensitivity", "haptics", "stickDeadzone", "mouseDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
-                         "pirateEvents", "tutorialHints",
+                         "pirateEvents", "tutorialHints", "levelPitch",
                      })
                 PlayerPrefs.DeleteKey(Prefix + key);
             PlayerPrefs.Save();

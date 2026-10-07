@@ -145,6 +145,7 @@ namespace GoF2Remake.Flight
         void Update()
         {
             Model.TiltMode = tiltMode;
+            Model.LevelPitch = Data.Settings.LevelPitch;
             // PlayerEgo::up / right with the mouse cursor: the ramp divisor is 12, i.e. (3.3 - sens) x 20 with sens 2.7.
             Model.Sensitivity = tiltMode ? Data.Settings.TiltSensitivity : mouseSteering ? 2.7f : sensitivity;
             // PlayerEgo::left / right / up / down on Extreme (+0x235): the live cargo load against Ship::getMaxLoad.

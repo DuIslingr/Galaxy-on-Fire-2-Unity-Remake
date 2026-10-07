@@ -238,6 +238,9 @@ namespace GoF2Remake.UI
             // Remake: the touch fire button's double-press autofire for the keys, the mouse and the controller.
             list.Add(Toggle("keyAutofire", OptionPage.Controls, () => X("keyAutofire", "Double-press fire for auto-fire"),
                 () => Settings.KeyAutofire, v => Settings.KeyAutofire = v));
+            // Remake (#37): Level out levels the nose too (the original: the roll only).
+            list.Add(Toggle("levelPitch", OptionPage.Controls, () => X("levelPitch", "Level out also levels the nose"),
+                () => Settings.LevelPitch, v => Settings.LevelPitch = v));
             // options[0x10] "Invert controls" (500), split per axis; the mining drill has its own pair.
             list.Add(Toggle("invert", OptionPage.Controls, () => X("invertY", "Invert up / down"), () => Settings.InvertPitch, v => Settings.InvertPitch = v));
             list.Add(Toggle("invertYaw", OptionPage.Controls, () => X("invertX", "Invert left / right"), () => Settings.InvertYaw, v => Settings.InvertYaw = v));

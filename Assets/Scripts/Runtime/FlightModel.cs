@@ -62,6 +62,12 @@ namespace GoF2Remake.Flight
         const float LevelRateOvershoot = 0.00035f, LevelRateFine = 0.0002f;   // PlayerEgo::roll's fine phase (+0x324)
         int levelSide;        // PlayerEgo+0x2a9: the sign of up.x last frame (1 negative, 2 positive, 0 none)
         bool levelFine;       // PlayerEgo+0x324: the lean changed sides once, the last part goes slow
+        bool rollLevelled;    // the roll part of a level-out is done
+        /// <summary>Remake (#37, Settings.LevelPitch): a level-out also brings the nose to the horizon (world up, the
+        /// orbit's and the station's up, like the autopilot's moveToPosition), not only the roll (the original).</summary>
+        public bool LevelPitch;
+        const float LevelPitchRate = 0.0006f;       // rad per ms (~34 deg/s), slower over the last 10 deg
+        const float LevelPitchDone = 0.01f;         // rad
 
         // ---- configuration ------------------------------------------------------------------
         /// <summary>Options-menu steering sensitivity. Must stay well below 3.3/1.45 (~2.27). Default is a guess.</summary>
@@ -201,7 +207,7 @@ namespace GoF2Remake.Flight
             }
         }
 
-        public void AlignToHorizon() { IsLeveling = true; levelSide = 0; levelFine = false; }
+        public void AlignToHorizon() { IsLeveling = true; levelSide = 0; levelFine = false; rollLevelled = false; }
         /// <summary>A manual roll (remake) cancels the auto-level.</summary>
         public void StopLeveling() => IsLeveling = false;
 
@@ -237,7 +243,30 @@ namespace GoF2Remake.Flight
             // ---- rotation for this frame --------------------------------------------------------
             float pitchRad = dtMs * PitchRate * RateToRadiansPerMs;
             float yawRad = dtMs * YawRate * RateToRadiansPerMs;
-            float rollRad = IsLeveling ? AutoLevelRoll(dtMs, shipUp, shipRight) : 0f;
+            // The roll is checked every frame until the whole level-out is done (pitching the nose moves the lean); with
+            // LevelPitch a steep nose (more than ~45 deg) comes down first, where the lean means little.
+            bool steep = LevelPitch && Mathf.Abs(Vector3.Cross(shipRight, shipUp).normalized.y) > 0.7f;
+            rollLevelled = false;
+            float rollRad = IsLeveling && !steep ? AutoLevelRoll(dtMs, shipUp, shipRight) : 0f;
+            if (IsLeveling)
+            {
+                bool pitchLevelled = true;
+                if (LevelPitch && !pitchInput)
+                {
+                    // The nose's angle above the horizon; a positive local-X turn lowers the nose.
+                    var fwd = Vector3.Cross(shipRight, shipUp).normalized;
+                    float above = Mathf.Asin(Mathf.Clamp(fwd.y, -1f, 1f));
+                    if (Mathf.Abs(above) > LevelPitchDone)
+                    {
+                        pitchLevelled = false;
+                        float rate = LevelPitchRate * Mathf.Clamp01(Mathf.Abs(above) / 0.17f + 0.25f);
+                        // Upside down (the roll not done yet) the ship's own pitch axis turns the other way.
+                        float sign = shipUp.y >= 0f ? 1f : -1f;
+                        pitchRad += sign * Mathf.Sign(above) * Mathf.Min(Mathf.Abs(above), rate * Mathf.Min(dtMs, LevelMaxDtMs));
+                    }
+                }
+                if (rollLevelled && pitchLevelled) { IsLeveling = false; rollLevelled = false; }
+            }
 
             // ---- no input: rates drain linearly back to zero (uses base H, not the cargo-reduced one)
             if (!yawInput) YawRate = Mathf.MoveTowards(YawRate, 0f, dtMs * Handling / DecayDivisor);
@@ -311,7 +340,7 @@ namespace GoF2Remake.Flight
 
             if (Mathf.Abs(lean) < LevelDoneThreshold && upY > 0f)
             {
-                IsLeveling = false;
+                rollLevelled = true;
                 levelSide = 0;
                 levelFine = false;
                 return 0f;
@@ -320,6 +349,9 @@ namespace GoF2Remake.Flight
             // PlayerEgo::roll 0xa7c04: once the lean crosses zero (an overshoot) one step of 0.00035, then 0.0002 rad/ms until
             // level; before that 0.00075 upside down, else 0.00035 beyond 0.3, 0.00025 closer.
             int side = lean < 0f ? 1 : lean > 0f ? 2 : levelSide;
+            // Remake: upside down the lean's sign is kept from the first frame (with the nose levelled at the same time,
+            // LevelPitch, the ship could settle exactly inverted, where the lean flips sign every frame and the roll with it).
+            if (upY < 0f && levelSide != 0) { side = levelSide; lean = side == 2 ? Mathf.Max(lean, 1e-4f) : Mathf.Min(lean, -1e-4f); }
             float rate;
             if (levelFine) rate = LevelRateFine;
             else if ((side == 2 && levelSide == 1) || (side == 1 && levelSide == 2)) { rate = LevelRateOvershoot; levelFine = true; }
