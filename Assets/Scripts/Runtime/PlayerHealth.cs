@@ -122,6 +122,37 @@ namespace GoF2Remake.Flight
             SetupBlaze(db);
         }
 
+        /// <summary>Remake debug (ShipPresets): the hull, shield and armor maxima, the shield recharge, the repair bots, the
+        /// emergency system and the shield injector from the ship and equipment now (a preset loaded in flight), all full;
+        /// Setup's rules.</summary>
+        public void RefreshLoadout(Database db)
+        {
+            if (Target == null) return;
+            int hull = (db.Ship(Session.ShipIndex)?.armor ?? 100) + (Session.HasMod(0) ? 40 : 0);
+            var shieldItem = Shop.FirstMounted(db, 9);
+            var armorItem = Shop.FirstMounted(db, 10);
+            var repair = Shop.FirstMounted(db, 15);
+            int shield = shieldItem != null ? shieldItem.Attr(18) : 0;
+            shieldRechargeMs = shieldItem != null ? shieldItem.Attr(19) : 0;
+            int armor = armorItem != null ? armorItem.Attr(20) : 0;
+            HasShield = shield > 0;
+            HasArmor = armor > 0;
+            hasRepair = repair != null;
+            if (repair != null) { bool mk2 = repair.index != 75; repairHullMs = mk2 ? 420f : 600f; repairArmorMs = mk2 ? 700f : 1000f; }
+            Hp.maxHull = hull; Hp.hull = hull;
+            Hp.maxShield = shield; Hp.shield = shield;
+            Hp.maxArmor = armor; Hp.armor = armor;
+            Target.hp = hull;
+            Target.maxHp = hull;
+            lastCombined = Hp.Combined;
+            var emergency = Shop.FirstMounted(db, 27);
+            hasEmergency = emergency != null;
+            if (emergency != null) emergencyLength = emergency.Attr(41, 10000);
+            var injector = Shop.FirstMounted(db, 43);
+            hasInjector = injector != null;
+            if (injector != null) injectorCost = injector.Attr(59, 30);
+        }
+
         // ---- emergency system (PlayerEgo::tryToStartEmergencySystem 0xad6f0) ------------------------------------
 
         bool TryEmergency()

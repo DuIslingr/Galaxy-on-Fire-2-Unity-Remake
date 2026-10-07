@@ -110,6 +110,27 @@ namespace GoF2Remake.UI
             return list;
         }
 
+        // ---- ship presets (ShipPresets; the pause menu and the station) ---------------------------------------------
+
+        static int presetSlot;
+
+        /// <summary>The Presets tab: the slot (its ship and item count; what it holds on the line under it), then Save the ship
+        /// flown now there, Load it (in flight where the player is, docked only a ship the hangar takes) and Delete.</summary>
+        public static List<OptionDef> Presets(Database db, World.SpaceLevel flight, World.StationLevel docked, Action<string> notify)
+        {
+            var slot = Choice("debugPresetSlot", () => X("debugPresetSlot", "Preset"), false,
+                () => { var a = new string[ShipPresets.Slots]; for (int i = 0; i < a.Length; i++) a[i] = ShipPresets.Label(i, db); return a; },
+                () => presetSlot, i => presetSlot = i);
+            slot.description = () => ShipPresets.Details(presetSlot, db);
+            return new List<OptionDef>
+            {
+                slot,
+                Button("debugPresetSave", () => X("debugPresetSave", "Save current ship here"), () => notify?.Invoke(ShipPresets.Save(presetSlot, db))),
+                Button("debugPresetLoad", () => X("debugPresetLoad", "Load this preset"), () => notify?.Invoke(ShipPresets.Load(presetSlot, db, flight, docked))),
+                Button("debugPresetDelete", () => X("debugPresetDelete", "Delete"), () => notify?.Invoke(ShipPresets.Delete(presetSlot))),
+            };
+        }
+
         // ---- fly any ship (World.PlayerHull; the pause menu and the station) ----------------------------------------
 
         static int hullCategory = -1, hullPick;

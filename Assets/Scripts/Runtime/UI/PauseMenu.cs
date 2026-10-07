@@ -386,7 +386,7 @@ namespace GoF2Remake.UI
             var db = level != null ? level.Database : Database.Load();
             string X(string key, string english) => Localization.Extra(key, english);
 
-            var names = new List<string> { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items"), X("debugShips", "Ships") };
+            var names = new List<string> { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items"), X("debugShips", "Ships"), X("debugPresets", "Presets") };
             if (level != null) names.Add(X("debugSpawn", "Spawn"));
             debugTabCount = names.Count;
             debugTab = Mathf.Clamp(debugTab, 0, debugTabCount - 1);
@@ -483,6 +483,18 @@ namespace GoF2Remake.UI
                     // Fly any ship (World.PlayerHull): the picker, then its buttons.
                     var defs = CheatsCatalog.Hulls(db, level, null, Notify);
                     var card = Card(content, X("debugShipsTitle", "Fly any ship"));
+                    foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
+                    var buttons = new VisualElement();
+                    buttons.AddToClassList("debug-buttons");
+                    card.Add(buttons);
+                    foreach (var def in defs) if (def.kind == OptionKind.Button) Row(def, buttons, "debug-action");
+                    break;
+                }
+                case 4:
+                {
+                    // Ship presets (ShipPresets): the slot, then Save / Load / Delete.
+                    var defs = CheatsCatalog.Presets(db, level, null, Notify);
+                    var card = Card(content, X("debugPresetsTitle", "Ship presets"));
                     foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
                     var buttons = new VisualElement();
                     buttons.AddToClassList("debug-buttons");

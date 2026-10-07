@@ -1253,7 +1253,7 @@ namespace GoF2Remake.UI
         void BuildStationDebug()
         {
             string X(string key, string english) => Localization.Extra(key, english);
-            var names = new[] { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items"), X("debugShips", "Ships") };
+            var names = new[] { X("debugCheats", "Cheats"), X("debugActions", "Actions"), X("debugItems", "Give items"), X("debugShips", "Ships"), X("debugPresets", "Presets") };
             stationDebugTab = Mathf.Clamp(stationDebugTab, 0, names.Length - 1);
             var tabs = new VisualElement();
             tabs.AddToClassList("debug-tabs");
@@ -1321,6 +1321,20 @@ namespace GoF2Remake.UI
                     foreach (var def in defs) if (def.kind == OptionKind.Button) Row(def, buttons, "debug-action");
                     break;
                 }
+                case 4:
+                {
+                    // Ship presets (ShipPresets): docked, a preset of a ship the hangar can't take is refused.
+                    var defs = CheatsCatalog.Presets(db, null, level, Notify);
+                    var card = Box(optionsScroll.contentContainer, "debug-card");
+                    var title = new Label(X("debugPresetsTitle", "Ship presets").ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                    title.AddToClassList("debug-card-title");
+                    title.AddToClassList("gof-semibold");
+                    card.Add(title);
+                    foreach (var def in defs) if (def.kind != OptionKind.Button) Row(def, card);
+                    var buttons = Box(card, "debug-buttons");
+                    foreach (var def in defs) if (def.kind == OptionKind.Button) Row(def, buttons, "debug-action");
+                    break;
+                }
                 default:
                 {
                     var defs = CheatsCatalog.Items(db, level.Stock, Notify);
@@ -1337,7 +1351,7 @@ namespace GoF2Remake.UI
             }
         }
 
-        const int StationDebugTabs = 4;   // Cheats, Actions, Give items, Ships
+        const int StationDebugTabs = 5;   // Cheats, Actions, Give items, Ships, Presets
 
         /// <summary>The Debug page's tab 'step' tabs on (wrapping), rebuilt with the first row selected.</summary>
         void SwitchDebugTab(int step)
