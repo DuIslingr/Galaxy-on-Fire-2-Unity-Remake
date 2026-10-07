@@ -30,6 +30,7 @@
                     <ui:Button name="mapButton" class="station-button gof-semibold" />
                     <ui:Button name="missionsButton" class="station-button gof-semibold" />
                     <ui:Button name="statusButton" class="station-button gof-semibold" />
+                    <ui:Button name="inspectButton" class="station-button gof-semibold" />
                 </ui:VisualElement>
             </ui:VisualElement>
 

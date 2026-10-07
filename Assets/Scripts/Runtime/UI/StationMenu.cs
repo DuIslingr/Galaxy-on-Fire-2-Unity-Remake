@@ -62,7 +62,7 @@ namespace GoF2Remake.UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
         VisualElement root, safeArea, dragZone, hints, dialog;
-        Button hangarButton, loungeButton, mapButton, missionsButton, statusButton, launchButton, dialogYes, dialogNo;
+        Button hangarButton, loungeButton, mapButton, missionsButton, statusButton, inspectButton, launchButton, dialogYes, dialogNo;
         StatusWindow status;
         LoungePanel lounge;
         bool safeAreaHidden;
@@ -152,6 +152,8 @@ namespace GoF2Remake.UI
             mapButton = Bind("mapButton", OpenMap);
             missionsButton = Bind("missionsButton", OpenMissions);
             statusButton = Bind("statusButton", OpenStatus);
+            inspectButton = Bind("inspectButton", BeginInspect);
+            SetupInspect();   // after SetupUiAnimation: its footer sits over the menu's blocker
             launchButton = Bind("launchButton", AskLaunch);
             // The lounge's footer Back (lounge_ui.md 1.2): back to the main view, like Esc / B.
             Bind("loungeBack", () => { if (level != null && level.View == StationView.Lounge) level.SetView(StationView.Hangar); });
@@ -209,6 +211,7 @@ namespace GoF2Remake.UI
             mapButton.text = T(177).ToUpperInvariant();
             missionsButton.text = T(129).ToUpperInvariant();
             statusButton.text = T(169).ToUpperInvariant();
+            inspectButton.text = Localization.Extra("stationInspect", "INSPECT SHIP");
             launchButton.text = Localization.Extra("stationLaunch", "LAUNCH");
             root.Q<Button>("loungeBack").text = Localization.Extra("hudBack", "BACK");
             dialogNo.text = T(135).ToUpperInvariant();
@@ -253,6 +256,8 @@ namespace GoF2Remake.UI
             loungeButton.EnableInClassList("station-button--current", inLounge);
             viewTitle.text = HangarOpen ? Localization.Get(167).ToUpperInvariant() : inLounge ? Localization.Get(398).ToUpperInvariant() : "";
             viewTitle.style.display = viewTitle.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            // Inspect ship: the hangar's view only (not in the lounge, nor in VR, which stands in the room already).
+            inspectButton.style.display = inLounge || Vr.VrMode.Enabled ? DisplayStyle.None : StyleKeyword.Null;
             dragVelocity = 0f;
             lounge?.OnViewChanged();
             ApplyStoryLocks();
@@ -1559,6 +1564,7 @@ namespace GoF2Remake.UI
             if (kind == InputKind.Gamepad && !HangarOpen && root.focusController?.focusedElement == null)
                 Select(DialogOpen ? dialogYes : SystemMenuOpen ? SystemMenuItems()[0] : level != null && level.View == StationView.Lounge ? loungeButton : hangarButton);
             BuildHints(kind);
+            BuildInspectHints(kind);
         }
 
         // Touch has no hover and shouldn't leave a focus highlight on what the finger pressed (see MainMenu).
@@ -1618,7 +1624,7 @@ namespace GoF2Remake.UI
                 root.focusController?.IgnoreEvent(e);
                 return;
             }
-            var stationItems = new VisualElement[] { hangarButton, loungeButton, mapButton, missionsButton, statusButton, launchButton };
+            var stationItems = new VisualElement[] { hangarButton, loungeButton, mapButton, missionsButton, statusButton, inspectButton, launchButton };
             VisualElement[] items;
             if (DialogOpen) items = new VisualElement[] { dialogYes, dialogNo };
             else if (SystemMenuOpen) items = SystemMenuItems();
@@ -1782,6 +1788,261 @@ namespace GoF2Remake.UI
             return CheckWanted() || CheckWingmenContract();
         }
 
+        // ---- remake: Inspect ship (World.HangarInspect, StationLevel.BeginInspect) ----------------------------
+
+        // The hangar's camera zooms in on the player's ship and orbits it like the flight's Action Freeze (PhotoMode): a drag
+        // or a finger turns it (with a fling, 0.9 a 30 fps frame), the wheel, a pinch, + / - (Page Up / Down) and the triggers
+        // zoom, the arrows / W A S D and the sticks turn it too. The menu flies out meanwhile (the UI animation); a footer
+        // keeps Back and the controls' hints. Back: Esc, Backspace, B, or the key that opened it (6 / I, the right stick press).
+        // Hide UI (H, the controller's Y) clears the screen (a short click / tap or H / Y again brings it back; a drag still
+        // turns); Screenshot (Enter / P, the controller's A) saves the view without the UI, like Action Freeze's 60 Save to
+        // library (PhotoMode.Store: PC Pictures/Galaxy on Fire 2, Android MediaStore; 55 / 56). Their hints are clickable
+        // (a tap on touch, which has no keys).
+        VisualElement inspectOverlay, inspectHints;
+        Label inspectTitle, inspectMessage;
+        Button inspectBack;
+        bool inspectDragging, inspectUiHidden, inspectCapturing;
+        Vector2 inspectLast, inspectFling;
+        float inspectPinch = -1f, inspectDragTravel, inspectMessageMs;
+
+        void SetupInspect()
+        {
+            inspectOverlay = new VisualElement { name = "inspectOverlay", pickingMode = PickingMode.Ignore };
+            inspectOverlay.AddToClassList("inspect-overlay");
+            inspectTitle = new Label { pickingMode = PickingMode.Ignore };
+            inspectTitle.AddToClassList("inspect-title");
+            inspectTitle.AddToClassList("gof-semibold");
+            inspectOverlay.Add(inspectTitle);
+            var footer = new VisualElement { pickingMode = PickingMode.Ignore };
+            footer.AddToClassList("inspect-footer");
+            inspectBack = new Button(EndInspect) { text = Localization.Extra("hudBack", "BACK"), focusable = false };
+            inspectBack.AddToClassList("inspect-back");
+            inspectBack.AddToClassList("gof-semibold");
+            inspectBack.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
+            footer.Add(inspectBack);
+            inspectMessage = new Label { pickingMode = PickingMode.Ignore };
+            inspectMessage.AddToClassList("inspect-message");
+            inspectMessage.AddToClassList("gof-semibold");
+            inspectOverlay.Add(inspectMessage);
+            inspectHints = new VisualElement { pickingMode = PickingMode.Ignore };
+            inspectHints.AddToClassList("inspect-hints");
+            inspectOverlay.Add(inspectHints);   // top right
+            inspectOverlay.Add(footer);
+            root.Add(inspectOverlay);   // the last child: over the blocker that keeps the menu's own input out meanwhile
+        }
+
+        void BeginInspect()
+        {
+            if (level == null || level.View != StationView.Hangar || ArrivalPending || UiBlocked || DialogOpen || SystemMenuOpen
+                || HangarOpen || StarMap.IsOpen || (storyDialogue != null && storyDialogue.IsOpen)) return;
+            if (!level.BeginInspect()) return;
+            inspectDragging = false;
+            inspectFling = Vector2.zero;
+            inspectPinch = -1f;
+            inspectMessageMs = 0f;
+            inspectMessage.text = "";
+            SetInspectUiHidden(false);
+            if (root.focusController?.focusedElement is VisualElement f) f.Blur();
+            inspectTitle.text = GameNames.Ship(Session.ShipIndex).ToUpperInvariant();
+            BuildInspectHints(InputMode.Current);
+            if (inspectOverlay != null) inspectOverlay.AddToClassList("inspect-overlay--shown");
+        }
+
+        void EndInspect()
+        {
+            if (level == null || !level.Inspect.Active) return;
+            Play(buttonRelease);
+            SetInspectUiHidden(false);
+            level.EndInspect();
+            if (inspectOverlay != null) inspectOverlay.RemoveFromClassList("inspect-overlay--shown");
+            Select(inspectButton);   // back where it was opened (keys / controller)
+        }
+
+        /// <summary>Hide UI: the overlay's title, footer and message out of the way (and the FPS / story step labels).</summary>
+        void SetInspectUiHidden(bool hidden)
+        {
+            inspectUiHidden = hidden;
+            inspectOverlay?.EnableInClassList("inspect-overlay--clean", hidden);
+            FpsCounter.Suppressed = hidden || inspectCapturing;
+        }
+
+        void TakeInspectScreenshot()
+        {
+            if (inspectCapturing || level == null || !level.Inspect.Active) return;
+            StartCoroutine(CaptureInspect());
+        }
+
+        System.Collections.IEnumerator CaptureInspect()
+        {
+            inspectCapturing = true;
+            FpsCounter.Suppressed = true;
+            inspectOverlay.style.visibility = Visibility.Hidden;
+            yield return null;   // a frame drawn without the overlay
+            yield return new WaitForEndOfFrame();
+            bool ok = false;
+            try
+            {
+                var shot = ScreenCapture.CaptureScreenshotAsTexture();
+                byte[] png = shot.EncodeToPNG();
+                Destroy(shot);
+                ok = PhotoMode.Store(png, $"GoF2_{System.DateTime.Now:yyyyMMdd_HHmmss}.png");
+            }
+            catch (System.Exception e) { Debug.LogWarning("Inspect screenshot: " + e.Message); }
+            inspectOverlay.style.visibility = StyleKeyword.Null;
+            inspectCapturing = false;
+            FpsCounter.Suppressed = inspectUiHidden;
+            inspectMessage.text = Localization.Get(ok ? 55 : 56);   // "Screenshot saved." / "Error saving screenshot."
+            inspectMessageMs = 3000f;
+        }
+
+        void BuildInspectHints(InputKind kind)
+        {
+            if (inspectHints == null) return;
+            inspectHints.Clear();
+            string T(string key, string english) => Localization.Extra(key, english);
+            void Add(string label, System.Action click, params VisualElement[] glyphs)
+            {
+                var h = new VisualElement { pickingMode = click != null ? PickingMode.Position : PickingMode.Ignore };
+                h.AddToClassList("hint");
+                foreach (var g in glyphs) { g.pickingMode = PickingMode.Ignore; h.Add(g); }
+                var l = new Label(label) { pickingMode = PickingMode.Ignore };
+                l.AddToClassList("hint-label");
+                l.AddToClassList("gof-semibold");
+                h.Add(l);
+                if (click != null)
+                {
+                    h.AddToClassList("inspect-hint--action");
+                    h.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush));
+                    h.RegisterCallback<ClickEvent>(_ => click());   // the actions play their own release sound
+                }
+                inspectHints.Add(h);
+            }
+            string rotate = T("inspectRotate", "ROTATE"), zoom = T("inspectZoom", "ZOOM"), back = T("hudBack", "BACK");
+            string hide = T("inspectHideUi", "HIDE UI"), shot = T("inspectScreenshot", "SCREENSHOT");
+            System.Action hideUi = () => { Play(buttonRelease); SetInspectUiHidden(true); };
+            System.Action screenshot = () => { Play(buttonRelease); TakeInspectScreenshot(); };
+            if (kind == InputKind.KeyboardMouse)
+            {
+                Add(rotate, null, InputGlyph.Key(T("inspectDrag", "DRAG"), true), InputGlyph.Key("W"), InputGlyph.Key("A"), InputGlyph.Key("S"), InputGlyph.Key("D"));
+                Add(zoom, null, InputGlyph.Key(T("inspectWheel", "WHEEL"), true), InputGlyph.Key("+"), InputGlyph.Key("-"));
+                Add(hide, hideUi, InputGlyph.Key("H"));
+                Add(shot, screenshot, InputGlyph.Key("ENTER", true));
+                Add(back, EndInspect, InputGlyph.Key("ESC"));
+            }
+            else if (kind == InputKind.Gamepad)
+            {
+                Add(rotate, null, InputGlyph.Pad(PadButton.LeftStick), InputGlyph.Pad(PadButton.RightStick));
+                Add(zoom, null, InputGlyph.Pad(PadButton.LeftTrigger), InputGlyph.Pad(PadButton.RightTrigger));
+                Add(hide, hideUi, InputGlyph.Pad(PadButton.Y));
+                Add(shot, screenshot, InputGlyph.Pad(PadButton.A));
+                Add(back, EndInspect, InputGlyph.Pad(PadButton.B));
+            }
+            else
+            {
+                Add(T("inspectTouch", "DRAG TO ROTATE · PINCH TO ZOOM"), null);
+                Add(hide, hideUi);
+                Add(shot, screenshot);
+            }
+        }
+
+        /// <summary>A pointer on one of the footer's buttons (while they show): a click there isn't a drag (screen pixels, y up).</summary>
+        bool OverInspectButton(Vector2 screen)
+        {
+            if (inspectUiHidden || root.panel == null) return false;
+            var p = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(screen.x, Screen.height - screen.y));
+            if (inspectBack != null && inspectBack.worldBound.Contains(p)) return true;
+            if (inspectHints != null)
+                foreach (var h in inspectHints.Children())
+                    if (h.pickingMode == PickingMode.Position && h.worldBound.Contains(p)) return true;   // the clickable hints
+            return false;
+        }
+
+        void UpdateInspect()
+        {
+            var insp = level.Inspect;
+            float frames = Time.unscaledDeltaTime * 1000f / (1000f / 30f);
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;   // null while a multiplayer chat line is typed
+            var pad = Gamepad.current;
+            if ((kb != null && (kb.escapeKey.wasPressedThisFrame || kb.backspaceKey.wasPressedThisFrame || kb.iKey.wasPressedThisFrame || kb.digit6Key.wasPressedThisFrame))
+                || (pad != null && (pad.buttonEast.wasPressedThisFrame || pad.rightStickButton.wasPressedThisFrame)))
+            { EndInspect(); return; }
+            if ((kb != null && kb.hKey.wasPressedThisFrame) || (pad != null && pad.buttonNorth.wasPressedThisFrame))
+            { Play(buttonRelease); SetInspectUiHidden(!inspectUiHidden); }
+            if ((kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame || kb.pKey.wasPressedThisFrame))
+                || (pad != null && pad.buttonSouth.wasPressedThisFrame))
+                TakeInspectScreenshot();
+            if (inspectMessageMs > 0f && (inspectMessageMs -= Time.unscaledDeltaTime * 1000f) <= 0f) inspectMessage.text = "";
+
+            float scale = 1080f / Mathf.Max(1, Screen.height);   // PhotoMode's pixels: a 1080-high screen
+            Vector2 delta = Vector2.zero;   // x: + takes the camera to its left (the ship turns with a drag right); y: + up
+            bool held = false;
+            var ts = Touchscreen.current;
+            int down = 0;
+            if (ts != null) foreach (var t in ts.touches) if (t.press.isPressed) down++;
+            if (down >= 2)
+            {
+                // Two fingers: a pinch zooms (spreading = closer).
+                Vector2 a = Vector2.zero, b = Vector2.zero; int n = 0;
+                foreach (var t in ts.touches) if (t.press.isPressed) { if (n == 0) a = t.position.ReadValue(); else if (n == 1) b = t.position.ReadValue(); n++; }
+                float span = (a - b).magnitude;
+                if (inspectPinch > 1f && span > 1f) insp.Zoom(inspectPinch / span);
+                inspectPinch = span;
+                inspectDragging = false;
+            }
+            else
+            {
+                inspectPinch = -1f;
+                Vector2? pos = null;
+                if (down == 1) pos = ts.primaryTouch.position.ReadValue();
+                else if (Mouse.current != null && Mouse.current.leftButton.isPressed) pos = Mouse.current.position.ReadValue();
+                if (pos.HasValue && (inspectDragging || !OverInspectButton(pos.Value)))
+                {
+                    if (!inspectDragging) { inspectDragging = true; inspectLast = pos.Value; inspectDragTravel = 0f; }
+                    delta = (pos.Value - inspectLast) * scale;
+                    inspectDragTravel += delta.magnitude;
+                    inspectLast = pos.Value;
+                    inspectFling = delta;
+                    held = true;
+                }
+                else if (inspectDragging)
+                {
+                    inspectDragging = false;
+                    if (inspectFling.magnitude <= 3f) inspectFling = Vector2.zero;
+                    // The UI hidden: a short click / tap (no drag) brings it back.
+                    if (inspectUiHidden && inspectDragTravel < 8f) { inspectFling = Vector2.zero; SetInspectUiHidden(false); }
+                }
+            }
+            if (!held && inspectFling != Vector2.zero)
+            {
+                delta = inspectFling * frames;
+                inspectFling *= Mathf.Pow(0.9f, frames);
+                if (inspectFling.magnitude <= 1f) inspectFling = Vector2.zero;
+            }
+            // The arrows / W A S D move the camera that way (PhotoMode's 4 px a frame), the sticks 8.
+            if (kb != null)
+            {
+                float left = kb.leftArrowKey.isPressed || kb.aKey.isPressed ? 1f : 0f, right = kb.rightArrowKey.isPressed || kb.dKey.isPressed ? 1f : 0f;
+                float up = kb.upArrowKey.isPressed || kb.wKey.isPressed ? 1f : 0f, dn = kb.downArrowKey.isPressed || kb.sKey.isPressed ? 1f : 0f;
+                delta += new Vector2(left - right, up - dn) * 4f * frames;
+                float zoomKeys = (kb.minusKey.isPressed || kb.numpadMinusKey.isPressed || kb.pageDownKey.isPressed ? 1f : 0f)
+                               - (kb.equalsKey.isPressed || kb.numpadPlusKey.isPressed || kb.pageUpKey.isPressed ? 1f : 0f);
+                if (zoomKeys != 0f) insp.Zoom(Mathf.Pow(1.03f, zoomKeys * frames));
+            }
+            if (pad != null)
+            {
+                var s = pad.leftStick.ReadValue() + pad.rightStick.ReadValue();
+                delta += new Vector2(-s.x, s.y) * 8f * frames;
+                float trig = pad.leftTrigger.ReadValue() - pad.rightTrigger.ReadValue();   // RT closer, LT further
+                if (Mathf.Abs(trig) > 0.05f) insp.Zoom(Mathf.Pow(1.03f, trig * frames));
+            }
+            if (Mouse.current != null)
+            {
+                float steps = Mathf.Clamp(Mouse.current.scroll.ReadValue().y, -1f, 1f);   // a notch reads 1 or 120
+                if (Mathf.Abs(steps) > 0f) insp.Zoom(Mathf.Pow(0.85f, steps));
+            }
+            insp.Turn(delta.x * 0.005f, delta.y * 0.005f);   // PhotoMode's 0.005 rad per pixel
+        }
+
         // ---- remake: the menu flies / fades out for the hangar take-off and back in after the landing ----
 
         // The original cuts straight between space and the parked ship, so its menu never moves; the remake's hangar flights
@@ -1899,13 +2160,16 @@ namespace GoF2Remake.UI
             // Remake hangar flights: the menu hides while the ship flies in or out; the conversations, windows and hints
             // wait until it has landed. Any key / tap / button skips the flight.
             bool flying = level.PlayerFlying;
-            UpdateUiAnimation(flying);
+            bool inspecting = level.Inspect.Active;
+            UpdateUiAnimation(flying || inspecting);   // Inspect ship: the menu flies out like for a flight
+            if (inspectOverlay != null) inspectOverlay.EnableInClassList("inspect-overlay--shown", inspecting);
             if (flying)
             {
                 if (World.SpaceLevel.PlayerTriedToFly()) level.SkipPlayerFlight();
                 settleMs = ArrivalSettleMs;
                 return;
             }
+            if (inspecting) { UpdateInspect(); return; }
             if (UiBlocked)
             {
                 // The menu still flying in after the landing: no input yet; the settle runs on meanwhile.
@@ -2025,6 +2289,14 @@ namespace GoF2Remake.UI
             {
                 Play(buttonRelease);
                 AskLaunch();
+                return;
+            }
+            // Remake: Inspect ship, 6 (the next "Menu button") / I, the controller's right stick press.
+            if (level.View == StationView.Hangar
+                && ((kb != null && (kb.digit6Key.wasPressedThisFrame || kb.iKey.wasPressedThisFrame)) || (pad != null && pad.rightStickButton.wasPressedThisFrame)))
+            {
+                Play(buttonRelease);
+                BeginInspect();
                 return;
             }
 

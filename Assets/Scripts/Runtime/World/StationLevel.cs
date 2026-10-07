@@ -619,9 +619,13 @@ namespace GoF2Remake.World
             if (dofVolume.enabled != on) dofVolume.enabled = on;
             if (!on) return;
             float focus = Mathf.Max(1f, Vector3.Distance(mainCamera.transform.position, playerShip.position));
+            // Inspect ship: focused on the ship's centre, through a wider lens (300 mm at f/2 kept only ~6 m sharp up close).
+            float inspect = Mathf.SmoothStep(0f, 1f, Inspect.Blend);
+            if (inspect > 0f) focus = Mathf.Lerp(focus, Mathf.Max(1f, Vector3.Distance(mainCamera.transform.position, Inspect.Centre)), inspect);
+            dof.focalLength.value = Mathf.Lerp(300f, 50f, inspect);
             dof.focusDistance.value = focus;
-            dof.gaussianStart.value = focus + 25f;
-            dof.gaussianEnd.value = focus + 140f;
+            dof.gaussianStart.value = focus + Mathf.Lerp(25f, Inspect.Radius * 1.2f + 10f, inspect);
+            dof.gaussianEnd.value = focus + Mathf.Lerp(140f, Inspect.Radius * 3f + 60f, inspect);
         }
 
         void ApplyAntialiasing()
@@ -648,6 +652,7 @@ namespace GoF2Remake.World
         {
             if (view == View && !force) return;
             View = view;
+            if (view != StationView.Hangar) Inspect.Reset();
             hangarRoot.gameObject.SetActive(view == StationView.Hangar);
             barRoot.gameObject.SetActive(view == StationView.Lounge);
             if (view == StationView.Lounge)
@@ -745,6 +750,50 @@ namespace GoF2Remake.World
             if (playerShip != null && !PlayerFlying) playerShip.rotation = OrbitLayout.RotationToUnity(new Vector3(0f, shipYaw, 0f));
         }
 
+        // ---- remake: Inspect ship (HangarInspect; UI.StationMenu reads the input) ----------------------------
+
+        /// <summary>The hangar's orbit camera around the player's ship.</summary>
+        public HangarInspect Inspect { get; } = new HangarInspect();
+
+        /// <summary>Starts inspecting the player's ship: only in the hangar, with the ship on its pad (not flying), not in VR.</summary>
+        public bool BeginInspect()
+        {
+            if (View != StationView.Hangar || playerShip == null || PlayerFlying || Vr.VrMode.Enabled || mainCamera == null) return false;
+            // The hull's box in the ship's own frame (a world box around a ship turned 45 deg is ~1.3x too big), without the
+            // additive glow layers, unless there is nothing else.
+            var local = ShipLocalBounds(playerShip, false);
+            if (local.size == Vector3.zero) local = ShipLocalBounds(playerShip, true);
+            if (local.size == Vector3.zero) local = new Bounds(Vector3.zero, Vector3.one * 20f);
+            var scale = playerShip.lossyScale;
+            var world = new Bounds(playerShip.TransformPoint(local.center), Vector3.Scale(local.size, new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z))));
+            flingVelocity = 0f;
+            Inspect.Begin(mainCamera.transform.position, world);   // its extents' length is the hull's radius
+            return true;
+        }
+
+        public void EndInspect() => Inspect.End();
+
+        /// <summary>The meshes' bounds in 'ship''s own space (the shown ones; 'withAdditive' takes the glow layers too).</summary>
+        static Bounds ShipLocalBounds(Transform ship, bool withAdditive)
+        {
+            bool any = false;
+            var b = new Bounds();
+            var toShip = ship.worldToLocalMatrix;
+            foreach (var mf in ship.GetComponentsInChildren<MeshFilter>())
+            {
+                var mr = mf.GetComponent<MeshRenderer>();
+                if (mf.sharedMesh == null || mr == null || !mr.enabled || (!withAdditive && mf.name.Contains("_add"))) continue;
+                var lb = mf.sharedMesh.bounds;
+                var m = toShip * mf.transform.localToWorldMatrix;
+                for (int i = 0; i < 8; i++)
+                {
+                    var p = m.MultiplyPoint3x4(lb.center + Vector3.Scale(lb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1)));
+                    if (!any) { b = new Bounds(p, Vector3.zero); any = true; } else b.Encapsulate(p);
+                }
+            }
+            return b;
+        }
+
         /// <summary>SpaceLounge::OnTouchEnd case 0 jumps to B; remake: the rest of the ease runs at a 0.7 s pace instead, so the
         /// camera doesn't snap.</summary>
         public void SkipIntro()
@@ -767,6 +816,7 @@ namespace GoF2Remake.World
             var lane = Lane;
             if (!Settings.HangarFlights || lane == null || playerShip == null) { then?.Invoke(); return; }
             SetView(StationView.Hangar);
+            Inspect.End();   // the camera eases back to the hangar's for the take-off
             flingVelocity = 0f;
             afterDeparture = then;
             var engine = HangarFlight.AddEngine(playerShip.gameObject, true, db, shipIndex, out float volume);
@@ -880,6 +930,12 @@ namespace GoF2Remake.World
                     var r = StationTables.HangarCameraRot[HangarIndex];
                     cam.SetPositionAndRotation(shipPivot + OrbitLayout.ToUnity(p), CameraRotation(r.x, r.y, StationTables.HangarCameraRoll));
                     SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar, false);
+                }
+                // Remake: Inspect ship, from the hangar pose just set to the orbit around the ship (and back).
+                if (Inspect.Shown || Inspect.Active)
+                {
+                    Inspect.Tick(Time.unscaledDeltaTime * 1000f);
+                    mainCamera.nearClipPlane = Inspect.Apply(cam, cam.position, cam.rotation, mainCamera.nearClipPlane);
                 }
             }
             else
