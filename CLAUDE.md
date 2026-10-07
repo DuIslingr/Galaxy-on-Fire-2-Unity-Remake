@@ -508,6 +508,7 @@ Research: `Reference/research/shop.md` (+ `item_icons.json`, reference price cod
 - **Prices** are deterministic per station: `java.util.Random(station)` reseeded per list (cargo, mounted, stock), min + distance factor * (max - min) +- 2 %; verified identical to `prices.py`. Selling pays the buying price; anything sold joins the station's stock. Loma (system 25) always charges the maximum.
 - **Stock** (`Generator::getItemBuyList`) and **dealer ships** (`getShipBuyList`) are rolled with `UnityEngine.Random` when docking at a station that isn't among the last 3 visited; re-docking after > 30 s nibbles 0-2 units off each row.
 - **Cargo:** every unit is 1 t, mounted items weigh nothing; buying never checks space, launching is refused while overloaded.
+- **Sell all / Buy all** (remake, players' suggestion; Store all / Take all in the Kaamo Club's storage; `HangarWindow.TradeAll`, buttons under the trade arrows, or Shift + left / right): every unit of the selected item: what the hold has of it, or the station's stock as far as the hold has room and the credits reach (no "not enough credits" after some units). In a session one stock message carries the count (`Hangar.BeginBatch` / `EndBatch`; `NetState.StockItemRpc` takes up to 10 000 units, grants what the host's row has and refuses the rest in one `ItemRefusedRpc` with the count, the faction tax on the granted units).
 - **List after a trade** (remake, `HangarWindow.Rebuild`): the same row stays selected; when it is gone (missiles of a mounted
   type bought out: they go onto the mounted stack, not the hold) the row that took its place (or the one before it at the
   end, `NearestSelectable`), so the list keeps its place; it used to jump back to the top.
@@ -1366,7 +1367,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   host: made with the single-player rules (`Shop.GenerateItems` / `GenerateShips`) the first time anyone docks there and
   made again every 15 minutes (`NetStock.ResetSeconds`; no 3-station re-roll or re-docking nibble in sessions); a docking
   player's own list is replaced by it (items and ships in place, the bar's agents stay theirs); a trade (a unit bought /
-  sold, a dealer row swapped, `Hangar`) goes to the host, which sends the list to everyone docked there (the open hangar
+  sold, several at once from Buy all / Sell all, a dealer row swapped, `Hangar`) goes to the host, which sends the list to everyone docked there (the open hangar
   window rebuilds, `HangarWindow.StockChanged`; during the blueprint view it waits, and an item new to the window gets its
   price on demand, `Hangar.PriceOf`). The host decides: a bought unit it no longer has is taken back and paid back
   (`NetStock.ItemRefused`), a dealer ship is reserved first (`NetStock.ReserveShip`); the docked list is empty until the

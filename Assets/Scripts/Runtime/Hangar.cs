@@ -114,6 +114,31 @@ namespace GoF2Remake.Data
 
         // ---- trading -------------------------------------------------------------------------------------------
 
+        // A batch (BeginBatch / EndBatch: a shop's Buy all / Sell all): its units reach the multiplayer host as one message.
+        bool batching;
+        int batchItem = -1, batchDelta, batchPrice;
+
+        /// <summary>The trades until EndBatch are of one item, one way: the shared stock hears of them as one change.</summary>
+        public void BeginBatch() { batching = true; batchItem = -1; batchDelta = 0; batchPrice = 0; }
+
+        public void EndBatch()
+        {
+            batching = false;
+            if (batchItem >= 0 && batchDelta != 0) GoF2Remake.Multiplayer.NetStock.ItemChanged(Station, batchItem, batchDelta, batchPrice);
+            batchItem = -1;
+            batchDelta = 0;
+        }
+
+        /// <summary>A unit bought (-1, at 'price') or sold (+1) for the shared stock: at once, or into the batch.</summary>
+        void Shared(int item, int delta, int price)
+        {
+            if (!batching) { GoF2Remake.Multiplayer.NetStock.ItemChanged(Station, item, delta, price); return; }
+            if (batchItem >= 0 && batchItem != item) { EndBatch(); batching = true; }   // (never in a shop's batch: one item)
+            batchItem = item;
+            batchDelta += delta;
+            batchPrice = price;
+        }
+
         /// <summary>Buy one unit (Item::transaction(true)). 'need' = missing credits on NoCredits.</summary>
         public Result Buy(int item, out int need)
         {
@@ -125,7 +150,7 @@ namespace GoF2Remake.Data
             if (Session.Credits < price) { need = price - Session.Credits; return Result.NoCredits; }
             row.amount--;
             if (row.amount <= 0) Stock.items.Remove(row);
-            if (!Storage) GoF2Remake.Multiplayer.NetStock.ItemChanged(Station, item, -1, price);   // multiplayer: the shared stock
+            if (!Storage) Shared(item, -1, price);   // multiplayer: the shared stock
             AddToCargo(item, 1);
             if (price > 0) ChangeCredits(-price);
             Session.SeenItems.Add(item);
@@ -148,7 +173,7 @@ namespace GoF2Remake.Data
                 int at = Stock.items.FindIndex(s => s.item > item);
                 Stock.items.Insert(at < 0 ? Stock.items.Count : at, new ItemStack(item, 1));   // the stock stays in index order
             }
-            if (!Storage) GoF2Remake.Multiplayer.NetStock.ItemChanged(Station, item, 1);   // multiplayer: the shared stock
+            if (!Storage) Shared(item, 1, 0);   // multiplayer: the shared stock
             if (!Storage) ChangeCredits(PriceOf(item));
             Session.SeenItems.Add(item);
             if (Session.IsBooze(item)) Session.BoozeTypes.Add(item);   // HangarWindow::selectItem: a committed booze trade

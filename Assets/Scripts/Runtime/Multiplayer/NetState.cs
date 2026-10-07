@@ -958,19 +958,24 @@ namespace GoF2Remake.Multiplayer
         {
             ulong client = rpc.Receive.SenderClientId;
             if (!NetRateLimit.Allow(client, NetRateLimit.Kind.Trade)) return;
-            if ((delta != 1 && delta != -1) || !NetGuard.Station(station) || !NetGuard.Item(item) || !NetGuard.DockedAt(client, station))
+            // One unit a message, or several at once (a shop's Buy all / Sell all: Hangar.EndBatch); 'price' is one unit's.
+            if (delta == 0 || Mathf.Abs(delta) > MaxTradeUnits || price < 0 || !NetGuard.Station(station) || !NetGuard.Item(item) || !NetGuard.DockedAt(client, station))
             {
                 NetRateLimit.Reject(client, $"a trade of {delta} x item {item} at {station}");
                 return;
             }
-            if (!NetStock.HostItem(station, item, delta))
-                ItemRefusedRpc(station, item, Mathf.Max(0, price), RpcTarget.Single(client, RpcTargetUse.Temp));
-            else if (delta < 0 && NetProfiles.Enabled) NetFactions.OnPurchase(client, station, Mathf.Max(0, price));   // a faction station's tax
+            int done = NetStock.HostItem(station, item, delta);
+            if (delta < 0 && done < -delta)
+                ItemRefusedRpc(station, item, price, -delta - done, RpcTarget.Single(client, RpcTargetUse.Temp));
+            if (delta < 0 && done > 0 && NetProfiles.Enabled) NetFactions.OnPurchase(client, station, price * done);   // a faction station's tax
             dirtyStock.Add(station);
         }
 
+        /// <summary>The most units one trade message may move (a whole hold or stock row at once).</summary>
+        const int MaxTradeUnits = 10000;
+
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
-        void ItemRefusedRpc(int station, int item, int price, RpcParams rpc = default) => NetStock.ItemRefused(station, item, price);
+        void ItemRefusedRpc(int station, int item, int price, int count, RpcParams rpc = default) => NetStock.ItemRefused(station, item, price, count);
 
         /// <summary>A player docked at 'station' wants the dealer's ship 'ship': theirs if it is still there (then off the list).</summary>
         [Rpc(SendTo.Server)]

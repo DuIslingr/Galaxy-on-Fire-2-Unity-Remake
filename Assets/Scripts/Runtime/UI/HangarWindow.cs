@@ -52,7 +52,8 @@ namespace GoF2Remake.UI
 
         readonly StationMenu menu;
         readonly StationLevel level;
-        readonly VisualElement window, details, detailIcon, detailStats, tradeBox, sellButton, buyButton;
+        readonly VisualElement window, details, detailIcon, detailStats, tradeBox, sellButton, buyButton, tradeAllRow;
+        readonly Button sellAllButton, buyAllButton;
         readonly ScrollView list, detailScroll;
         readonly Label detailName, detailSub, detailText, tradeStock, tradeCargo, tradeMounted, tradePrice, cargoLabel, creditsLabel, tradeStockLabel, tradeCargoLabel, sellLabel, buyLabel;
         readonly Button tabShip, tabShop, tabBlueprints, actionButton, actionButton2;
@@ -93,6 +94,9 @@ namespace GoF2Remake.UI
             tradeBox = root.Q("tradeBox");
             sellButton = root.Q("sellButton");
             buyButton = root.Q("buyButton");
+            tradeAllRow = root.Q("tradeAllRow");
+            sellAllButton = root.Q<Button>("sellAllButton");
+            buyAllButton = root.Q<Button>("buyAllButton");
             tradeStock = root.Q<Label>("tradeStock");
             tradeCargo = root.Q<Label>("tradeCargo");
             tradeMounted = root.Q<Label>("tradeMounted");
@@ -123,6 +127,8 @@ namespace GoF2Remake.UI
             if (actionButton2 != null) actionButton2.clicked += SecondaryAction;
             HookArrow(sellButton, -1);
             HookArrow(buyButton, 1);
+            if (sellAllButton != null) { sellAllButton.focusable = false; sellAllButton.clicked += () => TradeAll(-1); }
+            if (buyAllButton != null) { buyAllButton.focusable = false; buyAllButton.clicked += () => TradeAll(1); }
             foreach (var b in new VisualElement[] { tabShip, tabShop, tabBlueprints, actionButton, actionButton2 }) if (b != null) b.focusable = false;
             list.focusable = detailScroll.focusable = false;
         }
@@ -571,6 +577,7 @@ namespace GoF2Remake.UI
             detailText.text = "";
             details.style.visibility = selected == null ? Visibility.Hidden : Visibility.Visible;
             tradeBox.AddToClassList("trade-box--hidden");
+            tradeAllRow?.AddToClassList("trade-box--hidden");
             actionButton.AddToClassList("detail-action--hidden");
             actionButton.RemoveFromClassList("detail-action--disabled");
             actionButton2?.AddToClassList("detail-action--hidden");
@@ -610,6 +617,14 @@ namespace GoF2Remake.UI
                     tradePrice.EnableInClassList("trade-price--expensive", !store && price > Session.Credits);
                     sellButton.EnableInClassList("trade-arrow--disabled", cargo <= 0);
                     buyButton.EnableInClassList("trade-arrow--disabled", stock <= 0);
+                    if (tradeAllRow != null)
+                    {
+                        tradeAllRow.RemoveFromClassList("trade-box--hidden");
+                        sellAllButton.text = store ? Localization.Extra("shopStoreAll", "STORE ALL") : Localization.Extra("shopSellAll", "SELL ALL");
+                        buyAllButton.text = store ? Localization.Extra("shopTakeAll", "TAKE ALL") : Localization.Extra("shopBuyAll", "BUY ALL");
+                        sellAllButton.EnableInClassList("trade-all--disabled", cargo <= 0);
+                        buyAllButton.EnableInClassList("trade-all--disabled", stock <= 0);
+                    }
                 }
                 else if (selected.kind == RowKind.Slot)
                     ShowAction(T(282).ToUpperInvariant(), true);
@@ -869,8 +884,34 @@ namespace GoF2Remake.UI
 
         // ---- actions -----------------------------------------------------------------------------------------
 
-        /// <summary>Left / right: sell / buy one unit of the selected shop item (Item::transaction).</summary>
-        public void Trade(int direction, bool sound = true, int units = 1)
+        /// <summary>Remake (players' suggestion): every unit of the selected shop item at once. Sell all / Store all: what the
+        /// hold has of it (mounted units stay); Buy all / Take all: the station's whole stock, as far as the hold has room and
+        /// the credits reach. In a multiplayer session the host hears of them as one message (Hangar.BeginBatch / EndBatch).
+        /// Shift + left / right does the same with keys.</summary>
+        public void TradeAll(int direction)
+        {
+            if (selected == null || selected.kind != RowKind.ShopItem) return;
+            int units;
+            if (direction < 0) units = hangar.CargoOf(selected.item);
+            else
+            {
+                int free = hangar.MaxLoad - hangar.Load;
+                if (free <= 0 && hangar.StockOf(selected.item) > 0)
+                {
+                    menu.ShowToast(Localization.Extra("shopHoldFull", "The cargo hold is full."));
+                    return;
+                }
+                units = Mathf.Min(hangar.StockOf(selected.item), free);
+            }
+            if (units <= 0) return;
+            hangar.BeginBatch();
+            try { Trade(direction, true, units, true); }
+            finally { hangar.EndBatch(); }
+        }
+
+        /// <summary>Left / right: sell / buy one unit of the selected shop item (Item::transaction). 'all' (TradeAll): running out
+        /// of credits after some units just stops, without the "not enough credits" message.</summary>
+        public void Trade(int direction, bool sound = true, int units = 1, bool all = false)
         {
             if (selected != null && selected.kind == RowKind.Ingredient)
             {
@@ -886,7 +927,7 @@ namespace GoF2Remake.UI
                     var r = hangar.Buy(selected.item, out int need);
                     if (r == Hangar.Result.NoCredits)
                     {
-                        menu.ShowToast(Localization.Get(203).Replace("#C", ItemInfo.Credits(need)));
+                        if (!(all && changed)) menu.ShowToast(Localization.Get(203).Replace("#C", ItemInfo.Credits(need)));
                         ReleaseArrow();
                         break;
                     }
@@ -1107,6 +1148,8 @@ namespace GoF2Remake.UI
             keyDirection = horizontal;
             if (heldPointer == KeyHold) ReleaseArrow();
             if (horizontal == 0 || heldPointer >= 0) return;   // released, or a finger / the mouse holds an arrow
+            var kb = GoF2Remake.Multiplayer.NetChat.Keys;
+            if (kb != null && kb.shiftKey.isPressed) { TradeAll(horizontal); return; }   // remake: Shift + left / right = all
             heldPointer = KeyHold;
             heldDirection = horizontal;
             heldMs = repeatMs = 0f;

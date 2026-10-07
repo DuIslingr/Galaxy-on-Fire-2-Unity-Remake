@@ -97,17 +97,24 @@ namespace GoF2Remake.Multiplayer
             NetState.Instance.StockItemRpc(station, item, delta, price);
         }
 
-        /// <summary>NetState: the host had no unit left of what this player bought (someone was first): back it goes.</summary>
-        internal static void ItemRefused(int station, int item, int price) => pending.Add(() =>
+        /// <summary>NetState: the host had no unit left of 'count' units this player bought at 'price' each (someone was first):
+        /// back they go, paid back.</summary>
+        internal static void ItemRefused(int station, int item, int price, int count = 1) => pending.Add(() =>
         {
-            if (Story.CargoOf(item) > 0) Shop.RemoveFromCargo(item, 1);
-            else
+            int back = 0;
+            for (int n = 0; n < count; n++)
             {
-                var mounted = Session.Equipment.Find(e => e.item == item);
-                if (mounted == null) return;   // already sold on: nothing to take back
-                if (mounted.amount > 1) mounted.amount--; else Session.Equipment.Remove(mounted);
+                if (Story.CargoOf(item) > 0) Shop.RemoveFromCargo(item, 1);
+                else
+                {
+                    var mounted = Session.Equipment.Find(e => e.item == item);
+                    if (mounted == null) break;   // already sold on: nothing to take back
+                    if (mounted.amount > 1) mounted.amount--; else Session.Equipment.Remove(mounted);
+                }
+                back++;
             }
-            Session.Credits += price;
+            if (back == 0) return;
+            Session.Credits += price * back;
             NetChat.Notice(string.Format(Localization.Extra("mpSoldOut", "Sold out: another pilot bought the last {0}."), UI.ItemInfo.ItemName(item)));
             Changed?.Invoke(station);
         });
@@ -204,24 +211,29 @@ namespace GoF2Remake.Multiplayer
 
         /// <summary>One unit of 'item' bought (-1) or sold (+1) at 'station'; false = refused (no unit left to buy). (The
         /// clients only send what their own game shares: no Kaamo check here, the host's club isn't theirs.)</summary>
-        internal static bool HostItem(int station, int item, int delta)
+        /// <summary>The host's stock row changes by 'delta' units (a sale +, a purchase -; several at once from a shop's
+        /// Buy all / Sell all, Hangar.EndBatch). Returns the units done: a purchase gets only what the row still has (another
+        /// pilot may have bought some first); the caller refuses the rest.</summary>
+        internal static int HostItem(int station, int item, int delta)
         {
-            if (delta == 0) return true;
+            if (delta == 0) return 0;
             var e = Get(station);
             var row = e.items.Find(r => r.item == item);
             if (delta < 0)
             {
-                if (row == null || row.amount <= 0) return false;   // another pilot bought the last one
-                row.amount += delta;
+                if (row == null || row.amount <= 0) return 0;   // another pilot bought the last one
+                int granted = Math.Min(row.amount, -delta);
+                row.amount -= granted;
                 if (row.amount <= 0) e.items.Remove(row);
+                return granted;
             }
             else if (row != null) row.amount = Math.Min(row.amount + delta, MaxRowAmount);   // a seller can't grow a row without end
             else
             {
                 int at = e.items.FindIndex(r => r.item > item);
-                e.items.Insert(at < 0 ? e.items.Count : at, new ItemStack(item, delta));   // item index order, like Shop
+                e.items.Insert(at < 0 ? e.items.Count : at, new ItemStack(item, Math.Min(delta, MaxRowAmount)));   // item index order, like Shop
             }
-            return true;
+            return delta;
         }
 
         /// <summary>A dealer trade at 'station': the row 'removed' becomes 'added' (in place), or goes / comes.</summary>
