@@ -1,7 +1,8 @@
 // GoF2/Cloak: the player's cloak (AbyssEngine::BumpShaderCloak, shader type 0xe; combat_equipment.md 1.6). The hull is
 // lit like before, then dissolves by cloak_map.png into the screen behind it, refracted by the normal map with a slow
 // wobble (x + n.x * 100 * sin(rate), y + n.y * 75 * cos(rate) at 1024x768), with a light-blue (0.6, 0.8, 1.0) edge.
-// _AnimValue 0..0.5 dissolves the opaque hull, 0.5..0.75 blends into pure refraction (a glass silhouette).
+// _AnimValue is the fade (0..1 over 2 s): the hull dissolves where the map is below it, the band glowing along the front,
+// blended over the lit hull up to 0.5; 0.5..0.75 blends into pure refraction (a glass silhouette).
 // Rendered after the opaques and reads _CameraOpaqueTexture (the camera's opaque texture must be on).
 Shader "GoF2/Cloak"
 {
@@ -70,12 +71,16 @@ Shader "GoF2/Cloak"
                 float2 wobble = float2(nTS.x * 100.0 * sin(_CloakRate), nTS.y * 75.0 * cos(_CloakRate)) / float2(1024.0, 768.0);
                 half3 refr = SampleSceneColor(saturate(suv + wobble));
 
+                // BumpShaderCloak's fragment shader as it is (libgof2hdaa.so 0x218183): where the dissolve map is below
+                // u_AnimValue (+0.025) the screen behind shows, plus a light-blue band along the dissolve front
+                // (r >= u_AnimValue - 0.05); up to 0.5 that blends over the lit hull (x4), from 0.5 to 0.75 into pure
+                // refraction. The map's pattern stays on the hull for most of the 2 s fade (#47: the remake dissolved by
+                // u_AnimValue x 2, so it was gone within the first second).
                 float d = SAMPLE_TEXTURE2D(_CloakMap, sampler_CloakMap, i.uv).r;
-                float dissolve = saturate(_AnimValue * 2.0);
-                float through = step(d - 0.025, dissolve) * step(0.001, dissolve);
-                float edge = through * step(dissolve - 0.05, d);
-                half3 col = lerp(lit, refr, through) + half3(0.6, 0.8, 1.0) * edge;
-                col = lerp(col, refr, saturate((_AnimValue - 0.5) * 4.0));
+                half3 color2 = lit;
+                if (d - 0.025 < _AnimValue) color2 = refr + half3(0.6, 0.8, 1.0) * step(_AnimValue - 0.05, d);
+                half3 col = _AnimValue < 0.5 ? lerp(lit, color2, saturate(_AnimValue * 4.0))
+                                             : lerp(color2, refr, saturate((_AnimValue - 0.5) * 4.0));
                 return half4(col, 1);
             }
             ENDHLSL
