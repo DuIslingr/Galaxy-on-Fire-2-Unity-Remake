@@ -95,8 +95,14 @@ namespace GoF2Remake.Data
     /// <summary>Weapon mounts of one ship (weapons_hd.json). slotType 0 = primary, 1 = secondary, 2 = turret,
     /// 3 = engine exhaust points (not a turret, see weapons.md). position_engine is game space, ship-relative.</summary>
     /// <remarks>upsideDown (remake, turret mounts only): the turret hangs under the hull, turned 180 deg about the ship's
-    /// length (PlayerTurret); none of the original's mounts set it.</remarks>
-    [System.Serializable] public class WeaponMount { public int slotType; public int[] position_engine; public float[] turretAngles; public bool upsideDown; }
+    /// length (PlayerTurret); none of the original's mounts set it. glowColor / glowSize (remake, a mod ship's exhaust mounts):
+    /// the engine flame's colour (RGB 0..1, ModShipBuilder's tinted glow and the nearest-coloured exhaust particle cell) and
+    /// shape (half width, half height, flame length in game units; none = the round glow of CustomShipData.engineGlowRadius).</remarks>
+    [System.Serializable] public class WeaponMount
+    {
+        public int slotType; public int[] position_engine; public float[] turretAngles; public bool upsideDown;
+        public float[] glowColor, glowSize;
+    }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
 
     /// <summary>A mod's ship (a ships.json entry, Modding.ModContent; the format of PR #34's custom_ships.json): a ships.json
@@ -114,6 +120,7 @@ namespace GoF2Remake.Data
         public float modelLength = 1000f;  // nose to tail in game units (0.05 m each) after scaling
         public float modelYaw;             // degrees about Unity y, when the model's nose doesn't face +Z
         public float engineGlowRadius = 24f;   // game units, the glow disc at each exhaust mount
+        public float[] engineGlowColor;    // RGB 0..1: every exhaust's flame colour (a mount's glowColor wins); none = the original glow
         public List<CustomShipMaterial> materials;   // replace the model's materials on the renderers / submeshes they name
         public CustomThrottleGlow throttleGlow;   // a glow on part of the hull that follows the throttle (no mask = none)
         public List<CustomThrottleGlow> extraGlows;   // more of them (each its own mask, colour, levels and trail)
