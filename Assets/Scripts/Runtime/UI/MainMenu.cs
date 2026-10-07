@@ -238,7 +238,7 @@ namespace GoF2Remake.UI
             updateRow = root.Q("updateRow");
             updateButton = Bind("updateButton", () => Application.OpenURL(UpdateCheck.ReleaseUrl ?? UpdateCheck.ReleasesPage));
 
-            foreach (var n in new[] { "campaignPanel", "difficultyPanel", "economyPanel", "loadPanel", "optionsPanel", "aboutPanel", "multiplayerPanel" })
+            foreach (var n in new[] { "campaignPanel", "difficultyPanel", "economyPanel", "gameOptionsPanel", "loadPanel", "optionsPanel", "aboutPanel", "multiplayerPanel" })
             {
                 panels[n] = root.Q(n);
                 panels[n].usageHints = UsageHints.DynamicTransform;
@@ -259,7 +259,7 @@ namespace GoF2Remake.UI
                 sv.verticalScrollerVisibility = ScrollerVisibility.Hidden;
                 sv.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
             }
-            foreach (var n in new[] { "campaignBack", "difficultyBack", "economyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" })
+            foreach (var n in new[] { "campaignBack", "difficultyBack", "economyBack", "gameOptionsBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" })
             {
                 var b = root.Q<Button>(n);
                 b.clicked += Back;   // Back() plays the release sound itself (also used by Esc)
@@ -283,8 +283,9 @@ namespace GoF2Remake.UI
             Bind("hardButton", () => PickDifficulty(Session.DifficultyHard));
             Bind("extremeButton", () => ShowDialog(Localization.Get(25), Localization.Get(26),
                 () => PickDifficulty(Session.DifficultyExtreme)));
-            Bind("economyDefaultButton", () => StartGame(Economy.Default));
-            Bind("economyAndroidButton", () => StartGame(Economy.Android));
+            Bind("economyDefaultButton", () => PickEconomy(Economy.Default));
+            Bind("economyAndroidButton", () => PickEconomy(Economy.Android));
+            Bind("gameOptionsStart", () => StartGame(pendingEconomy));
             Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
             Bind("hardcoreToggle", () => { hardcoreNext = !hardcoreNext; RefreshHardcoreToggle(); });
             Bind("ngPlusToggle", () => { newGamePlus = !newGamePlus && ngPlusSave != null; RefreshNgPlus(false); });
@@ -747,6 +748,7 @@ namespace GoF2Remake.UI
             if (dialog.ClassListContains("dialog-backdrop--shown")) { CloseDialog(); return; }
             if (openPanel == null) return;
             Play(buttonRelease);
+            if (openPanel == panels["gameOptionsPanel"]) { OpenPanel("economyPanel"); return; }
             if (openPanel == panels["economyPanel"]) { OpenPanel("difficultyPanel"); return; }
             if (openPanel == panels["difficultyPanel"]) { OpenPanel(pendingStartIndex >= 0 && panels.ContainsKey("debugPanel") ? "debugPanel" : "campaignPanel"); return; }
             var closing = openPanel;
@@ -781,7 +783,18 @@ namespace GoF2Remake.UI
             OpenPanel("economyPanel");
         }
 
-        /// <summary>Remake: the next new game is hardcore (permadeath, Session.Hardcore): off whenever the economy panel opens.</summary>
+        Economy pendingEconomy = Economy.Default;
+
+        /// <summary>The economy picked: then the game options (the Kaamo Club from the start, hardcore) and Start.</summary>
+        void PickEconomy(Economy economy)
+        {
+            pendingEconomy = economy;
+            var desc = root.Q<Label>("gameOptionsStartDesc");
+            if (desc != null) desc.text = $"{Session.DifficultyName(pendingDifficulty)}  ·  {Session.EconomyName(economy)}";
+            OpenPanel("gameOptionsPanel");
+        }
+
+        /// <summary>Remake: the next new game is hardcore (permadeath, Session.Hardcore): off whenever a difficulty is picked.</summary>
         bool hardcoreNext;
 
         void RefreshHardcoreToggle()
@@ -840,7 +853,7 @@ namespace GoF2Remake.UI
             var desc = root.Q<Label>("kaamoDesc");
             if (desc != null)
                 desc.text = Localization.Extra("kaamoDesc",
-                    "The original's Kaamo Club expansion: the club in the Shima system is yours from day one, without the siege or the 30 million; store as many ships and goods there as you like. Choose, then pick the economy.");
+                    "The original's Kaamo Club expansion: the club in the Shima system is yours from day one, without the siege or the 30 million; store as many ships and goods there as you like.");
         }
 
         /// <summary>Remake: before a new game starts, the question whether to show the tutorial popups (Settings.TutorialHints,
@@ -1958,7 +1971,7 @@ namespace GoF2Remake.UI
             Set("aboutButton", T(43));
             Set("exitButton", T(33));
             Set("debugButton", Localization.Extra("debugButton", "Debug").ToUpperInvariant());
-            foreach (var n in new[] { "campaignBack", "difficultyBack", "economyBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" }) Set(n, "‹  " + T(170));
+            foreach (var n in new[] { "campaignBack", "difficultyBack", "economyBack", "gameOptionsBack", "loadBack", "optionsBack", "aboutBack", "multiplayerBack" }) Set(n, "‹  " + T(170));
             string mp = Localization.Extra("multiplayer", "Multiplayer").ToUpperInvariant();
             Set("multiplayerButton", mp);
             Set("multiplayerTitle", mp);
@@ -2010,6 +2023,8 @@ namespace GoF2Remake.UI
             Set("hardLabel", T(520));
             Set("hardDesc", Localization.Extra("hardDesc", "Tougher, harder-hitting enemies in bigger groups; the economy stays as on Normal."));
             Set("economyTitle", Localization.Extra("economyTitle", "Select the economy").ToUpperInvariant());
+            Set("gameOptionsTitle", Localization.Extra("gameOptionsTitle", "Game options").ToUpperInvariant());
+            Set("gameOptionsStartLabel", Localization.Extra("gameOptionsStart", "Start game").ToUpperInvariant());
             Set("economyDefaultLabel", Session.EconomyName(Economy.Default).ToUpperInvariant());
             Set("economyDefaultDesc", Localization.Extra("economyDefaultDesc",
                 "The original prices of the PC, Mac and iPhone versions: cheap commodities, tractor beams and signatures, smaller blueprint recipes, dearer ships."));
@@ -2127,7 +2142,8 @@ namespace GoF2Remake.UI
             var items = Focusables(scope);
             // The difficulty list starts on Normal (the original's first entry), Easy above it; the economy on the last one picked.
             var normal = scope.name == "difficultyPanel" ? scope.Q<Button>("normalButton")
-                : scope.name == "economyPanel" ? scope.Q<Button>(Session.Economy == Economy.Android ? "economyAndroidButton" : "economyDefaultButton") : null;
+                : scope.name == "economyPanel" ? scope.Q<Button>(Session.Economy == Economy.Android ? "economyAndroidButton" : "economyDefaultButton")
+                : scope.name == "gameOptionsPanel" ? scope.Q<Button>("gameOptionsStart") : null;
             // Not on a text field (the multiplayer panel's name is its first item): focused, it takes the keys, and on the
             // Xbox it can bring up the system keyboard, which then takes B (#20). The fields are one step away.
             var first = items.Find(v => !(v is TextField));
