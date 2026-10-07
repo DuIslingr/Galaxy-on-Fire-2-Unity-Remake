@@ -412,6 +412,28 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
 - **Minigame:** layers = class (A 7 .. D 4), 6 s each inside the ring; ore rate `yield * ((layer+1)/7*2.35+0.15)` t/s; a 2.5 s off-target energy budget per session (empty = no ore). Drill (`Mining.ReadDrillInput`, the stronger wins): the touch stick or the Drill row (`GameControls.Drill`: arrows, W A S D, the left stick), squared per axis like `Hud::getAnalog`, or with mouse steering on the mouse (the PC version: `PlayerEgo::update` feeds the cursor's offset, clamped to +-0.7 of half the screen, linear; centred when the approach docks); `MiningGame.SetInput` = 3 x the shaped value (it squared again: the stick ran at raw^4). Perfect runs with IMT Extract 1.3: D 14 t, C 20, B 28, A 37 + 1 core (verified in Play mode).
 - **Payout:** ore capped to free cargo (core first), "12t Pyresium" messages, the asteroid explodes; ores and cores are normal commodities in the shop.
 - **The fire button** (`MGame::OnTouchBegin` 0x1a838c: the original's fire button is the mining button too): during the approach, the landing and the settle it turns the autopilot off (571 + 39, sound 29, no ore) and that press fires nothing (`Hud::releaseAllKeys`, `WeaponSystem.SwallowPrimaryPress`); in the minigame it stops mining with the ore so far and, still held, the guns fire at once. The primary guns are silent from the approach on (`WeaponSystem.PrimaryBlocked`), missiles still fire until the minigame (`MGame::OnTouchEnd`), which blocks everything. The touch fire button stays on screen meanwhile. Not done: the original also starts the approach with the fire button while an asteroid is locked (the remake: the action prompt).
+- **Mining beam** (remake, for mods: a drill item with attribute 100 = 1; stats `miningBeam` / `miningBeamRange` 101 /
+  `miningBeamLayerMs` 102 / `miningBeamLook` 103, `ItemStats`; the example is the `mining_beam` mod in the mods repo, the
+  IMT Extract Beam 5.0): `Mining`'s beam mode keeps the ship in free flight (State stays Idle: no prompt, `Interact` and the
+  action arrow do nothing). The lock is the usual one; holding fire on the locked asteroid claims the fire button
+  (`WeaponSystem.FireClaimed`: the primaries stay silent) and cuts it within attr 101 units of its surface (default 24000,
+  the beam lasers' object reach), the lock following it in a ±w/5 box while the beam holds. `MiningBeamExtraction` (plain
+  C#) is the minigame's ore logic without the minigame: the layers one by one at `MiningGame.OreRate` × attr 33, attr 102 ms
+  each with the rate scaled to it (a whole asteroid = a perfect minigame run × the yield); the progress stays per asteroid
+  (`Mining.BeamProgress`, shown on the lock plate as a percentage); depleted: the core (class A), `Explode` with
+  `MiningOut`. The beam is fixed to the ship: straight along its heading (the unbanked root, like the guns), cutting
+  where that line meets the rock's visible surface (a sphere of 0.85 × the mesh's bounding radius = hit radius / 0.7 × 0.85;
+  the hit radius alone hid the impact and the chunks inside the rock), the beams ending a fifth deeper; off the rock or
+  beyond the reach (counted along the beam) it runs straight ahead at full length and cuts nothing.
+  `MiningBeamFx`: beams from the leftmost and rightmost primary mounts (the attr-103 beam laser's projectile:
+  a steady looping core without its fade + two pulses replayed with it), its impact every 300 ms, particles.png star
+  sparks, every ton a chunk of the asteroid's own mesh with a glow and a sparkling trail spiralling into the ship (0.7 s +
+  1 s per 900 m); the ton enters the hold on arrival (`Arrived`; chunks still flying when the level ends are delivered in
+  `OnDestroy`), with the hold's room counting the chunks in flight. The mod's icon is its own: items.json `icon` (any mod
+  item, or an override's for an original item; `ModContent.ItemIcon`, read by `ItemInfo.ItemIcon`, which every shop / HUD
+  icon goes through; uncompressed, clamped), here Gunant's Drill's icon with the beam turned green. Sound: the beam laser's shot on ignition, the repair
+  beam's hum and the drill's `DrillSound` by layer; haptics as the drill on target. Not counted: Ore Athlete (38), the
+  multiplayer ore split (each player keeps what their own beam cuts), Extreme's halving (nothing is unfinished).
 - **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no campaign; releasing the stick stops the drill's player movement (the original keeps the last input). The mining plant at 103 is a docking target (see "Supernova add-on"). The drill sound (`DrillSound`, event 1's layers by drill_speed = (LAYER_SPEEDS[layer] − 5) / 33 · 3): Slow_1 always, Add_1 from 1 (pitch ×0.896 → ×1 at 2, then ×1.196), Add_2 from 2, a Switch click on entering 0 / 1 / 2, event volume 0.244; off target (`MiningGame::update`: stop(1) + play(3), back on play(1) + stop(3)) event 3 Mining_Drill_Broken is one loop (10 s wave) at 0.245 until the drill is back on target or mining ends; the landing (2) at 0.183. **Ultrascan** (84, attr 30, `Mining.ClassAMarkers`, `Radar::draw` 0x1577de): inside the field's 100 000-unit sphere, not docking / mining, every class-A asteroid on screen gets the "A" letter (0x44e frame 0) with its top-left on the asteroid.
 
 ## Station scene
