@@ -32,7 +32,9 @@ namespace GoF2Remake.UI
 
         static string T(string key, string english) => Localization.Extra(key, english);
 
-        public ModBrowser(VisualElement host, Action back, Action<VisualElement> hookFocus, Action click)
+        /// <param name="rebuildCache">The footer's "Rebuild cache": every mod cache deleted and the mods loaded again (MainMenu,
+        /// behind its loading screen); none = no button.</param>
+        public ModBrowser(VisualElement host, Action back, Action<VisualElement> hookFocus, Action click, Action rebuildCache = null)
         {
             this.hookFocus = hookFocus;
             this.click = click;
@@ -77,6 +79,8 @@ namespace GoF2Remake.UI
             if (!Application.isMobilePlatform) ActionButton(footer, T("modsOpenFolder", "Open mods folder"),
                 () => ModManager.OpenFolder(selected != null ? ModManager.Find(selected) : null), "mods-footer-button");   // the selected mod's folder
             ActionButton(footer, T("modsRefresh", "Refresh"), () => { ModManager.Scan(); Rebuild(); }, "mods-footer-button");
+            // When something looks wrong after a mod changed: the cached textures, hangar shadows and unpacked zips are made again.
+            if (rebuildCache != null) ActionButton(footer, T("modsRebuildCache", "Rebuild cache"), rebuildCache, "mods-footer-button");
             var backButton = Add(Panel, new Button(back) { text = "‹  " + Localization.Get(170).ToUpperInvariant() }, "menu-button", "back-button", "gof-semibold");
             hookFocus(backButton);
 
@@ -107,7 +111,8 @@ namespace GoF2Remake.UI
             Rebuild();
         }
 
-        void Rebuild()
+        /// <summary>The list and the details again (after a rescan).</summary>
+        public void Rebuild()
         {
             list.Clear();
             rows.Clear();

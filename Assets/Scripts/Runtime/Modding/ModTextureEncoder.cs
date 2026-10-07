@@ -29,6 +29,13 @@ namespace GoF2Remake.Modding
 
             public bool Done => handle.IsCompleted;
 
+            /// <summary>A copy of the compressed data with its mipmaps, as Take uploads it (for ModTextureCache; before Take).</summary>
+            public byte[] Raw()
+            {
+                handle.Complete();
+                return output.GetSubArray(0, result[0]).ToArray();
+            }
+
             /// <summary>The compressed texture (frees the buffers).</summary>
             public Texture2D Take(string name)
             {

@@ -274,7 +274,7 @@ namespace GoF2Remake.UI
             // The mod browser (remake, ModBrowser): built in code next to the other panels.
             if (root.Q("panelHost") is VisualElement modHost)
             {
-                modBrowser = new ModBrowser(modHost, Back, HookFocusSound, () => Play(buttonRelease));
+                modBrowser = new ModBrowser(modHost, Back, HookFocusSound, () => Play(buttonRelease), () => StartCoroutine(RebuildModCache()));
                 panels["modsPanel"] = modBrowser.Panel;
             }
             SetupMultiplayerPanel();
@@ -1636,6 +1636,22 @@ namespace GoF2Remake.UI
             }
             if (!SaveGame.Load(slot)) return;
             StartCoroutine(Leave("Station"));
+        }
+
+        /// <summary>The mod browser's "Rebuild cache": every mod cache goes (ModTextureCache.ClearAll: textures, hangar shadows,
+        /// unpacked zips) and the mods load again, behind the black fade with the loading screen.</summary>
+        IEnumerator RebuildModCache()
+        {
+            if (screen != MenuState.Menu) yield break;
+            screen = MenuState.Leaving;   // no menu input meanwhile
+            fade.AddToClassList("fade--on");
+            yield return new WaitForSecondsRealtime(0.4f);
+            Modding.ModTextureCache.ClearAll();
+            Modding.ModManager.Scan();   // a new revision: every loader starts again
+            yield return WaitForMods(leaveLoading, 120f);
+            fade.RemoveFromClassList("fade--on");
+            modBrowser?.Rebuild();
+            screen = MenuState.Menu;
         }
 
         IEnumerator Leave(string scene = null)

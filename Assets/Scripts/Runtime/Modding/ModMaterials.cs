@@ -8,7 +8,8 @@
 // Textures load once per mod and file (Texture), compressed, with mipmaps. ModShips decodes them first in the background
 // (PreloadTexture: UnityWebRequestTexture decodes the PNG / JPG off the main thread, ModTextureEncoder compresses it to
 // DXT with its mipmaps on a worker thread where the GPU reads DXT; elsewhere Texture2D.Compress, one texture per frame), so
-// the builder's Texture calls find them made.
+// the builder's Texture calls find them made. The result is kept on disk (ModTextureCache): a later start reads it back on
+// a worker thread instead of decoding and compressing again.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -81,10 +82,32 @@ namespace GoF2Remake.Modding
             if (mod == null || string.IsNullOrEmpty(path)) return;
             string key = mod.Id + "|" + ModSource.Normalise(path).ToLowerInvariant() + (linear ? "|l" : "") + (readable ? "|r" : "");
             if (textures.ContainsKey(key)) return;
-            string file = await System.Threading.Tasks.Task.Run(() => mod.LocalFile(path));
-            if (file == null || textures.ContainsKey(key)) return;
             // Desktop GPUs read DXT: the worker thread compresses it with its own mipmaps (ModTextureEncoder).
             bool encode = !readable && SystemInfo.SupportsTextureFormat(TextureFormat.DXT1) && SystemInfo.SupportsTextureFormat(TextureFormat.DXT5);
+            string cacheRoot = ModTextureCache.Root;   // persistentDataPath: main thread only
+            string cacheFile = null;
+            ModTextureCache.Entry cached = null;
+            string file = await System.Threading.Tasks.Task.Run(() =>
+            {
+                string f = mod.LocalFile(path);
+                if (f != null && !readable)
+                {
+                    // Made before (ModTextureCache): read back here, off the main thread.
+                    cacheFile = ModTextureCache.FileFor(cacheRoot, mod.Id, path, f, linear, encode ? "dxt" : "gpu");
+                    cached = ModTextureCache.Read(cacheFile);
+                }
+                return f;
+            });
+            if (file == null || textures.ContainsKey(key)) return;
+            if (cached != null && ModTextureCache.Make(cached, mod.Id + ":" + path) is Texture2D fromCache)
+            {
+                fromCache.wrapMode = TextureWrapMode.Repeat;
+                fromCache.anisoLevel = 8;
+                fromCache.filterMode = FilterMode.Trilinear;
+                made.Add(fromCache);
+                textures[key] = fromCache;
+                return;
+            }
             var p = UnityEngine.Networking.DownloadedTextureParams.Default;
             p.mipmapChain = !encode;
             p.linearColorSpace = linear;
@@ -109,7 +132,15 @@ namespace GoF2Remake.Modding
                 Object.Destroy(t);
                 while (!work.Done) await Awaitable.NextFrameAsync();
                 if (textures.ContainsKey(key)) { work.Dispose(); return; }
+                byte[] raw = cacheFile != null ? work.Raw() : null;
                 var c = work.Take(name);
+                if (raw != null)
+                {
+                    int w = c.width, h = c.height, mips = c.mipmapCount;
+                    var format = c.format;
+                    string target = cacheFile;
+                    _ = System.Threading.Tasks.Task.Run(() => ModTextureCache.Write(target, w, h, format, mips, linear, raw));
+                }
                 c.wrapMode = TextureWrapMode.Repeat;
                 c.anisoLevel = 8;
                 c.filterMode = FilterMode.Trilinear;
@@ -124,6 +155,14 @@ namespace GoF2Remake.Modding
                 compressFrame = Time.frameCount;
                 if (textures.ContainsKey(key)) { Object.Destroy(t); return; }
                 if (t.width % 4 == 0 && t.height % 4 == 0) t.Compress(true);
+                if (cacheFile != null)
+                {
+                    byte[] raw = t.GetRawTextureData();
+                    int w = t.width, h = t.height, mips = t.mipmapCount;
+                    var format = t.format;
+                    string target = cacheFile;
+                    _ = System.Threading.Tasks.Task.Run(() => ModTextureCache.Write(target, w, h, format, mips, linear, raw));
+                }
                 t.Apply(false, true);
             }
             made.Add(t);

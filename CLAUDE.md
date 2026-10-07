@@ -1740,7 +1740,10 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   (`World.ShipShadowBaker.ModShipsBaked`, see "Station scene"). Textures are compressed to DXT1 /
   DXT5 with their mipmaps by a Burst job (`ModTextureEncoder`, van Waveren's real-time encoder, native buffers: Texture2D.Compress
   took 110-145 ms per 2048 px texture on the main thread, a managed encoder's garbage a 2 s collection) where the GPU reads
-  DXT; elsewhere (phones) Texture2D.Compress, one texture per frame. The startup splash shows "Loading mods" with a progress
+  DXT; elsewhere (phones) Texture2D.Compress, one texture per frame. The result is kept on disk (`ModTextureCache`,
+  `persistentDataPath/ModCache/Textures/<mod id>/<hash>.tex`, the hash of the file's path, size, change time, linear and the
+  kind of compression): a later start reads it back on a worker thread instead of decoding and compressing (five PR ships
+  2.3 s -> 1.3 s; the first start writes it, 126 MB for their 65 textures); an uninstalled mod's folder goes on `Scan`. The startup splash shows "Loading mods" with a progress
   bar and the ship / track in progress until it is done (`MainMenu.WaitForMods`, then the title; not shown when
   the mods that are on bring nothing to load, `ModLoading.HasWork`: no mods or only quests), so does the fade before a
   game scene when the mods changed in the menu (Leave). Measured in the Editor with the five PR ships: 5.3 s with frames of
@@ -1750,7 +1753,8 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   description and credits (mod.json `credits`), where it is installed, errors and warnings, Turn on / off (also the
   controller's X from anywhere in the panel, `ToggleSelected`, its glyph on the button with a controller, `.mods-pad-x`), Earlier / Later, Open mods folder (the selected
   mod's folder, else `ModManager.MainFolder`: the user folder, the project's Mods in the Editor; desktop only, phones show
-  the path), Refresh.
+  the path), Refresh, Rebuild cache (`MainMenu.RebuildModCache`: `ModTextureCache.ClearAll` deletes `ModCache` (textures,
+  hangar shadows) and the zip mods' unpacked files, then a rescan loads every mod again behind the fade with the loading screen).
   Mods change only in the menu: the tables are rebuilt when a game starts or loads.
 - **Multiplayer** (`NetMods`): the Host card's "Mods (N on)" Off / Allowed (`mp_allow_mods`, off by default; a dedicated
   server's `-allowmods` / `ALLOWMODS=1` = every usable mod in its Mods folders). Every session starts without mods

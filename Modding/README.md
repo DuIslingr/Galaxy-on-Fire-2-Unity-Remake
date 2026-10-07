@@ -36,6 +36,10 @@ The **Open mods folder** button in the Mods screen opens the folder the selected
 one above; on a phone the screen shows its path). The selected mod's details show where it is installed. After copying a
 mod in, press **Refresh**. New mods start turned off.
 
+The game keeps what it makes from a mod's textures (and its ships' hangar shadows) in a cache, so later starts load faster;
+an edited texture is made again by itself. If a mod still looks wrong after you changed it, press **Rebuild cache**: every
+mod cache is deleted and the mods load again.
+
 ## Sharing a mod as a zip
 
 Zip the mod's folder and share the `.zip`. Players drop it into their Mods folder as it is; there's no need to unpack it. Both
