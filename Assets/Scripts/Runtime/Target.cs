@@ -28,6 +28,9 @@ namespace GoF2Remake.Flight
         public bool isAsteroid;
         public GameObject explosionPrefab;
         public float explosionScale = 1f;
+        /// <summary>Remake: replaces the explosion billboard's (the first part's) texture: the ordinary asteroids' rock-coloured
+        /// copy of asteroid_explosion.png, whose purple fragments the original shares with the Void asteroid.</summary>
+        public Texture explosionTexture;
         public AudioClip destroyedSound;
 
         [Header("Asteroid (mining)")]
@@ -180,6 +183,16 @@ namespace GoF2Remake.Flight
                     fx.transform.localScale = explosionPrefab.transform.localScale * explosionScale;
                     float speed = isAsteroid && explosionScale < 1f ? (1f - explosionScale) * 3f + 1f : 1f;
                     foreach (var a in fx.GetComponentsInChildren<PartAnimation>(true)) { a.applyMaterialChannels = true; a.speed = speed; }
+                    if (explosionTexture != null && fx.transform.childCount > 0)
+                    {
+                        var block = new MaterialPropertyBlock();
+                        foreach (var r in fx.transform.GetChild(0).GetComponentsInChildren<Renderer>(true))
+                        {
+                            r.GetPropertyBlock(block);   // PartAnimation reads the block back before its fades, so this stays
+                            block.SetTexture("_MainTex", explosionTexture);
+                            r.SetPropertyBlock(block);
+                        }
+                    }
                     if (isAsteroid && fx.transform.childCount > 0) CameraFacing.Wrap(fx.transform.GetChild(0));
                     float length = PartAnimation.PlayOnce(fx) / speed;
                     Destroy(fx, Mathf.Max(1f, length / 1000f + 0.2f));

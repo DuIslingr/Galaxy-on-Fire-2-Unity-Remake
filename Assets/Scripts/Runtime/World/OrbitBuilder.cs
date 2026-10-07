@@ -241,6 +241,9 @@ namespace GoF2Remake.World
             var prefab = AssembledObject.LoadPrefab(db.AssemblyByName(layout.AsteroidAssembly));
             var explosion = AssembledObject.LoadPrefab(db.AssemblyByName(layout.AsteroidAssembly + "_explosion_anim"));
             var destroyedSound = GoF2Remake.Flight.CombatAudio.Load()?.asteroidDestroyed;
+            // Remake: Explosion types 2 and 3 share the billboard 0x4213 and its purple fragments (Void Crystals); the ordinary
+            // asteroids get a rock-coloured copy (Reference/tools/combat/make_rock_explosion.py).
+            var explosionTexture = layout.asteroidType == 0 ? Resources.Load<Texture2D>("GoF2Combat/asteroid_explosion_rock") : null;
             var root = new GameObject("Asteroids").transform;
             root.SetParent(parent, false);
             if (prefab == null) return root;
@@ -279,6 +282,7 @@ namespace GoF2Remake.World
                 target.maxHp = target.hp = scale * 100f + 30f;
                 target.explosionPrefab = explosion;
                 target.explosionScale = scale;
+                target.explosionTexture = explosionTexture;
                 target.destroyedSound = destroyedSound;
                 target.oreItem = ore;
                 target.quality = quality;
