@@ -84,6 +84,7 @@ namespace GoF2Remake.Flight
 
         Vector2 externalSteer;
         float bankAngle, tiltAngle;
+        bool autopilotBanking;
 
         void Awake() => ApplyStats();
 
@@ -203,11 +204,17 @@ namespace GoF2Remake.Flight
                 float turn = Mathf.Min(stats.handling / 100f + 0.2f * stats.handlingUpgrades + 2.7f, 4f);
                 var to = (autopilotTarget() - transform.position).normalized;
                 var dir = (transform.forward + (to - transform.forward) * ((int)(dtMs * turn) / 4096f)).normalized;
+                // The model banks into the turn (#45: it flew the turns flat).
+                float turnAngle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(transform.forward, dir), -1f, 1f));
+                if (Vector3.Dot(transform.right, dir) > 0f) turnAngle = -turnAngle;
                 if (dir.sqrMagnitude > 0f) transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+                Model.AutopilotBank(turnAngle, dtMs);
+                autopilotBanking = true;
             }
-            // Original: yaw positive = left. Unity yaw positive = right, so negate.
-            else
+            else if (autopilotBanking) { Model.ResetAutopilotBank(); autopilotBanking = false; }
+            if (autopilotTarget == null)
             {
+                // Original: yaw positive = left. Unity yaw positive = right, so negate.
                 transform.Rotate(r.pitchDeg, -r.yawDeg, r.rollDeg, Space.Self);
                 // Remake: manual roll (keys 1 / 3, the touch Level button slid sideways); rolling ends an auto-level.
                 float roll = inputLocked || steeringLocked ? 0f : Mathf.Clamp((useBuiltInInput ? GameControls.Roll.ReadValue<float>() : 0f) + touchRoll, -1f, 1f);

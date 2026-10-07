@@ -295,6 +295,36 @@ namespace GoF2Remake.Flight
             };
         }
 
+        // PlayerEgo::moveToPosition 0xa8720 (the autopilot) returns a bank value: the signed turn of each frame (+0x290, five
+        // samples, +0x2a4 / +0x2a8), x the limit +0x284 = H * 750 / 63 * 1.2 x +0x288 = 15.14, clamped to the limit;
+        // PlayerEgo::update then moves +0x280 toward it by dt * H / 81 and makes it the yaw rate +0x27c, which banks the model.
+        const float AutopilotBankGain = 15.139845f;   // 0x41723ace
+        readonly float[] autopilotTurns = new float[5];
+        int autopilotTurnCount, autopilotTurnIndex;
+        float autopilotRate;
+
+        /// <summary>The autopilot's model bank (PlayerEgo::moveToPosition / update): 'turnLeft' = this frame's turn in radians,
+        /// positive to the left; after Step, which left the bank at 0.</summary>
+        public void AutopilotBank(float turnLeft, float dtMs)
+        {
+            float he = EffectiveHandling;
+            // The original's samples are per frame (a 30 fps game): taken per 33.3 ms here, so the bank doesn't depend on the
+            // frame rate or on fast-forward.
+            if (dtMs > 0f) turnLeft *= 33.333f / dtMs;
+            autopilotTurns[autopilotTurnIndex] = turnLeft;
+            autopilotTurnIndex = (autopilotTurnIndex + 1) % autopilotTurns.Length;
+            autopilotTurnCount = Mathf.Min(autopilotTurnCount + 1, autopilotTurns.Length);
+            float sum = 0f;
+            for (int i = 0; i < autopilotTurnCount; i++) sum += autopilotTurns[i];
+            float limit = TargetRateScale * he / TargetRateDivisor * 1.2f;
+            float target = Mathf.Clamp(sum / autopilotTurnCount * limit * AutopilotBankGain, -limit, limit);
+            autopilotRate = Mathf.MoveTowards(autopilotRate, target, dtMs * he / 81f);
+            VisualYawBank = autopilotRate / (TargetRateScale / TargetRateDivisor);
+        }
+
+        /// <summary>The autopilot let go (PlayerEgo::update: +0x2a4 / +0x2a8 cleared).</summary>
+        public void ResetAutopilotBank() { autopilotTurnCount = 0; autopilotTurnIndex = 0; autopilotRate = 0f; }
+
         /// <summary>PlayerEgo::updateManeuver: handleShip is skipped (no steering ramp, no turn from the rates); the yaw rate
         /// is the maneuver's (it banks the model and decays normally afterwards); the ship flies on at its speed.</summary>
         public FrameResult StepManeuver(float dtMs, float yawRate)
