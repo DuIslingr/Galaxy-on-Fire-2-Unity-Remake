@@ -775,7 +775,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   the panel asks for it in the menu's dialog (`MainMenu.NeedsName`: its `dialogField`, OK refuses an empty name, Back
   closes), and so do Host, Join and a server browser row before they start (`WithName`). **Server browser** (`NetLobby.Query` every 5 s while the panel is open; rows rebuilt
   only when the list changed, so a controller's focus stays): every listed game of every version, this version's first
-  and the fullest first; two lines per game: its name with SERVER (dedicated) / PASSWORD tags, then the host, players /
+  and the fullest first; two lines per game: its name with SERVER (dedicated) / PASSWORD / MODDED tags and PVP / PVE (`NetLobby` key `pvp`, kept current like the player count; none for older listings), then the host, players /
   limit ("full") and the version (another version: amber "needs X", not joinable, a tap says why); a tap joins by its
   join code (a password game with the password field empty asks for it first); "N games" by the title. Under it one
   row: the code-or-address field (`mp_address`), the password field (this run only; `-mppassword` for testing), Join.
@@ -783,7 +783,7 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   the Game name field, `mp_session_name`, default "<pilot>'s universe"); the password field (`mp_host_password`,
   optional, every mode) and Max players beside it (`mp_max_players`, `NetGame.MaxPlayers`: 2..100, the host included,
   default 16; Relay's connections are that minus a player host, the browser's limit is it, and the connection approval
-  turns away a player past it in every mode, "The game is full (N players)."); Local network shows every address of this device others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
+  turns away a player past it in every mode, "The game is full (N players)."); **Combat** PvE / PvP (`mp_pvp`, PvE by default: `NetGame.FreePvp`, which NetState carries; PvE = players fight only in arena matches and faction sieges, PvP = anywhere; a dedicated server's `-freepvp`, the launchers' `PVP=1`, the server settings' "freepvp"); Local network shows every address of this device others could join on, named by adapter (`NetGame.LocalAddresses`: Ethernet / Wi-Fi first, then VPNs like Hamachi,
   ZeroTier, Radmin, Tailscale; not down, loopback, link-local or virtual-machine adapters; Android's Linux names
   mapped: wlan = Wi-Fi, swlan / ap = Hotspot, rndis / usb = USB, tun = VPN, mobile data (rmnet, ccmni) left out; Windows'
   mobile hotspot = Hotspot; none = a "connect to Wi-Fi" line, never 127.0.0.1), a tap copies it (with

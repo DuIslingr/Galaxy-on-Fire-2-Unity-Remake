@@ -952,6 +952,12 @@ namespace GoF2Remake.UI
             Bind("mpDebugOff", () => SetHostDebug(false));
             Bind("mpDebugOn", () => SetHostDebug(true));
             ApplyHostDebug();
+            // Combat in the hosted session (PlayerPrefs "mp_pvp", PvE by default; NetGame.FreePvp): PvE = players fight only in
+            // arena matches and faction sieges, PvP = anywhere. The server browser shows it as a chip.
+            GoF2Remake.Multiplayer.NetGame.FreePvp = PlayerPrefs.GetInt("mp_pvp", 0) != 0;
+            Bind("mpPvpOff", () => SetHostPvp(false));
+            Bind("mpPvpOn", () => SetHostPvp(true));
+            ApplyHostPvp();
             // The hosted world (PlayerPrefs "mp_persistent", fresh by default): persistent keeps every player's progress, the
             // factions, bans and news on this device (NetGame.HostWantsPersistent; the host is its master admin).
             GoF2Remake.Multiplayer.NetGame.HostWantsPersistent = PlayerPrefs.GetInt("mp_persistent", 0) != 0;
@@ -1017,6 +1023,20 @@ namespace GoF2Remake.UI
             bool allowed = GoF2Remake.Multiplayer.NetGame.HostAllowsDebug;
             root.Q<Button>("mpDebugOff")?.EnableInClassList("choice-segment--active", !allowed);
             root.Q<Button>("mpDebugOn")?.EnableInClassList("choice-segment--active", allowed);
+        }
+
+        void SetHostPvp(bool pvp)
+        {
+            GoF2Remake.Multiplayer.NetGame.FreePvp = pvp;
+            PlayerPrefs.SetInt("mp_pvp", pvp ? 1 : 0);
+            ApplyHostPvp();
+        }
+
+        void ApplyHostPvp()
+        {
+            bool pvp = GoF2Remake.Multiplayer.NetGame.FreePvp;
+            root.Q<Button>("mpPvpOff")?.EnableInClassList("choice-segment--active", !pvp);
+            root.Q<Button>("mpPvpOn")?.EnableInClassList("choice-segment--active", pvp);
         }
 
         void SetHostWorld(bool persistent)
@@ -1119,7 +1139,7 @@ namespace GoF2Remake.UI
             if (list.Count == 0) { ServerListNote(Localization.Extra("mpNoGames", "No public games right now. Host one, or join with a code.")); yield break; }
             // Unchanged since the last refresh: the rows stay (a controller's focus on one too).
             var key = new System.Text.StringBuilder();
-            foreach (var e in list) key.Append(e.code).Append(e.name).Append(e.players).Append('/').Append(e.maxPlayers).Append(e.password).Append(e.mods).Append('|');
+            foreach (var e in list) key.Append(e.code).Append(e.name).Append(e.players).Append('/').Append(e.maxPlayers).Append(e.password).Append(e.mods).Append(e.pvp).Append('|');
             if (key.ToString() == serverListKey) yield break;
             serverListKey = key.ToString();
             mpServerList.Clear();
@@ -1149,6 +1169,9 @@ namespace GoF2Remake.UI
                 if (entry.dedicated) Tag(Localization.Extra("mpServerTag", "Server"), null);
                 if (entry.password) Tag(Localization.Extra("mpPasswordTag", "Password"), "mp-server-tag--password");
                 if (entry.Modded) Tag(Localization.Extra("mpModdedTag", "Modded"), "mp-server-tag--mods");
+                if (entry.pvp.HasValue)   // players fight anywhere / only in arenas and sieges (NetGame.FreePvp)
+                    Tag(entry.pvp.Value ? Localization.Extra("mpPvp", "PvP") : Localization.Extra("mpPve", "PvE"),
+                        entry.pvp.Value ? "mp-server-tag--pvp" : "mp-server-tag--pve");
                 row.Add(top);
                 var bottom = new VisualElement { pickingMode = PickingMode.Ignore };
                 bottom.AddToClassList("mp-server-line");
@@ -1916,6 +1939,9 @@ namespace GoF2Remake.UI
             Set("mpDebugLabel", Localization.Extra("mpDebugMenu", "Debug menu").ToUpperInvariant());
             Set("mpDebugOff", Localization.Extra("mpDebugOff", "Off").ToUpperInvariant());
             Set("mpDebugOn", Localization.Extra("mpDebugAllowed", "Allowed").ToUpperInvariant());
+            Set("mpPvpLabel", Localization.Extra("mpCombat", "Combat").ToUpperInvariant());
+            Set("mpPvpOff", Localization.Extra("mpPve", "PvE").ToUpperInvariant());
+            Set("mpPvpOn", Localization.Extra("mpPvp", "PvP").ToUpperInvariant());
             Set("mpWorldLabel", Localization.Extra("mpWorld", "World").ToUpperInvariant());
             Set("mpWorldFresh", Localization.Extra("mpWorldFresh", "Fresh").ToUpperInvariant());
             Set("mpWorldPersistent", Localization.Extra("mpWorldPersistent", "Persistent").ToUpperInvariant());

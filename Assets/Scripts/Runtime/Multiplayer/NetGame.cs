@@ -860,8 +860,9 @@ namespace GoF2Remake.Multiplayer
         /// session nothing restricts it (Cheats.Allowed).</summary>
         public static bool DebugAllowed => NetState.Instance != null && NetState.Instance.DebugAllowed;
 
-        /// <summary>Players may shoot each other anywhere, not only in arena matches (a dedicated server's -freepvp; off by
-        /// default). NetState carries it to every player.</summary>
+        /// <summary>Players may shoot each other anywhere, not only in arena matches and faction sieges: PvP instead of PvE
+        /// (the Host card's Combat switch, PlayerPrefs "mp_pvp"; a dedicated server's -freepvp; the server settings' "freepvp").
+        /// Off (PvE) by default. NetState carries it to every player; the server browser shows it (NetLobby).</summary>
         public static bool FreePvp { get; set; }
 
         /// <summary>The session has a password (the server browser's tag).</summary>

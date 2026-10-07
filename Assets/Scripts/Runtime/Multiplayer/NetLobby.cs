@@ -22,7 +22,7 @@ namespace GoF2Remake.Multiplayer
     {
         const float HeartbeatSeconds = 15f, CountSeconds = 5f;
         const string KeyVersion = "version", KeyProtocol = "protocol", KeyCode = "code", KeyHost = "host", KeyPlayers = "players", KeyServer = "server", KeyPassword = "password",
-            KeyMods = "mods", KeyModNames = "modnames";
+            KeyMods = "mods", KeyModNames = "modnames", KeyPvp = "pvp";
 
         /// <summary>One listed session in the browser.</summary>
         public sealed class Entry
@@ -35,6 +35,9 @@ namespace GoF2Remake.Multiplayer
             public List<string> MissingMods => Modded ? NetMods.MissingForListing(mods) : new List<string>();
             public int players, maxPlayers;
             public bool dedicated, password;
+            /// <summary>Players fight anywhere (NetGame.FreePvp: "PvP") or only in arenas and sieges ("PvE"); null for a
+            /// listing from before the key (no chip).</summary>
+            public bool? pvp;
             public bool Full => players >= maxPlayers;
             /// <summary>The same code as this game (the fingerprint: the only ones it can join, whenever they were built; the
             /// Editor joins any, for testing). A listing from before the fingerprint has only its version.</summary>
@@ -42,7 +45,7 @@ namespace GoF2Remake.Multiplayer
         }
 
         static string lobbyId;
-        static int generation, lastCount = -1;
+        static int generation, lastCount = -1, lastPvp = -1;
 
         /// <summary>This game's session is listed (its lobby exists).</summary>
         public static bool Listed => lobbyId != null;
@@ -53,6 +56,7 @@ namespace GoF2Remake.Multiplayer
             lobbyId = null;
             generation++;
             lastCount = -1;
+            lastPvp = -1;
         }
 
         static DataObject Public(string value, DataObject.IndexOptions index = default) =>
@@ -79,6 +83,7 @@ namespace GoF2Remake.Multiplayer
                         [KeyPassword] = Public(NetGame.HasPassword ? "1" : "0"),
                         [KeyMods] = Public(Trim(NetMods.SessionList, 2000)),
                         [KeyModNames] = Public(Trim(NetMods.SessionNames, 300)),
+                        [KeyPvp] = Public(NetGame.FreePvp ? "1" : "0"),
                     },
                 });
                 if (gen != generation || !NetGame.Active)
@@ -89,6 +94,7 @@ namespace GoF2Remake.Multiplayer
                 }
                 lobbyId = lobby.Id;
                 lastCount = PlayerCount();
+                lastPvp = NetGame.FreePvp ? 1 : 0;
                 Debug.Log($"NetLobby: listed \"{lobby.Name}\" in the server browser");
                 Keep(gen);
             }
@@ -114,12 +120,18 @@ namespace GoF2Remake.Multiplayer
                 try
                 {
                     int count = PlayerCount();
-                    if (count != lastCount)
+                    int pvp = NetGame.FreePvp ? 1 : 0;   // the server settings / web admin can switch it while the game runs
+                    if (count != lastCount || pvp != lastPvp)
                     {
                         lastCount = count;
+                        lastPvp = pvp;
                         await LobbyService.Instance.UpdateLobbyAsync(lobbyId, new UpdateLobbyOptions
                         {
-                            Data = new Dictionary<string, DataObject> { [KeyPlayers] = Public(count.ToString(), DataObject.IndexOptions.N1) },
+                            Data = new Dictionary<string, DataObject>
+                            {
+                                [KeyPlayers] = Public(count.ToString(), DataObject.IndexOptions.N1),
+                                [KeyPvp] = Public(pvp.ToString()),
+                            },
                         });
                     }
                     if (sinceBeat >= HeartbeatSeconds && lobbyId != null)
@@ -142,6 +154,7 @@ namespace GoF2Remake.Multiplayer
             string id = lobbyId;
             lobbyId = null;
             lastCount = -1;
+            lastPvp = -1;
             if (id == null) return;
             try { _ = LobbyService.Instance.DeleteLobbyAsync(id); }
             catch (Exception) { }
@@ -169,6 +182,7 @@ namespace GoF2Remake.Multiplayer
                         name = l.Name, host = Get(l, KeyHost), code = code, version = Get(l, KeyVersion), protocol = Get(l, KeyProtocol),
                         players = players, maxPlayers = l.MaxPlayers, dedicated = Get(l, KeyServer) == "1", password = Get(l, KeyPassword) == "1",
                         mods = Get(l, KeyMods) ?? "", modNames = Get(l, KeyModNames) ?? "",
+                        pvp = Get(l, KeyPvp) switch { "1" => true, "0" => false, _ => (bool?)null },
                     });
                 }
                 // This version's first (the query's order, the fullest first, within each).

@@ -181,6 +181,13 @@
                                 </ui:VisualElement>
                             </ui:VisualElement>
                             <ui:VisualElement class="mp-debug-row">
+                                <ui:Label name="mpPvpLabel" class="mp-label mp-debug-label gof-semibold" />
+                                <ui:VisualElement class="choice-segments mp-debug-segments">
+                                    <ui:Button name="mpPvpOff" class="choice-segment gof-semibold" />
+                                    <ui:Button name="mpPvpOn" class="choice-segment gof-semibold" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:VisualElement class="mp-debug-row">
                                 <ui:Label name="mpWorldLabel" class="mp-label mp-debug-label gof-semibold" />
                                 <ui:VisualElement class="choice-segments mp-debug-segments">
                                     <ui:Button name="mpWorldFresh" class="choice-segment gof-semibold" />
