@@ -52,6 +52,7 @@ namespace GoF2Remake.World
             public (Vector3 pos, Vector3 rot)[] scenery;   // the Valkyrie's shield generators (no gun)
             public string sceneryAssembly;
             public bool holdAfterOneOff;  // the Void ship: its real size is the pose after its animation's first key
+            public float cameraHeight = 1f;   // FitCamera: the camera's and its look point's height above the hull's middle, x this
         }
 
         static List<Hull> hulls;
@@ -145,6 +146,7 @@ namespace GoF2Remake.World
                 key = "sn_carrier_terran_1", assembly = "sn_carrier_terran_1", stats = CapitalStats,
                 label = X("debugHullCarrier", "Terran carrier"),
                 turrets = TrafficPlan.CarrierTurrets, turretAssembly = "turret_002_static", turretScale = 6f,
+                cameraHeight = 0.4f,   // the 3.6 km deck seen from just above it, not from high over it
             });
             var vossk = new List<(Vector3, Vector3)>();
             foreach (var p in TrafficPlan.VosskTurrets) vossk.Add((p, Vector3.zero));
@@ -367,7 +369,7 @@ namespace GoF2Remake.World
             var b = LocalBounds(root, model);
             model.localPosition -= b.center;   // the hull's middle on the pivot
             if (chase == null) return;
-            float halfLength = b.extents.z, halfHeight = b.extents.y;
+            float halfLength = b.extents.z, halfHeight = b.extents.y * (Current(Db)?.cameraHeight ?? 1f);
             chase.offset = new Vector3(0f, halfHeight * 1.6f, -halfLength * 1.25f);
             chase.lookOffset = new Vector3(0f, halfHeight * 1.1f, halfLength * 0.1f);
             if (cam != null) cam.farClipPlane = Mathf.Max(levelFarClip, chase.offset.magnitude + b.extents.magnitude * 2f + 2000f);
