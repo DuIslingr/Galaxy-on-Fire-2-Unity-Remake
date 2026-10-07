@@ -554,7 +554,16 @@ namespace GoF2Remake.UI
 
         void ScrollToSelected()
         {
-            if (selected?.element != null && selected.element.panel != null && !float.IsNaN(selected.element.layout.height)) list.ScrollTo(selected.element);
+            if (selected?.element == null || selected.element.panel == null || float.IsNaN(selected.element.layout.height)) return;
+            // The first row of a section brings its header(s) into view too (#24: with a controller the shop opened with
+            // "Primary weapons" scrolled off above the first row).
+            var e = selected.element;
+            var parent = e.parent;
+            int i = parent != null ? parent.IndexOf(e) : -1;
+            VisualElement top = e;
+            while (i > 0 && parent[i - 1].ClassListContains("list-header")) top = parent[--i];
+            if (top != e) list.ScrollTo(top);
+            list.ScrollTo(e);
         }
 
         /// <summary>autoEquipSecondaryWeapons, when the selection moves on: missiles bought for a mounted launcher join it.</summary>

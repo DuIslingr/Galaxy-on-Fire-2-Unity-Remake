@@ -366,8 +366,15 @@ namespace GoF2Remake.UI
         {
             bool open = TouchScreenKeyboard.visible;
             if (open && root.focusController?.focusedElement is TextField f) { keyboardField = f; keyboardText = f.value; }
-            else if (!open && keyboardWasOpen && keyboardField != null && keyboardText != null && keyboardField.value != keyboardText)
-                keyboardField.value = keyboardText;
+            else if (!open && keyboardWasOpen && keyboardField != null && keyboardText != null)
+            {
+                if (keyboardField.value != keyboardText) keyboardField.value = keyboardText;
+                // The pilot name prompt: a name typed and the keyboard closed is the answer (#20: only Start kept it, and
+                // B left the prompt without the name, asking again and again).
+                if (keyboardField == dialogField && dialog.ClassListContains("dialog-backdrop--shown")
+                    && GoF2Remake.Multiplayer.NetGame.Clean(keyboardText).Length > 0)
+                    root.schedule.Execute(ConfirmDialog);
+            }
             keyboardWasOpen = open;
         }
 #endif
@@ -746,7 +753,7 @@ namespace GoF2Remake.UI
         void Back()
         {
             if (screen != MenuState.Menu) return;
-            if (dialog.ClassListContains("dialog-backdrop--shown")) { CloseDialog(); return; }
+            if (dialog.ClassListContains("dialog-backdrop--shown")) { var no = dialogNo; CloseDialog(); no?.Invoke(); return; }
             if (openPanel == null) return;
             Play(buttonRelease);
             if (openPanel == panels["gameOptionsPanel"]) { OpenPanel("economyPanel"); return; }
@@ -1267,7 +1274,9 @@ namespace GoF2Remake.UI
         {
             if (mpStatus != null) mpStatus.text = GoF2Remake.Multiplayer.NetGame.Status;   // why the last session ended
             OpenPanel("multiplayerPanel");
-            NeedsName(null);   // the first visit: the name first
+            // The first visit: the name first; Back there leaves the panel (#20: with a controller it came back to the
+            // prompt on every move).
+            if (NeedsName(null)) dialogNo = () => { if (openPanel == panels["multiplayerPanel"]) Back(); };
         }
 
         /// <summary>Multiplayer needs a pilot name (the others see it on the lock plate, in the chat and the pilot lists):
@@ -1291,7 +1300,10 @@ namespace GoF2Remake.UI
                 ApplyHostMode();   // the default game name is the pilot's
                 return true;
             };
-            dialogField.Focus();
+            // With a controller the prompt opens on OK (A on it with no name, or Up, goes to the field): a field focused
+            // at once brought the Xbox's keyboard up before the prompt had settled, and what it typed got lost (#20).
+            if (InputMode.Current == InputKind.Gamepad) Select(root.Q<Button>("dialogYes"));
+            else dialogField.Focus();
             return true;
         }
 

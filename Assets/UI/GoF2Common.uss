@@ -801,6 +801,9 @@
 .input-gamepad .debug-mission:focus,
 .input-gamepad .lounge-row:focus,
 .input-gamepad .wanted-row:focus,
+.input-gamepad .mods-row:focus,
+.input-gamepad .mp-server-row:focus,
+.input-gamepad .debug-option:focus,
 .input-gamepad .autopilot-menu-item--selected {
     color: #FFFFFF;
     background-color: rgba(255, 166, 48, 0.24);
@@ -833,8 +836,18 @@
 .input-gamepad .lounge-back:focus,
 .input-gamepad .dialogue-button:focus,
 .input-gamepad .update-button:focus,
+.input-gamepad .mods-action:focus,
+.input-gamepad .mods-footer-button:focus,
+.input-gamepad .mods-toggle:focus,
 .input-gamepad .launch-button:focus {
     color: #FFFFFF;
     border-color: var(--gof-amber);
     background-color: rgba(255, 166, 48, 0.24);
+}
+
+/* A text field with the controller's focus (#20: the multiplayer panel's fields gave no sign of it). */
+.input-gamepad .unity-text-field:focus > .unity-text-field__input,
+.input-gamepad .unity-text-field__input:focus {
+    border-color: var(--gof-amber);
+    background-color: rgba(255, 166, 48, 0.16);
 }

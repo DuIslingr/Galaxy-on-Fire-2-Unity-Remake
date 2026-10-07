@@ -183,14 +183,16 @@ namespace GoF2Remake.EditorTools
             return AssetDatabase.LoadAssetAtPath<Cubemap>(pngPath);
         }
 
-        /// <summary>UWP (#20): BC1 instead of the default's BC7 (CompressedHQ). On the Xbox the nebula cubemaps showed bands of
-        /// shifted tiles while every BC1 / BC3 texture drew right; Windows keeps BC7.</summary>
+        /// <summary>UWP (#20): uncompressed RGBA32 with 1365 px faces (the 12288 px strip capped at 8192, like Android). On the
+        /// Xbox the nebula cubemaps showed bands of shifted tiles with BC7 (the default's CompressedHQ; the Xbox runs UWP apps
+        /// at Direct3D feature level 10, which has no BC7) and bands with a criss-cross with BC1. Uncompressed tells whether
+        /// it is the compression at all; Windows keeps BC7.</summary>
         public static void ApplyUwpOverride(TextureImporter ti)
         {
             var uwp = ti.GetPlatformTextureSettings("WindowsStoreApps");
             uwp.overridden = true;
-            uwp.maxTextureSize = 16384;
-            uwp.format = TextureImporterFormat.DXT1;
+            uwp.maxTextureSize = 8192;
+            uwp.format = TextureImporterFormat.RGBA32;
             ti.SetPlatformTextureSettings(uwp);
         }
 
