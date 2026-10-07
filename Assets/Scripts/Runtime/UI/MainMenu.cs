@@ -286,6 +286,7 @@ namespace GoF2Remake.UI
             Bind("economyDefaultButton", () => StartGame(Economy.Default));
             Bind("economyAndroidButton", () => StartGame(Economy.Android));
             Bind("kaamoToggle", () => { KaamoFromStart = !KaamoFromStart; RefreshKaamoToggle(); });
+            Bind("hardcoreToggle", () => { hardcoreNext = !hardcoreNext; RefreshHardcoreToggle(); });
             Bind("ngPlusToggle", () => { newGamePlus = !newGamePlus && ngPlusSave != null; RefreshNgPlus(false); });
             Bind("dialogYes", ConfirmDialog);
             Bind("dialogNo", () => { var a = dialogNo; CloseDialog(); a?.Invoke(); });
@@ -775,7 +776,26 @@ namespace GoF2Remake.UI
         void PickDifficulty(float difficulty)
         {
             pendingDifficulty = difficulty;
+            hardcoreNext = false;   // never carried over from an earlier new game: chosen each time
+            RefreshHardcoreToggle();
             OpenPanel("economyPanel");
+        }
+
+        /// <summary>Remake: the next new game is hardcore (permadeath, Session.Hardcore): off whenever the economy panel opens.</summary>
+        bool hardcoreNext;
+
+        void RefreshHardcoreToggle()
+        {
+            var b = root.Q<Button>("hardcoreToggle");
+            if (b == null) return;
+            b.EnableInClassList("choice-button--on", hardcoreNext);
+            var label = root.Q<Label>("hardcoreLabel");
+            if (label != null)
+                label.text = $"{Localization.Extra("hardcoreTitle", "Hardcore")}: {(hardcoreNext ? Localization.Extra("hardcoreOn", "Permadeath") : Localization.Extra("hardcoreOff", "Off"))}".ToUpperInvariant();
+            var desc = root.Q<Label>("hardcoreDesc");
+            if (desc != null)
+                desc.text = Localization.Extra("hardcoreDesc",
+                    "One life: the game saves only when you dock, and if your ship is destroyed this game's saves are deleted and you return to the main menu.");
         }
 
         // Remake (GitHub #4, NewGamePlus): with a finished game in the save slots, the campaign panel offers New Game+.
@@ -837,6 +857,7 @@ namespace GoF2Remake.UI
         void BeginGame(Economy economy)
         {
             Session.ResetNewGame();   // Status::resetGame: Phantom at Var Hastra (Mido)
+            Session.Hardcore = hardcoreNext;   // remake: permadeath (a new RunId came with ResetNewGame)
             Session.Campaign = pendingCampaign;
             Session.Difficulty = pendingDifficulty;
             Session.Economy = economy;   // before the Database: it loads that economy's tables
@@ -1996,6 +2017,7 @@ namespace GoF2Remake.UI
             Set("economyAndroidDesc", Localization.Extra("economyAndroidDesc",
                 "The Android version's prices: commodities, tractor beams, shields and armor far dearer, blueprints need many more ingredients, ships cheaper."));
             RefreshKaamoToggle();
+            RefreshHardcoreToggle();
             Set("extremeLabel", T(25));
             Set("extremeDesc", Localization.Extra("extremeDesc", "For veterans who finished the game: tougher enemies and a harsher economy."));
             Set("loadTitle", T(29));

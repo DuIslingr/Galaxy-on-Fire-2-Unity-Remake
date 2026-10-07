@@ -16,7 +16,7 @@ namespace GoF2Remake.Data
     [Serializable]
     public class SaveData
     {
-        public const int CurrentVersion = 14;
+        public const int CurrentVersion = 15;
 
         public int version = CurrentVersion;
         public string savedAtUtc;
@@ -94,6 +94,9 @@ namespace GoF2Remake.Data
         public List<string> graphQuestsDone;
         // version 14: a mod's campaign (Session.ModCampaign, Modding.ModCampaigns)
         public string modCampaign;
+        // version 15: a hardcore (permadeath) game and the run it belongs to (Session.Hardcore / RunId)
+        public bool hardcore;
+        public string runId;
 
         [Serializable]
         public class KnownPrice { public int item, price, system; }
@@ -138,6 +141,8 @@ namespace GoF2Remake.Data
             // Multiplayer: a session is a separate free-play game; it never overwrites the single-player saves (also not
             // after its connection went, while its game is still loaded).
             if (GoF2Remake.Multiplayer.NetGame.SessionGame) return false;
+            // Hardcore: only the auto-save (no slot to go back to after a death).
+            if (Session.Hardcore && slot != AutoSaveSlot) return false;
             var s = Capture();
             Modding.ModSaves.Record(s, Database.Load());
             try
@@ -150,6 +155,22 @@ namespace GoF2Remake.Data
                 return true;
             }
             catch (Exception e) { Debug.LogError($"SaveGame: saving slot {slot} failed: {e.Message}"); return false; }
+        }
+
+        /// <summary>Remake (hardcore): deletes every slot of the run 'runId' (the death of a hardcore game); the slots deleted.</summary>
+        public static int DeleteRun(string runId)
+        {
+            if (string.IsNullOrEmpty(runId)) return 0;
+            int deleted = 0;
+            for (int i = 0; i < SlotCount; i++)
+            {
+                var s = Preview(i);
+                if (s == null || s.runId != runId) continue;
+                try { File.Delete(PathOf(i)); deleted++; }
+                catch (Exception e) { Debug.LogWarning($"SaveGame: couldn't delete slot {i}: {e.Message}"); }
+            }
+            Debug.Log($"SaveGame: hardcore death, {deleted} save(s) of the run deleted");
+            return deleted;
         }
 
         /// <summary>ModStation::autosave: slot 0, not for a game without playing time.</summary>
@@ -219,6 +240,8 @@ namespace GoF2Remake.Data
                 graphQuests = new List<GraphQuestState>(Session.GraphQuests),
                 graphQuestsDone = new List<string>(Session.GraphQuestsDone),
                 modCampaign = Session.ModCampaign ?? "",
+                hardcore = Session.Hardcore,
+                runId = Session.RunId ?? "",
                 campaignMission = Session.CampaignMission,
                 station = Session.StationIndex,
                 previousStation = Session.PreviousStationIndex,
@@ -373,6 +396,8 @@ namespace GoF2Remake.Data
                 return d;
             }
             Session.ResetNewGame();
+            Session.Hardcore = s.hardcore;
+            if (!string.IsNullOrEmpty(s.runId)) Session.RunId = s.runId;   // an older save keeps the new id ResetNewGame made
             Session.PlaySeconds = s.playSeconds;
             Session.Campaign = (Campaign)s.campaign;
             Session.Difficulty = s.difficulty;

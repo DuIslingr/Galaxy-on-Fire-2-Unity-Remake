@@ -1151,12 +1151,22 @@ namespace GoF2Remake.UI
             if (GoF2Remake.Multiplayer.NetArenaClient.InMatch) return;   // an arena match respawns the ship instead
             gameOverMs = 0f;
             gameOver.AddToClassList("game-over--shown");
+            // Remake (hardcore): the run's saves go at once (closing the game now can't keep them), Tap leaves to the menu.
+            if (Session.Hardcore && !GoF2Remake.Multiplayer.NetGame.Active && !GoF2Remake.Events.EventRespawn.Active)
+            {
+                SaveGame.DeleteRun(Session.RunId);
+                hardcoreDead = true;
+                gameOverText.text = Localization.Extra("hardcoreDead", "Hardcore: your pilot is lost and this game's saves are deleted. Tap to return to the main menu.");
+                return;
+            }
             gameOverText.text = GoF2Remake.Events.EventRespawn.Active
                 ? Localization.Extra("mpRespawnEvent", "Respawning in space...")      // an event's respawn point (EventRespawn)
                 : GoF2Remake.Multiplayer.NetGame.Active
                 ? Localization.Extra("mpRespawn", "Tap to respawn at the station.")   // multiplayer: no saves, docked again
                 : Localization.Get(Session.HasAutosave ? 196 : 199);
         }
+
+        bool hardcoreDead;
 
         /// <summary>Overlay fades in after 3000 ms over 4000 ms, then the blinking "Tap to load last savegame.".</summary>
         void UpdateGameOver()
@@ -1177,6 +1187,7 @@ namespace GoF2Remake.UI
         {
             if (gameOverMs < 7000f) return;
             gameOverMs = -1f;
+            if (hardcoreDead) { BackToMenu(); return; }   // hardcore: nothing to load
             // Multiplayer: back in this orbit's station (a faction member: the faction's home, NetFactions), repaired (docking
             // repairs), everything else kept.
             if (GoF2Remake.Multiplayer.NetGame.Active)

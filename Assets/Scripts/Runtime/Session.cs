@@ -194,6 +194,12 @@ namespace GoF2Remake.Data
         public static bool FreePlay;
         /// <summary>Remake mods: the mod whose campaign this game is (Modding.ModCampaigns; "": a GoF2 game).</summary>
         public static string ModCampaign = "";
+        /// <summary>Remake: a hardcore (permadeath) game, the new game's choice (MainMenu): it saves only to the auto-save, and
+        /// dying deletes every save of the run (SaveGame.DeleteRun by RunId) and goes to the main menu (FlightHud). Not the
+        /// original's "hardcore mode", which is the Extreme difficulty (IsExtreme).</summary>
+        public static bool Hardcore;
+        /// <summary>This game's identity (a new one at every new game; saved), so a hardcore death finds every slot of the run.</summary>
+        public static string RunId = "";
         public const int FreePlayMission = 20;
 
         /// <summary>
@@ -369,6 +375,8 @@ namespace GoF2Remake.Data
             StoryAgentsAccepted = new HashSet<int>();
             GraphQuests = new List<GraphQuestState>();
             ModCampaign = "";
+            Hardcore = false;
+            RunId = System.Guid.NewGuid().ToString("N");
             GraphQuestsDone = new HashSet<string>();
             GoF2Remake.Events.EventRunner.ResetLocal();   // single player's graph runs go with the game
             Blueprints = new List<BlueprintState>();
