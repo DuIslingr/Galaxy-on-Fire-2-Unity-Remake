@@ -541,6 +541,17 @@ namespace GoF2Remake.World
             {
                 asm.SetPlayerVariant(false);
                 if (asm.npcVariantParts != null) foreach (var p in asm.npcVariantParts) if (p != null) p.SetActive(false);   // exhaust off
+                // Remake: the hangar flights and bar flybys fly on the player's engine (its glow mesh and exhaust particles)
+                // instead of the NPC flame meshes, like the NPCs in space (Settings.NpcPlayerEngines; the player's own ship
+                // always): some hulls' _engine_add parts showed nothing, and the VoidX's was blue where the player's is purple.
+                // The particles follow the glow, which HangarFlight / BarFlybys switch on (HangarFlight.UsesPlayerEngine).
+                if (asm.playerVariantParts != null && asm.playerVariantParts.Length > 0 && asm.playerVariantParts[0] != null
+                    && (Settings.NpcPlayerEngines || !asm.HasNpcExhaust || label == "Player ship"))
+                {
+                    var glow = asm.playerVariantParts[0];
+                    GoF2Remake.Flight.ShipExhaust.AttachRemote(go, db, go.transform, index, () => glow != null && glow.activeInHierarchy,
+                                                               () => 0f, () => 0f, scaled: true);
+                }
             }
             // Remake: a soft shadow on the floor under every hangar ship (not the bar's flybys); it shows once the ship rests
             // (the "Hangar ship shadows" option: off, the player's own ship only, every ship).

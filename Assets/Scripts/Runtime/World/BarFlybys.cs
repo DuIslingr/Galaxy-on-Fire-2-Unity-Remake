@@ -351,7 +351,7 @@ namespace GoF2Remake.World
                 go.transform.position = a0 + offsets[n];
                 if (clear != null) foreach (var t in go.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = FlybyLayer;
                 var asm = go.GetComponent<AssembledObject>();
-                if (asm != null) asm.SetExhaust(true, !asm.HasNpcExhaust);
+                if (asm != null) asm.SetExhaust(true, HangarFlight.UsesPlayerEngine(asm));
                 flying.Add(new Flyby { go = go, a = a0 + offsets[n], b = b0 + offsets[n], c = c0 + offsets[n], duration = duration, roll = roll });
             }
             return true;

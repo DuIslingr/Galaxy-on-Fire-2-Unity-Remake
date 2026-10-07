@@ -3258,6 +3258,16 @@
     "table": "DAT_00254b10"
    },
    {
+    "mesh": 17939,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true,
+    "remake": true
+   },
+   {
     "mesh": 18039,
     "role": "engine",
     "variant": "npc",
@@ -3275,7 +3285,8 @@
      18039
     ],
     "childrenPlayer": [
-     18739
+     18739,
+     17939
     ]
    },
    {
@@ -3285,7 +3296,8 @@
      18039
     ],
     "childrenPlayer": [
-     18739
+     18739,
+     17939
     ]
    }
   ],
@@ -3311,7 +3323,7 @@
     18739
    ]
   },
-  "notes": "player variant (param_3=true): code skips the engine child for idx 0x27/0x29 (no engine_glow mesh exists), so the last child (shown at LOD levels, toggled by setExhaustVisible/cloak) is the lights mesh; npc variant (param_3=false): root and LOD meshes get material 32239 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32239 does not exist in the resource table, so the swap is a silent no-op"
+  "notes": "player variant (param_3=true): code skips the engine child for idx 0x27/0x29 (the game never registered the engine_glow mesh), so the last child (shown at LOD levels, toggled by setExhaustVisible/cloak) is the lights mesh. Remake: the OBB's engine_glow mesh (17939, added by patch_resources.py, material 34815) is the player child like every other ship's; npc variant (param_3=false): root and LOD meshes get material 32239 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32239 does not exist in the resource table, so the swap is a silent no-op"
  },
  {
   "name": "v_ship_040_deep_science",
@@ -3393,6 +3405,16 @@
     "table": "DAT_00254b10"
    },
    {
+    "mesh": 17941,
+    "role": "engine_glow",
+    "variant": "player",
+    "position": null,
+    "rotation": null,
+    "scale": null,
+    "lastChild": true,
+    "remake": true
+   },
+   {
     "mesh": 18041,
     "role": "engine",
     "variant": "npc",
@@ -3410,7 +3432,8 @@
      18041
     ],
     "childrenPlayer": [
-     18741
+     18741,
+     17941
     ]
    },
    {
@@ -3420,7 +3443,8 @@
      18041
     ],
     "childrenPlayer": [
-     18741
+     18741,
+     17941
     ]
    }
   ],
@@ -3446,7 +3470,7 @@
     18741
    ]
   },
-  "notes": "player variant (param_3=true): code skips the engine child for idx 0x27/0x29 (no engine_glow mesh exists), so the last child (shown at LOD levels, toggled by setExhaustVisible/cloak) is the lights mesh; npc variant (param_3=false): root and LOD meshes get material 32241 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32241 does not exist in the resource table, so the swap is a silent no-op"
+  "notes": "player variant (param_3=true): code skips the engine child for idx 0x27/0x29 (the game never registered the engine_glow mesh), so the last child (shown at LOD levels, toggled by setExhaustVisible/cloak) is the lights mesh. Remake: the OBB's engine_glow mesh (17941, added by patch_resources.py, material 34815) is the player child like every other ship's; npc variant (param_3=false): root and LOD meshes get material 32241 (MaterialCreate(32200+idx) + MeshChangeResourceMaterial); material 32241 does not exist in the resource table, so the swap is a silent no-op"
  },
  {
   "name": "ship_042_retro",

@@ -60,17 +60,19 @@ namespace GoF2Remake.Flight
 
         /// <summary>Multiplayer (NetPlayer): the exhaust of another player's ship 'model', driven by their game's engine state
         /// (on: the engine glow shows), boost (0..1) and cloak (0..100).</summary>
-        public static ShipExhaust AttachRemote(GameObject host, Database db, Transform model, int shipIndex, Func<bool> on, Func<float> boost, Func<float> cloak)
+        /// 'scaled': the plume shrinks with the ship's own scale (the hangar flights shrink a ship to nothing at the view's edge).
+        public static ShipExhaust AttachRemote(GameObject host, Database db, Transform model, int shipIndex, Func<bool> on, Func<float> boost, Func<float> cloak,
+                                               bool scaled = false)
         {
             var e = host.AddComponent<ShipExhaust>();
             e.remoteOn = on;
             e.remoteBoost = boost;
             e.remoteCloak = cloak;
-            e.Setup(db, model, shipIndex);
+            e.Setup(db, model, shipIndex, scaled);
             return e;
         }
 
-        void Setup(Database db, Transform parent, int shipIndex)
+        void Setup(Database db, Transform parent, int shipIndex, bool scaled = false)
         {
             var mat = ExhaustMaterial(CombatAssets.Load()?.particlesMaterial);
             int value = shipIndex >= 0 && shipIndex < ShipCell.Length ? ShipCell[shipIndex] : 0;
@@ -100,6 +102,7 @@ namespace GoF2Remake.Flight
                 main.startSize = size * M;
                 main.startColor = (Color)new Color32(0xDD, 0xDD, 0xDD, 0xFF);
                 main.simulationSpace = ParticleSystemSimulationSpace.World;
+                if (scaled) main.scalingMode = ParticleSystemScalingMode.Hierarchy;
                 main.emitterVelocityMode = ParticleSystemEmitterVelocityMode.Transform;
                 main.maxParticles = 20;
                 var em = ps.emission;

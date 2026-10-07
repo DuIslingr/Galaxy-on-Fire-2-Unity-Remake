@@ -39,6 +39,19 @@ for mid, src in sorted(path_by_id.items()):
     res['meshes'].append(dict(id=mid, model=model, source=src, materialId=mat if mat in mats else -1))
     added.append((mid, model, mat))
 
+# Remake: the Valkyrie Vossk fighters' engine glows. Globals::getShipGroup skips the player's engine child for idx
+# 0x27 / 0x29 (the game never registered 17939 / 17941), but the OBB has both meshes, mapped onto the right half of
+# v_ship_engine_glow.png (its green Vossk glows): material 34815, like the other Valkyrie ships' glows (37 / 38 / 40).
+REMAKE = [(17939, 'valkyrie/3d/meshes/ships/v_ship_039_vossk_engine_glow_add.aem', 34815),
+          (17941, 'valkyrie/3d/meshes/ships/v_ship_041_vossk_engine_glow_add.aem', 34815)]
+for mid, src, mat in REMAKE:
+    if mid in have or any(m['id'] == mid for m in res['meshes']): continue
+    src = 'data/assets/' + src
+    model = model_path(src)
+    if not os.path.exists(os.path.join(ROOT, 'Assets', model)): continue
+    res['meshes'].append(dict(id=mid, model=model, source=src, materialId=mat if mat in mats else -1))
+    added.append((mid, model, mat))
+
 json.dump(res, open(RES, 'w'), indent=1)
 for a in added: print(*a)
 print(len(added), 'meshes added')
