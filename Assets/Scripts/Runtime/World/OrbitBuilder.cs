@@ -252,6 +252,14 @@ namespace GoF2Remake.World
             var bigPositions = new Vector3[big];
             var ores = OreProbabilities(db, layout);
             int oreCursor = 0;
+            // Level::createAsteroids: a Novanium asteroid is type 3, mesh 18836 sn_asteroid_magma with its own explosion
+            // (space_props.md, table UNK_00251fb0), whatever the orbit's own type; the same mesh radius as asteroid_01.
+            GameObject magma = null, magmaExplosion = null;
+            if (ores.Exists(o => o.item == Novanium))
+            {
+                magma = AssembledObject.LoadPrefab(db.AssemblyByName("sn_asteroid_magma"));
+                magmaExplosion = AssembledObject.LoadPrefab(db.AssemblyByName("sn_asteroid_magma_explosion_anim"));
+            }
             for (int i = 0; i < layout.asteroidCount; i++)
             {
                 bool isBig = i < big;
@@ -273,17 +281,19 @@ namespace GoF2Remake.World
                 // Quality from the scale; the big ones (and the largest small ones) are 50 % A, else D..B.
                 int quality = scale < 0.4f ? 4 : scale < 0.7f ? 5 : scale < 0.92f ? 6 : Random.Range(0, 2) == 0 ? 7 : 4 + Random.Range(0, 3);
                 var euler = new Vector3(Random.Range(0, 100), Random.Range(0, 100), Random.Range(0, 100)) * 0.01f * 2f * Mathf.PI;
-                var go = Object.Instantiate(prefab, OrbitLayout.ToUnity(pos), OrbitLayout.RotationToUnity(euler), root);
+                bool isMagma = ore == Novanium && magma != null;
+                var model = isMagma ? magma : prefab;
+                var go = Object.Instantiate(model, OrbitLayout.ToUnity(pos), OrbitLayout.RotationToUnity(euler), root);
                 go.name = $"Asteroid {i}";
-                go.transform.localScale = prefab.transform.localScale * scale;
+                go.transform.localScale = model.transform.localScale * scale;
                 // PlayerAsteroid: hit radius = meshRadius * scale * 0.7, HP = scale * 100 + 30.
                 var target = go.AddComponent<GoF2Remake.Flight.Target>();
                 target.isAsteroid = true;
-                target.radius = layout.AsteroidMeshRadius * scale * 0.7f * M;
+                target.radius = (isMagma ? MagmaMeshRadius : layout.AsteroidMeshRadius) * scale * 0.7f * M;
                 target.maxHp = target.hp = scale * 100f + 30f;
-                target.explosionPrefab = explosion;
+                target.explosionPrefab = isMagma ? magmaExplosion : explosion;
                 target.explosionScale = scale;
-                target.explosionTexture = explosionTexture;
+                target.explosionTexture = isMagma ? null : explosionTexture;
                 target.destroyedSound = destroyedSound;
                 target.oreItem = ore;
                 target.quality = quality;
@@ -314,8 +324,19 @@ namespace GoF2Remake.World
             list.Add((164, alien ? 100 : 0));
             var sorted = list.Select((e, i) => (e, i)).OrderByDescending(x => x.e.p).ThenBy(x => x.i).Select(x => x.e).ToList();
             for (int k = 0; k < sorted.Count; k++) if (sorted[k].p > 0) sorted[k] = (sorted[k].item, sorted[k].p - 2 * k);
+            // The supernova orbit after step 0x59: every pair's ore becomes Novanium (0xd9), the chances stay.
+            if (NovaniumOrbit(layout)) for (int k = 0; k < sorted.Count; k++) sorted[k] = (Novanium, sorted[k].p);
             return sorted;
         }
+
+        public const int Novanium = 217;   // 0xd9; its core is 218 (Target.CoreItem)
+        const float MagmaMeshRadius = 3547f;   // sn_asteroid_magma's bounding sphere, as asteroid_01's
+
+        /// <summary>Galaxy::getAsteroidProbabilities 0x1a4fb0 with Status::inSupernovaOrbit 0xb9088 (station 0x6d, Naneroh)
+        /// and getCurrentCampaignMission > 0x59: the orbit's asteroids are all Novanium (Ginoya's other stations keep their
+        /// normal ores). The remake reads Session.WorldIndex, so the finished game's world (multiplayer) has it too.</summary>
+        public static bool NovaniumOrbit(OrbitLayout layout) =>
+            layout.systemIndex >= 0 && layout.stationIndex == 0x6d && Session.WorldIndex > 0x59;
 
         /// <summary>Level::createAsteroids 0xbd34a: a cursor walks the pairs; a roll under p takes that ore and moves on
         /// (wrapping after pair 5), a miss starts over at the top ore.</summary>
