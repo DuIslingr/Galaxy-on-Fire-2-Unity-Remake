@@ -192,7 +192,7 @@ namespace GoF2Remake.UI
             pauseMenu = new PauseMenu(root, BackToMenu);
             ButtonSounds(root.Q(className: "pause-backdrop"));
             pauseMenu.InfoSound = () => PlayUi(CombatAudio.Load()?.messageInfo);
-            pauseMenu.Photo = new PhotoMode(root, this);
+            pauseMenu.Photo = new PhotoMode(root, this) { ButtonSound = PlayButton };
             radioBox = root.Q("radio");
             screenFade = root.Q("screenFade");
             radioPortrait = root.Q("radioPortrait");
