@@ -132,7 +132,7 @@ namespace GoF2Remake.World
             swapped = on;
             foreach (var h in hull) if (h.r != null) h.r.sharedMaterials = on ? h.cloak : h.original;
             if (!on) glow.Restore();
-            OpaqueTexture.Request(owner, on);
+            GoF2Remake.Visuals.CloakPass.Request(owner, on);
         }
 
         public void Dispose()

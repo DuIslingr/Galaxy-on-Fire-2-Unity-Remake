@@ -7,7 +7,7 @@
 //     medal 19 counts the time (Status+0xc0). Sound 30 (Cloak_02) on and off.
 //   Look (BumpShaderCloak, shader type 0xe): the hull renderers switch to GoF2/Cloak (dissolve by cloak_map.png into the
 //     refracted screen behind, light-blue edge); the lights keep glowing and animating, the engine glow hides from 25 %
-//     (CloakGlow). Needs the camera's opaque texture, switched on while cloaked.
+//     (CloakGlow). Drawn by CloakPass from a copy of the frame after the transparents, so the hull refracts its own lights.
 
 using System;
 using System.Collections.Generic;
@@ -85,7 +85,7 @@ namespace GoF2Remake.Flight
         void OnDestroy()
         {
             if (target != null) target.cloaked = false;
-            OpaqueTexture.Request(this, false);
+            GoF2Remake.Visuals.CloakPass.Request(this, false);
             foreach (var h in hull) foreach (var m in h.cloak) Destroy(m);
         }
 
@@ -140,7 +140,7 @@ namespace GoF2Remake.Flight
             swapped = on;
             foreach (var h in hull) if (h.r != null) h.r.sharedMaterials = on ? h.cloak : h.original;
             if (!on) glow.Restore();
-            OpaqueTexture.Request(this, on);
+            GoF2Remake.Visuals.CloakPass.Request(this, on);
         }
 
         void Play()

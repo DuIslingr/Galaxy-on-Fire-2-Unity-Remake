@@ -3,7 +3,8 @@
 // wobble (x + n.x * 100 * sin(rate), y + n.y * 75 * cos(rate) at 1024x768), with a light-blue (0.6, 0.8, 1.0) edge.
 // _AnimValue is the fade (0..1 over 2 s): the hull dissolves where the map is below it, the band glowing along the front,
 // blended over the lit hull up to 0.5; 0.5..0.75 blends into pure refraction (a glass silhouette).
-// Rendered after the opaques and reads _CameraOpaqueTexture (the camera's opaque texture must be on).
+// Drawn by CloakPass after URP's transparents (LightMode GoF2Cloak) from its copy of the frame, _GoF2CloakScene, which
+// holds the ship's own lights and glare as the original's refraction FBO does.
 Shader "GoF2/Cloak"
 {
     Properties
@@ -22,13 +23,13 @@ Shader "GoF2/Cloak"
 
         Pass
         {
-            Tags { "LightMode" = "UniversalForward" }
+            Tags { "LightMode" = "GoF2Cloak" }
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+            TEXTURE2D_X(_GoF2CloakScene); SAMPLER(sampler_GoF2CloakScene);
 
             TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
             TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
@@ -69,7 +70,7 @@ Shader "GoF2/Cloak"
 
                 float2 suv = GetNormalizedScreenSpaceUV(i.positionCS);
                 float2 wobble = float2(nTS.x * 100.0 * sin(_CloakRate), nTS.y * 75.0 * cos(_CloakRate)) / float2(1024.0, 768.0);
-                half3 refr = SampleSceneColor(saturate(suv + wobble));
+                half3 refr = SAMPLE_TEXTURE2D_X(_GoF2CloakScene, sampler_GoF2CloakScene, UnityStereoTransformScreenSpaceTex(saturate(suv + wobble))).rgb;
 
                 // BumpShaderCloak's fragment shader as it is (libgof2hdaa.so 0x218183): where the dissolve map is below
                 // u_AnimValue (+0.025) the screen behind shows, plus a light-blue band along the dissolve front
