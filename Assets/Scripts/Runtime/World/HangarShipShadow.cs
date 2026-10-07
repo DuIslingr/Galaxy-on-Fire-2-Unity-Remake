@@ -7,7 +7,7 @@
 // a decal (GoF2/HangarShadow on a box around the footprint, reading the station camera's depth texture), so it lies on
 // whatever is under the hull: the pads, the Terran cradles (the hull sits below their rims), the raised rims and
 // pedestals, the crates. The box sits in the hangar, not on the ship: it only turns with the ship's heading. Shown while
-// the ship stands on its pad (the turntable, the parked ships), fading out as it lifts off (gone 15 m up) and staying on
+// the ship stands on its pad (the turntable, the parked ships; at once for a ship spawned there), fading out as it lifts off (gone 15 m up) and staying on
 // the pad as it flies away; an arriving ship's fades in the same way as it comes down onto its pad (ExpectLanding: the
 // flight names the pad, so the shadow knows the floor before the ship gets there). The "Hangar ship shadows" option
 // (Settings.HangarShadows: off / player ship only / all ships) hides them live; off also gives the station camera its
@@ -43,6 +43,7 @@ namespace GoF2Remake.World
         float landingPadY = float.NaN;   // an arriving ship's pad (its pivot's height there), until it has landed
         Vector3 lastPos;
         bool player;
+        bool settle;     // spawned resting: the floor and full strength on the first update (SpawnShip places the ship after Attach)
         string baking;   // the assembly ShipShadowBaker is baking for this ship (hidden meanwhile)
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -62,8 +63,8 @@ namespace GoF2Remake.World
             if (data.requiresDepthOption != want) data.requiresDepthOption = want;
         }
 
-        /// <summary>A shadow for a hangar ship (StationLevel.SpawnShip); 'resting': it stands on its pad now (else it shows
-        /// once the ship has come to rest); 'player': the player's own ship (the option's "Player ship only"). Attached
+        /// <summary>A shadow for a hangar ship (StationLevel.SpawnShip); 'resting': it stands on its pad now, shown at once (a
+        /// landing flight hides it again, ExpectLanding; else it shows once the ship has come to rest); 'player': the player's own ship (the option's "Player ship only"). Attached
         /// whatever the option, hidden while it doesn't allow it, so changing it while docked takes effect at once.</summary>
         public static HangarShipShadow Attach(GameObject ship, string assembly, bool resting, bool player = false)
         {
@@ -111,12 +112,7 @@ namespace GoF2Remake.World
             s.block = new MaterialPropertyBlock();
             s.block.SetTexture("_MainTex", tex);
             s.lastPos = ship.transform.position;
-            if (resting)
-            {
-                s.floorY = s.HullBottom();
-                s.alpha = 1f;
-                s.restTime = RestSeconds;
-            }
+            s.settle = resting;
             s.Place();
             return s;
         }
@@ -124,7 +120,7 @@ namespace GoF2Remake.World
         /// <summary>The ship is flying in to land with its pivot at height 'padY' (HangarFlight.Arrival): its shadow lies on
         /// that floor from now on and fades in as the ship comes down, the reverse of a take-off. A hover on the way
         /// (the turn over the pad) isn't taken for the landing.</summary>
-        public void ExpectLanding(float padY) { landingPadY = padY; restTime = 0f; }
+        public void ExpectLanding(float padY) { landingPadY = padY; restTime = 0f; alpha = 0f; settle = false; }
 
         /// <summary>Takes a baked map; its texture.</summary>
         Texture2D Use(ShipShadowSet.Entry entry)
@@ -182,6 +178,14 @@ namespace GoF2Remake.World
             if (box == null) return;
             if (baking != null) PollBake();
             var pos = transform.position;
+            if (settle)
+            {
+                settle = false;
+                lastPos = pos;
+                restTime = RestSeconds;
+                floorY = HullBottom();
+                alpha = 1f;
+            }
             float dt = Time.deltaTime;
             restTime = (pos - lastPos).sqrMagnitude < 1e-6f ? restTime + dt : 0f;
             lastPos = pos;
@@ -212,7 +216,6 @@ namespace GoF2Remake.World
                 size = Mathf.Max(b.size.x, b.size.z) * 1.25f;
                 bottom = b.min.y;
             }
-            alpha = 0f;
             if (restTime >= RestSeconds && float.IsNaN(landingPadY)) floorY = HullBottom();
         }
 

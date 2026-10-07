@@ -542,7 +542,7 @@ namespace GoF2Remake.World
             }
             // Remake: a soft shadow on the floor under every hangar ship (not the bar's flybys); it shows once the ship rests
             // (the "Hangar ship shadows" option: off, the player's own ship only, every ship).
-            if (go != null && hangarRoot != null && parent == hangarRoot) HangarShipShadow.Attach(go, entry.name, false, label == "Player ship");
+            if (go != null && hangarRoot != null && parent == hangarRoot) HangarShipShadow.Attach(go, entry.name, true, label == "Player ship");   // at once; a landing flight hides it (ExpectLanding)
             return go;
         }
 
@@ -807,13 +807,13 @@ namespace GoF2Remake.World
                     // A custom hangar: its "camera" marker, drifting a few metres, looking at "camera_target" (else the pad).
                     var at = customHangar.camera + OrbitLayout.ToUnity(p);
                     cam.SetPositionAndRotation(at, Quaternion.LookRotation(customHangar.cameraTarget - at, Vector3.up));
-                    SetCustomLens(customHangar.def, StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar);
+                    SetCustomLens(customHangar.def, StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar, false);
                 }
                 else
                 {
                     var r = StationTables.HangarCameraRot[HangarIndex];
                     cam.SetPositionAndRotation(shipPivot + OrbitLayout.ToUnity(p), CameraRotation(r.x, r.y, StationTables.HangarCameraRoll));
-                    SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar);
+                    SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar, false);
                 }
             }
             else
@@ -880,7 +880,7 @@ namespace GoF2Remake.World
                 var pos = bounds.center + away * (radius + 5f);
                 pos.y = bounds.min.y + 1.7f;
                 cam.SetPositionAndRotation(pos, Quaternion.LookRotation(-away, Vector3.up));
-                SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar);
+                SetLens(StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar, false);
             }
             else
             {
@@ -903,14 +903,17 @@ namespace GoF2Remake.World
         }
 
         /// <summary>A custom room's lens: "fov" (vertical degrees), "near" / "far" (metres); the original's otherwise.</summary>
-        void SetCustomLens(Modding.ModInteriors.Def d, float fovRad, float near, float far)
+        void SetCustomLens(Modding.ModInteriors.Def d, float fovRad, float near, float far, bool keepWidth = true)
         {
-            SetLens(d.fov > 0f ? d.fov * Mathf.Deg2Rad : fovRad, d.near > 0f ? d.near / M : near, d.far > 0f ? d.far / M : far);
+            SetLens(d.fov > 0f ? d.fov * Mathf.Deg2Rad : fovRad, d.near > 0f ? d.near / M : near, d.far > 0f ? d.far / M : far, keepWidth);
         }
 
-        void SetLens(float fovRad, float near, float far)
+        /// <summary>'keepWidth': wider screens keep the 16:9 width (the bars end outside it); the hangars use the original
+        /// Hor+ view like the flight cameras (a new hangar model is being made, so their cut-off edges are left for it).</summary>
+        void SetLens(float fovRad, float near, float far, bool keepWidth = true)
         {
-            mainCamera.fieldOfView = Aspect.VerticalFovKeepWidth(fovRad * Mathf.Rad2Deg, mainCamera.aspect);   // the rooms end outside 16:9
+            mainCamera.fieldOfView = keepWidth ? Aspect.VerticalFovKeepWidth(fovRad * Mathf.Rad2Deg, mainCamera.aspect)
+                                               : Aspect.VerticalFov(fovRad * Mathf.Rad2Deg, mainCamera.aspect);
             mainCamera.nearClipPlane = near * M;
             mainCamera.farClipPlane = far * M;
         }
