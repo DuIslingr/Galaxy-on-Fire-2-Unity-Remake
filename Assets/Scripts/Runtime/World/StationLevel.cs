@@ -190,6 +190,7 @@ namespace GoF2Remake.World
             // Survivor medal: the hull % this ship arrived with (before the repair).
             int maxHull = (db.Ship(Session.ShipIndex)?.armor ?? 100) + (Session.HasMod(0) ? 40 : 0);
             Session.LastArrivalHullPercent = Session.PlayerHull < 0 ? 100 : Mathf.RoundToInt(100f * Session.PlayerHull / Mathf.Max(1, maxHull));
+            Session.ArrivedWithoutGear = Achievements.NoWeaponOrEquipment(db);   // Harum-Scarum: the loadout docked with
             Session.HighestCredits = Mathf.Max(Session.HighestCredits, Session.Credits);
             Session.PlayerHull = Session.PlayerArmor = -1;
             Session.PlayerShield = -1f;

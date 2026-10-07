@@ -84,6 +84,7 @@ namespace GoF2Remake.World
             db = database;
             nav = navigation;
             ship = controller;
+            health = controller != null ? controller.GetComponent<PlayerHealth>() : null;
             weapons = weaponSystem;
             chase = chaseCamera;
             gate = jumpgate;
@@ -92,6 +93,8 @@ namespace GoF2Remake.World
             sfx.playOnAwake = false;
             nav.KhadorRequested += OpenKhadorMap;
         }
+
+        PlayerHealth health;
 
         /// <summary>Set by the level: the gate refuses the jump (the Kaamo siege).</summary>
         public System.Func<bool> GateBlocked;
@@ -105,6 +108,15 @@ namespace GoF2Remake.World
         {
             if (ship == null) return;
             float dtMs = Time.deltaTime * 1000f;
+            // Remake (#37): a destroyed ship neither takes the gate nor finishes a Khador charge (shot down on its way into
+            // the gate it still asked for the destination and jumped, coming out repaired); the scenes themselves are
+            // invulnerable.
+            if (health == null) health = ship.GetComponent<PlayerHealth>();
+            if (health != null && health.Dead)
+            {
+                if (state == State.Charging) state = State.None;
+                if (state == State.None) return;
+            }
             switch (state)
             {
                 case State.None:

@@ -76,14 +76,14 @@ namespace GoF2Remake.Data
                 case 43: return Session.GraveRiserKills;
                 case 37: return Session.KaamoShips.Count;   // Ship Collector: stored hulls (one per type)
                 case 39: return Session.BattleshipsDestroyed;
-                case 22: return NoWeaponOrEquipment(db) ? 1 : 0;
+                case 22: return Session.ArrivedWithoutGear ? 1 : 0;
                 case 38: case 40: case 41: case 42: case 44: return Session.EliteFlags.Contains(medal) ? Thresholds[medal, 0] : 0;
             }
             return null;
         }
 
         /// <summary>initCheckEquipmentAndWeapons: from campaign 8, no mounted weapon (types 0-2) or no equipment item (type 3).</summary>
-        static bool NoWeaponOrEquipment(Database db)
+        public static bool NoWeaponOrEquipment(Database db)
         {
             if (!Session.FreePlay && Session.CampaignMission < 8) return false;
             int weapons = 0, equipment = 0;

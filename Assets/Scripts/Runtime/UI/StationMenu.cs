@@ -274,7 +274,7 @@ namespace GoF2Remake.UI
         /// <summary>Station button 0 (ModStation::OnKeyPress): the Hangar window over the main view.</summary>
         void OpenHangar()
         {
-            if (HangarOpen || level == null || !Story.HangarUnlocked) return;
+            if (HangarOpen || level == null || !Story.HangarUnlocked || ArrivalPending) return;
             if (RefuseObserver()) return;
             if (level.View != StationView.Hangar) level.SetView(StationView.Hangar);
             FirstVisitHint(8, 622);   // before the first row's selection hint
@@ -649,7 +649,7 @@ namespace GoF2Remake.UI
 
         void OpenLounge()
         {
-            if (level == null || !Story.LoungeUnlocked(level.Station != null ? level.Station.index : -1)) return;
+            if (level == null || ArrivalPending || !Story.LoungeUnlocked(level.Station != null ? level.Station.index : -1)) return;
             if (RefuseObserver()) return;
             CloseHangar();
             level?.SetView(StationView.Lounge);
@@ -661,7 +661,7 @@ namespace GoF2Remake.UI
         /// autopilot to it or, for another system with a drive, the Khador charge.</summary>
         void OpenMap()
         {
-            if (level == null || StarMap.IsOpen || !Story.MapUnlocked) return;
+            if (level == null || StarMap.IsOpen || !Story.MapUnlocked || ArrivalPending) return;
             if (RefuseObserver()) return;
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
             if (Story.MapRefusal is string refusal) { ShowDialog(refusal, null, true); return; }   // index 77: take the Cronus
@@ -735,6 +735,7 @@ namespace GoF2Remake.UI
         /// the original's "Depart the station?" (397).</summary>
         void AskLaunch()
         {
+            if (ArrivalPending) return;
             if (RefuseObserver()) return;
             if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
             if (RefuseLaunchForStory()) return;
@@ -1057,6 +1058,13 @@ namespace GoF2Remake.UI
         }
 
         bool fineChecked;
+
+        /// <summary>Remake (#37, #46): the menu's Hangar, Lounge, Map, Launch and system menu wait until the docking checks
+        /// (the pirate base, the fine, the story's conversation, Kaamo) have had their first go after the landing and the
+        /// settle: they don't run while the hangar window or the system menu is open, so opening one first traded at an
+        /// enemy station without its fine, saved the game with it unpaid and sold a loaner before its conversation took it.</summary>
+        bool arrivalChecksRun;
+        bool ArrivalPending => !arrivalChecksRun;
         const float ArrivalSettleMs = 1000f;
         float settleMs;
 
@@ -1379,7 +1387,7 @@ namespace GoF2Remake.UI
 
         void OpenSystemMenu()
         {
-            if (SystemMenuOpen || level == null) return;
+            if (SystemMenuOpen || level == null || ArrivalPending) return;
             CloseHangar();
             systemMenu.AddToClassList("station-dialog-backdrop--shown");
             ShowSystemPage(SysPage.Main);
@@ -1761,6 +1769,7 @@ namespace GoF2Remake.UI
         bool RunDockingChecks()
         {
             if (DialogOpen || SystemMenuOpen || HangarOpen) return false;
+            arrivalChecksRun = true;
             if (CheckPirateBase() || CheckDockingFine() || CheckStory() || CheckFreelance() || CheckKaamo() || CheckPendingProducts()) return true;
             if (!storyDialogue.IsOpen && (CheckRescue() || CheckMedals() || CheckMedalHints())) return true;
             return CheckWanted() || CheckWingmenContract();

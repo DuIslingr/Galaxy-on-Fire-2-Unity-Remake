@@ -541,8 +541,10 @@ namespace GoF2Remake.Data
         /// <summary>ModStation::OnInitialize menu buttons: Hangar from 5, Map / Missions from 9 (not at 15), Lounge from 12
         /// (not at 15, never at stations 100 / 101).</summary>
         /// <summary>ModStation::OnKeyPress (the menu buttons, 528 "Not available." otherwise): no Hangar in a loaner (48, 49,
-        /// 56), no Lounge at 49, no Map at 48 / 49.</summary>
-        public static bool HangarUnlocked => Session.FreePlay || (Index >= 5 && Index != 48 && Index != 49 && Index != 56);
+        /// 56), no Lounge at 49, no Map at 48 / 49. Remake (#46): no Hangar while any loaner is flown (Session.ParkedShip): the
+        /// K'Suukk docks at 54 and the S'Kanarr at 57, where the original opens the success conversation the same frame (the
+        /// remake waits a second after the landing), and a quick tap on Hangar sold the loaner's guns or the loaner itself.</summary>
+        public static bool HangarUnlocked => Session.FreePlay || (Index >= 5 && Index != 48 && Index != 49 && Index != 56 && Session.ParkedShip == null);
         public static bool MapUnlocked => Session.FreePlay || (Index >= 9 && Index != 15 && Index != 48 && Index != 49);
         public static bool LoungeUnlocked(int station) => station != 100 && station != 101 && (Session.FreePlay || (Index >= 12 && Index != 15 && Index != 49));
         /// <summary>ModStation::OnKeyPress, the Map at index 77: only in the Cronus Khador left in the hangar (326), else null.</summary>

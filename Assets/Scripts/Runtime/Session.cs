@@ -105,6 +105,10 @@ namespace GoF2Remake.Data
         /// destroyed, the highest credits, the hull % on the last arrival at a station (Survivor).</summary>
         public static int AsteroidsDestroyed, OreMined, CoresMined, CratesSalvaged, JunkDestroyed, BattleshipsDestroyed, HighestCredits;
         public static int LastArrivalHullPercent = 100;
+        /// <summary>Medal 22 (Harum-Scarum): docked with no weapon or no equipment item mounted, taken when the station loads
+        /// (the original checks the medals at docking, before the hangar can change the loadout; the remake's check waits for
+        /// the landing and the conversations, and stripping the ship meanwhile earned it, #46). Not saved: a load docks anew.</summary>
+        public static bool ArrivedWithoutGear;
         public static HashSet<int> OreTypesMined = new HashSet<int>(), CoreTypesMined = new HashSet<int>();
         /// <summary>Status+0xa8 (medal 8 Personal Need): the booze tonnes gained per hangar visit (ModStation::OnKeyPress /
         /// OnTouchEnd); Status+0xac (medal 9 Barkeeper): the booze types traded (items 132-153); Status+0xcc (medal 21
@@ -385,6 +389,7 @@ namespace GoF2Remake.Data
             Medals = new int[45];
             AsteroidsDestroyed = OreMined = CoresMined = CratesSalvaged = JunkDestroyed = BattleshipsDestroyed = HighestCredits = 0;
             LastArrivalHullPercent = 100;
+            ArrivedWithoutGear = false;
             OreTypesMined = new HashSet<int>();
             BoozeBought = AlienRemainsCollected = 0;
             BoozeTypes = new HashSet<int>();
