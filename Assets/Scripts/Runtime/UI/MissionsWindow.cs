@@ -210,8 +210,13 @@ namespace GoF2Remake.UI
         {
             if (target < 0) return;
             root.AddToClassList("station-map-open");
-            var map = StarMap.Open(level.Database, StarMapMode.Mission, false, _ => { root.RemoveFromClassList("station-map-open"); menu.Focus(from); },
-                                   -1, target, false, routeFromSystem);
+            // Remake (players' suggestion): the map travels like the station's Map (a confirmed station launches with it programmed).
+            var map = StarMap.Open(level.Database, StarMapMode.Mission, GalaxyMap.HasJumpDrive(level.Database), r =>
+            {
+                root.RemoveFromClassList("station-map-open");
+                if (r.station >= 0) { menu.TravelFromMap(r); return; }
+                menu.Focus(from);
+            }, -1, target, false, routeFromSystem, -1, menu.CanTravelFromMap);
             if (map == null) root.RemoveFromClassList("station-map-open");
         }
 

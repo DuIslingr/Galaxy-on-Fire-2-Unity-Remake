@@ -676,6 +676,20 @@ namespace GoF2Remake.UI
             else if (cm < 16 && Session.Hints.Add(0xf)) map.ShowHint(HintText(631, true));
         }
 
+        /// <summary>Remake: whether the Missions window's map may travel: what the Map button needs (unlocked, a controlling
+        /// device, the map not refused by the story).</summary>
+        public bool CanTravelFromMap => level != null && Story.MapUnlocked && GoF2Remake.Multiplayer.NetProfileClient.Refusal == null
+                                        && Story.MapRefusal == null;
+
+        /// <summary>Remake: a station picked on the Missions window's map: the Map button's departure (an overloaded hold
+        /// stays, 204).</summary>
+        public void TravelFromMap(StarMapResult result)
+        {
+            if (new Hangar(level.Database, level.Stock).Overloaded) { ShowDialog(Localization.Get(204), null, true); return; }
+            if (missions != null && missions.IsOpen) missions.Close();
+            OnMapClosed(result);
+        }
+
         void OnMapClosed(StarMapResult result)
         {
             root.RemoveFromClassList("station-map-open");

@@ -44,7 +44,8 @@ using UnityEngine.UIElements;
 
 namespace GoF2Remake.UI
 {
-    /// <summary>Mission = StarMap(true, mission, ...): view only, centred on a mission's target, no departure.</summary>
+    /// <summary>Mission = StarMap(true, mission, ...): centred on a mission's target; view only in the original (remake: the
+    /// Missions window's map travels like the station's, StarMap.Open's allowTravel).</summary>
     public enum StarMapMode { Station, Gate, Khador, Mission }
 
     /// <summary>What the player picked: station -1 = closed without a destination.</summary>
@@ -80,6 +81,9 @@ namespace GoF2Remake.UI
         StarMapMode mode;
         public StarMapMode Mode => mode;
         bool jumpDrive;
+        /// <summary>Remake (players' suggestion): a Mission map that can travel: confirming a station programs it like the
+        /// station's map, and a target past the gate neighbours is reached along the gate route (SystemJump.NextHop).</summary>
+        bool travel;
         Action<StarMapResult> onClosed;
         int promptStation = -1, focusStation = -1;
         bool askVoid;
@@ -157,7 +161,8 @@ namespace GoF2Remake.UI
         /// <param name="routeFromSystem">Mission map: the route's start system (StarMap::setStart; -1 = the current system).</param>
         /// <param name="revealSystem">The reveal animation of a newly visible system (-1 = none).</param>
         public static StarMap Open(Database db, StarMapMode mode, bool jumpDrive, Action<StarMapResult> closed, int promptStation = -1,
-                                       int focusStation = -1, bool askVoid = false, int routeFromSystem = -1, int revealSystem = -1)
+                                       int focusStation = -1, bool askVoid = false, int routeFromSystem = -1, int revealSystem = -1,
+                                       bool allowTravel = false)
         {
             var assets = StarMapAssets.Load();
             if (assets == null || assets.layout == null || assets.panelSettings == null)
@@ -179,6 +184,7 @@ namespace GoF2Remake.UI
             map.askVoid = askVoid;
             map.routeFrom = routeFromSystem;
             map.revealSystem = revealSystem;
+            map.travel = allowTravel && mode == StarMapMode.Mission;
             var pr = go.AddComponent<PanelRenderer>();
             pr.panelSettings = assets.panelSettings;
             pr.visualTreeAsset = assets.layout;
@@ -1115,9 +1121,12 @@ namespace GoF2Remake.UI
         void Confirm(int k)
         {
             int station = planets[k].station;
-            if (mode == StarMapMode.Mission) { ShowDialog(StationName(station), null, null, true); return; }   // view only
+            if (mode == StarMapMode.Mission && !travel) { ShowDialog(StationName(station), null, null, true); return; }   // view only
             if (station == currentStation) { ShowDialog(T(419), null, null, true); return; }
             bool otherSystem = SystemOf(station) != currentSystem;
+            // Remake: the mission map views any system; without a drive a target past the gate neighbours needs a gate route.
+            if (travel && !jumpDrive && otherSystem && !GalaxyMap.IsInRoutes(current, SystemOf(station))
+                && GalaxyMap.SystemPath(db, currentSystem, SystemOf(station)) == null) { ShowDialog(T(420), null, null, true); return; }
             if (jumpDrive && otherSystem && GalaxyMap.HasVolatileGoods)
             {
                 // Ship::hasVolatileGoods: no Khador Drive; a gate neighbour is still reached through the jumpgate.

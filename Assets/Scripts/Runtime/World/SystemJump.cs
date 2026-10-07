@@ -161,7 +161,9 @@ namespace GoF2Remake.World
             if (result.station >= 0)
             {
                 Session.ProgrammedStation = result.station;
-                StartGateScene(result.station);
+                int hop = NextHop(result.station);
+                hopping = hop != result.station;
+                StartGateScene(hop);
                 return;
             }
             // dockToStream(false): controls back, the ship past the gate with the gate's direction.
@@ -171,6 +173,25 @@ namespace GoF2Remake.World
             if (gate != null)
                 ship.transform.SetPositionAndRotation(gate.transform.position + OrbitLayout.DirToUnity(new Vector3(0f, 0f, 8000f)) * M,
                                                       Quaternion.LookRotation(OrbitLayout.DirToUnity(Vector3.forward), Vector3.up));
+        }
+
+        /// <summary>Set while the gate takes the ship one system along the route to the programmed station (Arrive keeps it).</summary>
+        bool hopping;
+
+        /// <summary>Remake: where the gate jumps for the programmed station: the station itself in a gate neighbour (the
+        /// original's only case: its maps program nothing further), else the gate orbit of the next system on the gate
+        /// route (GalaxyMap.SystemPath), where the autopilot flies on to the next gate. The Missions window's map programs
+        /// stations anywhere; the original's gate took the ship straight there, any distance.</summary>
+        int NextHop(int station)
+        {
+            int from = db.Stations.Find(s => s.index == Session.StationIndex)?.system ?? -1;
+            int to = db.Stations.Find(s => s.index == station)?.system ?? -1;
+            var here = db.Systems.Find(s => s.index == from);
+            if (from < 0 || to < 0 || GalaxyMap.IsInRoutes(here, to)) return station;
+            var path = GalaxyMap.SystemPath(db, from, to);
+            if (path == null || path.Count < 3) return station;
+            int gateStation = db.Systems.Find(s => s.index == path[1])?.jumpgateStation ?? -1;
+            return gateStation >= 0 ? gateStation : station;
         }
 
         void StartGateScene(int station)
@@ -381,7 +402,8 @@ namespace GoF2Remake.World
             Session.ArrivedBySystemJump = true;
             Session.LaunchedFromStation = false;
             if (viaGate) Session.JumpgatesUsed++;
-            Session.ProgrammedStation = -1;
+            if (!hopping) Session.ProgrammedStation = -1;   // remake: a hop keeps the destination, the autopilot flies on
+            hopping = false;
             Session.InstantJump = false;
             state = State.None;
             enabled = false;
