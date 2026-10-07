@@ -75,7 +75,7 @@ namespace GoF2Remake.Multiplayer
         /// <summary>The main menu opened: a session that has ended leaves nothing behind.</summary>
         public static void OnMainMenu()
         {
-            if (!Active) { sessionGame = false; NetMods.End(); }   // single player's mods back
+            if (!Active) { sessionGame = false; NetMods.End(); NetArenaClient.Reset(); }   // single player's mods back, no arena match
         }
 
         // Play mode without a domain reload keeps statics: a fresh start (also builds, where it changes nothing).

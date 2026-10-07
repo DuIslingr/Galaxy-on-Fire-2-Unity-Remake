@@ -46,7 +46,10 @@ namespace GoF2Remake.Multiplayer
         }
 
         public static Match Current { get; private set; }
-        public static bool InMatch => Current != null;
+        /// <summary>In a match of the running session: never in single player (a session that ended mid-match left Current
+        /// set until the next session, and the next single-player flight got the arena layout, no jumps, no mining and no game
+        /// over: a softlock on death).</summary>
+        public static bool InMatch => Current != null && NetGame.Active;
 
         static int homeStation = -1;
         static List<ItemStack> equipment, cargo;
@@ -56,7 +59,7 @@ namespace GoF2Remake.Multiplayer
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => Reset();
 
-        /// <summary>A new session (NetGame.PrepareSession): no match.</summary>
+        /// <summary>A new session (NetGame.PrepareSession) or the main menu after one (NetGame.OnMainMenu): no match.</summary>
         public static void Reset()
         {
             Current = null;
