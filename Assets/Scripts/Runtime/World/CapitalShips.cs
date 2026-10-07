@@ -58,6 +58,8 @@ namespace GoF2Remake.World
         public const float BattleSeparationUnits = 80000f, BattleHoldUnits = 50000f, BattleSpeed = 0.2f;   // units, u/ms
         public const float BattleRadioMs = 6000f;
         public static int BattleBounty => 30000 + 3000 * Rank;
+        /// <summary>The carrier's name (lock plate, docking, its shop window).</summary>
+        public static string CarrierName => Localization.Extra("capitalCarrier", "Carrier");
         const float ResupplyMarkup = 1.25f;
         const int RepairPerPoint = 10;
 
@@ -88,7 +90,7 @@ namespace GoF2Remake.World
                 host.noLoot = true;   // its crate is CapitalShip's (RollLoot)
                 if (host.capital == SpawnSpec.CapitalCarrier)
                 {
-                    host.nameText = 1512;   // "Carrier"
+                    host.name = CarrierName;   // not text 1512 "Carrier": a medal (the hauler), "Spediteur" / "Курьер" in the other languages
                     host.dockingType = ObjectDocking.Resupply;
                     host.spacePoints = DeckPoints;
                 }

@@ -69,7 +69,7 @@ namespace GoF2Remake.World
             return string.Format(Localization.Extra("debugShipSpawned", "{0} spawned."), CapitalName(kind));
         }
 
-        public static string CapitalName(int kind) => kind == SpawnSpec.CapitalCarrier ? Localization.Get(1512)
+        public static string CapitalName(int kind) => kind == SpawnSpec.CapitalCarrier ? CapitalShips.CarrierName
             : kind == SpawnSpec.CapitalVossk ? $"{Localization.Get(407)} {Localization.Get(1667)}" : $"{Localization.Get(406)} {Localization.Get(1667)}";
 
         /// <summary>A fleet battle (TrafficPlan.AddFleetBattle: a Terran and a Vossk capital ship with their wings) centred about

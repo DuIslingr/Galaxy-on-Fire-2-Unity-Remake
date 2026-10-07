@@ -68,7 +68,7 @@ namespace GoF2Remake.UI
             window = El("hangar-window", "carrier-shop");
             window.style.display = DisplayStyle.None;
             var top = El("hangar-top");
-            var tab = new Button { text = T(1512).ToUpperInvariant(), focusable = false };
+            var tab = new Button { text = CapitalShips.CarrierName.ToUpperInvariant(), focusable = false };
             tab.AddToClassList("hangar-tab");
             tab.AddToClassList("hangar-tab--active");
             tab.AddToClassList("gof-semibold");
@@ -101,7 +101,7 @@ namespace GoF2Remake.UI
             tradeBox = El("trade-box");
             var left = El("trade-side");
             var leftLabel = Lbl("trade-side-label");
-            leftLabel.text = T(1512).ToUpperInvariant();
+            leftLabel.text = CapitalShips.CarrierName.ToUpperInvariant();
             tradeLeft = Lbl("trade-side-value", true);
             tradeLeft.text = "∞";
             left.Add(leftLabel);
