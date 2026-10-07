@@ -134,19 +134,29 @@ namespace GoF2Remake.EditorTools
             {
                 var m = mf.sharedMesh;
                 if (m == null || m.vertexCount == 0) continue;   // empty parts (sn_ship_047_most_wanted_engine_add_part0)
-                if (!m.isReadable)
+                // Read through MeshData: Unity 7 hands the meshes of an in-process import over unreadable (isReadable is
+                // off in OnPreprocessModel), and m.vertices then throws; MeshData reads them in the Editor all the same.
+                Vector3[] v, n;
+                Vector4[] t;
+                using (var data = Mesh.AcquireReadOnlyMeshData(m))
                 {
-                    // Unity 7 alpha handed one part of sn_cargo_001_midorian_wrecked over unreadable: it keeps its
-                    // file orientation (the transforms below still turn).
-                    Debug.LogWarning($"{assetPath}: mesh '{m.name}' isn't readable during import, not turned 180 deg");
-                    continue;
+                    var d = data[0];
+                    v = Read3(d, VertexAttribute.Position, d.GetVertices);
+                    n = Read3(d, VertexAttribute.Normal, d.GetNormals);
+                    t = new Vector4[d.HasVertexAttribute(VertexAttribute.Tangent) ? d.vertexCount : 0];
+                    if (t.Length > 0)
+                    {
+                        using var na = new Unity.Collections.NativeArray<Vector4>(t.Length, Unity.Collections.Allocator.Temp);
+                        d.GetTangents(na);
+                        na.CopyTo(t);
+                    }
                 }
-                var v = m.vertices; for (int i = 0; i < v.Length; i++) v[i] = new Vector3(-v[i].x, v[i].y, -v[i].z);
-                m.vertices = v;
-                var n = m.normals; for (int i = 0; i < n.Length; i++) n[i] = new Vector3(-n[i].x, n[i].y, -n[i].z);
-                if (n.Length > 0) m.normals = n;
-                var t = m.tangents; for (int i = 0; i < t.Length; i++) t[i] = new Vector4(-t[i].x, t[i].y, -t[i].z, t[i].w);
-                if (t.Length > 0) m.tangents = t;
+                for (int i = 0; i < v.Length; i++) v[i] = new Vector3(-v[i].x, v[i].y, -v[i].z);
+                m.SetVertices(v);
+                for (int i = 0; i < n.Length; i++) n[i] = new Vector3(-n[i].x, n[i].y, -n[i].z);
+                if (n.Length > 0) m.SetNormals(n);
+                for (int i = 0; i < t.Length; i++) t[i] = new Vector4(-t[i].x, t[i].y, -t[i].z, t[i].w);
+                if (t.Length > 0) m.SetTangents(t);
                 m.RecalculateBounds();
             }
             foreach (var tr in root.GetComponentsInChildren<Transform>(true))
@@ -155,6 +165,14 @@ namespace GoF2Remake.EditorTools
                 tr.localPosition = r * tr.localPosition;
                 tr.localRotation = r * tr.localRotation * ri;
             }
+        }
+
+        static Vector3[] Read3(Mesh.MeshData d, VertexAttribute attr, System.Action<Unity.Collections.NativeArray<Vector3>> get)
+        {
+            if (!d.HasVertexAttribute(attr)) return new Vector3[0];
+            using var na = new Unity.Collections.NativeArray<Vector3>(d.vertexCount, Unity.Collections.Allocator.Temp);
+            get(na);
+            return na.ToArray();
         }
     }
 

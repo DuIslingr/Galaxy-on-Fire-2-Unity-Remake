@@ -389,7 +389,7 @@ Research: `Reference/research/kaamo_club.md` (states, the siege, docking convers
 - **Storage** (owned, at 108): the Shop tab becomes 186 "Store": the storage is 108's stock (one list), free transfers,
   no prices, unsaleable goods refused (323), mounted items not listed; stored hulls with their sell value, row buttons
   332 "Use" (336 / 329 / 333: cargo and equipment move over, the old hull takes the row) and 330 "Sell" (334; X / pad X).
-  One hull per type. The Midorian hangar parks the first 3 stored hulls.
+  One hull per type. The Midorian hangar parks the first 5 stored hulls (the original 3; its remodelled room has two more pads).
 - **Buying elsewhere** while owning it: 304, then 327 with 330 Sell (trade-in) / 331 Keep (328 when the old type is
   stored, else the full price and the old hull goes to the club, the dealer row is gone).
 - **Lounge**: agents 21-26 once campaign > 16 (mechanics = ship mods, 25 special items, 26 a ship of [55..60] the player
@@ -490,6 +490,18 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   it On (again on every `Settings.Changed`).
 - The room's animations all run (`CutScene::process` updates every geometry, not only the `_anim` meshes), skipping their one-off first key like every animation (`PartAnimation.loopStartMs`, see "Known open items"; played, the key flashed the Nivelian bar and the Midorian bar for a frame on every wrap, parked the Terran gutter lights on the player's pad and made the loops jump; the Vossk bar's streaks start at 500 ms); rotations swing back and forth (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by their `extra` channel (the Vossk portal light).
 - The Kaamo Club parks its stored hulls: see "Kaamo Club".
+- **Midorian hangar, contributed remodel** (remake, 2026-10; sources `Reference/contrib/immersive_hangars`, Blender OBJs):
+  the room made whole (walls, ceiling, tanks and light strips where the original's hangar was open to space, a third row of
+  pads, the props copied around the bigger floor) and station_078_midorian's hangar mouth (a new frame and glowing panel).
+  They replace the converted originals in `Models/main/hangars/hangar_midorian*.fbx` and
+  `Models/main/stations/station_078_midorian(_emissive).fbx` in place (same .meta GUIDs and mesh names, so the per-mesh
+  prefabs and assemblies keep working; the old geometry is only in git history), written by
+  `Reference/tools/asset_conversion/contrib_immersive_hangars.py` (run with Blender; it documents the OBJ -> FBX mapping,
+  the per-file offsets and the fixes). The assembly's sixth prop slot (ids 14401/14402, which the original fills with x5 a
+  second time) shows x6 (`build_assemblies.py` MODEL_OVERRIDE; `Prefabs/main/hangars/hangar_midorian_x6*.prefab` made by
+  hand, x6 has no resource id). Its third row of pads, behind the turntable, are parked slots 3 / 4 (`StationTables.ParkedSlots`,
+  game (0, 0, -4096) a raised pedestal like slot 2, (-4096, 0, -4096) a sunk pad like the turntable's; `ParkedMax` 5). The hangar
+  heights were rebuilt for it.
 
 ## Shop
 

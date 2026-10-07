@@ -75,8 +75,9 @@ namespace GoF2Remake.World
         public static float StartYaw(int hangar) => (hangar == 2 ? -200f : 270f) / TurntablePixelsPerRadian;
         public const float TurntablePixelsPerRadian = 120f;
 
-        /// <summary>UNK_00253ee8: parked ships = nextInt(max + 1).</summary>
-        public static readonly int[] ParkedMax = { 2, 9, 2, 3, 0, 0, 0, 3, 0 };
+        /// <summary>UNK_00253ee8: parked ships = nextInt(max + 1). Remake: Midorian 5 (the original's 3), its remodelled
+        /// room's third row of pads (ParkedSlots).</summary>
+        public static readonly int[] ParkedMax = { 2, 9, 2, 5, 0, 0, 0, 3, 0 };
 
         /// <summary>Parked-ship slots (UNK_00253f10 ...); the ship's own height is added to y.</summary>
         public static readonly Vector3[][] ParkedSlots =
@@ -89,7 +90,13 @@ namespace GoF2Remake.World
                 new Vector3(-9408, 5359, 16301), new Vector3(-6983, 5359, 19191), new Vector3(-3715, 5359, 21078),
             },
             new[] { new Vector3(4096, 0, 0), new Vector3(4096, 0, 4096) },
-            new[] { new Vector3(-4096, 0, 0), new Vector3(0, 0, 4096), new Vector3(-4096, 0, 4096) },
+            new[]
+            {
+                new Vector3(-4096, 0, 0), new Vector3(0, 0, 4096), new Vector3(-4096, 0, 4096),
+                // Remake: the remodelled Midorian room's third row, behind the turntable (a raised pedestal like slot 2,
+                // a sunk pad like the turntable's; Reference/contrib/immersive_hangars).
+                new Vector3(0, 0, -4096), new Vector3(-4096, 0, -4096),
+            },
             null, null, null,
             new[] { new Vector3(-1961, 0, 8512), new Vector3(-1961, 0, 5562), new Vector3(-1961, 0, 2610) },
             new[] { new Vector3(4096, 0, 0) },

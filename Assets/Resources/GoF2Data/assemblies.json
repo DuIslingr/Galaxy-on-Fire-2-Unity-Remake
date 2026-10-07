@@ -17138,7 +17138,7 @@
    "pack": "main",
    "category": "hangars",
    "origin": "Level::createScene @0xc2910, mode 0x17, UNK_00253e48[3] (4 slots, -1 = none); children DAT_00251fd0[3] + 0..UNK_00251fc0[3]-1",
-   "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state. The x1..xN props (+shadow_alpha) get no transform of their own (placement is baked in the mesh). The loop adds a fresh copy under each static (so the original renders them up to 3x). Child id range 14391..14402 contains x5 twice (14399/14401) and never x6: resources.json maps 14401/14402 to hangar_midorian_x5(+shadow); hangar_midorian_x6(+shadow).fbx exist without a resource id.",
+   "notes": "Hangar = Level(mode 0x17), CutScene(0x17). Every static is PlayerStatic(-1, AEGeometry(id), (0,0,0)) with AEGeometry::setRotation(0, pi, 0) (0x40490fdb). Statics live in the enemies list, so their keyframe animation (*_anim_add) is advanced every frame by CutScene::process (Transform::Update(dt)); no explicit animation state. The x1..xN props (+shadow_alpha) get no transform of their own (placement is baked in the mesh). The loop adds a fresh copy under each static (so the original renders them up to 3x). Child id range 14391..14402 contains x5 twice (14399/14401) and never x6: resources.json maps 14401/14402 to hangar_midorian_x5(+shadow); hangar_midorian_x6(+shadow).fbx exist without a resource id. Remake: 14401/14402 use x6 (the contributed hangar places its sixth prop set there; build_assemblies.py MODEL_OVERRIDE).",
    "root": 14379,
    "parts": [
     {
@@ -17335,7 +17335,7 @@
      "key": "hangar_prop_6",
      "parent": "",
      "mesh": 14401,
-     "model": "Models/main/hangars/hangar_midorian_x5.fbx",
+     "model": "Models/main/hangars/hangar_midorian_x6.fbx",
      "material": 0,
      "role": "hangar_prop",
      "variant": "",
@@ -17349,7 +17349,7 @@
      "key": "hangar_prop_shadow_6",
      "parent": "",
      "mesh": 14402,
-     "model": "Models/main/hangars/hangar_midorian_x5_shadow_alpha.fbx",
+     "model": "Models/main/hangars/hangar_midorian_x6_shadow_alpha.fbx",
      "material": 0,
      "role": "hangar_prop_shadow",
      "variant": "",

@@ -30,7 +30,13 @@ for m in res['meshes']:
 # 19080 is registered twice (test_dock and the mining plant); the code always means the mining plant.
 MESH[19080] = next(m for m in res['meshes'] if m['id'] == 19080 and 'mining_plant' in m['model'])
 
+# Remake: the contributed Midorian hangar (Reference/contrib/immersive_hangars, contrib_immersive_hangars.py) puts its sixth
+# prop set in x6. The original registers x5 again under 14401/14402 (rules/aem_ids_from_disasm.json) and never loads x6.
+MODEL_OVERRIDE = {14401: 'Models/main/hangars/hangar_midorian_x6.fbx',
+                  14402: 'Models/main/hangars/hangar_midorian_x6_shadow_alpha.fbx'}
+
 def model_of(mid):
+    if mid in MODEL_OVERRIDE: return MODEL_OVERRIDE[mid]
     m = MESH.get(mid)
     return m['model'] if m else None
 
