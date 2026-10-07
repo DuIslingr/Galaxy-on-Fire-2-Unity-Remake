@@ -320,10 +320,11 @@ namespace GoF2Remake.Multiplayer
         }
 
         /// <summary>The local player and 'other' (in the same orbit) may shoot each other: in an arena match (its own orbit
-        /// id), during a siege between their two factions there (NetFactions), or anywhere on a server started with -freepvp
-        /// (NetState.FreePvp). Squadmates never (NetSquad).</summary>
+        /// id), during a siege between their two factions there (NetFactions), anywhere on a server started with -freepvp
+        /// (NetState.FreePvp), or while an event's free for all runs (NetState.FreeForAll: /pvp on, the Free For All node; the
+        /// Free For All / King of the Hill templates had stopped working). Squadmates never (NetSquad).</summary>
         static bool PvpWith(NetPlayer other) =>
-            other != null && ((NetState.Instance != null && NetState.Instance.FreePvp) || NetArena.IsArenaOrbit(other.Station)
+            other != null && ((NetState.Instance != null && NetState.Instance.FreePvp) || NetState.FreeForAll || NetArena.IsArenaOrbit(other.Station)
                               || (Local != null && NetFactionsClient.SiegePvp(other.Station, Local.FactionTag, other.FactionTag)));   // a faction siege
 
         /// <summary>This player's shots pass through their squadmates (the local player's ship included).</summary>
