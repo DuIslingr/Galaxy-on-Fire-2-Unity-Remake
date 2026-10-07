@@ -1,3 +1,4 @@
+%UNITY 7.0
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
@@ -36,6 +37,8 @@ MonoBehaviour:
   fogMaterial: {fileID: 2100000, guid: 9a401c99c1743c8478c7379f6ebca1b4, type: 2}
   explosionSpriteMaterial: {fileID: 2100000, guid: fb8b2a59e03c7a84cb84f60d21334155, type: 2}
   particlesMaterial: {fileID: 2100000, guid: 3b6ea14715e6ee944a89eecd2e7d25e7, type: 2}
+  sunfireTrailMaterial: {fileID: 2100000, guid: 1e854e53e32c165429277f716e69d5d6, type: 2}
+  fireworksSparkMaterial: {fileID: 2100000, guid: ac81e87a6c32b554aa3b177409221a69, type: 2}
   hitShield:
   - {fileID: 8300000, guid: 2180dc2e028978546a7ff4b4ad55be57, type: 3}
   - {fileID: 8300000, guid: 5f72e4c9b8af0944fbf0d4214f9816be, type: 3}

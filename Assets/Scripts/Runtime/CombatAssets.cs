@@ -34,6 +34,10 @@ namespace GoF2Remake.Flight
         public Material explosionSpriteMaterial;
         [Tooltip("Material 20090 particles (additive): the player's exhaust particles (ShipExhaust).")]
         public Material particlesMaterial;
+        [Tooltip("Material 24096 v_projectiles (additive): the SunFire o50's trail, record 28 on Level+0x98 (RocketTrail).")]
+        public Material sunfireTrailMaterial;
+        [Tooltip("Material 27321 sn_sprite_fireworks_rocket_sparks (additive): the Fireworks' trail, record 47 on Level+0x9c.")]
+        public Material fireworksSparkMaterial;
 
         public AudioClip[] hitShield, hitArmor, hitHull, shipDestroyed, explosionBig, explosionMid, shots;
         public AudioClip targetLock, tractorLoop, tractorClose, gameOver;

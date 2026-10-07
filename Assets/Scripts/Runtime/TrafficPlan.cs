@@ -79,6 +79,7 @@ namespace GoF2Remake.Flight
         public const int EventOutpost = 1, EventBoss = 2, EventTurret = 3;
     }
 
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class TrafficPlan
     {
         /// <summary>Station::stationHasHiddenBlueprint 0xb3ec8 (blueprints_mods.md 1.4 3): per slot the station

@@ -37,6 +37,8 @@ namespace GoF2Remake.EditorTools
             a.fireMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27250_sprite_fire.mat");
             a.explosionSpriteMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20099_sprite_explosion.mat");
             a.particlesMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_20090_particles.mat");
+            a.sunfireTrailMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_24096_v_projectiles.mat");
+            a.fireworksSparkMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/mat_27321_sn_sprite_fireworks_rocket_sparks.mat");
             if (a.smokeMaterial == null || a.fireMaterial == null) Debug.LogWarning("GoF2: missing sprite_smoke / sprite_fire materials");
             a.hitShield = Clips("SFX_SPACE", "Incoming_Fire_Shield");
             a.hitArmor = Clips("SFX_SPACE", "Incoming_Fire_Armor");

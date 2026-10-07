@@ -7,8 +7,8 @@
 // at fire time, following the mount, its animation restarted per shot and hidden when it ends. Mines are drawn at x0.7
 // and tumble (MineGun). Scatter shells have no impact mesh (their burst explosion replaces it).
 // The guided Liberator (BombGun, attr 15): its deploy animation plays once per launch, starting 500 ms after it.
-// The player's rockets, missiles and thermo shots trail smoke, EMP bombs fire sprites (RocketTrail, EnableTrails; NPC
-// guns have none).
+// The player's rockets, missiles and thermo shots trail smoke, the bombs fire sprites, the fireworks sparks (RocketTrail,
+// EnableTrails; NPC guns have none).
 // Projectiles, muzzle flashes and impacts fade by their `extra` (opacity) channel: without it an impact's big glow part
 // (radius ~3600 units, meant at 20 % and gone after 267 ms) stayed at full brightness and the impact looked far too big.
 
@@ -37,7 +37,7 @@ namespace GoF2Remake.Flight
         int nextImpact;
         readonly Transform fxRoot;
         RocketTrail[] trails;
-        ParticleSystem[] flames;   // EMP bombs: record 12 (RocketTrail.MissileTrail)
+        ParticleSystem[] flames;   // bombs: record 12, fireworks 47 (RocketTrail.MissileTrail)
 
         /// <param name="fxRoot">Parent of the projectiles and impacts (world space).</param>
         /// <param name="muzzleParent">The ship (null = no muzzle flash).</param>
@@ -99,14 +99,14 @@ namespace GoF2Remake.Flight
         /// for rockets, missiles, cluster missiles and thermo guns, a fire-sprite system for EMP bombs.</summary>
         public void EnableTrails()
         {
-            if (flames == null && gun.kind == Gun.Kind.EmpBomb)
+            if (flames == null && RocketTrail.HasMissileTrail(gun))
             {
                 flames = new ParticleSystem[gun.bullets.Length];
                 for (int i = 0; i < flames.Length; i++) flames[i] = RocketTrail.MissileTrail(gun, fxRoot);
             }
             var rec = RocketTrail.For(gun);
             if (rec == null || trails != null) return;
-            var mat = CombatAssets.Load()?.particlesMaterial;
+            var mat = RocketTrail.MaterialFor(gun);
             if (mat == null) return;
             trails = new RocketTrail[gun.bullets.Length];
             for (int i = 0; i < trails.Length; i++) trails[i] = new RocketTrail(rec, fxRoot, mat);
