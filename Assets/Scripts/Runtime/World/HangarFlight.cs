@@ -191,8 +191,11 @@ namespace GoF2Remake.World
 
         static Vector3 At(Vector3 p, float y) => new Vector3(p.x, y, p.z);
 
-        /// <summary>Where the sampled path crosses the edge of 'cam''s view: a departure's first point out of it (after
-        /// the climb), an arrival's first point of the stretch that stays in it; -1 when it never leaves / is never out.</summary>
+        /// <summary>Where the sampled path crosses the edge of 'cam''s view: a departure's first point out of it after
+        /// having been in it (after the climb), an arrival's first point of the stretch that stays in it; -1 when it
+        /// never leaves / is never out. A pad just outside the view (the Midorian hangar's right pad) isn't an edge: the
+        /// ship takes off there at full size and flies into the view (it vanished over its pad and crossed the hangar
+        /// unseen), like a landing there, which comes into the view at full size.</summary>
         float ViewEdge(Camera cam)
         {
             if (cam == null) return -1f;
@@ -207,8 +210,13 @@ namespace GoF2Remake.World
                     if (!InView(point[i])) return i + 1 < point.Count ? length[i + 1] : -1f;
                 return -1f;
             }
+            bool seen = false;
             for (int i = 0; i < point.Count; i++)
-                if (length[i] > sVertical && !InView(point[i])) return length[i];
+            {
+                if (length[i] <= sVertical) continue;
+                if (InView(point[i])) seen = true;
+                else if (seen) return length[i];
+            }
             return -1f;
         }
 
