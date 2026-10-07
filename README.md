@@ -85,22 +85,10 @@ and a Windows 10 / 11 SDK. Android and Linux builds don't need it.
 
 #### Scene lighting (environment reflections)
 
-The game builds its levels at runtime, but each scene's sky reflection comes from the scene's baked lighting data.
-Without it, a player build reflects whatever default sky the building editor has cached. On a fresh checkout that is
-Unity's light-blue default sky: floors look like grey plastic and hulls get a blue-grey sheen. The Editor's Play mode
-looks right either way, so the problem only shows in builds.
-
-The baked data is in the repository (`Assets/Scenes/<Scene>/LightingData.asset` and `ReflectionProbe-0.exr`). Bake it
-again after changing a scene's skybox or environment settings, or if a scene's data is missing:
-
-1. Pull the LFS files first (`git lfs pull`) and let Unity finish importing.
-2. Open the scene (`Space`, `Station` and `MainMenu`, one after the other).
-3. Window > Rendering > **Lighting**, **Scene** tab: Lighting Settings Asset `Assets/Scenes/SceneLighting.lighting`
-   (shared by the three scenes; Realtime and Baked Global Illumination off, only the environment is needed).
-4. **Environment** tab: the Skybox Material is `SpaceSky`, Environment Reflections Source **Skybox**.
-5. **Generate Lighting**, then save the scene.
-6. Commit the `Assets/Scenes/<Scene>/` folder (`LightingData.asset`, `ReflectionProbe-0.exr` and their `.meta` files)
-   and the changed `.unity` file, so other checkouts build the same.
+The scenes have no baked lighting data, on purpose: the game builds its levels at runtime and each system has its own
+sky. `SkyReflection` renders a realtime reflection probe of the current sky wherever the sky is set, so metallic hulls
+reflect the level's sky in the Editor and in builds alike. Don't generate lighting for the scenes: a baked probe is one
+fixed sky for every system.
 
 ### Multiplayer
 
