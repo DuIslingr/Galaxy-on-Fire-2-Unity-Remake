@@ -122,12 +122,16 @@ namespace GoF2Remake.Flight
             SetupBlaze(db);
         }
 
-        /// <summary>Remake debug (ShipPresets): the hull, shield and armor maxima, the shield recharge, the repair bots, the
-        /// emergency system and the shield injector from the ship and equipment now (a preset loaded in flight), all full;
-        /// Setup's rules.</summary>
-        public void RefreshLoadout(Database db)
+        /// <summary>Remake debug: the hull, shield and armor maxima, the shield recharge, the repair bots, the emergency system
+        /// and the shield injector from the ship and equipment now (the Ships tab's hull swap, a preset loaded in flight;
+        /// Setup's rules). 'keepFractions': each pool keeps its share of the new maximum (the Ships tab), else all full (a
+        /// preset).</summary>
+        public void RefreshLoadout(Database db, bool keepFractions = false)
         {
             if (Target == null) return;
+            float hullShare = Hp.maxHull > 0 ? (float)Hp.hull / Hp.maxHull : 1f;
+            float shieldShare = Hp.maxShield > 0 ? Hp.shield / Hp.maxShield : 1f;
+            float armorShare = Hp.maxArmor > 0 ? (float)Hp.armor / Hp.maxArmor : 1f;
             int hull = (db.Ship(Session.ShipIndex)?.armor ?? 100) + (Session.HasMod(0) ? 40 : 0);
             var shieldItem = Shop.FirstMounted(db, 9);
             var armorItem = Shop.FirstMounted(db, 10);
@@ -139,10 +143,10 @@ namespace GoF2Remake.Flight
             HasArmor = armor > 0;
             hasRepair = repair != null;
             if (repair != null) { bool mk2 = repair.index != 75; repairHullMs = mk2 ? 420f : 600f; repairArmorMs = mk2 ? 700f : 1000f; }
-            Hp.maxHull = hull; Hp.hull = hull;
-            Hp.maxShield = shield; Hp.shield = shield;
-            Hp.maxArmor = armor; Hp.armor = armor;
-            Target.hp = hull;
+            Hp.maxHull = hull; Hp.hull = keepFractions ? Mathf.Clamp(Mathf.RoundToInt(hull * hullShare), 1, hull) : hull;
+            Hp.maxShield = shield; Hp.shield = keepFractions ? shield * shieldShare : shield;
+            Hp.maxArmor = armor; Hp.armor = keepFractions ? Mathf.RoundToInt(armor * armorShare) : armor;
+            Target.hp = Hp.hull;
             Target.maxHp = hull;
             lastCombined = Hp.Combined;
             var emergency = Shop.FirstMounted(db, 27);

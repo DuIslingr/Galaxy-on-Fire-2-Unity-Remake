@@ -632,6 +632,7 @@ namespace GoF2Remake.World
             ctrl.stats.cargoCapacity = Mathf.Max(1, Shop.MaxLoad(db));
             ctrl.stats.cargoLoad = Shop.CargoLoad();
             ctrl.ApplyStats();
+            Health?.RefreshLoadout(db, true);   // the new hull's hull points (its armor value, mod 0) and the equipment's pools
 
             PlayerHull.FitCamera(root.transform, model.transform, chase, farClip);
             Weapons?.Rebuild(db, shipIndex, Session.Equipment);   // the new hull's mounts (none for 13 / 14 / 15 / capital ships)
