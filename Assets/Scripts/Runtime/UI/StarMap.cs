@@ -28,7 +28,8 @@
 //   volatile     Ship::hasVolatileGoods (209 / 204 in the hold) with a drive: a target outside the gate routes gives 612, one
 //                inside goes by the gate (no instant jump)
 // Remake: the full-map overview, one zoom level further out that fits every visible system (the Full map button, Q, the
-// controller's X, the mouse wheel or a pinch): no panning there; a tap or Enter on a system zooms back in on it.
+// controller's X, the mouse wheel or a pinch): no panning there; a tap or Enter on a system zooms back in on it. The zoom
+// takes the galaxy <-> system zoom's 2184.5 ms, its sounds' length.
 // Remake choices: hidden systems' suns aren't drawn (the original draws all 34, uncertainty 3); the galaxy sun shrinks to
 // the system-view sun size while zooming instead of a second sun with the flight sun texture; the reveal's sun grows to
 // the normal 0.012 (the original's 0.002 literal, uncertainty 10); the reveal map is view only.
@@ -127,7 +128,9 @@ namespace GoF2Remake.UI
         float overviewT;
         Vector2 overviewMin, overviewMax;
         float overviewZ;
-        const float OverviewMs = 650f;
+        // As long as the galaxy <-> system zoom (ZoomMs, the same sine ease and the same sounds, Map_Zoom_In 2.68 s / Map_Zoom_Out
+        // 2.32 s): at 650 ms the move was over long before its sound.
+        const float OverviewMs = ZoomMs;
         float OverviewEase => 0.5f - 0.5f * Mathf.Cos(Mathf.PI * overviewT);
         bool InOverview => overview || overviewT > 0f;
         readonly Dictionary<int, Vector2> pinch = new Dictionary<int, Vector2>();
