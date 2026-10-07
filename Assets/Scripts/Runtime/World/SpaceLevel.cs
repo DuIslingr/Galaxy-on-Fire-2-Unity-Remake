@@ -661,6 +661,7 @@ namespace GoF2Remake.World
             Health?.RefreshLoadout(db, true);   // the new hull's hull points (its armor value, mod 0) and the equipment's pools
 
             PlayerHull.FitCamera(root.transform, model.transform, chase, farClip);
+            PlayerHull.ApplyMass(ctrl, model.transform, chase);   // a capital ship flies like one
             Weapons?.Rebuild(db, shipIndex, Session.Equipment);   // the new hull's mounts (none for 13 / 14 / 15 / capital ships)
 
             foreach (var ex in root.GetComponents<ShipExhaust>()) Destroy(ex);
@@ -746,6 +747,7 @@ namespace GoF2Remake.World
             chase.lookOffset = new Vector3(0f, 600f, -650f) * M;
             // Remake debug: a freighter's or capital ship's hull is far bigger than any ship the camera was made for.
             if (PlayerHull.Big) PlayerHull.FitCamera(root.transform, ctrl.visualModel, chase, farClip);
+            PlayerHull.ApplyMass(ctrl, ctrl.visualModel, chase);   // remake debug: a capital ship flies like one (0 for every ordinary ship)
             // CameraSetPerspective(1.22 rad) is the vertical FOV: with the level look offset the ship then sits in the
             // lower middle of the screen like in the original. Used as the 16:9 value (Hor+ on wider screens). Remake: the
             // field of view option (Settings.OriginalFov by default).

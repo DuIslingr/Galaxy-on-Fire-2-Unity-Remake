@@ -107,14 +107,21 @@ namespace GoF2Remake.Flight
             // A 3D event at the ship heard from the camera (EngineVoices): about 85 % from the chase camera, quiet from the
             // launch camera's fly-by.
             var ear = EngineVoices.Listener();
-            if (ear != null) volume *= EngineVoices.Rolloff(Vector3.Distance(ear.position, transform.position));
+            // Remake debug: a capital ship's fitted camera sits km out, far past the 500 m rolloff: the distance is scaled by
+            // the normal chase distance / the fitted one (ShipController.engineEarScale, 1 for an ordinary ship).
+            if (ear != null) volume *= EngineVoices.Rolloff(Vector3.Distance(ear.position, transform.position) * ship.engineEarScale);
+            // ... and deeper the heavier it is (ShipController.mass).
+            float deep = Mathf.Lerp(1f, 0.6f, ship.mass);
             // 1104: one layer with the pitch; 1106 / 1107: EngineDLC_07 plain + the pitched second layer.
-            Drive(main, on, volume, engine >= 5 ? 1f : pitch);
-            Drive(extra, on, volume, pitch);
+            Drive(main, on, volume, (engine >= 5 ? 1f : pitch) * deep);
+            Drive(extra, on, volume, pitch * deep);
 
             bool boosting = ship.Model != null && ship.Model.IsBoosting;
             if (boosting && !wasBoosting && boostSource != null && boostSource.clip != null)
+            {
+                boostSource.pitch = Mathf.Lerp(1f, 0.7f, ship.mass);   // 1 for every ordinary ship, as before
                 boostSource.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(boostSource.clip), BoostVolume[boost] * Sfx.EventGain * Settings.SfxVolume);
+            }
             wasBoosting = boosting;
         }
 

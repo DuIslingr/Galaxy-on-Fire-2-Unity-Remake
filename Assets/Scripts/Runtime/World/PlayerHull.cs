@@ -299,6 +299,25 @@ namespace GoF2Remake.World
             return i >= 0 ? h.label.Substring(i + 3) : h.label;
         }
 
+        /// <summary>The radius (m) at which a hull counts as fully heavy: the carrier, the Vossk battleship and the battlestation
+        /// are 2.0-2.4 km; the race freighters ~0.3 km come out ~0.25, the Terran battleship (0.56 km) ~0.45.</summary>
+        const float FullMassRadius = 2500f;
+
+        /// <summary>Remake debug: the flown hull's weight (ShipController.mass / FlightModel.Mass) and engine distance scale, from the model as it
+        /// flies (the Void ship at its posed size): only the hulls the player can't normally own (the freighters 13 / 15, the
+        /// battleship 14, the capital ships: !PlayerShip), rising with the log of the radius from 0 at 150 m to 1 at 2.5 km;
+        /// every ship the player can own, a mod's big hull included, keeps 0 (the original's handling). Call once the model
+        /// is in place (spawn, a hull swap).</summary>
+        public static void ApplyMass(ShipController ctrl, Transform model, ChaseCamera chase)
+        {
+            if (ctrl == null) return;
+            float r = !PlayerShip && Big && model != null ? Radius(model) : 0f;
+            ctrl.mass = r > BigRadius ? Mathf.Clamp01(Mathf.Log(r / BigRadius) / Mathf.Log(FullMassRadius / BigRadius)) : 0f;
+            // The engine loop's distance: the normal chase offset (0, 600, -1338) units against the fitted one (FitCamera).
+            float normal = new Vector3(0f, 600f, -1338f).magnitude * M, fitted = chase != null ? chase.offset.magnitude : normal;
+            ctrl.engineEarScale = ctrl.mass > 0f && fitted > normal ? normal / fitted : 1f;
+        }
+
         /// <summary>The model's size in world metres (the hull, not its glows).</summary>
         static float Radius(Transform model) =>
             model == null ? 0f : LocalBounds(model, model).extents.magnitude * Mathf.Abs(model.lossyScale.x);

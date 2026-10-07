@@ -86,6 +86,37 @@ namespace GoF2Remake.Flight
         /// <summary>Reproduce the original's integer truncation of boost speed (see Configure).</summary>
         public bool TruncateBoostSpeed = true;
 
+        // ---- remake debug: the weight of the hulls the player can't normally fly (PlayerHull.MassOf) ----------------------
+        /// <summary>0 = an ordinary ship, flown exactly like the original; up to 1 = the largest hulls (the carrier, the Vossk
+        /// battleship, the battlestation, the Void ship), set from the hull's size. It lowers the top turn rate, makes the
+        /// turn rates slow to build up and to die away, eases the speed toward the throttle instead of jumping to it, and
+        /// slows the level-out and the strafe: a capital ship that answers like one.</summary>
+        public float Mass;
+        /// <summary>The top turn rate's share.</summary>
+        public float TurnScale => Mathf.Lerp(1f, 0.15f, Mass);
+        /// <summary>The turn rates' ramp and decay share (their inertia): below TurnScale, so a heavy hull also takes longer to
+        /// reach its (lower) top rate and to stop turning (~2 s at the carrier's 0.91, against 0.55 s for any ordinary ship).</summary>
+        public float Inertia => TurnScale * Mathf.Lerp(1f, 0.18f, Mass);
+        /// <summary>The auto-level's and the manual roll's share.</summary>
+        public float RollScale => Mathf.Lerp(1f, 0.25f, Mass);
+        /// <summary>The strafe's and the dodge's share.</summary>
+        public float SideScale => Mathf.Lerp(1f, 0.2f, Mass);
+        /// <summary>The time the engines take between a standstill and the base speed (ms); 0 = at once (the original). A boost
+        /// surges 2.5x as fast (it would take far longer than the boost lasts otherwise).</summary>
+        public float AccelMs => Mass * 7000f;
+        /// <summary>The speed the ship actually flies at (units/ms): Throttle x CurrentSpeed at once for an ordinary ship,
+        /// eased toward it for a heavy one (AccelMs).</summary>
+        public float MoveSpeed { get; private set; } = BaseSpeed;
+
+        float StepMoveSpeed(float dtMs)
+        {
+            float target = Braking ? 0f : Throttle * CurrentSpeed;
+            if (AccelMs <= 1f) return MoveSpeed = target;
+            float rate = BaseSpeed / AccelMs;   // units/ms per ms
+            if (target > BaseSpeed || MoveSpeed > BaseSpeed) rate *= 2.5f;   // the boost's surge and its run-down
+            return MoveSpeed = Mathf.MoveTowards(MoveSpeed, target, rate * dtMs);
+        }
+
         public float Handling { get; private set; }            // "H" in the notes (0x154)
         float boostSpeedValue = 5f;
         int boostDurationMs = 5000, boostRechargeMs = 20000;
@@ -124,6 +155,7 @@ namespace GoF2Remake.Flight
             hasBooster = boostRechargeMs > 0;
 
             CurrentSpeed = BaseSpeed;
+            MoveSpeed = BaseSpeed;
             Throttle = 1f;
             boostTimerMs = 0;
             IsBoosting = false;
@@ -160,8 +192,8 @@ namespace GoF2Remake.Flight
         /// on Extreme), the ramp from 0.1 x1.5 a (30 fps) frame up to 1: full sideways speed after ~6 frames.</summary>
         public void Strafe(int dir, float dtMs)
         {
-            StrafeVelocity = strafeRamp * dir * Mathf.Min(EffectiveHandling * 30f * 0.002f, 2f);
-            strafeRamp = Mathf.Min(strafeRamp * Mathf.Pow(1.5f, dtMs / StrafeFrameMs), 1f);
+            StrafeVelocity = strafeRamp * dir * Mathf.Min(EffectiveHandling * 30f * 0.002f, 2f) * SideScale;
+            strafeRamp = Mathf.Min(strafeRamp * Mathf.Pow(1.5f, dtMs / StrafeFrameMs * Inertia), 1f);
         }
 
         /// <summary>handleShip: while |v| &gt; 0.01 the ship moves v * dt sideways and v drops x0.7 a (30 fps) frame;
@@ -247,7 +279,7 @@ namespace GoF2Remake.Flight
             // LevelPitch a steep nose (more than ~45 deg) comes down first, where the lean means little.
             bool steep = LevelPitch && Mathf.Abs(Vector3.Cross(shipRight, shipUp).normalized.y) > 0.7f;
             rollLevelled = false;
-            float rollRad = IsLeveling && !steep ? AutoLevelRoll(dtMs, shipUp, shipRight) : 0f;
+            float rollRad = IsLeveling && !steep ? AutoLevelRoll(dtMs, shipUp, shipRight) * RollScale : 0f;
             if (IsLeveling)
             {
                 bool pitchLevelled = true;
@@ -259,7 +291,7 @@ namespace GoF2Remake.Flight
                     if (Mathf.Abs(above) > LevelPitchDone)
                     {
                         pitchLevelled = false;
-                        float rate = LevelPitchRate * Mathf.Clamp01(Mathf.Abs(above) / 0.17f + 0.25f);
+                        float rate = LevelPitchRate * Mathf.Clamp01(Mathf.Abs(above) / 0.17f + 0.25f) * RollScale;
                         // Upside down (the roll not done yet) the ship's own pitch axis turns the other way.
                         float sign = shipUp.y >= 0f ? 1f : -1f;
                         pitchRad += sign * Mathf.Sign(above) * Mathf.Min(Mathf.Abs(above), rate * Mathf.Min(dtMs, LevelMaxDtMs));
@@ -269,11 +301,11 @@ namespace GoF2Remake.Flight
             }
 
             // ---- no input: rates drain linearly back to zero (uses base H, not the cargo-reduced one)
-            if (!yawInput) YawRate = Mathf.MoveTowards(YawRate, 0f, dtMs * Handling / DecayDivisor);
-            if (!pitchInput) PitchRate = Mathf.MoveTowards(PitchRate, 0f, dtMs * Handling / DecayDivisor);
+            if (!yawInput) YawRate = Mathf.MoveTowards(YawRate, 0f, dtMs * Handling / DecayDivisor * Inertia);
+            if (!pitchInput) PitchRate = Mathf.MoveTowards(PitchRate, 0f, dtMs * Handling / DecayDivisor * Inertia);
 
             // ---- movement -------------------------------------------------------------------------
-            float forward = Braking ? 0f : dtMs * Throttle * CurrentSpeed;
+            float forward = dtMs * StepMoveSpeed(dtMs);
 
             float push = 0f;
             if (Mathf.Abs(collisionPush) > CollisionPushCutoff)
@@ -333,7 +365,7 @@ namespace GoF2Remake.Flight
             // The bank follows the rate: a full-stick rate (750 H / 63) banks like a full stick.
             VisualYawBank = yawRate / (TargetRateScale / TargetRateDivisor);
             VisualPitchBank = 0f;
-            float forward = Braking ? 0f : dtMs * Throttle * CurrentSpeed;
+            float forward = dtMs * StepMoveSpeed(dtMs);
             UpdateBoost(dtMs);
             return new FrameResult { forwardUnits = forward };
         }
@@ -342,10 +374,10 @@ namespace GoF2Remake.Flight
         {
             // target = trunc(input * 750 * H) / 63 (integer division, like the original)
             int raw = (int)(input * TargetRateScale * he);
-            float target = raw / TargetRateDivisor;
+            float target = raw / TargetRateDivisor * TurnScale;   // remake debug: a heavy hull's lower top rate (Mass)
             float denom = (RampBase - Sensitivity * sensitivityScale) * 20f;
             if (denom < 1f) denom = 1f; // guard against extreme sensitivity values
-            float step = dtMs * he / denom;
+            float step = dtMs * he / denom * Inertia;
 
             // The original only accelerates toward the target in the input's direction and never slows an
             // over-target rate while the direction is held. That was fine for its digital input (the target is

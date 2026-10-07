@@ -51,6 +51,14 @@ namespace GoF2Remake.Flight
         public float pitchTiltDegreesPerH = 0.4f;
         public float bankSmoothing = 6f;
 
+        [Header("Weight (remake debug: the hulls the player can't normally fly, PlayerHull.ApplyMass)")]
+        [Tooltip("0 = an ordinary ship (the original's handling) .. 1 = the largest capital ships: FlightModel.Mass, plus a slower " +
+                 "roll, dodge, autopilot turn and banking here, a heavier chase camera and a deeper engine.")]
+        [Range(0f, 1f)] public float mass;
+        [Tooltip("The normal chase distance / this hull's fitted one (PlayerHull.ApplyMass; 1 for an ordinary ship): the engine " +
+                 "sound's distance is scaled by it, so a capital ship's engines, km from its camera, sound as near as a fighter's.")]
+        public float engineEarScale = 1f;
+
         public FlightModel Model { get; private set; } = new FlightModel();
         /// <summary>The dodge (PlayerEgo::updateManeuver).</summary>
         public Maneuver Maneuver { get; } = new Maneuver();
@@ -147,6 +155,7 @@ namespace GoF2Remake.Flight
         {
             Model.TiltMode = tiltMode;
             Model.LevelPitch = Data.Settings.LevelPitch;
+            Model.Mass = mass;
             // PlayerEgo::up / right with the mouse cursor: the ramp divisor is 12, i.e. (3.3 - sens) x 20 with sens 2.7.
             Model.Sensitivity = tiltMode ? Data.Settings.TiltSensitivity : mouseSteering ? 2.7f : sensitivity;
             // PlayerEgo::left / right / up / down on Extreme (+0x235): the live cargo load against Ship::getMaxLoad.
@@ -168,6 +177,9 @@ namespace GoF2Remake.Flight
             {
                 // PlayerEgo::updateManeuver instead of handleShip (also over the autopilot's steering).
                 Maneuver.Step(dtMs, Model.Handling, out float slide, out float heading, out float yawRate);
+                // Remake debug: a heavy hull only lurches a little to the side (FlightModel.SideScale).
+                float side = Model.SideScale;
+                slide *= side; heading *= side; yawRate *= side;
                 var mr = Model.StepManeuver(dtMs, yawRate);
                 SteerInput = Vector2.zero;
                 transform.Rotate(0f, heading * Mathf.Rad2Deg, 0f, Space.Self);
@@ -201,7 +213,7 @@ namespace GoF2Remake.Flight
             {
                 // PlayerEgo::moveToPosition 0xa8720: turn = min(handling + 2.7, 4), dir += (to - dir) * (int)(dt * turn) / 4096,
                 // world up (the ship levels out, no roll).
-                float turn = Mathf.Min(stats.handling / 100f + 0.2f * stats.handlingUpgrades + 2.7f, 4f);
+                float turn = Mathf.Min(stats.handling / 100f + 0.2f * stats.handlingUpgrades + 2.7f, 4f) * Model.TurnScale;   // remake debug: a heavy hull turns slower
                 var to = (autopilotTarget() - transform.position).normalized;
                 var dir = (transform.forward + (to - transform.forward) * ((int)(dtMs * turn) / 4096f)).normalized;
                 // The model banks into the turn (#45: it flew the turns flat).
@@ -221,7 +233,7 @@ namespace GoF2Remake.Flight
                 if (Mathf.Abs(roll) > 0.01f)
                 {
                     Model.StopLeveling();
-                    transform.Rotate(0f, 0f, -roll * rollDegreesPerSecond * dtMs / 1000f, Space.Self);
+                    transform.Rotate(0f, 0f, -roll * rollDegreesPerSecond * Model.RollScale * dtMs / 1000f, Space.Self);
                 }
             }
             transform.position += transform.forward * (r.forwardUnits * metersPerUnit)
@@ -286,12 +298,14 @@ namespace GoF2Remake.Flight
             return Vector2.ClampMagnitude(GameControls.Steer.ReadValue<Vector2>(), 1f);
         }
 
-        void UpdateVisualBank() => UpdateVisualBank(Model.VisualYawBank * bankDegreesPerH, Model.VisualPitchBank * pitchTiltDegreesPerH);
+        // A heavy hull banks less and settles into it slowly (remake debug, mass).
+        void UpdateVisualBank() => UpdateVisualBank(Model.VisualYawBank * bankDegreesPerH * Mathf.Lerp(1f, 0.35f, mass),
+                                                    Model.VisualPitchBank * pitchTiltDegreesPerH * Mathf.Lerp(1f, 0.35f, mass));
 
         void UpdateVisualBank(float targetBank, float targetTilt)
         {
             if (visualModel == null) return;
-            float k = 1f - Mathf.Exp(-bankSmoothing * Time.deltaTime);
+            float k = 1f - Mathf.Exp(-bankSmoothing * Mathf.Lerp(1f, 0.2f, mass) * Time.deltaTime);
             bankAngle = Mathf.Lerp(bankAngle, targetBank, k);
             tiltAngle = Mathf.Lerp(tiltAngle, targetTilt, k);
             visualModel.localRotation = Quaternion.Euler(tiltAngle, 0f, bankAngle);

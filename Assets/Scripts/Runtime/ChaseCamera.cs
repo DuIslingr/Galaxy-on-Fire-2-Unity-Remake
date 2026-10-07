@@ -79,6 +79,8 @@ namespace GoF2Remake.Flight
             // TargetFollowCamera::update 0x186e40 does everything inside `if (0 < dt)`: paused, the camera neither follows,
             // shakes nor rumbles (the shake timer would never run out, the jitter piled up every frame).
             if (dtMs <= 0f) { rumble = 0f; return; }
+            // Last frame's engine sway comes off first, so it never feeds into the easing below.
+            if (lastSway != Quaternion.identity) { transform.rotation *= Quaternion.Inverse(lastSway); lastSway = Quaternion.identity; }
             if (constantRumble > 0f) rumble = Mathf.Max(rumble, constantRumble);
             // Remake: the same rumble on the controller / phone (Haptics; its own option, not the camera shake's): explosions,
             // the Liberator, the boost below; the boost's start as a pulse.
@@ -86,7 +88,12 @@ namespace GoF2Remake.Flight
             if (boosting && !wasBoosting) Haptics.Play(Haptics.Boost);
             wasBoosting = boosting;
             float boostRumble = boosting ? model.BoostVisualPercent * Mathf.Clamp(model.CurrentSpeed, 2f, 8f) / 50f : 0f;
-            Haptics.Rumble(Mathf.Max(rumble, boostRumble));
+            // Remake debug: a heavy hull's engines (ShipController.mass): how hard they work = the gap between the speed and
+            // the one the throttle asks for (FlightModel.MoveSpeed eases toward it), plus the boost.
+            float mass = target.mass;
+            float strain = mass > 0f ? Mathf.Clamp01(Mathf.Abs((model.Braking ? 0f : model.Throttle * model.CurrentSpeed) - model.MoveSpeed) / FlightModel.BaseSpeed) : 0f;
+            float engineRumble = mass * (0.06f + 0.25f * strain + 0.3f * model.BoostVisualPercent);
+            Haptics.Rumble(Mathf.Max(rumble, Mathf.Max(boostRumble, engineRumble)));
             rumble *= GoF2Remake.Data.Settings.CameraShake;   // the camera shake option
             if (follow != null)
             {
@@ -122,6 +129,7 @@ namespace GoF2Remake.Flight
                 posK = 0.01f * h * 0.011f + 0.001f;
                 rotK = (1f - 0.01f * h) * 0.015f + 0.003f;
             }
+            if (mass > 0f) { posK *= Mathf.Lerp(1f, 0.35f, mass); rotK *= Mathf.Lerp(1f, 0.35f, mass); }   // a heavy, unhurried follow
 
             // Slide opposite to the turn, proportional to turn rate (approximation of the target offset).
             float maxRate = Mathf.Max(1f, 750f * model.Handling / 63f);
@@ -162,9 +170,27 @@ namespace GoF2Remake.Flight
                 rumble = 0f;
             }
 
-            if (cam != null)
-                cam.fieldOfView = GoF2Remake.Visuals.Aspect.VerticalFov(baseFov + boostFovAdd * model.BoostVisualPercent, cam.aspect);
+            if (mass > 0f)
+            {
+                // The engine sway: a slow drift of the view (degrees), stronger while the engines strain and boost. The
+                // jitters above are in game units at the look-at point, which a capital ship's camera, hundreds of metres
+                // out, hardly shows.
+                swaySeconds += dtMs / 1000f;
+                float amp = mass * (0.12f + 0.5f * strain + 0.6f * model.BoostVisualPercent) * GoF2Remake.Data.Settings.CameraShake;
+                if (amp > 0f)
+                {
+                    float s = swaySeconds * 0.6f;
+                    lastSway = Quaternion.Euler((Mathf.PerlinNoise(s, 3.1f) - 0.5f) * 2f * amp, (Mathf.PerlinNoise(7.7f, s) - 0.5f) * 2f * amp,
+                                                (Mathf.PerlinNoise(s * 0.7f, 11.3f) - 0.5f) * amp);
+                    transform.rotation *= lastSway;
+                }
+            }
+            if (cam != null)   // a heavy hull's boost pushes the view out less (it gathers speed slowly anyway)
+                cam.fieldOfView = GoF2Remake.Visuals.Aspect.VerticalFov(baseFov + boostFovAdd * model.BoostVisualPercent * Mathf.Lerp(1f, 0.5f, mass), cam.aspect);
         }
+
+        Quaternion lastSway = Quaternion.identity;
+        float swaySeconds;
 
         /// <summary>Snap behind the ship (use after spawning / undocking).</summary>
         public void Snap()
@@ -175,6 +201,10 @@ namespace GoF2Remake.Flight
             transform.rotation = Quaternion.LookRotation(ship.TransformPoint(lookOffset) - transform.position, ship.up);
             if (GoF2Remake.Vr.VrMode.Enabled) transform.SetPositionAndRotation(ship.TransformPoint(GoF2Remake.Vr.VrCockpit.Seat), ship.rotation);
             slide = Vector3.zero;
+            lastSway = Quaternion.identity;
         }
+
+        // Another camera script (free look, a cutscene) sets the rotation meanwhile: nothing of the sway to take off after it.
+        void OnDisable() => lastSway = Quaternion.identity;
     }
 }
