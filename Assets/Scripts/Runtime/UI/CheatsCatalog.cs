@@ -208,7 +208,8 @@ namespace GoF2Remake.UI
                     () => Array.ConvertAll(Races, RaceName), () => shipRace, i => shipRace = i),
                 Choice("debugShip", () => X("debugShip", "Ship"), false,
                     () => ships.ConvertAll(i => $"{i} · {World.DebugSpawner.ShipName(db, i)}").ToArray(), () => shipPick, i => shipPick = i),
-                Choice("debugBehaviour", () => X("debugBehaviour", "Behaviour"), true,
+                // A stepper like the rows around it: four segments didn't fit the Debug page's width and their labels ran together.
+                Choice("debugBehaviour", () => X("debugBehaviour", "Behaviour"), false,
                     () => new[] { X("debugHostile", "Hostile"), X("debugNormal", "By standing"), X("debugFriendly", "Friendly"), X("debugNeutral", "Neutral") },
                     () => behaviourPick, i => behaviourPick = i),
                 Button("debugSpawnShip", () => X("debugSpawnShip", "Spawn ship"), () =>
