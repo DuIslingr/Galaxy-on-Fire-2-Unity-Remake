@@ -275,7 +275,7 @@ namespace GoF2Remake.UI
             {
                 id = "resetBindings", page = OptionPage.Bindings, kind = OptionKind.Button,
                 label = () => X("resetBindings", "Reset key bindings"),
-                description = () => X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc (or the controller's B, or a tap) cancels, Backspace clears; nothing pressed for 10 seconds cancels too. The menu keys stay fixed."),
+                description = () => X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc (or the controller's B, or a tap) cancels; nothing pressed for 10 seconds cancels too. To clear one: its ×, a right click, Delete (or the controller's X) on the selected row, or Backspace while it waits for a key. The menu keys stay fixed."),
                 action = Flight.GameControls.ResetToDefaults,
                 extra = BindingRow.Header,
             });

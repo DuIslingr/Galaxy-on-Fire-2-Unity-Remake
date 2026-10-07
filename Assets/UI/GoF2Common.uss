@@ -279,6 +279,34 @@
     background-color: rgba(0, 0, 0, 0);
 }
 
+/* The × that clears a bound cell: on hover, on the selected row's selected cell, always on touch. */
+.binding-cell-clear {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 26px;
+    margin: 0;
+    padding: 0;
+    font-size: 18px;
+    -unity-text-align: middle-center;
+    color: var(--gof-text-dim);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.can-hover .binding-cell-clear:hover {
+    color: #FF6B5E;
+}
+
+.can-hover .binding-cell--bound:hover .binding-cell-clear,
+.binding-row:focus .binding-cell--bound.binding-cell--selected .binding-cell-clear,
+.autopilot-menu-item--selected .binding-cell--bound.binding-cell--selected .binding-cell-clear,
+.input-touch .binding-cell--bound .binding-cell-clear {
+    display: flex;
+}
+
 .binding-row:focus .binding-cell--selected,
 .autopilot-menu-item--selected .binding-cell--selected {
     color: var(--gof-amber);

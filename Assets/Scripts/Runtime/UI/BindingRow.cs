@@ -3,8 +3,11 @@
 // the control's name, then its slots as cells: two keyboard / mouse keys and the controller button (GameControls). A click or
 // tap on a cell, or Enter / A on the row (left / right pick the cell), waits for the new key: Esc cancels (and the other
 // devices: GameControls.Rebind, or 10 s without input), Backspace / Delete
-// unbinds, a right click unbinds a cell. The row itself is the focusable element, like ChoiceRow. While a key is being
-// captured the panel's navigation events are swallowed (the menus' own keys would act on it too).
+// unbinds, a right click unbinds a cell. Remake (players couldn't find how to clear one, and a controller couldn't): a bound
+// cell shows a × (on hover, on the selected cell of the selected row, always on touch) that clears it, and on the selected
+// row Delete or the controller's X clears the selected cell without a capture (ClearSelected; Backspace is Back in the
+// pause menu). The row itself is the focusable element, like ChoiceRow. While a key is being captured the panel's
+// navigation events are swallowed (the menus' own keys would act on it too).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -19,6 +22,7 @@ namespace GoF2Remake.UI
         readonly ControlRow row;
         readonly Label label;
         readonly Button[] cells = new Button[3];
+        readonly Button[] clears = new Button[3];
         int selected;
         int listening = -1;
         string part;
@@ -51,9 +55,19 @@ namespace GoF2Remake.UI
                     GameControls.CancelRebind();
                     GameControls.Clear(row, (BindSlot)slot);
                 });
+                // The × that clears the cell (its press stays its own: the cell under it doesn't start a capture).
+                var x = new Button(() => { selected = slot; Clear(slot); }) { text = "×", focusable = false };
+                x.AddToClassList("binding-cell-clear");
+                x.RegisterCallback<PointerDownEvent>(e => e.StopPropagation());
+                x.RegisterCallback<PointerUpEvent>(e => e.StopPropagation());
+                x.RegisterCallback<ClickEvent>(e => e.StopPropagation());
+                b.Add(x);
+                clears[s] = x;
                 cells[s] = b;
                 Add(b);
             }
+            // Delete / the controller's X on the selected row clear its selected cell (every frame while shown).
+            schedule.Execute(PollClear).Every(0);
             if (!row.HasSlot(BindSlot.Key1)) selected = 2;
             RegisterCallback<NavigationSubmitEvent>(e =>
             {
@@ -103,6 +117,33 @@ namespace GoF2Remake.UI
         /// <summary>Enter / A on the row: capture the selected cell's key.</summary>
         public void Activate() => Listen(selected);
 
+        /// <summary>Clears the selected cell's binding (Delete or the controller's X on the selected row).</summary>
+        public void ClearSelected() => Clear(selected);
+
+        void Clear(int slot)
+        {
+            if (!row.HasSlot((BindSlot)slot)) return;
+            GameControls.CancelRebind();
+            if (GameControls.IsBound(row, (BindSlot)slot)) GameControls.Clear(row, (BindSlot)slot);
+        }
+
+        /// <summary>The menus select a row by focus (main menu, station) or by a class on its option (the pause menu).</summary>
+        bool IsSelectedRow()
+        {
+            if (focusController != null && focusController.focusedElement == this) return true;
+            for (VisualElement v = parent; v != null; v = v.parent)
+                if (v.ClassListContains("autopilot-menu-item--selected")) return true;
+            return false;
+        }
+
+        void PollClear()
+        {
+            if (listening >= 0 || panel == null || GameControls.BlocksMenus || !IsSelectedRow()) return;
+            var kb = Multiplayer.NetChat.Keys;
+            var pad = UnityEngine.InputSystem.Gamepad.current;
+            if ((kb != null && kb.deleteKey.wasPressedThisFrame) || (pad != null && pad.buttonWest.wasPressedThisFrame)) ClearSelected();
+        }
+
         /// <summary>A keyboard cell takes a capture only once a keyboard was used (InputMode.KeyboardSeen): on a phone without
         /// one it would wait for a key that can't come.</summary>
         static bool Usable(int slot) => slot == (int)BindSlot.Pad || InputMode.KeyboardSeen;
@@ -137,7 +178,9 @@ namespace GoF2Remake.UI
                 bool wait = s == listening;
                 string text = !has ? "" : wait ? Prompt() : GameControls.SlotText(row, (BindSlot)s);
                 b.text = has && text.Length == 0 ? "—" : text;
-                b.EnableInClassList("binding-cell--unbound", has && !wait && !GameControls.IsBound(row, (BindSlot)s));
+                bool bound = has && GameControls.IsBound(row, (BindSlot)s);
+                b.EnableInClassList("binding-cell--unbound", has && !wait && !bound);
+                b.EnableInClassList("binding-cell--bound", bound && !wait);
                 b.EnableInClassList("binding-cell--listening", wait);
                 b.EnableInClassList("binding-cell--selected", s == selected);
                 b.SetEnabled(has && Usable(s));

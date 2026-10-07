@@ -602,7 +602,7 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   (by action name and binding index: the Input System's own JSON finds bindings by id, new every launch for code-made ones, so
   nothing saved applied after a restart; an empty override unbinds); "Reset key bindings" and Default settings (497) clear them. A
   capture (`GameControls.Rebind`, `PerformInteractiveRebinding`): Esc cancels, Backspace / Delete (or a right click on the
-  cell) unbinds, the controller's Menu can't be taken; input of another kind cancels too (a keyboard cell: the controller's
+  cell) unbinds (a controller cell's capture takes the keyboard's Backspace / Delete too); remake (players couldn't find it, and a controller couldn't clear one): a bound cell's × (on hover, on the selected row's selected cell, always on touch) and Delete / the controller's X on the selected row clear the selected cell without a capture (`BindingRow.ClearSelected`, polled by the row itself in all three menus), the controller's Menu can't be taken; input of another kind cancels too (a keyboard cell: the controller's
   Menu / B or a tap; a controller cell: a mouse click or a tap; `CancelFromOtherDevice`), and so do 10 s without a match
   (a keyboard cell picked with a controller or on a phone waited for good with the menus blocked: a softlock); on a phone the
   keyboard cells only take a capture once a real keyboard was used this run (`InputMode.KeyboardSeen`; Android's back button

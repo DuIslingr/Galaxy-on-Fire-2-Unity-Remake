@@ -468,6 +468,7 @@ namespace GoF2Remake.UI
         {
             // The controller focus look (GoF2Common.uss .input-gamepad, like the station and the flight HUD).
             root?.EnableInClassList("input-gamepad", InputMode.Current == InputKind.Gamepad);
+            root?.EnableInClassList("input-touch", InputMode.Current == InputKind.Touch);   // the key bindings' × stays shown (no hover)
             if (pressAnyKey == null) return;
             pressAnyKey.text = InputMode.Current switch
             {

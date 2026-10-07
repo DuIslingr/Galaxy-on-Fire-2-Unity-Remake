@@ -353,6 +353,7 @@ namespace GoF2Remake.Flight
         static InputActionRebindingExtensions.RebindingOperation operation;
         static int rebindEndFrame = -10;
         static bool capturingPad;
+        static Action markClear;   // the running capture's "clear instead" (CancelFromOtherDevice)
 
         /// <summary>A capture that takes nothing in this long ends by itself: the menus ignore every input while one waits,
         /// so a player without the device it waits for (a keyboard cell picked with a controller or a tap) had no way out.</summary>
@@ -385,6 +386,7 @@ namespace GoF2Remake.Flight
             bool single = idx.Length == 1;
             prompt?.Invoke(single ? null : row.partLabels?[part]?.Invoke());
             bool clear = false;
+            markClear = () => clear = true;
 
             var op = row.action.PerformInteractiveRebinding(index)
                 .WithCancelingThrough("<Keyboard>/escape")
@@ -454,6 +456,15 @@ namespace GoF2Remake.Flight
             var op = operation;
             if (op == null) { InputSystem.onAfterUpdate -= CancelFromOtherDevice; return; }
             if (UnityEngine.InputSystem.LowLevel.InputState.currentUpdateType == UnityEngine.InputSystem.LowLevel.InputUpdateType.Editor) return;
+            // A controller cell's capture only listens to the controller: Backspace / Delete on the keyboard clears it too.
+            var keys = Keyboard.current;
+            if (capturingPad && keys != null && (keys.backspaceKey.wasPressedThisFrame || keys.deleteKey.wasPressedThisFrame)
+                && op.started && !op.completed && !op.canceled)
+            {
+                markClear?.Invoke();
+                op.Cancel();
+                return;
+            }
             var touch = Touchscreen.current;
             bool tap = touch != null && touch.primaryTouch.press.wasPressedThisFrame;
             bool other;
