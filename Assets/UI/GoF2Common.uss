@@ -807,6 +807,17 @@
     border-left-color: var(--gof-amber);
 }
 
+/* A stepper / segment row focused on its own (the Debug pages' Give items, Spawn, Ships rows): its fill and arrows too
+   (#24: only the value turned amber, so it was hard to tell which row the controller was on). */
+.input-gamepad .choice-row:focus {
+    background-color: rgba(255, 166, 48, 0.24);
+}
+
+.input-gamepad .choice-row:focus .choice-arrow {
+    color: var(--gof-amber);
+    background-color: rgba(255, 166, 48, 0.18);
+}
+
 .input-gamepad .tab-button:focus,
 .input-gamepad .tab-button.options-selected,
 .input-gamepad .missions-tab:focus {

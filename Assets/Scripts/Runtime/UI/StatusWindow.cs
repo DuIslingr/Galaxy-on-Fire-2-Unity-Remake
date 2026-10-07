@@ -47,10 +47,12 @@ namespace GoF2Remake.UI
             close.clicked += () => { menu.PlayRelease(); Close(); };
             root.Q<Label>("statusTitle").text = T(169).ToUpperInvariant();
             root.Q<Label>("medalsTitle").text = T(168).ToUpperInvariant();
-            var scroll = root.Q<ScrollView>("medalScroll");
+            scroll = root.Q<ScrollView>("medalScroll");
             scroll.verticalScrollerVisibility = ScrollerVisibility.Auto;
             scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
         }
+
+        ScrollView scroll;
 
         public bool IsOpen => root.ClassListContains("status-open");
 
@@ -151,7 +153,8 @@ namespace GoF2Remake.UI
                 // the grade-1 threshold).
                 bool reacts = grade > 0 || elite;
                 m.clicked += () => { if (reacts) { menu.PlayRelease(); ShowHint(medal); } };
-                m.RegisterCallback<FocusInEvent>(_ => { if (reacts) ShowHint(medal); });
+                // The keys / a controller move the focus through the grid: the list follows it (#45: it never scrolled).
+                m.RegisterCallback<FocusInEvent>(_ => { if (reacts) ShowHint(medal); scroll?.ScrollTo(m); });
                 grid.Add(m);
                 medalButtons.Add(m);
             }

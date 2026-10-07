@@ -393,6 +393,13 @@ namespace GoF2Remake.Flight
                 .WithControlsExcluding("<Keyboard>/anyKey")
                 .WithTimeout(CaptureTimeoutSeconds)
                 .OnMatchWaitForAnother(0.1f);
+            // A later part never takes what an earlier part of this slot just took: the stick still pushed left for "left"
+            // was taken again for "right" the moment that part's capture started (#24: Roll on the controller had one way).
+            for (int p = 0; p < part; p++)
+            {
+                string taken = row.action.bindings[idx[p]].effectivePath;
+                if (!string.IsNullOrEmpty(taken)) op.WithControlsExcluding(taken);
+            }
             capturingPad = IsPad(slot);
             if (IsPad(slot))
             {

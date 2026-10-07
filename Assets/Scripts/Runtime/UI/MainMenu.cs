@@ -1426,6 +1426,8 @@ namespace GoF2Remake.UI
 
         /// <summary>A hidden panel next to the others: the mission list (a new game from any story step, no intro) on the
         /// left, the cheat toggles on the right.</summary>
+        VisualElement debugMissionFocus, debugCheatFocus;   // where the focus was in each Debug column (OnNavigate)
+
         void BuildDebugPanel()
         {
             // A UI reload (PanelRenderer) rebuilds the tree: drop the old panel's elements.
@@ -2105,6 +2107,29 @@ namespace GoF2Remake.UI
 
             // Sliders and toggles keep left/right for themselves.
             if (horizontal && focused is BaseField<float> || horizontal && focused is BaseField<int>) return;
+
+            // The Debug panel's two columns (#24): left / right jump between the mission list and the cheats (a controller had
+            // to step through all 160 missions to reach them), back to where the focus was in that column.
+            if (horizontal && focused != null && panels.TryGetValue("debugPanel", out var debugPanel) && openPanel == debugPanel)
+            {
+                var missionsColumn = debugPanel.Q(className: "debug-column--missions");
+                var cheatsColumn = debugPanel.Q(className: "debug-column--cheats");
+                bool inMissions = missionsColumn != null && missionsColumn.Contains(focused);
+                bool inCheats = cheatsColumn != null && cheatsColumn.Contains(focused);
+                var to = e.direction == NavigationMoveEvent.Direction.Right && inMissions ? cheatsColumn
+                       : e.direction == NavigationMoveEvent.Direction.Left && inCheats ? missionsColumn : null;
+                if (to != null)
+                {
+                    if (inMissions) debugMissionFocus = focused; else debugCheatFocus = focused;
+                    var remembered = to == cheatsColumn ? debugCheatFocus : debugMissionFocus;
+                    var columnItems = Focusables(to).FindAll(v => !(v is TextField));
+                    var target = remembered != null && columnItems.Contains(remembered) ? remembered : columnItems.Count > 0 ? columnItems[0] : null;
+                    if (target != null) { target.Focus(); EnsureVisible(target); }
+                    e.StopPropagation();
+                    root.focusController?.IgnoreEvent(e);
+                    return;
+                }
+            }
 
             var scope = dialog.ClassListContains("dialog-backdrop--shown") ? dialog : openPanel ?? mainButtons;
             var items = Focusables(scope);

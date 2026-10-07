@@ -978,8 +978,7 @@ namespace GoF2Remake.UI
                     hangar.Demount(selected.equipment);
                     menu.PlayClip(menu.shopDemount);
                     menu.ShowToast(Localization.Get(209).Replace("#N", ItemInfo.ItemName(item)));
-                    selected = null;
-                    Rebuild();
+                    Rebuild();   // #45: the selection stays where it was (Rebuild's nearest row), not back at the top
                     break;
                 }
                 case RowKind.CargoItem:
@@ -994,7 +993,6 @@ namespace GoF2Remake.UI
                         {
                             if (!hangar.Swap(swapWith, item)) return;
                             menu.PlayClip(menu.shopMount);
-                            selected = null;
                             Rebuild();
                         });
                     }
@@ -1002,7 +1000,6 @@ namespace GoF2Remake.UI
                     {
                         menu.PlayClip(menu.shopMount);
                         menu.ShowToast(Localization.Get(208).Replace("#N", ItemInfo.ItemName(item)));
-                        selected = null;
                         Rebuild();
                     }
                     break;

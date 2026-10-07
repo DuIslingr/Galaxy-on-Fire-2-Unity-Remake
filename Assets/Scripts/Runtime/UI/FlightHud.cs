@@ -286,6 +286,7 @@ namespace GoF2Remake.UI
         {
             if (mining != null && mining.State != Mining.Phase.Idle) return false;
             if (docking != null && docking.PromptText != null) { docking.Interact(); return true; }
+            if (DockBeforeLock) { Dock(); return true; }
             // Remake: a refused action (a full hold, 525) doesn't use the press up: the original's did, so the autofire
             // latch could neither be set nor cleared while the lock lasted (#27).
             if (nav != null && nav.Locked != null && nav.PromptText != null && nav.Interact()) return true;
@@ -775,6 +776,7 @@ namespace GoF2Remake.UI
 
             // The action prompt: navigation (autopilot / jump) first, then mining (lock / approach / minigame), else docking.
             string prompt = docking != null ? docking.PromptText : null;
+            if (prompt == null && DockBeforeLock) prompt = Localization.Extra("hudDock", "DOCK");
             if (prompt == null && nav != null) prompt = nav.PromptText;
             if (prompt == null && mining != null) prompt = mining.PromptText;
             if (prompt == null && level.CanDock) prompt = Localization.Extra("hudDock", "DOCK");
@@ -1228,9 +1230,16 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>The action prompt: mining (mine / abort / stop) when it has something to do, else dock.</summary>
+        /// <summary>Remake (#24): inside the docking range Dock beats a lock on the station (its autopilot) or on a planet
+        /// behind it (a planet jump): pressing the action after the Dock prompt showed flew the ship off in a planet jump
+        /// whenever the lock completed meanwhile, which looked like a launch.</summary>
+        bool DockBeforeLock => level != null && level.CanDock && nav != null && !nav.Autopilot && nav.Locked != null
+                               && (nav.Locked.kind == Navigation.Kind.Planet || nav.Locked.kind == Navigation.Kind.Station);
+
         void Interact()
         {
             if (docking != null && docking.PromptText != null) docking.Interact();
+            else if (DockBeforeLock) Dock();
             else if (nav != null && nav.PromptText != null) nav.Interact();
             else if (mining != null && mining.PromptText != null) mining.Interact();
             else Dock();

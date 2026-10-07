@@ -289,6 +289,10 @@ namespace GoF2Remake.UI
                 () => Settings.HangarFlights, v => Settings.HangarFlights = v));
             list.Add(Toggle("tutorialHints", OptionPage.Gameplay, () => X("tutorialHints", "Tutorials"),
                 () => Settings.TutorialHints, v => Settings.TutorialHints = v));
+            var storyStep = Toggle("showStoryStep", OptionPage.Gameplay, () => X("showStoryStep", "Show story step"),
+                () => Settings.ShowStoryStep, v => Settings.ShowStoryStep = v);
+            storyStep.description = () => X("showStoryStepHelp", "The current story step at the bottom right of the screen. Handy for bug reports.");
+            list.Add(storyStep);
             var pirateEvents = Toggle("pirateEvents", OptionPage.Gameplay, () => X("pirateEvents", "Pirate outposts and bosses"),
                 () => Settings.PirateEvents, v => Settings.PirateEvents = v);
             pirateEvents.description = () => X("pirateEventsHelp", "Now and then an orbit holds a pirate outpost with its guards or a pirate boss with escorts; destroying them pays a bounty. Not in the original.");

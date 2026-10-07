@@ -1,7 +1,8 @@
 // StoryStepLabel.cs
 // Remake-only: a small line at the bottom right of every in-game scene naming the current story step ("Step 23: <title>",
 // StepSummaries; "Free play" without a story), the campaign and the station (its name and index), so a bug report's
-// screenshot shows where the player was. Not in the main menu, nor in photo mode / Action Freeze (FpsCounter.Suppressed).
+// screenshot shows where the player was. Only with Options > Gameplay "Show story step" (#40, Settings.ShowStoryStep, off by
+// default); not in the main menu, nor in photo mode / Action Freeze (FpsCounter.Suppressed).
 // Created by Bootstrap and kept for the whole run; its own panel like FpsCounter (the star map's panel settings, sorted
 // over the HUDs and menus), never picking (taps go through to the touch controls under it).
 
@@ -88,7 +89,7 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>In a game scene (not the main menu) and not hidden for a photo.</summary>
-        static bool Wanted() => !FpsCounter.Suppressed && SceneManager.GetActiveScene().buildIndex > 0;
+        static bool Wanted() => Settings.ShowStoryStep && !FpsCounter.Suppressed && SceneManager.GetActiveScene().buildIndex > 0;
 
         string Text()
         {
