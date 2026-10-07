@@ -704,8 +704,10 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   AppxManifest.xml, start it from `shell:AppsFolder\<family>!App`; the log is
   `%LOCALAPPDATA%\Packages\JoppieToppie.GoF2Remake_*\TempState\UnityPlayer.log`. `BuildVersionStamp` also stamps the package version
   (yyyy.M.d.HHmm). Switching to UWP adds default WindowsStoreApps entries to every texture .meta: revert them.
-- **UWP sky** (#20): the space-sky strips (`Resources/GoF2Sky`) have a WindowsStoreApps override to BC1 (`SkyboxBaker.ApplyUwpOverride`;
-  the default CompressedHQ = BC7 drew bands of shifted tiles on the Xbox; unverified on the device). Menus: a text field is one
+- **UWP sky** (#20): the space-sky strips (`Resources/GoF2Sky`) have a WindowsStoreApps override to uncompressed RGBA32 with 1365 px faces
+  (`SkyboxBaker.ApplyUwpOverride`; the Xbox runs UWP apps at D3D feature level 10, which has no BC7: the default CompressedHQ
+  drew bands of shifted tiles, BC1 bands and a criss-cross; if RGBA32 still breaks it is the cubemap layout, and the next step
+  is the shader's 2D strip path; unverified on the device). Menus: a text field is one
   focus stop (`MainMenu.InsideTextField`; its inner input was listed too and handed the focus back, trapping the D-pad in the
   multiplayer panel's name field), panels open on their first non-text item, and on UWP the text typed while the system keyboard
   was open is kept when it closes with B (`KeepKeyboardText`; closing counts as Cancel and put the old text back).
