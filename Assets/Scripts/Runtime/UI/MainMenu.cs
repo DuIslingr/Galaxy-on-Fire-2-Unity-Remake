@@ -868,7 +868,7 @@ namespace GoF2Remake.UI
             b.EnableInClassList("choice-button--on", on);
             var label = root.Q<Label>("tutorialLabel");
             if (label != null)
-                label.text = $"{Localization.Extra("tutorialTitle", "Tutorial popups")}: {(on ? Localization.Extra("tutorialOn", "On") : Localization.Extra("tutorialOff", "Off"))}".ToUpperInvariant();
+                label.text = $"{Localization.Extra("tutorialTitle", "Tutorials")}: {(on ? Localization.Extra("tutorialOn", "On") : Localization.Extra("tutorialOff", "Off"))}".ToUpperInvariant();
             var desc = root.Q<Label>("tutorialDesc");
             if (desc != null)
                 desc.text = Localization.Extra("tutorialDesc",
