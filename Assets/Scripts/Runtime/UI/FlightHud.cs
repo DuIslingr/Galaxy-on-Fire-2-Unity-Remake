@@ -72,7 +72,7 @@ namespace GoF2Remake.UI
         VisualElement gameOver;
         Label gameOverText;
         float gameOverMs = -1f;
-        VisualElement jumpCharge, jumpChargeFill, orbitInfo;
+        VisualElement jumpCharge, jumpChargeFill, jumpChargeStripes, orbitInfo;
         Label jumpChargeLabel;
         bool lastCloakCharging;
         bool orbitInfoFilled;
@@ -155,7 +155,12 @@ namespace GoF2Remake.UI
             jumpChargeFill = root.Q("jumpChargeFill");
             orbitInfo = root.Q("orbitInfo");
             jumpChargeLabel = root.Q<Label>("jumpChargeLabel");
-            jumpChargeLabel.text = Localization.Get(1359).ToUpperInvariant();   // Khador Drive
+            jumpChargeLabel.text = Localization.Get(318).ToUpperInvariant();   // Drive charging
+            jumpChargeStripes = root.Q("jumpChargeStripes");
+            var chargeFrame = Resources.Load<Texture2D>("GoF2Hud/charge_frame");
+            var chargeFill = Resources.Load<Texture2D>("GoF2Hud/charge_fill");
+            if (chargeFrame != null) jumpCharge.style.backgroundImage = new StyleBackground(chargeFrame);
+            if (chargeFill != null) jumpChargeStripes.style.backgroundImage = new StyleBackground(chargeFill);
             orbitInfoFilled = false;
 
             HookPress(dockPrompt, null, Interact);
@@ -745,6 +750,14 @@ namespace GoF2Remake.UI
                     freelance.RewardMessage += OnMiningMessage;
                 }
                 if (weapons != null) weapons.Hit += () => hitFlashMs = 200f;
+                // #48: the turret aimed in the turret view too (the crosshair sits on its gun then); not the auto turrets'
+                // own shots while the player flies.
+                if (level.Turrets != null)
+                    foreach (var tr in level.Turrets)
+                    {
+                        var turretRef = tr;
+                        if (turretRef != null) turretRef.Hit += () => { if (turretRef.InTurretView) hitFlashMs = 200f; };
+                    }
                 if (level.Turret != null) level.Turret.Message += OnMiningMessage;   // HUD event 0x20 / 0x21 (auto fire on / off)
                 if (health != null) health.Message += OnMiningMessage;             // injector / gamma messages
                 if (level.Cloak != null) level.Cloak.Message += OnMiningMessage;   // cells paid, "Cloak ready", 583
@@ -808,10 +821,17 @@ namespace GoF2Remake.UI
             if (cloakCharging != lastCloakCharging)
             {
                 lastCloakCharging = cloakCharging;
-                jumpChargeLabel.text = (cloakCharging ? Localization.Get(317) : Localization.Get(1359)).ToUpperInvariant();
+                jumpChargeLabel.text = (cloakCharging ? Localization.Get(317) : Localization.Get(318)).ToUpperInvariant();
             }
-            if (jump != null && jump.Charging) jumpChargeFill.style.width = Length.Percent(jump.ChargeRate * 100f);
-            else if (cloakCharging) jumpChargeFill.style.width = Length.Percent(Mathf.Min(1f, cloak.ChargeRate * 1.05f) * 100f);
+            // Hud::draw: half-width min(1, rate x 1.05) x 194 either side of the centre, the stripes' middle first.
+            float chargeRate = jump != null && jump.Charging ? jump.ChargeRate : cloakCharging ? cloak.ChargeRate : -1f;
+            if (chargeRate >= 0f)
+            {
+                float half = Mathf.Min(1f, chargeRate * 1.05f) * 194f;
+                jumpChargeFill.style.left = 204f - half;
+                jumpChargeFill.style.width = 2f * half;
+                jumpChargeStripes.style.left = half - 194f;
+            }
             // The time extender: the fast-forward slot's clock (touch) while it isn't fast-forward.
             if (navView.ConsumeExtenderTap()) level?.Extender?.Toggle();
             UpdateOrbitInfo();

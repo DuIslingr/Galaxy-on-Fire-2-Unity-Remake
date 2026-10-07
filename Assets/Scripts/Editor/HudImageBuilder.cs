@@ -36,6 +36,8 @@ namespace GoF2Remake.EditorTools
             (Main, "drill", 639, 855, 660, 66, 10, false),       // 0x4e6 drill bit, 10 frames 66x66
             (Main, "energy_frame", 651, 261, 408, 34, 0, false), // 0x4e3
             (Main, "energy_fill", 614, 1634, 388, 14, 0, false), // 0x4e8
+            (Main, "charge_frame", 705, 1259, 408, 69, 0, false), // 0x53a the Khador Drive / cloak charge bar (combat_equipment.md)
+            (Main, "charge_fill", 605, 1610, 388, 14, 0, false),  // 0x539 its fill, drawn from the centre outward
             (Main, "energy_label", 375, 160, 27, 8, 0, false),   // 0x4ed
             (Main, "strip_red", 1452, 1, 194, 11, 0, true),      // 0x4eb scrolling data strips
             (Main, "strip_orange", 162, 1, 194, 12, 0, true),    // 0x4ec

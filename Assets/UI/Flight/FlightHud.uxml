@@ -73,10 +73,10 @@
             </ui:VisualElement>
             <ui:VisualElement name="hudMessages" class="hud-messages" picking-mode="Ignore" />
             <ui:VisualElement name="jumpCharge" class="jump-charge" picking-mode="Ignore">
-                <ui:Label name="jumpChargeLabel" class="jump-charge-label gof-semibold" picking-mode="Ignore" />
-                <ui:VisualElement class="jump-charge-bar" picking-mode="Ignore">
-                    <ui:VisualElement name="jumpChargeFill" class="jump-charge-fill" picking-mode="Ignore" />
+                <ui:VisualElement name="jumpChargeFill" class="jump-charge-fill" picking-mode="Ignore">
+                    <ui:VisualElement name="jumpChargeStripes" class="jump-charge-stripes" picking-mode="Ignore" />
                 </ui:VisualElement>
+                <ui:Label name="jumpChargeLabel" class="jump-charge-label gof-semibold" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement name="orbitInfo" class="orbit-info" picking-mode="Ignore">
                 <ui:VisualElement name="orbitLogo" class="orbit-logo" picking-mode="Ignore" />
