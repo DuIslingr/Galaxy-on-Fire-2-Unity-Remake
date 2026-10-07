@@ -6,7 +6,8 @@
 //            x6, the battleship x8, the Pirate Outposts x8)
 //   type 7   explosion_emp_anim_lookat_add, 2000 ms (EMP bombs)
 //   type 8-10 v_scattergun_000_explosion_lookat_anim_add (scatter guns), random roll 0..3.14 rad, scale 0.6..0.99 and
-//            animation speed 0.7..1.29 (Explosion::setScaling / start)
+//            animation speed 0.7..1.29 (Explosion::setScaling / start); each type its own material (meshes 16806-16808:
+//            20151 / 20152 / 20153, CombatAssets.scatterMaterials)
 //   type 11  the shock blast: sn_shock_blast_glow (camera-facing) + sn_shock_blast_sphere facing the ship's direction,
 //            setScaling(50000), played at half speed
 //   type 13  sn_fireworks_lookat_anim_add, setScaling(0.25)
@@ -57,7 +58,10 @@ namespace GoF2Remake.Flight
                 {
                     // Explosion::start: random roll and scale; setScaling: random animation speed.
                     speed = 0.7f + Random.Range(0, 60) / 100f;
-                    var t = e.Add(assets.explosionScatter, scale * (0.6f + Random.Range(0, 40) / 100f), true, speed);
+                    // Each gun's own colour: meshes 16806 / 16807 / 16808 share the model but not the material (20151-20153).
+                    var mats = assets.scatterMaterials;
+                    var mat = mats != null && type - 8 < mats.Length ? mats[type - 8] : null;
+                    var t = e.Add(assets.explosionScatter, scale * (0.6f + Random.Range(0, 40) / 100f), true, speed, mat);
                     if (t != null) t.GetChild(0).localRotation = Quaternion.Euler(0f, 0f, Random.Range(0, 3141) / 1000f * Mathf.Rad2Deg);
                     break;
                 }
@@ -94,14 +98,16 @@ namespace GoF2Remake.Flight
             return e;
         }
 
-        /// <summary>One part: a pivot (for the camera-facing turn) holding the mesh, its animation at 'speed'.</summary>
-        Transform Add(GameObject prefab, float scale, bool faceCamera, float speed)
+        /// <summary>One part: a pivot (for the camera-facing turn) holding the mesh, its animation at 'speed'; 'material' (if
+        /// any) replaces the prefab's on every renderer before the animation reads it.</summary>
+        Transform Add(GameObject prefab, float scale, bool faceCamera, float speed, Material material = null)
         {
             if (prefab == null) return null;
             var pivot = new GameObject(prefab.name).transform;
             pivot.SetParent(transform, false);
             var go = Instantiate(prefab, pivot, false);
             go.transform.localScale *= scale;
+            if (material != null) foreach (var r in go.GetComponentsInChildren<Renderer>(true)) r.sharedMaterial = material;
             GunRig.StripForFx(go);
             foreach (var a in go.GetComponentsInChildren<PartAnimation>(true)) { a.speed = speed; a.applyMaterialChannels = true; }   // their `extra` fade-out
             float len = PartAnimation.PlayOnce(go) / Mathf.Max(0.05f, speed);

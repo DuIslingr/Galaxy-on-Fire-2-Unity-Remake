@@ -63,6 +63,10 @@ namespace GoF2Remake.Flight
         public GameObject outpostWreck;
         [Tooltip("Explosion types 7 (EMP), 8-10 (scatter), 11 (shock blast glow + sphere), 13 (fireworks).")]
         public GameObject explosionEmp, explosionScatter, shockGlow, shockSphere, fireworksBurst;
+        [Tooltip("Materials 20151 / 20152 / 20153 (v_scattergun_000 / 001 / 002_explosion.png): the scatter bursts of types 8 / 9 / 10 " +
+                 "(items 176 Nirai / 177 Berger / 178 Icarus). One mesh for all three (resources 16806-16808), so one per-mesh prefab, " +
+                 "whose material is the last id's (Icarus).")]
+        public Material[] scatterMaterials;
         [Tooltip("Sound 22 Garbage_Explosion: turrets, sentries, scatter bursts, mines.")]
         public AudioClip[] garbageExplosion;
         [Tooltip("The EMP lightning (records 17 / 18: material 27260 khador_jump, additive).")]

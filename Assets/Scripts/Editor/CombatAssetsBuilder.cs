@@ -65,6 +65,8 @@ namespace GoF2Remake.EditorTools
             a.outpostWreck = Prefab("Prefabs/main/stations/station_pirates_explosion_anim.prefab");
             a.explosionEmp = Prefab("Prefabs/main/fx/explosion_emp_anim_lookat_add.prefab");
             a.explosionScatter = Prefab("Prefabs/valkyrie/fx/v_scattergun_000_explosion_lookat_anim_add.prefab");
+            a.scatterMaterials = new[] { "mat_20151_v_scattergun_000_explosion", "mat_20152_v_scattergun_001_explosion", "mat_20153_v_scattergun_002_explosion" }
+                .Select(n => AssetDatabase.LoadAssetAtPath<Material>($"{Root}/Materials/{n}.mat")).ToArray();
             a.shockGlow = Prefab("Prefabs/supernova/fx/sn_shock_blast_glow_anim_lookat_add.prefab");
             a.shockSphere = Prefab("Prefabs/supernova/fx/sn_shock_blast_sphere_anim_add.prefab");
             a.fireworksBurst = Prefab("Prefabs/supernova/fx/sn_fireworks_lookat_anim_add.prefab");
