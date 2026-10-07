@@ -19,6 +19,7 @@ What mods can do so far:
   voice-over, objectives, map markers, checkpoints that saves keep, rewards and failure.
 - **Add and replace music**: replace any of the game's tracks, or add new ones for your systems, stations and quests.
 - **Replace sound effects**: any of the game's sounds, from the guns to the menu clicks and the voices.
+- **Reskin ships and objects**: replace any of the game's textures, for example a ship's hull paint.
 - **Build on other mods**: a story mod can use the ships, items and systems of a mod it depends on.
 - **Make a whole new game**: a campaign of its own under New Game, with its own start, galaxy, shops and NPC ships.
 - **Translate** their own texts into any of the game's languages.
@@ -742,6 +743,27 @@ in front, so each language is replaced on its own). Music has its own `music` fo
 
 A sound the game picks at random from several files (most shots and explosions) needs each file replaced to always sound
 yours. Only a weapon's own shot can be set on the item instead (`fx` → `shot`, above).
+
+## Textures (skins)
+
+Put images in the mod's `textures` folder (`.png` or `.jpg`), each named like one of the game's textures: it is used instead
+on every ship, station and object that uses it. The names are the file names in the game's `Assets/Textures` folders, for
+example `ship_028_terran_diffuse` (the Veteran's hull paint), `ship_028_terran_normal_specular` (its bumps and shine) or
+`ship_010_terran_diffuse` (the Phantom). A ship's hull texture is `ship_<number>_<race>_diffuse`; the race is the one in its
+model's name, which isn't always the race that sells it.
+
+Keep the original's layout: the image is wrapped around the model by the same UV mapping, so paint over a copy of the
+original texture (or use a skin maker that does). Its size may differ; 2048 x 2048 like the originals looks best. A
+skin changes every ship of that model, yours and the NPCs'. Names with `_normal` or `_metallic` are read as data, the rest as
+colours.
+
+```
+veteran_skin/
+  mod.json
+  preview.png
+  textures/
+    ship_028_terran_diffuse.png
+```
 
 ## Building on other mods
 

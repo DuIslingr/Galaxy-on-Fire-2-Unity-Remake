@@ -1662,6 +1662,12 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   everywhere; `ModSounds.Get(clip)` wraps every `PlayOneShot` and `.clip =` site (57, not the music sources: ModMusic's),
   memoised per clip (AudioClip.name allocates), a no-op without mod sounds; later mods win; loaded decoded
   (`ModAudio.Load(..., compressed: false)`). Verified: `Target_Lock_v08` replaced.
+- **Textures / skins** (`ModTextures`, a mod's `textures/<game texture name>.png | .jpg`, e.g. `ship_028_terran_diffuse` for
+  the Veteran's hull): replaces that texture on every assembled object using it (`AssembledObject.Awake` -> `Apply`: the
+  object's renderers get cached copies of their materials with the mod's texture in `_BaseMap` / `_MainTex` / `_BumpMap` /
+  `_MetallicGlossMap` / `_EmissionMap`; the game's material assets are never touched); `_normal` / `_metallic` names load
+  linear; loaded with the rest (`ModMaterials.PreloadTexture`, `ModLoading`). Verified in Play mode: a BountyBot
+  (/make_skin_texture) Veteran skin on the hangar turntable (`Mods/veteran_skin`, git-ignored).
 - **Mod campaigns** (`ModCampaigns`, a mod's `campaign.json`: name, description, image, startStation, startShip, credits,
   equipment, cargo, standing, quest, galaxy mod | all, items mod | all, ships mod | all, trafficShips per race): an entry under
   the campaign cards (`MainMenu.RefreshModCampaigns` / `PickModCampaign`, `.mod-campaign*` in MainMenu.uss) → difficulty →
@@ -1742,7 +1748,7 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   the cache `ModMaterials.Texture` reads; zip files copied out once by `ModInfo.LocalFile`, cache folder by the zip's date and
   size), glTFast's main-thread work for all of them in one `TimeBudgetPerFrameDeferAgent` (0.6 of a frame; the old
   `UninterruptedDeferAgent` built each model in one go), the stations and rooms (`ModStations`), the weapon fx
-  (`ModWeapons`), the music tracks and sound effects (`ModAudio`, `ModMusic`, `ModSounds`), then the ships' hangar shadows
+  (`ModWeapons`), the music tracks and sound effects (`ModAudio`, `ModMusic`, `ModSounds`), the texture replacements (`ModTextures`), then the ships' hangar shadows
   (`World.ShipShadowBaker.ModShipsBaked`, see "Station scene"). Textures are compressed to DXT1 /
   DXT5 with their mipmaps by a Burst job (`ModTextureEncoder`, van Waveren's real-time encoder, native buffers: Texture2D.Compress
   took 110-145 ms per 2048 px texture on the main thread, a managed encoder's garbage a 2 s collection) where the GPU reads

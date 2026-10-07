@@ -579,6 +579,7 @@ namespace GoF2Remake.UI
             Modding.ModStations.Preload();   // their station models and planet / sun textures
             Modding.ModWeapons.Preload();   // their weapons' own fx and sounds
             Modding.ModSounds.Preload();   // their sound effects
+            Modding.ModTextures.Preload();   // their texture replacements (skins)
             Modding.ModCharacters.Preload();   // their characters' portraits
             Modding.ModMusic.Preload();   // and their music (a replaced menu theme swaps in when it has loaded)
             Modding.ModMusic.Changed -= SwapModMusic;

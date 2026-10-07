@@ -27,6 +27,9 @@ namespace GoF2Remake.Visuals
             return prefab;
         }
 
+        // Remake mods: texture replacements (skins) on this object's renderers.
+        void Awake() => Modding.ModTextures.Apply(gameObject);
+
         [Tooltip("Resource id of the root (LOD 0) mesh.")]
         public int rootMeshId;
 
