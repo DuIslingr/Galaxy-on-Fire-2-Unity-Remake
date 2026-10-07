@@ -129,16 +129,18 @@ namespace GoF2Remake.Flight
                 g.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.black, 1f) },
                           new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0f, 1f) });
                 col.color = g;
-                // The cell as a camera-facing quad whose UVs stay half a texel inside it: a texture-sheet cell reached the
-                // cell's edge, and the bilinear filter pulled in the trail strips that start right under the glows (a
-                // purple / red line under every particle: lines behind the thrusters).
+                // The cell as a camera-facing quad: a texture-sheet cell reached the cell's edge, and the filter pulled in the
+                // trail strips that start right under the glows (a purple / red line under every particle: lines behind the
+                // thrusters). The cell is its own clamped texture with its own mipmaps (CellMaterial): an inset into the
+                // atlas held only at full size, the fx atlases' mipmaps (as the original) brought the lines back.
                 var r = go.GetComponent<ParticleSystemRenderer>();
                 r.renderMode = ParticleSystemRenderMode.Mesh;
-                r.mesh = CellQuad(mountCell);
+                var cellMat = CellMaterial(mat, mountCell);
+                r.mesh = CellQuad(cellMat != mat ? -1 : mountCell);
                 r.alignment = ParticleSystemRenderSpace.View;
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 r.receiveShadows = false;
-                if (mat != null) r.sharedMaterial = mat;
+                if (cellMat != null) r.sharedMaterial = cellMat;
                 systems.Add(ps);
                 baseSizes.Add(size * M);
                 tints.Add(tint);
@@ -187,23 +189,62 @@ namespace GoF2Remake.Flight
             return exhaustMaterial;
         }
 
+        static readonly Material[] cellMaterials = new Material[64];
+        static readonly RenderTexture[] cellTextures = new RenderTexture[64];
+
+        /// <summary>The exhaust material on cell 'cell' of the 8 x 8 particles.png alone: the cell copied 1:1 into a 128 px
+        /// render texture (clamped, its own mipmaps), so no mip level samples the neighbouring cells. Without a graphics
+        /// device (the dedicated server) the shared material and the inset atlas quad.</summary>
+        static Material CellMaterial(Material exhaust, int cell)
+        {
+            if (exhaust == null || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null) return exhaust;
+            var sheet = exhaust.mainTexture;
+            if (sheet == null) return exhaust;
+            var rt = cellTextures[cell];
+            if (rt == null || !rt.IsCreated() || cellMaterials[cell] == null || cellMaterials[cell].shader != exhaust.shader)
+            {
+                if (rt == null)
+                {
+                    rt = new RenderTexture(new RenderTextureDescriptor(128, 128, RenderTextureFormat.ARGB32, 0)
+                    {
+                        useMipMap = true, autoGenerateMips = true, sRGB = true,
+                    })
+                    { name = $"ExhaustCell{cell}", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Trilinear, anisoLevel = 8 };
+                    cellTextures[cell] = rt;
+                }
+                if (!rt.IsCreated()) rt.Create();
+                const float step = 1f / 8f;
+                int cx = cell % 8, cy = cell / 8;   // rows from the top
+                Graphics.Blit(sheet, rt, new Vector2(step, step), new Vector2(cx * step, 1f - (cy + 1) * step));
+                var m = new Material(exhaust) { name = exhaust.name + $" cell {cell}" };
+                m.mainTexture = rt;
+                m.mainTextureScale = Vector2.one;
+                m.mainTextureOffset = Vector2.zero;
+                cellMaterials[cell] = m;
+            }
+            return cellMaterials[cell];
+        }
+
         static readonly Mesh[] cellQuads = new Mesh[64];
+        static Mesh fullQuad;
 
         /// <summary>A quad of QuadScale x the particle's size mapping cell 'cell' of the 8 x 8, 1024 px particles.png, inset half
-        /// a texel.</summary>
+        /// a texel; -1 = the whole texture (a cell texture of CellMaterial).</summary>
         static Mesh CellQuad(int cell)
         {
-            if (cellQuads[cell] != null) return cellQuads[cell];
+            if (cell < 0 ? fullQuad != null : cellQuads[cell] != null) return cell < 0 ? fullQuad : cellQuads[cell];
             const float px = 1f / 1024f, step = 1f / 8f;
-            int cx = cell % 8, cy = cell / 8;   // rows from the top
+            int cx = Mathf.Max(cell, 0) % 8, cy = Mathf.Max(cell, 0) / 8;   // rows from the top
             float u0 = cx * step + 0.5f * px, u1 = (cx + 1) * step - 0.5f * px;
             float v1 = 1f - cy * step - 0.5f * px, v0 = 1f - (cy + 1) * step + 0.5f * px;
-            var m = new Mesh { name = $"ExhaustCell{cell}" };
+            if (cell < 0) { u0 = v0 = 0f; u1 = v1 = 1f; }
+            var m = new Mesh { name = cell < 0 ? "ExhaustCellTexture" : $"ExhaustCell{cell}" };
             const float h = 0.5f * QuadScale;
             m.vertices = new[] { new Vector3(-h, -h, 0f), new Vector3(h, -h, 0f), new Vector3(h, h, 0f), new Vector3(-h, h, 0f) };
             m.uv = new[] { new Vector2(u0, v0), new Vector2(u1, v0), new Vector2(u1, v1), new Vector2(u0, v1) };
             m.triangles = new[] { 0, 2, 1, 0, 3, 2 };
             m.RecalculateBounds();
+            if (cell < 0) return fullQuad = m;
             return cellQuads[cell] = m;
         }
 
