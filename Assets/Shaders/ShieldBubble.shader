@@ -1,7 +1,10 @@
 // GoF2/ShieldBubble: the emergency system's bubble (mesh 14374 v_shield, material 27150; AbyssEngine::SimpleRefractionShader,
-// combat_equipment.md 2). The sphere itself is invisible: it shows the screen behind it, pushed by the noise texture's
-// xy toward the rim (coord = fragCoord + (noise.xy - 0.5) * rim * 180 px at 1024x768, rim = smoothstep(0, 1, 1 - N.V)).
-// _Anim scrolls the noise (mesh+0x24 += dt * 0.001). Reads _CameraOpaqueTexture (the camera's opaque texture must be on).
+// combat_equipment.md 2). The sphere itself is invisible: it shows the screen behind it, pushed by the noise texture:
+// coord = fragCoord + (noise.xy - 0.5) * rim * 180 px (at 1024x768), rim = smoothstep(0, 1, 1 - dot(eye, noise * 2 - 1))
+// with the eye direction in tangent space and the noise read as the normal, so the whole sphere wobbles, most at its rim.
+// The noise doesn't scroll (the shader reads u_CloakRate into an unused variable). The scene it shows is clamped to LDR,
+// like the original's: the remake's HDR sun core smeared over the bubble bloomed the screen white (#45).
+// Reads _CameraOpaqueTexture (the camera's opaque texture must be on).
 Shader "GoF2/ShieldBubble"
 {
     Properties
@@ -31,8 +34,8 @@ Shader "GoF2/ShieldBubble"
                 float _Anim, _Strength;
             CBUFFER_END
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 normalWS : TEXCOORD1; float3 viewWS : TEXCOORD2; };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float4 tangentOS : TANGENT; float2 uv : TEXCOORD0; };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float3 eyeTS : TEXCOORD1; };
 
             Varyings vert(Attributes i)
             {
@@ -40,18 +43,22 @@ Shader "GoF2/ShieldBubble"
                 float3 ws = TransformObjectToWorld(i.positionOS.xyz);
                 o.positionCS = TransformWorldToHClip(ws);
                 o.uv = i.uv;
-                o.normalWS = TransformObjectToWorldNormal(i.normalOS);
-                o.viewWS = GetWorldSpaceViewDir(ws);
+                // v_eye_dir = TBN * (eye - position), per vertex like the original
+                float3 n = TransformObjectToWorldNormal(i.normalOS);
+                float3 t = TransformObjectToWorldDir(i.tangentOS.xyz);
+                float3 b = cross(n, t) * i.tangentOS.w * GetOddNegativeScale();
+                float3 v = normalize(GetWorldSpaceViewDir(ws));
+                o.eyeTS = float3(dot(v, t), dot(v, b), dot(v, n));
                 return o;
             }
 
             half4 frag(Varyings i) : SV_Target
             {
-                half4 noise = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, i.uv + float2(_Anim * 0.05, _Anim * 0.03));
-                float rim = smoothstep(0.0, 1.0, 1.0 - saturate(dot(normalize(i.viewWS), normalize(i.normalWS))));
+                half4 noise = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, i.uv);
+                float rim = smoothstep(0.0, 1.0, 1.0 - dot(normalize(i.eyeTS), noise.rgb * 2.0 - 1.0));
                 float2 suv = GetNormalizedScreenSpaceUV(i.positionCS);
                 float2 offset = (noise.xy - 0.5) * rim * 180.0 * _Strength / float2(1024.0, 768.0);
-                return half4(SampleSceneColor(saturate(suv + offset)), 1);
+                return half4(min(SampleSceneColor(saturate(suv + offset)), 1.0), 1);
             }
             ENDHLSL
         }

@@ -255,7 +255,7 @@ namespace GoF2Remake.Flight
                     position = new Vector3(s * (Random.Range(0, 60000) - 80000), Random.Range(0, 40000) - 20000, Random.Range(0, 160000) - 80000),
                 });
             }
-            if (terran || vossk) AddCapitalShip(list, terran, carrier);
+            if (terran || vossk) AddCapitalShip(list, terran, carrier, station);
             // 4 raiders (the loot orbits': Player::setHitpoints(2 x max), speed 3.5, each at the player + (20000 +- rnd 50000,
             // 10000 +- rnd 50000, 20000 +- rnd 50000))
             int raidersFrom = list.Count;
@@ -514,29 +514,60 @@ namespace GoF2Remake.Flight
             new Vector3(15624, -787, -7569), new Vector3(0, 4901, 3084),
         };
 
-        static void AddCapitalShip(List<SpawnSpec> list, bool terran, bool carrier)
+        static void AddCapitalShip(List<SpawnSpec> list, bool terran, bool carrier, int station)
         {
             Vector3 host;
             if (terran && !carrier)
             {
-                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 10000) - 5000, Random.Range(0, 80000) + 40000);
+                host = ClearOfStation(station, CollisionVolume.ForFreighter(14, 0),
+                    () => new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 10000) - 5000, Random.Range(0, 80000) + 40000));
                 list.Add(new SpawnSpec { group = NpcGroup.Special, race = 0, ship = 14, freighter = true, stationary = true, position = host });
                 foreach (var t in BattleshipTurrets) list.Add(Turret(0, host + t.pos, t.rot));
             }
             else if (terran)
             {
-                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 80000) + 100000);   // createMission's carrier box
+                host = ClearOfStation(station, CollisionVolume.ForStaticObject(2005),   // createMission's carrier box
+                    () => new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 80000) + 100000));
                 list.Add(new SpawnSpec { group = NpcGroup.Special, race = 0, ship = -1, position = host, fixedObject = "sn_carrier_terran_1",
                                          collisionId = 2005, hitRadius = 0f, hitpoints = 9999999, noLoot = true, stationary = true });
                 foreach (var t in CarrierTurrets) list.Add(Turret(0, host + t.pos, t.rot));
             }
             else
             {
-                host = new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 80000) + 60000);
+                host = ClearOfStation(station, CollisionVolume.ForStaticObject(2006),
+                    () => new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 80000) + 60000));
                 list.Add(new SpawnSpec { group = NpcGroup.Special, race = 1, ship = -1, position = host, fixedObject = "sn_battleship_vossk",
                                          collisionId = 2006, hitRadius = 0f, hitpoints = 9999999, noLoot = true, stationary = true, nameText = 1667 });
                 foreach (var t in VosskTurrets) list.Add(Turret(1, host + t, Vector3.zero));
             }
+        }
+
+        /// <summary>Remake (#45): the capital ship's box starts 2 km in front of the station, inside the bigger stations (Valadon's
+        /// 3 km hull had the battleship through it; the original rolls it anywhere in the box): the point is rolled again
+        /// while the ship's volumes (game units relative to it) would touch the station's, at most 40 times.</summary>
+        static Vector3 ClearOfStation(int station, List<CollisionVolume> ship, System.Func<Vector3> roll)
+        {
+            var hull = CollisionVolume.ForStation(GoF2Remake.World.OrbitBuilder.StationLook(station), false);
+            Vector3 p = roll();
+            for (int i = 0; i < 40 && Touches(hull, ship, p); i++) p = roll();
+            return p;
+        }
+
+        static bool Touches(List<CollisionVolume> station, List<CollisionVolume> ship, Vector3 gamePos)
+        {
+            var offset = new Vector3(gamePos.x, gamePos.y, -gamePos.z) * 0.05f;   // Unity metres, the station at the origin
+            const float Margin = 150f;
+            foreach (var a in station)
+            {
+                var ah = a.sphere ? Vector3.one * a.radius : a.half;
+                foreach (var b in ship)
+                {
+                    var bh = (b.sphere ? Vector3.one * b.radius : b.half) + Vector3.one * Margin;
+                    var d = b.centre + offset - a.centre;
+                    if (Mathf.Abs(d.x) < ah.x + bh.x && Mathf.Abs(d.y) < ah.y + bh.y && Mathf.Abs(d.z) < ah.z + bh.z) return true;
+                }
+            }
+            return false;
         }
 
         /// <summary>Level::createStaticObject 0x1a74 / 0x1a76: 1000 HP, scale 6, name 1666 "Turret", no loot.</summary>

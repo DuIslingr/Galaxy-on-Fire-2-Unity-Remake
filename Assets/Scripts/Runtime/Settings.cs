@@ -86,16 +86,19 @@ namespace GoF2Remake.Data
 
         /// <summary>Post-processing bloom on/off.</summary>
         /// <summary>Bloom: 0 off, 1 the remake's (URP Bloom on the HDR glow of lights, engines and effects), 2 the
-        /// original's (ClassicBloomPass: every bright pixel, a soft 256 x 256 glow). Old saves: the "bloom" toggle.</summary>
+        /// original's (ClassicBloomPass: every bright pixel, a soft 256 x 256 glow), 3 both (#45: the remake's glow on the
+        /// lights with the original's on the sky, the stars and the planets). Old saves: the "bloom" toggle.</summary>
         public static int BloomStyle
         {
             get => Mathf.RoundToInt(Get("bloomStyle", GetBool("bloom", true) ? BloomRemake : BloomOff));
             set => Set("bloomStyle", value);
         }
-        public const int BloomOff = 0, BloomRemake = 1, BloomOriginal = 2;
+        public const int BloomOff = 0, BloomRemake = 1, BloomOriginal = 2, BloomBoth = 3;
 
         /// <summary>URP's Bloom on the global volumes (the "Remake" bloom).</summary>
-        public static bool Bloom => BloomStyle == BloomRemake;
+        public static bool Bloom => BloomStyle == BloomRemake || BloomStyle == BloomBoth;
+        /// <summary>The original's bloom (ClassicBloomPass), alone or with the remake's.</summary>
+        public static bool ClassicBloom => BloomStyle == BloomOriginal || BloomStyle == BloomBoth;
 
         /// <summary>The sun's lens flare in flight (LensFlareView).</summary>
         public static bool LensFlare { get => GetBool("lensFlare", true); set => SetBool("lensFlare", value); }

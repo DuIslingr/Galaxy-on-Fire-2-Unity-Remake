@@ -191,10 +191,11 @@ namespace GoF2Remake.UI
             list.Add(Choice("brightness", OptionPage.Graphics, () => Localization.Get(503), true,
                 () => new[] { Localization.Get(513), Localization.Get(514), Localization.Get(515) },
                 () => Settings.Brightness, i => Settings.Brightness = i));
-            // Remake: the remake's bloom (the HDR glow of lights and effects) or the original's (every bright pixel, ClassicBloomPass).
+            // Remake: the remake's bloom (the HDR glow of lights and effects), the original's (every bright pixel, ClassicBloomPass)
+            // or both (#45).
             list.Add(Choice("bloom", OptionPage.Graphics, () => X("bloom", "Bloom"), true,
-                () => new[] { X("off", "Off"), X("bloomRemake", "Remake"), X("bloomOriginal", "Original") },
-                () => Mathf.Clamp(Settings.BloomStyle, 0, 2), i => Settings.BloomStyle = i));
+                () => new[] { X("off", "Off"), X("bloomRemake", "Remake"), X("bloomOriginal", "Original"), X("bloomBoth", "Both") },
+                () => Mathf.Clamp(Settings.BloomStyle, 0, 3), i => Settings.BloomStyle = i));
             // Remake: the hangar ships' contact shadows (HangarShipShadow); fewer for slower devices.
             list.Add(Choice("hangarShadows", OptionPage.Graphics, () => X("hangarShadows", "Hangar ship shadows"), true,
                 () => new[] { X("off", "Off"), X("hangarShadowsPlayer", "Player ship only"), X("hangarShadowsAll", "All ships") },

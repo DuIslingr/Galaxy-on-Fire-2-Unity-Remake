@@ -40,7 +40,7 @@ namespace GoF2Remake.Visuals
 
         static void OnBeginCamera(ScriptableRenderContext context, Camera cam)
         {
-            if (Settings.BloomStyle != Settings.BloomOriginal || cam.cameraType != CameraType.Game || cam.targetTexture != null) return;
+            if (!Settings.ClassicBloom || cam.cameraType != CameraType.Game || cam.targetTexture != null) return;
             var data = cam.GetUniversalAdditionalCameraData();
             if (data == null || !data.renderPostProcessing || data.renderType != CameraRenderType.Base || data.scriptableRenderer == null) return;
             instance ??= new ClassicBloomPass();

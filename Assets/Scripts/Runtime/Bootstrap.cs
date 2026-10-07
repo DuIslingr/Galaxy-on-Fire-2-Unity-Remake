@@ -150,7 +150,9 @@ namespace GoF2Remake
 #if ENABLE_UPSCALER_FRAMEWORK
             UpscalerFramework.Apply(UpscalerId(upscaler), Settings.UpscalerQuality);
 #else
-            urp.upscalingFilter = upscaler == Settings.UpscalerFsr ? UpscalingFilterSelection.FSR
+            // FSR 1 only below 100 % (#45: on Android FSR at 100 % or more left part of the screen frozen; at those scales
+            // there is nothing to upscale).
+            urp.upscalingFilter = upscaler == Settings.UpscalerFsr && urp.renderScale < 0.999f ? UpscalingFilterSelection.FSR
                 : upscaler == Settings.UpscalerStp ? UpscalingFilterSelection.STP : UpscalingFilterSelection.Auto;
 #endif
             // STP, DLSS and FSR 2+ are temporal: URP's temporal anti-aliasing path, which needs MSAA off

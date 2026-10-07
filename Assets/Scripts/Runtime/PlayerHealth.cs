@@ -209,7 +209,7 @@ namespace GoF2Remake.Flight
                 float f = t > d - edge ? (d - t) / edge : t < edge ? t / edge : 1f;
                 bubble.transform.localScale = Vector3.one * bubbleScale * Mathf.Clamp01(f);
             }
-            if (bubbleMaterial != null) bubbleMaterial.SetFloat("_Anim", (emergencyLength - emergencyMs) * 0.001f);   // mesh+0x24 += dt * 0.001
+            if (bubbleMaterial != null) bubbleMaterial.SetFloat("_Anim", (emergencyLength - emergencyMs) * 0.001f);   // mesh+0x24 += dt * 0.001 (the original shader never uses it)
             if (emergencyMs <= 0f) EndEmergency();
         }
 

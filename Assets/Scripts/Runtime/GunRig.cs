@@ -251,6 +251,9 @@ namespace GoF2Remake.Flight
             {
                 muzzleMs -= dtMs;
                 if (muzzleMs <= 0f) muzzle.SetActive(false);
+                // ObjectGun::update 0x18c2ec: along the ship's nose with the camera's up (turrets: the turret's matrix).
+                else if (gun.kind != Gun.Kind.Turret && ship != null && cam != null)
+                    muzzle.transform.rotation = Quaternion.LookRotation(ship.forward, cam.transform.up);
             }
             if (impacts != null)
                 for (int i = 0; i < impacts.Length; i++)
