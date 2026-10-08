@@ -232,7 +232,7 @@ namespace GoF2Remake.Flight
                 float turnAngle = Mathf.Acos(Mathf.Clamp(Vector3.Dot(transform.forward, dir), -1f, 1f));
                 if (Vector3.Dot(transform.right, dir) > 0f) turnAngle = -turnAngle;
                 if (dir.sqrMagnitude > 0f) transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
-                Model.AutopilotBank(turnAngle, dtMs);
+                Model.AutopilotBank(turnAngle, dtMs, Mathf.Min(Time.unscaledDeltaTime, Time.maximumDeltaTime) * 1000f);
                 autopilotBanking = true;
             }
             else if (autopilotBanking) { Model.ResetAutopilotBank(); autopilotBanking = false; }
