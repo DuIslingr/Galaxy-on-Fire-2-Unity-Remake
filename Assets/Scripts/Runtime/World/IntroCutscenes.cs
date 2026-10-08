@@ -298,6 +298,7 @@ namespace GoF2Remake.World
                         campaign.PlayLoop(1, assets?.engineBroken, 0.115f);    // 161 Engine_09_Broken, looped
                     }
                     if (soundsPlayed) playerSpeed *= Mathf.Pow(0.98f, dtMs / 33.3f);
+                    // LevelScript's dolly is (-0.2, 0, 0.3) u/ms; remake (PR #56): (0.4, 0, -0.2), which keeps the slowing ship in view.
                     if (Over(13)) cam.SetDolly(new Vector3(0.4f, 0f, -0.2f));
                     if (Triggered(14)) Step = 6;
                     break;
@@ -386,9 +387,11 @@ namespace GoF2Remake.World
                 case 14:
                     Tumble(dtMs / 5000f);
                     {
-						var f = Player.forward;
-						cam.SetDolly(new Vector3(f.x, f.y, -f.z) * playerSpeed);   // follow the drifting ship (same direction and speed)
-					}
+                        // LevelScript's dolly is (-2, 0, 0) u/ms; remake (PR #56): the camera travels with the drifting wreck
+                        // (its direction in game axes, its speed), so it stays in frame.
+                        var f = Player.forward;
+                        cam.SetDolly(new Vector3(f.x, f.y, -f.z) * playerSpeed);
+                    }
                     if (stepMs >= 12000f) { cam.LookAtUnity(Player.position + ToUnity(new Vector3(-3000, 3500, -6700)), Player); Step = 15; }
                     break;
                 case 15:
