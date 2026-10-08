@@ -777,7 +777,9 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
 
 - **One shared world, no scene synchronisation** (`EnableSceneManagement = false`): every player starts a fresh free-play
   game in the finished game's world (below) docked at Dis (70) and plays it like single player, their own scenes, economy, map,
-  jumps and docking. The network objects live in DontDestroyOnLoad and each player shows only what is where they are.
+  jumps and docking. A new pilot starts in Betty with 10 000 credits and a simple loadout (Nirai Impulse EX 1, Targe Shield,
+  Telta Quickscan, IMT Extract 1.3; `NetGame.StartShip` / `StartCredits` / `StartEquipment` in `PrepareSession`), not
+  resetGame's Phantom, so they work up to better ships; a server profile replaces it once it loads. The network objects live in DontDestroyOnLoad and each player shows only what is where they are.
   The host spawns NetState and its own NetPlayer and loads `Station`; a client connects (10 x 1 s) and loads `Station` when
   NetState reaches it (`NetGame.EnterWorld`); each connecting player gets a NetPlayer. Nothing is saved in a session
   (`SaveGame.Save` refuses), so it never touches the single-player saves; a dedicated server keeps player profiles
@@ -815,7 +817,11 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   adapters (0.0.0.0). A port in use is caught before the fade (`NetGame.CanHost`: UDP bind test), the panel says so and
   puts the next free port in the field. The address field takes a join code (6 letters / digits, `NetGame.IsJoinCode`)
   or "host" / "host:port" (a name is looked up, `NetGame.ParseAddress`); the status line under the cards gives the last
-  session's end reason. Touch presses don't take the focus in the menu, except in a text field (the on-screen keyboard
+  session's end reason. The host card's settings (text, addresses / port, name, password / player limit, the Debug / Combat /
+  World / Mods switches two to a row) sit in `mpHostScroll` between the mode tabs and Host: at 16:9 they fit; when they
+  don't (three or more adapters, short screens) they scroll by wheel / touch / focus with an amber "More options" hint
+  under them (`MainMenu.SetupHostMore`; the scroll bars are hidden everywhere). Before, the four switch rows squeezed the
+  local network's address list and port field flat. Touch presses don't take the focus in the menu, except in a text field (the on-screen keyboard
   needs it).
 - **Online (Relay / Lobby)** (`NetGame.PrepareOnlineHost` / `StartClientOnline`, `NetLobby`): hosting online signs in
   (anonymous; a profile per `-mpname`, so two games on one machine are two players), reserves a Relay allocation (`NetGame.MaxPlayers`
@@ -1051,10 +1057,14 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   the key shown after its name, not on phones) opens the input with the cursor in it (`ChatView` keeps focusing the
   field for a few frames until its row shows; the opening key's letter, which arrives after the focus, is dropped), the
   send key (Enter / keypad Enter, `GameControls.ChatSend`) sends, the channel key (Tab, `GameControls.ChatChannel`)
-  switches Local / Global, Esc closes. Phones: the field's own keyboard is off (`hideSoftKeyboard`) and `ChatView` opens
+  switches Local / Global, Esc closes. Sending keeps the chat open for the next line (`ChatView.SendLine`: the field keeps
+  the focus, a phone's keyboard comes straight back up), so a conversation needs no reopening; Enter / Done on an empty
+  line, Esc / B, the row's × or the Chat tab close it. Phones: the field's own keyboard is off (`hideSoftKeyboard`) and `ChatView` opens
   the on-screen keyboard itself (`TouchScreenKeyboard`, its input box hidden, the text copied into the field each frame):
   Done / the checkmark sends, Back or a tap outside ends the typing with the draft kept (UI Toolkit's own keyboard only
-  closed and blurred the field on Done, so nothing was sent); the send and channel keys are rebindable rows read straight from the devices
+  closed and blurred the field on Done, so nothing was sent); while typing the chat sits at the top of the screen
+  (`.chat--phone.chat--open`, the tab hidden, the "/" suggestions capped) where the keyboard can't cover the line (at 36 %
+  down the input row was under it); the send and channel keys are rebindable rows read straight from the devices
   (`GameControls.PressedNow`: the flight map is off while typing), and their key events and characters stay out of the
   line. The field keeps the focus: the project-wide UI map's Navigate (arrows, W A S D), Tab and Submit (Space / Enter)
   are swallowed there (`StopPropagation` + `focusController.IgnoreEvent`: stopping alone still moved the focus to a menu
