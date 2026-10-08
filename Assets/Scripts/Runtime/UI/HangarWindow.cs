@@ -55,6 +55,7 @@ namespace GoF2Remake.UI
         readonly VisualElement window, details, detailIcon, detailStats, tradeBox, sellButton, buyButton, tradeAllRow;
         readonly Button sellAllButton, buyAllButton;
         readonly ScrollView list, detailScroll;
+        readonly VisualElement detailMods = ItemInfo.NewModBlock();   // a ship's Kaamo Club mods, under its description
         readonly Label detailName, detailSub, detailText, tradeStock, tradeCargo, tradeMounted, tradePrice, cargoLabel, creditsLabel, tradeStockLabel, tradeCargoLabel, sellLabel, buyLabel;
         readonly Button tabShip, tabShop, tabBlueprints, actionButton, actionButton2;
         /// <summary>Tab 4: the blueprint whose ingredients are listed (-1 = the blueprint list).</summary>
@@ -131,6 +132,7 @@ namespace GoF2Remake.UI
             if (buyAllButton != null) { buyAllButton.focusable = false; buyAllButton.clicked += () => TradeAll(1); }
             foreach (var b in new VisualElement[] { tabShip, tabShop, tabBlueprints, actionButton, actionButton2 }) if (b != null) b.focusable = false;
             list.focusable = detailScroll.focusable = false;
+            detailText.parent?.Insert(detailText.parent.IndexOf(detailText) + 1, detailMods);
         }
 
         // ---- open / close ------------------------------------------------------------------------------------
@@ -397,7 +399,7 @@ namespace GoF2Remake.UI
                     var s = db.Ship(row.ship);
                     tex = ItemInfo.ShipIcon(row.ship);
                     name.text = ItemInfo.ShipName(row.ship);
-                    subText.text = s != null ? $"{Localization.Get(165)} {s.armor}   {Localization.Get(166)} {hangar.Load} / {hangar.MaxLoad} t" : "";
+                    subText.text = s != null ? $"{Localization.Get(165)} {Shop.BaseHp(db)}   {Localization.Get(166)} {hangar.Load} / {hangar.MaxLoad} t" : "";   // with the +40 hull mod
                     break;
                 }
                 case RowKind.Slot when row.equipment >= 0:
@@ -589,6 +591,7 @@ namespace GoF2Remake.UI
             var db = level.Database;
             detailStats.Clear();
             detailText.text = "";
+            ItemInfo.FillModLines(detailMods, null);
             details.style.visibility = selected == null ? Visibility.Hidden : Visibility.Visible;
             tradeBox.AddToClassList("trade-box--hidden");
             tradeAllRow?.AddToClassList("trade-box--hidden");
@@ -654,13 +657,17 @@ namespace GoF2Remake.UI
                 detailIcon.style.backgroundImage = new StyleBackground(ItemInfo.ShipIcon(selected.ship));
                 detailName.text = ItemInfo.ShipName(selected.ship);
                 detailSub.text = ItemInfo.ShipRaceText(selected.ship);
-                if (s != null) foreach (var (label, value) in ItemInfo.ShipStats(s, hangar.ShipPrice(selected.ship))) AddStat(label, value);
+                var hullMods = selected.kind == RowKind.OwnShip ? Session.ShipMods
+                    : selected.kind == RowKind.ShopShip ? hangar.Stock.ModsOf(selected.ship)
+                    : selected.kind == RowKind.StoredShip ? Session.KaamoShips[selected.equipment].mods : null;
+                if (s != null) foreach (var (label, value) in ItemInfo.ShipStats(s, hangar.ShipPrice(selected.ship), hullMods)) AddStat(label, value);
                 detailText.text = GameNames.ShipDescription(selected.ship);
+                if (selected.kind == RowKind.OwnShip) ItemInfo.FillModLines(detailMods, Session.ShipMods);
                 if (selected.kind == RowKind.ShopShip)
                 {
                     int delta = hangar.ShipPrice(selected.ship) - hangar.ShipPrice(Session.ShipIndex);
                     ShowAction($"{T(301).ToUpperInvariant()}   {ItemInfo.Credits(delta)}", true);
-                    foreach (int mod in hangar.Stock.ModsOf(selected.ship)) AddStat(ModName(mod), "(+)");   // a traded-in hull's mods
+                    ItemInfo.FillModLines(detailMods, hangar.Stock.ModsOf(selected.ship));   // a traded-in hull's mods
                 }
                 else if (selected.kind == RowKind.StoredShip)
                 {
@@ -671,8 +678,7 @@ namespace GoF2Remake.UI
                         actionButton2.text = $"{T(330).ToUpperInvariant()}   {ItemInfo.Credits(hangar.StoredPrice(selected.equipment))}";
                         actionButton2.RemoveFromClassList("detail-action--hidden");
                     }
-                    if (Session.KaamoShips[selected.equipment].mods.Count > 0)
-                        foreach (int mod in Session.KaamoShips[selected.equipment].mods) AddStat(ModName(mod), "(+)");
+                    ItemInfo.FillModLines(detailMods, Session.KaamoShips[selected.equipment].mods);
                 }
             }
             else
@@ -1091,15 +1097,6 @@ namespace GoF2Remake.UI
                 Rebuild();
             });
         }
-
-        /// <summary>The Kaamo mechanics' mods (907-910 texts' subjects): +40 hull, +30 t cargo, +1 slot, handling.</summary>
-        static string ModName(int mod) => mod switch
-        {
-            0 => Localization.Get(165),   // Armor
-            1 => Localization.Get(166),   // Cargo hold
-            2 => Localization.Get(269),   // Equipment
-            _ => Localization.Get(164),   // Handling
-        };
 
         public bool StorageMode => hangar != null && hangar.Storage;
 

@@ -124,19 +124,24 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>ListItemWindow::set, ships: armor, cargo hold, slots per type, handling, price.</summary>
-        public static List<(string label, string value)> ShipStats(ShipData s, int price)
+        /// <summary>'mods': the hull's Kaamo Club mods (the player's own ship, a traded-in or stored hull): their values added
+        /// with "(+)", like the item window's (ListItemWindow::set).</summary>
+        public static List<(string label, string value)> ShipStats(ShipData s, int price, IEnumerable<int> mods = null)
         {
             string T(int id) => Localization.Get(id);
+            var has = new HashSet<int>();
+            if (mods != null) foreach (int m in mods) has.Add(m);
+            string Plus(int mod) => has.Contains(mod) ? " (+)" : "";
             var rows = new List<(string, string)>
             {
-                (T(165), s.armor.ToString()),
-                (T(166), $"{s.cargo} t"),
+                (T(165), (s.armor + (has.Contains(0) ? 40 : 0)) + Plus(0)),
+                (T(166), $"{s.cargo + (has.Contains(1) ? 30 : 0)} t" + Plus(1)),
             };
             if (s.slots.primary > 0) rows.Add((T(265), s.slots.primary.ToString()));
             if (s.slots.secondary > 0) rows.Add((T(266), s.slots.secondary.ToString()));
             if (s.slots.turret > 0) rows.Add((T(267), s.slots.turret.ToString()));
-            if (s.slots.equipment > 0) rows.Add((T(269), s.slots.equipment.ToString()));
-            rows.Add((T(164), Mathf.RoundToInt(s.handling).ToString()));
+            if (s.slots.equipment > 0 || has.Contains(2)) rows.Add((T(269), (s.slots.equipment + (has.Contains(2) ? 1 : 0)) + Plus(2)));
+            rows.Add((T(164), (Mathf.RoundToInt(s.handling) + (has.Contains(3) ? 20 : 0)) + Plus(3)));
             rows.Add((T(132), Credits(price)));
             return rows;
         }
@@ -153,6 +158,42 @@ namespace GoF2Remake.UI
             if (lo) text += $"\n-> {Credits(low.price)} ({Where(low.system)})";
             if (hi) text += $"\n-> {Credits(high.price)} ({Where(high.system)})";
             return text;
+        }
+
+        /// <summary>Remake (players' suggestion): a Kaamo Club mechanic's ship mod (0 +40 hull, 1 +30 t cargo, 2 +1 equipment
+        /// slot, 3 handling +0.2) as one line for the ship's details.</summary>
+        public static string ModLine(int mod) => mod switch
+        {
+            0 => Localization.Extra("kaamoModArmor", "Kaamo Club armor upgrade applied (+40)"),
+            1 => Localization.Extra("kaamoModCargo", "Kaamo Club cargo upgrade applied (+30 t)"),
+            2 => Localization.Extra("kaamoModSlot", "Kaamo Club extra equipment slot upgrade applied (+1)"),
+            _ => Localization.Extra("kaamoModHandling", "Kaamo Club handling upgrade applied (+20)"),
+        };
+
+        /// <summary>Fills 'into' (cleared, hidden without mods) with a line per mod, in the mods' order 0..3: the block at the
+        /// bottom of a ship's details (hangar, carrier, item window).</summary>
+        public static void FillModLines(UnityEngine.UIElements.VisualElement into, IEnumerable<int> mods)
+        {
+            into.Clear();
+            var sorted = new List<int>();
+            if (mods != null) foreach (int m in mods) if (m >= 0 && !sorted.Contains(m)) sorted.Add(m);
+            sorted.Sort();
+            into.style.display = sorted.Count > 0 ? UnityEngine.UIElements.DisplayStyle.Flex : UnityEngine.UIElements.DisplayStyle.None;
+            foreach (int m in sorted)
+            {
+                var line = new UnityEngine.UIElements.Label("+ " + ModLine(m)) { pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+                line.AddToClassList("kaamo-mod-line");
+                into.Add(line);
+            }
+        }
+
+        /// <summary>The block FillModLines fills (styles .kaamo-mods in GoF2Common.uss).</summary>
+        public static UnityEngine.UIElements.VisualElement NewModBlock()
+        {
+            var block = new UnityEngine.UIElements.VisualElement { pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+            block.AddToClassList("kaamo-mods");
+            block.style.display = UnityEngine.UIElements.DisplayStyle.None;
+            return block;
         }
     }
 }

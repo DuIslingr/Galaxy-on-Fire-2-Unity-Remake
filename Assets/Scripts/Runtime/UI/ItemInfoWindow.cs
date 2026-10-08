@@ -32,6 +32,7 @@ namespace GoF2Remake.UI
         readonly VisualElement backdrop, icon, stats, preview, previewImage, floorLeft, floorRight;
         readonly Label header, help, nameLabel, subLabel, descTitle, text;
         readonly ScrollView textScroll;
+        readonly VisualElement modLines = ItemInfo.NewModBlock();
 
         GameObject stage;
         Transform model;
@@ -105,6 +106,7 @@ namespace GoF2Remake.UI
             text = new Label();
             text.AddToClassList("info-text");
             textScroll.Add(text);
+            textScroll.Add(modLines);
             right.Add(preview);
             right.Add(descTitle);
             right.Add(textScroll);
@@ -152,6 +154,7 @@ namespace GoF2Remake.UI
             help.text = T(643);
             descTitle.text = T(280).ToUpperInvariant();
             stats.Clear();
+            ItemInfo.FillModLines(modLines, null);
             textScroll.scrollOffset = Vector2.zero;
             IsOpen = true;
             backdrop.AddToClassList("info-backdrop--shown");
@@ -217,6 +220,7 @@ namespace GoF2Remake.UI
             Row(T(164), (Mathf.RoundToInt(s.handling) + (mine && Session.HasMod(3) ? 20 : 0)) + Plus(3), Cmp(s.handling, cur?.handling ?? 0));
             if (showPrice) Row(T(132), ItemInfo.Credits(price));
             text.text = GameNames.ShipDescription(ship);
+            if (mine) ItemInfo.FillModLines(modLines, Session.ShipMods);   // the Kaamo Club mods under the description
             ShowPreview(db, ship, Mathf.Max(0, Shop.RaceOfShip(ship)));   // the model by the original's race (freighters)
         }
 
