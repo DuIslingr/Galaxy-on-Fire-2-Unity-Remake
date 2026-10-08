@@ -212,7 +212,9 @@ namespace GoF2Remake.UI
             if (target != null)
             {
                 SetImage(lockClass, classFrames[Mathf.Clamp(7 - target.quality, 0, 4)]);
-                lockOre.text = ItemInfo.ItemName(target.oreItem);
+                // Remake: with a mining beam, how much of the rock it has cut.
+                float cut = mining.BeamProgress(target);
+                lockOre.text = cut >= 0f ? $"{ItemInfo.ItemName(target.oreItem)}  {Mathf.FloorToInt(cut * 100f)}%" : ItemInfo.ItemName(target.oreItem);
             }
         }
 
