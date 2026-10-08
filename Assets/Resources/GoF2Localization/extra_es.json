@@ -1231,5 +1231,17 @@
  "voiceAuto": "Como el texto",
  "voiceLanguage": "Idioma de las voces",
  "vrGrabControls": "Vuelo en RV: agarrar la palanca y el acelerador",
- "windowed": "Ventana"
+ "windowed": "Ventana",
+ "modsImport": "Importar mod",
+ "modsDelete": "Eliminar",
+ "modsDeleteTitle": "Eliminar mod",
+ "modsDeleteText": "¿Eliminar \"{0}\" de este dispositivo? No se puede deshacer.",
+ "modsDeleteNeeded": "Estos mods lo necesitan y se desactivarán: {0}",
+ "modsDeleteFailed": "No se pudo eliminar el mod: {0}",
+ "modsImportFailed": "No se pudo importar el mod: {0}",
+ "modsImportNotMod": "Ese archivo no es un mod. Elige el archivo .zip de un mod, con su mod.json dentro.",
+ "modsImported": "\"{0}\" {1} está instalado. Actívalo para usarlo.",
+ "modsImportedOn": "\"{0}\" {1} está instalado y activado.",
+ "modsImportReplace": "\"{0}\" ya está instalado (v{1}). ¿Reemplazarlo por la v{2}?",
+ "modsEmptyImport": "No hay mods instalados. Pulsa Importar mod y elige el archivo .zip de un mod, o ponlo en la carpeta Mods:\n{0}\ny pulsa Actualizar."
 }

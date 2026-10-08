@@ -44,6 +44,11 @@ The **Open mods folder** button in the Mods screen opens the folder the selected
 one above; on a phone the screen shows its path). The selected mod's details show where it is installed. After copying a
 mod in, press **Refresh**. New mods start turned off.
 
+Or press **Import mod** and pick the mod's `.zip` file with the system's file picker (Android, Windows, Linux with
+zenity or kdialog installed, macOS, the Windows Store version; not iOS): the game checks that it is a mod and puts it into the
+Mods folder as `<id>.zip`. A mod with the same id is replaced (the game asks first) and stays on if it was. **Delete** removes
+the selected mod from the device after asking; the mods that need it are turned off.
+
 The game keeps what it makes from a mod's textures (and its ships' hangar shadows) in a cache, so later starts load faster;
 an edited texture is made again by itself. If a mod still looks wrong after you changed it, press **Rebuild cache**: every
 mod cache is deleted and the mods load again.
@@ -60,8 +65,6 @@ plasma_arsenal.zip            plasma_arsenal.zip
 └─ items.json                    ├─ preview.png
                                  └─ items.json
 ```
-
-The `.gof2mod` extension works too (it's the same zip).
 
 ## mod.json
 

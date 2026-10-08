@@ -377,7 +377,8 @@ namespace GoF2Remake.UI
             // The mod browser (remake, ModBrowser): built in code next to the other panels.
             if (root.Q("panelHost") is VisualElement modHost)
             {
-                modBrowser = new ModBrowser(modHost, Back, HookFocusSound, () => Play(buttonRelease), () => StartCoroutine(RebuildModCache()));
+                modBrowser = new ModBrowser(modHost, Back, HookFocusSound, () => Play(buttonRelease), () => StartCoroutine(RebuildModCache()),
+                                            ShowDialog, ShowNotice);
                 panels["modsPanel"] = modBrowser.Panel;
             }
             SetupMultiplayerPanel();

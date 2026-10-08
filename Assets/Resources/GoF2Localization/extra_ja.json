@@ -1231,5 +1231,17 @@
  "voiceAuto": "テキストと同じ",
  "voiceLanguage": "音声の言語",
  "vrGrabControls": "VR飛行：操縦桿とスロットルをつかむ",
- "windowed": "ウィンドウ"
+ "windowed": "ウィンドウ",
+ "modsImport": "MODをインポート",
+ "modsDelete": "削除",
+ "modsDeleteTitle": "MODを削除",
+ "modsDeleteText": "「{0}」をこのデバイスから削除しますか？元に戻せません。",
+ "modsDeleteNeeded": "次のMODはこれを必要としているため無効になります：{0}",
+ "modsDeleteFailed": "MODを削除できませんでした：{0}",
+ "modsImportFailed": "MODをインポートできませんでした：{0}",
+ "modsImportNotMod": "このファイルはMODではありません。mod.jsonを含むMODの.zipファイルを選んでください。",
+ "modsImported": "「{0}」{1}をインストールしました。使うには有効にしてください。",
+ "modsImportedOn": "「{0}」{1}はインストール済みで有効です。",
+ "modsImportReplace": "「{0}」は既にインストールされています（v{1}）。v{2}に置き換えますか？",
+ "modsEmptyImport": "MODがインストールされていません。「MODをインポート」を押してMODの.zipファイルを選ぶか、Modsフォルダに入れてください：\n{0}\nその後「更新」を押してください。"
 }

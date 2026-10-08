@@ -1231,5 +1231,17 @@
  "voiceAuto": "Igual ao texto",
  "voiceLanguage": "Idioma das vozes",
  "vrGrabControls": "Voo em VR: segurar o manche e o acelerador",
- "windowed": "Janela"
+ "windowed": "Janela",
+ "modsImport": "Importar mod",
+ "modsDelete": "Excluir",
+ "modsDeleteTitle": "Excluir mod",
+ "modsDeleteText": "Excluir \"{0}\" deste dispositivo? Isso não pode ser desfeito.",
+ "modsDeleteNeeded": "Estes mods precisam dele e serão desativados: {0}",
+ "modsDeleteFailed": "Não foi possível excluir o mod: {0}",
+ "modsImportFailed": "Não foi possível importar o mod: {0}",
+ "modsImportNotMod": "Esse arquivo não é um mod. Escolha o arquivo .zip de um mod, com o mod.json dentro.",
+ "modsImported": "\"{0}\" {1} está instalado. Ative-o para usá-lo.",
+ "modsImportedOn": "\"{0}\" {1} está instalado e ativado.",
+ "modsImportReplace": "\"{0}\" já está instalado (v{1}). Substituir pela v{2}?",
+ "modsEmptyImport": "Nenhum mod instalado. Aperte Importar mod e escolha o arquivo .zip de um mod, ou coloque-o na pasta Mods:\n{0}\ne aperte Atualizar."
 }

@@ -1626,7 +1626,7 @@ Player-made content as data (no code: the game is IL2CPP), in `Scripts/Runtime/M
 guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/gof2-modding/SKILL.md` with it: an Agent Skill / paste-in guide for Claude and ChatGPT, with `reference.md` from **GoF2 > Build > Modding AI Reference** and the how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (items) and `frontier_systems`
 (systems / stations). Items, ships, systems and stations, quests and bar missions (event graphs), voice-over, music.
 
-- **A mod** = a folder or a `.zip` / `.gof2mod` (files at its root or in one top folder, `ZipSource`) with `mod.json`
+- **A mod** = a folder or a `.zip` (files at its root or in one top folder, `ZipSource`) with `mod.json`
   (`ModManifest`: id (a-z 0-9 _ -, the lasting name), name / description (a string or per language), version, author,
   website, preview image (default preview.png), dependencies). Mod JSON is read with Newtonsoft's JToken (`ModJson`: comments
   allowed, errors with file and line), not JsonUtility. Folders (`ModManager.Folders`): `persistentDataPath/Mods` everywhere,
@@ -1906,7 +1906,18 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   mod's folder, else `ModManager.MainFolder`: the user folder, the project's Mods in the Editor; desktop only, phones show
   the path), Refresh, Rebuild cache (`MainMenu.RebuildModCache`: `ModTextureCache.ClearAll` deletes `ModCache` (textures,
   hangar shadows) and the zip mods' unpacked files, then a rescan loads every mod again behind the fade with the loading screen).
-  Mods change only in the menu: the tables are rebuilt when a game starts or loads.
+  Mods change only in the menu: the tables are rebuilt when a game starts or loads. **Import mod** / **Delete** (`ModImport`;
+  players couldn't reach the Android Mods folder): the system's file picker copies the picked file into
+  temporaryCachePath/ModImport (Android: `ModImportActivity`, `Assets/Plugins/Android/ModImportActivity.java`, a see-through
+  activity around ACTION_OPEN_DOCUMENT that copies on a worker thread and is polled through its static fields, registered
+  in the unityLibrary manifest by the Editor's `AndroidModImportActivity`; Windows: `FileDialog.Open(title, filter, exts)`;
+  Linux: zenity, else kdialog, on a worker thread; macOS: osascript's choose file; UWP: `FileOpenPicker` on the UI thread;
+  the Editor: its open panel; none on iOS, `ModImport.Available`), `Inspect` reads it as a zip mod (mod.json, a valid id),
+  `Install` moves it into `ModManager.MainFolder` as `<id>.zip` (a mod with that id: replaced in its own folder
+  after the menu's Yes / No, keeping on / off and its load order); Delete asks (naming the mods that need it), turns it off,
+  releases its zip and deletes the file or folder. The browser takes the menu's `ShowDialog` / `ShowNotice`. Verified in the
+  Editor (a non-zip refused, a zip with a top folder installed, replaced by a newer zip and kept on, deleted through the
+  dialog) and compiled for Android / Windows / Linux / UWP; not yet run on a phone, Linux, macOS or UWP.
 - **Multiplayer** (`NetMods`): the Host card's "Mods (N on)" Off / Allowed (`mp_allow_mods`, off by default; a dedicated
   server's `-allowmods` / `ALLOWMODS=1` = every usable mod in its Mods folders). Every session starts without mods
   (`PrepareSession` → `BeginClient`); the host's `BeginHost` sets `ModManager.BeginSession` and `NetMods.SessionList`

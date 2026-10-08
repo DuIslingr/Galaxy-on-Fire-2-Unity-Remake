@@ -1231,5 +1231,17 @@
  "voiceAuto": "Comme le texte",
  "voiceLanguage": "Langue des voix",
  "vrGrabControls": "Vol en VR : saisir le manche et la manette des gaz",
- "windowed": "Fenêtré"
+ "windowed": "Fenêtré",
+ "modsImport": "Importer un mod",
+ "modsDelete": "Supprimer",
+ "modsDeleteTitle": "Supprimer le mod",
+ "modsDeleteText": "Supprimer « {0} » de cet appareil ? C'est irréversible.",
+ "modsDeleteNeeded": "Ces mods en ont besoin et seront désactivés : {0}",
+ "modsDeleteFailed": "Impossible de supprimer le mod : {0}",
+ "modsImportFailed": "Impossible d'importer le mod : {0}",
+ "modsImportNotMod": "Ce fichier n'est pas un mod. Choisis le fichier .zip d'un mod, avec son mod.json à l'intérieur.",
+ "modsImported": "« {0} » {1} est installé. Active-le pour l'utiliser.",
+ "modsImportedOn": "« {0} » {1} est installé et activé.",
+ "modsImportReplace": "« {0} » est déjà installé (v{1}). Le remplacer par la v{2} ?",
+ "modsEmptyImport": "Aucun mod installé. Appuie sur Importer un mod et choisis le fichier .zip d'un mod, ou mets-le dans le dossier Mods :\n{0}\npuis appuie sur Actualiser."
 }

@@ -1231,5 +1231,17 @@
  "voiceAuto": "Zoals de tekst",
  "voiceLanguage": "Taal van de stemmen",
  "vrGrabControls": "VR-vliegen: stuurknuppel en gashendel vastpakken",
- "windowed": "Venster"
+ "windowed": "Venster",
+ "modsImport": "Mod importeren",
+ "modsDelete": "Verwijderen",
+ "modsDeleteTitle": "Mod verwijderen",
+ "modsDeleteText": "\"{0}\" van dit apparaat verwijderen? Dit kan niet ongedaan worden gemaakt.",
+ "modsDeleteNeeded": "Deze mods hebben hem nodig en gaan uit: {0}",
+ "modsDeleteFailed": "De mod kon niet worden verwijderd: {0}",
+ "modsImportFailed": "De mod kon niet worden geïmporteerd: {0}",
+ "modsImportNotMod": "Dat bestand is geen mod. Kies het .zip-bestand van een mod, met zijn mod.json erin.",
+ "modsImported": "\"{0}\" {1} is geïnstalleerd. Zet hem aan om hem te gebruiken.",
+ "modsImportedOn": "\"{0}\" {1} is geïnstalleerd en staat aan.",
+ "modsImportReplace": "\"{0}\" is al geïnstalleerd (v{1}). Vervangen door v{2}?",
+ "modsEmptyImport": "Geen mods geïnstalleerd. Druk op Mod importeren en kies het .zip-bestand van een mod, of zet het in de map Mods:\n{0}\nen druk dan op Vernieuwen."
 }

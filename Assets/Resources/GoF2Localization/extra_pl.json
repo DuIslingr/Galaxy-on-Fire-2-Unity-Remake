@@ -1231,5 +1231,17 @@
  "voiceAuto": "Jak tekst",
  "voiceLanguage": "Język głosów",
  "vrGrabControls": "Lot w VR: chwyć drążek i przepustnicę",
- "windowed": "Okno"
+ "windowed": "Okno",
+ "modsImport": "Importuj mod",
+ "modsDelete": "Usuń",
+ "modsDeleteTitle": "Usuń mod",
+ "modsDeleteText": "Usunąć „{0}” z tego urządzenia? Tego nie można cofnąć.",
+ "modsDeleteNeeded": "Te mody go potrzebują i zostaną wyłączone: {0}",
+ "modsDeleteFailed": "Nie udało się usunąć moda: {0}",
+ "modsImportFailed": "Nie udało się zaimportować moda: {0}",
+ "modsImportNotMod": "Ten plik nie jest modem. Wybierz plik .zip moda z jego mod.json w środku.",
+ "modsImported": "„{0}” {1} jest zainstalowany. Włącz go, aby go używać.",
+ "modsImportedOn": "„{0}” {1} jest zainstalowany i włączony.",
+ "modsImportReplace": "„{0}” jest już zainstalowany (v{1}). Zastąpić go wersją v{2}?",
+ "modsEmptyImport": "Brak zainstalowanych modów. Naciśnij Importuj mod i wybierz plik .zip moda albo umieść go w folderze Mods:\n{0}\na potem naciśnij Odśwież."
 }

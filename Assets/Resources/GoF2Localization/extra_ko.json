@@ -1231,5 +1231,17 @@
  "voiceAuto": "텍스트와 같게",
  "voiceLanguage": "음성 언어",
  "vrGrabControls": "VR 비행: 조종간과 스로틀 잡기",
- "windowed": "창 모드"
+ "windowed": "창 모드",
+ "modsImport": "모드 가져오기",
+ "modsDelete": "삭제",
+ "modsDeleteTitle": "모드 삭제",
+ "modsDeleteText": "\"{0}\"을(를) 이 기기에서 삭제할까요? 되돌릴 수 없습니다.",
+ "modsDeleteNeeded": "이 모드가 필요한 다음 모드도 비활성화됩니다: {0}",
+ "modsDeleteFailed": "모드를 삭제할 수 없습니다: {0}",
+ "modsImportFailed": "모드를 가져올 수 없습니다: {0}",
+ "modsImportNotMod": "이 파일은 모드가 아닙니다. mod.json이 들어 있는 모드의 .zip 파일을 고르세요.",
+ "modsImported": "\"{0}\" {1}이(가) 설치되었습니다. 사용하려면 활성화하세요.",
+ "modsImportedOn": "\"{0}\" {1}이(가) 설치되어 활성화되어 있습니다.",
+ "modsImportReplace": "\"{0}\"이(가) 이미 설치되어 있습니다(v{1}). v{2}(으)로 교체할까요?",
+ "modsEmptyImport": "설치된 모드가 없습니다. 모드 가져오기를 누르고 모드의 .zip 파일을 고르거나, Mods 폴더에 넣으세요:\n{0}\n그다음 새로 고침을 누르세요."
 }

@@ -1231,5 +1231,17 @@
  "voiceAuto": "Come il testo",
  "voiceLanguage": "Lingua delle voci",
  "vrGrabControls": "Volo in VR: afferra cloche e manetta",
- "windowed": "Finestra"
+ "windowed": "Finestra",
+ "modsImport": "Importa mod",
+ "modsDelete": "Elimina",
+ "modsDeleteTitle": "Elimina mod",
+ "modsDeleteText": "Eliminare \"{0}\" da questo dispositivo? Non si può annullare.",
+ "modsDeleteNeeded": "Queste mod ne hanno bisogno e verranno disattivate: {0}",
+ "modsDeleteFailed": "Impossibile eliminare la mod: {0}",
+ "modsImportFailed": "Impossibile importare la mod: {0}",
+ "modsImportNotMod": "Questo file non è una mod. Scegli il file .zip di una mod, con il suo mod.json all'interno.",
+ "modsImported": "\"{0}\" {1} è installata. Attivala per usarla.",
+ "modsImportedOn": "\"{0}\" {1} è installata e attiva.",
+ "modsImportReplace": "\"{0}\" è già installata (v{1}). Sostituirla con la v{2}?",
+ "modsEmptyImport": "Nessuna mod installata. Premi Importa mod e scegli il file .zip di una mod, oppure mettilo nella cartella Mods:\n{0}\npoi premi Aggiorna."
 }

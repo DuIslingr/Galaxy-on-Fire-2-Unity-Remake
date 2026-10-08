@@ -1231,5 +1231,17 @@
   "voiceAuto": "与文本相同",
   "voiceLanguage": "语音语言",
   "vrGrabControls": "VR飞行：抓握操纵杆和节流阀",
-  "windowed": "窗口化"
+  "windowed": "窗口化",
+  "modsImport": "导入模组",
+  "modsDelete": "删除",
+  "modsDeleteTitle": "删除模组",
+  "modsDeleteText": "要从此设备删除“{0}”吗？此操作无法撤销。",
+  "modsDeleteNeeded": "以下模组依赖它，将被关闭：{0}",
+  "modsDeleteFailed": "无法删除模组：{0}",
+  "modsImportFailed": "无法导入模组：{0}",
+  "modsImportNotMod": "该文件不是模组。请选择模组的.zip文件，其中需包含mod.json。",
+  "modsImported": "“{0}” {1} 已安装。开启后即可使用。",
+  "modsImportedOn": "“{0}” {1} 已安装并已开启。",
+  "modsImportReplace": "“{0}”已安装（v{1}）。要替换为v{2}吗？",
+  "modsEmptyImport": "未安装任何模组。按导入模组并选择模组的.zip文件，或将其放入Mods文件夹：\n{0}\n然后按刷新。"
 }

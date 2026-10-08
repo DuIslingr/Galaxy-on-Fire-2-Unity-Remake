@@ -1231,5 +1231,17 @@
  "voiceAuto": "Wie der Text",
  "voiceLanguage": "Sprache der Stimmen",
  "vrGrabControls": "VR-Flug: Steuerknüppel und Schubhebel greifen",
- "windowed": "Fenster"
+ "windowed": "Fenster",
+ "modsImport": "Mod importieren",
+ "modsDelete": "Löschen",
+ "modsDeleteTitle": "Mod löschen",
+ "modsDeleteText": "\"{0}\" von diesem Gerät löschen? Das lässt sich nicht rückgängig machen.",
+ "modsDeleteNeeded": "Diese Mods brauchen ihn und werden ausgeschaltet: {0}",
+ "modsDeleteFailed": "Der Mod konnte nicht gelöscht werden: {0}",
+ "modsImportFailed": "Der Mod konnte nicht importiert werden: {0}",
+ "modsImportNotMod": "Diese Datei ist kein Mod. Wähle die .zip-Datei eines Mods mit seiner mod.json darin.",
+ "modsImported": "\"{0}\" {1} ist installiert. Schalte ihn ein, um ihn zu nutzen.",
+ "modsImportedOn": "\"{0}\" {1} ist installiert und eingeschaltet.",
+ "modsImportReplace": "\"{0}\" ist schon installiert (v{1}). Durch v{2} ersetzen?",
+ "modsEmptyImport": "Keine Mods installiert. Drücke Mod importieren und wähle die .zip-Datei eines Mods, oder lege sie in den Mods-Ordner:\n{0}\nund drücke dann Aktualisieren."
 }
