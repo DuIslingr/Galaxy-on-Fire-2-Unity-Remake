@@ -1657,7 +1657,19 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   so URP there reads X from alpha and Y from green (`UNITY_ASTC_NORMALMAP_ENCODING`); the game's Normal Map imports are
   re-encoded by Unity, a mod's RGB PNG wasn't, and every mod hull came out nearly black on Android (and in the Editor with
   the Android target). On Android `ModMaterials.NormalToAlpha` copies red into alpha before compressing (the glTF ones by
-  `Hidden/GoF2/NormalToAlpha`, `Resources/GoF2Mods`); desktop reads either layout and is unchanged. Shop icon: the entry's PNG (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
+  `Hidden/GoF2/NormalToAlpha`, `Resources/GoF2Mods`); desktop reads either layout and is unchanged. **A GLB's embedded
+  images** (`ModGltf.Load`, used by ships, stations, rooms and weapon fx) don't go through glTFast: `ModGlbImages.Strip` takes
+  them out on a worker thread (each pointed at one shared 1 x 1 PNG, the indices kept, the other bufferViews packed into a
+  new BIN; not for several / external buffers or meshopt) and `ModMaterials.PreloadImage` makes each different image once per
+  mod by its MD5 (`ModInfo.LocalImage` writes it out for the decoder and it is deleted afterwards; `ModTextureCache.FileForContent`),
+  compressed like the PNGs, the role's conversion on the CPU before compression (metallic-roughness to metallic / smoothness,
+  Android's normal layout), and `ModGltfMaterials` / `FromGltf` take those (glTFast's own texture and the GPU conversions only
+  for an image not taken out). glTFast kept every model's images uncompressed, one copy per model, plus an uncompressed
+  render texture per metallic map (and per normal map on Android): the GoF3 Ships mod (79 GLBs, 1452 images, 251 different)
+  crashed phones (2026-10; measured in the Editor: driver memory 4.9 GB -> 1.3 GB, its textures ~195 MB of DXT, 84 ships
+  10 s from the cache). Textures load once per key however many ask at once (`ModMaterials.Once`), at most 6 decodes at once
+  (2 on phones, `DecodeSlots`), phones compress in Texture2D.Compress's fast mode; at most 8 ships load at once (3 on phones,
+  `ModShips.ShipSlots`), each holding its GLB until glTFast has read it. Shop icon: the entry's PNG (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
   ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
   `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
   NetState applies them) is built again on `ModShips.ModelsChanged`.
