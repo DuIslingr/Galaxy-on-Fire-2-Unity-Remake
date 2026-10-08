@@ -846,13 +846,14 @@ namespace GoF2Remake.World
 
         /// <summary>MGame::OnTouchEnd -> LevelScript::skipSequence: the player tried to fly (steer, throttle, boost, fire, a
         /// tap, any key or button except the pause and autopilot-menu ones) during the start sequence.</summary>
-        /// <summary>Any key but Esc and the autopilot menu's (Q / E by default, GameControls), a click, a tap, a stick or a
-        /// controller button but Menu and the autopilot menu's (View) this frame (also the station's skip for the hangar
-        /// flights).</summary>
+        /// <summary>Any key but Esc and the flight menus' (Q / E / V / K by default, GameControls), a click, a tap, a stick or a
+        /// controller button but Menu and the menus' (View, D-pad left) this frame (also the station's skip for the hangar
+        /// flights). The menu keys do nothing during the fly-in (FlightHud), so they don't skip it either.</summary>
         public static bool PlayerTriedToFly()
         {
             var kb = GoF2Remake.Multiplayer.NetChat.Keys;
-            bool menuKey = GameControls.AutopilotMenu.WasPressedThisFrame();
+            bool menuKey = GameControls.AutopilotMenu.WasPressedThisFrame() || GameControls.ActionsMenu.WasPressedThisFrame()
+                           || GameControls.Wingmen.WasPressedThisFrame() || GameControls.KhadorDrive.WasPressedThisFrame();
             if (kb != null && kb.anyKey.wasPressedThisFrame && !kb.escapeKey.wasPressedThisFrame && !menuKey) return true;
             var mouse = Mouse.current;
             if (mouse != null && (mouse.leftButton.wasPressedThisFrame || mouse.rightButton.wasPressedThisFrame)) return true;

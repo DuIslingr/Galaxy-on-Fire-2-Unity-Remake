@@ -739,8 +739,9 @@ namespace GoF2Remake.UI
             // Q Autopilot (the target list, again = off) and E Actions (the quick menu), V Wingmen, K Khador Drive, M or the middle mouse button: mouse control (not the mouse while it orbits the
             // free-look camera).
             // Not during a level's cutscene (#46: Q opened the autopilot menu over it, which pauses the game, or turned a
-            // scripted autopilot leg off); the touch buttons are hidden then anyway.
-            bool menuKeys = nav != null && (level == null || !level.Cutscene);
+            // scripted autopilot leg off); the touch buttons are hidden then anyway. Nor during the launch / arrival fly-in:
+            // the HUD is hidden then, so the menu opened unseen and its pause looked like a frozen game (players' report).
+            bool menuKeys = nav != null && (level == null || (!level.Cutscene && level.LaunchCameraOver));
             if (menuKeys && GameControls.AutopilotMenu.WasPressedThisFrame()) OnAutopilotButton();
             else if (menuKeys && GameControls.ActionsMenu.WasPressedThisFrame()) OnActionsButton();
             else if (menuKeys && GameControls.Wingmen.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.Wingmen);
