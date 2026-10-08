@@ -4,7 +4,7 @@
 // (30 fps) frame, x0.98 per frame until < 0.05, spinning slowly; gone 60 s after the death. Only a tractor beam collects it
 // (CombatRadar: salvage lock, pull at 10 u/ms, captured within 400 units; the first non-empty entry). A crate stolen from
 // a living (EMP-disabled) ship (KIPlayer::createCrate(0) from TractorBeam::update) carries that ship's cargo and is
-// gone once captured: what is left stays aboard the ship.
+// gone once captured: what is left stays aboard the ship. A shot asteroid leaves one too (Target.DropAsteroidCrate).
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -37,6 +37,24 @@ namespace GoF2Remake.Flight
         [System.NonSerialized] public System.Action PullStarted;
         /// <summary>A mirror of another game's crate (NetCrate): it neither drifts nor expires by itself.</summary>
         [System.NonSerialized] public bool remote;
+
+        /// <summary>KIPlayer::createCrate's type: the model. 0 the race's container, 1 the rock 0x421e asteroid_01_junk (a shot
+        /// asteroid), 2 its Void variant 0x421f, 3 the space junk's 0x4218.</summary>
+        public const int LookContainer = 0, LookRock = 1, LookVoidRock = 2, LookJunk = 3;
+        public int look;
+
+        /// <summary>KIPlayer::createCrate(look) at 'at' (Unity): the model by look / race, drifting off with 'cargo'.</summary>
+        public static Crate Spawn(Vector3 at, IEnumerable<ItemStack> cargo, int race, int look)
+        {
+            var assets = CombatAssets.Load();
+            var prefab = assets != null ? assets.CrateModel(look, race) : null;
+            var go = prefab != null ? Instantiate(prefab, at, Random.rotation) : new GameObject();
+            go.name = "Crate";
+            var crate = go.AddComponent<Crate>();
+            crate.look = look;
+            crate.Setup(cargo, race);
+            return crate;
+        }
 
         /// <summary>A fixed object's crate: the 60 s start when its wreck animation ends (state 4).</summary>
         public void DelayExpiry(float ms) => ageMs -= ms;

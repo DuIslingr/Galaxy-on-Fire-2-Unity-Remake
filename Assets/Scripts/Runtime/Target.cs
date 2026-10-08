@@ -147,15 +147,16 @@ namespace GoF2Remake.Flight
             }
             Damaged?.Invoke(this, dmg, byNpc);
             if (dead && SaveFromDeath != null && SaveFromDeath()) dead = false;   // the player's emergency system
-            if (dead) { killedByNpc = byNpc; Die(); }
+            if (dead) { killedByNpc = byNpc; Die(true); }
         }
 
-        /// <summary>Destroys it with its explosion and sound (a mined asteroid: PlayerEgo::stopMining sets HP to -1).</summary>
+        /// <summary>Destroys it with its explosion and sound (a mined asteroid: PlayerEgo::stopMining sets HP to -1 and clears
+        /// the loot flag, so no crate; multiplayer: another game destroyed it and dropped the crate there).</summary>
         public void Explode()
         {
             if (!Alive) return;
             if (hitpoints != null) hitpoints.hull = 0;
-            Die();
+            Die(false);
         }
 
         /// <summary>Gun::calcCharacterCollision: 'point' (metres) inside the cube, or inside a local box.</summary>
@@ -188,9 +189,10 @@ namespace GoF2Remake.Flight
             return transform.TransformPoint(best);
         }
 
-        void Die()
+        void Die(bool loot)
         {
             hp = 0f;
+            if (loot && isAsteroid && oreItem >= 0) DropAsteroidCrate();
             if (!customDeath)
             {
                 foreach (var r in GetComponentsInChildren<Renderer>()) r.enabled = false;
@@ -224,6 +226,19 @@ namespace GoF2Remake.Flight
             }
             Died?.Invoke(this);
             if (!customDeath) All.Remove(this);
+        }
+
+        /// <summary>PlayerAsteroid::update 0xf7060: an asteroid destroyed by a hit (shot, rammed, a blast; its loot flag +0x48
+        /// is set by the constructor and only mining clears it) leaves a crate: class A (quality 7) 4 % with 1 core (ore + 11,
+        /// Novanium's 218), the others 20 % with 1-3 t of its ore; KIPlayer::createCrate(1) the rock container 0x421e
+        /// asteroid_01_junk, (2) 0x421f asteroid_void_junk for Void Crystals (164). The asteroid's KIPlayer race is -1: no
+        /// race rules on the capture.</summary>
+        void DropAsteroidCrate()
+        {
+            bool classA = quality == 7;
+            if (UnityEngine.Random.Range(0, 100) > (classA ? 3 : 19)) return;
+            var stack = new GoF2Remake.Data.ItemStack(classA ? CoreItem : oreItem, classA ? 1 : UnityEngine.Random.Range(0, 3) + 1);
+            Crate.Spawn(transform.position, new[] { stack }, -1, oreItem == 164 ? Crate.LookVoidRock : Crate.LookRock);
         }
 
         /// <summary>A dead ship relaunched (KIPlayer::revive): full pools.</summary>
