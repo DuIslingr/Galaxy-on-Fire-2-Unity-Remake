@@ -12,9 +12,20 @@ using UnityEngine;
 
 namespace GoF2Remake.Flight
 {
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public class Crate : MonoBehaviour
     {
         const float M = 0.05f, LifetimeMs = 60000f;
+
+        /// <summary>The crates in the scene (enabled, on active objects): what FindObjectsByType&lt;Crate&gt; returned, without
+        /// a scene search every frame (the HUD markers, the radar's salvage lock). Copy it before destroying crates in a loop.</summary>
+        public static readonly List<Crate> All = new List<Crate>();
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() => All.Clear();
+
+        void OnEnable() => All.Add(this);
+        void OnDisable() => All.Remove(this);
 
         public readonly List<ItemStack> loot = new List<ItemStack>();
         public int race;

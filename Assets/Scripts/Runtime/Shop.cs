@@ -63,7 +63,12 @@ namespace GoF2Remake.Data
         // ---- cargo (Ship::getCurrentLoad / getMaxLoad) -----------------------------------------------------------
 
         /// <summary>Every unit in cargo weighs 1 t; mounted items weigh nothing.</summary>
-        public static int CargoLoad() => Session.Cargo.Sum(s => s.amount);
+        public static int CargoLoad()
+        {
+            int load = 0;   // a loop: LINQ's Sum allocated on every call (the HUD's cargo readout, every frame)
+            foreach (var s in Session.Cargo) load += s.amount;
+            return load;
+        }
 
         /// <summary>Ship::refreshValue 0x1a33f4 (Ship+0x48, getFirePower): over the mounted items of sorts 0-3, 8 and 25,
         /// attr 9 x (1 + attr 40 / 100) / (attr 11 x (1 - attr 39 / 100)) x 1000; the factors are the sort-28 weapon mod's.</summary>

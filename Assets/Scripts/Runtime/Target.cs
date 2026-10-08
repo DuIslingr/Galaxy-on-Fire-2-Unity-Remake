@@ -159,6 +159,43 @@ namespace GoF2Remake.Flight
             Die(false);
         }
 
+        // Gun's broad phase (MayContain): a sphere around the hit volume, measured once a frame.
+        int broadFrame = -1;
+        Vector3 broadCentre;
+        float broadReach, boxesLocalReach;
+        Bounds[] broadBoxes;
+
+        /// <summary>False when 'point' (metres) can't be inside the hit volume, so Contains would be false too: a sphere
+        /// around the cube or the boxes, its centre and size taken on the first call each 'frame' (Time.frameCount), with a
+        /// margin for the target still moving later in the frame. Every bullet was tested against every target with several
+        /// engine calls per pair (the destroyed check, the transform, its position); this is plain arithmetic. A destroyed
+        /// target: false.</summary>
+        public bool MayContain(Vector3 point, int frame)
+        {
+            if (broadFrame != frame)
+            {
+                broadFrame = frame;
+                if (this == null) { broadReach = -1f; return false; }
+                var t = transform;
+                broadCentre = t.position;
+                if (boxes != null && boxes.Length > 0)
+                {
+                    if (!ReferenceEquals(boxes, broadBoxes))
+                    {
+                        broadBoxes = boxes;
+                        boxesLocalReach = 0f;
+                        foreach (var b in boxes) boxesLocalReach = Mathf.Max(boxesLocalReach, b.center.magnitude + b.extents.magnitude);
+                    }
+                    var s = t.lossyScale;
+                    broadReach = boxesLocalReach * Mathf.Max(Mathf.Abs(s.x), Mathf.Max(Mathf.Abs(s.y), Mathf.Abs(s.z)));
+                }
+                else broadReach = radius * 1.7321f;   // the cube's corner
+                // How far a ship can still move this frame after being measured (at most ~1 m/ms), plus 10 m.
+                broadReach += 10f + Time.deltaTime * 1000f;
+            }
+            return broadReach >= 0f && (point - broadCentre).sqrMagnitude <= broadReach * broadReach;
+        }
+
         /// <summary>Gun::calcCharacterCollision: 'point' (metres) inside the cube, or inside a local box.</summary>
         public bool Contains(Vector3 point)
         {

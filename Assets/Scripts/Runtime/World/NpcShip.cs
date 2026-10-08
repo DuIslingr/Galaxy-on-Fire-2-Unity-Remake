@@ -1219,8 +1219,9 @@ namespace GoF2Remake.World
                                  && firing.TryFire(transform) >= 0)
                         {
                             int shot = NpcTables.ShotSound(Race);
-                            var clip = firing == empGun ? WeaponFx.Load(18)?.Shot
-                                     : firing == secondGun ? WeaponFx.Load(secondGun.itemIndex)?.Shot
+                            // The rigs' own fx (WeaponFx.Load was a formatted path and a Resources lookup per shot).
+                            var clip = firing == empGun ? (empRig?.fx ?? WeaponFx.Load(18))?.Shot
+                                     : firing == secondGun ? (secondRig?.fx ?? WeaponFx.Load(secondGun.itemIndex))?.Shot
                                      : assets != null && assets.shots != null && shot < assets.shots.Length ? assets.shots[shot] : null;
                             if (clip != null) ShotVoices.PlayAt(clip, transform.position, 0.8f);   // shared voices (FEV max_playbacks)
                         }

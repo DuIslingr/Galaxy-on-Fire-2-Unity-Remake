@@ -128,7 +128,12 @@ namespace GoF2Remake.Data
         public static void AddShipMod(int mod) { if (mod >= 0 && (Settings.KaamoStacking || !ShipMods.Contains(mod))) ShipMods.Add(mod); }
         public static bool HasMod(int mod) => ShipMods.Contains(mod);
         /// <summary>How many times the mod is fitted (its level; 0 = none).</summary>
-        public static int ModLevel(int mod) => ModLevel(ShipMods, mod);
+        public static int ModLevel(int mod)
+        {
+            int n = 0;   // the List itself, not the IEnumerable overload: that boxed its enumerator (MaxLoad, every HUD frame)
+            if (ShipMods != null) foreach (int m in ShipMods) if (m == mod) n++;
+            return n;
+        }
         public static int ModLevel(IEnumerable<int> mods, int mod)
         {
             int n = 0;

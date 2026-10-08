@@ -41,6 +41,22 @@ namespace GoF2Remake.UI
         bool lastTurretView, lastTurretAuto;
         VisualElement root, safeArea, hints;
         VisualElement crosshair, dockPrompt, dockGlyph;
+        VisualElement lockRingElement, navMarkers;   // queried once: two root.Q per frame were a fifth of the HUD's update
+
+        // The secondary plate's "<name> (<amount>)" as last built: every frame made the string and looked the name up again.
+        int secondaryItem = int.MinValue, secondaryAmmo = int.MinValue;
+        string secondaryLanguage, secondaryLine;
+
+        string SecondaryText(int ammo)
+        {
+            int item = weapons.SelectedSecondary;
+            if (item != secondaryItem || ammo != secondaryAmmo || !ReferenceEquals(Localization.Language, secondaryLanguage))
+            {
+                secondaryItem = item; secondaryAmmo = ammo; secondaryLanguage = Localization.Language;
+                secondaryLine = $"{weapons.SecondaryName} ({ammo})";
+            }
+            return secondaryLine;
+        }
         Label dockLabel;
         SpaceLevel level;
         Mining mining;
@@ -162,6 +178,8 @@ namespace GoF2Remake.UI
 
             InputGlyph.TrackHintsOption(hints);
             crosshair = root.Q("crosshair");
+            lockRingElement = root.Q("lockRing");
+            navMarkers = root.Q("navMarkers");
             dockPrompt = root.Q("dockPrompt");
             dockGlyph = root.Q("dockGlyph");
             dockLabel = root.Q<Label>("dockLabel");
@@ -348,7 +366,7 @@ namespace GoF2Remake.UI
                 f.boostRate = Mathf.Clamp01(model.BoostRechargePercent);
                 int ammo = weapons != null ? weapons.SecondaryAmmo : -1;
                 f.secondary = weapons != null && weapons.SelectedSecondary >= 0 && ammo > 0 && !turretView;
-                f.secondaryText = f.secondary ? $"{weapons.SecondaryName} ({ammo})" : null;
+                f.secondaryText = f.secondary ? SecondaryText(ammo) : null;
                 // Hud::checkIfQuickMenuIsEmpty: the quick menu's entries (the remake's one menu: Khador Drive, wingmen, cloak).
                 if (Time.unscaledTime >= quickMenuCheck && nav != null)
                 {
@@ -385,7 +403,7 @@ namespace GoF2Remake.UI
                 int ammo = weapons != null ? weapons.SecondaryAmmo : -1;
                 bool turretView = level.Turret != null && level.Turret.InTurretView;
                 f.secondary = weapons != null && weapons.SelectedSecondary >= 0 && ammo > 0 && !turretView;
-                f.secondaryText = f.secondary ? $"{weapons.SecondaryName} ({ammo})" : null;
+                f.secondaryText = f.secondary ? SecondaryText(ammo) : null;
                 float thrust = ship.Model.Throttle;
                 if (lastThrust >= 0f && !Mathf.Approximately(thrust, lastThrust)) touch.NotifyThrottle();
                 lastThrust = thrust;
@@ -921,9 +939,8 @@ namespace GoF2Remake.UI
                 transferCounter.EnableInClassList("transfer-counter--hidden", !on);
                 if (on) transferCounter.text = $"{docking.TransferLabel.ToUpperInvariant()}  {docking.TransferDone} / {docking.TransferTotal}";
             }
-            var lockRing = root.Q("lockRing");
-            lockRing.style.left = crosshair.style.left;
-            lockRing.style.top = crosshair.style.top;
+            lockRingElement.style.left = crosshair.style.left;
+            lockRingElement.style.top = crosshair.style.top;
             navView.Update(nav, Camera.main, InputMode.Current == InputKind.Touch || cursorMode, phase,
                            level.Layout.alienOrbit ? Standing.Void : level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
             bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
@@ -940,7 +957,7 @@ namespace GoF2Remake.UI
             // level's asteroid field (Level+0xc4), not the autopilot's "Asteroid field" entry: the Void's crystal field has none
             // (players' report: no letters there).
             miningView.UpdateMarkers(mining, level.Asteroids != null && level.Layout != null ? OrbitLayout.ToUnity(level.Layout.asteroidCentre) : (Vector3?)null, Camera.main,
-                                     level.LaunchCameraOver && !cinematic && !(docking != null && docking.Busy), root.Q("navMarkers"));
+                                     level.LaunchCameraOver && !cinematic && !(docking != null && docking.Busy), navMarkers);
             UpdateRadio();
             PlaceDockPrompt();
             UpdateFade();

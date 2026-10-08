@@ -199,7 +199,7 @@ namespace GoF2Remake.Flight
                     if (best == null && bestSteal == null)
                     {
                         bestD = float.MaxValue;
-                        foreach (var cr in FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
+                        foreach (var cr in Crate.All)
                             if (cr != Salvaging && !cr.claimedByOther && InBox(cam, c, box, cr.transform.position, out float d) && d < bestD) { bestD = d; bestCrate = cr; }
                     }
                 }
@@ -281,7 +281,7 @@ namespace GoF2Remake.Flight
         {
             Crate pick = null;
             float best = float.MaxValue;
-            foreach (var cr in FindObjectsByType<Crate>(FindObjectsInactive.Exclude))
+            foreach (var cr in Crate.All)
             {
                 if (cr.stolenFrom != null || !cr.HasLoot || cr.claimedByOther) continue;
                 if (onScreenOnly)
