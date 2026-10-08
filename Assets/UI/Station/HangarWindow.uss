@@ -471,6 +471,19 @@
     color: var(--gof-text);
 }
 
+/* Remake (#62): a dealer / stored ship's stat compared with the ship flown (ItemInfo.ShipStatsCompared). */
+.stat-compare {
+    flex-direction: row;
+    align-items: center;
+}
+
+.stat-arrow {
+    width: 57px;
+    height: 32px;
+    margin-left: 8px;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
 .detail-text {
     margin-top: 14px;
     font-size: 20px;

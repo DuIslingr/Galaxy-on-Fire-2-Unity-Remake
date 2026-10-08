@@ -132,20 +132,38 @@ namespace GoF2Remake.UI
         /// with "(+)", like the item window's (ListItemWindow::set).</summary>
         public static List<(string label, string value)> ShipStats(ShipData s, int price, IEnumerable<int> mods = null)
         {
+            var rows = new List<(string, string)>();
+            foreach (var (label, value, _) in ShipStatsCompared(s, price, mods, null, null)) rows.Add((label, value));
+            return rows;
+        }
+
+        /// <summary>ShipStats with each row compared to 'current' (with its mods 'currentMods'), as ListItemWindow::set's
+        /// arrows 0x512 / 0x513 / 0x514: -1 worse, 1 better, 0 equal, 2 none (no current ship; the price). Remake (#62): the
+        /// hangar's details panel shows them too (the original only in its item window), with the Kaamo upgrades counted on
+        /// both sides; a slot row shows when either ship has such slots.</summary>
+        public static List<(string label, string value, int compare)> ShipStatsCompared(ShipData s, int price, IEnumerable<int> mods,
+            ShipData current, IEnumerable<int> currentMods)
+        {
             string T(int id) => Localization.Get(id);
             int Lv(int mod) => Session.ModLevel(mods, mod);
+            int CurLv(int mod) => Session.ModLevel(currentMods, mod);
             string Plus(int mod) => Lv(mod) > 0 ? " (+)" : "";
-            var rows = new List<(string, string)>
+            int Cmp(float v, float c) => current == null ? 2 : v < c ? -1 : v > c ? 1 : 0;
+            var rows = new List<(string, string, int)>();
+            int armor = s.armor + 40 * Lv(0), cargo = s.cargo + 30 * Lv(1), equipment = s.slots.equipment + Lv(2);
+            int handling = Mathf.RoundToInt(s.handling) + 20 * Lv(3);
+            rows.Add((T(165), armor + Plus(0), current == null ? 2 : Cmp(armor, current.armor + 40 * CurLv(0))));
+            rows.Add((T(166), $"{cargo} t" + Plus(1), current == null ? 2 : Cmp(cargo, current.cargo + 30 * CurLv(1))));
+            void Slots(int id, int n, int cur, string plus)
             {
-                (T(165), (s.armor + 40 * Lv(0)) + Plus(0)),
-                (T(166), $"{s.cargo + 30 * Lv(1)} t" + Plus(1)),
-            };
-            if (s.slots.primary > 0) rows.Add((T(265), s.slots.primary.ToString()));
-            if (s.slots.secondary > 0) rows.Add((T(266), s.slots.secondary.ToString()));
-            if (s.slots.turret > 0) rows.Add((T(267), s.slots.turret.ToString()));
-            if (s.slots.equipment > 0 || Lv(2) > 0) rows.Add((T(269), (s.slots.equipment + Lv(2)) + Plus(2)));
-            rows.Add((T(164), (Mathf.RoundToInt(s.handling) + 20 * Lv(3)) + Plus(3)));
-            rows.Add((T(132), Credits(price)));
+                if (n > 0 || current != null && cur > 0) rows.Add((T(id), n + plus, Cmp(n, cur)));
+            }
+            Slots(265, s.slots.primary, current?.slots.primary ?? 0, "");
+            Slots(266, s.slots.secondary, current?.slots.secondary ?? 0, "");
+            Slots(267, s.slots.turret, current?.slots.turret ?? 0, "");
+            Slots(269, equipment, current != null ? current.slots.equipment + CurLv(2) : 0, Plus(2));
+            rows.Add((T(164), handling + Plus(3), current == null ? 2 : Cmp(handling, Mathf.RoundToInt(current.handling) + 20 * CurLv(3))));
+            rows.Add((T(132), Credits(price), 2));
             return rows;
         }
 

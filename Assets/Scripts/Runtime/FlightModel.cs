@@ -394,10 +394,11 @@ namespace GoF2Remake.Flight
 
         float AutoLevelRoll(float dtMs, Vector3 up, Vector3 right)
         {
-            // "up.x" in the original = how much the ship's up vector leans sideways relative to the horizon;
-            // here: component of ship-up along the world-horizontal part of ship-right.
-            Vector3 horizRight = Vector3.ProjectOnPlane(right, Vector3.up).normalized;
-            float lean = Vector3.Dot(up, horizRight);
+            // "up.x" in the original = how much the ship's up vector leans sideways relative to the horizon; here: how far
+            // the right wing points down (-right.y; for a small lean the same as up along the horizontal right). #57: it was
+            // up along the horizontal part of 'right', which is nothing on a knife edge (the right wing straight up or down):
+            // a ship on its side or upside down counted as level and stayed so.
+            float lean = -right.y;
             float upY = up.y;
 
             if (Mathf.Abs(lean) < LevelDoneThreshold && upY > 0f)

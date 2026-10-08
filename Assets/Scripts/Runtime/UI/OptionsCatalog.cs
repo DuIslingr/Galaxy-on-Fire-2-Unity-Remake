@@ -283,6 +283,19 @@ namespace GoF2Remake.UI
                 mouseDeadzone.description = () => X("mouseDeadzoneHelp", "How far the mouse can move from the centre before the ship turns.");
                 list.Add(mouseDeadzone);
             }
+            // Remake (#61): the original's Configure screen (Options > Controls, 494 / 495) moved the touch controls' left
+            // group and right cluster up and down; here as two sliders, shown when the touch controls are in use.
+            foreach (bool right in new[] { false, true })
+            {
+                bool r = right;
+                var touchHeight = Slider(r ? "touchRightHeight" : "touchLeftHeight", OptionPage.Controls,
+                    () => r ? X("touchRightHeight", "Touch controls height: fire buttons") : X("touchLeftHeight", "Touch controls height: stick"), 0f, 1f,
+                    () => { float v = r ? Settings.TouchRightHeight : Settings.TouchLeftHeight; return v < 0f ? TouchControls.DefaultHeight01(r) : v; },
+                    v => { if (r) Settings.TouchRightHeight = v; else Settings.TouchLeftHeight = v; }, Percent);
+                touchHeight.description = () => X("touchHeightHelp", "How high the touch controls sit on the screen: 0 % is the highest, 100 % the lowest.");
+                touchHeight.visible = () => Application.isMobilePlatform || InputMode.Current == InputKind.Touch;
+                list.Add(touchHeight);
+            }
             // Remake VR: the cockpit's grabbable stick (right grip) and throttle lever (left grip), else the controllers as a gamepad.
             var vrGrab = Toggle("vrGrabControls", OptionPage.Controls, () => X("vrGrabControls", "VR flight: grab the stick and throttle"),
                 () => Settings.VrGrabControls, v => Settings.VrGrabControls = v);

@@ -158,6 +158,11 @@ namespace GoF2Remake.Data
         public static float HapticsIntensity { get => Get("haptics", 1f); set => Set("haptics", Mathf.Clamp01(value)); }
 
         /// <summary>Controller stick dead zone (InputSettings.defaultDeadzoneMin).</summary>
+        /// <summary>Remake (#61, the original's Options > Controls > Configure, options+0x54 / +0x58): where the touch
+        /// controls' left group (the stick) and right cluster (fire) sit, 0 = highest, 1 = lowest the original allows;
+        /// -1 = the original's defaults (S 415, F 365; TouchControls).</summary>
+        public static float TouchLeftHeight { get => Get("touchLeftHeight", -1f); set => Set("touchLeftHeight", value < 0f ? -1f : Mathf.Clamp01(value)); }
+        public static float TouchRightHeight { get => Get("touchRightHeight", -1f); set => Set("touchRightHeight", value < 0f ? -1f : Mathf.Clamp01(value)); }
         public static float StickDeadzone { get => Get("stickDeadzone", DefaultDeadzone); set => Set("stickDeadzone", Mathf.Clamp(value, 0.05f, 0.4f)); }
 
         // ---- gameplay ----------------------------------------------------------------------------------------
@@ -252,6 +257,7 @@ namespace GoF2Remake.Data
         {
             "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "invertPitch", "invertYaw", "invertDrillY",
             "invertDrillX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "vrGrabControls", "haptics", "stickDeadzone",
+            "touchLeftHeight", "touchRightHeight",
         };
         public static readonly string[] GameplayKeys =
         {
