@@ -84,7 +84,7 @@ namespace GoF2Remake.UI
         readonly Dictionary<string, VisualElement> panels = new Dictionary<string, VisualElement>();
         VisualElement openPanel;
         readonly List<OptionControl> optionControls = new List<OptionControl>();
-        Action dialogYes, dialogNo;
+        Action dialogYes, dialogNo, dialogAlt;   // dialogAlt: the third button, only for ShowResetChoice
         Func<bool> dialogCheck;   // the Yes button closes the dialog only when this passes (null = always)
         TextField dialogField;
         MenuState screen = MenuState.Splash;
@@ -296,9 +296,10 @@ namespace GoF2Remake.UI
             Bind("ngPlusToggle", () => { newGamePlus = !newGamePlus && ngPlusSave != null; RefreshNgPlus(false); });
             Bind("dialogYes", ConfirmDialog);
             Bind("dialogNo", () => { var a = dialogNo; CloseDialog(); a?.Invoke(); });
+            Bind("dialogAlt", () => { var a = dialogAlt; CloseDialog(); a?.Invoke(); });
 
             foreach (var (tab, pg) in OptionPages) Bind(tab, () => SelectTab(pg));
-            Bind("optionsDefaults", () => { Settings.ResetToDefaults(); RefreshTexts(); });   // 497
+            Bind("optionsDefaults", ShowResetChoice);   // 497: asks first (this tab or every tab)
             SetupOptions();
 
             root.RegisterCallback<NavigationCancelEvent>(_ => Back(), TrickleDown.TrickleDown);
@@ -1817,9 +1818,44 @@ namespace GoF2Remake.UI
             a?.Invoke();
         }
 
+        /// <summary>Default settings (497), remake (players' request): the dialog asks whether to reset only the open tab or
+        /// every tab (a third button), Cancel = nothing; a stray press reset everything before.</summary>
+        void ShowResetChoice()
+        {
+            var page = CurrentOptionPage();
+            ShowDialog(Localization.Get(497), OptionsCatalog.ResetQuestion, () => { OptionsCatalog.ResetPage(page); RefreshTexts(); });
+            dialogAlt = () => { Settings.ResetToDefaults(); RefreshTexts(); };
+            var yes = root.Q<Button>("dialogYes");
+            yes.text = OptionsCatalog.ResetTabLabel(page).ToUpperInvariant();
+            var alt = root.Q<Button>("dialogAlt");
+            alt.text = OptionsCatalog.ResetAllLabel.ToUpperInvariant();
+            alt.style.display = DisplayStyle.Flex;
+            root.Q<Button>("dialogNo").text = Localization.Get(425).ToUpperInvariant();   // Cancel
+            Select(yes);
+        }
+
+        /// <summary>The Options tab on show (SelectTab).</summary>
+        OptionPage CurrentOptionPage()
+        {
+            foreach (OptionPage p in Enum.GetValues(typeof(OptionPage)))
+                if (PageName(p) == currentOptionsPage) return p;
+            return OptionPage.Sound;
+        }
+
+        string currentOptionsPage = "soundPage";
+
         void CloseDialog()
         {
             var no = root.Q<Button>("dialogNo");
+            var alt = root.Q<Button>("dialogAlt");
+            if (alt != null && alt.style.display == DisplayStyle.Flex)
+            {
+                // The reset choice: back to Yes / No.
+                alt.style.display = DisplayStyle.None;
+                no.text = Localization.Get(135).ToUpperInvariant();
+                root.Q<Button>("dialogYes").text = Localization.Get(134).ToUpperInvariant();
+            }
+            dialogAlt = null;
             if (no.style.display == DisplayStyle.None || dialogField != null && dialogField.style.display == DisplayStyle.Flex)
             {
                 no.style.display = StyleKeyword.Null;
@@ -2002,6 +2038,7 @@ namespace GoF2Remake.UI
 
         void SelectTab(string page)
         {
+            currentOptionsPage = page;
             foreach (var (tab, p) in OptionPages)
             {
                 root.Q(tab).EnableInClassList("tab-button--active", p == page);

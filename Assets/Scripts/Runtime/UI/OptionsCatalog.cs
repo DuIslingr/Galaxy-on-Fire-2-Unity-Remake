@@ -66,6 +66,26 @@ namespace GoF2Remake.UI
             _ => X("tabGameplay", "Gameplay"),
         };
 
+        /// <summary>Remake (players' request): "Default settings" for one tab only, the choice the menus offer next to every
+        /// tab (Settings' key groups; the Key bindings tab resets the bindings).</summary>
+        public static void ResetPage(OptionPage page)
+        {
+            switch (page)
+            {
+                case OptionPage.Sound: Settings.Reset(Settings.SoundKeys); break;
+                case OptionPage.Graphics: Settings.Reset(Settings.GraphicsKeys); break;
+                case OptionPage.Controls: Settings.Reset(Settings.ControlsKeys); break;
+                case OptionPage.Gameplay: Settings.Reset(Settings.GameplayKeys); break;
+                case OptionPage.Language: Settings.Reset(Settings.LanguageKeys); break;
+                case OptionPage.Bindings: Flight.GameControls.ResetToDefaults(); break;
+            }
+        }
+
+        /// <summary>The defaults prompt's question and its two reset buttons' texts.</summary>
+        public static string ResetQuestion => X("resetQuestion", "Reset to the default settings:");
+        public static string ResetTabLabel(OptionPage page) => string.Format(X("resetTab", "Only {0}"), PageTitle(page));
+        public static string ResetAllLabel => X("resetAll", "All tabs");
+
         static readonly string[] VoiceCodes = { "auto", "en", "de" };
         static readonly float[] RenderScales = { 0.5f, 0.67f, 0.75f, 0.8f, 0.9f, 1f, 1.25f, 1.5f, 2f };
         static readonly int[] MsaaSamples = { 1, 2, 4, 8 };

@@ -881,6 +881,7 @@ namespace GoF2Remake.UI
             else if (status != null && status.IsOpen) { Play(buttonRelease); status.Close(); }
             else if (lounge != null && lounge.ChatOpen) { Play(buttonRelease); lounge.CloseChat(); }
             else if (HangarOpen) { Play(buttonRelease); if (!hangarWindow.Back()) CloseHangar(); }
+            else if (SystemMenuOpen && sysPage == SysPage.Options && optionsView != null && optionsView.CloseResetPrompt()) Play(buttonRelease);   // the defaults prompt first
             else if (SystemMenuOpen && sysPage != SysPage.Main) { Play(buttonRelease); ShowSystemPage(SysPage.Main); }
             else if (SystemMenuOpen) { Play(buttonRelease); CloseSystemMenu(); }
             else if (level != null && level.View == StationView.Lounge) { Play(buttonRelease); level.SetView(StationView.Hangar); }
@@ -1262,9 +1263,10 @@ namespace GoF2Remake.UI
         void BuildOptionsView()
         {
             optionsView = new OptionsView(() => { Play(buttonRelease); ShowSystemPage(SysPage.Main); }, true);
-            foreach (var b in new[] { optionsView.BackButton, optionsView.DefaultsButton })
+            foreach (var b in new[] { optionsView.BackButton, optionsView.DefaultsButton, optionsView.CancelButton, optionsView.ResetTabButton, optionsView.ResetAllButton })
                 b.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
             optionsView.DefaultsRestored += () => Play(buttonRelease);
+            optionsView.FooterChanged += () => Select(optionsView.FooterFocus);   // the defaults prompt opened / closed
             optionsView.Changed += c => { if (c.def.kind == OptionKind.Choice || c.def.kind == OptionKind.Toggle) Play(buttonRelease); };
             optionsView.TabChanged += () => Select(optionsView.ActiveTab);
             systemMenu.Add(optionsView.Root);
@@ -1652,16 +1654,16 @@ namespace GoF2Remake.UI
                     var row = optionsView.RowOf(f);
                     if (optionsView.IsTab(f)) optionsView.StepTab(dir);
                     else if (row != null) row.Step(dir);
-                    else if (f == optionsView.BackButton || f == optionsView.DefaultsButton)
-                        Select(dir < 0 ? optionsView.BackButton : optionsView.DefaultsButton);
+                    else if (optionsView.IsFooter(f)) Select(optionsView.FooterStep(f, dir));   // Back / Default settings, or the prompt
                     else Select(optionsView.ActiveTab);
                 }
                 else
                 {
                     int step = e.direction == NavigationMoveEvent.Direction.Up ? -1 : 1;
                     int next = at < 0 ? 0 : at + step;
-                    if (step > 0 && f == optionsView.BackButton) next = at;
-                    if (step < 0 && f == optionsView.DefaultsButton) next = at - 2;
+                    // The footer is one row: down from it stays, up from any of its buttons goes to the item before it.
+                    if (step > 0 && optionsView.IsFooter(f)) next = at;
+                    if (step < 0 && optionsView.IsFooter(f)) next = optionsView.FooterStart(nav) - 1;
                     Select(nav[Mathf.Clamp(next, 0, nav.Count - 1)]);
                 }
                 e.StopPropagation();

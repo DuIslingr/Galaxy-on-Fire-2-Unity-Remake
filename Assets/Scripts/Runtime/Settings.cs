@@ -234,21 +234,50 @@ namespace GoF2Remake.Data
         /// <summary>Whether the German voice lines play (VoiceLanguage, "auto" follows the text language).</summary>
         public static bool GermanVoices => VoiceLanguage switch { "de" => true, "en" => false, _ => Language == "de" };
 
-        /// <summary>"Default settings" (497): every option back to its default, the language kept.</summary>
+        // "Default settings" (497) by Options tab (OptionsCatalog.ResetPage): the keys of every option on it. A new option's
+        // key goes in its tab's list. Not reset: the text language and the tilt calibration (taken on the device, not an
+        // option); the Key bindings tab resets the bindings (GameControls), the in-game Difficulty and Debug tools rows are
+        // the game's / Cheats' state.
+        public static readonly string[] SoundKeys = { "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "eachWeaponSound", "muteInBackground" };
+        public static readonly string[] GraphicsKeys =
+        {
+            "displayMode", "resolutionWidth", "resolutionHeight", "frameRate", "quality", "renderScale", "upscaler", "upscalerQuality",
+            "msaa", "brightness", "bloom", "bloomStyle", "hangarShadows", "hangarDof", "lensFlare", "npcPlayerEngines", "fov",
+            "cameraShake", "showFps",
+        };
+        public static readonly string[] ControlsKeys =
+        {
+            "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "invertPitch", "invertYaw", "invertDrillY",
+            "invertDrillX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "vrGrabControls", "haptics", "stickDeadzone",
+        };
+        public static readonly string[] GameplayKeys =
+        {
+            "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "pirateEvents", "capitalShips", "informerOriginalRule",
+            "originalTargetLock", "autoAdvanceDialogue", "animatedDialogue", "inputHints", "discordPresence",
+        };
+        public static readonly string[] LanguageKeys = { "voiceLanguage" };
+
+        /// <summary>These options back to their defaults.</summary>
+        public static void Reset(IEnumerable<string> keys)
+        {
+            foreach (var key in keys)
+            {
+                PlayerPrefs.DeleteKey(Prefix + key);
+                cache.Remove(key);
+            }
+            PlayerPrefs.Save();
+            Changed?.Invoke();
+        }
+
+        /// <summary>"Default settings" (497), every tab: every option back to its default and the key bindings, the language
+        /// kept. (Before, a list from the early options: 19 later ones, animated dialogue, hangar flights and shadows, mouse
+        /// steering, Show FPS, the target lock... were never reset.)</summary>
         public static void ResetToDefaults()
         {
-            foreach (var key in new[]
-                     {
-                         "masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "displayMode", "resolutionWidth", "resolutionHeight",
-                         "frameRate", "renderScale", "upscaler", "upscalerQuality", "msaa", "quality", "brightness", "bloom", "bloomStyle", "lensFlare", "npcPlayerEngines", "fov", "cameraShake",
-                         "sensitivity", "invertPitch", "invertYaw", "invertDrillY", "invertDrillX", "gyroSteering", "gyroSensitivity", "haptics", "stickDeadzone", "mouseDeadzone", "launchCamera", "autoAdvanceDialogue", "inputHints",
-                         "pirateEvents", "capitalShips", "tutorialHints", "levelPitch",
-                     })
-                PlayerPrefs.DeleteKey(Prefix + key);
-            PlayerPrefs.Save();
-            cache.Clear();
-            GoF2Remake.Flight.GameControls.ResetToDefaults();   // the key bindings too
-            Changed?.Invoke();
+            GoF2Remake.Flight.GameControls.ResetToDefaults();
+            var all = new List<string>();
+            foreach (var group in new[] { SoundKeys, GraphicsKeys, ControlsKeys, GameplayKeys, LanguageKeys }) all.AddRange(group);
+            Reset(all);
         }
 
         // PlayerPrefs reads go through a cache: game code reads some options every frame.
