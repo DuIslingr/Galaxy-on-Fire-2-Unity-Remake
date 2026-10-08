@@ -1448,12 +1448,31 @@ namespace GoF2Remake.UI
             {
                 int slot = i;
                 var save = SaveGame.Preview(i);
-                var row = SaveSlotRow.Build(level.Database, i, save, Localization.Extra("autosaveHint", "Saved automatically when you dock"));
+                var row = SaveSlotRow.Build(level.Database, i, save, Localization.Extra("autosaveHint", "Saved automatically when you dock"), DeleteSlot);
                 row.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
-                row.clicked += () => { Play(buttonRelease); if (sysPage == SysPage.Load) PickLoadSlot(slot, save != null); else PickSaveSlot(slot, save != null); };
+                row.clicked += () =>
+                {
+                    if (SaveSlotRow.HoldUsed(row)) return;
+                    Play(buttonRelease);
+                    if (sysPage == SysPage.Load) PickLoadSlot(slot, save != null); else PickSaveSlot(slot, save != null);
+                };
                 row.RegisterCallback<FocusInEvent>(_ => { if (!DragScroll.PointerActive) saveSlotList.ScrollTo(row); });
                 saveSlotList.Add(row);
             }
+            SaveSlotRow.AttachHint(saveSlotList);
+        }
+
+        /// <summary>Remake: a slot held down (SaveSlotRow): deleted, the list rebuilt with the same row selected.</summary>
+        void DeleteSlot(int slot)
+        {
+            if (!SaveGame.Delete(slot)) return;
+            Play(buttonRelease);
+            root.schedule.Execute(() =>
+            {
+                if (!SavePageOpen) return;
+                BuildSaveSlots();
+                if (slot < saveSlotList.contentContainer.childCount) Select(saveSlotList.contentContainer.ElementAt(slot));
+            });
         }
 
         /// <summary>MenuTouchWindow load mode: a used slot, after 523 (the progress since the last save is lost), is loaded

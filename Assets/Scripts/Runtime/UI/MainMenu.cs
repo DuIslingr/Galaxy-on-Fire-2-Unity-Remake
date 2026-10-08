@@ -1880,11 +1880,27 @@ namespace GoF2Remake.UI
             {
                 int slot = i;
                 var save = SaveGame.Preview(i);
-                var row = SaveSlotRow.Build(db, i, save, Localization.Extra("autosaveHint", "Saved automatically when you dock"));
-                row.clicked += () => { Play(buttonPush); if (save != null) LoadSlot(slot); };
+                var row = SaveSlotRow.Build(db, i, save, Localization.Extra("autosaveHint", "Saved automatically when you dock"), DeleteSlot);
+                row.clicked += () => { if (SaveSlotRow.HoldUsed(row)) return; Play(buttonPush); if (save != null) LoadSlot(slot); };
                 HookFocusSound(row);
                 list.Add(row);
             }
+            SaveSlotRow.AttachHint(list);
+        }
+
+        /// <summary>Remake: a slot held down (SaveSlotRow): deleted, the list rebuilt with the same row selected.</summary>
+        void DeleteSlot(int slot)
+        {
+            if (!SaveGame.Delete(slot)) return;
+            Play(buttonRelease);
+            root.schedule.Execute(() =>
+            {
+                BuildSlots();
+                var list = root.Q<ScrollView>("slotList");
+                if (slot < list.contentContainer.childCount) Select(list.contentContainer.ElementAt(slot));
+                resumeButton.EnableInClassList("menu-button--gone", SaveGame.MostRecentSlot() < 0);
+                UpdateColumnFit();
+            });
         }
 
         // ---- options ---------------------------------------------------------------------------
