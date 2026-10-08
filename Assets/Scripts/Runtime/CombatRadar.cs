@@ -355,6 +355,18 @@ namespace GoF2Remake.Flight
             if (assets != null && assets.tractorClose != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.tractorClose), Settings.SfxVolume);
             var entry = crate.loot.Find(s => s.amount > 0);
             if (entry == null) { Destroy(crate.gameObject); return; }
+            if (GoF2Remake.Modding.ModBlueprints.Of(entry.item) != null)
+            {
+                // Remake mods: a data crate (a mod blueprint's drop or derelict): the blueprint is learnt, nothing goes in
+                // the hold.
+                bool known = Blueprints.IsUnlocked(entry.item);
+                Blueprints.Unlock(entry.item);
+                Message?.Invoke(string.Format(known ? Localization.Extra("bpKnown", "Blueprint already known: {0}")
+                                                    : Localization.Extra("bpFound", "Blueprint found: {0}"), GameNames.Item(entry.item)), 2);
+                crate.CapturedHere?.Invoke();
+                Destroy(crate.gameObject);
+                return;
+            }
             int free = Shop.FreeCargo(db);
             var ship = crate.stolenFrom;
             int want = ship != null ? UnityEngine.Random.Range(0, entry.amount) : entry.amount;

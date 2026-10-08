@@ -217,6 +217,9 @@ namespace GoF2Remake.Data
         public static bool Hardcore;
         /// <summary>This game's identity (a new one at every new game; saved), so a hardcore death finds every slot of the run.</summary>
         public static string RunId = "";
+        /// <summary>Remake mods: the mods' new-game options switched on for this game ("mod_id:option_id",
+        /// Modding.ModGameOptions; saved).</summary>
+        public static HashSet<string> ModGameOptions = new HashSet<string>();
         public const int FreePlayMission = 20;
 
         /// <summary>
@@ -394,6 +397,7 @@ namespace GoF2Remake.Data
             ModCampaign = "";
             Hardcore = false;
             RunId = System.Guid.NewGuid().ToString("N");
+            ModGameOptions = new HashSet<string>();
             GraphQuestsDone = new HashSet<string>();
             GoF2Remake.Events.EventRunner.ResetLocal();   // single player's graph runs go with the game
             Blueprints = new List<BlueprintState>();

@@ -73,6 +73,7 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 - **GoF2 > Scenes > Space Scene**: `Assets/Scenes/Space.unity`, the flight level (see "Space scene"). Also (re)makes `Resources/GoF2Backdrop` and bakes the space skies if missing.
 - **GoF2 > Scenes > Station Scene**: `Assets/Scenes/Station.unity`, the docked station (see "Station scene"). Wires the bar visitor prefabs, glow materials, music, ambience and language tables.
 - **GoF2 > Scenes > Add Post Processing To Open Scene**: global Volume with `Assets/Settings/GoF2_VolumeProfile.asset` (Bloom, threshold 1) + camera post-processing on.
+- **GoF2 > Build > Modding AI Reference** (`ModdingReferenceBuilder`): `Modding/ai/gof2-modding/reference.md`, every original item, ship, system and station with its number and stats (Android economy) for the AI modding guide. Run it again after changing the game data.
 - **GoF2 > Build > Combat Assets**: `Resources/GoF2Combat/CombatAssets` (`CombatAssets`). Also run by Create Space Scene.
 - **GoF2 > Build > Star Map Assets**: `Resources/GoF2StarMap/StarMapAssets` (`StarMapAssets`). Also run by Create Space Scene, and by Create Station Scene when missing.
 - **GoF2 > Build > Network Prefabs**: `Resources/GoF2Net`, the multiplayer network prefabs (see "Multiplayer").
@@ -1604,7 +1605,7 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
 ## Mods (remake-only)
 
 Player-made content as data (no code: the game is IL2CPP), in `Scripts/Runtime/Modding` (`GoF2Remake.Modding`); the modders'
-guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/plasma_arsenal` (items) and `frontier_systems`
+guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/gof2-modding/SKILL.md` with it: an Agent Skill / paste-in guide for Claude and ChatGPT, with `reference.md` from **GoF2 > Build > Modding AI Reference** and the how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (items) and `frontier_systems`
 (systems / stations). Items, ships, systems and stations, quests and bar missions (event graphs), voice-over, music.
 
 - **A mod** = a folder or a `.zip` / `.gof2mod` (files at its root or in one top folder, `ZipSource`) with `mod.json`
@@ -1737,9 +1738,12 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   `_MetallicGlossMap` / `_EmissionMap`; the game's material assets are never touched); `_normal` / `_metallic` names load
   linear; loaded with the rest (`ModMaterials.PreloadTexture`, `ModLoading`). Verified in Play mode: a BountyBot
   (/make_skin_texture) Veteran skin on the hangar turntable (`Mods/veteran_skin`, git-ignored).
-- **Mod campaigns** (`ModCampaigns`, a mod's `campaign.json`: name, description, image, startStation, startShip, credits,
-  equipment, cargo, standing, quest, galaxy mod | all, items mod | all, ships mod | all, trafficShips per race): an entry under
-  the campaign cards (`MainMenu.RefreshModCampaigns` / `PickModCampaign`, `.mod-campaign*` in MainMenu.uss) → difficulty →
+- **Mod campaigns** (`ModCampaigns`, a mod's `campaign.json`: name, description, image, imageHover, showTitle, startStation,
+  startShip, credits, equipment, cargo, standing, quest, galaxy mod | all, items mod | all, ships mod | all, trafficShips per
+  race): a card after the three campaign cards, picked the same way (`MainMenu.RefreshModCampaigns` / `ModCard` /
+  `PickModCampaign`: the art cropped to the card, the hover art fading in while selected, a name plate unless showTitle is
+  false; four cards shrink to fit the row (`.card-row--4`), five or more go small and the row scrolls sideways
+  (`.card-row--many`, `card-scroll`, `DragScroll` horizontal too)) → difficulty →
   economy → `BeginGame` → `ModCampaigns.Start`: Session.ResetNewGame's state, then `Session.ModCampaign` (save v14
   `modCampaign`), `FreePlay` (no GoF2 story, index 20), the start station / ship / credits / equipment / cargo / standing, the
   quest as a pending `GraphQuestState` (`EventRunner.RestorePending`: started once the station is up; the record takes the
@@ -1751,6 +1755,42 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   in Play mode with a local test campaign (Mods/test_campaign: Kepler, the Jedi Starfighter, the plasma weapons): the entry,
   the start (station, ship, credits, equipment), only Kepler visible, mod-only dealers, Jedi / Banshee traffic, missions
   inside Kepler, the quest running, save / load keeping it.
+- **New-game options** (`ModGameOptions`, a mod's `gameoptions.json`: id, name, description, image, imageHover, showTitle,
+  default): campaign-style cards in the Game options panel (`MainMenu.RefreshModOptions`: the panel goes wide, the toggles in
+  a left column, the cards in a right one that scrolls sideways with "N options · scroll for more" past two, Start game under
+  both; `NavigateGameOptions`: left / right through the cards, right from the column to the last card visited, left out of
+  the first card back to the toggle it came from, up / down in the column; the containers are made again after a UI reload),
+  ON / OFF badge, the art dimmed while off; the choice is remembered (PlayerPrefs `newgame_modopt_<mod:id>`) and becomes the
+  game's at `BeginGame` (`ApplyChoices`, `Session.ModGameOptions`, save v16 `modGameOptions`); a multiplayer session plays
+  with each option's default. Verified in Play mode with 8 options from two mods (with and without images, a missing image
+  warned), the arrow-key navigation and the scrolling, and 3 mod campaigns (6 cards).
+- **Conditions** (`Events.EventRunner.Condition(expression, out error)`: the event graphs' expression language outside an
+  event, a throwaway run like the quests' "Starts when"; new words `option(mod:id)`, `won(main | valkyrie | supernova)`
+  (or the multiplayer finished world), `systemsvisited` (distinct systems of `Session.VisitedStations`)): items.json /
+  ships.json "available" (new entries and overrides; `ModUnlocks.ItemAvailable` in `Shop.GenerateItems` and
+  `NpcTables.RollLoot`, `ShipAvailable` in `Shop.GenerateShips` and the lounge ship sellers), blueprints' "available"; an
+  unreadable one is false with a warning on its mod. ships.json "dealer" { chance %, systemRace, minTechLevel }
+  (`CustomShipData.dealer`, `ModUnlocks.AddDealerShips` at the end of `Shop.GenerateShipsOriginal`'s ordinary path: not the
+  special yards).
+- **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
+  "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
+  kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
+  available, unlocked (known once available, `UnlockAvailable` at `Shop.EnterStation`), and three sources while available and
+  not known (`Offerable`): "lounge" (`AgentGenerator.AddModBlueprintSellers`, a local visitor with offer SellBlueprint, the
+  openers 874 / 875 in `LoungeChat.StoryLine`), "derelict" (`TrafficPlan.Build`: one hackable freighter wreck per visit at
+  most, `SpawnSpec.modBlueprint`; `Traffic.OnHackWon` leaves a data crate) and "drops" per race (`NpcShip.OnDied`, a kill by
+  the player: `RollDrop`, a data crate). A data crate is a `Crate` (look 3, the junk container) holding the product item;
+  `CombatRadar.Capture` learns a mod blueprint's product instead of loading it ("Blueprint found: X"). An item product gets the
+  recipe on its `ItemData.blueprint`; a ship product is a hidden "blueprint item" ("<mod>:blueprint:<id>", numbered like a mod
+  item in `ModContent.EnsureMapping`, made in `Apply` (`Deed`), its price the ship's after `ApplyShips`; `ModContent.ItemText`
+  / `ItemInfo.ItemIcon` / `ItemInfo.Category` show it as the ship, "Ship blueprint"), so the Blueprints tab, the saves and the
+  crates need nothing new. A finished ship never enters the hold: `Blueprints.Produce` leaves it pending at the production
+  station, `Hangar.DeliverBuiltShips` (the hangar's Finish there, `StationMenu.CheckPendingProducts` on docking) swaps it in
+  like a purchase: the old hull traded in at its price into the dealer list, or parked in the Kaamo Club when owned and free of
+  that type; `level.ReplacePlayerShip`. The details show the ship's stats (`HangarWindow.ShowBlueprintDetails`), "Let me see
+  it" the ship (`LoungePanel.ShowGoods`). Verified in Play mode with a test mod: the tab and details, autocomplete and the
+  delivery (trade-in credited, gear moved), the skin's refusal and rebuild, the lounge seller's offer, a derelict hacked into a
+  data crate, a pirate kill's drop, the capture unlocking it.
 - **Custom hangars and bars** (`ModInteriors`, a mod's `interiors.json`: id, type hangar | bar, model, scale, materials, fov
   (degrees), near / far (metres), ambient, lightIntensity, fog [r, g, b, end m]; hangar startYaw (Unity degrees), parkedMax,
   flights, cruise, gateSpan; stations.json `hangar` / `bar` = an interior key, `interior` still the race): the GLB loads with the

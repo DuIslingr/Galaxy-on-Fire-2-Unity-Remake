@@ -325,7 +325,8 @@ namespace GoF2Remake.Data
         /// armor +40, cargo +30 (t), 1 slot, handling +20.</summary>
         string StoryLine(Agent a)
         {
-            if (a.storyIndex < 0) return "";
+            // A generic visitor (a mod blueprint's seller): the sellers' openers 874 / 875 ("Psst... Hey!").
+            if (a.storyIndex < 0) return a.offer == AgentOffer.SellBlueprint ? T((a.name ?? "").Length % 2 == 0 ? 874 : 875) : "";
             string s = T(886 + a.storyIndex).Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex));
             return a.sellMod >= 0 && a.sellMod < ModGain.Length ? s.Replace("#N", ModGain[a.sellMod].ToString()) : s;
         }

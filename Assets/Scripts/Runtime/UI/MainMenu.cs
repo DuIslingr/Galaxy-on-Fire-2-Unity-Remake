@@ -92,52 +92,152 @@ namespace GoF2Remake.UI
         Campaign pendingCampaign;
         /// <summary>Remake mods: the mod campaign picked (null: one of the three GoF2 campaigns).</summary>
         Modding.ModCampaigns.Def pendingModCampaign;
-        VisualElement modCampaignList;
 
-        /// <summary>The mods' campaigns (Modding.ModCampaigns) as entries under the three campaign cards, built anew each time
-        /// the panel opens (the mods change in the menu).</summary>
+        /// <summary>A mod's card, like the campaign cards (290 x 448 art, the hover art fading in while selected, scaled with
+        /// them): its art cropped to the card, and unless the art has its own title, the name on a plate at the foot.</summary>
+        static Button ModCard(Texture2D art, Texture2D hover, bool showTitle, string title, string subtitle)
+        {
+            var b = new Button();
+            b.AddToClassList("campaign-card");
+            b.AddToClassList("mod-card");
+            var a = new VisualElement { pickingMode = PickingMode.Ignore };
+            a.AddToClassList("card-art");
+            a.AddToClassList("mod-card__art");
+            if (art != null) a.style.backgroundImage = new StyleBackground(art);
+            b.Add(a);
+            if (hover != null)
+            {
+                var h = new VisualElement { pickingMode = PickingMode.Ignore };
+                h.AddToClassList("card-art");
+                h.AddToClassList("card-art-hover");
+                h.AddToClassList("mod-card__art");
+                h.style.backgroundImage = new StyleBackground(hover);
+                b.Add(h);
+            }
+            if (showTitle || art == null)
+            {
+                var plate = new VisualElement { pickingMode = PickingMode.Ignore };
+                plate.AddToClassList("mod-card__plate");
+                var t = new Label(title.ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
+                t.AddToClassList("mod-card__title");
+                t.AddToClassList("gof-semibold");
+                plate.Add(t);
+                if (!string.IsNullOrEmpty(subtitle))
+                {
+                    var st = new Label(subtitle) { pickingMode = PickingMode.Ignore };
+                    st.AddToClassList("mod-card__sub");
+                    plate.Add(st);
+                }
+                b.Add(plate);
+            }
+            return b;
+        }
+
+        ScrollView campaignCardScroll;
+
+        /// <summary>The mods' campaigns (Modding.ModCampaigns) as cards after the three campaign cards, picked the same way;
+        /// built anew each time the panel opens (the mods change in the menu). Four or five cards shrink to fit the row, more
+        /// scroll sideways.</summary>
         void RefreshModCampaigns()
         {
             var panel = panels["campaignPanel"];
-            if (modCampaignList == null)
+            var row = panel.Q(className: "card-row");
+            if (row == null) return;
+            if (campaignCardScroll == null || !panel.Contains(campaignCardScroll))   // made again after a UI reload
             {
-                modCampaignList = new VisualElement();
-                modCampaignList.AddToClassList("mod-campaigns");
-                var anchor = panel.Q<Button>("ngPlusToggle");
-                if (anchor != null) panel.Insert(panel.IndexOf(anchor), modCampaignList);
-                else panel.Add(modCampaignList);
+                // The row goes into a sideways scroll view (it only scrolls with more than five cards).
+                campaignCardScroll = new ScrollView(ScrollViewMode.Horizontal);
+                campaignCardScroll.AddToClassList("card-scroll");
+                campaignCardScroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+                campaignCardScroll.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                row.parent.Insert(row.parent.IndexOf(row), campaignCardScroll);
+                campaignCardScroll.Add(row);
+                new DragScroll(campaignCardScroll);   // a drag scrolls the cards sideways
             }
-            modCampaignList.Clear();
+            row.Query(className: "mod-card").ForEach(e => e.RemoveFromHierarchy());
             var all = Modding.ModCampaigns.All();
-            modCampaignList.style.display = all.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             foreach (var c in all)
             {
                 var def = c;
-                var b = new Button();
-                b.AddToClassList("choice-button");
-                b.AddToClassList("mod-campaign");
-                var tex = Modding.ModCampaigns.Image(def);
-                if (tex != null)
-                {
-                    var img = new VisualElement { pickingMode = PickingMode.Ignore };
-                    img.AddToClassList("mod-campaign__image");
-                    img.style.backgroundImage = new StyleBackground(tex);
-                    b.Add(img);
-                }
-                var text = new VisualElement { pickingMode = PickingMode.Ignore };
-                text.AddToClassList("mod-campaign__text");
-                var title = new Label(def.Name.ToUpperInvariant()) { pickingMode = PickingMode.Ignore };
-                title.AddToClassList("choice-title");
-                title.AddToClassList("gof-semibold");
-                var desc = new Label(def.Description + "  ·  " + string.Format(Localization.Extra("modCampaignBy", "a mod: {0}"), def.mod.Name)) { pickingMode = PickingMode.Ignore };
-                desc.AddToClassList("choice-desc");
-                text.Add(title);
-                text.Add(desc);
-                b.Add(text);
+                var b = ModCard(Modding.ModCampaigns.Image(def), Modding.ModCampaigns.ImageHover(def), def.showTitle, def.Name,
+                                string.Format(Localization.Extra("modCampaignBy", "a mod: {0}"), def.mod.Name));
+                b.tooltip = def.Description;
                 b.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
                 b.clicked += () => { Play(buttonRelease); PickModCampaign(def); };
+                b.RegisterCallback<FocusInEvent>(_ => campaignCardScroll.ScrollTo(b));
                 HookFocusSound(b);
-                modCampaignList.Add(b);
+                row.Add(b);
+            }
+            int n = 3 + all.Count;
+            row.EnableInClassList("card-row--4", n == 4);
+            row.EnableInClassList("card-row--many", n >= 5);
+        }
+
+        ScrollView modOptionCards;
+        Label modOptionHint;
+
+        /// <summary>Remake mods: the mods' new-game options (Modding.ModGameOptions) as cards like the campaign cards, in a
+        /// column beside the game options' toggles (the panel widens for them); a card toggles its option for this new game
+        /// (remembered for the next one).</summary>
+        void RefreshModOptions()
+        {
+            var panel = panels["gameOptionsPanel"];
+            if (modOptionCards == null || !panel.Contains(modOptionCards))   // made again after a UI reload
+            {
+                // The toggles into a left column, the cards in a right one that scrolls sideways; Start under both.
+                var body = new VisualElement();
+                body.AddToClassList("game-options-body");
+                var left = new VisualElement();
+                left.AddToClassList("game-options-left");
+                var anchor = panel.Q("gameOptionsStart");
+                anchor.parent.Insert(anchor.parent.IndexOf(anchor), body);
+                foreach (var name in new[] { "kaamoToggle", "hardcoreToggle", "tutorialToggle", "capitalToggle" })
+                    if (panel.Q(name) is VisualElement e) left.Add(e);
+                body.Add(left);
+                var right = new VisualElement();
+                right.AddToClassList("mod-option-column");
+                modOptionCards = new ScrollView(ScrollViewMode.Horizontal);
+                modOptionCards.AddToClassList("mod-option-cards");
+                modOptionCards.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+                modOptionCards.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+                modOptionCards.mouseWheelScrollSize = 120f;
+                right.Add(modOptionCards);
+                modOptionHint = new Label { pickingMode = PickingMode.Ignore };
+                modOptionHint.AddToClassList("mod-option-hint");
+                right.Add(modOptionHint);
+                body.Add(right);
+                new DragScroll(modOptionCards);   // a drag (mouse or finger) scrolls the cards sideways
+            }
+            modOptionCards.Clear();
+            var all = Modding.ModGameOptions.All();
+            modOptionCards.parent.style.display = all.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            panel.EnableInClassList("panel--wide", all.Count > 0);
+            // Two cards show at a time; more scroll sideways (a drag, the wheel, or the focus moving onto one).
+            modOptionHint.style.display = all.Count > 2 ? DisplayStyle.Flex : DisplayStyle.None;
+            modOptionHint.text = string.Format(Localization.Extra("modOptionsMore", "{0} options  ·  scroll for more"), all.Count);
+            foreach (var o in all)
+            {
+                var def = o;
+                var b = ModCard(Modding.ModGameOptions.Image(def), Modding.ModGameOptions.ImageHover(def), def.showTitle, def.Name,
+                                string.Format(Localization.Extra("modCampaignBy", "a mod: {0}"), def.mod.Name));
+                b.AddToClassList("mod-option-card");
+                b.tooltip = def.Description;
+                var badge = new Label { pickingMode = PickingMode.Ignore };
+                badge.AddToClassList("mod-option-card__badge");
+                badge.AddToClassList("gof-semibold");
+                b.Add(badge);
+                void Show()
+                {
+                    bool on = Modding.ModGameOptions.Chosen(def);
+                    b.EnableInClassList("mod-option-card--on", on);
+                    badge.text = (on ? Localization.Extra("modOptionOn", "On") : Localization.Extra("modOptionOff", "Off")).ToUpperInvariant();
+                }
+                Show();
+                b.RegisterCallback<PointerDownEvent>(_ => Play(buttonPush), TrickleDown.TrickleDown);
+                b.clicked += () => { Play(buttonRelease); Modding.ModGameOptions.SetChosen(def, !Modding.ModGameOptions.Chosen(def)); Show(); };
+                b.RegisterCallback<FocusInEvent>(_ => modOptionCards.ScrollTo(b));
+                HookFocusSound(b);
+                modOptionCards.Add(b);
             }
         }
 
@@ -805,6 +905,7 @@ namespace GoF2Remake.UI
             pendingEconomy = economy;
             RefreshTutorialToggle();   // the option may have changed in Options meanwhile
             RefreshCapitalToggle();
+            RefreshModOptions();   // remake mods: their new-game options
             var desc = root.Q<Label>("gameOptionsStartDesc");
             if (desc != null) desc.text = $"{Session.DifficultyName(pendingDifficulty)}  ·  {Session.EconomyName(economy)}";
             OpenPanel("gameOptionsPanel");
@@ -914,6 +1015,7 @@ namespace GoF2Remake.UI
             Session.Difficulty = pendingDifficulty;
             Session.Economy = economy;   // before the Database: it loads that economy's tables
             if (KaamoFromStart) Session.KaamoState = 3;   // resetGame with the expansion bought: the club owned, its storage empty
+            Modding.ModGameOptions.ApplyChoices();   // remake mods: the options picked in the Game options panel
             var db = Database.Load();
             // Remake mods: a mod's campaign (Modding.ModCampaigns): its start, docked at its station; no GoF2 story.
             if (pendingModCampaign != null)
@@ -2242,6 +2344,8 @@ namespace GoF2Remake.UI
                 }
             }
 
+            if (NavigateGameOptions(e, focused)) return;
+
             var scope = dialog.ClassListContains("dialog-backdrop--shown") ? dialog : openPanel ?? mainButtons;
             var items = Focusables(scope);
             if (scope == mainButtons && updateButton != null && updateButton.focusable && updateRow.ClassListContains("update-row--shown"))
@@ -2253,6 +2357,54 @@ namespace GoF2Remake.UI
             items[next].Focus();
             e.StopPropagation();
             root.focusController?.IgnoreEvent(e);
+        }
+
+        VisualElement lastOptionCard, lastOptionToggle;
+
+        /// <summary>The Game options panel with the mods' option cards (RefreshModOptions): two columns. Left / right step
+        /// through the cards (the first card's left goes back to the toggles), right from a toggle or Start goes to the cards
+        /// (the one last on); up / down stay in the toggles, Start and Back (down from a card: Start). False: not this case.</summary>
+        bool NavigateGameOptions(NavigationMoveEvent e, VisualElement focused)
+        {
+            if (focused == null || modOptionCards == null || dialog.ClassListContains("dialog-backdrop--shown")) return false;
+            if (!panels.TryGetValue("gameOptionsPanel", out var panel) || openPanel != panel) return false;
+            if (modOptionCards.parent == null || modOptionCards.parent.resolvedStyle.display == DisplayStyle.None) return false;
+            var cards = Focusables(modOptionCards.contentContainer);
+            if (cards.Count == 0) return false;
+            bool onCard = modOptionCards.Contains(focused);
+            var d = e.direction;
+            VisualElement to = null;
+            if (onCard)
+            {
+                lastOptionCard = focused;
+                int i = cards.IndexOf(focused);
+                if (d == NavigationMoveEvent.Direction.Right) to = cards[Mathf.Min(i + 1, cards.Count - 1)];
+                else if (d == NavigationMoveEvent.Direction.Left)
+                    to = i > 0 ? cards[i - 1] : lastOptionToggle != null && panel.Contains(lastOptionToggle) ? lastOptionToggle : panel.Q("kaamoToggle");
+                else if (d == NavigationMoveEvent.Direction.Down) to = panel.Q("gameOptionsStart");
+                else to = focused;   // up: stays
+            }
+            else
+            {
+                var column = Focusables(panel).FindAll(v => !modOptionCards.Contains(v));
+                if (d == NavigationMoveEvent.Direction.Right)
+                {
+                    lastOptionToggle = focused;
+                    to = lastOptionCard != null && cards.Contains(lastOptionCard) ? lastOptionCard : cards[0];
+                }
+                else if (d == NavigationMoveEvent.Direction.Left) to = focused;
+                else
+                {
+                    int i = column.IndexOf(focused);
+                    if (i < 0) return false;
+                    to = column[Mathf.Clamp(i + (d == NavigationMoveEvent.Direction.Up ? -1 : 1), 0, column.Count - 1)];
+                }
+            }
+            if (to == null) return false;
+            if (to != focused) Select(to);
+            e.StopPropagation();
+            root.focusController?.IgnoreEvent(e);
+            return true;
         }
 
         static List<VisualElement> Focusables(VisualElement scope)

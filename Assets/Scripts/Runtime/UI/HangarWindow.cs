@@ -266,7 +266,7 @@ namespace GoF2Remake.UI
                     AddHeader(ItemInfo.ItemName(editing).ToUpperInvariant());
                     var parts = db.Item(editing).blueprint;
                     for (int k = 0; k < parts.Count; k++) AddRow(new Row { kind = RowKind.Ingredient, item = parts[k].item, type = k });
-                    AddRow(new Row { kind = RowKind.Autocomplete, item = editing });
+                    if (Blueprints.CanAutocomplete(editing)) AddRow(new Row { kind = RowKind.Autocomplete, item = editing });   // a mod's may not
                 }
                 else
                 {
@@ -699,9 +699,23 @@ namespace GoF2Remake.UI
             var it = db.Item(item);
             detailIcon.style.backgroundImage = new StyleBackground(ItemInfo.ItemIcon(item));
             detailName.text = ItemInfo.ItemName(item);
-            detailSub.text = $"{ItemInfo.Category(it)}  ·  {T(133)} {it.techLevel}";
-            foreach (var (label, value) in ItemInfo.ItemStats(it)) AddStat(label, value);
-            detailText.text = ItemInfo.ItemText(db, it, hangar.SystemIndex);
+            int bpShip = Modding.ModBlueprints.ShipOf(item);
+            if (bpShip >= 0 && db.Ship(bpShip) is ShipData ship)
+            {
+                // Remake mods: a ship blueprint shows the ship it builds.
+                detailSub.text = $"{Localization.Extra("bpShipBlueprint", "Ship blueprint")}  ·  {ItemInfo.ShipRaceText(bpShip)}";
+                foreach (var (label, value) in ItemInfo.ShipStats(ship, ship.price)) AddStat(label, value);
+                detailText.text = GameNames.ShipDescription(bpShip);
+                var bp = Modding.ModBlueprints.Of(item);
+                if (bp != null && bp.requiresShip >= 0)
+                    detailText.text += "\n\n" + string.Format(Localization.Extra("bpRebuilds", "Rebuilds your {0}: build it while flying one."), GameNames.Ship(bp.requiresShip));
+            }
+            else
+            {
+                detailSub.text = $"{ItemInfo.Category(it)}  ·  {T(133)} {it.techLevel}";
+                foreach (var (label, value) in ItemInfo.ItemStats(it)) AddStat(label, value);
+                detailText.text = ItemInfo.ItemText(db, it, hangar.SystemIndex);
+            }
             switch (selected.kind)
             {
                 case RowKind.Blueprint:
@@ -742,6 +756,9 @@ namespace GoF2Remake.UI
         {
             var db = level.Database;
             int item = selected.item;
+            // Remake mods: a skin's blueprint ("requiresShip") is only built while flying that ship.
+            string refusal = Modding.ModBlueprints.RequiresShipRefusal(editing);
+            if (refusal != null) { ReleaseArrow(); menu.ShowToast(refusal); return; }
             var st = Blueprints.State(db, editing);
             if (Blueprints.IsEmpty(st) && !startConfirmed && !HasPending)
             {
@@ -839,6 +856,17 @@ namespace GoF2Remake.UI
             bool here = Blueprints.Produce(db, product, StationIndex);
             hangar = new Hangar(db, level.Stock);   // the new product needs its price
             string name = ItemInfo.ItemName(product);
+            if (here && Modding.ModBlueprints.ShipOf(product) >= 0)
+            {
+                // Remake mods: a ship blueprint's ship, taken here like a bought ship.
+                string text = hangar.DeliverBuiltShips();
+                level.ReplacePlayerShip(Session.ShipIndex);
+                hangar = new Hangar(db, level.Stock);
+                menu.ShowDialog(text ?? Localization.Get(211).Replace("#N", name), null, true);
+                editing = -1;
+                SetTab(Tab.Ship);
+                return;
+            }
             if (here)
             {
                 menu.ShowDialog(Localization.Get(211).Replace("#N", name), null, true);
@@ -859,6 +887,9 @@ namespace GoF2Remake.UI
         void AskAutocomplete()
         {
             var db = level.Database;
+            if (!Blueprints.CanAutocomplete(editing)) return;
+            string refusal = Modding.ModBlueprints.RequiresShipRefusal(editing);
+            if (refusal != null) { menu.ShowToast(refusal); return; }
             int price = Blueprints.AutoCompletePrice(db, editing);
             if (price > Session.Credits) { menu.ShowToast(Localization.Get(203).Replace("#C", ItemInfo.Credits(price - Session.Credits))); return; }
             if (!Blueprints.CanStartIn(db, editing, StationIndex) && Blueprints.IsEmpty(Blueprints.State(db, editing)))

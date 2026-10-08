@@ -197,6 +197,7 @@ namespace GoF2Remake.Data
         /// station isn't among the last 3 visited, otherwise nibbled by computerTradeGoods after > 30 s away.</summary>
         public static StationStock EnterStation(Database db, int station)
         {
+            Modding.ModBlueprints.UnlockAvailable();   // remake mods: blueprints.json "unlocked": known once available
             var recent = Session.RecentStations;
             var stock = recent.Find(s => s.station == station);
             if (stock == null)
@@ -230,7 +231,7 @@ namespace GoF2Remake.Data
         public static List<ItemStack> GenerateItems(Database db, int station)
         {
             var list = GenerateItemsOriginal(db, station);
-            list.RemoveAll(s => !Modding.ModCampaigns.ItemAllowed(db, s.item));
+            list.RemoveAll(s => !Modding.ModCampaigns.ItemAllowed(db, s.item) || !Modding.ModUnlocks.ItemAvailable(s.item));
             return list;
         }
 
@@ -329,7 +330,7 @@ namespace GoF2Remake.Data
         public static List<int> GenerateShips(Database db, int station)
         {
             var ships = GenerateShipsOriginal(db, station);
-            ships.RemoveAll(s => !Modding.ModCampaigns.ShipAllowed(s));
+            ships.RemoveAll(s => !Modding.ModCampaigns.ShipAllowed(s) || !Modding.ModUnlocks.ShipAvailable(s));
             return ships;
         }
 
@@ -381,6 +382,7 @@ namespace GoF2Remake.Data
             }
             if (race == 0 && Random.Range(0, 8) == 0) ships.Add(51);
             if (system == 17) foreach (int s in new[] { 42, 43, 52 }) if (Random.Range(0, 3) == 0) ships.Add(s);
+            Modding.ModUnlocks.AddDealerShips(db, station, race, ships);   // remake mods: ships.json "dealer"
             return ships.Distinct().ToList();
         }
 

@@ -17,6 +17,8 @@ namespace GoF2Remake.UI
         /// <summary>The item's shop icon: a mod's own ("icon" in items.json), else its base item's (Modding.ModContent.ItemLook).</summary>
         public static Texture2D ItemIcon(int item)
         {
+            int bpShip = Modding.ModBlueprints.ShipOf(item);   // a mod's ship blueprint: its ship's icon
+            if (bpShip >= 0) return ShipIcon(bpShip);
             var own = Modding.ModContent.ItemIcon(item);   // a mod's own icon (items.json "icon")
             return own != null ? own : Icon($"item_{Modding.ModContent.ItemLook(item):000}");
         }
@@ -47,7 +49,9 @@ namespace GoF2Remake.UI
             int race = Shop.ShipMakerRace(ship);
             return race >= 0 && (race <= 3 || race == 7 || race == 8) ? Localization.Get(406 + race) : "";
         }
-        public static string Category(ItemData it) => Localization.Get(221 + it.categoryId);
+        public static string Category(ItemData it) => Modding.ModBlueprints.ShipOf(it.index) >= 0
+            ? Localization.Extra("bpShipBlueprint", "Ship blueprint")   // a mod's ship blueprint (its hidden item)
+            : Localization.Get(221 + it.categoryId);
 
         /// <summary>Attributes the details never list (index, type, price systems, occurrence, prices, Vossk flag, home station).</summary>
         static readonly HashSet<int> Hidden = new HashSet<int> { 0, 1, 4, 5, 6, 7, 8, 60, 61, 100, 102, 103 };

@@ -295,6 +295,43 @@ namespace GoF2Remake.Data
             return true;
         }
 
+        /// <summary>Remake mods: the ship blueprints' ships finished for this station (Blueprints.TakeBuiltShips), taken like
+        /// bought ships: the old hull goes to the Kaamo Club when the club is owned and has none of its type, else it is traded
+        /// in at its price into the dealer list; a skin's blueprint ("requiresShip", the hull flown) rebuilds the old hull
+        /// instead (its Kaamo upgrades stay). The message for the player, null when none was waiting.</summary>
+        public string DeliverBuiltShips()
+        {
+            var built = Blueprints.TakeBuiltShips(Station);
+            if (built.Count == 0) return null;
+            var text = new System.Text.StringBuilder();
+            foreach (int deed in built)
+            {
+                int ship = Modding.ModBlueprints.ShipOf(deed);
+                if (ship < 0 || db.Ship(ship) == null) continue;
+                var bp = Modding.ModBlueprints.Of(deed);
+                int old = Session.ShipIndex;
+                var oldMods = new List<int>(Session.ShipMods ?? new List<int>());
+                string oldName = GameNames.Ship(old);
+                bool rebuilt = bp != null && bp.requiresShip >= 0 && bp.requiresShip == old;
+                string how;
+                if (rebuilt) how = string.Format(Localization.Extra("bpShipRebuilt", "Your {0} was rebuilt into it."), oldName);
+                else if (KaamoClub.Owned && KaamoClub.Store(old, 0, oldMods))
+                    how = string.Format(Localization.Extra("bpShipStored", "Your {0} is parked in the Kaamo Club."), oldName);
+                else
+                {
+                    int price = ShipPrice(old);
+                    ChangeCredits(price);
+                    if (!Stock.ships.Contains(old)) Stock.ships.Add(old);
+                    Stock.PutMods(old, oldMods);
+                    how = string.Format(Localization.Extra("bpShipTradedIn", "Your {0} was traded in for {1}."), oldName, GoF2Remake.UI.ItemInfo.Credits(price));
+                }
+                SwitchTo(ship, rebuilt ? oldMods : null);
+                if (text.Length > 0) text.Append("\n\n");
+                text.Append(string.Format(Localization.Extra("bpShipReady", "Your new {0} is ready in the hangar."), GameNames.Ship(ship))).Append(' ').Append(how);
+            }
+            return text.Length > 0 ? text.ToString() : null;
+        }
+
         /// <summary>The new hull becomes the flown ship: every mounted item moves to the first free slot of its type (in
         /// slot order, secondaries with their ammo), the rest to the hold; the cargo stays with the player.</summary>
         void SwitchTo(int ship, List<int> mods)

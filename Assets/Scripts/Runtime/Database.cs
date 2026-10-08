@@ -125,6 +125,17 @@ namespace GoF2Remake.Data
         public CustomThrottleGlow throttleGlow;   // a glow on part of the hull that follows the throttle (no mask = none)
         public List<CustomThrottleGlow> extraGlows;   // more of them (each its own mask, colour, levels and trail)
         public CustomLoungeSeller lounge;  // a lounge visitor who sells it (AgentGenerator.AddCustomShipSellers); null = none
+        public CustomDealer dealer;        // remake mods: ship dealers may stock it (Modding.ModUnlocks.AddDealerShips); null = never
+    }
+
+    /// <summary>Remake mods: a mod ship in the ordinary ship dealers' lists (Shop.GenerateShips): each time a station's dealer
+    /// list is made, 'chance' % (0.1 steps; 100 = always) at stations of 'systemRace' systems (-1 = any) with a tech level
+    /// of at least 'minTechLevel'.</summary>
+    [System.Serializable] public class CustomDealer
+    {
+        public float chance = 2f;
+        public int systemRace = -1;
+        public int minTechLevel;
     }
 
     /// <summary>When a lounge may have a visitor selling a custom ship (AgentOffer.SellShip): each time a station's bar is

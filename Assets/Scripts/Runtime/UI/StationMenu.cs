@@ -1189,6 +1189,13 @@ namespace GoF2Remake.UI
             if (pendingChecked || level == null || level.Station == null) return false;
             pendingChecked = true;
             var moved = Blueprints.CollectPending(level.Database, level.Station.index);
+            // Remake mods: a ship blueprint's ship finished for this station is taken now, like a bought ship.
+            string ships = new Hangar(level.Database, level.Stock).DeliverBuiltShips();
+            if (ships != null)
+            {
+                level.ReplacePlayerShip(Session.ShipIndex);
+                if (moved.Count == 0) { ShowDialog(ships, null, true); return true; }
+            }
             if (moved.Count == 0) return false;
             string text = Localization.Get(213);
             foreach (var p in moved) text += $"\n{p.quantity}x {ItemInfo.ItemName(p.item)}";
