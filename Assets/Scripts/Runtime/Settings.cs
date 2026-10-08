@@ -195,6 +195,8 @@ namespace GoF2Remake.Data
         /// <summary>Remake (players' suggestion): the Kaamo Club mechanics sell their upgrade again, the price doubling per
         /// level (LoungeChat.ModPrice); off = the original's one of each. Levels already fitted stay either way.</summary>
         public static bool KaamoStacking { get => GetBool("kaamoStacking", true); set => SetBool("kaamoStacking", value); }
+        /// <summary>Remake (players' suggestion): a hull stored in the Kaamo Club keeps the items mounted on it (Hangar).</summary>
+        public static bool KaamoKeepsEquipment { get => GetBool("kaamoKeepsEquipment", true); set => SetBool("kaamoKeepsEquipment", value); }
         /// <summary>Remake (players' suggestion): the capital ships fight back (World.CapitalShips): escorts, stronger turrets,
         /// a killable carrier and Vossk battleship with loot, the carrier's Inflicts and its resupply dock. Off = the original.</summary>
         public static bool CapitalShips { get => GetBool("capitalShips", false); set => SetBool("capitalShips", value); }
@@ -261,7 +263,7 @@ namespace GoF2Remake.Data
         };
         public static readonly string[] GameplayKeys =
         {
-            "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "pirateEvents", "capitalShips", "kaamoStacking", "informerOriginalRule",
+            "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "pirateEvents", "capitalShips", "kaamoStacking", "kaamoKeepsEquipment", "informerOriginalRule",
             "originalTargetLock", "autoAdvanceDialogue", "animatedDialogue", "inputHints", "discordPresence",
         };
         public static readonly string[] LanguageKeys = { "voiceLanguage" };

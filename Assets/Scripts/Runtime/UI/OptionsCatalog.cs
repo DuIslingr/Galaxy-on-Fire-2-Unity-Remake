@@ -346,6 +346,10 @@ namespace GoF2Remake.UI
                 () => Settings.KaamoStacking, v => Settings.KaamoStacking = v);
             kaamoStacking.description = () => X("kaamoStackingHelp", "The Kaamo Club's mechanics fit their upgrade again and again, each level costing twice the last. Off: one of each, as in the original. Not in the original.");
             list.Add(kaamoStacking);
+            var kaamoGear = Toggle("kaamoKeepsEquipment", OptionPage.Gameplay, () => X("kaamoKeepsEquipment", "Stored ships keep their equipment"),
+                () => Settings.KaamoKeepsEquipment, v => Settings.KaamoKeepsEquipment = v);
+            kaamoGear.description = () => X("kaamoKeepsEquipmentHelp", "A ship you park in the Kaamo Club keeps its weapons, turrets and equipment, and they are back on it when you fly it again. Off: they move to the ship you take, as in the original. Ships traded in elsewhere always hand theirs over.");
+            list.Add(kaamoGear);
             // #28: the Informer mission's rule for other ships dying after the spy.
             list.Add(Choice("informerRule", OptionPage.Gameplay, () => X("informerRule", "Informer missions"), true,
                 () => new[] { X("informerRemake", "Remake"), X("informerOriginal", "Original") },

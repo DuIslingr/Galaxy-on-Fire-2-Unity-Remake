@@ -215,6 +215,29 @@ namespace GoF2Remake.UI
             }
         }
 
+        /// <summary>Remake (Settings.KaamoKeepsEquipment): a stored hull's mounted items after its mod lines, "Mounted:" and one
+        /// line each ("name (amount)" for a secondary's ammo); the block shows when there is any.</summary>
+        public static void AddEquipmentLines(UnityEngine.UIElements.VisualElement into, IEnumerable<ItemStack> equipment)
+        {
+            if (equipment == null) return;
+            bool any = false;
+            foreach (var e in equipment)
+            {
+                if (e == null) continue;
+                if (!any)
+                {
+                    var head = new UnityEngine.UIElements.Label(Localization.Extra("kaamoGearHeader", "Mounted on this ship:")) { pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+                    head.AddToClassList("kaamo-mod-line");
+                    into.Add(head);
+                    any = true;
+                }
+                var line = new UnityEngine.UIElements.Label("  " + ItemName(e.item) + (e.amount > 1 ? $" ({e.amount})" : "")) { pickingMode = UnityEngine.UIElements.PickingMode.Ignore };
+                line.AddToClassList("kaamo-mod-line");
+                into.Add(line);
+            }
+            if (any) into.style.display = UnityEngine.UIElements.DisplayStyle.Flex;
+        }
+
         /// <summary>The block FillModLines fills (styles .kaamo-mods in GoF2Common.uss).</summary>
         public static UnityEngine.UIElements.VisualElement NewModBlock()
         {

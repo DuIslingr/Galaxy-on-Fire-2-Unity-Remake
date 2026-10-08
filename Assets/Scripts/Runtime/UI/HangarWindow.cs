@@ -388,6 +388,8 @@ namespace GoF2Remake.UI
                     tex = ItemInfo.ShipIcon(row.ship);
                     name.text = ItemInfo.ShipName(row.ship);
                     subText.text = ItemInfo.ShipRaceText(row.ship) + (stored.mods.Count > 0 ? "  (+)" : "");
+                    int gear = stored.equipment?.Count ?? 0;   // remake: the items left on it (Settings.KaamoKeepsEquipment)
+                    if (gear > 0) subText.text += "  ·  " + string.Format(Localization.Extra("kaamoGearCount", "{0} mounted"), gear);
                     price.text = ItemInfo.Credits(hangar.StoredPrice(row.equipment));   // the sell value
                     break;
                 }
@@ -690,6 +692,7 @@ namespace GoF2Remake.UI
                         actionButton2.RemoveFromClassList("detail-action--hidden");
                     }
                     ItemInfo.FillModLines(detailMods, Session.KaamoShips[selected.equipment].mods);
+                    ItemInfo.AddEquipmentLines(detailMods, Session.KaamoShips[selected.equipment].equipment);
                 }
             }
             else

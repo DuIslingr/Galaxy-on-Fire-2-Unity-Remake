@@ -391,6 +391,9 @@ namespace GoF2Remake.Data
                                 return "a broken bar visitor";
                 }
             if (s.kaamoShips != null && s.kaamoShips.Exists(k => k == null || !Ship(k.ship))) return "an unknown ship in the Kaamo Club";
+            if (s.kaamoShips != null)
+                foreach (var k in s.kaamoShips)
+                    if (Stacks(k.equipment, "Kaamo Club ships' equipment") is string e5) return e5;
             if (s.version >= 6 && s.hasParkedShip)
             {
                 if (s.parkedShip == null || !Ship(s.parkedShip.ship)) return "an unknown parked ship";

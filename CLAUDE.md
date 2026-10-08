@@ -400,6 +400,15 @@ Research: `Reference/research/kaamo_club.md` (states, the siege, docking convers
   no prices, unsaleable goods refused (323), mounted items not listed; stored hulls with their sell value, row buttons
   332 "Use" (336 / 329 / 333: cargo and equipment move over, the old hull takes the row) and 330 "Sell" (334; X / pad X).
   One hull per type. The Midorian hangar parks the first 5 stored hulls (the original 3; its remodelled room has two more pads).
+- **Stored hulls keep their equipment** (remake, players' suggestion; Options > Gameplay "Stored ships keep their equipment",
+  `Settings.KaamoKeepsEquipment`, on by default; `StoredShip.equipment`, null / empty = a bare hull, older saves): a hull going
+  into the club (327 Keep, a lounge seller's Keep, a mod blueprint's delivery) keeps what is mounted on it
+  (`Hangar.EquipmentToStore`; the new hull starts bare) except the story's unsaleable items, which stay with the player; "Use"
+  mounts the stored hull's own items (`SwitchTo`'s 'mount': the story items first, the rest by slot, overflow to the hold) and
+  the old hull keeps its; off: the original (the items move over) and a stored hull's items go to the storage
+  (`KaamoClub.AddToStorage`), as do a sold stored hull's. Trade-ins elsewhere hand the items over as before. The Store tab shows
+  "N mounted" on the row and the items under the details (`ItemInfo.AddEquipmentLines`); checked by `SaveGame.TryParse`, fixed by
+  `ModSaves`, counted in a profile's worth.
 - **Buying elsewhere** while owning it: 304, then 327 with 330 Sell (trade-in) / 331 Keep (328 when the old type is
   stored, else the full price and the old hull goes to the club, the dealer row is gone).
 - **Lounge**: agents 21-26 once campaign > 16 (mechanics = ship mods, 25 special items, 26 a ship of [55..60] the player
