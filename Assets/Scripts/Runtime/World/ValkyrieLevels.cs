@@ -330,6 +330,16 @@ namespace GoF2Remake.World
             c.FailObjective = () => c.DeadRange(8, 12);  // 0x12 (8, 12)
         }
 
+        /// <summary>StationTurrets[i]'s pose relative to an unrotated battlestation (OrbitLayout.RotationToUnity(0), as in 80):
+        /// the Unity offset (metres) and rotation; the measured one where there is (TurretPoses80), else the table's (offset
+        /// (-x, y, -z), rotation (0, 0, -rz): the table turned by (0, pi, 0)).</summary>
+        public static (Vector3 offset, Quaternion rotation) StationTurretPose(int i)
+        {
+            if (TurretPoses80.TryGetValue(i, out var p)) return (p.pos, Quaternion.Euler(p.rot));
+            var t = StationTurrets[i];
+            return (ToUnity(new Vector3(-t.pos.x, t.pos.y, -t.pos.z)), OrbitLayout.RotationToUnity(new Vector3(0f, 0f, -t.rz)));
+        }
+
         /// <summary>DAT_002539d4: the battlestation's 8 turrets and 4 shield generators (position, rotation z, shield).</summary>
         public static readonly (Vector3 pos, float rz, bool shield)[] StationTurrets =
         {
@@ -423,9 +433,12 @@ namespace GoF2Remake.World
                                      sp => { sp.alwaysEnemy = true; sp.hitpoints = hp; });
                 // Modified: named after its StationTurrets entry, so each one can be told apart in the Hierarchy.
                 if (s != null) s.gameObject.name = $"{(t.shield ? "Shield" : "Turret")} {i} (StationTurrets[{i}])";
-                // Modified: the turrets' pose measured against the original (Inspector values, relative to the battlestation).
-                if (s != null && battlestation != null && TurretPoses80.TryGetValue(i, out var pose))
-                    s.transform.SetPositionAndRotation(battlestation.transform.position + pose.pos, Quaternion.Euler(pose.rot));
+                // Modified: the turrets' pose measured against the original where there is one (StationTurretPose).
+                if (s != null && battlestation != null)
+                {
+                    var pose = StationTurretPose(i);
+                    s.transform.SetPositionAndRotation(battlestation.transform.position + pose.offset, pose.rotation);
+                }
                 // Level::assignGuns, mission 0x50: turrets x1.7 (NpcTables.GunDamage).
                 if (t.shield) s.shootingEnabled = false;
             }
@@ -487,7 +500,6 @@ namespace GoF2Remake.World
             var o = go.AddComponent<Obstacle>();
             o.landmark = true;
             o.volumes = unfolded ? CollisionVolume.ForStation(101, true, true) : CollisionVolume.ForStation(101, false);
-            Debug.Log($"[Valkyrie] {go.name}: {o.volumes.Count} collision volumes ({(unfolded ? "1003, unfolded" : "101")})");
             if (unrotated)
                 for (int i = 0; i < o.volumes.Count; i++)
                 {
@@ -1280,9 +1292,10 @@ namespace GoF2Remake.World
         const float ExplosionAt80 = 6900f;
         const float HitWait80 = 800f;        // steps 7 and 8 (unchanged from the original)
         const float LaserDelay80 = ExplosionAt80 - LaserWindow80 - 2f * HitWait80;   // Modified: ms until the laser fires (3600 now; was step 1's 3000)
-        // Modified: 80's battlestation turrets (StationTurrets index -> position relative to the battlestation, Unity units,
-        // and rotation, degrees), from the Inspector with the battlestation at (0, 0, -8000). The shield generators keep the
-        // table's pose.
+        // Modified: the battlestation's turrets (StationTurrets index -> position relative to the battlestation, Unity units,
+        // and rotation, degrees), measured in 80 from the Inspector with the battlestation at (0, 0, -8000), unrotated
+        // (OrbitLayout.RotationToUnity(0)). The shield generators keep the table's pose. Read through StationTurretPose
+        // (80 and PlayerHull's Valkyrie hull).
         static readonly Dictionary<int, (Vector3 pos, Vector3 rot)> TurretPoses80 = new Dictionary<int, (Vector3 pos, Vector3 rot)>
         {
             { 0, (new Vector3(215f, 1165f, -370f), new Vector3(0f, 180f, 87f)) },
