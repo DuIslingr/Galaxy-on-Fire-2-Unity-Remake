@@ -206,6 +206,11 @@ namespace GoF2Remake.Data
             // A taken offer stays taken (Agent+0x74 persists in Status); known too, so the chat opens with 858.
             if (a.offer != AgentOffer.KaamoSpecial && a.offer != AgentOffer.ShipDealer && Session.StoryAgentsAccepted.Contains(s.index))
                 a.accepted = a.known = true;
+            // Remake (players' report): a blueprint already owned (the story's Liberator, a hidden wreck's...) isn't offered
+            // again: the seller has 858 "nothing left". The original sells it again for nothing (Generator::createAgents
+            // never checks BluePrint::isUnlocked).
+            if (a.offer == AgentOffer.SellBlueprint && Session.UnlockedBlueprints.Contains(s.sellBlueprint))
+                a.accepted = a.known = true;
             if (a.offer == AgentOffer.KaamoSpecial)
             {
                 int k = Session.CampaignMission < 0x8e ? R(7) + 2 : R(9);
