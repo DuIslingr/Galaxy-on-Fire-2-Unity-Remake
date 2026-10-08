@@ -326,6 +326,12 @@ against the FEV's LGCY data, see "Sound").
   NPC static objects with a `DockingType` (1 drop-off, 2 pickup, 3 hackable) are lockable "DOCK" targets (`Navigation`); the
   autopilot to the approach point, a 2000 ms ease in, a look-at camera, then transfers 1 unit / 1500 ms (ore 1000; "Loading"
   3204 / "Unloading" 3205, 3200) of passengers (cabins) or goods, or the hacking game; UNDOCK eases back out. No collision meanwhile.
+  One ship per port: the player takes the nearest free approach point (`SpacePoints.Take` / `Free`, SpacePoint::take /
+  giveFree; a taken one only when all are), shared with the story's shuttles (`SupernovaLevels.ShuttleDocking`; a shuttle
+  used to dock onto the player's port). Docked (not hacking) the turrets work as in the original (PlayerEgo::setTurretMode
+  refuses only mining, the Liberator and auto turrets): the auto turrets fire and the camera key cycles standard / each
+  manual turret (`FreeLookCamera.TurretAllowed`, not free look; `PlayerTurret.GunsBlocked` ignores the docked ship's
+  blocked guns; the chase camera is on for the view; the stick still reads under `externalControl`).
 - **Hacking** (`HackingGame` plain C#, `HackingView`): the 2x3 tile board, the left / right 2x2 blocks turn clockwise, scrambled
   2 x kind rounds and never solvable in `kind` moves (kind 1 at 91, else 4); won 1500 ms after solving. Keys A / D (Q / E, arrows),
   pad LB / RB, taps on the halves. Hidden-blueprint wrecks (`TrafficPlan` table: stations 123 / 129 / 132-134) unlock their

@@ -303,6 +303,7 @@ namespace GoF2Remake.World
                 FreeLook.Blocked = () => Cutscene || !LaunchCameraOver || (Mining != null && Mining.State != Mining.Phase.Idle)
                                          || (Docking != null && Docking.Busy) || (Navigation != null && Navigation.Jumping)
                                          || (SystemJump != null && SystemJump.Cinematic) || (Health != null && Health.Dead);
+            if (FreeLook != null) FreeLook.TurretAllowed = () => Docking != null && Docking.IsDocked && Docking.Hacking == null && !Cutscene;
             Navigation.Docking = Docking;
             Navigation.Ships = Traffic.Ships;
             Collision.docking = Docking;

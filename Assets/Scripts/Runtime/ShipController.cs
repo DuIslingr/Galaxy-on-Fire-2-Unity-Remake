@@ -168,6 +168,13 @@ namespace GoF2Remake.Flight
             float dtMs = Time.deltaTime * 1000f * TimeExtender.PlayerFactor;   // MGame+0x44: the player's dt
             if (externalControl)
             {
+                // The turret view while docked at an object (PlayerTurret aims by SteerInput): the stick still reads.
+                if (steeringLocked && useBuiltInInput && !inputLocked)
+                {
+                    var turretSteer = ReadInput();
+                    if (externalSteer.sqrMagnitude > turretSteer.sqrMagnitude) turretSteer = externalSteer;
+                    SteerInput = turretSteer;
+                }
                 Model.TickBoost(dtMs);   // PlayerEgo::update: the boost and its recharge run on (the mining approach boosts)
                 SpeedMetersPerSecond = ExternalSpeedMetersPerSecond;
                 Maneuver.Cancel();
