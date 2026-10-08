@@ -431,12 +431,16 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   `MiningBeamFx`: beams from the leftmost and rightmost primary mounts (the attr-103 beam laser's projectile:
   a steady looping core without its fade + two pulses replayed with it), its impact every 300 ms, particles.png star
   sparks, every ton a chunk of the asteroid's own mesh with a glow and a sparkling trail spiralling into the ship (0.7 s +
-  1 s per 900 m); the ton enters the hold on arrival (`Arrived`; chunks still flying when the level ends are delivered in
-  `OnDestroy`), with the hold's room counting the chunks in flight. The mod's icon is its own: items.json `icon` (any mod
-  item, or an override's for an original item; `ModContent.ItemIcon`, read by `ItemInfo.ItemIcon`, which every shop / HUD
+  1 s per 900 m); the ton enters the hold as it is cut (`Mining.Launch`; the chunk is the look only, its arrival a haptic:
+  delivering on arrival put chunks still flying at a scene change into the next scene's state, after a failed mission the
+  reloaded save's), a class-A rock keeping one ton of room free for its core (`BeamRoom`). Extreme: half the ore while
+  the rock stands, the withheld half when it is depleted (`MiningBeamExtraction` halveUnfinished, like
+  `PlayerEgo::stopMining` halving an unfinished run). The mod's icon is its own: items.json `icon` (any mod
+  item, or an override's for an original item, a new item without one its nearest base's; `ModContent.ItemIcon`, read by `ItemInfo.ItemIcon`, which every shop / HUD
   icon goes through; uncompressed, clamped), here Gunant's Drill's icon with the beam turned green. Sound: the beam laser's shot on ignition, the repair
-  beam's hum and the drill's `DrillSound` by layer; haptics as the drill on target. Not counted: Ore Athlete (38), the
-  multiplayer ore split (each player keeps what their own beam cuts), Extreme's halving (nothing is unfinished).
+  beam's hum and the drill's `DrillSound` by layer; haptics as the drill on target. Not counted: Ore Athlete (38: it
+  rewards the minigame's perfect runs, which the beam has none of), the multiplayer ore split (each player keeps what their
+  own beam cuts).
 - **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no campaign; releasing the stick stops the drill's player movement (the original keeps the last input). The mining plant at 103 is a docking target (see "Supernova add-on"). The drill sound (`DrillSound`, event 1's layers by drill_speed = (LAYER_SPEEDS[layer] − 5) / 33 · 3): Slow_1 always, Add_1 from 1 (pitch ×0.896 → ×1 at 2, then ×1.196), Add_2 from 2, a Switch click on entering 0 / 1 / 2, event volume 0.244; off target (`MiningGame::update`: stop(1) + play(3), back on play(1) + stop(3)) event 3 Mining_Drill_Broken is one loop (10 s wave) at 0.245 until the drill is back on target or mining ends; the landing (2) at 0.183. **Ultrascan** (84, attr 30, `Mining.ClassAMarkers`, `Radar::draw` 0x1577de): inside the field's 100 000-unit sphere, not docking / mining, every class-A asteroid on screen gets the "A" letter (0x44e frame 0) with its top-left on the asteroid.
 
 ## Station scene

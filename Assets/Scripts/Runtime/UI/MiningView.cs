@@ -214,9 +214,19 @@ namespace GoF2Remake.UI
                 SetImage(lockClass, classFrames[Mathf.Clamp(7 - target.quality, 0, 4)]);
                 // Remake: with a mining beam, how much of the rock it has cut.
                 float cut = mining.BeamProgress(target);
-                lockOre.text = cut >= 0f ? $"{ItemInfo.ItemName(target.oreItem)}  {Mathf.FloorToInt(cut * 100f)}%" : ItemInfo.ItemName(target.oreItem);
+                int pct = cut >= 0f ? Mathf.FloorToInt(cut * 100f) : -1;
+                if (target.oreItem != plateOre || pct != platePct)
+                {
+                    // Built only when it changes (the percentage string allocated every frame).
+                    plateOre = target.oreItem;
+                    platePct = pct;
+                    lockOre.text = pct >= 0 ? $"{ItemInfo.ItemName(plateOre)}  {pct}%" : ItemInfo.ItemName(plateOre);
+                }
             }
+            else plateOre = -2;
         }
+
+        int plateOre = -2, platePct = -2;
 
         // ---- minigame ------------------------------------------------------------------------------------------
 

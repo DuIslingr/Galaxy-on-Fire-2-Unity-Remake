@@ -97,8 +97,8 @@ namespace GoF2Remake.Flight
 
         void OnDestroy()
         {
-            // The level ends with ore in the air (docking, a jump): it still reaches the hold.
-            for (int i = flying.Count - 1; i >= 0; i--) Arrived?.Invoke(flying[i].item, flying[i].core);
+            // The ore is in the hold from the moment it is cut (Mining.Launch): the chunks still in the air just go. (Delivering
+            // them here put ore into whatever state the next scene brought: after a failed mission the reloaded save's.)
             flying.Clear();
             if (root != null) Destroy(root.gameObject);
         }

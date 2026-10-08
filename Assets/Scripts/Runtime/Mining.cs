@@ -149,7 +149,7 @@ namespace GoF2Remake.Flight
                 beamLayerMs = Mathf.Max(500f, drill.Attr(102, (int)MiningGame.LayerMs));
                 beamFx = gameObject.AddComponent<MiningBeamFx>();
                 beamFx.Setup(ship, db, drill.Attr(103, 228));
-                beamFx.Arrived += DeliverBeamOre;
+                beamFx.Arrived += OreLanded;
                 if (weapons != null) weapons.FireClaimed = BeamClaimsFire;
             }
         }
@@ -575,8 +575,22 @@ namespace GoF2Remake.Flight
             float along = AlongToRock(t, out _);
             if (along < 0f) return "";
             if (along / M > beamRangeUnits) return Localization.Extra("miningBeamRange", "Asteroid out of range.");
-            if (Shop.FreeCargo(db) - beamFx.InFlight < 1) return Localization.Get(322);   // Cargo hold is full.
+            if (BeamRoom(t) < 1) return Localization.Get(322);   // Cargo hold is full.
             return null;
+        }
+
+        /// <summary>Tons the beam may still cut into the hold from 't': a class-A rock keeps one free for its core (the minigame
+        /// pays the core first; the beam pays it last).</summary>
+        int BeamRoom(Target t) => Shop.FreeCargo(db) - (t.quality >= 7 ? 1 : 0);
+
+        readonly List<Target> deadExtractions = new List<Target>();
+
+        /// <summary>Partly cut rocks that went another way (shot, rammed, mined out by another player) leave the table.</summary>
+        void PruneExtractions()
+        {
+            foreach (var t in extractions.Keys) if (t == null || !t.Alive) deadExtractions.Add(t);
+            foreach (var t in deadExtractions) extractions.Remove(t);
+            deadExtractions.Clear();
         }
 
         void UpdateBeam(float dtMs)
@@ -627,7 +641,7 @@ namespace GoF2Remake.Flight
             }
             var contact = shipPos + fwd * along;
             var normal = (contact - centre).normalized;
-            int room = Shop.FreeCargo(db) - beamFx.InFlight;
+            int room = BeamRoom(target);
             if (room < 1)
             {
                 Say(Localization.Get(322));   // Cargo hold is full.
@@ -639,7 +653,7 @@ namespace GoF2Remake.Flight
             beamFx.Aim(contact + fwd * surface * 0.2f, contact, normal, true);
 
             if (!extractions.TryGetValue(target, out var ex))
-                extractions[target] = ex = new MiningBeamExtraction(target.quality, beamYield, beamLayerMs);
+                extractions[target] = ex = new MiningBeamExtraction(target.quality, beamYield, beamLayerMs, Session.IsExtreme);
             int layer = ex.Layer;
             int tons = Mathf.Min(ex.Update(dtMs), room);
             for (int i = 0; i < tons; i++) Launch(target, contact, normal, target.oreItem, false);
@@ -651,7 +665,7 @@ namespace GoF2Remake.Flight
             if (!ex.Depleted) return;
 
             // Every layer cut: a class-A asteroid's core comes last (if the hold has room), then the rock goes.
-            if (ex.GotCore && Shop.FreeCargo(db) - beamFx.InFlight >= 1)
+            if (ex.GotCore && Shop.FreeCargo(db) >= 1)   // the slot BeamRoom kept free
             {
                 Launch(target, contact, normal, target.CoreItem, true);
                 Session.CoreTypesMined.Add(target.CoreItem);
@@ -665,22 +679,19 @@ namespace GoF2Remake.Flight
             MiningOut = false;
         }
 
+        /// <summary>A ton (or the core) cut: into the hold at once (PlayerEgo::stopMining's bookkeeping), the chunk flying into
+        /// the ship is the look only (MiningBeamFx).</summary>
         void Launch(Target from, Vector3 contact, Vector3 normal, int item, bool core)
         {
+            Shop.AddToCargo(item, 1);
+            if (core) Session.CoresMined++;
+            else Session.OreMined++;
             beamCut[item] = (beamCut.TryGetValue(item, out int n) ? n : 0) + 1;
             beamFx.Launch(from, contact, normal, item, core);
         }
 
-        /// <summary>A ton of ore (or the core) reached the ship: into the hold (PlayerEgo::stopMining's bookkeeping).</summary>
-        void DeliverBeamOre(int item, bool core)
-        {
-            if (db == null) return;
-            if (Shop.FreeCargo(db) < 1) return;   // filled meanwhile (a crate): this ton is lost, like the minigame's cap
-            Shop.AddToCargo(item, 1);
-            if (core) Session.CoresMined++;
-            else Session.OreMined++;
-            Haptics.Play(Haptics.DrillTon);
-        }
+        /// <summary>A chunk reached the ship (its ore is in the hold already).</summary>
+        void OreLanded(int item, bool core) => Haptics.Play(Haptics.DrillTon);
 
         /// <summary>The beam off: the messages for what it cut ("12t Gold", "1t Gold Core"), the sounds off.</summary>
         void StopBeam()
@@ -696,6 +707,7 @@ namespace GoF2Remake.Flight
             drillSound.Stop();
             foreach (var kv in beamCut) Say($"{kv.Value}t {GameNames.Item(kv.Key)}");
             beamCut.Clear();
+            PruneExtractions();
         }
 
         void OnDestroy()

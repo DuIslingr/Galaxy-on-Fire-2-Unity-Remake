@@ -280,6 +280,20 @@ namespace GoF2Remake.Modding
                     if (string.IsNullOrEmpty(icon) || !mod.Source.Exists(icon)) continue;
                     if (d.key != null ? itemIndex.TryGetValue(d.key, out int i) : TryResolveItem(d.overrideRef, out i)) itemIcons[i] = d;
                 }
+            // A new item without an icon of its own takes the nearest base's that has one (a copy of a mod item, or of an
+            // original item an override gave an icon); without any, the original look's (ItemLook).
+            foreach (var kv in itemDefAt)
+            {
+                if (itemIcons.ContainsKey(kv.Key)) continue;
+                int at = kv.Key;
+                for (int depth = 0; depth < 16 && itemDefAt.TryGetValue(at, out var def) && TryResolveItem(def.baseRef, out int b) && b != at; depth++)
+                {
+                    at = b;
+                    if (itemIcons.TryGetValue(at, out var src)) { inheritedIcons[kv.Key] = src; break; }
+                }
+            }
+            foreach (var kv in inheritedIcons) itemIcons[kv.Key] = kv.Value;
+            inheritedIcons.Clear();
 
             // Ships: the same, after the original 64.
             shipIndex.Clear(); shipDefAt.Clear(); placeholderShips.Clear(); shipRenames.Clear();
@@ -431,7 +445,7 @@ namespace GoF2Remake.Modding
             return itemLook.TryGetValue(index, out int l) ? l : index;
         }
 
-        static readonly Dictionary<int, ItemDef> itemIcons = new Dictionary<int, ItemDef>();
+        static readonly Dictionary<int, ItemDef> itemIcons = new Dictionary<int, ItemDef>(), inheritedIcons = new Dictionary<int, ItemDef>();
 
         /// <summary>An item's shop icon from a mod (items.json "icon": a PNG like the originals' 180 x 88, frame included,
         /// kept uncompressed), null = none (the item's own, or its base's: ItemLook).</summary>

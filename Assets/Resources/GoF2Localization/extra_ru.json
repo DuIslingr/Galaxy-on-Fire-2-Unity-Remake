@@ -279,6 +279,7 @@
  "masterVolume": "Общая",
  "medalToastClick": "Нажмите, чтобы посмотреть медали",
  "medalToastTap": "Коснитесь, чтобы посмотреть медали",
+  "miningBeamRange": "Астероид вне досягаемости.",
  "missileBoostHint": "ФОРСАЖ, ЧТОБЫ УЙТИ",
  "missileIncoming": "РАКЕТА НА ПОДЛЁТЕ",
  "missileIncomingCount": "РАКЕТЫ НА ПОДЛЁТЕ ×{0}",

@@ -279,6 +279,7 @@
  "masterVolume": "Général",
  "medalToastClick": "Clique pour voir tes médailles",
  "medalToastTap": "Touche pour voir tes médailles",
+  "miningBeamRange": "Astéroïde hors de portée.",
  "missileBoostHint": "BOOST POUR ESQUIVER",
  "missileIncoming": "MISSILE EN APPROCHE",
  "missileIncomingCount": "MISSILES EN APPROCHE ×{0}",

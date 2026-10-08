@@ -279,6 +279,7 @@
  "masterVolume": "マスター",
  "medalToastClick": "クリックしてメダルを見る",
  "medalToastTap": "タップしてメダルを見る",
+  "miningBeamRange": "小惑星が射程外です。",
  "missileBoostHint": "ブーストで回避",
  "missileIncoming": "ミサイル接近",
  "missileIncomingCount": "ミサイル接近 ×{0}",
