@@ -133,9 +133,9 @@ namespace GoF2Remake.Data
                 SetChoices();
                 return;
             }
-            if (a.offer == AgentOffer.SellMod && Session.HasMod(a.sellMod))
+            if (a.offer == AgentOffer.SellMod && !ModForSale(a.sellMod))
             {
-                Text = T(858);   // the mod is already on this hull
+                Text = T(858);   // the mod is already on this hull (and stacking is off)
                 closing = true;
                 SetChoices();
                 return;
@@ -156,7 +156,7 @@ namespace GoF2Remake.Data
                     case AgentOffer.SmallTalk: return false;
                     case AgentOffer.Diplomat: return Standing.IsEnemy(a.race);
                     case AgentOffer.Mission: case AgentOffer.Purchase: return a.HasMission;
-                    case AgentOffer.SellMod: return !Session.HasMod(a.sellMod);   // installed on this hull: 858
+                    case AgentOffer.SellMod: return ModForSale(a.sellMod);   // installed on this hull: 858 (unless upgrades stack)
                     case AgentOffer.EventMission: return EventMissions.OfferOf(a) != null;
                     default: return true;
                 }
@@ -294,8 +294,13 @@ namespace GoF2Remake.Data
                 case AgentOffer.SellSystem:
                     return StoryLine(a) + " " + T(877).Replace("#S", SystemName(a.sellSystem)).Replace("#C", C(a.sellPrice));
                 case AgentOffer.SellMod:
-                    return StoryLine(a) + " " + T(879).Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex)).Replace("#N", a.name)
-                                                      .Replace("#C", C(ModPrice(a)));
+                {
+                    string offer = StoryLine(a) + " " + T(879).Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex)).Replace("#N", a.name)
+                                                               .Replace("#C", C(ModPrice(a)));
+                    int level = Session.ModLevel(a.sellMod);
+                    // Remake: a stacked upgrade says which level it would be.
+                    return level > 0 ? offer + " " + string.Format(Localization.Extra("kaamoModNextLevel", "(Upgrade level {0}.)"), level + 1) : offer;
+                }
                 case AgentOffer.SellShip:
                 {
                     // Remake: a seller's lines (768-772, 773 / 774) with the ship, and what it costs with the current ship
@@ -333,13 +338,19 @@ namespace GoF2Remake.Data
             return item >= 0 ? ItemInfo.ItemName(item) : "";
         }
 
-        /// <summary>Agent::getModPricePercentage 0x1a698c: the ship's price x 20 / 30 / 40 / 20 % (mods 0..3).</summary>
+        /// <summary>Agent::getModPricePercentage 0x1a698c: the ship's price x 20 / 30 / 40 / 20 % (mods 0..3); remake
+        /// (Settings.KaamoStacking): x2 for every level already fitted, capped at int.MaxValue.</summary>
         int ModPrice(Agent a)
         {
             int[] pct = { 20, 30, 40, 20 };
             int ship = db.Ship(Session.ShipIndex)?.price ?? 0;
-            return a.sellMod >= 0 && a.sellMod < pct.Length ? ship * pct[a.sellMod] / 100 : a.sellPrice;
+            if (a.sellMod < 0 || a.sellMod >= pct.Length) return a.sellPrice;
+            double price = (double)ship * pct[a.sellMod] / 100 * System.Math.Pow(2, Session.ModLevel(a.sellMod));
+            return price >= int.MaxValue ? int.MaxValue : (int)price;
         }
+
+        /// <summary>The mechanic still has something to fit: the mod isn't on this hull, or upgrades stack.</summary>
+        static bool ModForSale(int mod) => !Session.HasMod(mod) || Settings.KaamoStacking;
 
         /// <summary>786 + type (#P, #Q, #S, #N; Recovery / Salvage + 802) and the reward line with #C = reward + the current
         /// bonus (+ 767 with the bonus percentage). Challenge: 798 only.</summary>

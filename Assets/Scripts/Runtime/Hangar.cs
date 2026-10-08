@@ -99,7 +99,7 @@ namespace GoF2Remake.Data
         {
             var s = Ship?.slots;
             if (s == null) return 0;
-            return type switch { 0 => s.primary, 1 => s.secondary, 2 => s.turret, 3 => s.equipment + (Session.HasMod(2) ? 1 : 0), _ => 0 };   // mod 2: +1 equipment slot
+            return type switch { 0 => s.primary, 1 => s.secondary, 2 => s.turret, 3 => s.equipment + Session.ModLevel(2), _ => 0 };   // mod 2: +1 equipment slot per level
         }
 
         public int TypeOf(int item) => db.Item(item)?.TypeId ?? 4;

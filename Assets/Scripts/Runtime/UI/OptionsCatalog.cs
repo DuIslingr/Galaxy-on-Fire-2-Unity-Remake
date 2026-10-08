@@ -329,6 +329,10 @@ namespace GoF2Remake.UI
                 () => Settings.CapitalShips, v => Settings.CapitalShips = v);
             capitalShips.description = () => X("capitalShipsHelp", "Battleships and carriers get escorts and stronger turrets; the carrier and the Vossk battleship can be destroyed for loot, the carrier launches Inflicts when attacked and lets trusted pilots dock to resupply. Not in the original.");
             list.Add(capitalShips);
+            var kaamoStacking = Toggle("kaamoStacking", OptionPage.Gameplay, () => X("kaamoStacking", "Stackable Kaamo Club upgrades"),
+                () => Settings.KaamoStacking, v => Settings.KaamoStacking = v);
+            kaamoStacking.description = () => X("kaamoStackingHelp", "The Kaamo Club's mechanics fit their upgrade again and again, each level costing twice the last. Off: one of each, as in the original. Not in the original.");
+            list.Add(kaamoStacking);
             // #28: the Informer mission's rule for other ships dying after the spy.
             list.Add(Choice("informerRule", OptionPage.Gameplay, () => X("informerRule", "Informer missions"), true,
                 () => new[] { X("informerRemake", "Remake"), X("informerOriginal", "Original") },

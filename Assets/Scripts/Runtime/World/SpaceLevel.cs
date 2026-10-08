@@ -653,7 +653,7 @@ namespace GoF2Remake.World
             var ship = db.Ship(shipIndex);
             var equipment = new System.Collections.Generic.List<ItemData>();
             foreach (var e in Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
-            if (ship != null) ctrl.stats = Database.BuildFlightStats(ship, equipment, Session.HasMod(3) ? 1 : 0);
+            if (ship != null) ctrl.stats = Database.BuildFlightStats(ship, equipment, Session.ModLevel(3));
             ctrl.stats.cargoAffectsHandling = Session.IsExtreme;
             ctrl.stats.cargoCapacity = Mathf.Max(1, Shop.MaxLoad(db));
             ctrl.stats.cargoLoad = Shop.CargoLoad();
@@ -711,7 +711,7 @@ namespace GoF2Remake.World
             var ctrl = root.AddComponent<ShipController>();
             var equipment = new System.Collections.Generic.List<ItemData>();
             foreach (var e in Session.Equipment) { var it = db.Item(e.item); if (it != null) equipment.Add(it); }
-            if (ship != null) ctrl.stats = Database.BuildFlightStats(ship, equipment, Session.HasMod(3) ? 1 : 0);   // mod 3: handling +0.2
+            if (ship != null) ctrl.stats = Database.BuildFlightStats(ship, equipment, Session.ModLevel(3));   // mod 3: handling +0.2 per level
             // PlayerEgo ctor: +0x235 = Status::hardCoreMode(), the cargo load then weighs on the handling.
             ctrl.stats.cargoAffectsHandling = Session.IsExtreme;
             ctrl.stats.cargoCapacity = Mathf.Max(1, Shop.MaxLoad(db));
