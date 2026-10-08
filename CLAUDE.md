@@ -154,10 +154,10 @@ The game stores every object as several meshes (hull, `_lights_add`, `_emissive`
 - **Empty orbits** (`OrbitLayout.IsEmptyOrbit`, `Status::inEmptyOrbit` 0xb8ee8; no docking, no station target): 102-104, 109, 110, 132-134 always, 111 (Luur) above index 0x5d, 101 (Herjaza, the Valkyrie's orbit) from 0x54 (the battlestation is in the Void then), 78 at index 0 / 1 (the prologue, the rescue, a menu backdrop rolled there); the station's model stays in 27 / 110 / 111 (`Level::createSpace` 0xbc0f6, `OrbitLayout.stationObject`). Free play and sessions read index 20.
 - **Stable layout:** the original's RNG is `java.util.Random` (`JavaRandom`), seeded per station: jumpgates and sky rotation `2 * station` (separate sequences), sun/planets `300 * station`, asteroid count/centre `station`. `OrbitLayout` reproduces the research tables exactly. Everything the original randomises per visit uses `UnityEngine.Random`.
 - **Rotations:** game `setRotation(x, y, z)` = Rx*Ry*Rz; `OrbitLayout.RotationToUnity` mirrors it and undoes the import's 180 deg yaw, so game (0, pi, 0) (stations, gates) = identity and an undocking player faces Unity -Z.
-- **Sky:** stars `systemIndex % 3` + nebula `system textureIndex`, rotated per station (`_SkyRotation`); it is `RenderSettings.skybox`, so it also gives ambient light. Its reflection comes from `SkyReflection` (a realtime probe of the skybox alone, re-rendered by
-  `SkyReflection.Update` wherever the sky is set): the scenes have no baked lighting data, so a player's URP Lit materials
-  reflected Unity's built-in Default Skybox (DynamicGI.UpdateEnvironment doesn't refresh it, UUM-27634); the Editor hid it,
-  and the mods' metallic hulls (Falcon, Jedi Starfighter, Banshee) came out pale blue-white in builds.
+- **Sky:** stars `systemIndex % 3` + nebula `system textureIndex`, rotated per station (`_SkyRotation`); it is `RenderSettings.skybox`, so it also gives ambient light (`SkyReflection.Update` = DynamicGI.UpdateEnvironment wherever the sky is set). The
+  environment reflection (URP Lit hulls) is the default one a player falls back to: the realtime sky probe `SkyReflection`
+  used to make never rendered (both quality levels have Realtime Reflection Probes off) and was removed. Don't add a
+  realtime probe without turning realtime probes on (rendered, the space sky reflects black).
 - **Sun/planets:** quads 1000 m from the camera, drawn at the far plane (`GoF2/Backdrop`; with the sky layers drawn by
   `BackdropPass` right after the skybox, LightMode `GoF2Backdrop`, so they are in the opaque texture the cloak and the shield
   bubble refract: in URP's transparent pass the cloak showed black over a planet); the sun at the texture's own brightness (additive, like the original), only its near-white core lifted into HDR (×1.6, `_CoreGlow`) under the remake's bloom; sun swells + streak near the screen centre (the supernova system, system 27 before 0x9e: the sun keeps game +x as its up and its size, and a sn_sun_011 glow of 0.3 × the sun + the swell rolls with the camera and makes the streak; `StarSystem::render` with +0xc); planets mirrored so their lit rim faces the sun. Mission 0 (the prologue and the main menu's backdrop after `Status::resetGame`) halves the orbit planet unless a texture size rule replaces it; no camera zoom on the orbit planet in the planet ring orbits and the alien orbit; the alien orbit has its sun straight ahead and `planet_void_big` at yaw 5.2347 (60 deg to the right), unseeded size; K'ontrr (system 20) swaps 58's and 62's planet textures like the original (textures by the stations' file order, roles by the system's list).
@@ -1620,7 +1620,12 @@ guide is `Modding/README.md` (keep it in step), the examples `Modding/Examples/p
   every build: without it Linux / Android shipped without the emission variants, mod ships' glowing parts dark): the
   GLB's own glTF materials (`ModGltfMaterials`; metallic-roughness converted by `Hidden/GoF2/MetallicRoughnessToGloss`) or
   the entry's `materials` (`ModMaterials.FromSpec`: the PR's fields plus `doubleSided`). Textures load from the mod's PNGs,
-  compressed with mipmaps. Shop icon: the entry's PNG (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
+  compressed with mipmaps. Normal maps (ships / stations / rooms `normal` / `detailNormal`, glTF normal textures, `*_normal`
+  texture replacements) are loaded with `normal: true`: Android's normal map encoding is "DXT5nm-style" (Player settings),
+  so URP there reads X from alpha and Y from green (`UNITY_ASTC_NORMALMAP_ENCODING`); the game's Normal Map imports are
+  re-encoded by Unity, a mod's RGB PNG wasn't, and every mod hull came out nearly black on Android (and in the Editor with
+  the Android target). On Android `ModMaterials.NormalToAlpha` copies red into alpha before compressing (the glTF ones by
+  `Hidden/GoF2/NormalToAlpha`, `Resources/GoF2Mods`); desktop reads either layout and is unchanged. Shop icon: the entry's PNG (`ItemInfo.ShipIcon`), else the Phantom's; the dialogue tints mod
   ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
   `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
   NetState applies them) is built again on `ModShips.ModelsChanged`.
