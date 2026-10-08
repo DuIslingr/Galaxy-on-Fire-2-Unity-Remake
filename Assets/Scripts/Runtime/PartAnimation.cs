@@ -11,7 +11,10 @@
 // applyMaterialChannels (opt-in: the sky layers, explosions): the `extra` channel (0..100, opacity) goes to the part
 // renderer's _Fade, or for the GoF2 Shader Graphs (no _Fade) scales their _Color tint (rgb on additive, alpha otherwise),
 // and `v5_0` (a UV scroll, assumed 100 = one texture width) to its _UVOffset.x, through a MaterialPropertyBlock.
-// Without it an explosion's debris streaks never fade and hang in space fully stretched (long lines).
+// Without it an explosion's debris streaks never fade and hang in space fully stretched (long lines). An animation with
+// nothing but `extra` keys (blinking lights: the Kaamo Club's, the plasma array stages') applies them by itself and runs
+// for their length (it had no length and stayed off); on an opaque material `extra` scales the colour (_BaseColor on URP
+// Lit), a light switched off going dark.
 
 using System;
 using System.Collections.Generic;
@@ -73,9 +76,9 @@ namespace GoF2Remake.Visuals
         [Tooltip("Apply the `extra` (opacity) and `v5_0` (UV scroll) channels to the part renderers (_Fade / _UVOffset).")]
         public bool applyMaterialChannels;
 
-        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised; }
+        class Track { public Transform tr; public AnimationKey[][] pos = new AnimationKey[3][]; public AnimationKey[][] rot = new AnimationKey[3][]; public AnimationKey[][] scl = new AnimationKey[3][]; public float[] rotTimes; public Vector3 basePos; public Quaternion baseRot; public Vector3 baseScale; public AnimationKey[] extra, uv, uvY; public Renderer renderer; public MaterialPropertyBlock block; public int fadeMode; public string fadeProperty = "_Color"; public Color baseColor; public int uvMode; public Vector4 baseST; public bool initialised; }
         readonly List<Track> tracks = new List<Track>();
-        float timeMs, lengthMs;
+        float timeMs, lengthMs, extraMs;
 
         void Awake()
         {
@@ -98,7 +101,7 @@ namespace GoF2Remake.Visuals
                 {
                     if (c.keys == null || c.keys.Length == 0 || string.IsNullOrEmpty(c.target) || c.target.Length < 4) continue;
                     foreach (var key in c.keys) if (key.t > 0f) loadPoseMs = Mathf.Min(loadPoseMs, key.t);
-                    if (c.target == "extra") { tk.extra = c.keys; continue; }   // not in the length: the transform channels set it
+                    if (c.target == "extra") { tk.extra = c.keys; extraMs = Mathf.Max(extraMs, c.keys[c.keys.Length - 1].t); continue; }   // not in the length: the transform channels set it
                     // The UV scrolls set the length too: the burning stations' fire and smoke have no other keys.
                     if (c.target == "v5_0" || c.target == "v5_1")
                     {
@@ -120,6 +123,8 @@ namespace GoF2Remake.Visuals
                 if (times.Count > 0) { tk.rotTimes = new float[times.Count]; times.CopyTo(tk.rotTimes); }
                 tracks.Add(tk);
             }
+            // Remake: opacity keys alone (blinking lights) are the whole animation: their length, applied by themselves.
+            if (lengthMs <= 0f && extraMs > 0f) { lengthMs = extraMs; applyMaterialChannels = true; }
             enabled = tracks.Count > 0 && lengthMs > 0f;
             // The original's range start (see loopStartMs); kept when something set one before (a prefab's own value).
             if (loopStartMs <= 0f) loopStartMs = Mathf.Min(LoadPoseMs, lengthMs);
@@ -136,7 +141,9 @@ namespace GoF2Remake.Visuals
             // 0 = _Fade, 1 = _Color rgb (additive), 2 = _Color alpha, -1 = nothing to fade
             tk.fadeMode = mat == null ? -1 : mat.HasProperty("_Fade") ? 0 : !mat.HasProperty("_Color") ? -1
                         : mat.shader.name.Contains("Additive") ? 1 : 2;
-            if (tk.fadeMode > 0) tk.baseColor = mat.GetColor("_Color");
+            // Opaque (no blending): its alpha shows nothing, so the colour is scaled instead (URP Lit's own is _BaseColor).
+            if (tk.fadeMode == 2 && mat.renderQueue < 2450) { tk.fadeMode = 1; if (mat.HasProperty("_BaseColor")) tk.fadeProperty = "_BaseColor"; }
+            if (tk.fadeMode > 0) tk.baseColor = mat.GetColor(tk.fadeProperty);
             // 1 = _UVOffset (GoF2/SkyLayer), 2 = _MainTex_ST (the Shader Graphs' main texture tiling and offset), 0 = none
             tk.uvMode = mat == null ? 0 : mat.HasProperty("_UVOffset") ? 1 : mat.HasProperty("_MainTex_ST") ? 2 : 0;
             if (tk.uvMode == 2) { var sc = mat.mainTextureScale; var of = mat.mainTextureOffset; tk.baseST = new Vector4(sc.x, sc.y, of.x, of.y); }
@@ -322,8 +329,8 @@ namespace GoF2Remake.Visuals
                     {
                         float f = Mathf.Clamp01(Eval(tk.extra, timeMs, 100f) / 100f);
                         if (tk.fadeMode == 0) tk.block.SetFloat("_Fade", f);
-                        else if (tk.fadeMode == 1) tk.block.SetColor("_Color", new Color(tk.baseColor.r * f, tk.baseColor.g * f, tk.baseColor.b * f, tk.baseColor.a));
-                        else if (tk.fadeMode == 2) tk.block.SetColor("_Color", new Color(tk.baseColor.r, tk.baseColor.g, tk.baseColor.b, tk.baseColor.a * f));
+                        else if (tk.fadeMode == 1) tk.block.SetColor(tk.fadeProperty, new Color(tk.baseColor.r * f, tk.baseColor.g * f, tk.baseColor.b * f, tk.baseColor.a));
+                        else if (tk.fadeMode == 2) tk.block.SetColor(tk.fadeProperty, new Color(tk.baseColor.r, tk.baseColor.g, tk.baseColor.b, tk.baseColor.a * f));
                     }
                     if (uvAnimated)
                     {
