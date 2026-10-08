@@ -200,7 +200,7 @@ Which stats an item uses depends on its category, so copy the stats its base ite
 
 A drill (an item based on one of the drills, 86 to 90) with `"miningBeam": 1` is a mining beam: the player locks on to an
 asteroid with the scanner as usual, but there is no autopilot approach, landing or minigame. Holding fire on the locked
-asteroid (the guns stay silent while one is locked) cuts its ore while the ship keeps flying: beams from the ship's outer
+asteroid (the guns stay silent while the beam cuts, or could: the nose on the rock, in reach, room in the hold) cuts its ore while the ship keeps flying: beams from the ship's outer
 gun mounts, sparks on the rock, and every ton flying into the ship as a chunk of the asteroid before it lands in the hold.
 The lock plate shows how much of the rock is cut. Letting go keeps the progress; a depleted asteroid gives its core (class A)
 and explodes. Without the item mounted, mining works as in the original.

@@ -417,7 +417,9 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   `miningBeamLayerMs` 102 / `miningBeamLook` 103, `ItemStats`; the example is the `mining_beam` mod in the mods repo, the
   IMT Extract Beam 5.0): `Mining`'s beam mode keeps the ship in free flight (State stays Idle: no prompt, `Interact` and the
   action arrow do nothing). The lock is the usual one; holding fire on the locked asteroid claims the fire button
-  (`WeaponSystem.FireClaimed`: the primaries stay silent) and cuts it within attr 101 units of its surface (default 24000,
+  (`WeaponSystem.FireClaimed`, `Mining.BeamClaimsFire`: the primaries stay silent; only while the beam cuts or could start:
+  the nose on the rock, in reach, room in the hold, else the guns keep the press; a press still held when the beam stops
+  is swallowed until released, so it doesn't turn into gunfire at the next rock) and cuts it within attr 101 units of its surface (default 24000,
   the beam lasers' object reach), the lock following it in a ±w/5 box while the beam holds. `MiningBeamExtraction` (plain
   C#) is the minigame's ore logic without the minigame: the layers one by one at `MiningGame.OreRate` × attr 33, attr 102 ms
   each with the rate scaled to it (a whole asteroid = a perfect minigame run × the yield); the progress stays per asteroid

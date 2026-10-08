@@ -16,7 +16,7 @@
 // Not yet: stats / medals (Geologist, Miner, Ore Athlete), the Ultrascan class-A markers, the mining plant.
 // Remake, beam mode: a mounted drill item (sort 19) with attribute 100 = 1 is a mining beam (a mod's equipment; Modding/
 // README.md). The lock is the same; there is no approach, landing or minigame and the ship keeps flying: holding fire on
-// the locked asteroid (the guns stay silent meanwhile, WeaponSystem.FireClaimed) fires the beam straight along the ship's
+// the locked asteroid (the guns stay silent meanwhile, WeaponSystem.FireClaimed / BeamClaimsFire) fires the beam straight along the ship's
 // heading, fixed to it: it cuts where that line meets the rock (aim the nose at it), with the minigame's rules
 // (MiningBeamExtraction: layer by layer, attr 33 yield, attr 102 ms per layer) within attr 101 units of its surface
 // (default 24000, the beam lasers' reach on objects, WeaponSystem.BeamTarget); the progress stays with the asteroid when
@@ -150,7 +150,7 @@ namespace GoF2Remake.Flight
                 beamFx = gameObject.AddComponent<MiningBeamFx>();
                 beamFx.Setup(ship, db, drill.Attr(103, 228));
                 beamFx.Arrived += DeliverBeamOre;
-                if (weapons != null) weapons.FireClaimed = () => BeamMode && State == Phase.Idle && Locked != null;
+                if (weapons != null) weapons.FireClaimed = BeamClaimsFire;
             }
         }
 
@@ -553,10 +553,36 @@ namespace GoF2Remake.Flight
         /// <summary>0..1 of the asteroid the beam has cut, -1 = none (the lock plate).</summary>
         public float BeamProgress(Target t) => t != null && extractions.TryGetValue(t, out var e) ? e.Progress01 : -1f;
 
+        /// <summary>The fire button is the beam's (WeaponSystem.FireClaimed): while it cuts, or when it could start on the
+        /// locked asteroid (the nose on it, in reach, room in the hold). Otherwise the press stays the guns': a far or missed
+        /// asteroid or a full hold no longer silences them (a locked asteroid behind an enemy did, mid-fight).</summary>
+        bool BeamClaimsFire() =>
+            BeamMode && State == Phase.Idle && (beamOn || (Locked != null && Locked.Alive && !beamRefused && StartRefusal(Locked) == null));
+
+        /// <summary>Metres along the ship's heading to the rock's visible surface (-1 = the heading misses it). The rock's
+        /// surface is about 0.85 of the mesh's bounding radius (the hit radius is 0.7 of it).</summary>
+        float AlongToRock(Target t, out float surface)
+        {
+            surface = t.radius / 0.7f * 0.85f;
+            var oc = ship.transform.position - t.transform.position;
+            float b = Vector3.Dot(oc, ship.transform.forward), disc = b * b - (oc.sqrMagnitude - surface * surface);
+            return disc >= 0f ? Mathf.Max(0f, -b - Mathf.Sqrt(disc)) : -1f;
+        }
+
+        /// <summary>Why the beam can't start on 't' (null = it can; "" = the heading misses the rock: no message).</summary>
+        string StartRefusal(Target t)
+        {
+            float along = AlongToRock(t, out _);
+            if (along < 0f) return "";
+            if (along / M > beamRangeUnits) return Localization.Extra("miningBeamRange", "Asteroid out of range.");
+            if (Shop.FreeCargo(db) - beamFx.InFlight < 1) return Localization.Get(322);   // Cargo hold is full.
+            return null;
+        }
+
         void UpdateBeam(float dtMs)
         {
             bool fire = weapons != null && weapons.FireHeld && !weapons.TurretView && !Navigation.InputHalted;
-            if (!fire) beamRefused = false;
+            if (!fire) { beamRefused = false; beamRangeSaid = false; }
             var target = fire && !beamRefused ? Locked : null;
             if (beamTarget != null && target != beamTarget && !beamTarget.Alive)
             {
@@ -568,8 +594,14 @@ namespace GoF2Remake.Flight
             if (target == null || !target.Alive) { StopBeam(); return; }
             if (!beamOn)
             {
+                // Only where it can cut (BeamClaimsFire): otherwise the guns have the press; the reason once per press.
+                string refusal = StartRefusal(target);
+                if (refusal != null)
+                {
+                    if (refusal.Length > 0 && !beamRangeSaid) { beamRangeSaid = true; Say(refusal); }
+                    return;
+                }
                 beamOn = true;
-                beamRangeSaid = false;
                 beamCut.Clear();
             }
             beamTarget = target;
@@ -581,10 +613,7 @@ namespace GoF2Remake.Flight
             var shipPos = ship.transform.position;
             var fwd = ship.transform.forward;
             var centre = target.transform.position;
-            float surface = target.radius / 0.7f * 0.85f;
-            var oc = shipPos - centre;
-            float b = Vector3.Dot(oc, fwd), disc = b * b - (oc.sqrMagnitude - surface * surface);
-            float along = disc >= 0f ? Mathf.Max(0f, -b - Mathf.Sqrt(disc)) : -1f;   // metres to the rock along the nose, -1 = off it
+            float along = AlongToRock(target, out float surface);   // metres to the rock along the nose, -1 = off it
             bool inRange = along >= 0f && along / M <= beamRangeUnits;
             if (!inRange)
             {
@@ -659,6 +688,9 @@ namespace GoF2Remake.Flight
             Beaming = null;
             if (!beamOn) return;
             beamOn = false;
+            // Remake: a fire button still held when the beam stops (mined out, lock lost, hold full) doesn't turn into
+            // gunfire at the next rock: ignored until it is let go (WeaponSystem.SwallowPrimaryPress, as the approach's).
+            if (weapons != null && weapons.FireHeld) weapons.SwallowPrimaryPress();
             beamTarget = null;
             beamFx?.Off();
             drillSound.Stop();
