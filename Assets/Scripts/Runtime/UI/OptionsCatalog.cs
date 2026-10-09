@@ -234,6 +234,12 @@ namespace GoF2Remake.UI
             list.Add(Toggle("showFps", OptionPage.Graphics, () => X("showFps", "Show FPS"), () => Settings.ShowFps, v => Settings.ShowFps = v));
 
             // ---- controls
+            // Remake: free flight after EVERSPACE 2 (Settings.FlightStyle, FlightModel.StepFree); it switches the key layout too.
+            // A toggle: off = the original's flight and key layout, untouched.
+            var freeFlight = Toggle("flightStyle", OptionPage.Controls, () => X("flightStyleFree", "Free flight (EVERSPACE 2 style)"),
+                () => Settings.FlightStyle == FlightStyles.Free, v => Settings.FlightStyle = v ? FlightStyles.Free : FlightStyles.Original);
+            freeFlight.description = () => X("flightStyleHelp", "Original: a throttle, the ship always flies forward. Free flight, after EVERSPACE 2: hold W / S to thrust, A / D to strafe, Space / Ctrl for up and down, Q / E to roll and Shift to boost; the mouse aims, Z toggles the inertial dampeners (off: the ship keeps drifting), Alt held looks around. It has its own key layout (Key bindings). Keyboard, mouse and controller; touch keeps the original.");
+            list.Add(freeFlight);
             // MenuTouchWindow state 8: 490 Touch / 491 Accelerometer pictures (options[0x11]), 492 Steering Calibration
             // (493, then OK stores the device's position), the sensitivity slider per mode (+0x14 / +0x18).
             if (Flight.TiltSteering.Available)
@@ -316,12 +322,18 @@ namespace GoF2Remake.UI
             {
                 id = "resetBindings", page = OptionPage.Bindings, kind = OptionKind.Button,
                 label = () => X("resetBindings", "Reset key bindings"),
-                description = () => X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc (or the controller's B, or a tap) cancels; nothing pressed for 10 seconds cancels too. To clear one: its ×, a right click, Delete (or the controller's X) on the selected row, or Backspace while it waits for a key. The menu keys stay fixed."),
+                // Which layout the list shows: each flight style has its own (GameControls.ApplyStyle).
+                description = () => string.Format(X("bindingsLayout", "Key layout: {0}. The Free flight toggle under {1} switches it."),
+                                                  Settings.FlightStyle == FlightStyles.Free ? X("flightStyleFree", "Free flight (EVERSPACE 2 style)")
+                                                                                            : X("flightStyleOriginal", "Original"),
+                                                  PageTitle(OptionPage.Controls))
+                                    + " " + X("bindingsHelp", "Keys, second keys and controller buttons: pick one to change it. Esc (or the controller's B, or a tap) cancels; nothing pressed for 10 seconds cancels too. To clear one: its ×, a right click, Delete (or the controller's X) on the selected row, or Backspace while it waits for a key. The menu keys stay fixed."),
                 action = Flight.GameControls.ResetToDefaults,
                 extra = BindingRow.Header,
             });
             foreach (var row in Flight.GameControls.Rows)
-                list.Add(new OptionDef { id = "bind_" + row.id, page = OptionPage.Bindings, kind = OptionKind.Binding, label = row.label, control = row });
+                list.Add(new OptionDef { id = "bind_" + row.id, page = OptionPage.Bindings, kind = OptionKind.Binding, label = row.label, control = row,
+                                         visible = row.visible });   // rows only one flight style reads
 
             // ---- gameplay
             list.Add(Toggle("launchCamera", OptionPage.Gameplay, () => X("launchCamera", "Launch and arrival camera"),

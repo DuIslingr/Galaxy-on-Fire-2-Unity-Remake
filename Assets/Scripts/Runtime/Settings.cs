@@ -15,6 +15,12 @@ namespace GoF2Remake.Data
     /// <summary>Window mode option (desktop only).</summary>
     public enum DisplayMode { Borderless, Fullscreen, Windowed }
 
+    /// <summary>Settings.FlightStyle's values.</summary>
+    public static class FlightStyles
+    {
+        public const int Original = 0, Free = 1;
+    }
+
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class Settings
     {
@@ -138,6 +144,10 @@ namespace GoF2Remake.Data
         /// original's: PlayerEgo::update steers by the raw offset).</summary>
         public static float MouseDeadzone { get => Get("mouseDeadzone", DefaultMouseDeadzone); set => Set("mouseDeadzone", Mathf.Clamp(value, 0f, 0.3f)); }
         public const float DefaultMouseDeadzone = 0.08f;
+        /// <summary>Remake: how the player's ship flies (FlightStyles): the original's (a throttle, the ship always flying
+        /// forward) or free flight after EVERSPACE 2 (thrust, strafe and up / down held, inertial dampeners, the mouse aiming
+        /// through a tethered reticle; Flight.FlightModel's free mode). It also switches the key layout (GameControls).</summary>
+        public static int FlightStyle { get => Mathf.Clamp(Mathf.RoundToInt(Get("flightStyle", FlightStyles.Original)), 0, 1); set => Set("flightStyle", Mathf.Clamp(value, 0, 1)); }
         /// <summary>Remake: Discord Rich Presence (DiscordPresence, desktop).</summary>
         public static bool DiscordPresence { get => GetBool("discordPresence", true); set => SetBool("discordPresence", value); }
         /// <summary>options[0x11] = 0: the accelerometer steers (MGame::handleAccelerometer).</summary>
@@ -259,7 +269,7 @@ namespace GoF2Remake.Data
         {
             "tiltSteering", "tiltSensitivity", "sensitivity", "keyAutofire", "levelPitch", "invertPitch", "invertYaw", "invertDrillY",
             "invertDrillX", "gyroSteering", "gyroSensitivity", "mouseSteering", "mouseDeadzone", "vrGrabControls", "haptics", "stickDeadzone",
-            "touchLeftHeight", "touchRightHeight",
+            "touchLeftHeight", "touchRightHeight", "flightStyle",
         };
         public static readonly string[] GameplayKeys =
         {

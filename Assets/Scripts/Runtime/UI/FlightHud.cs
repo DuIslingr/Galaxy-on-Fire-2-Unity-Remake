@@ -121,7 +121,13 @@ namespace GoF2Remake.UI
             InputMode.Changed += ApplyInputMode;
             GameControls.Changed += ApplyInputMode;   // a rebound key: the hints show it
             Gun.LockShaken += OnLockShaken;
+            ShipController.DampenersChanged += OnDampeners;
         }
+
+        /// <summary>Free flight's inertial dampeners toggled (ShipController.Dampeners).</summary>
+        void OnDampeners(bool on) =>
+            miningView?.ShowMessage(on ? Localization.Extra("dampenersOn", "Inertial dampeners on")
+                                       : Localization.Extra("dampenersOff", "Inertial dampeners off"));
 
         void OnDestroy()
         {
@@ -147,6 +153,7 @@ namespace GoF2Remake.UI
             InputMode.Changed -= ApplyInputMode;
             GameControls.Changed -= ApplyInputMode;
             Gun.LockShaken -= OnLockShaken;
+            ShipController.DampenersChanged -= OnDampeners;
         }
 
         /// <summary>Remake: a boost shook off missiles homing on the player (any shooter, Gun): "Missiles evaded!" in green, at
@@ -573,6 +580,28 @@ namespace GoF2Remake.UI
                 Hint(drilling ? T("hudMiningStop", "STOP MINING") : T("hudMiningAbort", "ABORT"), GameControls.FirePrimary, GameControls.Action);
                 return;
             }
+            if (Settings.FlightStyle == FlightStyles.Free)
+            {
+                // Free flight (EVERSPACE 2's layout, ShipController.FreeFlightActive): the held movement axes, the held boost.
+                if (!pad) Hint(T("hudAim", "AIM"), InputGlyph.Key(T("hudMouse", "MOUSE")));
+                Hint(pad ? T("hudAim", "AIM") : T("hudSteer", "STEER"), GameControls.Steer);
+                Hint(T("hudThrust", "THRUST"), GameControls.Thrust);
+                Hint(T("hudStrafe", "STRAFE"), GameControls.StrafeAxis);
+                Hint(T("hudHover", "UP / DOWN"), GameControls.Hover);
+                Hint(T("hudRoll", "ROLL"), GameControls.Roll);
+                Hint(T("hudBoost", "BOOST") + " (" + T("hudHold", "HOLD") + ")", GameControls.Boost);
+                Hint(T("hudDampeners", "DAMPENERS"), GameControls.Dampeners);
+                Hint(fire, GameControls.FirePrimary);
+                Hint(T("hudMissile", "MISSILE"), GameControls.FireSecondary);
+                if (weapons != null && weapons.CanCycleSecondary) Hint(T("hudSwitchSecondary", "SWITCH"), GameControls.SwitchSecondary);
+                Hint(T("hudFreeLook", "FREE LOOK"), GameControls.FreeLookHold);
+                if (FirstAuto() != null) Hint(Localization.Get(37).ToUpperInvariant(), GameControls.AutoTurret);
+                if (HasManualTurret()) Hint(T("hudTurretView", "TURRET VIEW"), GameControls.Camera);
+                Hint(Localization.Get(571).ToUpperInvariant(), GameControls.AutopilotMenu);
+                if (nav != null && nav.MenuEntries(true).Count > 0) Hint(T("hudActions", "ACTIONS"), GameControls.ActionsMenu);
+                Hint(T("hudMenu", "MENU"), menuKey);
+                return;
+            }
             // The PC version's defaults (Galaxy on Fire 2 Full HD), or the player's own bindings.
             Hint(T("hudSteer", "STEER"), GameControls.Steer);
             Hint(throttle, GameControls.Throttle);
@@ -654,6 +683,7 @@ namespace GoF2Remake.UI
                 safeArea.Add(mouseReticle);
             }
             if (mouseReticle == null) return;
+            UpdateTetherRing(on && ship.Model.FreeFlight);
             // Only once the mouse steers away from the centre (beyond ~4 % of the half screen height and the dead zone).
             bool show = on && !ship.MouseInDeadzone && ship.MouseOffset.magnitude > Screen.height * 0.02f;
             mouseReticle.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
@@ -663,6 +693,35 @@ namespace GoF2Remake.UI
             var parent = mouseReticle.parent.worldBound;
             mouseReticle.style.left = p.x - parent.x;
             mouseReticle.style.top = p.y - parent.y;
+        }
+
+        VisualElement tetherRing;
+
+        /// <summary>Free flight's mouse: a faint circle round the centre, the tethered reticle's reach
+        /// (ShipController.TetherRadius).</summary>
+        void UpdateTetherRing(bool show)
+        {
+            if (tetherRing != null && tetherRing.parent == null) tetherRing = null;   // a UI reload rebuilt the tree
+            if (tetherRing == null && safeArea != null)
+            {
+                tetherRing = new VisualElement { pickingMode = PickingMode.Ignore };
+                tetherRing.AddToClassList("mouse-tether");
+                safeArea.Insert(0, tetherRing);
+            }
+            if (tetherRing == null) return;
+            tetherRing.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            if (!show || root.panel == null) return;
+            var c = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
+            var p0 = RuntimePanelUtils.ScreenToPanel(root.panel, c);
+            var p1 = RuntimePanelUtils.ScreenToPanel(root.panel, c + new Vector2(Screen.height * ShipController.TetherRadius, 0f));
+            float r = Mathf.Abs(p1.x - p0.x);
+            var parent = tetherRing.parent.worldBound;
+            tetherRing.style.left = p0.x - parent.x - r;
+            tetherRing.style.top = p0.y - parent.y - r;
+            tetherRing.style.width = 2f * r;
+            tetherRing.style.height = 2f * r;
+            tetherRing.style.borderTopLeftRadius = tetherRing.style.borderTopRightRadius =
+                tetherRing.style.borderBottomLeftRadius = tetherRing.style.borderBottomRightRadius = r;
         }
 
         void Update()

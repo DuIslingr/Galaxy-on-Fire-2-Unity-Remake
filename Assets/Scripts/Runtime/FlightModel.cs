@@ -5,6 +5,14 @@
 //
 // Units: the original works in milliseconds and "GoF units". This class keeps those units
 // internally so every constant matches the original; the MonoBehaviour converts to Unity.
+//
+// Remake: a second flight style, free flight (Settings.FlightStyle, StepFree), after EVERSPACE 2's controls as they are
+// publicly described (not from its code): thrust, strafe and up / down held instead of a throttle, the turn rates eased
+// toward the stick or the mouse's tethered reticle, a manual roll and no auto-level, a held boost on an energy pool, and
+// inertial dampeners (on: the thrusters cancel any motion not asked for, the ship stops when nothing is held; off: the
+// ship keeps its momentum and the thrust only adds to it, the speed easing back to a soft cap). The ship's own numbers
+// carry over: the top speed is the original's 2 units/ms, the top turn rate the original's for its handling, the boost
+// speed, duration and recharge its booster's.
 
 using System;
 using UnityEngine;
@@ -137,6 +145,138 @@ namespace GoF2Remake.Flight
         public float VisualYawBank { get; private set; }
         public float VisualPitchBank { get; private set; }
 
+        // ---- remake: free flight (Settings.FlightStyle; see the header) ----------------------------------------------
+        /// <summary>The player's free-flight input for one frame (ShipController).</summary>
+        public struct FreeInput
+        {
+            /// <summary>-1 back .. 1 forward; -1 left .. 1 right; -1 down .. 1 up; -1 roll left .. 1 roll right.</summary>
+            public float thrust, strafe, hover, roll;
+            /// <summary>Pitch / yaw in Step's convention: x = yaw (-1 right .. +1 left), y = pitch (+1 down .. -1 up).</summary>
+            public Vector2 aim;
+            public bool dampeners;
+        }
+
+        /// <summary>Free flight is the style in use (ShipController, every frame): the boost runs on its energy pool.</summary>
+        public bool FreeFlight;
+        /// <summary>Free flight: the boost key is held (ShipController).</summary>
+        public bool BoostHeld;
+        /// <summary>Free flight: the ship's velocity, world space, units per ms. Kept in step with the original's forward
+        /// flight while another mode moves the ship (the autopilot, the launch camera), so switching is seamless.</summary>
+        public Vector3 FreeVelocity;
+
+        const float FreeReverseShare = 0.5f;     // backward thrust's top speed, of the forward one
+        const float FreeSideShare = 0.6f;        // strafe and up / down
+        const float FreeAccelMs = 650f;          // standstill to top speed at handling 24 (Betty): sqrt-scaled by the handling
+        const float FreeDampenShare = 1.3f;      // the dampeners brake a little harder than the engines accelerate
+        const float FreeCapEaseShare = 0.35f;    // dampeners off: above the soft cap the speed eases back at this share of the acceleration
+        const float FreeTurnLagMs = 110f;        // the turn rates' time constant toward the aim
+        const float FreeRollRate = 120f * Mathf.Deg2Rad / 1000f;   // rad per ms at full roll input
+        const float FreeBoostTurnShare = 0.7f;   // boosting turns slower
+        const float FreeBoostAccelShare = 2f;    // and surges
+        const float BoostRestartEnergy = 0.2f;   // an emptied pool boosts again from a fifth full
+        float boostEnergy = 1f, freeBoostVisual, freeYaw, freePitch, freeRoll;   // the free rates in rad/ms
+
+        /// <summary>Free flight: one frame. The rotation to apply (degrees, local, as Step), the world move in units
+        /// (FrameResult.move) and the collision push.</summary>
+        public FrameResult StepFree(FreeInput input, float dtMs, Quaternion rotation, Vector3 shipUp, Vector3 shipRight)
+        {
+            float he = EffectiveHandling;
+            UpdateBoost(dtMs);
+
+            // ---- turning: the rates ease toward the aim (the stick's or the reticle's deflection x the ship's top rate)
+            float maxRate = (int)(TargetRateScale * he) / TargetRateDivisor * RateToRadiansPerMs * TurnScale
+                          * Mathf.Lerp(0.6f, 1.4f, Mathf.Clamp01(Sensitivity / 2.2f)) * (IsBoosting ? FreeBoostTurnShare : 1f);
+            float k = 1f - Mathf.Exp(-dtMs / (FreeTurnLagMs / Mathf.Max(0.05f, Inertia)));
+            freeYaw = Mathf.Lerp(freeYaw, Mathf.Clamp(input.aim.x, -1f, 1f) * maxRate, k);
+            freePitch = Mathf.Lerp(freePitch, Mathf.Clamp(input.aim.y, -1f, 1f) * maxRate, k);
+            float roll = Mathf.Clamp(input.roll, -1f, 1f);
+            if (Mathf.Abs(roll) > 0.01f) StopLeveling();
+            freeRoll = Mathf.Lerp(freeRoll, roll * FreeRollRate * RollScale, k);
+            float rollRad = -freeRoll * dtMs;
+            rollLevelled = false;
+            if (IsLeveling) { rollRad += AutoLevelRoll(dtMs, shipUp, shipRight) * RollScale; if (rollLevelled) IsLeveling = false; }
+            // The original's rate units for whatever reads them (a full-stick rate = 750 H / 63).
+            YawRate = freeYaw / RateToRadiansPerMs;
+            PitchRate = freePitch / RateToRadiansPerMs;
+
+            // ---- moving
+            float top = BaseSpeed;
+            float accel = top / (FreeAccelMs * Mathf.Sqrt(24f / Mathf.Max(5f, he)) + AccelMs) * (IsBoosting ? FreeBoostAccelShare : 1f);
+            float thrust = Mathf.Clamp(input.thrust, -1f, 1f), strafe = Mathf.Clamp(input.strafe, -1f, 1f), hover = Mathf.Clamp(input.hover, -1f, 1f);
+            if (IsBoosting) thrust = 1f;   // the boost drives forward whatever is held
+            var fwd = rotation * Vector3.forward;
+            if (input.dampeners)
+            {
+                // The thrusters fly the velocity asked for and cancel the rest.
+                var local = new Vector3(strafe * top * FreeSideShare, hover * top * FreeSideShare,
+                                        thrust >= 0f ? thrust * (IsBoosting ? boostSpeedValue : top) : thrust * top * FreeReverseShare);
+                FreeVelocity = Vector3.MoveTowards(FreeVelocity, rotation * local, accel * FreeDampenShare * dtMs);
+            }
+            else
+            {
+                // Pseudo-Newtonian: the thrust adds to the momentum; above the soft cap (the top speed, the boost's while
+                // boosting) the speed eases back.
+                var push = Vector3.ClampMagnitude(new Vector3(strafe * FreeSideShare, hover * FreeSideShare, thrust >= 0f ? thrust : thrust * FreeReverseShare), 1f);
+                FreeVelocity += rotation * push * (accel * dtMs);
+                float cap = IsBoosting ? boostSpeedValue : top, speed = FreeVelocity.magnitude;
+                if (speed > cap) FreeVelocity *= Mathf.MoveTowards(speed, cap, accel * FreeCapEaseShare * dtMs) / speed;
+            }
+
+            // What the rest of the game reads: the forward speed as the throttle (the gauge, the engine sound, the exhaust).
+            float forwardSpeed = Vector3.Dot(FreeVelocity, fwd);
+            MoveSpeed = Mathf.Max(0f, forwardSpeed);
+            Throttle = Mathf.Clamp01(forwardSpeed / top);
+            Braking = false;
+
+            // Cosmetic: the model banks into turns and strafes, tilts with the nose and up / down.
+            VisualYawBank = Mathf.Clamp(input.aim.x * 0.8f - strafe * 0.6f, -1f, 1f) * he;
+            VisualPitchBank = Mathf.Clamp(input.aim.y * 0.8f - hover * 0.4f, -1f, 1f) * he;
+
+            float pushUnits = 0f;
+            if (Mathf.Abs(collisionPush) > CollisionPushCutoff) { pushUnits = collisionPush * dtMs; collisionPush *= CollisionPushDecay; }
+            else collisionPush = 0f;
+
+            return new FrameResult
+            {
+                pitchDeg = freePitch * dtMs * Mathf.Rad2Deg,
+                yawDeg = freeYaw * dtMs * Mathf.Rad2Deg,
+                rollDeg = rollRad * Mathf.Rad2Deg,
+                move = FreeVelocity * dtMs,
+                forwardUnits = forwardSpeed * dtMs,
+                sidePushUnits = pushUnits,
+            };
+        }
+
+        /// <summary>Free flight: another mode moved the ship this frame (forward at 'unitsPerMs'): the free state follows, so
+        /// free flight picks up from there.</summary>
+        public void SyncFree(Vector3 forward, float unitsPerMs)
+        {
+            FreeVelocity = forward * unitsPerMs;
+            freeYaw = freePitch = freeRoll = 0f;
+        }
+
+        /// <summary>The held boost on its energy pool: drains in the booster's duration, refills in its recharge time; an
+        /// emptied pool boosts again from BoostRestartEnergy.</summary>
+        void UpdateFreeBoost(float dtMs)
+        {
+            if (!hasBooster) { IsBoosting = false; CurrentSpeed = BaseSpeed; return; }
+            if (Data.Cheats.NoBoostCooldown) boostEnergy = 1f;
+            bool can = IsBoosting ? boostEnergy > 0f : boostEnergy >= BoostRestartEnergy;
+            if (BoostHeld && can)
+            {
+                IsBoosting = true;
+                boostEnergy = Mathf.Max(0f, boostEnergy - (boostDurationMs > 0 ? dtMs / boostDurationMs : 1f));
+                if (boostEnergy <= 0f) IsBoosting = false;
+            }
+            else
+            {
+                IsBoosting = false;
+                boostEnergy = Mathf.Min(1f, boostEnergy + (boostRechargeMs > 0 ? dtMs / boostRechargeMs : 1f));
+            }
+            CurrentSpeed = IsBoosting ? boostSpeedValue : BaseSpeed;
+            freeBoostVisual = Mathf.MoveTowards(freeBoostVisual, IsBoosting ? 1f : 0f, dtMs / 200f);
+        }
+
         public void Configure(FlightStats s)
         {
             stats = s;
@@ -159,6 +299,7 @@ namespace GoF2Remake.Flight
             Throttle = 1f;
             boostTimerMs = 0;
             IsBoosting = false;
+            boostEnergy = 1f;
         }
 
         /// <summary>Handling after the hardcore-mode cargo penalty: H*(0.6 + 0.4*(1 - load/max)).</summary>
@@ -208,15 +349,16 @@ namespace GoF2Remake.Flight
         public void SetThrottle(float value) => Throttle = Mathf.Clamp01(value);
 
         public bool HasBooster => hasBooster;
-        public bool BoostReady => !IsBoosting && hasBooster && boostTimerMs >= 0;
+        public bool BoostReady => FreeFlight ? !IsBoosting && hasBooster && boostEnergy >= BoostRestartEnergy
+                                             : !IsBoosting && hasBooster && boostTimerMs >= 0;
 
-        /// <summary>0 at recharge start, 1 when ready.</summary>
-        public float BoostRechargePercent =>
+        /// <summary>0 at recharge start, 1 when ready (free flight: the energy pool).</summary>
+        public float BoostRechargePercent => FreeFlight ? boostEnergy :
             boostTimerMs >= 0 || boostRechargeMs <= 0 ? 1f : 1f + (float)boostTimerMs / boostRechargeMs;
 
         public void Boost()
         {
-            if (!BoostReady) return;
+            if (FreeFlight || !BoostReady) return;   // free flight: the boost is held (BoostHeld)
             Throttle = 1f;   // MGame::OnTouchEnd HUD element 2: full throttle first, then the boost
             boostTimerMs = 0;
             CurrentSpeed = boostSpeedValue;
@@ -231,6 +373,7 @@ namespace GoF2Remake.Flight
         {
             get
             {
+                if (FreeFlight) return freeBoostVisual;
                 if (!IsBoosting || boostDurationMs <= 0) return 0f;
                 float p = boostTimerMs / (boostDurationMs / 6f);
                 if (p < 1f) return p;
@@ -433,6 +576,7 @@ namespace GoF2Remake.Flight
 
         void UpdateBoost(float dtMs)
         {
+            if (FreeFlight) { UpdateFreeBoost(dtMs); return; }
             // Timer counts up every frame; negative values mean "recharging" (PlayerEgo::update).
             int dt = Mathf.RoundToInt(dtMs);
             if (boostTimerMs < 0 && boostTimerMs + dt * 3 > 0) boostTimerMs = 0;
@@ -451,6 +595,8 @@ namespace GoF2Remake.Flight
             public float pitchDeg, yawDeg, rollDeg;
             public float forwardUnits;
             public float sidePushUnits;
+            /// <summary>Free flight: this frame's move, world space, units.</summary>
+            public Vector3 move;
         }
     }
 }
