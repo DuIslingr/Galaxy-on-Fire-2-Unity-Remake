@@ -780,10 +780,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   multiplayer panel's name field), panels open on their first non-text item, and on UWP the text typed while the system keyboard
   was open is kept when it closes with B (`KeepKeyboardText`; closing counts as Cancel and put the old text back).
 - **Version** (`BuildVersion`): the menu's credit line and the About page show "Galaxy on Fire 2 Unity Remake created with
-  <heart sprite> by JoppieToppie · <version>-b<branch>@<commit>" (`BuildVersion.Full`; the commit, "+dirty" with uncommitted
-  changes under Assets/Scripts / Resources / UI, from git at build time into `Resources/GoF2Build/BuildCommit.txt` by
-  `BuildVersionStamp`; also `/version` in the chat, the multiplayer window's foot and the dedicated server's first log
-  line); the version is the date and time of the git commit the build comes from (`yyyy.MM.dd.HHmm`, UTC; fork change, upstream
+  <heart sprite> by JoppieToppie · <version>" (`BuildVersion.Text`; also `/version` in the chat, the multiplayer window's
+  foot and the dedicated server's first log line; no git branch / commit any more: joining compares the fingerprint); the version is the date and time of the git commit the build comes from (`yyyy.MM.dd.HHmm`, UTC; fork change, upstream
   uses the build's own time, still the fallback without git), so Windows, Linux and Android builds of one commit match; stamped into
   `PlayerSettings.bundleVersion` for each build by `BuildVersionStamp` (Editor) and put back afterwards, so
   `Application.version` and Android's versionName carry it; "editor" in the Editor.
