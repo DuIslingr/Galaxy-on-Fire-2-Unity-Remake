@@ -15,6 +15,7 @@
     "com.unity.services.multiplayer": "2.3.3",
     "com.unity.test-framework": "1.9.0",
     "com.unity.timeline": "6.7.0",
+    "com.unity.toolchain.linux-x86_64-linux": "1.1.0",
     "com.unity.toolchain.win-x86_64-linux": "1.1.0",
     "com.unity.ugui": "7.0.0",
     "com.unity.xr.openxr": "1.18.0",
