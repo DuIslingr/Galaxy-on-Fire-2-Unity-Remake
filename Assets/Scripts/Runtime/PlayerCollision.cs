@@ -14,6 +14,8 @@
 // mining (PlayerEgo+0x356 with a mining phase 1-3) and once dead.
 // The 1000 ms jitter of the ship model after a hit (PlayerEgo+0x328 / +0x32c, +-0.006 units) is too small to see and
 // isn't reproduced.
+// Remake: a phase cloak (PlayerCloak.Phasing, a mod item's attribute 104) lets the ship pass through the landmarks, the
+// freighters, other players' ships and the asteroids while it is cloaked; the wormhole still pulls.
 // Remake haptics: running into a landmark is a knock, then a scraping rumble while the ship slides along it; an asteroid a
 // knock; the wormhole's pull a rumble that grows toward it.
 
@@ -47,6 +49,8 @@ namespace GoF2Remake.Flight
         const float ScrapeRumble = 0.35f;
         /// <summary>Docking at a story object: no collision while easing in, docked or leaving (set by the level).</summary>
         [System.NonSerialized] public ObjectDocking docking;
+        /// <summary>The player's cloak (set by the level), for the phase cloak.</summary>
+        [NonSerialized] public PlayerCloak cloak;
 
         public void Setup(PlayerHealth playerHealth, ChaseCamera chaseCamera, Mining miningSystem)
         {
@@ -63,6 +67,7 @@ namespace GoF2Remake.Flight
             if (mining != null && mining.State != Mining.Phase.Idle) { scrapedLastFrame = false; return; }
             if (docking != null && docking.Busy && docking.State != ObjectDocking.Phase.Approach) { scrapedLastFrame = false; return; }   // easing onto a docking point
             CheckWormhole();
+            if (cloak != null && cloak.Phasing) { scrapedLastFrame = false; return; }   // phased out: nothing solid
             CheckObstacles(true);
             CheckObstacles(false);
             CheckAsteroids();
