@@ -712,7 +712,7 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   goes to `StrafeSlide`, so the chase camera stays square behind a sliding ship. `ShipController.FreeFlightActive`: the
   option with keyboard / mouse or a controller (touch, tilt and VR keep the original); the autopilot, the launch / arrival
   camera, the turret view, the dodge and computer control (mining, object docking) run the original path and hand back
-  the velocity (`SyncFree`). The mouse: EVERSPACE 2's virtual joystick (`ReadVirtualStick`: the mouse moves a reticle
+  the velocity (`SyncFree`). Mods can tune each style or set the style (see "Mods", Flight styles). The mouse: EVERSPACE 2's virtual joystick (`ReadVirtualStick`: the mouse moves a reticle
   inside a circle of 0.5 x the screen height, `StickRadius`, EVERSPACE 2's measured ~0.52: the rate grows linearly with the
   reticle's offset; it stays where the mouse leaves it; beyond the mouse steering dead zone (a hard one, not rescaled, like
   the game's ~8 % of the screen height) the deflection is the whole offset over the radius (measured to 478 px: 0.229 deg/s
@@ -1869,6 +1869,24 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   game's at `BeginGame` (`ApplyChoices`, `Session.ModGameOptions`, save v16 `modGameOptions`); a multiplayer session plays
   with each option's default. Verified in Play mode with 8 options from two mods (with and without images, a missing image
   warned), the arrow-key navigation and the scrolling, and 3 mod campaigns (6 cards).
+- **Flight styles** (`ModFlight`; the guide's "Flight styles"): mods choose per content whether they touch the original
+  flight, free flight or both. Items: attributes 105-116 (`ItemStats`): `flightScope` (105: 0 both, 1 original, 2 free) keeps
+  the item's booster / Steering Nozzle attributes 25-28 to one style; % bonuses `topSpeed` / `turnRate` / `strafeSpeed` (both),
+  `original*` (109-111), `free*` + `freeAcceleration` (112-115) and `freeBoostFactor` (116, x100, instead of the booster's).
+  Ships (new or override): `flightStyle` and `flight` { topSpeed, turnRate, strafeSpeed, acceleration, boostFactor, original {},
+  free {} } (`ShipData.flightStyle` / `flightBoth` / `flightOriginal` / `flightFree`, non-serialized, set by
+  `ModFlight.ApplyShip`). `Database.BuildFlightStats` fills `FlightStats.original` / `free` (`FlightTuning`: the style's
+  booster, agility and summed `FlightBonus`; the ship's first, so an item's freeBoostFactor wins); `FlightModel.Configure`
+  makes a `StyleState` per style and `FreeFlight` picks one (`Handling`, the booster, `TopSpeed`, the turn / strafe / ease
+  factors; totals never below -90 %); the original scales its speed and boost by the top speed bonus, its target rate, ramp and
+  decay by the turn bonus, its strafe by the strafe bonus (it has no acceleration). The style: `FlightStyles.Current` = the
+  first of `EventFlight` (`/flightstyle [players] <free | original | player>`, NetAdmin.Order.Flight 30, the graphs' Set Flight
+  Model node, undone at the event's end, re-applied when a quest resumes), the ship's, the mod campaign's, an on new-game
+  option's (`"flightStyle"` in campaign.json / gameoptions.json), else `Settings.FlightStyle`; `ShipController.FreeFlightActive`,
+  the HUD hints and the key layout (`GameControls.ApplyStyle`, polled by the flight and the bindings page) follow it, and the
+  Options page names who sets it (`OptionsCatalog.FlightStyleForcedNote`). Expression `freeflight`. Verified on `FlightModel`
+  in the Editor (the bonuses per style, a free-only booster, freeBoostFactor, a ship's JSON, the validation, a ship-forced
+  style); not yet played with a real mod.
 - **Conditions** (`Events.EventRunner.Condition(expression, out error)`: the event graphs' expression language outside an
   event, a throwaway run like the quests' "Starts when"; new words `option(mod:id)`, `won(main | valkyrie | supernova)`
   (or the multiplayer finished world), `systemsvisited` (distinct systems of `Session.VisitedStations`)): items.json /

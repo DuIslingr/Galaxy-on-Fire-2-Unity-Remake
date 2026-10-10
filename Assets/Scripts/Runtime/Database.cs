@@ -22,6 +22,11 @@ namespace GoF2Remake.Data
         public ShipSlots slots;
         public float handling;            // UI value, e.g. 120
         public float handlingMultiplier;  // handling / 100
+
+        /// <summary>Remake mods (Modding.ModFlight, ships.json "flightStyle" / "flight"): the flight style this ship always
+        /// flies with (-1 = the player's), and its bonuses for both styles / the original / free flight (null = none).</summary>
+        [System.NonSerialized] public int flightStyle = -1;
+        [System.NonSerialized] public FlightBonus flightBoth, flightOriginal, flightFree;
     }
 
     [System.Serializable] public class StatEntry { public string key; public int value; }
@@ -397,20 +402,37 @@ namespace GoF2Remake.Data
         public static FlightStats BuildFlightStats(ShipData ship, IEnumerable<ItemData> equipment, int handlingUpgrades = 0)
         {
             var fs = new FlightStats { handling = ship.handling, handlingUpgrades = handlingUpgrades };
+            // Remake, for mods (Modding.ModFlight): each flight style's share; an item's flightScope (attr 105) keeps its
+            // booster / nozzle attributes to one style, its bonuses (106-116) go to both, the original or free flight.
+            var styles = new[] { new FlightTuning(), new FlightTuning() };   // [0] original, [1] free flight
+            // The ship's first, so an item's freeBoostFactor (the booster's) wins over the ship's.
+            styles[0].bonus.Add(ship.flightBoth).Add(ship.flightOriginal);
+            styles[1].bonus.Add(ship.flightBoth).Add(ship.flightFree);
             foreach (var item in equipment ?? Enumerable.Empty<ItemData>())
             {
-                switch (item.categoryId)
+                int scope = item.Attr(Modding.ModFlight.ScopeAttr);
+                for (int k = 0; k < 2; k++)
                 {
-                    case 14: // Booster
-                        fs.boostSpeed = item.Stat("boostSpeed");
-                        fs.boostDurationMs = item.Stat("boostDurationMs");
-                        fs.boostRechargeMs = item.Stat("boostRechargeMs");
-                        break;
-                    case 16: // Steering nozzle
-                        fs.agility = item.Stat("agility");
-                        break;
+                    if ((k == 0 && scope == Modding.ModFlight.ScopeFree) || (k == 1 && scope == Modding.ModFlight.ScopeOriginal)) continue;
+                    switch (item.categoryId)
+                    {
+                        case 14: // Booster
+                            styles[k].boostSpeed = item.Stat("boostSpeed");
+                            styles[k].boostDurationMs = item.Stat("boostDurationMs");
+                            styles[k].boostRechargeMs = item.Stat("boostRechargeMs");
+                            break;
+                        case 16: // Steering nozzle
+                            styles[k].agility = item.Stat("agility");
+                            break;
+                    }
                 }
+                Modding.ModFlight.AddItemBonuses(item, styles[0].bonus, styles[1].bonus);
             }
+            fs.original = styles[0];
+            fs.free = styles[1];
+            // The single-style fields (the original's share) for whatever reads them directly.
+            fs.boostSpeed = styles[0].boostSpeed; fs.boostDurationMs = styles[0].boostDurationMs;
+            fs.boostRechargeMs = styles[0].boostRechargeMs; fs.agility = styles[0].agility;
             return fs;
         }
     }

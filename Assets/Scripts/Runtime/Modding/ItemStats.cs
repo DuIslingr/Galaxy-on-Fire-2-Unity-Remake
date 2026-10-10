@@ -27,6 +27,14 @@ namespace GoF2Remake.Modding
             ["miningBeam"] = 100, ["miningBeamRange"] = 101, ["miningBeamLayerMs"] = 102, ["miningBeamLook"] = 103,
             // A cloak (sort 21) with phaseCloak 1 also phases the ship through objects while cloaked (PlayerCloak.Phasing).
             ["phaseCloak"] = 104,
+            // The flight (Modding.ModFlight, Database.BuildFlightStats): flightScope keeps a booster's / Steering Nozzle's
+            // attributes (25-28) to one flight style (0 both, 1 the original only, 2 free flight only); the bonuses are
+            // percentages (20 = +20 %) for both styles, the original only or free flight only; freeBoostFactor = free
+            // flight's boost top speed in hundredths of the top speed (350 = x3.5) instead of the booster's.
+            ["flightScope"] = 105, ["topSpeed"] = 106, ["turnRate"] = 107, ["strafeSpeed"] = 108,
+            ["originalTopSpeed"] = 109, ["originalTurnRate"] = 110, ["originalStrafeSpeed"] = 111,
+            ["freeTopSpeed"] = 112, ["freeTurnRate"] = 113, ["freeStrafeSpeed"] = 114, ["freeAcceleration"] = 115,
+            ["freeBoostFactor"] = 116,
             // items.json's statList names
             ["steerable"] = 15, ["handling"] = 17,
             ["loadingTimeMs"] = 11, ["range"] = 12, ["projectileSpeed"] = 13, ["magnitude"] = 14, ["shieldRegenTime"] = 19,

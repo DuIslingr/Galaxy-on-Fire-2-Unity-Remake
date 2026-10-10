@@ -20,6 +20,9 @@ What mods can do so far:
 - **Add new-game options**: a card the player switches on when starting a new game (like "All Canon Ships"), and content
   that only appears with it, or only later in the game (after leaving Mido, after the Supernova...).
 - **Change existing ships**: armour, cargo, price, slots, handling, and their model.
+- **Tune the flight, for either flight style**: items and ships that fly faster, turn quicker or boost harder in the
+  original flight, in free flight (the EVERSPACE 2-style option) or both, and campaigns, ships, new-game options and quests
+  that decide which of the two the game flies with (see [Flight styles](#flight-styles)).
 - **Add star systems and stations**: on the star map, linked by jumpgates, with their own orbits, shops and bars, their own
   station models (glTF / GLB), planets and suns, and their own hangars and bars to dock in.
 - **Add quests and bar missions**: story chains and side jobs made as event graphs in the Unity Editor, with dialogue,
@@ -203,6 +206,11 @@ earlier). Only the fields you give change. Giving `name` or `description` rename
 | `miningBeamLayerMs` | 102 | Mining beam: time to cut one rock layer (ms; default 6000, the drill minigame's) |
 | `miningBeamLook` | 103 | Mining beam: the beam laser whose beam and impact it shows (9, 10, 11 or 228; default 228) |
 | `phaseCloak` | 104 | 1 = a cloak that also phases the ship through objects, shots and explosions while cloaked (see [Phase cloaks](#phase-cloaks)) |
+| `flightScope` | 105 | Which flight style the item's booster / Steering Nozzle stats count in: 0 both (default), 1 the original only, 2 free flight only (see [Flight styles](#flight-styles)) |
+| `topSpeed`, `turnRate`, `strafeSpeed` | 106 to 108 | Flight bonuses in both styles, in % (20 = +20 %, -10 = 10 % less) |
+| `originalTopSpeed`, `originalTurnRate`, `originalStrafeSpeed` | 109 to 111 | The same, in the original flight only |
+| `freeTopSpeed`, `freeTurnRate`, `freeStrafeSpeed`, `freeAcceleration` | 112 to 115 | The same, in free flight only (acceleration: how fast the ship reaches its speed) |
+| `freeBoostFactor` | 116 | Free flight's boost top speed in hundredths of the top speed (350 = x3.5) instead of the booster's own |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
 `item_attributes.json` in `Assets/Resources/GoF2Data`). items.json's own stat names (`loadingTimeMs`, `range`,
@@ -391,7 +399,8 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 ### Changing ships
 
 `override`: an original ship's number or another mod's `"mod_id:ship_id"`, with any of `armor`, `cargo`, `price`,
-`priceDefault`, `slots`, `handling`, `name`, `description`, `mounts` (and for mod ships `race`, `hangarHeight`).
+`priceDefault`, `slots`, `handling`, `name`, `description`, `mounts`, `flightStyle`, `flight` (see
+[Flight styles](#flight-styles)) (and for mod ships `race`, `hangarHeight`).
 
 **More (or fewer) weapons:** `slots` sets how many primaries, secondaries, turrets and equipment the ship takes (give only the
 ones you change), and `mounts`
@@ -417,6 +426,53 @@ NPCs', the hangar's). Its guns and exhausts stay at the original's mounts unless
     }
 ]
 ```
+
+## Flight styles
+
+The remake has two ways to fly the player's ship: the **original** (a throttle, the ship always flying forward) and **free
+flight** (the EVERSPACE 2-style option under Options > Controls: held thrust, strafe and up / down, a held boost, inertial
+dampeners). A mod decides for itself whether its content touches one, the other or both.
+
+**Items** (their `stats`, see [Stats](#stats)): a booster's and a Steering Nozzle's own stats (`boostSpeed`,
+`boostRechargeMs`, `boostDurationMs`, `agility`) count in both styles unless `flightScope` keeps them to one. On top of that,
+any item (an engine part, a module, a booster) can carry percentage bonuses for both styles (`topSpeed`, `turnRate`,
+`strafeSpeed`), for the original only (`originalTopSpeed`...) or free flight only (`freeTopSpeed`, ..., `freeAcceleration`), and
+`freeBoostFactor` sets free flight's boost outright (by default free flight takes the booster's original boost speed x 3.2 / 3:
+Linear and Cyclotron x1.6, Synchrotron x2.67, Me'al x3.2, Polytron x4.27). The bonuses of every mounted item and of the ship
+add up; no total goes below -90 %.
+
+```json
+[
+    { "id": "afterburner", "base": 74, "name": "Vortex Afterburner",
+      "stats": { "boostSpeed": 200, "boostRechargeMs": 14000, "boostDurationMs": 7000, "freeBoostFactor": 450 } },
+    { "id": "gyro_vanes", "base": 77, "name": "Gyro Vanes",
+      "stats": { "agility": 40, "flightScope": 1, "freeTurnRate": 15, "freeAcceleration": 30 } }
+]
+```
+
+The Gyro Vanes turn the original flight through the agility (like any Steering Nozzle) and free flight through their own
+bonuses instead.
+
+**Ships** (`ships.json`, a new ship or an `override`):
+
+```json
+{ "override": 10, "flightStyle": "free",
+  "flight": { "turnRate": 10, "original": { "topSpeed": 15 }, "free": { "acceleration": 25, "boostFactor": 380 } } }
+```
+
+| Field | |
+|---|---|
+| `flightStyle` | `"free"` or `"original"`: this ship always flies so, whatever the player's option (`"player"` or no field: the player's). |
+| `flight` | Bonuses in % for both styles: `topSpeed`, `turnRate`, `strafeSpeed`, `acceleration` (free flight only: the original has none), and `boostFactor` (free flight's boost in hundredths of the top speed). `original` / `free` inside it: the same, for one style only. |
+
+**Who decides the style**, first match: an event or quest (the **Set Flight Model** node, `/flightstyle`), the ship flown,
+the mod campaign (`campaign.json`'s `"flightStyle"`), a new-game option that is on (`gameoptions.json`'s `"flightStyle"`), then
+the player's own option. The Options page says so while a mod decides, and the key layout follows the style in use. Touch,
+tilt and VR always fly the original. Quests can ask with `freeflight` (1 in free flight, 0 in the original).
+
+In the original a top speed bonus speeds the boost up too, and a turn rate bonus keeps the time the ship takes to reach its
+turn rate. Free flight's top speed, turn rate and acceleration otherwise come from the ship's handling (with its Steering
+Nozzle and Kaamo Club upgrades), its boost from the booster.
 
 ## systems.json and stations.json
 
@@ -568,6 +624,7 @@ story off.
 | `items` | `"mod"`: shops and bar sellers offer only mods' items (sell the player anything they find; mining still brings the game's ores). Default `"all"`. Give the campaign its own goods and energy cells if it needs them. |
 | `ships` | `"mod"`: dealers sell only mods' ships. Default `"all"`. |
 | `trafficShips` | The ships NPC fighters fly, per race (`terran`, `vossk`, `nivelian`, `midorian`, `pirate`). Default: the game's. |
+| `flightStyle` | `"free"` or `"original"`: the campaign's games always fly so (see [Flight styles](#flight-styles)). Default: the player's option. |
 
 A campaign's mod usually depends on the mods with its galaxy, ships and items, so turning it on turns them on too. Saves
 remember the campaign; loading one asks for its mods like any modded save.
@@ -599,6 +656,7 @@ game remembers it in its saves, and your content asks for it with `option(...)` 
 | `imageHover` | Optional. The art while the card is selected. |
 | `showTitle` | `true` (default): the name and the mod on a plate at the card's foot; `false` when the art has its own title. |
 | `default` | The switch's position the first time (afterwards the player's last choice). Also what a multiplayer session plays with. |
+| `flightStyle` | `"free"` or `"original"`: while the option is on, the game flies so (see [Flight styles](#flight-styles)). |
 
 Two cards show at a time; more scroll sideways (drag, wheel, or the arrow keys / D-pad). A game started before your mod was
 installed has every option off.
@@ -795,8 +853,9 @@ Nodes made for quests:
 Everything else is the event graphs' toolbox: **Dialog** (conversations with portraits, see [Voice-over](#voice-over)), **Radio**,
 **Spawn** (ships, friendly or hostile, named; objects as scenery), **Wait Until**, **On** triggers (docked, entered an orbit,
 destroyed, a spawned ship destroyed, all enemies cleared, arriving near a point), **Set Waypoint**, **Restrict Travel**,
-**Give Item**, **Reward**, **Title**, **Timer**, **Play Music** and more. Game values for conditions: `campaign` (the story
-step, -1 without one), `credits`, `rank`, `station`, `system`, `ship`, `kills`, and the functions `cargo(item)`, `has(item)`
+**Give Item**, **Reward**, **Title**, **Timer**, **Play Music**, **Set Flight Model** (free flight or the original for a race
+or a chase, undone when the graph ends; see [Flight styles](#flight-styles)) and more. Game values for conditions: `campaign` (the story
+step, -1 without one), `credits`, `rank`, `station`, `system`, `ship`, `kills`, `freeflight` (1 in free flight), and the functions `cargo(item)`, `has(item)`
 (in the hold or mounted), `visited(station)` and `quest(name)` (0 not started, 1 under way, 2 done); items and stations by
 name or number. In single player `%player%` is Keith T. Maxwell.
 

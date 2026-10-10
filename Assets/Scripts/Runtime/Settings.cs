@@ -16,9 +16,17 @@ namespace GoF2Remake.Data
     public enum DisplayMode { Borderless, Fullscreen, Windowed }
 
     /// <summary>Settings.FlightStyle's values.</summary>
+    [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class FlightStyles
     {
         public const int Original = 0, Free = 1;
+
+        /// <summary>The style the game flies with now: what a mod or an event sets (Modding.ModFlight: an event, the ship
+        /// flown, the mod campaign, a new-game option), else the player's option (Settings.FlightStyle).</summary>
+        public static int Current { get { int f = Modding.ModFlight.ForcedStyle; return f >= 0 ? f : Settings.FlightStyle; } }
+
+        /// <summary>A mod or an event decides the style (the option's choice doesn't apply now).</summary>
+        public static bool Forced => Modding.ModFlight.ForcedStyle >= 0;
     }
 
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]

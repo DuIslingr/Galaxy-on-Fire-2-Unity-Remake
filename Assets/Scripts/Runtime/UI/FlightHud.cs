@@ -581,7 +581,7 @@ namespace GoF2Remake.UI
                 Hint(drilling ? T("hudMiningStop", "STOP MINING") : T("hudMiningAbort", "ABORT"), GameControls.FirePrimary, GameControls.Action);
                 return;
             }
-            if (Settings.FlightStyle == FlightStyles.Free)
+            if (FlightStyles.Current == FlightStyles.Free)
             {
                 // Free flight (EVERSPACE 2's layout, ShipController.FreeFlightActive): the held movement axes, the held boost.
                 if (!pad) Hint(T("hudAim", "AIM"), InputGlyph.Key(T("hudMouse", "MOUSE")));

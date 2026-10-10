@@ -173,7 +173,7 @@ namespace GoF2Remake.Modding
         {
             "id", "override", "name", "description", "race", "armor", "cargo", "price", "priceDefault", "slots", "handling",
             "hangarHeight", "mounts", "model", "icon", "modelLength", "modelYaw", "engineGlowRadius", "engineGlowColor", "materials", "throttleGlow",
-            "extraGlows", "lounge", "dealer", "available",
+            "extraGlows", "lounge", "dealer", "available", "flightStyle", "flight",
         };
 
         static void ParseShips(ModInfo mod, Parsed p)
@@ -197,6 +197,7 @@ namespace GoF2Remake.Modding
                 foreach (var prop in o.Properties())
                     if (!ShipFields.Contains(prop.Name)) mod.Warnings.Add($"{ModJson.Where(prop, ShipsFile)}: unknown field \"{prop.Name}\" (ignored)");
                 foreach (var f in new[] { "race", "armor", "cargo", "price", "priceDefault", "handling", "hangarHeight" }) ModJson.Int(o, f, 0, ShipsFile);
+                ModFlight.CheckShip(o, where, mod, ShipsFile);   // "flightStyle", "flight": per flight style
                 if (d.localId != null)
                 {
                     if (!ModManifest.ValidId(d.localId)) throw new ModJsonException($"{where}: the id \"{d.localId}\" may only use a-z, 0-9, _ and -");
@@ -608,6 +609,7 @@ namespace GoF2Remake.Modding
                                     primary = ModJson.Int(sl, "primary", s.slots?.primary ?? 0, ShipsFile), secondary = ModJson.Int(sl, "secondary", s.slots?.secondary ?? 0, ShipsFile),
                                     turret = ModJson.Int(sl, "turret", s.slots?.turret ?? 0, ShipsFile), equipment = ModJson.Int(sl, "equipment", s.slots?.equipment ?? 0, ShipsFile),
                                 };
+                            ModFlight.ApplyShip(s, o, d.where);
                             if (s is CustomShipData cs)
                             {
                                 cs.race = ModJson.Int(o, "race", cs.race, ShipsFile);
@@ -637,6 +639,7 @@ namespace GoF2Remake.Modding
                         int index = shipIndex[d.key];
                         var c = ShipData(index, d);
                         if (dflt && c.priceDefault > 0) c.price = c.priceDefault;
+                        ModFlight.ApplyShip(c, d.json, d.where);
                         db.Ships.Add(c);
                         db.Assemblies.Add(new AssemblyData { name = c.assembly, pack = ModShips.Pack, category = "ships", origin = "mod " + mod.Id });
                         if (c.mounts != null && c.mounts.Count > 0)

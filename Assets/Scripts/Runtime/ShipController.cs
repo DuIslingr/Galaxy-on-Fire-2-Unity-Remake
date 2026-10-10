@@ -34,9 +34,9 @@ namespace GoF2Remake.Flight
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { Dampeners = true; DampenersChanged = null; }
 
-        /// <summary>Free flight is in use for this ship now: the option, the player's own input (keyboard / mouse or a
+        /// <summary>Free flight is in use for this ship now: the style (the option, or a mod's / an event's), the player's own input (keyboard / mouse or a
         /// controller; touch, tilt and VR keep the original style).</summary>
-        public bool FreeFlightActive => Data.Settings.FlightStyle == Data.FlightStyles.Free && useBuiltInInput && !tiltMode
+        public bool FreeFlightActive => Data.FlightStyles.Current == Data.FlightStyles.Free && useBuiltInInput && !tiltMode
                                         && UI.InputMode.Current != UI.InputKind.Touch && !Vr.VrMode.Enabled;
 
         [Header("Ship")]
@@ -201,6 +201,8 @@ namespace GoF2Remake.Flight
             // Remake: a boost shakes off the homing missiles locked on this ship (Gun, Target.boosting).
             if (selfTarget == null) selfTarget = GetComponent<Target>();
             if (selfTarget != null) selfTarget.boosting = Model.IsBoosting;
+            // A mod or an event can switch the flight style in flight (Modding.ModFlight): its key layout follows.
+            if (useBuiltInInput) GameControls.ApplyStyle();
             Model.TiltMode = tiltMode;
             Model.LevelPitch = Data.Settings.LevelPitch;
             Model.Mass = mass;

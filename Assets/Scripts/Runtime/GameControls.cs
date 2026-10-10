@@ -146,7 +146,7 @@ namespace GoF2Remake.Flight
             Dampeners = Button("dampeners", () => X("ctlDampeners", "Inertial dampeners on / off"), null, null, null);
             FreeLookHold = Button("freeLookHold", () => X("ctlFreeLookHold", "Free look (hold)"), null, null, null);
 
-            bool Free() => Settings.FlightStyle == FlightStyles.Free;
+            bool Free() => loadedStyle == FlightStyles.Free;
             foreach (var r in rows)
                 switch (r.id)
                 {
@@ -201,15 +201,18 @@ namespace GoF2Remake.Flight
             ["mouseSteering"] = new Dictionary<BindSlot, string[]> { [BindSlot.Key2] = new[] { "" } },
         };
 
-        /// <summary>The style whose layout is loaded (Settings.FlightStyle when it was last applied).</summary>
+        /// <summary>The style whose layout is loaded (FlightStyles.Current when it was last applied).</summary>
         static int loadedStyle = -1;
+        /// <summary>The flight style whose key layout is loaded (FlightStyles).</summary>
+        public static int LoadedStyle => loadedStyle;
         static string StylePrefsKey => loadedStyle == FlightStyles.Free ? PrefsKey + "_free" : PrefsKey;
 
-        /// <summary>The layout of the flight style now set (Settings.FlightStyle): its defaults and its own overrides. Called
-        /// when the option changes; a no-op when that style is loaded already.</summary>
+        /// <summary>The layout of the flight style now in use (FlightStyles.Current: the option, or a mod's / an event's):
+        /// its defaults and its own overrides. Called when the option changes and every frame by the flight (ShipController)
+        /// and the bindings page, for a style a mod or an event switches; a no-op when that style is loaded already.</summary>
         public static void ApplyStyle()
         {
-            if (loadedStyle == Settings.FlightStyle) return;
+            if (loadedStyle == FlightStyles.Current) return;
             CancelRebind();
             Load();
             Changed?.Invoke();
@@ -309,7 +312,7 @@ namespace GoF2Remake.Flight
         static void Load()
         {
             Map.RemoveAllBindingOverrides();
-            loadedStyle = Settings.FlightStyle;
+            loadedStyle = FlightStyles.Current;
             // The style's defaults first (as overrides of the original's paths), the player's own on top.
             foreach (var action in Map.actions)
                 for (int i = 0; i < action.bindings.Count; i++)

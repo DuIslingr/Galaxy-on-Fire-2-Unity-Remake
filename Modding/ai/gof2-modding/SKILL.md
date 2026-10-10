@@ -120,7 +120,11 @@ drillSpeed 32, miningYield 33, cabins 34, cloakDurationMs 35, cloakChargeMs 36, 
 damageFactor 40 (weapon mods %), emergencyMs 41, timeExtenderMs 42, timeExtenderCooldownMs 43, collectorSpeed 49,
 collectorMagnitude 50, collectorRange 51, gammaShielding 52, beamRange 53, beamStrength 54, beamTargets 55, miningBeam 100 (a
 drill based on 86-90 that cuts while flying), miningBeamRange 101, miningBeamLayerMs 102, miningBeamLook 103 (9/10/11/228), phaseCloak 104 (a
-cloak based on 94-96 whose ship passes through asteroids, stations, gates, ships, shots and explosions while cloaked).
+cloak based on 94-96 whose ship passes through asteroids, stations, gates, ships, shots and explosions while cloaked), flightScope
+105 (the item's booster / nozzle stats count in 0 both flight styles, 1 the original only, 2 free flight only), topSpeed 106,
+turnRate 107, strafeSpeed 108 (% bonuses, both styles), originalTopSpeed 109, originalTurnRate 110, originalStrafeSpeed 111,
+freeTopSpeed 112, freeTurnRate 113, freeStrafeSpeed 114, freeAcceleration 115, freeBoostFactor 116 (free flight's boost, 350 =
+x3.5; default the booster's original boost speed x 3.2 / 3). See Flight styles.
 items.json's own names (`loadingTimeMs`, `range`, `projectileSpeed`...) work too. An unknown stat name is an error.
 
 ### Weapon fx
@@ -180,9 +184,11 @@ several thousand), `color` (`[r,g,b]` 0-1 or `"#rrggbb"`), `glow` (>1 blooms; ga
 | `lounge` | A Space Lounge visitor sells it: systemRace (-1 any), minCampaign (story step), minRank (free play), chance %. |
 | `dealer` | Ordinary ship dealers stock it: chance % (decimals ok) per dealer list, systemRace, minTechLevel. Not the special yards. |
 | `available` | Condition before dealers / lounges sell it. |
+| `flightStyle` | `"free"` / `"original"`: the ship always flies so (default the player's option). |
+| `flight` | % bonuses `{ "topSpeed", "turnRate", "strafeSpeed", "acceleration" (free only), "boostFactor" (free, 350 = x3.5), "original": {...}, "free": {...} }`. |
 
 `override` changes an original (number) or another mod's ship (key): armor, cargo, price, priceDefault, slots, handling, name,
-description, `mounts` (mod ships also race, hangarHeight), and an original can get a new `model` (+ its fields). `slots` merges
+description, `mounts`, `flightStyle`, `flight` (mod ships also race, hangarHeight), and an original can get a new `model` (+ its fields). `slots` merges
 (give only the changed counts); `mounts` replaces the ship's whole list (exhausts too). More weapon slots than gun mounts: the
 extra weapons share the mounts; fewer slots: what doesn't fit goes to the hold on the next docking.
 
@@ -233,6 +239,15 @@ Found blueprints come in a data container the tractor beam pulls in. Sources sto
 Useful ingredients (see reference.md): 122 Energy Cells, 127 Microchips, 154 Gold, 155 Titanium, 157 Orichalzine, 165 Golden
 Core, 114 Explosives, 118 Electronics.
 
+## Flight styles
+
+Two ways to fly: the **original** (throttle, always forward) and **free flight** (the EVERSPACE 2-style option: held thrust /
+strafe / up-down, held boost, dampeners). Mods pick per content: item stats 105-116 (above; bonuses add up over the ship and
+every mounted item, never below -90 %; an item's freeBoostFactor beats the ship's), ships' `flightStyle` / `flight`, and
+`flightStyle` in campaign.json and gameoptions.json. Who decides, first match: an event (Set Flight Model, `/flightstyle`),
+the ship flown, the mod campaign, a new-game option that is on, the player's option. Touch, tilt and VR always fly the
+original. The original has no acceleration (the throttle is at once); its top speed bonus scales the boost too.
+
 ## gameoptions.json
 
 Cards in Start new game's **Game options** panel, each a switch saved with the game; content asks for it with `option(...)`.
@@ -247,6 +262,7 @@ Cards in Start new game's **Game options** panel, each a switch saved with the g
 `id` required. `image` is card art like the game's campaign cards: **290 x 448** or a multiple (580 x 896), portrait; cropped
 to the card. `showTitle` false when the art carries its own title (else a name plate is drawn at the foot). `default` is the
 first-time position and what multiplayer uses. A game started before the mod was installed has the option off.
+`"flightStyle": "free" | "original"`: while the option is on, the game flies so.
 
 ## Conditions
 
@@ -281,7 +297,7 @@ A whole new game under Start new game, shown as a card next to the three campaig
 
 `startStation` and `startShip` required. `image` 290 x 448 card art. `standing` = [Terran/Vossk, Nivelian/Midorian] -100..100
 (default [30, 0]). `galaxy`/`items`/`ships` `"mod"` limit the game to mods' content. `quest` = an event graph started with
-the game.
+the game. `"flightStyle": "free" | "original"`: the campaign's games always fly so.
 
 ## systems.json, stations.json
 
@@ -327,7 +343,8 @@ to the mod's `events/` folder; the file name is the graph's name. The Start node
 Nodes include Dialog, Radio, Spawn (named ships), Wait / Wait Until, On (docked, entered orbit, destroyed, cleared, near a
 point), Set Waypoint, Set Objective, Checkpoint, Quest Orbit, Give Item, Reward, Mission Complete / Failed, Start Quest, ship
 orders (Fly To, Fly Route, Follow, Attack, Ship Action), cutscene nodes (Start Cutscene, Camera Shot, Fade, End Cutscene),
-Play Music. You can't write the file; describe the graph as an ordered list of nodes with their settings for the user to
+Play Music, Set Flight Model (free flight / original / the player's choice, undone at the graph's end; expression
+`freeflight` = 1 in free flight). You can't write the file; describe the graph as an ordered list of nodes with their settings for the user to
 build.
 
 ## Balancing (the originals, Android economy)

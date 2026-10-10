@@ -46,6 +46,47 @@ namespace GoF2Remake.Flight
         public bool cargoAffectsHandling = false;
         public float cargoLoad = 0f;
         public float cargoCapacity = 1f;
+
+        /// <summary>Remake, for mods (Modding.ModFlight): what counts in each flight style, the booster and the Steering
+        /// Nozzle (an item's flightScope can keep them to one style) and the items' and the ship's per-style bonuses. Null =
+        /// the fields above for both styles, no bonuses (Database.BuildFlightStats always fills both).</summary>
+        public FlightTuning original, free;
+
+        public FlightTuning ForStyle(bool freeFlight) => (freeFlight ? free : original) ?? new FlightTuning
+        {
+            agility = agility, boostSpeed = boostSpeed, boostDurationMs = boostDurationMs, boostRechargeMs = boostRechargeMs,
+        };
+    }
+
+    /// <summary>One flight style's share of the equipment (FlightStats.original / free).</summary>
+    [Serializable]
+    public class FlightTuning
+    {
+        public float agility;
+        public int boostSpeed, boostDurationMs, boostRechargeMs;
+        public FlightBonus bonus = new FlightBonus();
+    }
+
+    /// <summary>Remake, for mods: per-style flight bonuses (Modding.ModFlight: items' stats 106-116, ships.json "flight").
+    /// Percentages add up (20 = +20 %, -10 = 10 % less; the total never below -90 %); boostFactor is free flight's boost top
+    /// speed in hundredths of the top speed (350 = x3.5), 0 = the booster's own.</summary>
+    [Serializable]
+    public class FlightBonus
+    {
+        public float topSpeed, turnRate, strafeSpeed, acceleration;
+        public int boostFactor;
+
+        public FlightBonus Add(FlightBonus o)
+        {
+            if (o == null) return this;
+            topSpeed += o.topSpeed; turnRate += o.turnRate; strafeSpeed += o.strafeSpeed; acceleration += o.acceleration;
+            if (o.boostFactor > 0) boostFactor = o.boostFactor;
+            return this;
+        }
+
+        public bool IsEmpty => topSpeed == 0f && turnRate == 0f && strafeSpeed == 0f && acceleration == 0f && boostFactor == 0;
+
+        public static float Scale(float percent) => Mathf.Max(0.1f, 1f + percent / 100f);
     }
 
     public class FlightModel
@@ -121,15 +162,31 @@ namespace GoF2Remake.Flight
         {
             float target = Braking ? 0f : Throttle * CurrentSpeed;
             if (AccelMs <= 1f) return MoveSpeed = target;
-            float rate = BaseSpeed / AccelMs;   // units/ms per ms
-            if (target > BaseSpeed || MoveSpeed > BaseSpeed) rate *= 2.5f;   // the boost's surge and its run-down
+            float rate = TopSpeed / AccelMs;   // units/ms per ms
+            if (target > TopSpeed || MoveSpeed > TopSpeed) rate *= 2.5f;   // the boost's surge and its run-down
             return MoveSpeed = Mathf.MoveTowards(MoveSpeed, target, rate * dtMs);
         }
 
-        public float Handling { get; private set; }            // "H" in the notes (0x154)
-        float boostSpeedValue = 5f;
-        int boostDurationMs = 5000, boostRechargeMs = 20000;
-        bool hasBooster;
+        /// <summary>What one flight style flies with (Configure fills both; FreeFlight picks): the handling with the
+        /// agility counting in it, the booster, and the mods' bonuses as factors (FlightBonus).</summary>
+        sealed class StyleState
+        {
+            public float handling, boostSpeedValue = 5f;
+            public int boostDurationMs = 5000, boostRechargeMs = 20000;
+            public bool hasBooster;
+            public float speedScale = 1f, turnScale = 1f, strafeScale = 1f, accelScale = 1f;
+            public int boostFactor;   // free flight's boost x100 (0 = the booster's)
+        }
+        readonly StyleState styleOriginal = new StyleState(), styleFree = new StyleState();
+        StyleState Style => FreeFlight ? styleFree : styleOriginal;
+
+        public float Handling => Style.handling;               // "H" in the notes (0x154)
+        float boostSpeedValue => Style.boostSpeedValue;
+        int boostDurationMs => Style.boostDurationMs;
+        int boostRechargeMs => Style.boostRechargeMs;
+        bool hasBooster => Style.hasBooster;
+        /// <summary>The top speed (units/ms): the base 2 for every ship, x a mod's top speed bonus for this style.</summary>
+        public float TopSpeed => BaseSpeed * Style.speedScale;
         FlightStats stats;
 
         // ---- state ----------------------------------------------------------------------------
@@ -200,13 +257,14 @@ namespace GoF2Remake.Flight
         /// <summary>Free flight: the boost's top speed, of the forward one, by the booster: its original boost speed
         /// (PlayerEgo's int(2 b / 100) + 2 u/ms, over the base 2) x 3.2 / 3, so the Me'al boosts like EVERSPACE 2's
         /// measured x3.2: Linear / Cyclotron x1.6, Synchrotron x2.67, Polytron x4.27.</summary>
-        float FreeBoostFactor => boostSpeedValue > BaseSpeed ? boostSpeedValue / BaseSpeed * FreeBoostScale : FreeBoostFallback;
+        float FreeBoostFactor => Style.boostFactor > 0 ? Style.boostFactor / 100f   // a mod's (ModFlight)
+            : boostSpeedValue > BaseSpeed ? boostSpeedValue / BaseSpeed * FreeBoostScale : FreeBoostFallback;
 
         /// <summary>Free flight: the top turn rate (rad / ms) for this ship: EVERSPACE 2's 125 deg/s at handling 100,
         /// scaled by (H / 20)^0.75, the steering sensitivity option x0.6..1.6 (1 at its default). The option
         /// itself, not Sensitivity: that one is the original's ramp setting, a fixed 2.7 under mouse steering.</summary>
         float FreeTopTurnRate(float he) =>
-            FreeTurnRate * Mathf.Pow(Mathf.Max(1f, he) / 20f, FreeTurnExponent) * TurnScale * Mathf.Clamp(0.5f + 0.5f * Data.Settings.Sensitivity, 0.6f, 1.6f);
+            FreeTurnRate * Mathf.Pow(Mathf.Max(1f, he) / 20f, FreeTurnExponent) * Style.turnScale * TurnScale * Mathf.Clamp(0.5f + 0.5f * Data.Settings.Sensitivity, 0.6f, 1.6f);
 
         /// <summary>One velocity component toward 'want' while there is input that asks for more speed (or the other way):
         /// along EVERSPACE 2's cubic ease-out, v = top (1 - (1 - t/T)^3), written as a rate of the speed still missing
@@ -245,8 +303,9 @@ namespace GoF2Remake.Flight
             PitchRate = freePitch / RateToRadiansPerMs;
 
             // ---- moving
-            float top = BaseSpeed, boostTop = top * FreeBoostFactor;
-            float handlingScale = Mathf.Sqrt(20f / Mathf.Max(5f, he));
+            float top = TopSpeed, boostTop = top * FreeBoostFactor;
+            float handlingScale = Mathf.Sqrt(20f / Mathf.Max(5f, he)) / Style.accelScale;   // a mod's acceleration bonus shortens the eases
+            float strafeTop = top * Style.strafeScale;
             float easeFwd = FreeEaseFwdMs * handlingScale + AccelMs;
             float easeBoost = FreeBoostEaseMs * handlingScale + AccelMs;
             float easeSide = FreeEaseSideMs * handlingScale + AccelMs;
@@ -259,8 +318,8 @@ namespace GoF2Remake.Flight
             {
                 // Each axis flies the speed asked for; what isn't asked for brakes away at 60 m/s^2 (so a boost's speed
                 // eases off instead of stopping dead, EVERSPACE 2's momentum after a boost).
-                v.x = FreeAxis(v.x, strafe * top * FreeStrafeShare, strafe != 0f, top * FreeStrafeShare, easeSide, decel, dtMs);
-                v.y = FreeAxis(v.y, hover * top * FreeHoverShare, hover != 0f, top * FreeHoverShare, easeSide, decel, dtMs);
+                v.x = FreeAxis(v.x, strafe * strafeTop * FreeStrafeShare, strafe != 0f, strafeTop * FreeStrafeShare, easeSide, decel, dtMs);
+                v.y = FreeAxis(v.y, hover * strafeTop * FreeHoverShare, hover != 0f, strafeTop * FreeHoverShare, easeSide, decel, dtMs);
                 float wantZ = thrust >= 0f ? thrust * (IsBoosting ? boostTop : top) : thrust * top * FreeReverseShare;
                 // The ease's span: the axis's top speed, or while boosting the gap from the top speed to the boost's.
                 float spanZ = thrust < 0f ? top * FreeReverseShare : IsBoosting ? boostTop - top : top;
@@ -273,7 +332,7 @@ namespace GoF2Remake.Flight
                 // Pseudo-Newtonian: the thrust adds to the momentum; above the soft cap (the top speed, the boost's while
                 // boosting) the speed eases back at the braking rate.
                 // The ease-out's initial rate (3 top / T) as the thrust's acceleration.
-                var push = new Vector3(strafe * 3f * top * FreeStrafeShare / easeSide, hover * 3f * top * FreeHoverShare / easeSide,
+                var push = new Vector3(strafe * 3f * strafeTop * FreeStrafeShare / easeSide, hover * 3f * strafeTop * FreeHoverShare / easeSide,
                                        thrust * 3f * (thrust < 0f ? top * FreeReverseShare / easeSide
                                                       : IsBoosting ? (boostTop - top) / easeBoost : top / easeFwd));
                 FreeVelocity += rotation * push * dtMs;
@@ -318,7 +377,7 @@ namespace GoF2Remake.Flight
         /// refills in its recharge time; an emptied pool boosts again from BoostRestartEnergy on a fresh press.</summary>
         void UpdateFreeBoost(float dtMs)
         {
-            if (!hasBooster) { IsBoosting = false; CurrentSpeed = BaseSpeed; return; }
+            if (!hasBooster) { IsBoosting = false; CurrentSpeed = TopSpeed; return; }
             if (Data.Cheats.NoBoostCooldown) boostEnergy = 1f;
             // An emptied pool doesn't restart while the key is still held (EVERSPACE 2 answers a boost on an empty pool
             // with a refusal sound): release and press again.
@@ -335,34 +394,47 @@ namespace GoF2Remake.Flight
                 IsBoosting = false;
                 boostEnergy = Mathf.Min(1f, boostEnergy + (boostRechargeMs > 0 ? dtMs / boostRechargeMs : 1f));
             }
-            CurrentSpeed = IsBoosting ? BaseSpeed * FreeBoostFactor : BaseSpeed;
+            CurrentSpeed = IsBoosting ? TopSpeed * FreeBoostFactor : TopSpeed;
             freeBoostVisual = Mathf.MoveTowards(freeBoostVisual, IsBoosting ? 1f : 0f, dtMs / 200f);
         }
 
         public void Configure(FlightStats s)
         {
             stats = s;
-            // Ship::getHandling() = handling/100 + 0.2 per handling upgrade
-            float baseH = s.handling / 100f + 0.2f * s.handlingUpgrades;
-            // PlayerEgo ctor: H = (h + h*agility/100) * 20
-            Handling = (baseH + baseH * (s.agility / 100f)) * 20f;
-
-            // PlayerEgo ctor: boost speed = int(2*boostSpeed/100) + 2. The original stores this as an int,
-            // so e.g. Linear Boost (60) gives 3.0 (1.5x) although the shop UI implies 1.6x, and
-            // Cyclotron (80) ends up equal to Linear. Set TruncateBoostSpeed = false for the "intended" values.
-            float boost = 2f * s.boostSpeed / 100f + 2f;
-            boostSpeedValue = TruncateBoostSpeed ? (int)(2f * s.boostSpeed / 100f) + 2 : boost;
-            boostDurationMs = s.boostDurationMs;
-            boostRechargeMs = s.boostRechargeMs;
-            hasBooster = boostRechargeMs > 0;
-
-            CurrentSpeed = BaseSpeed;
-            MoveSpeed = BaseSpeed;
+            FillStyle(styleOriginal, s, s.ForStyle(false));
+            FillStyle(styleFree, s, s.ForStyle(true));
+            CurrentSpeed = TopSpeed;
+            MoveSpeed = TopSpeed;
             Throttle = 1f;
             boostTimerMs = 0;
             IsBoosting = false;
             boostEnergy = 1f;
             boostSpent = false;
+        }
+
+        void FillStyle(StyleState st, FlightStats s, FlightTuning t)
+        {
+            // Ship::getHandling() = handling/100 + 0.2 per handling upgrade
+            float baseH = s.handling / 100f + 0.2f * s.handlingUpgrades;
+            // PlayerEgo ctor: H = (h + h*agility/100) * 20
+            st.handling = (baseH + baseH * (t.agility / 100f)) * 20f;
+
+            // PlayerEgo ctor: boost speed = int(2*boostSpeed/100) + 2. The original stores this as an int,
+            // so e.g. Linear Boost (60) gives 3.0 (1.5x) although the shop UI implies 1.6x, and
+            // Cyclotron (80) ends up equal to Linear. Set TruncateBoostSpeed = false for the "intended" values.
+            float boost = 2f * t.boostSpeed / 100f + 2f;
+            st.boostSpeedValue = TruncateBoostSpeed ? (int)(2f * t.boostSpeed / 100f) + 2 : boost;
+            st.boostDurationMs = t.boostDurationMs;
+            st.boostRechargeMs = t.boostRechargeMs;
+            st.hasBooster = t.boostRechargeMs > 0;
+
+            // Remake, for mods (ModFlight): the style's bonuses.
+            var b = t.bonus ?? new FlightBonus();
+            st.speedScale = FlightBonus.Scale(b.topSpeed);
+            st.turnScale = FlightBonus.Scale(b.turnRate);
+            st.strafeScale = FlightBonus.Scale(b.strafeSpeed);
+            st.accelScale = FlightBonus.Scale(b.acceleration);
+            st.boostFactor = Mathf.Max(0, b.boostFactor);
         }
 
         /// <summary>Handling after the hardcore-mode cargo penalty: H*(0.6 + 0.4*(1 - load/max)).</summary>
@@ -396,7 +468,7 @@ namespace GoF2Remake.Flight
         /// on Extreme), the ramp from 0.1 x1.5 a (30 fps) frame up to 1: full sideways speed after ~6 frames.</summary>
         public void Strafe(int dir, float dtMs)
         {
-            StrafeVelocity = strafeRamp * dir * Mathf.Min(EffectiveHandling * 30f * 0.002f, 2f) * SideScale;
+            StrafeVelocity = strafeRamp * dir * Mathf.Min(EffectiveHandling * 30f * 0.002f, 2f) * SideScale * Style.strafeScale;
             strafeRamp = Mathf.Min(strafeRamp * Mathf.Pow(1.5f, dtMs / StrafeFrameMs * Inertia), 1f);
         }
 
@@ -424,7 +496,7 @@ namespace GoF2Remake.Flight
             if (FreeFlight || !BoostReady) return;   // free flight: the boost is held (BoostHeld)
             Throttle = 1f;   // MGame::OnTouchEnd HUD element 2: full throttle first, then the boost
             boostTimerMs = 0;
-            CurrentSpeed = boostSpeedValue;
+            CurrentSpeed = boostSpeedValue * Style.speedScale;
             IsBoosting = true;
         }
 
@@ -507,8 +579,8 @@ namespace GoF2Remake.Flight
             }
 
             // ---- no input: rates drain linearly back to zero (uses base H, not the cargo-reduced one)
-            if (!yawInput) YawRate = Mathf.MoveTowards(YawRate, 0f, dtMs * Handling / DecayDivisor * Inertia);
-            if (!pitchInput) PitchRate = Mathf.MoveTowards(PitchRate, 0f, dtMs * Handling / DecayDivisor * Inertia);
+            if (!yawInput) YawRate = Mathf.MoveTowards(YawRate, 0f, dtMs * Handling / DecayDivisor * Inertia * Style.turnScale);
+            if (!pitchInput) PitchRate = Mathf.MoveTowards(PitchRate, 0f, dtMs * Handling / DecayDivisor * Inertia * Style.turnScale);
 
             // ---- movement -------------------------------------------------------------------------
             float forward = dtMs * StepMoveSpeed(dtMs);
@@ -582,10 +654,10 @@ namespace GoF2Remake.Flight
         {
             // target = trunc(input * 750 * H) / 63 (integer division, like the original)
             int raw = (int)(input * TargetRateScale * he);
-            float target = raw / TargetRateDivisor * TurnScale;   // remake debug: a heavy hull's lower top rate (Mass)
+            float target = raw / TargetRateDivisor * TurnScale * Style.turnScale;   // remake debug: a heavy hull's lower top rate (Mass); a mod's turn bonus
             float denom = (RampBase - Sensitivity * sensitivityScale) * 20f;
             if (denom < 1f) denom = 1f; // guard against extreme sensitivity values
-            float step = dtMs * he / denom * Inertia;
+            float step = dtMs * he / denom * Inertia * Style.turnScale;   // the same time to the (scaled) top rate
 
             // The original only accelerates toward the target in the input's direction and never slows an
             // over-target rate while the direction is held. That was fine for its digital input (the target is
@@ -640,6 +712,7 @@ namespace GoF2Remake.Flight
         void UpdateBoost(float dtMs)
         {
             if (FreeFlight) { UpdateFreeBoost(dtMs); return; }
+            if (!IsBoosting) CurrentSpeed = TopSpeed;   // the style's (a mod's top speed bonus; switched in flight)
             // Timer counts up every frame; negative values mean "recharging" (PlayerEgo::update).
             int dt = Mathf.RoundToInt(dtMs);
             if (boostTimerMs < 0 && boostTimerMs + dt * 3 > 0) boostTimerMs = 0;
@@ -648,7 +721,7 @@ namespace GoF2Remake.Flight
             if (IsBoosting && boostTimerMs > boostDurationMs)
             {
                 IsBoosting = false;
-                CurrentSpeed = BaseSpeed;
+                CurrentSpeed = TopSpeed;
                 boostTimerMs = Data.Cheats.NoBoostCooldown ? 0 : -boostRechargeMs;   // remake debug: no recharge
             }
         }
