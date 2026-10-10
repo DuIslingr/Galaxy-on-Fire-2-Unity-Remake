@@ -247,3 +247,39 @@ and up / down x0.5, the cubic ease-out (forward T 1.75 s, the others 1.27 s), br
 boost to x3.2, eased out over 3.1 s. Still open: the third-person camera's own small lag (~0.07 s, the
 remake's chase camera keeps its own), the fast drop after a boost when the thrust is released (~2x the top speed),
 the boost's growth on a long boost (equipment).
+
+### Do the ship classes change these values? (the dumped assets, 2026-10-09)
+
+Classes: `EShipClass` Light / Medium / Heavy (+ Okkar, the mining ship). From `DT_DebugShipsKS`: Light = Scout, Stinger,
+Vanguard; Medium = Sentinel, Striker, Interceptor; Heavy = Gunship, Bomber, Vindicator. The measured Nemesis is a Sentinel,
+so **every number above is a Medium ship's**.
+
+Nothing in the assets ties a flight value to the class:
+- One player pawn for every ship (`BP_Ship_Player`, its `ShipMovementComponent`); no per-class or per-type pawn.
+- `DT_ShipSettings` (per class) holds only the third-person camera, identical for Light / Medium / Heavy: rotation lag
+  stiffness 12 (the small camera lag measured), pivot x 3000, close arm 2000 at (0, 0, 500), far 2800 at (0, 0, 600),
+  free look 2000. Only the mining ship's row differs (stiffness 10, arms 3000 / 3800).
+- `DT_ShipModules_<class>` (`FShipModule`): meshes per slot (body, wings, rear, extension, base, cockpit), a ship-type
+  whitelist and extension meshes: looks only.
+- The class is otherwise read for the camera shake scale (`GetShipClassCameraShakeScale`, `ScaleWithShipClass`) and
+  the cockpit widgets (`CockpitWidgetsClassLight / Medium / Heavy / Okkar`).
+- The per-ship speed, acceleration, handling and boost come from the ship's item attributes (`ID_HANDLING` etc.) in
+  `ItemTemplates`, which is built at run time (transient), not stored in the cooked assets.
+- Ship-type passives are conditional perks, not base values: the Interceptor's speed buff on a lock
+  (`ID_INTERCEPTOR_LOCK_ON_SPEED_INCREASE`), the Striker's on a locked target (`ID_STRIKER_LOCKED_TARGET_SPEED`), the
+  Gunship's damage reduction, the Vanguard's overcharge.
+
+So any differences between Light / Medium / Heavy ships (and between ships and tiers within a class) live in the run-time
+item stats and can only be measured by flying them. The remake maps its own per-ship differences through the handling
+(`FreeTopTurnRate`'s sqrt(H / 20), the ease time's sqrt scaling).
+
+### Equipment in the remake's free flight (2026-10-10)
+
+The ship-class check above left the per-ship differences to the remake. Two changes so the original's equipment matters:
+- **Boost by the booster** (`FlightModel.FreeBoostFactor`): the original boost speed (int(2 b / 100) + 2 u/ms) over the base
+  speed, x 3.2 / 3, so the Me'al (x3 in the original) boosts like the measured Sentinel (x3.2): Linear / Cyclotron x1.6,
+  Synchrotron x2.67, Polytron x4.27. Before, every booster gave x3.2.
+- **Turn spread** (`FreeTurnExponent` 0.75): the top turn rate is 125 deg/s x (H / 20)^0.75 instead of the square root: a bare
+  Rhino (H 6) 51 deg/s, handling 100 125, a Dace with the Pulsed Plasma Thrust (H 74.5) 335; the original's linear rate spans
+  13-161 deg/s (12x), the square root 68-241 (3.5x), now 6.6x. The acceleration ease stays square-root scaled.
+Checked on `FlightModel` alone (2.7 s of boost: 160 / 160 / 266 / 320 / 426 m/s; the turn rates above).

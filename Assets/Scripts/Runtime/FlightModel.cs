@@ -184,7 +184,11 @@ namespace GoF2Remake.Flight
         const float FreeTurnRate = 125f * Mathf.Deg2Rad / 1000f;   // rad per ms at full input, handling 20 (H of handling 100)
         const float FreeTurnRampMs = 400f;       // standstill to the top turn rate (and back), linear (measured in the cockpit
                                                  // view, which follows the ship rigidly: 10-85 % in 0.31 s)
-        const float FreeBoostFactor = 3.2f;      // boost top speed, of the forward one (the gauge: 1110 of 343 km/h)
+        const float FreeBoostScale = 3.2f / 3f;  // EVERSPACE 2's boost (the gauge: 1110 of 343 km/h, x3.2) given to the Me'al,
+                                                 // whose original boost is x3; every booster keeps its original ratio to it
+        const float FreeBoostFallback = 3.2f;    // a booster without a boost speed (a mod's)
+        const float FreeTurnExponent = 0.75f;    // the turn rate grows with H^0.75: between EVERSPACE 2's single ship and the
+                                                 // original's linear spread (Rhino 51, handling 100 125, a tuned Dace 335 deg/s)
         const float FreeBoostEaseMs = 3100f;     // the boost's cubic ease-out over the gap from the top speed (the gauge)
         const float FreeBoostDurationMs = 3500f; // a full energy pool without a booster duration (the blueprint's value); with
                                                  // one, the booster's duration (attribute 27), refilled in its recharge time
@@ -193,10 +197,16 @@ namespace GoF2Remake.Flight
         float boostEnergy = 1f, freeBoostVisual, freeYaw, freePitch, freeRoll;   // the free rates in rad/ms
         bool boostSpent;   // the pool ran empty while the key was held
 
+        /// <summary>Free flight: the boost's top speed, of the forward one, by the booster: its original boost speed
+        /// (PlayerEgo's int(2 b / 100) + 2 u/ms, over the base 2) x 3.2 / 3, so the Me'al boosts like EVERSPACE 2's
+        /// measured x3.2: Linear / Cyclotron x1.6, Synchrotron x2.67, Polytron x4.27.</summary>
+        float FreeBoostFactor => boostSpeedValue > BaseSpeed ? boostSpeedValue / BaseSpeed * FreeBoostScale : FreeBoostFallback;
+
         /// <summary>Free flight: the top turn rate (rad / ms) for this ship: EVERSPACE 2's 125 deg/s at handling 100,
-        /// square-root scaled by the handling, the sensitivity option x0.6..1.6 (1 at its default).</summary>
+        /// scaled by (H / 20)^0.75, the steering sensitivity option x0.6..1.6 (1 at its default). The option
+        /// itself, not Sensitivity: that one is the original's ramp setting, a fixed 2.7 under mouse steering.</summary>
         float FreeTopTurnRate(float he) =>
-            FreeTurnRate * Mathf.Sqrt(Mathf.Max(1f, he) / 20f) * TurnScale * Mathf.Clamp(0.5f + 0.5f * Sensitivity, 0.6f, 1.6f);
+            FreeTurnRate * Mathf.Pow(Mathf.Max(1f, he) / 20f, FreeTurnExponent) * TurnScale * Mathf.Clamp(0.5f + 0.5f * Data.Settings.Sensitivity, 0.6f, 1.6f);
 
         /// <summary>One velocity component toward 'want' while there is input that asks for more speed (or the other way):
         /// along EVERSPACE 2's cubic ease-out, v = top (1 - (1 - t/T)^3), written as a rate of the speed still missing
