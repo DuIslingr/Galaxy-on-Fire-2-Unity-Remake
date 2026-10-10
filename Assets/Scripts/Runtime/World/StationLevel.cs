@@ -971,10 +971,35 @@ namespace GoF2Remake.World
                     pos = (customBar != null ? barPosB : yaw * barPosB) + new Vector3(0f, Mathf.Sin(bobPhase) * 3.5f * M, 0f);
                     rot = yaw * barRotB;
                 }
+                // Remake: talking to a visitor, the view turns to the middle of their figure and zooms in a little
+                // (FocusVisitor), easing back when the chat closes.
+                chatZoom = Mathf.MoveTowards(chatZoom, chatVisitor >= 0 ? 1f : 0f, dtMs / ChatZoomMs);
+                float z = chatZoom * chatZoom * (3f - 2f * chatZoom);   // smoothstep
+                if (z > 0f && chatTarget != Vector3.zero)
+                {
+                    var toVisitor = chatTarget - pos;
+                    if (toVisitor.sqrMagnitude > 0.01f) rot = Quaternion.Slerp(rot, Quaternion.LookRotation(toVisitor, Vector3.up), z);
+                }
                 cam.SetPositionAndRotation(pos, rot);
                 if (customBar != null) SetCustomLens(customBar.def, StationTables.BarFov, StationTables.BarNear, StationTables.BarFar);
                 else SetLens(StationTables.BarFov, StationTables.BarNear, StationTables.BarFar);
+                if (z > 0f) mainCamera.fieldOfView *= 1f - ChatZoomIn * z;
             }
+        }
+
+        /// <summary>Remake: the bar camera's zoom toward the visitor talked to (the share of the field of view taken off), eased
+        /// over ChatZoomMs.</summary>
+        const float ChatZoomIn = 0.25f, ChatZoomMs = 800f;
+        int chatVisitor = -1;
+        Vector3 chatTarget;
+        float chatZoom;
+
+        /// <summary>The Space Lounge's chat opened with visitor 'index' (LoungePanel): the camera eases toward them; -1 = the
+        /// chat closed, back to the room's view.</summary>
+        public void FocusVisitor(int index)
+        {
+            chatVisitor = index >= 0 && index < visitors.Count ? index : -1;
+            if (chatVisitor >= 0) chatTarget = visitors[chatVisitor].feet + Vector3.up * visitors[chatVisitor].height * 0.5f;   // the figure's middle
         }
 
         /// <summary>VR: standing in the room, still (no drift, sway or intro). The hangar: on the floor beside the pad, between

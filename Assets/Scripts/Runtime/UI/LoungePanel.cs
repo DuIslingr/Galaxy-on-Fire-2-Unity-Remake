@@ -189,6 +189,7 @@ namespace GoF2Remake.UI
         {
             if (index < 0 || index >= level.VisitorAgentCount) return;
             selected = index;
+            level.FocusVisitor(index);   // remake: the camera turns to them and zooms in a little
             var a = level.VisitorAgent(index);
             chat = new LoungeChat(Db, a, Station, smallTalkUsed);
             chat.Start();
@@ -211,6 +212,7 @@ namespace GoF2Remake.UI
         {
             if (chat == null) return;
             chat = null;
+            level.FocusVisitor(-1);   // back to the room's view
             menu.PlayVoice(null);
             root.RemoveFromClassList("chat-open");
             RefreshMarks();
