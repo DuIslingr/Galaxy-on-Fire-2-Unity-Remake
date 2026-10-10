@@ -1682,7 +1682,7 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   templates hold placeholder textures and a faint emission so URP keeps their keywords and a build keeps the variants;
   a platform switch can drop their `_EMISSION` (seen switching to Android), so `ModAssetsGuard` (Editor) puts it back before
   every build: without it Linux / Android shipped without the emission variants, mod ships' glowing parts dark): the
-  GLB's own glTF materials (`ModGltfMaterials`; metallic-roughness converted by `Hidden/GoF2/MetallicRoughnessToGloss`) or
+  GLB's own glTF materials (`ModGltfMaterials`; metallic-roughness converted by `Hidden/GoF2/MetallicRoughnessToGloss`, the material's `metallicFactor` / `roughnessFactor` baked in, also on the CPU path, per factor pair (`ModGlbImages.Image.mrFactors`, `ModMaterials.RoleKey`): they were taken as 1, and the GoF3 Ships mod's maps are all metal in B with metallicFactor 0, so its hulls were mirrors, black against space) or
   the entry's `materials` (`ModMaterials.FromSpec`: the PR's fields plus `doubleSided`). Textures load from the mod's PNGs,
   compressed with mipmaps. Normal maps (ships / stations / rooms `normal` / `detailNormal`, glTF normal textures, `*_normal`
   texture replacements) are loaded with `normal: true`: Android's normal map encoding is "DXT5nm-style" (Player settings),
