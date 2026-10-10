@@ -1596,8 +1596,7 @@ namespace GoF2Remake.UI
             root.EnableInClassList("input-keyboard", kind == InputKind.KeyboardMouse);
             root.EnableInClassList("input-gamepad", kind == InputKind.Gamepad);
             SetTouchMode(kind == InputKind.Touch);
-            if (kind == InputKind.Gamepad && !HangarOpen && root.focusController?.focusedElement == null)
-                Select(DialogOpen ? dialogYes : SystemMenuOpen ? SystemMenuItems()[0] : level != null && level.View == StationView.Lounge ? loungeButton : hangarButton);
+            if (kind == InputKind.Gamepad && !HangarOpen && root.focusController?.focusedElement == null) Select(DefaultFocus());
             BuildHints(kind);
             BuildInspectHints(kind);
         }
@@ -1620,6 +1619,10 @@ namespace GoF2Remake.UI
             root.focusController?.IgnoreEvent(e);
         }
 
+
+        /// <summary>What a controller starts on: the dialog's Yes, the system menu's first entry, else the view's button.</summary>
+        VisualElement DefaultFocus() =>
+            DialogOpen ? dialogYes : SystemMenuOpen ? SystemMenuItems()[0] : level != null && level.View == StationView.Lounge ? loungeButton : hangarButton;
 
         void Select(VisualElement e)
         {
@@ -2195,6 +2198,13 @@ namespace GoF2Remake.UI
                 return;
             }
             if (toastMs > 0f && (toastMs -= Time.unscaledDeltaTime * 1000f) <= 0f) toast.RemoveFromClassList("station-toast--shown");
+            // #74: the panel only sends a controller's navigation to a focused element. ApplyInputMode focuses the default
+            // button when the controller becomes the input, but a station loaded with the controller already in use (the menu
+            // still away behind the hangar flight) or a closed window can leave nothing focused: the D-pad then did nothing
+            // until a dialog, a menu or a touch set the focus again.
+            if (InputMode.Current == InputKind.Gamepad && !HangarOpen && root.focusController?.focusedElement == null
+                && !(missions != null && missions.IsOpen) && !(status != null && status.IsOpen) && !(lounge != null && lounge.ChatOpen))
+                Select(DefaultFocus());
             if (DialogOpen || SystemMenuOpen) return;
             if (missions != null && missions.IsOpen) return;
             if (status != null && status.IsOpen) return;

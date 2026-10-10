@@ -506,7 +506,25 @@ namespace GoF2Remake.UI
                 && !dialog.ClassListContains("dialog-backdrop--shown"))
                 modBrowser.ToggleSelected();
             if (lastScreen != ScreenSize() || lastSafeArea != Screen.safeArea) UpdateLayout();
+            KeepControllerFocus();
         }
+
+        /// <summary>#74: the panel only sends a controller's navigation to a focused element, and nothing focuses one when the
+        /// controller takes over from touch (Android starts in touch mode) or a closed panel took the focus with it: the
+        /// D-pad then did nothing until a touch. With the controller in use and nothing focused, the open dialog's Yes, the
+        /// open panel's first item or the main column's.</summary>
+        void KeepControllerFocus()
+        {
+            if (screen != MenuState.Menu || InputMode.Current != InputKind.Gamepad || root.focusController == null
+                || root.focusController.focusedElement != null) return;
+            if ((focusRetry -= Time.unscaledDeltaTime) > 0f) return;   // a page with nothing to focus: not every frame
+            focusRetry = 0.25f;
+            SetTouchMode(false);
+            if (dialog.ClassListContains("dialog-backdrop--shown")) Select(root.Q<Button>("dialogYes"));
+            else FocusFirst(openPanel ?? mainButtons);
+        }
+
+        float focusRetry;
 
         static int FingersDown()
         {
