@@ -2208,6 +2208,7 @@ namespace GoF2Remake.UI
             if (DialogOpen || SystemMenuOpen) return;
             if (missions != null && missions.IsOpen) return;
             if (status != null && status.IsOpen) return;
+            if (lounge != null && lounge.NumberKey(kb)) return;   // #75: in the lounge the number keys pick its visitors
             // The PC version's "Menu button 1 - 9" (3356) tap Globals::sub_menu_buttons: the main view's Hangar / Lounge / Map /
             // Missions / Status, the hangar window's three tabs (HangarWindow::initialize): 4 / 5 do nothing there.
             if (kb != null && kb.digit5Key.wasPressedThisFrame && !HangarOpen) { Play(buttonRelease); OpenStatus(); return; }

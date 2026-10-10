@@ -493,7 +493,7 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
     so its flybys (layer 27) are drawn by an overlay camera stacked on the bar camera (its depth kept) with the fog off.
 - **Menu:**
   - Layout: header; system, tech level and race; Hangar (opens the shop window, see "Shop"), Space Lounge and Map (the star map, see "Star map and system travel") buttons; **Launch**, refused while the cargo hold is overloaded (204); the original's "Depart the station?" (397) is left out (remake: it launches at once).
-  - Input modes work like the flight HUD: touch; keyboard 1 / 2 / M / L / Esc; controller LB / RB / Y / X / B / Menu. The number keys are the PC version's "Menu button 1 - 9" (3356, its key table is still in the Android binary: a tap on `Globals::sub_menu_buttons`): on the main view 1 Hangar, 2 Lounge, 3 Map, 4 Missions, 5 Status; in the hangar window 1 / 2 / 3 = Ship / Shop (Store) / Blueprints (`HangarWindow::initialize`), 4 / 5 nothing; Q / E (LB / RB) cycle the tabs. No hint row on the main view (the buttons say it); toasts sit at the bottom, above the ticker.
+  - Input modes work like the flight HUD: touch; keyboard 1 / 2 / M / L / Esc; controller LB / RB / Y / X / B / Menu. The number keys are the PC version's "Menu button 1 - 9" (3356, its key table is still in the Android binary: a tap on `Globals::sub_menu_buttons`): on the main view 1 Hangar, 2 Lounge, 3 Map, 4 Missions, 5 Status; in the Space Lounge 1-9 (and the keypad's) pick its visitors in the list's order instead, numbered "1." on the rows with keys and mouse (remake, #75, `LoungePanel.NumberKey`); in the hangar window 1 / 2 / 3 = Ship / Shop (Store) / Blueprints (`HangarWindow::initialize`), 4 / 5 nothing; Q / E (LB / RB) cycle the tabs. No hint row on the main view (the buttons say it); toasts sit at the bottom, above the ticker.
   - Esc or B steps back: dialog, then lounge, then the system menu (Save game, Back to Main Menu).
   - Music per race and station; ambience per screen as the FMOD cycle events (`CycleSound`): 122 Mainview, 95 Hangar while the hangar window is open (`StationLevel.SetHangarWindowOpen`, `ModStation::OnKeyPress`), 108 Lounge.
 - Missions (129, unlocks with the Map) and Status (169): see "Bar and freelance".
@@ -698,7 +698,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   original has none: `Engine::Vibrate` is an empty stub and `Globals::init` calls `VibrateEnable(false)`): `Haptics` (created
   by `Bootstrap`, kept for the run) sends to the controller last used while `InputMode` is Gamepad (the Input System's
   `SetMotorSpeeds`: XInput, DualShock 4 / DualSense; a no-op where the platform has no rumble) or to the phone while it is
-  Touch (`PhoneVibrator`, Android `Vibrator` over JNI: `VibrationEffect.createOneShot` with the amplitude when the motor
+  Touch (on Android also while it is Gamepad, #73: the Input System's Android backend sends no controller rumble, so the
+  device's motor stands in, the one built-in controls of handhelds like the Konkr Pocket FIT have) (`PhoneVibrator`, Android `Vibrator` over JNI: `VibrationEffect.createOneShot` with the amplitude when the motor
   has amplitude control, else shorter buzzes for weaker pulses; `AndroidVibratePermission` (Editor) adds the VIBRATE
   permission to the Gradle manifest). `HapticMixer` (plain C#) mixes the pulses (held for the first quarter, then a linear
   fade; the strongest per motor wins) and the frame's continuous rumble. Pulses (`Haptics.Play` with the presets in
