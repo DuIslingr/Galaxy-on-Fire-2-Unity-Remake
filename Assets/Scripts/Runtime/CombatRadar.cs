@@ -13,7 +13,9 @@
 //               Remake, the smarter lock (default; Settings.OriginalTargetLock = the original's): among the ships in the box
 //               the hostile ones come first, then the one nearest the crosshair (the original takes the first of the
 //               list, any faction), and while a hostile ship is locked and alive no neutral or friendly one becomes a
-//               candidate: one crossing the box no longer steals the lock (and the missiles) from the enemy aimed at.
+//               candidate: one crossing the box no longer steals the lock (and the missiles) from the enemy aimed at. A
+//               crate in the box beats the ship already locked and the non-hostile ones (#76: the locked enemy kept the
+//               tractor off its own container); a new hostile ship still comes first.
 //   salvage     a crate in the box: ring after 500 ms, locked after the tractor beam's attr 24 (TractorBeam::update);
 //               without a tractor beam "No tractor beam." (540). The beam (projectile_068..070 / v_194) pulls the crate at
 //               10 u/ms, sound 0 loops; within 400 units it is captured (sound 4): the first non-empty cargo entry, capped
@@ -196,11 +198,16 @@ namespace GoF2Remake.Flight
                                 if (Better(o)) best = o;
                             }
                     if (bestSteal != null) best = null;
-                    if (best == null && bestSteal == null)
+                    // Remake, the smarter lock (#76): a crate in the box also beats the ship already locked (that lock stays,
+                    // there is nothing to lock) and a non-hostile one; only a new hostile ship still comes first. Before, the
+                    // locked enemy, usually in the box beside the container it dropped, kept the tractor beam off it.
+                    bool crateFirst = smart && (best == null || best == Locked || !best.hostileToPlayer);
+                    if ((best == null || crateFirst) && bestSteal == null)
                     {
                         bestD = float.MaxValue;
                         foreach (var cr in Crate.All)
                             if (cr != Salvaging && !cr.claimedByOther && InBox(cam, c, box, cr.transform.position, out float d) && d < bestD) { bestD = d; bestCrate = cr; }
+                        if (bestCrate != null) best = null;
                     }
                 }
             }

@@ -225,6 +225,11 @@ namespace GoF2Remake.Flight
                 var it = db.Item(e.item);
                 if (it != null && it.categoryId == 28) { fireRate = 1f - it.Attr(39) / 100f; damageFactor = 1f + it.Attr(40) / 100f; }
             }
+            // MGame::OnInitialize 0x1a6ebc -> PlayerEgo::pitchAllPrimaryGuns(1 - getFireRateFactor()) when it is >= 0: Gun+0xb0,
+            // the raw FMOD pitch Player::playShootSound passes to FModSound::play (set only when != 0; raw x 4 = octaves,
+            // EventI::getPitch). The Nirai Overdrive (+20 % fire rate) raises the primaries' shots by 0.8 octaves; the
+            // Overcharge (-10 %) gives a negative value the original skips: no change (#76).
+            primaryPitch = 1f - fireRate > 0f ? Mathf.Pow(2f, 4f * (1f - fireRate)) : 1f;
             int p = 0, s = 0;
             for (int e = 0; e < equipment.Count; e++)
             {
@@ -278,6 +283,7 @@ namespace GoF2Remake.Flight
                 rig.loop.loop = true;
                 rig.loop.playOnAwake = false;
                 rig.loop.spatialBlend = 0f;
+                if (!gun.isSecondary) rig.loop.pitch = primaryPitch;   // pitchAllPrimaryGuns
             }
             gun.owner = owner;
             gun.Hit += (i, target, point) => OnHit(rig, i, target, point);
@@ -487,6 +493,8 @@ namespace GoF2Remake.Flight
 
         VolatileCargo volatileCargo;
         ChaseCamera chaseCam;
+        /// <summary>The primaries' shot pitch (Gun+0xb0, pitchAllPrimaryGuns): a weapon mod speeding up the fire rate raises it.</summary>
+        float primaryPitch = 1f;
 
         /// <summary>Player::shoot: every shot + 0.008 on the volatile meter; Gun::shootAt: TargetFollowCamera::hitSmall
         /// (50 ms, +-2 units).</summary>
@@ -501,7 +509,8 @@ namespace GoF2Remake.Flight
         void PlayShot(Rig r)
         {
             var clip = r.fx != null ? r.fx.Shot : null;
-            if (clip != null) ShotVoices.Play(clip, shotVolume * Settings.SfxVolume);   // two voices per shot sound (FEV max_playbacks)
+            // Two voices per shot sound (FEV max_playbacks); the primaries at the weapon mod's pitch (pitchAllPrimaryGuns).
+            if (clip != null) ShotVoices.Play(clip, shotVolume * Settings.SfxVolume, r.gun.isSecondary ? 1f : primaryPitch);
         }
 
         /// <summary>Radar::draw's auto-aim flag (KIPlayer+0x6f) for the beams: the nearest target (to the player) on screen,
