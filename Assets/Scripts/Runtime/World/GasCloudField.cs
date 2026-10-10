@@ -244,7 +244,9 @@ namespace GoF2Remake.World
                     else if (dt < ShrinkUnits) s.scale = (dt - CollectUnits) / 2700f;
                     else s.scale = 1f;
                     bool pulled = collecting && c.ageMs >= CollectDelayMs && InSight(pos);
-                    if (pulled) pos += (gun - pos).normalized * turret.PullSpeed * dtMs * M;
+                    // PlayerGasCloud::update 0x1a5e54..: in sight the spark's own direction becomes "toward the turret"
+                    // (kept after it leaves the sight: it drifts on that way at its own speed, #79) and it moves at attr 49.
+                    if (pulled) { s.dir = (gun - pos).normalized; pos += s.dir * turret.PullSpeed * dtMs * M; }
                     else pos += s.dir * s.speed * dtMs * M;
                     if (s.tr != null) { s.tr.position = pos; s.tr.localScale = sparkBaseScale * Mathf.Max(0f, s.scale); }
                     if (s.Alive) anyAlive = true;
@@ -309,7 +311,7 @@ namespace GoF2Remake.World
                 if (turret == null || !turret.IsCollector || !turret.InTurretView) return false;
                 foreach (var c in clouds)
                     if (c.exploded && !c.done)
-                        foreach (var s in c.sparks) if (s.Alive && s.tr != null && InSight(s.tr.position)) return true;
+                        foreach (var s in c.sparks) if (s.lifeMs > 0f && s.tr != null && InSight(s.tr.position)) return true;   // not one fading out
                 return false;
             }
         }

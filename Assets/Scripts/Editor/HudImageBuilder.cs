@@ -222,7 +222,8 @@ namespace GoF2Remake.EditorTools
             (Ipad3, "hack_blocked", 57, 607, 68, 67, 0, false), (Ipad3, "hack_bar", 315, 1, 770, 58, 0, false),
             (Ipad3, "hack_frame_top", 717, 61, 566, 416, 0, false), (Ipad3, "hack_frame_bottom", 315, 61, 400, 400, 0, false),
             // Radar::draw with a plasma collector: the crosshair while a plasma spark is in range (0x1f5d).
-            (Ipad3, "plasma_crosshair", 1285, 354, 214, 214, 0, false),
+            (Ipad3, "plasma_crosshair", 1285, 354, 214, 214, 0, false),       // 0x1f5d the collector's crosshair, plasma in range
+            (Ipad3, "plasma_crosshair_idle", 315, 463, 214, 214, 0, false),  // 0x1f5e the collector's crosshair otherwise
         };
 
         [MenuItem("GoF2/Build/HUD Images", priority = 220)]
