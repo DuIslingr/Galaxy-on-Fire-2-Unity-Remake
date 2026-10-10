@@ -4,7 +4,7 @@ A remake of the 2010 mobile game *Galaxy on Fire 2* (Fishlabs / Deep Silver) in 
 
 ## Environment
 
-- Unity **7000.0** (alpha 7000.0.0a7, from 6000.7.0b3 on 2026-10-06; .NET CoreCLR instead of Mono), **URP 17.7**, Windows.
+- Unity **7000.0** (alpha 7000.0.0a8, from 6000.7.0b3 on 2026-10-06, a8 on 2026-10-10; .NET CoreCLR instead of Mono), **URP 17.7**, Windows.
 - **Scripting backend:** IL2CPP for Windows / Linux (Standalone; the Editor modules "Windows / Linux Build Support (IL2CPP)";
   Linux builds from Windows use `com.unity.toolchain.win-x86_64-linux` + `com.unity.sdk.linux-x86_64`, which the first Linux
   IL2CPP build added) and Android; native callbacks must be static `[AOT.MonoPInvokeCallback]` methods (`WinConsole`). A
