@@ -1074,8 +1074,8 @@
     background-color: rgba(120, 220, 255, 0.6);
 }
 
-/* Remake, free flight (FlightStyles.Free): the tethered mouse reticle's reach, a faint circle round the centre. */
-.mouse-tether {
+/* Remake, free flight (FlightStyles.Free): the mouse's virtual joystick reach, a faint circle round the centre. */
+.mouse-stick {
     display: none;
     position: absolute;
     border-width: 1px;

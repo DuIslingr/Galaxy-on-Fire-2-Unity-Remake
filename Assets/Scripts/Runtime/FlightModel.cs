@@ -6,13 +6,14 @@
 // Units: the original works in milliseconds and "GoF units". This class keeps those units
 // internally so every constant matches the original; the MonoBehaviour converts to Unity.
 //
-// Remake: a second flight style, free flight (Settings.FlightStyle, StepFree), after EVERSPACE 2's controls as they are
-// publicly described (not from its code): thrust, strafe and up / down held instead of a throttle, the turn rates eased
-// toward the stick or the mouse's tethered reticle, a manual roll and no auto-level, a held boost on an energy pool, and
-// inertial dampeners (on: the thrusters cancel any motion not asked for, the ship stops when nothing is held; off: the
-// ship keeps its momentum and the thrust only adds to it, the speed easing back to a soft cap). The ship's own numbers
-// carry over: the top speed is the original's 2 units/ms, the top turn rate the original's for its handling, the boost
-// speed, duration and recharge its booster's.
+// Remake: a second flight style, free flight (Settings.FlightStyle, StepFree), after EVERSPACE 2 (not from its code): its
+// numbers are measured from recordings of the game and read from its asset values (Reference/research/
+// es2_flight_measurements.md). Thrust, strafe and up / down held instead of a throttle, the turn rates ramped toward the
+// stick or the mouse's virtual joystick, a manual roll and no auto-level, a held boost on an energy pool, and inertial
+// dampeners (on: each axis flies the speed asked for, and what isn't asked for brakes away; off: the ship keeps its
+// momentum and the thrust only adds to it, the speed easing back to a soft cap). The top speed is the original's
+// 2 units/ms (100 m/s, also EVERSPACE 2's); the turn rate scales with the ship's handling, the boost recharge is its
+// booster's.
 
 using System;
 using UnityEngine;
@@ -164,17 +165,51 @@ namespace GoF2Remake.Flight
         /// flight while another mode moves the ship (the autopilot, the launch camera), so switching is seamless.</summary>
         public Vector3 FreeVelocity;
 
-        const float FreeReverseShare = 0.5f;     // backward thrust's top speed, of the forward one
-        const float FreeSideShare = 0.6f;        // strafe and up / down
-        const float FreeAccelMs = 650f;          // standstill to top speed at handling 24 (Betty): sqrt-scaled by the handling
-        const float FreeDampenShare = 1.3f;      // the dampeners brake a little harder than the engines accelerate
-        const float FreeCapEaseShare = 0.35f;    // dampeners off: above the soft cap the speed eases back at this share of the acceleration
-        const float FreeTurnLagMs = 110f;        // the turn rates' time constant toward the aim
-        const float FreeRollRate = 120f * Mathf.Deg2Rad / 1000f;   // rad per ms at full roll input
-        const float FreeBoostTurnShare = 0.7f;   // boosting turns slower
-        const float FreeBoostAccelShare = 2f;    // and surges
+        // EVERSPACE 2's player ship (es2_flight_measurements.md; the cockpit's speed gauge, km/h): top speed 100 m/s forward
+        // (measured 343 km/h = 95.3), backward, strafe and up / down half of it (all 172 km/h); every axis eases out cubically
+        // to its top speed in a fixed time (v = V (1 - (1 - t/T)^3), the assets' EaseAccelerationExponent 3: forward
+        // T ~1.75 s, the others ~1.27 s); ~33 m/s^2 of braking with nothing held, linear, on every axis (the asset's 60
+        // is probably scaled by the player's dampener strength); a boost to ~x3.2 the top speed (the gauge: 1110 km/h),
+        // eased out cubically over ~3.1 s from the top speed, lasting as long as the equipment allows (measured: 4.5 s
+        // held, all of it boosting; the blueprint's 3.5 s is overridden; on the measured ship a long boost kept gaining
+        // speed past that, its equipment, not modelled); every axis turns at ~125 deg/s, reached in ~0.4 s (the cockpit
+        // view), at any speed; ~0.85 of it boosting (measured).
+        const float FreeReverseShare = 0.5f;     // backward top speed, of the forward one (measured)
+        const float FreeStrafeShare = 0.5f;      // sideways (measured)
+        const float FreeHoverShare = 0.5f;       // up / down (measured)
+        const float FreeEaseFwdMs = 1750f;       // forward: standstill to top speed, eased out cubically (handling 100,
+                                                 // sqrt-scaled by the handling)
+        const float FreeEaseSideMs = 1270f;      // backward, strafe, up / down: the same
+        const float FreeDecelMs = 3000f;         // braking from top speed to a stop (33 m/s^2), dampeners on, nothing held
+        const float FreeTurnRate = 125f * Mathf.Deg2Rad / 1000f;   // rad per ms at full input, handling 20 (H of handling 100)
+        const float FreeTurnRampMs = 400f;       // standstill to the top turn rate (and back), linear (measured in the cockpit
+                                                 // view, which follows the ship rigidly: 10-85 % in 0.31 s)
+        const float FreeBoostFactor = 3.2f;      // boost top speed, of the forward one (the gauge: 1110 of 343 km/h)
+        const float FreeBoostEaseMs = 3100f;     // the boost's cubic ease-out over the gap from the top speed (the gauge)
+        const float FreeBoostDurationMs = 3500f; // a full energy pool without a booster duration (the blueprint's value); with
+                                                 // one, the booster's duration (attribute 27), refilled in its recharge time
+        const float FreeBoostTurnShare = 0.85f;  // boosting turns slower (measured 0.82-0.9: the boost's wider view makes it read low)
         const float BoostRestartEnergy = 0.2f;   // an emptied pool boosts again from a fifth full
         float boostEnergy = 1f, freeBoostVisual, freeYaw, freePitch, freeRoll;   // the free rates in rad/ms
+        bool boostSpent;   // the pool ran empty while the key was held
+
+        /// <summary>Free flight: the top turn rate (rad / ms) for this ship: EVERSPACE 2's 125 deg/s at handling 100,
+        /// square-root scaled by the handling, the sensitivity option x0.6..1.6 (1 at its default).</summary>
+        float FreeTopTurnRate(float he) =>
+            FreeTurnRate * Mathf.Sqrt(Mathf.Max(1f, he) / 20f) * TurnScale * Mathf.Clamp(0.5f + 0.5f * Sensitivity, 0.6f, 1.6f);
+
+        /// <summary>One velocity component toward 'want' while there is input that asks for more speed (or the other way):
+        /// along EVERSPACE 2's cubic ease-out, v = top (1 - (1 - t/T)^3), written as a rate of the speed still missing
+        /// (dv/dt = 3 top / T x (missing / top)^(2/3), so it continues from any speed and arrives in finite time);
+        /// else braked at 'decel' (no input, or faster than asked: after a boost).</summary>
+        static float FreeAxis(float v, float want, bool input, float top, float easeMs, float decel, float dtMs)
+        {
+            bool drive = input && (Mathf.Abs(v) <= Mathf.Abs(want) || Mathf.Sign(v) != Mathf.Sign(want));
+            if (!drive) return Mathf.MoveTowards(v, want, decel * dtMs);
+            float missing = Mathf.Abs(want - v), share = Mathf.Min(1f, missing / Mathf.Max(1e-4f, top));
+            float rate = 3f * top / easeMs * Mathf.Pow(share, 2f / 3f);
+            return Mathf.MoveTowards(v, want, rate * dtMs);
+        }
 
         /// <summary>Free flight: one frame. The rotation to apply (degrees, local, as Step), the world move in units
         /// (FrameResult.move) and the collision push.</summary>
@@ -183,15 +218,15 @@ namespace GoF2Remake.Flight
             float he = EffectiveHandling;
             UpdateBoost(dtMs);
 
-            // ---- turning: the rates ease toward the aim (the stick's or the reticle's deflection x the ship's top rate)
-            float maxRate = (int)(TargetRateScale * he) / TargetRateDivisor * RateToRadiansPerMs * TurnScale
-                          * Mathf.Lerp(0.6f, 1.4f, Mathf.Clamp01(Sensitivity / 2.2f)) * (IsBoosting ? FreeBoostTurnShare : 1f);
-            float k = 1f - Mathf.Exp(-dtMs / (FreeTurnLagMs / Mathf.Max(0.05f, Inertia)));
-            freeYaw = Mathf.Lerp(freeYaw, Mathf.Clamp(input.aim.x, -1f, 1f) * maxRate, k);
-            freePitch = Mathf.Lerp(freePitch, Mathf.Clamp(input.aim.y, -1f, 1f) * maxRate, k);
+            // ---- turning: the rates ramp toward the aim (the stick's or the virtual joystick's deflection x the top rate)
+            float maxRate = FreeTopTurnRate(he) * (IsBoosting ? FreeBoostTurnShare : 1f);
+            float step = maxRate / (FreeTurnRampMs / Mathf.Max(0.05f, Inertia)) * dtMs;
+            freeYaw = Mathf.MoveTowards(freeYaw, Mathf.Clamp(input.aim.x, -1f, 1f) * maxRate, step);
+            freePitch = Mathf.MoveTowards(freePitch, Mathf.Clamp(input.aim.y, -1f, 1f) * maxRate, step);
             float roll = Mathf.Clamp(input.roll, -1f, 1f);
             if (Mathf.Abs(roll) > 0.01f) StopLeveling();
-            freeRoll = Mathf.Lerp(freeRoll, roll * FreeRollRate * RollScale, k);
+            float rollTop = FreeTopTurnRate(he) * RollScale;   // EVERSPACE 2 rolls as fast as it turns
+            freeRoll = Mathf.MoveTowards(freeRoll, roll * rollTop, rollTop / (FreeTurnRampMs / Mathf.Max(0.05f, Inertia)) * dtMs);
             float rollRad = -freeRoll * dtMs;
             rollLevelled = false;
             if (IsLeveling) { rollRad += AutoLevelRoll(dtMs, shipUp, shipRight) * RollScale; if (rollLevelled) IsLeveling = false; }
@@ -200,26 +235,40 @@ namespace GoF2Remake.Flight
             PitchRate = freePitch / RateToRadiansPerMs;
 
             // ---- moving
-            float top = BaseSpeed;
-            float accel = top / (FreeAccelMs * Mathf.Sqrt(24f / Mathf.Max(5f, he)) + AccelMs) * (IsBoosting ? FreeBoostAccelShare : 1f);
+            float top = BaseSpeed, boostTop = top * FreeBoostFactor;
+            float handlingScale = Mathf.Sqrt(20f / Mathf.Max(5f, he));
+            float easeFwd = FreeEaseFwdMs * handlingScale + AccelMs;
+            float easeBoost = FreeBoostEaseMs * handlingScale + AccelMs;
+            float easeSide = FreeEaseSideMs * handlingScale + AccelMs;
+            float decel = top / (FreeDecelMs + AccelMs);
             float thrust = Mathf.Clamp(input.thrust, -1f, 1f), strafe = Mathf.Clamp(input.strafe, -1f, 1f), hover = Mathf.Clamp(input.hover, -1f, 1f);
             if (IsBoosting) thrust = 1f;   // the boost drives forward whatever is held
             var fwd = rotation * Vector3.forward;
+            var v = Quaternion.Inverse(rotation) * FreeVelocity;   // ship space: x right, y up, z forward
             if (input.dampeners)
             {
-                // The thrusters fly the velocity asked for and cancel the rest.
-                var local = new Vector3(strafe * top * FreeSideShare, hover * top * FreeSideShare,
-                                        thrust >= 0f ? thrust * (IsBoosting ? boostSpeedValue : top) : thrust * top * FreeReverseShare);
-                FreeVelocity = Vector3.MoveTowards(FreeVelocity, rotation * local, accel * FreeDampenShare * dtMs);
+                // Each axis flies the speed asked for; what isn't asked for brakes away at 60 m/s^2 (so a boost's speed
+                // eases off instead of stopping dead, EVERSPACE 2's momentum after a boost).
+                v.x = FreeAxis(v.x, strafe * top * FreeStrafeShare, strafe != 0f, top * FreeStrafeShare, easeSide, decel, dtMs);
+                v.y = FreeAxis(v.y, hover * top * FreeHoverShare, hover != 0f, top * FreeHoverShare, easeSide, decel, dtMs);
+                float wantZ = thrust >= 0f ? thrust * (IsBoosting ? boostTop : top) : thrust * top * FreeReverseShare;
+                // The ease's span: the axis's top speed, or while boosting the gap from the top speed to the boost's.
+                float spanZ = thrust < 0f ? top * FreeReverseShare : IsBoosting ? boostTop - top : top;
+                float easeZ = thrust < 0f ? easeSide : IsBoosting && v.z >= top * 0.999f ? easeBoost : easeFwd;
+                v.z = FreeAxis(v.z, wantZ, thrust != 0f, IsBoosting && v.z < top * 0.999f ? top : spanZ, easeZ, decel, dtMs);
+                FreeVelocity = rotation * v;
             }
             else
             {
                 // Pseudo-Newtonian: the thrust adds to the momentum; above the soft cap (the top speed, the boost's while
-                // boosting) the speed eases back.
-                var push = Vector3.ClampMagnitude(new Vector3(strafe * FreeSideShare, hover * FreeSideShare, thrust >= 0f ? thrust : thrust * FreeReverseShare), 1f);
-                FreeVelocity += rotation * push * (accel * dtMs);
-                float cap = IsBoosting ? boostSpeedValue : top, speed = FreeVelocity.magnitude;
-                if (speed > cap) FreeVelocity *= Mathf.MoveTowards(speed, cap, accel * FreeCapEaseShare * dtMs) / speed;
+                // boosting) the speed eases back at the braking rate.
+                // The ease-out's initial rate (3 top / T) as the thrust's acceleration.
+                var push = new Vector3(strafe * 3f * top * FreeStrafeShare / easeSide, hover * 3f * top * FreeHoverShare / easeSide,
+                                       thrust * 3f * (thrust < 0f ? top * FreeReverseShare / easeSide
+                                                      : IsBoosting ? (boostTop - top) / easeBoost : top / easeFwd));
+                FreeVelocity += rotation * push * dtMs;
+                float cap = IsBoosting ? boostTop : top, speed = FreeVelocity.magnitude;
+                if (speed > cap) FreeVelocity *= Mathf.MoveTowards(speed, cap, decel * dtMs) / speed;
             }
 
             // What the rest of the game reads: the forward speed as the throttle (the gauge, the engine sound, the exhaust).
@@ -255,25 +304,28 @@ namespace GoF2Remake.Flight
             freeYaw = freePitch = freeRoll = 0f;
         }
 
-        /// <summary>The held boost on its energy pool: drains in the booster's duration, refills in its recharge time; an
-        /// emptied pool boosts again from BoostRestartEnergy.</summary>
+        /// <summary>The held boost on its energy pool: drains in the booster's duration (FreeBoostDurationMs without one),
+        /// refills in its recharge time; an emptied pool boosts again from BoostRestartEnergy on a fresh press.</summary>
         void UpdateFreeBoost(float dtMs)
         {
             if (!hasBooster) { IsBoosting = false; CurrentSpeed = BaseSpeed; return; }
             if (Data.Cheats.NoBoostCooldown) boostEnergy = 1f;
-            bool can = IsBoosting ? boostEnergy > 0f : boostEnergy >= BoostRestartEnergy;
+            // An emptied pool doesn't restart while the key is still held (EVERSPACE 2 answers a boost on an empty pool
+            // with a refusal sound): release and press again.
+            if (!BoostHeld) boostSpent = false;
+            bool can = IsBoosting ? boostEnergy > 0f : boostEnergy >= BoostRestartEnergy && !boostSpent;
             if (BoostHeld && can)
             {
                 IsBoosting = true;
-                boostEnergy = Mathf.Max(0f, boostEnergy - (boostDurationMs > 0 ? dtMs / boostDurationMs : 1f));
-                if (boostEnergy <= 0f) IsBoosting = false;
+                boostEnergy = Mathf.Max(0f, boostEnergy - dtMs / (boostDurationMs > 0 ? boostDurationMs : FreeBoostDurationMs));
+                if (boostEnergy <= 0f) { IsBoosting = false; boostSpent = true; }
             }
             else
             {
                 IsBoosting = false;
                 boostEnergy = Mathf.Min(1f, boostEnergy + (boostRechargeMs > 0 ? dtMs / boostRechargeMs : 1f));
             }
-            CurrentSpeed = IsBoosting ? boostSpeedValue : BaseSpeed;
+            CurrentSpeed = IsBoosting ? BaseSpeed * FreeBoostFactor : BaseSpeed;
             freeBoostVisual = Mathf.MoveTowards(freeBoostVisual, IsBoosting ? 1f : 0f, dtMs / 200f);
         }
 
@@ -300,6 +352,7 @@ namespace GoF2Remake.Flight
             boostTimerMs = 0;
             IsBoosting = false;
             boostEnergy = 1f;
+            boostSpent = false;
         }
 
         /// <summary>Handling after the hardcore-mode cargo penalty: H*(0.6 + 0.4*(1 - load/max)).</summary>

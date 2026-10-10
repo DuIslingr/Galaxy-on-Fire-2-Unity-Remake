@@ -683,7 +683,7 @@ namespace GoF2Remake.UI
                 safeArea.Add(mouseReticle);
             }
             if (mouseReticle == null) return;
-            UpdateTetherRing(on && ship.Model.FreeFlight);
+            UpdateStickRing(on && ship.Model.FreeFlight);
             // Only once the mouse steers away from the centre (beyond ~4 % of the half screen height and the dead zone).
             bool show = on && !ship.MouseInDeadzone && ship.MouseOffset.magnitude > Screen.height * 0.02f;
             mouseReticle.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
@@ -695,33 +695,33 @@ namespace GoF2Remake.UI
             mouseReticle.style.top = p.y - parent.y;
         }
 
-        VisualElement tetherRing;
+        VisualElement stickRing;
 
-        /// <summary>Free flight's mouse: a faint circle round the centre, the tethered reticle's reach
-        /// (ShipController.TetherRadius).</summary>
-        void UpdateTetherRing(bool show)
+        /// <summary>Free flight's mouse: a faint circle round the centre, the virtual joystick's reach
+        /// (ShipController.StickRadius).</summary>
+        void UpdateStickRing(bool show)
         {
-            if (tetherRing != null && tetherRing.parent == null) tetherRing = null;   // a UI reload rebuilt the tree
-            if (tetherRing == null && safeArea != null)
+            if (stickRing != null && stickRing.parent == null) stickRing = null;   // a UI reload rebuilt the tree
+            if (stickRing == null && safeArea != null)
             {
-                tetherRing = new VisualElement { pickingMode = PickingMode.Ignore };
-                tetherRing.AddToClassList("mouse-tether");
-                safeArea.Insert(0, tetherRing);
+                stickRing = new VisualElement { pickingMode = PickingMode.Ignore };
+                stickRing.AddToClassList("mouse-stick");
+                safeArea.Insert(0, stickRing);
             }
-            if (tetherRing == null) return;
-            tetherRing.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+            if (stickRing == null) return;
+            stickRing.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (!show || root.panel == null) return;
             var c = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
             var p0 = RuntimePanelUtils.ScreenToPanel(root.panel, c);
-            var p1 = RuntimePanelUtils.ScreenToPanel(root.panel, c + new Vector2(Screen.height * ShipController.TetherRadius, 0f));
+            var p1 = RuntimePanelUtils.ScreenToPanel(root.panel, c + new Vector2(Screen.height * ShipController.StickRadius, 0f));
             float r = Mathf.Abs(p1.x - p0.x);
-            var parent = tetherRing.parent.worldBound;
-            tetherRing.style.left = p0.x - parent.x - r;
-            tetherRing.style.top = p0.y - parent.y - r;
-            tetherRing.style.width = 2f * r;
-            tetherRing.style.height = 2f * r;
-            tetherRing.style.borderTopLeftRadius = tetherRing.style.borderTopRightRadius =
-                tetherRing.style.borderBottomLeftRadius = tetherRing.style.borderBottomRightRadius = r;
+            var parent = stickRing.parent.worldBound;
+            stickRing.style.left = p0.x - parent.x - r;
+            stickRing.style.top = p0.y - parent.y - r;
+            stickRing.style.width = 2f * r;
+            stickRing.style.height = 2f * r;
+            stickRing.style.borderTopLeftRadius = stickRing.style.borderTopRightRadius =
+                stickRing.style.borderBottomLeftRadius = stickRing.style.borderBottomRightRadius = r;
         }
 
         void Update()

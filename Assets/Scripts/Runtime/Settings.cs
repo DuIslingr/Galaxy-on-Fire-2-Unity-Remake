@@ -146,7 +146,7 @@ namespace GoF2Remake.Data
         public const float DefaultMouseDeadzone = 0.08f;
         /// <summary>Remake: how the player's ship flies (FlightStyles): the original's (a throttle, the ship always flying
         /// forward) or free flight after EVERSPACE 2 (thrust, strafe and up / down held, inertial dampeners, the mouse aiming
-        /// through a tethered reticle; Flight.FlightModel's free mode). It also switches the key layout (GameControls).</summary>
+        /// through a virtual joystick; Flight.FlightModel's free mode). It also switches the key layout (GameControls).</summary>
         public static int FlightStyle { get => Mathf.Clamp(Mathf.RoundToInt(Get("flightStyle", FlightStyles.Original)), 0, 1); set => Set("flightStyle", Mathf.Clamp(value, 0, 1)); }
         /// <summary>Remake: Discord Rich Presence (DiscordPresence, desktop).</summary>
         public static bool DiscordPresence { get => GetBool("discordPresence", true); set => SetBool("discordPresence", value); }

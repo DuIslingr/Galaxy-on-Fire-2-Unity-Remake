@@ -12,7 +12,7 @@
 // Touch or your own UI: call SetSteer()/SetThrottle()/Boost(); the stronger of the external steer and the
 // built-in actions wins, so both can be used at the same time (FlightHud's touch stick does this).
 // Remake: free flight (Settings.FlightStyle, after EVERSPACE 2; FlightModel.StepFree) with the keyboard / mouse or a
-// controller: GameControls' Thrust / Strafe / Hover / Roll held, the stick or the mouse's tethered reticle aims, the boost
+// controller: GameControls' Thrust / Strafe / Hover / Roll held, the stick or the mouse's virtual joystick aims, the boost
 // held, Dampeners toggles the inertial dampeners. Touch, tilt and VR keep the original style; so do the autopilot, the
 // launch / arrival camera, the turret view, the dodge and computer control, which hand the ship back where they left it.
 
@@ -153,15 +153,16 @@ namespace GoF2Remake.Flight
         /// <summary>Remake: the mouse offset is inside the steering dead zone (Settings.MouseDeadzone): no turning.</summary>
         public bool MouseInDeadzone { get; private set; } = true;
 
-        /// <summary>Free flight: the tethered reticle's radius, of the screen height, and how fast it drifts back to the
-        /// centre (a time constant): the mouse moved turns the ship, the mouse still lets it settle.</summary>
-        public const float TetherRadius = 0.22f, TetherReturnMs = 260f;
+        /// <summary>Free flight: the mouse's virtual joystick radius, of the screen height (full deflection at its edge):
+        /// EVERSPACE 2's measured ~0.51 (the turn rate grows linearly with the reticle's offset, 0.229 deg/s per px at 1080p,
+        /// 125 deg/s at ~546 px).</summary>
+        public const float StickRadius = 0.5f;
 
         Vector2 ReadMouseSteer()
         {
             var mouse = Mouse.current;
             if (!mouseSteering || mouse == null) { MouseOffset = Vector2.zero; MouseInDeadzone = true; return Vector2.zero; }
-            if (Model.FreeFlight) return ReadTetheredMouse(mouse);
+            if (Model.FreeFlight) return ReadVirtualStick(mouse);
             var lim = new Vector2(Screen.width * 0.5f * 0.7f, Screen.height * 0.5f * 0.7f);
             var o = MouseOffset + mouse.delta.ReadValue();
             MouseOffset = new Vector2(Mathf.Clamp(o.x, -lim.x, lim.x), Mathf.Clamp(o.y, -lim.y, lim.y));
@@ -175,19 +176,22 @@ namespace GoF2Remake.Flight
             return new Vector2(Mathf.Clamp(scaled.x, -1f, 1f), Mathf.Clamp(scaled.y, -1f, 1f));
         }
 
-        /// <summary>Free flight's mouse (EVERSPACE 2's): the mouse moves a reticle inside a circle round the centre, the ship
-        /// turns toward it at a rate by its distance from the centre, and it drifts back to the centre on its own.</summary>
-        Vector2 ReadTetheredMouse(Mouse mouse)
+        /// <summary>Free flight's mouse, EVERSPACE 2's virtual joystick (measured: the reticle stays where the mouse leaves
+        /// it, the ship keeps turning at a rate by its offset): the mouse moves the reticle inside a circle round the centre,
+        /// its offset beyond the dead zone (Settings.MouseDeadzone) is the stick's deflection. It holds still while free look
+        /// turns the camera and is centred while the autopilot or a script steers.</summary>
+        Vector2 ReadVirtualStick(Mouse mouse)
         {
-            float radius = Screen.height * TetherRadius;
-            var o = MouseOffset + mouse.delta.ReadValue();
-            float dt = Time.timeScale > 0f ? Time.unscaledDeltaTime * 1000f : 0f;
-            o *= Mathf.Exp(-dt / TetherReturnMs);
-            MouseOffset = Vector2.ClampMagnitude(o, radius);
-            float m = MouseOffset.magnitude / Mathf.Max(1f, radius), dz = Data.Settings.MouseDeadzone;
+            if (freeLook == null) freeLook = GetComponent<FreeLookCamera>();
+            if (autopilotTarget != null || steeringLocked) MouseOffset = Vector2.zero;
+            else if (freeLook == null || !freeLook.FreeLookActive)
+                MouseOffset = Vector2.ClampMagnitude(MouseOffset + mouse.delta.ReadValue(), Screen.height * StickRadius);
+            float m = MouseOffset.magnitude / Mathf.Max(1f, Screen.height * StickRadius), dz = Data.Settings.MouseDeadzone;
             MouseInDeadzone = m <= dz;
             if (MouseInDeadzone) return Vector2.zero;
-            return MouseOffset / Mathf.Max(1f, MouseOffset.magnitude) * ((m - dz) / (1f - dz));
+            // A hard dead zone, not rescaled: beyond it the deflection is the whole offset over the radius (measured in
+            // EVERSPACE 2: 0.229 deg/s per px of offset, through the centre, from the dead zone's edge on).
+            return MouseOffset / Mathf.Max(1f, Screen.height * StickRadius);
         }
 
         Target selfTarget;
