@@ -653,6 +653,13 @@ namespace GoF2Remake.UI
         /// <summary>Credits changed outside the hangar window (a deal in the lounge).</summary>
         public void RefreshCredits() => BuildHints(InputMode.Current);
 
+        /// <summary>Multiplayer: a trade with another player changed the hold and the credits (NetTradeClient).</summary>
+        public void CargoChanged()
+        {
+            hangarWindow?.StockChanged();
+            RefreshCredits();
+        }
+
         void OpenLounge()
         {
             if (level == null || ArrivalPending || !Story.LoungeUnlocked(level.Station != null ? level.Station.index : -1)) return;

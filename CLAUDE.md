@@ -1023,6 +1023,19 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`Resources/GoF2Net/Squad.uss`) in the flight HUD and the station menu: the collapsible squad window (right side, only in
   a squad: each member, where they are, a shield bar and a hull bar with the armor over it like the HUD's), the station's
   collapsible pilot list, the invitation popup.
+- **Trades between players** (remake, `NetTrade` on the server, `NetTradeClient` on each game, RPCs in `NetState`, rate
+  kind `PlayerTrade`): only while both are docked at the same station. A request (the station pilot list's Trade, the
+  Multiplayer window's Trade tab, `/trade <pilot>`) waits 60 s for Accept / Decline (a popup like the squad invitation's,
+  `/trade accept | decline`); the trade then opens in the Multiplayer window's Trade tab for both: each side's offer is
+  credits and cargo items (no ships, no mounted equipment, no story items `Session.Unsaleable`, no Courier containers or
+  cabins 116 / 117; at most 16 kinds), sent whole 0.3 s after the last change and kept within the hold and the wallet;
+  every change makes a new version and takes back both accepts, Accept carries the version it saw and waits 2 s after the
+  other side's last change. Both accepted: the server asks each game to pay its own offer (`TradePayRpc`: checked, out of
+  the wallet and the hold), and only once both paid sends each the other's (`TradeDeliverRpc`); a side that can't pay,
+  doesn't answer in 15 s or leaves fails it and whoever paid gets their offer back (a late payment too). Either side
+  cancelling, taking off or leaving the station ends it. Profiles: the recorded worth moves with what each gave and got
+  (`NetProfiles.AdjustWorth`), so the upload check stays right. Goods past the hold's capacity are allowed (a warning; the
+  launch refuses as for the shop).
 - **NPCs and the players** (the authority's `NpcShip` hooks, set by NetOrbit): every other player in the orbit is in an
   NPC's hit list (their ships block its shots; a non-hostile NPC's stray hit does 20 % like the local player's). An NPC
   is hostile to another player when its race always is (pirates, the Void, Specters), when a player of their squad shot it
@@ -1605,7 +1618,7 @@ now takes an option right after another (a dash and a letter) as no value). `Boo
   `Build/Windows`) as client: `GoF2Remake.exe -screen-fullscreen 0 -screen-width 1280 -screen-height 720 -mpjoin 127.0.0.1
   -mpname Pilot2` (`-mpjoin`: the menu skips its intro and joins, again every 2 s until a host answers; development
   builds also take `-mpdock` (docks once, a few seconds into the first flight after launching) and `-mpaccept` (accepts squad invitations
-  while docked) and `-mphost` (hosts from the menu), so the real hangar / squad flows run without a hand on the client
+  while docked) and `-mptrade` (accepts trade requests while docked, offers 500 credits, accepts once the other side has) and `-mphost` (hosts from the menu), so the real hangar / squad flows run without a hand on the client
   (a phone: `adb shell "am start -n com.joppietoppie.gof2remake/com.unity3d.player.UnityPlayerGameActivity -e unity
   '-mphost -mpname Phone'"`). **Switch the active build profile before building another platform**: URP picks the shader
   variants to keep from the *active* build target's quality levels (`ShaderBuildPreprocessor`), so an Android APK built
