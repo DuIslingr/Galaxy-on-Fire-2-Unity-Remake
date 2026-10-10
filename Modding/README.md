@@ -949,6 +949,29 @@ veteran_skin/
     ship_028_terran_diffuse.png
 ```
 
+### Planets, suns and rings
+
+The same goes for the planets, suns and rings in the sky: a texture named like the game's replaces it in every system that
+shows it. The planets are `planet_000_small` ... `planet_019_small` (the other stations' planets) and `planet_000_big` ...
+`planet_019_big` (the orbit's own big planet), `planet_void_small` / `_big`, and the Supernova add-on's `sn_planet_024_small`
+... `sn_planet_026_big`; the suns `sun_000` ... (and `sn_sun_011`, the supernova); the rings `sn_planet_ring`. Each is one
+whole image (a disc on a transparent background, not a wrapped map), so keep the original's size and keep the transparent
+edge: the sun swells when it is near the middle of the screen, and a glow reaching the image's edge then shows as a square.
+
+To draw your retextured planets as stars, add a `backdrop.json` to the mod (the last mod in the load order that has one wins):
+
+```json
+{ "planets": "star", "planetGlow": 2, "planetFlare": 0.35 }
+```
+
+| Field | Meaning |
+|---|---|
+| `planets` | `"star"`: the planets whose texture your mod replaces face the camera like the sun, aren't mirrored and have no ring |
+| `planetGlow` | How much their bright core glows with the game's bloom (default 2; 1 = no extra glow) |
+| `planetFlare` | The sun's flare at this share of its strength when you look at them: a slight swell and a horizontal streak (0..1, default 0.35; 0 = none) |
+
+Planets you don't retexture stay planets.
+
 ## Building on other mods
 
 A mod can use what another mod adds: list it in `dependencies` (with the lowest version it needs, `"ship_pack>=1.2"`), and

@@ -1781,7 +1781,13 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   object's renderers get cached copies of their materials with the mod's texture in `_BaseMap` / `_MainTex` / `_BumpMap` /
   `_MetallicGlossMap` / `_EmissionMap`; the game's material assets are never touched); `_normal` / `_metallic` names load
   linear; loaded with the rest (`ModMaterials.PreloadTexture`, `ModLoading`). Verified in Play mode: a BountyBot
-  (/make_skin_texture) Veteran skin on the hangar turntable (`Mods/veteran_skin`, git-ignored).
+  (/make_skin_texture) Veteran skin on the hangar turntable (`Mods/veteran_skin`, git-ignored). The backdrop's planets, suns
+  and rings too (#66, `Backdrop.Load` -> `ModTextures.Replace(material)`: their Resources/GoF2Backdrop materials aren't on
+  assembled objects; the copy's texture clamped). A mod's `backdrop.json` (`ModBackdrop.StarPlanets`, the last mod in the load
+  order with one wins) `{ "planets": "star", "planetGlow": 2, "planetFlare": 0.35 }` draws the retextured planets as stars:
+  facing the camera with its roll, not mirrored, no ring, their core at `_CoreGlow` planetGlow under the remake's bloom, and
+  looked at, the sun's flare at planetFlare of its strength (a slight swell, an additive horizontal streak of their own
+  texture, `Body.starStreak`).
 - **Mod campaigns** (`ModCampaigns`, a mod's `campaign.json`: name, description, image, imageHover, showTitle, startStation,
   startShip, credits, equipment, cargo, standing, quest, galaxy mod | all, items mod | all, ships mod | all, trafficShips per
   race): a card after the three campaign cards, picked the same way (`MainMenu.RefreshModCampaigns` / `ModCard` /
