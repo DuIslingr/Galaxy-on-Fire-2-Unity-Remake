@@ -202,6 +202,7 @@ earlier). Only the fields you give change. Giving `name` or `description` rename
 | `miningBeamRange` | 101 | Mining beam reach from the asteroid's surface (game units, 20 per metre; default 24000) |
 | `miningBeamLayerMs` | 102 | Mining beam: time to cut one rock layer (ms; default 6000, the drill minigame's) |
 | `miningBeamLook` | 103 | Mining beam: the beam laser whose beam and impact it shows (9, 10, 11 or 228; default 228) |
+| `phaseCloak` | 104 | 1 = a cloak that also phases the ship through objects, shots and explosions while cloaked (see [Phase cloaks](#phase-cloaks)) |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
 `item_attributes.json` in `Assets/Resources/GoF2Data`). items.json's own stat names (`loadingTimeMs`, `range`,
@@ -229,6 +230,25 @@ of 100 and needs the landing and 6 s per layer.
     "techLevel": 10,
     "price": [480000, 520000],
     "stats": { "miningBeam": 1, "miningYield": 160, "miningBeamLayerMs": 4000, "miningBeamRange": 24000, "miningBeamLook": 228 }
+}
+```
+
+### Phase cloaks
+
+A cloak (an item based on one of the cloaks, 94 to 96) with `"phaseCloak": 1` works like any cloak (the energy cells, the
+charge, the duration, the cooldown, the look) and while it is cloaked, its fades included, the ship is phased out: it flies
+straight through asteroids, stations, jumpgates, freighters and other players' ships without touching them, and shots,
+beams and explosions pass through it without doing any damage (in multiplayer too). The wormhole still pulls. When the cloak ends inside something, the ship collides as usual: pushed out of a station's or a freighter's
+volume, or the asteroid it sits in destroyed for 20 damage.
+
+```json
+{
+    "id": "pegaphase",
+    "base": 96,
+    "name": "PegaPhase",
+    "techLevel": 10,
+    "price": [540000, 580000],
+    "stats": { "cloakDurationMs": 80000, "cloakChargeMs": 7000, "energyCells": 5, "phaseCloak": 1 }
 }
 ```
 
