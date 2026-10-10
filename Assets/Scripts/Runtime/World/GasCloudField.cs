@@ -78,6 +78,12 @@ namespace GoF2Remake.World
         /// <summary>Campaign 142's script: any cloud burst into sparks ("ionized").</summary>
         public bool AnyExploded => clouds.Exists(c => c.exploded);
         public int Count => clouds.Count;
+
+        /// <summary>Radar::draw's live PlayerGasClouds (Player::isActive and not dying: not burst yet), by a stable index
+        /// 0..Count-1: the spectral filters' markers and lock (CombatRadar, CombatView).</summary>
+        public bool IsLive(int i) => i >= 0 && i < clouds.Count && !clouds[i].exploded && !clouds[i].done;
+        public Vector3 PositionOf(int i) => clouds[i].position;
+        public GameObject ObjectOf(int i) => clouds[i].go;
         public event System.Action<string> Message;
 
         static readonly string[] Assemblies = { "sn_gas_cloud_green_anim_lookat_add", "sn_gas_cloud_blue_anim_lookat_add",

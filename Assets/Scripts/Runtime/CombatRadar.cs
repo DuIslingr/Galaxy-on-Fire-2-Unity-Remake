@@ -55,7 +55,7 @@ namespace GoF2Remake.Flight
         /// <summary>Lock ring frame 0..23, -1 = none.</summary>
         public int LockFrame { get; private set; } = -1;
         /// <summary>A ship or crate candidate exists (blocks the asteroid lock, Navigation.ShipLockActive).</summary>
-        public bool Busy => Candidate != null || CrateCandidate != null || StealCandidate != null;
+        public bool Busy => Candidate != null || CrateCandidate != null || StealCandidate != null || cloudCandidate >= 0;
         public event Action<string, int> Message;   // text, colour (0 white, 1 red, 2 green)
 
         Database db;
@@ -78,6 +78,17 @@ namespace GoF2Remake.Flight
         Transform beam;
         float beamLength = M;
 
+        /// <summary>The orbit's gas clouds (SpaceLevel; null without): the spectral filters' lock and markers.</summary>
+        [System.NonSerialized] public GasCloudField Clouds;
+        /// <summary>Spectral filter (sort 33) attr 57: live gas clouds are lock targets with markers (ST-X, Omega); attr 58:
+        /// also their marker off screen on the radar ellipse (Omega).</summary>
+        public bool CloudRadar { get; private set; }
+        public bool CloudOffScreen { get; private set; }
+        /// <summary>The gas cloud locked (GasCloudField index, -1 = none): Radar+0x38, held only while it is in the box.</summary>
+        public int LockedCloud { get; private set; } = -1;
+        int cloudCandidate = -1;
+        float cloudTimer;
+
         public void Setup(Database database, ShipController controller, Navigation navigation, Mining miningSystem,
                           WeaponSystem weaponSystem, PlayerHealth playerHealth, Traffic trafficManager)
         {
@@ -94,6 +105,9 @@ namespace GoF2Remake.Flight
             lockTimeMs = scanner != null && scanner.HasAttr(29) ? scanner.Attr(29) : 8000;
             lockTimeMs = Cheats.LockMs(lockTimeMs);
             cargoScan = scanner != null && scanner.Attr(31) == 1;
+            var filter = Shop.FirstMounted(db, 33);
+            CloudRadar = filter != null && filter.Attr(57) == 1;
+            CloudOffScreen = filter != null && filter.Attr(58) == 1;
             var tractor = Shop.FirstMounted(db, 13);
             if (tractor != null) { tractorItem = tractor.index; tractorLockMs = tractor.Attr(24); tractorMode = tractor.Attr(23); }
             sfx = gameObject.AddComponent<AudioSource>();
@@ -136,7 +150,7 @@ namespace GoF2Remake.Flight
             bool turretView = weapons != null && weapons.TurretView;
             if (turretView && Salvaging != null) { Salvaging.pulled = false; Salvaging = null; }
             UpdateSalvage(dtMs);
-            if (!HasScanner || health == null || health.Dead || nav == null || nav.Paused || nav.MenuOpen || turretView) { Candidate = null; CrateCandidate = null; StealCandidate = null; LockFrame = -1; Publish(); return; }
+            if (!HasScanner || health == null || health.Dead || nav == null || nav.Paused || nav.MenuOpen || turretView) { Candidate = null; CrateCandidate = null; StealCandidate = null; LockFrame = -1; UpdateCloudLock(-1, 0f); Publish(); return; }
             // Radar+0x1ab (AB-4): any crate, wherever it is, even on the autopilot.
             if (tractorMode == 2 && Salvaging == null && !nav.Jumping) AutoSalvage(Camera.main, false);
 
@@ -147,6 +161,7 @@ namespace GoF2Remake.Flight
             Target best = null;
             Crate bestCrate = null;
             NpcShip bestSteal = null;
+            int bestCloud = -1;
             var cam = Camera.main;
             // Radar+0x1aa (AB-3): the first crate on screen, no box and no lock time.
             if (!blocked && cam != null && tractorMode == 1 && Salvaging == null) AutoSalvage(cam, true);
@@ -209,6 +224,14 @@ namespace GoF2Remake.Flight
                             if (cr != Salvaging && !cr.claimedByOther && InBox(cam, c, box, cr.transform.position, out float d) && d < bestD) { bestD = d; bestCrate = cr; }
                         if (bestCrate != null) best = null;
                     }
+                    // Radar::draw 0x1570ec, a spectral filter with attr 57: a live gas cloud in the box is a lock candidate
+                    // (Radar+0x3c) when nothing else is.
+                    if (CloudRadar && Clouds != null && best == null && bestCrate == null && bestSteal == null)
+                    {
+                        float cd = float.MaxValue;
+                        for (int i = 0; i < Clouds.Count; i++)
+                            if (Clouds.IsLive(i) && InBox(cam, c, box, Clouds.PositionOf(i), out float d) && d < cd) { cd = d; bestCloud = i; }
+                    }
                 }
             }
             if (bestCrate != null && bestCrate == refusedCrate) bestCrate = null; else refusedCrate = null;
@@ -258,7 +281,32 @@ namespace GoF2Remake.Flight
                     }
                 }
             }
+            UpdateCloudLock(bestCloud, dtMs);
             Publish();
+        }
+
+        /// <summary>Radar::draw's gas cloud lock: the candidate's timer runs while it stays in the box; past the scanner's lock
+        /// time - 200 ms it is locked (sound 0x1a once), the ring filling from 500 ms and full while locked; it lets go as the
+        /// cloud leaves the box or bursts. Only a display aid (Radar::getLockedGasCloud has no caller): the plate's "Gas cloud"
+        /// (3236) and the distance under its marker (CombatView).</summary>
+        void UpdateCloudLock(int cloud, float dtMs)
+        {
+            if (cloud < 0 || Candidate != null || CrateCandidate != null || StealCandidate != null)
+            {
+                cloudCandidate = -1; cloudTimer = 0f; LockedCloud = -1;
+                return;
+            }
+            if (cloud != cloudCandidate) { cloudCandidate = cloud; cloudTimer = 0f; LockedCloud = -1; }
+            cloudTimer += dtMs;
+            int lt = Mathf.Max(501, lockTimeMs - 200);
+            if (cloudTimer > lt && LockedCloud != cloud)
+            {
+                LockedCloud = cloud;
+                if (assets != null && assets.targetLock != null) sfx.PlayOneShot(GoF2Remake.Modding.ModSounds.Get(assets.targetLock), Settings.SfxVolume);
+                Haptics.Play(Haptics.TargetLock);
+            }
+            if (cloudTimer > SalvageRingDelay)
+                LockFrame = LockedCloud == cloud ? 23 : Mathf.Min(23, (int)(23f * (cloudTimer - SalvageRingDelay) / (lt - SalvageRingDelay)));
         }
 
         /// <summary>Radar::draw on a new lock with Radar+0x1a5: the ship's first cargo entry. Its 24000-unit test (0x156916)

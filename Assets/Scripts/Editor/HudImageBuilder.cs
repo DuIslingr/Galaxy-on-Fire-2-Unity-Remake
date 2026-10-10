@@ -148,6 +148,7 @@ namespace GoF2Remake.EditorTools
             (Ipad3, "status_gamma", 1, 267, 42, 42, 0, false),           // 0x1f59 gamma shield row (supernova orbits)
             (Ipad3, "status_gamma_frame", 57, 956, 248, 14, 0, false),   // 0x1f5a
             (Ipad3, "status_gamma_fill", 1087, 17, 248, 14, 0, false),   // 0x1f5b
+            (Ipad3, "cloud_off", 57, 365, 58, 58, 0, false),             // 0x1f62 a gas cloud off screen (Spectral Filter Omega)
             (Ipad, "hit_side_blue", 112, 112, 324, 1000, 0, false),
             (Ipad, "hit_top_blue", 1012, 1670, 1000, 374, 0, false),
             (Ipad, "hit_side_red", 438, 1074, 325, 892, 0, false),

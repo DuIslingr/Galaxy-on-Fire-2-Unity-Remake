@@ -185,6 +185,12 @@ namespace GoF2Remake.UI
                         DrawShip(Get(sg), sg.transform.position, 1, sg.Target.HullFraction, radar.Locked == sg.Target, cam, origin, centre);
                 foreach (var c in Crate.All)   // the registry: a scene search every frame before
                     DrawCrate(Get(c), c.transform.position, c.race == 9, cam, origin, centre);
+                // Radar::draw 0x1570ec: a spectral filter's gas clouds (attr 57), off screen too with attr 58 (Omega).
+                var clouds = radar.Clouds;
+                if (radar.CloudRadar && clouds != null)
+                    for (int i = 0; i < clouds.Count; i++)
+                        if (clouds.IsLive(i) && clouds.ObjectOf(i) != null)
+                            DrawCloud(Get(clouds.ObjectOf(i)), clouds.PositionOf(i), radar.LockedCloud == i, radar.CloudOffScreen, cam, origin, centre);
 
                 // Lock ring and plate for ships / crates (after the navigation view, which owns them otherwise).
                 if (radar.LockFrame >= 0)
@@ -210,6 +216,15 @@ namespace GoF2Remake.UI
                     lockOre.EnableInClassList("lock-ore--wanted", locked.plateWanted);
                     lockClass.style.display = plateIcon != null ? DisplayStyle.Flex : DisplayStyle.None;
                     Image(lockClass, plateIcon);
+                }
+                else if (plateFree && radar.LockedCloud >= 0)
+                {
+                    // Radar::drawCurrentLock: a locked gas cloud's plate reads 3236 "Gas cloud", no icon.
+                    lockPlate.EnableInClassList("lock-plate--shown", true);
+                    plateTarget = null;
+                    lockOre.text = Localization.Get(3236);
+                    lockOre.EnableInClassList("lock-ore--wanted", false);
+                    lockClass.style.display = DisplayStyle.None;
                 }
             }
             List<Object> gone = null;
@@ -328,6 +343,26 @@ namespace GoF2Remake.UI
             var tex = !onScreen ? Tex(voidCrate ? "crate_off_void" : "crate_off") : near ? Tex("bracket") : Tex("crate_dot");
             Image(m.dot, tex);
             if (tex != null) Place(m.dot, p.x - tex.width / 2f, p.y - tex.height / 2f);
+        }
+
+        /// <summary>A gas cloud (Radar::draw): on screen the white diamond 0x4f1 with the distance under it while locked; off
+        /// screen, with the Omega (attr 58), 0x1f62 on the radar ellipse.</summary>
+        void DrawCloud(Marker m, Vector3 world, bool locked, bool offScreen, Camera cam, Vector2 origin, Vector2 centre)
+        {
+            bool onScreen = Project(cam, world, origin, centre, out var p, out _);
+            Show(m.bar, false); Show(m.fill, false); Show(m.bracket, false); Show(m.emp, false); Show(m.empFill, false);
+            bool dot = onScreen || (offScreen && !Vr.VrMode.Enabled);
+            Show(m.dot, dot);
+            Show(m.distance, onScreen && locked);
+            if (!dot) return;
+            var tex = onScreen ? Tex("crate_dot") : Tex("cloud_off");
+            Image(m.dot, tex);
+            if (tex != null) Place(m.dot, p.x - tex.width / 2f, p.y - tex.height / 2f);
+            if (onScreen && locked)
+            {
+                m.distance.text = Navigation.FormatDistance((world - cam.transform.position).magnitude / M);
+                Place(m.distance, p.x - 61f, p.y + 61f);
+            }
         }
 
         void UpdateStatus(PlayerHealth health, bool cinematic)

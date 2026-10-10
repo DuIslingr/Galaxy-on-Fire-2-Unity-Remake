@@ -339,7 +339,7 @@ against the FEV's LGCY data, see "Sound").
   createShip(DAT_00253754[k], ship 13 / 15), `PlayerFixedObject::setDeadButSelectable`): the race's freighter wreck held at its
   end pose (`SpawnSpec.deadButSelectable`, `NpcShip.ShowWreckAtEnd`, invulnerable, `ModelPath` "wreck:N" for the proxies),
   docking points sets 14 / 11 / 12 / 13 / 12 (DAT_002537a4: Vossk 132, Midorian 133, Nivelian 134 / 123, Terran 129).
-- **Gas clouds** (`GasCloudField`; needs a spectral filter, sort 33, not in the Void): clouds by `Galaxy::getPlasmaProbabilities`
+- **Gas clouds** (`GasCloudField`; needs a spectral filter, sort 33, not in the Void; #77, `Radar::draw` 0x1570ec: with the filter's attr 57 (ST-X, Omega) every live cloud has the white diamond 0x4f1 and is a lock target (`CombatRadar.LockedCloud`: in the crosshair box with no ship or crate there, the ring from 500 ms, locked at the scanner's lock time - 200 ms with sound 0x1a, held only while in the box; the plate 3236 "Gas cloud", the distance under its marker; a display aid only, `Radar::getLockedGasCloud` has no caller), with attr 58 (Omega) also 0x1f62 (`GoF2Hud/cloud_off`) on the radar ellipse off screen; the SA-1 has neither): clouds by `Galaxy::getPlasmaProbabilities`
   (items 201-204); an ionizing blast (`Gun.Detonated`) bursts clouds in reach into sparks; the plasma collector turret (sort 35,
   `PlayerTurret` collector mode, meshes 198-200) pulls sparks in the turret view (attr 49 speed, 51 range) and collects within 800
   (one sound at a time, messages summed over 600 ms).
