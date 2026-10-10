@@ -104,6 +104,34 @@ namespace GoF2Remake.Data
 
         public int TypeOf(int item) => db.Item(item)?.TypeId ?? 4;
 
+        /// <summary>Remake: the flown ship's equipment fitted to its slots on docking (StationLevel). A mod lowering a ship's
+        /// slots, or a debug hull swap (PlayerHull), could leave more mounted than it has slots, and in flight each mounted
+        /// weapon gets a gun (WeaponSystem reuses the mounts): what is past a type's slots goes to the hold, in slot order,
+        /// like a bought ship's (SwitchTo); the story's unsaleable items keep their place. Returns how many moved.</summary>
+        public static int FitToSlots(Database db)
+        {
+            var s = db.Ship(Session.ShipIndex)?.slots;
+            if (s == null) return 0;
+            int Slots(int type) => type switch { 0 => s.primary, 1 => s.secondary, 2 => s.turret, 3 => s.equipment + Session.ModLevel(2), _ => int.MaxValue };
+            int TypeOfItem(int item) => db.Item(item)?.TypeId ?? 4;
+            var used = new int[5];
+            foreach (var e in Session.Equipment) if (!IsSaleable(e.item)) used[Mathf.Clamp(TypeOfItem(e.item), 0, 4)]++;
+            var keep = new List<ItemStack>();
+            int moved = 0;
+            foreach (var e in Session.Equipment)
+            {
+                int type = Mathf.Clamp(TypeOfItem(e.item), 0, 4);
+                if (!IsSaleable(e.item) || used[type] < Slots(type))
+                {
+                    if (IsSaleable(e.item)) used[type]++;
+                    keep.Add(e);
+                }
+                else { Shop.AddToCargo(e.item, Mathf.Max(1, e.amount)); moved++; }
+            }
+            if (moved > 0) Session.Equipment = keep;
+            return moved;
+        }
+
         /// <summary>Indices into Session.Equipment of the items mounted in slots of this type, in slot order.</summary>
         public List<int> MountedOfType(int type)
         {

@@ -391,7 +391,17 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 ### Changing ships
 
 `override`: an original ship's number or another mod's `"mod_id:ship_id"`, with any of `armor`, `cargo`, `price`,
-`priceDefault`, `slots`, `handling`, `name`, `description` (and for mod ships `race`, `hangarHeight`).
+`priceDefault`, `slots`, `handling`, `name`, `description`, `mounts` (and for mod ships `race`, `hangarHeight`).
+
+**More (or fewer) weapons:** `slots` sets how many primaries, secondaries, turrets and equipment the ship takes (give only the
+ones you change), and `mounts`
+where its guns sit (the same list as a new ship's; it replaces the ship's whole list, exhausts included, so copy the ones you
+keep). A ship with more weapon slots than gun mounts still fires every weapon: the extra ones share the mounts in turn. With
+fewer slots, what no longer fits moves to the hold the next time the player docks.
+
+```json
+[ { "override": 10, "slots": { "primary": 3, "secondary": 2 } } ]
+```
 
 An override of an original ship can also give it a new **model**: `model` with `modelLength`, `modelYaw`, `materials`,
 `engineGlowRadius` / `engineGlowColor` and the glows, as for a new ship. Every ship of that number then uses it (yours, the

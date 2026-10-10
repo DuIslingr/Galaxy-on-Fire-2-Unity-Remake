@@ -239,8 +239,10 @@ namespace GoF2Remake.Flight
                 if (item.type != "primary" && !secondary) continue;
                 var mounts = secondary ? secondaryMounts : primaryMounts;
                 int slot = secondary ? s++ : p++;
-                if (slot >= mounts.Count) { Debug.LogWarning($"WeaponSystem: no free {(secondary ? "secondary" : "primary")} mount for {item.name}"); continue; }
-                var gun = new Gun(item, MountToLocal(mounts[slot]), secondary);
+                // Remake: more weapons than the model has mounts (a mod's or a Kaamo upgrade's extra slots) reuse the mounts in
+                // turn, the ship's centre without any; they were skipped, so an extra secondary could be neither selected nor fired.
+                var at = mounts.Count > 0 ? MountToLocal(mounts[slot % mounts.Count]) : Vector3.zero;
+                var gun = new Gun(item, at, secondary);
                 gun.Ignores = t => t.playerProof;   // multiplayer: through squadmates
                 if (!secondary)
                 {

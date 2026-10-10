@@ -182,7 +182,9 @@ several thousand), `color` (`[r,g,b]` 0-1 or `"#rrggbb"`), `glow` (>1 blooms; ga
 | `available` | Condition before dealers / lounges sell it. |
 
 `override` changes an original (number) or another mod's ship (key): armor, cargo, price, priceDefault, slots, handling, name,
-description (mod ships also race, hangarHeight), and an original can get a new `model` (+ its fields and `mounts`).
+description, `mounts` (mod ships also race, hangarHeight), and an original can get a new `model` (+ its fields). `slots` merges
+(give only the changed counts); `mounts` replaces the ship's whole list (exhausts too). More weapon slots than gun mounts: the
+extra weapons share the mounts; fewer slots: what doesn't fit goes to the hold on the next docking.
 
 ## blueprints.json
 

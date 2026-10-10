@@ -175,6 +175,7 @@ namespace GoF2Remake.World
             // Remake debug (PlayerHull): a hull the player can't normally fly never sits in a hangar (an old save from the
             // battleship toggle): back in the player's own ship.
             if (!PlayerHull.PlayerShip) PlayerHull.ForceOwnShip();
+            Hangar.FitToSlots(db);   // remake: no more mounted than the ship has slots (a mod's lower slot count, a debug swap)
             shipIndex = shipOverride >= 0 ? shipOverride : Session.ShipIndex;
             Station = db.Stations.Find(s => s.index == station);
             Layout = OrbitLayout.Build(db, station);
