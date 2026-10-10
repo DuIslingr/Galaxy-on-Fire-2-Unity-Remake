@@ -341,7 +341,7 @@ against the FEV's LGCY data, see "Sound").
   docking points sets 14 / 11 / 12 / 13 / 12 (DAT_002537a4: Vossk 132, Midorian 133, Nivelian 134 / 123, Terran 129).
 - **Gas clouds** (`GasCloudField`; needs a spectral filter, sort 33, not in the Void; #77, `Radar::draw` 0x1570ec: with the filter's attr 57 (ST-X, Omega) every live cloud has the white diamond 0x4f1 and is a lock target (`CombatRadar.LockedCloud`: in the crosshair box with no ship or crate there, the ring from 500 ms, locked at the scanner's lock time - 200 ms with sound 0x1a, held only while in the box; the plate 3236 "Gas cloud", the distance under its marker; a display aid only, `Radar::getLockedGasCloud` has no caller), with attr 58 (Omega) also 0x1f62 (`GoF2Hud/cloud_off`) on the radar ellipse off screen; the SA-1 has neither): clouds by `Galaxy::getPlasmaProbabilities`
   (items 201-204); an ionizing blast (`Gun.Detonated`) bursts clouds in reach into sparks; the plasma collector turret (sort 35,
-  `PlayerTurret` collector mode, meshes 198-200) pulls sparks in the turret view (attr 49 speed, 51 range; a spark in its sight takes "toward the turret" as its own direction and keeps it after, #79; the crosshair blue 0x1f5e, red 0x1f5d only while a live spark is in range, #78) and collects within 800
+  `PlayerTurret` collector mode, meshes 198-200) pulls sparks in the turret view (attr 49 speed, 51 range; a spark in its sight takes "toward the turret" as its own direction and keeps it after, #79; the crosshair blue 0x1f5e, red 0x1f5d only while a live spark is in range, #78; the stream in the turret view is the model's `sn_plasma_stream_anim_add` root: the lookup kept its last mesh part, which showed under a still hidden parent, so no collector's stream appeared until 2026-10-10) and collects within 800
   (one sound at a time, messages summed over 600 ms).
 - **Most Wanted** (`WantedBoard` plain C#, `Session.Wanted`, the Missions window's Most Wanted tab; save v7): criminals activate
   and move between stations (`WantedBoard.Move` on arrivals); in their orbit the criminal and escorts (`TrafficPlan.AddWanted`:
@@ -1711,7 +1711,7 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (`items.<id>.name`). `Database.Load` merges after the economy overlay (`ModContent.Apply`, only for the GoF2Data folder).
   A mod item's 0 occurrence means never (the add-on items' random roll in `Shop.GenerateItems` skips them).
 - **Ships** (ships.json; the format of PR #34's custom_ships.json, `CustomShipData` in Database.cs): `{ "id", "model": glb,
-  stats, slots, race, hangarHeight, mounts (slotType 0-3, `upsideDown` turrets), icon, modelLength / modelYaw,
+  stats, slots, race, hangarHeight, mounts (slotType 0-3, `upsideDown` turrets, `builtIn` turrets: `PlayerTurret` puts an empty pivot / gun stand-in at the point instead of the item's `turretMounted` model (the item's gun, stats, aim, auto fire, turret view; shots from the point + 120 units, the view 60 units above it), `BuildStatic` (hangar, other players) shows nothing there; a plasma collector keeps only its stream, `sn_plasma_stream_anim_add` moved from a copy of the item's model onto the stand-in gun, so it pours from the point and turns with the aim; the ES2 kit's turret sockets), icon, modelLength / modelYaw,
   engineGlowRadius, materials, throttleGlow / extraGlows, lounge }` adds a ship (numbered after the original 64,
   `ModRegistry.Kind.Ship`, assembly "ship_NNN_mod", pack "mod"); `{ "override", armor, cargo, price, priceDefault, slots,
   handling, mounts }` changes one (`mounts` replaces its hardpoints, with or without a new model). `ModContent.ApplyShips` merges them into Ships / Assemblies / WeaponMounts; `CustomShips` (the PR's
@@ -1869,6 +1869,71 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   game's at `BeginGame` (`ApplyChoices`, `Session.ModGameOptions`, save v16 `modGameOptions`); a multiplayer session plays
   with each option's default. Verified in Play mode with 8 options from two mods (with and without images, a missing image
   warned), the arrow-key navigation and the scrolling, and 3 mod campaigns (6 cards).
+- **Customizable ships** (`ModShipKits`, the guide's "Customizable ships"; EVERSPACE 2's ship modules): a mod's
+  `shipkits.json` lists kits (id, slots in assembly order, `scale` = Unity metres per model unit for every build, `yaw`,
+  `materials`, parts { id, slot, name, model, `types` (the ship types allowed, EVERSPACE 2's wing whitelist), `tiers`
+  (extension meshes per build tier) }, all at one origin); a ships.json ship with `kit` (made "mod_id:kit_id" by
+  `ModContent.ShipData`), `kitType` and `build` (`CustomShipData.kit` / `kitType` / `defaultBuild`, the build text
+  "slot=part;...;tier=N") instead of `model`. `ModShips` loads each kit's part files once (`partTemplates`, the kit's materials
+  applied, `ModShipBuilder.ApplyMaterials`), and only those a build uses: the kit ships' default builds and the player's saved
+  builds at the start, any other when a build first needs it (`EnsureBuild` / `Template` start it; `KitPartsLoaded` and
+  `ModelsChanged` follow, `StationLevel` / `SpaceLevel.OnModShipModels` rebuild the player's ship, the Customize screen keeps
+  the last build with "Loading parts..." meanwhile; the ES2 kits: 39 of 205 files at the start), assembles the default build as the ship's "ship_NNN_mod" template and a player's
+  build as "ship_NNN_mod#<build>" the first time `Template` asks (`variants`, the newest 48 kept; `Database.AssemblyByName`
+  answers a variant name); `ModShipBuilder.Build`'s kitScale / kitYaw keep the kit's size. `Session.ShipBuilds` (by the ship's
+  key, save v17 `shipBuilds` "key|build"), `ModShipKits.PlayerBuild` (normalized: every slot a part the type may fit, the tier
+  clamped) -> `PlayerHull.Assembly` (the hangar turntable, flight). The hangar's **Customize ship** button (under Inspect ship,
+  only for a kit ship, `StationMenu.BeginCustomize`) opens `UI.ShipCustomizePanel` over Inspect ship's orbit view: a row per
+  slot and the tier, up / down / left / right (W A S D, D-pad, left stick) and the arrows' clicks, every change shown on the
+  turntable (`ReplacePlayerShip`), Enter / A applies (autosave), Esc / B / Back cancels (the old build back). Verified in Play
+  mode with a box-part test kit (Mods/kit_test): parsing, the default builds, a variant, the type whitelist and tier clamp, the
+  panel changing the turntable, cancel, the build in flight. Colours: a kit's `palettes` / `colorSlots` (targets: a material
+  name filter and base / emission / engine) / `presets`, the build's `colors` ("color.slot=value": a palette id or
+  "#RRGGBB/metallic/smoothness", `ModShipKits.Resolve`); `ModShips.Assemble` recolours copies of the matching materials
+  (`ApplyColors`) and passes an engine slot's colour as the build's engineGlowColor; kit `materials` entries are named by their
+  `material` filter (`ModShipBuilder.ApplyMaterials`, `CustomShipMaterial.material`: matching the model's own material names)
+  so colour targets find them; the panel's Colour scheme row (the matching preset, else Custom) and a row per slot with a
+  swatch. Verified with the private EVERSPACE 2 kits built from the user's own export (git-ignored `Mods/es2_ships`,
+  `tools/build.py` reads the exported glTF parts, textures and DT_ShipModules / DT_ShipColors / DT_ShipColorSets /
+  DT_DebugShipsKS JSON: never committed or shared): Light / Medium / Heavy kits (37 / 39 / 29 parts), nine ships with ES2's named
+  default builds, ES2's 4 palettes, 7 slots and 22 schemes, the hull split into Paint1-3 by its vertex-colour masks; its
+  `tools/phone.py` makes a phone build (the same mod id; Blender decimation to a quarter, 2.9 M -> 0.73 M triangles, half-size
+  maps; `Build/es2_ships_phone.zip`, 43 MB). Mounts per part: a part's `mounts` / `tierMounts` (`ModShipKits.MountsFor`: per slot type the
+  build's parts', else the ship's own), `Database.MountsOf` -> `ModShipKits.BuildMounts` (the player's build for the player's
+  ship, else the default build: guns, secondaries, turrets, exhaust particles, the mining beam), `ModShips.Assemble` passes them
+  as the build's mounts (the engine glow). Weapon and turret models (`ModHardpoints`, a kit's `hardpoints`: `turret` + `weapons`
+  rules by slot, items (also by the look) or categories; loaded with the start's parts as part templates, `ModShips.PartTemplate`):
+  the turret is rebuilt in the ship's frame (`TurretModel`: "Turret" -> "pivot" -> "kit_gun" -> "muzzle", the meshes in holders at
+  the kit's turn and scale, the item's turret weapon on the gun with its muzzle on the turret's) and replaces `PlayerTurret`'s
+  stand-in on `builtIn` mounts (its muzzle for the shots, 40 units ahead, and a collector's stream; `BuildStatic` shows it in the
+  hangar and on other players' ships); the primary / secondary models go on the mounts in `WeaponSystem`'s order
+  (`AttachWeapons`, from `SpaceLevel` and `StationLevel.RefreshTurret`, rebuilt when the weapons change) and `WeaponSystem`
+  moves each gun to its model's `muzzle` node (`MuzzleOffset`). The ES2 converter adds ES2's player turret
+  (`SK_Turret_PlayerShip_001`, skinned, split by bone into rigid base / pivot / gun meshes) and its weapon models
+  (`SM_PrimaryWeapon_*`, the missile pod) with their muzzle sockets, mapped onto GoF2's weapons by item / category. Verified in
+  Play mode on the Gunship: the hangar turntable's guns, pod and turret, the guns firing from the models' muzzles, the turret
+  aiming, tilting and firing from its barrel, a plasma collector's stream from the kit turret. Other players' ships too (`NetPlayer.weapons`,
+  an owner-written "p,p|s,s" of the mounted primaries / secondaries, `PackWeapons` / `WeaponStacks`; `NetPlayer.BuildTurret` and
+  `NetHangar.ShowTurret` build them with the turret). **Other players' builds** (`NetPlayer.build`, FixedString512, the owner's
+  `PlayerBuild` text, "" for another ship or past 500 bytes; `ShownBuild` = `ModShipKits.RemoteBuild`, normalized against this
+  game's kit): their ship is the build's variant (`VariantAssembly`; parts not loaded yet load through `ModShips.Template` /
+  `EnsureBuild` and `ModelsChanged` builds it again), its turret, weapons and exhaust particles on that build's mounts
+  (`ModShipKits.MountsShown(db, ship, slot, build)`; `Database.MountsOf` answers with the local player's build); parked in the
+  hangar the same (`HangarTraffic.SpawningGuest` -> `NetHangar.GuestAssembly` in `StationLevel.SpawnShip`, the exhausts from
+  `ModShipKits.BuildOfAssembly`; a guest is parked again when its build changes or its parts finish loading). Verified in a session (the Editor hosting
+  with mods allowed, a Linux development build joining on 127.0.0.1): the host's custom Gunship (Gunship B wings, body 7, a
+  yellow hull) parked in the client's hangar and flying in front of it in space in that build with its turret. Not yet: the
+  other eight ES2 ships looked at; the hangar's NPC ships of a kit type show the local player's build (`PlayerHull.Assembly`). The ES2 converter reads the meshes' sockets (SKT_PWSlot / SWSlot / Turret / Engine,
+  Unreal cm -> the export's glTF metres (X, Z, Y); at most 4 exhausts per part). Stats and slots per part (`Part.armor` / `cargo` /
+  `handling` %, `equipment`, flight %, `primarySlots` / `secondarySlots` / `turretSlots`; `ModShipKits.EffectOf` /
+  `BuildEffect`, the player's build for the player's ship): `ModShipKits.Armor` / `Cargo` / `Handling` / `Slots` /
+  `Effective` feed `Shop.BaseHp` / `MaxLoad`, `PlayerHealth`, `StationLevel` (the arrival's max hull), `Hangar.SlotCount` /
+  `FitToSlots`, `Database.BuildFlightStats` (handling, the flight bonuses in both styles) and the stat rows (`ItemInfo`,
+  `ItemInfoWindow`); the Customize panel's stats line (`StationMenu.CustomStatsText`) and Apply's `FitToSlots`; the tier is
+  cosmetic. The ES2 kits' numbers are the converter's design (ES2's modules carry none): bodies hull / cargo / equipment by
+  size, rears speed / acceleration by nozzles, wings turning / armour by span and gun / missile slots +-1 around the type's
+  base by their sockets, turret slots by their turret sockets. Not yet: other players' builds in multiplayer (they see the
+  default build), decals.
 - **Flight styles** (`ModFlight`; the guide's "Flight styles"): mods choose per content whether they touch the original
   flight, free flight or both. Items: attributes 105-116 (`ItemStats`): `flightScope` (105: 0 both, 1 original, 2 free) keeps
   the item's booster / Steering Nozzle attributes 25-28 to one style; % bonuses `topSpeed` / `turnRate` / `strafeSpeed` (both),

@@ -95,6 +95,7 @@ namespace GoF2Remake.World
         /// <summary>The ship's turrets, in mount order (remake: more than one on a custom ship with several turret mounts).</summary>
         public System.Collections.Generic.IReadOnlyList<PlayerTurret> Turrets => turrets;
         readonly System.Collections.Generic.List<PlayerTurret> turrets = new System.Collections.Generic.List<PlayerTurret>();
+        GameObject hardpoints;   // a kit ship's weapon models (Modding.ModHardpoints)
         /// <summary>The turret the HUD and the level scripts talk to: the one in the turret view, else the first (null: none).</summary>
         public PlayerTurret Turret
         {
@@ -170,11 +171,27 @@ namespace GoF2Remake.World
         float launchCameraMs;
         bool leftDockRange, orbitInfo;
 
-        void OnEnable() => Settings.Changed += ApplyOptions;
+        void OnEnable()
+        {
+            Settings.Changed += ApplyOptions;
+            Modding.ModShips.ModelsChanged += OnModShipModels;
+        }
+
         void OnDisable()
         {
             Settings.Changed -= ApplyOptions;
+            Modding.ModShips.ModelsChanged -= OnModShipModels;
             if (savedMaxDelta > 0f) Time.maximumDeltaTime = savedMaxDelta;
+        }
+
+        /// <summary>Remake mods: a customizable ship's parts arrived (loaded on demand, ModShips.EnsureBuild): the player's model
+        /// becomes the build if it showed the default build meanwhile.</summary>
+        void OnModShipModels()
+        {
+            if (this == null || Player == null || Modding.ModShipKits.KitShip(Session.ShipIndex) == null) return;
+            string want = PlayerHull.Assembly(db, Session.ShipIndex)?.name;
+            string shown = Player.visualModel != null ? Player.visualModel.name.Replace("(Clone)", "") : null;
+            if (want != null && want != shown) SwapPlayerShip(Session.ShipIndex);
         }
 
         /// <summary>Options changed in flight (the pause menu) reach the ship and the chase camera at once.</summary>
@@ -676,6 +693,8 @@ namespace GoF2Remake.World
             PlayerTurret.RemoveAll(turrets);
             turrets.Clear();
             turrets.AddRange(PlayerTurret.AttachAll(root, db, shipIndex, Session.Equipment, chase));
+            if (hardpoints != null) Destroy(hardpoints);
+            hardpoints = Modding.ModHardpoints.AttachWeapons(db, shipIndex, Session.Equipment, ctrl.visualModel);
 
             PlayerHull.AttachTurrets(this);
         }
@@ -763,6 +782,7 @@ namespace GoF2Remake.World
             // PlayerEgo::checkForTurret: the turret-slot item on the ship's turret mount (remake: each on its own mount).
             turrets.Clear();
             turrets.AddRange(PlayerTurret.AttachAll(root, db, Session.ShipIndex, Session.Equipment, chase));
+            hardpoints = Modding.ModHardpoints.AttachWeapons(db, Session.ShipIndex, Session.Equipment, ctrl.visualModel);   // a kit ship's weapon models
             // MGame::switchCamera: the camera button's modes (standard / turret / free look).
             FreeLook = FreeLookCamera.Attach(root, chase, Turret);
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).

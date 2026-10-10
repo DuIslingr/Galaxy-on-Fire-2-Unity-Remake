@@ -15,6 +15,8 @@ What mods can do so far:
   your own shot and explosion sounds.
 - **Add new ships**: your own 3D model (glTF / GLB) with its stats, weapon mounts, turrets, engine glows and textures, sold
   by visitors in the Space Lounges and by the ordinary ship dealers.
+- **Add customizable ships**: ships assembled from parts (body, wings, cockpit...) the player swaps in the hangar's
+  **Customize ship** screen, like EVERSPACE 2's ship modules (see [Customizable ships](#customizable-ships)).
 - **Add blueprints**: for ships (skins too) and items, with their ingredients and autocomplete price, found in lounges, in
   hackable derelict freighters and in the wrecks of the ships the player destroys.
 - **Add new-game options**: a card the player switches on when starting a new game (like "All Canon Ships"), and content
@@ -353,7 +355,7 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `modelLength`, `modelYaw` | Its length nose to tail in game units (the Phantom is about 1000; 20 units = 1 m), and a turn in degrees when the model's nose doesn't point forward (+Z). The model is scaled to that length. |
 | `icon` | The shop icon, a PNG of 180 x 88 like the originals (the ship on the plate). None = the Phantom's. |
 | `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). |
-| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle). |
+| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle). |
 | `engineGlowRadius` | Size of the engine flame at each exhaust mount (game units, default 24); a mount's `glowSize` replaces it. |
 | `engineGlowColor` | `[r, g, b]` (0 to 1): the flame colour of every exhaust without its own `glowColor`. None = the game's own blue-white flame. |
 | `materials` | Optional. Replace the model's own materials, see below. |
@@ -426,6 +428,137 @@ NPCs', the hangar's). Its guns and exhausts stay at the original's mounts unless
     }
 ]
 ```
+
+## Customizable ships
+
+A ship can be built from parts the player picks in the hangar (**Customize ship**, under Inspect ship), instead of one model.
+The parts are a **kit** in `shipkits.json`; the ship names its kit, its type and its default build in `ships.json`.
+
+```json
+[
+    {
+        "id": "medium",
+        "name": "Medium hulls",
+        "slots": ["body", "rear", "cockpit", "wings"],
+        "scale": 1.0,
+        "parts": [
+            { "id": "body_a", "slot": "body", "name": "A", "model": "parts/body_a.glb" },
+            { "id": "body_b", "slot": "body", "name": "B", "model": "parts/body_b.glb" },
+            { "id": "rear_1", "slot": "rear", "name": "1", "model": "parts/rear_1.glb" },
+            { "id": "bubble", "slot": "cockpit", "name": "Bubble", "model": "parts/cockpit_1.glb" },
+            { "id": "hawk", "slot": "wings", "name": "Hawk", "model": "parts/wings_hawk.glb", "types": ["striker"],
+              "tiers": ["parts/wings_hawk_t1.glb", "parts/wings_hawk_t2.glb"] },
+            { "id": "reaver", "slot": "wings", "name": "Reaver", "model": "parts/wings_reaver.glb", "types": ["sentinel"] }
+        ]
+    }
+]
+```
+
+| Kit field | |
+|---|---|
+| `id` | **Required.** The kit's id; ships name it `"kit": "<id>"` (your mod's) or `"mod_id:kit_id"` (another mod's). |
+| `slots` | The build's slots, in the order the parts are put together. Default: every slot the parts use. |
+| `scale` | Unity metres per model unit (glTF's metres: 1). One scale for the whole kit: the parts are made to fit together at one origin, so every build has the same size (not stretched to a `modelLength`). |
+| `yaw` | Degrees about the up axis when the parts' nose doesn't face +Z. |
+| `materials` | Like a ship's `materials`, applied to every part's meshes they name. |
+| `parts` | Each `{ "id", "slot", "name", "model" }`, optionally `"mounts"` (the part's own weapon, turret and exhaust mounts, like a ship's `mounts`), `"tierMounts"` (a list of mount lists, one per tier extension), `"stats"` and `"slots"` (see below): a part's id (unique in the kit), its slot, its name in the Customize screen (a string or per language), its glTF / GLB. `types`: the ship types that may fit it (a ship's `kitType`; none = every type: a body any ship of the kit can take). `tiers`: extension meshes shown at build tier 1, 2, ... (EVERSPACE 2's wing extensions); the tier row cycles from the base (0) to the kit's highest. |
+
+All the parts of a kit share one origin: export them in place, as they sit on the assembled ship. Only the parts a build uses
+are loaded (the ships' default builds and the player's builds at the start, others when the player first picks them), so a
+big kit costs little memory; still, keep each part's triangle count modest for phones.
+
+**Stats and slots.** Parts can change the ship: `"stats": { "armor": 8, "cargo": -10, "handling": 3, "equipment": 1, "topSpeed": 4,
+"turnRate": -5, "acceleration": 6, "strafeSpeed": 0 }` (hull, cargo and handling in % of the ship's own; equipment slots; flight
+bonuses in % in both flight styles) and `"slots": { "primary": 3, "secondary": 2, "turret": 1 }`. A build adds up its parts'
+stats; for each weapon slot type it has the sum of its parts' slots, or the ship's own count when none of its parts gives that
+type. The hull, cargo, slots and flight of the player's ship follow its build, the hangar's stat rows show it, and the
+Customize screen shows the result live; applying a build with fewer slots moves what no longer fits to the hold. The tier is
+cosmetic. Keep the changes small (a few %) so every build stays close to the ship's own numbers.
+
+**Colours.** A kit can also let the player paint the ship: palettes of named colours, colour slots that recolour materials,
+and preset schemes that set every slot at once. The Customize screen then shows a Colour scheme row and a row per slot.
+
+```json
+"palettes": {
+    "main": [ { "id": "white", "name": "Snow White", "color": "#F9F9F9" }, { "id": "jet", "name": "Jet", "color": "#383838", "metallic": 0.8, "smoothness": 0.6 } ],
+    "lights": [ { "id": "amber", "name": "Amber", "color": "#FFC059" } ]
+},
+"colorSlots": [
+    { "id": "hull1", "name": "Main colour", "palette": "main", "default": "white", "targets": [ { "material": "Paint1" } ] },
+    { "id": "lights", "name": "Lights", "palette": "lights", "default": "amber",
+      "targets": [ { "material": "Glow", "property": "emission", "intensity": 4 } ] },
+    { "id": "engines", "name": "Engines", "palette": "lights", "targets": [ { "property": "engine" } ] }
+],
+"presets": [ { "id": "racer", "name": "Racer", "colors": { "hull1": "#CB7800/0/0.5", "lights": "amber" } } ]
+```
+
+| Field | |
+|---|---|
+| `palettes` | Named lists of colours: `id`, `name` (string or per language), `color` (`#RRGGBB`), optionally `metallic` and `smoothness` (0..1). |
+| `colorSlots` | What the player paints: `id`, `name`, the `palette` it picks from, its `default` colour, and `targets`. A target recolours the materials whose name contains `material` (the model's own material name, or a kit `materials` entry's `material` filter): `property` `"base"` (the default: the base colour, x `intensity`, and the colour's metallic / smoothness), `"emission"` (the glow colour x `intensity`) or `"engine"` (the engine glow, no `material`). |
+| `presets` | Colour schemes: `id`, `name` and `colors` (slot -> a palette id, or `"#RRGGBB"` with an optional `/metallic/smoothness`). |
+
+A ship's default `build` can give its colours too: `"build": { "wings": "reaver", "colors": { "hull1": "jet" } }`. To paint parts of
+a mesh separately, give them their own materials in the model (e.g. "Paint1", "Paint2").
+
+In `ships.json`, a new ship with `"kit"` instead of `"model"`:
+
+```json
+{ "id": "nemesis", "name": "Nemesis", "race": 0, "armor": 420, "cargo": 50, "handling": 110, "price": 420000,
+  "slots": { "primary": 2, "secondary": 2, "turret": 0, "equipment": 10 },
+  "kit": "medium", "kitType": "sentinel", "build": { "wings": "reaver", "body": "body_a", "tier": 1 },
+  "mounts": [ ... ] }
+```
+
+| Field | |
+|---|---|
+| `kit` | The kit it is built from. |
+| `kitType` | **Required** with a kit: which parts it may fit (a part's `types`). |
+| `build` | Its default build: a part id per slot and `tier`. Dealers sell it so and NPC pilots fly it so. A slot left out takes the first part the type may fit. |
+
+Everything else is a normal ship's (stats, `mounts`, `icon`, glows, `lounge`, `dealer`). Mounts can come with the parts: a build
+fires from, and glows at, its parts' mounts of each slot type (with the tier extensions' at that tier), and uses the ship's own
+`mounts` only for a slot type none of its parts has. So wings can carry their guns, rears their exhausts, and a turret socket
+comes with the wing set that has one (give the ship as many turret slots as its default build has turret mounts).
+Mark a part's turret mounts `"builtIn": true` when the part's model already shows the turret: a turret item mounted in that
+slot then puts no model of the game's turrets on the ship (in space, in the hangar or on other players' screens) and keeps
+only what it does: its gun, damage, reload, shots and sound, auto aiming or the turret view, the plasma collector's pull and its stream (the game's stream effect, pouring from the
+mount point and turning with the aim).
+Its shots leave from the mount point (a little ahead of it) and the turret view looks from just above it.
+
+**Weapon and turret models** (`"hardpoints"` in a kit): the kit can show the mounted weapons and turrets with models of its
+own, at the kit's scale and yaw, with the kit's materials:
+
+```json
+"hardpoints": {
+  "turret": "equipment/turret.glb",
+  "weapons": [
+    { "slot": "primary", "model": "equipment/beam_laser.glb", "items": [9, 10, 11] },
+    { "slot": "primary", "model": "equipment/blaster.glb", "categories": [1] },
+    { "slot": "primary", "model": "equipment/pulse_laser.glb" },
+    { "slot": "secondary", "model": "equipment/pod.glb" },
+    { "slot": "turret", "model": "", "categories": [35] },
+    { "slot": "turret", "model": "equipment/coil_gun.glb" }
+  ]
+}
+```
+
+- `turret`: the model a turret item shows on the build's `builtIn` turret mounts, instead of nothing. It needs a node named
+  `pivot` (it turns sideways) with a node under it whose name contains `gun` (it tilts up and down; the barrel along the
+  parts' nose), and may have a `muzzle` node (where the shots, and a plasma collector's stream, leave). Leave the pivot and
+  gun nodes unrotated. It shows in flight, in the hangar and on other players' ships; the turret item still decides how it
+  fires.
+- `weapons`: for each mounted weapon the first rule of its slot that matches gives its model. `items` matches item numbers
+  (also mod items based on them) or `"mod:id"` keys, `categories` item category numbers (see the reference); a rule with
+  neither is the slot's default, and `"model": ""` shows nothing. A primary / secondary model's origin goes on its mount (the
+  n-th primary weapon on the n-th primary mount), and a node named `muzzle` in it moves that gun's shots to its muzzle. A
+  turret weapon goes on the turret's gun with its muzzle on the turret's `muzzle` node. The weapon models show on the player's
+  ship in flight and in the hangar, and on other players' ships.
+
+The player's build of each customizable ship (parts, tier and colours) is saved with the game (one per ship type, also for a
+hull kept in the Kaamo Club) and shown in the hangar and in flight. Changing it is free. In multiplayer the other players see
+it too, in space and parked in their hangars (parts their game hasn't loaded yet load first; the default build shows
+meanwhile).
 
 ## Flight styles
 

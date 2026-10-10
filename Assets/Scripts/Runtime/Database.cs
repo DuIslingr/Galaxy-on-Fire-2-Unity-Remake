@@ -107,6 +107,9 @@ namespace GoF2Remake.Data
     {
         public int slotType; public int[] position_engine; public float[] turretAngles; public bool upsideDown;
         public float[] glowColor, glowSize;
+        /// <summary>Remake mods: a turret mount whose turret is part of the ship's own model (a customizable ship's turret
+        /// socket): the turret item's gun aims and fires from here, no turret model of the game is put on it (PlayerTurret).</summary>
+        public bool builtIn;
     }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
 
@@ -131,6 +134,8 @@ namespace GoF2Remake.Data
         public List<CustomThrottleGlow> extraGlows;   // more of them (each its own mask, colour, levels and trail)
         public CustomLoungeSeller lounge;  // a lounge visitor who sells it (AgentGenerator.AddCustomShipSellers); null = none
         public CustomDealer dealer;        // remake mods: ship dealers may stock it (Modding.ModUnlocks.AddDealerShips); null = never
+        public string kit, kitType;        // remake mods: a customizable ship (Modding.ModShipKits): its kit ("mod_id:kit_id") and type
+        [System.NonSerialized] public string defaultBuild;   // its "build" as build text (ModShipKits.Build)
     }
 
     /// <summary>Remake mods: a mod ship in the ordinary ship dealers' lists (Shop.GenerateShips): each time a station's dealer
@@ -163,6 +168,7 @@ namespace GoF2Remake.Data
     [System.Serializable] public class CustomShipMaterial
     {
         public string mesh, diffuse, normal, metallicSmoothness, emission, detailAlbedo, detailNormal;
+        public string material;   // remake mods: only where the model's own material's name contains this (empty = any)
         public int submesh = -1;
         public float[] color, emissionColor;
         public float smoothness = 1f, metallic = -1f, emissionIntensity = 1f, alphaClip, normalScale = 1f;
@@ -382,11 +388,20 @@ namespace GoF2Remake.Data
             return ta != null ? JsonUtility.FromJson<AssemblyFile>(ta.text).entries : new List<AssemblyData>();
         }
 
-        public AssemblyData AssemblyByName(string name) => Assemblies.FirstOrDefault(a => a.name == name);
+        public AssemblyData AssemblyByName(string name)
+        {
+            // Remake mods: a customizable ship's build ("ship_NNN_mod#<build>", Modding.ModShipKits) isn't in the table.
+            int hash = name?.IndexOf(Modding.ModShipKits.VariantSeparator) ?? -1;
+            if (hash > 0) return Assemblies.Any(a => a.name == name.Substring(0, hash)) ? new AssemblyData { name = name, pack = Modding.ModShips.Pack, category = "ships", origin = "kit build" } : null;
+            return Assemblies.FirstOrDefault(a => a.name == name);
+        }
 
         /// <summary>Mount positions of a slot type for a ship, in the order of Ship::getSlotPos.</summary>
         public List<WeaponMount> MountsOf(int shipIndex, int slotType)
         {
+            // Remake mods: a customizable ship's mounts come with its build's parts (Modding.ModShipKits).
+            var built = Modding.ModShipKits.BuildMounts(shipIndex, slotType);
+            if (built != null) return built;
             var set = WeaponMounts.FirstOrDefault(m => m.ship == shipIndex);
             return set != null ? set.mounts.Where(m => m.slotType == slotType).ToList() : new List<WeaponMount>();
         }
@@ -401,13 +416,18 @@ namespace GoF2Remake.Data
         /// </summary>
         public static FlightStats BuildFlightStats(ShipData ship, IEnumerable<ItemData> equipment, int handlingUpgrades = 0)
         {
-            var fs = new FlightStats { handling = ship.handling, handlingUpgrades = handlingUpgrades };
+            var fs = new FlightStats { handling = Modding.ModShipKits.Handling(ship), handlingUpgrades = handlingUpgrades };   // a kit ship's build too
             // Remake, for mods (Modding.ModFlight): each flight style's share; an item's flightScope (attr 105) keeps its
             // booster / nozzle attributes to one style, its bonuses (106-116) go to both, the original or free flight.
             var styles = new[] { new FlightTuning(), new FlightTuning() };   // [0] original, [1] free flight
             // The ship's first, so an item's freeBoostFactor (the booster's) wins over the ship's.
             styles[0].bonus.Add(ship.flightBoth).Add(ship.flightOriginal);
             styles[1].bonus.Add(ship.flightBoth).Add(ship.flightFree);
+            if (Modding.ModShipKits.BuildEffect(ship.index) is Modding.ModShipKits.Effect build)   // a kit ship's parts: both styles
+            {
+                styles[0].bonus.Add(build.flight);
+                styles[1].bonus.Add(build.flight);
+            }
             foreach (var item in equipment ?? Enumerable.Empty<ItemData>())
             {
                 int scope = item.Attr(Modding.ModFlight.ScopeAttr);

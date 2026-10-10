@@ -29,8 +29,10 @@ namespace GoF2Remake.Modding
         const float ReferenceFov = 60f;
         const float GlowMaskThreshold = 0.08f;
 
-        /// <summary>The template for 'c' around the instantiated glTF scene 'model' (re-parented as the hull).</summary>
-        public static GameObject Build(CustomShipData c, ModInfo mod, GameObject model)
+        /// <summary>The template for 'c' around the instantiated glTF scene 'model' (re-parented as the hull). A kit ship's
+        /// build (ModShipKits) passes the kit's 'kitScale' (Unity metres per model unit: every build of the kit the same size,
+        /// not stretched to modelLength) and 'kitYaw'.</summary>
+        public static GameObject Build(CustomShipData c, ModInfo mod, GameObject model, float kitScale = 0f, float kitYaw = 0f)
         {
             var root = new GameObject(c.assembly);
             var asm = root.AddComponent<AssembledObject>();
@@ -41,7 +43,7 @@ namespace GoF2Remake.Modding
             model.name = "hull";
             model.transform.SetParent(root.transform, false);
             model.transform.localPosition = Vector3.zero;
-            model.transform.localRotation = Quaternion.Euler(0f, c.modelYaw, 0f);
+            model.transform.localRotation = Quaternion.Euler(0f, kitScale > 0f ? kitYaw : c.modelYaw, 0f);
             var renderers = model.GetComponentsInChildren<Renderer>(true);
             var specs = c.materials ?? new List<CustomShipMaterial>();
             var mats = new Material[specs.Count];
@@ -53,12 +55,16 @@ namespace GoF2Remake.Modding
                     var assigned = r.sharedMaterials;
                     int count = Mathf.Max(1, mesh != null ? mesh.subMeshCount : assigned.Length);
                     if (assigned.Length != count) System.Array.Resize(ref assigned, count);
-                    for (int s = 0; s < count; s++) { var m = MaterialFor(specs, mats, r.name, s); if (m != null) assigned[s] = m; }
+                    for (int s = 0; s < count; s++) { var m = MaterialFor(specs, mats, r.name, s, assigned[s] != null ? assigned[s].name : null); if (m != null) assigned[s] = m; }
                     r.sharedMaterials = assigned;
                 }
             foreach (var r in renderers) { r.shadowCastingMode = ShadowCastingMode.On; r.receiveShadows = true; }
-            float length = BoundsIn(root.transform, renderers).size.z;
-            if (length > 0f) model.transform.localScale *= c.modelLength * M / length;
+            if (kitScale > 0f) model.transform.localScale = Vector3.one * kitScale;
+            else
+            {
+                float length = BoundsIn(root.transform, renderers).size.z;
+                if (length > 0f) model.transform.localScale *= c.modelLength * M / length;
+            }
 
             var parts = new List<GameObject>();
             var glow = BuildEngineGlow(c);
@@ -89,6 +95,25 @@ namespace GoF2Remake.Modding
             return root;
         }
 
+        /// <summary>A kit's "materials" onto a part's renderers (ModShipKits; the same rules as a ship's).</summary>
+        internal static void ApplyMaterials(ModInfo mod, List<CustomShipMaterial> specs, Renderer[] renderers, string label)
+        {
+            if (specs == null || specs.Count == 0) return;
+            var mats = new Material[specs.Count];
+            // Named by the entry's 'material' filter when it has one, so a kit's colour targets find it again (ModShipKits).
+            for (int i = 0; i < specs.Count; i++)
+                mats[i] = ModMaterials.FromSpec(mod, specs[i], !string.IsNullOrEmpty(specs[i].material) ? specs[i].material : $"{label} {specs[i].mesh}{specs[i].submesh}");
+            foreach (var r in renderers)
+            {
+                var mesh = MeshOf(r);
+                var assigned = r.sharedMaterials;
+                int count = Mathf.Max(1, mesh != null ? mesh.subMeshCount : assigned.Length);
+                if (assigned.Length != count) System.Array.Resize(ref assigned, count);
+                for (int sm = 0; sm < count; sm++) { var m = MaterialFor(specs, mats, r.name, sm, assigned[sm] != null ? assigned[sm].name : null); if (m != null) assigned[sm] = m; }
+                r.sharedMaterials = assigned;
+            }
+        }
+
         internal static Mesh MeshOf(Renderer r) => r is SkinnedMeshRenderer s ? s.sharedMesh : r.GetComponent<MeshFilter>()?.sharedMesh;
 
         internal static Bounds BoundsIn(Transform root, Renderer[] renderers)
@@ -112,14 +137,17 @@ namespace GoF2Remake.Modding
 
         /// <summary>The entry for a renderer's submesh: one naming that submesh first, else the first for every submesh
         /// (submesh -1); its 'mesh' must be part of the renderer's name (empty = any). Null = keep the model's own.</summary>
-        internal static Material MaterialFor(List<CustomShipMaterial> specs, Material[] mats, string rendererName, int submesh)
+        internal static Material MaterialFor(List<CustomShipMaterial> specs, Material[] mats, string rendererName, int submesh, string currentMaterial = null)
         {
             string n = rendererName.ToLowerInvariant();
+            string cur = (currentMaterial ?? "").ToLowerInvariant();
             int any = -1;
             for (int i = 0; i < specs.Count; i++)
             {
                 var e = specs[i];
                 if (!string.IsNullOrEmpty(e.mesh) && !n.Contains(e.mesh.ToLowerInvariant())) continue;
+                // 'material': only where the model's own material has that name (a kit's parts name theirs, e.g. EVERSPACE 2's).
+                if (!string.IsNullOrEmpty(e.material) && !cur.Contains(e.material.ToLowerInvariant())) continue;
                 if (e.submesh == submesh) return mats[i];
                 if (e.submesh < 0 && any < 0) any = i;
             }

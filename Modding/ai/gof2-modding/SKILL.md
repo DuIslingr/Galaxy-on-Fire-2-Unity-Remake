@@ -177,7 +177,7 @@ several thousand), `color` (`[r,g,b]` 0-1 or `"#rrggbb"`), `glow` (>1 blooms; ga
 | `modelLength`, `modelYaw` | Nose-to-tail length in game units (Phantom ~1000); yaw degrees if the nose isn't +Z. |
 | `icon` | Shop icon PNG 180 x 88. Default: the Phantom's. |
 | `hangarHeight` | Pivot height above the hangar pad (originals 140-400). |
-| `mounts` | Game units from the ship centre (x right, y up, z forward). `slotType` 0 primary, 1 secondary, 2 turret (`upsideDown`), 3 engine exhaust (`turretAngles[0]` particle size, `glowColor` [r,g,b], `glowSize` [halfW, halfH, length]). Give each gun slot its own mount where possible (the originals do). |
+| `mounts` | Game units from the ship centre (x right, y up, z forward). `slotType` 0 primary, 1 secondary, 2 turret (`upsideDown`; `builtIn`: no game turret model, the turret item fires from the point), 3 engine exhaust (`turretAngles[0]` particle size, `glowColor` [r,g,b], `glowSize` [halfW, halfH, length]). Give each gun slot its own mount where possible (the originals do). |
 | `engineGlowRadius`, `engineGlowColor` | Flame size (default 24) / colour for all exhausts. |
 | `materials` | Replace materials: entries `{ "mesh", "submesh", "diffuse", "color", "normal", "normalScale", "metallicSmoothness", "metallic", "smoothness", "emission", "emissionColor", "emissionIntensity", "alphaClip", "opacity", "detailAlbedo", "detailNormal", "detailTiling", "detailNormalScale", "doubleSided" }`. Without it the GLB's own materials are used. |
 | `throttleGlow`, `extraGlows` | Hull parts glowing with the throttle: `{ "mask", "mesh", "submesh", "color", "idle", "full", "boost", "offset", "trailWidth", "trailTime", "trailBrightness", "trailCount" }`. |
@@ -185,6 +185,7 @@ several thousand), `color` (`[r,g,b]` 0-1 or `"#rrggbb"`), `glow` (>1 blooms; ga
 | `dealer` | Ordinary ship dealers stock it: chance % (decimals ok) per dealer list, systemRace, minTechLevel. Not the special yards. |
 | `available` | Condition before dealers / lounges sell it. |
 | `flightStyle` | `"free"` / `"original"`: the ship always flies so (default the player's option). |
+| `kit`, `kitType`, `build` | A customizable ship instead of `model` (see shipkits.json). |
 | `flight` | % bonuses `{ "topSpeed", "turnRate", "strafeSpeed", "acceleration" (free only), "boostFactor" (free, 350 = x3.5), "original": {...}, "free": {...} }`. |
 
 `override` changes an original (number) or another mod's ship (key): armor, cargo, price, priceDefault, slots, handling, name,
@@ -238,6 +239,25 @@ parked in the Kaamo Club if owned).
 Found blueprints come in a data container the tractor beam pulls in. Sources stop once the player knows the blueprint.
 Useful ingredients (see reference.md): 122 Energy Cells, 127 Microchips, 154 Gold, 155 Titanium, 157 Orichalzine, 165 Golden
 Core, 114 Explosives, 118 Electronics.
+
+## shipkits.json (customizable ships)
+
+Ships built from parts the player swaps in the hangar's Customize ship screen (EVERSPACE 2-style modules).
+`[ { "id": "medium", "slots": ["body","rear","cockpit","wings"], "scale": 1.0 (Unity m per model unit; one for the whole kit),
+"yaw": 0, "materials": [...], "parts": [ { "id": "reaver", "slot": "wings", "name": "Reaver", "model": "parts/w.glb",
+"types": ["sentinel"] (ship types allowed; none = all), "tiers": ["parts/w_t1.glb", ...] (extension meshes per tier),
+"mounts": [ ...like a ship's mounts... ], "tierMounts": [ [ ... ], ... ] } ] } ]` (a build uses its parts' mounts per slot type,
+the ship's own only for a type no part has; turret mounts with `"builtIn": true` take the turret item's gun and stats but no turret model, for parts whose mesh has the turret). A kit's `"hardpoints": { "turret": "x.glb" (nodes `pivot`, a `...gun` under it, optional `muzzle`; shown on `builtIn` mounts), "weapons": [ { "slot": "primary" | "secondary" | "turret", "model": "y.glb" ("" = none), "items": [numbers or "mod:id"], "categories": [numbers] } ] }` shows the mounted weapons and turret as models (first matching rule per slot, one without filters = the default; a `muzzle` node is where the shots leave; a turret weapon's muzzle lands on the turret's). Parts may also carry `"stats": { "armor", "cargo", "handling" (% of the ship's),
+"equipment" (slots), "topSpeed", "turnRate", "acceleration", "strafeSpeed" (%) }` and `"slots": { "primary", "secondary",
+"turret" }`: a build sums them (slots per type: its parts' sum, else the ship's); the tier is cosmetic.
+All parts share one origin (export in place). A ship in ships.json uses `"kit": "medium"` instead of `"model"`, with
+`"kitType": "sentinel"` (required) and `"build": { "wings": "reaver", "body": "body_a", "tier": 1 }` (the default: dealers'
+and NPCs'; missing slots take the first allowed part). The player's build is
+saved per ship type and shown in the hangar and in flight; changing it is free. Colours (optional, in the kit):
+`"palettes": { "main": [ { "id", "name", "color": "#RRGGBB", "metallic", "smoothness" } ] }`, `"colorSlots": [ { "id", "name",
+"palette", "default", "targets": [ { "material": "<name contains>", "property": "base"|"emission"|"engine", "intensity" } ] } ]`,
+`"presets": [ { "id", "name", "colors": { "<slot>": "<palette id or #RRGGBB/metallic/smoothness>" } } ]`; a ship's build may
+carry `"colors": { ... }`. Give separately paintable areas their own materials in the model.
 
 ## Flight styles
 

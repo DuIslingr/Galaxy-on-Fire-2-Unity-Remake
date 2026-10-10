@@ -173,7 +173,7 @@ namespace GoF2Remake.Modding
         {
             "id", "override", "name", "description", "race", "armor", "cargo", "price", "priceDefault", "slots", "handling",
             "hangarHeight", "mounts", "model", "icon", "modelLength", "modelYaw", "engineGlowRadius", "engineGlowColor", "materials", "throttleGlow",
-            "extraGlows", "lounge", "dealer", "available", "flightStyle", "flight",
+            "extraGlows", "lounge", "dealer", "available", "flightStyle", "flight", "kit", "kitType", "build",
         };
 
         static void ParseShips(ModInfo mod, Parsed p)
@@ -202,9 +202,15 @@ namespace GoF2Remake.Modding
                 {
                     if (!ModManifest.ValidId(d.localId)) throw new ModJsonException($"{where}: the id \"{d.localId}\" may only use a-z, 0-9, _ and -");
                     if (!ids.Add(d.localId)) throw new ModJsonException($"{where}: the id \"{d.localId}\" is used twice");
-                    string model = ModJson.Str(o, "model");
-                    if (string.IsNullOrEmpty(model)) throw new ModJsonException($"{where}: a new ship needs \"model\", its glTF / GLB file");
-                    if (!mod.Source.Exists(model)) throw new ModJsonException($"{where}: the model \"{model}\" isn't in the mod");
+                    string model = ModJson.Str(o, "model"), kit = ModJson.Str(o, "kit");
+                    if (!string.IsNullOrEmpty(kit))
+                    {
+                        // A customizable ship (ModShipKits): its parts come from the kit, its default build from "build".
+                        if (string.IsNullOrEmpty(ModJson.Str(o, "kitType"))) throw new ModJsonException($"{where}: a kit ship needs \"kitType\" (which parts it may fit)");
+                        if (ModJson.Get(o, "build") is JToken bt && !(bt is JObject)) throw new ModJsonException($"{where}: \"build\" must be an object {{ \"wings\": \"part_id\", \"tier\": 1 }}");
+                    }
+                    else if (string.IsNullOrEmpty(model)) throw new ModJsonException($"{where}: a new ship needs \"model\" (its glTF / GLB file) or \"kit\" (a customizable ship)");
+                    else if (!mod.Source.Exists(model)) throw new ModJsonException($"{where}: the model \"{model}\" isn't in the mod");
                     d.key = mod.Id + ":" + d.localId;
                 }
                 else if (ModJson.Has(o, "model"))
@@ -215,7 +221,7 @@ namespace GoF2Remake.Modding
                 }
                 // The rest as CustomShipData (JsonUtility reads it; the texts and ids are the mod's own).
                 var data = (JObject)o.DeepClone();
-                foreach (var k in new[] { "id", "override", "name", "description" }) data.Remove(k);
+                foreach (var k in new[] { "id", "override", "name", "description", "build" }) data.Remove(k);
                 try { JsonUtility.FromJson<CustomShipData>(data.ToString()); }
                 catch (Exception e) { throw new ModJsonException($"{where}: {e.Message}"); }
                 d.data = data.ToString();
@@ -351,6 +357,13 @@ namespace GoF2Remake.Modding
             ShipText(index, true, out c.description);
             c.handlingMultiplier = c.handling / 100f;
             c.slots ??= new ShipSlots();
+            if (!string.IsNullOrEmpty(c.kit))
+            {
+                // A customizable ship (ModShipKits): the kit as "mod_id:kit_id", the default build as build text.
+                if (c.kit.IndexOf(':') < 0) c.kit = d.mod.Id + ":" + c.kit;
+                c.defaultBuild = ModShipKits.Build.FromJson(ModJson.Get(d.json, "build") as JObject).ToString();
+            }
+            else c.kit = null;
             return c;
         }
 

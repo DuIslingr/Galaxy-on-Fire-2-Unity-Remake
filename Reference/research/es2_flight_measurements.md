@@ -273,6 +273,51 @@ So any differences between Light / Medium / Heavy ships (and between ships and t
 item stats and can only be measured by flying them. The remake maps its own per-ship differences through the handling
 (`FreeTopTurnRate`'s sqrt(H / 20), the ease time's sqrt scaling).
 
+### The player ships (the dumped ship module tables, 2026-10-10)
+
+A player ship is assembled from parts (`FShipModule` rows in `DT_ShipModules_Light / Medium / Heavy`, plus `_EA` / `_DEV`
+variants; `DT_ShipModules_OkkarMedium` and `_MiningShip` hold one-off hulls): a base, a body, a rear, an exterior cockpit, a
+cockpit interior and wings, each a mesh with optional extension meshes. Each row has a `ShipsWhiteList` (a set of `EShip`):
+only the wings fill it, each wing with exactly one ship type; bodies, rears and cockpits are open to every type of their class.
+So the wings are the model, and the Medium table names them (`ModuleName`, string table `ship_modules`). Decoding note: an enum
+inside a set is serialized as its FName ("EShip::Sentinel"), not as the byte a top-level enum property is.
+
+The internal type names, matched to the in-game ones through `DT_DebugShipsKS` (each named debug build's wings -> the wing's
+whitelist):
+
+| EShip | In game | Class | Wing models (`ModuleName` where the data has one) |
+|---|---|---|---|
+| PatrolShip | Vanguard | Light | 4: Wings_001-004 (the debug build's Mercury = Wings_002) |
+| Scout | Scout | Light | 4: Wings_005-008 (Spirit = Wings_005) |
+| SpecOps | Stinger | Light | 4: Wings_009-012 (Wasp = Wings_011) |
+| Interceptor | Interceptor | Medium | 4: Orion, Gryphon, Predator, Stalker |
+| Sentinel | Sentinel | Medium | 4: Nemesis, Thunderbolt, Reaver, Tormentor |
+| AssaultFighter | Striker | Medium | 4: Harpy, Raptor, Osprey, Hawk |
+| Bomber | Bomber | Heavy | 3: Wings_001, 003, 004 (Behemoth) |
+| Defender | Vindicator | Heavy | 3: Wings_005 (Typhoon), 006, 008 |
+| Gunship | Gunship | Heavy | 3: Wings_009 (Liberator), 010, 012 |
+
+33 ship models in 9 types, plus the Okkar ship (`OkkarShip1`, DLC) and the mining ship. The Light and Heavy wings' names are
+empty in the data (apart from Behemoth and Titan): those ships are named elsewhere, presumably by the run-time ship items. The
+debug row "Bomber_Liberator" uses a Gunship wing (Wings_009), so the Liberator is a Gunship. The measured Nemesis is the
+Sentinel's Nemesis wings.
+
+Parts per class (type `Invalid` rows left out: Medium Cockpit_Exterior_010 / 012; Heavy Body_007 / 008 / 010, Rear_002 / 003
+and the wings Titan (Bomber), Wings_007 (Vindicator), Wings_011 (Gunship): cut or unreleased):
+
+| Class | Bodies | Rears | Cockpits (exterior) | Interiors | Wings per type | Builds per type | Builds per class |
+|---|---|---|---|---|---|---|---|
+| Light | 9 | 9 | 3 | 3 | 4 | 972 | 2916 |
+| Medium (bodies A-I, rears 1-9) | 9 | 9 | 7 | 1 | 4 | 2268 | 6804 |
+| Heavy | 7 | 7 | 4 | 1 | 3 | 588 | 1764 |
+
+About 11 500 builds in all (wings x bodies x rears x cockpits), before the wings' tier extensions (`Extensions`, meshes
+`..._Ext_T1_001` to `_T4_001`: 2-4 per wing, none on some), colours (`DT_ShipColors`, `DT_ShipColorSets`), decals and skins
+(`DT_ShipSkins`: Alienware, Kickstarter). `DT_Ships_SpecialOffers` holds 15 fixed backer builds with their own names: Zephyrus,
+Stellarwind, X-25 Swift Wing, Bordeaux, Insurgent, Capkaru SD42 (Striker), Lacunae, Goldstar, Hyena (Bomber), Fatebringer,
+Fulmin (Vindicator), Quantum (Stinger), Hawkini, Darkstar (Sentinel), K-17 (Vanguard). None of this sets a flight value: the
+per-ship stats are the run-time items' (see the section above).
+
 ### Equipment in the remake's free flight (2026-10-10)
 
 The ship-class check above left the per-ship differences to the remake. Two changes so the original's equipment matters:

@@ -225,6 +225,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods: the mods' new-game options switched on for this game ("mod_id:option_id",
         /// Modding.ModGameOptions; saved).</summary>
         public static HashSet<string> ModGameOptions = new HashSet<string>();
+
+        /// <summary>Remake mods: the player's build of each customizable ship (Modding.ModShipKits), by the ship's "mod_id:ship_id"
+        /// key; build text "slot=part;...;tier=N". Saved.</summary>
+        public static Dictionary<string, string> ShipBuilds = new Dictionary<string, string>();
         public const int FreePlayMission = 20;
 
         /// <summary>
@@ -403,6 +407,7 @@ namespace GoF2Remake.Data
             Hardcore = false;
             RunId = System.Guid.NewGuid().ToString("N");
             ModGameOptions = new HashSet<string>();
+            ShipBuilds = new Dictionary<string, string>();
             GraphQuestsDone = new HashSet<string>();
             GoF2Remake.Events.EventRunner.ResetLocal();   // single player's graph runs go with the game
             Blueprints = new List<BlueprintState>();
