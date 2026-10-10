@@ -363,6 +363,7 @@ namespace GoF2Remake.World
                                            || (Siege != null && Siege.Active) || Events.EventRules.NoJumps;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
+            Radar.Clouds = GasClouds;
             Traffic.LockedTarget = () => Radar != null ? Radar.Locked : null;   // locking a Most Wanted criminal uncovers it
             // Equipment (combat_equipment.md): the cloak (autopilot menu entry), the time extender, the repair / transfusion beams.
             Cloak = PlayerCloak.Attach(Player.gameObject, db, Session.ShipIndex, Health.Target, Player.visualModel);
@@ -766,6 +767,7 @@ namespace GoF2Remake.World
             FreeLook = FreeLookCamera.Attach(root, chase, Turret);
             // Level::createGasClouds: the Supernova plasma clouds (a spectral filter mounted).
             GasClouds = GasCloudField.Spawn(db, Layout, ctrl, Turret);
+            if (Radar != null) Radar.Clouds = GasClouds;   // the spectral filters' markers and lock
             Extender = TimeExtender.Attach(root, db);
 
             // Asteroid mining (lock, autopilot approach, minigame): needs a drill (category 19) to lock.

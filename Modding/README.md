@@ -391,7 +391,17 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 ### Changing ships
 
 `override`: an original ship's number or another mod's `"mod_id:ship_id"`, with any of `armor`, `cargo`, `price`,
-`priceDefault`, `slots`, `handling`, `name`, `description` (and for mod ships `race`, `hangarHeight`).
+`priceDefault`, `slots`, `handling`, `name`, `description`, `mounts` (and for mod ships `race`, `hangarHeight`).
+
+**More (or fewer) weapons:** `slots` sets how many primaries, secondaries, turrets and equipment the ship takes (give only the
+ones you change), and `mounts`
+where its guns sit (the same list as a new ship's; it replaces the ship's whole list, exhausts included, so copy the ones you
+keep). A ship with more weapon slots than gun mounts still fires every weapon: the extra ones share the mounts in turn. With
+fewer slots, what no longer fits moves to the hold the next time the player docks.
+
+```json
+[ { "override": 10, "slots": { "primary": 3, "secondary": 2 } } ]
+```
 
 An override of an original ship can also give it a new **model**: `model` with `modelLength`, `modelYaw`, `materials`,
 `engineGlowRadius` / `engineGlowColor` and the glows, as for a new ship. Every ship of that number then uses it (yours, the
@@ -948,6 +958,29 @@ veteran_skin/
   textures/
     ship_028_terran_diffuse.png
 ```
+
+### Planets, suns and rings
+
+The same goes for the planets, suns and rings in the sky: a texture named like the game's replaces it in every system that
+shows it. The planets are `planet_000_small` ... `planet_019_small` (the other stations' planets) and `planet_000_big` ...
+`planet_019_big` (the orbit's own big planet), `planet_void_small` / `_big`, and the Supernova add-on's `sn_planet_024_small`
+... `sn_planet_026_big`; the suns `sun_000` ... (and `sn_sun_011`, the supernova); the rings `sn_planet_ring`. Each is one
+whole image (a disc on a transparent background, not a wrapped map), so keep the original's size and keep the transparent
+edge: the sun swells when it is near the middle of the screen, and a glow reaching the image's edge then shows as a square.
+
+To draw your retextured planets as stars, add a `backdrop.json` to the mod (the last mod in the load order that has one wins):
+
+```json
+{ "planets": "star", "planetGlow": 2, "planetFlare": 0.35 }
+```
+
+| Field | Meaning |
+|---|---|
+| `planets` | `"star"`: the planets whose texture your mod replaces face the camera like the sun, aren't mirrored and have no ring |
+| `planetGlow` | How much their bright core glows with the game's bloom (default 2; 1 = no extra glow) |
+| `planetFlare` | The sun's flare at this share of its strength when you look at them: a slight swell and a horizontal streak (0..1, default 0.35; 0 = none) |
+
+Planets you don't retexture stay planets.
 
 ## Building on other mods
 

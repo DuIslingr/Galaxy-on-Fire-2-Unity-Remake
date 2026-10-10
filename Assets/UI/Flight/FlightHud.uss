@@ -104,6 +104,12 @@
     height: 214px;
     margin-left: -107px;
     margin-top: -107px;
+    background-image: url("project://database/Assets/Resources/GoF2Hud/plasma_crosshair_idle.png");
+}
+
+/* PlayerEgo::draw: 0x1f5d while plasma is in range (Radar::isPlasmaInRange), else 0x1f5e above. */
+.crosshair--plasma.crosshair--plasma-in,
+.crosshair--plasma.crosshair--plasma-in.crosshair--hit {
     background-image: url("project://database/Assets/Resources/GoF2Hud/plasma_crosshair.png");
 }
 

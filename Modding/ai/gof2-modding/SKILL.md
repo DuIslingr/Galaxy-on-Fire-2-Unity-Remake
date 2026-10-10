@@ -182,7 +182,9 @@ several thousand), `color` (`[r,g,b]` 0-1 or `"#rrggbb"`), `glow` (>1 blooms; ga
 | `available` | Condition before dealers / lounges sell it. |
 
 `override` changes an original (number) or another mod's ship (key): armor, cargo, price, priceDefault, slots, handling, name,
-description (mod ships also race, hangarHeight), and an original can get a new `model` (+ its fields and `mounts`).
+description, `mounts` (mod ships also race, hangarHeight), and an original can get a new `model` (+ its fields). `slots` merges
+(give only the changed counts); `mounts` replaces the ship's whole list (exhausts too). More weapon slots than gun mounts: the
+extra weapons share the mounts; fewer slots: what doesn't fit goes to the hold on the next docking.
 
 ## blueprints.json
 
@@ -312,7 +314,10 @@ required). `override` changes originals (name, techLevel, looks, music...).
   quests.
 - `sounds/<name>.ogg`: replaces the game sound with that file name (from the game's Assets/Audio folders).
 - `textures/<name>.png`: replaces that game texture everywhere (`ship_028_terran_diffuse`; keep the original UV layout,
-  2048 x 2048).
+  2048 x 2048). Also the sky's planets, suns and rings (`planet_000_small` ... `planet_019_big`, `planet_void_*`,
+  `sn_planet_024_*` ... `sn_planet_026_*`, `sun_000` ..., `sn_sun_011`, `sn_planet_ring`): one whole disc image each, keep the
+  transparent edge. `backdrop.json` `{ "planets": "star", "planetGlow": 2, "planetFlare": 0.35 }` draws the retextured planets
+  as stars (facing the camera, no ring, a core glow, a weaker copy of the sun's flare).
 
 ## Quests and bar missions (event graphs)
 
