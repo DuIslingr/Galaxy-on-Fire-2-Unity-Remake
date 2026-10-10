@@ -783,7 +783,9 @@ namespace GoF2Remake.UI
             var p = logo.parent.layout;
             var el = logo.layout;
             if (el.width <= 0f || el.height <= 0f || p.width <= 0f) return;
-            const float aspect = 449f / 155f;                           // logo_gof2_remake.png (the remake's title logo)
+            // logo_gof2_remake.png's own proportions (the remake's title logo; #67 redrew it at 953 x 360)
+            var logoTex = logo.resolvedStyle.backgroundImage.texture;
+            float aspect = logoTex != null && logoTex.height > 0 ? (float)logoTex.width / logoTex.height : 953f / 360f;
             float imgW = Mathf.Min(el.width, el.height * aspect);     // scale-to-fit, left aligned
             var imgCenter = new Vector2(el.x + imgW * 0.5f, el.y + el.height * 0.5f);
             float targetW = Mathf.Min(p.width * 0.56f, p.height * 0.34f * aspect);
