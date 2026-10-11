@@ -1,7 +1,8 @@
 // EngineMaterialGlow.cs
 // Remake mods: the materials a mod ship marks "engine" (ships.json / shipkits.json "materials": the nozzles' own glowing
-// surfaces, EVERSPACE 2's nozzle rings and grilles) follow the engines: dim at idle (IdleLevel), full with the thrust
-// (EngineDrive: the player's throttle, else the ship's measured speed), as EVERSPACE 2's do (checked in the game). On a
+// surfaces, EVERSPACE 2's nozzle rings and grilles) follow the engines: dark at idle, full with the thrust (EngineDrive: the
+// player's throttle, else the ship's measured speed), as EVERSPACE 2's do (the user's shots of a Raptor at rest: no glow;
+// they kept 18 % at idle before). On a
 // ship a station spawns (StationLevel.SpawnShip sets followEngine) they also follow the engine glow part
 // (AssembledObject.playerVariantParts' engine_glow): dark on the turntable and the pads, lit through a hangar flight.
 // Materials marked "boost" (boost vents) glow only while boosting, with the boost (EngineDrive above 1). Changes ease over
@@ -20,7 +21,6 @@ namespace GoF2Remake.Modding
         public bool followEngine;
 
         const float FadePerSecond = 4f;
-        const float IdleLevel = 0.18f;   // EVERSPACE 2's nozzles idle: the rings' dotted pattern dimly lit
         readonly List<(Material mat, Color emission)> glowing = new List<(Material, Color)>();
         readonly List<(Material mat, Color emission)> boosting = new List<(Material, Color)>();
         float boostLevel = -1f;
@@ -81,7 +81,7 @@ namespace GoF2Remake.Modding
             if (glowing.Count == 0 && boosting.Count == 0) return;
             float d = drive.Sample(Time.deltaTime, followEngine ? engineGlow : null);
             bool off = (followEngine && !On) || drive.Off;   // free flight with no thrust: dark like a parked ship
-            Ease(ref level, off ? 0f : Mathf.Lerp(IdleLevel, 1f, Mathf.Clamp01(d)), glowing);
+            Ease(ref level, off ? 0f : Mathf.Clamp01(d), glowing);
             Ease(ref boostLevel, off ? 0f : Mathf.Clamp01(d - 1f), boosting);
         }
 

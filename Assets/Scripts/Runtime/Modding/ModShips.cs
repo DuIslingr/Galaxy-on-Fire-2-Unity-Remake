@@ -552,10 +552,11 @@ namespace GoF2Remake.Modding
         /// <summary>A build's colours onto its renderers: each slot's targets recolour copies of the materials whose name
         /// contains the target's 'material' (base: _BaseColor x intensity and the value's metallic / smoothness; emission:
         /// _EmissionColor x intensity; boost: an engine flame's _BoostColor x intensity).</summary>
-        static void ApplyColors(GameObject root, ModShipKits.Kit kit, ModShipKits.Build build)
+        /// ('cache': copies to reuse and keep, ModHardpoints' weapon models per build; null = new ones for this root.)
+        internal static void ApplyColors(GameObject root, ModShipKits.Kit kit, ModShipKits.Build build, Dictionary<Material, Material> cache = null)
         {
             if (kit.colorSlots.Count == 0) return;
-            var copies = new Dictionary<Material, Material>();
+            var copies = cache ?? new Dictionary<Material, Material>();
             foreach (var r in root.GetComponentsInChildren<Renderer>(true))
             {
                 var mats = r.sharedMaterials;

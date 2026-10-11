@@ -188,7 +188,7 @@ namespace GoF2Remake.Flight
             {
                 int item = items[m];
                 // The ship's own turret: no model of the game on it, its kit's turret if it has one (ModHardpoints).
-                var kitTurret = mounts[m].builtIn ? Modding.ModHardpoints.TurretModel(shipIndex, db.Item(item)) : null;
+                var kitTurret = mounts[m].builtIn ? Modding.ModHardpoints.TurretModel(shipIndex, db.Item(item), shown) : null;
                 if (mounts[m].builtIn && kitTurret == null) continue;
                 var prefab = kitTurret != null ? null : Visuals.AssembledObject.LoadPrefab(db.AssemblyByName("hangar_turret_item_" + Modding.ModContent.ItemLook(item)));
                 if (prefab == null && kitTurret == null) continue;

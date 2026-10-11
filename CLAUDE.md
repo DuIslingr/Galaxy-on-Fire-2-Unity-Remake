@@ -1848,7 +1848,7 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   as camera-facing ribbons of points that keep the ship's velocity plus their own backward speed (they bend when the ship turns,
   as in GoF3's ship viewer) and sway in smooth waves (each trail eases toward random sideways speeds, `SwayEase`; independent
   points made a zigzag), the streak's middle row across them (whole copies per segment read as beads) and a random brightness
-  per point. EngineDrive levels (thrust 0.3..1 length, boost longer); in the station capped; materials copies of
+  per point. EngineDrive levels (thrust 0.3..1 length, boost longer; a third of the glow at idle, unlike the ES2 flames); in the station capped; materials copies of
   `ModAssets.fxAdditive` (`ModMaterials.CopyOf`) at `_Glow` 0.75 / 0.5 / 1 / 0.45 (flare, cone, trail, helix). A mount's `fxScale` sizes it (GoF3's helper scale:
   the Retro 0.5 / 1.62) and its `rotation` turns it (`ModHardpoints.MountTurn`; five Vossk hulls' engines 8.5-10 deg inward).
   The helix (`spiral*`, only the Nivelian engine has one: `_spiral.ae4meshgroup`, two ribbon strands, radius 0.5 -> 0.1 over
@@ -1864,7 +1864,10 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   textures' brightness-weighted colour (amber: flare 1 / 0.65 / 0.28, cone and trail 1 / 0.54 / 0.27; `texture_colour`), not the
   EngineAttachment's blue or the hull's pale nozzle colour; no wavering streams but one thin straight streak (`RACE_TRAIL`: 1 per
   exhaust, 0.45 units wide, wander 0.6, x2 the cards' length, intensity 0.35) behind a cone 2.5 x brighter, the spike GoF3
-  shows. Matched by eye against two clips of the Moornta (GoF3's ship viewer, and in flight from the side and
+  shows. A Terran engine on a hull whose nozzles glow yellower than that amber takes its parts halfway to the
+  nozzles' colour (the builder's `nozzle_tinted`: GoF3 draws the flare additively over the lit nozzle; the Retro / Groza
+  Gr'Gath's gold nozzles, checked against a GoF3 video: (1, 0.75, 0.35) measured, (1, 0.80, 0.35) the blend; also the
+  Acheron and Cronus). Matched by eye against two clips of the Moornta (GoF3's ship viewer, and in flight from the side and
   behind; Play mode: behind, below, above, the side, a hard turn; the Terran, Vossk and Retro hulls; the hangar hides it).
 - **Exhaust styles** (`ModExhausts`, a mod's `exhausts.json`; the guide's "Exhaust styles"): engine effects any ship can wear,
   picked in the hangar's Customize screen (`ShipCustomizePanel`'s Exhaust row and the style's two colour rows; with styles in
@@ -2061,7 +2064,9 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   moves each gun to its model's `muzzle` node (`MuzzleOffset`); a mount's `rotation` (`WeaponMount.rotation`, Euler degrees or
   a quaternion in the ship model's frame, `ModHardpoints.MountTurn`) turns its weapon model and muzzle (the GoF3 hulls'
   slanted hardpoints; the shots still fly along the nose), and a turret model without a `muzzle` node carries its weapon on
-  the gun node and fires from the weapon's muzzle; a primary / secondary mount's `nodes` (`WeaponMount.nodes`, ship model node
+  the gun node and fires from the weapon's muzzle; the weapon and turret models take the build's colours
+  (`ModHardpoints.Colour` -> `ModShips.ApplyColors` with a cache of copies per build's colours: ES2's missile pod lights its
+  bay frame in Emissive 2 and is painted in the hull colours; they kept the template's white before); a primary / secondary mount's `nodes` (`WeaponMount.nodes`, ship model node
   names: the GoF3 hulls' pylons) show only while that mount carries a weapon (`ModHardpoints.ShowMountNodes`, from every
   `AttachWeapons`: flight, the hangar turntable, other players' ships and hangar guests). **Skins** (a kit's `skins`, `ModShipKits.Skin`; `Build.skin`, text
   "skin=id", "none" = the model's own look over a default build's skin, `Build.Reserved` keeps "skin" / "tier" / "color." out
@@ -2127,18 +2132,19 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   converter (`flame_across`) writes each card's coordinate across it into UV1.x and its kind into UV1.y, read as
   |y - 0.5| (glTFast flips V): 0 main, 0.25 boost, 0.5 none. The vertex shader moves each vertex u x the length backward
   (`_FlameDir`, the ship root's -Z in the renderer's object space, per renderer and submesh through a MaterialPropertyBlock,
-  the renderer's bounds grown to match): main cards by thrust 0..1 (idle 15 %), +30 % at a full boost, boost cards by the
+  the renderer's bounds grown to match): main cards by thrust 0..1 (none at idle: below a drive of 0.02 the flames shrink into the nozzles like free flight's engines off; the user's ES2 shots of a ship at rest), +30 % at a full boost, boost cards by the
   boost alone, both x the engines' level (the engine glow part active, 0.25 s fade: shrunk into the nozzles and dark on a
   parked ship; in the station capped at full throttle). The fragment: additive, the colour gold near the nozzle (boost
-  cards white-blue), ES2's T_Noise_018_M stretched into fine streaks, faded hard toward the tip (`_Fade` 4), each card
+  cards a tight near-white head, `_BoostCore`, then saturated in the boost colour at `_BoostBrightness` 1.6: matched to the
+  user's ES2 customization-screen shots of the Wraith boosting; they were half as bright with a faint head), ES2's T_Noise_018_M stretched into fine streaks, faded hard toward the tip (`_Fade` 4), each card
   softened toward its long edges (UV1.x) and, for main cards, faded as it turns edge-on (|N.V|^2, ES2's OpacityExponent:
   from behind only thin rays remain, as in ES2; the remake had widened the cards toward the camera, `_Widen`, now 0, which
   turned Rear_009's boost cards into fans above and below the ring). A ship with flames keeps an empty `engine_glow` part
   (no discs) and has no exhaust particles (`ShipExhaust.Setup`). The nozzle glow (`M_Vehicles_Floaters_Emissive`, split by
   vertex colour by `glow_split`: green NozzleCore, black NozzleOff, the rest NozzleGlow) takes the engine colour slot through
   the brighter of its mask's red and green channels (T_Vehicles_Floaters_Emissive_M: the rings and grilles, and the dotted
-  band Rear_009's ring samples), `engine`: `EngineMaterialGlow` dims it to 18 % at idle and lights it with the thrust (ES2's
-  idle nozzles keep a dim dotted glow), dark parked. Intensities: flames 4, nozzles 1.6 (brighter clips to pale yellow under
+  band Rear_009's ring samples), `engine`: `EngineMaterialGlow` lights it with the thrust, dark at idle (it kept 18 % at idle
+  before; ES2's nozzles at rest are dark), dark parked. Intensities: flames 4, nozzles 1.6 (brighter clips to pale yellow under
   the remake's tone mapping; ES2 adds a bloom halo the remake's bloom can't without washing it out). **Manoeuvring jets**
   (`LateralThrusters`, mounts of slotType 4 with `WeaponMount.direction`; the converter reads every part's
   `SKT_LateralThruster` sockets, `thruster_mounts`: the Unreal rotator's forward axis): ES2 fires `P_Vehicle_LateralThruster`
@@ -2147,7 +2153,8 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   is two crossed boost cards drawn by the flame shader (5 m at full strength) plus a glow disc facing along it, in the
   ship's flames' boost colour; under the engine glow part (hidden with the engines, left out of the hangar heights and
   shadows). Input: the player's free-flight keys (`FlightModel.ThrustInput`, set by `StepFree`), in the original flight the
-  strafe and the brake, other ships their measured acceleration; none in the station. `LateralThrusters.TestInput` overrides
+  strafe and the brake, other ships their measured acceleration; none in the station, except a small glow on every jet
+  (0.35) while the Customize screen runs the engines (`Visuals.EnginePreview`), as ES2's customization screen shows them. `LateralThrusters.TestInput` overrides
   it for Editor tests. Colours like EVERSPACE 2's (TrailColorEngine / Boost / Lateral): a kit colour slot's target "property": "boost" sets a
   flame material's `_BoostColor` (`ModShips.ApplyColors`); the ES2 kits' slots Main thrusters (the flames and nozzles), Booster
   (the boost cards) and Side thrusters (the "lateral thruster" material: the jets and, through `LateralThrusters.Setup`, their
@@ -2174,7 +2181,15 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   M_Vehicles_Floaters_Emissive by vertex colour and glow atlas region (`glow_split`: Emissive 1 / 2 rings, the exhaust
   grilles and nozzles in the engine colour, the boost vents "BoostVent", the hot discs); the cybernetic glow lights the floater
   strips (T_ShipModules_Floaters_001's strip graphic, "CyberStrip", `floater_split`); the rest of the floaters are alpha-cut
-  detail cards that never glow. Verified in Play mode: thrust (chase, behind, side), a forced boost (the cyan slots in ES2's places),
+  detail cards that never glow. The Wraith (Okkar hull, `okkar_split`): its glow faces are all white, so `glow_split`'s rules took its small lights for engine
+  glow; only the faces within 1.5 m of its engine socket keep the engine colour, the rest (blade and wing-tip lights, the
+  nose's bars) are Emissive 1, the spine's ribs Emissive 2; its plates don't glow (MI_Vehicles_Okkar_TechDetail_PlayerShip's
+  EmissiveColor is #100801; they were in Emissive 1). Checked against the user's ES2 photo-mode shots with Emissive 1 blue
+  and 2 red. The glow atlas (T_Vehicles_Floaters_Emissive_M) row 0.40..0.50 by the user's shots of a Nemesis-B9-1 I and a Raptor
+  D1-1 I+ (Emissive 1 / 2 in different colours): its V-shaped triangles (u 0.34..0.50) Emissive 1 (engine glow before: body
+  B's forward keel lamps, the small lamps beside body D's nose frame), the rest from u 0.5 Emissive 2 as before (the nose
+  frame, the round dots of body B's rear keel lamps); cyan glow faces Emissive 2 (the missile pod's bay frame); the fin
+  edges' dotted bars (u < 0.5) keep the engine colour. Verified in Play mode: thrust (chase, behind, side), a forced boost (the cyan slots in ES2's places),
   the jets in all four strafe directions and in reverse, parked in the hangar (flames, nozzles and jets off). The ES2 converter reads the meshes' sockets (SKT_PWSlot / SWSlot / Turret / Engine,
   Unreal cm -> the export's glTF metres (X, Z, Y); at most 4 exhausts per part). Stats and slots per part (`Part.armor` / `cargo` /
   `handling` %, `equipment`, flight %, `primarySlots` / `secondarySlots` / `turretSlots`; `ModShipKits.EffectOf` /

@@ -22,6 +22,7 @@ namespace GoF2Remake.Modding
     public class EngineFlame : MonoBehaviour
     {
         const float FadePerSecond = 4f;
+        const float IdleThrust = 0.02f;   // a drive below this is idle: no flame
         const float Response = 6f;   // 1/s: how fast the flame follows the throttle
 
         static readonly int DirId = Shader.PropertyToID("_FlameDir");
@@ -111,7 +112,9 @@ namespace GoF2Remake.Modding
                 thrust = Mathf.Lerp(thrust, t, k);
                 boost = Mathf.Lerp(boost, b, k);
             }
-            float target = On && !drive.Off && !suppressed ? 1f : 0f;   // free flight with no thrust: the flames shrink into the nozzles
+            // Off (free flight with no thrust) or idle (no thrust, the throttle at 0 or a ship at rest): the flames shrink
+            // into the nozzles, as EVERSPACE 2's do (they kept a short flame at idle before).
+            float target = On && !drive.Off && !suppressed && d > IdleThrust ? 1f : 0f;
             level = level < 0f ? target : Mathf.MoveTowards(level, target, Time.unscaledDeltaTime * FadePerSecond);
             foreach (var (r, index, dir) in flames)
             {

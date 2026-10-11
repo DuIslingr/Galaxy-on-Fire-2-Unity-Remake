@@ -29,6 +29,7 @@ namespace GoF2Remake.Modding
         const float JetLength = 5f;       // metres at full strength (EVERSPACE 2's ~1.4 m x the kit's 3.6)
         const float RiseRate = 14f, FallRate = 7f;   // 1/s
         const float AccelRef = 20f;       // m/s^2 of measured acceleration that counts as a full push (other ships)
+        const float PreviewLevel = 0.35f; // each jet's strength while the Customize screen runs the engines
 
         static readonly int BoostId = Shader.PropertyToID("_FlameBoost");
         static readonly int DirId = Shader.PropertyToID("_FlameDir");
@@ -225,12 +226,16 @@ namespace GoF2Remake.Modding
             if (jets.Length == 0) return;
             float dt = Time.deltaTime;
             var want = TestInput ?? (inStation ? Vector3.zero : Wanted(dt));
+            // The hangar's Customize screen running the engines (Visuals.EnginePreview): every jet lit a little, as EVERSPACE
+            // 2's customization screen shows its side thrusters.
+            var preview = inStation ? GetComponentInParent<Visuals.EnginePreview>() : null;
+            float floor = preview != null && preview.isActiveAndEnabled ? PreviewLevel : 0f;
             for (int i = 0; i < jets.Length; i++)
             {
                 var r = jets[i];
                 if (r == null) continue;
                 // A jet pushes the ship against the way it blows.
-                float target = Mathf.Clamp01(Vector3.Dot(want, -directions[i]) * 1.3f - 0.3f);
+                float target = Mathf.Max(floor, Mathf.Clamp01(Vector3.Dot(want, -directions[i]) * 1.3f - 0.3f));
                 levels[i] = Mathf.MoveTowards(levels[i], target, dt * (target > levels[i] ? RiseRate : FallRate));
                 r.GetPropertyBlock(block);
                 block.SetFloat(BoostId, levels[i]);

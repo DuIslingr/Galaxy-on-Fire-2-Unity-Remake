@@ -162,6 +162,25 @@ namespace GoF2Remake.Modding
             return h;
         }
 
+        // The weapon and turret models in a build's colours (ES2 lights its missile pod's bay frame in Emissive 2, paints it in
+        // the hull colours): copies of their materials per build's colours, reused (the weapons are attached again whenever
+        // they change).
+        static readonly Dictionary<string, Dictionary<Material, Material>> coloured = new Dictionary<string, Dictionary<Material, Material>>();
+        static int colouredRevision = -1;
+
+        static void Colour(GameObject root, ModShipKits.Kit kit, ModShipKits.Build build)
+        {
+            if (root == null || kit == null || build == null || kit.colorSlots.Count == 0 || build.colors.Count == 0) return;
+            if (colouredRevision != ModManager.Revision) { coloured.Clear(); colouredRevision = ModManager.Revision; }
+            string key = kit.Key + "|" + string.Join(";", build.colors.OrderBy(kv => kv.Key).Select(kv => kv.Key + "=" + kv.Value));
+            if (!coloured.TryGetValue(key, out var cache))
+            {
+                if (coloured.Count >= 32) coloured.Clear();
+                coloured[key] = cache = new Dictionary<Material, Material>();
+            }
+            ModShips.ApplyColors(root, kit, build, cache);
+        }
+
         static void Layered(GameObject go, int layer)
         {
             foreach (var t in go.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = layer;
@@ -172,7 +191,7 @@ namespace GoF2Remake.Modding
         /// "pivot" (turns about its up) -> "kit_gun" (tilts about its right, barrel along its forward) -> "muzzle", the meshes
         /// under them at the kit's turn and scale, the item's turret weapon (if a rule gives one) on the gun with its muzzle on
         /// the turret's. Null = no kit turret (PlayerTurret's stand-in). Its pivot / gun nodes are assumed unrotated.</summary>
-        public static GameObject TurretModel(int ship, ItemData item)
+        public static GameObject TurretModel(int ship, ItemData item, ModShipKits.Build shown = null)
         {
             var kit = KitOfShip(ship);
             if (kit == null || string.IsNullOrEmpty(kit.hardpoints.turret)) return null;
@@ -220,6 +239,7 @@ namespace GoF2Remake.Modding
                 if (u == null && wm != null) muzzle.localPosition = K(Local(w, wm));
                 Holder(gun, "weapon", at, Quaternion.identity, kit, w);
             }
+            Colour(root, kit, shown ?? ModShipKits.PlayerBuild(ship));
             return root;
         }
 
@@ -251,7 +271,11 @@ namespace GoF2Remake.Modding
                            MountTurn(mounts[i]), kit, t);
                 }
             }
-            if (root != null) Layered(root, shipModel.gameObject.layer);
+            if (root != null)
+            {
+                Layered(root, shipModel.gameObject.layer);
+                Colour(root, kit, shown ?? ModShipKits.PlayerBuild(ship));
+            }
             return root;
         }
 
@@ -311,7 +335,7 @@ namespace GoF2Remake.Modding
         static int heightsRevision = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { heights.Clear(); heightsRevision = -1; }
+        static void ResetStatics() { heights.Clear(); heightsRevision = -1; coloured.Clear(); colouredRevision = -1; }
 
         /// <summary>The pivot height (game units above the floor, like StationTables.ShipY) at which a customizable ship's model
         /// 'assembly' (a build variant, ModShipKits.VariantAssembly) floats HoverGap clear of the floor: its lowest point, its

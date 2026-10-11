@@ -38,6 +38,8 @@ Shader "GoF2/ModEngineFlame"
         _Graze ("Edge-on brightening", Float) = 0
         _EdgeOnFade ("Fade seen edge-on (|N.V| ^ x, ES2's OpacityExponent)", Float) = 2
         _Core ("Gold core near the nozzle", Float) = 1.2
+        _BoostBrightness ("Boost jets' brightness", Float) = 1.6
+        _BoostCore ("Boost jets' white head (share of _Core)", Float) = 1
         _Brightness ("Brightness", Float) = 1
         _FlameDir ("Backward, object space (EngineFlame)", Vector) = (0, 0, -1, 0)
         _FlameThrust ("Thrust 0..1 (EngineFlame)", Float) = 1
@@ -63,7 +65,7 @@ Shader "GoF2/ModEngineFlame"
             CBUFFER_START(UnityPerMaterial)
                 half4 _EmissionColor, _BoostColor;
                 float4 _NoiseMap_ST, _NoiseTiling, _FlameDir;
-                float _Widen, _StreakContrast, _StreakTiling, _NoiseSpeed, _NoiseStrength, _Length, _IdleLength, _BoostLength, _Fade, _EdgePower, _Taper, _EdgeSoftness, _Graze, _EdgeOnFade, _Core, _Brightness;
+                float _Widen, _StreakContrast, _StreakTiling, _NoiseSpeed, _NoiseStrength, _Length, _IdleLength, _BoostLength, _Fade, _EdgePower, _Taper, _EdgeSoftness, _Graze, _EdgeOnFade, _Core, _Brightness, _BoostBrightness, _BoostCore;
                 float _FlameThrust, _FlameBoost, _FlameLevel, _BoostOverride;
             CBUFFER_END
 
@@ -143,9 +145,11 @@ Shader "GoF2/ModEngineFlame"
                 half3 col = boostCard ? _BoostColor.rgb : hasAcross ? lerp(_EmissionColor.rgb, _BoostColor.rgb, boost * over) : lerp(_EmissionColor.rgb, _BoostColor.rgb, boost);
                 // Gold (the boost cards: white) and brighter near the nozzle (ES2's main flame never goes white there).
                 half peak = max(max(col.r, col.g), col.b);
-                half hot = saturate(exp(-u * 4) * _Core * (boostCard ? 0.25 : 1));
-                col = lerp(col, (boostCard ? half3(0.8, 0.95, 1) : half3(1, 0.5, 0.1)) * peak, hot) * (1 + hot * 0.5);
-                half3 rgb = col * a * facing * _Brightness * level * (boostCard ? boost * 0.5 * (1 - over) : 1);
+                // (the boost jets: a near-white head where each jet starts, like EVERSPACE 2's customization screen shows
+                // the Wraith's; _BoostBrightness their strength against the main flame)
+                half hot = saturate(exp(-u * (boostCard ? 8 : 4)) * _Core * (boostCard ? _BoostCore : 1));
+                col = lerp(col, (boostCard ? half3(0.85, 0.97, 1) : half3(1, 0.5, 0.1)) * peak, hot) * (1 + hot * (boostCard ? 1 : 0.5));
+                half3 rgb = col * a * facing * _Brightness * level * (boostCard ? boost * _BoostBrightness * (1 - over) : 1);
                 return half4(rgb, 0);
             }
             ENDHLSL
