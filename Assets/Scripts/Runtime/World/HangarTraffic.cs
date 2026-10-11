@@ -116,16 +116,9 @@ namespace GoF2Remake.World
         readonly Func<int, int, Quaternion, Vector3> padPosition;     // (slot, ship, parked rotation) -> the ship's parked pivot
         readonly Func<int, Vector3, Quaternion, GameObject> spawn;     // (ship, position, rotation) -> the ship
 
-        /// <summary>The guest whose ship 'spawn' is making now (multiplayer: StationLevel shows it in that player's build of
-        /// a customizable ship), -1 = an NPC ship.</summary>
+        /// <summary>The guest whose ship 'spawn' is making, or whose pad 'padPosition' is placing, now (multiplayer:
+        /// StationLevel shows it in that player's build of a customizable ship, at that build's height), -1 = an NPC ship.</summary>
         public long SpawningGuest { get; private set; } = -1;
-
-        GameObject SpawnGuest(long id, int ship, Vector3 position, Quaternion rotation)
-        {
-            SpawningGuest = id;
-            try { return spawn(ship, position, rotation); }
-            finally { SpawningGuest = -1; }
-        }
 
         HangarFlight flight;
         Parked flying;
@@ -279,20 +272,30 @@ namespace GoF2Remake.World
             int slot = FreeSlot();
             if (slot < 0) return;
             var rot = ParkedYaw();
-            var go = SpawnGuest(id, ship, padPosition(slot, ship, rot), rot);
-            if (go != null) parked.Add(new Parked { go = go, slot = slot, ship = ship, guest = id });
+            SpawningGuest = id;
+            try
+            {
+                var go = spawn(ship, padPosition(slot, ship, rot), rot);
+                if (go != null) parked.Add(new Parked { go = go, slot = slot, ship = ship, guest = id });
+            }
+            finally { SpawningGuest = -1; }
         }
 
         void LandGuest(long id, int ship)
         {
             int slot = FreeSlot();
             if (slot < 0) return;
-            var go = SpawnGuest(id, ship, lane.gate, Quaternion.identity);
-            if (go == null) return;
-            flying = new Parked { go = go, slot = slot, ship = ship, guest = id };
-            var engine = HangarFlight.AddEngine(go, false, db, ship, out float volume);
-            var rot = ParkedYaw();
-            flight = HangarFlight.Arrival(go.transform, lane, padPosition(slot, ship, rot), rot, engine, volume);
+            SpawningGuest = id;
+            try
+            {
+                var go = spawn(ship, lane.gate, Quaternion.identity);
+                if (go == null) return;
+                flying = new Parked { go = go, slot = slot, ship = ship, guest = id };
+                var engine = HangarFlight.AddEngine(go, false, db, ship, out float volume);
+                var rot = ParkedYaw();
+                flight = HangarFlight.Arrival(go.transform, lane, padPosition(slot, ship, rot), rot, engine, volume);
+            }
+            finally { SpawningGuest = -1; }
         }
 
         void Land()

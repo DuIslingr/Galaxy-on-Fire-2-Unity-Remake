@@ -221,6 +221,9 @@ namespace GoF2Remake.Flight
         /// <summary>Free flight: the ship's velocity, world space, units per ms. Kept in step with the original's forward
         /// flight while another mode moves the ship (the autopilot, the launch camera), so switching is seamless.</summary>
         public Vector3 FreeVelocity;
+        /// <summary>Free flight: what this frame's keys ask for in ship space (x strafe, y up / down, z thrust; -1..1), for
+        /// the effects that show it (Modding.LateralThrusters). Set by StepFree.</summary>
+        public Vector3 ThrustInput;
 
         // EVERSPACE 2's player ship (es2_flight_measurements.md; the cockpit's speed gauge, km/h): top speed 100 m/s forward
         // (measured 343 km/h = 95.3), backward, strafe and up / down half of it (all 172 km/h); every axis eases out cubically
@@ -311,6 +314,7 @@ namespace GoF2Remake.Flight
             float easeSide = FreeEaseSideMs * handlingScale + AccelMs;
             float decel = top / (FreeDecelMs + AccelMs);
             float thrust = Mathf.Clamp(input.thrust, -1f, 1f), strafe = Mathf.Clamp(input.strafe, -1f, 1f), hover = Mathf.Clamp(input.hover, -1f, 1f);
+            ThrustInput = new Vector3(strafe, hover, thrust);
             if (IsBoosting) thrust = 1f;   // the boost drives forward whatever is held
             var fwd = rotation * Vector3.forward;
             var v = Quaternion.Inverse(rotation) * FreeVelocity;   // ship space: x right, y up, z forward

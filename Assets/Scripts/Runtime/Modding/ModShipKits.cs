@@ -12,6 +12,9 @@
 //           "tiers": ["parts/wings_009_t1.glb", ...],   extension meshes shown at build tier 1, 2, ... (none = no extension)
 //           "mounts": [ { "slotType": 0, "position_engine": [x, y, z] }, ... ],   the part's weapon / turret / exhaust mounts,
 //           "tierMounts": [ [ ... ], ... ],   and its tier extensions' (like a ship's "mounts", ship-relative game units)
+//           "anchors": { "cockpit": [x, y, z] },   points this part offers others (model units, the GLB's glTF coordinates)
+//           "anchor": "cockpit",   this part (and its tier models) sits on that point of the build's part offering it
+//                                  (EVERSPACE 2's bodies carry the canopy at a socket of their own)
 //           "stats": { "armor": 10, "cargo": -5, "handling": 8 (%), "equipment": 1 (slots), "topSpeed", "turnRate",
 //                      "acceleration", "strafeSpeed" (% flight bonuses, both flight styles) },
 //           "slots": { "primary": 2, "secondary": 1, "turret": 1 } }
@@ -24,12 +27,15 @@
 //       ] } ]
 //       "palettes": { "main": [ { "id": "white", "name": "Snow White", "color": "#F9F9F9", "metallic": 0, "smoothness": 0.5 }, ... ] },
 //       "colorSlots": [ { "id": "hull1", "name": "Main colour", "palette": "main", "default": "white",
-//                         "targets": [ { "material": "Paint1", "property": "base" | "emission" | "engine", "intensity": 1 } ] } ],
+//                         "targets": [ { "material": "Paint1", "property": "base" | "emission" | "boost" | "engine", "intensity": 1 } ] } ],
 //       "presets": [ { "id": "scheme_4", "name": "Scheme 4", "colors": { "hull1": "#699CBF/1/0.6", "lights": "white", ... } } ]
 //     The player picks a colour per slot from its palette (or a preset sets them all); each target recolours the materials whose
 //     name contains 'material' (the model's own, or a kit "materials" entry's 'material' filter): base = the base colour (x
-//     intensity; a value's metallic / smoothness too), emission = the emission colour x intensity, engine = the engine glow.
+//     intensity; a value's metallic / smoothness too), emission = the emission colour x intensity, boost = an engine flame's
+//     boost colour x intensity (its boost cards; the manoeuvring jets' material is "lateral thruster"), engine = the engine glow.
 //     A colour value: a palette entry's id, or "#RRGGBB" with an optional "/metallic/smoothness".
+//     A strength slot { "id", "name", "steps": [0, 0.25, 0.5, 0.75, 1], "default": "0.5", "scales": "<colour slot id>" } has no
+//     palette: its value (a number) scales that colour slot's emission targets (EVERSPACE 2's Emissive 3 intensity).
 //       "hardpoints": { "turret": "...glb", "weapons": [ { "slot", "model", "items", "categories" } ] }: the weapons' and the
 //     turret's models on the build's mounts (ModHardpoints).
 // ships.json: a new ship with "kit": "<kit id>" (this mod's) or "mod_id:kit_id" instead of "model", "kitType": "sentinel",
@@ -55,7 +61,7 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> KitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "name", "slots", "scale", "yaw", "materials", "parts", "palettes", "colorSlots", "presets", "hardpoints" };
         static readonly HashSet<string> PartFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "id", "slot", "name", "model", "types", "tiers", "mounts", "tierMounts", "stats", "slots" };
+            { "id", "slot", "name", "model", "types", "tiers", "mounts", "tierMounts", "stats", "slots", "anchors", "anchor" };
 
         public sealed class Part
         {
@@ -67,6 +73,10 @@ namespace GoF2Remake.Modding
             public float armor, cargo, handling, topSpeed, turnRate, acceleration, strafeSpeed;   // % (stats)
             public int equipment;                                                                  // slots (stats)
             public int primarySlots = -1, secondarySlots = -1, turretSlots = -1;                  // -1 = not given
+            /// <summary>Named points this part offers others (model units, the GLB's own glTF coordinates), and the anchor
+            /// this part sits on (its model and tier models moved to that point of the build's part that offers it).</summary>
+            public Dictionary<string, Vector3> anchors = new Dictionary<string, Vector3>(StringComparer.OrdinalIgnoreCase);
+            public string anchor;
             public string Name => ModManifest.Pick(name) ?? id;
             public bool Allows(string type) => types.Count == 0 || types.Any(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase));
         }
@@ -92,6 +102,11 @@ namespace GoF2Remake.Modding
             public string id, palette, defaultValue;
             public Dictionary<string, string> name;
             public List<ColorTarget> targets = new List<ColorTarget>();
+            /// <summary>A strength slot (no palette): the values the player steps through (0..1), scaling the emission
+            /// targets of the slot 'scales' names (EVERSPACE 2's Emissive 3 intensity slider).</summary>
+            public float[] steps;
+            public string scales;
+            public bool IsStrength => steps != null && steps.Length > 0;
             public string Name => ModManifest.Pick(name) ?? id;
         }
 
@@ -205,6 +220,11 @@ namespace GoF2Remake.Modding
                     };
                     if (string.IsNullOrEmpty(p.id) || !ModManifest.ValidId(p.id))
                         throw new ModJsonException($"{pwhere}: \"id\" is missing or uses more than a-z, 0-9, _ and -");
+                    p.anchor = ModJson.Str(po, "anchor");
+                    if (ModJson.Get(po, "anchors") is JObject an)
+                        foreach (var ap in an.Properties())
+                            if (ap.Value is JArray av && av.Count >= 3)
+                                p.anchors[ap.Name] = new Vector3((float)av[0], (float)av[1], (float)av[2]);
                     if (!partIds.Add(p.id)) throw new ModJsonException($"{pwhere}: the part id \"{p.id}\" is used twice in this kit");
                     if (string.IsNullOrEmpty(p.slot) || !ModManifest.ValidId(p.slot)) throw new ModJsonException($"{pwhere}: \"slot\" is missing (e.g. \"wings\")");
                     if (string.IsNullOrEmpty(p.model)) throw new ModJsonException($"{pwhere}: \"model\" is missing (the part's glTF / GLB)");
@@ -269,7 +289,7 @@ namespace GoF2Remake.Modding
                 if (build.tier > 0 && build.tier <= part.tierMounts.Count) fromParts.AddRange(part.tierMounts[build.tier - 1]);
             }
             var all = new List<WeaponMount>();
-            foreach (int type in new[] { 0, 1, 2, 3 })
+            foreach (int type in new[] { 0, 1, 2, 3, 4 })
             {
                 var own = fromParts.Where(m => m.slotType == type).ToList();
                 all.AddRange(own.Count > 0 ? own : (c.mounts ?? new List<WeaponMount>()).Where(m => m.slotType == type));
@@ -410,6 +430,15 @@ namespace GoF2Remake.Modding
                     if (!(t is JObject so)) continue;
                     var slot = new ColorSlot { id = ModJson.Str(so, "id"), palette = ModJson.Str(so, "palette"), defaultValue = ModJson.Str(so, "default"), name = ModJson.Text(so, "name") };
                     if (string.IsNullOrEmpty(slot.id) || !ModManifest.ValidId(slot.id)) throw new ModJsonException($"{ModJson.Where(t, File)}: a colour slot needs an \"id\" (a-z, 0-9, _ and -)");
+                    if (ModJson.Get(so, "steps") is JArray st)
+                    {
+                        // A strength slot: "steps": [0, 0.25, ...], "scales": "<colour slot id>", "default": "0.5".
+                        slot.steps = st.Where(x => x.Type == JTokenType.Float || x.Type == JTokenType.Integer).Select(x => Mathf.Clamp((float)x, 0f, 4f)).ToArray();
+                        slot.scales = ModJson.Str(so, "scales");
+                        if (slot.steps.Length == 0 || string.IsNullOrEmpty(slot.scales)) throw new ModJsonException($"{ModJson.Where(t, File)}: a strength slot needs numbers in \"steps\" and the colour slot it \"scales\"");
+                        k.colorSlots.Add(slot);
+                        continue;
+                    }
                     if (slot.palette == null || !k.palettes.ContainsKey(slot.palette)) throw new ModJsonException($"{ModJson.Where(t, File)}: \"palette\" \"{slot.palette}\" isn't in \"palettes\"");
                     if (ModJson.Get(so, "targets") is JArray ta)
                         foreach (var x in ta)
@@ -440,11 +469,19 @@ namespace GoF2Remake.Modding
             return ColorUtility.TryParseHtmlString(text.StartsWith("#") ? text : "#" + text, out c);
         }
 
-        /// <summary>A colour value: a palette id of the slot's palette, or "#RRGGBB[/metallic/smoothness]".</summary>
+        /// <summary>A colour value: a palette id of the slot's palette, or "#RRGGBB[/metallic/smoothness]"; a strength slot's
+        /// value is a number (the colour then grey at that level).</summary>
         public static bool Resolve(Kit kit, ColorSlot slot, string value, out Color color, out float metallic, out float smoothness)
         {
             color = Color.white; metallic = smoothness = -1f;
             if (string.IsNullOrEmpty(value)) return false;
+            if (slot != null && slot.IsStrength)
+            {
+                if (!float.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float f)) return false;
+                f = Mathf.Clamp(f, 0f, 4f);
+                color = new Color(f, f, f, 1f);
+                return true;
+            }
             if (value.StartsWith("#"))
             {
                 var bits = value.Split('/');
@@ -457,6 +494,15 @@ namespace GoF2Remake.Modding
             if (choice == null) return false;
             color = choice.color; metallic = choice.metallic; smoothness = choice.smoothness;
             return true;
+        }
+
+        /// <summary>The strength a build gives a colour slot's emission (a strength slot that scales it; 1 without one).</summary>
+        public static float StrengthOf(Kit kit, Build build, string slotId)
+        {
+            var s = kit.colorSlots.Find(c => c.IsStrength && string.Equals(c.scales, slotId, StringComparison.OrdinalIgnoreCase));
+            if (s == null) return 1f;
+            string v = build.colors.TryGetValue(s.id, out var bv) ? bv : s.defaultValue;
+            return Resolve(kit, s, v, out var c, out _, out _) ? c.r : 1f;
         }
 
         static void Warn(ModInfo mod, string message)

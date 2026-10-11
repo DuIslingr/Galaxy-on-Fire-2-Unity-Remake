@@ -421,10 +421,16 @@ namespace GoF2Remake.World
 
         /// <summary>The Unity pivot of 'ship' parked on 'slot' at 'rotation' (the slot plus the ship's height, lifted where the
         /// hull would cut into the pad: StationTables.PadPivotY).</summary>
-        Vector3 ParkedPosition(int slot, int ship, Quaternion rotation) => customHangar != null
-            ? customHangar.parked[slot] + Vector3.up * (StationTables.ShipY(ship) * M)   // a custom hangar's marker
-            : new Vector3(0f, StationTables.PadPivotY(HangarIndex, slot, ship, rotation), 0f)
-              + Vector3.Scale(OrbitLayout.ToUnity(StationTables.ParkedSlots[HangarIndex][slot]), new Vector3(1f, 0f, 1f));
+        Vector3 ParkedPosition(int slot, int ship, Quaternion rotation)
+        {
+            // Another player's customizable ship floats at the height of their build (multiplayer, HangarTraffic.SpawningGuest).
+            float guestY = traffic != null && traffic.SpawningGuest >= 0 && GoF2Remake.Multiplayer.NetGame.Active
+                ? GoF2Remake.Multiplayer.NetHangar.GuestShipY((ulong)traffic.SpawningGuest, ship) : float.NaN;
+            return customHangar != null
+                ? customHangar.parked[slot] + Vector3.up * ((float.IsNaN(guestY) ? StationTables.ShipY(ship) : guestY) * M)   // a custom hangar's marker
+                : new Vector3(0f, StationTables.PadPivotY(HangarIndex, slot, ship, rotation, guestY), 0f)
+                  + Vector3.Scale(OrbitLayout.ToUnity(StationTables.ParkedSlots[HangarIndex][slot]), new Vector3(1f, 0f, 1f));
+        }
 
         int RandomParkedShip()
         {
@@ -568,6 +574,9 @@ namespace GoF2Remake.World
                                                                mounts: build != null ? Modding.ModShipKits.MountsShown(db, index, 3, build) : null);
                 }
             }
+            // Remake mods: a ship's "engine" materials (its nozzles) glow only while its engine glow shows: dark parked, lit in a
+            // hangar flight (EngineMaterialGlow).
+            if (go != null && go.GetComponent<Modding.EngineMaterialGlow>() is Modding.EngineMaterialGlow nozzles) nozzles.followEngine = true;
             // Remake: a soft shadow on the floor under every hangar ship (not the bar's flybys); it shows once the ship rests
             // (the "Hangar ship shadows" option: off, the player's own ship only, every ship).
             if (go != null && hangarRoot != null && parent == hangarRoot) HangarShipShadow.Attach(go, entry.name, true, label == "Player ship");   // at once; a landing flight hides it (ExpectLanding)

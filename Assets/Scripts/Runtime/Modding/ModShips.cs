@@ -193,6 +193,10 @@ namespace GoF2Remake.Modding
                     if (!string.IsNullOrEmpty(m.emission)) yield return (m.emission, false, false, false);
                     if (!string.IsNullOrEmpty(m.detailAlbedo)) yield return (m.detailAlbedo, true, false, false);
                     if (!string.IsNullOrEmpty(m.detailNormal)) yield return (m.detailNormal, true, false, true);
+                    if (!string.IsNullOrEmpty(m.flameNoise)) yield return (m.flameNoise, true, false, false);
+                    if (!string.IsNullOrEmpty(m.damageEmission)) yield return (m.damageEmission, false, false, false);
+                    if (!string.IsNullOrEmpty(m.damageDetail)) yield return (m.damageDetail, false, false, false);
+                    if (!string.IsNullOrEmpty(m.damageNormal)) yield return (m.damageNormal, true, false, true);
                 }
             if (c.throttleGlow != null && !string.IsNullOrEmpty(c.throttleGlow.mask)) yield return (c.throttleGlow.mask, false, true, false);
             if (c.extraGlows != null)
@@ -260,7 +264,8 @@ namespace GoF2Remake.Modding
         static async Task LoadKit(int rev, ModShipKits.Kit kit, ICollection<string> files)
         {
             await Task.WhenAll(kit.materials.SelectMany(m => new[] { (m.diffuse, false, false), (m.normal, true, true), (m.metallicSmoothness, true, false),
-                                                                     (m.emission, false, false), (m.detailAlbedo, true, false), (m.detailNormal, true, true) })
+                                                                     (m.emission, false, false), (m.detailAlbedo, true, false), (m.detailNormal, true, true), (m.flameNoise, true, false), (m.damageEmission, false, false),
+                                                                     (m.damageDetail, false, false), (m.damageNormal, true, true) })
                                             .Where(t => !string.IsNullOrEmpty(t.Item1))
                                             .Select(t => ModMaterials.PreloadTexture(kit.mod, t.Item1, t.Item2, false, t.Item3)));
             string label = kit.Name;
@@ -349,18 +354,26 @@ namespace GoF2Remake.Modding
         {
             var scene = new GameObject("scene");
             scene.transform.SetParent(holder.transform, false);
-            void Add(string file)
+            // The anchors the build's parts offer (glTF coordinates; glTFast mirrors x into Unity's).
+            var anchors = new Dictionary<string, Vector3>(System.StringComparer.OrdinalIgnoreCase);
+            foreach (string slot in kit.slots)
+                if (build.parts.TryGetValue(slot, out var aid) && kit.Find(aid) is ModShipKits.Part ap)
+                    foreach (var kv in ap.anchors) anchors[kv.Key] = new Vector3(-kv.Value.x, kv.Value.y, kv.Value.z);
+            void Add(string file, Vector3 offset)
             {
-                if (!string.IsNullOrEmpty(file) && partTemplates.TryGetValue(kit.Key + "|" + file, out var t) && t != null)
-                    Object.Instantiate(t, scene.transform, false).name = file;
+                if (string.IsNullOrEmpty(file) || !partTemplates.TryGetValue(kit.Key + "|" + file, out var t) || t == null) return;
+                var go = Object.Instantiate(t, scene.transform, false);
+                go.name = file;
+                go.transform.localPosition += offset;
             }
             foreach (string slot in kit.slots)
             {
                 if (!build.parts.TryGetValue(slot, out var id)) continue;
                 var part = kit.Find(id);
                 if (part == null) continue;
-                Add(part.model);
-                if (build.tier > 0 && build.tier <= part.tiers.Count) Add(part.tiers[build.tier - 1]);
+                var offset = !string.IsNullOrEmpty(part.anchor) && anchors.TryGetValue(part.anchor, out var a) ? a : Vector3.zero;
+                Add(part.model, offset);
+                if (build.tier > 0 && build.tier <= part.tiers.Count) Add(part.tiers[build.tier - 1], offset);
             }
             // The build's mounts (its parts' exhausts carry the engine glow) and colours (ModShipKits colour slots: the engine
             // glow through the ship data, the rest on the materials).
@@ -370,16 +383,19 @@ namespace GoF2Remake.Modding
                 if (cs.targets.Exists(t => t.property == "engine") && build.colors.TryGetValue(cs.id, out var ev)
                     && ModShipKits.Resolve(kit, cs, ev, out var engine, out _, out _))
                     data.engineGlowColor = new[] { engine.r, engine.g, engine.b };
-            var template = ModShipBuilder.Build(data, mod, scene, kit.scale, kit.yaw);
+            var template = ModShipBuilder.Build(data, mod, scene, kit.scale, kit.yaw, kit.materials.Exists(m => m != null && m.flame));
             template.name = name;
             template.transform.SetParent(holder.transform, false);
             ApplyColors(template, kit, build);
+            DamageEmbers.Add(template, kit.materials.Where(m => m != null && (!string.IsNullOrEmpty(m.damageEmission) || !string.IsNullOrEmpty(m.damageDetail)) && !string.IsNullOrEmpty(m.material)).Select(m => m.material));
+            EngineMaterialGlow.Add(template, kit.materials.Where(m => m != null && m.engine && !string.IsNullOrEmpty(m.material)).Select(m => m.material),
+                kit.materials.Where(m => m != null && m.boost && !string.IsNullOrEmpty(m.material)).Select(m => m.material));
             return template;
         }
 
         /// <summary>A build's colours onto its renderers: each slot's targets recolour copies of the materials whose name
         /// contains the target's 'material' (base: _BaseColor x intensity and the value's metallic / smoothness; emission:
-        /// _EmissionColor x intensity).</summary>
+        /// _EmissionColor x intensity; boost: an engine flame's _BoostColor x intensity).</summary>
         static void ApplyColors(GameObject root, ModShipKits.Kit kit, ModShipKits.Build build)
         {
             if (kit.colorSlots.Count == 0) return;
@@ -397,15 +413,21 @@ namespace GoF2Remake.Modding
                     string n = m.name.ToLowerInvariant();
                     foreach (var cs in kit.colorSlots)
                     {
-                        if (!build.colors.TryGetValue(cs.id, out var v) || !ModShipKits.Resolve(kit, cs, v, out var col, out float metal, out float smooth)) continue;
+                        if (cs.IsStrength || !build.colors.TryGetValue(cs.id, out var v) || !ModShipKits.Resolve(kit, cs, v, out var col, out float metal, out float smooth)) continue;
+                        float strength = ModShipKits.StrengthOf(kit, build, cs.id);
                         foreach (var t in cs.targets)
                         {
                             if (t.property == "engine" || string.IsNullOrEmpty(t.material) || !n.Contains(t.material.ToLowerInvariant())) continue;
                             copy ??= new Material(m) { name = m.name };
                             if (t.property == "emission")
                             {
-                                copy.SetColor("_EmissionColor", col.linear * t.intensity);
+                                copy.SetColor("_EmissionColor", col.linear * (t.intensity * strength));
                                 copy.EnableKeyword("_EMISSION");
+                            }
+                            else if (t.property == "boost")
+                            {
+                                // An engine flame's boost colour (GoF2/ModEngineFlame: the boost cards, the manoeuvring jets).
+                                if (copy.HasProperty("_BoostColor")) { var b = col.linear * t.intensity; b.a = 1f; copy.SetColor("_BoostColor", b); }
                             }
                             else
                             {

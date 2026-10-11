@@ -260,6 +260,92 @@ namespace GoF2Remake.Modding
             return turn * (Local(t, mz) * kit.scale);
         }
 
+        // ---- the hangar parking height of a customizable ship ----------------------------------------------------------
+
+        public const float HoverGap = 1.5f;   // Unity metres between the lowest point of a parked kit ship and the floor
+        static readonly Dictionary<string, float> heights = new Dictionary<string, float>();
+        static int heightsRevision = -1;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetStatics() { heights.Clear(); heightsRevision = -1; }
+
+        /// <summary>The pivot height (game units above the floor, like StationTables.ShipY) at which a customizable ship's model
+        /// 'assembly' (a build variant, ModShipKits.VariantAssembly) floats HoverGap clear of the floor: its lowest point, its
+        /// weapon models under it and a turret hung under the hull included ('equipment': the mounted items, null = none;
+        /// 'shown': the build whose mounts they sit on, null = Database.MountsOf). Null = no kit ship. Measured on the model's
+        /// template, kept per model and weapons once the build's parts are loaded (the default build stands in meanwhile).</summary>
+        public static float? HangarHeight(Database db, int ship, string assembly, IList<ItemStack> equipment, ModShipKits.Build shown = null)
+        {
+            if (ModShipKits.KitShip(ship) == null || string.IsNullOrEmpty(assembly)) return null;
+            if (heightsRevision != ModManager.Revision) { heights.Clear(); heightsRevision = ModManager.Revision; }
+            string key = assembly + "|" + (equipment == null ? "" : string.Join(",", equipment.Select(e => e.item)));
+            if (heights.TryGetValue(key, out float known)) return known;
+            var t = ModShips.Template(assembly);
+            if (t == null) return null;
+            float bottom = ModelBottom(t);
+            var kit = KitOfShip(ship);
+            if (kit != null && equipment != null) bottom = Mathf.Min(bottom, HardpointsBottom(db, kit, ship, equipment, shown));
+            float h = (HoverGap - bottom) / ModelScaleM;
+            if (t.name == assembly) heights[key] = h;   // not the default build standing in while the parts load
+            return h;
+        }
+
+        const float ModelScaleM = 0.05f;   // metres per game unit
+
+        /// <summary>The lowest point of a ship model in its own frame (Unity metres; its meshes' boxes, not the glow parts).</summary>
+        static float ModelBottom(GameObject model)
+        {
+            var asm = model.GetComponent<Visuals.AssembledObject>();
+            var skip = new List<Transform>();
+            if (asm != null)
+            {
+                if (asm.playerVariantParts != null) foreach (var p in asm.playerVariantParts) if (p != null) skip.Add(p.transform);
+                if (asm.npcVariantParts != null) foreach (var p in asm.npcVariantParts) if (p != null) skip.Add(p.transform);
+            }
+            var renderers = model.GetComponentsInChildren<Renderer>(true)
+                .Where(r => (r is MeshRenderer || r is SkinnedMeshRenderer) && !skip.Exists(s => r.transform.IsChildOf(s))).ToArray();
+            return renderers.Length > 0 ? ModShipBuilder.BoundsIn(model.transform, renderers).min.y : 0f;
+        }
+
+        /// <summary>The lowest point of the weapon models (and a turret hung under the hull) the equipment shows on the ship.</summary>
+        static float HardpointsBottom(Database db, ModShipKits.Kit kit, int ship, IList<ItemStack> equipment, ModShipKits.Build shown)
+        {
+            float low = float.MaxValue;
+            void Add(GameObject template, Vector3 at, Quaternion extraTurn)
+            {
+                if (template == null) return;
+                var r = template.GetComponentsInChildren<Renderer>(true).Where(x => x is MeshRenderer || x is SkinnedMeshRenderer).ToArray();
+                if (r.Length == 0) return;
+                var b = ModShipBuilder.BoundsIn(template.transform, r);
+                var turn = extraTurn * KitTurn(kit);
+                for (int i = 0; i < 8; i++)
+                {
+                    var corner = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    low = Mathf.Min(low, (at + turn * (corner * kit.scale)).y);
+                }
+            }
+            foreach (bool secondary in new[] { false, true })
+            {
+                var mounts = shown != null ? ModShipKits.MountsShown(db, ship, secondary ? 1 : 0, shown) : db.MountsOf(ship, secondary ? 1 : 0);
+                var items = WeaponItems(db, equipment, secondary);
+                for (int i = 0; i < items.Count && i < mounts.Count; i++)
+                {
+                    string file = ModelFile(kit, secondary ? "secondary" : "primary", items[i]);
+                    Add(file != null ? ModShips.PartTemplate(kit, file) : null, Flight.WeaponSystem.MountToLocal(mounts[i]),
+                        mounts[i].upsideDown ? Quaternion.Euler(0f, 0f, 180f) : Quaternion.identity);
+                }
+            }
+            if (!string.IsNullOrEmpty(kit.hardpoints.turret))
+            {
+                var mounts = shown != null ? ModShipKits.MountsShown(db, ship, 2, shown) : db.MountsOf(ship, 2);
+                var turrets = Flight.PlayerTurret.TurretItems(db, equipment);
+                for (int i = 0; i < turrets.Count && i < mounts.Count; i++)
+                    if (mounts[i].builtIn && mounts[i].upsideDown)
+                        Add(ModShips.PartTemplate(kit, kit.hardpoints.turret), Flight.WeaponSystem.MountToLocal(mounts[i]), Quaternion.Euler(0f, 0f, 180f));
+            }
+            return low;
+        }
+
         static void Warn(ModInfo mod, string message)
         {
             if (!mod.Warnings.Contains(message)) mod.Warnings.Add(message);

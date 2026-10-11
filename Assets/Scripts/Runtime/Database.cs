@@ -110,6 +110,9 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods: a turret mount whose turret is part of the ship's own model (a customizable ship's turret
         /// socket): the turret item's gun aims and fires from here, no turret model of the game is put on it (PlayerTurret).</summary>
         public bool builtIn;
+        /// <summary>Remake mods, slotType 4 (a manoeuvring jet, EVERSPACE 2's lateral thrusters, Modding.LateralThrusters):
+        /// the way it blows, in position_engine's convention.</summary>
+        public float[] direction;
     }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
 
@@ -122,7 +125,7 @@ namespace GoF2Remake.Data
         public int priceDefault;           // the Default Economy's price (0 = the same as 'price')
         public int hangarHeight = 250;     // StationTables.ShipY: pivot height above the hangar floor, game units
         public string assembly;            // set by ModContent: "ship_NNN_mod" (Database.ShipAssembly finds it by number)
-        public List<WeaponMount> mounts;   // like weapons_hd.json: slotType 0 primary, 1 secondary, 2 turret, 3 exhaust
+        public List<WeaponMount> mounts;   // like weapons_hd.json: slotType 0 primary, 1 secondary, 2 turret, 3 exhaust, 4 manoeuvring jet
         public string model;               // the glTF / GLB file in the mod
         public string icon;                // the shop icon (PNG, 180 x 88 like the originals); none = the Phantom's
         public float modelLength = 1000f;  // nose to tail in game units (0.05 m each) after scaling
@@ -175,6 +178,27 @@ namespace GoF2Remake.Data
         public float detailTiling = 1f, detailNormalScale = 1f;
         public float opacity;   // 0 / 1 = opaque; below 1 a see-through surface (glass: premultiplied, so reflections stay bright)
         public bool doubleSided;   // both faces drawn (models with one-sided panels the camera can see from behind)
+        public bool engine;        // its emission shows only while the engines run (dark on a ship parked in a hangar)
+        public bool boost;         // its emission shows only while boosting (a boost vent; dark otherwise)
+        // A hologram projector (GoF2/ModHologram): additive rings whose emission pattern turns and which bob; UV1 x a ring's
+        // spin (-1..1), y its share of the hover; emissionColor x emissionIntensity and emission (the pattern) as usual.
+        public bool hologram;
+        // A nozzle shimmer (GoF2/ModNozzleShimmer): an additive layer over the nozzle's glowing faces, the glow pattern
+        // (emission) times flameNoise scrolling along it; with "engine" it follows the engines like the glow.
+        public bool shimmer;
+        // Battle damage embers: a mask (PNG) set as this material's emission when it has none, glowing ember-orange with the
+        // ship's hull damage (DamageEmbers: from a third of the hull lost, flickering).
+        public string damageEmission;
+        // Battle damage charring: a detail colour (PNG, its alpha the burn mask) and normal map blended in with the hull
+        // damage (URP Lit's detail layer, DamageEmbers raising its strength); dark, matte-looking burn patches under the embers.
+        public string damageDetail, damageNormal;
+        // An engine flame (GoF2/ModEngineFlame, Modding.EngineFlame): the surfaces are flame stubs whose UV u runs from the
+        // nozzle (0) to the tip (1), stretched backward by the throttle; emissionColor x emissionIntensity is its colour.
+        public bool flame;
+        public float flameLength = 5f;     // model units at full throttle (the stub's own length comes on top)
+        public float flameIdle = 0.15f;    // the length at idle, a share of flameLength
+        public string flameNoise;          // a PNG in the mod (grey noise, tiling), streaked along the flame
+        public float[] boostColor;         // RGB 0..1 while boosting (default a hot blue), x emissionIntensity
     }
 
     /// <summary>A mod ship's throttle-driven glow (Modding.ModShipBuilder, ThrottleGlow): the

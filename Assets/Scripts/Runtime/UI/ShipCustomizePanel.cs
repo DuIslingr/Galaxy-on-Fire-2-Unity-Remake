@@ -36,7 +36,7 @@ namespace GoF2Remake.UI
         ModShipKits.Build build;
         int row;
         float holdMs;
-        enum Kind { Part, Tier, Preset, Color }
+        enum Kind { Part, Tier, Preset, Color, Strength }
         readonly List<(Kind kind, string key, Label value, VisualElement line, VisualElement swatch)> rows = new List<(Kind, string, Label, VisualElement, VisualElement)>();
         int presetIndex = -1;
         readonly VisualElement list;
@@ -103,7 +103,7 @@ namespace GoF2Remake.UI
             if (kit.MaxTier > 0) AddRow(Kind.Tier, null, X("kitTier", "Tier"));
             presetIndex = MatchingPreset();
             if (kit.presets.Count > 0) AddRow(Kind.Preset, null, X("kitPreset", "Colour scheme"));
-            foreach (var cs in kit.colorSlots) AddRow(Kind.Color, cs.id, cs.Name);
+            foreach (var cs in kit.colorSlots) AddRow(cs.IsStrength ? Kind.Strength : Kind.Color, cs.id, cs.Name);
             row = 0;
             Refresh();
             Root.style.display = DisplayStyle.Flex;
@@ -200,6 +200,17 @@ namespace GoF2Remake.UI
                     foreach (var kv in kit.presets[presetIndex].colors) build.colors[kv.Key] = kv.Value;
                     break;
                 }
+                case Kind.Strength:
+                {
+                    var cs = kit.colorSlots.Find(c => c.id == slot);
+                    float cur = ModShipKits.Resolve(kit, cs, build.colors.TryGetValue(slot, out var sv) ? sv : cs.defaultValue, out var sc, out _, out _) ? sc.r : cs.steps[0];
+                    int at = 0;
+                    for (int i = 1; i < cs.steps.Length; i++) if (Mathf.Abs(cs.steps[i] - cur) < Mathf.Abs(cs.steps[at] - cur)) at = i;
+                    at = Mathf.Clamp(at + dir, 0, cs.steps.Length - 1);
+                    build.colors[slot] = cs.steps[at].ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+                    presetIndex = MatchingPreset();
+                    break;
+                }
                 case Kind.Color:
                 {
                     var cs = kit.colorSlots.Find(c => c.id == slot);
@@ -242,6 +253,13 @@ namespace GoF2Remake.UI
                     case Kind.Preset:
                         value.text = presetIndex >= 0 ? kit.presets[presetIndex].Name : X("kitPresetCustom", "Custom");
                         break;
+                    case Kind.Strength:
+                    {
+                        var cs = kit.colorSlots.Find(c => c.id == slot);
+                        string v = build.colors.TryGetValue(slot, out var cv) ? cv : cs.defaultValue;
+                        value.text = ModShipKits.Resolve(kit, cs, v, out var sc, out _, out _) ? Mathf.RoundToInt(sc.r * 100f) + " %" : "-";
+                        break;
+                    }
                     case Kind.Color:
                     {
                         var cs = kit.colorSlots.Find(c => c.id == slot);

@@ -1711,7 +1711,7 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (`items.<id>.name`). `Database.Load` merges after the economy overlay (`ModContent.Apply`, only for the GoF2Data folder).
   A mod item's 0 occurrence means never (the add-on items' random roll in `Shop.GenerateItems` skips them).
 - **Ships** (ships.json; the format of PR #34's custom_ships.json, `CustomShipData` in Database.cs): `{ "id", "model": glb,
-  stats, slots, race, hangarHeight, mounts (slotType 0-3, `upsideDown` turrets, `builtIn` turrets: `PlayerTurret` puts an empty pivot / gun stand-in at the point instead of the item's `turretMounted` model (the item's gun, stats, aim, auto fire, turret view; shots from the point + 120 units, the view 60 units above it), `BuildStatic` (hangar, other players) shows nothing there; a plasma collector keeps only its stream, `sn_plasma_stream_anim_add` moved from a copy of the item's model onto the stand-in gun, so it pours from the point and turns with the aim; the ES2 kit's turret sockets), icon, modelLength / modelYaw,
+  stats, slots, race, hangarHeight, mounts (slotType 0-4 (4: manoeuvring jets with a `direction`, `LateralThrusters`), `upsideDown` turrets, `builtIn` turrets: `PlayerTurret` puts an empty pivot / gun stand-in at the point instead of the item's `turretMounted` model (the item's gun, stats, aim, auto fire, turret view; shots from the point + 120 units, the view 60 units above it), `BuildStatic` (hangar, other players) shows nothing there; a plasma collector keeps only its stream, `sn_plasma_stream_anim_add` moved from a copy of the item's model onto the stand-in gun, so it pours from the point and turns with the aim; the ES2 kit's turret sockets), icon, modelLength / modelYaw,
   engineGlowRadius, materials, throttleGlow / extraGlows, lounge }` adds a ship (numbered after the original 64,
   `ModRegistry.Kind.Ship`, assembly "ship_NNN_mod", pack "mod"); `{ "override", armor, cargo, price, priceDefault, slots,
   handling, mounts }` changes one (`mounts` replaces its hardpoints, with or without a new model). `ModContent.ApplyShips` merges them into Ships / Assemblies / WeaponMounts; `CustomShips` (the PR's
@@ -1923,7 +1923,77 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   `ModShipKits.BuildOfAssembly`; a guest is parked again when its build changes or its parts finish loading). Verified in a session (the Editor hosting
   with mods allowed, a Linux development build joining on 127.0.0.1): the host's custom Gunship (Gunship B wings, body 7, a
   yellow hull) parked in the client's hangar and flying in front of it in space in that build with its turret. Not yet: the
-  other eight ES2 ships looked at; the hangar's NPC ships of a kit type show the local player's build (`PlayerHull.Assembly`). The ES2 converter reads the meshes' sockets (SKT_PWSlot / SWSlot / Turret / Engine,
+  other eight ES2 ships looked at; the hangar's NPC ships of a kit type show the local player's build (`PlayerHull.Assembly`).
+  **Hangar height of kit ships** (`ModHardpoints.HangarHeight`, from `StationTables.ShipY` through `KitShipY`; a guest's own build
+  through `NetHangar.GuestShipY` in `StationLevel.ParkedPosition`, `HangarTraffic.SpawningGuest` now also around the pad
+  placement): the shown model's lowest point (its mesh boxes without the glow parts) and the weapon models under it, an
+  upside-down turret too, `HoverGap` 1.5 m above the pad; kept per model and weapons once the build's parts are loaded; ships.json
+  `hangarHeight` is ignored for kit ships (the converter's value ignored the wing tiers: four default builds sat 2-7.5 m in the
+  floor, other wings up to 15 m). **Engine materials** (`CustomShipMaterial.engine`, `EngineMaterialGlow` on the template from
+  `ModShips.Assemble` / `ModShipBuilder.Build`): their emission follows the engine glow part on ships a station spawns
+  (`StationLevel.SpawnShip` sets `followEngine`: dark parked, lit in a hangar flight, 0.25 s fade, this ship's material copies);
+  always lit in space. Verified in Play mode: the nine ships' heights, the Sentinel's default build 2.1 m clear of the Midorian
+  turntable (7.5 m into the floor before). **Engine flames** (`CustomShipMaterial.flame` / `flameLength` / `flameIdle` /
+  `boostColor` / `flameNoise`; `GoF2/ModEngineFlame` from `ModAssets.engineFlame` (the Mod Assets builder resets the
+  template to the shader's defaults), `ModMaterials.Flame`; `EngineFlame` on the template, `EngineDrive` the throttle reader
+  it shares with `ThrottleGlow` and `EngineMaterialGlow`): EVERSPACE 2 draws its flames from small `M_Vehicle_EngineExhaust`
+  sections of the rear / wing parts, flat cards with UV u from the nozzle to the tip that its material stretches with the
+  thrust (its graph can't be exported: rebuilt from its parameters and matched against EVERSPACE 2 running, the player's
+  Sentinel (Body_014, Rear_009, Nemesis tier 4) behind, beside and chased at full thrust, boosting, strafing in all four
+  directions and reversing, through its photo mode). The cards' vertex colours say what they are: red the main flame (the
+  thrust, the engine colour, also through a boost), green the boost jets (only while boosting, in the boost colour); the
+  converter (`flame_across`) writes each card's coordinate across it into UV1.x and its kind into UV1.y, read as
+  |y - 0.5| (glTFast flips V): 0 main, 0.25 boost, 0.5 none. The vertex shader moves each vertex u x the length backward
+  (`_FlameDir`, the ship root's -Z in the renderer's object space, per renderer and submesh through a MaterialPropertyBlock,
+  the renderer's bounds grown to match): main cards by thrust 0..1 (idle 15 %), +30 % at a full boost, boost cards by the
+  boost alone, both x the engines' level (the engine glow part active, 0.25 s fade: shrunk into the nozzles and dark on a
+  parked ship; in the station capped at full throttle). The fragment: additive, the colour gold near the nozzle (boost
+  cards white-blue), ES2's T_Noise_018_M stretched into fine streaks, faded hard toward the tip (`_Fade` 4), each card
+  softened toward its long edges (UV1.x) and, for main cards, faded as it turns edge-on (|N.V|^2, ES2's OpacityExponent:
+  from behind only thin rays remain, as in ES2; the remake had widened the cards toward the camera, `_Widen`, now 0, which
+  turned Rear_009's boost cards into fans above and below the ring). A ship with flames keeps an empty `engine_glow` part
+  (no discs) and has no exhaust particles (`ShipExhaust.Setup`). The nozzle glow (`M_Vehicles_Floaters_Emissive`, split by
+  vertex colour by `glow_split`: green NozzleCore, black NozzleOff, the rest NozzleGlow) takes the engine colour slot through
+  the brighter of its mask's red and green channels (T_Vehicles_Floaters_Emissive_M: the rings and grilles, and the dotted
+  band Rear_009's ring samples), `engine`: `EngineMaterialGlow` dims it to 18 % at idle and lights it with the thrust (ES2's
+  idle nozzles keep a dim dotted glow), dark parked. Intensities: flames 4, nozzles 1.6 (brighter clips to pale yellow under
+  the remake's tone mapping; ES2 adds a bloom halo the remake's bloom can't without washing it out). **Manoeuvring jets**
+  (`LateralThrusters`, mounts of slotType 4 with `WeaponMount.direction`; the converter reads every part's
+  `SKT_LateralThruster` sockets, `thruster_mounts`: the Unreal rotator's forward axis): ES2 fires `P_Vehicle_LateralThruster`
+  at them, each jet blowing along its socket whenever the ship moves against it (strafe right fires the left body and
+  under-wing jets, down the upward ones on the wing tops, reverse the forward-facing wing tips; turning fires none). Each jet
+  is two crossed boost cards drawn by the flame shader (5 m at full strength) plus a glow disc facing along it, in the
+  ship's flames' boost colour; under the engine glow part (hidden with the engines, left out of the hangar heights and
+  shadows). Input: the player's free-flight keys (`FlightModel.ThrustInput`, set by `StepFree`), in the original flight the
+  strafe and the brake, other ships their measured acceleration; none in the station. `LateralThrusters.TestInput` overrides
+  it for Editor tests. Colours like EVERSPACE 2's (TrailColorEngine / Boost / Lateral): a kit colour slot's target "property": "boost" sets a
+  flame material's `_BoostColor` (`ModShips.ApplyColors`); the ES2 kits' slots Main thrusters (the flames and nozzles), Booster
+  (the boost cards) and Side thrusters (the "lateral thruster" material: the jets and, through `LateralThrusters.Setup`, their
+  discs; without a slot on it they take the ship's flames' boost colour). Strength slots (`ColorSlot.steps` / `scales`, no palette; the Customize
+  panel's percentage rows; `ModShipKits.StrengthOf`) scale another slot's emission: the ES2 kits' Cybernetic glow (Emissive 3)
+  and its intensity. Materials marked `"boost"` glow only while boosting (`EngineMaterialGlow.boostMaterials`, EngineDrive
+  above 1); `"hologram"` materials are copies of `GoF2/ModHologram` (`ModAssets.hologram`, `ModMaterials.Hologram`): additive
+  rings whose pattern turns and which bob, per ring by UV1 (x spin, y 1 - bob share), rebuilt from EVERSPACE 2's
+  M_ShipModules_Holograms parameters (the converter's `holo_rings` reads the rings' vertex colours: red spin, blue bob);
+  `"shimmer"` materials (`GoF2/ModNozzleShimmer`, `ModAssets.nozzleShimmer`, `ModMaterials.Shimmer`) draw additively over the
+  nozzle glow's faces (the converter splits them twice, "NozzleShimmer"): the glow pattern times T_Noise_001_M scrolling at
+  M_Vehicles_Floaters_Emissive's ScrollSpeed 0.3, driven by `EngineMaterialGlow` like the glow (which keeps 60 % then). `"damageEmission"` (a mask PNG, the emission of a
+  material that has none): battle damage embers, `DamageEmbers` lighting them ember-orange with the ship's `Target.HullFraction`
+  (a third lost to full at 90 %, a slow flicker; EVERSPACE 2's DamageAmount / Ember* parameters); the ES2 converter builds
+  the mask from T_Vehicles_Damage_C_R_M_H (the blurred height's burn blobs, cracks from its colour) for the hull and details.
+  `"damageDetail"` / `"damageNormal"`: charring through URP Lit's detail layer (detail colour with the burn mask in its alpha as
+  `_DetailMask`, the damage normals), `DamageEmbers` raising `_DetailAlbedoMapScale` / `_DetailNormalMapScale` from a fifth
+  of the hull lost to full at 75 %; the mod detail templates use `_DETAIL_SCALED` (MULX2 ignores the scale). `Hitpoints.hull`
+  is an int (an eval setting it needs a cast). The
+  ES2 export's skeletal animations (AnimSequence JSON) carry no keyframes and none targets the ship modules. Kit parts' `anchors` / `anchor` (`ModShipKits.Part`): a part sits on a named point another part of the build offers
+  (`ModShips.Assemble` offsets its models; the ES2 bodies offer their SKT_Cockpit socket to the canopy and interior). The ES2
+  lights (converter, matched against EVERSPACE 2's customization screen with Emissive 1 / 2 / 3 apart): TechDetails lights
+  by `T_ShipModules_TechDetails_00N_E`'s sector IDs into Lamp<N>_S4..S7 (S4 Emissive 1, S5-S7 Emissive 2);
+  M_Vehicles_Floaters_Emissive by vertex colour and glow atlas region (`glow_split`: Emissive 1 / 2 rings, the exhaust
+  grilles and nozzles in the engine colour, the boost vents "BoostVent", the hot discs); the cybernetic glow lights the floater
+  strips (T_ShipModules_Floaters_001's strip graphic, "CyberStrip", `floater_split`); the rest of the floaters are alpha-cut
+  detail cards that never glow. Verified in Play mode: thrust (chase, behind, side), a forced boost (the cyan slots in ES2's places),
+  the jets in all four strafe directions and in reverse, parked in the hangar (flames, nozzles and jets off). The ES2 converter reads the meshes' sockets (SKT_PWSlot / SWSlot / Turret / Engine,
   Unreal cm -> the export's glTF metres (X, Z, Y); at most 4 exhausts per part). Stats and slots per part (`Part.armor` / `cargo` /
   `handling` %, `equipment`, flight %, `primarySlots` / `secondarySlots` / `turretSlots`; `ModShipKits.EffectOf` /
   `BuildEffect`, the player's build for the player's ship): `ModShipKits.Armor` / `Cargo` / `Handling` / `Slots` /

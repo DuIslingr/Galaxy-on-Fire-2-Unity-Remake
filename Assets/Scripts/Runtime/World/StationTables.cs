@@ -35,7 +35,17 @@ namespace GoF2Remake.World
         };
 
         public static float ShipY(int ship) => ship >= 0 && ship < ShipHeight.Length ? ShipHeight[ship]
-                                              : GoF2Remake.Data.CustomShips.Get(ship)?.hangarHeight ?? 250f;   // remake: custom_ships.json
+                                              : KitShipY(ship) ?? GoF2Remake.Data.CustomShips.Get(ship)?.hangarHeight ?? 250f;   // remake: custom_ships.json
+
+        /// <summary>Remake mods: a customizable ship floats clear of the floor in the build it is shown in (the player's, with
+        /// the player's weapons on the ship flown; Modding.ModHardpoints.HangarHeight), null = no kit ship.</summary>
+        static float? KitShipY(int ship)
+        {
+            if (Modding.ModShipKits.KitShip(ship) == null) return null;
+            var db = GoF2Remake.Data.Database.Shared;
+            var asm = PlayerHull.Assembly(db, ship);
+            return Modding.ModHardpoints.HangarHeight(db, ship, asm?.name, ship == GoF2Remake.Data.Session.ShipIndex ? GoF2Remake.Data.Session.Equipment : null);
+        }
 
         // ---- remake: lifted off the pad where the hull would cut into it (hangar_heights.json, GoF2 > Build > Hangar Heights) ----
 
@@ -52,11 +62,12 @@ namespace GoF2Remake.World
         /// hangar 'hangar' at 'rotation': the original's floor y + ShipY, raised only where the hull would otherwise cut into
         /// the pad (remake: the wide hulls into the Midorian pads' raised rims, any ship into the raised pedestals of
         /// Midorian / deep science slot 2), never lowered.</summary>
-        public static float PadPivotY(int hangar, int slot, int ship, Quaternion rotation)
+        /// 'shipY': the ship's height to use instead of ShipY (another player's build of a customizable ship).
+        public static float PadPivotY(int hangar, int slot, int ship, Quaternion rotation, float shipY = float.NaN)
         {
             var slots = hangar >= 0 && hangar < ParkedSlots.Length ? ParkedSlots[hangar] : null;
             float floor = slot >= 0 && slots != null && slot < slots.Length ? slots[slot].y : 0f;
-            float y = (floor + ShipY(ship)) * OrbitLayout.MetersPerUnit;
+            float y = (floor + (float.IsNaN(shipY) ? ShipY(ship) : shipY)) * OrbitLayout.MetersPerUnit;
             if (lifts == null)
             {
                 lifts = new Dictionary<(int, int, int), float[]>();

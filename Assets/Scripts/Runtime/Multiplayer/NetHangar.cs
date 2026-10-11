@@ -30,6 +30,20 @@ namespace GoF2Remake.Multiplayer
             public string build;
         }
 
+        /// <summary>The height (game units, like StationTables.ShipY) a guest's customizable ship floats at in their build
+        /// with their weapons and turret (ModHardpoints.HangarHeight), NaN = the ship's usual one.</summary>
+        public static float GuestShipY(ulong clientId, int ship)
+        {
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.OwnerClientId == clientId && p.ShipIndex == ship && p.ShownBuild is Modding.ModShipKits.Build b)
+                {
+                    var equipment = NetPlayer.WeaponStacks(NetGame.Db, p.Weapons);
+                    equipment.AddRange(NetPlayer.TurretStacks(NetPlayer.PackTurrets(p.TurretItems)));
+                    return Modding.ModHardpoints.HangarHeight(NetGame.Db, ship, Modding.ModShipKits.VariantAssembly(ship, b).name, equipment, b) ?? float.NaN;
+                }
+            return float.NaN;
+        }
+
         /// <summary>The model a guest's ship shows: their build of a customizable ship (ModShipKits.VariantAssembly), null =
         /// the ship's usual one (StationLevel.SpawnShip, through HangarTraffic.SpawningGuest).</summary>
         public static AssemblyData GuestAssembly(ulong clientId, int ship)

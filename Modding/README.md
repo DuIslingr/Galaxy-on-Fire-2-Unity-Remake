@@ -354,8 +354,8 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `model` | **Required.** The ship's model, a `.glb` (or `.gltf`) file in the mod. |
 | `modelLength`, `modelYaw` | Its length nose to tail in game units (the Phantom is about 1000; 20 units = 1 m), and a turn in degrees when the model's nose doesn't point forward (+Z). The model is scaled to that length. |
 | `icon` | The shop icon, a PNG of 180 x 88 like the originals (the ship on the plate). None = the Phantom's. |
-| `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). |
-| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle). |
+| `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). A customizable ship's is measured from its build instead. |
+| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet in the flames' boost colour fires whenever the ship strafes, rises, sinks or reverses against it, like EVERSPACE 2's lateral thrusters). |
 | `engineGlowRadius` | Size of the engine flame at each exhaust mount (game units, default 24); a mount's `glowSize` replaces it. |
 | `engineGlowColor` | `[r, g, b]` (0 to 1): the flame colour of every exhaust without its own `glowColor`. None = the game's own blue-white flame. |
 | `materials` | Optional. Replace the model's own materials, see below. |
@@ -384,6 +384,26 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 | `opacity` | Below 1: glass (see-through, reflections stay bright). |
 | `detailAlbedo`, `detailNormal`, `detailTiling`, `detailNormalScale` | A tiled detail pair (brushed metal ...). |
 | `doubleSided` | Draw both faces (models with one-sided panels). |
+| `engine` | `true`: its emission (glow) follows the engines: dim at idle, full at full throttle, dark on a ship parked in a hangar (an engine nozzle's glowing surface). |
+| `boost` | `true`: its emission shows only while boosting, fading in and out with the boost (a boost vent); dark otherwise. |
+| `damageEmission` | A mask (PNG) used as the material's emission when it has none: battle damage embers, glowing ember-orange with the ship's hull damage (from a third lost to full at 90 %, flickering slowly). |
+| `damageDetail`, `damageNormal` | Battle damage charring (a material without its own detail maps): a detail colour PNG (sRGB, mid grey = unchanged, darker = burnt; its alpha the burn mask) and a normal map, blended in with the hull damage (from a fifth lost to full at 75 %), under the embers. |
+| `shimmer` | `true`: a nozzle shimmer: an additive layer over the same faces as the nozzle's glow, its `emission` pattern times the `flameNoise` texture scrolling along it, in `emissionColor` x `emissionIntensity` (with `engine` it follows the engines like the glow). |
+| `hologram` | `true`: a hologram projector: additive rings in `emissionColor` x `emissionIntensity` through the `emission` pattern, which turns about each ring's centre (UV 0.5, 0.5) while the rings bob along their normal. A second UV channel per ring: x its spin (-1..1: direction and share of the speed), y its share of the bob (written as 1 - share: the loader flips V). |
+| `flame` | `true`: these surfaces are engine flames drawn by the game (see below); `emissionColor` x `emissionIntensity` is the flame's colour. |
+| `flameLength`, `flameIdle` | The flame's length at full throttle in the model's own units (default 5), and at idle as a share of it (default 0.15). |
+| `boostColor` | The flame's colour while boosting, RGB 0 to 1 (default a hot blue), x `emissionIntensity`. |
+| `flameNoise` | A tiling grey noise PNG streaked through the flame and eating its tip (optional). |
+
+**Engine flames.** Model each flame as a short stub behind its nozzle: one or more flat cards (crossed cards read as a round
+flame) whose first UV's u runs from 0 at the nozzle to 1 at the tip, with a material the `flame` entry names. The game
+stretches the tip backward with the throttle (a little longer while boosting, shrunk into the nozzle while the engines are
+off, as on a ship parked in a hangar), streaks it with the noise, and fades and narrows it toward the tip. A second UV
+channel, x = 0..1 across the card, softens each card's long edges, and its y says what the card is: 0.5 a main flame card
+(the engine colour, also while boosting), 0.25 (or 0.75) a boost card (only while boosting, in `boostColor`; EVERSPACE 2's
+boost jets). Main cards fade as they turn edge-on, so from behind only thin rays remain. Without the second channel the
+cards fade by how far their normals bend off the card, and the whole flame turns toward `boostColor` while boosting. A ship
+with flames gets neither the engine glow discs nor the exhaust particles at its exhaust mounts. A colour slot's `emission` target recolours the flame like any glow.
 
 ### Glows
 
@@ -461,7 +481,7 @@ The parts are a **kit** in `shipkits.json`; the ship names its kit, its type and
 | `scale` | Unity metres per model unit (glTF's metres: 1). One scale for the whole kit: the parts are made to fit together at one origin, so every build has the same size (not stretched to a `modelLength`). |
 | `yaw` | Degrees about the up axis when the parts' nose doesn't face +Z. |
 | `materials` | Like a ship's `materials`, applied to every part's meshes they name. |
-| `parts` | Each `{ "id", "slot", "name", "model" }`, optionally `"mounts"` (the part's own weapon, turret and exhaust mounts, like a ship's `mounts`), `"tierMounts"` (a list of mount lists, one per tier extension), `"stats"` and `"slots"` (see below): a part's id (unique in the kit), its slot, its name in the Customize screen (a string or per language), its glTF / GLB. `types`: the ship types that may fit it (a ship's `kitType`; none = every type: a body any ship of the kit can take). `tiers`: extension meshes shown at build tier 1, 2, ... (EVERSPACE 2's wing extensions); the tier row cycles from the base (0) to the kit's highest. |
+| `parts` | Each `{ "id", "slot", "name", "model" }`, optionally `"mounts"` (the part's own weapon, turret and exhaust mounts, like a ship's `mounts`), `"tierMounts"` (a list of mount lists, one per tier extension), `"stats"` and `"slots"` (see below): a part's id (unique in the kit), its slot, its name in the Customize screen (a string or per language), its glTF / GLB. `types`: the ship types that may fit it (a ship's `kitType`; none = every type: a body any ship of the kit can take). `tiers`: extension meshes shown at build tier 1, 2, ... (EVERSPACE 2's wing extensions); the tier row cycles from the base (0) to the kit's highest. `"anchors": { "cockpit": [x, y, z] }`: named points this part offers (model units, the GLB's own coordinates); `"anchor": "cockpit"`: this part and its tier models sit on that point of the build's part that offers it (a canopy on each body's own cockpit spot). |
 
 All the parts of a kit share one origin: export them in place, as they sit on the assembled ship. Only the parts a build uses
 are loaded (the ships' default builds and the player's builds at the start, others when the player first picks them), so a
@@ -495,7 +515,7 @@ and preset schemes that set every slot at once. The Customize screen then shows 
 | Field | |
 |---|---|
 | `palettes` | Named lists of colours: `id`, `name` (string or per language), `color` (`#RRGGBB`), optionally `metallic` and `smoothness` (0..1). |
-| `colorSlots` | What the player paints: `id`, `name`, the `palette` it picks from, its `default` colour, and `targets`. A target recolours the materials whose name contains `material` (the model's own material name, or a kit `materials` entry's `material` filter): `property` `"base"` (the default: the base colour, x `intensity`, and the colour's metallic / smoothness), `"emission"` (the glow colour x `intensity`) or `"engine"` (the engine glow, no `material`). |
+| `colorSlots` | What the player paints: `id`, `name`, the `palette` it picks from, its `default` colour, and `targets`. A target recolours the materials whose name contains `material` (the model's own material name, or a kit `materials` entry's `material` filter): `property` `"base"` (the default: the base colour, x `intensity`, and the colour's metallic / smoothness), `"emission"` (the glow colour x `intensity`), `"boost"` (an engine flame's boost colour x `intensity`: its boost cards; the manoeuvring jets' material is named `lateral thruster`, and their glow discs follow it) or `"engine"` (the engine glow, no `material`). A **strength slot** has no palette: `{ "id", "name", "steps": [0, 0.25, 0.5, 0.75, 1], "default": "0.5", "scales": "<colour slot id>" }`; the player steps through `steps` and the value scales that colour slot's emission targets (EVERSPACE 2's Emissive 3 intensity slider). Presets give it a number as text. |
 | `presets` | Colour schemes: `id`, `name` and `colors` (slot -> a palette id, or `"#RRGGBB"` with an optional `/metallic/smoothness`). |
 
 A ship's default `build` can give its colours too: `"build": { "wings": "reaver", "colors": { "hull1": "jet" } }`. To paint parts of
@@ -554,6 +574,9 @@ own, at the kit's scale and yaw, with the kit's materials:
   n-th primary weapon on the n-th primary mount), and a node named `muzzle` in it moves that gun's shots to its muzzle. A
   turret weapon goes on the turret's gun with its muzzle on the turret's `muzzle` node. The weapon models show on the player's
   ship in flight and in the hangar, and on other players' ships.
+
+In the hangars a customizable ship floats at the height its build needs: its lowest point, weapon models hanging under it
+included, 1.5 m above the pad (its `hangarHeight` isn't used), so no build cuts into the floor.
 
 The player's build of each customizable ship (parts, tier and colours) is saved with the game (one per ship type, also for a
 hull kept in the Kaamo Club) and shown in the hangar and in flight. Changing it is free. In multiplayer the other players see
