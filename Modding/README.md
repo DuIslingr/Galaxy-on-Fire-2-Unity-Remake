@@ -356,14 +356,18 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `modelLength`, `modelYaw` | Its length nose to tail in game units (the Phantom is about 1000; 20 units = 1 m), and a turn in degrees when the model's nose doesn't point forward (+Z). The model is scaled to that length. |
 | `icon` | The shop icon, a PNG of 180 x 88 like the originals (the ship on the plate). None = the Phantom's. |
 | `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). A customizable ship's is measured from its build instead. |
-| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point; a customizable ship's primary / secondary mounts may also carry `"rotation"`, see [Customizable ships](#customizable-ships)), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet in the flames' boost colour fires whenever the ship strafes, rises, sinks or reverses against it, like EVERSPACE 2's lateral thrusters). |
+| `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point; a customizable ship's primary / secondary mounts may also carry `"rotation"`, see [Customizable ships](#customizable-ships)), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; with `engineFx`, `"fxScale"` sizes that exhaust's effect and `"rotation"` turns the way it blows, as a weapon mount's below;
+`"outline": [x0, y0, x1, y1, ...]` the nozzle's shape seen from behind, game units around the mount, for the [exhaust
+styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet in the flames' boost colour fires whenever the ship strafes, rises, sinks or reverses against it, like EVERSPACE 2's lateral thrusters). |
 | `engineGlowRadius` | Size of the engine flame at each exhaust mount (game units, default 24); a mount's `glowSize` replaces it. |
 | `engineGlowColor` | `[r, g, b]` (0 to 1): the flame colour of every exhaust without its own `glowColor`. None = the game's own blue-white flame. |
 | `materials` | Optional. Replace the model's own materials, see below. |
 | `throttleGlow`, `extraGlows` | Optional. Parts of the hull that glow with the throttle, see below. |
+| `engineFx` | Optional. A Galaxy on Fire 3 style engine effect at every exhaust instead of the flame and its particles, see [Engine effect](#engine-effect). For effects any ship can wear, see [Exhaust styles](#exhaust-styles). |
 | `lounge` | Optional. A visitor in the Space Lounges sells it: in systems of `systemRace` (-1 = any), from story step `minCampaign` (in free play from rank `minRank`), `chance` % each time a bar fills with new visitors. |
 | `dealer` | Optional. The ordinary ship dealers may stock it: `{ "chance": 2, "systemRace": -1, "minTechLevel": 0 }`, `chance` % (decimals allowed) each time a station's dealer list is made, at stations of `systemRace` systems (-1 = any) with at least that tech level. Not the special yards (Kothar, Quineros, Thynome...). |
-| `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges). |
+| `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void; default its own `race`). Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. |
+| `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges), and before NPCs fly it. |
 
 Ship and station materials get the original game's hull shine: the system's reflection and a rim light, stronger where
 the surface is smoother (the smoothness / alpha of the metallic map), like the game's own ships; metal parts reflect
@@ -423,6 +427,76 @@ with flames gets neither the engine glow discs nor the exhaust particles at its 
 | `idle`, `full`, `boost` | Brightness at throttle 0, full throttle and while boosting (above 1 blooms). |
 | `offset` | How far the glow sits out from the hull (game units, default 0.5). |
 | `trailWidth`, `trailTime`, `trailBrightness`, `trailCount` | A trail in the glow's colour while boosting or jumping: width (game units), length (s), brightness, and `trailCount` above 0 for that many trails along the glow's rear edge. |
+
+### Engine effect
+
+`engineFx` draws an engine like Galaxy on Fire 3's at every exhaust mount, in place of the flame disc and the exhaust
+particles: up to four parts, each an additive PNG in the mod (black shows nothing; a grey image is tinted by the part's own
+colour if given, else the exhaust's `glowColor`, else the ship's `engineGlowColor`, else `color`). Every part follows the engines like the other engine effects:
+off while the ship is parked or the engines are off, stronger and longer with the throttle and while boosting.
+
+| Field | |
+|---|---|
+| `glow`, `glowSize`, `glowIntensity` | A flare facing the camera at the nozzle, brightest seen from behind: a square of the whole picture plus a long thin streak at half brightness (the picture turned a quarter). `glowSize`: the square's half size, the streak's half width and half height (game units, default 240, 720, 72). |
+| `cone`, `coneLength`, `coneWidth`, `coneIntensity` | Four crossed cards along the exhaust, `coneLength` at full throttle and `coneWidth` half wide (default 650, 87); along them the picture's horizontal middle band from 0.39 (the nozzle) to 0.69, brightest just behind the nozzle. |
+| `trail`, `trailCount`, `trailLength`, `trailWidth`, `trailWander`, `trailTime`, `trailIntensity` | `trailCount` streams per exhaust (default 2) that waver in smooth waves and bend behind the ship when it turns: each reaches `trailLength` behind at full throttle (default 2800), `trailWidth` half wide at the nozzle (default 28, thinner toward the end), swaying by `trailWander` (default 650), each point living `trailTime` seconds (default 0.75). `trail` is one soft streak; the stream takes its middle row across. |
+| `spiral`, `spiralCount`, `spiralLength`, `spiralRadius`, `spiralWidth`, `spiralTurns`, `spiralSpin`, `spiralScroll`, `spiralRepeat`, `spiralIntensity` | A helix: `spiralCount` strands per exhaust (default 2) winding round it, `spiralLength` long at full throttle (default 560), from `spiralRadius` `[at the nozzle, at the end]` (default 27, 5), each `spiralWidth` half wide (default 22), `spiralTurns` turns along it (default 2), spinning `spiralSpin` turns a second (default 1.2). The picture runs along each strand (taller than wide: Galaxy on Fire 3's Nivelian engines use a lightning bolt, so the strands crackle), `spiralRepeat` times along it (default 3), scrolling `spiralScroll` lengths a second (default 3); the strands fade out toward their end. |
+| `color` | `[r, g, b]` for exhausts with no colour of their own. |
+| `flareColor`, `coneColor`, `trailColor`, `spiralColor` | `[r, g, b]`: that part's own colour, over the exhaust's (the GoF3 Ships mod's Nivelian engines take them from the game's materials: a deep blue helix and plume; its Terran engines the textures' own amber). |
+
+An exhaust mount may carry `"fxScale"` (that exhaust's effect larger or smaller) and `"rotation"` (the way it blows, turned
+from straight back; Euler degrees or a quaternion in the ship model's frame, as a weapon mount's). The sizes match Galaxy on
+Fire 3's own at 53.5 game units per GoF3 unit: the GoF3 Ships mod uses that game's flare, exhaust, streak and lightning
+textures.
+
+```json
+"engineFx": { "glow": "fx/nivelian_glow.png", "cone": "fx/nivelian_cone.png", "trail": "fx/engine_trail.png",
+              "glowSize": [238, 714, 72], "coneLength": 647, "coneWidth": 87 }
+```
+
+### Exhaust styles
+
+`exhausts.json` offers engine effects to **every** ship: in the hangar's Customize screen (which every ship has while a mod
+with exhaust styles is on) the player picks an exhaust for the ship they fly, the game's own ships included, and its two
+colours. "Ship's own" keeps the model's exhaust.
+
+```json
+[
+  { "id": "nivelian", "name": "Nivelian drive",
+    "engineFx": { "glow": "fx/nivelian_glow.png", "cone": "fx/nivelian_cone.png", "trail": "fx/engine_trail.png",
+                  "spiral": "fx/engine_spiral.png", "coneWidth": 87, "color": [0.22, 0.86, 1] },
+    "mainName": "Flare colour", "secondName": "Trail and helix colour" },
+  { "id": "thruster", "name": "Thruster", "model": "exhausts/thruster.glb", "nozzle": 0.38,
+    "materials": [ { "material": "EngineExhaust", "flame": true, "flameLength": 4, "emissionColor": [1, 0.29, 0.05],
+                     "boostColor": [0.05, 0.53, 1], "emissionIntensity": 4 } ],
+    "palette": [ { "id": "orange", "name": "Orange", "color": "#FF923F" }, { "id": "blue", "name": "Blue", "color": "#3FC0FF" } ],
+    "mainName": "Main thrusters", "secondName": "Booster" }
+]
+```
+
+| Field | |
+|---|---|
+| `id`, `name` | The style (builds name it `"mod_id:id"`). |
+| `engineFx` | A Galaxy on Fire 3 style effect, the fields of a ship's [`engineFx`](#engine-effect). Its two colours: the flare and cone, then the trails and helix. |
+| `model`, `materials`, `yaw` | Or a flame model put at each exhaust: its origin at the nozzle's exit, the flame blowing along -Z (`yaw`: degrees about the up axis when it faces another way); `materials` as a ship's, a `"flame": true` entry for the flame cards (see [materials](#materials)). Its two colours: the flame and the boost cards. |
+| `nozzle` | The nozzle radius the effect is made for: game units for `engineFx` (default its `coneWidth`), the model's units for `model` (default 1). Each exhaust of the ship is scaled by its own nozzle's size against it (a mod mount's `glowSize`, a mod ship's `engineGlowRadius`, the game's ships' exhaust sizes). |
+| `palette` | The colours offered, `[ { "id", "name", "color": "#RRGGBB" } ]` (default the game's bright colour list). Each row also offers "Original", the style's own colour. |
+| `mainName`, `secondName` | The two colour rows' names (default "Exhaust colour" / "Second colour"). |
+
+The style sits where the ship's exhausts are (`slotType` 3 mounts: a kit ship's build's, a mod ship's, the game's own) and takes
+each nozzle's shape: its outline (the hull of the nozzle seen from behind) and centre. A flame model's cross-section is bent to
+that outline (a square nozzle gets a square flame, a hexagon a hexagonal one), a GoF3 effect's cone and helix follow it and its
+trails spread along a slot. Where the outline comes from: a mount's `"outline"` (below), else the ship's meshes whose material
+name contains "nozzle", else a mount's `glowSize` (an oval), else the game's ships' own nozzles (measured from their engine
+glow). It goes
+with the engines: off while parked, mining or docking at an object, stronger with the throttle and the boost. The model's own
+exhaust (glow, particles, flames, engine effect) is hidden meanwhile; its manoeuvring jets stay. An **Exhaust size** row
+resizes it (50 % to 200 % of the fitted size, in 10 % steps) so it fits the ship's nozzles. A flame model's boost cards are its
+own mod's ships' boost jets: on the game's ships and other mods' ships they stay hidden, and a boost turns each nozzle's main
+flame to the boost colour instead. While the Customize screen is open the engines run on the turntable, boosting while a
+boost colour row is picked. A build may carry it (`"exhaust": "mod_id:id"`, `"exhaustColor"`, `"exhaustColor2"`: a palette id or
+`"#RRGGBB"`, `"exhaustSize"`: 0.5 to 2); it is saved with the game and other players see it. The Galaxy on Fire 3 Ships mod offers GoF3's Nivelian (with its helix), Terran and Vossk drives, the
+EVERSPACE 2 importer three ES2 thrusters cut from rear parts.
 
 ### Changing ships
 

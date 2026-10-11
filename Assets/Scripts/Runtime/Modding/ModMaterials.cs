@@ -340,6 +340,9 @@ namespace GoF2Remake.Modding
             return solids[k] = t;
         }
 
+        /// <summary>A copy of a template material, released with the rest when the mods change (EngineFx's).</summary>
+        internal static Material CopyOf(Material template, string name) => template != null ? Copy(template, name) : null;
+
         static Material Copy(Material template, string name)
         {
             Check();

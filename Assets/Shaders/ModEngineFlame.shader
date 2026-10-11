@@ -13,6 +13,8 @@
 // T_Noise_018_M stretched into fine streaks drifting outward, each ending at its own length; main cards fade as they turn
 // edge-on (|N.V| ^ _EdgeOnFade, ES2's OpacityExponent: from behind only thin rays remain), boost cards don't (they glow from
 // behind as bright slots). _Widen (off) widens UV1 cards toward the camera; _Graze (off) brightens edge-on cards.
+// _BoostOverride (EngineFlame per renderer: an exhaust style on a ship that has no boost jets, Modding.ModExhausts): the
+// boost cards stay hidden and the main cards turn to _BoostColor while boosting instead.
 Shader "GoF2/ModEngineFlame"
 {
     Properties
@@ -41,6 +43,7 @@ Shader "GoF2/ModEngineFlame"
         _FlameThrust ("Thrust 0..1 (EngineFlame)", Float) = 1
         _FlameBoost ("Boost 0..1 (EngineFlame)", Float) = 0
         _FlameLevel ("Engines on 0..1 (EngineFlame)", Float) = 1
+        _BoostOverride ("Boost recolours the main flame, no boost cards (EngineFlame)", Float) = 0
     }
     SubShader
     {
@@ -61,7 +64,7 @@ Shader "GoF2/ModEngineFlame"
                 half4 _EmissionColor, _BoostColor;
                 float4 _NoiseMap_ST, _NoiseTiling, _FlameDir;
                 float _Widen, _StreakContrast, _StreakTiling, _NoiseSpeed, _NoiseStrength, _Length, _IdleLength, _BoostLength, _Fade, _EdgePower, _Taper, _EdgeSoftness, _Graze, _EdgeOnFade, _Core, _Brightness;
-                float _FlameThrust, _FlameBoost, _FlameLevel;
+                float _FlameThrust, _FlameBoost, _FlameLevel, _BoostOverride;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float2 uv1 : TEXCOORD1; };
@@ -77,7 +80,7 @@ Shader "GoF2/ModEngineFlame"
                 Varyings o;
                 float thrust = saturate(_FlameThrust), boost = saturate(_FlameBoost), level = saturate(_FlameLevel);
                 // Off: the flame shrinks back into its nozzle as it fades. A boost card grows only with the boost.
-                float stretch = IsBoostCard(i.uv1.y) ? _Length * boost * level
+                float stretch = IsBoostCard(i.uv1.y) ? _Length * boost * level * (1 - saturate(_BoostOverride))
                               : _Length * (_IdleLength + (1 - _IdleLength) * thrust) * (1 + _BoostLength * boost) * level;
                 float3 dir = normalize(_FlameDir.xyz + float3(0, 0, 1e-5));
                 float3 pos = i.positionOS.xyz + dir * saturate(i.uv.x) * stretch;
@@ -135,12 +138,14 @@ Shader "GoF2/ModEngineFlame"
                 half facing = edge * (boostCard ? 1 : graze * pow(saturate(abs(dot(face, v))), _EdgeOnFade));
                 // ES2's main flames keep the engine colour through a boost, its boost cards burn in the boost colour; a
                 // flame without card kinds (no UV1) turns toward the boost colour instead.
-                half3 col = boostCard ? _BoostColor.rgb : hasAcross ? _EmissionColor.rgb : lerp(_EmissionColor.rgb, _BoostColor.rgb, boost);
+                // (_BoostOverride: the main cards turn to the boost colour too)
+                float over = saturate(_BoostOverride);
+                half3 col = boostCard ? _BoostColor.rgb : hasAcross ? lerp(_EmissionColor.rgb, _BoostColor.rgb, boost * over) : lerp(_EmissionColor.rgb, _BoostColor.rgb, boost);
                 // Gold (the boost cards: white) and brighter near the nozzle (ES2's main flame never goes white there).
                 half peak = max(max(col.r, col.g), col.b);
                 half hot = saturate(exp(-u * 4) * _Core * (boostCard ? 0.25 : 1));
                 col = lerp(col, (boostCard ? half3(0.8, 0.95, 1) : half3(1, 0.5, 0.1)) * peak, hot) * (1 + hot * 0.5);
-                half3 rgb = col * a * facing * _Brightness * level * (boostCard ? boost * 0.5 : 1);
+                half3 rgb = col * a * facing * _Brightness * level * (boostCard ? boost * 0.5 * (1 - over) : 1);
                 return half4(rgb, 0);
             }
             ENDHLSL

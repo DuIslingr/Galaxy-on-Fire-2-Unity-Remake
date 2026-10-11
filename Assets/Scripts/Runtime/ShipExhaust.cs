@@ -82,8 +82,9 @@ namespace GoF2Remake.Flight
             var asm = parent.GetComponent<Visuals.AssembledObject>();
             if (asm != null && asm.playerVariantParts != null && asm.playerVariantParts.Length > 0) glow = asm.playerVariantParts[0];
             var custom = CustomShips.Get(shipIndex);
-            // A mod ship with its own engine flames (Modding.EngineFlame: EVERSPACE 2's) has no particle plume.
-            bool flames = parent.GetComponentInChildren<Modding.EngineFlame>(true) != null;
+            // A mod ship with its own engine flames (Modding.EngineFlame: EVERSPACE 2's) or Galaxy on Fire 3's engine effect
+            // (Modding.EngineFx) has no particle plume.
+            bool flames = parent.GetComponentInChildren<Modding.EngineFlame>(true) != null || parent.GetComponentInChildren<Modding.EngineFx>(true) != null;
             foreach (var m in flames ? new WeaponMount[0] : mounts ?? db.MountsOf(shipIndex, 3))
             {
                 var want = m.glowColor != null && m.glowColor.Length >= 3 ? m.glowColor : custom?.engineGlowColor;

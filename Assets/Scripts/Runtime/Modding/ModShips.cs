@@ -20,6 +20,8 @@
 // A kit's hardpoint models (ModHardpoints: weapons, turret) load with the start's parts, as part templates too. A build's skin
 // (ModShipKits skins: texture sets) loads its textures with the build's parts, and ApplySkin puts them on copies of the
 // materials it names when the build is assembled.
+// The exhaust styles' flame models (ModExhausts) load with the rest, each as the one part of its style's own kit (their
+// pictures too); one not there yet when a ship needs it loads on demand (EnsureExhaust).
 
 using System.Collections.Generic;
 using System.Linq;
@@ -78,7 +80,7 @@ namespace GoF2Remake.Modding
         static void ResetStatics()
         {
             templates.Clear(); icons.Clear(); imports.Clear(); names.Clear();
-            partTemplates.Clear(); kitShips.Clear(); variants.Clear(); variantOrder.Clear(); partsLoading.Clear(); KitPartsLoaded = null;
+            partTemplates.Clear(); kitShips.Clear(); variants.Clear(); variantOrder.Clear(); partsLoading.Clear(); KitPartsLoaded = null; notifyPending = false;
             skinned.Clear(); skinnedOrder.Clear();
             holder = null; agent = null; loading = null; ModelsChanged = null;
             loadingRevision = loadedRevision = -1;
@@ -91,7 +93,7 @@ namespace GoF2Remake.Modding
             get
             {
                 if (loadedRevision == ModManager.Revision) return true;
-                if (ModContent.ActiveShips().Count == 0 && ModContent.ModelOverrides().Count == 0 && templates.Count == 0) return true;
+                if (ModContent.ActiveShips().Count == 0 && ModContent.ModelOverrides().Count == 0 && templates.Count == 0 && !ModExhausts.Any) return true;
                 Preload();
                 return false;
             }
@@ -158,7 +160,8 @@ namespace GoF2Remake.Modding
                 }
                 set.UnionWith(ModHardpoints.Files(kit));   // the weapon / turret models: few, all at the start
             }
-            steps = ships.Count * StepsPerShip + needed.Values.Sum(v => v.Count) + kitted.Count;
+            var exhausts = ModExhausts.All();
+            steps = ships.Count * StepsPerShip + needed.Values.Sum(v => v.Count) + kitted.Count + exhausts.Count(e => e.IsFlame);
             stepsDone = 0;
             current.Clear();
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -166,6 +169,13 @@ namespace GoF2Remake.Modding
             foreach (var (mod, c) in ships) tasks.Add(LoadShip(rev, mod, c));
             foreach (var kit in kits) tasks.Add(LoadKit(rev, kit, needed.TryGetValue(kit, out var files) ? files : new HashSet<string>()));
             foreach (var t in skinTextures.Distinct()) tasks.Add(ModMaterials.PreloadTexture(t.mod, t.path, t.linear, false, t.normal));
+            // The exhaust styles: the flame models, and the pictures of Galaxy on Fire 3's effects.
+            foreach (var e in exhausts)
+            {
+                if (e.IsFlame) tasks.Add(LoadKit(rev, e.kit, new[] { e.model }));
+                else foreach (var f in new[] { e.fx.glow, e.fx.cone, e.fx.trail, e.fx.spiral })
+                    if (!string.IsNullOrEmpty(f)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, false, false, false));
+            }
             await Task.WhenAll(tasks);
             if (rev != ModManager.Revision) return;   // the mods changed meanwhile: a newer load runs
             // The kit ships' default builds (what dealers sell and NPCs fly), their icons and textures.
@@ -211,6 +221,9 @@ namespace GoF2Remake.Modding
             if (c.throttleGlow != null && !string.IsNullOrEmpty(c.throttleGlow.mask)) yield return (c.throttleGlow.mask, false, true, false);
             if (c.extraGlows != null)
                 foreach (var g in c.extraGlows) if (g != null && !string.IsNullOrEmpty(g.mask)) yield return (g.mask, false, true, false);
+            if (c.engineFx != null)
+                foreach (var f in new[] { c.engineFx.glow, c.engineFx.cone, c.engineFx.trail, c.engineFx.spiral })
+                    if (!string.IsNullOrEmpty(f)) yield return (f, false, false, false);
         }
 
         /// <summary>One ship: its textures and model file at once, then glTFast, then the template.</summary>
@@ -366,10 +379,41 @@ namespace GoF2Remake.Modding
             return false;
         }
 
-        static async void LoadOnDemand(ModShipKits.Kit kit, List<string> files, List<(ModInfo mod, string path, bool linear, bool normal)> skinTextures)
+        /// <summary>An exhaust style's flame model, loading it when it isn't (ModShips.ModelsChanged follows).</summary>
+        internal static void EnsureExhaust(ModExhausts.Style style)
+        {
+            if (style?.kit == null || PartTemplate(style.kit, style.model) != null) return;
+            LoadOnDemand(style.kit, new List<string> { style.model }, new List<(ModInfo, string, bool, bool)>());
+        }
+
+        /// <summary>Remake mods (ModTraffic): a kit ship's build is loaded, its parts and skin (true for a ship that is no kit ship).</summary>
+        internal static bool BuildLoaded(int ship, ModShipKits.Build build) =>
+            build == null || !kitShips.TryGetValue(ship, out var info) || PartsReady(info.kit, build);
+
+        /// <summary>Remake mods (ModTraffic): a kit part's model file is loaded.</summary>
+        internal static bool PartLoaded(ModShipKits.Kit kit, ModShipKits.Part part) => PartTemplate(kit, part?.model) != null;
+
+        /// <summary>A kit's part files loaded so far.</summary>
+        internal static int LoadedParts(ModShipKits.Kit kit) => kit == null ? 0 : partTemplates.Keys.Count(k => k.StartsWith(kit.Key + "|"));
+
+        /// <summary>Remake mods (ModTraffic.Warm): loads a build's parts in the background without rebuilding anything shown
+        /// (no KitPartsLoaded / ModelsChanged of its own), so NPCs can fly it later.</summary>
+        internal static void Warm(int ship, ModShipKits.Build build)
+        {
+            if (build == null || !kitShips.TryGetValue(ship, out var info) || PartsReady(info.kit, build)) return;
+            LoadOnDemand(info.kit, BuildFiles(info.kit, build).ToList(), SkinTextures(info.kit, build).ToList(), quiet: true);
+        }
+
+        // A request found its files already being loaded by a quiet warm-up: that load tells when it is done.
+        static bool notifyPending;
+
+        static async void LoadOnDemand(ModShipKits.Kit kit, List<string> files, List<(ModInfo mod, string path, bool linear, bool normal)> skinTextures,
+                                       bool quiet = false)
         {
             if ((holder == null || agent == null) && files.Count > 0) return;
             int rev = ModManager.Revision;
+            if (!quiet && (files.Any(f => partsLoading.Contains(kit.Key + "|" + f))
+                           || skinTextures.Any(t => partsLoading.Contains(t.mod.Id + "|texture|" + t.path)))) notifyPending = true;
             var missing = files.Where(f => !partTemplates.ContainsKey(kit.Key + "|" + f) && partsLoading.Add(kit.Key + "|" + f)).ToList();
             var textures = skinTextures.Where(t => !ModMaterials.Has(t.mod, t.path, t.linear, false, t.normal)
                                                    && partsLoading.Add(t.mod.Id + "|texture|" + t.path)).ToList();
@@ -387,7 +431,8 @@ namespace GoF2Remake.Modding
                 foreach (var f in missing) partsLoading.Remove(kit.Key + "|" + f);
                 foreach (var t in textures) partsLoading.Remove(t.mod.Id + "|texture|" + t.path);
             }
-            if (rev != ModManager.Revision) return;
+            if (rev != ModManager.Revision || (quiet && !notifyPending)) return;
+            notifyPending = false;
             KitPartsLoaded?.Invoke();
             ModelsChanged?.Invoke();
         }

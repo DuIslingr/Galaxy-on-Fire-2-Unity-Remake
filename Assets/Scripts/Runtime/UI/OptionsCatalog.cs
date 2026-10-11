@@ -406,6 +406,11 @@ namespace GoF2Remake.UI
                 () => new[] { X("targetLockSmart", "Smart"), X("targetLockOriginal", "Original") },
                 () => Settings.OriginalTargetLock ? 1 : 0, i => Settings.OriginalTargetLock = i == 1,
                 () => X("targetLockHelp", "Smart: hostile ships are locked first, then the one nearest the crosshair, and a neutral or friendly ship passing through can't take over a hostile lock (your missiles stay on your target). Original: the first ship in the box is locked, whoever it is.")));
+            // Remake mods: NPC fighters in the mods' ships of their race (Modding.ModTraffic).
+            list.Add(Choice("modShipTraffic", OptionPage.Gameplay, () => X("modShipTraffic", "Mod ships in traffic"), true,
+                () => new[] { X("modShipTrafficOff", "Off"), "10 %", "25 %", "50 %" },
+                () => Settings.ModShipTraffic, i => Settings.ModShipTraffic = i,
+                () => X("modShipTrafficHelp", "How often an NPC fighter flies one of your mods' ships of its race instead of the game's. Their hulls and guns stay those of the game's fighters.")));
             list.Add(Toggle("autoAdvance", OptionPage.Gameplay, () => X("autoPlayDialogue", "Auto-play dialogue"),
                 () => Settings.AutoAdvanceDialogue, v => Settings.AutoAdvanceDialogue = v));
             list.Add(Toggle("animatedDialogue", OptionPage.Gameplay, () => X("animatedDialogue", "Animated dialogue"),

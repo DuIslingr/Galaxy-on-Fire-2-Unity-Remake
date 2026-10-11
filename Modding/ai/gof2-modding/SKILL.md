@@ -55,6 +55,7 @@ my_mod/
   blueprints.json     blueprints for ships and items
   gameoptions.json    cards in the new game's Game options panel
   campaign.json       a whole new game under Start new game
+  exhausts.json       exhaust styles any ship can wear (the hangar's Customize screen)
   systems.json, stations.json, interiors.json   new star systems, stations, hangars and bars
   characters.json     speakers with portraits
   events/*.gof2event  quests and bar missions (made in the Unity Editor)
@@ -183,9 +184,11 @@ several thousand), `color` (`[r,g,b]` 0-1 or `"#rrggbb"`), `glow` (>1 blooms; ga
 | `engineGlowRadius`, `engineGlowColor` | Flame size (default 24) / colour for all exhausts. |
 | `materials` | Replace materials: entries `{ "mesh", "submesh", "diffuse", "color", "normal", "normalScale", "metallicSmoothness", "metallic", "smoothness", "emission", "emissionColor", "emissionIntensity", "alphaClip", "opacity", "detailAlbedo", "detailNormal", "detailTiling", "detailNormalScale", "doubleSided", "engine" (true: glows only while the engines run, dark parked in a hangar), "boost" (true: glows only while boosting), "damageEmission" (mask PNG: embers glowing with hull damage), "damageDetail" / "damageNormal" (charring detail colour with mask alpha, and normals, blended in with hull damage), "shimmer" (true: additive layer over the nozzle glow, emission pattern x scrolling flameNoise), "hologram" (true: additive rings whose emission pattern turns and which bob; UV2 x = spin -1..1, y = 1 - bob share), "flame" (true: engine flame cards, UV u 0 at the nozzle to 1 at the tip, stretched backward with the throttle; colour = emissionColor x emissionIntensity), "flameLength" (model units at full throttle, 5), "flameIdle" (share at idle, 0.15), "boostColor", "flameNoise" (tiling grey PNG); a second UV channel x 0..1 across each card softens its edges, its y the kind: 0.5 a main card (the engine colour, edge-on cards fade), 0.25 a boost card (only while boosting, in boostColor); a ship with flames gets no glow discs or exhaust particles; "engine" materials dim at idle, full at full throttle }`. Without it the GLB's own materials are used. |
 | `throttleGlow`, `extraGlows` | Hull parts glowing with the throttle: `{ "mask", "mesh", "submesh", "color", "idle", "full", "boost", "offset", "trailWidth", "trailTime", "trailBrightness", "trailCount" }`. |
+| `engineFx` | A Galaxy on Fire 3 style engine effect at every exhaust instead of the flame and particles: `{ "glow", "glowSize": [square, streakW, streakH], "glowIntensity", "cone", "coneLength", "coneWidth", "coneIntensity", "trail", "trailCount", "trailLength", "trailWidth", "trailWander", "trailTime", "trailIntensity", "spiral", "spiralCount", "spiralLength", "spiralRadius": [nozzle, end], "spiralWidth", "spiralTurns", "spiralSpin", "spiralScroll", "spiralRepeat", "spiralIntensity", "color", "flareColor", "coneColor", "trailColor", "spiralColor" }` (additive PNGs, tinted by the part's colour, else each exhaust's `glowColor`; game units; the spiral is a helix of strands with the picture along them); an exhaust mount may add `"fxScale"` and `"rotation"`. |
 | `lounge` | A Space Lounge visitor sells it: systemRace (-1 any), minCampaign (story step), minRank (free play), chance %. |
 | `dealer` | Ordinary ship dealers stock it: chance % (decimals ok) per dealer list, systemRace, minTechLevel. Not the special yards. |
-| `available` | Condition before dealers / lounges sell it. |
+| `traffic` | `{ "weight": 1, "races": [8] }`: NPC fighters of those races (default its `race`) fly it at the "Mod ships in traffic" option's chance (default 25 %), weighted; `weight` 0 = never. Ships over 150 m never. Hull / guns stay the game's fighter's. A kit ship's NPCs fly random builds (parts, tier, colours, skin); `"randomBuild": false` = its default build. |
+| `available` | Condition before dealers / lounges sell it (and NPCs fly it). |
 | `flightStyle` | `"free"` / `"original"`: the ship always flies so (default the player's option). |
 | `kit`, `kitType`, `build` | A customizable ship instead of `model` (see shipkits.json). |
 | `flight` | % bonuses `{ "topSpeed", "turnRate", "strafeSpeed", "acceleration" (free only), "boostFactor" (free, 350 = x3.5), "original": {...}, "free": {...} }`. |
@@ -268,6 +271,19 @@ fields left out keep the model's own, no stats change; a build may carry `"skin"
 Any other ship (an original's "override", or a new ship without "kit") may carry `"skins"` (as above, no "types"; materials by the ship's own material names, e.g. "ship_010_terran_diffuse" for the Phantom's hull) and / or `"weaponColors"` (palette list or true): it then gets the Customize screen with Skin and Weapon colour rows; saved per ship; engineColor works only on kit ships.
 Every kit ship also gets a Weapon colour row (energy weapons and energy-bolt turrets' shots, flashes, impacts; "Original" = their
 own): the game's colour list, or the kit's palette `"weapons"`; a build may carry `"weaponColor": "<palette id or #RRGGBB>"`.
+
+## exhausts.json (exhaust styles for every ship)
+
+`[ { "id", "name", "engineFx": { ...as ships.json engineFx } | "model": "exhausts/x.glb" + "materials": [ { "material": "...",
+"flame": true, ... } ] + "yaw", "nozzle" (radius the effect is made for: game units for engineFx, default its coneWidth; model
+units for a model, default 1), "palette": [ { "id", "name", "color": "#RRGGBB" } ], "mainName", "secondName" } ]`. A flame model:
+origin at the nozzle exit, flame along -Z. Any ship (the game's too) then has a Customize screen with Exhaust ("Ship's own" or a
+style) and its two colours (engineFx: flare+cone / trails+helix; model: flame / boost cards); each exhaust scaled by its nozzle
+against "nozzle" by its nozzle's mean radius, its cross-section bent to the nozzle's outline (a mount's `"outline": [x0, y0, ...]`
+game units around it; else meshes with "nozzle" in a material name; else glowSize as an oval; game ships measured) and the
+player's Exhaust size (0.5-2); the model's own exhaust hidden; a flame model's boost cards only on its own
+mod's ships (elsewhere the boost recolours the main flame). Builds: `"exhaust": "mod_id:id"`, `"exhaustColor"`, `"exhaustColor2"`,
+`"exhaustSize"`.
 
 ## Flight styles
 

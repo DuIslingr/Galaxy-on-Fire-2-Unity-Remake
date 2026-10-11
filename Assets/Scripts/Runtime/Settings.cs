@@ -209,6 +209,10 @@ namespace GoF2Remake.Data
         /// <summary>The ship lock as the original picks it (Radar::draw: the first ship of the list in the box, any faction,
         /// and any completed lock replaces the old one); off (default) = the remake's smarter lock (CombatRadar).</summary>
         public static bool OriginalTargetLock { get => GetBool("originalTargetLock", false); set => SetBool("originalTargetLock", value); }
+        /// <summary>Remake mods: how often an NPC fighter flies one of the mods' ships of its race (Modding.ModTraffic): 0 off,
+        /// 1 10 %, 2 25 % (default), 3 50 %.</summary>
+        public static int ModShipTraffic { get => Mathf.Clamp(Mathf.RoundToInt(Get("modShipTraffic", 2)), 0, 3); set => Set("modShipTraffic", Mathf.Clamp(value, 0, 3)); }
+        public static float ModShipTrafficChance => ModShipTraffic switch { 1 => 0.1f, 2 => 0.25f, 3 => 0.5f, _ => 0f };
         /// <summary>The crate markers on a ship dying with cargo (Radar::draw, the original's; NpcShip.DyingWithCargo). Off
         /// (players' suggestion, for realism): no markers; aimed at, it is still salvage for the tractor beam.</summary>
         public static bool DyingCargoMarkers { get => GetBool("dyingCargoMarkers", true); set => SetBool("dyingCargoMarkers", value); }
@@ -321,7 +325,7 @@ namespace GoF2Remake.Data
         public static readonly string[] GameplayKeys =
         {
             "launchCamera", "hangarFlights", "tutorialHints", "showStoryStep", "pirateEvents", "capitalShips", "kaamoStacking", "kaamoKeepsEquipment", "cloakBay", "informerOriginalRule",
-            "originalTargetLock", "dyingCargoMarkers", "cloakLosesPursuers", "empBreaksCloak", "autoAdvanceDialogue", "animatedDialogue", "inputHints", "discordPresence",
+            "originalTargetLock", "modShipTraffic", "dyingCargoMarkers", "cloakLosesPursuers", "empBreaksCloak", "autoAdvanceDialogue", "animatedDialogue", "inputHints", "discordPresence",
         };
         public static readonly string[] LanguageKeys = { "voiceLanguage" };
 

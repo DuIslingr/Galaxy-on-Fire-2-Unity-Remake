@@ -8,7 +8,8 @@
 //     sprite (mat_34813, centre uv (0.46, 0.947)); no exhaust mounts = no flame (ShipExhaust uses the same mounts); a
 //     mount's glowSize makes it an ellipse with its own flame length, a glowColor / the ship's engineGlowColor tints it
 //     (engineGlowTint: the sprite in white, the colour in the vertex colours);
-//     with "flame" materials (EngineFlame, the model's own flame geometry) the glow part stays, empty;
+//     with "flame" materials (EngineFlame, the model's own flame geometry) the glow part stays, empty; with "engineFx"
+//     (Galaxy on Fire 3's flare, cone and trails, EngineFx) it stays without discs and carries those;
 //   - the manoeuvring jets at the slotType-4 mounts (LateralThrusters), under the engine glow part;
 //   - each "throttleGlow" / "extraGlows" entry: the hull triangles under the lit part of its mask, pushed 'offset' out,
 //     additive, driven by ThrottleGlow (with its trails), plus an empty engine_state player part;
@@ -77,8 +78,10 @@ namespace GoF2Remake.Modding
             var parts = new List<GameObject>();
             // A ship with its own engine flames ("flame" materials) keeps the glow part (it marks the engines on / off for
             // the flames, the exhaust particles and the "engine" materials) without its glow discs.
-            var glow = BuildEngineGlow(c, !flames);
+            // Galaxy on Fire 3's engine effect (engineFx) replaces the discs too, drawn under the same part (EngineFx).
+            var glow = BuildEngineGlow(c, !flames && c.engineFx == null);
             if (glow != null) parts.Add(glow);
+            if (glow != null && c.engineFx != null) EngineFx.Add(root, glow, c, mod);
             var glowSpecs = new List<CustomThrottleGlow> { c.throttleGlow };
             if (c.extraGlows != null) glowSpecs.AddRange(c.extraGlows);
             GameObject engineState = null;

@@ -1972,6 +1972,7 @@ namespace GoF2Remake.UI
             inspectTitle.text = "";
             inspectHints.style.display = DisplayStyle.None;   // the panel has its own keys
             customize.Show(GameNames.Ship(ship), kit, ModShipKits.TypeOf(ship), build);
+            level.PreviewEngines(true);   // the exhaust running, so its style and colours can be seen
         }
 
         /// <summary>A change in the panel: the turntable shows it at once (the build is the player's until Cancel).</summary>
@@ -2040,6 +2041,8 @@ namespace GoF2Remake.UI
         void EndCustomize()
         {
             customizing = false;
+            level.PreviewEngineDrive(1f);
+            level.PreviewEngines(false);
             customize.Hide();
             inspectHints.style.display = StyleKeyword.Null;
             EndInspect();
@@ -2321,7 +2324,12 @@ namespace GoF2Remake.UI
             }
             if (inspecting)
             {
-                if (customizing) { customize.HandleInput(GoF2Remake.Multiplayer.NetChat.Keys, Gamepad.current, Time.unscaledDeltaTime * 1000f); if (customizing) UpdateInspect(true); }
+                if (customizing)
+                {
+                    customize.HandleInput(GoF2Remake.Multiplayer.NetChat.Keys, Gamepad.current, Time.unscaledDeltaTime * 1000f);
+                    level.PreviewEngineDrive(customize.BoostRowSelected ? 2f : 1f);   // a boost colour picked: the engines boost
+                    if (customizing) UpdateInspect(true);
+                }
                 else UpdateInspect();
                 return;
             }

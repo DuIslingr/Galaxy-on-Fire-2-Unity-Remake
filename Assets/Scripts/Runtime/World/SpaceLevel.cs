@@ -191,7 +191,10 @@ namespace GoF2Remake.World
             if (this == null || Player == null || Modding.ModShipKits.CustomizationOf(Session.ShipIndex) == null) return;
             string want = PlayerHull.Assembly(db, Session.ShipIndex)?.name;
             string shown = Player.visualModel != null ? Player.visualModel.name.Replace("(Clone)", "") : null;
-            if (want != null && want != shown) SwapPlayerShip(Session.ShipIndex);
+            // ... or its exhaust style's flame model arrived (ModExhausts: loaded on demand).
+            bool exhaust = Player.visualModel != null && Modding.ModExhausts.Find(Modding.ModShipKits.PlayerBuild(Session.ShipIndex)?.exhaust) != null
+                           && PlayerHull.OwnEngines(db) && !Modding.ModExhausts.HasHolder(Player.visualModel);
+            if ((want != null && want != shown) || exhaust) SwapPlayerShip(Session.ShipIndex);
         }
 
         /// <summary>Options changed in flight (the pause menu) reach the ship and the chase camera at once.</summary>
@@ -682,6 +685,8 @@ namespace GoF2Remake.World
             model.GetComponent<AssembledObject>()?.SetPlayerVariant(true);
             foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
             PlayerHull.PrepareModel(db, model);   // the Void ship at its full size
+            // Remake mods: the exhaust style of the ship's build (ModExhausts; before the exhaust particles, which it replaces).
+            if (PlayerHull.OwnEngines(db)) Modding.ModExhausts.Apply(db, shipIndex, model, Modding.ModShipKits.PlayerBuild(shipIndex));
             ctrl.visualModel = model.transform;
             if (Health != null) HullCollision.Attach(model, Health.Target, null);
 
@@ -769,6 +774,8 @@ namespace GoF2Remake.World
                 // lights (LOD 0 only) popped in as a cutscene camera closed in.
                 foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
                 PlayerHull.PrepareModel(db, model);   // remake debug: the Void ship at its full size
+                // Remake mods: the exhaust style of the ship's build (ModExhausts; the exhaust particles are attached below).
+                if (PlayerHull.OwnEngines(db)) Modding.ModExhausts.Apply(db, Session.ShipIndex, model, Modding.ModShipKits.PlayerBuild(Session.ShipIndex));
                 ctrl.visualModel = model.transform;
             }
             Player = ctrl;

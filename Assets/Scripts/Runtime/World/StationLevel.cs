@@ -169,6 +169,7 @@ namespace GoF2Remake.World
         void Awake()
         {
             Modding.ModShips.ModelsChanged += OnModShipModels;
+            Modding.ModTraffic.Warm();   // remake mods: more kit parts for the NPCs' random builds, loaded while docked
             // Multiplayer: loaded after its session ended (a docking queued behind the menu): on to the menu (nothing is
             // saved, SaveGame.SessionGame).
             if (GoF2Remake.Multiplayer.NetGame.SessionLost) SceneManager.LoadScene("MainMenu");
@@ -362,6 +363,36 @@ namespace GoF2Remake.World
             if (playerShip != null) PlayerHull.FitHangar(playerShip);   // remake debug: a freighter / capital ship shrunk
             RefreshTurret(true);
             ApplyShipYaw();
+            ApplyEnginePreview();
+        }
+
+        bool enginePreview;
+        float enginePreviewDrive = 1f;
+
+        /// <summary>How hard the previewed engines run (1 full throttle, 2 a full boost; EnginePreview).</summary>
+        public void PreviewEngineDrive(float drive)
+        {
+            enginePreviewDrive = drive;
+            var preview = playerShip != null ? playerShip.GetComponent<GoF2Remake.Visuals.EnginePreview>() : null;
+            if (preview != null) preview.drive = drive;
+        }
+
+        /// <summary>Remake mods: the turntable ship's engines run (the Customize screen: its exhaust can be seen) or stop again.</summary>
+        public void PreviewEngines(bool on)
+        {
+            enginePreview = on;
+            ApplyEnginePreview();
+        }
+
+        void ApplyEnginePreview()
+        {
+            if (playerShip == null) return;
+            var asm = playerShip.GetComponent<AssembledObject>();
+            if (asm != null && asm.playerVariantParts != null)
+                foreach (var p in asm.playerVariantParts) if (p != null) p.SetActive(enginePreview);
+            var preview = playerShip.GetComponent<GoF2Remake.Visuals.EnginePreview>();
+            if (enginePreview && preview == null) playerShip.gameObject.AddComponent<GoF2Remake.Visuals.EnginePreview>().drive = enginePreviewDrive;
+            else if (!enginePreview && preview != null) Destroy(preview);
         }
 
         GameObject turret, hardpoints;
@@ -571,6 +602,12 @@ namespace GoF2Remake.World
             {
                 asm.SetPlayerVariant(false);
                 if (asm.npcVariantParts != null) foreach (var p in asm.npcVariantParts) if (p != null) p.SetActive(false);   // exhaust off
+                // Remake mods: the exhaust style of the player's build, or of a guest's (ModExhausts; before the particles,
+                // which it replaces).
+                var exhaustBuild = label == "Player ship" ? (PlayerHull.OwnEngines(db) ? Modding.ModShipKits.PlayerBuild(index) : null)
+                                 : traffic != null && traffic.SpawningGuest >= 0 && GoF2Remake.Multiplayer.NetGame.Active
+                                   ? GoF2Remake.Multiplayer.NetHangar.GuestBuild((ulong)traffic.SpawningGuest, index) : null;
+                if (exhaustBuild != null) Modding.ModExhausts.Apply(db, index, go, exhaustBuild);
                 // Remake: the hangar flights and bar flybys fly on the player's engine (its glow mesh and exhaust particles)
                 // instead of the NPC flame meshes, like the NPCs in space (Settings.NpcPlayerEngines; the player's own ship
                 // always): some hulls' _engine_add parts showed nothing, and the VoidX's was blue where the player's is purple.

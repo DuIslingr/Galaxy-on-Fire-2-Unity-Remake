@@ -53,6 +53,9 @@
 // or true for the built-in one). Such a ship gets a kit of its own with no parts (CustomizationOf: the skins of every mod that
 // is on, merged), so the Customize screen, builds (saved by BuildKey: "gof2:<n>" for the game's ships), the weapon colour and
 // other players' views work as for kit ships; its skins show on a copy of its model (ModShips.SkinnedTemplate).
+// With exhaust styles in the mods that are on (ModExhausts, exhausts.json) every ship has a Customize screen: a ship without
+// other customizations gets a kit with nothing but them (no weapon colour row). A build's exhaust ("exhaust=mod_id:id",
+// "exhaustcolor=", "exhaustcolor2=", "exhaustsize=") is put on the model's instance (ModExhausts.Apply), not into its assembly.
 // ships.json: a new ship with "kit": "<kit id>" (this mod's) or "mod_id:kit_id" instead of "model", "kitType": "sentinel",
 // and "build": { "wings": "nemesis", "body": "body_a", ..., "tier": 1 } (its default: what the dealers sell and NPCs fly;
 // a slot left out takes the first part the type may fit). The player's build of each kit ship is Session.ShipBuilds (by the
@@ -187,6 +190,9 @@ namespace GoF2Remake.Modding
             public List<Part> parts = new List<Part>();
             public ModHardpoints.Set hardpoints;   // the weapon / turret models (ModHardpoints), null = none
             public readonly List<Skin> skins = new List<Skin>();
+            /// <summary>The Customize screen offers the weapon colour (false: a ship whose only customizations are the mods'
+            /// exhaust styles).</summary>
+            public bool weaponColorRow = true;
             public string Key => mod.Id + ":" + localId;
             public string Name => ModManifest.Pick(name) ?? localId;
             public int MaxTier => parts.Count == 0 ? 0 : parts.Max(p => p.tiers.Count);
@@ -214,7 +220,7 @@ namespace GoF2Remake.Modding
         static int parsedRevision = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetStatics() { kits.Clear(); parsedRevision = -1; shipCustom.Clear(); customRevision = -1; }
+        static void ResetStatics() { kits.Clear(); parsedRevision = -1; shipCustom.Clear(); exhaustOnly.Clear(); customRevision = -1; }
 
         /// <summary>The kits of the mods that are on.</summary>
         public static List<Kit> All()
@@ -466,7 +472,7 @@ namespace GoF2Remake.Modding
             return MountsFor(c, kit, build).Where(m => m.slotType == slotType).ToList();
         }
 
-        static List<ColorChoice> ReadPalette(JArray arr, string file)
+        internal static List<ColorChoice> ReadPalette(JArray arr, string file)
         {
             var list = new List<ColorChoice>();
             foreach (var e in arr)
@@ -609,7 +615,7 @@ namespace GoF2Remake.Modding
             }
         }
 
-        static bool TryHex(string text, out Color c)
+        internal static bool TryHex(string text, out Color c)
         {
             c = Color.white;
             if (string.IsNullOrEmpty(text)) return false;
@@ -673,13 +679,20 @@ namespace GoF2Remake.Modding
             public const string NoSkin = "none";
             /// <summary>The weapon colour (written "weaponcolor=id" or "#RRGGBB"; null or "none" = the weapons' own).</summary>
             public string weaponColor;
+            /// <summary>The exhaust style (ModExhausts, written "exhaust=mod_id:id"; null or "none" = the ship's own) and its two
+            /// colours ("exhaustcolor=" / "exhaustcolor2=": a palette id of the style or "#RRGGBB"; null = the style's own).</summary>
+            public string exhaust, exhaustColor, exhaustColor2;
+            /// <summary>The exhaust style's size ("exhaustsize=1.2": x its fitted size, ModExhausts.MinSize .. MaxSize; null = 1).</summary>
+            public string exhaustSize;
             const string ColorPrefix = "color.", SkinKey = "skin", WeaponColorKey = "weaponcolor";
+            const string ExhaustKey = "exhaust", ExhaustColorKey = "exhaustcolor", ExhaustColor2Key = "exhaustcolor2", ExhaustSizeKey = "exhaustsize";
 
             /// <summary>Names a kit can't use for a slot: the build text's own keys.</summary>
             public static bool Reserved(string slot) => string.Equals(slot, "tier", StringComparison.OrdinalIgnoreCase)
                                                         || string.Equals(slot, "ship", StringComparison.OrdinalIgnoreCase)
                                                         || string.Equals(slot, SkinKey, StringComparison.OrdinalIgnoreCase)
                                                         || string.Equals(slot, WeaponColorKey, StringComparison.OrdinalIgnoreCase)
+                                                        || slot.StartsWith(ExhaustKey, StringComparison.OrdinalIgnoreCase)
                                                         || slot.StartsWith(ColorPrefix, StringComparison.OrdinalIgnoreCase);
 
             public static Build Parse(string text)
@@ -694,6 +707,10 @@ namespace GoF2Remake.Modding
                     if (k == "tier") int.TryParse(v, out b.tier);
                     else if (k == SkinKey) b.skin = v.Length > 0 ? v : null;
                     else if (k == WeaponColorKey) b.weaponColor = v.Length > 0 ? v : null;
+                    else if (k == ExhaustKey) b.exhaust = v.Length > 0 ? v : null;
+                    else if (k == ExhaustColorKey) b.exhaustColor = v.Length > 0 ? v : null;
+                    else if (k == ExhaustColor2Key) b.exhaustColor2 = v.Length > 0 ? v : null;
+                    else if (k == ExhaustSizeKey) b.exhaustSize = v.Length > 0 ? v : null;
                     else if (k.StartsWith(ColorPrefix)) { if (v.Length > 0) b.colors[k.Substring(ColorPrefix.Length)] = v; }
                     else if (v.Length > 0) b.parts[k] = v;
                 }
@@ -710,6 +727,16 @@ namespace GoF2Remake.Modding
                     if (string.Equals(prop.Name, "tier", StringComparison.OrdinalIgnoreCase)) { b.tier = prop.Value.Type == JTokenType.Integer ? (int)prop.Value : 0; continue; }
                     if (string.Equals(prop.Name, SkinKey, StringComparison.OrdinalIgnoreCase)) { b.skin = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
                     if (string.Equals(prop.Name, "weaponColor", StringComparison.OrdinalIgnoreCase)) { b.weaponColor = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, ExhaustKey, StringComparison.OrdinalIgnoreCase)) { b.exhaust = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, "exhaustColor", StringComparison.OrdinalIgnoreCase)) { b.exhaustColor = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, "exhaustColor2", StringComparison.OrdinalIgnoreCase)) { b.exhaustColor2 = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, "exhaustSize", StringComparison.OrdinalIgnoreCase))
+                    {
+                        b.exhaustSize = prop.Value.Type == JTokenType.Float || prop.Value.Type == JTokenType.Integer
+                            ? ((float)prop.Value).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)
+                            : prop.Value.Type == JTokenType.String ? (string)prop.Value : null;
+                        continue;
+                    }
                     if (string.Equals(prop.Name, "colors", StringComparison.OrdinalIgnoreCase) && prop.Value is JObject co)
                     {
                         foreach (var c in co.Properties()) if (c.Value.Type == JTokenType.String) b.colors[c.Name] = (string)c.Value;
@@ -722,7 +749,7 @@ namespace GoF2Remake.Modding
 
             public Build Clone()
             {
-                var b = new Build { tier = tier, skin = skin, weaponColor = weaponColor };
+                var b = new Build { tier = tier, skin = skin, weaponColor = weaponColor, exhaust = exhaust, exhaustColor = exhaustColor, exhaustColor2 = exhaustColor2, exhaustSize = exhaustSize };
                 foreach (var kv in parts) b.parts[kv.Key] = kv.Value;
                 foreach (var kv in colors) b.colors[kv.Key] = kv.Value;
                 return b;
@@ -731,7 +758,11 @@ namespace GoF2Remake.Modding
             public override string ToString() => string.Join(";", parts.Select(kv => kv.Key + "=" + kv.Value)
                 .Concat(colors.Select(kv => ColorPrefix + kv.Key + "=" + kv.Value))
                 .Concat(string.IsNullOrEmpty(skin) ? Enumerable.Empty<string>() : new[] { SkinKey + "=" + skin })
-                .Concat(string.IsNullOrEmpty(weaponColor) ? Enumerable.Empty<string>() : new[] { WeaponColorKey + "=" + weaponColor }).Append("tier=" + tier));
+                .Concat(string.IsNullOrEmpty(weaponColor) ? Enumerable.Empty<string>() : new[] { WeaponColorKey + "=" + weaponColor })
+                .Concat(string.IsNullOrEmpty(exhaust) ? Enumerable.Empty<string>() : new[] { ExhaustKey + "=" + exhaust })
+                .Concat(string.IsNullOrEmpty(exhaustColor) ? Enumerable.Empty<string>() : new[] { ExhaustColorKey + "=" + exhaustColor })
+                .Concat(string.IsNullOrEmpty(exhaustColor2) ? Enumerable.Empty<string>() : new[] { ExhaustColor2Key + "=" + exhaustColor2 })
+                .Concat(string.IsNullOrEmpty(exhaustSize) ? Enumerable.Empty<string>() : new[] { ExhaustSizeKey + "=" + exhaustSize }).Append("tier=" + tier));
         }
 
         /// <summary>'b' made valid for this kit and ship type: every slot one part the type may fit ('fallback''s part, else the
@@ -768,6 +799,18 @@ namespace GoF2Remake.Modding
             string fw = fallback != null && ResolveWeaponColor(kit, fallback.weaponColor, out _) ? fallback.weaponColor : null;
             string wc = b?.weaponColor == Build.NoSkin ? null : b != null && ResolveWeaponColor(kit, b.weaponColor, out _) ? b.weaponColor : fw;
             n.weaponColor = wc ?? (fw != null ? Build.NoSkin : null);
+            // The exhaust style the same way, its colours only with it (a palette id it has, or "#RRGGBB").
+            string fe = ModExhausts.Find(fallback?.exhaust) != null ? fallback.exhaust : null;
+            string ex = b?.exhaust == Build.NoSkin ? null : ModExhausts.Find(b?.exhaust) != null ? b.exhaust : fe;
+            n.exhaust = ex ?? (fe != null ? Build.NoSkin : null);
+            var style = ModExhausts.Find(n.exhaust);
+            if (style != null)
+            {
+                var src = ex == b?.exhaust ? b : fallback;
+                n.exhaustColor = ModExhausts.ResolveColor(style, src?.exhaustColor, out _) ? src.exhaustColor : null;
+                n.exhaustColor2 = ModExhausts.ResolveColor(style, src?.exhaustColor2, out _) ? src.exhaustColor2 : null;
+                n.exhaustSize = ModExhausts.SizeText(ModExhausts.ParseSize(src?.exhaustSize));
+            }
             return n;
         }
 
@@ -806,7 +849,13 @@ namespace GoF2Remake.Modding
         public static AssemblyData VariantAssembly(int ship, Build build)
         {
             // The weapon colour isn't part of the model (Flight.WeaponTint colours the shots): no variant of its own.
-            if (!string.IsNullOrEmpty(build?.weaponColor)) { build = build.Clone(); build.weaponColor = null; }
+            // Nor the exhaust style (ModExhausts.Apply puts it on the instance).
+            if (build != null && (!string.IsNullOrEmpty(build.weaponColor) || !string.IsNullOrEmpty(build.exhaust) || !string.IsNullOrEmpty(build.exhaustColor)
+                                  || !string.IsNullOrEmpty(build.exhaustColor2) || !string.IsNullOrEmpty(build.exhaustSize)))
+            {
+                build = build.Clone();
+                build.weaponColor = build.exhaust = build.exhaustColor = build.exhaustColor2 = build.exhaustSize = null;
+            }
             if (KitShip(ship) == null)
             {
                 // Another ship with customizations: its own model, or with a skin a skinned copy of it
@@ -863,13 +912,22 @@ namespace GoF2Remake.Modding
             var c = KitShip(ship);
             if (c != null) return KitOf(c);
             if (customRevision != ModManager.Revision) ReadShipCustomizations();
-            return shipCustom.TryGetValue(ship, out var k) ? k : null;
+            if (shipCustom.TryGetValue(ship, out var k)) return k;
+            // The mods' exhaust styles, on any ship: a kit with nothing else (made once per ship and set of mods).
+            if (ship < 0 || !ModExhausts.Any) return null;
+            if (!exhaustOnly.TryGetValue(ship, out k))
+                exhaustOnly[ship] = k = new Kit { mod = ModExhausts.All()[0].mod, localId = "ship_" + ship, weaponColorRow = false,
+                                                  name = new Dictionary<string, string> { ["en"] = "ship " + ship } };
+            return k;
         }
+
+        static readonly Dictionary<int, Kit> exhaustOnly = new Dictionary<int, Kit>();
 
         static void ReadShipCustomizations()
         {
             customRevision = ModManager.Revision;
             shipCustom.Clear();
+            exhaustOnly.Clear();
             const string ShipsFile = "ships.json";
             foreach (var mod in ModManager.Active)
             {

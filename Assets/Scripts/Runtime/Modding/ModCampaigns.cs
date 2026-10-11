@@ -198,6 +198,13 @@ namespace GoF2Remake.Modding
             return c == null || !c.modShips || ModContent.IsModShip(ship);
         }
 
+        /// <summary>The campaign names its own ships for NPC fighters of the race ("trafficShips"): ModTraffic leaves them.</summary>
+        public static bool HasTrafficShips(int race)
+        {
+            var c = Current;
+            return c != null && c.trafficShips.TryGetValue(race == 8 || race > 3 ? 8 : race, out var refs) && refs.Count > 0;
+        }
+
         /// <summary>The ship an NPC fighter of the race flies ("trafficShips"; else the game's pick).</summary>
         public static int TrafficShip(int race, int fallback)
         {

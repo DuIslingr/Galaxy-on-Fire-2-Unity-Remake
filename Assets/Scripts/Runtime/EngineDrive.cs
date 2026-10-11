@@ -7,6 +7,7 @@
 // against the base speed every ship shares (FlightModel.BaseSpeed, game units per ms; above it = boosting).
 // An inactive 'engineState' (a player engine part the game turns off while mining, object docking, cutscenes) reads 0.
 // Free flight with no forward thrust held (FlightModel.EnginesOff) reads 0 with Off set: the effects treat it as engines off.
+// A ship under an EnginePreview (the hangar's Customize screen) reads its 'drive'.
 
 using GoF2Remake.Flight;
 using UnityEngine;
@@ -21,6 +22,7 @@ namespace GoF2Remake.Visuals
         ShipController ship;
         Navigation nav;
         World.SystemJump systemJump;
+        EnginePreview preview;
         float lookupTimer;   // the level adds Navigation / SystemJump to the player after spawning the model: look again
         Vector3 lastPosition;
         bool hasLast;
@@ -37,6 +39,7 @@ namespace GoF2Remake.Visuals
             if (ship == null) ship = transform.GetComponentInParent<ShipController>();
             if (nav == null) nav = transform.GetComponentInParent<Navigation>();
             if (systemJump == null) systemJump = transform.GetComponentInParent<World.SystemJump>();
+            preview = transform.GetComponentInParent<EnginePreview>();
         }
 
         /// <summary>Forget the last position (after a scene change or a re-enable: no speed from the jump).</summary>
@@ -45,6 +48,9 @@ namespace GoF2Remake.Visuals
         /// <summary>The player's main engines are off (free flight with no forward thrust held: FlightModel.EnginesOff), as
         /// of the last Sample: the effects go dark as with the engine part off.</summary>
         public bool Off { get; private set; }
+
+        /// <summary>The engines run for a look at them (EnginePreview): the station's cap at full throttle doesn't apply.</summary>
+        public bool Previewing => preview != null && preview.isActiveAndEnabled;
 
         /// <summary>0 idle .. 1 full throttle .. 2 full boost, for this frame ('dt' seconds).</summary>
         public float Sample(float dt, GameObject engineState = null)
@@ -56,6 +62,7 @@ namespace GoF2Remake.Visuals
                 Lookup();
             }
             if (engineState != null && !engineState.activeInHierarchy) { hasLast = false; measured = 0f; return 0f; }
+            if (preview != null && preview.isActiveAndEnabled) return preview.drive;
             if ((nav != null && nav.Jumping) || (systemJump != null && systemJump.Traveling)) return 2f;
             if (ship != null && ship.Model != null)
             {

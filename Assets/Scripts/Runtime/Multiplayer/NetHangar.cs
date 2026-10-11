@@ -54,6 +54,14 @@ namespace GoF2Remake.Multiplayer
             return null;
         }
 
+        /// <summary>A guest's build of their ship (its exhaust style, ModExhausts), null = none.</summary>
+        public static Modding.ModShipKits.Build GuestBuild(ulong clientId, int ship)
+        {
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.OwnerClientId == clientId && p.ShipIndex == ship) return p.ShownBuild;
+            return null;
+        }
+
         bool modelsChanged;   // the mods' ship models were (re)built: guests in a build whose parts were loading are parked again
         void OnModels() => modelsChanged = true;
         void OnEnable() => Modding.ModShips.ModelsChanged += OnModels;

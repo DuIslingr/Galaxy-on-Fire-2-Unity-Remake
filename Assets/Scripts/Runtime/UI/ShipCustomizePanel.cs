@@ -2,7 +2,8 @@
 // Remake mods: the hangar's Customize screen for a customizable ship (Modding.ModShipKits, EVERSPACE 2's ship modules): a
 // panel over Inspect ship's orbit view (StationMenu) with one row per slot of the ship's kit and its tier, each cycling
 // through what the ship's type may fit, then its skin (the kit's paint jobs for the type, "Standard" = the model's own), its
-// weapon colour (the energy weapons' and energy turrets' shots, Flight.WeaponTint; "Original" = their own), then the kit's
+// weapon colour (the energy weapons' and energy turrets' shots, Flight.WeaponTint; "Original" = their own), its exhaust (the
+// mods' exhaust styles, Modding.ModExhausts, on any ship; "Ship's own" = the model's) with the style's two colours, then the kit's
 // colours: a preset (sets every colour) and a row per colour slot with a swatch. Up / down (W / S, the D-pad, the left stick) pick a row, left / right (A / D) cycle
 // it, a click on a row's arrows too; Enter / the controller's A applies, Esc / the controller's B cancels. Every change is
 // shown on the turntable at once (StationMenu's Changed: the build is the player's while the screen is open, Cancel puts the
@@ -37,7 +38,7 @@ namespace GoF2Remake.UI
         ModShipKits.Build build;
         int row;
         float holdMs;
-        enum Kind { Part, Tier, Skin, WeaponColor, Preset, Color, Strength }
+        enum Kind { Part, Tier, Skin, WeaponColor, Exhaust, ExhaustSize, ExhaustColor, Preset, Color, Strength }
         readonly List<(Kind kind, string key, Label value, VisualElement line, VisualElement swatch)> rows = new List<(Kind, string, Label, VisualElement, VisualElement)>();
         int presetIndex = -1;
         readonly VisualElement list;
@@ -94,6 +95,16 @@ namespace GoF2Remake.UI
             build = current.Clone();
             title.text = string.Format(X("kitCustomizeTitle", "CUSTOMIZE {0}"), shipName.ToUpperInvariant());
             help.text = X("kitCustomizeHelp", "Up / down: pick a part. Left / right: change it. Enter: apply, Esc: cancel. Drag to turn the ship, the wheel zooms.");
+            row = 0;
+            BuildRows();
+            Refresh();
+            Root.style.display = DisplayStyle.Flex;
+            IsOpen = true;
+        }
+
+        /// <summary>The rows for the kit and the build (the exhaust's colour rows only with an exhaust style picked).</summary>
+        void BuildRows()
+        {
             rows.Clear();
             list.Clear();
             foreach (string slot in kit.slots)
@@ -103,14 +114,34 @@ namespace GoF2Remake.UI
             }
             if (kit.MaxTier > 0) AddRow(Kind.Tier, null, X("kitTier", "Tier"));
             if (kit.SkinsFor(type).Count > 0) AddRow(Kind.Skin, null, X("kitSkin", "Skin"));
-            AddRow(Kind.WeaponColor, null, X("kitWeaponColor", "Weapon colour"));
+            if (kit.weaponColorRow) AddRow(Kind.WeaponColor, null, X("kitWeaponColor", "Weapon colour"));
+            if (ModExhausts.Any)
+            {
+                AddRow(Kind.Exhaust, null, X("kitExhaust", "Exhaust"));
+                if (ModExhausts.Find(build.exhaust) is ModExhausts.Style style)
+                {
+                    AddRow(Kind.ExhaustSize, null, X("kitExhaustSize", "Exhaust size"));
+                    AddRow(Kind.ExhaustColor, "1", style.MainName);
+                    AddRow(Kind.ExhaustColor, "2", style.SecondName);
+                }
+            }
             presetIndex = MatchingPreset();
             if (kit.presets.Count > 0) AddRow(Kind.Preset, null, X("kitPreset", "Colour scheme"));
             foreach (var cs in kit.colorSlots) AddRow(cs.IsStrength ? Kind.Strength : Kind.Color, cs.id, cs.Name);
-            row = 0;
-            Refresh();
-            Root.style.display = DisplayStyle.Flex;
-            IsOpen = true;
+            row = Mathf.Clamp(row, 0, Math.Max(0, rows.Count - 1));
+        }
+
+        /// <summary>The selected row is a boost colour (the exhaust style's second colour of a flame style, or a kit colour
+        /// slot recolouring the boost): StationMenu shows the engines boosting meanwhile.</summary>
+        public bool BoostRowSelected
+        {
+            get
+            {
+                if (!IsOpen || row < 0 || row >= rows.Count) return false;
+                var (kind, slot, _, _, _) = rows[row];
+                if (kind == Kind.ExhaustColor) return slot == "2" && ModExhausts.Find(build.exhaust) is ModExhausts.Style s && s.IsFlame;
+                return kind == Kind.Color && kit.colorSlots.Find(c => c.id == slot) is ModShipKits.ColorSlot cs && cs.targets.Exists(t => t.property == "boost");
+            }
         }
 
         public void Hide()
@@ -144,7 +175,7 @@ namespace GoF2Remake.UI
             value.style.flexGrow = 1; value.style.flexShrink = 1; value.style.fontSize = 21; value.style.unityTextAlign = TextAnchor.MiddleCenter; value.style.color = Color.white;
             NoWrap(value);
             VisualElement swatch = null;
-            if (kind == Kind.Color || kind == Kind.WeaponColor)
+            if (kind == Kind.Color || kind == Kind.WeaponColor || kind == Kind.ExhaustColor)
             {
                 swatch = new VisualElement { pickingMode = PickingMode.Ignore };
                 var ws = swatch.style;
@@ -206,6 +237,44 @@ namespace GoF2Remake.UI
                     int at = colors.FindIndex(c => string.Equals(c.id, build.weaponColor, StringComparison.OrdinalIgnoreCase)) + 1;
                     at = (at + dir + n) % n;
                     build.weaponColor = at == 0 ? ModShipKits.Build.NoSkin : colors[at - 1].id;
+                    break;
+                }
+                case Kind.Exhaust:
+                {
+                    // The ship's own exhaust (index 0), then the mods' styles; the colour rows come and go with it.
+                    var styles = ModExhausts.All();
+                    int n = styles.Count + 1;
+                    int at = styles.FindIndex(x => string.Equals(x.Key, build.exhaust, StringComparison.OrdinalIgnoreCase)) + 1;
+                    at = (at + dir + n) % n;
+                    build.exhaust = at == 0 ? ModShipKits.Build.NoSkin : styles[at - 1].Key;
+                    var style = ModExhausts.Find(build.exhaust);
+                    if (!ModExhausts.ResolveColor(style, build.exhaustColor, out _)) build.exhaustColor = null;
+                    if (!ModExhausts.ResolveColor(style, build.exhaustColor2, out _)) build.exhaustColor2 = null;
+                    BuildRows();
+                    break;
+                }
+                case Kind.ExhaustSize:
+                {
+                    // x the fitted size, a step at a time (no wrapping: it's a scale).
+                    float size = ModExhausts.ParseSize(build.exhaustSize) + dir * ModExhausts.SizeStep;
+                    size = Mathf.Clamp(size, ModExhausts.MinSize, ModExhausts.MaxSize);
+                    string text = ModExhausts.SizeText(ModExhausts.ParseSize(size.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                    if (text == build.exhaustSize) return;
+                    build.exhaustSize = text;
+                    break;
+                }
+                case Kind.ExhaustColor:
+                {
+                    // The style's own colour (index 0), then its palette.
+                    var style = ModExhausts.Find(build.exhaust);
+                    if (style == null) return;
+                    var colors = style.Colors;
+                    string cur = slot == "1" ? build.exhaustColor : build.exhaustColor2;
+                    int n = colors.Count + 1;
+                    int at = colors.FindIndex(c => string.Equals(c.id, cur, StringComparison.OrdinalIgnoreCase)) + 1;
+                    at = (at + dir + n) % n;
+                    string pick = at == 0 ? null : colors[at - 1].id;
+                    if (slot == "1") build.exhaustColor = pick; else build.exhaustColor2 = pick;
                     break;
                 }
                 case Kind.Part:
@@ -294,6 +363,30 @@ namespace GoF2Remake.UI
                             bool has = ModShipKits.ResolveWeaponColor(kit, build.weaponColor, out var wc);
                             swatch.style.backgroundColor = has ? wc : Color.clear;
                         }
+                        break;
+                    }
+                    case Kind.Exhaust:
+                    {
+                        var styles = ModExhausts.All();
+                        var style = ModExhausts.Find(build.exhaust);
+                        int at = style == null ? 0 : styles.IndexOf(style) + 1;
+                        value.text = (style?.Name ?? X("kitExhaustOwn", "Ship's own")) + $"  ({at + 1}/{styles.Count + 1})";
+                        break;
+                    }
+                    case Kind.ExhaustSize:
+                        value.text = Mathf.RoundToInt(ModExhausts.ParseSize(build.exhaustSize) * 100f) + " %";
+                        break;
+                    case Kind.ExhaustColor:
+                    {
+                        var style = ModExhausts.Find(build.exhaust);
+                        string v = slot == "1" ? build.exhaustColor : build.exhaustColor2;
+                        var colors = style?.Colors ?? new List<ModShipKits.ColorChoice>();
+                        var choice = colors.Find(c => string.Equals(c.id, v, StringComparison.OrdinalIgnoreCase));
+                        int at = choice == null ? 0 : colors.IndexOf(choice) + 1;
+                        bool custom = choice == null && ModExhausts.ResolveColor(style, v, out _);
+                        value.text = (choice != null ? choice.Name : custom ? X("kitColorScheme", "Scheme colour") : X("kitExhaustColorOwn", "Original"))
+                                   + $"  ({at + 1}/{colors.Count + 1})";
+                        if (swatch != null) swatch.style.backgroundColor = ModExhausts.ResolveColor(style, v, out var ec) ? ec : Color.clear;
                         break;
                     }
                     case Kind.Preset:

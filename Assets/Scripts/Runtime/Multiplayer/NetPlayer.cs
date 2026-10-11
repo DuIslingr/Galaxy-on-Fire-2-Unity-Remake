@@ -493,7 +493,10 @@ namespace GoF2Remake.Multiplayer
             model.SetActive(shown);
             HullCollision.Attach(model, target, obstacle);   // shots hit and the local ship slides along its real shape
             BuildTurret();
-            // Its look and sound: the exhaust, the cloak, the engine loop (3D, at space distances).
+            // Its look and sound: the exhaust (their build's exhaust style, ModExhausts, in place of the particles), the cloak,
+            // the engine loop (3D, at space distances).
+            if (kitBuild != null) Modding.ModExhausts.Apply(Database.Load(), index, model, kitBuild,
+                                                            Modding.ModShipKits.MountsShown(Database.Load(), index, 3, kitBuild));
             asm = model.GetComponent<AssembledObject>();
             if (exhaust != null) Destroy(exhaust);
             exhaust = ShipExhaust.AttachRemote(gameObject, Database.Load(), model.transform, index, () => shown && engine.Value && cloak.Value < 25f,

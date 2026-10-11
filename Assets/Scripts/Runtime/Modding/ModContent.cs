@@ -173,8 +173,9 @@ namespace GoF2Remake.Modding
         {
             "id", "override", "name", "description", "race", "armor", "cargo", "price", "priceDefault", "slots", "handling",
             "hangarHeight", "mounts", "model", "icon", "modelLength", "modelYaw", "engineGlowRadius", "engineGlowColor", "materials", "throttleGlow",
-            "extraGlows", "lounge", "dealer", "available", "flightStyle", "flight", "kit", "kitType", "build",
+            "extraGlows", "lounge", "dealer", "traffic", "available", "flightStyle", "flight", "kit", "kitType", "build",
             "skins", "weaponColors",   // customizations of a ship without a kit (ModShipKits.CustomizationOf)
+            "engineFx",   // Galaxy on Fire 3's engine effect (EngineFx)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)
@@ -354,6 +355,7 @@ namespace GoF2Remake.Modding
             if (!d.hasLounge) c.lounge = null;   // JsonUtility makes one with its defaults
             if (!d.hasDealer) c.dealer = null;
             if (c.throttleGlow != null && string.IsNullOrEmpty(c.throttleGlow.mask)) c.throttleGlow = null;
+            if (c.engineFx != null && !c.engineFx.Any) c.engineFx = null;   // (JsonUtility makes one either way)
             ShipText(index, false, out c.name);
             ShipText(index, true, out c.description);
             c.handlingMultiplier = c.handling / 100f;
@@ -393,6 +395,7 @@ namespace GoF2Remake.Modding
                 c.name = db.Ship(kv.Key)?.name ?? c.assembly;
                 c.lounge = null;
                 if (c.throttleGlow != null && string.IsNullOrEmpty(c.throttleGlow.mask)) c.throttleGlow = null;
+                if (c.engineFx != null && !c.engineFx.Any) c.engineFx = null;
                 if (c.mounts == null || c.mounts.Count == 0)
                     c.mounts = db.WeaponMounts.Find(w => w.ship == kv.Key)?.mounts ?? new List<WeaponMount>();
                 l.Add((kv.Value.mod, c));

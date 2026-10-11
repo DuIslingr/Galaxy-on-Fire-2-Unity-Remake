@@ -7,6 +7,10 @@
 // level: on while the ship's engine glow part (AssembledObject.playerVariantParts) is active (dark and pulled into the
 // nozzles on a ship parked in a hangar, while mining or docking at an object, on a dead ship), fading over a quarter
 // second. Without a glow part the flames are always on.
+// A customized exhaust (ModExhausts: the hangar's Customize screen, any ship) brings flames of its own under a holder
+// (ModExhausts.HolderName) with an EngineFlame of its own: the ship's EngineFlame leaves them alone and, 'suppressed', keeps
+// the model's own flames shrunk into the nozzles and dark. Each of the holder's nozzles (ModExhausts.NozzleName) blows along
+// its own backward axis (the mount's turn), the model's own flames along the ship's.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -24,8 +28,21 @@ namespace GoF2Remake.Modding
         static readonly int ThrustId = Shader.PropertyToID("_FlameThrust");
         static readonly int BoostId = Shader.PropertyToID("_FlameBoost");
         static readonly int LevelId = Shader.PropertyToID("_FlameLevel");
+        static readonly int OverrideId = Shader.PropertyToID("_BoostOverride");
 
         readonly List<(Renderer r, int index, Vector4 dir)> flames = new List<(Renderer, int, Vector4)>();
+        /// <summary>The model's own flames stay off (a customized exhaust replaces them).</summary>
+        public bool suppressed;
+        /// <summary>A boost turns the main flames to the boost colour and the boost cards stay hidden (an exhaust style on a ship
+        /// without boost jets of its own: the game's ships, other mods'; ModExhausts).</summary>
+        public bool boostOverride;
+        /// <summary>Meshes made for this ship (a customized exhaust's flames bent to its nozzles), freed with it.</summary>
+        public readonly List<Mesh> ownedMeshes = new List<Mesh>();
+
+        void OnDestroy()
+        {
+            foreach (var m in ownedMeshes) if (m != null) Destroy(m);
+        }
         MaterialPropertyBlock block;
         EngineDrive drive;
         GameObject engineGlow;
@@ -55,13 +72,16 @@ namespace GoF2Remake.Modding
             var asm = GetComponent<AssembledObject>();
             if (asm != null && asm.playerVariantParts != null)
                 engineGlow = asm.playerVariantParts.FirstOrDefault(p => p != null && p.name.Contains("engine_glow"));
-            var back = -transform.forward;
+            bool holder = name == ModExhausts.HolderName;
             foreach (var r in GetComponentsInChildren<Renderer>(true))
             {
                 var mats = r.sharedMaterials;
                 for (int i = 0; i < mats.Length; i++)
                 {
                     if (!IsFlame(mats[i]) || r.name.StartsWith("engine_glow_thruster")) continue;   // LateralThrusters drives its own
+                    if (!holder && ModExhausts.InHolder(r.transform)) continue;                     // a customized exhaust's own
+                    var nozzle = holder ? ModExhausts.NozzleOf(r.transform) : null;
+                    var back = nozzle != null ? -nozzle.forward : -transform.forward;
                     var d = r.transform.InverseTransformDirection(back).normalized;
                     flames.Add((r, i, new Vector4(d.x, d.y, d.z, 0f)));
                     // The stretched flame reaches past the mesh's bounds: grow them so it isn't culled with its stub.
@@ -82,7 +102,7 @@ namespace GoF2Remake.Modding
             if (flames.Count == 0) return;
             float dt = Time.deltaTime;
             float d = drive.Sample(dt, engineGlow);
-            if (inStation) d = Mathf.Min(d, 1f);
+            if (inStation && !drive.Previewing) d = Mathf.Min(d, 1f);
             float t = Mathf.Clamp01(d), b = Mathf.Clamp01(d - 1f);
             if (thrust < 0f) { thrust = t; boost = b; }
             else
@@ -91,7 +111,7 @@ namespace GoF2Remake.Modding
                 thrust = Mathf.Lerp(thrust, t, k);
                 boost = Mathf.Lerp(boost, b, k);
             }
-            float target = On && !drive.Off ? 1f : 0f;   // free flight with no thrust: the flames shrink into the nozzles
+            float target = On && !drive.Off && !suppressed ? 1f : 0f;   // free flight with no thrust: the flames shrink into the nozzles
             level = level < 0f ? target : Mathf.MoveTowards(level, target, Time.unscaledDeltaTime * FadePerSecond);
             foreach (var (r, index, dir) in flames)
             {
@@ -101,6 +121,7 @@ namespace GoF2Remake.Modding
                 block.SetFloat(ThrustId, thrust);
                 block.SetFloat(BoostId, boost);
                 block.SetFloat(LevelId, level);
+                block.SetFloat(OverrideId, boostOverride ? 1f : 0f);
                 r.SetPropertyBlock(block, index);
             }
         }

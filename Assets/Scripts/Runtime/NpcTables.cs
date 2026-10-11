@@ -37,7 +37,8 @@ namespace GoF2Remake.Flight
         };
 
         /// <summary>Globals::getRandomEnemyFighter.</summary>
-        public static int RandomFighter(int race) => Modding.ModCampaigns.TrafficShip(race, RandomFighterOriginal(race));   // remake mods: a campaign's own ships
+        public static int RandomFighter(int race) =>   // remake mods: a campaign's own ships, now and then the mods' (ModTraffic)
+            Modding.ModTraffic.Pick(race, Modding.ModCampaigns.TrafficShip(race, RandomFighterOriginal(race)));
 
         static int RandomFighterOriginal(int race)
         {
@@ -57,7 +58,7 @@ namespace GoF2Remake.Flight
             var sorted = new List<int>(pool);
             sorted.Sort((a, b) => (db.Ship(b)?.price ?? 0).CompareTo(db.Ship(a)?.price ?? 0));
             int pick = sorted[Random.Range(0, Mathf.Max(1, (sorted.Count + 1) / 2))];
-            return Modding.ModCampaigns.TrafficShip(race, pick);
+            return Modding.ModTraffic.Pick(race, Modding.ModCampaigns.TrafficShip(race, pick), strong: true);
         }
 
         /// <summary>Freighter ship index and its race (30 % Nivelian in Terran systems and the other way round).</summary>

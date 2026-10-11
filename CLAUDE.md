@@ -83,6 +83,7 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 - **GoF2 > Build > Linux Dedicated Server** (`LinuxServerBuild`): `Build/LinuxServer/GoF2Server.x86_64`, Unity's Dedicated Server build (Linux, subtarget Server, IL2CPP, the dedicated server optimizations on: no texture / audio / shader data), only the first scene; it starts as a server by itself (`UNITY_SERVER` in `DedicatedServer.Enabled`), `start-server.sh` beside it. Needs the Hub module "Linux Dedicated Server Build Support"; switches the active target for the build and back.
 - **GoF2 > Build > Event Audio**: `Resources/GoF2Events/EventAudio`, the sounds and music the event graphs play (see "Multiplayer", Events).
 - **GoF2 > Build > Hangar Heights**: `Resources/GoF2Data/hangar_heights.json`, how far each ship is lifted off each hangar pad (see "Station scene"). Run it again after changing a hangar room or a ship model.
+- **GoF2 > Build > Nozzle Shapes** (`NozzleShapesBuilder`): `Resources/GoF2Data/nozzle_shapes.json`, each game ship's (0..63) exhaust nozzles as their outline (radius at 32 angles), extents and centre, measured on its player engine glow mesh (vertices to the nearest slot-3 mount; the game's meshes are only readable in the Editor), for the mods' exhaust styles (see "Mods", Exhaust styles). Run it again after changing a ship model or its exhaust mounts.
 - **GoF2 > Build > Void Station Collision** (`VoidStationCollisionBuilder`): `Resources/GoF2Data/void_station_extra.json`, extra collision boxes for the Void station's outer blades and lower spire (see "Space scene", Alien orbit). Run it again after changing the station's model or animation.
 - **GoF2 > Build > Hangar Shadows**: `Resources/GoF2Station/ShipShadows` (+ `ShipShadows.asset`, `HangarShipShadow.mat`), each ship's contact shadow in the hangars (see "Station scene"). Run it again after changing a ship model.
 - **GoF2 > Build > HUD Images**: `Resources/GoF2Hud`, the HUD / star map images and the alien font glyphs cut from the original interface atlases (rects in `Reference/research/mining.md`, `autopilot_travel.md`, `starmap_travel.md`). Also run by Create Space Scene.
@@ -1836,6 +1837,72 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   ship names (no sprite). Code that sizes a ship by its renderers must skip trails (empty at the origin): the item window and
   `NetPlayer` use mesh renderers only. Another player's ship built before the session's mods were on (they join before
   NetState applies them) is built again on `ModShips.ModelsChanged`.
+- **Engine effect** (`EngineFx`, ships.json `engineFx`, `CustomEngineFx`; the GoF3 Ships mod): Galaxy on Fire 3's engine at every
+  exhaust mount in place of the glow discs (`BuildEngineGlow` without discs: the empty part marks the engines on / off) and the
+  exhaust particles (`ShipExhaust` skips the ship): GoF3's NivelianEngine / TerranEngine / VosskEngine scenes
+  (`assets/vfx/engines/<race>`: the flare `glow_mesh`, two camera-facing quads, a 9 x 9 unit square and a 27 x 2.7 streak at half
+  brightness with the texture turned a quarter; the exhaust, four crossed cards 12.1 x 1.62 units with the texture's middle band
+  u 0.39 -> 0.69 along and vertex brightness 0 / 0.77 / 0.2 / 0 at 0 / 1.73 / 6.91 / 12.09) and its VfxList trail (TrailNivelian =
+  `particles/ship_engine_nivelian.psb`, Fork Particle Studio, unreadable: `beam_001.bmp` streaks drifting apart), the trail rebuilt
+  as camera-facing ribbons of points that keep the ship's velocity plus their own backward speed (they bend when the ship turns,
+  as in GoF3's ship viewer) and sway in smooth waves (each trail eases toward random sideways speeds, `SwayEase`; independent
+  points made a zigzag), the streak's middle row across them (whole copies per segment read as beads) and a random brightness
+  per point. EngineDrive levels (thrust 0.3..1 length, boost longer); in the station capped; materials copies of
+  `ModAssets.fxAdditive` (`ModMaterials.CopyOf`) at `_Glow` 0.75 / 0.5 / 1 / 0.45 (flare, cone, trail, helix). A mount's `fxScale` sizes it (GoF3's helper scale:
+  the Retro 0.5 / 1.62) and its `rotation` turns it (`ModHardpoints.MountTurn`; five Vossk hulls' engines 8.5-10 deg inward).
+  The helix (`spiral*`, only the Nivelian engine has one: `_spiral.ae4meshgroup`, two ribbon strands, radius 0.5 -> 0.1 over
+  10.5 units, spun by its animation): camera-facing strands rebuilt each frame round the exhaust's axis, the texture (GoF3's
+  `vfx_generic_electricity_000`, a guess: the spiral's material names its flow textures by GUID only) along them, scrolled, faded
+  by (1 - s)^2 (in flight GoF3's crackle is gone well before the strands' end). Part colours (`flareColor` / `coneColor` / `trailColor` /
+  `spiralColor`, over the exhaust's; the flare's until then was always the exhaust's): the builder reads them from GoF3's materials for the helix engine (Colorize_Color1 = the
+  EngineAttachment colour, unless Colorize_Custom; times DiffuseColor when DiffuseColorMultiply: cone 0.08 / 0.51 / 1, helix and
+  trails 0.22 / 0.56 / 1) with the flare 0.75, cone 0.4 and trails 0.35 dimmer under it; the Terran / Vossk engines keep the hull's
+  nozzle colour (their hulls light the nozzles orange / yellow-green while their effect materials colour blue / green; nothing
+  shows which GoF3 draws; corrected for the Terran engine below). The Terran engine (checked against a clip of the Argus rotating in
+  GoF3's ship viewer): its materials' Colorize_Options 1 draw the textures in their own colour, so every part takes the decoded
+  textures' brightness-weighted colour (amber: flare 1 / 0.65 / 0.28, cone and trail 1 / 0.54 / 0.27; `texture_colour`), not the
+  EngineAttachment's blue or the hull's pale nozzle colour; no wavering streams but one thin straight streak (`RACE_TRAIL`: 1 per
+  exhaust, 0.45 units wide, wander 0.6, x2 the cards' length, intensity 0.35) behind a cone 2.5 x brighter, the spike GoF3
+  shows. Matched by eye against two clips of the Moornta (GoF3's ship viewer, and in flight from the side and
+  behind; Play mode: behind, below, above, the side, a hard turn; the Terran, Vossk and Retro hulls; the hangar hides it).
+- **Exhaust styles** (`ModExhausts`, a mod's `exhausts.json`; the guide's "Exhaust styles"): engine effects any ship can wear,
+  picked in the hangar's Customize screen (`ShipCustomizePanel`'s Exhaust row and the style's two colour rows; with styles in
+  the mods that are on every ship has the screen: `ModShipKits.CustomizationOf` gives a ship without other customizations a
+  kit of its own with nothing else, `Kit.weaponColorRow` false). A style is a GoF3 `engineFx` (`EngineFx.Create`; its colours:
+  flare + cone, trails + helix) or a flame `model` with flame `materials` (an ES2 thruster: loaded with the mod ships as the one
+  part of the style's own kit, `ModShips.LoadAll` / `EnsureExhaust`; per exhaust an instance named `exhaust_nozzle_N` at the
+  mount, `MountTurn` x the style's `yaw`, scaled by `NozzleRadius` against the style's `nozzle`, driven by an `EngineFlame` on
+  the holder that blows each along its nozzle's -Z; colours: copies of the flame materials with `_EmissionColor` / `_BoostColor`
+  at their own intensity; a flame style's boost cards are its own mod's ships' boost jets (`OwnShip`: the ship's key in the
+  style's mod): on any other ship the holder's `EngineFlame.boostOverride` sets GoF2/ModEngineFlame's `_BoostOverride`, the boost
+  cards stay hidden and the boost turns the main cards to the boost colour). The player's Exhaust size row (`exhaustsize=`,
+  `ModExhausts.ParseSize`: 0.5..2 in 0.1 steps) multiplies each exhaust's fitted scale. Each exhaust takes its nozzle's outline
+  (`ModExhausts.ShapesOf`, `NozzleShape`: the convex hull of the nozzle's geometry in the mount's plane, its area centroid as the
+  centre, kept as `profile`, its radius at 32 angles; `FromPoints`): the mount's `outline` (game units, position_engine's axes:
+  the GoF3 builder writes it from the nozzle's glowing surface, `engine_glows.engines`), else a mod ship's readable meshes with
+  "nozzle" materials measured on the instance (`Measure`: vertices to the nearest mount; an ES2 hexagonal rear), else the mount's
+  `glowSize` as an oval, else the game ship's measured glow (`nozzle_shapes.json`, x1.1: the glow sits inside the nozzle, median
+  0.91 of the round size), else round (`NozzleRadius`). Sized by its mean radius; the shape itself: a flame model's meshes are
+  copied per nozzle and bent to the outline (`Warp`: each vertex's distance from the axis x the profile's factor at its angle;
+  freed with the holder's `EngineFlame.ownedMeshes`), an engineFx's cone cards reach the outline (a cone mesh per shaped
+  nozzle), its helix runs along it and its trails spread along the long side (`EngineFx.profiles`, `Trail.start`), centred on
+  the nozzle. Checked in Play mode: ship 7's wide nozzle blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
+  from its nozzle meshes) with a GoF3 drive, the Moornta's GoF3 outlines with an ES2 thruster. `NozzleRadius`: a mount's `glowSize`, a mod ship's `engineGlowRadius`, else 55 game units x the game
+  ship's exhaust anchor scale (`turretAngles`). The build carries it (`exhaust=mod_id:id;exhaustcolor=;exhaustcolor2=;exhaustsize=`,
+  `ModShipKits.Build`, kept out of `VariantAssembly`'s name like the weapon colour) and `ModExhausts.Apply` puts it on each model
+  instance (the player's in `SpaceLevel` spawn / swap, the turntable and hangar guests in `StationLevel.SpawnShip`, other players'
+  ships in `NetPlayer.BuildModel`): a holder `exhaust_style` under the engine glow part aligned with the ship's root (it goes with
+  the engines), the model's own exhaust hidden (the glow part's renderers `forceRenderingOff`: `ShipController.UpdateEngineParts`
+  only toggles `enabled`; a built-in `EngineFx` disabled; the model's `EngineFlame` `suppressed`, its own flames dark; no
+  particles: `ShipExhaust` finds the holder's effect), the manoeuvring jets kept. The Customize screen runs the turntable's
+  engines (`StationLevel.PreviewEngines` / `PreviewEngineDrive`, `Visuals.EnginePreview` read by `EngineDrive`, past the
+  station's full-throttle cap: boosting while a boost colour row is selected, `ShipCustomizePanel.BoostRowSelected`). The GoF3
+  Ships mod's builder writes GoF3's Nivelian (helix), Terran and Vossk drives (`exhaust_styles`, GoF3's engine colours as the
+  palette); the ES2 importer three thrusters cut from one-nozzle rear parts (`exhaust_module`: the flame cards with their UV1,
+  the main cards' nozzle ring at the origin, ES2's +X nose turned to +Z; ES2's exhaust palette). Verified in Play mode: the
+  Nivelian helix and an ES2 thruster on the Phantom, a GoF3 Terran drive on an ES2 Sentinel (its flames dark), an ES2 ring
+  thruster in custom colours on the GoF3 Moornta (its engine effect off, the boost cards in the second colour), the Customize
+  screen's rows and the turntable preview. Not tested in multiplayer.
 - **From PR #34, now general** (for any ship with the data): several turret mounts (`PlayerTurret.AttachAll`, one item per
   mount in equipment order, `upsideDown` mounts; `FreeLookCamera` visits Turret 1, 2...; the HUD's auto-fire and turret-view
   hints for each kind; `Hangar` takes a second turret into a second slot), `ThrottleGlow`, lounge ship sellers
@@ -2138,6 +2205,27 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   unreadable one is false with a warning on its mod. ships.json "dealer" { chance %, systemRace, minTechLevel }
   (`CustomShipData.dealer`, `ModUnlocks.AddDealerShips` at the end of `Shop.GenerateShipsOriginal`'s ordinary path: not the
   special yards).
+- **Mod ships in traffic** (`ModTraffic`, Options > Gameplay "Mod ships in traffic", `Settings.ModShipTraffic`: Off / 10 /
+  25 % (default) / 50 %, each player's own, not a session rule): `NpcTables.RandomFighter` / `StrongFighter` (every NPC
+  fighter roll: locals, raiders, pirates, jumpers, escorts, guards, battle wings) take one of the mods' ships of the race
+  (`ModTraffic.Pick`) at that chance; candidates: the mods that are on, `race` (or ships.json `traffic.races`; minor races
+  count as pirates, no Specters), `ModUnlocks.ShipAvailable`, the model built (`ModShips.Built`) and at most 150 m long (its
+  meshes along the nose, cached per `ModManager.Revision`), weighted by `traffic.weight` (`CustomTraffic`, 0 = never); a
+  strong fighter one of the dearer half; a mod campaign's `trafficShips` for the race skip it (`ModCampaigns.HasTrafficShips`).
+  The hull and gun come from `NpcTables` as before (only the look changes); freighters / capital ships / story ships keep
+  theirs. Verified in Play mode (gof3_ships, 50 %): 37 of its 38 hulls qualify (the 159 m Bl'Arek doesn't), Dis's Terran
+  fighters 4 of 5 GoF3 hulls with their GoF3 exhausts, the freighters untouched. Candidates are cached per race for 5 s
+  (a scan cost ~2 ms a roll). A kit ship's NPCs fly random builds (`Traffic.Create` -> `ModTraffic.Assembly` ->
+  `RandomBuild` -> `ModShipKits.VariantAssembly`, the variant in `NpcShip.ModelPath` for the proxies; `traffic.randomBuild`,
+  default true): per slot a part the type may fit, a tier, a kit preset's colours (75 %) else a palette colour per slot, a
+  skin 30 %; only from what is loaded (`ModShips.PartLoaded` / `BuildLoaded`: the tier steps down, then the skin goes, else
+  the default build), so it assembles at once; `ModTraffic.Warm` (each `StationLevel.Awake`) starts 3 (phones 1) random
+  full builds' parts loading through `ModShips.Warm` (`LoadOnDemand` quiet: no KitPartsLoaded / ModelsChanged of its own,
+  unless a player build waited on the same files, `notifyPending`) until a kit has 150 (phones 40) part files loaded. A
+  proxy whose build isn't loaded in that game shows the default build. The ES2 importer gives every ES2 ship
+  `"traffic": { "races": [0, 1, 2, 3, 8, 9] }` (every race but the Specters). Verified in Play mode (es2_ships + gof3_ships,
+  50 %): all six races roll ES2 ships (Void / pirates only those), 12 random Sentinel builds all different, four warm-ups
+  taking its slot parts from ~7 to 15, a random-build Sentinel (Tormentor wings, body C) patrolling Dis, 2400 rolls in 57 ms.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
