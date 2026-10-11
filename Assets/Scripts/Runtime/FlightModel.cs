@@ -224,6 +224,10 @@ namespace GoF2Remake.Flight
         /// <summary>Free flight: what this frame's keys ask for in ship space (x strafe, y up / down, z thrust; -1..1), for
         /// the effects that show it (Modding.LateralThrusters). Set by StepFree.</summary>
         public Vector3 ThrustInput;
+        /// <summary>Free flight: no forward thrust held and no boost, so the main engines are off (EVERSPACE 2: a ship at rest or
+        /// coasting burns nothing; strafing and reversing fire only its manoeuvring jets). The engine effects read it
+        /// (EngineDrive.Off: flames, nozzle glow, throttle glow; ShipExhaust). Always false in the original flight.</summary>
+        public bool EnginesOff { get; private set; }
 
         // EVERSPACE 2's player ship (es2_flight_measurements.md; the cockpit's speed gauge, km/h): top speed 100 m/s forward
         // (measured 343 km/h = 95.3), backward, strafe and up / down half of it (all 172 km/h); every axis eases out cubically
@@ -339,15 +343,20 @@ namespace GoF2Remake.Flight
                 var push = new Vector3(strafe * 3f * strafeTop * FreeStrafeShare / easeSide, hover * 3f * strafeTop * FreeHoverShare / easeSide,
                                        thrust * 3f * (thrust < 0f ? top * FreeReverseShare / easeSide
                                                       : IsBoosting ? (boostTop - top) / easeBoost : top / easeFwd));
+                // The thrust never pushes past the cap (it only steers the momentum there: the speed it had, or the cap);
+                // the braking rate is weaker than the thrust, so easing back alone let a held key climb on for good.
+                float before = FreeVelocity.magnitude;
                 FreeVelocity += rotation * push * dtMs;
                 float cap = IsBoosting ? boostTop : top, speed = FreeVelocity.magnitude;
-                if (speed > cap) FreeVelocity *= Mathf.MoveTowards(speed, cap, decel * dtMs) / speed;
+                if (speed > cap) FreeVelocity *= Mathf.MoveTowards(Mathf.Min(speed, Mathf.Max(cap, before)), cap, decel * dtMs) / speed;
             }
 
-            // What the rest of the game reads: the forward speed as the throttle (the gauge, the engine sound, the exhaust).
+            // What the rest of the game reads: the forward thrust held as the throttle (the gauge, the engine effects; 0 with
+            // no key held, whatever the ship's momentum), the forward speed as MoveSpeed.
             float forwardSpeed = Vector3.Dot(FreeVelocity, fwd);
             MoveSpeed = Mathf.Max(0f, forwardSpeed);
-            Throttle = Mathf.Clamp01(forwardSpeed / top);
+            Throttle = Mathf.Clamp01(thrust);
+            EnginesOff = thrust <= 0f && !IsBoosting;
             Braking = false;
 
             // Cosmetic: the model banks into turns and strafes, tilts with the nose and up / down.
@@ -373,6 +382,7 @@ namespace GoF2Remake.Flight
         /// free flight picks up from there.</summary>
         public void SyncFree(Vector3 forward, float unitsPerMs)
         {
+            EnginesOff = false;   // another mode flies the ship: its engines run
             FreeVelocity = forward * unitsPerMs;
             freeYaw = freePitch = freeRoll = 0f;
         }
@@ -410,6 +420,7 @@ namespace GoF2Remake.Flight
             CurrentSpeed = TopSpeed;
             MoveSpeed = TopSpeed;
             Throttle = 1f;
+            EnginesOff = false;
             boostTimerMs = 0;
             IsBoosting = false;
             boostEnergy = 1f;
@@ -539,6 +550,7 @@ namespace GoF2Remake.Flight
         /// in degrees, plus forward distance in GoF units and sideways collision push.</returns>
         public FrameResult Step(Vector2 steer, float dtMs, Vector3 shipUp, Vector3 shipRight)
         {
+            EnginesOff = false;
             float he = EffectiveHandling;
 
             // ---- steering input: ramp turn rates toward the stick target ----------------------

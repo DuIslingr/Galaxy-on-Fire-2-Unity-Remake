@@ -756,7 +756,9 @@ namespace GoF2Remake.Multiplayer
             // The look the others see: the engine glow (off while mining, docking at an object, cloaked, dead), boost, cloak.
             var ownAsm = level.Player.visualModel != null ? level.Player.visualModel.GetComponent<AssembledObject>() : null;
             var glowPart = ownAsm != null && ownAsm.playerVariantParts != null && ownAsm.playerVariantParts.Length > 0 ? ownAsm.playerVariantParts[0] : null;
-            bool glowOn = (glowPart == null || glowPart.activeInHierarchy) && (level.Health == null || !level.Health.Dead);
+            // (also off in free flight with no forward thrust: FlightModel.EnginesOff)
+            bool glowOn = (glowPart == null || glowPart.activeInHierarchy) && (level.Health == null || !level.Health.Dead)
+                          && (level.Player.Model == null || !level.Player.Model.EnginesOff);
             if (level.Health != null && level.Health.Dead) NetAggression.Clear();   // a respawn starts clean
             if (engine.Value != glowOn) engine.Value = glowOn;
             float b = level.Player.Model != null ? level.Player.Model.BoostVisualPercent : 0f;

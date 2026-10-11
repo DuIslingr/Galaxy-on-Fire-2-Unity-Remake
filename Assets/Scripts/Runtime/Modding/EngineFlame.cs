@@ -91,7 +91,7 @@ namespace GoF2Remake.Modding
                 thrust = Mathf.Lerp(thrust, t, k);
                 boost = Mathf.Lerp(boost, b, k);
             }
-            float target = On ? 1f : 0f;
+            float target = On && !drive.Off ? 1f : 0f;   // free flight with no thrust: the flames shrink into the nozzles
             level = level < 0f ? target : Mathf.MoveTowards(level, target, Time.unscaledDeltaTime * FadePerSecond);
             foreach (var (r, index, dir) in flames)
             {

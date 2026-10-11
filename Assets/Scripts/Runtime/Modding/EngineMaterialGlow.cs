@@ -80,7 +80,7 @@ namespace GoF2Remake.Modding
             if (!ready) { Setup(); drive = new Visuals.EngineDrive(transform); }
             if (glowing.Count == 0 && boosting.Count == 0) return;
             float d = drive.Sample(Time.deltaTime, followEngine ? engineGlow : null);
-            bool off = followEngine && !On;
+            bool off = (followEngine && !On) || drive.Off;   // free flight with no thrust: dark like a parked ship
             Ease(ref level, off ? 0f : Mathf.Lerp(IdleLevel, 1f, Mathf.Clamp01(d)), glowing);
             Ease(ref boostLevel, off ? 0f : Mathf.Clamp01(d - 1f), boosting);
         }

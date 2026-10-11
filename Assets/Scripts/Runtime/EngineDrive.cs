@@ -6,6 +6,7 @@
 // another player's ship in multiplayer, the hangar) has no throttle at hand, so it uses how fast the ship actually moves
 // against the base speed every ship shares (FlightModel.BaseSpeed, game units per ms; above it = boosting).
 // An inactive 'engineState' (a player engine part the game turns off while mining, object docking, cutscenes) reads 0.
+// Free flight with no forward thrust held (FlightModel.EnginesOff) reads 0 with Off set: the effects treat it as engines off.
 
 using GoF2Remake.Flight;
 using UnityEngine;
@@ -41,9 +42,14 @@ namespace GoF2Remake.Visuals
         /// <summary>Forget the last position (after a scene change or a re-enable: no speed from the jump).</summary>
         public void Reset() { hasLast = false; Lookup(); }
 
+        /// <summary>The player's main engines are off (free flight with no forward thrust held: FlightModel.EnginesOff), as
+        /// of the last Sample: the effects go dark as with the engine part off.</summary>
+        public bool Off { get; private set; }
+
         /// <summary>0 idle .. 1 full throttle .. 2 full boost, for this frame ('dt' seconds).</summary>
         public float Sample(float dt, GameObject engineState = null)
         {
+            Off = false;
             if ((nav == null || systemJump == null || ship == null) && (lookupTimer -= Time.unscaledDeltaTime) <= 0f)
             {
                 lookupTimer = 0.5f;
@@ -54,6 +60,7 @@ namespace GoF2Remake.Visuals
             if (ship != null && ship.Model != null)
             {
                 var m = ship.Model;
+                Off = m.EnginesOff && !(systemJump != null && systemJump.Charging);
                 float d = (m.Braking ? 0f : m.Throttle) + m.BoostVisualPercent;
                 if (systemJump != null && systemJump.Charging) d = Mathf.Max(d, 1f + systemJump.ChargeRate);
                 return d;

@@ -129,7 +129,7 @@ namespace GoF2Remake.Visuals
         {
             float dt = Time.deltaTime;
             float d = drive.Sample(dt, engineState);
-            float target = d <= 1f ? Mathf.Lerp(idle, full, d) : Mathf.Lerp(full, boost, d - 1f);
+            float target = drive.Off ? 0f : d <= 1f ? Mathf.Lerp(idle, full, d) : Mathf.Lerp(full, boost, d - 1f);   // free flight, no thrust: off
             level = level < 0f ? target : Mathf.Lerp(level, target, 1f - Mathf.Exp(-dt * response));
             block.SetFloat(GlowId, level);
             block.SetColor(ColorId, color);

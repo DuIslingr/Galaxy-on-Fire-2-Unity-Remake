@@ -265,7 +265,8 @@ namespace GoF2Remake.Flight
                 if (health == null) health = GetComponent<PlayerHealth>();
                 // Only ships with a cloak have one: looked for twice a second, not every frame (added later by a debug mount).
                 if (cloak == null && Time.frameCount >= nextCloakLook) { cloak = GetComponent<PlayerCloak>(); nextCloakLook = Time.frameCount + 30; }
-                want = (glow == null || glow.activeInHierarchy) && (health == null || !health.Dead)
+                // Free flight with no forward thrust held: the engines are off (FlightModel.EnginesOff).
+                want = (glow == null || glow.activeInHierarchy) && (health == null || !health.Dead) && (ship.Model == null || !ship.Model.EnginesOff)
                        && (ship.visualModel == null || ship.visualModel.gameObject.activeInHierarchy);
             }
             if (want != on)

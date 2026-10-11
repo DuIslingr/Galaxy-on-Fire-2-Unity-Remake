@@ -708,8 +708,14 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   top speed (`FreeBoostEaseMs`, over the gap), a full pool lasts the booster's duration (attribute 27; 3.5 s without one: EVERSPACE 2's boost lasted 4.5 s held, so its equipment sets it)
   and refills in its recharge time, restarts from 20 % and only on a fresh press after running empty (`BoostHeld`,
   `BoostRechargePercent` = the pool). The forward
-  speed is written to `Throttle` / `MoveSpeed` (the gauge, the engine sound, the exhaust); the sideways part of the move
-  goes to `StrafeSlide`, so the chase camera stays square behind a sliding ship. `ShipController.FreeFlightActive`: the
+  thrust held is `Throttle` (0 with no key, whatever the momentum) and the forward speed `MoveSpeed`; with no forward
+  thrust and no boost the main engines are off (`FlightModel.EnginesOff` -> `EngineDrive.Off`: mod flames shrink into the
+  nozzles, the nozzle / throttle glows go dark, `ShipExhaust` stops, `ShipController.UpdateEngineParts` stops drawing the
+  model's player engine parts (Renderer.enabled, not the jets), `NetPlayer`'s engine flag), so a ship at rest or coasting
+  burns nothing; after the launch / arrival fly-in the ship comes to rest (`ShipController.freeSettle`: braked like the
+  dampeners even with them off, until the player thrusts). With the dampeners off the thrust never pushes past the soft
+  cap (before, the cap's easing was weaker than the thrust and a held key climbed on for good). The sideways part of the
+  move goes to `StrafeSlide`, so the chase camera stays square behind a sliding ship. `ShipController.FreeFlightActive`: the
   option with keyboard / mouse or a controller (touch, tilt and VR keep the original); the autopilot, the launch / arrival
   camera, the turret view, the dodge and computer control (mining, object docking) run the original path and hand back
   the velocity (`SyncFree`). Mods can tune each style or set the style (see "Mods", Flight styles). The mouse: EVERSPACE 2's virtual joystick (`ReadVirtualStick`: the mouse moves a reticle

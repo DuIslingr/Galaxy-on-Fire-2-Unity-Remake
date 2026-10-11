@@ -195,9 +195,41 @@ namespace GoF2Remake.Flight
         }
 
         Target selfTarget;
+        bool freeSettle;   // free flight brakes the fly-in's speed away (StepFree)
+        Transform enginePartsModel;
+        GameObject[] engineParts;
+        bool enginePartsOff;
+
+        /// <summary>Free flight with no forward thrust (FlightModel.EnginesOff): the model's player engine parts (the original
+        /// ships' engine glow, a mod ship's glow discs) aren't drawn. Renderer.enabled, so the parts' active state (mining,
+        /// cutscenes: AssembledObject.SetExhaust) and the cloak's forceRenderingOff (CloakGlow) stay theirs.</summary>
+        void UpdateEngineParts()
+        {
+            if (visualModel != enginePartsModel)
+            {
+                enginePartsModel = visualModel;
+                var assembled = visualModel != null ? visualModel.GetComponentInChildren<Visuals.AssembledObject>(true) : null;
+                engineParts = assembled != null ? assembled.playerVariantParts : null;
+                enginePartsOff = false;   // a new model's renderers start drawn
+            }
+            bool off = Model.EnginesOff;
+            if (off == enginePartsOff || engineParts == null) return;
+            enginePartsOff = off;
+            foreach (var g in engineParts)
+                if (g != null)
+                    foreach (var r in g.GetComponentsInChildren<Renderer>(true))
+                        if (!IsManoeuvringJet(r.transform)) r.enabled = !off;   // the jets fire without the main engines
+        }
+
+        static bool IsManoeuvringJet(Transform t)
+        {
+            for (; t != null; t = t.parent) if (t.name.StartsWith("engine_glow_thruster")) return true;
+            return false;
+        }
 
         void Update()
         {
+            UpdateEngineParts();
             // Remake: a boost shakes off the homing missiles locked on this ship (Gun, Target.boosting).
             if (selfTarget == null) selfTarget = GetComponent<Target>();
             if (selfTarget != null) selfTarget.boosting = Model.IsBoosting;
@@ -254,6 +286,7 @@ namespace GoF2Remake.Flight
 
             // The launch / arrival camera: no steering, throttle, boost or levelling (the ship flies on).
             if (!useBuiltInInput || inputLocked) Model.Braking = false;
+            if (inputLocked) freeSettle = true;   // free flight takes over at rest once the fly-in is over (StepFree)
             Vector2 steer = useBuiltInInput && !inputLocked ? ReadInput() : Vector2.zero;
             if (!inputLocked && externalSteer.sqrMagnitude > steer.sqrMagnitude) steer = externalSteer;
             var mouseSteer = !inputLocked ? ReadMouseSteer() : Vector2.zero;
@@ -348,6 +381,13 @@ namespace GoF2Remake.Flight
                 aim = aim,
                 dampeners = Dampeners,
             };
+            // After the launch / arrival fly-in (the original flight at full throttle) the ship comes to rest with its engines
+            // off, the dampeners braking it even when they are switched off, until the player thrusts or it has stopped.
+            if (freeSettle)
+            {
+                if (input.thrust != 0f || input.strafe != 0f || input.hover != 0f || Model.BoostHeld || Model.FreeVelocity.sqrMagnitude < 1e-6f) freeSettle = false;
+                else input.dampeners = true;
+            }
             var r = Model.StepFree(input, dtMs, transform.rotation, transform.up, transform.right);
             transform.Rotate(r.pitchDeg, -r.yawDeg, r.rollDeg, Space.Self);
             var move = r.move * metersPerUnit + transform.right * (r.sidePushUnits * metersPerUnit);
