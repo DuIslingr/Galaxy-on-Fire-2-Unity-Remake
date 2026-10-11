@@ -99,6 +99,7 @@ Every mod needs a `mod.json` at its top level:
 | `credits` | Shown in the Mods screen under the description: who made the models, textures or sounds the mod uses, and their licenses. |
 | `preview` | The image shown in the Mods screen, PNG or JPG. Default `preview.png`. 16:9 looks best, for example 640 × 360. |
 | `dependencies` | Ids of mods that must be on too, optionally with the lowest version: `["ship_pack", "frontier_systems>=1.2"]`. They are loaded first, turning this mod on turns them on as well, and turning one of them off turns this mod off. See [Building on other mods](#building-on-other-mods). |
+| `multiplayerIgnore` | Files multiplayer doesn't compare: what only changes how the mod looks, or what the game never reads. `"folder/"` means everything in that folder, `*` any characters: `["parts/", "maps/*.png", "icons/", "preview.png", "tools/"]`. With it a lighter phone build of the mod (smaller models and textures under the same names) plays with the PC build. The data always counts, whatever the list says: `mod.json`'s `id`, `version`, `dependencies` and this list, the `.json` files at the mod's root, and everything in `events/`. See [Multiplayer](#multiplayer). |
 
 ## items.json
 
@@ -1287,7 +1288,10 @@ To keep them, turn the mod back on before loading.
 
 The host decides in the Host card: **Mods: Off** plays the original game for everyone, whatever mods they have on. **Allowed**
 plays the host's mods. Players joining then need the same mods installed with exactly the same files (on or off doesn't matter);
-otherwise they are told which ones they lack. The server browser tags such games **Modded** and lists their mods. A dedicated
+otherwise they are told which ones they lack. Files the mod's `mod.json` lists in `multiplayerIgnore` aren't compared, nor are
+`mod.json`'s name, description and credits: a phone build with lighter models and textures (the same file names, the same
+data) can join a PC build's game and the other way round. A ship's lighter model is also its hull for the shots that player
+fires, so the hits can differ a little at the edges of a hull. The server browser tags such games **Modded** and lists their mods. A dedicated
 server uses every mod in its Mods folder with `-allowmods` (`ALLOWMODS=1` in its start script).
 
 ## When something is wrong

@@ -2259,7 +2259,11 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (`PrepareSession` → `BeginClient`); the host's `BeginHost` sets `ModManager.BeginSession` and `NetMods.SessionList`
   ("id@version#hash;..."), NetState carries it (`sessionMods`, FixedString4096) and a joining game turns exactly those on
   (`ApplyFromServer`) before `EnterWorld`. The connection data's 4th line lists the joiner's installed mods ("id#hash;...");
-  `NetMods.Refusal` turns away a game lacking one (same files, on or off doesn't matter) with their names. Lobby keys `mods` /
+  `NetMods.Refusal` turns away a game lacking one (same files, on or off doesn't matter) with their names. "Same files" is
+  `ModInfo.NetHash` (`NetSignature` in the session list): every file but those mod.json's `multiplayerIgnore` lists
+  (`ModManifest.MultiplayerIgnores`: "folder/" or `*` patterns; never root `.json` files or `events/`), and mod.json only as its
+  id / version / dependencies / that list, so a phone build with decimated models and halved textures plays with the PC build
+  (the es2_ships importer writes `parts/`, `maps/`, `icons/`, `preview.png`); `ModInfo.Hash` (every file) stays the saves' signature. Lobby keys `mods` /
   `modnames`: the browser tags such games "Modded", shows the mods and "needs mods: ..." when this game lacks some (not
   joinable). `NetGame.OnMainMenu` → `NetMods.End` (single player's mods back); `NetGame.ResetDb` on every change.
 - Verified in Play mode (ships): the three PR mods load without warnings; every ship on the turntable and the Falcon in flight

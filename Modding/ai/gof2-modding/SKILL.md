@@ -77,7 +77,9 @@ my_mod/
 }
 ```
 
-`id` is required; `name`/`description` can be per language; `preview` defaults to `preview.png`.
+`id` is required; `name`/`description` can be per language; `preview` defaults to `preview.png`. Optional `"multiplayerIgnore": ["parts/", "maps/", "icons/", "preview.png"]`: files multiplayer doesn't compare (models,
+textures, icons; "folder/" or `*` patterns), so a phone build with lighter models and textures under the same names plays with
+the PC build. Root `.json` files, `events/` and mod.json's id / version / dependencies always count.
 
 ## items.json
 
