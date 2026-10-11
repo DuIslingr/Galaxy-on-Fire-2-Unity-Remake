@@ -250,7 +250,9 @@ namespace GoF2Remake.World
         float dyingMs, deadMs;
         Vector3 spinAxis, deathDir;
         Explosion explosion;
+        int explosionSerial;   // the explosions are pooled: this one's Spawn (Explosion.Done)
         GameObject wreck;
+        float wreckDamageMs;   // until the wreck takes its damaged material (CombatAssets.ApplyWreckDamage)
         WreckBurn wreckBurn;
         Crate crate;
         readonly List<Crate> moreCrates = new List<Crate>();   // remake: a crate per kind of loot (DropCrate)
@@ -1718,6 +1720,7 @@ namespace GoF2Remake.World
                 if (Spec.wreckPrefab != null && modelGo != null)
                 {
                     wreck = Instantiate(Spec.wreckPrefab, transform, false);
+                    wreckDamageMs = 140f;
                     float len = PartAnimation.PlayOnce(wreck);
                     if (len > 0f) dyingMs = len;
                     modelGo.SetActive(false);
@@ -1737,6 +1740,7 @@ namespace GoF2Remake.World
                     // (CollisionVolume.ForWreck).
                     wreck.transform.localRotation = model.localRotation;
                     wreck.transform.localScale = model.localScale;
+                    wreckDamageMs = 140f;
                     float len = PartAnimation.PlayOnce(wreck);
                     if (len > 0f) dyingMs = len;
                     modelGo.SetActive(false);
@@ -1793,7 +1797,12 @@ namespace GoF2Remake.World
         {
             float frames = dtMs / 33.3f;
             if (IsTurret) { dyingMs -= dtMs; if (dyingMs <= 0f) SetDead(); return; }
-            if (IsFixed || IsFreighter) { }   // PlayerFixedObject: the dying clears the moving flag (0x17f6b4), the wreck stays put
+            if (IsFixed || IsFreighter)
+            {
+                // PlayerFixedObject: the dying clears the moving flag (0x17f6b4), the wreck stays put; 140 ms in (+0x18c > 0x8c)
+                // the wreck mesh takes its damaged material (the remake left the intact textures on it).
+                if (wreckDamageMs > 0f && (wreckDamageMs -= dtMs) <= 0f) CombatAssets.ApplyWreckDamage(wreck);
+            }
             else
             {
                 transform.Rotate(spinAxis, 0.05f * frames * Mathf.Rad2Deg, Space.World);
@@ -1803,6 +1812,7 @@ namespace GoF2Remake.World
             if (dyingMs > 0f) return;
             // PlayerFixedObject::update: setScaling(6), 8 for the Terran battleship (0x37e7) and the pirate outpost (0x37a3).
             explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : 1f);
+            explosionSerial = explosion != null ? explosion.Serial : 0;
             wreckBurn?.SetEmitting(false);   // state 4: enableSystemEmit(false)
             Current = State.Dead;
             smoke?.SetEmitting(false);   // the end of the tumble: Explosion::start, smoke and fire off
@@ -1931,7 +1941,7 @@ namespace GoF2Remake.World
                 if (modelGo != null && modelGo.activeSelf) modelGo.SetActive(false);
                 if (wreck != null) Destroy(wreck);
             }
-            bool exploded = explosion == null || explosion.Finished;
+            bool exploded = explosion == null || explosion.Done(explosionSerial);
             if (exploded && crate == null && moreCrates.TrueForAll(c => c == null) && deadMs > 300f) SetDead();
         }
     }
