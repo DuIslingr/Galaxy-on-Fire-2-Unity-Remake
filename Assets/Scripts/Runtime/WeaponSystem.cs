@@ -286,6 +286,7 @@ namespace GoF2Remake.Flight
         Rig BuildRig(Gun gun)
         {
             var rig = new Rig { visuals = new GunRig(gun, WeaponFx.Load(gun.itemIndex), fxRoot, FirePose) };
+            rig.visuals.Tint(WeaponTint.For(Database.Shared.Item(gun.itemIndex), WeaponTint.PlayerColor()));   // the build's weapon colour
             rig.visuals.EnableTrails();   // RocketGun::setRadar: the player's rockets / missiles / thermo shots trail smoke
             var fx = rig.fx;
             if (fx != null && fx.shotLoops && fx.shot != null)

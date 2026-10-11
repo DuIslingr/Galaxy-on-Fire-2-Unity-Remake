@@ -247,7 +247,7 @@ Ships built from parts the player swaps in the hangar's Customize ship screen (E
 "yaw": 0, "materials": [...], "parts": [ { "id": "reaver", "slot": "wings", "name": "Reaver", "model": "parts/w.glb",
 "types": ["sentinel"] (ship types allowed; none = all), "tiers": ["parts/w_t1.glb", ...] (extension meshes per tier),
 "mounts": [ ...like a ship's mounts... ], "tierMounts": [ [ ... ], ... ] } ] } ]` (a build uses its parts' mounts per slot type,
-the ship's own only for a type no part has; turret mounts with `"builtIn": true` take the turret item's gun and stats but no turret model, for parts whose mesh has the turret). A kit's `"hardpoints": { "turret": "x.glb" (nodes `pivot`, a `...gun` under it, optional `muzzle`; shown on `builtIn` mounts), "weapons": [ { "slot": "primary" | "secondary" | "turret", "model": "y.glb" ("" = none), "items": [numbers or "mod:id"], "categories": [numbers] } ] }` shows the mounted weapons and turret as models (first matching rule per slot, one without filters = the default; a `muzzle` node is where the shots leave; a turret weapon's muzzle lands on the turret's). A kit ship's hangar height is measured from its build (lowest point incl. weapon models + 1.5 m); `hangarHeight` is ignored for it. Parts may also carry `"stats": { "armor", "cargo", "handling" (% of the ship's),
+the ship's own only for a type no part has; turret mounts with `"builtIn": true` take the turret item's gun and stats but no turret model, for parts whose mesh has the turret). A kit's `"hardpoints": { "turret": "x.glb" (nodes `pivot`, a `...gun` under it, optional `muzzle`; shown on `builtIn` mounts), "weapons": [ { "slot": "primary" | "secondary" | "turret", "model": "y.glb" ("" = none), "items": [numbers or "mod:id"], "categories": [numbers] } ] }` shows the mounted weapons and turret as models (first matching rule per slot, one without filters = the default; a `muzzle` node is where the shots leave; a turret weapon's muzzle lands on the turret's; a turret without `muzzle` carries the weapon on its `gun` node and fires from the weapon's muzzle). A primary / secondary mount may carry `"rotation"` (Euler degrees `[x, y, z]` or quaternion `[x, y, z, w]`, ship frame x right, y up, z forward) turning its weapon model; shots still fly along the nose; `"nodes": ["<model node name>"]` on such a mount shows those parts of the ship's model (its pylon) only while the mount carries a weapon. A kit ship's hangar height is measured from its build (lowest point incl. weapon models + 1.5 m); `hangarHeight` is ignored for it. Parts may also carry `"stats": { "armor", "cargo", "handling" (% of the ship's),
 "equipment" (slots), "topSpeed", "turnRate", "acceleration", "strafeSpeed" (%) }` and `"slots": { "primary", "secondary",
 "turret" }`: a build sums them (slots per type: its parts' sum, else the ship's); the tier is cosmetic.
 All parts share one origin (export in place). A ship in ships.json uses `"kit": "medium"` instead of `"model"`, with
@@ -258,6 +258,13 @@ saved per ship type and shown in the hangar and in flight; changing it is free. 
 "palette", "default", "targets": [ { "material": "<name contains>", "property": "base"|"emission"|"boost"|"engine", "intensity" } ] } ]` (boost = a flame's boost colour; the manoeuvring jets' material is "lateral thruster"); a strength slot `{ "id", "name", "steps": [0..1 numbers], "default": "0.5", "scales": "<colour slot id>" }` (no palette) scales that slot's emission,
 `"presets": [ { "id", "name", "colors": { "<slot>": "<palette id or #RRGGBB/metallic/smoothness>" } } ]`; a ship's build may
 carry `"colors": { ... }`. Give separately paintable areas their own materials in the model.
+Skins (optional, in the kit): texture paint jobs, a Skin row in Customize ("Standard" = the model's own):
+`"skins": [ { "id" (not "none"), "name", "types": [ship types; none = all], "engineColor": [r, g, b] (optional, every
+exhaust's glow), "materials": [ { "material": "<model material name contains>", "diffuse", "emission", "metallicSmoothness"
+(URP layout: R metallic, A smoothness), "normal" (PNG / JPG paths), "color", "emissionColor" ([r, g, b]), "emissionIntensity" } ] } ]`;
+fields left out keep the model's own, no stats change; a build may carry `"skin": "<id>"`.
+Every kit ship also gets a Weapon colour row (energy weapons and energy-bolt turrets' shots, flashes, impacts; "Original" = their
+own): the game's colour list, or the kit's palette `"weapons"`; a build may carry `"weaponColor": "<palette id or #RRGGBB>"`.
 
 ## Flight styles
 

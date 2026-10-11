@@ -121,6 +121,14 @@ namespace GoF2Remake.Modding
             return rt;
         }
 
+        /// <summary>Whether a texture of the mod is loaded (Texture returns it without reading the file; also true for a file
+        /// that failed, which Texture answers with null).</summary>
+        public static bool Has(ModInfo mod, string path, bool linear, bool readable = false, bool normal = false)
+        {
+            Check();
+            return mod == null || string.IsNullOrEmpty(path) || textures.ContainsKey(Key(mod, path, linear, readable, normal));
+        }
+
         /// <summary>A PNG / JPG of the mod (null = none or unreadable); linear for data (normal, metallic, masks); normal for a
         /// normal map (its Android layout).</summary>
         public static Texture2D Texture(ModInfo mod, string path, bool linear, bool readable = false, bool normal = false)

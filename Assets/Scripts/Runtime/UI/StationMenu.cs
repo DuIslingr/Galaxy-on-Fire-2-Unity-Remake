@@ -1947,7 +1947,8 @@ namespace GoF2Remake.UI
         float customizeCheckMs;
 
         bool CanCustomize => level != null && level.View == StationView.Hangar && !Vr.VrMode.Enabled && !level.PlayerFlying
-                             && ModShipKits.PlayerBuild(Session.ShipIndex) != null;
+                             && ModShipKits.KitShip(Session.ShipIndex) is CustomShipData kc && ModShipKits.KitOf(kc) is ModShipKits.Kit kk
+                             && kk.HasChoices(kc.kitType);
 
         void RefreshCustomizeButton()
         {

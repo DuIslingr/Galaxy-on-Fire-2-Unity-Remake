@@ -38,6 +38,16 @@
 //     palette: its value (a number) scales that colour slot's emission targets (EVERSPACE 2's Emissive 3 intensity).
 //       "hardpoints": { "turret": "...glb", "weapons": [ { "slot", "model", "items", "categories" } ] }: the weapons' and the
 //     turret's models on the build's mounts (ModHardpoints).
+//       "skins": [ { "id": "gold", "name": "Gold", "types": ["groza"],   (none = every type)
+//                    "engineColor": [1, 0.8, 0.5],   the exhausts' glow in this skin (none = the mounts' own)
+//                    "materials": [ { "material": "ship_terran_000_body", "diffuse": "skins/groza_gold.jpg",
+//                                     "emission": "...png", "metallicSmoothness": "...png", "normal": "...png",
+//                                     "color": [r, g, b], "emissionColor": [r, g, b], "emissionIntensity": 1 } ] } ]
+//     Paint jobs as texture sets (Galaxy on Fire 3's paint schemes): a build's skin swaps the textures of copies of the
+//     materials whose name contains 'material' (the model's own glTF material names; ModShips.ApplySkin); a field left out
+//     keeps the model's own. No skin = the model's own look. A skin's textures load only when a build shows it.
+//   Every kit ship also has a weapon colour (Build.weaponColor, "weaponcolor=<id or #RRGGBB>"; none = the weapons' own look):
+//   the energy weapons' shots in that colour (Flight.WeaponTint), picked from the kit's "weapons" palette, else WeaponPalette.
 // ships.json: a new ship with "kit": "<kit id>" (this mod's) or "mod_id:kit_id" instead of "model", "kitType": "sentinel",
 // and "build": { "wings": "nemesis", "body": "body_a", ..., "tier": 1 } (its default: what the dealers sell and NPCs fly;
 // a slot left out takes the first part the type may fit). The player's build of each kit ship is Session.ShipBuilds (by the
@@ -59,7 +69,11 @@ namespace GoF2Remake.Modding
         public const string File = "shipkits.json";
 
         static readonly HashSet<string> KitFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            { "id", "name", "slots", "scale", "yaw", "materials", "parts", "palettes", "colorSlots", "presets", "hardpoints" };
+            { "id", "name", "slots", "scale", "yaw", "materials", "parts", "palettes", "colorSlots", "presets", "hardpoints", "skins" };
+        static readonly HashSet<string> SkinFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "id", "name", "types", "engineColor", "materials" };
+        static readonly HashSet<string> SkinMaterialFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            { "material", "diffuse", "emission", "metallicSmoothness", "normal", "color", "emissionColor", "emissionIntensity" };
         static readonly HashSet<string> PartFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "slot", "name", "model", "types", "tiers", "mounts", "tierMounts", "stats", "slots", "anchors", "anchor" };
 
@@ -118,6 +132,38 @@ namespace GoF2Remake.Modding
             public string Name => ModManifest.Pick(name) ?? id;
         }
 
+        /// <summary>One material's textures in a skin (paths in the mod; null = the model's own).</summary>
+        public sealed class SkinMaterial
+        {
+            public string material, diffuse, emission, metallicSmoothness, normal;
+            public float[] color, emissionColor;
+            public float emissionIntensity = 1f;
+        }
+
+        /// <summary>A paint job: texture sets for the materials it names (ModShips.ApplySkin).</summary>
+        public sealed class Skin
+        {
+            public string id;
+            public Dictionary<string, string> name;
+            public List<string> types = new List<string>();
+            public float[] engineColor;
+            public List<SkinMaterial> materials = new List<SkinMaterial>();
+            public string Name => ModManifest.Pick(name) ?? id;
+            public bool Allows(string type) => types.Count == 0 || types.Any(t => string.Equals(t, type, StringComparison.OrdinalIgnoreCase));
+
+            /// <summary>The image files it uses, with how they are read (linear, normal map).</summary>
+            public IEnumerable<(string path, bool linear, bool normal)> Textures()
+            {
+                foreach (var m in materials)
+                {
+                    if (!string.IsNullOrEmpty(m.diffuse)) yield return (m.diffuse, false, false);
+                    if (!string.IsNullOrEmpty(m.emission)) yield return (m.emission, false, false);
+                    if (!string.IsNullOrEmpty(m.metallicSmoothness)) yield return (m.metallicSmoothness, true, false);
+                    if (!string.IsNullOrEmpty(m.normal)) yield return (m.normal, true, true);
+                }
+            }
+        }
+
         public sealed class Kit
         {
             public readonly Dictionary<string, List<ColorChoice>> palettes = new Dictionary<string, List<ColorChoice>>(StringComparer.OrdinalIgnoreCase);
@@ -134,11 +180,24 @@ namespace GoF2Remake.Modding
             public List<CustomShipMaterial> materials = new List<CustomShipMaterial>();
             public List<Part> parts = new List<Part>();
             public ModHardpoints.Set hardpoints;   // the weapon / turret models (ModHardpoints), null = none
+            public readonly List<Skin> skins = new List<Skin>();
             public string Key => mod.Id + ":" + localId;
             public string Name => ModManifest.Pick(name) ?? localId;
             public int MaxTier => parts.Count == 0 ? 0 : parts.Max(p => p.tiers.Count);
 
             public Part Find(string id) => parts.Find(p => string.Equals(p.id, id, StringComparison.OrdinalIgnoreCase));
+
+            public Skin FindSkin(string id) => string.IsNullOrEmpty(id) ? null : skins.Find(k => string.Equals(k.id, id, StringComparison.OrdinalIgnoreCase));
+
+            /// <summary>The skins a ship type may wear, in the file's order.</summary>
+            public List<Skin> SkinsFor(string type) => skins.Where(k => k.Allows(type)).ToList();
+
+            /// <summary>Whether the Customize screen has anything for a ship type: a slot with more than one part, a tier, colours
+            /// or skins.</summary>
+            public bool HasChoices(string type) => true;   // the weapon colour, on every kit ship
+
+            /// <summary>The weapon colours: the kit's palette "weapons", else the built-in WeaponPalette.</summary>
+            public List<ColorChoice> WeaponColors => palettes.TryGetValue("weapons", out var w) && w.Count > 0 ? w : WeaponPalette;
 
             /// <summary>The parts of a slot a ship type may fit, in the file's order.</summary>
             public List<Part> PartsFor(string slot, string type) =>
@@ -227,6 +286,7 @@ namespace GoF2Remake.Modding
                                 p.anchors[ap.Name] = new Vector3((float)av[0], (float)av[1], (float)av[2]);
                     if (!partIds.Add(p.id)) throw new ModJsonException($"{pwhere}: the part id \"{p.id}\" is used twice in this kit");
                     if (string.IsNullOrEmpty(p.slot) || !ModManifest.ValidId(p.slot)) throw new ModJsonException($"{pwhere}: \"slot\" is missing (e.g. \"wings\")");
+                    if (Build.Reserved(p.slot)) throw new ModJsonException($"{pwhere}: \"{p.slot}\" can't be a slot's name (a build uses it)");
                     if (string.IsNullOrEmpty(p.model)) throw new ModJsonException($"{pwhere}: \"model\" is missing (the part's glTF / GLB)");
                     if (!mod.Source.Exists(p.model)) throw new ModJsonException($"{pwhere}: the model \"{p.model}\" isn't in the mod");
                     foreach (var tier in p.tiers)
@@ -254,6 +314,7 @@ namespace GoF2Remake.Modding
                     if (!k.slots.Contains(p.slot, StringComparer.OrdinalIgnoreCase))
                         throw new ModJsonException($"{where}: the part \"{p.id}\"'s slot \"{p.slot}\" isn't in \"slots\"");
                 ReadColors(o, k, where);
+                ReadSkins(o, k, mod, where);
                 k.hardpoints = ModHardpoints.Read(o, mod, File, where);
                 into.Add(k);
             }
@@ -462,6 +523,82 @@ namespace GoF2Remake.Modding
                 }
         }
 
+        static ColorChoice Choice(string id, string english, string hex)
+        {
+            TryHex(hex, out var c);
+            return new ColorChoice { id = id, name = new Dictionary<string, string> { ["en"] = english }, color = c };
+        }
+
+        /// <summary>The built-in weapon colours (bright, so the bolts glow in them).</summary>
+        public static readonly List<ColorChoice> WeaponPalette = new List<ColorChoice>
+        {
+            Choice("red", "Red", "#FF3030"), Choice("orange", "Orange", "#FF8A1A"), Choice("yellow", "Yellow", "#FFE135"),
+            Choice("lime", "Lime", "#9CFF2E"), Choice("green", "Green", "#2EFF6A"), Choice("cyan", "Cyan", "#2EF6FF"),
+            Choice("blue", "Blue", "#3D7BFF"), Choice("violet", "Violet", "#9B4DFF"), Choice("magenta", "Magenta", "#FF3DE8"),
+            Choice("pink", "Pink", "#FF7AB8"), Choice("white", "White", "#F4F8FF"),
+        };
+
+        /// <summary>A weapon colour value: a weapon palette id or "#RRGGBB" (false: none, or not one).</summary>
+        public static bool ResolveWeaponColor(Kit kit, string value, out Color color)
+        {
+            color = Color.white;
+            if (string.IsNullOrEmpty(value) || value == Build.NoSkin) return false;
+            if (value.StartsWith("#")) return TryHex(value, out color);
+            var choice = kit.WeaponColors.Find(c => string.Equals(c.id, value, StringComparison.OrdinalIgnoreCase));
+            if (choice == null) return false;
+            color = choice.color;
+            return true;
+        }
+
+        /// <summary>A build's weapon colour (null = the weapons' own look).</summary>
+        public static Color? WeaponColor(Kit kit, Build build) =>
+            kit != null && build != null && ResolveWeaponColor(kit, build.weaponColor, out var c) ? c : (Color?)null;
+
+        static void ReadSkins(JObject o, Kit k, ModInfo mod, string where)
+        {
+            if (!(ModJson.Get(o, "skins") is JToken st)) return;
+            if (!(st is JArray list)) throw new ModJsonException($"{where}: \"skins\" must be a list of skins");
+            float[] Rgb(JObject x, string field, string w)
+            {
+                if (!(ModJson.Get(x, field) is JToken t)) return null;
+                if (!(t is JArray a) || a.Count < 3) throw new ModJsonException($"{w}: \"{field}\" must be [r, g, b] (0..1)");
+                return a.Take(3).Select(v => (float)v).ToArray();
+            }
+            foreach (var t in list)
+            {
+                string swhere = ModJson.Where(t, File);
+                if (!(t is JObject so)) throw new ModJsonException($"{swhere}: each skin must be an object {{ \"id\", \"name\", \"materials\" }}");
+                foreach (var prop in so.Properties())
+                    if (!SkinFields.Contains(prop.Name)) Warn(mod, $"{ModJson.Where(prop, File)}: unknown field \"{prop.Name}\" (ignored)");
+                var skin = new Skin { id = ModJson.Str(so, "id"), name = ModJson.Text(so, "name"), types = ModJson.Strings(so, "types") ?? new List<string>(),
+                                      engineColor = Rgb(so, "engineColor", swhere) };
+                if (string.IsNullOrEmpty(skin.id) || !ModManifest.ValidId(skin.id)) throw new ModJsonException($"{swhere}: a skin's \"id\" is missing or uses more than a-z, 0-9, _ and -");
+                if (skin.id == Build.NoSkin) throw new ModJsonException($"{swhere}: \"none\" can't be a skin's id (it means the model's own look)");
+                if (k.skins.Exists(x => string.Equals(x.id, skin.id, StringComparison.OrdinalIgnoreCase))) throw new ModJsonException($"{swhere}: the skin id \"{skin.id}\" is used twice in this kit");
+                if (ModJson.Get(so, "materials") is JArray ma)
+                    foreach (var mt in ma)
+                    {
+                        string mwhere = ModJson.Where(mt, File);
+                        if (!(mt is JObject mo)) throw new ModJsonException($"{mwhere}: each skin material must be an object {{ \"material\", \"diffuse\", ... }}");
+                        foreach (var prop in mo.Properties())
+                            if (!SkinMaterialFields.Contains(prop.Name)) Warn(mod, $"{ModJson.Where(prop, File)}: unknown field \"{prop.Name}\" (ignored)");
+                        var m = new SkinMaterial
+                        {
+                            material = ModJson.Str(mo, "material"), diffuse = ModJson.Str(mo, "diffuse"), emission = ModJson.Str(mo, "emission"),
+                            metallicSmoothness = ModJson.Str(mo, "metallicSmoothness"), normal = ModJson.Str(mo, "normal"),
+                            color = Rgb(mo, "color", mwhere), emissionColor = Rgb(mo, "emissionColor", mwhere),
+                            emissionIntensity = ModJson.Float(mo, "emissionIntensity", 1f, File),
+                        };
+                        if (string.IsNullOrEmpty(m.material)) throw new ModJsonException($"{mwhere}: \"material\" is missing (the model's material name, or part of it)");
+                        foreach (var path in new[] { m.diffuse, m.emission, m.metallicSmoothness, m.normal })
+                            if (!string.IsNullOrEmpty(path) && !mod.Source.Exists(path)) throw new ModJsonException($"{mwhere}: the texture \"{path}\" isn't in the mod");
+                        skin.materials.Add(m);
+                    }
+                if (skin.materials.Count == 0 && skin.engineColor == null) Warn(mod, $"{swhere}: the skin \"{skin.id}\" changes nothing (no \"materials\")");
+                k.skins.Add(skin);
+            }
+        }
+
         static bool TryHex(string text, out Color c)
         {
             c = Color.white;
@@ -520,7 +657,19 @@ namespace GoF2Remake.Modding
             /// <summary>A colour value per colour slot (written "color.slot=value").</summary>
             public readonly SortedDictionary<string, string> colors = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             public int tier;
-            const string ColorPrefix = "color.";
+            /// <summary>The skin's id (written "skin=id"); null (or NoSkin) = the model's own look.</summary>
+            public string skin;
+            /// <summary>The model's own look chosen where the default build has a skin.</summary>
+            public const string NoSkin = "none";
+            /// <summary>The weapon colour (written "weaponcolor=id" or "#RRGGBB"; null or "none" = the weapons' own).</summary>
+            public string weaponColor;
+            const string ColorPrefix = "color.", SkinKey = "skin", WeaponColorKey = "weaponcolor";
+
+            /// <summary>Names a kit can't use for a slot: the build text's own keys.</summary>
+            public static bool Reserved(string slot) => string.Equals(slot, "tier", StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(slot, SkinKey, StringComparison.OrdinalIgnoreCase)
+                                                        || string.Equals(slot, WeaponColorKey, StringComparison.OrdinalIgnoreCase)
+                                                        || slot.StartsWith(ColorPrefix, StringComparison.OrdinalIgnoreCase);
 
             public static Build Parse(string text)
             {
@@ -532,6 +681,8 @@ namespace GoF2Remake.Modding
                     if (eq <= 0) continue;
                     string k = pair.Substring(0, eq).Trim(), v = pair.Substring(eq + 1).Trim();
                     if (k == "tier") int.TryParse(v, out b.tier);
+                    else if (k == SkinKey) b.skin = v.Length > 0 ? v : null;
+                    else if (k == WeaponColorKey) b.weaponColor = v.Length > 0 ? v : null;
                     else if (k.StartsWith(ColorPrefix)) { if (v.Length > 0) b.colors[k.Substring(ColorPrefix.Length)] = v; }
                     else if (v.Length > 0) b.parts[k] = v;
                 }
@@ -546,6 +697,8 @@ namespace GoF2Remake.Modding
                 foreach (var prop in o.Properties())
                 {
                     if (string.Equals(prop.Name, "tier", StringComparison.OrdinalIgnoreCase)) { b.tier = prop.Value.Type == JTokenType.Integer ? (int)prop.Value : 0; continue; }
+                    if (string.Equals(prop.Name, SkinKey, StringComparison.OrdinalIgnoreCase)) { b.skin = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
+                    if (string.Equals(prop.Name, "weaponColor", StringComparison.OrdinalIgnoreCase)) { b.weaponColor = prop.Value.Type == JTokenType.String ? (string)prop.Value : null; continue; }
                     if (string.Equals(prop.Name, "colors", StringComparison.OrdinalIgnoreCase) && prop.Value is JObject co)
                     {
                         foreach (var c in co.Properties()) if (c.Value.Type == JTokenType.String) b.colors[c.Name] = (string)c.Value;
@@ -558,14 +711,16 @@ namespace GoF2Remake.Modding
 
             public Build Clone()
             {
-                var b = new Build { tier = tier };
+                var b = new Build { tier = tier, skin = skin, weaponColor = weaponColor };
                 foreach (var kv in parts) b.parts[kv.Key] = kv.Value;
                 foreach (var kv in colors) b.colors[kv.Key] = kv.Value;
                 return b;
             }
 
             public override string ToString() => string.Join(";", parts.Select(kv => kv.Key + "=" + kv.Value)
-                .Concat(colors.Select(kv => ColorPrefix + kv.Key + "=" + kv.Value)).Append("tier=" + tier));
+                .Concat(colors.Select(kv => ColorPrefix + kv.Key + "=" + kv.Value))
+                .Concat(string.IsNullOrEmpty(skin) ? Enumerable.Empty<string>() : new[] { SkinKey + "=" + skin })
+                .Concat(string.IsNullOrEmpty(weaponColor) ? Enumerable.Empty<string>() : new[] { WeaponColorKey + "=" + weaponColor }).Append("tier=" + tier));
         }
 
         /// <summary>'b' made valid for this kit and ship type: every slot one part the type may fit ('fallback''s part, else the
@@ -591,6 +746,17 @@ namespace GoF2Remake.Modding
                 else if (kit.PaletteOf(cs).Count > 0) v = kit.PaletteOf(cs)[0].id;
                 if (v != null) n.colors[cs.id] = v;
             }
+            // The skin: 'b''s when the type may wear it, else the fallback's, else none (the model's own look).
+            var allowedSkins = kit.SkinsFor(type);
+            Skin Allowed(string id) => string.IsNullOrEmpty(id) ? null : allowedSkins.Find(k => string.Equals(k.id, id, StringComparison.OrdinalIgnoreCase));
+            // "none" (Build.NoSkin) is the model's own look picked over a fallback that has a skin.
+            string fb = Allowed(fallback?.skin)?.id;
+            string chosen = b?.skin == Build.NoSkin ? null : Allowed(b?.skin)?.id ?? fb;
+            n.skin = chosen ?? (fb != null ? Build.NoSkin : null);
+            // The weapon colour the same way ("none" = the weapons' own over a fallback that has one).
+            string fw = fallback != null && ResolveWeaponColor(kit, fallback.weaponColor, out _) ? fallback.weaponColor : null;
+            string wc = b?.weaponColor == Build.NoSkin ? null : b != null && ResolveWeaponColor(kit, b.weaponColor, out _) ? b.weaponColor : fw;
+            n.weaponColor = wc ?? (fw != null ? Build.NoSkin : null);
             return n;
         }
 
@@ -627,7 +793,11 @@ namespace GoF2Remake.Modding
         public const char VariantSeparator = '#';
 
         /// <summary>The assembly that shows 'build' of a kit ship ("ship_NNN_mod#<build>", ModShips.Template assembles it).</summary>
-        public static AssemblyData VariantAssembly(int ship, Build build) =>
-            new AssemblyData { name = $"ship_{ship:000}_mod{VariantSeparator}{build}", pack = ModShips.Pack, category = "ships", origin = "kit build" };
+        public static AssemblyData VariantAssembly(int ship, Build build)
+        {
+            // The weapon colour isn't part of the model (Flight.WeaponTint colours the shots): no variant of its own.
+            if (!string.IsNullOrEmpty(build?.weaponColor)) { build = build.Clone(); build.weaponColor = null; }
+            return new AssemblyData { name = $"ship_{ship:000}_mod{VariantSeparator}{build}", pack = ModShips.Pack, category = "ships", origin = "kit build" };
+        }
     }
 }

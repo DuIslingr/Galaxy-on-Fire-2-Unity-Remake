@@ -36,12 +36,16 @@ namespace GoF2Remake.Multiplayer
         readonly Transform muzzleParent;
         readonly System.Func<Target> owner;
         readonly System.Func<Target, bool> ignores;
+        readonly System.Func<Color?> weaponColor;
 
         /// <param name="muzzleParent">The shooter's model (muzzle flashes), null = none (NPC guns draw none either).</param>
         /// <param name="owner">The shooter's own Target here (its shots pass through it).</param>
         /// <param name="ignores">What the shooter's shots pass through here (its squadmates), null = nothing.</param>
-        public NetShotMirror(Transform muzzleParent, System.Func<Target> owner = null, System.Func<Target, bool> ignores = null)
+        /// <param name="weaponColor">The shooter's weapon colour (their build's, Flight.WeaponTint), null = none.</param>
+        public NetShotMirror(Transform muzzleParent, System.Func<Target> owner = null, System.Func<Target, bool> ignores = null,
+                             System.Func<Color?> weaponColor = null)
         {
+            this.weaponColor = weaponColor;
             this.muzzleParent = muzzleParent;
             this.owner = owner;
             this.ignores = ignores;
@@ -58,12 +62,13 @@ namespace GoF2Remake.Multiplayer
         {
             Refresh();
             if (fxRoot == null) { fxRoot = new GameObject("NetShots").transform; rootGeneration++; generation = rootGeneration; }
-            if (mirrors.TryGetValue(item, out var m)) return m;
             var data = Database.Load().Item(item);
+            if (mirrors.TryGetValue(item, out var m)) { m.rig.Tint(WeaponTint.For(data, weaponColor?.Invoke())); return m; }   // a changed colour
             if (data == null) return null;
             var gun = new Gun(data, Vector3.zero, false) { Ignores = ignores };
             var fx = WeaponFx.Load(item);
             m = new Mirror { gun = gun, fx = fx, rig = new GunRig(gun, fx, fxRoot, muzzleParent, 2) };
+            m.rig.Tint(WeaponTint.For(data, weaponColor?.Invoke()));   // their weapon colour
             m.rig.EnableTrails();   // another player's rockets trail smoke like one's own
             var rig = m.rig;
             gun.Hit += (i, t, point) => rig.ShowImpact(point);   // the impact only: no damage handler

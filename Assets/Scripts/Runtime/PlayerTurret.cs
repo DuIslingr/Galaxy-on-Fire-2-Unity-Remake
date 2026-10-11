@@ -263,6 +263,7 @@ namespace GoF2Remake.Flight
             gun = new Gun(item, Vector3.zero, false) { owner = GetComponent<Target>(), Ignores = t => t.playerProof };   // multiplayer: through squadmates
             var fxRoot = new GameObject(model.name + " fx").transform;
             rig = new GunRig(gun, fx, fxRoot, muzzle);
+            rig.Tint(WeaponTint.For(item, WeaponTint.PlayerColor()));   // an energy turret in the build's weapon colour
             gun.Hit += OnHit;
             if (fx.shot != null)
             {

@@ -11,12 +11,16 @@
 // For each mounted weapon the first rule of its slot whose "items" (numbers, also matching mod items based on them, or
 // "mod:id" keys) or "categories" (item category numbers) match, or that has neither, gives its model ("model": "" = none).
 // A weapon model's origin goes on the mount (its "muzzle" node, if any, is where its shots leave); a turret's weapon goes on
-// the turret's gun with its muzzle on the turret's "muzzle" (EVERSPACE 2 seats its turret weapons so). Every model loads
+// the turret's gun with its muzzle on the turret's "muzzle" (EVERSPACE 2 seats its turret weapons so); a turret without a
+// "muzzle" node takes the weapon's origin on its gun node and the weapon's muzzle as its own. Every model loads
 // with the kit's parts (ModShips: the kit's materials applied) and shows at the kit's scale and yaw, like the parts.
 // Primary / secondary models sit on the mounts in WeaponSystem's order (the n-th primary on the n-th primary mount; a weapon
-// past the mounts shows nothing more) and move that gun's fire point to the model's muzzle (MuzzleOffset); the turret
+// past the mounts shows nothing more), turned by the mount's "rotation" (MountTurn: a gun on a slanted wing, Galaxy on Fire
+// 3's hardpoints) and move that gun's fire point to the model's muzzle (MuzzleOffset); the turret
 // replaces PlayerTurret's invisible stand-in (TurretModel). Shown on the player's ship in flight and on the hangar
-// turntable (AttachWeapons), the turret also on other players' ships (PlayerTurret.BuildStatic).
+// turntable (AttachWeapons), the turret also on other players' ships (PlayerTurret.BuildStatic). A mount's "nodes" (parts of
+// the ship's own model, a hardpoint's pylon) show only while the mount carries a weapon (ShowMountNodes, from AttachWeapons:
+// any ship with such mounts, every time the weapons change).
 
 using System;
 using System.Collections.Generic;
@@ -127,6 +131,17 @@ namespace GoF2Remake.Modding
 
         static Quaternion KitTurn(ModShipKits.Kit kit) => Quaternion.Euler(0f, kit.yaw, 0f);
 
+        /// <summary>How a primary / secondary mount turns its weapon model (the ship model's frame): its "rotation" (Euler
+        /// degrees, or a quaternion), then upsideDown's half turn about the ship's length.</summary>
+        public static Quaternion MountTurn(WeaponMount m)
+        {
+            var q = Quaternion.identity;
+            var r = m?.rotation;
+            if (r != null && r.Length >= 4) q = new Quaternion(r[0], r[1], r[2], r[3]).normalized;
+            else if (r != null && r.Length >= 3) q = Quaternion.Euler(r[0], r[1], r[2]);
+            return m != null && m.upsideDown ? q * Quaternion.Euler(0f, 0f, 180f) : q;
+        }
+
         /// <summary>A holder at the kit's turn and scale with a copy of 'template' in it.</summary>
         static Transform Holder(Transform parent, string name, Vector3 localPosition, Quaternion extraTurn, ModShipKits.Kit kit, GameObject template)
         {
@@ -200,6 +215,9 @@ namespace GoF2Remake.Modding
             {
                 var wm = MuzzleOf(w.transform);
                 var at = u != null && wm != null ? muzzle.localPosition - K(Local(w, wm)) : Vector3.zero;
+                // A turret without a muzzle of its own: the weapon on the gun node, its muzzle the turret's (the shots, the
+                // plasma stream leave there).
+                if (u == null && wm != null) muzzle.localPosition = K(Local(w, wm));
                 Holder(gun, "weapon", at, Quaternion.identity, kit, w);
             }
             return root;
@@ -210,8 +228,10 @@ namespace GoF2Remake.Modding
         /// player's ship; null = Database.MountsOf, the local player's).</summary>
         public static GameObject AttachWeapons(Database db, int ship, IList<ItemStack> equipment, Transform shipModel, ModShipKits.Build shown = null)
         {
+            if (shipModel == null) return null;
+            ShowMountNodes(db, ship, equipment, shipModel, shown);
             var kit = KitOfShip(ship);
-            if (kit == null || shipModel == null || kit.hardpoints.weapons.Count == 0) return null;
+            if (kit == null || kit.hardpoints.weapons.Count == 0) return null;
             GameObject root = null;
             foreach (bool secondary in new[] { false, true })
             {
@@ -228,11 +248,35 @@ namespace GoF2Remake.Modding
                         root.transform.SetParent(shipModel, false);
                     }
                     Holder(root.transform, (secondary ? "secondary " : "primary ") + (i + 1), Flight.WeaponSystem.MountToLocal(mounts[i]),
-                           mounts[i].upsideDown ? Quaternion.Euler(0f, 0f, 180f) : Quaternion.identity, kit, t);
+                           MountTurn(mounts[i]), kit, t);
                 }
             }
             if (root != null) Layered(root, shipModel.gameObject.layer);
             return root;
+        }
+
+        /// <summary>Each primary / secondary mount's "nodes" (WeaponMount.nodes: its pylon in the ship's model) shown while the
+        /// mount carries a weapon (the n-th weapon of its type on the n-th mount), hidden while it is empty.</summary>
+        static void ShowMountNodes(Database db, int ship, IList<ItemStack> equipment, Transform shipModel, ModShipKits.Build shown)
+        {
+            Dictionary<string, Transform> byName = null;
+            foreach (bool secondary in new[] { false, true })
+            {
+                var mounts = shown != null ? ModShipKits.MountsShown(db, ship, secondary ? 1 : 0, shown) : db.MountsOf(ship, secondary ? 1 : 0);
+                if (mounts == null || !mounts.Exists(m => m.nodes != null && m.nodes.Length > 0)) continue;
+                if (byName == null)
+                {
+                    byName = new Dictionary<string, Transform>();
+                    foreach (var t in shipModel.GetComponentsInChildren<Transform>(true)) byName.TryAdd(t.name, t);
+                }
+                int used = equipment == null ? 0 : WeaponItems(db, equipment, secondary).Count;
+                for (int i = 0; i < mounts.Count; i++)
+                {
+                    if (mounts[i].nodes == null) continue;
+                    foreach (var n in mounts[i].nodes)
+                        if (n != null && byName.TryGetValue(n, out var node) && node.gameObject.activeSelf != i < used) node.gameObject.SetActive(i < used);
+                }
+            }
         }
 
         /// <summary>The primary (or secondary) weapon items of the equipment in their order (WeaponSystem.Setup's).</summary>
@@ -256,7 +300,7 @@ namespace GoF2Remake.Modding
             var t = file != null ? ModShips.PartTemplate(kit, file) : null;
             var mz = t != null ? MuzzleOf(t.transform) : null;
             if (mz == null) return Vector3.zero;
-            var turn = (mount.upsideDown ? Quaternion.Euler(0f, 0f, 180f) : Quaternion.identity) * KitTurn(kit);
+            var turn = MountTurn(mount) * KitTurn(kit);
             return turn * (Local(t, mz) * kit.scale);
         }
 
@@ -331,8 +375,7 @@ namespace GoF2Remake.Modding
                 for (int i = 0; i < items.Count && i < mounts.Count; i++)
                 {
                     string file = ModelFile(kit, secondary ? "secondary" : "primary", items[i]);
-                    Add(file != null ? ModShips.PartTemplate(kit, file) : null, Flight.WeaponSystem.MountToLocal(mounts[i]),
-                        mounts[i].upsideDown ? Quaternion.Euler(0f, 0f, 180f) : Quaternion.identity);
+                    Add(file != null ? ModShips.PartTemplate(kit, file) : null, Flight.WeaponSystem.MountToLocal(mounts[i]), MountTurn(mounts[i]));
                 }
             }
             if (!string.IsNullOrEmpty(kit.hardpoints.turret))

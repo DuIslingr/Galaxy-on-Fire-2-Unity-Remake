@@ -1,8 +1,9 @@
 // ShipCustomizePanel.cs
 // Remake mods: the hangar's Customize screen for a customizable ship (Modding.ModShipKits, EVERSPACE 2's ship modules): a
 // panel over Inspect ship's orbit view (StationMenu) with one row per slot of the ship's kit and its tier, each cycling
-// through what the ship's type may fit, then the kit's colours: a preset (sets every colour) and a row per colour slot with
-// a swatch. Up / down (W / S, the D-pad, the left stick) pick a row, left / right (A / D) cycle
+// through what the ship's type may fit, then its skin (the kit's paint jobs for the type, "Standard" = the model's own), its
+// weapon colour (the energy weapons' and energy turrets' shots, Flight.WeaponTint; "Original" = their own), then the kit's
+// colours: a preset (sets every colour) and a row per colour slot with a swatch. Up / down (W / S, the D-pad, the left stick) pick a row, left / right (A / D) cycle
 // it, a click on a row's arrows too; Enter / the controller's A applies, Esc / the controller's B cancels. Every change is
 // shown on the turntable at once (StationMenu's Changed: the build is the player's while the screen is open, Cancel puts the
 // old one back). Plain UI Toolkit, built in code; the styles are inline like the multiplayer window's.
@@ -36,7 +37,7 @@ namespace GoF2Remake.UI
         ModShipKits.Build build;
         int row;
         float holdMs;
-        enum Kind { Part, Tier, Preset, Color, Strength }
+        enum Kind { Part, Tier, Skin, WeaponColor, Preset, Color, Strength }
         readonly List<(Kind kind, string key, Label value, VisualElement line, VisualElement swatch)> rows = new List<(Kind, string, Label, VisualElement, VisualElement)>();
         int presetIndex = -1;
         readonly VisualElement list;
@@ -101,6 +102,8 @@ namespace GoF2Remake.UI
                 AddRow(Kind.Part, slot, SlotName(slot));
             }
             if (kit.MaxTier > 0) AddRow(Kind.Tier, null, X("kitTier", "Tier"));
+            if (kit.SkinsFor(type).Count > 0) AddRow(Kind.Skin, null, X("kitSkin", "Skin"));
+            AddRow(Kind.WeaponColor, null, X("kitWeaponColor", "Weapon colour"));
             presetIndex = MatchingPreset();
             if (kit.presets.Count > 0) AddRow(Kind.Preset, null, X("kitPreset", "Colour scheme"));
             foreach (var cs in kit.colorSlots) AddRow(cs.IsStrength ? Kind.Strength : Kind.Color, cs.id, cs.Name);
@@ -141,7 +144,7 @@ namespace GoF2Remake.UI
             value.style.flexGrow = 1; value.style.flexShrink = 1; value.style.fontSize = 21; value.style.unityTextAlign = TextAnchor.MiddleCenter; value.style.color = Color.white;
             NoWrap(value);
             VisualElement swatch = null;
-            if (kind == Kind.Color)
+            if (kind == Kind.Color || kind == Kind.WeaponColor)
             {
                 swatch = new VisualElement { pickingMode = PickingMode.Ignore };
                 var ws = swatch.style;
@@ -185,6 +188,26 @@ namespace GoF2Remake.UI
                 case Kind.Tier:
                     build.tier = (build.tier + dir + kit.MaxTier + 1) % (kit.MaxTier + 1);
                     break;
+                case Kind.Skin:
+                {
+                    // The model's own look (index 0), then the type's skins.
+                    var skins = kit.SkinsFor(type);
+                    int n = skins.Count + 1;
+                    int at = skins.FindIndex(k => string.Equals(k.id, build.skin, StringComparison.OrdinalIgnoreCase)) + 1;
+                    at = (at + dir + n) % n;
+                    build.skin = at == 0 ? ModShipKits.Build.NoSkin : skins[at - 1].id;
+                    break;
+                }
+                case Kind.WeaponColor:
+                {
+                    // The weapons' own look (index 0), then the palette.
+                    var colors = kit.WeaponColors;
+                    int n = colors.Count + 1;
+                    int at = colors.FindIndex(c => string.Equals(c.id, build.weaponColor, StringComparison.OrdinalIgnoreCase)) + 1;
+                    at = (at + dir + n) % n;
+                    build.weaponColor = at == 0 ? ModShipKits.Build.NoSkin : colors[at - 1].id;
+                    break;
+                }
                 case Kind.Part:
                 {
                     var parts = kit.PartsFor(slot, type);
@@ -242,12 +265,35 @@ namespace GoF2Remake.UI
                 switch (kind)
                 {
                     case Kind.Tier: value.text = build.tier == 0 ? X("kitTierNone", "Base") : build.tier.ToString(); break;
+                    case Kind.Skin:
+                    {
+                        var skins = kit.SkinsFor(type);
+                        var skin = kit.FindSkin(build.skin);
+                        int at = skin == null ? 0 : skins.IndexOf(skin) + 1;
+                        value.text = (skin?.Name ?? X("kitSkinStandard", "Standard")) + $"  ({at + 1}/{skins.Count + 1})";
+                        break;
+                    }
                     case Kind.Part:
                     {
                         var parts = kit.PartsFor(slot, type);
                         var part = build.parts.TryGetValue(slot, out var id) ? kit.Find(id) : null;
                         int at = part == null ? -1 : parts.IndexOf(part);
                         value.text = (part?.Name ?? "-") + (parts.Count > 1 ? $"  ({at + 1}/{parts.Count})" : "");
+                        break;
+                    }
+                    case Kind.WeaponColor:
+                    {
+                        var colors = kit.WeaponColors;
+                        var choice = colors.Find(c => string.Equals(c.id, build.weaponColor, StringComparison.OrdinalIgnoreCase));
+                        int at = choice == null ? 0 : colors.IndexOf(choice) + 1;
+                        bool custom = choice == null && ModShipKits.ResolveWeaponColor(kit, build.weaponColor, out _);
+                        value.text = (choice != null ? X("weaponColor_" + choice.id, choice.Name) : custom ? X("kitColorScheme", "Scheme colour") : X("kitWeaponColorOriginal", "Original"))
+                                   + $"  ({at + 1}/{colors.Count + 1})";
+                        if (swatch != null)
+                        {
+                            bool has = ModShipKits.ResolveWeaponColor(kit, build.weaponColor, out var wc);
+                            swatch.style.backgroundColor = has ? wc : Color.clear;
+                        }
                         break;
                     }
                     case Kind.Preset:

@@ -17,7 +17,9 @@
 // (EnsureBuild / Template start the load; KitPartsLoaded and ModelsChanged follow, and the hangar / flight rebuild the
 // player's ship). A kit ship's template is its default build assembled from them; a player's build ("ship_NNN_mod#<build>",
 // PlayerHull.Assembly) is assembled the first time Template asks for it (variants, the most recent VariantCap kept).
-// A kit's hardpoint models (ModHardpoints: weapons, turret) load with the start's parts, as part templates too.
+// A kit's hardpoint models (ModHardpoints: weapons, turret) load with the start's parts, as part templates too. A build's skin
+// (ModShipKits skins: texture sets) loads its textures with the build's parts, and ApplySkin puts them on copies of the
+// materials it names when the build is assembled.
 
 using System.Collections.Generic;
 using System.Linq;
@@ -139,14 +141,20 @@ namespace GoF2Remake.Modding
             Done = 0;
             // Only the parts the default builds and the player's saved builds use (the rest on demand: EnsureBuild).
             var needed = new Dictionary<ModShipKits.Kit, HashSet<string>>();
+            var skinTextures = new List<(ModInfo mod, string path, bool linear, bool normal)>();
             foreach (var kv in kitShips)
             {
                 var (_, c, kit) = kv.Value;
                 if (!needed.TryGetValue(kit, out var set)) needed[kit] = set = new HashSet<string>();
-                set.UnionWith(BuildFiles(kit, ModShipKits.DefaultBuild(c, kit)));
+                var builds = new List<ModShipKits.Build> { ModShipKits.DefaultBuild(c, kit) };
                 string key = ModContent.ShipKey(kv.Key);
                 if (key != null && Session.ShipBuilds.TryGetValue(key, out var text))
-                    set.UnionWith(BuildFiles(kit, ModShipKits.Normalize(kit, c.kitType, ModShipKits.Build.Parse(text), ModShipKits.DefaultBuild(c, kit))));
+                    builds.Add(ModShipKits.Normalize(kit, c.kitType, ModShipKits.Build.Parse(text), ModShipKits.DefaultBuild(c, kit)));
+                foreach (var b in builds)
+                {
+                    set.UnionWith(BuildFiles(kit, b));
+                    skinTextures.AddRange(SkinTextures(kit, b).Select(t => (kit.mod, t.path, t.linear, t.normal)));
+                }
                 set.UnionWith(ModHardpoints.Files(kit));   // the weapon / turret models: few, all at the start
             }
             steps = ships.Count * StepsPerShip + needed.Values.Sum(v => v.Count) + kitted.Count;
@@ -156,6 +164,7 @@ namespace GoF2Remake.Modding
             var tasks = new List<Task>();
             foreach (var (mod, c) in ships) tasks.Add(LoadShip(rev, mod, c));
             foreach (var kit in kits) tasks.Add(LoadKit(rev, kit, needed.TryGetValue(kit, out var files) ? files : new HashSet<string>()));
+            foreach (var t in skinTextures.Distinct()) tasks.Add(ModMaterials.PreloadTexture(t.mod, t.path, t.linear, false, t.normal));
             await Task.WhenAll(tasks);
             if (rev != ModManager.Revision) return;   // the mods changed meanwhile: a newer load runs
             // The kit ships' default builds (what dealers sell and NPCs fly), their icons and textures.
@@ -319,11 +328,19 @@ namespace GoF2Remake.Modding
             }
         }
 
+        /// <summary>The textures a build's skin uses (none without a skin).</summary>
+        static IEnumerable<(string path, bool linear, bool normal)> SkinTextures(ModShipKits.Kit kit, ModShipKits.Build build) =>
+            kit.FindSkin(build?.skin)?.Textures() ?? Enumerable.Empty<(string, bool, bool)>();
+
+        static bool SkinReady(ModShipKits.Kit kit, ModShipKits.Build build) =>
+            SkinTextures(kit, build).All(t => ModMaterials.Has(kit.mod, t.path, t.linear, false, t.normal));
+
         /// <summary>A kit's loaded model file (a part, an extension or a hardpoint model; ModHardpoints), null = not loaded.</summary>
         internal static GameObject PartTemplate(ModShipKits.Kit kit, string file) =>
             kit != null && !string.IsNullOrEmpty(file) && partTemplates.TryGetValue(kit.Key + "|" + file, out var t) ? t : null;
 
-        static bool PartsReady(ModShipKits.Kit kit, ModShipKits.Build build) => BuildFiles(kit, build).All(f => partTemplates.ContainsKey(kit.Key + "|" + f));
+        static bool PartsReady(ModShipKits.Kit kit, ModShipKits.Build build) =>
+            BuildFiles(kit, build).All(f => partTemplates.ContainsKey(kit.Key + "|" + f)) && SkinReady(kit, build);
 
         /// <summary>The parts a kit ship's build shows are loaded (true; also for a ship that is no kit ship), or start loading
         /// (false: KitPartsLoaded and ModelsChanged follow once they are).</summary>
@@ -331,18 +348,31 @@ namespace GoF2Remake.Modding
         {
             if (build == null || !kitShips.TryGetValue(ship, out var info)) return true;
             if (PartsReady(info.kit, build)) return true;
-            LoadOnDemand(info.kit, BuildFiles(info.kit, build).ToList());
+            LoadOnDemand(info.kit, BuildFiles(info.kit, build).ToList(), SkinTextures(info.kit, build).ToList());
             return false;
         }
 
-        static async void LoadOnDemand(ModShipKits.Kit kit, List<string> files)
+        static async void LoadOnDemand(ModShipKits.Kit kit, List<string> files, List<(string path, bool linear, bool normal)> skinTextures)
         {
             if (holder == null || agent == null) return;
             int rev = ModManager.Revision;
             var missing = files.Where(f => !partTemplates.ContainsKey(kit.Key + "|" + f) && partsLoading.Add(kit.Key + "|" + f)).ToList();
-            if (missing.Count == 0) return;
-            try { await Task.WhenAll(missing.Select(f => LoadPart(rev, kit, f))); }
-            finally { foreach (var f in missing) partsLoading.Remove(kit.Key + "|" + f); }
+            var textures = skinTextures.Where(t => !ModMaterials.Has(kit.mod, t.path, t.linear, false, t.normal)
+                                                   && partsLoading.Add(kit.Key + "|texture|" + t.path)).ToList();
+            if (missing.Count == 0 && textures.Count == 0) return;
+            try
+            {
+                await Task.WhenAll(missing.Select(f => LoadPart(rev, kit, f))
+                    .Concat(textures.Select(t => ModMaterials.PreloadTexture(kit.mod, t.path, t.linear, false, t.normal))));
+                // A texture the background way couldn't make: the plain way (it warns, and stays null), so the build isn't
+                // waiting for it for good.
+                if (rev == ModManager.Revision) foreach (var t in textures) ModMaterials.Texture(kit.mod, t.path, t.linear, false, t.normal);
+            }
+            finally
+            {
+                foreach (var f in missing) partsLoading.Remove(kit.Key + "|" + f);
+                foreach (var t in textures) partsLoading.Remove(kit.Key + "|texture|" + t.path);
+            }
             if (rev != ModManager.Revision) return;
             KitPartsLoaded?.Invoke();
             ModelsChanged?.Invoke();
@@ -379,6 +409,13 @@ namespace GoF2Remake.Modding
             // glow through the ship data, the rest on the materials).
             var data = JsonUtility.FromJson<CustomShipData>(JsonUtility.ToJson(c));
             data.mounts = ModShipKits.MountsFor(c, kit, build);
+            var skin = kit.FindSkin(build.skin);
+            if (skin?.engineColor != null && skin.engineColor.Length >= 3)
+            {
+                // The skin's engine colour on every exhaust (copies: the mounts are the kit's / the ship's own).
+                data.engineGlowColor = skin.engineColor;
+                data.mounts = data.mounts.Select(m => m.slotType != 3 ? m : CopyWithoutGlowColor(m)).ToList();
+            }
             foreach (var cs in kit.colorSlots)
                 if (cs.targets.Exists(t => t.property == "engine") && build.colors.TryGetValue(cs.id, out var ev)
                     && ModShipKits.Resolve(kit, cs, ev, out var engine, out _, out _))
@@ -386,11 +423,70 @@ namespace GoF2Remake.Modding
             var template = ModShipBuilder.Build(data, mod, scene, kit.scale, kit.yaw, kit.materials.Exists(m => m != null && m.flame));
             template.name = name;
             template.transform.SetParent(holder.transform, false);
+            ApplySkin(template, kit, skin);
             ApplyColors(template, kit, build);
             DamageEmbers.Add(template, kit.materials.Where(m => m != null && (!string.IsNullOrEmpty(m.damageEmission) || !string.IsNullOrEmpty(m.damageDetail)) && !string.IsNullOrEmpty(m.material)).Select(m => m.material));
             EngineMaterialGlow.Add(template, kit.materials.Where(m => m != null && m.engine && !string.IsNullOrEmpty(m.material)).Select(m => m.material),
                 kit.materials.Where(m => m != null && m.boost && !string.IsNullOrEmpty(m.material)).Select(m => m.material));
             return template;
+        }
+
+        static WeaponMount CopyWithoutGlowColor(WeaponMount m)
+        {
+            var copy = JsonUtility.FromJson<WeaponMount>(JsonUtility.ToJson(m));
+            copy.glowColor = null;
+            return copy;
+        }
+
+        /// <summary>A skin's textures onto copies of the materials it names (the name contains its 'material'): diffuse =
+        /// _BaseMap, emission = _EmissionMap (its colour x intensity, white without one), metallicSmoothness = _MetallicGlossMap
+        /// (URP Lit's layout: R metallic, A smoothness), normal = _BumpMap, color = _BaseColor; each texture keeps the
+        /// material's tiling. A texture that doesn't load keeps the model's own.</summary>
+        static void ApplySkin(GameObject root, ModShipKits.Kit kit, ModShipKits.Skin skin)
+        {
+            if (skin == null || skin.materials.Count == 0) return;
+            var copies = new Dictionary<Material, Material>();
+            foreach (var r in root.GetComponentsInChildren<Renderer>(true))
+            {
+                var mats = r.sharedMaterials;
+                bool changed = false;
+                for (int i = 0; i < mats.Length; i++)
+                {
+                    var m = mats[i];
+                    if (m == null) continue;
+                    if (copies.TryGetValue(m, out var done)) { mats[i] = done; changed = true; continue; }
+                    string n = m.name.ToLowerInvariant();
+                    var spec = skin.materials.Find(x => n.Contains(x.material.ToLowerInvariant()));
+                    if (spec == null) continue;
+                    var copy = new Material(m) { name = m.name };
+                    Texture2D Tex(string path, bool linear, bool normal = false) => string.IsNullOrEmpty(path) ? null : ModMaterials.Texture(kit.mod, path, linear, false, normal);
+                    if (Tex(spec.diffuse, false) is Texture2D d) { copy.SetTexture("_BaseMap", d); if (copy.HasProperty("_MainTex")) copy.SetTexture("_MainTex", d); }
+                    if (spec.color != null && copy.HasProperty("_BaseColor"))
+                        copy.SetColor("_BaseColor", new Color(spec.color[0], spec.color[1], spec.color[2], copy.GetColor("_BaseColor").a));
+                    if (Tex(spec.emission, false) is Texture2D e)
+                    {
+                        copy.SetTexture("_EmissionMap", e);
+                        var ec = spec.emissionColor != null ? new Color(spec.emissionColor[0], spec.emissionColor[1], spec.emissionColor[2]) : Color.white;
+                        copy.SetColor("_EmissionColor", ec * spec.emissionIntensity);
+                        copy.EnableKeyword("_EMISSION");
+                    }
+                    else if (spec.emissionColor != null)
+                    {
+                        copy.SetColor("_EmissionColor", new Color(spec.emissionColor[0], spec.emissionColor[1], spec.emissionColor[2]) * spec.emissionIntensity);
+                        copy.EnableKeyword("_EMISSION");
+                    }
+                    if (Tex(spec.metallicSmoothness, true) is Texture2D ms)
+                    {
+                        copy.SetTexture("_MetallicGlossMap", ms);
+                        if (copy.HasProperty("_Smoothness")) copy.SetFloat("_Smoothness", 1f);
+                    }
+                    if (Tex(spec.normal, true, true) is Texture2D nm) copy.SetTexture("_BumpMap", nm);   // the templates keep their map keywords
+                    copies[m] = copy;
+                    mats[i] = copy;
+                    changed = true;
+                }
+                if (changed) r.sharedMaterials = mats;
+            }
         }
 
         /// <summary>A build's colours onto its renderers: each slot's targets recolour copies of the materials whose name

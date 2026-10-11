@@ -113,6 +113,14 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods, slotType 4 (a manoeuvring jet, EVERSPACE 2's lateral thrusters, Modding.LateralThrusters):
         /// the way it blows, in position_engine's convention.</summary>
         public float[] direction;
+        /// <summary>Remake mods, a primary / secondary mount of a customizable ship: how its weapon model (Modding.ModHardpoints)
+        /// is turned on the hull, in the ship model's frame (x right, y up, z forward): Euler degrees [x, y, z] (Unity's order)
+        /// or a quaternion [x, y, z, w]; none = upright (upsideDown still turns it over). Only the look and the muzzle: the
+        /// shots still fly along the nose.</summary>
+        public float[] rotation;
+        /// <summary>Remake mods, a primary / secondary mount: nodes of the ship's model (by name) that show only while this mount
+        /// carries a weapon (a hardpoint's pylon; Modding.ModHardpoints.AttachWeapons).</summary>
+        public string[] nodes;
     }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
 

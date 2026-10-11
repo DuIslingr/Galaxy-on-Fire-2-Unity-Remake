@@ -1984,7 +1984,30 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   stand-in on `builtIn` mounts (its muzzle for the shots, 40 units ahead, and a collector's stream; `BuildStatic` shows it in the
   hangar and on other players' ships); the primary / secondary models go on the mounts in `WeaponSystem`'s order
   (`AttachWeapons`, from `SpaceLevel` and `StationLevel.RefreshTurret`, rebuilt when the weapons change) and `WeaponSystem`
-  moves each gun to its model's `muzzle` node (`MuzzleOffset`). The ES2 converter adds ES2's player turret
+  moves each gun to its model's `muzzle` node (`MuzzleOffset`); a mount's `rotation` (`WeaponMount.rotation`, Euler degrees or
+  a quaternion in the ship model's frame, `ModHardpoints.MountTurn`) turns its weapon model and muzzle (the GoF3 hulls'
+  slanted hardpoints; the shots still fly along the nose), and a turret model without a `muzzle` node carries its weapon on
+  the gun node and fires from the weapon's muzzle; a primary / secondary mount's `nodes` (`WeaponMount.nodes`, ship model node
+  names: the GoF3 hulls' pylons) show only while that mount carries a weapon (`ModHardpoints.ShowMountNodes`, from every
+  `AttachWeapons`: flight, the hangar turntable, other players' ships and hangar guests). **Skins** (a kit's `skins`, `ModShipKits.Skin`; `Build.skin`, text
+  "skin=id", "none" = the model's own look over a default build's skin, `Build.Reserved` keeps "skin" / "tier" / "color." out
+  of the slot names): texture sets per material name (diffuse, emission, metallicSmoothness in URP's layout, normal, colours)
+  put on copies of the build's materials (`ModShips.ApplySkin`, before the colours) and an optional `engineColor` for every
+  exhaust; their textures load with the build's parts (`SkinTextures` / `SkinReady` in `PartsReady`, `LoadOnDemand` preloads
+  them, a failed one falls back to `ModMaterials.Texture`; `ModMaterials.Has`); the Customize panel's Skin row
+  ("Standard" + the type's skins). **Weapon colour** (`Build.weaponColor`, "weaponcolor=id|#RRGGBB", "none" = the weapons'
+  own; the kit's palette "weapons" else `ModShipKits.WeaponPalette`; left out of the variant assembly's name, the model doesn't
+  change): the Customize panel's Weapon colour row on every kit ship (so the Customize button shows for every kit ship);
+  `Flight.WeaponTint` colours the energy weapons (categories 0 / 1 / 3 by the Look, and the blaster-bolt turrets 47 / 48 / 49 /
+  224) through `GunRig.Tint` (projectiles, muzzle flash, impacts, and thermo trails when called before `EnableTrails`): cached
+  copies of their materials with the main texture blitted by `Hidden/GoF2/WeaponTint` (`Resources/GoF2Weapons`: brightness x
+  the colour, the hottest part kept white; a red laser can't just be multiplied blue) and a grey `_Color` at its own intensity,
+  `PartAnimation.RefreshMaterials` re-reading the fades; the player's guns (`WeaponSystem.BuildRig`), turret (`PlayerTurret`)
+  and other players' mirrored shots (`NetShotMirror`'s weaponColor, from `NetPlayer.ShownBuild`). Verified in Play mode: the
+  classification (a Micro Gun kept its own), green and blue bolts, beams and impacts, the row, Apply into flight. Used by the GoF3 Ships mod (version 2: one kit "gof3", a hull part per ship, its GoF3 paint schemes as
+  skins, the GoF3 guns as hardpoint models by weapon, a GoF3-parts turret on every hull, GoF3's projectile colours as its
+  "weapons" palette (Colorize_Color1 of the GoF3 weapon effects' materials); built by
+  `~/Downloads/gof3assets/tools/build_gof3_mod.py`). The ES2 converter adds ES2's player turret
   (`SK_Turret_PlayerShip_001`, skinned, split by bone into rigid base / pivot / gun meshes) and its weapon models
   (`SM_PrimaryWeapon_*`, the missile pod) with their muzzle sockets, mapped onto GoF2's weapons by item / category. Verified in
   Play mode on the Gunship: the hangar turntable's guns, pod and turret, the guns firing from the models' muzzles, the turret
