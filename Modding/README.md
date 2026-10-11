@@ -439,6 +439,23 @@ fewer slots, what no longer fits moves to the hold the next time the player dock
 [ { "override": 10, "slots": { "primary": 3, "secondary": 2 } } ]
 ```
 
+**Skins and weapon colours for any ship** (the game's own ships, and new ships built from one model): `"skins"` (the same list as
+a kit's [skins](#customizable-ships), for this ship; no `types`) and / or `"weaponColors"` (a palette list of `{ "id", "name",
+"color" }`, or `true` for the game's own colours) on the ship's entry give it the hangar's **Customize ship** screen: a Skin row
+("Standard" is its own look) and the Weapon colour row. A skin names the ship's own materials: the game's ship materials are
+called after their textures (`ship_010_terran_diffuse` for the Phantom's hull; find a ship's in the reference or by its
+texture's name). Several mods may add skins to one ship (each its own ids). The player's choice is saved with the game; with
+the mod turned off the ship is back to its own look. `engineColor` only works on customizable (kit) ships.
+
+```json
+[
+    { "override": 10,
+      "skins": [ { "id": "crimson", "name": "Crimson",
+                   "materials": [ { "material": "ship_010_terran_diffuse", "diffuse": "skins/phantom_crimson.png" } ] } ],
+      "weaponColors": [ { "id": "ice", "name": "Ice", "color": "#9FE8FF" } ] }
+]
+```
+
 An override of an original ship can also give it a new **model**: `model` with `modelLength`, `modelYaw`, `materials`,
 `engineGlowRadius` / `engineGlowColor` and the glows, as for a new ship. Every ship of that number then uses it (yours, the
 NPCs', the hangar's). Its guns and exhausts stay at the original's mounts unless the entry has its own `mounts`.

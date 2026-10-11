@@ -610,7 +610,7 @@ namespace GoF2Remake.World
         /// the player's build.</summary>
         void OnModShipModels()
         {
-            if (this == null || playerShip == null || PlayerFlying || Modding.ModShipKits.KitShip(Session.ShipIndex) == null) return;
+            if (this == null || playerShip == null || PlayerFlying || Modding.ModShipKits.CustomizationOf(Session.ShipIndex) == null) return;
             ReplacePlayerShip(Session.ShipIndex);
         }
 

@@ -188,7 +188,7 @@ namespace GoF2Remake.World
         /// becomes the build if it showed the default build meanwhile.</summary>
         void OnModShipModels()
         {
-            if (this == null || Player == null || Modding.ModShipKits.KitShip(Session.ShipIndex) == null) return;
+            if (this == null || Player == null || Modding.ModShipKits.CustomizationOf(Session.ShipIndex) == null) return;
             string want = PlayerHull.Assembly(db, Session.ShipIndex)?.name;
             string shown = Player.visualModel != null ? Player.visualModel.name.Replace("(Clone)", "") : null;
             if (want != null && want != shown) SwapPlayerShip(Session.ShipIndex);

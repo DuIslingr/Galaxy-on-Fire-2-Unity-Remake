@@ -170,7 +170,7 @@ namespace GoF2Remake.Multiplayer
         /// variable's 512 bytes: the default build shows then).</summary>
         static string LocalBuildText()
         {
-            if (Modding.ModShipKits.KitShip(Session.ShipIndex) == null) return "";
+            if (Modding.ModShipKits.CustomizationOf(Session.ShipIndex) == null) return "";
             string text = Modding.ModShipKits.PlayerBuild(Session.ShipIndex)?.ToString() ?? "";
             return System.Text.Encoding.UTF8.GetByteCount(text) <= 500 ? text : "";
         }

@@ -2004,7 +2004,16 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   the colour, the hottest part kept white; a red laser can't just be multiplied blue) and a grey `_Color` at its own intensity,
   `PartAnimation.RefreshMaterials` re-reading the fades; the player's guns (`WeaponSystem.BuildRig`), turret (`PlayerTurret`)
   and other players' mirrored shots (`NetShotMirror`'s weaponColor, from `NetPlayer.ShownBuild`). Verified in Play mode: the
-  classification (a Micro Gun kept its own), green and blue bolts, beams and impacts, the row, Apply into flight. Used by the GoF3 Ships mod (version 2: one kit "gof3", a hull part per ship, its GoF3 paint schemes as
+  classification (a Micro Gun kept its own), green and blue bolts, beams and impacts, the row, Apply into flight.
+  **Customizations of ships without a kit** (the game's own, one-model mod ships): a ships.json entry's `skins` / `weaponColors`
+  (`ModShipKits.CustomizationOf`: a kit with no parts per ship, merged from every mod that is on, `ReadShipCustomizations`;
+  `Skin.mod` the mod whose files it uses); builds saved under `BuildKey` ("gof2:<n>" for the game's ships), `TypeOf` "",
+  `DefaultBuildOf` none; a skin shows on a skinned copy of the model (`VariantAssembly` -> "<model>#ship=N;skin=id",
+  `ModShips.SkinnedTemplate` from `AssembledObject.LoadPrefab` / `ModShips.Template`, `ParseSkinned`; `Database.AssemblyByName`
+  keeps the model's own pack for "#" names); the Customize screen, weapon colour, the rebuild hooks (`SpaceLevel` /
+  `StationLevel.OnModShipModels`) and other players' views (`NetPlayer` build text) take `CustomizationOf`. Verified in Play
+  mode with throwaway skin mods: the Phantom's Customize screen (Skin + Weapon colour rows), its crimson skin on the
+  turntable and in flight with a mod weapon colour, the game's Groza (22) skinned in the hangar, the mod turned off (plain). Used by the GoF3 Ships mod (version 2: one kit "gof3", a hull part per ship, its GoF3 paint schemes as
   skins, the GoF3 guns as hardpoint models by weapon, a GoF3-parts turret on every hull, GoF3's projectile colours as its
   "weapons" palette (Colorize_Color1 of the GoF3 weapon effects' materials); built by
   `~/Downloads/gof3assets/tools/build_gof3_mod.py`). The ES2 converter adds ES2's player turret

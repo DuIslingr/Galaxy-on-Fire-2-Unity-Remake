@@ -42,10 +42,9 @@ namespace GoF2Remake.Flight
         /// <summary>A kit ship's weapon colour in a build (null: the player's own build of it), null = none.</summary>
         public static Color? ShipColor(int ship, Modding.ModShipKits.Build build)
         {
-            var c = Modding.ModShipKits.KitShip(ship);
-            var kit = Modding.ModShipKits.KitOf(c);
+            var kit = Modding.ModShipKits.CustomizationOf(ship);   // a kit ship's kit, or the customizations mods give another ship
             if (kit == null) return null;
-            var b = build != null ? Modding.ModShipKits.Normalize(kit, c.kitType, build, Modding.ModShipKits.DefaultBuild(c, kit))
+            var b = build != null ? Modding.ModShipKits.Normalize(kit, Modding.ModShipKits.TypeOf(ship), build, Modding.ModShipKits.DefaultBuildOf(ship, kit))
                   : Modding.ModShipKits.PlayerBuild(ship);
             return Modding.ModShipKits.WeaponColor(kit, b);
         }

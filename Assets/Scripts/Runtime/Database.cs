@@ -422,9 +422,15 @@ namespace GoF2Remake.Data
 
         public AssemblyData AssemblyByName(string name)
         {
-            // Remake mods: a customizable ship's build ("ship_NNN_mod#<build>", Modding.ModShipKits) isn't in the table.
+            // Remake mods: a customizable ship's build ("ship_NNN_mod#<build>", Modding.ModShipKits) or a ship in a mod's skin
+            // ("<model>#ship=N;skin=id") isn't in the table: its model's pack and category (a skinned game ship stays the game's).
             int hash = name?.IndexOf(Modding.ModShipKits.VariantSeparator) ?? -1;
-            if (hash > 0) return Assemblies.Any(a => a.name == name.Substring(0, hash)) ? new AssemblyData { name = name, pack = Modding.ModShips.Pack, category = "ships", origin = "kit build" } : null;
+            if (hash > 0)
+            {
+                var own = Assemblies.FirstOrDefault(a => a.name == name.Substring(0, hash));
+                return own == null ? null : new AssemblyData { name = name, pack = own.pack, category = own.category, root = own.root,
+                                                               origin = own.pack == Modding.ModShips.Pack ? "kit build" : "skin" };
+            }
             return Assemblies.FirstOrDefault(a => a.name == name);
         }
 

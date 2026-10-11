@@ -1947,8 +1947,8 @@ namespace GoF2Remake.UI
         float customizeCheckMs;
 
         bool CanCustomize => level != null && level.View == StationView.Hangar && !Vr.VrMode.Enabled && !level.PlayerFlying
-                             && ModShipKits.KitShip(Session.ShipIndex) is CustomShipData kc && ModShipKits.KitOf(kc) is ModShipKits.Kit kk
-                             && kk.HasChoices(kc.kitType);
+                             && ModShipKits.CustomizationOf(Session.ShipIndex) is ModShipKits.Kit kk   // a kit ship, or one a mod customizes
+                             && kk.HasChoices(ModShipKits.TypeOf(Session.ShipIndex));
 
         void RefreshCustomizeButton()
         {
@@ -1961,18 +1961,17 @@ namespace GoF2Remake.UI
         {
             if (!CanCustomize || customizing) return;
             int ship = Session.ShipIndex;
-            var c = ModShipKits.KitShip(ship);
-            var kit = ModShipKits.KitOf(c);
+            var kit = ModShipKits.CustomizationOf(ship);
             var build = ModShipKits.PlayerBuild(ship);
             if (kit == null || build == null) return;
             BeginInspect();
             if (!level.Inspect.Active) return;
-            string key = ModContent.ShipKey(ship);
+            string key = ModShipKits.BuildKey(ship);
             customizeBefore = key != null && Session.ShipBuilds.TryGetValue(key, out var text) ? text : null;
             customizing = true;
             inspectTitle.text = "";
             inspectHints.style.display = DisplayStyle.None;   // the panel has its own keys
-            customize.Show(GameNames.Ship(ship), kit, c.kitType, build);
+            customize.Show(GameNames.Ship(ship), kit, ModShipKits.TypeOf(ship), build);
         }
 
         /// <summary>A change in the panel: the turntable shows it at once (the build is the player's until Cancel).</summary>
@@ -2000,9 +1999,9 @@ namespace GoF2Remake.UI
         /// <summary>The Customize panel's stats line: the ship as 'build' makes it, and what wouldn't fit its slots.</summary>
         string CustomStatsText(ModShipKits.Build build)
         {
-            var c = ModShipKits.KitShip(Session.ShipIndex);
-            var kit = ModShipKits.KitOf(c);
-            if (kit == null) return "";
+            var kit = ModShipKits.CustomizationOf(Session.ShipIndex);
+            var c = level.Db.Ship(Session.ShipIndex);   // a kit ship's data, or the game's / a mod's ship
+            if (kit == null || c == null) return "";
             var e = ModShipKits.EffectOf(kit, build);
             int hull = Mathf.Max(1, Mathf.RoundToInt(c.armor * (1f + e.armor / 100f))) + 40 * Session.ModLevel(0);
             int cargo = Mathf.Max(0, Mathf.RoundToInt(c.cargo * (1f + e.cargo / 100f))) + 30 * Session.ModLevel(1);
@@ -2028,7 +2027,7 @@ namespace GoF2Remake.UI
         void CancelCustomize()
         {
             if (!customizing) return;
-            string key = ModContent.ShipKey(Session.ShipIndex);
+            string key = ModShipKits.BuildKey(Session.ShipIndex);
             if (key != null)
             {
                 if (customizeBefore != null) Session.ShipBuilds[key] = customizeBefore;

@@ -174,6 +174,7 @@ namespace GoF2Remake.Modding
             "id", "override", "name", "description", "race", "armor", "cargo", "price", "priceDefault", "slots", "handling",
             "hangarHeight", "mounts", "model", "icon", "modelLength", "modelYaw", "engineGlowRadius", "engineGlowColor", "materials", "throttleGlow",
             "extraGlows", "lounge", "dealer", "available", "flightStyle", "flight", "kit", "kitType", "build",
+            "skins", "weaponColors",   // customizations of a ship without a kit (ModShipKits.CustomizationOf)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)

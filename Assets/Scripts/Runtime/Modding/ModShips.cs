@@ -79,6 +79,7 @@ namespace GoF2Remake.Modding
         {
             templates.Clear(); icons.Clear(); imports.Clear(); names.Clear();
             partTemplates.Clear(); kitShips.Clear(); variants.Clear(); variantOrder.Clear(); partsLoading.Clear(); KitPartsLoaded = null;
+            skinned.Clear(); skinnedOrder.Clear();
             holder = null; agent = null; loading = null; ModelsChanged = null;
             loadingRevision = loadedRevision = -1;
             steps = stepsDone = 0; current.Clear(); Count = Done = 0;
@@ -153,7 +154,7 @@ namespace GoF2Remake.Modding
                 foreach (var b in builds)
                 {
                     set.UnionWith(BuildFiles(kit, b));
-                    skinTextures.AddRange(SkinTextures(kit, b).Select(t => (kit.mod, t.path, t.linear, t.normal)));
+                    skinTextures.AddRange(SkinTextures(kit, b));
                 }
                 set.UnionWith(ModHardpoints.Files(kit));   // the weapon / turret models: few, all at the start
             }
@@ -329,11 +330,16 @@ namespace GoF2Remake.Modding
         }
 
         /// <summary>The textures a build's skin uses (none without a skin).</summary>
-        static IEnumerable<(string path, bool linear, bool normal)> SkinTextures(ModShipKits.Kit kit, ModShipKits.Build build) =>
-            kit.FindSkin(build?.skin)?.Textures() ?? Enumerable.Empty<(string, bool, bool)>();
+        static IEnumerable<(ModInfo mod, string path, bool linear, bool normal)> SkinTextures(ModShipKits.Kit kit, ModShipKits.Build build)
+        {
+            var skin = kit?.FindSkin(build?.skin);
+            if (skin == null) return Enumerable.Empty<(ModInfo, string, bool, bool)>();
+            var mod = skin.mod ?? kit.mod;
+            return skin.Textures().Select(t => (mod, t.path, t.linear, t.normal));
+        }
 
         static bool SkinReady(ModShipKits.Kit kit, ModShipKits.Build build) =>
-            SkinTextures(kit, build).All(t => ModMaterials.Has(kit.mod, t.path, t.linear, false, t.normal));
+            SkinTextures(kit, build).All(t => ModMaterials.Has(t.mod, t.path, t.linear, false, t.normal));
 
         /// <summary>A kit's loaded model file (a part, an extension or a hardpoint model; ModHardpoints), null = not loaded.</summary>
         internal static GameObject PartTemplate(ModShipKits.Kit kit, string file) =>
@@ -346,32 +352,40 @@ namespace GoF2Remake.Modding
         /// (false: KitPartsLoaded and ModelsChanged follow once they are).</summary>
         public static bool EnsureBuild(int ship, ModShipKits.Build build)
         {
-            if (build == null || !kitShips.TryGetValue(ship, out var info)) return true;
+            if (build == null) return true;
+            if (!kitShips.TryGetValue(ship, out var info))
+            {
+                // A ship with customizations but no kit: only its skin's textures.
+                var custom = ModShipKits.KitShip(ship) == null ? ModShipKits.CustomizationOf(ship) : null;
+                if (custom == null || SkinReady(custom, build)) return true;
+                LoadOnDemand(custom, new List<string>(), SkinTextures(custom, build).ToList());
+                return false;
+            }
             if (PartsReady(info.kit, build)) return true;
             LoadOnDemand(info.kit, BuildFiles(info.kit, build).ToList(), SkinTextures(info.kit, build).ToList());
             return false;
         }
 
-        static async void LoadOnDemand(ModShipKits.Kit kit, List<string> files, List<(string path, bool linear, bool normal)> skinTextures)
+        static async void LoadOnDemand(ModShipKits.Kit kit, List<string> files, List<(ModInfo mod, string path, bool linear, bool normal)> skinTextures)
         {
-            if (holder == null || agent == null) return;
+            if ((holder == null || agent == null) && files.Count > 0) return;
             int rev = ModManager.Revision;
             var missing = files.Where(f => !partTemplates.ContainsKey(kit.Key + "|" + f) && partsLoading.Add(kit.Key + "|" + f)).ToList();
-            var textures = skinTextures.Where(t => !ModMaterials.Has(kit.mod, t.path, t.linear, false, t.normal)
-                                                   && partsLoading.Add(kit.Key + "|texture|" + t.path)).ToList();
+            var textures = skinTextures.Where(t => !ModMaterials.Has(t.mod, t.path, t.linear, false, t.normal)
+                                                   && partsLoading.Add(t.mod.Id + "|texture|" + t.path)).ToList();
             if (missing.Count == 0 && textures.Count == 0) return;
             try
             {
                 await Task.WhenAll(missing.Select(f => LoadPart(rev, kit, f))
-                    .Concat(textures.Select(t => ModMaterials.PreloadTexture(kit.mod, t.path, t.linear, false, t.normal))));
+                    .Concat(textures.Select(t => ModMaterials.PreloadTexture(t.mod, t.path, t.linear, false, t.normal))));
                 // A texture the background way couldn't make: the plain way (it warns, and stays null), so the build isn't
                 // waiting for it for good.
-                if (rev == ModManager.Revision) foreach (var t in textures) ModMaterials.Texture(kit.mod, t.path, t.linear, false, t.normal);
+                if (rev == ModManager.Revision) foreach (var t in textures) ModMaterials.Texture(t.mod, t.path, t.linear, false, t.normal);
             }
             finally
             {
                 foreach (var f in missing) partsLoading.Remove(kit.Key + "|" + f);
-                foreach (var t in textures) partsLoading.Remove(kit.Key + "|texture|" + t.path);
+                foreach (var t in textures) partsLoading.Remove(t.mod.Id + "|texture|" + t.path);
             }
             if (rev != ModManager.Revision) return;
             KitPartsLoaded?.Invoke();
@@ -459,7 +473,8 @@ namespace GoF2Remake.Modding
                     var spec = skin.materials.Find(x => n.Contains(x.material.ToLowerInvariant()));
                     if (spec == null) continue;
                     var copy = new Material(m) { name = m.name };
-                    Texture2D Tex(string path, bool linear, bool normal = false) => string.IsNullOrEmpty(path) ? null : ModMaterials.Texture(kit.mod, path, linear, false, normal);
+                    var mod = skin.mod ?? kit.mod;
+                    Texture2D Tex(string path, bool linear, bool normal = false) => string.IsNullOrEmpty(path) ? null : ModMaterials.Texture(mod, path, linear, false, normal);
                     if (Tex(spec.diffuse, false) is Texture2D d) { copy.SetTexture("_BaseMap", d); if (copy.HasProperty("_MainTex")) copy.SetTexture("_MainTex", d); }
                     if (spec.color != null && copy.HasProperty("_BaseColor"))
                         copy.SetColor("_BaseColor", new Color(spec.color[0], spec.color[1], spec.color[2], copy.GetColor("_BaseColor").a));
@@ -555,6 +570,7 @@ namespace GoF2Remake.Modding
             foreach (var t in templates.Values) if (t != null) Object.Destroy(t);
             templates.Clear();
             partTemplates.Clear(); kitShips.Clear(); variants.Clear(); variantOrder.Clear();   // under the holder: destroyed below
+            skinned.Clear(); skinnedOrder.Clear();
             icons.Clear();
             names.Clear();
             foreach (var i in imports) i.Dispose();
@@ -571,6 +587,8 @@ namespace GoF2Remake.Modding
         public static GameObject Template(string assembly)
         {
             int hash = assembly?.IndexOf(ModShipKits.VariantSeparator) ?? -1;
+            if (hash > 0 && ModShipKits.ParseSkinned(assembly, out _, out _, out _))
+                return SkinnedTemplate(new AssemblyData { name = assembly, pack = Pack, category = "ships" });
             if (hash > 0)
             {
                 // A player's build of a kit ship: assembled the first time, then kept (the most recent VariantCap).
@@ -600,6 +618,50 @@ namespace GoF2Remake.Modding
             if (!Ready) Debug.LogWarning($"Mods: ship {ship}'s model is still loading: the Phantom stands in");
             var db = Database.Load();
             return Visuals.AssembledObject.LoadPrefab(db.ShipAssembly(FallbackShip));
+        }
+
+        // Skinned copies of ships without a kit (ModShipKits.CustomizationOf): "<model>#ship=N;skin=id".
+        static readonly Dictionary<string, GameObject> skinned = new Dictionary<string, GameObject>();
+        static readonly Queue<string> skinnedOrder = new Queue<string>();
+
+        static GameObject Holder()
+        {
+            if (holder == null)
+            {
+                holder = new GameObject("Mod ship models");
+                holder.SetActive(false);
+                Object.DontDestroyOnLoad(holder);
+            }
+            return holder;
+        }
+
+        /// <summary>A ship's own model with a skin of its customizations ("<model>#ship=N;skin=id", ModShipKits.VariantAssembly):
+        /// a copy of the model (the game's prefab, or a mod ship's template) under the hidden holder with the skin's textures on
+        /// copies of its materials (ApplySkin), made the first time and kept (the most recent VariantCap). While the skin's
+        /// textures load (EnsureBuild starts it; ModelsChanged follows) the model itself stands in.</summary>
+        public static GameObject SkinnedTemplate(AssemblyData entry)
+        {
+            if (entry == null || !ModShipKits.ParseSkinned(entry.name, out string model, out int ship, out string skinId)) return null;
+            var plain = new AssemblyData { name = model, pack = entry.pack, category = entry.category, root = entry.root, origin = entry.origin };
+            var source = Visuals.AssembledObject.LoadPrefab(plain);
+            if (skinned.TryGetValue(entry.name, out var made) && made != null) return made;
+            var kit = ModShipKits.CustomizationOf(ship);
+            var skin = kit?.FindSkin(skinId);
+            if (source == null || skin == null) return source;
+            var build = new ModShipKits.Build { skin = skin.id };
+            if (!EnsureBuild(ship, build)) return source;   // its textures load: the model itself meanwhile
+            var copy = Object.Instantiate(source, Holder().transform, false);
+            copy.name = entry.name;
+            ApplySkin(copy, kit, skin);
+            skinned[entry.name] = copy;
+            skinnedOrder.Enqueue(entry.name);
+            while (skinnedOrder.Count > VariantCap)
+            {
+                string old = skinnedOrder.Dequeue();
+                if (skinned.TryGetValue(old, out var go) && go != null) Object.Destroy(go);
+                skinned.Remove(old);
+            }
+            return copy;
         }
 
         /// <summary>Runs the action once the models are built (at most 'timeoutSeconds' later).</summary>
