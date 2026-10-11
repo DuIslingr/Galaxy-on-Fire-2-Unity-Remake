@@ -124,8 +124,14 @@ namespace GoF2Remake.Data
         /// the ship is traded).</summary>
         public static List<int> ShipMods = new List<int>();
         /// <summary>Remake: with Settings.KaamoStacking a mod can be fitted again (a level is how many times it is in the
-        /// list); the original's rule is one of each.</summary>
-        public static void AddShipMod(int mod) { if (mod >= 0 && (Settings.KaamoStacking || !ShipMods.Contains(mod))) ShipMods.Add(mod); }
+        /// list), up to MaxModLevel; the original's rule is one of each.</summary>
+        public static void AddShipMod(int mod)
+        {
+            if (mod >= 0 && (!ShipMods.Contains(mod) || (Settings.KaamoStacking && ModLevel(mod) < MaxModLevel))) ShipMods.Add(mod);
+        }
+        /// <summary>Remake: the highest level of one Kaamo upgrade with stacking (players' feedback, 2026-10: 45 equipment slots
+        /// on a Cronus); levels fitted before the cap stay.</summary>
+        public const int MaxModLevel = 10;
         public static bool HasMod(int mod) => ShipMods.Contains(mod);
         /// <summary>How many times the mod is fitted (its level; 0 = none).</summary>
         public static int ModLevel(int mod)
@@ -182,6 +188,9 @@ namespace GoF2Remake.Data
         public static List<WantedState> Wanted = new List<WantedState>();
         /// <summary>Status+0x04: bounties collected per board (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian).</summary>
         public static int[] CollectedBounties = new int[4];
+        /// <summary>Remake: the Pirate activity board's reports (PirateReports) and the next report's id.</summary>
+        public static List<PirateSighting> PirateSightings = new List<PirateSighting>();
+        public static int NextPirateSightingId;
         /// <summary>hints[0x2a] (601, the Terran board), hints 613 (the other boards) and 0x33-0x36 (3232, ships 45-48 at
         /// Quineros) shown, as bits 0 / 1 / 2-5.</summary>
         public static int WantedHints;
@@ -443,6 +452,8 @@ namespace GoF2Remake.Data
             StoryTargets = new List<int>();
             Wanted = new List<WantedState>();
             CollectedBounties = new int[4];
+            PirateSightings = new List<PirateSighting>();
+            NextPirateSightingId = 0;
             WantedHints = 0;
             HiddenBlueprintsFound = 0;
             VoidInvasionSystem = VoidInvasionStation = -1;

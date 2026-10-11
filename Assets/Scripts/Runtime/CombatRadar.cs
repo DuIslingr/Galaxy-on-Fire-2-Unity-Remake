@@ -197,7 +197,15 @@ namespace GoF2Remake.Flight
                     if (traffic != null)
                         foreach (var s in traffic.Ships)
                         {
-                            if (s.Gone || !s.Target.Alive || s.Hidden || s.RadarHidden || s.DockingType > 0 || s.Asleep) continue;
+                            // Radar::draw: a fighter dying with cargo (KIPlayer+0x48) is salvage until it explodes.
+                            if (s.DyingWithCargo && !s.Gone && !s.Hidden && !s.RadarHidden)
+                            {
+                                if (InBox(cam, c, box, s.transform.position, out float dd) && dd < stealD) { stealD = dd; bestSteal = s; }
+                                continue;
+                            }
+                            // KIPlayer untargetable (a Rhino's / Myfft's turret, Level::createFighterTurrets): no lock; it was
+                            // locked, dropped and locked again every frame, so the Rhino under it couldn't be scanned.
+                            if (s.Gone || !s.Target.Alive || s.Hidden || s.RadarHidden || s.DockingType > 0 || s.Asleep || s.Target.untargetable) continue;
                             if (!InBox(cam, c, box, s.transform.position, out float d)) continue;
                             // KIPlayer+0x20: a disabled ship with cargo is salvage (it wins over the ship locks).
                             if (s.Hp.empDisabled && s.HasCargo) { if (d < stealD && (Salvaging == null || Salvaging.stolenFrom != s)) { stealD = d; bestSteal = s; } }
@@ -375,8 +383,9 @@ namespace GoF2Remake.Flight
                 if (beamLoop.isPlaying) beamLoop.Stop();
                 return;
             }
-            // TractorBeam::update: a living ship's cargo is let go when the ship dies.
-            if (Salvaging.stolenFrom != null && (!Salvaging.stolenFrom.Target.Alive || Salvaging.stolenFrom.Gone))
+            // TractorBeam::update lets go when the ship is gone (Player::isActive); a dying one keeps its crate coming, which
+            // becomes the ship's crate when it explodes (NpcShip.DropCrate).
+            if (Salvaging.stolenFrom != null && ((!Salvaging.stolenFrom.Target.Alive && !Salvaging.stolenFrom.Dying) || Salvaging.stolenFrom.Gone))
             {
                 Destroy(Salvaging.gameObject);
                 Salvaging = null;
@@ -424,7 +433,9 @@ namespace GoF2Remake.Flight
             }
             int free = Shop.FreeCargo(db);
             var ship = crate.stolenFrom;
-            int want = ship != null ? UnityEngine.Random.Range(0, entry.amount) : entry.amount;
+            // KIPlayer::captureCrate: rnd(amount) only from a living ship; a dying one gives it all and leaves no crate.
+            int want = ship != null && ship.Target.Alive ? UnityEngine.Random.Range(0, entry.amount) : entry.amount;
+            if (ship != null && !ship.Target.Alive) ship.LootTaken();
             int n = Mathf.Max(1, Mathf.Min(want, free));
             n = Mathf.Min(n, entry.amount);
             bool friend = ship != null ? ship.Target.friendToPlayer : crate.fromFriend;
@@ -454,6 +465,23 @@ namespace GoF2Remake.Flight
             if (crate.race == Standing.Void) Session.AlienRemainsCollected += n;
             else if (Session.IsBooze(entry.item)) Session.BoozeTypes.Add(entry.item);
             Message?.Invoke($"{n}t {GameNames.Item(entry.item)}", 2);
+            // Remake: a crate of several stacks (the remake's own: a capital ship's, a pirate outpost's by tier; the
+            // original's crates hold one) gives every one of them, as far as the hold has room (it used to give the first).
+            if (ship == null && !crate.missionCrate)
+                foreach (var more in crate.loot)
+                {
+                    if (more == entry || more.amount <= 0) continue;
+                    int room = Shop.FreeCargo(db);
+                    if (room <= 0) { Message?.Invoke(Localization.Get(322), 1); break; }
+                    int k = Mathf.Min(more.amount, room);
+                    more.amount -= k;
+                    var mountedMore = db.Item(more.item)?.TypeId == 1 ? Session.Equipment.Find(e => e.item == more.item) : null;
+                    if (mountedMore != null) mountedMore.amount += k; else Shop.AddToCargo(more.item, k);
+                    Session.CratesSalvaged += k;
+                    if (crate.race == Standing.Void) Session.AlienRemainsCollected += k;
+                    else if (Session.IsBooze(more.item)) Session.BoozeTypes.Add(more.item);
+                    Message?.Invoke($"{k}t {GameNames.Item(more.item)}", 2);
+                }
             crate.CapturedHere?.Invoke();   // multiplayer: the capture reaches the crate's owner (NetCrate)
             Destroy(crate.gameObject);
         }

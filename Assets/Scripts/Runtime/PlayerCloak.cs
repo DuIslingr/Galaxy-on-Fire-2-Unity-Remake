@@ -42,7 +42,7 @@ namespace GoF2Remake.Flight
         AudioSource sfx;
         static InputAction action => GameControls.Cloak;   // rebindable (C / right stick press)
         readonly List<(Renderer r, Material[] original, Material[] cloak)> hull = new List<(Renderer, Material[], Material[])>();
-        readonly CloakGlow glow = new CloakGlow();
+        readonly CloakGlow glow = new CloakGlow { KeepEngine = true };   // #85: the engine glow stays
         bool swapped;
 
         public static bool HasCloak(Database db, int ship) =>
@@ -74,7 +74,7 @@ namespace GoF2Remake.Flight
             {
                 if (r is ParticleSystemRenderer) continue;
                 var mats = r.sharedMaterials;
-                bool lit = mats.Length > 0 && mats[0] != null && mats[0].shader != null && mats[0].shader.name.Contains("Lit");
+                bool lit = mats.Length > 0 && mats[0] != null && mats[0].shader != null && (mats[0].shader.name.Contains("Lit") || mats[0].shader.name == "GoF2/Hull");   // the hull (GoF2/Hull: URP Lit + the original's reflection)
                 if (!lit) { glow.Add(r, model); continue; }
                 if (shader == null) continue;
                 var cloak = new Material[mats.Length];
@@ -99,6 +99,26 @@ namespace GoF2Remake.Flight
             GoF2Remake.Visuals.CloakPass.Request(this, false);
             foreach (var h in hull) foreach (var m in h.cloak) Destroy(m);
         }
+
+        /// <summary>Remake (Settings.EmpBreaksCloak): an EMP hit drops the cloak at once (no fade) or ends its charge, then
+        /// the cooldown; "Cloak disrupted!". A phase cloak is out of the EMP's reach anyway (Target.phased).</summary>
+        public void Break()
+        {
+            if (Rules == null || !Settings.EmpBreaksCloak) return;
+            bool cloaked = Rules.Cloaked;
+            if (!Rules.Break()) return;
+            if (cloaked)
+            {
+                target.cloaked = false;
+                target.phased = false;
+                Play();
+                Swap(false);
+            }
+            Message?.Invoke(Localization.Extra("cloakDisrupted", "Cloak disrupted!"));
+        }
+
+        /// <summary>The ship's cloak, if it has one (the player's ship root).</summary>
+        public static PlayerCloak Of(Component c) => c != null ? c.GetComponentInParent<PlayerCloak>() : null;
 
         /// <summary>MGame::useCloak -> PlayerEgo::toggleCloaking.</summary>
         public void Use()

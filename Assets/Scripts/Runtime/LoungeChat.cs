@@ -135,7 +135,11 @@ namespace GoF2Remake.Data
             }
             if (a.offer == AgentOffer.SellMod && !ModForSale(a.sellMod))
             {
-                Text = T(858);   // the mod is already on this hull (and stacking is off)
+                // The mod is already on this hull (and stacking is off), or (remake) at the top level.
+                Text = Settings.KaamoStacking && Session.ModLevel(a.sellMod) >= Session.MaxModLevel
+                    ? string.Format(Localization.Extra("kaamoModMaxed", "That's as far as I can take it: your #SHIP_NAME already has this upgrade at level {0}."),
+                                    Session.MaxModLevel).Replace("#SHIP_NAME", ItemInfo.ShipName(Session.ShipIndex))
+                    : T(858);
                 closing = true;
                 SetChoices();
                 return;
@@ -340,18 +344,26 @@ namespace GoF2Remake.Data
         }
 
         /// <summary>Agent::getModPricePercentage 0x1a698c: the ship's price x 20 / 30 / 40 / 20 % (mods 0..3); remake
-        /// (Settings.KaamoStacking): x2 for every level already fitted, capped at int.MaxValue.</summary>
+        /// (Settings.KaamoStacking): x2 for every level already fitted, capped at int.MaxValue. A ship without a price is
+        /// valued at UnpricedShipValue.</summary>
         int ModPrice(Agent a)
         {
             int[] pct = { 20, 30, 40, 20 };
             int ship = db.Ship(Session.ShipIndex)?.price ?? 0;
+            if (ship <= 0) ship = UnpricedShipValue;
             if (a.sellMod < 0 || a.sellMod >= pct.Length) return a.sellPrice;
             double price = (double)ship * pct[a.sellMod] / 100 * System.Math.Pow(2, Session.ModLevel(a.sellMod));
             return price >= int.MaxValue ? int.MaxValue : (int)price;
         }
 
-        /// <summary>The mechanic still has something to fit: the mod isn't on this hull, or upgrades stack.</summary>
-        static bool ModForSale(int mod) => !Session.HasMod(mod) || Settings.KaamoStacking;
+        /// <summary>Remake (players' feedback, 2026-10): the Cronus (37), Khador's gift at step 77, has no price, so its upgrades
+        /// cost 0 at every level (the original's too, at its single level); valued between its sister ships from Khador's
+        /// yard, the Typhon (1 666 667) and the Nemesis (3 400 000). Any other ship without a price (a mod's) the same.</summary>
+        const int UnpricedShipValue = 2500000;
+
+        /// <summary>The mechanic still has something to fit: the mod isn't on this hull, or upgrades stack and it is below
+        /// Session.MaxModLevel.</summary>
+        static bool ModForSale(int mod) => !Session.HasMod(mod) || (Settings.KaamoStacking && Session.ModLevel(mod) < Session.MaxModLevel);
 
         /// <summary>786 + type (#P, #Q, #S, #N; Recovery / Salvage + 802) and the reward line with #C = reward + the current
         /// bonus (+ 767 with the bonus percentage). Challenge: 798 only.</summary>
@@ -498,7 +510,7 @@ namespace GoF2Remake.Data
 
         /// <summary>Remake, AgentOffer.SellShip after the confirmation: 'keep' = 331 (the old hull to the Kaamo Club, the full
         /// price), else the trade-in (the seller takes the old hull). Null when bought, else the refusal (328 / 203 / 336).</summary>
-        public string ConfirmShipTrade(bool keep)
+        public string ConfirmShipTrade(bool keep, bool moveEquipment = false)
         {
             var a = Agent;
             var h = TradeHangar();
@@ -508,7 +520,7 @@ namespace GoF2Remake.Data
             if (r == Hangar.Result.Passengers) return T(336);
             if (r == Hangar.Result.SameShip) return T(329);
             if (r == Hangar.Result.NoCredits) return T(203).Replace("#C", C(need));
-            if (!(keep ? h.KeepAndBuyShipFor(a.sellShip, a.sellPrice) : h.BuyShipFor(a.sellShip, a.sellPrice))) return T(858);
+            if (!(keep ? h.KeepAndBuyShipFor(a.sellShip, a.sellPrice, moveEquipment) : h.BuyShipFor(a.sellShip, a.sellPrice))) return T(858);
             a.accepted = true;
             BoughtShip = true;
             Text = T(850 + Random.Range(0, 3));

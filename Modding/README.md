@@ -351,7 +351,7 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `armor`, `cargo`, `handling` | Hull points, hold size (t), handling (the originals use 60 to 160). |
 | `price`, `priceDefault` | The price, and the price in the Default Economy (0 = the same). |
 | `slots` | `primary`, `secondary`, `turret`, `equipment`. A ship may have several turret slots, one per turret mount. |
-| `model` | **Required.** The ship's model, a `.glb` (or `.gltf`) file in the mod. |
+| `model` | **Required.** The ship's model, a `.glb` (or `.gltf`) file in the mod. Shots hit its real shape, and the player's ship slides along it: every mesh counts except those with an additive / glow material, so keep invisible helper meshes out of the file. |
 | `modelLength`, `modelYaw` | Its length nose to tail in game units (the Phantom is about 1000; 20 units = 1 m), and a turn in degrees when the model's nose doesn't point forward (+Z). The model is scaled to that length. |
 | `icon` | The shop icon, a PNG of 180 x 88 like the originals (the ship on the plate). None = the Phantom's. |
 | `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). A customizable ship's is measured from its build instead. |
@@ -363,6 +363,11 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `lounge` | Optional. A visitor in the Space Lounges sells it: in systems of `systemRace` (-1 = any), from story step `minCampaign` (in free play from rank `minRank`), `chance` % each time a bar fills with new visitors. |
 | `dealer` | Optional. The ordinary ship dealers may stock it: `{ "chance": 2, "systemRace": -1, "minTechLevel": 0 }`, `chance` % (decimals allowed) each time a station's dealer list is made, at stations of `systemRace` systems (-1 = any) with at least that tech level. Not the special yards (Kothar, Quineros, Thynome...). |
 | `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges). |
+
+Ship and station materials get the original game's hull shine: the system's reflection and a rim light, stronger where
+the surface is smoother (the smoothness / alpha of the metallic map), like the game's own ships; metal parts reflect
+through the normal lighting instead. A custom hangar or bar (interiors.json) has none, like the game's rooms. A mod system
+reflects its template system's sky.
 
 The model's own materials (base colour, metallic-roughness with its metallic / roughness factors, normal map, emission,
 transparency) are used as they are. glTF
@@ -721,7 +726,7 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `modelYaw` | Degrees to turn the model about its up axis. A launch leaves along the station's front (the model's +Z after the turn, toward the orbit's planet); arrivals come from there too. |
 | `modelCentre` | `true` (default): the middle of the model is the station's centre; `false`: the model's own origin is. |
 | `materials` | Replace the model's materials on parts it names, like [ships.json's materials](#materials). |
-| `collision` | What ships bump into: `"box"` (default, the model's bounds), `"sphere"`, or `"none"`. |
+| `collision` | What ships bump into: `"box"` (default, the model's bounds), `"sphere"`, or `"none"`. The player's ship collides with your model's real shape (its meshes, except additive / glow materials); the box or sphere is what NPC fighters steer around. `"none"` turns both off. |
 | `volumes` | Instead of `collision`, your own shapes in game units around the station's centre: `[{ "box": [x, y, z, half x, half y, half z] }, { "sphere": [x, y, z, radius] }]`. Boxes stay axis-aligned, like the originals'. |
 | `interior` | The hangar and bar you see when docked: `"terran"`, `"vossk"`, `"nivelian"`, `"midorian"` (or 0-3). Default: those of its system's race. |
 | `hangar`, `bar` | Your own hangar / bar room from `interiors.json` (see [Hangars and bars](#hangars-and-bars)): its id, or `"mod_id:interior_id"` for another mod's. `interior` still picks the race whose ships park there. |

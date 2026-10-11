@@ -491,6 +491,7 @@ namespace GoF2Remake.Multiplayer
                 obstacle.volumes.Add(CollisionVolume.Sphere(Vector3.zero, size * CollisionScale));
             }
             model.SetActive(shown);
+            HullCollision.Attach(model, target, obstacle);   // shots hit and the local ship slides along its real shape
             BuildTurret();
             // Its look and sound: the exhaust, the cloak, the engine loop (3D, at space distances).
             asm = model.GetComponent<AssembledObject>();
@@ -499,7 +500,7 @@ namespace GoF2Remake.Multiplayer
                                                () => boost.Value, () => cloak.Value,
                                                mounts: kitBuild != null ? Modding.ModShipKits.MountsShown(Database.Load(), index, 3, kitBuild) : null);
             cloakLook?.Dispose();
-            cloakLook = new World.NpcCloak(model.transform);
+            cloakLook = new World.NpcCloak(model.transform, keepEngine: true);
             if (engineLoop != null) Destroy(engineLoop);
             engineLoop = World.HangarFlight.AddEngine(model, true, Database.Load(), index, out engineVolume);
             if (engineLoop != null) EngineVoices.Setup3D(engineLoop);   // the engine events' rolloff (0.05 .. 500 m) in space
@@ -566,6 +567,7 @@ namespace GoF2Remake.Multiplayer
             if (from == null || from.Station != Station || !PvpWith(from)) return;   // only where players may fight
             var hp = level != null && level.Health != null && level.Health.Target != null ? level.Health.Target.hitpoints : null;
             if (hp == null || !hp.Alive || level.Health.Target.phased) return;   // a phase cloak: it passes through
+            PlayerCloak.Of(level.Health)?.Break();   // remake (Settings.EmpBreaksCloak, the session's): the cloak drops
             NetAggression.Hit(shooter, emp);
             hp.shield = Mathf.Max(0f, hp.shield - emp);
             empShockMs = 1500f;
