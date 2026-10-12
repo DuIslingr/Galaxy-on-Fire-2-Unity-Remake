@@ -52,6 +52,7 @@ namespace GoF2Remake.Modding
             public string where, localId, key, overrideRef, data;   // data: the entry as CustomShipData JSON (no texts / ids)
             public Dictionary<string, string> name, description;
             public bool hasLounge, hasDealer;
+            public ModShipSounds.ShipSounds sounds;   // "sounds" (ModShipSounds), null = none
         }
 
         /// <summary>The parsed content of one mod (read when the mods are scanned, so a broken file shows in the browser).</summary>
@@ -176,6 +177,7 @@ namespace GoF2Remake.Modding
             "extraGlows", "lounge", "dealer", "traffic", "available", "flightStyle", "flight", "kit", "kitType", "build",
             "skins", "weaponColors",   // customizations of a ship without a kit (ModShipKits.CustomizationOf)
             "engineFx",   // Galaxy on Fire 3's engine effect (EngineFx)
+            "sounds",     // the ship's own engine and boost sounds (ModShipSounds)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)
@@ -200,6 +202,7 @@ namespace GoF2Remake.Modding
                     if (!ShipFields.Contains(prop.Name)) mod.Warnings.Add($"{ModJson.Where(prop, ShipsFile)}: unknown field \"{prop.Name}\" (ignored)");
                 foreach (var f in new[] { "race", "armor", "cargo", "price", "priceDefault", "handling", "hangarHeight" }) ModJson.Int(o, f, 0, ShipsFile);
                 ModFlight.CheckShip(o, where, mod, ShipsFile);   // "flightStyle", "flight": per flight style
+                d.sounds = ModShipSounds.ParseShip(o, mod, ShipsFile);
                 if (d.localId != null)
                 {
                     if (!ModManifest.ValidId(d.localId)) throw new ModJsonException($"{where}: the id \"{d.localId}\" may only use a-z, 0-9, _ and -");
@@ -223,7 +226,7 @@ namespace GoF2Remake.Modding
                 }
                 // The rest as CustomShipData (JsonUtility reads it; the texts and ids are the mod's own).
                 var data = (JObject)o.DeepClone();
-                foreach (var k in new[] { "id", "override", "name", "description", "build" }) data.Remove(k);
+                foreach (var k in new[] { "id", "override", "name", "description", "build", "sounds" }) data.Remove(k);
                 try { JsonUtility.FromJson<CustomShipData>(data.ToString()); }
                 catch (Exception e) { throw new ModJsonException($"{where}: {e.Message}"); }
                 d.data = data.ToString();
@@ -401,6 +404,19 @@ namespace GoF2Remake.Modding
                 l.Add((kv.Value.mod, c));
             }
             return l;
+        }
+
+        /// <summary>The ships' own sounds (ships.json "sounds", ModShipSounds) by ship number: new ships' and overrides', the
+        /// later mod in the load order winning.</summary>
+        internal static Dictionary<int, ModShipSounds.ShipSounds> ShipSounds()
+        {
+            EnsureMapping();
+            var r = new Dictionary<int, ModShipSounds.ShipSounds>();
+            foreach (var kv in shipDefAt) if (kv.Value.sounds != null) r[kv.Key] = kv.Value.sounds;
+            foreach (var mod in ModManager.Active)
+                foreach (var d in Parse(mod).ships)
+                    if (d.overrideRef != null && d.sounds != null && TryResolveShip(d.overrideRef, out int t)) r[t] = d.sounds;
+            return r;
         }
 
         /// <summary>The assembly of a mod's model for an original ship (ModelOverrides).</summary>

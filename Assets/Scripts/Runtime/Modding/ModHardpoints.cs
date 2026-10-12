@@ -39,6 +39,7 @@ namespace GoF2Remake.Modding
             public string slot, model;
             public List<string> items = new List<string>();
             public List<int> categories = new List<int>();
+            public ModShipSounds.WeaponSound sound;   // "sound" (ModShipSounds), null = the weapon's own
             public bool Unfiltered => items.Count == 0 && categories.Count == 0;
         }
 
@@ -49,7 +50,7 @@ namespace GoF2Remake.Modding
         }
 
         static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "turret", "weapons" };
-        static readonly HashSet<string> RuleFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "slot", "model", "items", "categories" };
+        static readonly HashSet<string> RuleFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "slot", "model", "items", "categories", "sound" };
         static readonly string[] Slots = { "primary", "secondary", "turret" };
 
         /// <summary>A kit's "hardpoints" (ModShipKits.Read); null without one.</summary>
@@ -73,6 +74,7 @@ namespace GoF2Remake.Modding
                         if (!RuleFields.Contains(prop.Name)) Warn(mod, $"{ModJson.Where(prop, file)}: unknown field \"{prop.Name}\" (ignored)");
                     var rule = new Rule { slot = (ModJson.Str(r, "slot") ?? "").ToLowerInvariant(), model = ModJson.Str(r, "model") ?? "",
                                           items = ModJson.Strings(r, "items") };
+                    rule.sound = ModShipSounds.ParseWeapon(r, mod, file);
                     if (!Slots.Contains(rule.slot)) throw new ModJsonException($"{ewhere}: \"slot\" must be \"primary\", \"secondary\" or \"turret\"");
                     if (rule.model.Length > 0 && !mod.Source.Exists(rule.model)) throw new ModJsonException($"{ewhere}: the model \"{rule.model}\" isn't in the mod");
                     foreach (var c in ModJson.Strings(r, "categories"))
@@ -114,6 +116,16 @@ namespace GoF2Remake.Modding
             if (kit?.hardpoints == null || item == null) return null;
             foreach (var r in kit.hardpoints.weapons)
                 if (r.slot == slot && Matches(r, item)) return r.model.Length > 0 ? r.model : null;
+            return null;
+        }
+
+        /// <summary>The "sound" of the rule that gives 'item' its model on a kit ship (its slot by the item's type), null = none.</summary>
+        public static ModShipSounds.WeaponSound SoundOf(int ship, ItemData item)
+        {
+            var kit = KitOfShip(ship);
+            if (kit == null || item == null) return null;
+            foreach (var r in kit.hardpoints.weapons)
+                if (r.slot == item.type && Matches(r, item)) return r.sound;
             return null;
         }
 

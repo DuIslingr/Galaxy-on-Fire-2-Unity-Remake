@@ -328,7 +328,7 @@ namespace GoF2Remake.Multiplayer
             Target.NetShips.Add(target);
             obstacle = gameObject.AddComponent<Obstacle>();
             obstacle.projectFromVolume = false;
-            mirror = new NetShotMirror(transform, () => target, ThroughSquad, () => WeaponTint.ShipColor(ship.Value, ShownBuild));
+            mirror = new NetShotMirror(transform, () => target, ThroughSquad, () => WeaponTint.ShipColor(ship.Value, ShownBuild), () => ship.Value);
             BuildModel(ship.Value);
             // A mod's ship: this player can arrive before the session's mods are on and their models built (NetMods); the
             // model is built again then.

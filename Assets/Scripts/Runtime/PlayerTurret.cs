@@ -86,6 +86,8 @@ namespace GoF2Remake.Flight
         TurretAim aim;
         Transform muzzle, camAnchor;
         AudioSource loop;
+        /// <summary>Remake mods: the kit hardpoint's sound for this turret (Modding.ModShipSounds), null = the item's own.</summary>
+        Modding.ModShipSounds.WeaponSound modSound;
         Target target, unreachable;
         float pickMs = PickMs, idleMs;
         bool alternate;
@@ -272,6 +274,23 @@ namespace GoF2Remake.Flight
                 loop.loop = fx.shotLoops;
                 loop.playOnAwake = false;
                 loop.spatialBlend = 0f;
+            }
+            modSound = Modding.ModShipSounds.Weapon(shipIndex, item);
+            if (modSound != null)
+            {
+                // A kit turret's own sound: its loop while it fires, else its shots one by one (ShotVoices).
+                if (modSound.loop?.Clip is AudioClip ownLoop)
+                {
+                    if (loop == null)
+                    {
+                        loop = gameObject.AddComponent<AudioSource>();
+                        loop.playOnAwake = false;
+                        loop.spatialBlend = 0f;
+                    }
+                    loop.clip = ownLoop;
+                    loop.loop = true;
+                }
+                else if (loop != null) { Destroy(loop); loop = null; }
             }
             camAnchor = new GameObject(model.name + " camera").transform;
             camAnchor.SetParent(pivot, false);
@@ -470,7 +489,11 @@ namespace GoF2Remake.Flight
                 {
                     rig.OnShot();
                     idleMs = 0f;
-                    if (loop != null && (!loop.isPlaying || !loop.loop)) { loop.volume = 0.7f * Settings.SfxVolume; loop.Play(); }
+                    bool starting = loop != null && (!loop.isPlaying || !loop.loop);
+                    if (starting) { loop.volume = (modSound?.loop != null ? modSound.loop.vol0 : 0.7f) * Settings.SfxVolume; loop.Play(); }
+                    // A mod sound's shot: every shot, or with a loop once as it starts.
+                    if (modSound?.shot is Modding.ModShipSounds.Sound own && (loop == null || starting) && own.Clip is AudioClip shotClip)
+                        ShotVoices.Play(shotClip, own.vol0 * Settings.SfxVolume, own.RandomPitch);
                 }
             }
             idleMs += dtMs;

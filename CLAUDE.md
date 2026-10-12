@@ -1984,6 +1984,22 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   everywhere; `ModSounds.Get(clip)` wraps every `PlayOneShot` and `.clip =` site (57, not the music sources: ModMusic's),
   memoised per clip (AudioClip.name allocates), a no-op without mod sounds; later mods win; loaded decoded
   (`ModAudio.Load(..., compressed: false)`). Verified: `Target_Lock_v08` replaced.
+- **Ship and weapon sounds** (`ModShipSounds`): ships.json `"sounds"` (a new ship or an override; `ShipDef.sounds`,
+  `ModContent.ShipSounds`) = engine / boostStart / boostLoop / boostStop / charger, each a file, a list (random) or { file(s),
+  volume, pitch } with a value or [from, to]; a kit hardpoint rule's `"sound"` { shot, loop, release } (`Rule.sound`,
+  `ModHardpoints.SoundOf` by the item's type as the slot). A file missing under its name is taken in another audio format of
+  the same name (`Resolve`: the ES2 importer always names .ogg and keeps a .wav where it couldn't encode, and lists `audio/` in
+  `multiplayerIgnore`, so builds on different computers still match). Files anywhere in the mod (not `sounds/`, ModSounds' replacements by
+  name), loaded decoded with the rest (`Preload`, counted in `ModLoading`'s sounds). `PlayerEngine.UpdateOwn`: the engine by
+  speed (standstill -> top speed: `MoveSpeed`, free flight `FreeVelocity`), boostStart / Stop on the boost's edges (random pitch
+  in the range), boostLoop by `BoostVisualPercent`, the charger while recharging by `BoostRechargePercent`; a missing one keeps
+  the game's. The engine also for `PlayerEngine.EngineClip` (hangar flights, other players) at 0.6 and NPCs flying the ship
+  (`NpcShip`, event 46's voice slot) at 0.8. Weapons: `WeaponSystem` (`Rig.modSound`: `PlayShot` per shot via ShotVoices, a
+  loop while held with the shot once at its start, released over `release` ms), `PlayerTurret`, `NetShotMirror` (the shooter's
+  ship, `NetPlayer`; a looping rule keeps the weapon's own there). The ES2 importer writes them from EVERSPACE 2's cues
+  (`tools/audio.py`, vgmstream through Wine). Verified in Play mode (the Gunship): every sound loads and resolves per
+  weapon type, the engine plays, a boost runs the loop to pitch 1.5 and the stop, the charger climbs 0.7 -> 1.9 as it refills
+  and stops when full. Not yet: the shots fired by hand, multiplayer.
 - **Textures / skins** (`ModTextures`, a mod's `textures/<game texture name>.png | .jpg`, e.g. `ship_028_terran_diffuse` for
   the Veteran's hull): replaces that texture on every assembled object using it (`AssembledObject.Awake` -> `Apply`: the
   object's renderers get cached copies of their materials with the mod's texture in `_BaseMap` / `_MainTex` / `_BumpMap` /

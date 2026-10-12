@@ -380,6 +380,7 @@ styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way 
 | `dealer` | Optional. The ordinary ship dealers may stock it: `{ "chance": 2, "systemRace": -1, "minTechLevel": 0 }`, `chance` % (decimals allowed) each time a station's dealer list is made, at stations of `systemRace` systems (-1 = any) with at least that tech level. Not the special yards (Kothar, Quineros, Thynome...). |
 | `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void; default its own `race`). Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. |
 | `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges), and before NPCs fly it. |
+| `sounds` | Optional. The ship's own engine and boost sounds, see [Ship sounds](#ship-sounds). |
 
 Ship and station materials get the original game's hull shine: the system's reflection and a rim light, stronger where
 the surface is smoother (the smoothness / alpha of the metallic map), like the game's own ships; metal parts reflect
@@ -390,6 +391,33 @@ The model's own materials (base colour, metallic-roughness with its metallic / r
 transparency) are used as they are. glTF
 from Blender works: File > Export > glTF 2.0, format glTF Binary (.glb), +Y up. Projects made in Unity can use the
 Project window's right-click **GoF2 > Export Model As GLB (Mods)**.
+
+### Ship sounds
+
+`"sounds"` gives a ship (a new one, or an original through `override`) its own engine and boost sounds instead of the game's:
+
+```json
+"sounds": {
+  "engine":     { "file": "audio/engine.ogg", "volume": [0.15, 0.27], "pitch": [0.9, 1.1] },
+  "boostStart": { "file": "audio/boost_start.ogg", "volume": 0.4, "pitch": [0.8, 1.2] },
+  "boostLoop":  { "file": "audio/boost_loop.ogg", "volume": [0.5, 1.0], "pitch": [1.0, 1.5] },
+  "boostStop":  { "file": "audio/boost_stop.ogg", "volume": 0.25 },
+  "charger":    { "file": "audio/boost_charge.ogg", "volume": [0.1, 0.6], "pitch": [0.5, 2.0] }
+}
+```
+
+- `engine`: the engine loop, from its first `volume` / `pitch` at a standstill to the second at top speed. NPCs flying the
+  ship (see `traffic`), its hangar flights and other players' copies of it play it too.
+- `boostStart` / `boostStop`: played once when a boost starts / ends; a `pitch` range is a random pitch in between.
+- `boostLoop`: a loop while boosting, from its first values as the boost starts to its second at full strength.
+- `charger`: a loop while the booster recharges, from empty to full.
+
+Each sound is a file name, a list of files (one at random each time), or `{ "file" (or "files"), "volume", "pitch" }`
+(`volume` / `pitch` a number or `[from, to]`). The files (`.ogg`, `.wav` or `.mp3`) may sit anywhere in the mod, but not in
+`sounds/`, which replaces the game's sounds by name (see [Sound effects](#sound-effects)). A file missing under its name is
+taken in another of those formats of the same name (`audio/engine.ogg` from `audio/engine.wav`), so a tool that can't always
+encode Ogg Vorbis can keep its JSON the same. The volumes are the game's: its
+engine loops play at about 0.27, a booster's start at 0.8, its shots at 0.7. Any sound left out stays the game's.
 
 ### materials
 
@@ -514,7 +542,7 @@ EVERSPACE 2 importer three ES2 thrusters cut from rear parts.
 
 `override`: an original ship's number or another mod's `"mod_id:ship_id"`, with any of `armor`, `cargo`, `price`,
 `priceDefault`, `slots`, `handling`, `name`, `description`, `mounts`, `flightStyle`, `flight` (see
-[Flight styles](#flight-styles)) (and for mod ships `race`, `hangarHeight`).
+[Flight styles](#flight-styles)), `sounds` (see [Ship sounds](#ship-sounds)) (and for mod ships `race`, `hangarHeight`).
 
 **More (or fewer) weapons:** `slots` sets how many primaries, secondaries, turrets and equipment the ship takes (give only the
 ones you change), and `mounts`
@@ -700,7 +728,8 @@ own, at the kit's scale and yaw, with the kit's materials:
     { "slot": "primary", "model": "equipment/beam_laser.glb", "items": [9, 10, 11] },
     { "slot": "primary", "model": "equipment/blaster.glb", "categories": [1] },
     { "slot": "primary", "model": "equipment/pulse_laser.glb" },
-    { "slot": "secondary", "model": "equipment/pod.glb" },
+    { "slot": "secondary", "model": "equipment/pod.glb",
+      "sound": { "shot": { "files": ["audio/launch_1.ogg", "audio/launch_2.ogg"], "volume": 0.5, "pitch": [0.95, 1.05] } } },
     { "slot": "turret", "model": "", "categories": [35] },
     { "slot": "turret", "model": "equipment/coil_gun.glb" }
   ]
@@ -720,6 +749,10 @@ own, at the kit's scale and yaw, with the kit's materials:
   n-th primary weapon on the n-th primary mount), and a node named `muzzle` in it moves that gun's shots to its muzzle. A
   turret weapon goes on the turret's gun with its muzzle on the turret's `muzzle` node. The weapon models show on the player's
   ship in flight and in the hangar, and on other players' ships.
+- `sound` (optional, on a rule): the weapon's sound on this kit's ships instead of the item's own. `shot` plays with every
+  shot (a list of files: one at random; a `pitch` range: a random pitch), `loop` loops while the trigger is held (a beam),
+  with `shot` then played once as it starts, and fades out over `release` ms (default 100) when let go. Each is a sound as in
+  [Ship sounds](#ship-sounds) (`volume` a number; the game's shots play at 0.7). Other players hear it on your shots too.
 
 In the hangars a customizable ship floats at the height its build needs: its lowest point, weapon models hanging under it
 included, 1.5 m above the pad (its `hangarHeight` isn't used), so no build cuts into the floor.
@@ -1297,7 +1330,8 @@ files. Voices are sounds too: a voice line's file name replaces that line (the G
 in front, so each language is replaced on its own). Music has its own `music` folder (above).
 
 A sound the game picks at random from several files (most shots and explosions) needs each file replaced to always sound
-yours. Only a weapon's own shot can be set on the item instead (`fx` → `shot`, above).
+yours. Only a weapon's own shot can be set on the item instead (`fx` → `shot`, above). A ship's own engine and boost sounds are
+[Ship sounds](#ship-sounds), a customizable ship's weapon sounds its hardpoint rules' `sound`.
 
 ## Textures (skins)
 

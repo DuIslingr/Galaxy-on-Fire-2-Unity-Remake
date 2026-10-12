@@ -37,14 +37,16 @@ namespace GoF2Remake.Multiplayer
         readonly System.Func<Target> owner;
         readonly System.Func<Target, bool> ignores;
         readonly System.Func<Color?> weaponColor;
+        readonly System.Func<int> ship;   // the shooter's ship (a kit's hardpoint sounds, ModShipSounds), null = none
 
         /// <param name="muzzleParent">The shooter's model (muzzle flashes), null = none (NPC guns draw none either).</param>
         /// <param name="owner">The shooter's own Target here (its shots pass through it).</param>
         /// <param name="ignores">What the shooter's shots pass through here (its squadmates), null = nothing.</param>
         /// <param name="weaponColor">The shooter's weapon colour (their build's, Flight.WeaponTint), null = none.</param>
         public NetShotMirror(Transform muzzleParent, System.Func<Target> owner = null, System.Func<Target, bool> ignores = null,
-                             System.Func<Color?> weaponColor = null)
+                             System.Func<Color?> weaponColor = null, System.Func<int> ship = null)
         {
+            this.ship = ship;
             this.weaponColor = weaponColor;
             this.muzzleParent = muzzleParent;
             this.owner = owner;
@@ -97,6 +99,13 @@ namespace GoF2Remake.Multiplayer
             {
                 if (soundItem < 0) soundItem = item;
                 if (item != soundItem) return;
+            }
+            // Remake mods: the shooter's kit hardpoint sound (ModShipSounds; a looping one keeps the weapon's own here).
+            var ownSound = ship != null ? Modding.ModShipSounds.Weapon(ship(), Database.Load().Item(item)) : null;
+            if (ownSound?.shot is Modding.ModShipSounds.Sound own && ownSound.loop == null)
+            {
+                if (own.Clip is AudioClip ownClip) ShotVoices.PlayAt(ownClip, position, own.vol0 * 0.8f / 0.7f);
+                return;
             }
             var clip = m.fx != null ? m.fx.Shot : null;
             if (clip != null) ShotVoices.PlayAt(clip, position, 0.8f);
