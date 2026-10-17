@@ -20,7 +20,7 @@ namespace GoF2Remake.Multiplayer
                          CapitalShips = SessionRules.CapitalShips, InformerOriginalRule = SessionRules.InformerOriginalRule,
                          KaamoStacking = SessionRules.KaamoStacking, KaamoKeepsEquipment = SessionRules.KaamoKeepsEquipment,
                          CloakBay = SessionRules.CloakBay, EmpBreaksCloak = SessionRules.EmpBreaksCloak,
-                         SmarterNpcTargeting = SessionRules.SmarterNpcTargeting;
+                         SmarterNpcTargeting = SessionRules.SmarterNpcTargeting, PreciseShipCollision = SessionRules.PreciseShipCollision;
 
         /// <summary>One rule: its bit, the server setting's key, the command-line flag that sets it the other way from
         /// its default, the server window's label, and the option's default.</summary>
@@ -42,6 +42,7 @@ namespace GoF2Remake.Multiplayer
             new Rule { bit = CloakBay, key = "cloakbay", flag = "-nocloakbay", label = "Cloak bay on cloaking ships", fallback = true },
             new Rule { bit = EmpBreaksCloak, key = "empcloak", flag = "-noempcloak", label = "EMP breaks cloaks", fallback = true },
             new Rule { bit = SmarterNpcTargeting, key = "smarttargeting", flag = "-originaltargeting", label = "Smarter NPC targeting", fallback = true },
+            new Rule { bit = PreciseShipCollision, key = "precisecollision", flag = "-originalcollision", label = "Precise ship collision", fallback = true },
         };
 
         /// <summary>Every rule at its option's default (a dedicated server's start).</summary>
@@ -125,8 +126,8 @@ namespace GoF2Remake.Multiplayer
         public const string FlightKey = "flightmodel", FlightFlag = "-flightmodel",
                             FlightLabel = "Flight model: gof2 (the game's), es2 (EVERSPACE 2 style) or player (each player's own)";
 
-        /// <summary>The server's flight model (SessionRules.ParseFlight's values; NetGame.StartHost: the game's;
-        /// DedicatedServer.Boot: -flightmodel, else the game's; an admin's /flightmodel or /set flightmodel). NetState carries
+        /// <summary>The server's flight model (SessionRules.ParseFlight's values; NetGame.StartHost: SessionRules.DefaultFlight,
+        /// each player's own; DedicatedServer.Boot: -flightmodel, else the default; an admin's /flightmodel or /set flightmodel). NetState carries
         /// it.</summary>
         public static int HostFlight { get; set; } = SessionRules.DefaultFlight;
 
