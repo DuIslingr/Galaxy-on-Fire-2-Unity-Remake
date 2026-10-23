@@ -588,8 +588,7 @@
 /* Remake: a blueprint ingredient's sides as wide as their text (the fixed 110px broke "12 / 40 t" and ADD in two),
    up to half the box before they wrap. */
 .trade-box--ingredient .trade-side {
-    width: auto;
-    max-width: 50%;
+    width: 110px;
     flex-shrink: 0;
 }
 
@@ -1165,3 +1164,31 @@
 .layout-compact .detail-preview-side {
     width: 44%;
 }
+
+/* Manufacturing v0.3: keep the two inventories on a single row like the ordinary shop. */
+.trade-box--ingredient .trade-side--right {
+    width: 150px;
+    flex-shrink: 0;
+}
+.trade-box--ingredient .trade-side-value {
+    white-space: nowrap;
+}
+
+/* Production actions: same visual language as the game's arrows, with distinct purpose colours. */
+.manufacturing-shop, .manufacturing-autocomplete, .manufacturing-complete {
+    border-width: 2px;
+    border-radius: 4px;
+    padding: 12px 14px;
+    margin-top: 6px;
+    letter-spacing: 2px;
+    background-color: rgba(4, 10, 18, 0.72);
+    color: #FFFFFF;
+    -unity-text-align: middle-center;
+}
+.manufacturing-shop { border-color: #49D66E; background-color: rgba(36, 100, 54, 0.30); }
+.manufacturing-autocomplete { border-color: var(--gof-amber); background-color: rgba(165, 93, 24, 0.30); }
+.manufacturing-complete { border-color: var(--gof-cyan); background-color: rgba(20, 100, 148, 0.30); }
+.manufacturing-complete.detail-action--disabled { opacity: 0.4; }
+.can-hover .manufacturing-shop:hover { background-color: rgba(36, 100, 54, 0.48); }
+.can-hover .manufacturing-autocomplete:hover { background-color: rgba(165, 93, 24, 0.48); }
+.can-hover .manufacturing-complete:hover { background-color: rgba(20, 100, 148, 0.48); }
