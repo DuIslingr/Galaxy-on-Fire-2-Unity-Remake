@@ -129,6 +129,10 @@ namespace GoF2Remake.Modding
             if (fx != null)
                 foreach (var f in new[] { fx.glow, fx.cone, fx.trail, fx.spiral })
                     if (!string.IsNullOrEmpty(f)) yield return (f, false, false);
+            if (!string.IsNullOrEmpty(fx?.meshes))
+                foreach (var f in EngineModels.Textures(s.mod, fx.meshes)) yield return (f, true, false);
+            foreach (var em in new[] { fx?.trailParticles, fx?.contrailParticles })
+                if (em?.Any == true) yield return (em.texture, true, false);
         }
 
         static async Task LoadOne(int rev, ModWorld.StationModel s)

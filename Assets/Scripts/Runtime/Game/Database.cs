@@ -382,8 +382,38 @@ namespace GoF2Remake.Data
         public float spiralIntensity = 1f;
         public float[] color;                // RGB 0..1, for mounts without glowColor and ships without engineGlowColor
         public float[] flareColor, coneColor, trailColor, spiralColor;   // RGB 0..1, each part's own (default: the engine's colour)
-        public bool Any => !string.IsNullOrEmpty(glow) || !string.IsNullOrEmpty(cone) || !string.IsNullOrEmpty(trail) || !string.IsNullOrEmpty(spiral);
+        public string meshes;                // GoF3's engine as the game draws it (Modding.EngineModel: its parts' meshes, textures
+                                             // and shader options, from the GoF3 importer), in place of the glow, cone and helix;
+                                             // the trails still drawn when given
+        public float meshScale = 1f;         // game units per unit of the meshes (GoF3's: 53.5)
+        public float meshGlow = 1f;          // x the meshes' brightness (GoF3 draws them into an 8-bit frame: 1 = never past
+                                             // white, more blooms)
+        public CustomForkEmitter trailParticles;     // GoF3's engine trail as its Fork particles (in place of "trail"), at each exhaust
+        public CustomForkEmitter contrailParticles;  // GoF3's contrails, at the "contrails" points
+        public CustomForkEmitter boostParticles;     // GoF3's booster flash at each exhaust, emitted only while boosting
+        public float[] contrails;            // [x, y, z, ...] game units from the ship's centre (position_engine's axes)
+        public bool Any => !string.IsNullOrEmpty(glow) || !string.IsNullOrEmpty(cone) || !string.IsNullOrEmpty(trail) || !string.IsNullOrEmpty(spiral)
+                           || !string.IsNullOrEmpty(meshes) || trailParticles?.Any == true || contrailParticles?.Any == true || boostParticles?.Any == true;
         public float NozzleRadius => nozzle > 0f ? nozzle : coneWidth;
+    }
+
+    /// <summary>Remake mods: one Fork Particle Studio emitter of Galaxy on Fire 3 (its .psb's EData, the GoF3 importer's
+    /// tools/fork_psb.py), as GoF3's Fork runtime runs it (Modding.EngineFx): particles born at the emitter at 'rate' a second,
+    /// spread along the path it moved, still where they were born (speed 0: a wake), each living 'life' seconds, sized
+    /// start -> mid (at 'sizeMidTime' of its life) -> end, coloured through four keys at 'colorTimes', drawn additively
+    /// with 'texture' stretched along the wake. Sizes in the units of the engineFx's "meshScale".</summary>
+    [System.Serializable] public class CustomForkEmitter
+    {
+        public string texture;               // a PNG in the mod
+        public float[] life;                 // [min, max] seconds
+        public float[] sizeStart, sizeMid, sizeEnd;   // [min, max]
+        public float sizeMidTime = 0.5f;
+        public float[] colors;               // 4 x rgba (0..1, gamma as GoF3 draws them)
+        public float[] colorTimes;           // 4 shares of the life (0, a, b, 1)
+        public float rate = 30f;             // particles a second
+        public int max = 100;                // the most alive per emitter
+        public bool local;                   // the particles ride with the emitter (else they stay where they were born)
+        public bool Any => !string.IsNullOrEmpty(texture) && life != null && life.Length >= 1 && life[0] > 0f;
     }
 
     [System.Serializable] public class AssemblyData

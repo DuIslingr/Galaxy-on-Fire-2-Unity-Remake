@@ -173,8 +173,13 @@ namespace GoF2Remake.Modding
             foreach (var e in exhausts)
             {
                 if (e.IsFlame) tasks.Add(LoadKit(rev, e.kit, new[] { e.model }));
-                else foreach (var f in new[] { e.fx.glow, e.fx.cone, e.fx.trail, e.fx.spiral })
-                    if (!string.IsNullOrEmpty(f)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, false, false, false));
+                else
+                {
+                    foreach (var f in new[] { e.fx.glow, e.fx.cone, e.fx.trail, e.fx.spiral })
+                        if (!string.IsNullOrEmpty(f)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, false, false, false));
+                    if (!string.IsNullOrEmpty(e.fx.meshes))
+                        foreach (var f in EngineModels.Textures(e.mod, e.fx.meshes)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, true, false, false));
+                }
             }
             await Task.WhenAll(tasks);
             if (rev != ModManager.Revision) return;   // the mods changed meanwhile: a newer load runs
@@ -183,7 +188,7 @@ namespace GoF2Remake.Modding
             {
                 try
                 {
-                    await Task.WhenAll(TexturesOf(c).Select(t => ModMaterials.PreloadTexture(mod, t.path, t.linear, t.readable, t.normal)));
+                    await Task.WhenAll(TexturesOf(c, mod).Select(t => ModMaterials.PreloadTexture(mod, t.path, t.linear, t.readable, t.normal)));
                     if (rev != ModManager.Revision || holder == null) return;
                     var icon = ModMaterials.Texture(mod, c.icon, false);
                     if (icon != null) icons[c.index] = icon;
@@ -200,7 +205,7 @@ namespace GoF2Remake.Modding
         }
 
         /// <summary>The PNGs a ship's entry uses, with how they are read (ModMaterials.FromSpec, the throttle glow masks).</summary>
-        static IEnumerable<(string path, bool linear, bool readable, bool normal)> TexturesOf(CustomShipData c)
+        static IEnumerable<(string path, bool linear, bool readable, bool normal)> TexturesOf(CustomShipData c, ModInfo mod)
         {
             if (!string.IsNullOrEmpty(c.icon) && !GameModels.Is(c.icon)) yield return (c.icon, false, false, false);
             if (c.materials != null)
@@ -224,6 +229,11 @@ namespace GoF2Remake.Modding
             if (c.engineFx != null)
                 foreach (var f in new[] { c.engineFx.glow, c.engineFx.cone, c.engineFx.trail, c.engineFx.spiral })
                     if (!string.IsNullOrEmpty(f)) yield return (f, false, false, false);
+            // GoF3's own engine meshes' textures, read raw as GoF3 reads them (EngineModel)
+            if (!string.IsNullOrEmpty(c.engineFx?.meshes))
+                foreach (var f in EngineModels.Textures(mod, c.engineFx.meshes)) yield return (f, true, false, false);
+            foreach (var em in new[] { c.engineFx?.trailParticles, c.engineFx?.contrailParticles })
+                if (em?.Any == true) yield return (em.texture, true, false, false);
             if (c.addParts != null)
                 foreach (var p in c.addParts) if (p != null && !string.IsNullOrEmpty(p.texture)) yield return (p.texture, false, false, false);
         }
@@ -264,7 +274,7 @@ namespace GoF2Remake.Modding
             {
                 if (rev != ModManager.Revision) return;
                 var textures = new List<Task>();
-                foreach (var (path, linear, readable, normal) in TexturesOf(c)) textures.Add(ModMaterials.PreloadTexture(mod, path, linear, readable, normal));
+                foreach (var (path, linear, readable, normal) in TexturesOf(c, mod)) textures.Add(ModMaterials.PreloadTexture(mod, path, linear, readable, normal));
                 bool gameModel = GameModels.Is(c.model);
                 var file = string.IsNullOrEmpty(c.model) || gameModel ? Task.FromResult<byte[]>(null) : Task.Run(() => mod.Source.ReadBytes(c.model));
                 await Task.WhenAll(textures);

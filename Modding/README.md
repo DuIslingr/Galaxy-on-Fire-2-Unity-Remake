@@ -779,6 +779,57 @@ textures.
               "glowSize": [238, 714, 72], "coneLength": 647, "coneWidth": 87 }
 ```
 
+#### Galaxy on Fire 3's engines as the game draws them (`meshes`)
+
+`"meshes": "fx/engines/<name>.json"` draws an engine part by part as Galaxy on Fire 3 itself does, in place of `glow`,
+`cone` and `spiral` (which then only stand in if the file can't be read; the `trail` streams are still drawn on top). The
+GoF3 Ships mod's importer writes these files from the game's engine scenes (`tools/engine_meshes.py`); you can write your
+own. Each part has its own mesh and the options of the shader Galaxy on Fire 3 compiled for its material:
+
+| Part field | |
+|---|---|
+| `name`, `pos`, `rot`, `scale` | Its place in the engine's frame: `+z` runs backward along the exhaust from the nozzle, in the file's units (`rot` a quaternion x y z w). |
+| `v`, `n`, `uv`, `c`, `i` | Its mesh: positions, normals, UVs, vertex colours (r g b a, 0 to 1) and triangles. |
+| `o`, `sprite` | A sprite: every vertex sits at the part's centre and is pushed out by its offset (`o`, 2 per vertex) facing the camera, sized by the engine's scale. |
+| `texture`, `useTex`, `flowMap`, `flow` | Its picture (a PNG in the mod, read as stored, as GoF3 does) or, without one, its `diffuse` colour; a flow map's red / green push the picture around (`flowStrength`, `flowTiling`). |
+| `diffuse`, `lumAlpha`, `rgbFromDc`, `mulDc` | GoF3's DiffuseColor: the picture's alpha times its brightness, the picture's colour replaced by `diffuse`, the picture times `diffuse`. |
+| `opacity`, `alpha` | Its brightness (above 1 is allowed: GoF3 caps each pixel at white) and Alpha_Value. |
+| `colorize`, `c1`, `c2`, `colorizeMul`, `colorizeVtx` | Colourising by the picture's red: 1 multiplies by `mix(c1, c2, red) x colorizeMul`, 2 tints (`rgb x (rgb + colour x (1 - rgb) x colorizeMul)`); `colorizeVtx` uses the vertex colour for `c1`. |
+| `angle`, `angleMin`, `angleMax` | Fading by the angle to the camera: 1 how squarely the face is seen (either side), 2 seen from its back, 3 from its front, mapped `angleMin` (gone) to `angleMax` (full). |
+| `pulsate`, `pulseMin`, `pulseMax`, `pulseFreq` | Pulsing: `|sin(time x pulseFreq)|` kept between the two. |
+| `uvSpeed`, `scrollDirect`, `scrollFlow` | The picture or the flow map scrolling `uvSpeed` [u, v] a second. |
+| `vertexAnim`, `vaFreq`, `vaStrength` | Vertices wobbling along their normals (by their vertex alpha). |
+| `blend` | 2 additive (default), 1 alpha blended. |
+| `anims` | `[ { "kind": "loop" \| "ignite" \| "off", "length": ms, "channels": [ { "name": "rotation.x".."w" \| "translation.x".."z" \| "scale.x".."z" \| "alpha", "keys": [ms, value, ms, value, ...] } ] } ]`: `loop` plays all the time (a spiral turning), `ignite` as the engines light and as a boost starts, `off` as they go out. |
+
+| `engineFx` field | |
+|---|---|
+| `meshes` | The file. |
+| `meshScale` | Game units per unit of the file (Galaxy on Fire 3's: 53.5). Each exhaust's `fxScale` sizes it further. |
+| `meshGlow` | Brightness multiplier (default 1; above 1 blooms). |
+
+The parts follow the engines like the other effects: they fade out when the engines are off, are a little shorter at idle,
+and shaped to each exhaust's `outline` (all but sprites).
+
+#### Galaxy on Fire 3's trails, contrails and booster flash (`trailParticles`, `contrailParticles`, `boostParticles`)
+
+Particle emitters as Galaxy on Fire 3's Fork Particle runtime runs them (the GoF3 Ships mod's importer reads them from the
+game's `.psb` files, `tools/fork_psb.py`). Particles are born at `rate` a second, spread along the path the emitter moved
+since the last frame, and stay where they were born, so they lie along the wake; each is drawn as a quad facing the camera,
+stretched along the wake, additively. `trailParticles` runs at every exhaust (in place of `trail`), `contrailParticles` at
+the points in `contrails`, `boostParticles` at every exhaust only while boosting.
+
+| Field | |
+|---|---|
+| `texture` | A PNG in the mod (read as stored). |
+| `life` | `[min, max]` seconds each particle lives. |
+| `sizeStart`, `sizeMid`, `sizeEnd`, `sizeMidTime` | `[min, max]` each, in the units of `meshScale`, the middle one at `sizeMidTime` of its life. |
+| `colors`, `colorTimes` | Four colour keys (16 numbers, r g b a) at four shares of the life (`[0, a, b, 1]`). |
+| `rate`, `max` | Particles a second; the most alive at once. |
+| `local` | `true`: the particles ride with the ship instead of staying behind. |
+
+`"contrails": [x, y, z, ...]`: the contrail points, game units from the ship's centre (as `position_engine`).
+
 ### Exhaust styles
 
 `exhausts.json` offers engine effects to **every** ship: in the hangar's Customize screen (which every ship has while a mod

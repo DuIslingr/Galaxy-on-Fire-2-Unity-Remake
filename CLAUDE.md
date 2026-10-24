@@ -2564,6 +2564,30 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   teal at 130-160; the style's flare the Vossk hulls' mean 0.65 / 1 / 0.11); the Nivelian streams 1.5 x the cards (970 units,
   wander 3: GoF3's viewer shows short wisps a fifth of the hull, 4.33 x ran 1.5 hulls behind). The Inouac engine (no exhaust
   material of its own) takes the Nivelian exhaust's rings and fade, whose textures it borrows.
+- **GoF3's engines as GoF3 draws them** (2026-10-24, the user's request: "decompile the GoF3 binary and use it"; libgofm.so of
+  the Android APK, Ghidra headless without auto analysis, `~/GOF2UnityRemakeMods/gof3_re`: the full analysis ran out of Java
+  heap; the library is Thumb and Ghidra loads it at 0x10000). GoF3's resource ids (`ae::resource::getResourceId` 0x15fdad8):
+  MurmurHash3_x86_128 of "/assets/<path>" with seed 1, the 64-bit halves xor-ed (importer `ae4_ids.py`), which resolves every
+  texture a material names (the large flare's is `vfx_generic_lens_flare_000`, the core's `smoke_001`; before, "GUID only").
+  engineFx `"meshes": "fx/engines/<name>.json"` (+ `meshScale` 53.5, `meshGlow`; `Modding.EngineModel`, the importer's
+  `engine_meshes.py`): each part of the engine scene (vfx/engines/<race>/vfx_engine_<race>_000, the capitals'
+  vfx/engines/large/vfx_enigne_large_<race>) with its own mesh, place, textures, the options of the shader variant GoF3
+  compiled for its material (read from the variant's GLSL in romfs shaders/: the material's own flags overstate them, e.g.
+  the Vossk exhaust's DiffuseColor and the Terran exhaust's Colorize are compiled out) and its animations (the Nivelian
+  spiral's turn, the Terran "ignite" burst on lighting and boosting, the capitals' "engines_off" flicker), drawn by
+  `GoF2/ModEngineMesh` (`Resources/GoF2Mods`: GoF3's sprite, flow map, UV scroll, colourise 1 / 2, angle blend |N.E| /
+  -N.E / N.E, pulsate, vertex wobble; computed on raw texture values, clamped and turned to linear as GoF3's 8-bit gamma
+  frame) in place of the flare, cone and helix cards, in the engine frame (+z backward: the holder's z scale negative),
+  each exhaust by its fxScale, warped to its outline (not sprites), 0.6 x long at idle. GoF3's trails / contrails / booster
+  flash (`trailParticles` / `contrailParticles` + `contrails` / `boostParticles`, `Data.CustomForkEmitter`; importer
+  `fork_psb.py`): the Fork Particle Studio .psb emitters each ship's VfxList names (Trail* at the engine helpers, Contrails at
+  the contrail helpers; not the buffs), decoded from the Fork runtime (chunks: a 256-byte name, +0x100 size, +0x104 data,
+  +0x108 type; EData: colour keys +0x10.., key times +0x50 / 0x54, life +0x58 / 0x5c, speed +0x60 / 0x64, sizes +0x6c.. /
+  +0xb8.., mid time +0x78, rate +0xcc, max +0xe4) and run as Fork runs them (`EngineFx.UpdateFork`): still particles born
+  at the rate along the path moved, quads facing the camera stretched along the wake, each x N^1.2 (N its overlap: GoF3 sums
+  the streaks in its gamma frame, `_VertexGain`). They replaced the remake's imitated wavy streams. Checked in Play mode: the
+  Manticore and a capital freighter (body, core, flare per nozzle), the Moornta and Argus flying with their wakes. Tests
+  `EngineModelTests`.
 - **Exhaust styles** (`ModExhausts`, a mod's `exhausts.json`; the guide's "Exhaust styles"): engine effects any ship can wear,
   picked in the hangar's Customize screen (`ShipCustomizePanel`'s Exhaust row and the style's two colour rows; with styles in
   the mods that are on every ship has the screen: `ModShipKits.CustomizationOf` gives a ship without other customizations a
