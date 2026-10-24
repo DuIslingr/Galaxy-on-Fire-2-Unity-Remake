@@ -263,11 +263,49 @@ namespace GoF2Remake.Flight
             }
         }
 
+        /// <summary>Remake (LineOfFire): the ship this turret sits on; its hull (or, without hull meshes, its collision volumes)
+        /// blocks the turret's fire. Null = nothing to block (a sentry gun).</summary>
+        public Transform Host
+        {
+            get => host;
+            set { host = value; hostBody = null; hostObstacle = null; hostLooked = false; }
+        }
+        Transform host;
+        HullBody hostBody;
+        Obstacle hostObstacle;
+        bool hostLooked;
+
+        /// <summary>The last Fire found its barrel pointing into its own ship (the owners drop such a target like an
+        /// unreachable one).</summary>
+        public bool Blocked { get; private set; }
+
+        bool IntoOwnHull()
+        {
+            Blocked = false;
+            if (host == null) return false;
+            if (!hostLooked || hostBody == null && hostObstacle == null)
+            {
+                hostLooked = true;
+                hostBody = host.GetComponentInChildren<HullBody>();
+                hostObstacle = host.GetComponentInChildren<Obstacle>();
+            }
+            var from = GunNode.position;
+            var dir = BarrelForward;
+            if (hostBody != null && hostBody.Active)
+                Blocked = HullCollision.RayHits(from, dir, 30000f, hostBody, Root);
+            else if (hostObstacle != null)
+                Blocked = hostObstacle.RayInto(from, dir);
+            return Blocked;
+        }
+
         /// <summary>Fires along the barrel when the gun is ready: the bullet's index, else -1. Starts the animations' clock.
         /// Item 48 switches sides at every try (ObjectGun::update), shot or not.</summary>
         public int Fire()
         {
             if (Gun == null || GunNode == null) return -1;
+            // Remake (LineOfFire): no shot into its own ship's hull (a turret on a capital ship's far side shot the player
+            // straight through it: shots pass their own side's hulls).
+            if (Gun.Ready && IntoOwnHull()) return -1;
             var off = shotOffsetUnits;
             if (alternateSides) { off.x = alternate ? -80f : 80f; alternate = !alternate; }
             int b = Gun.TryFire(ShotOrigin(off), Quaternion.LookRotation(BarrelForward, BarrelUp), false);

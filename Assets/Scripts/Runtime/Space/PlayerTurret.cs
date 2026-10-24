@@ -257,6 +257,7 @@ namespace GoF2Remake.Flight
                     // the last one switched only "_part1" back on in the turret view, under a parent still hidden.
                     if (stream == null && t.name.Contains("plasma_stream")) { stream = t.gameObject; stream.SetActive(false); }
             if (!core.Valid) { enabled = false; return; }
+            core.Host = transform;   // no shots into its own ship (LineOfFire)
             gun.owner = GetComponent<Target>();
             gun.Ignores = t => t.playerProof;   // multiplayer: through squadmates
             core.Rig?.Tint(WeaponTint.For(item, WeaponTint.PlayerColor()));   // an energy turret in the build's weapon colour
@@ -510,7 +511,7 @@ namespace GoF2Remake.Flight
             var t = picking.Update(dtMs, Target.All, transform.position);
             if (t == null) return false;
             bool aligned = core.StepToward(TurretTargeting.LeadPoint(t), dtMs);
-            if (aim.LimitHit) { picking.LimitHit(dtMs); return false; }
+            if (aim.LimitHit || core.Blocked) { picking.LimitHit(dtMs); return false; }   // (its own hull in the way: another target)
             return aligned;
         }
 

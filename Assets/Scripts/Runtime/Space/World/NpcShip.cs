@@ -218,6 +218,7 @@ namespace GoF2Remake.World
         }
 
         Traffic traffic;
+        bool turretHostLooked;   // UpdateTurret: its host for LineOfFire looked up
         Database db;
         CombatAssets assets;
         Transform model;
@@ -664,6 +665,14 @@ namespace GoF2Remake.World
         void UpdateTurret(float dtMs)
         {
             if (turretCore == null || !turretCore.Valid || gun == null) return;
+            if (!turretHostLooked)
+            {
+                // Remake (LineOfFire): the ship it sits on blocks its fire: its capital ship, else the ship it rides on.
+                turretHostLooked = true;
+                var hostShip = Spec.capitalHost != null && traffic != null ? traffic.Ships.Find(s => s != null && s.Spec == Spec.capitalHost) : null;
+                if (hostShip == null && transform.parent != null) hostShip = transform.parent.GetComponentInParent<NpcShip>();
+                if (hostShip != null && hostShip != this) turretCore.Host = hostShip.transform;
+            }
             var target = turretPicking.Update(dtMs, enemies, transform.position);
             if (turretPicking.JustPicked) turretTargetFixed = target != null && IsTurretTarget(target);
             if (target == null || target.cloaked) return;   // handleTurret: no turning toward a cloaked target
@@ -675,7 +684,9 @@ namespace GoF2Remake.World
             if (!aligned || !shootingEnabled) return;
             // Bullets from the barrel frame, the usual 100 ahead in the scaled frame (about 600 units); a turret item's from
             // its gun like on a ship.
-            if (turretCore.Fire() >= 0)
+            int shot = turretCore.Fire();
+            if (shot < 0 && turretCore.Blocked) { turretPicking.LimitHit(dtMs); return; }   // its own hull in the way: another target
+            if (shot >= 0)
                 Sfx.PlayAt(turretShot != null ? turretShot
                            : assets != null && assets.shots != null && assets.shots.Length > 0 ? assets.shots[Race == 1 ? 1 : 0] : null, transform.position, 0.6f);
         }

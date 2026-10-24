@@ -7,6 +7,8 @@
 //                 chance, in Nivelian / Midorian systems (the original has none there) whenever the mods have one of that race.
 //                 Hull x25 like the Terran battleship (Level::createShip); its turret items ("npcTurrets" on its turret mounts,
 //                 NpcMountedTurrets) are armed although it is parked (the original's parked ship never fires).
+//                 Pirate (8) and Void (9) warships are hostile instead: now and then one comes with a pirate raid (a third of the
+//                 chance, parked 3 km beyond the raiders' point) and in the Void's own orbit (PickHostile, SpawnHostile).
 //   "freighter"   one of the orbit's freighters (TrafficPlan's freighter loop) at the "Mod ships in traffic" chance, cruising
 //                 game +Z at the freighters' 1 u/ms.
 // Neither flies as a fighter (ModTraffic leaves them out). Their collision boxes (CollisionVolume.ForFreighter via ShipVolumes)
@@ -59,6 +61,23 @@ namespace GoF2Remake.Modding
             return PickOf(race, Battleship);
         }
 
+        /// <summary>A hostile mod warship of 'race' (pirates, the Void) to come with that race's raiders: at 'share' of the "Mod
+        /// ships in traffic" chance, -1 = none (no random draw without a candidate).</summary>
+        public static int PickHostile(int race, float share)
+        {
+            float chance = Settings.ModShipTrafficChance * share;
+            if (chance <= 0f || !Has(race, Battleship) || Random.value >= chance) return -1;
+            return PickOf(race, Battleship);
+        }
+
+        /// <summary>A hostile warship's spawn: 'ship' at 'position' (game units), always the player's enemy.</summary>
+        public static SpawnSpec SpawnHostile(int ship, int race, Vector3 position)
+        {
+            var s = Spawn(ship, race, position);
+            s.alwaysEnemy = true;
+            return s;
+        }
+
         /// <summary>A mod capital ship of 'kind' may fly for 'race' now (the option not Off).</summary>
         public static bool Has(int race, string kind) => Settings.ModShipTrafficChance > 0f && Candidates(race, kind).Count > 0;
 
@@ -105,7 +124,7 @@ namespace GoF2Remake.Modding
             {
                 group = parkedShip ? NpcGroup.Special : NpcGroup.Freighter, race = race, ship = ship, freighter = true,
                 stationary = parkedShip, modCapital = true, position = position,
-                hitpoints = parkedShip ? NpcTables.Hull(1, 14) : -1,
+                hitpoints = Mathf.Max(1, Mathf.RoundToInt((parkedShip ? NpcTables.Hull(1, 14) : NpcTables.Hull(1, ship)) * Mathf.Max(0.05f, CustomShips.Get(ship)?.hullFactor ?? 1f))),
                 name = parkedShip ? GameNames.Ship(ship) : null,
             };
         }

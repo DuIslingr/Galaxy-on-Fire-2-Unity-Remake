@@ -46,6 +46,85 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ACapitalShipsSubsystemsAndShields()
+        {
+            string dir = WriteMod("c", "t_sub", "1.0", "", ("ships.json",
+                "[ { 'id': 'fort', 'name': 'Fort', 'race': 8, 'model': 'big.glb', 'traffic': { 'capital': 'battleship', 'weight': 0 }," +
+                "    'shieldMaterial': 'energyfield|', 'shieldedDamage': 0.1, 'hullFactor': 3, 'engineStyle': 'es2'," +
+                "    'subsystems': [" +
+                "      { 'kind': 'turret', 'name': 'Gun', 'position_engine': [100, 200, 300], 'item': 48, 'stage': 2, 'turretUp': [1, 0, 0] }," +
+                "      { 'kind': 'object', 'name': 'Emitter', 'position_engine': [0, 0, 0], 'shields': true, 'stage': 1, 'hull': 900, 'model': 'gof2:v_station_battlestation_shield' }," +
+                "      { 'kind': 'object', 'name': 'Weak', 'position_engine': [1, 2, 3], 'upsideDown': true, 'weakspot': 2.5, 'bonus': 0.08 }," +
+                "      { 'kind': 'hangar', 'model': 'none', 'position_engine': [5, 0, 0], 'ships': [ 2, 't_sub:fort' ], 'every': 10, 'perWave': 3, 'maxAlive': 5, 'total': 9 }," +
+                "      { 'kind': 'turret', 'position_engine': [0, 0, 0] }," +
+                "      { 'kind': 'turret', 'position_engine': [0, 0, 0], 'item': 0 }," +
+                "      { 'kind': 'laser', 'position_engine': [0, 0, 0] }," +
+                "      { 'kind': 'hangar', 'position_engine': [0, 0, 0] } ] } ]"));
+            WriteFile(dir, "big.glb", Dummy);
+            ScanAndEnable("t_sub");
+            var db = Database.Load();
+            int fort = ModContent.ShipIndexOf("t_sub:fort");
+            var subs = db.ShipSubsystems[fort];
+            Assert.AreEqual(4, subs.Count, "the four good ones; a turret without a turret item, a non-turret item, an unknown kind and a hangar without ships are left out");
+            Assert.AreEqual(4, ModManager.Find("t_sub").Warnings.Count(w => w.Contains("subsystem") || w.Contains("\"item\"") || w.Contains("\"kind\"")));
+            Assert.AreEqual("turret", subs[0].kind); Assert.AreEqual(48, subs[0].item); Assert.AreEqual(2, subs[0].stage);
+            Assert.AreEqual(new Vector3(100, 200, 300), subs[0].position); Assert.AreEqual(Vector3.right, subs[0].up);
+            Assert.IsTrue(subs[1].shields); Assert.AreEqual(900, subs[1].hull); Assert.AreEqual("gof2:v_station_battlestation_shield", subs[1].model);
+            Assert.AreEqual(Vector3.down, subs[2].up, "upsideDown");
+            Assert.AreEqual(2.5f, subs[2].weakspot); Assert.AreEqual(0.08f, subs[2].bonus, 1e-5f);
+            Assert.AreEqual(new[] { "2", "t_sub:fort" }, subs[3].ships.ToArray());
+            Assert.AreEqual(10000f, subs[3].everyMs); Assert.AreEqual(3, subs[3].perWave); Assert.AreEqual(5, subs[3].maxAlive); Assert.AreEqual(9, subs[3].total);
+            var c = CustomShips.Get(fort);
+            Assert.AreEqual("energyfield|", c.shieldMaterial); Assert.AreEqual(0.1f, c.shieldedDamage, 1e-5f); Assert.AreEqual("es2", c.engineStyle);
+            Assert.AreEqual(Mathf.RoundToInt(NpcTables.Hull(1, 14) * 3f), ModCapitalShips.Spawn(fort, 8, Vector3.zero).hitpoints, "hullFactor");
+            Assert.IsEmpty(ModCapitalShips.Candidates(8, ModCapitalShips.Battleship), "weight 0: never in the traffic (the encounter brings it)");
+        }
+
+        [Test]
+        public void ShieldsAndWeakSpotsOnTheTargets()
+        {
+            var hullGo = new GameObject("hull"); var spotGo = new GameObject("spot");
+            try
+            {
+                var hull = hullGo.AddComponent<Target>(); hull.hitpoints = new Hitpoints(1000); hull.hp = 1000;
+                var spot = spotGo.AddComponent<Target>(); spot.hitpoints = new Hitpoints(100); spot.hp = 100;
+                hull.damageFactor = 0f;
+                hull.Damage(500f);
+                Assert.AreEqual(1000, hull.hitpoints.hull, "shielded: no damage");
+                spot.forwardTo = hull; spot.forwardFactor = 2f;
+                hull.damageFactor = 1f;
+                spot.Damage(40f);
+                Assert.AreEqual(60, spot.hitpoints.hull);
+                Assert.AreEqual(920, hull.hitpoints.hull, "the weak spot's hit x 2 on the hull");
+                spot.Damage(9999f);
+                Assert.IsFalse(spot.Alive);
+                Assert.AreEqual(800, hull.hitpoints.hull, "only what the weak spot had left (60) x 2, not the overkill");
+            }
+            finally { Object.DestroyImmediate(hullGo); Object.DestroyImmediate(spotGo); }
+        }
+
+        [Test]
+        public void ATurretDoesntFireIntoItsOwnHullsVolumes()
+        {
+            var go = new GameObject("host");
+            try
+            {
+                var o = go.AddComponent<Obstacle>();
+                o.volumes = new System.Collections.Generic.List<CollisionVolume> { CollisionVolume.Box(Vector3.zero, new Vector3(20f, 10f, 100f)) };
+                var top = new Vector3(0f, 9.5f, 0f);   // a turret on the hull's back, inside its box
+                Assert.IsTrue(o.RayInto(top, Vector3.down), "down into its own ship");
+                Assert.IsFalse(o.RayInto(top, Vector3.up), "up and away");
+                Assert.IsFalse(o.RayInto(top, Vector3.forward), "along the back");
+                Assert.IsFalse(o.RayInto(top, (Vector3.forward + Vector3.up * 0.3f).normalized));
+                Assert.IsTrue(o.RayInto(top, (Vector3.forward - Vector3.up).normalized), "down at a slant");
+                o.volumes.Add(CollisionVolume.Box(new Vector3(0f, 40f, 0f), new Vector3(5f, 5f, 5f)));   // a tower over it
+                Assert.IsTrue(o.RayInto(top, Vector3.up), "into the tower above");
+                Assert.IsFalse(o.RayInto(new Vector3(0f, 200f, 0f), Vector3.up), "outside, away from it all");
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
         public void TheHullIsCutIntoBoxesAlongItsLength()
         {
             var root = new GameObject("hull");

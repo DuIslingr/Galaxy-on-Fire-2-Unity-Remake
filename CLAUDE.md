@@ -3182,6 +3182,38 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   8 boxes and 8 turrets. A ship's own `engineFx` takes each mount's `outline` like an exhaust style (`EngineFx.CreateShaped`,
   `ModExhausts.OutlineOf`: the cards reach the nozzle's shape, the trails along its long side, centred on it); the GoF3
   capitals get GoF3's large engine on their nozzles, shaped to them (see Mobile stations).
+- **Capital ship subsystems** (remake, 2026-10-24, the user's request: EVERSPACE 2's warships and its Dreadnought encounter;
+  `World.CapitalSubsystems`, ships.json `"subsystems"` parsed by `ModContent.ApplySubsystems` into `Database.ShipSubsystems`,
+  `Data.CapitalSubsystem`): Traffic.Create attaches it to a `modCapital` spec with subsystems; its first Update spawns each
+  part through `Traffic.SpawnShip` (capitalPart / capitalHost = the ship, its event tag, so a mission's `alive(name)` counts
+  them) placed like a turret on a mount (`transform.TransformPoint(WeaponSystem.MountToLocal)`, `TurretTurn`) and parented to
+  the hull: "turret" (turret_002_static with `turretItem`), "object" (a `fixedObject`: "gof2:<assembly>", a ship's assembly by
+  ship reference, else `v_station_battlestation_shield`) or "hangar" (an object, or `"model": "none"`: a launch point on the
+  hull, `Part.localPos`). Rules each frame: `shields` parts standing -> the hull's `Target.damageFactor` = `shieldedDamage`
+  (Target.Damage multiplies every hit; a player's hit then "Its shields hold", rate-limited) and the renderers whose material
+  name contains `shieldMaterial` shown; `stage` parts invulnerable while a lower stage stands; a `weakspot` part's
+  `Target.forwardTo` / `forwardFactor` pass its hits on to the hull, its death takes `bonus` of the hull's maximum (through
+  the shields); hangars launch `ships` (escorts looping round the hull, `CapitalShips.LoopAround`) while it is hostile and
+  the player within 7.5 km. Hostile pirate (8) / Void (9) capitals (`ModCapitalShips.PickHostile` / `SpawnHostile`): with a
+  pirate or Void raid at a third of the traffic chance, 3 km beyond the raiders' point, and in the Void's orbit. `/spawn` of a
+  mod capital (`DebugSpawner.SpawnShip`) uses `ModCapitalShips.Spawn` (parked, subsystems) 1-2 hull lengths ahead.
+  `hullFactor` scales a mod capital's hull; `engineStyle: "es2"` runs `Es2EngineVfx` without flame materials (no glow discs);
+  CustomShipMaterial `tiling` scales URP Lit's `_BaseMap` (EVERSPACE 2's plating Tiling). Tests in `ModCapitalShipsTests`.
+  The ES2 Ships mod's importer (`tools/warships.py`, `weapons.py`, `encounter.py`, `es2mat.py`) builds ES2's ten warships and
+  seven freighters from their blueprints (turrets, missile launchers, drone / hangar spawners, the frigate's weak spots), ES2's
+  weapons as items on GoF2's DPS ladder with their own colours, sounds and models, the capital turrets on ES2's turret meshes
+  (split by bone, textures embedded), and the Dreadnought (its stage pieces as one hull) with its encounter at Herjaza (101)
+  once the Valkyrie add-on is over: fields / shield generator (stage 1, shields) with the torpedo launchers, sniper and
+  lightning turrets (stage 2), explosive weak points (stage 3), flak / missile batteries and five hangars throughout.
+- **Turrets don't fire through their own ship** (remake, 2026-10-24, the user's request, for every turret): `TurretCore.Host`
+  (the ship it sits on: NpcShip's turret objects their capital host (`Spec.capitalHost`) or the ship they ride on,
+  `NpcMountedTurrets` / `PlayerTurret` their ship) and `TurretCore.Fire` checks, once the gun is ready, a ray from the gun's
+  pivot along the barrel against that ship's hull (`HullCollision.RayHits`: its own mesh colliders, past the turret's own
+  meshes; built in every collision mode but Original), else its collision volumes (`Obstacle.RayInto`: entering another
+  volume, or heading inward through the face of the one it starts in); blocked = no shot, `TurretCore.Blocked`, and the owner
+  drops that target like an unreachable one (`TurretTargeting.LimitHit`). Shots pass their own side's hulls, so a turret on a
+  capital ship's far side hit the player straight through it. Checked in Play mode: 141 shots of a hostile Dreadnought's
+  turrets with the player under it, none through the hull. Test `ModCapitalShipsTests.ATurretDoesntFireIntoItsOwnHullsVolumes`.
 - **Mobile stations** (remake, 2026-10-24, the user's request: GoF3's Manticore as a moving station with its own hangar;
   stations.json `"mobile": true | { "route", "stayMinutes", "systemMinutes", "exclude", "speed", "race", "engines",
   "engineColor", "engineFx" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`;

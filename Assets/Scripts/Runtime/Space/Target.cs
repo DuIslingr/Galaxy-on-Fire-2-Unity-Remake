@@ -104,6 +104,13 @@ namespace GoF2Remake.Flight
         [NonSerialized] public Func<bool> SaveFromDeath;
         /// <summary>Takes no damage (a sentry gun's first 3 s, Player+0xc2 cleared).</summary>
         [NonSerialized] public bool invulnerable;
+        /// <summary>Remake mods (World.CapitalSubsystems): every hit x this (a capital ship behind its shield generators: 0 = it
+        /// shrugs the hits off, the Damaged event still sees them).</summary>
+        [NonSerialized] public float damageFactor = 1f;
+        /// <summary>Remake mods (World.CapitalSubsystems): a weak spot's hits also go to this target (its capital ship) x
+        /// 'forwardFactor'.</summary>
+        [NonSerialized] public Target forwardTo;
+        [NonSerialized] public float forwardFactor;
         [Tooltip("Local-space hit boxes (metres) instead of the cube (big ships).")]
         public Bounds[] boxes;
         /// <summary>Remake: the hull of MeshColliders shots hit instead of the cube / boxes (HullCollision), null = none.</summary>
@@ -151,6 +158,10 @@ namespace GoF2Remake.Flight
             if (isPlayer && Data.Cheats.GodMode) return;   // remake: the Debug panel's god mode
             if (playerProof && !byNpc) return;
             if (RemoteDamage != null) { RemoteDamage(amount, hitVector, byNpc, shieldFactor); return; }
+            // (a weak spot passes on what it takes, not the overkill of the hit that destroys it)
+            if (forwardTo != null && forwardTo != this && forwardFactor > 0f && forwardTo.Alive)
+                forwardTo.Damage(Mathf.Min(amount * damageFactor, hitpoints != null ? hitpoints.Combined : hp) * forwardFactor, byNpc, hitVector, shieldFactor);
+            amount *= damageFactor;
             int dmg = Mathf.Max(0, (int)amount);
             lastHitVector = hitVector;
             bool dead;

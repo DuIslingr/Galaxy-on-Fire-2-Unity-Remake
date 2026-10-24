@@ -263,6 +263,24 @@ namespace GoF2Remake.Flight
             return true;
         }
 
+        /// <summary>Remake (Flight.LineOfFire): a ray from 'from' along 'dir' (unit) meets 'body''s shown hull within 'reach'
+        /// metres, past the colliders under 'ignore' (a turret's own meshes on its host's hull). The hull is built whatever the
+        /// ship collision mode takes for shots (Mixed leaves fighters' out of the shot tests, not out of this).</summary>
+        public static bool RayHits(Vector3 from, Vector3 dir, float reach, HullBody body, Transform ignore)
+        {
+            if (body == null || !body.Active) return false;
+            Sync();
+            int n = Physics.RaycastNonAlloc(from, dir, hits, reach, HullMask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < n; i++)
+            {
+                var c = hits[i].collider;
+                if (hits[i].distance <= 0.05f || BodyOf(c) != body || !Shown(c)) continue;
+                if (ignore != null && c.transform.IsChildOf(ignore)) continue;
+                return true;
+            }
+            return false;
+        }
+
         /// <summary>The hull colliders within 'radius' of 'centre' into 'buffer'; their count.</summary>
         public static int Overlap(Vector3 centre, float radius, Collider[] buffer)
         {

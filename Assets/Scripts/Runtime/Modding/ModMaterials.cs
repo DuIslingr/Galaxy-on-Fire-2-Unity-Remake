@@ -460,6 +460,12 @@ namespace GoF2Remake.Modding
             var diffuse = Texture(mod, e.diffuse, false);
             m.SetTexture("_BaseMap", diffuse);
             m.SetTexture("_MainTex", diffuse);
+            if (e.tiling > 0f && !Mathf.Approximately(e.tiling, 1f))
+            {
+                // (URP Lit's base, normal, metallic and emission maps share _BaseMap's scale)
+                m.SetTextureScale("_BaseMap", Vector2.one * e.tiling);
+                m.SetTextureScale("_MainTex", Vector2.one * e.tiling);
+            }
             var baseColor = Rgb(e.color, Color.white);
             if (glass) baseColor.a = e.opacity;
             m.SetColor("_BaseColor", baseColor);

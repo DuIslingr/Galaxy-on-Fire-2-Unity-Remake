@@ -638,11 +638,54 @@ A big hull can fly in the orbits as a capital ship or a freighter rather than a 
   and its `npcTurrets` on its turret mounts fire although it is parked.
 - **`"freighter"`** is one of the orbit's freighters now and then (the same option's chance), cruising like them.
 
+A **pirate** (`race` 8) or **Void** (9) capital ship is hostile instead: now and then one comes with a pirate raid (a third of
+the option's chance, parked 3 km beyond the raiders) and with the Void's ships in their own orbit. `"traffic": { "capital":
+"battleship", "weight": 0 }` keeps one out of the traffic altogether: a mission brings it (the `spawn` step or `/spawn
+mod_id:ship`, which parks any capital ship 1-2 hull lengths ahead of the player, subsystems and all). `"hullFactor": 6` makes
+its hull that many times the Terran battleship's.
+
 Its race is its `race` (or the races in `"races"`). Its collision boxes are measured on the model: the hull cut along its
 length into 8 slices. The player and the shots still meet its real shape (unless Options > Gameplay "Ship collision" is
 Original). It leaves no wreck: it burns, explodes at its `explosionScale` and is gone. The capital ship enhancements
 (escorts, resupply, fleet battles) stay with the game's own capital ships. A capital ship's hardpoints carry at most 8 turrets
 in multiplayer copies, so give it 8 at most. Keep it under about 5 km: the flight level's far plane is 15 km.
+
+### Capital ship subsystems
+
+A capital ship's turrets, shield generators, weak spots and hangars can be parts of their own that the player shoots off its
+hull (EVERSPACE 2's warships): `"subsystems"`, each placed like a mount (`position_engine`, game units in the ship's frame;
+`turretUp` / `upsideDown` the way it faces):
+
+```json
+"subsystems": [
+    { "kind": "turret", "name": "Torpedo launcher", "position_engine": [0, 3200, 9000], "item": "my_mod:torpedo_turret", "scale": 2, "stage": 1 },
+    { "kind": "object", "name": "Field emitter", "position_engine": [4000, 0, 21000], "model": "my_mod:emitter", "shields": true, "stage": 1, "hull": 2600 },
+    { "kind": "object", "name": "Weak point", "position_engine": [-2500, -3300, 8000], "model": "gof2:v_station_battlestation_shield", "weakspot": 2.5, "bonus": 0.08, "stage": 3 },
+    { "kind": "hangar", "model": "none", "position_engine": [-4400, 0, 4400], "turretUp": [1, 0, 0], "ships": [ "my_mod:raider", 2 ], "every": 30, "perWave": 2, "maxAlive": 4, "total": 8 }
+],
+"shieldMaterial": "energyfield|", "shieldedDamage": 0
+```
+
+- `"turret"`: a turret object of turret item `item` (its model, gun and aim; `scale` sizes its model).
+- `"object"`: a part without a gun: its `model` is one of the game's (`"gof2:<model>"`) or a ship of a mod (its model; give such
+  a prop ship `"race": -1` and `"traffic": { "weight": 0 }` so it never flies), the game's battlestation shield generator
+  without one.
+- `"hangar"`: launches `ships` (numbers or `"mod:id"`, random builds for customizable ships) along its facing, `perWave` every
+  `every` seconds while the capital ship is the player's enemy and the player within 7.5 km, at most `maxAlive` flying and
+  `total` in all (-1 = no end); `"model": "none"` makes it a launch point on the hull that can't be shot off.
+- `hull`: its hit points (default by kind, growing with the rank), x the difficulty.
+- `shields`: while any part with it stands, the hull takes `shieldedDamage` of every hit (0 = none; the player is told to
+  find the generators), and its renderers whose material name contains `shieldMaterial` (its energy fields) show, hidden once
+  the last of them falls.
+- `weakspot`: hits on it also go to the hull x this; its destruction takes `bonus` (a share) of the hull's maximum.
+- `stage`: a part can't be harmed while a part of a lower stage still stands (an encounter's order: fields, then guns, then
+  the weak points).
+
+Parts take the capital ship's side, go when it dies, and a mission's `alive("<name>")` counts them. Every turret (these, the
+`npcTurrets` on a ship's mounts, the game's own capital ship turrets, your own) holds its fire while its barrel points into
+its own ship's hull and turns to another target: a turret on the far side can't shoot you through the ship. Without `subsystems` its
+`npcTurrets` still arm its turret mounts. `"engineStyle": "es2"` gives a capital ship EVERSPACE 2's engine glow and trails at
+its exhaust mounts (`slotType` 3, sized by `socketScale`) without flame meshes of its own.
 
 ### Camera, cockpit, damage smoke and explosion
 
@@ -705,6 +748,7 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 |---|---|
 | `diffuse`, `color` | Base colour map (PNG) and / or an RGB tint `[r, g, b]` (0 to 1). |
 | `normal`, `normalScale` | Normal map. |
+| `tiling` | How many times the main textures (colour, normal, metallic, emission) repeat over the UVs (default 1): a plating texture laid over a big hull. |
 | `metallicSmoothness`, `metallic`, `smoothness` | Metallic (red) / smoothness (alpha) map; without a map `metallic` sets the metalness. |
 | `emission`, `emissionColor`, `emissionIntensity` | Emission map and / or colour; above 1 it blooms. |
 | `alphaClip` | Cut the diffuse's alpha below this (decals). |

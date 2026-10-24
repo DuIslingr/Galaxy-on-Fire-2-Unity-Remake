@@ -152,6 +152,11 @@ namespace GoF2Remake.Flight
                 for (int i = 0; i < n; i++)
                     list.Add(new SpawnSpec { group = NpcGroup.Raider, race = Standing.Void, ship = NpcTables.RandomFighter(Standing.Void), alwaysEnemy = true,
                                              position = new Vector3(Random.Range(0, 120000) - 60000, Random.Range(0, 80000) - 40000, Random.Range(0, 120000) - 60000) });
+                // Remake mods: now and then one of the mods' Void warships (Modding.ModCapitalShips).
+                int voidCapital = Modding.ModCapitalShips.PickHostile(Standing.Void, 0.35f);
+                if (voidCapital >= 0)
+                    list.Add(Modding.ModCapitalShips.SpawnHostile(voidCapital, Standing.Void,
+                        new Vector3(Random.Range(0, 120000) - 60000, Random.Range(0, 40000) - 20000, Random.Range(0, 60000) + 120000)));
                 return list;
             }
             if (system == null) return list;
@@ -316,6 +321,17 @@ namespace GoF2Remake.Flight
             // 10000 +- rnd 50000, 20000 +- rnd 50000))
             int raidersFrom = list.Count;
             AddRaiders(list, raiders, raiderRace, raiderSpawn);
+            // Remake mods: now and then a pirate / Void warship of the mods comes with the raiders, parked beyond their point.
+            if (raiders > 0 && !lootOrbit && (raiderRace == Standing.Pirate || raiderRace == Standing.Void))
+            {
+                int hostileCapital = Modding.ModCapitalShips.PickHostile(raiderRace, 0.35f);
+                if (hostileCapital >= 0)
+                {
+                    var away = raiderSpawn - playerGame;
+                    away = away.sqrMagnitude > 1f ? away.normalized : Vector3.forward;
+                    list.Add(Modding.ModCapitalShips.SpawnHostile(hostileCapital, raiderRace, raiderSpawn + away * 60000f));
+                }
+            }
             if (lootOrbit)
                 for (int i = raidersFrom; i < list.Count; i++)
                 {

@@ -160,6 +160,9 @@ namespace GoF2Remake.World
                 && ship.MountedTurrets == null)
                 AttachFighterTurret(ship);
             if (spec.capital != 0 && spec.capitalEnhanced) CapitalShip.Attach(ship, this, db);   // remake option (CapitalShips)
+            // Remake mods: a mod capital ship's subsystems (turrets, shield generators, weak spots, hangars) on its hull.
+            if (spec.modCapital && db.ShipSubsystems.TryGetValue(spec.ship, out var subsystems) && subsystems.Count > 0)
+                CapitalSubsystems.Attach(ship, this, db, subsystems);
             return ship;
         }
 

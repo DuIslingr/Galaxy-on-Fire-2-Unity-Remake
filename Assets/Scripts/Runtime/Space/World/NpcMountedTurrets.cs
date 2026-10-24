@@ -54,6 +54,7 @@ namespace GoF2Remake.World
                 var fx = WeaponFx.Load(item.index);
                 var core = TurretCore.ForItem(item, fx, model, mounts[m], fxRoot, m == 0 ? "Turret" : "Turret " + (m + 1), ship.transform.forward);
                 if (core == null) continue;
+                core.Host = ship.transform;   // no shots through its own ship (LineOfFire)
                 set ??= new NpcMountedTurrets(ship);
                 var t = new Mounted { core = core, collector = item.categoryId == 35, shot = fx != null && fx.shot != null ? fx.Shot : null };
                 set.turrets.Add(t);
@@ -91,6 +92,7 @@ namespace GoF2Remake.World
                         bool aligned = core.StepToward(TurretTargeting.LeadPoint(target), dtMs);
                         if (core.Aim.LimitHit) t.picking.LimitHit(dtMs);
                         else if (aligned && core.Fire() >= 0) Sfx.PlayAt(t.shot, core.GunPosition, 0.6f);
+                        else if (core.Blocked) t.picking.LimitHit(dtMs);   // its own hull in the way: another target
                     }
                 }
                 core.SetAnimating(core.RecentlyFired);

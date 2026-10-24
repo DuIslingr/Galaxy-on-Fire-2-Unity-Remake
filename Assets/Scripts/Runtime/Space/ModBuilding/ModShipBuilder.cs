@@ -57,7 +57,10 @@ namespace GoF2Remake.Modding
             var renderers = model.GetComponentsInChildren<Renderer>(true);
             var specs = c.materials ?? new List<CustomShipMaterial>();
             var mats = new Material[specs.Count];
-            for (int i = 0; i < specs.Count; i++) mats[i] = ModMaterials.FromSpec(mod, specs[i], $"{c.assembly} {specs[i].mesh}{specs[i].submesh}");
+            // (named by the entry's "material" filter like a kit's: the engine / damage / shield lookups find a material by its
+            // name, and every filter entry was "ship_NNN_mod -1" alike)
+            for (int i = 0; i < specs.Count; i++)
+                mats[i] = ModMaterials.FromSpec(mod, specs[i], !string.IsNullOrEmpty(specs[i].material) ? $"{c.assembly} {specs[i].material}" : $"{c.assembly} {specs[i].mesh}{specs[i].submesh}");
             if (specs.Count > 0)
                 foreach (var r in renderers)
                 {
@@ -81,7 +84,8 @@ namespace GoF2Remake.Modding
                 specs.Select((sp, i) => sp != null && sp.boost && mats[i] != null ? mats[i].name : null).Where(n => n != null),
                 specs.Select((sp, i) => (sp, i)).Where(x => x.sp != null && x.sp.engine && x.sp.engineIdle > 0f && mats[x.i] != null)
                      .GroupBy(x => mats[x.i].name).ToDictionary(g => g.Key, g => g.First().sp.engineIdle));
-            bool flames = specs.Any(sp => sp != null && sp.flame) || hasFlames;
+            // (a capital ship with "engineStyle": "es2": EVERSPACE 2's engine effects at its sockets, without flame cards)
+            bool flames = specs.Any(sp => sp != null && sp.flame) || hasFlames || string.Equals(c.engineStyle, "es2", System.StringComparison.OrdinalIgnoreCase);
             if (flames) EngineFlame.Add(root);
             if (kitScale > 0f) model.transform.localScale = Vector3.one * kitScale;
             else

@@ -218,6 +218,34 @@ namespace GoF2Remake.Data
         public CustomTraffic traffic;      // remake mods: how NPC fighters fly it (Modding.ModTraffic); null = its race's, weight 1
         public string kit, kitType;        // remake mods: a customizable ship (Modding.ModShipKits): its kit ("mod_id:kit_id") and type
         [System.NonSerialized] public string defaultBuild;   // its "build" as build text (ModShipKits.Build)
+        // Remake mods: a capital ship's subsystems (ships.json "subsystems", World.CapitalSubsystems; resolved into
+        // Database.ShipSubsystems): while any part with "shields" stands the hull takes 'shieldedDamage' of every hit (0 =
+        // none) and its renderers with a material named like 'shieldMaterial' show (its energy fields), hidden once they fall.
+        public string shieldMaterial;
+        public float shieldedDamage;
+        public float hullFactor = 1f;     // remake mods: a mod capital ship's hull x this (Modding.ModCapitalShips.Spawn)
+        /// <summary>"es2": EVERSPACE 2's engine effects (Modding.Es2EngineVfx: the glow, trails and lights at the exhaust and
+        /// booster mounts) without flame materials of its own and without the glow discs (a capital ship's sockets).</summary>
+        public string engineStyle;
+    }
+
+    /// <summary>Remake mods: one subsystem of a capital ship (ships.json "subsystems"; World.CapitalSubsystems): a target of
+    /// its own on the hull that dies with it. 'kind' "turret" (a turret object of turret item 'item'), "object" (a fixed object
+    /// of 'model': "gof2:<assembly>" or a ship, a number or a mod's "mod:id", whose model it shows) or "hangar" (an object
+    /// that launches 'ships' (numbers or "mod:id", resolved when they launch) while its capital ship fights the player). 'position' game units in the ship's frame like a mount's
+    /// position_engine, 'up' the way it faces (turretUp's axes). 'shields': the hull is shielded while it stands; 'weakspot'
+    /// &gt; 0: hits on it also go to the hull x that, and its death takes 'bonus' of the hull's maximum; 'stage' &gt; 0: it can't
+    /// be harmed while a part of a lower stage stands. 'hull' its hit points (-1: by kind).</summary>
+    public class CapitalSubsystem
+    {
+        public string kind = "object", name, model;
+        public Vector3 position, up = Vector3.up;
+        public int item = -1, hull = -1, stage;
+        public bool shields;
+        public float weakspot, bonus, scale = 1f, radius = -1f;
+        public List<string> ships = new List<string>();
+        public float everyMs = 25000f;
+        public int perWave = 2, maxAlive = 6, total = -1;
     }
 
     /// <summary>Remake mods: one of the original's additive layers a ship model brings beside its hull (ships.json "addParts";
@@ -292,6 +320,7 @@ namespace GoF2Remake.Data
         public float[] color, emissionColor;
         public float smoothness = 1f, metallic = -1f, emissionIntensity = 1f, alphaClip, normalScale = 1f;
         public float detailTiling = 1f, detailNormalScale = 1f;
+        public float tiling = 1f;  // remake mods: the main textures repeat this many times over the UVs (EVERSPACE 2's plating 'Tiling')
         public float opacity;   // 0 / 1 = opaque; below 1 a see-through surface (glass: premultiplied, so reflections stay bright)
         public bool doubleSided;   // both faces drawn (models with one-sided panels the camera can see from behind)
         public bool engine;        // its emission shows only while the engines run (dark on a ship parked in a hangar)
@@ -457,6 +486,9 @@ namespace GoF2Remake.Data
         /// on its turret mounts (World.NpcMountedTurrets, the hangar's parked ships), by ship index. The original's NPC ships
         /// carry none.</summary>
         [System.NonSerialized] public Dictionary<int, List<int>> NpcTurrets = new Dictionary<int, List<int>>();
+        /// <summary>Remake mods (ships.json "subsystems", Modding.ModContent): a capital ship's subsystems by ship index
+        /// (World.CapitalSubsystems builds them on the hull).</summary>
+        [System.NonSerialized] public Dictionary<int, List<CapitalSubsystem>> ShipSubsystems = new Dictionary<int, List<CapitalSubsystem>>();
 
         /// <summary>Remake (Modding.GameModels): ships that fly one of the game's own models, by ship index (a mod's new ship
         /// or an override with "model": "gof2:<model>"); ShipAssembly hands it out before anything else.</summary>

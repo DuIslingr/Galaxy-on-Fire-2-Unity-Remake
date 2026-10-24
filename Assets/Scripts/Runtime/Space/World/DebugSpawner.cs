@@ -30,10 +30,18 @@ namespace GoF2Remake.World
             var p = level.Player.transform;
             var centre = at ?? p.position + p.forward * 400f + p.up * 40f;
             int made = 0;
+            // Remake mods: a mod's capital ship or freighter (ships.json "traffic": { "capital" }) flies the freighter path, with
+            // its subsystems, parked clear ahead of the player (its length out) unless 'at' is given.
+            bool capital = Modding.ModCapitalShips.KindOf(ship) != null;
+            if (capital && at == null)
+            {
+                float length = Mathf.Max(400f, Modding.ModTraffic.HullLength(ship));
+                centre = p.position + p.forward * (length * 1.2f + 300f);
+            }
             for (int i = 0; i < count; i++)
             {
-                float side = (i - (count - 1) * 0.5f) * 60f;
-                var spec = new SpawnSpec
+                float side = (i - (count - 1) * 0.5f) * (capital ? Mathf.Max(600f, Modding.ModTraffic.HullLength(ship) * 1.1f) : 60f);
+                var spec = capital ? Modding.ModCapitalShips.Spawn(ship, race, ToGame(centre + p.right * side)) : new SpawnSpec
                 {
                     group = NpcGroup.Raider,
                     race = race,
@@ -48,6 +56,15 @@ namespace GoF2Remake.World
                     // Remake (generic turrets): turret items on its turret mounts (/spawn ... turrets), null = its type's.
                     turretItems = turrets != null ? new System.Collections.Generic.List<int>(turrets) : null,
                 };
+                if (capital)
+                {
+                    spec.alwaysEnemy = behaviour == Behaviour.Hostile;
+                    spec.alwaysFriend = behaviour == Behaviour.Friendly;
+                    spec.alwaysNeutral = behaviour == Behaviour.Neutral;
+                    spec.eventTag = eventTag;
+                    if (!string.IsNullOrEmpty(name)) spec.name = count > 1 ? $"{name} {i + 1}" : name;
+                    if (turrets != null) spec.turretItems = new System.Collections.Generic.List<int>(turrets);
+                }
                 if (level.Traffic.SpawnShip(spec) != null) made++;
             }
             level.Traffic.ConnectPlayers();   // the new ships and the others see each other (targets, hit lists)
