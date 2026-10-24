@@ -605,7 +605,7 @@ styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way 
 | `lounge` | Optional. A visitor in the Space Lounges sells it: in systems of `systemRace` (-1 = any), from story step `minCampaign` (in free play from rank `minRank`), `chance` % each time a bar fills with new visitors. |
 | `npcTurrets` | Optional, also in an `override`. Turret items (numbers or `"mod:id"`, e.g. `[ 48, "my_mod:flak" ]`) the **NPC** ships of this type carry on its turret mounts (`slotType` 2), the n-th item on the n-th mount: in space they aim and fire by themselves at whatever that ship is hostile to (your own turret model, missiles and salvos included), and parked in a hangar they show them. Items that are no turret, or more items than mounts, give a warning. The game's own NPC ships carry none; the Bloodstar (45) and the Rhino (51) swap their built-in turret for yours. |
 | `dealer` | Optional. The ordinary ship dealers may stock it: `{ "chance": 2, "systemRace": -1, "minTechLevel": 0 }`, `chance` % (decimals allowed) each time a station's dealer list is made, at stations of `systemRace` systems (-1 = any) with at least that tech level (above 10: the tech level 10 stations). Not the special yards (Kothar, Quineros, Thynome...). |
-| `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void; default its own `race`). Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. `"boss": true` makes it a boss hull instead: it never flies as an ordinary fighter, and the pirate bosses (Pirate outposts and bosses, the Pirate activity board) fly it at the same option's chance, up to 400 m long; give it `npcTurrets` to arm its turret mounts. Their hull, guns and escorts stay the pirate boss's. |
+| `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void; default its own `race`). Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. `"boss": true` makes it a boss hull instead: it never flies as an ordinary fighter, and the pirate bosses (Pirate outposts and bosses, the Pirate activity board) fly it at the same option's chance, up to 400 m long; give it `npcTurrets` to arm its turret mounts. Their hull, guns and escorts stay the pirate boss's. `"capital": "battleship"` or `"freighter"` makes it a capital ship instead, see [Capital ships and freighters](#capital-ships-and-freighters). |
 | `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges), and before NPCs fly it. |
 | `sounds` | Optional. The ship's own engine and boost sounds, see [Ship sounds](#ship-sounds). |
 | `integrated` | Optional, also in an `override`. Equipment built into the hull, like the Kothar ships' Khador Drive (Cronus, Typhon, Nemesis) and the Specter's / Scimitar's cloak: `{ "khadorDrive": true, "cloak": true }`. `khadorDrive`: the ship can make Khador jumps without the drive in a slot (it still needs energy cells). `cloak`: `true` (the U'tool's stats), a cloak item (a number or `"mod:id"`, e.g. `96`) whose stats it has, or `false`; a cloak the player mounts replaces it, and with the Gameplay option "Cloak bay on cloaking ships" it goes into the built-in cloak's bay instead of a slot. `false` takes an original ship's away. `items`: any equipment built in, a list of item numbers, `"mod:id"` keys or `{ "item": ..., "amount": n }` (a secondary weapon's starting ammo, default 10), e.g. `"items": [46, { "item": 36, "amount": 20 }, 54]`. Built-in items work like mounted ones but take no slot, show on the hangar's Ship tab under "Built into the ship", and can't be demounted, sold or stored; they stay with the ship type when the player changes ships. A one-per-ship item the player fits (a shield, armor, a booster, a scanner, a drill, a cloak...) takes the built-in one's place without a slot, and the built-in one is back when it is demounted; built-in weapons and turrets add to the ship's own slots. A built-in launcher's missiles are refilled by buying more; a one-off item that is used up (an emergency system) is back at the next docking. An empty list takes them away. |
@@ -626,6 +626,23 @@ Moving parts animate: the model's first animation (a spinning radar dish, bobbin
 scaled over time) plays on a loop wherever the ship is shown, in flight, in the hangar and on NPC ships. Animations
 that bend the mesh with bones (an armature) don't play: such a hull is shown in its rest pose. Keep moving parts as
 separate objects animated by themselves, and put the animation you want looped first in the file.
+
+### Capital ships and freighters
+
+A big hull can fly in the orbits as a capital ship or a freighter rather than a fighter: give it
+`"traffic": { "capital": "battleship" }` or `"traffic": { "capital": "freighter" }` (it never flies as a fighter then).
+
+- **`"battleship"`** parks in the orbit's capital ship special: in a Terran or Vossk system, at the "Mod ships in traffic"
+  chance, in place of the game's Terran battleship or Vossk battleship; in a Nivelian or Midorian system (the game has no
+  capital ships there) in 30 % of the orbits with freighters. It has the Terran battleship's hull (25 x a freighter's)
+  and its `npcTurrets` on its turret mounts fire although it is parked.
+- **`"freighter"`** is one of the orbit's freighters now and then (the same option's chance), cruising like them.
+
+Its race is its `race` (or the races in `"races"`). Its collision boxes are measured on the model: the hull cut along its
+length into 8 slices. The player and the shots still meet its real shape (unless Options > Gameplay "Ship collision" is
+Original). It leaves no wreck: it burns, explodes at its `explosionScale` and is gone. The capital ship enhancements
+(escorts, resupply, fleet battles) stay with the game's own capital ships. A capital ship's hardpoints carry at most 8 turrets
+in multiplayer copies, so give it 8 at most. Keep it under about 5 km: the flight level's far plane is 15 km.
 
 ### Camera, cockpit, damage smoke and explosion
 
@@ -1204,9 +1221,31 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `mapPlace` | `{ "angle": degrees, "distance": n }`: where its planet sits in the star map's system view, round the sun (0 to 360) and how far out (the game's planets lie about 8000 to 45000 out). Either may be left out. Default: the game's place for it. |
 | `orbit` | The layout of its orbit level: station or not, jumpgate, arrivals, asteroids, fog, sun and planet. See [Orbit layouts](#orbit-layouts). |
 | `music` | A mod's track for its docked music (see [Music](#music)). |
+| `mobile` | A new station that moves: `true` or `{ "route": [stations], "stayMinutes": 15, "speed": 0.2 }`. See [Mobile stations](#mobile-stations). |
 
 Changing a station (`"override"`): `name`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
 `mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music` (an original station can get a new model too).
+
+### Mobile stations
+
+`"mobile"` makes a new station a moving one, like a carrier you can dock in. It has no planet: it isn't one of its system's
+stations (so it doesn't count toward the 7, isn't on the star map and can't be travelled to by planet jump). Instead it
+cruises from orbit to orbit of its system's stations:
+
+- `route`: the stations of its own system whose orbits it visits, in order (numbers or `"mod_id:station_id"`). Default:
+  every station of its system.
+- `stayMinutes`: how long it stays in each orbit (1-240, default 15).
+- `speed`: game units per ms (0-2, default 0.2, 10 m/s; the freighters fly 1).
+
+Where it is follows the real clock, so it is in the same place for every player of a multiplayer game, and it has
+moved on when you come back later. In each orbit it crosses a straight course sideways past the station, its middle 6 to 8
+km out in front of it, so its hull never sweeps through the station. Fly close and lock it like a station: the autopilot
+flies to it, and within its range (its size + 300 m) **Dock** takes you into its hangar and bar (its `interior`, or your own
+`hangar` / `bar`). Its shop, bar and missions are a station's like any other. A launch from it comes out beside it, in the
+orbit it is in by then.
+
+Give it a `model` and a `modelSize`; the course runs along the model's front (+Z after `modelYaw`). Keep it under about
+6 km: the flight level's far plane is 15 km.
 
 ### Orbit layouts
 

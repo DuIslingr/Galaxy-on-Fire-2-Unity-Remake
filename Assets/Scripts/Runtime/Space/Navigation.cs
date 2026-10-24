@@ -68,6 +68,7 @@ namespace GoF2Remake.Flight
             public ulong client;             // multiplayer Assist: the squadmate calling for help
             public bool freelance;          // waypoints: a freelance mission's route (the white freelance icon, not the gold story one)
             public bool eventWaypoint;      // waypoints: the event's own one (SetEventWaypoint), beside the player route
+            public int techLevel = -1;      // stations: the tech level its marker shows (-1 = the orbit's station's)
             public Vector3 Position => transform != null ? transform.position : fixedPosition;
         }
 
@@ -107,7 +108,17 @@ namespace GoF2Remake.Flight
         public int LockTimeMs { get; private set; } = 8000;
         public Target AutopilotTarget { get; private set; }
         public bool Autopilot => AutopilotTarget != null;
-        public bool GoingToStation => AutopilotTarget?.kind == Kind.Station;
+        public bool GoingToStation => AutopilotTarget?.kind == Kind.Station && AutopilotTarget.transform == null;
+        /// <summary>Remake mods: the autopilot flies to a mobile station (World.MobileStation: a Station target that moves).</summary>
+        public Target GoingToMobile => AutopilotTarget?.kind == Kind.Station && AutopilotTarget.transform != null ? AutopilotTarget : null;
+
+        /// <summary>Remake mods: a mobile station in this orbit (World.MobileStation): a station landmark that follows it.</summary>
+        public Target AddMobileStation(Transform station, int index, string name, int tech)
+        {
+            var t = new Target { kind = Kind.Station, transform = station, station = index, name = name, techLevel = tech };
+            Targets.Add(t);
+            return t;
+        }
         public bool GoingToGate => AutopilotTarget?.kind == Kind.Jumpgate;
         /// <summary>A campaign level's player route (Level+0x108, PlayerEgo::setRoute): its current waypoint is a landmark
         /// target named "Waypoint" (548): marked on the HUD, lockable, and the autopilot flies to it; "Waypoint reached."
@@ -361,8 +372,8 @@ namespace GoF2Remake.Flight
             if (!layout.alienOrbit)
             {
                 if (AsteroidField != null) list.Add(AsteroidField);
-                var station = Targets.Find(t => t.kind == Kind.Station);
-                if (station != null && !station.hidden) list.Add(station);
+                foreach (var station in Targets)   // the orbit's station, then any mobile station here (remake mods)
+                    if (station.kind == Kind.Station && !station.hidden) list.Add(station);
                 var gate = Targets.Find(t => t.kind == Kind.Jumpgate);
                 if (gate != null) list.Add(gate);
                 // 573 "Waypoint": the player route's last waypoint isn't reached (Route::getLastWaypoint +300).
@@ -551,7 +562,7 @@ namespace GoF2Remake.Flight
             bool gone = !StationObject.activeInHierarchy || StationReplaced;
             foreach (var t in Targets)
             {
-                if (t.kind != Kind.Station || t.hidden == gone) continue;
+                if (t.kind != Kind.Station || t.transform != null || t.hidden == gone) continue;   // (not a mobile station)
                 t.hidden = gone;
                 if (!gone) continue;
                 if (Locked == t || Candidate == t) { Locked = Candidate = null; LockTimer = 0f; }

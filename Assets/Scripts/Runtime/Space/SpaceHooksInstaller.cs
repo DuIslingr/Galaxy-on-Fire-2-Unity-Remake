@@ -22,6 +22,8 @@ namespace GoF2Remake.Flight
             GameHooks.KitMounts = Modding.ModShipKits.BuildMounts;
             GameHooks.ParseShipSounds = (o, mod, file) => Modding.ModShipSounds.ParseShip(o, mod, file);
             GameHooks.KitBuildText = o => Modding.ModShipKits.Build.FromJson(o).ToString();
+            // Remake mods: a mod capital ship's / freighter's boxes from its own model.
+            CollisionVolume.ShipVolumes = Modding.ModCapitalShips.HullVolumes;
         }
     }
 }

@@ -95,6 +95,8 @@ namespace GoF2Remake.Flight
         public SpawnSpec routeAround;      // the capital ship its loop circles (moved along with it in a fleet battle)
         public float deathMs = -1f;        // a fixed object's dying time before the big explosion (-1 = its wreck animation or 20 s)
         public int empPoints = -1;         // the EMP pool (-1 = NpcTables.Emp)
+        public bool modCapital;            // remake mods: a mod's capital ship or freighter (Modding.ModCapitalShips): its own
+                                           // model and boxes, its turret items armed even parked, no wreck
         public const int CapitalBattleship = 1, CapitalCarrier = 2, CapitalVossk = 3;
     }
 
@@ -250,7 +252,21 @@ namespace GoF2Remake.Flight
             // the single capital ship special.
             bool fleetBattle = FleetBattleHere(station, system, sysRace, baseSystem, story);
             if (fleetBattle) terran = vossk = false;
-            if (terran || vossk) freighters--;
+            // Remake mods (Modding.ModCapitalShips): a mod's capital ship of the system's race in the special's place (Terran /
+            // Vossk at the "Mod ships in traffic" chance), or in a Nivelian / Midorian system, which has none, at the same 30 %.
+            int modCapital = -1;
+            if (!fleetBattle)
+            {
+                if (terran || vossk)
+                {
+                    modCapital = Modding.ModCapitalShips.PickCapital(sysRace, true);
+                    if (modCapital >= 0) terran = vossk = carrier = false;
+                }
+                else if ((sysRace == 2 || sysRace == 3) && freighters > 0 && Modding.ModCapitalShips.Has(sysRace, Modding.ModCapitalShips.Battleship)
+                         && Random.Range(0, 100) < 30)
+                    modCapital = Modding.ModCapitalShips.PickCapital(sysRace, false);
+            }
+            if (terran || vossk || modCapital >= 0) freighters--;
             // A pirate raid on a traveller (initStreamOutPosition): rnd(100) < rank + 20 (40 Extreme) moves the pirates'
             // point toward the arriving player (Route::setNewCoords(player position / f); f is lost in the decompile,
             // the remake takes a quarter of the way: half the way put up to 19 Extreme pirates on a player just arrived within
@@ -288,13 +304,13 @@ namespace GoF2Remake.Flight
             {
                 var (ship, race) = NpcTables.RandomFreighter(sysRace);
                 float s = Random.value < 0.5f ? -1f : 1f;
-                list.Add(new SpawnSpec
-                {
-                    group = NpcGroup.Freighter, race = race, ship = ship, freighter = true,
-                    position = new Vector3(s * (Random.Range(0, 60000) - 80000), Random.Range(0, 40000) - 20000, Random.Range(0, 160000) - 80000),
-                });
+                var at = new Vector3(s * (Random.Range(0, 60000) - 80000), Random.Range(0, 40000) - 20000, Random.Range(0, 160000) - 80000);
+                int modShip = Modding.ModCapitalShips.PickFreighter(race, -1);   // remake mods: now and then a mod's freighter
+                list.Add(modShip >= 0 ? Modding.ModCapitalShips.Spawn(modShip, race, at)
+                       : new SpawnSpec { group = NpcGroup.Freighter, race = race, ship = ship, freighter = true, position = at });
             }
             if (terran || vossk) AddCapitalShip(db, list, terran, carrier, station);
+            if (modCapital >= 0) AddModCapital(list, modCapital, sysRace, station);
             if (fleetBattle) AddFleetBattle(db, list, station);
             // 4 raiders (the loot orbits': Player::setHitpoints(2 x max), speed 3.5, each at the player + (20000 +- rnd 50000,
             // 10000 +- rnd 50000, 20000 +- rnd 50000))
@@ -647,6 +663,15 @@ namespace GoF2Remake.Flight
                 : () => new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 40000) - 20000, Random.Range(0, 80000) + 60000);
             // Remake option: escorts, stronger turrets, the killable carrier / Vossk battleship (World.CapitalShips).
             AddCapitalShipAt(db, list, kind, ClearOfStation(station, CapitalVolumes(kind), roll), Settings.CapitalShips);
+        }
+
+        /// <summary>Remake mods: a mod's capital ship (Modding.ModCapitalShips) parked in the Terran battleship's box, clear of
+        /// the station.</summary>
+        static void AddModCapital(List<SpawnSpec> list, int ship, int race, int station)
+        {
+            var at = ClearOfStation(station, CollisionVolume.ForFreighter(ship, race),
+                () => new Vector3(Random.Range(0, 80000) - 40000, Random.Range(0, 10000) - 5000, Random.Range(0, 80000) + 80000));
+            list.Add(Modding.ModCapitalShips.Spawn(ship, race, at));
         }
 
         static List<CollisionVolume> CapitalVolumes(int kind) => kind == SpawnSpec.CapitalBattleship ? CollisionVolume.ForFreighter(14, 0)

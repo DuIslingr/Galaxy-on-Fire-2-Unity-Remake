@@ -142,7 +142,11 @@ namespace GoF2Remake.Modding
             group.SetLODs(new[] { new LOD(0.5f, root.GetComponentsInChildren<Renderer>(true)) });
             group.RecalculateBounds();
             float tanHalf = Mathf.Tan(ReferenceFov * 0.5f * Mathf.Deg2Rad);
-            float h = Mathf.Clamp01(group.size / (2f * CullDistance * M * tanHalf));
+            // A capital ship (a mod's 4 km hull) stays in sight as far as its size allows: 25 times its size, the generic ships'
+            // CullDistance at least (a fighter's 4 km).
+            float cull = Mathf.Max(CullDistance, group.size / M * 25f);
+            asm.lastVisibleDistanceGameUnits = cull;
+            float h = Mathf.Clamp01(group.size / (2f * cull * M * tanHalf));
             group.SetLODs(new[] { new LOD(h, root.GetComponentsInChildren<Renderer>(true)) });
             return root;
         }

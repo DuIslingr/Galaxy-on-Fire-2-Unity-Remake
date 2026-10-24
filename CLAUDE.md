@@ -3128,6 +3128,39 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (`Scan` keeps them to their own cache key); the pirate boss (`TrafficPlan.AddPirateEventShips`) flies one at the same
   chance (`ModTraffic.PickBoss` over `BossShips`), up to 400 m (`MaxBossLength`); its hull, gun and escorts stay the boss's,
   `npcTurrets` arm its turret mounts. The GoF3 Ships mod's five GoF3 bosses use it.
+- **Mod capital ships and freighters** (remake, 2026-10-24, the user's request for GoF3's capital ships; `ModCapitalShips`,
+  ships.json `"traffic": { "capital": "battleship" | "freighter" }`, `CustomTraffic.capital`): never fighters (`ModTraffic`
+  skips them). A battleship parks in the orbit's capital ship special (`TrafficPlan`: Terran / Vossk systems in place of the
+  game's battleship / Vossk battleship at the "Mod ships in traffic" chance, `PickCapital(race, true)`; Nivelian / Midorian
+  systems, which have none, in 30 % of the orbits with freighters; `AddModCapital`: the Terran battleship's box, 4-8 km out,
+  `ClearOfStation`); a freighter replaces one of the orbit's freighters at that chance (`PickFreighter`); nothing is drawn while the mods have
+  none for the race (`Has`), so the game's own traffic rolls stay as they were. Both fly NpcShip's
+  freighter path (`SpawnSpec.freighter`, `modCapital`; a battleship `stationary`, the Terran battleship's hull `Hull(1, 14)`,
+  its name on the lock plate) with the mod ship's own model (`Traffic.Create`), its `npcTurrets` armed even parked (`NpcShip`:
+  `!parked || modCapital`); collision boxes measured on the built model (`CollisionVolume.ShipVolumes` hook in
+  `ForFreighter`, filled by `SpaceHooksInstaller`: `ModCapitalShips.HullVolumes`, the hull meshes cut into 8 slices along
+  the longest axis, each slice's cross-section, `Measure`), so `NetProxy`'s freighter boxes match; no wreck (no
+  `WreckPrefab`, `leavesWreck` false, empty volumes once dead), the explosion its `explosionScale` (`FreighterExplosionScale`,
+  else 8 / 6). `ModShipBuilder` culls a mod ship at max(4 km, 25 x its size). Not for the capital ship enhancements (escorts,
+  resupply, fleet battles). Tests `ModCapitalShipsTests`. Verified in Play mode: the GoF3 Nemesis (4.4 km) spawned at Dis with
+  8 boxes and 8 turrets.
+- **Mobile stations** (remake, 2026-10-24, the user's request: GoF3's Manticore as a moving station with its own hangar;
+  stations.json `"mobile": true | { "route", "stayMinutes", "speed" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`;
+  `MobileStations` (Game layer, plain C#); `World.MobileStation`): a new station with no planet (not added to its system's
+  `stations`, so not on the map, not in the 7, never a random target). Its route (default every station of its system) is
+  walked by the UTC clock (`MobileStations.Clock`, `ClockOverride` for tests; the same for every player, it moves on while
+  the game is closed): stay n = seconds / stay, the (n + station) % count-th stop; in that orbit a straight course crossed
+  sideways (`CourseAt`: a JavaRandom of station and n, the middle 6-8 km out within 50 deg of the station's front, heading
+  square to it, so the hull never sweeps the station). `SpaceLevel` spawns those in its orbit (`MobileStation.SpawnAll`,
+  not in an arena or the prologue): the model (its ModStations template, else looksLike), an `Obstacle` turning with it
+  (`rotates`; `ModCapitalShips.Measure` in its own frame), `HullCollision`, moving at its speed in game time; Navigation gets
+  a Station target with its transform (`AddMobileStation`, `Target.techLevel` for its marker, `GoingToMobile`; `GoingToStation`
+  now only the orbit's own); `CanDock` / `Dock` / the autopilot dock at the one in range (bounding radius + 6000 units, after
+  the player left it once: `MobileStation.LeftRange`; `DockAt`: `Session.StationIndex` = the mobile station, the Station
+  scene with its own hangar / bar). A level loaded with a mobile station's index (a launch from it, a teleport) is its
+  current host orbit (`SpaceLevel.Awake`, `launchFromMobile`) and the player comes out beside it (`LaunchPose`: its right,
+  along its course). Tests `ModCapitalShipsTests`. Verified in Play mode (the GoF3 Ships mod's Manticore, 6.3 km, Magnetar):
+  found in Dis's orbit cruising nose first, docked into its hangar, launched back beside it.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),

@@ -218,8 +218,8 @@ namespace GoF2Remake.Multiplayer
                 position.Value = m.position;
                 rotation.Value = m.rotation;
                 label.Value = ship.Target != null && !string.IsNullOrEmpty(ship.Target.displayName) ? ship.Target.displayName : "";
-                explosionScale.Value = ship.IsFixed ? ship.Spec.explosionScale : ship.IsFreighter ? 6f : ship.FighterExplosionScale;   // NpcShip.UpdateDying
-                leavesWreck.Value = ship.IsFixed || ship.IsFreighter;
+                explosionScale.Value = ship.IsFixed ? ship.Spec.explosionScale : ship.IsFreighter ? ship.FreighterExplosionScale : ship.FighterExplosionScale;   // NpcShip.UpdateDying
+                leavesWreck.Value = (ship.IsFixed || ship.IsFreighter) && !ship.Spec.modCapital;   // (a mod capital ship leaves none)
                 var spec = ship.Spec;
                 hitVolume.Value = spec.freighter ? FreighterVolumes + spec.ship * 16 + Mathf.Clamp(spec.race, 0, 15)
                                 : spec.capitalEnhanced && spec.fixedObject != null && spec.collisionId >= 0 ? spec.collisionId : -1;

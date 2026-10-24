@@ -246,6 +246,10 @@ namespace GoF2Remake.Data
         /// <summary>A boss hull: the pirate bosses (TrafficPlan's pirate events) fly it now and then (ModTraffic.PickBoss), and
         /// it never flies as an ordinary fighter. Up to ModTraffic.MaxBossLength long.</summary>
         public bool boss;
+        /// <summary>A capital ship (Modding.ModCapitalShips): "battleship" = a parked warship in the orbits' capital ship special
+        /// (instead of the Terran battleship / the Vossk battleship, and in Nivelian / Midorian systems, which have none),
+        /// "freighter" = it cruises among the orbits' freighters. Either way it never flies as a fighter. Empty = a fighter.</summary>
+        public string capital;
     }
 
     /// <summary>Remake mods: a mod ship in the ordinary ship dealers' lists (Shop.GenerateShips): each time a station's dealer

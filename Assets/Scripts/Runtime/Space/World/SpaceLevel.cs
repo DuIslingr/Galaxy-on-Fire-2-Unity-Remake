@@ -135,6 +135,10 @@ namespace GoF2Remake.World
         public Transform Asteroids { get; private set; }
         public Backdrop Backdrop { get; private set; }
         public GameObject Station { get; private set; }
+        /// <summary>Remake mods: the mobile stations cruising through this orbit now (Modding.MobileStations).</summary>
+        public readonly System.Collections.Generic.List<MobileStation> Mobiles = new System.Collections.Generic.List<MobileStation>();
+        /// <summary>The mobile station this level was launched from (its orbit is where it is now), -1 = none.</summary>
+        int launchFromMobile = -1;
         public GameObject Jumpgate { get; private set; }
         /// <summary>Landmark 3 (PlayerWormHole), null once the game is won.</summary>
         public Wormhole Wormhole { get; private set; }
@@ -158,12 +162,23 @@ namespace GoF2Remake.World
 
         /// <summary>The HUD's "Dock" prompt: an orbit with a station, player inside the dock range, not during the launch
         /// camera, and only after having left the range once (the undock spawn at 10000 units is inside it).</summary>
-        public bool CanDock => Layout.hasStation && StationShown && Player != null && launchCameraMs <= 0f && leftDockRange && InDockRange && (Health == null || !Health.Dead)
+        public bool CanDock => ((Layout.hasStation && StationShown && leftDockRange && InDockRange) || MobileInRange != null)
+                               && Player != null && launchCameraMs <= 0f && (Health == null || !Health.Dead)
                                && !DockingBlocked && PlayerHull.PlayerShip   // remake debug: no hangar for a freighter / capital ship
                                && (Mining == null || Mining.State == Mining.Phase.Idle);
         /// <summary>The station is there (a level script may hide it: 78's Valkyrie jumping away); nothing docks at a hidden one.</summary>
         bool StationShown => Station == null || Station.activeInHierarchy;
         bool InDockRange => Player.transform.position.sqrMagnitude < StationDockRange * M * StationDockRange * M;
+        /// <summary>Remake mods: a mobile station whose dock range the player is in (having left it once since the level began).</summary>
+        MobileStation MobileInRange
+        {
+            get
+            {
+                if (Player == null) return null;
+                foreach (var m in Mobiles) if (m != null && m.LeftRange && m.InRange(Player.transform.position)) return m;
+                return null;
+            }
+        }
 
         Database db;
         public Database Database => db;
@@ -222,6 +237,13 @@ namespace GoF2Remake.World
             // Multiplayer arena match (NetArenaClient): the template orbit's sky, sun and planets, its own orbit id.
             var arena = GoF2Remake.World.SpaceHooks.Arena;
             if (arena != null) { station = arena.template; Session.ArrivedByTravel = Session.ArrivedBySystemJump = false; }
+            // Remake mods: launched from a mobile station (Modding.MobileStations): into the orbit it cruises through now.
+            if (arena == null && stationOverride < 0 && Modding.ModWorld.IsMobile(station))
+            {
+                launchFromMobile = station;
+                int host = Modding.MobileStations.HostNow(station);
+                station = Session.StationIndex = host >= 0 ? host : Modding.ModWorld.RefugeStation;
+            }
             ComingFromVoid = Session.ComingFromVoid;
             // Status::departStation: the Void-invasion re-roll counter (index 32-44).
             Story.OnDepart(db, station);
@@ -260,6 +282,8 @@ namespace GoF2Remake.World
             Jumpgate = OrbitBuilder.SpawnJumpgate(db, Layout);
             SpawnWormhole();
             AddObstacles();
+            // Remake mods: the mobile stations in this orbit now (not in an arena or the prologue).
+            if (arena == null && !prologue) Mobiles.AddRange(MobileStation.SpawnAll(db, Layout));
             // Multiplayer (NetGame): the orbit's field from the world seed, the same for every player here (NetOrbit).
             if (!GoF2Remake.Data.NetSession.Active) Asteroids = OrbitBuilder.SpawnAsteroids(db, Layout);
             else SpawnNetworkAsteroids(GoF2Remake.Data.NetSession.OrbitSeed(NetOrbitId));
@@ -284,6 +308,7 @@ namespace GoF2Remake.World
             Navigation = Player.gameObject.AddComponent<Navigation>();
             Navigation.Setup(db, Layout, backdrop, Player, Mining, chase, Weapons);
             Navigation.StationObject = Station;
+            foreach (var m in Mobiles) Navigation.AddMobileStation(m.transform, m.Station, m.Label, m.TechLevel);
             Mining.navigation = Navigation;
             SystemJump = Player.gameObject.AddComponent<SystemJump>();
             SystemJump.Setup(db, Navigation, Player, Weapons, chase, Jumpgate);
@@ -896,6 +921,11 @@ namespace GoF2Remake.World
                 if (Layout.systemIndex == 25) arrival += OrbitLayout.ToUnity(new Vector3(0f, 0f, 40000f));
                 root.transform.SetPositionAndRotation(arrival, facing);
             }
+            else if (launchFromMobile >= 0 && Mobiles.Find(m => m.Station == launchFromMobile) is MobileStation from)
+            {
+                var pose = from.LaunchPose();   // remake mods: out beside the mobile station, along its course
+                root.transform.SetPositionAndRotation(pose.position, pose.rotation);
+            }
             else
                 root.transform.SetPositionAndRotation(
                     OrbitLayout.ToUnity(UndockPoint),
@@ -1089,6 +1119,14 @@ namespace GoF2Remake.World
         {
             if (Player == null || (Health != null && Health.Dead)) return;
             if (!InDockRange) leftDockRange = true;
+            foreach (var m in Mobiles) if (m != null && !m.LeftRange && !m.InRange(Player.transform.position)) m.LeftRange = true;
+            // Remake mods: the autopilot to a mobile station docks within its range.
+            if (Navigation != null && Navigation.GoingToMobile is Navigation.Target toMobile && launchCameraMs <= 0f
+                && Mobiles.Find(m => m != null && m.transform == toMobile.transform) is MobileStation mobile && mobile.InRange(Player.transform.position))
+            {
+                DockAt(mobile);
+                return;
+            }
             // MGame::dockEvent: the autopilot to the station docks within 16000 units or on touching the station (collision
             // is off during the launch).
             if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation && StationShown)
@@ -1129,6 +1167,17 @@ namespace GoF2Remake.World
         /// fly-in; the story's own moves into a station (the rescue, arrests, "docked at ...") pass false.</summary>
         public void Dock(bool flyIn = false)
         {
+            // Remake mods: the player's own docking near a mobile station (and not at the orbit's station) docks there.
+            if (flyIn && MobileInRange is MobileStation near && !(Layout.hasStation && StationShown && leftDockRange && InDockRange))
+            {
+                DockAt(near);
+                return;
+            }
+            DockInto(flyIn);
+        }
+
+        void DockInto(bool flyIn)
+        {
             // Remake debug (PlayerHull): a hull the player can't normally fly never lands in a hangar. The player's own docking
             // is refused (CanDock and the autopilot already refuse it); the story's moves into a station put the player
             // back in their own ship first.
@@ -1146,6 +1195,20 @@ namespace GoF2Remake.World
             Session.DockedFromSpace = flyIn;
             Weapons?.StoreAmmo();   // MGame::dockEvent saves the ship state to Status
             if (Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);
+        }
+
+        /// <summary>Remake mods: docks at a mobile station (its hangar and bar: the Station scene with its index).</summary>
+        void DockAt(MobileStation mobile)
+        {
+            if (DockingBlocked) { Navigation?.Refuse(); return; }
+            if (!PlayerHull.PlayerShip)
+            {
+                Navigation?.Refuse(string.Format(Localization.Extra("hullNoDock", "The {0} doesn't fit in the hangar."), PlayerHull.Label));
+                return;
+            }
+            Session.PreviousStationIndex = Layout.stationIndex;
+            Session.StationIndex = mobile.Station;
+            DockInto(true);
         }
     }
 }

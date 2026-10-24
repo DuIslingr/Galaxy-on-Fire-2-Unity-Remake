@@ -232,7 +232,7 @@ stays a beam) except through the stats above.
 | `lounge` | A Space Lounge visitor sells it: systemRace (-1 any), minCampaign (story step), minRank (free play), chance %. |
 | `npcTurrets` | Also in an override: turret items (numbers or "mod:id") the NPC ships of this type carry on its turret mounts (n-th item on n-th slotType-2 mount); they aim and fire by themselves, and show in hangars. 45 / 51 swap their built-in turret for them. |
 | `dealer` | Ordinary ship dealers stock it: chance % (decimals ok) per dealer list, systemRace, minTechLevel. Not the special yards. |
-| `traffic` | `{ "weight": 1, "races": [8] }`: NPC fighters of those races (default its `race`) fly it at the "Mod ships in traffic" option's chance (default 25 %), weighted; `weight` 0 = never. Ships over 150 m never. Hull / guns stay the game's fighter's. A kit ship's NPCs fly random builds (parts, tier, colours, skin); `"randomBuild": false` = its default build. `"boss": true`: a boss hull: never an ordinary fighter, the pirate bosses fly it instead (up to 400 m; `npcTurrets` arm it). |
+| `traffic` | `{ "weight": 1, "races": [8] }`: NPC fighters of those races (default its `race`) fly it at the "Mod ships in traffic" option's chance (default 25 %), weighted; `weight` 0 = never. Ships over 150 m never. Hull / guns stay the game's fighter's. A kit ship's NPCs fly random builds (parts, tier, colours, skin); `"randomBuild": false` = its default build. `"boss": true`: a boss hull: never an ordinary fighter, the pirate bosses fly it instead (up to 400 m; `npcTurrets` arm it). `"capital": "battleship"`: parked in the orbits' capital ship special (Terran / Vossk systems at the traffic chance instead of the game's battleship, Nivelian / Midorian 30 % of orbits with freighters), battleship hull, its `npcTurrets` fire parked; `"capital": "freighter"`: one of the orbit's freighters now and then. Boxes measured on the model, no wreck, at most 8 turrets, under ~5 km. |
 | `available` | Condition before dealers / lounges sell it (and NPCs fly it). |
 | `flightStyle` | `"free"` / `"original"`: the ship always flies so (default the player's option). |
 | `kit`, `kitType`, `build` | A customizable ship instead of `model` (see shipkits.json). |
@@ -423,6 +423,12 @@ right): `"station": true | false | "nodock"`, `"jumpgate": true | false` (arriva
 orbit), `"jumpgatePosition"` / `"arrival"`: [x, y, z], `"asteroids": false | { "count", "centre", "spread" (default 100000),
 "type": rock | void | ice | magma, "ores": [item | { item, chance }] }`, `"fog": false | { "color", "end" }`, `"sun": [yaw,
 pitch]`, `"planet": { "size", "yaw", "pitch" }`.
+
+A new station's `"mobile": true | { "route": [stations of its system], "stayMinutes": 15, "speed": 0.2 }` makes it a moving
+one: no planet (not one of its system's stations, not on the map, not counted in the 7), it cruises through the orbits of its
+system's stations in turn (default all), by the real clock (the same for every player), crossing each orbit sideways 6-8 km
+in front of the station along its model's front (+Z after `modelYaw`); docked by flying close (lock, autopilot, Dock) into its
+`interior` / `hangar` / `bar`; a launch comes out beside it. Keep it under ~6 km (the far plane is 15 km).
 
 `looksLike` borrows only an original station's model and collision (reference.md's Model column): its special rules (the
 Kaamo Club's storage and siege, a pirate base) stay with the original number. Stations have no hidden flag: every station of

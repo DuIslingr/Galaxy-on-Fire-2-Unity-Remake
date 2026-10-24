@@ -380,6 +380,12 @@ namespace GoF2Remake.World
         /// (ModShipView).</summary>
         public float FighterExplosionScale => db?.Ship(Spec.ship)?.explosionScale ?? 1f;
 
+        /// <summary>A freighter's: PlayerFixedObject::update's setScaling(6), 8 for the Terran battleship; a mod's capital ship
+        /// or freighter its own "explosionScale" when it has one (else the battleship's / a freighter's).</summary>
+        public float FreighterExplosionScale => Spec.ship == 14 ? 8f
+            : Spec.modCapital && db?.Ship(Spec.ship)?.explosionScale is float own && own != 1f ? own
+            : Spec.modCapital && Spec.stationary ? 8f : 6f;
+
         public void Setup(Traffic owner, Database database, SpawnSpec spec, GameObject prefab, Transform fxRoot)
         {
             traffic = owner;
@@ -787,7 +793,7 @@ namespace GoF2Remake.World
                 empRig.UpdateVisuals(dtMs, Camera.main, transform.forward);
             }
             // Remake: turret items on its turret mounts (NpcMountedTurrets) aim and fire while it flies, awake and armed.
-            mounted?.Update(dtMs, enemies, HitTargets, Current == State.Fly && !Asleep && !inactive && !Hidden && !parked && !frozen
+            mounted?.Update(dtMs, enemies, HitTargets, Current == State.Fly && !Asleep && !inactive && !Hidden && (!parked || Spec.modCapital) && !frozen
                                                      && shootingEnabled && !Hp.empDisabled && Target.Alive);
             if (Current == State.Dead) { UpdateDead(dtMs); return; }
             if (Current == State.Dying) { UpdateSmoke(); UpdateDying(dtMs); return; }
@@ -1940,7 +1946,7 @@ namespace GoF2Remake.World
             else if (IsFreighter)
             {
                 dyingMs = 10000f;
-                var wreckPrefab = WreckPrefab(assets, Spec.ship, Race);
+                var wreckPrefab = Spec.modCapital ? null : WreckPrefab(assets, Spec.ship, Race);   // a mod's hull burns as it is
                 if (wreckPrefab != null && model != null)
                 {
                     wreck = Instantiate(wreckPrefab, transform, false);
@@ -2026,14 +2032,15 @@ namespace GoF2Remake.World
             dyingMs -= dtMs;
             if (dyingMs > 0f) return;
             // PlayerFixedObject::update: setScaling(6), 8 for the Terran battleship (0x37e7) and the pirate outpost (0x37a3).
-            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : FighterExplosionScale);
+            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? FreighterExplosionScale : FighterExplosionScale);
             explosionSerial = explosion != null ? explosion.Serial : 0;
             wreckBurn?.SetEmitting(false);   // state 4: enableSystemEmit(false)
             Current = State.Dead;
             smoke?.SetEmitting(false);   // the end of the tumble: Explosion::start, smoke and fire off
             if (burn != null && burn.Emitting) { burn.SetBurning(false); burn.Burst(); }   // record 11 at the explosion
             deadMs = 0f;
-            if (obstacle != null && !IsFixed) obstacle.volumes = CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
+            if (obstacle != null && !IsFixed && Spec.modCapital) obstacle.volumes = new List<CollisionVolume>();   // a mod's: no wreck
+            else if (obstacle != null && !IsFixed) obstacle.volumes = CollisionVolume.ForWreck(Spec.ship, Race);   // setWreckedMeshId
             // A Pirate Outpost's wreck (0x37a3 -> wreck volume 5): in state 4 only the wreck volumes collide.
             else if (obstacle != null && Spec.fixedObject == "station_pirates") obstacle.volumes = CollisionVolume.ForWreckId(5);
             // Remake (CapitalShips): a capital ship without a wreck leaves nothing to fly into.

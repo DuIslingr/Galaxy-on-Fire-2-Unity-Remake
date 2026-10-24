@@ -12,7 +12,8 @@
 // parts, tier, colour scheme, now and then a skin; "traffic": { "randomBuild": false } = its default build), drawn from the
 // parts already loaded; each docking loads a few more random builds' parts in the background (Warm). A boss hull ("traffic":
 // { "boss": true }, the GoF3 Ships mod's five GoF3 bosses) never flies as a fighter: the pirate bosses fly it instead
-// (PickBoss, at the same chance, up to MaxBossLength long).
+// (PickBoss, at the same chance, up to MaxBossLength long). A capital ship or freighter ("traffic": { "capital": ... })
+// never flies as a fighter either (ModCapitalShips).
 
 using System.Collections.Generic;
 using System.Linq;
@@ -99,6 +100,7 @@ namespace GoF2Remake.Modding
                 if (weight <= 0f || !CustomShips.Offered(c.index) || db.Ship(c.index) == null) continue;
                 bool boss = c.traffic != null && c.traffic.boss;
                 if (boss != (key == BossKey)) continue;   // (a boss hull is never a fighter)
+                if (!string.IsNullOrEmpty(c.traffic?.capital)) continue;   // a capital ship or freighter (ModCapitalShips)
                 bool flies = boss || (c.traffic?.races != null && c.traffic.races.Length > 0 ? c.traffic.races.Any(r => Key(r) == key) : Key(c.race) == key);
                 if (!flies || !ModUnlocks.ShipAvailable(c.index)) continue;
                 float length = Length(c.index);
@@ -182,6 +184,8 @@ namespace GoF2Remake.Modding
         static int Key(int race) => race >= 0 && race <= 3 ? race : race == 9 ? 9 : race == 10 ? -1 : race < 0 ? -1 : 8;
 
         /// <summary>A built mod ship's length (Unity metres, its meshes' bounds along its nose; 0: not built).</summary>
+        public static float HullLength(int ship) => Length(ship);
+
         static float Length(int ship)
         {
             if (lengthRevision != ModManager.Revision) { lengths.Clear(); lengthRevision = ModManager.Revision; }
