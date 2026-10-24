@@ -3205,6 +3205,10 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (split by bone, textures embedded), and the Dreadnought (its stage pieces as one hull) with its encounter at Herjaza (101)
   once the Valkyrie add-on is over: fields / shield generator (stage 1, shields) with the torpedo launchers, sniper and
   lightning turrets (stage 2), explosive weak points (stage 3), flak / missile batteries and five hangars throughout.
+  ES2's Mobile Homebase is no warship but a mobile station like the GoF3 mod's Manticore (`warships.build_homebase`:
+  stations.json, route "any", 30 minutes an orbit, two hours a system, the game's Terran rooms). Fixed on the way: a
+  station's stations.json `materials` ignored their `material` filter (`ModStations.Build` passed no glTF material name to
+  `ModShipBuilder.MaterialFor`), so such a station showed its model's own white materials.
 - **Turrets don't fire through their own ship** (remake, 2026-10-24, the user's request, for every turret): `TurretCore.Host`
   (the ship it sits on: NpcShip's turret objects their capital host (`Spec.capitalHost`) or the ship they ride on,
   `NpcMountedTurrets` / `PlayerTurret` their ship) and `TurretCore.Fire` checks, once the gun is ready, a ray from the gun's

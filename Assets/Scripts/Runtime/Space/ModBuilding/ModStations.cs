@@ -274,14 +274,16 @@ namespace GoF2Remake.Modding
             if (s.materials.Count > 0)
             {
                 var mats = new Material[s.materials.Count];
-                for (int i = 0; i < mats.Length; i++) mats[i] = ModMaterials.FromSpec(s.mod, s.materials[i], $"{s.Assembly} {s.materials[i].mesh}{s.materials[i].submesh}");
+                for (int i = 0; i < mats.Length; i++)
+                    mats[i] = ModMaterials.FromSpec(s.mod, s.materials[i], !string.IsNullOrEmpty(s.materials[i].material) ? $"{s.Assembly} {s.materials[i].material}" : $"{s.Assembly} {s.materials[i].mesh}{s.materials[i].submesh}");
                 foreach (var r in renderers)
                 {
                     var mesh = ModShipBuilder.MeshOf(r);
                     var assigned = r.sharedMaterials;
                     int count = Mathf.Max(1, mesh != null ? mesh.subMeshCount : assigned.Length);
                     if (assigned.Length != count) System.Array.Resize(ref assigned, count);
-                    for (int sub = 0; sub < count; sub++) { var m = ModShipBuilder.MaterialFor(s.materials, mats, r.name, sub); if (m != null) assigned[sub] = m; }
+                    // (the model's own material name too: an entry's "material" filter, as on a ship; stations ignored it)
+                    for (int sub = 0; sub < count; sub++) { var m = ModShipBuilder.MaterialFor(s.materials, mats, r.name, sub, assigned[sub] != null ? assigned[sub].name : null); if (m != null) assigned[sub] = m; }
                     r.sharedMaterials = assigned;
                 }
             }
