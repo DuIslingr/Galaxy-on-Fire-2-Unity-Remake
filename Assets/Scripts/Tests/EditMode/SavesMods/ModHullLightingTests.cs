@@ -28,6 +28,22 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void AModRoomKeepsItsGlowOnPlainLit()
+        {
+            var a = Resources.Load<ModAssets>(ModAssets.ResourcePath);
+            var m = new Material(a.litOpaque);
+            var room = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try
+            {
+                room.GetComponent<MeshRenderer>().sharedMaterial = m;
+                ModMaterials.PlainLit(room);
+                Assert.AreEqual("Universal Render Pipeline/Lit", m.shader.name);
+                Assert.IsTrue(m.IsKeywordEnabled("_EMISSION"), "the shader switch dropped the room's emission");
+            }
+            finally { Object.DestroyImmediate(room); Object.DestroyImmediate(m); }
+        }
+
+        [Test]
         public void AGoF2HangarLightsTheModHullsFromAbove()
         {
             float dim = Shader.GetGlobalFloat("_GoF2PbrIndirectDim");
