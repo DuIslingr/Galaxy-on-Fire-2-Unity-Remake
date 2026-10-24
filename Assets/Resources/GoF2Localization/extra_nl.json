@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "vertrekt over {0} min",
  "animatedDialogue": "Geanimeerde dialogen",
  "antiAliasing": "Anti-aliasing",
  "msaaByUpscaler": "De upscaler doet de anti-aliasing: zet hem uit om MSAA te gebruiken",

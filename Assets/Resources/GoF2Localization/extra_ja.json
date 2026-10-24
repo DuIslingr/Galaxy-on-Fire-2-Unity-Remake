@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "あと{0}分で移動",
  "animatedDialogue": "会話アニメーション",
  "antiAliasing": "アンチエイリアス",
  "msaaByUpscaler": "アンチエイリアスはアップスケーラーが行います。MSAA を使うにはオフにしてください",

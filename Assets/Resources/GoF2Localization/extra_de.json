@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "zieht in {0} Min. weiter",
  "animatedDialogue": "Animierte Dialoge",
  "antiAliasing": "Kantenglättung",
  "msaaByUpscaler": "Der Upscaler übernimmt die Kantenglättung: schalte ihn aus, um MSAA zu nutzen",

@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "{0}分钟后离开",
   "animatedDialogue": "动画对话",
   "antiAliasing": "抗锯齿",
   "msaaByUpscaler": "抗锯齿由超分辨率技术完成：关闭它才能使用 MSAA",

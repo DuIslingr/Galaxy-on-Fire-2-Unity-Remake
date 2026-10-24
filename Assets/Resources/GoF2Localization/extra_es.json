@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "se va en {0} min",
  "animatedDialogue": "Diálogo animado",
  "antiAliasing": "Antialiasing",
  "msaaByUpscaler": "El escalador se encarga del antialiasing: desactívalo para usar MSAA",

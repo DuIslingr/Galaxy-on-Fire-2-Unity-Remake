@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "{0}분 후 이동",
  "animatedDialogue": "대화 애니메이션",
  "antiAliasing": "안티에일리어싱",
  "msaaByUpscaler": "안티에일리어싱은 업스케일러가 처리합니다. MSAA를 쓰려면 업스케일러를 끄세요",

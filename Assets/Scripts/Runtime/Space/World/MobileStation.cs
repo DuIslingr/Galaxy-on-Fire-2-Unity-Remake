@@ -4,7 +4,7 @@
 // into slices like a mod capital ship's, Obstacle.rotates; the player slides along the real hull, HullCollision), a lockable
 // landmark the autopilot flies to (Navigation: a Station target that follows it), and docking within its range (its bounding
 // radius + 6000 units, like a mod station model's) into its own hangar and bar (SpaceLevel.Dock). A launch from it comes out
-// beside it, flying along its course (SpaceLevel.SpawnPlayer).
+// beside it, flying along its course (SpaceLevel.SpawnPlayer). Its "engines" glow at its stern like a mod ship's.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -88,6 +88,15 @@ namespace GoF2Remake.World
             ms.Obstacle = o;
             ms.DockRangeUnits = radius / M + 6000f;
             HullCollision.Attach(model, null, o);
+            // Its exhausts ("mobile" "engines": mounts like a ship's, from its centre), lit while it cruises; the ship
+            // glow's discs and rings (no collision: HullCollision skips the glow layers).
+            var spec = Modding.ModWorld.MobileOf(mobile);
+            if (spec?.engines != null && spec.engines.Count > 0)
+            {
+                var glow = Modding.ModShipBuilder.BuildEngineGlow(new CustomShipData
+                    { mounts = spec.engines, engineGlowColor = spec.engineColor, assembly = $"mobile_{mobile:000}" });
+                if (glow != null) glow.transform.SetParent(model.transform, false);
+            }
             ms.Place(seconds);
             return ms;
         }

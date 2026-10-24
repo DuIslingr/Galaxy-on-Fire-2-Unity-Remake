@@ -3146,10 +3146,14 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   resupply, fleet battles). Tests `ModCapitalShipsTests`. Verified in Play mode: the GoF3 Nemesis (4.4 km) spawned at Dis with
   8 boxes and 8 turrets.
 - **Mobile stations** (remake, 2026-10-24, the user's request: GoF3's Manticore as a moving station with its own hangar;
-  stations.json `"mobile": true | { "route", "stayMinutes", "speed", "race" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`;
+  stations.json `"mobile": true | { "route", "stayMinutes", "systemMinutes", "exclude", "speed", "race", "engines",
+  "engineColor" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`;
   `MobileStations` (Game layer, plain C#); `World.MobileStation`): a new station with no planet (not added to its system's
   `stations`, so not on the map, not in the 7, never a random target). Its route (any systems' stations, default every
-  station of its own system; the user's request: the Manticore tours the Terran systems) is
+  station of its own system; `"any"`: every system, the user's request for the Manticore: `systemMinutes` in one, its
+  orbits there in turn, then another, every system once per round in an order drawn from the station and the round
+  (`RoamSystemAt`, never the same twice in a row), never `MobileStations.RoamSkip`'s story / Kaamo orbits; `exclude`
+  systems) is
   walked by the UTC clock (`MobileStations.Clock`, `ClockOverride` for tests; the same for every player, it moves on while
   the game is closed): stay n = seconds / stay, the (n + station) % count-th stop; in that orbit a straight course crossed
   sideways (`CourseAt`: a JavaRandom of station and n, the middle 6-8 km out within 50 deg of the station's front, heading
@@ -3164,7 +3168,9 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   along its course). Each `Database.Load` gives it the system of the orbit it is in (`ModWorld.Apply`: `StationData.system`
   = the host's, so the docked header, prices and star map follow it; a scene keeps the one it loaded), while its race stays
   `MobileSpec.race` ("race", else its interior's, else its home system's; `OrbitLayout.Build`); its title is its name alone
-  (`StationMenu`, `MobileStation.Label`). Tests `ModCapitalShipsTests`. Verified in Play mode (the GoF3 Ships mod's Manticore, 6.3 km, Magnetar):
+  (`StationMenu`, `MobileStation.Label`). The star map marks it (`StarMap.MobileMark`: amber, after the system's name and
+  under its orbit's planet with the minutes until it leaves the system, `MobileStations.LeavesSystemIn`); its `engines`
+  (exhaust mounts from its centre) get a mod ship's glow (`ModShipBuilder.BuildEngineGlow`). Tests `ModCapitalShipsTests`. Verified in Play mode (the GoF3 Ships mod's Manticore, 6.3 km, Magnetar):
   found in Dis's orbit cruising nose first, docked into its hangar, launched back beside it.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades

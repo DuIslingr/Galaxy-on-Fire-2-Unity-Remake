@@ -309,7 +309,7 @@ namespace GoF2Remake.Modding
         /// glowSize (half width, half height, flame length in game units) makes it an ellipse with its own length, its
         /// glowColor (else the ship's engineGlowColor) tints it: then the whole glow uses engineGlowTint (the white sprite)
         /// with vertex colours, white-hot at the centre, the colour at the rim and the ring; uncoloured mounts stay white.</summary>
-        static GameObject BuildEngineGlow(CustomShipData c, bool discs = true)
+        internal static GameObject BuildEngineGlow(CustomShipData c, bool discs = true)
         {
             var exhausts = c.mounts?.Where(m => m.slotType == 3).ToList();
             var assets = ModAssets.Get();

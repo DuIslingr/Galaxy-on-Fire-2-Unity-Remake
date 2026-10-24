@@ -166,6 +166,43 @@ namespace GoF2Remake.Tests
 
         [Test] public void OnlyANewStationIsMobile() =>
             StringAssert.Contains("only a new station", OpenBroken("[ { 'override': 70, 'mobile': true } ]"));
+        [Test]
+        public void ItRoamsEverySystemAWhileInEach()
+        {
+            MobileMod("{ 'route': 'any', 'stayMinutes': 20, 'systemMinutes': 60, 'exclude': [15], " +
+                      "'engines': [ { 'position_engine': [0, 0, -9000], 'glowSize': [500, 500, 1500] } ], 'engineColor': [1, 0.6, 0.2] }");
+            ScanAndEnable("t_mob");
+            var db = Database.Load();
+            int mother = ModWorld.StationIndexOf("t_mob:mother");
+            var spec = ModWorld.MobileOf(mother);
+            Assert.IsTrue(spec.roam);
+            Assert.AreEqual(1, spec.engines.Count);
+            Assert.AreEqual(3, spec.engines[0].slotType);
+            int SystemOf(int st) => db.Stations.Find(s => s.index == st).system;
+            var systems = new System.Collections.Generic.HashSet<int>();
+            int last = -1;
+            for (long visit = 0; visit < 300; visit++)
+            {
+                int sys = -1;
+                for (int stay = 0; stay < 3; stay++)
+                {
+                    double at = (visit * 3 + stay) * 1200.0 + 5.0;
+                    int host = MobileStations.HostAt(mother, at);
+                    CollectionAssert.DoesNotContain(MobileStations.RoamSkip, host, "never a story or Kaamo orbit");
+                    if (stay == 0) sys = SystemOf(host);
+                    else Assert.AreEqual(sys, SystemOf(host), "an hour in one system, its orbits in turn");
+                    Assert.AreEqual(3600.0 - stay * 1200.0 - 5.0, MobileStations.LeavesSystemIn(mother, at), 0.01);
+                }
+                Assert.AreNotEqual(15, sys, "excluded");
+                Assert.AreNotEqual(last, sys, "never the same system twice in a row");
+                last = sys;
+                systems.Add(sys);
+            }
+            Assert.Greater(systems.Count, 20, "every system in turn");
+        }
+
+        [Test] public void ARouteIsAListOrAny() =>
+            StringAssert.Contains("\"route\" must be", OpenBroken("[ { 'id': 'x', 'name': 'X', 'system': 14, 'mobile': { 'route': 'everywhere' } } ]"));
         [Test] public void ARaceIsARace() =>
             StringAssert.Contains("\"race\" must be", OpenBroken("[ { 'id': 'x', 'name': 'X', 'system': 14, 'mobile': { 'race': 'klingon' } } ]"));
         [Test] public void MobileIsTrueOrAnObject() =>

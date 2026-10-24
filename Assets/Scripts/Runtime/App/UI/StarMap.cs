@@ -40,6 +40,7 @@
 using System;
 using System.Collections.Generic;
 using GoF2Remake.Data;
+using GoF2Remake.Modding;
 using GoF2Remake.Visuals;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -1077,6 +1078,7 @@ namespace GoF2Remake.UI
                 string faction = GoF2Remake.Multiplayer.NetFactionsClient.SystemTag(db, s.index);
                 if (faction != null) it.name.text += $" [{faction}]";
                 it.name.text += SquadMark(s.index, -1);   // multiplayer: squadmates here
+                it.name.text += MobileMark(s.index, -1);  // remake mods: a mobile station in this system now
                 bool owned = GalaxyMap.HasOwner(s.index) && s.raceId >= 0 && s.raceId <= 3;
                 // Remake: the owner's emblem in the player's standing colours (allied / neutral / enemy), the old radar icon as fallback.
                 if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(StatusWindow.StandingIcon(s.raceId) ?? Tex($"race_{s.raceId}"));
@@ -1113,6 +1115,7 @@ namespace GoF2Remake.UI
                 it.name.text = StationName(p.station, false);
                 if (GoF2Remake.Multiplayer.NetFactionsClient.Owner(p.station, out string faction, out _)) it.name.text = $"[{faction}] {it.name.text}";
                 it.name.text += SquadMark(-1, p.station);   // multiplayer: squadmates at this station
+                it.name.text += MobileMark(-1, p.station);  // remake mods: a mobile station in this orbit now
                 it.visited.style.display = Session.VisitedStations.Contains(p.station) ? DisplayStyle.Flex : DisplayStyle.None;
                 it.gate.style.display = p.gate ? DisplayStyle.Flex : DisplayStyle.None;
                 it.pulse.style.display = p.station == currentStation ? DisplayStyle.Flex : DisplayStyle.None;
@@ -1366,6 +1369,26 @@ namespace GoF2Remake.UI
             if (count == 0) return "";
             string colour = distress ? "#ff6655" : "#78e68c";
             return station >= 0 ? $"\n<color={colour}>● {names}</color>" : $" <color={colour}>{(distress ? "⚠" : "●")}{count}</color>";
+        }
+
+        /// <summary>Remake mods: the mobile stations (Modding.MobileStations) in 'system' (their names) or in the orbit of
+        /// 'station' (their names and how long until they leave its system), amber. "" = none. Read when the map opens.</summary>
+        string MobileMark(int system, int station)
+        {
+            var mobiles = ModWorld.Mobiles();
+            if (mobiles.Count == 0) return "";
+            double now = MobileStations.Clock;
+            var sb = new System.Text.StringBuilder();
+            foreach (int mobile in mobiles)
+            {
+                int host = MobileStations.HostAt(mobile, now);
+                if (host < 0 || (station >= 0 ? host != station : SystemOf(host) != system)) continue;
+                string name = db.Stations.Find(x => x.index == mobile)?.name ?? "?";
+                if (station < 0) { sb.Append($" <color=#ffb347>● {name}</color>"); continue; }
+                int minutes = Mathf.Max(1, Mathf.CeilToInt((float)MobileStations.LeavesSystemIn(mobile, now) / 60f));
+                sb.Append($"\n<color=#ffb347>● {name} · {Localization.Extra("mapMobileLeaves", "leaves in {0} min").Replace("{0}", minutes.ToString())}</color>");
+            }
+            return sb.ToString();
         }
 
         // ---- selection rules -------------------------------------------------------------------------------

@@ -727,8 +727,27 @@ namespace GoF2Remake.Modding
                 var sys = st != null ? db.Systems.Find(x => x.index == st.system) : null;
                 m.system = st?.system ?? -1;
                 m.route.Clear();
-                if (m.routeRefs.Count == 0 && sys != null) m.route.AddRange(sys.stations);
-                foreach (var r in m.routeRefs)
+                m.roamSystems.Clear();
+                if (m.roam)
+                {
+                    // "route": "any": every system with an orbit it may be in (MobileStations.RoamSkip: the story's and the
+                    // Kaamo Club's), the same list in every game with these mods, so a session's players agree where it is.
+                    var skip = new HashSet<int>(MobileStations.RoamSkip);
+                    var skipSystems = new HashSet<int>();
+                    foreach (var r in m.excludeRefs)
+                        if (TryResolveSystem(r, out int xs)) skipSystems.Add(xs);
+                        else Report(m.mod, $"{m.where}: \"exclude\" \"{r}\" is no system");
+                    foreach (var sy in db.Systems.OrderBy(x => x.index))
+                    {
+                        if (skipSystems.Contains(sy.index) || IsMissingSystem(sy.index)) continue;
+                        var orbits = sy.stations.Where(x => !skip.Contains(x) && !mobiles.ContainsKey(x) && !IsMissingStation(x)).ToList();
+                        if (orbits.Count == 0) continue;
+                        m.roamSystems.Add((sy.index, orbits));
+                        m.route.AddRange(orbits);
+                    }
+                }
+                else if (m.routeRefs.Count == 0 && sys != null) m.route.AddRange(sys.stations);
+                foreach (var r in m.roam ? new List<string>() : m.routeRefs)
                 {
                     if (!TryResolveStation(r, out int host) || mobiles.ContainsKey(host) || !db.Systems.Any(x => x.stations.Contains(host)))
                     { Report(m.mod, $"{m.where}: route stop \"{r}\" is no station with an orbit"); continue; }
@@ -778,8 +797,9 @@ namespace GoF2Remake.Modding
 
         // ---- mobile stations (MobileStations) -----------------------------------------------------------------------
 
-        /// <summary>stations.json "mobile": true or { "route": [stations], "stayMinutes": 15, "speed": 0.2, "race": "terran" }:
-        /// a station with no planet that cruises from orbit to orbit (MobileStations).</summary>
+        /// <summary>stations.json "mobile": true or { "route": [stations] | "any", "stayMinutes": 15, "systemMinutes": 90,
+        /// "exclude": [systems], "speed": 0.2, "race": "terran", "engines": [mounts], "engineColor": [r, g, b] }: a
+        /// station with no planet that cruises from orbit to orbit (MobileStations).</summary>
         public class MobileSpec
         {
             public ModInfo mod;
@@ -791,6 +811,16 @@ namespace GoF2Remake.Modding
             /// <summary>Its race (0-3), the same wherever it is: "race", else its interior's, else its home system's.</summary>
             public int race;
             internal int raceToken = -1;
+            /// <summary>"route": "any": it roams every system (roamSystems), "systemMinutes" in each before it moves on to
+            /// another, its orbits there "stayMinutes" each.</summary>
+            public bool roam;
+            public float systemMinutes = 90f;
+            public readonly List<string> excludeRefs = new List<string>();
+            public readonly List<(int system, List<int> orbits)> roamSystems = new List<(int, List<int>)>();
+            /// <summary>"engines": its exhausts, mounts like ships.json's (position_engine in game units from its centre,
+            /// glowSize, glowColor), lit while it cruises; "engineColor" [r, g, b] for every one.</summary>
+            public List<WeaponMount> engines;
+            public float[] engineColor;
             /// <summary>Minutes in each orbit (1..240).</summary>
             public float stayMinutes = 15f;
             /// <summary>Its cruising speed, game units per ms (the freighters' 1; 0..2).</summary>
@@ -814,7 +844,28 @@ namespace GoF2Remake.Modding
                 stayMinutes = Mathf.Clamp(ModJson.Float(o, "stayMinutes", 15f, file), 1f, 240f),
                 speed = Mathf.Clamp(ModJson.Float(o, "speed", 0.2f, file), 0f, 2f),
             };
-            m.routeRefs.AddRange(ModJson.Strings(o, "route"));
+            if (ModJson.Get(o, "route") is JValue rv && rv.Type == JTokenType.String)
+            {
+                if (!string.Equals(((string)rv).Trim(), "any", StringComparison.OrdinalIgnoreCase))
+                    throw new ModJsonException($"{where}: \"route\" must be a list of stations or \"any\"");
+                m.roam = true;
+            }
+            else m.routeRefs.AddRange(ModJson.Strings(o, "route"));
+            m.systemMinutes = Mathf.Clamp(ModJson.Float(o, "systemMinutes", Mathf.Max(90f, m.stayMinutes), file), m.stayMinutes, 24f * 60f);
+            m.excludeRefs.AddRange(ModJson.Strings(o, "exclude"));
+            if (ModJson.Get(o, "engines") is JArray ea)
+            {
+                m.engines = new List<WeaponMount>();
+                foreach (var e in ea)
+                {
+                    var wm = e is JObject eo ? eo.ToObject<WeaponMount>() : null;
+                    if (wm?.position_engine == null || wm.position_engine.Length < 3)
+                        throw new ModJsonException($"{where}: every \"engines\" entry needs a \"position_engine\": [x, y, z]");
+                    wm.slotType = 3;
+                    m.engines.Add(wm);
+                }
+            }
+            if (ModJson.Get(o, "engineColor") is JArray ec && ec.Count >= 3) m.engineColor = new[] { (float)ec[0], (float)ec[1], (float)ec[2] };
             if (ModJson.Has(o, "race"))
             {
                 m.raceToken = RaceToken(ModJson.Get(o, "race"));

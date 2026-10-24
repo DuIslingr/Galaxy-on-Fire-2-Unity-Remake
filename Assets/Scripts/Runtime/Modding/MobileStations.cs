@@ -1,7 +1,8 @@
 // MobileStations.cs
 // Remake mods: stations that move (stations.json "mobile", ModWorld.MobileSpec; the GoF3 Ships mod's Manticore, GoF3's Hades).
 // A mobile station has no planet: it cruises through the orbits of its route's stations in turn ("route", any systems; default
-// its own system's), "stayMinutes" in each, and is docked at where it is (World.MobileStation in the flight level, its own hangar and bar
+// its own system's; "any": it roams every system, "systemMinutes" in one, its orbits there in turn, then another system in an
+// order drawn per round), "stayMinutes" in each, and is docked at where it is (World.MobileStation in the flight level, its own hangar and bar
 // in the station scene like any station). Where it is follows the clock (UTC: the same for every player of a session, and it
 // moves on while the game is closed): the stay number n = seconds / stay picks the route's (n + station) % count-th stop, and
 // in that orbit it crosses a straight course of speed x stay sideways past the orbit's station (its middle 6-8 km out within
@@ -41,7 +42,56 @@ namespace GoF2Remake.Modding
         {
             if (m == null || m.route.Count == 0) return -1;
             long n = (long)Math.Floor(seconds / StaySeconds(m));
-            return m.route[(int)(((n + mobile) % m.route.Count + m.route.Count) % m.route.Count)];
+            if (m.roam && m.roamSystems.Count > 0)
+            {
+                // A visit of StaysPerSystem stays in one system, its orbits in turn, then another system.
+                int per = StaysPerSystem(m);
+                long v = FloorDiv(n, per);
+                var orbits = m.roamSystems[RoamSystemAt(m, mobile, v)].orbits;
+                return orbits[(int)Mod(n - v * per + mobile, orbits.Count)];
+            }
+            return m.route[(int)Mod(n + mobile, m.route.Count)];
+        }
+
+        /// <summary>Remake mods ("route": "any"): the stations a roaming station never stops at: the story's places (Kothar's
+        /// deep science 100, the Valkyrie's 101, Skavac / the supernova system / Alda's empty or burning orbits) and the
+        /// Kaamo Club's siege orbit.</summary>
+        public static readonly int[] RoamSkip = { 100, 101, 102, 103, 104, 108, 109, 110, 111, 112, 113, 132, 133, 134 };
+
+        static int StaysPerSystem(ModWorld.MobileSpec m) => Math.Max(1, (int)Math.Round(m.systemMinutes / Math.Max(1f, m.stayMinutes)));
+
+        static long FloorDiv(long a, long b) => a >= 0 ? a / b : -((-a + b - 1) / b);
+        static long Mod(long a, long b) => ((a % b) + b) % b;
+
+        /// <summary>The roamSystems entry of visit 'v': every system once per round in an order of its own (the station and
+        /// the round seed it), never the same system twice in a row across rounds.</summary>
+        static int RoamSystemAt(ModWorld.MobileSpec m, int mobile, long v)
+        {
+            int count = m.roamSystems.Count;
+            long round = FloorDiv(v, count);
+            int k = (int)(v - round * count);
+            var order = RoundOrder(mobile, round, count);
+            if (count > 2 && order[0] == RoundOrder(mobile, round - 1, count)[count - 1]) (order[0], order[1]) = (order[1], order[0]);
+            return order[k];
+        }
+
+        static int[] RoundOrder(int mobile, long round, int count)
+        {
+            var order = new int[count];
+            for (int i = 0; i < count; i++) order[i] = i;
+            var rnd = new JavaRandom(mobile * 7919L + round * 104729L + 17L);
+            for (int i = count - 1; i > 0; i--) { int j = rnd.NextInt(i + 1); (order[i], order[j]) = (order[j], order[i]); }
+            return order;
+        }
+
+        /// <summary>Seconds until it leaves the system it is in at 'seconds' (a route: the orbit).</summary>
+        public static double LeavesSystemIn(int mobile, double seconds)
+        {
+            var m = ModWorld.MobileOf(mobile);
+            if (m == null) return 0;
+            double stay = StaySeconds(m);
+            double block = m.roam && m.roamSystems.Count > 0 ? stay * StaysPerSystem(m) : stay;
+            return block - (seconds - Math.Floor(seconds / block) * block);
         }
 
         public static int HostNow(int mobile) => HostAt(mobile, Clock);

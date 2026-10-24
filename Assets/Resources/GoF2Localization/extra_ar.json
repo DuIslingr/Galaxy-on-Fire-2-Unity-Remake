@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "يغادر خلال {0} دقيقة",
  "animatedDialogue": "حوار متحرك",
  "antiAliasing": "تنعيم الحواف",
  "msaaByUpscaler": "تتولى أداة رفع الدقة تنعيم الحواف: أوقفها لاستخدام MSAA",

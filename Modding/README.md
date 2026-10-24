@@ -1221,7 +1221,7 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `mapPlace` | `{ "angle": degrees, "distance": n }`: where its planet sits in the star map's system view, round the sun (0 to 360) and how far out (the game's planets lie about 8000 to 45000 out). Either may be left out. Default: the game's place for it. |
 | `orbit` | The layout of its orbit level: station or not, jumpgate, arrivals, asteroids, fog, sun and planet. See [Orbit layouts](#orbit-layouts). |
 | `music` | A mod's track for its docked music (see [Music](#music)). |
-| `mobile` | A new station that moves: `true` or `{ "route": [stations], "stayMinutes": 15, "speed": 0.2, "race": "terran" }`. See [Mobile stations](#mobile-stations). |
+| `mobile` | A new station that moves: `true` or `{ "route": [stations] \| "any", "stayMinutes": 15, "systemMinutes": 90, "speed": 0.2, "race": "terran", "engines": [mounts] }`. See [Mobile stations](#mobile-stations). |
 
 Changing a station (`"override"`): `name`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
 `mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music` (an original station can get a new model too).
@@ -1233,7 +1233,14 @@ stations (so it doesn't count toward the 7, isn't on the star map and can't be t
 cruises from orbit to orbit:
 
 - `route`: the stations whose orbits it visits, in order (numbers or `"mod_id:station_id"`), in any systems. Default:
-  every station of its own `system`.
+  every station of its own `system`. `"any"`: it roams every system, staying `systemMinutes` in one (its orbits there
+  `stayMinutes` each, so a pilot who leaves can come back to it soon), then another; every system once per round, in an
+  order of its own, never the same one twice in a row. It never stops at the story's places (Kothar's deep science
+  station, the Valkyrie, Skavac, the supernova system, Alda) or the Kaamo Club.
+- `systemMinutes`: with `"any"`, how long it stays in a system (default 90; at least `stayMinutes`, at most a day).
+- `exclude`: with `"any"`, systems it never goes to (numbers, `"mod_id:system_id"`).
+- `engines`: its exhausts, lit while it cruises: mounts like a ship's (`position_engine` in game units from the model's
+  centre, its front +Z; `glowSize`, `glowColor`); `engineColor` [r, g, b] for every one.
 - `race`: its race, `terran`, `vossk`, `nivelian`, `midorian` or 0-3, the same wherever it is (its hangar, the docked
   screen's race). Default: its `interior`'s, else its own system's.
 - `stayMinutes`: how long it stays in each orbit (1-240, default 15).
@@ -1245,7 +1252,8 @@ km out in front of it, so its hull never sweeps through the station. Fly close a
 flies to it, and within its range (its size + 300 m) **Dock** takes you into its hangar and bar (its `interior`, or your own
 `hangar` / `bar`). Its shop, bar and missions are a station's like any other. A launch from it comes out beside it, in the
 orbit it is in by then. Docked, the system it shows (the header, the prices, the star map's "you are here") is the one of
-the orbit it was in when you docked. Its title is its name alone, without "Station".
+the orbit it was in when you docked. Its title is its name alone, without "Station". The star map marks where it is now:
+its name in amber after the system's and under the planet of its orbit, with how long until it leaves the system.
 
 Give it a `model` and a `modelSize`; the course runs along the model's front (+Z after `modelYaw`). Keep it under about
 6 km: the flight level's far plane is 15 km.

@@ -1,4 +1,5 @@
 {
+ "mapMobileLeaves": "part dans {0} min",
  "animatedDialogue": "Dialogues animés",
  "antiAliasing": "Anticrénelage",
  "msaaByUpscaler": "L'upscaler se charge de l'anticrénelage : désactivez-le pour utiliser le MSAA",
