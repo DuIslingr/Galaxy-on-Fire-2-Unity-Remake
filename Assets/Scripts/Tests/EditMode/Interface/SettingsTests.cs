@@ -33,8 +33,8 @@ namespace GoF2Remake.Tests
         public void OriginalOptionDefaults()
         {
             AllDefaults();
-            Assert.AreEqual(2, Settings.Quality, "options+0x28 = 1.0: High");
-            Assert.IsTrue(Settings.QualityEffects);
+            Assert.IsTrue(Settings.FireSmoke && Settings.Fog, "options+0x28 = 1.0: the original's Quality High");
+            Assert.AreEqual(2, Settings.DetailDistance);
             Assert.AreEqual(1, Settings.Brightness, "options+0x24 = 0.5: the middle of Dark / Medium / Bright");
             Assert.AreEqual(0f, Settings.BrightnessExposure);
             Assert.AreEqual(1f, Settings.Sensitivity, "options+0x14 = 1.0");
@@ -202,9 +202,9 @@ namespace GoF2Remake.Tests
             Settings.TiltSensitivity = 3f; Assert.AreEqual(1f, Settings.TiltSensitivity);
             Settings.HapticsIntensity = -0.5f; Assert.AreEqual(0f, Settings.HapticsIntensity);
             Settings.CameraShake = 4f; Assert.AreEqual(1f, Settings.CameraShake);
-            Settings.Quality = 7; Assert.AreEqual(2, Settings.Quality);
-            Settings.Quality = -3; Assert.AreEqual(0, Settings.Quality);
-            Assert.IsFalse(Settings.QualityEffects, "Low: smoke and fog off");
+            Settings.DetailDistance = 7; Assert.AreEqual(3, Settings.DetailDistance);
+            Settings.DetailDistance = -3; Assert.AreEqual(0, Settings.DetailDistance);
+            Settings.TextureFiltering = 9; Assert.AreEqual(3, Settings.TextureFiltering);
             Settings.Brightness = 9; Assert.AreEqual(2, Settings.Brightness);
             Settings.HangarShadows = 9; Assert.AreEqual(2, Settings.HangarShadows);
             Settings.HangarShadows = -1; Assert.AreEqual(0, Settings.HangarShadows);
@@ -221,6 +221,30 @@ namespace GoF2Remake.Tests
             Settings.RenderScale = 0.1f; Assert.AreEqual(0.5f, Settings.RenderScale);
             Settings.RenderScale = 3f; Assert.AreEqual(2f, Settings.RenderScale);
             Settings.RenderScale = 0.75f; Assert.AreEqual(0.75f, Settings.RenderScale);
+        }
+
+        [Test]
+        public void AndroidAtOneHundredPercentGetsMsaa()
+        {
+            // MSAA off -> 2x on Android at 100 %, the scale left alone.
+            Assert.AreEqual(2, Bootstrap.AppliedMsaa(1, 1f, true, false));
+            Assert.AreEqual(1f, Bootstrap.AppliedRenderScale(1f, true, false));
+            // The player's own MSAA, other scales, other platforms: as picked.
+            Assert.AreEqual(4, Bootstrap.AppliedMsaa(4, 1f, true, false));
+            Assert.AreEqual(1, Bootstrap.AppliedMsaa(1, 0.9f, true, false));
+            Assert.AreEqual(1, Bootstrap.AppliedMsaa(1, 1.25f, true, false));
+            Assert.AreEqual(1, Bootstrap.AppliedMsaa(1, 1f, false, false));
+            Assert.AreEqual(1f, Bootstrap.AppliedRenderScale(1f, false, true));
+        }
+
+        [Test]
+        public void AndroidUnderATemporalUpscalerDrawsOneHundredPercentFarEnoughBelowItForUrp()
+        {
+            Assert.AreEqual(1, Bootstrap.AppliedMsaa(1, 1f, true, true));   // temporal upscalers need MSAA off
+            Assert.AreEqual(Bootstrap.AndroidFullScale, Bootstrap.AppliedRenderScale(1f, true, true));
+            // URP's kRenderScaleThreshold: closer than 0.05 to 1 is rendered as 1.
+            Assert.GreaterOrEqual(Mathf.Abs(1f - Bootstrap.AppliedRenderScale(1f, true, true)), 0.05f);
+            Assert.AreEqual(0.9f, Bootstrap.AppliedRenderScale(0.9f, true, true));
         }
 
         [Test]
@@ -280,17 +304,17 @@ namespace GoF2Remake.Tests
             AllDefaults();
             float music = Settings.MusicVolume;
             Settings.MusicVolume = music > 0.5f ? 0.1f : 0.9f;
-            Settings.Quality = 0;
+            Settings.DetailDistance = 0;
             Settings.InvertPitch = true;
             Settings.TutorialHints = true;
             Settings.Reset(Settings.SoundKeys);
             Assert.AreEqual(music, Settings.MusicVolume, 1e-6f, "Sound reset");
-            Assert.AreEqual(0, Settings.Quality, "Graphics kept");
+            Assert.AreEqual(0, Settings.DetailDistance, "Graphics kept");
             Assert.IsTrue(Settings.InvertPitch, "Controls kept");
             Assert.IsTrue(Settings.TutorialHints, "Gameplay kept");
             Settings.Reset(Settings.ControlsKeys);
             Assert.IsFalse(Settings.InvertPitch);
-            Assert.AreEqual(0, Settings.Quality);
+            Assert.AreEqual(0, Settings.DetailDistance);
         }
 
         [Test]
@@ -303,14 +327,14 @@ namespace GoF2Remake.Tests
                 bool fps = Settings.ShowFps, flights = Settings.HangarFlights;
                 float sfx = Settings.SfxVolume;
                 Settings.Language = "nl";
-                Settings.Quality = 0;
+                Settings.DetailDistance = 0;
                 Settings.ShowFps = !fps;
                 Settings.InvertYaw = true;
                 Settings.HangarFlights = !flights;
                 Settings.VoiceLanguage = "de";
                 Settings.SfxVolume = sfx > 0.5f ? 0.2f : 0.8f;
                 Settings.ResetToDefaults();
-                Assert.AreEqual(2, Settings.Quality);
+                Assert.AreEqual(2, Settings.DetailDistance);
                 Assert.AreEqual(fps, Settings.ShowFps);
                 Assert.IsFalse(Settings.InvertYaw);
                 Assert.AreEqual(flights, Settings.HangarFlights);
