@@ -131,8 +131,12 @@ namespace GoF2Remake.Modding
                 tg.GetComponent<ThrottleGlow>().engineState = engineState;
             }
             foreach (var p in parts) p.transform.SetParent(root.transform, false);
-            // Manoeuvring jets (slotType 4: EVERSPACE 2's lateral thrusters), under the engine glow part so they go with it.
-            LateralThrusters.Add(root, glow != null ? glow.transform : null, c.mounts);
+            // Manoeuvring jets (slotType 4: EVERSPACE 2's lateral thrusters), under the engine glow part so they go with it,
+            // and EVERSPACE 2's engine lights, trails and glow at the engine and booster sockets of a ship with its flames,
+            // sized in its metres (the kit's scale).
+            float es2Scale = model.transform.localScale.x;
+            LateralThrusters.Add(root, glow != null ? glow.transform : null, c.mounts, es2Scale);
+            if (flames) Es2EngineVfx.Add(root, c.mounts, es2Scale);
             asm.playerVariantParts = parts.ToArray();
             asm.npcVariantParts = npcParts.ToArray();
             asm.conditionalParts = new GameObject[0];

@@ -366,7 +366,7 @@ namespace GoF2Remake.Modding
                 if (build.tier > 0 && build.tier <= part.tierMounts.Count) fromParts.AddRange(part.tierMounts[build.tier - 1]);
             }
             var all = new List<WeaponMount>();
-            foreach (int type in new[] { 0, 1, 2, 3, 4 })
+            foreach (int type in new[] { 0, 1, 2, 3, 4, 5 })
             {
                 var own = fromParts.Where(m => m.slotType == type).ToList();
                 all.AddRange(own.Count > 0 ? own : (c.mounts ?? new List<WeaponMount>()).Where(m => m.slotType == type));

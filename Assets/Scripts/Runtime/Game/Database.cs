@@ -108,7 +108,8 @@ namespace GoF2Remake.Data
     }
 
     /// <summary>Weapon mounts of one ship (weapons_hd.json). slotType 0 = primary, 1 = secondary, 2 = turret,
-    /// 3 = engine exhaust points (not a turret, see weapons.md). position_engine is game space, ship-relative.</summary>
+    /// 3 = engine exhaust points (not a turret, see weapons.md); remake mods: 4 = a manoeuvring jet, 5 = a booster point
+    /// (EVERSPACE 2's). position_engine is game space, ship-relative.</summary>
     /// <remarks>upsideDown (remake, turret mounts only): the turret hangs under the hull, turned 180 deg about the ship's
     /// length (PlayerTurret); none of the original's mounts set it. turretUp (remake, turret mounts): the direction the
     /// turret's base faces, game space like position_engine (x toward the pilot's left, y up, z forward; any length), so a
@@ -179,6 +180,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake mods, an exhaust mount (slotType 3) of a ship with "engineFx": that effect's size here (GoF3's engine
         /// helper scale; 0 = 1).</summary>
         public float fxScale;
+        /// <summary>Remake mods, an exhaust mount (slotType 3) or a booster point (slotType 5, EVERSPACE 2's SKT_Booster sockets):
+        /// the socket's scale in EVERSPACE 2 (its largest axis; 0 = 1), which sizes the engine light, trail and glow there
+        /// (Modding.Es2EngineVfx).</summary>
+        public float socketScale;
     }
     [System.Serializable] public class WeaponMountSet { public int ship; public string shipName; public List<WeaponMount> mounts; }
 

@@ -1217,7 +1217,7 @@ namespace GoF2Remake.Modding
             outline = m.outline != null ? (float[])m.outline.Clone() : null, builtIn = m.builtIn,
             direction = m.direction != null ? (float[])m.direction.Clone() : null,
             rotation = m.rotation != null ? (float[])m.rotation.Clone() : null,
-            nodes = m.nodes != null ? (string[])m.nodes.Clone() : null, fxScale = m.fxScale,
+            nodes = m.nodes != null ? (string[])m.nodes.Clone() : null, fxScale = m.fxScale, socketScale = m.socketScale,
         };
 
         public bool IsOverride => json["override"] != null;
@@ -1431,6 +1431,7 @@ namespace GoF2Remake.Modding
             if (m.rotation != null && m.rotation.Length >= 3) e["rotation"] = Floats(m.rotation, 3);
             if (m.nodes != null && m.nodes.Length > 0) e["nodes"] = new JArray(m.nodes);
             if (m.fxScale > 0f) e["fxScale"] = (float)Math.Round(m.fxScale, 3);
+            if (m.socketScale > 0f) e["socketScale"] = (float)Math.Round(m.socketScale, 3);
             return e;
         }
     }

@@ -511,6 +511,11 @@ namespace GoF2Remake.Modding
             return m;
         }
 
+        /// <summary>EVERSPACE 2's flame emits 1000 x its colour, alpha-blended by its opacity, which its exposure brings down:
+        /// the remake adds colour x opacity x this (matched by eye against EVERSPACE 2 screenshots of the Wraith: a short
+        /// white-hot core ringed in orange, a little longer than its nozzle is wide).</summary>
+        public static float Es2FlameGain = 300f;
+
         /// <summary>A "flame" entry: a copy of GoF2/ModEngineFlame (EngineFlame drives it per ship) in the entry's colour
         /// (emissionColor x emissionIntensity, the kit colour slots' emission target too), boost colour, length and noise.</summary>
         static Material Flame(ModInfo mod, CustomShipMaterial e, string name, ModAssets a)
@@ -524,6 +529,9 @@ namespace GoF2Remake.Modding
             m.SetColor("_BoostColor", b);
             m.SetFloat("_Length", e.flameLength > 0f ? e.flameLength : 5f);
             m.SetFloat("_IdleLength", Mathf.Clamp01(e.flameIdle));
+            // EVERSPACE 2's own exhaust formula (GoF2/ModEngineFlame's _Es2: its M_Vehicle_EngineExhaust, decompiled)
+            m.SetFloat("_Es2", 1f);
+            m.SetFloat("_Brightness", Es2FlameGain);
             var noise = Texture(mod, e.flameNoise, true);
             if (noise != null) { noise.wrapMode = TextureWrapMode.Repeat; m.SetTexture("_NoiseMap", noise); }
             else m.SetFloat("_NoiseStrength", 0f);

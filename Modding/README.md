@@ -595,7 +595,7 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | `hangarHeight` | How high its pivot sits above the hangar pad, in game units (the originals 140 to 400). A customizable ship's is measured from its build instead. |
 | `mounts` | Where guns and exhausts sit, in game units from the ship's centre (x right, y up, z forward): `slotType` 0 primary gun, 1 secondary, 2 turret (`"upsideDown": true` hangs it under the hull; `"builtIn": true`: the ship's own turret, no turret model of the game on it, the mounted turret item firing from this point; a customizable ship's primary / secondary mounts may also carry `"rotation"`, see [Customizable ships](#customizable-ships)), 3 engine exhaust (the flame and its particles; `turretAngles[0]` sizes the particles; `"glowColor": [r, g, b]` (0 to 1) colours that exhaust's flame and its exhaust particles; `"glowSize": [halfWidth, halfHeight, length]` (game units) makes the flame an ellipse of that size, its flared ring `length` behind the nozzle; with `engineFx`, `"fxScale"` sizes that exhaust's effect and `"rotation"` turns the way it blows, as a weapon mount's below;
 `"outline": [x0, y0, x1, y1, ...]` the nozzle's shape seen from behind, game units around the mount, for the [exhaust
-styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet in the flames' boost colour fires whenever the ship strafes, rises, sinks or reverses against it, like EVERSPACE 2's lateral thrusters). |
+styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way it blows in the same axes: a short jet fires whenever the ship strafes, rises, sinks or reverses against it, and with no input the jets blowing along the ship's drift fire to brake it, like EVERSPACE 2's lateral thrusters; only on the player's ship. Its colour is the hue of the `lateral thruster` colour slot, else of the flames' boost colour, at EVERSPACE 2's own brightness: a slot's `intensity` doesn't change it), 5 booster (a ship with engine flames: EVERSPACE 2's booster socket, its trail and light in `boostColor` while boosting; `"socketScale"` sizes them, as on an exhaust). |
 | `engineGlowRadius` | Size of the engine flame at each exhaust mount (game units, default 24); a mount's `glowSize` replaces it. |
 | `engineGlowColor` | `[r, g, b]` (0 to 1): the flame colour of every exhaust without its own `glowColor`. None = the game's own blue-white flame. |
 | `materials` | Optional. Replace the model's own materials, see below. |
@@ -719,19 +719,26 @@ To set materials up in the mod instead (paths inside the mod), each entry applie
 | `shimmer` | `true`: a nozzle shimmer: an additive layer over the same faces as the nozzle's glow, its `emission` pattern times the `flameNoise` texture scrolling along it, in `emissionColor` x `emissionIntensity` (with `engine` it follows the engines like the glow). |
 | `hologram` | `true`: a hologram projector: additive rings in `emissionColor` x `emissionIntensity` through the `emission` pattern, which turns about each ring's centre (UV 0.5, 0.5) while the rings bob along their normal. A second UV channel per ring: x its spin (-1..1: direction and share of the speed), y its share of the bob (written as 1 - share: the loader flips V). |
 | `flame` | `true`: these surfaces are engine flames drawn by the game (see below); `emissionColor` x `emissionIntensity` is the flame's colour. |
-| `flameLength`, `flameIdle` | The flame's length at full throttle in the model's own units (default 5), and at idle as a share of it (default 0.15). |
+| `flameLength`, `flameIdle` | How far the flame reaches behind its stub, in the model's own units (default 5: EVERSPACE 2's 500 cm). `flameIdle` is no longer used. |
 | `boostColor` | The flame's colour while boosting, RGB 0 to 1 (default a hot blue), x `emissionIntensity`. |
-| `flameNoise` | A tiling grey noise PNG streaked through the flame and eating its tip (optional). |
+| `flameNoise` | A tiling grey noise PNG (its red channel): each row across the flame flickers with it (EVERSPACE 2's `T_Noise_018_M`). |
 
 **Engine flames.** Model each flame as a short stub behind its nozzle: one or more flat cards (crossed cards read as a round
 flame) whose first UV's u runs from 0 at the nozzle to 1 at the tip, with a material the `flame` entry names. The game
-stretches the tip backward with the throttle (a little longer while boosting, shrunk into the nozzle while the engines are
-off, as on a ship parked in a hangar), streaks it with the noise, and fades and narrows it toward the tip. A second UV
-channel, x = 0..1 across the card, softens each card's long edges, and its y says what the card is: 0.5 a main flame card
-(the engine colour, also while boosting), 0.25 (or 0.75) a boost card (only while boosting, in `boostColor`; EVERSPACE 2's
-boost jets). Main cards fade as they turn edge-on, so from behind only thin rays remain. Without the second channel the
-cards fade by how far their normals bend off the card, and the whole flame turns toward `boostColor` while boosting. A ship
-with flames gets neither the engine glow discs nor the exhaust particles at its exhaust mounts. A colour slot's `emission` target recolours the flame like any glow.
+draws it as EVERSPACE 2 draws its own (its exhaust material, decompiled): each vertex is moved u x `flameLength` backward;
+the flame's strength is the thrust to the 6th power (bright only near full thrust, gone at idle and while the engines are
+off), it falls off steeply along its length ((1 - u) / (1 + 18 u), to the 4th power), and each row across it flickers with
+the noise, so it reads as a short white-hot core ringed in its colour. A second UV channel's y says what the card is: 0.5
+(or none) a main flame card (the engine colour), 0.25 (or 0.75) a boost card (only while boosting, in `boostColor` x 2;
+EVERSPACE 2's boost jets). There is no fading by the view angle: seen from behind, flat cards are thin by their shape. On
+the player's own ship the flame eases with the controls (faster rising than falling) and its tip bends against the
+ship's movement, by at most a sixth of its length at full speed (EVERSPACE 2's steering offset); other ships' flames
+follow their speed at once. A ship with flames gets neither the engine glow discs nor the exhaust particles at its exhaust
+mounts; it gets EVERSPACE 2's other engine effects instead, at every exhaust mount (`slotType` 3) and booster mount
+(`slotType` 5), each sized by the mount's `"socketScale"` (EVERSPACE 2's socket scale, default 1) in the kit's metres: on
+the player's ship a faint veil trail behind each engine and a point light on the hull that grows with the thrust; on any
+other ship a camera-facing glow and a long trail, seen only while it flies nose first. A booster mount's effects are in
+`boostColor` and show only while boosting. A colour slot's `emission` target recolours the flame like any glow.
 
 ### Glows
 

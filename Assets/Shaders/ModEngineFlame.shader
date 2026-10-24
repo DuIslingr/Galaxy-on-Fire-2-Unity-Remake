@@ -15,6 +15,20 @@
 // behind as bright slots). _Widen (off) widens UV1 cards toward the camera; _Graze (off) brightens edge-on cards.
 // _BoostOverride (EngineFlame per renderer: an exhaust style on a ship that has no boost jets, Modding.ModExhausts): the
 // boost cards stay hidden and the main cards turn to _BoostColor while boosting instead.
+// _Es2 1 (ModMaterials.Flame: every "flame" material): EVERSPACE 2's own M_Vehicle_EngineExhaust, decompiled (2026-10-24,
+// its compiled shaders read out of the game's IoStore with CUE4Parse and disassembled; the ES2 importer's notes,
+// es2_ships_importer/research/engine_exhaust.md). Its vertex shader moves each vertex backward by u x Length x
+// (1 + 4 TravelMode + CruiseMode), whatever the thrust; its pixel shader is unlit translucent with
+//   colour  = R x EngineColor + G x BoostColor x 2 (the vertex colour: R the main flame, G the boost jets; here the UV1
+//             card kind), toward TravelModeEngineColor by TravelMode, x 1000 (an emissive the exposure brings down)
+//   opacity = pow(sat(TravelMode + CruiseMode + Thrust (R + G sat(Boost + CruiseMode))), OpacityExponent 6)
+//             x (w x 1e-4 + pow(w, 4)), w = (1 - u) / (1 + 18 u)   (18 = 1 / max(0.05, 1e-4) - 2)
+//             x noise(T_Noise_018_M red at (time x 2, v))^2,   saturated
+// alpha-blended (the 1000 x colour makes it read additive): here colour x opacity x _Brightness, added. No view-angle
+// term: from behind its flat cards are thin rays by their geometry alone. Its SteeringOffset (the player's velocity, cm/s,
+// clamped to 10000) bends each vertex by u^2 x SteeringOffset x -0.008 x sat(Thrust.x / |Thrust|), in world space:
+// _SteerBend, that offset as a share of the flame's length (EngineFlame). (Its edge-on fade, idle length, boost length,
+// gold core and streak noise were the remake's guesses before; they stay for _Es2 0, the lateral jets.)
 Shader "GoF2/ModEngineFlame"
 {
     Properties
@@ -46,6 +60,16 @@ Shader "GoF2/ModEngineFlame"
         _FlameBoost ("Boost 0..1 (EngineFlame)", Float) = 0
         _FlameLevel ("Engines on 0..1 (EngineFlame)", Float) = 1
         _BoostOverride ("Boost recolours the main flame, no boost cards (EngineFlame)", Float) = 0
+        _Es2 ("EVERSPACE 2's formula (1) or the remake's (0)", Float) = 0
+        _OpacityExponent ("ES2 OpacityExponent", Float) = 6
+        _FalloffK ("ES2 falloff (1 - u) / (1 + k u)", Float) = 18
+        _FalloffPower ("ES2 falloff power", Float) = 4
+        _FalloffLinear ("ES2 falloff linear share", Float) = 0.0001
+        _NoiseRate ("ES2 noise rate (texture widths a second)", Float) = 2
+        _Travel ("ES2 TravelMode 0..1", Float) = 0
+        _Cruise ("ES2 CruiseMode", Float) = 0
+        [HDR] _TravelColor ("ES2 TravelModeEngineColor", Color) = (0.1, 0.85, 1, 1)
+        _SteerBend ("ES2 steering bend: the tip's offset, world space, x the flame's length (EngineFlame)", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {
@@ -65,9 +89,11 @@ Shader "GoF2/ModEngineFlame"
             TEXTURE2D(_NoiseMap); SAMPLER(sampler_NoiseMap);
             CBUFFER_START(UnityPerMaterial)
                 half4 _EmissionColor, _BoostColor;
-                float4 _NoiseMap_ST, _NoiseTiling, _FlameDir;
+                float4 _NoiseMap_ST, _NoiseTiling, _FlameDir, _SteerBend;
                 float _Widen, _StreakContrast, _StreakTiling, _NoiseSpeed, _NoiseStrength, _Length, _IdleLength, _BoostLength, _Fade, _EdgePower, _Taper, _EdgeSoftness, _Graze, _EdgeOnFade, _Core, _Brightness, _BoostBrightness, _BoostCore;
                 float _FlameThrust, _FlameBoost, _FlameLevel, _BoostOverride;
+                float _Es2, _OpacityExponent, _FalloffK, _FalloffPower, _FalloffLinear, _NoiseRate, _Travel, _Cruise;
+                half4 _TravelColor;
             CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 uv : TEXCOORD0; float2 uv1 : TEXCOORD1; UNITY_VERTEX_INPUT_INSTANCE_ID };
@@ -87,13 +113,21 @@ Shader "GoF2/ModEngineFlame"
                 // Off: the flame shrinks back into its nozzle as it fades. A boost card grows only with the boost.
                 float stretch = IsBoostCard(i.uv1.y) ? _Length * boost * level * (1 - saturate(_BoostOverride))
                               : _Length * (_IdleLength + (1 - _IdleLength) * thrust) * (1 + _BoostLength * boost) * level;
+                // EVERSPACE 2: a fixed length, its thrust only in the opacity
+                if (_Es2 > 0.5) stretch = _Length * (1 + 4 * saturate(_Travel) + _Cruise);
                 float3 dir = normalize(_FlameDir.xyz + float3(0, 0, 1e-5));
                 float3 pos = i.positionOS.xyz + dir * saturate(i.uv.x) * stretch;
                 float3 world = TransformObjectToWorld(pos);
+                // EVERSPACE 2's SteeringOffset: + u^2 x the offset (against the velocity), in world space, to the tip
+                if (_Es2 > 0.5)
+                {
+                    float u = saturate(i.uv.x);
+                    world += u * u * _SteerBend.xyz * length(TransformObjectToWorldDir(dir * stretch, false));
+                }
                 // ES2's cards are thinner than its flames (the wings' are 0.1 m boxes): with UV1 each card also widens
                 // across, turned toward the camera like an axial billboard (by _Widen model units, from a quarter at the
                 // nozzle, where the grilles and rings show, to the full width further back); seen along the flame the widening fades out, so from behind the cards stay lines (ES2's rays).
-                if (HasAcross(i.uv1.y) && _Widen > 0)
+                if (HasAcross(i.uv1.y) && _Widen > 0 && _Es2 < 0.5)
                 {
                     float3 axis = TransformObjectToWorldDir(dir);
                     float3 side = cross(axis, normalize(_WorldSpaceCameraPos - world));
@@ -115,6 +149,23 @@ Shader "GoF2/ModEngineFlame"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 float u = saturate(i.uv.x);
                 float level = saturate(_FlameLevel), boost = saturate(_FlameBoost);
+                if (_Es2 > 0.5)
+                {
+                    bool g = IsBoostCard(i.across.y);
+                    float over2 = saturate(_BoostOverride);
+                    float R = g ? 0 : 1, G = g ? 1 - over2 : 0;
+                    float thrust2 = saturate(_FlameThrust), travel = saturate(_Travel);
+                    float lit = saturate(travel + _Cruise + thrust2 * (R + G * saturate(boost + _Cruise)));
+                    float op = lit > 2.98e-8 ? pow(lit, _OpacityExponent) : 0;
+                    float w = (1 - u) / (1 + _FalloffK * u);
+                    op *= w * _FalloffLinear + (w > 2.98e-8 ? pow(w, _FalloffPower) : 0);
+                    half n = SAMPLE_TEXTURE2D(_NoiseMap, sampler_NoiseMap, float2(_Time.y * _NoiseRate, i.uv.y)).r;
+                    op = saturate(op * n * n) * level;
+                    half3 c2 = R * _EmissionColor.rgb + G * _BoostColor.rgb * 2;
+                    c2 = lerp(c2, _TravelColor.rgb, travel);
+                    c2 = lerp(c2, _BoostColor.rgb, boost * over2);   // (an exhaust style on a ship without boost jets)
+                    return half4(c2 * op * _Brightness, 0);
+                }
                 // ES2's look: fine streaks along the flame (the noise stretched: _StreakTiling across a card, _NoiseTiling.x
                 // per model unit along it, drifting outward), each streak ending at its own length (a noise read across only).
                 bool hasAcross = HasAcross(i.across.y), boostCard = IsBoostCard(i.across.y);
