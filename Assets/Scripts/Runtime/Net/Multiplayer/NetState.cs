@@ -654,6 +654,15 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void NoticeToRpc(string text, RpcParams rpc = default) => NetChat.Notice(text);
 
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void FactionLineRpc(string from, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveFaction(from, text, own);
+
+        /// <summary>Server: a faction member's chat line to one player (the chat's Faction channel).</summary>
+        internal void TellFactionLine(ulong client, string from, string text, bool own)
+        {
+            if (IsServer && !string.IsNullOrEmpty(text)) FactionLineRpc(from, text, own, RpcTarget.Single(client, RpcTargetUse.Temp));
+        }
+
         /// <summary>Server: a notice in one player's chat.</summary>
         internal void Notify(ulong client, string text)
         {
@@ -1201,6 +1210,7 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             int done = NetStock.HostItem(station, item, delta, out int vatUnits);
+            NetAudit.Trade(client, station, item, delta < 0 ? -done : done, price);   // the money log: what was granted
             if (delta < 0 && done < -delta)
                 ItemRefusedRpc(station, item, price, -delta - done, RpcTarget.Single(client, RpcTargetUse.Temp));
             if (delta < 0 && vatUnits > 0 && NetProfiles.Enabled) NetFactions.OnPurchase(client, station, item, price, vatUnits);   // a faction station's VAT
@@ -1524,6 +1534,7 @@ namespace GoF2Remake.Multiplayer
             NetTradeClient.Tick();   // this player's trade offer goes out, kept within the hold
             if (!IsServer || !IsSpawned) return;
             NetTrade.Tick();      // trade requests and trades that ran out, sides that left the hangar
+            NetAudit.Tick();      // the shop runs that stopped, into the money log
             NetProfiles.Tick();   // link codes and handovers that ran out
             NetArena.Tick();      // queues, countdowns, time limits
             if (NetProfiles.Enabled) NetFactions.Tick();   // claims kept by docking members, lapses, stale deposits

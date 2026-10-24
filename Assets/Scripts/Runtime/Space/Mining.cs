@@ -81,6 +81,7 @@ namespace GoF2Remake.Flight
         ShipController ship;
         WeaponSystem weapons;
         ChaseCamera chase;
+        PlayerHealth health;
         CombatAudio sounds;
         AudioSource sfx;
         /// <summary>Event 3 Mining_Drill_Broken: a loop (Mining_Drill_Broken.wav, 10 s, loop and cutoff), event volume 0.245.</summary>
@@ -162,6 +163,10 @@ namespace GoF2Remake.Flight
         void Update()
         {
             if (db == null) return;
+            // Destroyed: the approach / landing / minigame drops without handing anything back (#132: the fire button or the
+            // asteroid going ran Undock, which gave the steering, guns and chase camera back on the death screen).
+            if (health == null) health = GetComponent<PlayerHealth>();   // added after Mining (SpaceLevel.Awake)
+            if (health != null && health.Dead) { if (State != Phase.Idle) DropOnDeath(); return; }
             float dtMs = Time.deltaTime * 1000f;
             // MGame::OnTouchBegin 0x1a838c: the fire button is the mining button too. During the approach, the landing and
             // the settle it turns the autopilot off (hudEvent 6, dockToAsteroid(null), Hud::releaseAllKeys: that press
@@ -176,7 +181,8 @@ namespace GoF2Remake.Flight
             switch (State)
             {
                 case Phase.Idle:
-                    if (navigation != null && navigation.BlocksAsteroidLock) { Candidate = Locked = refusedNoDrill = null; LockFrame = -1; lockTimer = 0f; wasLocked = false; }
+                    // Remake: nor while the radar is off (cutscenes, the fly-in, the jump scenes: no Radar::draw).
+                    if (navigation != null && (navigation.BlocksAsteroidLock || navigation.RadarOff)) { Candidate = Locked = refusedNoDrill = null; LockFrame = -1; lockTimer = 0f; wasLocked = false; }
                     else UpdateLock(dtMs);
                     if (BeamMode) UpdateBeam(dtMs);
                     break;
@@ -202,7 +208,9 @@ namespace GoF2Remake.Flight
         /// <summary>Radar::draw, asteroid part: box around the crosshair, nearest in 3D, lock timer.</summary>
         void UpdateLock(float dtMs)
         {
-            if (GoF2Remake.World.SpaceHooks.InArena) return;   // no mining in an arena match
+            // No mining in an arena match, nor in the Supernova Challenge (remake: the Blue Fyre has no drill, and the
+            // asteroid lock's "No drill installed." came up at every rock in the fight).
+            if (GoF2Remake.World.SpaceHooks.InArena || SupernovaChallenge.Active) return;
             var cam = Camera.main;
             // Remake, beam mode: while the beam holds an asteroid the lock follows it in a wider box (the ship turns and the
             // rock spins; the crosshair box alone dropped it at every wobble).
@@ -513,6 +521,28 @@ namespace GoF2Remake.Flight
         }
 
         /// <summary>dockToAsteroid(null): spin back on, camera and controls back, the model upright, sounds off.</summary>
+        /// <summary>The player was destroyed while approaching, landing or drilling: mining ends quietly. The death owns the
+        /// ship's control, weapons, camera and model (PlayerHealth.StartDeath); only the asteroid spins again.</summary>
+        void DropOnDeath()
+        {
+            if (Target != null && Target.Alive)
+            {
+                var spin = Target.GetComponent<Spin>();
+                bool othersOn = GoF2Remake.World.SpaceHooks.SharedOrbit != null
+                                && GoF2Remake.World.SpaceHooks.SharedOrbit.OthersOn(Target);
+                if (spin != null && !othersOn) spin.enabled = true;
+            }
+            State = Phase.Idle;
+            Target = null;
+            Game = null;
+            Locked = Candidate = null;
+            LockFrame = -1;
+            lockTimer = 0f;
+            ship.modelHeld = false;   // the death tumble turns the model (modelTumbling)
+            drillSound.Stop();
+            StopBroken();
+        }
+
         void Undock()
         {
             if (Target != null && Target.Alive)

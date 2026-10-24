@@ -12,11 +12,13 @@ namespace GoF2Remake.UI
 {
     public static class TextFieldKeys
     {
-        /// <summary>'target' is a TextField or inside one.</summary>
+        /// <summary>'target' is a text input field (a TextField, or a number field: IntegerField, FloatField...) or inside one.
+        /// The number fields aren't TextFields: the menus' touch handling took their focus away, so on a phone the Mod
+        /// Builder's number boxes couldn't be typed into.</summary>
         public static bool InTextField(IEventHandler target)
         {
             for (var v = target as VisualElement; v != null; v = v.parent)
-                if (v is TextField) return true;
+                if (v is TextField || v.ClassListContains(TextField.ussClassName) || v.ClassListContains("unity-base-text-field")) return true;
             return false;
         }
 
@@ -25,6 +27,9 @@ namespace GoF2Remake.UI
         public static bool IsTyping(EventBase e, VisualElement focused)
         {
             if (!InTextField(focused)) return false;
+            // A controller in use: its D-pad / stick moves on (a Discord report on the Xbox: a key the system keyboard left
+            // "pressed" made every D-pad press in the multiplayer panel's fields count as typing, so the focus never left them).
+            if (InputMode.Current == InputKind.Gamepad) return false;
             var kb = Keyboard.current;
             if (kb == null || !kb.anyKey.isPressed) return false;   // a controller's D-pad / stick, or a click
             if (e is NavigationMoveEvent && (kb.upArrowKey.isPressed || kb.downArrowKey.isPressed)) return false;

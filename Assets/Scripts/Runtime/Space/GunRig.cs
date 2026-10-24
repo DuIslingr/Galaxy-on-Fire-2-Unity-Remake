@@ -11,6 +11,8 @@
 // EnableTrails; NPC guns have none).
 // Projectiles, muzzle flashes and impacts fade by their `extra` (opacity) channel: without it an impact's big glow part
 // (radius ~3600 units, meant at 20 % and gone after 267 ms) stayed at full brightness and the impact looked far too big.
+// The camera-facing projectiles and the impacts also carry a CameraFacing: their owners stop calling UpdateVisuals while
+// the world is frozen (Action Freeze, a paused game), and turned round in the photo mode's orbit they were seen edge-on.
 
 using System.Collections.Generic;
 using GoF2Remake.Visuals;
@@ -27,11 +29,18 @@ namespace GoF2Remake.Flight
         float beamMs, beamLength;
         Vector3[] spin;
         bool[] wasActive;
+        // What each projectile object was last set to (SetActive) and its last scale: asking the engine every frame for every
+        // NPC's four projectiles was a native call each (20 fleet battles: ~3400 a frame).
+        bool[] shown;
+        float[] shownScale;
         PartAnimation[][] projAnims;
         readonly bool billboard;
         readonly GameObject muzzle;
         readonly float muzzleLength;
         float muzzleMs;
+        // Remake: more flashes of the same muzzle (SetMuzzles: a twin-barrelled gun flashes at each barrel), with their parts.
+        readonly List<(GameObject go, (PartAnimation[] anims, Modding.ModFxPart[] mods) parts)> extraMuzzles =
+            new List<(GameObject, (PartAnimation[], Modding.ModFxPart[]))>();
         readonly GameObject[] impacts;
         readonly float[] impactMs;
         readonly float impactLength;
@@ -50,6 +59,7 @@ namespace GoF2Remake.Flight
             this.fx = fx;
             this.fxRoot = fxRoot;
             ship = muzzleParent;
+            if (gun.echo != null) gun.Echoed += ShowEcho;
             billboard = gun.kind == Gun.Kind.Blaster || gun.kind == Gun.Kind.Thermo;
             projectiles = new Transform[gun.bullets.Length];
             if (fx != null && fx.projectile != null)
@@ -59,6 +69,7 @@ namespace GoF2Remake.Flight
                     go.name = $"{fx.projectile.name} {i}";
                     StripForFx(go);
                     EnableFades(go);
+                    if (billboard) go.AddComponent<CameraFacing>();
                     go.SetActive(false);
                     projectiles[i] = go.transform;
                 }
@@ -73,6 +84,9 @@ namespace GoF2Remake.Flight
                 muzzle.SetActive(false);
             }
             wasActive = new bool[projectiles.Length];
+            shown = new bool[projectiles.Length];   // made inactive above
+            shownScale = new float[projectiles.Length];
+            for (int i = 0; i < shownScale.Length; i++) shownScale[i] = float.NaN;
             projAnims = new PartAnimation[projectiles.Length][];
             for (int i = 0; i < projectiles.Length; i++)
                 projAnims[i] = projectiles[i] != null ? projectiles[i].GetComponentsInChildren<PartAnimation>(true) : new PartAnimation[0];
@@ -97,6 +111,7 @@ namespace GoF2Remake.Flight
                     impacts[i] = Object.Instantiate(fx.impact, fxRoot);
                     StripForFx(impacts[i]);
                     EnableFades(impacts[i]);
+                    impacts[i].AddComponent<CameraFacing>();   // "_lookat" meshes
                     impacts[i].SetActive(false);
                 }
                 impactParts = new (PartAnimation[], Modding.ModFxPart[])[impactPool];
@@ -145,6 +160,7 @@ namespace GoF2Remake.Flight
             }
             foreach (var p in projectiles) if (p != null) On(p.gameObject);
             On(muzzle);
+            foreach (var e in extraMuzzles) On(e.go);
             if (impacts != null) foreach (var i in impacts) On(i);
         }
 
@@ -165,7 +181,12 @@ namespace GoF2Remake.Flight
         /// <summary>The part animations apply their `extra` channel as opacity (PartAnimation.applyMaterialChannels).</summary>
         public static void EnableFades(GameObject go)
         {
-            foreach (var a in go.GetComponentsInChildren<PartAnimation>(true)) a.applyMaterialChannels = true;
+            foreach (var a in go.GetComponentsInChildren<PartAnimation>(true))
+            {
+                a.applyMaterialChannels = true;
+                a.ownMaterials = true;   // copies, not property blocks: the SRP Batcher keeps them
+                a.onlyWhenSeen = true;   // a shot nobody sees needn't pulse (20 fleet battles: ~760 of them, 3 ms a frame)
+            }
         }
 
         public static void StripForFx(GameObject go)
@@ -175,11 +196,36 @@ namespace GoF2Remake.Flight
                 r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 r.receiveShadows = false;
             }
+            GoF2Remake.Visuals.AutoLods.FullDetail(go);   // no made levels: the LODGroup goes off
             foreach (var lg in go.GetComponentsInChildren<LODGroup>(true)) lg.enabled = false;
         }
 
+        /// <summary>Remake: the muzzle flash at each of 'localPositions' on 'parent' (a twin-barrelled gun: one per barrel's
+        /// tip; the Valkyrie battlestation's turrets in 80, whose single flash sat inside the turret). The rig's own flash
+        /// moves to the first point, copies of it to the others; OnShot() flashes them all, OnShot(i) the one that fired.</summary>
+        public void SetMuzzles(Transform parent, params Vector3[] localPositions)
+        {
+            if (muzzle == null || parent == null || localPositions == null || localPositions.Length == 0) return;
+            foreach (var e in extraMuzzles) if (e.go != null) Object.Destroy(e.go);
+            extraMuzzles.Clear();
+            muzzle.transform.SetParent(parent, false);
+            muzzle.transform.SetLocalPositionAndRotation(localPositions[0], Quaternion.identity);
+            for (int i = 1; i < localPositions.Length; i++)
+            {
+                var go = Object.Instantiate(muzzle, parent, false);
+                go.name = $"{muzzle.name} {i}";
+                go.transform.SetLocalPositionAndRotation(localPositions[i], Quaternion.identity);
+                go.SetActive(muzzle.activeSelf);
+                extraMuzzles.Add((go, Parts(go)));
+            }
+        }
+
         /// <summary>A shot left the gun: the muzzle flash.</summary>
-        public void OnShot()
+        public void OnShot() => OnShot(-1);
+
+        /// <summary>A shot left the gun: the muzzle flash at muzzle 'muzzleIndex' only (SetMuzzles' order: a twin-barrelled
+        /// gun flashes at the barrel that fired), -1 = at every muzzle.</summary>
+        public void OnShot(int muzzleIndex)
         {
             if (gun.isBeam && projectiles.Length > 0 && projectiles[0] != null)
             {
@@ -188,12 +234,30 @@ namespace GoF2Remake.Flight
                 beamMs = beamLength;
             }
             if (muzzle == null) return;
-            muzzle.SetActive(true);
-            PartAnimation.PlayOnce(muzzleParts.anims, muzzleParts.mods);
+            int count = 1 + extraMuzzles.Count;
+            bool one = muzzleIndex >= 0 && count > 1;
+            for (int i = 0; i < count; i++)
+            {
+                var go = i == 0 ? muzzle : extraMuzzles[i - 1].go;
+                if (go == null) continue;
+                if (one && i != muzzleIndex % count) { go.SetActive(false); continue; }   // the other barrel's goes out
+                go.SetActive(true);
+                var parts = i == 0 ? muzzleParts : extraMuzzles[i - 1].parts;
+                PartAnimation.PlayOnce(parts.anims, parts.mods);
+            }
             muzzleMs = muzzleLength;
         }
 
         /// <summary>A bullet hit something at 'point'.</summary>
+        /// <summary>A shot's echo went off here (GunEcho): its explosion, at the echo's size, a second blast after the hit.</summary>
+        void ShowEcho(Vector3 point)
+        {
+            var echo = gun.echo;
+            if (echo == null || echo.explosion < 0) return;
+            var forward = fxRoot != null ? fxRoot.forward : Vector3.forward;
+            Explosion.Spawn(echo.explosion, point, forward, echo.Scale, fx != null ? fx.ExplosionSound : null, false);
+        }
+
         public void ShowImpact(Vector3 point)
         {
             // Gun::calcCharacterCollision: rockets, missiles and cluster missiles have no impact mesh; a hit emits record 11
@@ -221,12 +285,13 @@ namespace GoF2Remake.Flight
                 projectilesDone(dtMs, cam);
                 return;
             }
+            Quaternion camRot = cam != null ? cam.transform.rotation : Quaternion.identity;
             for (int i = 0; i < projectiles.Length; i++)
             {
                 var t = projectiles[i];
-                if (t == null) continue;
+                if ((object)t == null) continue;
                 bool active = gun.IsActive(i);
-                if (t.gameObject.activeSelf != active) t.gameObject.SetActive(active);
+                if (shown[i] != active) { if (t == null) continue; t.gameObject.SetActive(active); shown[i] = active; }
                 bool launched = active && !wasActive[i];
                 if (trails != null)
                 {
@@ -249,11 +314,12 @@ namespace GoF2Remake.Flight
                     foreach (var a in projAnims[i]) a.speed = sp;
                 }
                 var rot = billboard && cam != null
-                    ? cam.transform.rotation
+                    ? camRot
                     : Quaternion.LookRotation(b.velocity.sqrMagnitude > 1e-9f ? b.velocity : fallbackForward, b.up);
                 if (spin != null) rot = Quaternion.Euler(spin[i] * (b.age * 0.001f * Mathf.Rad2Deg));
                 t.SetPositionAndRotation(b.position, rot);
-                t.localScale = Vector3.one * gun.VisualScale(i) * (spin != null ? 0.7f : 1f);
+                float scale = gun.VisualScale(i) * (spin != null ? 0.7f : 1f);
+                if (scale != shownScale[i]) { t.localScale = Vector3.one * scale; shownScale[i] = scale; }
                 trails?[i].Tick(dtMs, true, b.position, cam);
                 if (flames?[i] != null)
                 {
@@ -294,10 +360,17 @@ namespace GoF2Remake.Flight
             if (muzzle != null && muzzleMs > 0f)
             {
                 muzzleMs -= dtMs;
-                if (muzzleMs <= 0f) muzzle.SetActive(false);
+                if (muzzleMs <= 0f)
+                {
+                    muzzle.SetActive(false);
+                    foreach (var e in extraMuzzles) if (e.go != null) e.go.SetActive(false);
+                }
                 // ObjectGun::update 0x18c2ec: along the ship's nose with the camera's up (turrets: the turret's matrix).
                 else if (gun.kind != Gun.Kind.Turret && ship != null && cam != null)
+                {
                     muzzle.transform.rotation = Quaternion.LookRotation(ship.forward, cam.transform.up);
+                    foreach (var e in extraMuzzles) if (e.go != null) e.go.transform.rotation = muzzle.transform.rotation;
+                }
             }
             if (impacts != null)
                 for (int i = 0; i < impacts.Length; i++)
@@ -313,6 +386,7 @@ namespace GoF2Remake.Flight
         public void HideAll()
         {
             foreach (var t in projectiles) if (t != null) t.gameObject.SetActive(false);
+            if (shown != null) System.Array.Clear(shown, 0, shown.Length);
             for (int i = 0; i < gun.bullets.Length; i++) gun.bullets[i].timer = -1e9f;
             if (trails != null) foreach (var tr in trails) tr.Clear();
             if (flames != null) foreach (var f in flames) if (f != null) f.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);

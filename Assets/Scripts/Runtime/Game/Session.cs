@@ -112,6 +112,11 @@ namespace GoF2Remake.Data
         /// (the original checks the medals at docking, before the hangar can change the loadout; the remake's check waits for
         /// the landing and the conversations, and stripping the ship meanwhile earned it, #46). Not saved: a load docks anew.</summary>
         public static bool ArrivedWithoutGear;
+        /// <summary>#122: Khador's Cronus at Kothar is a gift once (ModStation::OnTouchEnd 0xea4ec, step 77:
+        /// Station::addShip(Ship::makeShip(ships[0x25], 0)), a dealer row priced 0 whatever the table says; the Default economy
+        /// lists the Cronus at 1 200 000). Set as that row appears, cleared when it is bought (Hangar.BuyShipPrice): a traded-
+        /// back Cronus is a row at the table price again, as in the original. Saved.</summary>
+        public static bool KhadorCronusGift;
         public static HashSet<int> OreTypesMined = new HashSet<int>(), CoreTypesMined = new HashSet<int>();
         /// <summary>Status+0xa8 (medal 8 Personal Need): the booze tonnes gained per hangar visit (ModStation::OnKeyPress /
         /// OnTouchEnd); Status+0xac (medal 9 Barkeeper): the booze types traded (items 132-153); Status+0xcc (medal 21
@@ -208,6 +213,8 @@ namespace GoF2Remake.Data
         public static int VoidReturnStation = 10;
         /// <summary>Level::comingFromAlienWorld: the next level starts with a wormhole closing behind the player.</summary>
         public static bool ComingFromVoid;
+        /// <summary>Remake events: the next level starts with a wormhole closing behind the player (an event's wormhole ride).</summary>
+        public static bool ArrivedByWormhole;
         /// <summary>Level::initStreamOutPositionAfterCutscene: index 143 won in space at Var Lupra, so the 144 cutscene's reload
         /// into the 145 attack is a stream-out arrival (LevelScript::process 0x90). Not saved, like the original's static.</summary>
         public static bool StreamOutAfterCutscene;
@@ -310,6 +317,10 @@ namespace GoF2Remake.Data
         /// <summary>Remake: the player docked from space (SpaceLevel.Dock), so the station opens with the hangar fly-in.</summary>
         public static bool DockedFromSpace;
 
+        /// <summary>The station was opened by loading a save (ModStation::setGameLoaded, +0xac): no docking fine then
+        /// (StationMenu.CheckDockingFine takes and clears it; SpaceLevel clears it too).</summary>
+        public static bool ArrivedByLoad;
+
         /// <summary>Arrived through a jumpgate or the Khador Drive: the arrival camera shows the orbit information
         /// (Hud::drawOrbitInformation, not after a planet jump).</summary>
         public static bool ArrivedBySystemJump;
@@ -317,6 +328,9 @@ namespace GoF2Remake.Data
         /// <summary>Status+0x38: which systems the star map shows (null = not set up yet, filled from systems.json
         /// initiallyVisible by GalaxyMap.Visibility).</summary>
         public static bool[] SystemVisible;
+        /// <summary>Remake mods: systems an event / quest showed (true) or hid (false) with "system ... show | hide", over the
+        /// map's revealed state and a mod's "available" condition until "reset" (GalaxyMap.Visibility). Saved.</summary>
+        public static Dictionary<int, bool> SystemShown = new Dictionary<int, bool>();
 
         /// <summary>Galaxy::getVisited: stations the player has docked at (the star map's "Already visited" tick).</summary>
         public static HashSet<int> VisitedStations = new HashSet<int> { 78 };
@@ -452,6 +466,7 @@ namespace GoF2Remake.Data
             LastArrivalHullPercent = 100;
             CapitalLootReadyAt = 0f;
             ArrivedWithoutGear = false;
+            KhadorCronusGift = false;
             OreTypesMined = new HashSet<int>();
             BoozeBought = AlienRemainsCollected = 0;
             BoozeTypes = new HashSet<int>();
@@ -485,9 +500,11 @@ namespace GoF2Remake.Data
             InvasionDepartures = 0;
             VoidReturnStation = 10;
             ComingFromVoid = false;
+            ArrivedByWormhole = false;
             StreamOutAfterCutscene = false;
             LastFreighterHull = -1;
             EndingPending = false;
+            SupernovaChallenge.End();   // a new game or a load ends the challenge (its Start sets it again after)
             Unsaleable = new HashSet<int>();
             FreePlay = false;
             CompletedWorld = false;
@@ -499,8 +516,10 @@ namespace GoF2Remake.Data
             ArrivedByTravel = false;
             LaunchedFromStation = false;
             DockedFromSpace = false;
+            ArrivedByLoad = false;
             ArrivedBySystemJump = false;
             SystemVisible = null;
+            SystemShown = new Dictionary<int, bool>();
             VisitedStations = new HashSet<int> { 78 };
             ProgrammedStation = -1;
             InstantJump = false;

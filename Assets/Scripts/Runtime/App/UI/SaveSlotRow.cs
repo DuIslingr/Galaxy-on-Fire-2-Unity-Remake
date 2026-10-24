@@ -1,7 +1,7 @@
 // SaveSlotRow.cs
 // One save slot row (MenuTouchWindow::drawLoadSaveMenu 0x14bfbc), shared by the main menu's Load list and the station
 // menu's Save game list: index, "Auto-save" (486) / "Slot N", the preview (RecordHandler::recordStoreWritePreview:
-// station, system, ship, difficulty and economy, credits, playing time) or "-BLANK-" (174). Styles: .slot-* in GoF2Common.uss.
+// station, system, ship, difficulty and economy, credits, playing time) or "Empty slot" (the original's 174 "-BLANK-"). Styles: .slot-* in GoF2Common.uss.
 // Remake (players' suggestion): a used row is deleted by holding it (a tap / click held, or Delete / the controller's X
 // held while it is selected) for HoldSeconds; the row fills red meanwhile (SaveGame.Delete keeps a copy in Saves/Deleted).
 
@@ -17,6 +17,9 @@ namespace GoF2Remake.UI
     public static class SaveSlotRow
     {
         public const float HoldSeconds = 3f;
+        /// <summary>Modified: the hold shows (the red fill, "Hold to delete...") only after this long held: a plain click / tap to
+        /// load or save flashed it for a moment. The fill then runs from empty to full over the rest of HoldSeconds.</summary>
+        public const float ShowAfterSeconds = 0.35f;
 
         /// <summary>'onDelete': a used slot can be held to delete it; called with the slot once the hold completes (the caller
         /// deletes it and rebuilds the list).</summary>
@@ -50,7 +53,7 @@ namespace GoF2Remake.UI
                 sub.AddToClassList("slot-sub");
                 info.Add(sub);
             }
-            var state = new Label(save == null ? Localization.Get(174)   // -BLANK-
+            var state = new Label(save == null ? Localization.Extra("slotEmpty", "Empty slot")   // the original: 174 "-BLANK-"
                 : $"{save.credits:N0} Cr  ·  {(int)(save.playSeconds / 3600)}:{(int)(save.playSeconds / 60) % 60:00} h");
             state.AddToClassList("slot-state");
 
@@ -150,7 +153,9 @@ namespace GoF2Remake.UI
                 if (source == Source.Key && (!key || !focused)) Cancel();
                 if (source == Source.None) return;
 
-                float t = (Time.realtimeSinceStartup - startTime) / HoldSeconds;
+                float held = Time.realtimeSinceStartup - startTime;
+                if (held < ShowAfterSeconds) return;   // Modified: a click, so far (ShowAfterSeconds)
+                float t = (held - ShowAfterSeconds) / (HoldSeconds - ShowAfterSeconds);
                 fill.style.width = Length.Percent(Mathf.Clamp01(t) * 100f);
                 row.AddToClassList("slot-row--deleting");
                 state.text = Localization.Extra("slotHoldDelete", "Hold to delete...");

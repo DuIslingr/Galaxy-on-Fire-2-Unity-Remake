@@ -73,7 +73,7 @@ namespace GoF2Remake.UI
             message = OrbitViewUi.Message();
             overlay.Add(message);
             hints = OrbitViewUi.Hints();
-            overlay.Add(hints);   // top right
+            overlay.Add(hints);   // top right, the controls for the input in use (docs/UI-DESIGN.md "Button prompts")
             var footer = new VisualElement { pickingMode = PickingMode.Ignore };
             footer.AddToClassList("orbit-view-footer");
             footer.AddToClassList(SafeArea.EdgeClass);
@@ -251,6 +251,7 @@ namespace GoF2Remake.UI
                 if (Mathf.Abs(steps) > 0f) wheel += steps;
             }
             if (Mathf.Abs(wheel) > 0.01f) { distance += wheel * -50f * frames; wheel *= Mathf.Pow(0.9f, frames); } else wheel = 0f;
+            delta = Settings.OrbitTurn(delta);   // #121: the camera views' own inversion
             px += delta.x;
             py += delta.y;
             if (flingClamps) py = Mathf.Clamp(py, -200f, 200f);

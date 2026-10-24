@@ -90,6 +90,8 @@ namespace GoF2Remake.World
         public FreelanceOrbit FreelanceOrbit { get; private set; }
         /// <summary>The Kaamo Club's pirate siege (station 108 before it's freed), null elsewhere.</summary>
         public KaamoSiege Siege { get; private set; }
+        /// <summary>The Supernova Challenge's orbit (SupernovaChallenge), else null.</summary>
+        public ChallengeOrbit Challenge { get; private set; }
         /// <summary>The ship's turrets, in mount order (remake: more than one on a custom ship with several turret mounts).</summary>
         public System.Collections.Generic.IReadOnlyList<PlayerTurret> Turrets => turrets;
         readonly System.Collections.Generic.List<PlayerTurret> turrets = new System.Collections.Generic.List<PlayerTurret>();
@@ -208,6 +210,7 @@ namespace GoF2Remake.World
         {
             Story.ReopenUnshownSuccess();   // #88
             HullCollision.Suppressed = false;   // the main menu's backdrop had them off (whichever scene's code runs first)
+            Session.ArrivedByLoad = false;   // a load's no-fine docking is only the station it opened
             // Multiplayer: loaded after its session ended (a docking queued behind the menu): on to the menu (nothing is
             // saved, SaveGame.SessionGame).
             if (GoF2Remake.Data.NetSession.SessionLost) SceneManager.LoadScene("MainMenu");
@@ -311,6 +314,8 @@ namespace GoF2Remake.World
             // Remake: a Mod Builder test flight (Modding.ModBuilder): a quiet orbit with its own pirates (ModBuilderRange).
             // The builder's own work in space (Stations, Weapon fx: ModBuilder.InSpace) too, with nothing flying at all.
             bool builderTest = Modding.ModBuilder.TestFlying || Modding.ModBuilder.InSpace;
+            // The Supernova Challenge (mission type 0xb7, SupernovaChallenge): its own Specters and scenery, no traffic.
+            bool challenge = SupernovaChallenge.Active && !storyOrbit && arena == null && !builderTest && !GoF2Remake.Data.NetSession.Active;
             // Level::assignGuns reads the level mission (Status+400): a campaign level or a freelance mission's type.
             NpcTables.InCampaignLevel = storyOrbit;
             NpcTables.LevelFreelanceType = freelanceOrbit ? Freelance.Mission.type : -1;
@@ -319,19 +324,23 @@ namespace GoF2Remake.World
             // ships (NetOrbit) and take them over if it leaves, never building new ones.
             // An arena: no NPCs, or with the Void fighters the alien orbit's own (run by the first player in the match's orbit).
             NetAuthority = GoF2Remake.Data.NetSession.Active && (arena == null || arena.voids) && GoF2Remake.World.SpaceHooks.IsOrbitEmpty(NetOrbitId);
-            ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || builderTest || (arena != null && !arena.voids);
+            ownPassive = storyOrbit || freelanceOrbit || siege || questOrbit || builderTest || challenge || (arena != null && !arena.voids);
             Traffic.LevelMissionActive = () => (storyOrbit && Story.IsLevelMission(station)) || (missionHere && Freelance.IsMissionOrbit(station));
             Traffic.Setup(db, Layout, Health.Target, Station, ownPassive || (GoF2Remake.Data.NetSession.Active && !NetAuthority), Wormhole);
             Traffic.LaunchCameraRunning = () => !LaunchCameraOver;
             Traffic.RadarHidden = () => Cutscene;
-            Navigation.RadarHidden = () => Cutscene || !LaunchCameraOver;   // no locks or lock sounds
+            // No locks or lock sounds (the scanner off). Remake: also in the planet jump, the jumpgate / Khador Drive scenes and
+            // while a level script holds the controls (its cutscene camera moves before or after Cutscene says so).
+            Navigation.RadarHidden = () => Cutscene || !LaunchCameraOver || Navigation.Jumping
+                || (SystemJump != null && SystemJump.Cinematic) || (Player != null && Player.inputLocked);
             PlayerHull.AttachTurrets(this);   // remake debug: a capital ship's turrets on the player's hull (PlayerHull)
             // Docking at the story's objects (PlayerEgo::dockToDockingPoint): locked through Navigation.
             Docking = Player.gameObject.AddComponent<ObjectDocking>();
             Docking.Setup(db, Player, chase, Weapons);
             if (FreeLook != null)
                 FreeLook.Blocked = () => Cutscene || !LaunchCameraOver || (Mining != null && Mining.State != Mining.Phase.Idle)
-                                         || (Docking != null && Docking.Busy && Docking.State != ObjectDocking.Phase.Approach)   // the approach is an autopilot leg
+                                         // the approach is an autopilot leg; docked (not hacking) free look is the view (#132)
+                                         || (Docking != null && Docking.Busy && Docking.State != ObjectDocking.Phase.Approach && !DockedLook)
                                          || (Navigation != null && Navigation.Jumping)
                                          || (SystemJump != null && SystemJump.Cinematic) || (Health != null && Health.Dead);
             // MGame::switchCamera / PlayerEgo::setTurretMode refuse the turret view only while docking to an asteroid, mining,
@@ -339,6 +348,14 @@ namespace GoF2Remake.World
             // the remake refused it from the approach on).
             if (FreeLook != null) FreeLook.TurretAllowed = () => Docking != null && (Docking.State == ObjectDocking.Phase.Entering || Docking.IsDocked)
                                                                  && Docking.Hacking == null && !Cutscene;
+            if (FreeLook != null)
+            {
+                // PlayerEgo::approachDockingPoint / MGame::OnUpdate: docked, the camera goes to free look by itself (not while
+                // hacking: setDockingState(2) suppresses it); the undock's end goes back to the standard view (Blocked while
+                // leaving).
+                FreeLook.DockedView = () => DockedLook;
+                Docking.Docked += () => { if (DockedLook) FreeLook.EnterDockedLook(); };
+            }
             Navigation.Docking = Docking;
             Navigation.Ships = Traffic.Ships;
             Collision.docking = Docking;
@@ -370,6 +387,11 @@ namespace GoF2Remake.World
                 if (GoF2Remake.Data.NetSession.Active && KaamoSiege.OtherRunsHere(station)) Siege.SetupFollower(this, Traffic);   // one siege per orbit
                 else Siege.Setup(this, Traffic);
             }
+            else if (challenge)
+            {
+                Challenge = new GameObject("Supernova Challenge").AddComponent<ChallengeOrbit>();
+                Challenge.Setup(this, Traffic);
+            }
             // Multiplayer: an Informer mission's spy is this player's when another player built the orbit's traffic (theirs
             // has it only for their own mission) and no squadmate here has one already.
             if (GoF2Remake.Data.NetSession.Active && !NetAuthority && !storyOrbit && arena == null && Freelance.Active && Freelance.Mission.type == MissionType.Informer
@@ -382,13 +404,13 @@ namespace GoF2Remake.World
                 Traffic.ConvoyDone += () => { Navigation.SetAutopilot(null); Navigation.SetRoute(null); };
             }
             // Level::createWingmen: after the mission's ships (Challenge: unarmed).
-            if (arena == null && !builderTest) Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
+            if (arena == null && !builderTest && !challenge) Traffic.SpawnWingmen(Player.transform, FreelanceOrbit != null && FreelanceOrbit.Type == MissionType.Challenge);
             Navigation.HasWingmen = () => Traffic != null && Traffic.LivingWingmen.Count > 0;
             StorySpace = gameObject.AddComponent<StorySpace>();
             StorySpace.Setup(this, Campaign);
             Hints = gameObject.AddComponent<FlightHints>();
             Hints.Setup(this);
-            Navigation.JumpsBlocked = () => GoF2Remake.World.SpaceHooks.InArena || builderTest || !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
+            Navigation.JumpsBlocked = () => GoF2Remake.World.SpaceHooks.InArena || builderTest || challenge || !Story.PlanetJumpsAllowed || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || (Siege != null && Siege.Active)
                                             || FreelanceBlocks   // a freelance mission's orbit (#32)
                                             || GoF2Remake.World.SpaceHooks.NoJumps   // an event's Restrict Travel
                                             || (!Session.FreePlay && Story.Index == 65 && Layout.stationIndex == 100)   // escorting Khador (MGame::UseKhadorDrive)
@@ -402,7 +424,7 @@ namespace GoF2Remake.World
             Navigation.SetWormhole(Wormhole);
             Navigation.PlanetJumpRefused = st => StorySpace != null && StorySpace.RefusePlanetJump(st);
             // MGame::dockEvent refuses the gate on the same mission check as docking: the story's level missions too.
-            SystemJump.GateBlocked = () => builderTest || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || FreelanceBlocks
+            SystemJump.GateBlocked = () => builderTest || challenge || Story.BlocksJumps(Layout.stationIndex, IsStoryOrbit) || FreelanceBlocks
                                            || (Siege != null && Siege.Active) || GoF2Remake.World.SpaceHooks.NoJumps;
             Radar = Player.gameObject.AddComponent<CombatRadar>();
             Radar.Setup(db, Player, Navigation, Mining, Weapons, Health, Traffic);
@@ -489,8 +511,16 @@ namespace GoF2Remake.World
         public bool ComingFromVoid { get; private set; }
 
         /// <summary>A cinematic, a jump, the launch camera or the player's death stops the time extender (MGame::OnUpdate 0x1af162).</summary>
+        /// <summary>Docked at an object and not hacking (free look allowed, FreeLookCamera.DockedView).</summary>
+        bool DockedLook => Docking != null && Docking.IsDocked && Docking.Hacking == null && !Cutscene;
+
         bool ExtenderBlocked => launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Cutscene
                                 || Health == null || Health.Dead;
+
+        /// <summary>Modified: what ends a running time extender: a cinematic, the launch camera or the player's death. Not the
+        /// jumps any more (the jumpgate / Khador drive scenes, the planet jump): a running slow-down carries on through them
+        /// (it can't be started there, ExtenderBlocked) until the next place loads, which ends it (TimeExtender.OnDestroy).</summary>
+        bool ExtenderCancelled => launchCameraMs > 0f || Cutscene || Health == null || Health.Dead;
 
         void Update()
         {
@@ -505,9 +535,49 @@ namespace GoF2Remake.World
             Collision.ignoreGate = Navigation.GoingToGate;
             // Hostiles, or a radio line on screen, block fast-forward (MGame::OnUpdate).
             Navigation.HostilesPresent = (Traffic != null && (Traffic.HostileCount > 0 || Traffic.ChatterVisible != null)) || (Campaign != null && Campaign.Radio != null && Campaign.Radio.Busy);
-            if (Extender != null && ExtenderBlocked) Extender.Cancel();
+            if (Extender != null && ExtenderCancelled) Extender.Cancel();
             UpdateWormholeRide();
+            UpdateHiddenSystem();
         }
+
+        // ---- remake mods: a system that disappears (GalaxyMap.ForcedHidden) ----------------------------------------------
+
+        const float HiddenCheckMs = 500f, HiddenLeaveMs = 4000f;
+        float hiddenCheckMs, hiddenMs;
+
+        /// <summary>A system an event / quest hid ("system ... hide") or whose mod's "available" condition stopped holding,
+        /// with the player in it: a HUD message, and 4 s of game time later a stream-out arrival at GalaxyMap.FallbackStation
+        /// (the nearest system on the map along the gate routes). Not during a cutscene, a jump, the launch camera or death
+        /// (the clock waits), nor in the Void, an arena, a story orbit or the Mod Builder's own work.</summary>
+        void UpdateHiddenSystem()
+        {
+            if (Leaving || Layout.alienOrbit || Layout.stationIndex < 0 || IsStoryOrbit || GoF2Remake.World.SpaceHooks.InArena
+                || (Modding.ModBuilder.Active && !Modding.ModBuilder.PlayTesting)) { hiddenMs = 0f; return; }
+            if (Cutscene || Navigation.Jumping || launchCameraMs > 0f || (SystemJump != null && SystemJump.Cinematic)
+                || (Health != null && Health.Dead) || Time.deltaTime <= 0f) return;
+            if ((hiddenCheckMs -= Time.unscaledDeltaTime * 1000f) <= 0f)
+            {
+                hiddenCheckMs = HiddenCheckMs;
+                bool hidden = GalaxyMap.ForcedHidden(Layout.systemIndex);
+                if (!hidden) { hiddenMs = 0f; hiddenNowhere = false; return; }
+                if (hiddenNowhere) return;   // no shown system to go to: the player stays
+                if (hiddenMs <= 0f)
+                {
+                    hiddenMs = 0.001f;
+                    Radar?.Say(Localization.Extra("systemClosing", "This system is off the map now: leaving it."), 1);
+                }
+            }
+            if (hiddenMs <= 0f) return;
+            hiddenMs += Time.deltaTime * 1000f;
+            if (hiddenMs < HiddenLeaveMs) return;
+            hiddenMs = 0f;
+            int to = GalaxyMap.FallbackStation(db, Layout.systemIndex);
+            if (to < 0 || to == Layout.stationIndex) { hiddenNowhere = true; return; }   // nowhere shown: stay (it looped into hidden Mido)
+            TravelTo(to);
+        }
+
+        /// <summary>The hidden system has no shown system to leave for (GalaxyMap.FallbackStation -1): the player stays.</summary>
+        bool hiddenNowhere;
 
         // ---- the wormhole (landmark 3) -----------------------------------------------------------------------
 
@@ -527,6 +597,16 @@ namespace GoF2Remake.World
         /// 10000 units behind the player and closes after a second (reset(true)).</summary>
         void PlaceArrivalWormhole()
         {
+            if (Session.ArrivedByWormhole)
+            {
+                // Remake events: out of an event's wormhole, one closing 10000 units behind the player (like the Void's).
+                Session.ArrivedByWormhole = false;
+                var behind = Player.transform.position - Player.transform.forward * 10000f * M;
+                var hole = Wormhole.Spawn(StoryAssets.Load(), new Vector3(behind.x, behind.y, -behind.z) / M, true);
+                hole.FreeMissionLock();
+                hole.ResetTimer(true);
+                hole.player = Player.transform;
+            }
             if (Wormhole == null) return;
             Wormhole.player = Player.transform;
             if (!(ComingFromVoid || Layout.alienOrbit) || Story.Index >= 43) return;
@@ -565,6 +645,11 @@ namespace GoF2Remake.World
         /// <summary>MGame::OnUpdate, PlayerEgo::isInWormhole (see the header).</summary>
         void UpdateWormholeRide()
         {
+            if (!riding && Collision != null && Collision.InEventWormhole && Health != null && !Health.Dead && EventWormhole != null)
+            {
+                RideEventWormhole();
+                return;
+            }
             if (riding || Collision == null || !Collision.InWormhole || Health == null || Health.Dead) return;
             int index = Story.Index;
             bool active = !Session.FreePlay && Campaign != null && Story.IsLevelMission(Layout.stationIndex);
@@ -603,6 +688,57 @@ namespace GoF2Remake.World
             Session.LaunchedFromStation = false;
             Session.ComingFromVoid = true;
             Session.ProgrammedStation = -1;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
+
+        // ---- remake events: an event's / mission's wormhole (EventWormhole, /wormhole) ----------------------------
+
+        /// <summary>The event's wormhole in this orbit (null: none).</summary>
+        public Wormhole EventWormhole { get; private set; }
+        int eventWormholeTo;
+
+        /// <summary>Opens (or moves) the event's wormhole at 'game' (game units in this orbit); flying in takes the player to
+        /// 'destination' (a station, Session.VoidOrbit the Void's home).</summary>
+        public void OpenEventWormhole(Vector3 game, int destination)
+        {
+            if (Player == null) return;
+            eventWormholeTo = destination;
+            if (EventWormhole == null)
+            {
+                EventWormhole = Wormhole.Spawn(StoryAssets.Load(), game, true);
+                EventWormhole.held = true;
+                EventWormhole.FreeMissionLock();
+                EventWormhole.player = Player.transform;
+                if (Collision != null) Collision.eventWormhole = EventWormhole;
+                Navigation?.SetEventWormhole(EventWormhole);
+            }
+            else
+            {
+                EventWormhole.SetPosition(game);
+                EventWormhole.SetVisible(true);
+            }
+            EventWormhole.Open();
+        }
+
+        /// <summary>The event's wormhole shrinks away.</summary>
+        public void CloseEventWormhole() => EventWormhole?.Close();
+
+        /// <summary>The ride through an event's wormhole: a stream-out arrival at its destination with a wormhole closing
+        /// behind (hull etc. kept, like the Void's).</summary>
+        void RideEventWormhole()
+        {
+            if (rode || Leaving) return;
+            rode = riding = true;
+            Leaving = true;
+            Weapons?.StoreAmmo();
+            int from = Layout.stationIndex;
+            if (eventWormholeTo == Session.VoidOrbit && !Layout.alienOrbit) Session.VoidReturnStation = from;
+            Session.PreviousStationIndex = from;
+            Session.StationIndex = eventWormholeTo;
+            Session.ArrivedByTravel = true;
+            Session.LaunchedFromStation = false;
+            Session.ProgrammedStation = -1;
+            Session.ArrivedByWormhole = true;
             SceneManager.LoadScene(SceneManager.GetActiveScene().name);
         }
 
@@ -704,11 +840,13 @@ namespace GoF2Remake.World
             Session.ShipIndex = shipIndex;
             var prefab = AssembledObject.LoadPrefab(PlayerHull.Assembly(db, shipIndex));
             if (prefab == null) { Session.ShipIndex = before; return; }
+            Hangar.SyncBuiltIn(db);   // the new hull's built-in items, the old one's gone
             var root = ctrl.gameObject;
             PlayerHull.RemoveTurrets(this);   // before the old model goes (they ride on it)
             if (ctrl.visualModel != null) Destroy(ctrl.visualModel.gameObject);
             var model = Instantiate(prefab, root.transform, false);
             model.GetComponent<AssembledObject>()?.SetPlayerVariant(true);
+            GoF2Remake.Visuals.AutoLods.FullDetail(model);   // the player's own ship: full detail
             foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
             PlayerHull.PrepareModel(db, model);   // the Void ship at its full size
             // Remake mods: the exhaust style of the ship's build (ModExhausts; before the exhaust particles, which it replaces).
@@ -747,6 +885,7 @@ namespace GoF2Remake.World
 
         void SpawnPlayer()
         {
+            Hangar.SyncBuiltIn(db);   // remake mods: the flown ship's built-in items (ships.json "integrated": "items")
             var ship = db.Ships.Find(s => s.index == Session.ShipIndex);
             var root = new GameObject($"Player ({ship?.name})");
             if (Session.ArrivedByTravel)
@@ -800,6 +939,7 @@ namespace GoF2Remake.World
                 model.GetComponent<AssembledObject>()?.SetPlayerVariant(true);
                 // AEGeometry::updateLod always picks LOD 0 in this binary: the player's ship keeps full detail, or its
                 // lights (LOD 0 only) popped in as a cutscene camera closed in.
+                GoF2Remake.Visuals.AutoLods.FullDetail(model);
                 foreach (var lg in model.GetComponentsInChildren<LODGroup>(true)) lg.ForceLOD(0);
                 PlayerHull.PrepareModel(db, model);   // remake debug: the Void ship at its full size
                 // Remake mods: the exhaust style of the ship's build (ModExhausts; the exhaust particles are attached below).
@@ -856,6 +996,7 @@ namespace GoF2Remake.World
         /// when that station isn't in this system.</summary>
         Vector3 ArrivalPosition()
         {
+            if (Layout.arrival.HasValue) return OrbitLayout.ToUnity(Layout.arrival.Value);   // remake mods: the orbit's own
             if (Layout.hasJumpgate || Layout.alienOrbit) return OrbitLayout.ToUnity(Layout.hiddenJumpgate);
             var from = Layout.planets.Find(p => p.station == Session.PreviousStationIndex);
             if (from == null) return OrbitLayout.ToUnity(new Vector3(0f, 0f, 100000f));

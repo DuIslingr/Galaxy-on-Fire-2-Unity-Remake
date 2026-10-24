@@ -318,7 +318,7 @@ namespace GoF2Remake.Data
             r.ship = ship;
             r.shipRace = ship < Shop.ShipRace.Length ? Shop.ShipRace[ship] : 0;
             var cargo = (s.cargo ?? new List<ItemStack>()).Where(c => c != null).Select(c => c.Clone()).ToList();
-            r.equipment = Slots(db, ship, s.equipment, s.shipMods, unsaleable, cargo, notes, ref modItems);
+            r.equipment = Slots(db, ship, s.equipment?.Where(e => !e.builtIn).ToList(), s.shipMods, unsaleable, cargo, notes, ref modItems);   // built-ins are the remake mods' ships'
             r.cargo = Goods(cargo, db, s.station, unsaleable, ref modItems);
 
             // The station memory: the 3 stations, newest first, then the current one
@@ -399,7 +399,8 @@ namespace GoF2Remake.Data
                 if (k == null || !OrigShip(k.ship)) { notes?.Add("a mod's ship in the Kaamo Club was left out"); continue; }
                 r.kaamoShips.Add(new OriginalShip { ship = k.ship, race = k.race, mods = OneOfEach(k.mods, notes) });
                 foreach (var e in k.equipment ?? new List<ItemStack>())   // the original's stored hulls are bare: their gear into the storage
-                    if (e != null && OrigItem(e.item)) r.kaamoItems.Add(new OriginalItem { item = e.item, amount = Math.Max(1, e.amount), price = db.Item(e.item).maxPrice });
+                    if (e != null && OrigItem(e.item) && Hangar.UnitsOf(db, e) > 0)
+                        r.kaamoItems.Add(new OriginalItem { item = e.item, amount = Hangar.UnitsOf(db, e), price = db.Item(e.item).maxPrice });
             }
             r.itemsObtained = new bool[items];
             foreach (int i in s.seenItems ?? new List<int>()) if (i >= 0 && i < items) r.itemsObtained[i] = true;
@@ -490,9 +491,16 @@ namespace GoF2Remake.Data
                     if (k >= ofType.Count) { list.Add(new OriginalEquipment()); continue; }
                     var e = ofType[k];
                     if (db.Item(e.item).modded) { modItems++; list.Add(new OriginalEquipment()); continue; }
-                    list.Add(new OriginalEquipment { item = e.item, amount = Math.Max(1, e.amount), unsaleable = unsaleable.Contains(e.item) });
+                    int units = Hangar.UnitsOf(db, e);   // an empty secondary leaves its slot empty, not 1 round
+                    if (units <= 0) { list.Add(new OriginalEquipment()); continue; }
+                    list.Add(new OriginalEquipment { item = e.item, amount = units, unsaleable = unsaleable.Contains(e.item) });
                 }
-                for (int k = counts[type]; k < ofType.Count; k++) { cargo.Add(new ItemStack(ofType[k].item, Math.Max(1, ofType[k].amount))); moved++; }
+                for (int k = counts[type]; k < ofType.Count; k++)
+                {
+                    int n = Hangar.UnitsOf(db, ofType[k]);
+                    if (n > 0) cargo.Add(new ItemStack(ofType[k].item, n));
+                    moved++;
+                }
             }
             if (moved > 0) notes?.Add($"{moved} items past the ship's slots (the remake's cloak bay or upgrades) went to the hold");
             return list;

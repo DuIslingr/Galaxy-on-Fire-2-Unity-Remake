@@ -165,7 +165,7 @@ namespace GoF2Remake.Modding
                 if (rev != ModManager.Revision || holder == null) return;
                 var scene = new GameObject("scene");
                 scene.transform.SetParent(holder.transform, false);
-                if (!await import.InstantiateMainSceneAsync(scene.transform)) { Object.Destroy(scene); Warn(s.mod, $"{s.model}: no scene to show"); return; }
+                if (!await ModGltf.InstantiateMain(import, scene.transform)) { Object.Destroy(scene); Warn(s.mod, $"{s.model}: no scene to show"); return; }
                 if (rev != ModManager.Revision || holder == null) return;
                 var template = Build(s, scene);
                 template.transform.SetParent(holder.transform, false);
@@ -232,7 +232,7 @@ namespace GoF2Remake.Modding
                 if (rev != ModManager.Revision || holder == null) return;
                 var scene = new GameObject("scene");
                 scene.transform.SetParent(holder.transform, false);
-                if (!await import.InstantiateMainSceneAsync(scene.transform)) { Object.Destroy(scene); Warn(d.mod, $"{d.model}: no scene to show"); return; }
+                if (!await ModGltf.InstantiateMain(import, scene.transform)) { Object.Destroy(scene); Warn(d.mod, $"{d.model}: no scene to show"); return; }
                 if (rev != ModManager.Revision || holder == null) return;
                 var room = ModInteriors.Build(d, scene);
                 if (room != null)
@@ -259,6 +259,7 @@ namespace GoF2Remake.Modding
             asm.origin = $"mod {s.mod.Id}";
             asm.lodDistancesGameUnits = new float[0];
             asm.lastVisibleDistanceGameUnits = 0f;   // always visible
+            AutoLods.MarkRuntime(root, s.mod.Id);   // levels of detail made from the hull at run time (ModLodCache)
             asm.playerVariantParts = new GameObject[0];
             asm.npcVariantParts = new GameObject[0];
             asm.conditionalParts = new GameObject[0];

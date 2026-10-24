@@ -476,8 +476,11 @@ namespace GoF2Remake.Multiplayer
             if (faction == null) return Localization.Extra("mpFactionNone", "You aren't in a faction.");
             text = NetChat.Clean(text);
             if (text.Length == 0) return "/f <text>";
-            TellFaction(faction, $"[{faction.tag}] {NameOf(me)}: {text}");
-            Debug.Log($"[Faction {faction.tag}] {NameOf(me)}: {text}");
+            // The chat's Faction channel (NetChat.Channel.Faction), the sender's own copy marked.
+            string from = NameOf(me);
+            foreach (var m in faction.members)
+                foreach (ulong c in NetProfiles.ClientsOf(m)) NetState.Instance?.TellFactionLine(c, from, text, m == me);
+            Debug.Log($"[Faction {faction.tag}] {from}: {text}");
             return "";
         }
 
@@ -581,6 +584,7 @@ namespace GoF2Remake.Multiplayer
             if (faction == null) { Grant(client, c.account, c.amount); return; }   // the faction went meanwhile: back to the player
             faction.bank += c.amount;
             Save();
+            NetAudit.Bank(faction.tag, "deposited", NameOf(c.account), c.amount, faction.bank);
             TellFaction(faction, string.Format(Localization.Extra("mpFactionDeposited", "{0} put {1:N0} credits into the bank ({2:N0})."), NameOf(c.account), c.amount, faction.bank));
         }
 
@@ -594,6 +598,7 @@ namespace GoF2Remake.Multiplayer
             faction.bank -= amount;
             Save();
             Grant(client, me, amount);
+            NetAudit.Bank(faction.tag, "withdrew", NameOf(me), amount, faction.bank);
             TellFaction(faction, string.Format(Localization.Extra("mpFactionWithdrew", "{0} took {1:N0} credits from the bank ({2:N0})."), NameOf(me), amount, faction.bank));
             return "";
         }
@@ -1187,6 +1192,7 @@ namespace GoF2Remake.Multiplayer
             }
             owner.bank += paid;
             Save();
+            NetAudit.Bank(owner.tag, $"paid the toll at {StationName(station)}:", NameOf(account), paid, owner.bank);
             TellFaction(owner, string.Format(Localization.Extra("mpTollReceived", "[{0}] {1} paid the {2:N0} credits toll at {3}."), payer.tag, NameOf(account), paid, StationName(station)));
         }
 

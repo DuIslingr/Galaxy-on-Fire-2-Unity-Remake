@@ -69,6 +69,13 @@ namespace GoF2Remake.World
 
         [Header("Audio")]
         public AudioSource musicSource;
+
+        /// <summary>Remake: the Mod Builder plays a sound, voice line or track to choose it; the station's music fades out
+        /// meanwhile (0.3 s) and stays out 3 s after the last one (the user's request: the next one is often played right
+        /// after), then fades back in over a second. The station's own: gone with the scene.</summary>
+        public bool MusicHeld { get; set; }
+        float musicHold = 1f, musicHeldUntil;
+        const float MusicHoldAfter = 3f;
         [Tooltip("Indexed by StationTables.Music.")]
         public AudioClip[] music = new AudioClip[7];
         public AudioClip mainViewAmbience;
@@ -191,6 +198,7 @@ namespace GoF2Remake.World
             // Remake debug (PlayerHull): a hull the player can't normally fly never sits in a hangar (an old save from the
             // battleship toggle): back in the player's own ship.
             if (!PlayerHull.PlayerShip) PlayerHull.ForceOwnShip();
+            Hangar.SyncBuiltIn(db);  // remake mods: the flown ship's built-in items (ships.json "integrated": "items")
             Hangar.FitToSlots(db);   // remake: no more mounted than the ship has slots (a mod's lower slot count, a debug swap)
             shipIndex = shipOverride >= 0 ? shipOverride : Session.ShipIndex;
             Station = db.Stations.Find(s => s.index == station);
@@ -345,9 +353,15 @@ namespace GoF2Remake.World
                 foreach (var a in roomGo.GetComponentsInChildren<PartAnimation>(true))
                 {
                     a.play = true;
-                    a.pingPongRotation = true;
+                    // Modified: not the Terran hangar's bots (hangar_terran_bot_*): they drive a keyed loop, a heading swung
+                    // back on every other loop turned them against their path.
+                    a.pingPongRotation = !a.gameObject.name.Contains("_bot_");
                     // Remake: and the Nivelian hangar's flashing light (hangar_nivelian_add, PartAnimation.HasSignedExtra).
-                    if (a.gameObject.name.Contains("_anim") || a.HasSignedExtra) a.applyMaterialChannels = true;
+                    // Modified: and the Terran hangar's blinking light (hangar_terran_add_part0, its `extra` 0..100).
+                    if (a.gameObject.name.Contains("_anim") || a.HasSignedExtra || a.gameObject.name.StartsWith("hangar_terran_add"))
+                        a.applyMaterialChannels = true;
+                    // Modified: the Terran hangar's beta bots are keyed heading first (PartAnimation.headingFirst).
+                    if (a.gameObject.name.StartsWith("hangar_terran_bot_")) a.headingFirst = true;
                 }
             if (customHangar == null) PlaceValkyrieHangarParts(roomGo);
             CollectRoomHighlights(roomGo);
@@ -356,6 +370,7 @@ namespace GoF2Remake.World
             var ship = SpawnShip(shipIndex, shipPivot, Quaternion.identity, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
             if (playerShip != null) PlayerHull.FitHangar(playerShip);   // remake debug: a freighter / capital ship shrunk
+            CentreOnPad();
             RefreshTurret(true);
             shipYaw = StationTables.StartYaw(HangarIndex);
             if (customHangar != null)
@@ -394,6 +409,44 @@ namespace GoF2Remake.World
             for (int i = 0; i < 3; i++) { driftSign[i] = Random.Range(0, 20) < 10; NextDriftLeg(i, Base(i)); }
         }
 
+        int captureSavedIndex = -1, captureSavedRace;
+        Modding.ModInteriors.Room captureSavedCustom;
+
+        /// <summary>Modified: HangarCubemapCapture's "every hangar" (an editor tool, Play mode): the hangar room built again as
+        /// hangar 'index' (0..3 the races', 7 / 8 the Valkyrie's) with its lighting for 'raceId' (ambient, fog), the
+        /// player's ship on its pad. RestoreHangar puts the station's own back.</summary>
+        public void RebuildHangarAs(int index, int raceId)
+        {
+            if (index < 0 || index >= StationTables.HangarRoom.Length || StationTables.HangarRoom[index] == null) return;
+            if (captureSavedIndex < 0) { captureSavedIndex = HangarIndex; captureSavedRace = Layout.raceId; captureSavedCustom = customHangar; }
+            if (View != StationView.Hangar) SetView(StationView.Hangar);
+            RebuildHangar(index, null, raceId);
+        }
+
+        /// <summary>Modified: the station's own hangar again after RebuildHangarAs.</summary>
+        public void RestoreHangar()
+        {
+            if (captureSavedIndex < 0) return;
+            RebuildHangar(captureSavedIndex, captureSavedCustom, captureSavedRace);
+            captureSavedIndex = -1;
+            captureSavedCustom = null;
+        }
+
+        void RebuildHangar(int index, Modding.ModInteriors.Room custom, int raceId)
+        {
+            traffic = null;
+            parkedShips.Clear();
+            if (hangarRoot != null) { hangarRoot.gameObject.SetActive(false); Destroy(hangarRoot.gameObject); }
+            HangarIndex = index;
+            customHangar = custom;
+            BuildHangar();
+            hangarRoot.gameObject.SetActive(View == StationView.Hangar);
+            int race = Layout.raceId;
+            Layout.raceId = raceId;
+            ApplyHangarLighting();
+            Layout.raceId = race;
+        }
+
         /// <summary>CutScene::replacePlayerShip 0xa53b4: after buying a ship, the new one on the turntable at its own height
         /// (the camera keeps the pivot of the ship the hangar was entered with).</summary>
         public void ReplacePlayerShip(int index)
@@ -402,9 +455,11 @@ namespace GoF2Remake.World
             if (dbRevision != Modding.ModManager.Revision) { db = Database.Load(); dbRevision = Modding.ModManager.Revision; }
             if (playerShip != null) Destroy(playerShip.gameObject);
             shipIndex = index;
+            if (index == Session.ShipIndex) Hangar.SyncBuiltIn(db);   // its built-in items (a purchase, a stored hull, a debug swap)
             var ship = SpawnShip(index, PadPosition(index), Quaternion.identity, hangarRoot, "Player ship");
             playerShip = ship != null ? ship.transform : null;
             if (playerShip != null) PlayerHull.FitHangar(playerShip);   // remake debug: a freighter / capital ship shrunk
+            CentreOnPad();
             RefreshTurret(true);
             ApplyShipYaw();
             ApplyEnginePreview();
@@ -674,6 +729,7 @@ namespace GoF2Remake.World
             if (prefab == null) { Debug.LogWarning($"StationLevel: no assembled prefab '{assembly}'"); return null; }
             var go = Instantiate(prefab, unityPos, rot, parent);
             go.name = label;
+            GoF2Remake.Visuals.AutoLods.FullDetail(go);
             foreach (var lod in go.GetComponentsInChildren<LODGroup>()) lod.ForceLOD(0);   // close-up room: full detail
             return go;
         }
@@ -1059,7 +1115,29 @@ namespace GoF2Remake.World
 
         void ApplyShipYaw()
         {
-            if (playerShip != null && !PlayerFlying) playerShip.rotation = OrbitLayout.RotationToUnity(new Vector3(0f, shipYaw, 0f));
+            if (playerShip == null || PlayerFlying) return;
+            playerShip.rotation = OrbitLayout.RotationToUnity(new Vector3(0f, shipYaw, 0f));
+            // Modified: a hull off its pivot stands centred on the pad and turns about its own middle (CentreOnPad).
+            if (padCentre != Vector3.zero) playerShip.position = padPivot - playerShip.TransformVector(padCentre);
+        }
+
+        /// <summary>Modified: the VoidX (ship 8): its hull's middle sits ~18 m off its pivot along its length (the model's centre
+        /// at -355 units, the other hulls' within ~85), so on the pad it stood off the turntable and swung around it.</summary>
+        public const int OffCentreShip = 8;
+        /// <summary>The pad pivot the player's ship was spawned at, and its hull's middle in its own frame (horizontal; zero for
+        /// the hulls that stand on their pivot).</summary>
+        Vector3 padPivot, padCentre;
+
+        /// <summary>Modified: the player's ship centred on its pad (ApplyShipYaw keeps it so as it turns). The arrival flight
+        /// lands on the centred spot (it flies to where the ship stands).</summary>
+        void CentreOnPad()
+        {
+            padCentre = Vector3.zero;
+            if (playerShip == null) return;
+            padPivot = playerShip.position;
+            if (shipIndex != OffCentreShip) return;
+            var local = ShipLocalBounds(playerShip, false);
+            if (local.size != Vector3.zero) padCentre = new Vector3(local.center.x, 0f, local.center.z);
         }
 
         // ---- remake: Inspect ship (HangarInspect; UI.StationMenu reads the input) ----------------------------
@@ -1218,9 +1296,12 @@ namespace GoF2Remake.World
             if (View == StationView.Hangar && flingVelocity != 0f)
             {
                 shipYaw += flingVelocity * Time.deltaTime;
-                flingVelocity *= Mathf.Pow(0.9f, dtMs / 20f);
-                // Stops below 1 px per frame (1/120 rad per 20 ms).
-                if (Mathf.Abs(flingVelocity) < 1f / StationTables.TurntablePixelsPerRadian / 0.02f) flingVelocity = 0f;
+                // Modified: a fast flick keeps the ship turning and slows it gently (to 35 % a second; the original's x0.9 per
+                // 20 ms frame stopped it within half a second), down to a crawl before it stops (it snapped still at 1 px a
+                // frame, ~24 deg/s). How much of the speed is left after a second, and the speed it stops at (rad/s):
+                const float FlingKeptPerSecond = 0.35f, FlingStopSpeed = 0.03f;
+                flingVelocity *= Mathf.Pow(FlingKeptPerSecond, dtMs / 1000f);
+                if (Mathf.Abs(flingVelocity) < FlingStopSpeed) flingVelocity = 0f;
                 ApplyShipYaw();
             }
 
@@ -1232,7 +1313,10 @@ namespace GoF2Remake.World
             if (View == StationView.Lounge && vosskBots != null) UpdateVosskBots(dtMs);
 
             if (View == StationView.Hangar) RefreshTurret(false);
-            if (musicSource != null) musicSource.volume = Settings.MusicVolume * GoF2Remake.World.SpaceHooks.SceneMusic;
+            if (MusicHeld) musicHeldUntil = Time.unscaledTime + MusicHoldAfter;
+            bool held = Time.unscaledTime < musicHeldUntil;
+            musicHold = Mathf.MoveTowards(musicHold, held ? 0f : 1f, Time.unscaledDeltaTime / (held ? 0.3f : 1f));
+            if (musicSource != null) musicSource.volume = Settings.MusicVolume * GoF2Remake.World.SpaceHooks.SceneMusic * musicHold;
             float atmoMs = Time.unscaledDeltaTime * 1000f;
             mainViewAtmo?.Update(atmoMs); loungeAtmo?.Update(atmoMs); hangarAtmo?.Update(atmoMs);
         }
@@ -1302,16 +1386,20 @@ namespace GoF2Remake.World
                     // The photo tools' field of view (UI.PhotoTools), eased in with the orbit.
                     if (Inspect.FovDeg > 0f) mainCamera.fieldOfView = Mathf.Lerp(mainCamera.fieldOfView, Inspect.FovDeg, Mathf.SmoothStep(0f, 1f, Inspect.Blend));
                     // A panel over part of the screen (the Customize screen): the view turns aside so the ship stands in the
-                    // middle of the free part (InspectFrameX), eased, with the orbit's blend.
-                    inspectFrame = Mathf.MoveTowards(inspectFrame, InspectFrameX, Time.unscaledDeltaTime * 1000f / InspectFrameMs);
-                    float off = (inspectFrame - 0.5f) * Inspect.Blend;
+                    // middle of the free part (InspectFrameX). The turn comes and goes with the orbit's own eased blend, so
+                    // the Customize screen moves in and out like Inspect ship (a separate linear ease times the raw blend
+                    // started and stopped abruptly, and the target reset on leaving swung the view back before the orbit
+                    // did); a change of the panel's width once in eases over InspectFrameMs.
+                    if (!Inspect.Active || Inspect.Blend < 1f) inspectFrame = InspectFrameX;
+                    else inspectFrame = Mathf.MoveTowards(inspectFrame, InspectFrameX, Time.unscaledDeltaTime * 1000f / InspectFrameMs);
+                    float off = (inspectFrame - 0.5f) * Mathf.SmoothStep(0f, 1f, Inspect.Blend);
                     if (Mathf.Abs(off) > 0.0005f)
                     {
                         float halfTanX = Mathf.Tan(mainCamera.fieldOfView * 0.5f * Mathf.Deg2Rad) * mainCamera.aspect;
                         cam.rotation *= Quaternion.AngleAxis(-Mathf.Atan(halfTanX * 2f * off) * Mathf.Rad2Deg, Vector3.up);
                     }
                 }
-                else inspectFrame = 0.5f;
+                else inspectFrame = InspectFrameX = 0.5f;   // the blend back has ended: the frame back in the middle
             }
             else
             {
@@ -1379,7 +1467,8 @@ namespace GoF2Remake.World
         /// over ChatZoomMs.</summary>
         const float ChatZoomIn = 0.25f, ChatZoomMs = 800f;
         /// <summary>Where the visitor talked to stands across the screen, from the left (0) to the right (1): the middle of
-        /// the room left of the chat window (LoungePanel sets it from the window's place).</summary>
+        /// the room beside the chat window, left of it or (the window on the left) right of it (LoungePanel sets it from the
+        /// window's place).</summary>
         public float ChatFrameX = 0.24f;
         int chatVisitor = -1;
         Vector3 chatTarget;

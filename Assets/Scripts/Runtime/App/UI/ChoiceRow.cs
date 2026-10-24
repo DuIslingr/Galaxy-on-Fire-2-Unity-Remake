@@ -1,7 +1,12 @@
 // ChoiceRow.cs
 // One option with a fixed set of values (remake UI, styled by GoF2Common.uss .choice-*): a label, then either
 // segments (every value as a clickable button, for a few short values) or a stepper (‹ value ›, for long lists).
-// The row itself is the focusable element: left / right step through it (MainMenu, PauseMenu call Step).
+// Modified: the long lists are a drop-down instead of the stepper: a box with the value and a down chevron; a click / tap
+// opens the list of values under it (ChoicePopup, the current one ticked), a pick or a press outside closes it. The keys
+// and the controller still step through the values (left / right). The box sits at the row's right end, a set share of
+// its width; a value longer than the box slides left and back (a pause at each end) so it can be read: TextMarquee.
+// The row itself is the focusable element: left / right step through it (MainMenu, PauseMenu call Step); Enter / A leave
+// it as it is (they cycled it, a player's report: A should only take the value shown).
 
 using System;
 using UnityEngine.UIElements;
@@ -13,6 +18,9 @@ namespace GoF2Remake.UI
         readonly Label label;
         readonly VisualElement segments;
         readonly Label value;
+        readonly Button dropdown;
+        readonly VisualElement textClip;
+
         string[] choices = Array.Empty<string>();
         int index;
 
@@ -39,26 +47,30 @@ namespace GoF2Remake.UI
             }
             else
             {
-                var stepper = new VisualElement();
-                stepper.AddToClassList("choice-stepper");
-                stepper.Add(Arrow("‹", -1));
+                dropdown = new Button { focusable = false };
+                dropdown.AddToClassList("choice-dropdown");
                 value = new Label { pickingMode = PickingMode.Ignore };
                 value.AddToClassList("choice-value");
                 value.AddToClassList("gof-semibold");
-                stepper.Add(value);
-                stepper.Add(Arrow("›", 1));
-                Add(stepper);
+                textClip = new VisualElement { pickingMode = PickingMode.Ignore };
+                textClip.AddToClassList("choice-dropdown-text");
+                textClip.Add(value);
+                dropdown.Add(textClip);
+                // Modified: the shared marquee (TextMarquee), which the Debug page's item grids use too; this was a second
+                // copy of the same slide, hold and measure.
+                TextMarquee.Attach(textClip, value);
+                var chevron = new VisualElement { pickingMode = PickingMode.Ignore };
+                chevron.AddToClassList("choice-dropdown-chevron");
+                dropdown.Add(chevron);
+                dropdown.clicked += () =>
+                {
+                    if (ChoicePopup.IsOpenFor(dropdown)) ChoicePopup.Close();
+                    else if (enabledInHierarchy) ChoicePopup.Open(dropdown, choices, index, Pick);
+                };
+                Add(dropdown);
             }
         }
 
-        Button Arrow(string text, int dir)
-        {
-            var b = new Button { text = text, focusable = false };
-            b.AddToClassList("choice-arrow");
-            b.AddToClassList("gof-semibold");
-            b.clicked += () => Step(dir);
-            return b;
-        }
 
         public string LabelText { get => label.text; set => label.text = value; }
 
@@ -88,9 +100,6 @@ namespace GoF2Remake.UI
 
         /// <summary>One step left (-1) or right (+1), clamped to the ends.</summary>
         public void Step(int dir) => Pick(index + dir);
-
-        /// <summary>Confirm on the row (Enter / A): the next value, wrapping round.</summary>
-        public void Cycle() { if (choices.Length > 0) Pick((index + 1) % choices.Length); }
 
         void Pick(int i)
         {

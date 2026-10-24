@@ -331,7 +331,7 @@ namespace GoF2Remake.Data
                 case 20: EnsureMounted(db, 6, 41, 10); break;                       // Kappa's free EMP GL I (531: none, no launch at 21)
                 case 50: Session.Standing[0] = 100; break;                          // LevelScript 0x32: Standing::setStanding(0, 100), the Vossk hostile
                 case 58: Shop.AddToCargo(179, 10); break;                           // the 10 Liberators built (kept: 59's kill bonus)
-                case 77: TakeShip(db, 37, 100); break;                              // Khador's Cronus at Kothar (326: no launch in another ship)
+                case 77: TakeShip(db, 37, 100, gift: true); break;                  // Khador's Cronus at Kothar (326: no launch in another ship), free
                 case 91: Session.StoryCounter = 10; EnsureMounted(db, 20, 93); break;   // the 10 miners aboard, in a Large Cabin
                 case 92: Session.StoryCounter = 0; break;                           // dropped at the transporter
                 case 118: Shop.AddToCargo(209, 1); break;                           // the K'mirkk Toad Mutagen bought at Bak S'ondorr
@@ -348,12 +348,13 @@ namespace GoF2Remake.Data
 
         /// <summary>A dealer ship bought at 'station' like Hangar.BuyShip: the old hull traded in at its price there, every
         /// mounted item to the first free slot of its type, the rest to the hold; mods stay with the old hull.</summary>
-        static void TakeShip(Database db, int ship, int station)
+        static void TakeShip(Database db, int ship, int station, bool gift = false)
         {
             if (Session.ShipIndex == ship || db.Ship(ship) == null) return;
-            Session.Credits += Mathf.Max(0, Shop.ShipPrice(db, Session.ShipIndex, station) - Shop.ShipPrice(db, ship, station));
+            // A gift (the Cronus at 77, #122) costs nothing: the old ship's trade-in is credited whole.
+            Session.Credits += Mathf.Max(0, Shop.ShipPrice(db, Session.ShipIndex, station) - (gift ? 0 : Shop.ShipPrice(db, ship, station)));
             var slots = db.Ship(ship).slots;
-            var mounted = Session.Equipment;
+            var mounted = Session.Equipment.Where(e => !e.builtIn).ToList();   // the old hull's built-ins stay with it
             Session.ShipIndex = ship;
             Session.ShipMods = new List<int>();
             Session.Equipment = new List<ItemStack>();
@@ -365,8 +366,9 @@ namespace GoF2Remake.Data
                 if (type == 3) max += Hangar.BaySlot(db, ship, Session.Equipment);
                 if (Session.Equipment.FindAll(x => (db.Item(x.item)?.TypeId ?? 4) == type).Count < max || Hangar.BayTakes(db, ship, e.item, Session.Equipment))
                     Session.Equipment.Add(e);
-                else Shop.AddToCargo(e.item, Mathf.Max(1, e.amount));
+                else if (Hangar.UnitsOf(db, e) > 0) Shop.AddToCargo(e.item, Hangar.UnitsOf(db, e));
             }
+            Hangar.SyncBuiltIn(db);
         }
 
         /// <summary>The debug start: the equipment the step's planet-jump checks ask for (RequirementRefusal, 532), so a jump
@@ -700,7 +702,7 @@ namespace GoF2Remake.Data
                 case 63: RevealSystem(db, 24); break;                                       // Skavac
                 case 67:   // Cornelius' mines: 5 each of AMR Saber, Neutha EMP and Ksann'k in this station's stock
                     Session.StoryMission.value = 0;
-                    AddToCurrentStock(new ItemStack(60, 5), new ItemStack(61, 5), new ItemStack(62, 5));
+                    AddToCurrentStock(true, new ItemStack(60, 5), new ItemStack(61, 5), new ItemStack(62, 5));   // makeItem(5, 0): free
                     break;
                 case 69: Shop.RemoveFromCargo(175, CargoOf(175)); break;                // the Void Essence handed to Netor
                 case 75: RemoveCurrentDealerShips(); break;                                 // Station::removeShips
@@ -709,7 +711,7 @@ namespace GoF2Remake.Data
                 {
                     int drive = Session.Equipment.FindIndex(e => db.Item(e.item)?.categoryId == 18);
                     if (drive >= 0) Session.Equipment.RemoveAt(drive);
-                    else Shop.RemoveFromCargo(GalaxyMap.KhadorDriveItem, 1);
+                    else Shop.RemoveFromCargo(GalaxyMap.KhadorDriveItem, CargoOf(GalaxyMap.KhadorDriveItem));   // Ship::removeCargo(Item*): the whole stack
                     // The original's unsaleable flag was on that Item: it goes with it (the remake's flag is per item
                     // number, so it stayed and locked every later Khador Drive).
                     Session.Unsaleable.Remove(GalaxyMap.KhadorDriveItem);
@@ -789,8 +791,10 @@ namespace GoF2Remake.Data
             if (saleable) Session.Unsaleable.Remove(GalaxyMap.KhadorDriveItem); else Session.Unsaleable.Add(GalaxyMap.KhadorDriveItem);
         }
 
-        /// <summary>Station::addItem on the station the player is docked at (Status+0x198).</summary>
-        static void AddToCurrentStock(params ItemStack[] items)
+        /// <summary>Station::addItem on the station the player is docked at (Status+0x198). 'free': Item::makeItem(amount, 0),
+        /// the units cost nothing (StationStock.freeUnits; #131: Cornelius' mines were sold at the full price). Remake: free
+        /// also when the station already stocked the item (addItem merges into that row and its price, so there they cost).</summary>
+        static void AddToCurrentStock(bool free, params ItemStack[] items)
         {
             var stock = Session.RecentStations.Find(r => r.station == Session.StationIndex);
             if (stock == null) return;
@@ -798,6 +802,10 @@ namespace GoF2Remake.Data
             {
                 var row = stock.items.Find(x => x.item == it.item);
                 if (row != null) row.amount += it.amount; else Shop.InsertStock(stock, new ItemStack(it.item, it.amount));
+                if (!free) continue;
+                stock.freeUnits ??= new List<ItemStack>();
+                var f = stock.freeUnits.Find(x => x != null && x.item == it.item);
+                if (f != null) f.amount += it.amount; else stock.freeUnits.Add(new ItemStack(it.item, it.amount));
             }
         }
 
@@ -862,7 +870,7 @@ namespace GoF2Remake.Data
         public static void AfterDockedAdvance(int n, int station)
         {
             if (station != 100) return;
-            if (n == 77) AddDealerShip(100, 37);
+            if (n == 77) { AddDealerShip(100, 37); Session.KhadorCronusGift = true; }   // makeShip(37, 0): the row is free (#122)
             if (n == 84)
             {
                 AddDealerShip(100, 38);
