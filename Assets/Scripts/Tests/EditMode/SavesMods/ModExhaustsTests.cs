@@ -4,7 +4,8 @@
 // with one "group" are one choice whose nozzles each wear the member made for the nearest nozzle size (ForNozzle); a mount's
 // "outline" stands for its nozzle only when it is plausible against the mount's glowSize (ShapesOf: the GoF3 builder's
 // Vossk slivers fall back to the glowSize oval), and so a ship's own engineFx and a mobile station's take its shape
-// (OutlineOf, EngineFx.CreateShaped); an "engineFx" reads its "coneProfile" / "coneFade" (CustomEngineFx).
+// (OutlineOf, EngineFx.CreateShaped); an "engineFx" style draws GoF3's own engine (its "meshes") in the build's colours on
+// any ship (EngineFx's _Tint per renderer: the helix and particles the second colour, the rest the first).
 // Expected values: the format in Modding/README.md "Exhaust styles".
 
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace GoF2Remake.Tests
         const string StylesJson = @"[
             { 'id': 'flame', 'name': 'Flame', 'model': 'exhausts/flame.glb', 'nozzle': 0.5,
               'materials': [ { 'material': 'EngineExhaust', 'flame': true } ] },
-            { 'id': 'drive', 'name': 'Drive', 'engineFx': { 'glow': 'fx/glow.png', 'coneWidth': 87 }, 'nozzle': 25 }
+            { 'id': 'drive', 'name': 'Drive', 'engineFx': { 'meshes': 'fx/engines/e.json', 'meshScale': 50 }, 'nozzle': 25 }
         ]";
 
         void StylesModOn()
@@ -30,7 +31,7 @@ namespace GoF2Remake.Tests
                 ("exhausts.json", StylesJson),
                 ("ships.json", "[ { 'id': 'own', 'name': 'Own', 'model': 'gof2:ship_005_terran' } ]"));
             WriteFile(dir, "exhausts/flame.glb", Dummy);
-            WriteFile(dir, "fx/glow.png", Dummy);
+            WriteFile(dir, "fx/engines/e.json", System.Text.Encoding.UTF8.GetBytes(EngineModelTests.EngineJson));
             ScanAndEnable("t_ex");
             Assert.IsFalse(Installed("t_ex").Broken, AllMessages(Installed("t_ex")));
         }
@@ -88,45 +89,37 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void AStylesNozzleIsReadAndTheEngineFxsConeShapeToo()
+        public void AStylesNozzleIsReadAndAnEngineFxsOwnToo()
         {
             StylesModOn();
             var drive = ModExhausts.Find("t_ex:drive");
             Assert.AreEqual(25f, drive.nozzle, 1e-4f);
-            var fxOnly = JsonUtility.FromJson<CustomEngineFx>("{ \"coneWidth\": 138, \"nozzle\": 45 }");
-            Assert.AreEqual(45f, fxOnly.NozzleRadius, 1e-4f, "an engineFx's own nozzle, else its coneWidth");
-            Assert.AreEqual(138f, JsonUtility.FromJson<CustomEngineFx>("{ \"coneWidth\": 138 }").NozzleRadius, 1e-4f);
-            var fx = JsonUtility.FromJson<CustomEngineFx>("{ \"glow\": \"g.png\", \"coneProfile\": [0, 0, 0.1, 0.5, 1, 0.5, 1, 0, 0.9], \"coneFade\": [0, 0.3] }");
-            Assert.AreEqual(9, fx.coneProfile.Length);
-            Assert.AreEqual(0.3f, fx.coneFade[1], 1e-6f);
+            var fxOnly = JsonUtility.FromJson<CustomEngineFx>("{ \"meshes\": \"e.json\", \"nozzle\": 45 }");
+            Assert.AreEqual(45f, fxOnly.NozzleRadius, 1e-4f, "an engineFx's own nozzle, else GoF3's Nivelian one");
+            Assert.AreEqual(CustomEngineFx.DefaultNozzle, JsonUtility.FromJson<CustomEngineFx>("{ \"meshes\": \"e.json\" }").NozzleRadius, 1e-4f);
         }
 
         [Test]
-        public void AnEngineFxsConeFlowsUnlessItsSpeedIsZero()
+        public void AGoF3EngineIsDrawnLongerOnAHullWithSmallNozzles()
         {
-            // GoF3's exhausts churn (their materials' UVAnim flow): the cone's material is GoF2/ModEngineFlow with the engine's
-            // speed, strength and tiling, the default without "coneFlow"; a speed of 0 keeps the still additive picture.
-            var flowing = typeof(GoF2Remake.Modding.EngineFx).GetMethod("Flowing", BindingFlags.NonPublic | BindingFlags.Static);
-            var additive = new Material(Shader.Find("Unlit/Color"));
+            // GoF3's hulls carry nozzles of ~0.062 of their length; the Phantom 25 game units on 940: its plume, fitted across
+            // the nozzle, is stretched along it by that share (1 on GoF3's own proportions, at most 3).
+            var length = typeof(ModExhausts).GetMethod("EngineLength", BindingFlags.NonPublic | BindingFlags.Static);
+            var model = GameObject.CreatePrimitive(PrimitiveType.Cube);
             try
             {
-                var fx = JsonUtility.FromJson<CustomEngineFx>("{ \"cone\": \"c.png\", \"coneFlow\": [1.3, 1, 0.5] }");
-                Assert.AreEqual(3, fx.coneFlow.Length);
-                var mat = new Material(additive);
-                flowing.Invoke(null, new object[] { mat, fx.coneFlow });
-                Assert.AreEqual("GoF2/ModEngineFlow", mat.shader.name);
-                Assert.AreEqual(1.3f, mat.GetFloat("_FlowSpeed"), 1e-5f);
-                Assert.AreEqual(0.5f, mat.GetFloat("_FlowTiling"), 1e-5f);
-                var plain = new Material(additive);
-                flowing.Invoke(null, new object[] { plain, null });
-                Assert.AreEqual("GoF2/ModEngineFlow", plain.shader.name, "no coneFlow: the default flow");
-                Assert.AreEqual(1f, plain.GetFloat("_FlowSpeed"), 1e-5f);
-                var still = new Material(additive);
-                flowing.Invoke(null, new object[] { still, new[] { 0f } });
-                Assert.AreEqual(additive.shader, still.shader, "speed 0: the picture stays still");
-                Object.DestroyImmediate(mat); Object.DestroyImmediate(plain); Object.DestroyImmediate(still);
+                model.transform.localScale = Vector3.one;
+                var hull = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                hull.transform.SetParent(model.transform, false);
+                hull.transform.localScale = new Vector3(10f, 5f, 940f * 0.05f);
+                Object.DestroyImmediate(model.GetComponent<MeshFilter>());
+                ModExhausts.NozzleShape Round(float r) => new ModExhausts.NozzleShape { halfWidth = r, halfHeight = r };
+                float phantom = (float)length.Invoke(null, new object[] { model, new[] { Round(25f), Round(25f), Round(25f) } });
+                Assert.AreEqual(ModExhausts.Gof3NozzleToLength / (25f / 940f), phantom, 0.02f);
+                Assert.AreEqual(1f, (float)length.Invoke(null, new object[] { model, new[] { Round(87f) } }), 1e-4f, "GoF3's own proportions");
+                Assert.AreEqual(3f, (float)length.Invoke(null, new object[] { model, new[] { Round(5f) } }), 1e-4f, "at most 3");
             }
-            finally { Object.DestroyImmediate(additive); }
+            finally { Object.DestroyImmediate(model); }
         }
 
         static ModExhausts.NozzleShape[] ShapesOf(int ship, List<WeaponMount> mounts)
@@ -142,7 +135,7 @@ namespace GoF2Remake.Tests
         {
             // A GoF3 hull: its glowSize is the hot core of each nozzle's glow; its effect is drawn for an 87-unit nozzle.
             WriteMod("gf", "t_gf", "1.0", "", ("ships.json", @"[ { 'id': 'hull', 'name': 'Hull', 'model': 'gof2:ship_005_terran',
-                'engineFx': { 'glow': 'g.png', 'coneWidth': 138, 'nozzle': 87 },
+                'engineFx': { 'meshes': 'e.json', 'nozzle': 87 },
                 'mounts': [ { 'slotType': 3, 'position_engine': [100, 0, -300], 'glowSize': [16, 16, 40] },
                             { 'slotType': 3, 'position_engine': [0, 50, -300], 'glowSize': [32, 32, 40] } ] } ]"));
             ScanAndEnable("t_gf");

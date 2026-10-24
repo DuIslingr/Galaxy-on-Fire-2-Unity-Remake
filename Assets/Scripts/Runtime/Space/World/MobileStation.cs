@@ -102,8 +102,7 @@ namespace GoF2Remake.World
                 if (spec.engineFx != null)
                 {
                     root.AddComponent<EnginePreview>().drive = CruiseDrive;
-                    Modding.EngineFx.CreateShaped(model, glow, spec.engineFx, spec.engines, spec.mod, data.assembly,
-                        m => m.glowColor != null && m.glowColor.Length >= 3 ? m.glowColor : spec.engineColor);
+                    Modding.EngineFx.CreateShaped(model, glow, spec.engineFx, spec.engines, spec.mod, data.assembly);
                 }
             }
             ms.Place(seconds);

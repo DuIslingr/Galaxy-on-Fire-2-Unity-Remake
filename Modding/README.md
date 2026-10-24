@@ -749,40 +749,36 @@ with flames gets neither the engine glow discs nor the exhaust particles at its 
 
 ### Engine effect
 
-`engineFx` draws an engine like Galaxy on Fire 3's at every exhaust mount, in place of the flame disc and the exhaust
-particles: up to four parts, each an additive PNG in the mod (black shows nothing; a grey image is tinted by the part's own
-colour if given, else the exhaust's `glowColor`, else the ship's `engineGlowColor`, else `color`). Every part follows the engines like the other engine effects:
-off while the ship is parked or the engines are off, stronger and longer with the throttle and while boosting.
+`engineFx` draws a Galaxy on Fire 3 engine at every exhaust mount as that game draws it, in place of the flame disc and the
+exhaust particles: the engine's own parts (`meshes`, below) and its particle trail, contrails and booster flash. It follows
+the engines like the other engine effects: off while the ship is parked or the engines are off, a little shorter at idle,
+stronger while boosting.
 
 | Field | |
 |---|---|
-| `glow`, `glowSize`, `glowIntensity` | A flare facing the camera at the nozzle, brightest seen from behind: a square of the whole picture plus a long thin streak at half brightness (the picture turned a quarter). `glowSize`: the square's half size, the streak's half width and half height (game units, default 240, 720, 72). |
-| `cone`, `coneLength`, `coneWidth`, `coneIntensity` | Four crossed cards along the exhaust, `coneLength` at full throttle and `coneWidth` half wide (default 650, 87); along them the picture's horizontal middle band from 0.39 (the nozzle) to 0.69, brightest just behind the nozzle. |
-| `nozzle` | The nozzle radius the effect is drawn for (game units, default `coneWidth`): exhaust styles on this ship are sized so its nozzles are this large (only when `nozzle` is given), and a style made from this effect fits other ships' nozzles against it. The GoF3 Ships mod's: Nivelian 87, Terran 100, Vossk 45 (the Vossk plume is three times its nozzles). |
-| `coneProfile`, `coneFade` | The cards' own shape: `coneProfile` a ring after ring `[share of the length, brightness 0..1, u of the picture, ...]` from the nozzle (default `[0, 0, 0.39, 0.143, 0.77, 0.44, 0.571, 0.2, 0.56, 1, 0, 0.69]`); `coneFade` `[from, to]` fades each card out as it turns edge-on to the camera (how much it faces the camera, 0 edge-on to 1 face-on: gone at `from`, full from `to`): seen from straight behind only the flare shows, as Galaxy on Fire 3 draws its exhausts (its engines use `[0, 0.3]`). |
-| `coneFlow` | `[speed, strength, tiling]`: the cards' picture churns in a moving flow field, as Galaxy on Fire 3's exhausts do (default `[1, 1, 0.5]`; GoF3's own: Nivelian `[0.5, 1, 0.5]`, Terran `[4, 0.8, 2]`, Vossk `[1.3, 1, 0.5]`); a speed of 0 keeps the picture still. |
-| `trail`, `trailCount`, `trailLength`, `trailWidth`, `trailWander`, `trailTime`, `trailIntensity` | `trailCount` streams per exhaust (default 2) that waver in smooth waves and bend behind the ship when it turns: each reaches `trailLength` behind at full throttle (default 2800), `trailWidth` half wide at the nozzle (default 28, thinner toward the end), swaying by `trailWander` (default 650; 0 = a straight streak), each point living `trailTime` seconds (default 0.75). `trail` is one soft streak; the stream takes its middle row across. |
-| `spiral`, `spiralCount`, `spiralLength`, `spiralRadius`, `spiralWidth`, `spiralTurns`, `spiralSpin`, `spiralScroll`, `spiralRepeat`, `spiralIntensity` | A helix: `spiralCount` strands per exhaust (default 2) winding round it, `spiralLength` long at full throttle (default 560), from `spiralRadius` `[at the nozzle, at the end]` (default 27, 5), each `spiralWidth` half wide (default 22), `spiralTurns` turns along it (default 2), spinning `spiralSpin` turns a second (default 1.2). The picture runs along each strand (taller than wide: Galaxy on Fire 3's Nivelian engines use a lightning bolt, so the strands crackle), `spiralRepeat` times along it (default 3), scrolling `spiralScroll` lengths a second (default 3); the strands fade out toward their end. |
-| `color` | `[r, g, b]` for exhausts with no colour of their own. |
-| `flareColor`, `coneColor`, `trailColor`, `spiralColor` | `[r, g, b]`: that part's own colour, over the exhaust's (the GoF3 Ships mod's Nivelian engines take them from the game's materials: a deep blue helix and plume; its Terran engines the textures' own amber). |
+| `meshes` | The engine's parts (below): `"fx/engines/<name>.json"`. |
+| `meshScale` | Game units per unit of the file (Galaxy on Fire 3's: 53.5). Each exhaust's `fxScale` sizes it further. |
+| `meshGlow` | Brightness multiplier (default 1; above 1 blooms). |
+| `nozzle` | The nozzle radius the effect is drawn for (game units, default 87): exhaust styles on this ship are sized so its nozzles are this large (only when `nozzle` is given), and a style made from this effect fits other ships' nozzles against it. The GoF3 Ships mod's: Nivelian 87, Terran 100, Vossk 45 (the Vossk plume is three times its nozzles), Inouac 138, the capital engines 108-117. |
+| `trailParticles`, `contrailParticles`, `boostParticles`, `contrails` | Galaxy on Fire 3's particle trail, contrails and booster flash ([below](#galaxy-on-fire-3s-trails-contrails-and-booster-flash-trailparticles-contrailparticles-boostparticles)). |
 
 An exhaust mount may carry `"fxScale"` (that exhaust's effect larger or smaller) and `"rotation"` (the way it blows, turned
 from straight back; Euler degrees or a quaternion in the ship model's frame, as a weapon mount's), and `"outline"` (its
 nozzle's shape: [x0, y0, x1, y1, ...] game units around the mount in `position_engine`'s axes, as for
-[Exhaust styles](#exhaust-styles)): the exhaust then takes that shape (the cards reach it, the trails spread along its long
-side) and is centred on it; without one it is round. The sizes match Galaxy on
-Fire 3's own at 53.5 game units per GoF3 unit: the GoF3 Ships mod uses that game's flare, exhaust, streak and lightning
-textures.
+[Exhaust styles](#exhaust-styles)): the engine's parts (all but its sprites) are then spread to that shape and centred on
+it; without one it is round.
 
 ```json
-"engineFx": { "glow": "fx/nivelian_glow.png", "cone": "fx/nivelian_cone.png", "trail": "fx/engine_trail.png",
-              "glowSize": [238, 714, 72], "coneLength": 647, "coneWidth": 87 }
+"engineFx": { "meshes": "fx/engines/engine_nivelian.json", "meshScale": 53.5, "nozzle": 87,
+              "trailParticles": { "texture": "fx/particles/beam_001.png", "life": [1.8, 1.8], "rate": 30, "max": 60 } }
 ```
+
+(Before 2026-10-24 `engineFx` drew an imitation from PNGs: `glow`, `cone`, `trail`, `spiral` and their sizes and colours.
+Those fields are gone and ignored now.)
 
 #### Galaxy on Fire 3's engines as the game draws them (`meshes`)
 
-`"meshes": "fx/engines/<name>.json"` draws an engine part by part as Galaxy on Fire 3 itself does, in place of `glow`,
-`cone` and `spiral` (which then only stand in if the file can't be read; the `trail` streams are still drawn on top). The
+`"meshes": "fx/engines/<name>.json"` draws an engine part by part as Galaxy on Fire 3 itself does. The
 GoF3 Ships mod's importer writes these files from the game's engine scenes (`tools/engine_meshes.py`); you can write your
 own. Each part has its own mesh and the options of the shader Galaxy on Fire 3 compiled for its material:
 
@@ -800,17 +796,10 @@ own. Each part has its own mesh and the options of the shader Galaxy on Fire 3 c
 | `uvSpeed`, `scrollDirect`, `scrollFlow` | The picture or the flow map scrolling `uvSpeed` [u, v] a second. |
 | `vertexAnim`, `vaFreq`, `vaStrength` | Vertices wobbling along their normals (by their vertex alpha). |
 | `blend` | 2 additive (default), 1 alpha blended. |
+| `tint` | Which of an exhaust style's two colours recolours it: `"main"` or `"second"` (default `"second"` for Galaxy on Fire 3's helix, a part named "...spiral", else `"main"`). |
 | `intensity` | How much brighter than GoF3's formula an additive part is drawn, before each pixel is capped at white (default 4; the GoF3 Ships mod's Nivelian flare 1.5, plume 2, helix 5, Vossk flare 1.5, plume 5, the rest 4). |
 | `anims` | `[ { "kind": "loop" \| "ignite" \| "off", "length": ms, "channels": [ { "name": "rotation.x".."w" \| "translation.x".."z" \| "scale.x".."z" \| "alpha", "keys": [ms, value, ms, value, ...] } ] } ]`: `loop` plays all the time (a spiral turning), `ignite` as the engines light and as a boost starts, `off` as they go out. |
 
-| `engineFx` field | |
-|---|---|
-| `meshes` | The file. |
-| `meshScale` | Game units per unit of the file (Galaxy on Fire 3's: 53.5). Each exhaust's `fxScale` sizes it further. |
-| `meshGlow` | Brightness multiplier (default 1; above 1 blooms). |
-
-The parts follow the engines like the other effects: they fade out when the engines are off, are a little shorter at idle,
-and shaped to each exhaust's `outline` (all but sprites).
 
 #### Galaxy on Fire 3's trails, contrails and booster flash (`trailParticles`, `contrailParticles`, `boostParticles`)
 
@@ -840,9 +829,8 @@ colours. "Ship's own" keeps the model's exhaust.
 ```json
 [
   { "id": "nivelian", "name": "Nivelian drive",
-    "engineFx": { "glow": "fx/nivelian_glow.png", "cone": "fx/nivelian_cone.png", "trail": "fx/engine_trail.png",
-                  "spiral": "fx/engine_spiral.png", "coneWidth": 87, "color": [0.22, 0.86, 1] },
-    "mainName": "Flare colour", "secondName": "Trail and helix colour" },
+    "engineFx": { "meshes": "fx/engines/engine_nivelian.json", "meshScale": 53.5, "nozzle": 87 },
+    "mainName": "Engine colour", "secondName": "Helix and trail colour" },
   { "id": "thruster", "name": "Thruster", "model": "exhausts/thruster.glb", "nozzle": 0.38,
     "materials": [ { "material": "EngineExhaust", "flame": true, "flameLength": 4, "emissionColor": [1, 0.29, 0.05],
                      "boostColor": [0.05, 0.53, 1], "emissionIntensity": 4 } ],
@@ -854,30 +842,31 @@ colours. "Ship's own" keeps the model's exhaust.
 | Field | |
 |---|---|
 | `id`, `name` | The style (builds name it `"mod_id:id"`). |
-| `engineFx` | A Galaxy on Fire 3 style effect, the fields of a ship's [`engineFx`](#engine-effect). Its two colours: the flare and cone, then the trails and helix. |
+| `engineFx` | A Galaxy on Fire 3 engine, the fields of a ship's [`engineFx`](#engine-effect). Its two colours: every part but the helix, then the helix and the particles (each pixel takes the colour's hue and keeps its white, so the hot core stays white); "Original" keeps Galaxy on Fire 3's own. |
 | `model`, `materials`, `yaw` | Or a flame model put at each exhaust: its origin at the nozzle's exit, the flame blowing along -Z (`yaw`: degrees about the up axis when it faces another way); `materials` as a ship's, a `"flame": true` entry for the flame cards (see [materials](#materials)). Its two colours: the flame and the boost cards. |
-| `nozzle` | The nozzle radius the effect is made for: game units for `engineFx` (default its own `nozzle`, else its `coneWidth`), the model's units for `model` (default 1). Each exhaust of the ship is scaled by its own nozzle's size against it (a mod mount's `glowSize`, a mod ship's `engineGlowRadius`, the game's ships' exhaust sizes; on a ship with an `engineFx` of its own that gives a `nozzle`, its nozzles are taken as large as that `nozzle` x `fxScale`, so a ship wearing a style made like its own engine shows it at its own engine's size). |
+| `nozzle` | The nozzle radius the effect is made for: game units for `engineFx` (default its own `nozzle`, else 87), the model's units for `model` (default 1). Each exhaust of the ship is scaled by its own nozzle's size against it (a mod mount's `glowSize`, a mod ship's `engineGlowRadius`, the game's ships' exhaust sizes; on a ship with an `engineFx` of its own that gives a `nozzle`, its nozzles are taken as large as that `nozzle` x `fxScale`, so a ship wearing a style made like its own engine shows it at its own engine's size). |
 | `palette` | The colours offered, `[ { "id", "name", "color": "#RRGGBB" } ]` (default the game's bright colour list). Each row also offers "Original", the style's own colour. |
 | `mainName`, `secondName` | The two colour rows' names (default "Exhaust colour" / "Second colour"). |
 | `group`, `groupName`, `scale` | Flame models of one mod with the same `group` are offered as one choice (named `groupName`, else the first one's name): each nozzle of the ship wears the one made for the nearest nozzle size, its `nozzle` x `scale` (the model's size as the mod's own ships show it: Unity metres per model unit, default 1). The EVERSPACE 2 importer offers its three thrusters this way. |
 
 The style sits where the ship's exhausts are (`slotType` 3 mounts: a kit ship's build's, a mod ship's, the game's own) and takes
 each nozzle's shape: its outline (the hull of the nozzle seen from behind) and centre. A flame model's cross-section is bent to
-that outline (a square nozzle gets a square flame, a hexagon a hexagonal one), a GoF3 effect's cone and helix follow it and its
-trails spread along a slot. Where the outline comes from: a mount's `"outline"` (below; only when it is at least half the
+that outline (a square nozzle gets a square flame, a hexagon a hexagonal one), a GoF3 engine's parts are spread to it. Where the outline comes from: a mount's `"outline"` (below; only when it is at least half the
 mount's `glowSize` and centred within 1.5 x it, else it is taken for stray lit pixels), else the ship's meshes whose material
 name contains "nozzle", else a mount's `glowSize` (an oval), else the game's ships' own nozzles (measured from their engine
 glow). It goes
 with the engines: off while parked, mining or docking at an object, stronger with the throttle and the boost. The model's own
 exhaust (glow, particles, flames, engine effect) is hidden meanwhile; its manoeuvring jets stay. An **Exhaust size** row
-resizes it (50 % to 200 % of the fitted size, in 10 % steps) so it fits the ship's nozzles. A flame model's boost cards are its
+resizes it (50 % to 200 % of the fitted size, in 10 % steps) so it fits the ship's nozzles. A Galaxy on Fire 3 engine is
+also drawn longer on a ship whose nozzles are small for its length (the game's own ships: the Phantom's are a third of a GoF3
+hull's of its size), so its plume reads at the ship's scale. A flame model's boost cards are its
 own mod's ships' boost jets: on the game's ships and other mods' ships they stay hidden, and a boost turns each nozzle's main
 flame to the boost colour instead. While the Customize screen is open the engines run on the turntable, boosting while a
 boost colour row is picked. A build may carry it (`"exhaust": "mod_id:id"`, `"exhaustColor"`, `"exhaustColor2"`: a palette id or
 `"#RRGGBB"`, `"exhaustSize"`: 0.5 to 2); it is saved with the game and other players see it. A flame model style isn't
 offered on its own mod's ships: it is cut from those ships' own exhaust parts, which they choose in their own rows. The Galaxy
-on Fire 3 Ships mod offers GoF3's Nivelian (with its helix), Terran and Vossk drives, the EVERSPACE 2 importer three ES2
-thrusters cut from rear parts.
+on Fire 3 Ships mod offers GoF3's Nivelian (with its helix), Terran and Vossk drives with their trails and booster flashes,
+and its Terran, Nivelian and Vossk capital ship drives; the EVERSPACE 2 importer three ES2 thrusters cut from rear parts.
 
 ### Changing ships
 

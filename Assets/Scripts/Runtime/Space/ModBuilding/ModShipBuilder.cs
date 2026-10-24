@@ -9,7 +9,7 @@
 //     mount's glowSize makes it an ellipse with its own flame length, a glowColor / the ship's engineGlowColor tints it
 //     (engineGlowTint: the sprite in white, the colour in the vertex colours);
 //     with "flame" materials (EngineFlame, the model's own flame geometry) the glow part stays, empty; with "engineFx"
-//     (Galaxy on Fire 3's flare, cone and trails, EngineFx) it stays without discs and carries those;
+//     (Galaxy on Fire 3's engine and its particles, EngineFx) it stays without discs and carries those;
 //   - the manoeuvring jets at the slotType-4 mounts (LateralThrusters), under the engine glow part;
 //   - each "addParts" model (the original's additive layers, e.g. an original-game mod's *_lights_add / *_engine_glow_add /
 //     *_engine_add, OriginalModImport) in the hull's frame with the game's material for its role: the lights always on, an

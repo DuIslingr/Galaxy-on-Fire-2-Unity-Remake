@@ -125,14 +125,7 @@ namespace GoF2Remake.Modding
                 if (!string.IsNullOrEmpty(m.detailNormal)) yield return (m.detailNormal, true, true);
             }
             // a mobile station's engine effect (MobileStation)
-            var fx = ModWorld.MobileOf(s.station)?.engineFx;
-            if (fx != null)
-                foreach (var f in new[] { fx.glow, fx.cone, fx.trail, fx.spiral })
-                    if (!string.IsNullOrEmpty(f)) yield return (f, false, false);
-            if (!string.IsNullOrEmpty(fx?.meshes))
-                foreach (var f in EngineModels.Textures(s.mod, fx.meshes)) yield return (f, true, false);
-            foreach (var em in new[] { fx?.trailParticles, fx?.contrailParticles })
-                if (em?.Any == true) yield return (em.texture, true, false);
+            foreach (var f in ModShips.EngineFxTextures(s.mod, ModWorld.MobileOf(s.station)?.engineFx)) yield return (f, true, false);
         }
 
         static async Task LoadOne(int rev, ModWorld.StationModel s)

@@ -340,61 +340,26 @@ namespace GoF2Remake.Data
     /// place of the glow disc and the exhaust particles. Up to three parts, each a PNG in the mod (additive: black shows
     /// nothing), in the mount's glowColor (else the ship's engineGlowColor, else 'color'); sizes in game units. Each follows the
     /// engines like the other engine effects (EngineDrive: off while the engine part is, longer with the throttle and boost).</summary>
+    /// <summary>Remake mods: Galaxy on Fire 3's engine effect at every exhaust (ships.json / an exhaust style's / a mobile
+    /// station's "engineFx", Modding.EngineFx), as GoF3 draws it: its engine scene's parts and its Fork particles.</summary>
     [System.Serializable] public class CustomEngineFx
     {
-        public string glow;                  // a flare facing the camera at the nozzle, brightest seen from behind: a square of
-                                             // the whole texture plus a long thin streak at half brightness (the texture turned
-                                             // a quarter: its vertical middle stretched sideways), as GoF3's glow_mesh
-        public float[] glowSize;             // half sizes: the square, the streak's width, the streak's height (default 240,
-                                             // 720, 72: GoF3's 4.5 / 13.5 / 1.35 units)
-        public float glowIntensity = 1f;
-        public string cone;                  // four crossed cards from the nozzle backward, the texture's horizontal middle
-                                             // band along them (GoF3's exhaust: u 0.39 at the nozzle to 0.69 at the end)
-        public float coneLength = 650f;      // at full throttle (GoF3's 12.1 units)
-        public float coneWidth = 87f;        // half width (GoF3's 1.62 units)
-        public float coneIntensity = 1f;
-        public float nozzle;                 // the nozzle radius the effect is drawn for (game units; 0 = coneWidth): exhaust
-                                             // styles are sized against it, on this ship and as a style (Modding.ModExhausts)
-        public float[] coneProfile;          // the cards' rings: [share of the length, brightness, u] per ring, nozzle first
-                                             // (GoF3's own exhaust mesh; default the Nivelian one: 0 / 0.143 / 0.571 / 1)
-        public float[] coneFade;             // [from, to]: the cards fade out as they turn edge-on, |N.V| from 'to' down to
-                                             // 'from' (GoF3's AngleBlend: from straight behind only the flares show)
-        public float[] coneFlow;             // [speed, strength, tiling]: the cards' texture churns in a moving flow field (GoF3's
-                                             // UVAnim flow: its exhaust materials' SpeedMultiplier / FlowStrength / FlowTiling);
-                                             // default 1, 1, 0.5; a speed of 0 = a still texture
-        public string trail;                 // the stream: one soft streak (taller than wide), repeated along each trail
-        public int trailCount = 2;           // trails per exhaust
-        public float trailLength = 2800f;    // how far behind the nozzle it reaches at full throttle
-        public float trailWidth = 28f;       // half width at the nozzle (thinner toward its end)
-        public float trailWander = 650f;     // how hard it sways sideways (the wavering; it bends in smooth waves)
-        public float trailTime = 0.75f;      // seconds a point of it lives (also how long it keeps a turn's bend)
-        public float trailIntensity = 1f;
-        public string spiral;                // the helix: strands winding round the exhaust, this texture (a thin bolt, taller than
-                                             // wide) running along each strand (GoF3's spiral: its lightning crackles in them)
-        public int spiralCount = 2;          // strands per exhaust
-        public float spiralLength = 560f;    // at full throttle (GoF3's 10.5 units)
-        public float[] spiralRadius;         // at the nozzle and at the end (default 27, 5: GoF3's 0.5 / 0.1 units)
-        public float spiralWidth = 22f;      // each strand's half width (the texture across it: a wide one shows the bolt's branches)
-        public float spiralTurns = 2f;       // turns along its length
-        public float spiralSpin = 1.2f;      // turns a second (the helix seems to run backward)
-        public float spiralScroll = 3f;      // texture lengths a second along the strands
-        public float spiralRepeat = 3f;      // texture lengths along a strand
-        public float spiralIntensity = 1f;
-        public float[] color;                // RGB 0..1, for mounts without glowColor and ships without engineGlowColor
-        public float[] flareColor, coneColor, trailColor, spiralColor;   // RGB 0..1, each part's own (default: the engine's colour)
-        public string meshes;                // GoF3's engine as the game draws it (Modding.EngineModel: its parts' meshes, textures
-                                             // and shader options, from the GoF3 importer), in place of the glow, cone and helix;
-                                             // the trails still drawn when given
+        /// <summary>The nozzle radius an engine is drawn for when its "nozzle" isn't given (game units: GoF3's Nivelian
+        /// exhaust, 1.62 GoF3 units x 53.5).</summary>
+        public const float DefaultNozzle = 87f;
+        public string meshes;                // GoF3's engine scene (Modding.EngineModel: its parts' meshes, textures and shader
+                                             // options, from the GoF3 importer)
         public float meshScale = 1f;         // game units per unit of the meshes (GoF3's: 53.5)
         public float meshGlow = 1f;          // x the meshes' brightness (GoF3 draws them into an 8-bit frame: 1 = never past
                                              // white, more blooms)
-        public CustomForkEmitter trailParticles;     // GoF3's engine trail as its Fork particles (in place of "trail"), at each exhaust
+        public float nozzle;                 // the nozzle radius the effect is drawn for (game units; 0 = DefaultNozzle):
+                                             // exhaust styles are sized against it, on this ship and as a style (Modding.ModExhausts)
+        public CustomForkEmitter trailParticles;     // GoF3's engine trail as its Fork particles, at each exhaust
         public CustomForkEmitter contrailParticles;  // GoF3's contrails, at the "contrails" points
         public CustomForkEmitter boostParticles;     // GoF3's booster flash at each exhaust, emitted only while boosting
         public float[] contrails;            // [x, y, z, ...] game units from the ship's centre (position_engine's axes)
-        public bool Any => !string.IsNullOrEmpty(glow) || !string.IsNullOrEmpty(cone) || !string.IsNullOrEmpty(trail) || !string.IsNullOrEmpty(spiral)
-                           || !string.IsNullOrEmpty(meshes) || trailParticles?.Any == true || contrailParticles?.Any == true || boostParticles?.Any == true;
-        public float NozzleRadius => nozzle > 0f ? nozzle : coneWidth;
+        public bool Any => !string.IsNullOrEmpty(meshes) || trailParticles?.Any == true || contrailParticles?.Any == true || boostParticles?.Any == true;
+        public float NozzleRadius => nozzle > 0f ? nozzle : DefaultNozzle;
     }
 
     /// <summary>Remake mods: one Fork Particle Studio emitter of Galaxy on Fire 3 (its .psb's EData, the GoF3 importer's

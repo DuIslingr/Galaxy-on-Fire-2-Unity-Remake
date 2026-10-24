@@ -16,6 +16,8 @@
 // shaders holds): the fragment's addition x this before the clamp, per part (EnginePart.intensity, the importer's table
 // matched against GoF3's ship viewer: the Argus' plume colour and length, the Moornta's flare, plume and helix, the
 // Shamash's flare and plumes), 4 by default; the Fork particles keep 1 (their own gain below).
+// _Tint (an exhaust style's colour, EngineFx: per renderer; alpha 0 = none): each pixel's hue replaced by it, its white
+// kept (its smallest channel stays, the rest of its brightness takes the colour), before the intensity and the clamp.
 // _VertexGain: uv1.x scales a fragment's linear addition (EngineFx's Fork particles: N overlapping additions of x make about
 // N x in GoF3's gamma frame but only N^0.45 x added in linear, so each takes N^1.2, N its overlap along the wake).
 Shader "GoF2/ModEngineMesh"
@@ -59,6 +61,7 @@ Shader "GoF2/ModEngineMesh"
         _Additive ("Additive", Float) = 1
         _VertexGain ("Gain in uv1.x", Float) = 0
         _Intensity ("Intensity", Float) = 4
+        _Tint ("Recolour", Color) = (0, 0, 0, 0)
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst blend", Float) = 1
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 0
@@ -84,7 +87,7 @@ Shader "GoF2/ModEngineMesh"
             TEXTURE2D(_FlowMap); SAMPLER(sampler_FlowMap);
             CBUFFER_START(UnityPerMaterial)
                 float4 _MainTex_ST, _FlowMap_ST;
-                float4 _Diffuse, _C1, _C2, _UVSpeed;
+                float4 _Diffuse, _C1, _C2, _UVSpeed, _Tint;
                 float _Opacity, _ColorizeMul, _AngleMin, _AngleMax, _PulseMin, _PulseMax, _PulseFreq, _FlowTiling, _FlowStrength;
                 float _VAFreq, _VAStrength, _Alpha, _Glow, _Level;
                 float _Sprite, _UseTex, _LumAlpha, _RgbFromDc, _MulDc, _Flow, _ScrollDirect, _ScrollFlow, _Colorize, _ColorizeVtx;
@@ -176,6 +179,12 @@ Shader "GoF2/ModEngineMesh"
                 }
                 c.a *= i.angle;
                 c *= i.pulse;
+                if (_Tint.a > 0.5)
+                {
+                    float hi = max(c.r, max(c.g, c.b)), lo = min(c.r, min(c.g, c.b));
+                    float3 hue = _Tint.rgb / max(1e-4, max(_Tint.r, max(_Tint.g, _Tint.b)));
+                    c.rgb = lo + (hi - lo) * hue;
+                }
                 c.a *= _Alpha * _Level;
                 if (_Additive > 0.5)
                 {

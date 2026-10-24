@@ -174,12 +174,7 @@ namespace GoF2Remake.Modding
             {
                 if (e.IsFlame) tasks.Add(LoadKit(rev, e.kit, new[] { e.model }));
                 else
-                {
-                    foreach (var f in new[] { e.fx.glow, e.fx.cone, e.fx.trail, e.fx.spiral })
-                        if (!string.IsNullOrEmpty(f)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, false, false, false));
-                    if (!string.IsNullOrEmpty(e.fx.meshes))
-                        foreach (var f in EngineModels.Textures(e.mod, e.fx.meshes)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, true, false, false));
-                }
+                    foreach (var f in EngineFxTextures(e.mod, e.fx)) tasks.Add(ModMaterials.PreloadTexture(e.mod, f, true, false, false));
             }
             await Task.WhenAll(tasks);
             if (rev != ModManager.Revision) return;   // the mods changed meanwhile: a newer load runs
@@ -226,16 +221,19 @@ namespace GoF2Remake.Modding
             if (c.throttleGlow != null && !string.IsNullOrEmpty(c.throttleGlow.mask)) yield return (c.throttleGlow.mask, false, true, false);
             if (c.extraGlows != null)
                 foreach (var g in c.extraGlows) if (g != null && !string.IsNullOrEmpty(g.mask)) yield return (g.mask, false, true, false);
-            if (c.engineFx != null)
-                foreach (var f in new[] { c.engineFx.glow, c.engineFx.cone, c.engineFx.trail, c.engineFx.spiral })
-                    if (!string.IsNullOrEmpty(f)) yield return (f, false, false, false);
-            // GoF3's own engine meshes' textures, read raw as GoF3 reads them (EngineModel)
-            if (!string.IsNullOrEmpty(c.engineFx?.meshes))
-                foreach (var f in EngineModels.Textures(mod, c.engineFx.meshes)) yield return (f, true, false, false);
-            foreach (var em in new[] { c.engineFx?.trailParticles, c.engineFx?.contrailParticles })
-                if (em?.Any == true) yield return (em.texture, true, false, false);
+            foreach (var f in EngineFxTextures(mod, c.engineFx)) yield return (f, true, false, false);
             if (c.addParts != null)
                 foreach (var p in c.addParts) if (p != null && !string.IsNullOrEmpty(p.texture)) yield return (p.texture, false, false, false);
+        }
+
+        /// <summary>An engineFx's pictures (EngineFx): its engine meshes' and its particles', read raw as GoF3 reads them.</summary>
+        public static IEnumerable<string> EngineFxTextures(ModInfo mod, CustomEngineFx fx)
+        {
+            if (fx == null) yield break;
+            if (!string.IsNullOrEmpty(fx.meshes))
+                foreach (var f in EngineModels.Textures(mod, fx.meshes)) yield return f;
+            foreach (var em in new[] { fx.trailParticles, fx.contrailParticles, fx.boostParticles })
+                if (em?.Any == true) yield return em.texture;
         }
 
         /// <summary>A ship's add parts (ships.json "addParts": its lights and engine glows beside the hull) as glTF scenes

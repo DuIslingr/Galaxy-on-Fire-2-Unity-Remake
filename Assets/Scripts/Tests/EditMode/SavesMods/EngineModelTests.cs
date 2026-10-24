@@ -2,7 +2,7 @@
 // Feature: CLAUDE.md "Mods" > Engine effect, GoF3's engines as GoF3 draws them: an "engineFx" with "meshes" (EngineModel,
 // the GoF3 importer's file of an engine scene's parts) is read once per set of mods, and EngineFx then draws each part's own
 // mesh at every exhaust in GoF3's engine frame (+z backward: the holder's z scale negative), x "meshScale" x the mount's
-// fxScale, with GoF2/ModEngineMesh, instead of the flare and cone cards; a sprite keeps its corner offsets (uv1); an
+// fxScale, with GoF2/ModEngineMesh, an exhaust style's colours on each renderer (the helix the second); a sprite keeps its corner offsets (uv1); an
 // animation channel samples its keys linearly (EngineChannel.Sample). GoF3's Fork emitters ("trailParticles" /
 // "contrailParticles"): particles born at the rate along the path the exhaust moved, a quad each in the wake, none past "max",
 // none while the ship stands still; a part's "intensity" is its material's _Intensity (4 without one).
@@ -18,15 +18,15 @@ namespace GoF2Remake.Tests
 {
     public class EngineModelTests : SavesModsTest
     {
-        // a coloured tube's ring (no texture: its DiffuseColor) that flickers out, and a sprite at the nozzle
-        const string EngineJson = @"{ 'source': 'test', 'parts': [
+        // a coloured tube's ring (no texture: its DiffuseColor) that flickers out, and a sprite at the nozzle (named as GoF3's helix)
+        internal const string EngineJson = @"{ 'source': 'test', 'parts': [
             { 'name': 'body', 'pos': [0, 0, 0.5], 'rot': [0, 0, 0, 1], 'scale': [1, 1, 1],
               'v': [1, 0, 0,  0, 1, 0,  -1, 0, 4], 'n': [1, 0, 0,  0, 1, 0,  -1, 0, 0], 'uv': [0, 0,  1, 0,  0, 1],
               'c': [1, 0.5, 0, 1,  1, 0.5, 0, 1,  0, 0, 0, 1], 'i': [0, 1, 2],
               'useTex': false, 'angle': 1, 'pulsate': true, 'pulseMin': 0.95, 'pulseMax': 1, 'pulseFreq': 25, 'opacity': 0.7,
               'diffuse': [1, 1, 1, 1], 'blend': 2, 'intensity': 1.5,
               'anims': [ { 'kind': 'off', 'length': 1000, 'channels': [ { 'name': 'alpha', 'keys': [0, 1, 500, 0.2, 1000, 0] } ] } ] },
-            { 'name': 'glow', 'pos': [0, 0, 0], 'rot': [0, 0, 0, 1], 'scale': [1, 1, 1],
+            { 'name': 'engine_spiral', 'pos': [0, 0, 0], 'rot': [0, 0, 0, 1], 'scale': [1, 1, 1],
               'v': [0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0], 'n': [0, 0, 1,  0, 0, 1,  0, 0, 1,  0, 0, 1],
               'uv': [0, 0,  1, 0,  1, 1,  0, 1], 'o': [-4.5, -4.5,  4.5, -4.5,  4.5, 4.5,  -4.5, 4.5],
               'c': [1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1,  1, 1, 1, 1], 'i': [0, 1, 2, 0, 2, 3],
@@ -69,15 +69,13 @@ namespace GoF2Remake.Tests
             glow.transform.SetParent(ship.transform, false);
             try
             {
-                var fx = new CustomEngineFx { meshes = "fx/engines/e.json", meshScale = 50f, glow = "fx/none.png", cone = "fx/none.png" };
+                var fx = new CustomEngineFx { meshes = "fx/engines/e.json", meshScale = 50f };
                 var mount = new WeaponMount { slotType = 3, position_engine = new[] { 0, 0, -400 }, fxScale = 2f };
-                var e = EngineFx.Create(ship, glow, fx, new[] { mount }, mod, "test", m => m.fxScale);
+                var e = EngineFx.Create(ship, glow, fx, new[] { mount }, mod, "test", m => m.fxScale, main: Color.red, second: new Color(0f, 0.5f, 1f));
                 Assert.IsNotNull(e);
                 typeof(EngineFx).GetMethod("LateUpdate", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(e, null);
                 var holder = glow.transform.Find("engine_fx_mesh_0");
                 Assert.IsNotNull(holder, "the parts' holder at the exhaust");
-                Assert.IsNull(glow.transform.Find("engine_fx_glow_0"), "no flare card with the meshes");
-                Assert.IsNull(glow.transform.Find("engine_fx_cone_0"), "no cone cards with the meshes");
                 Assert.AreEqual(50f * 0.05f * 2f, holder.localScale.x, 1e-4f, "meshScale x metres x fxScale");
                 Assert.Less(holder.localScale.z, 0f, "GoF3's +z is backward: the mount's -z");
                 Assert.AreEqual(-400f * 0.05f, holder.localPosition.z, 1e-3f, "at the mount");
@@ -93,7 +91,12 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual(1f, mat.GetFloat("_Pulsate"));
                 Assert.AreEqual(1.5f, mat.GetFloat("_Intensity"), 1e-5f, "the part's own intensity");
                 Assert.AreEqual(4f, holder.GetChild(1).GetComponent<MeshRenderer>().sharedMaterial.GetFloat("_Intensity"), 1e-5f, "4 without one");
-            }
+                // an exhaust style's colours on each renderer: the helix the second, the rest the first
+                var block = new MaterialPropertyBlock();
+                holder.GetChild(0).GetComponent<MeshRenderer>().GetPropertyBlock(block);
+                Assert.AreEqual(Color.red, block.GetColor("_Tint"), "the first colour on the body");
+                holder.GetChild(1).GetComponent<MeshRenderer>().GetPropertyBlock(block);
+                Assert.AreEqual(new Color(0f, 0.5f, 1f, 1f), block.GetColor("_Tint"), "the second on the helix");            }
             finally { Object.DestroyImmediate(ship); }
         }
 
@@ -118,7 +121,7 @@ namespace GoF2Remake.Tests
                     colors = new[] { 0.16f, 1f, 0.96f, 1f, 0f, 0.33f, 0.93f, 0.22f, 0.06f, 0.11f, 0.45f, 0.1f, 0f, 0f, 0f, 0f },
                     colorTimes = new[] { 0f, 0.0145f, 0.73f, 1f },
                 };
-                var fx = new CustomEngineFx { meshScale = 50f, trailParticles = trail, trail = "fx/none.png" };
+                var fx = new CustomEngineFx { meshScale = 50f, trailParticles = trail };
                 var mount = new WeaponMount { slotType = 3, position_engine = new[] { 0, 0, -400 } };
                 var e = EngineFx.Create(ship, glow, fx, new[] { mount }, mod, "test", m => 1f);
                 Assert.IsNotNull(e, AllMessages(mod));
@@ -126,7 +129,6 @@ namespace GoF2Remake.Tests
                 late.Invoke(e, null);
                 var run = glow.transform.Find("engine_fx_fork_0");
                 Assert.IsNotNull(run, "a Fork run at the exhaust");
-                Assert.IsNull(glow.transform.Find("engine_fx_trail_0_0"), "no wavy streams with GoF3's own trail");
                 var update = typeof(EngineFx).GetMethod("UpdateFork", BindingFlags.Instance | BindingFlags.NonPublic);
                 for (int k = 0; k < 5; k++) update.Invoke(e, new object[] { 0.1f, null, true });
                 Assert.AreEqual(0, run.GetComponent<MeshFilter>().sharedMesh.vertexCount, "no wake behind a ship standing still");
