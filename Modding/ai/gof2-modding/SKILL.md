@@ -231,7 +231,7 @@ stays a beam) except through the stats above.
 | `lounge` | A Space Lounge visitor sells it: systemRace (-1 any), minCampaign (story step), minRank (free play), chance %. |
 | `npcTurrets` | Also in an override: turret items (numbers or "mod:id") the NPC ships of this type carry on its turret mounts (n-th item on n-th slotType-2 mount); they aim and fire by themselves, and show in hangars. 45 / 51 swap their built-in turret for them. |
 | `dealer` | Ordinary ship dealers stock it: chance % (decimals ok) per dealer list, systemRace, minTechLevel. Not the special yards. |
-| `traffic` | `{ "weight": 1, "races": [8] }`: NPC fighters of those races (default its `race`) fly it at the "Mod ships in traffic" option's chance (default 25 %), weighted; `weight` 0 = never. Ships over 150 m never. Hull / guns stay the game's fighter's. A kit ship's NPCs fly random builds (parts, tier, colours, skin); `"randomBuild": false` = its default build. |
+| `traffic` | `{ "weight": 1, "races": [8] }`: NPC fighters of those races (default its `race`) fly it at the "Mod ships in traffic" option's chance (default 25 %), weighted; `weight` 0 = never. Ships over 150 m never. Hull / guns stay the game's fighter's. A kit ship's NPCs fly random builds (parts, tier, colours, skin); `"randomBuild": false` = its default build. `"boss": true`: a boss hull: never an ordinary fighter, the pirate bosses fly it instead (up to 400 m; `npcTurrets` arm it). |
 | `available` | Condition before dealers / lounges sell it (and NPCs fly it). |
 | `flightStyle` | `"free"` / `"original"`: the ship always flies so (default the player's option). |
 | `kit`, `kitType`, `build` | A customizable ship instead of `model` (see shipkits.json). |
@@ -285,7 +285,7 @@ parked in the Kaamo Club if owned).
 | `unlocked` | `true`: known as soon as available (next docking). |
 | `lounge` | Lounge seller: chance % per bar refresh, price (default half the product price), systemRace. |
 | `derelict` | chance % of orbit visits holding a hackable derelict freighter (race terran/vossk/nivelian/midorian/any) with it; "stations": [ numbers or "mod:id" ] only there (chance then defaults to 100), "position": [ x, y, z ] game units in the orbit (/pos). Hacking fires the `hacked` trigger too. |
-| `drops` | `{ "race", "chance" }`: chance % (decimals ok) that a ship of that race the player destroys drops it. |
+| `drops` | `{ "race", "chance" }`: chance % (decimals ok) that a ship of that race the player destroys drops it; or `{ "ship": n | "mod:id", "chance" }`: only that ship type drops it (checked first; a boss hull's own blueprint at 100). Known blueprints never drop. |
 
 Found blueprints come in a data container the tractor beam pulls in. Sources stop once the player knows the blueprint.
 Useful ingredients (see reference.md): 122 Energy Cells, 127 Microchips, 154 Gold, 155 Titanium, 157 Orichalzine, 165 Golden

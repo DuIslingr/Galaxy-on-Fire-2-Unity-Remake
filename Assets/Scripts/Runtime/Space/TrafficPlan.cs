@@ -528,7 +528,7 @@ namespace GoF2Remake.Flight
             var bossLoot = tier >= 4 ? DangerousBossLoot : BossLoot;
             list.Add(new SpawnSpec
             {
-                group = NpcGroup.Special, race = Standing.Pirate, ship = BossShips[Random.Range(0, BossShips.Length)], position = spawn,
+                group = NpcGroup.Special, race = Standing.Pirate, ship = Modding.ModTraffic.PickBoss(BossShips[Random.Range(0, BossShips.Length)]), position = spawn,
                 hitpoints = hull, nameText = 1606, speed = tier == 5 ? 4f : 3.5f, gunItem = gun, gunFactor = BossGunFactor[t], alwaysEnemy = true,
                 lootItem = bossLoot[Random.Range(0, bossLoot.Length)], lootAmount = Random.Range(BossLootMin[t], BossLootMax[t] + 1),
                 pirateEvent = SpawnSpec.EventBoss, eventTier = tier, sightingId = sightingId,

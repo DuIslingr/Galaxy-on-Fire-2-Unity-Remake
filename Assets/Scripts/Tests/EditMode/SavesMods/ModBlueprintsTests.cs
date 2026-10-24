@@ -224,6 +224,25 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0f, ModBlueprints.Of(2).derelictChance);
         }
 
+        [Test]
+        public void AShipTypeDropsItsOwnBlueprint()
+        {
+            WriteMod("d", "t_boss", "1.0", "", ("blueprints.json",
+                "[ { 'id': 'a', 'item': 2, 'ingredients': [ { 'item': 155 } ], 'drops': [ { 'ship': 28, 'chance': 100 }, { 'ship': 'nobody:here' } ] } ]"));
+            ScanAndEnable("t_boss");
+            Database.Load();
+            var m = Installed("t_boss");
+            Assert.IsFalse(m.Broken, AllMessages(m));
+            Assert.IsTrue(m.Warnings.Exists(w => w.Contains("nobody:here is no ship")), AllMessages(m));
+            var a = ModBlueprints.Of(2);
+            CollectionAssert.AreEqual(new[] { (28, 100f) }, a.shipDrops);
+            Assert.AreEqual(0, a.drops.Count, "a ship drop isn't a race drop");
+            Assert.AreEqual(2, ModBlueprints.RollDrop(0, 28), "the Veteran always drops it");
+            for (int i = 0; i < 50; i++) Assert.AreEqual(-1, ModBlueprints.RollDrop(0, 27), "another ship of its race never does");
+            Blueprints.Unlock(2);
+            Assert.AreEqual(-1, ModBlueprints.RollDrop(0, 28), "known: no more drops");
+        }
+
         [Test] public void ADerelictPositionIsThreeNumbers() => StringAssert.Contains("\"position\" is [ x, y, z ]", ParseError("[ { 'id': 'a', 'item': 2, 'ingredients': [ { 'item': 155 } ], 'derelict': { 'position': [ 1, 2 ] } } ]"));
 
         [Test]

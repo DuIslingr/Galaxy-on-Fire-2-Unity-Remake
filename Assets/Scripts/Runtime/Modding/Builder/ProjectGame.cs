@@ -71,17 +71,32 @@ namespace GoF2Remake.Modding
         public JObject Lounge { get => json["lounge"] as JObject; set => Set("lounge", value); }
         public JObject Derelict { get => json["derelict"] as JObject; set => Set("derelict", value); }
 
-        /// <summary>drops: (race word, chance %).</summary>
+        /// <summary>drops by race: (race word, chance %); the ship drops are kept as they are.</summary>
         public List<(string race, float chance)> Drops
         {
-            get => json["drops"] is JArray a
-                ? a.OfType<JObject>().Select(o => ((string)o["race"] ?? "any", o["chance"] is JValue v && (v.Type == JTokenType.Float || v.Type == JTokenType.Integer) ? (float)v : 1f)).ToList()
-                : new List<(string, float)>();
-            set
-            {
-                if (value == null || value.Count == 0) { json.Remove("drops"); return; }
-                json["drops"] = new JArray(value.Select(d => (JToken)new JObject { ["race"] = d.race, ["chance"] = Mathf.Round(d.chance * 100f) / 100f }));
-            }
+            get => DropsOf(false).Select(o => ((string)o["race"] ?? "any", ChanceOf(o))).ToList();
+            set => SetDrops(value?.Select(d => new JObject { ["race"] = d.race, ["chance"] = Mathf.Round(d.chance * 100f) / 100f }), ShipDrops.Select(ShipDrop));
+        }
+
+        /// <summary>drops by ship type: (ship reference, chance %): only ships of that type drop it (a boss's own hull).</summary>
+        public List<(string ship, float chance)> ShipDrops
+        {
+            get => DropsOf(true).Select(o => (RefText(o["ship"]), ChanceOf(o))).ToList();
+            set => SetDrops(Drops.Select(d => new JObject { ["race"] = d.race, ["chance"] = Mathf.Round(d.chance * 100f) / 100f }), value?.Select(ShipDrop));
+        }
+
+        static JObject ShipDrop((string ship, float chance) d) =>
+            new JObject { ["ship"] = RefToken(d.ship), ["chance"] = Mathf.Round(d.chance * 100f) / 100f };
+
+        IEnumerable<JObject> DropsOf(bool ships) =>
+            json["drops"] is JArray a ? a.OfType<JObject>().Where(o => (o["ship"] != null) == ships) : Enumerable.Empty<JObject>();
+
+        static float ChanceOf(JObject o) => o["chance"] is JValue v && (v.Type == JTokenType.Float || v.Type == JTokenType.Integer) ? (float)v : 1f;
+
+        void SetDrops(IEnumerable<JObject> races, IEnumerable<JObject> ships)
+        {
+            var all = (races ?? Enumerable.Empty<JObject>()).Concat(ships ?? Enumerable.Empty<JObject>()).ToList();
+            if (all.Count == 0) json.Remove("drops"); else json["drops"] = new JArray(all);
         }
     }
 

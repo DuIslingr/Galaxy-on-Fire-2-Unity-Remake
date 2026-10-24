@@ -12,7 +12,9 @@
 //       "derelict": { "chance": 5, "race": "terran" }                    (a hackable freighter wreck in an orbit holds it;
 //                   "stations": [ 78, "mod:id" ]  only in those orbits (then the chance defaults to 100),
 //                   "position": [ x, y, z ]       there, in game units like /pos, instead of somewhere out in front),
-//       "drops": [ { "race": "pirate", "chance": 1.5 } ]                 (a ship of that race the player destroys drops it) } ]
+//       "drops": [ { "race": "pirate", "chance": 1.5 } ]                 (a ship of that race the player destroys drops it;
+//                  { "ship": "mod_id:ship_id" | number, "chance": 100 }   or a ship of that type, whatever its race: a boss
+//                                                                          hull dropping its own blueprint) } ]
 // A ship product is a hidden "blueprint item" of its own (registered like a mod item, key "<mod>:blueprint:<id>"), so the
 // Blueprints tab, saving (Session.UnlockedBlueprints / Blueprints) and the data crates work on it as on any product. Its
 // name and icon are the ship's; finished, it never enters the hold: it waits at the production station and the player
@@ -54,6 +56,9 @@ namespace GoF2Remake.Modding
             /// <summary>"derelict" "position": game units in the orbit (null: somewhere out in front of the station).</summary>
             public Vector3? derelictPosition;
             public readonly List<(int race, float chance)> drops = new List<(int, float)>();
+            /// <summary>"drops" naming a "ship" (as written, then resolved by Apply): only that ship type drops it.</summary>
+            public readonly List<(string ship, float chance)> shipDropRefs = new List<(string, float)>();
+            public readonly List<(int ship, float chance)> shipDrops = new List<(int, float)>();
             // The current numbering's (ModContent.EnsureMapping / Apply):
             public int product = -1, ship = -1, requiresShip = -1;
             public string DeedKey => mod.Id + ":blueprint:" + localId;
@@ -128,6 +133,12 @@ namespace GoF2Remake.Modding
                     foreach (var e in dr)
                     {
                         if (!(e is JObject eo)) throw new ModJsonException($"{ModJson.Where(e, File)}: a drop is {{ \"race\": \"pirate\", \"chance\": 1 }}");
+                        if (ModJson.Str(eo, "ship") is string dropShip)
+                        {
+                            if (ModJson.Has(eo, "race")) mod.Warnings.Add($"{ModJson.Where(e, File)}: a drop names a \"ship\" or a \"race\"; the race is ignored");
+                            d.shipDropRefs.Add((dropShip, ModJson.Float(eo, "chance", 1f, File)));
+                            continue;
+                        }
                         string race = ModJson.Str(eo, "race", "any");
                         int r = RaceOf(race);
                         if (r == -2) throw new ModJsonException($"{ModJson.Where(e, File)}: unknown race \"{race}\" (terran, vossk, nivelian, midorian, pirate, void, specter, any)");
@@ -213,6 +224,10 @@ namespace GoF2Remake.Modding
                         else Warn(d, $"\"derelict\" \"stations\": {st} is no station");
                     // Every station it names unknown: none at all, not everywhere.
                     if (d.derelictStationRefs.Count > 0 && d.derelictStations.Count == 0) d.derelictChance = 0f;
+                    d.shipDrops.Clear();
+                    foreach (var (sr, chance) in d.shipDropRefs)
+                        if (ModContent.TryResolveShip(sr, out int si) && db.Ship(si) != null) d.shipDrops.Add((si, chance));
+                        else Warn(d, $"\"drops\" \"ship\": {sr} is no ship");
                     product.blueprint = parts;
                     byProduct[d.product] = d;
                 }
@@ -266,10 +281,15 @@ namespace GoF2Remake.Modding
                 if (d.unlocked && d.product >= 0 && !Blueprints.IsUnlocked(d.product) && Available(d)) Blueprints.Unlock(d.product);
         }
 
-        /// <summary>A ship of 'race' the player destroyed: the first mod blueprint whose drop for that race (or any) rolls
-        /// its chance, -1 for none.</summary>
-        public static int RollDrop(int race)
+        /// <summary>A ship of 'race' and type 'ship' the player destroyed: the first mod blueprint whose drop for that ship
+        /// type, else that race (or any), rolls its chance, -1 for none. A ship's own drops come first, so a boss hull's
+        /// blueprint isn't beaten by a race-wide one.</summary>
+        public static int RollDrop(int race, int ship = -1)
         {
+            if (ship >= 0)
+                foreach (var d in Offerable(b => b.shipDrops.Count > 0))
+                    foreach (var (s, chance) in d.shipDrops)
+                        if (s == ship && UnityEngine.Random.value * 100f < chance) return d.product;
             foreach (var d in Offerable(b => b.drops.Count > 0))
                 foreach (var (r, chance) in d.drops)
                     if ((r < 0 || r == race) && UnityEngine.Random.value * 100f < chance) return d.product;

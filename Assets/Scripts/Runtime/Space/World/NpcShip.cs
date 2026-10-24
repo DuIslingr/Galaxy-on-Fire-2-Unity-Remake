@@ -1886,7 +1886,7 @@ namespace GoF2Remake.World
             // Remake mods: a ship the player destroys may drop a mod blueprint (blueprints.json "drops") in a data crate.
             if (!Target.killedByNpc && !IsWingman && !IsTurret)
             {
-                int bp = Modding.ModBlueprints.RollDrop(Race);
+                int bp = Modding.ModBlueprints.RollDrop(Race, Spec.ship);
                 if (bp >= 0) Crate.Spawn(transform.position, new[] { new ItemStack(bp, 1) }, Race, Crate.LookJunk);
             }
             if (IsWingman) Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract

@@ -243,6 +243,29 @@ namespace GoF2Remake.UI
                 Act(row, "×", () => { var l = b.Drops; l.RemoveAt(n); b.Drops = l; BlueprintEdited(); }, "mbv-step");
             }
             Act(blueprintPage, T("mbAddDrop", "+ Add a drop"), () => { var l = b.Drops; l.Add(("pirate", 1f)); b.Drops = l; BlueprintEdited(); }, "mbv-add");
+            // Drops by ship type (blueprints.json "drops" { "ship" }): only that ship leaves it (a boss's own hull).
+            var shipDrops = b.ShipDrops;
+            for (int i = 0; i < shipDrops.Count; i++)
+            {
+                int n = i;
+                RefField(blueprintPage, T("mbDropShip", "Left by this ship"), RefKind.Ship, shipDrops[i].ship, v =>
+                {
+                    var l = b.ShipDrops;
+                    if (string.IsNullOrEmpty(v)) l.RemoveAt(n); else l[n] = (v, l[n].chance);
+                    b.ShipDrops = l;
+                    BlueprintEdited();
+                }, T("mbNoShip", "none (remove)"));
+                var row = Row(blueprintPage);
+                Float(row, T("mbChancePerKill", "% per kill"), shipDrops[i].chance, 0f, 100f, v => { var l = b.ShipDrops; l[n] = (l[n].ship, v); b.ShipDrops = l; MarkDirty(); });
+                Act(row, "×", () => { var l = b.ShipDrops; l.RemoveAt(n); b.ShipDrops = l; BlueprintEdited(); }, "mbv-step");
+            }
+            Act(blueprintPage, T("mbAddShipDrop", "+ Add a drop by one ship"), () =>
+            {
+                var l = b.ShipDrops;
+                l.Add((b.IsShip && !string.IsNullOrEmpty(b.Product) ? b.Product : "0", 100f));
+                b.ShipDrops = l;
+                BlueprintEdited();
+            }, "mbv-add");
             Note(blueprintPage, T("mbDropsNote", "A destroyed ship may drop it in a data container; sources stop once it's known."));
         }
 

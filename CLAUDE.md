@@ -152,7 +152,10 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 - `Database.Load()` parses every table again (~6 ms and several MB of garbage): use it once per scene (the levels keep
   their own, `level.Database`) or where the result is changed; read-only lookups that run more often (UI rebuilds, spawns,
   multiplayer mirrors, the Mod Builder) take `Database.Shared`, made again only when the economy or the mods change, and
-  never write to it.
+  never write to it. While a Load applies the mods, `Shared` answers with the database being loaded (`applying`): a kit
+  ship's mounts read through `Shared` while `ModContent.ApplyNpcTurrets` counted them, so `Shared` loaded itself again
+  without end (a stack overflow that took the Editor down, 2026-10-24). Tests: `SandboxTest` drops `ModManager`'s lists
+  too, else a scan of the player's own Mods folder made before the run leaked the player's mods into the tests.
 
 - `ships`, `items`, `systems`, `stations`: the economy and universe.
   - `items[].statList` has named stats (damage, range, boostSpeed, agility…).
@@ -3111,6 +3114,10 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   `"traffic": { "races": [0, 1, 2, 3, 8, 9] }` (every race but the Specters). Verified in Play mode (es2_ships + gof3_ships,
   50 %): all six races roll ES2 ships (Void / pirates only those), 12 random Sentinel builds all different, four warm-ups
   taking its slot parts from ~7 to 15, a random-build Sentinel (Tormentor wings, body C) patrolling Dis, 2400 rolls in 57 ms.
+  Boss hulls (2026-10-24, `CustomTraffic.boss`, ships.json `"traffic": { "boss": true }`): never an ordinary fighter
+  (`Scan` keeps them to their own cache key); the pirate boss (`TrafficPlan.AddPirateEventShips`) flies one at the same
+  chance (`ModTraffic.PickBoss` over `BossShips`), up to 400 m (`MaxBossLength`); its hull, gun and escorts stay the boss's,
+  `npcTurrets` arm its turret mounts. The GoF3 Ships mod's five GoF3 bosses use it.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
@@ -3119,7 +3126,7 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   openers 874 / 875 in `LoungeChat.StoryLine`), "derelict" (`TrafficPlan.Build`: one hackable freighter wreck per visit at
   most, `TrafficPlan.HackableWreck` + `SpawnSpec.modBlueprint`; `Traffic.OnHackWon` leaves a data crate; "stations" limits it
   to those orbits, `RollDerelict(station)` / `DerelictAllowedAt`, the chance then defaulting to 100, a list of unknown ones =
-  nowhere; "position" [x, y, z] game units in the orbit, else out in front) and "drops" per race (`NpcShip.OnDied`, a kill by
+  nowhere; "position" [x, y, z] game units in the orbit, else out in front) and "drops" per race or per ship type (`{ "ship", "chance" }`, `Def.shipDrops`, rolled first: a boss hull's own blueprint) (`NpcShip.OnDied`, a kill by
   the player: `RollDrop`, a data crate). A data crate is a `Crate` (look 3, the junk container) holding the product item;
   `CombatRadar.Capture` learns a mod blueprint's product instead of loading it ("Blueprint found: X"). An item product gets the
   recipe on its `ItemData.blueprint`; a ship product is a hidden "blueprint item" ("<mod>:blueprint:<id>", numbered like a mod

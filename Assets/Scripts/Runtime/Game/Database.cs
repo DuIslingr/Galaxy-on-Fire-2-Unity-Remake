@@ -233,6 +233,9 @@ namespace GoF2Remake.Data
         /// <summary>A customizable (kit) ship: each NPC flies a random build of it (parts, tier, colours, skin); false = the
         /// ship's default build.</summary>
         public bool randomBuild = true;
+        /// <summary>A boss hull: the pirate bosses (TrafficPlan's pirate events) fly it now and then (ModTraffic.PickBoss), and
+        /// it never flies as an ordinary fighter. Up to ModTraffic.MaxBossLength long.</summary>
+        public bool boss;
     }
 
     /// <summary>Remake mods: a mod ship in the ordinary ship dealers' lists (Shop.GenerateShips): each time a station's dealer
@@ -522,6 +525,10 @@ namespace GoF2Remake.Data
         static Database shared;
         static Economy sharedEconomy;
         static int sharedRevision = -1;
+        /// <summary>The database a Load is applying the mods to: what Shared answers meanwhile. Code the mods' entries run
+        /// (a kit ship's mounts, read through Shared) would otherwise load Shared, which applies the mods again, and so on: a
+        /// stack overflow that took the Editor down (a kit ship with "npcTurrets", 2026-10-24).</summary>
+        [System.ThreadStatic] static Database applying;
 
         /// <summary>One loaded game database for read-only lookups (names, stations, systems), made again only when the
         /// economy or the mods change. Load() parses every table again (several MB of garbage, a hitch): callers that only
@@ -531,18 +538,21 @@ namespace GoF2Remake.Data
         {
             get
             {
+                if (applying != null) return applying;
                 if (shared == null || sharedEconomy != Session.Economy || sharedRevision != Modding.ModManager.Revision)
                 {
                     sharedEconomy = Session.Economy;
                     sharedRevision = Modding.ModManager.Revision;
                     shared = Load();
+                    // (the load may have made the first scan of the Mods folders, which bumps the revision: it is this one's)
+                    sharedRevision = Modding.ModManager.Revision;
                 }
                 return shared;
             }
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void ResetShared() { shared = null; sharedRevision = -1; }
+        static void ResetShared() { shared = null; sharedRevision = -1; applying = null; }
 
         /// <summary>The Cronus' price in the finished world (multiplayer): see Load.</summary>
         public const int CronusSessionPrice = 1_150_000;
@@ -578,7 +588,13 @@ namespace GoF2Remake.Data
                 if (cronus != null && cronus.price <= 0) cronus.price = CronusSessionPrice;
             }
             // The active mods' new and changed entries (Modding.ModContent), after the economy so their prices stand.
-            if (resourceFolder == "GoF2Data") Modding.ModContent.Apply(db);
+            if (resourceFolder == "GoF2Data")
+            {
+                var outer = applying;
+                applying = db;
+                try { Modding.ModContent.Apply(db); }
+                finally { applying = outer; }
+            }
             return db;
         }
 
