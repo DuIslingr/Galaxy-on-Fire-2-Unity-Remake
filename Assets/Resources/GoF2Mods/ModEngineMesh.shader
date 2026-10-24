@@ -2,8 +2,8 @@
 // compiles a shader variant per material from one effect shader (romfs shaders/, e.g. shader_1899022019 for the capital
 // engine's body); the options it compiles in are flags here, the formulas its GLSL's:
 //   vertex: the vertex wobble (pos += strength N sin((t + y) freq) a; the vertex alpha then 1); a sprite's corners pushed
-//     out in view space by its offset x the object's scale (|M (1,1,1)/sqrt 3|); the angle blend from N.E in the object's
-//     space (E = from the camera to the vertex): |N.E|, clamp(-N.E) or N.E, remapped Min..Max; pulsing |sin(t f)| clamped
+//     out in view space by its offset x the object's scale (|M (1,1,1)/sqrt 3|); the angle blend from N.E (E = from the camera to
+//     the vertex; in world space, GoF3's in the object's): |N.E|, clamp(-N.E) or N.E, remapped Min..Max; pulsing |sin(t f)| clamped
 //     Min..Max; UV scrolling fract(speed t) on the texture or on the flow map's coordinates (x the flow tiling);
 //   fragment: the diffuse texture (pushed by the flow map's rg x2-1 x strength x 0.1) or the DiffuseColor; its alpha x its
 //     luminance; its colour the DiffuseColor; x the DiffuseColor; x Opacity x the vertex colour; colourise 1 (x mix(C1, C2,
@@ -138,8 +138,11 @@ Shader "GoF2/ModEngineMesh"
                     o.positionCS = TransformWViewToHClip(vs);
                 }
                 else o.positionCS = TransformObjectToHClip(pos);
-                float3 cam = TransformWorldToObject(GetCameraPositionWS());
-                float nde = dot(i.normalOS, normalize(pos - cam));
+                // N.E in world space: the same as GoF3's object-space one under a uniform scale, and right under EngineFx's
+                // stretch along the exhaust (ModExhausts.EngineLength), which skewed the object-space angle so far that the
+                // flare and the body faded out seen from a little to the side.
+                float3 nWS = normalize(TransformObjectToWorldNormal(i.normalOS));
+                float nde = dot(nWS, normalize(TransformObjectToWorld(pos) - GetCameraPositionWS()));
                 float a = 1.0;
                 if (_Angle > 0.5)
                 {

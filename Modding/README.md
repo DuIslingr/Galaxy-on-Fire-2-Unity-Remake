@@ -759,7 +759,7 @@ stronger while boosting.
 | `meshes` | The engine's parts (below): `"fx/engines/<name>.json"`. |
 | `meshScale` | Game units per unit of the file (Galaxy on Fire 3's: 53.5). Each exhaust's `fxScale` sizes it further. |
 | `meshGlow` | Brightness multiplier (default 1; above 1 blooms). |
-| `nozzle` | The nozzle radius the effect is drawn for (game units, default 87): exhaust styles on this ship are sized so its nozzles are this large (only when `nozzle` is given), and a style made from this effect fits other ships' nozzles against it. The GoF3 Ships mod's: Nivelian 87, Terran 100, Vossk 45 (the Vossk plume is three times its nozzles), Inouac 138, the capital engines 108-117. |
+| `nozzle` | The nozzle radius the effect is drawn for (game units, default 87): exhaust styles on this ship are sized so its nozzles are this large (only when `nozzle` is given), and a style made from this effect fits other ships' nozzles against it. The GoF3 Ships mod's: Nivelian 60, Terran 100, Vossk 45 (the Vossk plume is three times its nozzles), Inouac 138, the capital engines 108-117. |
 | `trailParticles`, `contrailParticles`, `boostParticles`, `contrails` | Galaxy on Fire 3's particle trail, contrails and booster flash ([below](#galaxy-on-fire-3s-trails-contrails-and-booster-flash-trailparticles-contrailparticles-boostparticles)). |
 
 An exhaust mount may carry `"fxScale"` (that exhaust's effect larger or smaller) and `"rotation"` (the way it blows, turned

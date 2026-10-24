@@ -2577,7 +2577,8 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   smaller the ship's nozzles are for its length than GoF3's hulls' (`ModExhausts.EngineLength`: GoF3's median nozzle is
   0.062 of its hull, `Gof3NozzleToLength`; the Phantom's 25 on 940 game units, 0.027, so its plume x2.3; 1 on GoF3's own
   hulls, at most 3; a player's report on the Phantom, 2026-10-24: fitted across its small nozzles the plume was short for the
-  ship. Its exhaust points do sit at the nozzle exits: measured, the hull ends 0.11 m in front of the Phantom's mount). Checked in Play mode: ship 7's wide nozzle blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
+  ship. The stretch skewed GoF2/ModEngineMesh's angle blend while it was computed in object space: the glare and the body
+  faded out seen a little from the side, only the helix left; it is computed in world space now. Its exhaust points do sit at the nozzle exits: measured, the hull ends 0.11 m in front of the Phantom's mount). Checked in Play mode: ship 7's wide nozzle blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
   from its nozzle meshes) with a GoF3 drive, the Moornta's GoF3 outlines with an ES2 thruster. `NozzleRadius`: a mount's `glowSize`, a mod ship's `engineGlowRadius`, else 55 game units x the game
   ship's exhaust anchor scale (`turretAngles`). An `outline` is used only when plausible against the mount's `glowSize` (mean
   at least half of it, centre within 1.5 x it; `ModExhausts.Plausible`; the builder writes no others, `outline_plausible`):
@@ -2586,7 +2587,8 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (the game ships, ES2's nozzle meshes); the GoF3 builder's `glowSize` / `outline` are the hottest core of the nozzle's glow,
   1 to 5 x smaller (the Atauno Rheep's 16 units in its ~90-unit hexagon). An `engineFx` now says which nozzle it is drawn
   for (`nozzle`, game units, default 87; `CustomEngineFx.NozzleRadius`), measured by the builder on the hulls from
-  behind (`ENGINE_NOZZLE`: Nivelian 87, its exhaust fills its nozzles; Terran 100, the Argus' 75-110 under a 138 exhaust; Vossk
+  behind (`ENGINE_NOZZLE`: Nivelian 60 (its exhaust's 87 fills its nozzles, but as a style on the Phantom it was the
+  smallest of the three, its glare dimmer: 87 / 1.45 by eye, the user's report); Terran 100, the Argus' 75-110 under a 138 exhaust; Vossk
   45, the K'ssshar Ka's ~46 and the Shaan'ra-Grth's ~34 under a 138 exhaust; the others their exhaust mesh's radius, Inouac
   138, the capital engines 108-117); on a ship with an `engineFx` of its own that gives a `nozzle` the shapes
   are scaled to it (`FitToOwnEffect`: the median of mean / fxScale becomes `nozzle`; without one, a mod written before
