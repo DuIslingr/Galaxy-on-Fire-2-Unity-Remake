@@ -342,6 +342,9 @@ namespace GoF2Remake.Data
                                              // (GoF3's own exhaust mesh; default the Nivelian one: 0 / 0.143 / 0.571 / 1)
         public float[] coneFade;             // [from, to]: the cards fade out as they turn edge-on, |N.V| from 'to' down to
                                              // 'from' (GoF3's AngleBlend: from straight behind only the flares show)
+        public float[] coneFlow;             // [speed, strength, tiling]: the cards' texture churns in a moving flow field (GoF3's
+                                             // UVAnim flow: its exhaust materials' SpeedMultiplier / FlowStrength / FlowTiling);
+                                             // default 1, 1, 0.5; a speed of 0 = a still texture
         public string trail;                 // the stream: one soft streak (taller than wide), repeated along each trail
         public int trailCount = 2;           // trails per exhaust
         public float trailLength = 2800f;    // how far behind the nozzle it reaches at full throttle

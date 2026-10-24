@@ -174,6 +174,7 @@ namespace GoF2Remake.Modding
             }
             e.glowMaterial = Made(fx.glow, "glow", false, GlowHdr);
             e.coneMaterial = Made(fx.cone, "cone", false, ConeHdr);
+            Flowing(e.coneMaterial, fx.coneFlow);
             e.trailMaterial = Made(fx.trail, "trail", false, TrailHdr);
             var gs = fx.glowSize;
             e.glowHalf = new Vector3(gs != null && gs.Length >= 1 ? gs[0] : 240f, gs != null && gs.Length >= 2 ? gs[1] : 720f,
@@ -486,6 +487,26 @@ namespace GoF2Remake.Modding
             if (n < 2) return;
             mesh.SetVertices(verts); mesh.SetUVs(0, uvs); mesh.SetColors(vcolours); mesh.SetTriangles(tris, 0);
             mesh.RecalculateBounds();
+        }
+
+        static Shader flowShader;
+        static bool flowLoaded;
+
+        /// <summary>The cone's cards drawn with GoF3's flow (GoF2/ModEngineFlow: the texture churning in a moving field, as GoF3's
+        /// exhaust materials' UVAnim flow does): 'flow' is the engineFx's [speed, strength, tiling] (null = 1, 1, 0.5; speed 0 =
+        /// the plain additive, a still texture). Before, every GoF3 engine's exhaust stood still: the Terran and Vossk ones,
+        /// whose streak is straight, had nothing moving at all.</summary>
+        static void Flowing(Material mat, float[] flow)
+        {
+            if (mat == null || mat.shader != null && mat.shader.name == "GoF2/ModEngineFlow") return;   // (a shared one, made before)
+            float speed = flow != null && flow.Length >= 1 ? flow[0] : 1f;
+            if (speed <= 0f) return;
+            if (!flowLoaded) { flowLoaded = true; flowShader = Resources.Load<Shader>("GoF2Mods/ModEngineFlow"); }
+            if (flowShader == null || !flowShader.isSupported) return;
+            mat.shader = flowShader;
+            mat.SetFloat("_FlowSpeed", speed);
+            mat.SetFloat("_FlowStrength", flow != null && flow.Length >= 2 ? flow[1] : 1f);
+            mat.SetFloat("_FlowTiling", flow != null && flow.Length >= 3 ? flow[2] : 0.5f);
         }
 
         void SetColour(Renderer r, Color c)

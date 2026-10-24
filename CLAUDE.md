@@ -2546,7 +2546,13 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   own exhaust mesh: the Terran's peak at 0.93 and run the whole texture, the Vossk's a short spike, nothing past 0.84; default
   the Nivelian rings above) and `coneFade` ([from, to], the exhaust material's AngleBlend: each card's vertex colours x
   smoothstep(from, to, |N.V|) every frame, `EngineFx.FadeCards`, a cone mesh per nozzle), so from straight behind only the
-  flares show, as in GoF3's ship viewer; the builder had written both since 2026-10-12 but nothing read them. Checked against
+  flares show, as in GoF3's ship viewer; the builder had written both since 2026-10-12 but nothing read them. The cards
+  churn (`coneFlow` [speed, strength, tiling], default 1 / 1 / 0.5, speed 0 = still; `EngineFx.Flowing` puts the cone's
+  material on `Resources/GoF2Mods/ModEngineFlow.shader`, GoF2/Additive's look plus GoF3's UVAnim flow: two-phase flow of
+  the texture through smooth noise drifting down the exhaust, GoF3's flow map being named by GUID only): GoF3's exhaust
+  materials all flow (the builder reads their UVAnim_SpeedMultiplier / FlowStrength / FlowTiling: Nivelian 0.5 / 1 / 0.5,
+  Terran 4 / 0.8 / 2, Vossk 1.3 / 1 / 0.5); the remake drew the cards still, and with the Terran / Vossk streaks made
+  straight (below) nothing on those engines moved (the user's report, 2026-10-24). Checked against
   GoF3 ship-viewer clips of the Atauno Rheep, Nestaar, K'ssshar Ka, Na'takath and Shaan'ra-Grth (one horizontal, one vertical
   turn each; the flares on the nozzles, the directions): the Vossk engine's streak is the Terran's, as long (1121 units: the
   builder's `trailSpan`, 2 x the Terran cards; 2 x its own longer cards ran past those hulls) and straight (wander 0); its

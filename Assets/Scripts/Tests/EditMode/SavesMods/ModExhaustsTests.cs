@@ -100,6 +100,34 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0.3f, fx.coneFade[1], 1e-6f);
         }
 
+        [Test]
+        public void AnEngineFxsConeFlowsUnlessItsSpeedIsZero()
+        {
+            // GoF3's exhausts churn (their materials' UVAnim flow): the cone's material is GoF2/ModEngineFlow with the engine's
+            // speed, strength and tiling, the default without "coneFlow"; a speed of 0 keeps the still additive picture.
+            var flowing = typeof(GoF2Remake.Modding.EngineFx).GetMethod("Flowing", BindingFlags.NonPublic | BindingFlags.Static);
+            var additive = new Material(Shader.Find("Unlit/Color"));
+            try
+            {
+                var fx = JsonUtility.FromJson<CustomEngineFx>("{ \"cone\": \"c.png\", \"coneFlow\": [1.3, 1, 0.5] }");
+                Assert.AreEqual(3, fx.coneFlow.Length);
+                var mat = new Material(additive);
+                flowing.Invoke(null, new object[] { mat, fx.coneFlow });
+                Assert.AreEqual("GoF2/ModEngineFlow", mat.shader.name);
+                Assert.AreEqual(1.3f, mat.GetFloat("_FlowSpeed"), 1e-5f);
+                Assert.AreEqual(0.5f, mat.GetFloat("_FlowTiling"), 1e-5f);
+                var plain = new Material(additive);
+                flowing.Invoke(null, new object[] { plain, null });
+                Assert.AreEqual("GoF2/ModEngineFlow", plain.shader.name, "no coneFlow: the default flow");
+                Assert.AreEqual(1f, plain.GetFloat("_FlowSpeed"), 1e-5f);
+                var still = new Material(additive);
+                flowing.Invoke(null, new object[] { still, new[] { 0f } });
+                Assert.AreEqual(additive.shader, still.shader, "speed 0: the picture stays still");
+                Object.DestroyImmediate(mat); Object.DestroyImmediate(plain); Object.DestroyImmediate(still);
+            }
+            finally { Object.DestroyImmediate(additive); }
+        }
+
         static ModExhausts.NozzleShape[] ShapesOf(int ship, List<WeaponMount> mounts)
         {
             var m = typeof(ModExhausts).GetMethod("ShapesOf", BindingFlags.NonPublic | BindingFlags.Static);
