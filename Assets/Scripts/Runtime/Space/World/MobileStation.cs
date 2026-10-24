@@ -61,7 +61,7 @@ namespace GoF2Remake.World
             foreach (var pa in model.GetComponentsInChildren<PartAnimation>(true)) pa.applyMaterialChannels = true;
             var ms = root.AddComponent<MobileStation>();
             ms.Station = mobile;
-            ms.Label = st != null ? $"{st.name} {Localization.Get(136)}" : "Station";
+            ms.Label = st != null ? st.name : "Station";   // a ship: no "Station" after its name
             ms.TechLevel = st?.techLevel ?? 0;
 
             // Collision measured in its own frame (identity), turned with it from there.

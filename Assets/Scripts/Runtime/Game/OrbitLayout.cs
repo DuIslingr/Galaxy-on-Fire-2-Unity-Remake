@@ -170,7 +170,8 @@ namespace GoF2Remake.World
                 systemIndex = sys != null ? sys.index : -1,
                 systemTexture = sys != null ? sys.textureIndex : 10,
                 stationTexture = st != null ? st.textureIndex : 23,
-                raceId = sys != null ? sys.raceId : 0,
+                // A mobile station (ModWorld "mobile") keeps its own race wherever it is.
+                raceId = Modding.ModWorld.MobileOf(stationIndex) is Modding.ModWorld.MobileSpec ms ? ms.race : sys != null ? sys.raceId : 0,
                 hasStation = st != null && !IsEmptyOrbit(stationIndex, mission),
                 alienOrbit = alien,
             };

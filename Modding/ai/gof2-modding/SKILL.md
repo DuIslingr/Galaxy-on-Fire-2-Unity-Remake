@@ -424,9 +424,10 @@ orbit), `"jumpgatePosition"` / `"arrival"`: [x, y, z], `"asteroids": false | { "
 "type": rock | void | ice | magma, "ores": [item | { item, chance }] }`, `"fog": false | { "color", "end" }`, `"sun": [yaw,
 pitch]`, `"planet": { "size", "yaw", "pitch" }`.
 
-A new station's `"mobile": true | { "route": [stations of its system], "stayMinutes": 15, "speed": 0.2 }` makes it a moving
+A new station's `"mobile": true | { "route": [stations, any systems], "stayMinutes": 15, "speed": 0.2, "race": "terran" }` makes it a moving
 one: no planet (not one of its system's stations, not on the map, not counted in the 7), it cruises through the orbits of its
-system's stations in turn (default all), by the real clock (the same for every player), crossing each orbit sideways 6-8 km
+route in turn (default its own system's stations; docked, it shows the system of the orbit it is in, its own `race` (default
+its `interior`'s) wherever it is, its name without "Station"), by the real clock (the same for every player), crossing each orbit sideways 6-8 km
 in front of the station along its model's front (+Z after `modelYaw`); docked by flying close (lock, autopilot, Dock) into its
 `interior` / `hangar` / `bar`; a launch comes out beside it. Keep it under ~6 km (the far plane is 15 km).
 

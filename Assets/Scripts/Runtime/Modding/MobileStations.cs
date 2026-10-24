@@ -1,7 +1,7 @@
 // MobileStations.cs
 // Remake mods: stations that move (stations.json "mobile", ModWorld.MobileSpec; the GoF3 Ships mod's Manticore, GoF3's Hades).
-// A mobile station has no planet: it cruises through the orbits of its system's stations in turn ("route", default all of
-// them), "stayMinutes" in each, and is docked at where it is (World.MobileStation in the flight level, its own hangar and bar
+// A mobile station has no planet: it cruises through the orbits of its route's stations in turn ("route", any systems; default
+// its own system's), "stayMinutes" in each, and is docked at where it is (World.MobileStation in the flight level, its own hangar and bar
 // in the station scene like any station). Where it is follows the clock (UTC: the same for every player of a session, and it
 // moves on while the game is closed): the stay number n = seconds / stay picks the route's (n + station) % count-th stop, and
 // in that orbit it crosses a straight course of speed x stay sideways past the orbit's station (its middle 6-8 km out within
@@ -34,9 +34,11 @@ namespace GoF2Remake.Modding
         static double StaySeconds(ModWorld.MobileSpec m) => Math.Max(60.0, m.stayMinutes * 60.0);
 
         /// <summary>The orbit (a station of its system) the mobile station is in at 'seconds'; -1 = nowhere (no route).</summary>
-        public static int HostAt(int mobile, double seconds)
+        public static int HostAt(int mobile, double seconds) => HostAt(ModWorld.MobileOf(mobile), mobile, seconds);
+
+        /// <summary>The same for a spec (ModWorld.Apply, while the database is being loaded).</summary>
+        public static int HostAt(ModWorld.MobileSpec m, int mobile, double seconds)
         {
-            var m = ModWorld.MobileOf(mobile);
             if (m == null || m.route.Count == 0) return -1;
             long n = (long)Math.Floor(seconds / StaySeconds(m));
             return m.route[(int)(((n + mobile) % m.route.Count + m.route.Count) % m.route.Count)];

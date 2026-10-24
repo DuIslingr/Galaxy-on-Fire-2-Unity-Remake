@@ -116,6 +116,32 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ItRoamsOtherSystemsAsItsOwnRace()
+        {
+            // Home Magnetar (14), a route through Union (55 Kappa) and V'ikka (15), a Terran ship wherever it is.
+            MobileMod("{ 'route': [70, 55, 15], 'stayMinutes': 10, 'race': 'terran' }");
+            ScanAndEnable("t_mob");
+            int mother = -1;
+            var seen = new System.Collections.Generic.HashSet<int>();
+            for (int stay = 0; stay < 3; stay++)
+            {
+                double at = stay * 600.0 + 1.0;
+                MobileStations.ClockOverride = () => at;
+                var db = Database.Load();
+                mother = ModWorld.StationIndexOf("t_mob:mother");
+                int host = MobileStations.HostAt(mother, at);
+                var st = db.Stations.Find(s => s.index == mother);
+                Assert.AreEqual(db.Stations.Find(s => s.index == host).system, st.system, "the system of the orbit it is in");
+                Assert.AreEqual(db.Systems.Find(s => s.index == st.system).name, st.systemName);
+                Assert.AreEqual(0, ModWorld.MobileOf(mother).race);
+                Assert.AreEqual(0, World.OrbitLayout.Build(db, mother).raceId, "its own race, in V'ikka too");
+                seen.Add(st.system);
+            }
+            CollectionAssert.AreEquivalent(new[] { 14, 11, 3 }, seen);
+            CollectionAssert.DoesNotContain(Database.Load().Systems.Find(s => s.index == 3).stations, mother, "still no planet");
+        }
+
+        [Test]
         public void ItsCoursePassesSidewaysClearOfTheStation()
         {
             MobileMod();
@@ -140,6 +166,8 @@ namespace GoF2Remake.Tests
 
         [Test] public void OnlyANewStationIsMobile() =>
             StringAssert.Contains("only a new station", OpenBroken("[ { 'override': 70, 'mobile': true } ]"));
+        [Test] public void ARaceIsARace() =>
+            StringAssert.Contains("\"race\" must be", OpenBroken("[ { 'id': 'x', 'name': 'X', 'system': 14, 'mobile': { 'race': 'klingon' } } ]"));
         [Test] public void MobileIsTrueOrAnObject() =>
             StringAssert.Contains("\"mobile\" must be true or", OpenBroken("[ { 'id': 'x', 'name': 'X', 'system': 14, 'mobile': 5 } ]"));
 

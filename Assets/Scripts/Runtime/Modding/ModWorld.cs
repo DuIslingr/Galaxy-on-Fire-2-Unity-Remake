@@ -28,9 +28,11 @@
 // stations.json: { "id", "system": "mod:id" | number, "name", "techLevel" (0-10), "planet" (its planet texture: 0-22 or
 //   24-26 like the originals), "looksLike": a station number (its model and collision; default the first original
 //   station of the system's race) } or { "override": n | "mod:id", name, techLevel }.
-// A new station may be "mobile": true or { "route", "stayMinutes", "speed" } (MobileStations, MobileSpec): no planet (not one of
-//   its system's stations, not on the star map), it cruises through the orbits of its system's stations in turn and is
-//   docked at where it is.
+// A new station may be "mobile": true or { "route", "stayMinutes", "speed", "race" } (MobileStations, MobileSpec): no planet
+//   (not one of any system's stations, not on the star map), it cruises through the orbits of its route's stations in turn
+//   (any systems; default its own system's) and is docked at where it is: its "system" is its home, while each Database.Load
+//   gives it the system of the orbit it is in (its header, prices, the star map's "you are here"); its race (its hangar,
+//   the header's race) stays "race", else its interior's, else its home system's; its title has no "Station".
 // A system takes at most 7 stations (OrbitLayout places 7 planet slots around the sun). Numbering as ModContent: the
 // registry in single player (a mod turned off leaves placeholders: a hidden system without stations or routes, a
 // station in no system; ModSaves moves a save docked there to Var Hastra), afresh in a session.
@@ -501,9 +503,11 @@ namespace GoF2Remake.Modding
             return s;
         }
 
-        static int InteriorOf(JObject o)
+        static int InteriorOf(JObject o) => RaceToken(ModJson.Get(o, "interior"));
+
+        /// <summary>terran / vossk / nivelian / midorian or 0-3; -1 otherwise.</summary>
+        static int RaceToken(JToken t)
         {
-            var t = ModJson.Get(o, "interior");
             if (t == null) return -1;
             if (t.Type == JTokenType.Integer) { int v = (int)t; return v >= 0 && v <= 3 ? v : -1; }
             switch (((string)t ?? "").Trim().ToLowerInvariant())
@@ -711,7 +715,11 @@ namespace GoF2Remake.Modding
                 if (gateStations.TryGetValue(s.index, out var gsRef) && TryResolveStation(gsRef, out int gst) && s.stations.Contains(gst)) s.jumpgateStation = gst;
                 if (s.jumpRoutesTo.Count > 0 && (s.jumpgateStation < 0 || !s.stations.Contains(s.jumpgateStation)) && s.stations.Count > 0) s.jumpgateStation = s.stations[0];
             }
-            // Mobile stations' routes: the stations of their own system they cruise past (default all of them).
+            // Mobile stations' routes: the stations they cruise past, in any systems (default all of their own system's);
+            // their race; then the system of the orbit each is in now (MobileStations.HostAt), so the docked station's
+            // header, prices and star map are where it is. A scene's own Load is taken when it starts: docked, the station
+            // stays in the system it was docked in until the next scene.
+            double now = MobileStations.Clock;
             foreach (var kv in mobiles)
             {
                 var m = kv.Value;
@@ -722,11 +730,15 @@ namespace GoF2Remake.Modding
                 if (m.routeRefs.Count == 0 && sys != null) m.route.AddRange(sys.stations);
                 foreach (var r in m.routeRefs)
                 {
-                    if (!TryResolveStation(r, out int host) || sys == null || !sys.stations.Contains(host))
-                    { Report(m.mod, $"{m.where}: route stop \"{r}\" is no station of its system"); continue; }
+                    if (!TryResolveStation(r, out int host) || mobiles.ContainsKey(host) || !db.Systems.Any(x => x.stations.Contains(host)))
+                    { Report(m.mod, $"{m.where}: route stop \"{r}\" is no station with an orbit"); continue; }
                     if (!m.route.Contains(host)) m.route.Add(host);
                 }
                 if (m.route.Count == 0) Report(m.mod, $"{m.where}: a mobile station needs a system with stations to cruise past");
+                m.race = m.raceToken >= 0 ? m.raceToken : stationInterior.TryGetValue(kv.Key, out int ir) ? ir : sys?.raceId ?? 0;
+                int now0 = MobileStations.HostAt(m, kv.Key, now);
+                var hs = now0 >= 0 ? db.Stations.Find(x => x.index == now0) : null;
+                if (st != null && hs != null) st.system = hs.system;
             }
             // Station names carry their system's (StationData.systemName).
             foreach (var st in db.Stations)
@@ -766,16 +778,19 @@ namespace GoF2Remake.Modding
 
         // ---- mobile stations (MobileStations) -----------------------------------------------------------------------
 
-        /// <summary>stations.json "mobile": true or { "route": [stations of its system], "stayMinutes": 15, "speed": 0.2 }: a
-        /// station with no planet that cruises from orbit to orbit of its system (MobileStations).</summary>
+        /// <summary>stations.json "mobile": true or { "route": [stations], "stayMinutes": 15, "speed": 0.2, "race": "terran" }:
+        /// a station with no planet that cruises from orbit to orbit (MobileStations).</summary>
         public class MobileSpec
         {
             public ModInfo mod;
             public string where;
             public int system = -1;
             public readonly List<string> routeRefs = new List<string>();
-            /// <summary>The orbits it visits, in order (station numbers of its system).</summary>
+            /// <summary>The orbits it visits, in order (station numbers, any systems).</summary>
             public readonly List<int> route = new List<int>();
+            /// <summary>Its race (0-3), the same wherever it is: "race", else its interior's, else its home system's.</summary>
+            public int race;
+            internal int raceToken = -1;
             /// <summary>Minutes in each orbit (1..240).</summary>
             public float stayMinutes = 15f;
             /// <summary>Its cruising speed, game units per ms (the freighters' 1; 0..2).</summary>
@@ -800,6 +815,11 @@ namespace GoF2Remake.Modding
                 speed = Mathf.Clamp(ModJson.Float(o, "speed", 0.2f, file), 0f, 2f),
             };
             m.routeRefs.AddRange(ModJson.Strings(o, "route"));
+            if (ModJson.Has(o, "race"))
+            {
+                m.raceToken = RaceToken(ModJson.Get(o, "race"));
+                if (m.raceToken < 0) throw new ModJsonException($"{where}: \"race\" must be terran, vossk, nivelian, midorian or 0-3");
+            }
             return m;
         }
 

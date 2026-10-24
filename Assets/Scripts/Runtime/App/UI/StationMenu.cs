@@ -311,7 +311,7 @@ namespace GoF2Remake.UI
             var st = level != null ? level.Station : null;
             string T(int id) => Localization.Get(id);
             root.Q<Label>("stationTitle").text = st == null ? "" :
-                (st.index == 101 ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101
+                (st.index == 101 || Modding.ModWorld.IsMobile(st.index) ? st.name : $"{st.name} {T(136)}").ToUpperInvariant();   // no suffix for station 101 or a mobile station (a ship)
             root.Q<Label>("systemName").text = st == null ? "" : $"{st.systemName} {T(137)}";
             // Multiplayer: the faction holding this station (NetFactions).
             string holder = st == null ? "" : GoF2Remake.Multiplayer.NetFactionsClient.OwnerText(st.index);

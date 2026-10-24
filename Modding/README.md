@@ -1221,7 +1221,7 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `mapPlace` | `{ "angle": degrees, "distance": n }`: where its planet sits in the star map's system view, round the sun (0 to 360) and how far out (the game's planets lie about 8000 to 45000 out). Either may be left out. Default: the game's place for it. |
 | `orbit` | The layout of its orbit level: station or not, jumpgate, arrivals, asteroids, fog, sun and planet. See [Orbit layouts](#orbit-layouts). |
 | `music` | A mod's track for its docked music (see [Music](#music)). |
-| `mobile` | A new station that moves: `true` or `{ "route": [stations], "stayMinutes": 15, "speed": 0.2 }`. See [Mobile stations](#mobile-stations). |
+| `mobile` | A new station that moves: `true` or `{ "route": [stations], "stayMinutes": 15, "speed": 0.2, "race": "terran" }`. See [Mobile stations](#mobile-stations). |
 
 Changing a station (`"override"`): `name`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
 `mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music` (an original station can get a new model too).
@@ -1230,10 +1230,12 @@ Changing a station (`"override"`): `name`, `techLevel`, and the looks: `model` a
 
 `"mobile"` makes a new station a moving one, like a carrier you can dock in. It has no planet: it isn't one of its system's
 stations (so it doesn't count toward the 7, isn't on the star map and can't be travelled to by planet jump). Instead it
-cruises from orbit to orbit of its system's stations:
+cruises from orbit to orbit:
 
-- `route`: the stations of its own system whose orbits it visits, in order (numbers or `"mod_id:station_id"`). Default:
-  every station of its system.
+- `route`: the stations whose orbits it visits, in order (numbers or `"mod_id:station_id"`), in any systems. Default:
+  every station of its own `system`.
+- `race`: its race, `terran`, `vossk`, `nivelian`, `midorian` or 0-3, the same wherever it is (its hangar, the docked
+  screen's race). Default: its `interior`'s, else its own system's.
 - `stayMinutes`: how long it stays in each orbit (1-240, default 15).
 - `speed`: game units per ms (0-2, default 0.2, 10 m/s; the freighters fly 1).
 
@@ -1242,7 +1244,8 @@ moved on when you come back later. In each orbit it crosses a straight course si
 km out in front of it, so its hull never sweeps through the station. Fly close and lock it like a station: the autopilot
 flies to it, and within its range (its size + 300 m) **Dock** takes you into its hangar and bar (its `interior`, or your own
 `hangar` / `bar`). Its shop, bar and missions are a station's like any other. A launch from it comes out beside it, in the
-orbit it is in by then.
+orbit it is in by then. Docked, the system it shows (the header, the prices, the star map's "you are here") is the one of
+the orbit it was in when you docked. Its title is its name alone, without "Station".
 
 Give it a `model` and a `modelSize`; the course runs along the model's front (+Z after `modelYaw`). Keep it under about
 6 km: the flight level's far plane is 15 km.
