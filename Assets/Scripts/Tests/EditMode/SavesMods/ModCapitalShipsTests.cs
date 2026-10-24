@@ -170,7 +170,8 @@ namespace GoF2Remake.Tests
         public void ItRoamsEverySystemAWhileInEach()
         {
             MobileMod("{ 'route': 'any', 'stayMinutes': 20, 'systemMinutes': 60, 'exclude': [15], " +
-                      "'engines': [ { 'position_engine': [0, 0, -9000], 'glowSize': [500, 500, 1500] } ], 'engineColor': [1, 0.6, 0.2] }");
+                      "'engines': [ { 'position_engine': [0, 0, -9000], 'glowSize': [500, 500, 1500], 'fxScale': 12 } ], 'engineColor': [1, 0.6, 0.2], " +
+                      "'engineFx': { 'cone': 'fx/cone.png', 'coneLength': 430, 'trailCount': 1, 'trailWander': 0 } }");
             ScanAndEnable("t_mob");
             var db = Database.Load();
             int mother = ModWorld.StationIndexOf("t_mob:mother");
@@ -178,6 +179,13 @@ namespace GoF2Remake.Tests
             Assert.IsTrue(spec.roam);
             Assert.AreEqual(1, spec.engines.Count);
             Assert.AreEqual(3, spec.engines[0].slotType);
+            Assert.AreEqual(12f, spec.engines[0].fxScale, "each engine sized by its own fxScale");
+            Assert.IsNotNull(spec.engineFx, "GoF3's engine effect instead of the discs");
+            Assert.AreEqual("fx/cone.png", spec.engineFx.cone);
+            Assert.AreEqual(430f, spec.engineFx.coneLength);
+            Assert.AreEqual(1, spec.engineFx.trailCount);
+            Assert.AreEqual(0f, spec.engineFx.trailWander);
+            Assert.AreEqual(2800f, spec.engineFx.trailLength, "the rest at the effect's defaults");
             int SystemOf(int st) => db.Stations.Find(s => s.index == st).system;
             var systems = new System.Collections.Generic.HashSet<int>();
             int last = -1;

@@ -344,6 +344,17 @@ namespace GoF2Remake.Modding
             return hull;
         }
 
+        /// <summary>A mount's own "outline" (game units: [x0, y0, x1, y1, ...] around it, position_engine's axes) as its nozzle's
+        /// shape, when it is plausible for the mount (Plausible); null otherwise.</summary>
+        public static NozzleShape OutlineOf(WeaponMount m)
+        {
+            if (m?.outline == null || m.outline.Length < 6) return null;
+            var pts = new List<Vector2>();
+            for (int k = 0; k + 1 < m.outline.Length; k += 2) pts.Add(new Vector2(-m.outline[k] * M, m.outline[k + 1] * M));   // game x -> Unity's -x
+            var o = FromPoints(pts, false);
+            return Plausible(o, m) ? o : null;
+        }
+
         /// <summary>An oval nozzle (half width / height, game units).</summary>
         static NozzleShape Ellipse(float hw, float hh)
         {
@@ -411,13 +422,7 @@ namespace GoF2Remake.Modding
             for (int i = 0; i < exhausts.Count; i++)
             {
                 var m = exhausts[i];
-                if (m.outline != null && m.outline.Length >= 6)
-                {
-                    var pts = new List<Vector2>();
-                    for (int k = 0; k + 1 < m.outline.Length; k += 2) pts.Add(new Vector2(-m.outline[k] * M, m.outline[k + 1] * M));   // game x -> Unity's -x
-                    var o = FromPoints(pts, false);
-                    if (Plausible(o, m)) { shapes[i] = o; continue; }
-                }
+                if (OutlineOf(m) is NozzleShape o) { shapes[i] = o; continue; }
                 if (meshes?[i] != null) { shapes[i] = meshes[i]; continue; }
                 if (m.glowSize != null && m.glowSize.Length >= 2 && m.glowSize[0] > 0f && m.glowSize[1] > 0f)
                 {

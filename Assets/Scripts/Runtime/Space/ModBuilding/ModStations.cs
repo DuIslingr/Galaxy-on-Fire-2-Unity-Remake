@@ -124,6 +124,11 @@ namespace GoF2Remake.Modding
                 if (!string.IsNullOrEmpty(m.detailAlbedo)) yield return (m.detailAlbedo, true, false);
                 if (!string.IsNullOrEmpty(m.detailNormal)) yield return (m.detailNormal, true, true);
             }
+            // a mobile station's engine effect (MobileStation)
+            var fx = ModWorld.MobileOf(s.station)?.engineFx;
+            if (fx != null)
+                foreach (var f in new[] { fx.glow, fx.cone, fx.trail, fx.spiral })
+                    if (!string.IsNullOrEmpty(f)) yield return (f, false, false);
         }
 
         static async Task LoadOne(int rev, ModWorld.StationModel s)

@@ -17,6 +17,7 @@ namespace GoF2Remake.World
     public class MobileStation : MonoBehaviour
     {
         const float M = OrbitLayout.MetersPerUnit;
+        const float CruiseDrive = 0.8f;   // the engine effect's thrust while it cruises (EngineDrive: 1 = full throttle)
 
         /// <summary>The station number (stations.json's mobile station).</summary>
         public int Station { get; private set; }
@@ -91,11 +92,19 @@ namespace GoF2Remake.World
             // Its exhausts ("mobile" "engines": mounts like a ship's, from its centre), lit while it cruises; the ship
             // glow's discs and rings (no collision: HullCollision skips the glow layers).
             var spec = Modding.ModWorld.MobileOf(mobile);
+            // With an "engineFx" Galaxy on Fire 3's engine effect instead of the discs (EngineFx, each engine sized by its
+            // fxScale and shaped by its outline), run at a cruise's thrust (EnginePreview): measured, its 0.15 u/ms would read as idle.
             if (spec?.engines != null && spec.engines.Count > 0)
             {
-                var glow = Modding.ModShipBuilder.BuildEngineGlow(new CustomShipData
-                    { mounts = spec.engines, engineGlowColor = spec.engineColor, assembly = $"mobile_{mobile:000}" });
-                if (glow != null) glow.transform.SetParent(model.transform, false);
+                var data = new CustomShipData { mounts = spec.engines, engineGlowColor = spec.engineColor, assembly = $"mobile_{mobile:000}" };
+                var glow = Modding.ModShipBuilder.BuildEngineGlow(data, spec.engineFx == null) ?? new GameObject("engine_glow");
+                glow.transform.SetParent(model.transform, false);
+                if (spec.engineFx != null)
+                {
+                    root.AddComponent<EnginePreview>().drive = CruiseDrive;
+                    Modding.EngineFx.CreateShaped(model, glow, spec.engineFx, spec.engines, spec.mod, data.assembly,
+                        m => m.glowColor != null && m.glowColor.Length >= 3 ? m.glowColor : spec.engineColor);
+                }
             }
             ms.Place(seconds);
             return ms;

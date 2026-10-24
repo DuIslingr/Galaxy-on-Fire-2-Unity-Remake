@@ -767,7 +767,10 @@ off while the ship is parked or the engines are off, stronger and longer with th
 | `flareColor`, `coneColor`, `trailColor`, `spiralColor` | `[r, g, b]`: that part's own colour, over the exhaust's (the GoF3 Ships mod's Nivelian engines take them from the game's materials: a deep blue helix and plume; its Terran engines the textures' own amber). |
 
 An exhaust mount may carry `"fxScale"` (that exhaust's effect larger or smaller) and `"rotation"` (the way it blows, turned
-from straight back; Euler degrees or a quaternion in the ship model's frame, as a weapon mount's). The sizes match Galaxy on
+from straight back; Euler degrees or a quaternion in the ship model's frame, as a weapon mount's), and `"outline"` (its
+nozzle's shape: [x0, y0, x1, y1, ...] game units around the mount in `position_engine`'s axes, as for
+[Exhaust styles](#exhaust-styles)): the exhaust then takes that shape (the cards reach it, the trails spread along its long
+side) and is centred on it; without one it is round. The sizes match Galaxy on
 Fire 3's own at 53.5 game units per GoF3 unit: the GoF3 Ships mod uses that game's flare, exhaust, streak and lightning
 textures.
 
@@ -1240,7 +1243,9 @@ cruises from orbit to orbit:
 - `systemMinutes`: with `"any"`, how long it stays in a system (default 90; at least `stayMinutes`, at most a day).
 - `exclude`: with `"any"`, systems it never goes to (numbers, `"mod_id:system_id"`).
 - `engines`: its exhausts, lit while it cruises: mounts like a ship's (`position_engine` in game units from the model's
-  centre, its front +Z; `glowSize`, `glowColor`); `engineColor` [r, g, b] for every one.
+  centre, its front +Z; `glowSize`, `glowColor`, `fxScale`); `engineColor` [r, g, b] for every one.
+- `engineFx`: an engine effect at those exhausts instead of the glow discs, the same object as a ship's `engineFx` (see
+  [Engine effect](#engine-effect)), each exhaust sized by its `fxScale`; it runs at a cruise's thrust.
 - `race`: its race, `terran`, `vossk`, `nivelian`, `midorian` or 0-3, the same wherever it is (its hangar, the docked
   screen's race). Default: its `interior`'s, else its own system's.
 - `stayMinutes`: how long it stays in each orbit (1-240, default 15).

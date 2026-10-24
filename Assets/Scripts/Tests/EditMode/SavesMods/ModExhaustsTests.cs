@@ -3,7 +3,8 @@
 // that mod's own ships (ModExhausts.For / Offered / Find(key, ship)), every other style and ship keeps them; flame styles
 // with one "group" are one choice whose nozzles each wear the member made for the nearest nozzle size (ForNozzle); a mount's
 // "outline" stands for its nozzle only when it is plausible against the mount's glowSize (ShapesOf: the GoF3 builder's
-// Vossk slivers fall back to the glowSize oval); an "engineFx" reads its "coneProfile" / "coneFade" (CustomEngineFx).
+// Vossk slivers fall back to the glowSize oval), and so a ship's own engineFx and a mobile station's take its shape
+// (OutlineOf, EngineFx.CreateShaped); an "engineFx" reads its "coneProfile" / "coneFade" (CustomEngineFx).
 // Expected values: the format in Modding/README.md "Exhaust styles".
 
 using System.Collections.Generic;
@@ -168,6 +169,29 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(0f, shapes[0].centreX, 1e-4f);
             Assert.Greater(shapes[1].Mean, 18f, "the hexagon kept");
             Assert.Less(shapes[1].Mean, 26f);
+        }
+
+        [Test]
+        public void AMountsOutlineShapesItsOwnEffect()
+        {
+            // a slot three times wider than high (game units around the mount), centred 4 units to the pilot's left
+            var outline = new List<float>();
+            for (int k = 0; k < 16; k++)
+            {
+                float a = k * Mathf.PI / 8f;
+                outline.Add(4f + 30f * Mathf.Cos(a)); outline.Add(10f * Mathf.Sin(a));
+            }
+            var slot = new WeaponMount { slotType = 3, position_engine = new[] { 0, 0, -500 }, glowSize = new[] { 30f, 10f, 90f },
+                                         outline = outline.ToArray() };
+            var shape = ModExhausts.OutlineOf(slot);
+            Assert.IsNotNull(shape, "a plausible outline");
+            var profile = shape.Normalized();
+            Assert.Greater(ModExhausts.FactorOf(profile, 0f) / ModExhausts.FactorOf(profile, Mathf.PI / 2f), 2.5f, "wide, not round");
+            Assert.AreEqual(-4f * 0.05f, shape.centreX, 0.02f, "centred on the nozzle (game x -> Unity -x, metres)");
+            Assert.IsNull(ModExhausts.OutlineOf(new WeaponMount { slotType = 3, position_engine = new[] { 0, 0, 0 } }), "none: round");
+            var sliver = new WeaponMount { slotType = 3, position_engine = new[] { 0, 0, 0 }, glowSize = new[] { 30f, 30f, 90f },
+                                           outline = new float[] { -1, -1, 1, -1, 1, 1, -1, 1 } };
+            Assert.IsNull(ModExhausts.OutlineOf(sliver), "a sliver against its glowSize isn't the nozzle");
         }
     }
 }

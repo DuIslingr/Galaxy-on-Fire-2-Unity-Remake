@@ -117,8 +117,21 @@ namespace GoF2Remake.Modding
         public static void Add(GameObject root, GameObject glowPart, CustomShipData c, ModInfo mod)
         {
             if (c?.engineFx == null || c.mounts == null) return;
-            Create(root, glowPart, c.engineFx, c.mounts, mod, c.assembly ?? c.name, m => m.fxScale > 0f ? m.fxScale : 1f,
-                   m => m.glowColor != null && m.glowColor.Length >= 3 ? m.glowColor : c.engineGlowColor);
+            CreateShaped(root, glowPart, c.engineFx, c.mounts, mod, c.assembly ?? c.name,
+                         m => m.glowColor != null && m.glowColor.Length >= 3 ? m.glowColor : c.engineGlowColor);
+        }
+
+        /// <summary>Create with each exhaust sized by its mount's fxScale and shaped by its mount's "outline" (the nozzle's
+        /// cross-section, ModExhausts.OutlineOf: the cards reach it, the trails spread along its long side, centred on it), as an
+        /// exhaust style is on the same mounts; round without one.</summary>
+        public static EngineFx CreateShaped(GameObject host, GameObject glowPart, CustomEngineFx fx, IEnumerable<WeaponMount> mounts, ModInfo mod,
+                                            string label, System.Func<WeaponMount, float[]> colourOf)
+        {
+            var shapes = new Dictionary<WeaponMount, ModExhausts.NozzleShape>();
+            foreach (var m in mounts) if (m != null && m.slotType == 3 && ModExhausts.OutlineOf(m) is ModExhausts.NozzleShape o) shapes[m] = o;
+            return Create(host, glowPart, fx, mounts, mod, label, m => m.fxScale > 0f ? m.fxScale : 1f, colourOf,
+                          centreOf: m => shapes.TryGetValue(m, out var o) ? new Vector2(o.centreX, o.centreY) : Vector2.zero,
+                          profileOf: m => shapes.TryGetValue(m, out var o) ? o.Normalized() : null);
         }
 
         /// <summary>The effect 'fx' at every exhaust mount (slotType 3) of 'mounts' (ship-relative game units, as the host's

@@ -798,8 +798,8 @@ namespace GoF2Remake.Modding
         // ---- mobile stations (MobileStations) -----------------------------------------------------------------------
 
         /// <summary>stations.json "mobile": true or { "route": [stations] | "any", "stayMinutes": 15, "systemMinutes": 90,
-        /// "exclude": [systems], "speed": 0.2, "race": "terran", "engines": [mounts], "engineColor": [r, g, b] }: a
-        /// station with no planet that cruises from orbit to orbit (MobileStations).</summary>
+        /// "exclude": [systems], "speed": 0.2, "race": "terran", "engines": [mounts], "engineColor": [r, g, b], "engineFx": {...} }:
+        /// a station with no planet that cruises from orbit to orbit (MobileStations).</summary>
         public class MobileSpec
         {
             public ModInfo mod;
@@ -821,6 +821,9 @@ namespace GoF2Remake.Modding
             /// glowSize, glowColor), lit while it cruises; "engineColor" [r, g, b] for every one.</summary>
             public List<WeaponMount> engines;
             public float[] engineColor;
+            /// <summary>"engineFx": Galaxy on Fire 3's engine effect at the engines instead of the glow discs (ships.json's
+            /// engineFx, EngineFx; each engine sized by its "fxScale").</summary>
+            public CustomEngineFx engineFx;
             /// <summary>Minutes in each orbit (1..240).</summary>
             public float stayMinutes = 15f;
             /// <summary>Its cruising speed, game units per ms (the freighters' 1; 0..2).</summary>
@@ -866,6 +869,7 @@ namespace GoF2Remake.Modding
                 }
             }
             if (ModJson.Get(o, "engineColor") is JArray ec && ec.Count >= 3) m.engineColor = new[] { (float)ec[0], (float)ec[1], (float)ec[2] };
+            if (ModJson.Get(o, "engineFx") is JObject efx) m.engineFx = efx.ToObject<CustomEngineFx>();
             if (ModJson.Has(o, "race"))
             {
                 m.raceToken = RaceToken(ModJson.Get(o, "race"));

@@ -3144,10 +3144,12 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   `WreckPrefab`, `leavesWreck` false, empty volumes once dead), the explosion its `explosionScale` (`FreighterExplosionScale`,
   else 8 / 6). `ModShipBuilder` culls a mod ship at max(4 km, 25 x its size). Not for the capital ship enhancements (escorts,
   resupply, fleet battles). Tests `ModCapitalShipsTests`. Verified in Play mode: the GoF3 Nemesis (4.4 km) spawned at Dis with
-  8 boxes and 8 turrets.
+  8 boxes and 8 turrets. A ship's own `engineFx` takes each mount's `outline` like an exhaust style (`EngineFx.CreateShaped`,
+  `ModExhausts.OutlineOf`: the cards reach the nozzle's shape, the trails along its long side, centred on it); the GoF3
+  capitals get GoF3's large engine on their nozzles, shaped to them (see Mobile stations).
 - **Mobile stations** (remake, 2026-10-24, the user's request: GoF3's Manticore as a moving station with its own hangar;
   stations.json `"mobile": true | { "route", "stayMinutes", "systemMinutes", "exclude", "speed", "race", "engines",
-  "engineColor" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`;
+  "engineColor", "engineFx" }`, `ModWorld.MobileSpec` / `IsMobile` / `Mobiles`;
   `MobileStations` (Game layer, plain C#); `World.MobileStation`): a new station with no planet (not added to its system's
   `stations`, so not on the map, not in the 7, never a random target). Its route (any systems' stations, default every
   station of its own system; `"any"`: every system, the user's request for the Manticore: `systemMinutes` in one, its
@@ -3170,7 +3172,19 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   `MobileSpec.race` ("race", else its interior's, else its home system's; `OrbitLayout.Build`); its title is its name alone
   (`StationMenu`, `MobileStation.Label`). The star map marks it (`StarMap.MobileMark`: amber, after the system's name and
   under its orbit's planet with the minutes until it leaves the system, `MobileStations.LeavesSystemIn`); its `engines`
-  (exhaust mounts from its centre) get a mod ship's glow (`ModShipBuilder.BuildEngineGlow`). Tests `ModCapitalShipsTests`. Verified in Play mode (the GoF3 Ships mod's Manticore, 6.3 km, Magnetar):
+  (exhaust mounts from its centre) get a mod ship's glow (`ModShipBuilder.BuildEngineGlow`), or with `"engineFx"` (ships.json's,
+  `CustomEngineFx`) Galaxy on Fire 3's engine effect instead (`EngineFx.CreateShaped`, each engine by its `fxScale` and its
+  `outline`, run at
+  `MobileStation.CruiseDrive` 0.8 through an `EnginePreview`: its 0.15 u/ms measured as idle; the textures preloaded with
+  the station's, `ModStations.TexturesOf`). The GoF3 Ships mod gives it and the nine capital ships GoF3's capital engine
+  (`vfx/engines/large`, the importer's `capitals.large_engine_fx`: the glowing nozzle body as the cone, its taper drawn
+  into the cards' picture, the hot core as one straight trail, the flat flare as the glow's streak (1.6 x GoF3's quad and
+  brighter: our texture fades toward its ends), in the race's colours) on their engine helpers at the helpers' scale, each
+  shaped to its nozzle (the importer's `nozzle_outline`: slices across the nozzle, rays from the axis to its walls, the
+  aftmost closed slice's convex hull, of three readings the one nearest GoF3's own size; the mount's `outline`); before,
+  plain discs twice the nozzle's size floated off the nozzles (the user's report), and the Hades' hull sat 86 GoF3 units
+  above its own engine helpers (the importer's scene reader took each node's parent from the record before: fixed in
+  `ae4_scene`). Tests `ModCapitalShipsTests`. Verified in Play mode (the GoF3 Ships mod's Manticore, 6.3 km, Magnetar):
   found in Dis's orbit cruising nose first, docked into its hangar, launched back beside it.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
