@@ -2578,7 +2578,11 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   0.062 of its hull, `Gof3NozzleToLength`; the Phantom's 25 on 940 game units, 0.027, so its plume x2.3; 1 on GoF3's own
   hulls, at most 3; a player's report on the Phantom, 2026-10-24: fitted across its small nozzles the plume was short for the
   ship. The stretch skewed GoF2/ModEngineMesh's angle blend while it was computed in object space: the glare and the body
-  faded out seen a little from the side, only the helix left; it is computed in world space now. Its exhaust points do sit at the nozzle exits: measured, the hull ends 0.11 m in front of the Phantom's mount). Checked in Play mode: ship 7's wide nozzle blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
+  faded out seen a little from the side, only the helix left; it is computed in world space now. A sprite (the glare) is
+  drawn `_SpriteBias` (1.6 GoF3 units x its scale) toward the camera: on the game's ships the near rim of the nozzle housing
+  cut a dark crescent out of it seen at an angle (the Betty, the Phantom). Tested on a spread of ships (2026-10-24): the
+  Betty, Phantom, Inflict, ship 7, Groza, Veteran (also with the Terran capital drive: large, very bright plumes), S'Kanarr,
+  45, 55, two ES2 ships. Its exhaust points do sit at the nozzle exits: measured, the hull ends 0.11 m in front of the Phantom's mount). Checked in Play mode: ship 7's wide nozzle blocks (both styles fill them), an ES2 Sentinel's hexagon (measured
   from its nozzle meshes) with a GoF3 drive, the Moornta's GoF3 outlines with an ES2 thruster. `NozzleRadius`: a mount's `glowSize`, a mod ship's `engineGlowRadius`, else 55 game units x the game
   ship's exhaust anchor scale (`turretAngles`). An `outline` is used only when plausible against the mount's `glowSize` (mean
   at least half of it, centre within 1.5 x it; `ModExhausts.Plausible`; the builder writes no others, `outline_plausible`):

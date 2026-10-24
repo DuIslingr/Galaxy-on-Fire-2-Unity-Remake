@@ -18,6 +18,9 @@
 // Shamash's flare and plumes), 4 by default; the Fork particles keep 1 (their own gain below).
 // _Tint (an exhaust style's colour, EngineFx: per renderer; alpha 0 = none): each pixel's hue replaced by it, its white
 // kept (its smallest channel stays, the rest of its brightness takes the colour), before the intensity and the clamp.
+// _SpriteBias: a sprite (the glare) drawn this far toward the camera (its own units, x the object's scale), so the rim of the
+// nozzle it sits in, nearer the camera than its centre seen at an angle, doesn't cut a dark crescent out of it (the game's
+// ships wearing a GoF3 exhaust style: the Betty's and the Phantom's housings); about a GoF3 nozzle's radius.
 // _VertexGain: uv1.x scales a fragment's linear addition (EngineFx's Fork particles: N overlapping additions of x make about
 // N x in GoF3's gamma frame but only N^0.45 x added in linear, so each takes N^1.2, N its overlap along the wake).
 Shader "GoF2/ModEngineMesh"
@@ -60,6 +63,7 @@ Shader "GoF2/ModEngineMesh"
         _OpaqueVtxAlpha ("Vertex alpha 1", Float) = 0
         _Additive ("Additive", Float) = 1
         _VertexGain ("Gain in uv1.x", Float) = 0
+        _SpriteBias ("Sprite toward the camera", Float) = 1.6
         _Intensity ("Intensity", Float) = 4
         _Tint ("Recolour", Color) = (0, 0, 0, 0)
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src blend", Float) = 1
@@ -91,7 +95,7 @@ Shader "GoF2/ModEngineMesh"
                 float _Opacity, _ColorizeMul, _AngleMin, _AngleMax, _PulseMin, _PulseMax, _PulseFreq, _FlowTiling, _FlowStrength;
                 float _VAFreq, _VAStrength, _Alpha, _Glow, _Level;
                 float _Sprite, _UseTex, _LumAlpha, _RgbFromDc, _MulDc, _Flow, _ScrollDirect, _ScrollFlow, _Colorize, _ColorizeVtx;
-                float _Angle, _Pulsate, _VertexAnim, _OpaqueVtxAlpha, _Additive, _SrcBlend, _DstBlend, _Cull, _VertexGain, _Intensity;
+                float _Angle, _Pulsate, _VertexAnim, _OpaqueVtxAlpha, _Additive, _SrcBlend, _DstBlend, _Cull, _VertexGain, _Intensity, _SpriteBias;
             CBUFFER_END
 
             struct Attributes
@@ -135,6 +139,7 @@ Shader "GoF2/ModEngineMesh"
                     float3 vs = TransformWorldToView(TransformObjectToWorld(pos));
                     float scale = length(mul((float3x3)UNITY_MATRIX_M, float3(0.57735027, 0.57735027, 0.57735027)));
                     vs.xy += scale * i.offset;
+                    vs.z += scale * _SpriteBias;   // (view space: +z toward the camera)
                     o.positionCS = TransformWViewToHClip(vs);
                 }
                 else o.positionCS = TransformObjectToHClip(pos);
