@@ -193,7 +193,7 @@ namespace GoF2Remake.Modding
                     var assigned = r.sharedMaterials;
                     int count = Mathf.Max(1, mesh != null ? mesh.subMeshCount : assigned.Length);
                     if (assigned.Length != count) Array.Resize(ref assigned, count);
-                    for (int s = 0; s < count; s++) { var m = ModShipBuilder.MaterialFor(d.materials, mats, r.name, s); if (m != null) assigned[s] = m; }
+                    for (int s = 0; s < count; s++) { var m = ModShipBuilder.MaterialFor(d.materials, mats, r.name, s, assigned[s] != null ? assigned[s].name : null); if (m != null) assigned[s] = m; }
                     r.sharedMaterials = assigned;
                 }
             }

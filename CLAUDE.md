@@ -3206,9 +3206,13 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   once the Valkyrie add-on is over: fields / shield generator (stage 1, shields) with the torpedo launchers, sniper and
   lightning turrets (stage 2), explosive weak points (stage 3), flak / missile batteries and five hangars throughout.
   ES2's Mobile Homebase is no warship but a mobile station like the GoF3 mod's Manticore (`warships.build_homebase`:
-  stations.json, route "any", 30 minutes an orbit, two hours a system, the game's Terran rooms). Fixed on the way: a
-  station's stations.json `materials` ignored their `material` filter (`ModStations.Build` passed no glTF material name to
-  `ModShipBuilder.MaterialFor`), so such a station showed its model's own white materials.
+  stations.json, route "any", 30 minutes an orbit, two hours a system), docked into its own hangar and casino
+  (`homebase_hangar.py`: ES2's carrier level POI_HomebaseCarrier_001 assembled into one interiors.json room x2.8, its six
+  landing pads the pad and parked slots, a side force field's opening the flights' gate, the casino behind the hall as the
+  bar; the structure colours as ES2's shader computes them, saturate(2 x C x vertex-colour tint), read from its compiled
+  shader). Fixed on the way: a station's stations.json `materials`, and an interiors.json room's, ignored their `material`
+  filter (`ModStations.Build` / `ModInteriors.Build` passed no glTF material name to `ModShipBuilder.MaterialFor`), so such
+  a station showed its model's own white materials.
 - **Turrets don't fire through their own ship** (remake, 2026-10-24, the user's request, for every turret): `TurretCore.Host`
   (the ship it sits on: NpcShip's turret objects their capital host (`Spec.capitalHost`) or the ship they ride on,
   `NpcMountedTurrets` / `PlayerTurret` their ship) and `TurretCore.Fire` checks, once the gun is ready, a ray from the gun's
