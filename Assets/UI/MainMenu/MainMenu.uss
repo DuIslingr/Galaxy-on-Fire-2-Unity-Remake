@@ -259,14 +259,6 @@
     max-width: 1240px;
 }
 
-/* Modified: the Language page as tall as the other tabs' scroll pages (GoF2Common.uss .options-scroll): sized by its few
-   buttons, the window shrank whenever that tab was shown. */
-#languagePage {
-    height: 560px;
-    flex-shrink: 1;
-    min-height: 160px;
-}
-
 .panel--wide {
     max-width: 1020px;
 }
@@ -1079,7 +1071,7 @@
 }
 
 /* The password takes what is left and shrinks (min-width 0): its placeholder's width pushed the player limit out of the
-   card with the wider Serpentine font. */
+   card with the old, wider Serpentine font. */
 .mp-host-row .mp-host-password {
     flex-grow: 1;
     flex-shrink: 1;
@@ -1760,9 +1752,12 @@
     color: var(--gof-amber);
 }
 
+/* The Language page is a scroll page like the other tabs (.options-scroll): a fixed box, its buttons ran past the bottom
+   on a phone, over the voice language row, and the last one couldn't be reached. */
 .language-list {
     flex-direction: row;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 /* The voice language row under the text language buttons. */
@@ -2001,8 +1996,30 @@
     display: none;
 }
 
+/* Rows 64 units high, the touch minimum (docs/UI-DESIGN.md "Touch targets"; 72 with 16 units of padding). */
 .layout-phone .menu-button {
-    padding: 16px 24px;
+    padding: 12px 24px;
+}
+
+/* The menu's rows centred between the logo's bottom (.logo: top 6 %, height 16 %) and the version line at the bottom
+   left (its tap zone, .footer-version, from about 89 %), however many rows show (8, or 9 with Resume and Debug) and at
+   any interface size: the column's own padding is a share of the width, which on a 20:9 phone put the first row a
+   fifth of the height down (the nine rows ran past the version line) and left the gap under the logo uneven. The
+   column stays in the flow (the panel host sits beside it); an absolute child ignores its padding, so 'left' takes it
+   over: 10 % of the column's 30 % is the logo's 3 %. The rows touch, each still 64 units high, so nine fit. */
+.layout-phone .main-buttons,
+.layout-phone .main-column--full .main-buttons {
+    position: absolute;
+    top: 22%;
+    bottom: 11%;
+    left: 10%;
+    right: 0;
+    margin-top: 0;
+    justify-content: center;
+}
+
+.layout-phone .main-buttons .menu-button {
+    margin: 0;
 }
 
 .layout-phone .panel-host {

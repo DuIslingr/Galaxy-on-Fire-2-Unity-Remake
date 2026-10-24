@@ -64,16 +64,19 @@
     --button-primary-line: var(--gof-amber);
     --button-primary-focus-fill: rgba(255, 166, 48, 0.38);
 
-    /* The original's interface font (gof2_interface.png's bitmap glyphs, font 1111) is Serpentine: Serpentine ICG Light,
-       with Inter as its fallback for the letters it lacks (Cyrillic, most of Latin Extended-A). */
-    -unity-font-definition: url("project://database/Assets/UI/Fonts/Serpentine-ICG-Light-SDF.asset");
+    /* Klavika, the typeface of the original HD versions' interface. Medium is the body weight (the font has no upright
+       Regular); its asset's weight table gives bold and italic the real faces. Inter is the fallback for the letters
+       Klavika lacks (Cyrillic and the like). The only rule that names a font: a font chosen in Options > Accessibility
+       (UiFont) replaces it inline on each panel's root. */
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Klavika-Medium-SDF.asset");
     color: var(--gof-text);
     font-size: var(--text-body);
 }
 
+/* The bold weight of the font in use: Klavika's own Bold through its asset's weight table, and a font chosen in Options >
+   Accessibility (UiFont) its family's Bold face or faux bold. A font set here would override the player's choice. */
 .gof-semibold {
-    -unity-font-definition: url("project://database/Assets/UI/Fonts/Serpentine-ICG-Light-SDF.asset");
-    -unity-font-style: bold;   /* Serpentine has the one weight: the emphasis is the font asset's bold (faux) style */
+    -unity-font-style: bold;
 }
 
 /* ---- Slider -------------------------------------------------------------------------- */
@@ -687,15 +690,28 @@
     background-color: var(--gof-cyan);
 }
 
-/* Phones: a finger-wide touch area around the same slim track and handle. */
+/* Phones: a finger-wide touch area beside the same slim track and handle, reaching out to the right only (the track's
+   centre stays where ScrollBars puts it: 6 units into a bar moved 6 units left). Centred on the track, its left half lay
+   over the list's right edge and took the taps meant for the options' "?" icons there. */
 .layout-phone .gof-scroll-bar {
-    width: 56px;
+    width: 44px;
+    translate: -6px 0;
 }
 
 .layout-phone .gof-scroll-bar-track,
 .layout-phone .gof-scroll-bar-thumb {
-    left: 22px;
-    right: 22px;
+    left: 0;
+    right: 32px;
+}
+
+/* Phones: the "?" icon takes a tap in a fingertip-sized area around it (OptionInfo's hit pad), inside the room the row
+   keeps for it. */
+.option-info-pad {
+    display: none;
+}
+
+.layout-phone .option-info-pad {
+    display: flex;
 }
 
 /* ---- save slots (main menu Load, station Save game; SaveSlotRow) ------------------------------------------------------------------- */
@@ -1135,10 +1151,21 @@
     min-width: 200px;
 }
 
+/* Every option row's name at one size: the toggles' and sliders' names (a base field's label) grow with the drop-downs'
+   (a phone showed the drop-down rows' names larger than the toggles' between them), so do the key bindings' names and
+   the main menu's language buttons (left at the body size, they read smaller than the other tabs' rows). */
 .ui-large .choice-label,
 .ui-large .choice-value,
-.ui-large .option-item .option-button {
+.ui-large .option-item .unity-base-field__label,
+.ui-large .option-item .option-button,
+.ui-large .binding-label,
+.ui-large .language-button {
     font-size: var(--text-heading);
+}
+
+/* The key binding cells a size up with them: at the caption size they were the smallest text on the page. */
+.ui-large .binding-cell {
+    font-size: var(--text-body);
 }
 
 

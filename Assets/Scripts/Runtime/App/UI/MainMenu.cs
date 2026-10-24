@@ -490,6 +490,7 @@ namespace GoF2Remake.UI
             InputGlyph.PadPrompt(root.Q<Button>("dialogAlt"), PadButton.A, true);
             InputGlyph.PadPrompt(root.Q<Button>("dialogNo"), PadButton.B);
             PadKeyboard.Attach(root);   // a controller's keyboard for the text fields (docs/UI-DESIGN.md "Text entry")
+            KeyboardLift.Watch(root);   // phones: the focused text field kept above the on-screen keyboard
             UiFocus.SkipScrollBars(root);   // no stop on a scroll bar (docs/UI-DESIGN.md "Focus")
             RefreshTexts();
             lastScreen = Vector2Int.zero;
@@ -1477,7 +1478,7 @@ namespace GoF2Remake.UI
             var scroll = root.Q<ScrollView>("mpHostScroll");
             var more = root.Q<Label>("mpHostMore");
             if (scroll == null || more == null) return;
-            more.text = "▾ " + Localization.Extra("mpMoreOptions", "More options").ToUpperInvariant();
+            more.text = "▼ " + Localization.Extra("mpMoreOptions", "More options").ToUpperInvariant();
             void Update()
             {
                 float hidden = scroll.contentContainer.layout.height - scroll.contentViewport.layout.height;

@@ -6,7 +6,8 @@
 //
 // The panel is laid out in units of a 1920 x 1080 design ("panel units", what the USS px mean). Each screen is scaled by
 // one factor S:
-//  - the device class: desktop 1, handheld (Steam Deck, a small Windows / Linux screen) 1.25, TV (an Xbox) 1.3, phone 1.5;
+//  - the device class: desktop 1, handheld (Steam Deck, a small Windows / Linux screen) 1.25, TV (an Xbox) 1.3, phone 1.2
+//    (1.5 until 2026-10-23: on a 20:9 phone the main menu ran off the screen and everything read too big, the user's report);
 //  - a pixel floor: the smallest text (the caption, 16 units) is never drawn under 11 real pixels (a 720p or 540p screen);
 //  - the player's Options > Graphics "Interface size" (80..150 %) on top.
 // The panel then shows 1080 / S units of height (PanelScreenMatchMode.Expand), but never fewer than MinWidth units of
@@ -52,7 +53,7 @@ namespace GoF2Remake.UI
         public static int Revision => Settings.UiScalePercent * 1000 + Settings.UiWidth * 100 + Mathf.RoundToInt(Settings.UiMarginPercent * 10f)
                                       + (TvDetected ? 7 : 0) + DebugDevice() * 13 + Settings.UiTextScalePercent * 100000
                                       + (Settings.HighContrast ? 1 : 0) * 30000000 + (Settings.ReduceMotion ? 1 : 0) * 60000000
-                                      + (Settings.ColorblindMarkers ? 1 : 0) * 120000000;
+                                      + (Settings.ColorblindMarkers ? 1 : 0) * 120000000 + UiFont.Revision;
 
         /// <summary>Options > Accessibility "Text size" as a factor (1..2): the root's ui-text-N class (GoF2Common.uss) for the
         /// style sheets, Type for code.</summary>
@@ -86,7 +87,7 @@ namespace GoF2Remake.UI
         {
             Device.Handheld => 1.25f,
             Device.Tv => 1.3f,
-            Device.Phone => 1.5f,
+            Device.Phone => 1.2f,
             _ => 1f,
         };
 
@@ -153,6 +154,7 @@ namespace GoF2Remake.UI
                 root.EnableInClassList("ui-high-contrast", Settings.HighContrast);
                 root.EnableInClassList("ui-reduce-motion", Settings.ReduceMotion);
                 root.EnableInClassList("ui-colorblind", Settings.ColorblindMarkers);
+                UiFont.Apply(root);   // Options > Accessibility "Interface font"
             }
             return r;
         }

@@ -186,6 +186,7 @@ namespace GoF2Remake.UI
             root = rootElement;
             ScrollBars.Watch(rootElement);   // Modified: the hangar's scrollbar on every scroll view that needs one
             PadKeyboard.Attach(rootElement);   // a controller's keyboard for the chat's text field (docs/UI-DESIGN.md "Text entry")
+            KeyboardLift.Watch(rootElement);   // phones: the focused text field kept above the on-screen keyboard
             root.style.flexGrow = 1;   // no default theme to stretch the document root
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");
@@ -421,13 +422,40 @@ namespace GoF2Remake.UI
         /// clicks (no stick, the cluster in the bottom-right corner). While the mouse steers they are invisible (alpha 0).</summary>
         bool cursorMode;
 
+        /// <summary>The touch controls show this frame with the autopilot / fast-forward block (UpdateTouch): not under the
+        /// pause menu, a conversation, the star map or death, nor in a cutscene, jump or the launch camera (pause button
+        /// only). NavigationView shows the block by it; it only asked for touch input, so it stayed over the pause menu.</summary>
+        bool touchNavShown;
+
+        float readoutRight = -1f;
+
+        /// <summary>The top readout (cargo, timer) left of the touch pause button (0x4b8 at w - 121) while that shows, its right
+        /// edge 19 units clear (the original's readout at w - 140): measured from the button where it actually is, not by the
+        /// root's input-touch class (the .input-touch .hud-readout rule), which a phone showed the readout over the button
+        /// without (a player's report). -1 = the style sheet's place.</summary>
+        void KeepReadoutClearOfPause()
+        {
+            var box = readout != null ? readout.Root : null;
+            if (box == null || box.parent == null) return;
+            var pause = touch != null ? touch.PauseButton : null;
+            float right = -1f;
+            if (pause != null && pause.resolvedStyle.display == DisplayStyle.Flex && pause.worldBound.width > 0f)
+                right = Mathf.Max(40f, box.parent.worldBound.xMax - pause.worldBound.xMin + 19f);
+            if (Mathf.Abs(right - readoutRight) < 0.5f) return;
+            readoutRight = right;
+            box.style.right = right < 0f ? new StyleLength(StyleKeyword.Null) : new StyleLength(right);
+        }
+
         /// <summary>The touch controls' state for this frame (Hud::draw's conditions, MGame::OnRender2D's hiding).</summary>
         void UpdateTouch()
         {
             if (touch == null) return;
             var f = new TouchControls.Frame { mode = TouchControls.Mode.Off, nextCamera = -1 };
+            touchNavShown = false;
             bool touchMode = InputMode.Current == InputKind.Touch;
-            cursorMode = !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse && !Settings.MouseSteering;
+            // Phones and tablets too, with a mouse connected (a keyboard alone keeps the keycap hints).
+            cursorMode = InputMode.Current == InputKind.KeyboardMouse && !Settings.MouseSteering
+                         && (!Application.isMobilePlatform || Mouse.current != null);
             root.EnableInClassList("hud-cursor", cursorMode);
             bool flying = ship != null && level != null && !StarMap.IsOpen && !pauseMenu.IsOpen && !storyDialogue.IsOpen
                           && (health == null || !health.Dead);
@@ -438,6 +466,7 @@ namespace GoF2Remake.UI
                 f.cinematic = cinematic;
                 f.mode = cinematic || (carrierShop != null && carrierShop.IsOpen) ? TouchControls.Mode.PauseOnly
                        : nav != null && nav.MenuOpen ? TouchControls.Mode.MenuOpen : TouchControls.Mode.Full;
+                touchNavShown = f.mode != TouchControls.Mode.PauseOnly;
                 var phase = mining != null ? mining.State : Mining.Phase.Idle;
                 bool dockBusy = docking != null && docking.Busy;
                 var turret = level.Turret;
@@ -493,6 +522,7 @@ namespace GoF2Remake.UI
             }
             if (!f.gauge) lastThrust = -1f;
             touch.Update(f, Time.unscaledDeltaTime * 1000f);
+            KeepReadoutClearOfPause();
         }
 
 
@@ -750,7 +780,9 @@ namespace GoF2Remake.UI
         void UpdateMouseSteering()
         {
             if (ship == null || level == null) return;
-            bool cursor = Settings.MouseSteering && !Application.isMobilePlatform && InputMode.Current == InputKind.KeyboardMouse && !Vr.VrMode.Enabled
+            // Remake: Android too, with a mouse connected (the lock is Android's pointer capture); without one a keyboard
+            // steers alone at its own sensitivity.
+            bool cursor = Settings.MouseSteering && Mouse.current != null && InputMode.Current == InputKind.KeyboardMouse && !Vr.VrMode.Enabled
                       && !pauseMenu.IsOpen && !(nav != null && nav.MenuOpen) && !StarMap.IsOpen && !storyDialogue.IsOpen
                       && !level.Cutscene && level.LaunchCameraOver && Time.timeScale > 0f && (health == null || !health.Dead)
                       // the Liberator too: the mouse steers it (it was off); docked at an object only the turret view (it aims the
@@ -862,6 +894,10 @@ namespace GoF2Remake.UI
                 voicePausedByMenu = menuPause;
                 if (menuPause) voiceSource.Pause(); else voiceSource.UnPause();
             }
+            // The root's input classes follow InputMode.Changed; should they ever disagree with the input in use (a change
+            // missed while the HUD was being built), the touch layer, the readout's place and the hints went by the wrong
+            // input (a phone showed the cargo readout over the pause button): put them right.
+            if (root.ClassListContains("input-touch") != (InputMode.Current == InputKind.Touch)) ApplyInputMode();
             UpdateTouch();   // every frame: the controls hide and let go under menus, dialogues and cutscenes
             UpdateMouseSteering();
             // StarSystem::render2D, under the HUD; Action Freeze can switch it for the photo (PhotoSettings.Flare).
@@ -962,7 +998,7 @@ namespace GoF2Remake.UI
             else if (menuKeys && GameControls.Wingmen.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.Wingmen);
             else if (menuKeys && GameControls.KhadorDrive.WasPressedThisFrame()) OpenMenuEntry(Navigation.Kind.KhadorDrive);
             bool freeLookNow = level != null && level.FreeLook != null && level.FreeLook.FreeLookActive;
-            if (!Application.isMobilePlatform && GameControls.MouseSteering.WasPressedThisFrame()
+            if (GameControls.MouseSteering.WasPressedThisFrame()
                 && !(freeLookNow && GameControls.MouseSteering.activeControl?.device is Mouse))
             {
                 Settings.MouseSteering = !Settings.MouseSteering;
@@ -1159,7 +1195,7 @@ namespace GoF2Remake.UI
             }
             lockRingElement.style.left = crosshair.style.left;
             lockRingElement.style.top = crosshair.style.top;
-            navView.Update(nav, Camera.main, InputMode.Current == InputKind.Touch || cursorMode, phase,
+            navView.Update(nav, Camera.main, touchNavShown, phase,
                            level.Layout.alienOrbit ? Standing.Void : level.Layout.raceId, level.SystemJumpgateStation, level.StationInfo != null ? level.StationInfo.techLevel : 0);
             bool cinematic = (nav != null && nav.Jumping) || (jump != null && jump.Cinematic);
             // Radar::drawCurrentLock's order: an asteroid, then a ship lock, then a landmark (the ship's plate goes over it).
