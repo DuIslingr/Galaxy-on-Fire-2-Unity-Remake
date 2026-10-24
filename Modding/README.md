@@ -800,6 +800,7 @@ own. Each part has its own mesh and the options of the shader Galaxy on Fire 3 c
 | `uvSpeed`, `scrollDirect`, `scrollFlow` | The picture or the flow map scrolling `uvSpeed` [u, v] a second. |
 | `vertexAnim`, `vaFreq`, `vaStrength` | Vertices wobbling along their normals (by their vertex alpha). |
 | `blend` | 2 additive (default), 1 alpha blended. |
+| `intensity` | How much brighter than GoF3's formula an additive part is drawn, before each pixel is capped at white (default 4; the GoF3 Ships mod's Nivelian flare 1.5, plume 2, helix 5, Vossk flare 1.5, plume 5, the rest 4). |
 | `anims` | `[ { "kind": "loop" \| "ignite" \| "off", "length": ms, "channels": [ { "name": "rotation.x".."w" \| "translation.x".."z" \| "scale.x".."z" \| "alpha", "keys": [ms, value, ms, value, ...] } ] } ]`: `loop` plays all the time (a spiral turning), `ignite` as the engines light and as a boost starts, `off` as they go out. |
 
 | `engineFx` field | |
@@ -815,7 +816,7 @@ and shaped to each exhaust's `outline` (all but sprites).
 
 Particle emitters as Galaxy on Fire 3's Fork Particle runtime runs them (the GoF3 Ships mod's importer reads them from the
 game's `.psb` files, `tools/fork_psb.py`). Particles are born at `rate` a second, spread along the path the emitter moved
-since the last frame, and stay where they were born, so they lie along the wake; each is drawn as a quad facing the camera,
+since the last frame (none while it stands still), and stay where they were born, so they lie along the wake; each is drawn as a quad facing the camera,
 stretched along the wake, additively. `trailParticles` runs at every exhaust (in place of `trail`), `contrailParticles` at
 the points in `contrails`, `boostParticles` at every exhaust only while boosting.
 

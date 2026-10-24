@@ -4,7 +4,8 @@
 // mesh at every exhaust in GoF3's engine frame (+z backward: the holder's z scale negative), x "meshScale" x the mount's
 // fxScale, with GoF2/ModEngineMesh, instead of the flare and cone cards; a sprite keeps its corner offsets (uv1); an
 // animation channel samples its keys linearly (EngineChannel.Sample). GoF3's Fork emitters ("trailParticles" /
-// "contrailParticles"): particles born at the rate along the path the exhaust moved, a quad each in the wake, none past "max".
+// "contrailParticles"): particles born at the rate along the path the exhaust moved, a quad each in the wake, none past "max",
+// none while the ship stands still; a part's "intensity" is its material's _Intensity (4 without one).
 // Expected values: the format in Modding/README.md "Engine effect".
 
 using System.Reflection;
@@ -23,7 +24,7 @@ namespace GoF2Remake.Tests
               'v': [1, 0, 0,  0, 1, 0,  -1, 0, 4], 'n': [1, 0, 0,  0, 1, 0,  -1, 0, 0], 'uv': [0, 0,  1, 0,  0, 1],
               'c': [1, 0.5, 0, 1,  1, 0.5, 0, 1,  0, 0, 0, 1], 'i': [0, 1, 2],
               'useTex': false, 'angle': 1, 'pulsate': true, 'pulseMin': 0.95, 'pulseMax': 1, 'pulseFreq': 25, 'opacity': 0.7,
-              'diffuse': [1, 1, 1, 1], 'blend': 2,
+              'diffuse': [1, 1, 1, 1], 'blend': 2, 'intensity': 1.5,
               'anims': [ { 'kind': 'off', 'length': 1000, 'channels': [ { 'name': 'alpha', 'keys': [0, 1, 500, 0.2, 1000, 0] } ] } ] },
             { 'name': 'glow', 'pos': [0, 0, 0], 'rot': [0, 0, 0, 1], 'scale': [1, 1, 1],
               'v': [0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0], 'n': [0, 0, 1,  0, 0, 1,  0, 0, 1,  0, 0, 1],
@@ -90,6 +91,8 @@ namespace GoF2Remake.Tests
                 Assert.AreEqual("GoF2/ModEngineMesh", mat.shader.name);
                 Assert.AreEqual(0.7f, mat.GetFloat("_Opacity"), 1e-5f);
                 Assert.AreEqual(1f, mat.GetFloat("_Pulsate"));
+                Assert.AreEqual(1.5f, mat.GetFloat("_Intensity"), 1e-5f, "the part's own intensity");
+                Assert.AreEqual(4f, holder.GetChild(1).GetComponent<MeshRenderer>().sharedMaterial.GetFloat("_Intensity"), 1e-5f, "4 without one");
             }
             finally { Object.DestroyImmediate(ship); }
         }
@@ -125,6 +128,8 @@ namespace GoF2Remake.Tests
                 Assert.IsNotNull(run, "a Fork run at the exhaust");
                 Assert.IsNull(glow.transform.Find("engine_fx_trail_0_0"), "no wavy streams with GoF3's own trail");
                 var update = typeof(EngineFx).GetMethod("UpdateFork", BindingFlags.Instance | BindingFlags.NonPublic);
+                for (int k = 0; k < 5; k++) update.Invoke(e, new object[] { 0.1f, null, true });
+                Assert.AreEqual(0, run.GetComponent<MeshFilter>().sharedMesh.vertexCount, "no wake behind a ship standing still");
                 for (int k = 0; k < 10; k++)   // a second, flying forward
                 {
                     ship.transform.position += Vector3.forward * 10f;

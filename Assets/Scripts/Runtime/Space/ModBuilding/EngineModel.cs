@@ -29,6 +29,8 @@ namespace GoF2Remake.Modding
         public int colorize, angle, blend = 2;   // colourise 0 / 1 / 2; angle 0 none, 1 |N.E|, 2 -N.E, 3 N.E; blend 2 additive, 1 alpha
         public float opacity = 1f, colorizeMul = 1f, angleMin, angleMax = 1f, pulseMin, pulseMax = 1f, pulseFreq = 1f;
         public float flowTiling = 1f, flowStrength, vaFreq, vaStrength, alpha = 1f;
+        public float intensity;                  // GoF2/ModEngineMesh's _Intensity (how much brighter than its formula GoF3
+                                                 // shows the part); 0 = the shader's 4
         public float[] diffuse, c1, c2, uvSpeed;
         public EngineAnim[] anims;
     }

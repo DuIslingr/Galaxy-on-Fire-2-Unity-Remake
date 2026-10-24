@@ -2577,7 +2577,11 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   spiral's turn, the Terran "ignite" burst on lighting and boosting, the capitals' "engines_off" flicker), drawn by
   `GoF2/ModEngineMesh` (`Resources/GoF2Mods`: GoF3's sprite, flow map, UV scroll, colourise 1 / 2, angle blend |N.E| /
   -N.E / N.E, pulsate, vertex wobble; computed on raw texture values, clamped and turned to linear as GoF3's 8-bit gamma
-  frame) in place of the flare, cone and helix cards, in the engine frame (+z backward: the holder's z scale negative),
+  frame; the addition x the part's `intensity` before the clamp, `_Intensity`: GoF3's ship viewer shows them brighter than
+  the formula (a bloom none of its shaders holds), matched by eye against clips of the Argus, Moornta and Shamash rotating
+  there: 4 for the Terran and capital engines, the Nivelian / Inouac flare 1.5, plume 2, helix 5, the Vossk flare 1.5 and
+  plume 5, the importer's `INTENSITY` table; linear-light blending was tried and dropped: it lost the dim helix) in place of
+  the flare, cone and helix cards, in the engine frame (+z backward: the holder's z scale negative),
   each exhaust by its fxScale, warped to its outline (not sprites), 0.6 x long at idle. GoF3's trails / contrails / booster
   flash (`trailParticles` / `contrailParticles` + `contrails` / `boostParticles`, `Data.CustomForkEmitter`; importer
   `fork_psb.py`): the Fork Particle Studio .psb emitters each ship's VfxList names (Trail* at the engine helpers, Contrails at
@@ -2585,8 +2589,10 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   +0x108 type; EData: colour keys +0x10.., key times +0x50 / 0x54, life +0x58 / 0x5c, speed +0x60 / 0x64, sizes +0x6c.. /
   +0xb8.., mid time +0x78, rate +0xcc, max +0xe4) and run as Fork runs them (`EngineFx.UpdateFork`): still particles born
   at the rate along the path moved, quads facing the camera stretched along the wake, each x N^1.2 (N its overlap: GoF3 sums
-  the streaks in its gamma frame, `_VertexGain`). They replaced the remake's imitated wavy streams. Checked in Play mode: the
-  Manticore and a capital freighter (body, core, flare per nozzle), the Moornta and Argus flying with their wakes. Tests
+  the streaks in its gamma frame, `_VertexGain`), none while the ship stands still (`EngineFx.MinWakeSpeed` 2 m/s: parked
+  in the Customize preview they piled into a blot on the nozzle, which GoF3's viewer never shows). They replaced the remake's imitated wavy streams. Checked in Play mode: the
+  Manticore and a capital freighter (body, core, flare per nozzle), the Moornta and Argus flying with their wakes, the
+  Argus, Moornta and Shamash in the Customize preview and the three races' capitals in space. Tests
   `EngineModelTests`.
 - **Exhaust styles** (`ModExhausts`, a mod's `exhausts.json`; the guide's "Exhaust styles"): engine effects any ship can wear,
   picked in the hangar's Customize screen (`ShipCustomizePanel`'s Exhaust row and the style's two colour rows; with styles in

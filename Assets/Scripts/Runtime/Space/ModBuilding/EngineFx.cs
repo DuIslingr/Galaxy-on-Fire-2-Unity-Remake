@@ -57,6 +57,7 @@ namespace GoF2Remake.Modding
         const float FadePerSecond = 4f;
         const float Response = 6f;          // 1/s: how fast the effect follows the throttle
         const float EmitInterval = 1f / 60f;
+        const float MinWakeSpeed = 2f;      // m/s: the Fork trails emit only faster than this
         const int MaxPoints = 64;
         const float SwayEase = 0.12f;       // per emitted point: how fast a stream's sideways motion turns
         // The materials' _Glow (HDR for the bloom), per part: matched by eye against GoF3 (the Moornta in its ship viewer and
@@ -377,6 +378,7 @@ namespace GoF2Remake.Modding
             mat.SetFloat("_VAFreq", p.vaFreq);
             mat.SetFloat("_VAStrength", p.vaStrength);
             mat.SetFloat("_Alpha", p.alpha);
+            mat.SetFloat("_Intensity", p.intensity > 0f ? p.intensity : 4f);
             mat.SetFloat("_Glow", fx.meshGlow > 0f ? fx.meshGlow : 1f);
             mat.SetFloat("_Sprite", p.sprite ? 1f : 0f);
             mat.SetFloat("_UseTex", tex != null ? 1f : 0f);
@@ -417,7 +419,7 @@ namespace GoF2Remake.Modding
                 if (partCache.TryGetValue(key, out var made) && made.mat != null) return made.mat;
                 var p = new EnginePart { name = part, texture = em.texture, useTex = true, blend = 2, opacity = 1f };
                 var mat = PartMaterial(p, mod, fx, $"{label} {part}");
-                if (mat != null) { mat.SetFloat("_VertexGain", 1f); partCache[key] = (null, mat); }
+                if (mat != null) { mat.SetFloat("_VertexGain", 1f); mat.SetFloat("_Intensity", 1f); partCache[key] = (null, mat); }
                 return mat;
             }
             forkTrailMaterial = Mat(fx.trailParticles, "trail particles");
@@ -705,9 +707,12 @@ namespace GoF2Remake.Modding
                 var em = run.em; var ps = run.particles;
                 for (int j = ps.Count - 1; j >= 0; j--) { ps[j].age += dt; if (ps[j].age >= ps[j].life) ps.RemoveAt(j); }
                 var here = transform.TransformPoint(run.point);
-                if (on && level > 0.02f && dt > 0f && (!run.boost || boost > 0.05f))
+                if (!run.hasLast || (here - run.last).sqrMagnitude > 1e8f) run.last = here;   // (a jump: no wake across it)
+                // a wake needs a ship moving through it: standing still (the hangar's Customize preview, a ship at rest) the
+                // particles piled up on the nozzle into a blot GoF3's ship viewer never shows (a local one rides along anyway)
+                bool moving = em.local || (here - run.last).magnitude > MinWakeSpeed * dt;
+                if (on && moving && level > 0.02f && dt > 0f && (!run.boost || boost > 0.05f))
                 {
-                    if (!run.hasLast || (here - run.last).sqrMagnitude > 1e8f) run.last = here;   // (a jump: no wake across it)
                     var moved = here - run.last;
                     var along = moved.sqrMagnitude > 1e-8f ? moved.normalized : (run.engine >= 0 ? -Back(run.engine) : -transform.forward);
                     run.carry += em.rate * dt;

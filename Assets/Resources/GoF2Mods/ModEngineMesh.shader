@@ -11,6 +11,11 @@
 //     blend, x the pulse (colour too), x Alpha_Value (_Level: the engine's on / off fade and the "off" animation's alpha).
 // GoF3 does this in gamma space into an 8-bit frame buffer, blending SrcAlpha / One (BlendMode 2) or alpha (1): the result
 // is clamped to 1 and turned to linear here (the textures are read raw, as GoF3 reads them), x _Glow for the bloom.
+// _Intensity: GoF3's plumes and flares come out brighter than its formula gives into an 8-bit frame (the Argus' exhaust
+// peaks near white in its ship viewer, the formula at a third of that; its bloom, presumably, which none of its effect
+// shaders holds): the fragment's addition x this before the clamp, per part (EnginePart.intensity, the importer's table
+// matched against GoF3's ship viewer: the Argus' plume colour and length, the Moornta's flare, plume and helix, the
+// Shamash's flare and plumes), 4 by default; the Fork particles keep 1 (their own gain below).
 // _VertexGain: uv1.x scales a fragment's linear addition (EngineFx's Fork particles: N overlapping additions of x make about
 // N x in GoF3's gamma frame but only N^0.45 x added in linear, so each takes N^1.2, N its overlap along the wake).
 Shader "GoF2/ModEngineMesh"
@@ -53,6 +58,7 @@ Shader "GoF2/ModEngineMesh"
         _OpaqueVtxAlpha ("Vertex alpha 1", Float) = 0
         _Additive ("Additive", Float) = 1
         _VertexGain ("Gain in uv1.x", Float) = 0
+        _Intensity ("Intensity", Float) = 4
         [Enum(UnityEngine.Rendering.BlendMode)] _SrcBlend ("Src blend", Float) = 1
         [Enum(UnityEngine.Rendering.BlendMode)] _DstBlend ("Dst blend", Float) = 1
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("Cull", Float) = 0
@@ -82,7 +88,7 @@ Shader "GoF2/ModEngineMesh"
                 float _Opacity, _ColorizeMul, _AngleMin, _AngleMax, _PulseMin, _PulseMax, _PulseFreq, _FlowTiling, _FlowStrength;
                 float _VAFreq, _VAStrength, _Alpha, _Glow, _Level;
                 float _Sprite, _UseTex, _LumAlpha, _RgbFromDc, _MulDc, _Flow, _ScrollDirect, _ScrollFlow, _Colorize, _ColorizeVtx;
-                float _Angle, _Pulsate, _VertexAnim, _OpaqueVtxAlpha, _Additive, _SrcBlend, _DstBlend, _Cull, _VertexGain;
+                float _Angle, _Pulsate, _VertexAnim, _OpaqueVtxAlpha, _Additive, _SrcBlend, _DstBlend, _Cull, _VertexGain, _Intensity;
             CBUFFER_END
 
             struct Attributes
@@ -174,7 +180,7 @@ Shader "GoF2/ModEngineMesh"
                 if (_Additive > 0.5)
                 {
                     // GoF3: SrcAlpha / One into an 8-bit gamma frame buffer: the fragment's addition, clamped, in linear
-                    float3 add = ToLinear(saturate(c.rgb * saturate(c.a))) * _Glow * i.gain;
+                    float3 add = ToLinear(saturate(c.rgb * saturate(c.a) * _Intensity)) * _Glow * i.gain;
                     return half4(MixFogColor(add, float3(0, 0, 0), i.fog), 0);
                 }
                 float3 rgb = ToLinear(saturate(c.rgb)) * _Glow;
