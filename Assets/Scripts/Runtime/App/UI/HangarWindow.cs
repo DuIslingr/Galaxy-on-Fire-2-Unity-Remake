@@ -70,7 +70,7 @@ namespace GoF2Remake.UI
         readonly Dictionary<int, int> pendingUnits = new Dictionary<int, int>();
         bool startConfirmed;
         // GOF2_MANUFACTURING_PATCH_V1 — UI-only, never serialized.
-        readonly HashSet<int> shopBlueprintMaterials = new HashSet<int>();
+        readonly Dictionary<int, int> shopBlueprintMaterials = new Dictionary<int, int>();
         bool shopBlueprintHighlight;
         VisualElement productionActions;
         Label productionComplete, productionShop, productionAutocomplete;
@@ -438,7 +438,14 @@ namespace GoF2Remake.UI
             shopBlueprintMaterials.Clear();
             var parts = level.Database.Item(editing)?.blueprint;
             if (parts == null) return;
-            foreach (var part in parts) shopBlueprintMaterials.Add(part.item);
+            // Recipe totals, not outstanding quantities: unchanged by cargo or manufacturing progress.
+            foreach (var part in parts)
+            {
+                if (shopBlueprintMaterials.TryGetValue(part.item, out int total))
+                    shopBlueprintMaterials[part.item] = total + part.amount;
+                else
+                    shopBlueprintMaterials.Add(part.item, part.amount);
+            }
             shopBlueprintHighlight = true;
             focusShopItem = item;   // -1 = ordinary SHOP; otherwise select this SOLD HERE commodity
             SetTab(Tab.Shop);
@@ -707,8 +714,8 @@ namespace GoF2Remake.UI
         {
             if (!shopBlueprintHighlight || !element.ClassListContains("list-row--blueprint-material")) return;
             Color green = greenPaletteProbe.resolvedStyle.color;
-            float a = element.ClassListContains("list-row--selected") ? .32f : .18f;
-            element.style.backgroundColor = new Color(green.r, green.g, green.b, a);
+            // GOF2_MANUFACTURING_V12_VISUAL: leave background to USS so hover and selection
+            // work naturally. Inline styles overrode the remake's normal row interaction states.
             element.style.borderLeftColor = green;
             element.style.borderLeftWidth = 3f;
         }
@@ -752,7 +759,7 @@ namespace GoF2Remake.UI
             var db = level.Database;
             var e = new VisualElement();
             e.AddToClassList("list-row");
-            if (row.kind == RowKind.ShopItem && shopBlueprintHighlight && shopBlueprintMaterials.Contains(row.item))
+            if (row.kind == RowKind.ShopItem && shopBlueprintHighlight && shopBlueprintMaterials.ContainsKey(row.item))
             {
                 e.AddToClassList("list-row--blueprint-material");
                 e.RegisterCallback<AttachToPanelEvent>(_ => e.schedule.Execute(() => TintBlueprintRow(e)).ExecuteLater(1));
@@ -1014,7 +1021,25 @@ namespace GoF2Remake.UI
             else if (amounts && row.kind != RowKind.CargoItem) e.Add(Amount(hangar.StockOf(row.item), "row-qty--station"));
             e.Add(icon);
             e.Add(texts);
-            if (amounts && row.kind != RowKind.Ingredient) e.Add(Amount(hangar.CargoOf(row.item), "row-qty--ship"));   // the ship's hold
+            if (amounts && row.kind != RowKind.Ingredient)
+            {
+                // Keep the normal cargo value anchored to the right. During blueprint-shop mode,
+                // show the FULL recipe amount to its left, irrespective of progress or cargo owned.
+                var shipQuantity = Amount(hangar.CargoOf(row.item), "row-qty--ship");
+                if (row.kind == RowKind.ShopItem && shopBlueprintHighlight
+                    && shopBlueprintMaterials.TryGetValue(row.item, out int required))
+                {
+                    var quantities = new VisualElement { pickingMode = PickingMode.Ignore };
+                    quantities.AddToClassList("row-qty-group");
+                    var recipeQuantity = new Label($"({required}t)") { pickingMode = PickingMode.Ignore };
+                    recipeQuantity.AddToClassList("row-qty--blueprint-required");
+                    recipeQuantity.AddToClassList("gof-semibold");
+                    quantities.Add(recipeQuantity);
+                    quantities.Add(shipQuantity);
+                    e.Add(quantities);
+                }
+                else e.Add(shipQuantity);
+            }
             if (shipPrice && price.text.Length > 0) e.Add(price);
             if (bpAmount != null) e.Add(bpAmount);
             // ListItemWindow's "i" (image 0x470) on the selected row: Remake, left out (the details panel shows it all; the

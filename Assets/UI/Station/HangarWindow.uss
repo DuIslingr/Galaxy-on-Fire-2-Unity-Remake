@@ -410,6 +410,50 @@
     -unity-text-align: middle-right;
 }
 
+/* Manufacturing shop overlay: one-run recipe total before the usual ship amount. */
+.row-qty-group {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: var(--space-s);
+}
+
+/* GOF2_MANUFACTURING_V13_VISUAL: the original fixed 76px ship label
+   left empty space before its right-aligned number. Size it to its text,
+   keeping the whole pair anchored at the row's right edge. */
+.row-qty-group .row-qty--ship {
+    width: auto;
+    margin-left: 0;
+}
+
+/* GOF2_MANUFACTURING_V12_VISUAL: recipe totals are secondary to ship cargo. */
+.row-qty--blueprint-required {
+    flex-shrink: 0;
+    margin-right: var(--space-s, 6px);
+    font-size: var(--text-label);
+    color: var(--gof-text-dim);
+    -unity-text-align: middle-right;
+}
+
+/* The blueprint overlay uses a dark resting row, with the same grey hover and
+   blue selection distinction as the regular shop, adjusted for the dark base.
+   Selected+hovered remains blue, never the hover grey. */
+.list-row.list-row--blueprint-material {
+    background-color: rgba(12, 27, 24, 0.40);
+}
+/* GOF2_MANUFACTURING_V14_EXACT_COMPOSITES: colours calculated from this project's ordinary shop rules.
+   Blueprint hover = blueprint normal + (ordinary hover - ordinary normal).
+   Blueprint selected = blueprint normal + (ordinary selected - ordinary normal).
+   The alpha-composite calculation preserves both effects over any backdrop;
+   selected + hovered remains selected. */
+.can-hover .list-row.list-row--blueprint-material:hover {
+    background-color: rgba(34, 48, 45, 0.440);
+}
+.list-row.list-row--blueprint-material.list-row--selected,
+.can-hover .list-row.list-row--blueprint-material.list-row--selected:hover {
+    background-color: rgba(9, 55, 66, 0.490);
+}
+
 /* Remake: an ingredient's SOLD HERE | amount badge opens the shop on it. */
 .can-hover .row-badge--link:hover {
     background-color: #A6F08F;
