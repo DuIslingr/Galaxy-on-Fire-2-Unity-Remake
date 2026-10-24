@@ -283,7 +283,7 @@ parked in the Kaamo Club if owned).
 | `autocomplete` | `true` (default, 1.25 x product price), a number (that price) or `false` (never). |
 | `available` | Condition before any source offers it. |
 | `unlocked` | `true`: known as soon as available (next docking). |
-| `lounge` | Lounge seller: chance % per bar refresh, price (default half the product price), systemRace. |
+| `lounge` | Lounge seller: chance % per bar refresh, price (default half the product price), systemRace; `stations` [n | "mod:id"] = only those bars, chance then 100 (the game's own sellers stand at one station). |
 | `derelict` | chance % of orbit visits holding a hackable derelict freighter (race terran/vossk/nivelian/midorian/any) with it; "stations": [ numbers or "mod:id" ] only there (chance then defaults to 100), "position": [ x, y, z ] game units in the orbit (/pos). Hacking fires the `hacked` trigger too. |
 | `drops` | `{ "race", "chance" }`: chance % (decimals ok) that a ship of that race the player destroys drops it; or `{ "ship": n | "mod:id", "chance" }`: only that ship type drops it (checked first; a boss hull's own blueprint at 100). Known blueprints never drop. |
 

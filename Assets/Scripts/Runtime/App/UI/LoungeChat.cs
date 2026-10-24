@@ -100,6 +100,13 @@ namespace GoF2Remake.Data
                 SetChoices();
                 return;
             }
+            // Remake: a blueprint learnt since this visitor came (from another seller, a drop, a derelict) is handed out once:
+            // the seller has nothing left (858), like a story seller of a known blueprint (AgentGenerator.StoryAgent).
+            if (a.offer == AgentOffer.SellBlueprint && !a.accepted && Blueprints.IsUnlocked(a.sellBlueprint))
+            {
+                if (!a.known) Session.AgentsTalkedTo++;
+                a.accepted = a.known = true;
+            }
             if (!a.known)
             {
                 Session.AgentsTalkedTo++;

@@ -789,9 +789,11 @@ namespace GoF2Remake.World
         {
             if (ship != null && ship.Spec.modBlueprint >= 0)
             {
-                // Remake mods: a derelict's blueprint, in a data crate drifting off the wreck (pulled in, it is learnt).
+                // Remake mods: a derelict's blueprint, in a data crate drifting off the wreck (pulled in, it is learnt); none
+                // when it was learnt meanwhile (a blueprint is handed out once).
                 ship.DockingType = 0;
-                Crate.Spawn(ship.transform.position + ship.transform.up * 300f * M, new[] { new ItemStack(ship.Spec.modBlueprint, 1) },
+                if (!Blueprints.IsUnlocked(ship.Spec.modBlueprint) && !Crate.HoldsAny(ship.Spec.modBlueprint))
+                    Crate.Spawn(ship.transform.position + ship.transform.up * 300f * M, new[] { new ItemStack(ship.Spec.modBlueprint, 1) },
                             ship.Spec.race, Crate.LookJunk);
                 return;
             }

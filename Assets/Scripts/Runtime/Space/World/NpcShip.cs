@@ -1887,7 +1887,7 @@ namespace GoF2Remake.World
             if (!Target.killedByNpc && !IsWingman && !IsTurret)
             {
                 int bp = Modding.ModBlueprints.RollDrop(Race, Spec.ship);
-                if (bp >= 0) Crate.Spawn(transform.position, new[] { new ItemStack(bp, 1) }, Race, Crate.LookJunk);
+                if (bp >= 0 && !Crate.HoldsAny(bp)) Crate.Spawn(transform.position, new[] { new ItemStack(bp, 1) }, Race, Crate.LookJunk);
             }
             if (IsWingman) Wingmen.Died(Target.displayName);   // Level::wingmanDied: gone from the contract
             if (Spec.ship == 14 && !Target.killedByNpc) Session.BattleshipsDestroyed++;   // Status+0x118

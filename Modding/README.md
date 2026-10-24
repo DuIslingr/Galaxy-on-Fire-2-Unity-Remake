@@ -1366,7 +1366,7 @@ autocomplete), and the product is made at the station where the first ingredient
 | `autocomplete` | `true` (default): the game's price, 1.25 x the product's price. A number: that price. `false`: it can't be autocompleted. |
 | `available` | A [condition](#conditions) before any source offers it. |
 | `unlocked` | `true`: the player knows it as soon as it is available (the next docking), without finding it. |
-| `lounge` | A Space Lounge visitor sells it: `chance` % each time a bar fills with new visitors, for `price` (default half the product's price), in `systemRace` systems (-1 = any). |
+| `lounge` | A Space Lounge visitor sells it: `chance` % each time a bar fills with new visitors, for `price` (default half the product's price), in `systemRace` systems (-1 = any). `stations`: only in those bars (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100), like the game's own blueprint sellers, each at one station: `{ "stations": [ 54 ], "price": 59999 }`. |
 | `derelict` | `chance` % of the orbits visited hold a derelict freighter (`race`: terran, vossk, nivelian, midorian or any) to dock at and hack; it leaves the blueprint in a data container. `stations`: only in those orbits (station numbers or `"mod_id:station_id"`; then `chance` defaults to 100, always there). `position`: `[ x, y, z ]` in game units (what `/pos` shows in that orbit), else somewhere out in front of the station. Hacking it also fires the missions' and events' `hacked` trigger. |
 | `drops` | A ship the player destroys may leave it in a data container: `race` (terran, vossk, nivelian, midorian, pirate, void, specter or any), `chance` % per kill (decimals allowed). Or `ship` (a number or `"mod_id:ship_id"`) instead of `race`: only ships of that type drop it, whatever their race, and before any race-wide drop; `{ "ship": "my_mod:boss_hull", "chance": 100 }` makes a boss leave its own hull's blueprint. A blueprint already known is never dropped again. |
 
@@ -1375,7 +1375,9 @@ ship's blueprint shows the ship in the Blueprints tab, and the finished ship wai
 it replaces the player's ship like a purchase (the old one is traded in at its price, or parked in the Kaamo Club when the
 player owns it and has no ship of that type stored), the equipment moving over as far as it fits.
 
-Every source stops offering a blueprint once the player knows it.
+A blueprint is obtained once: once the player knows it, every source stops offering it. A seller already standing in a bar
+has nothing left ("I don't have anything left, sorry."), a derelict hacked afterwards is empty, and no second data container
+is dropped while one with it still floats in the orbit. It can be built from as often as the player likes.
 
 ## Hangars and bars
 

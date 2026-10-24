@@ -8,7 +8,9 @@
 //       "autocomplete": true | false | 1500000 (the price; true = the original's 1.25 x the product's price),
 //       "available": "condition"               (EventRunner.Condition: before any source offers it),
 //       "unlocked": false                      (true: known as soon as it is available),
-//       "lounge": { "chance": 10, "price": 250000, "systemRace": -1 }   (a Space Lounge visitor sells it),
+//       "lounge": { "chance": 10, "price": 250000, "systemRace": -1 }   (a Space Lounge visitor sells it;
+//                 "stations": [ 78, "mod:id" ]  only in those bars (then the chance defaults to 100): like the game's own
+//                                               blueprint sellers, one at a fixed station),
 //       "derelict": { "chance": 5, "race": "terran" }                    (a hackable freighter wreck in an orbit holds it;
 //                   "stations": [ 78, "mod:id" ]  only in those orbits (then the chance defaults to 100),
 //                   "position": [ x, y, z ]       there, in game units like /pos, instead of somewhere out in front),
@@ -50,6 +52,9 @@ namespace GoF2Remake.Modding
             public int autocompletePrice = -1;          // -1: the original's formula
             public float loungeChance, derelictChance;  // 0: no such source
             public int loungePrice, loungeRace = -1, derelictRace = -1;
+            /// <summary>"lounge" "stations" as written (empty: any bar of its systemRace) and resolved (ModBlueprints.Apply).</summary>
+            public readonly List<string> loungeStationRefs = new List<string>();
+            public readonly List<int> loungeStations = new List<int>();
             /// <summary>"derelict" "stations" as written (empty: any orbit) and resolved (ModBlueprints.Apply).</summary>
             public readonly List<string> derelictStationRefs = new List<string>();
             public readonly List<int> derelictStations = new List<int>();
@@ -108,7 +113,8 @@ namespace GoF2Remake.Modding
                 }
                 if (ModJson.Get(o, "lounge") is JObject lo)
                 {
-                    d.loungeChance = ModJson.Float(lo, "chance", 10f, File);
+                    d.loungeStationRefs.AddRange(ModJson.Strings(lo, "stations"));
+                    d.loungeChance = ModJson.Float(lo, "chance", d.loungeStationRefs.Count > 0 ? 100f : 10f, File);
                     d.loungePrice = Math.Max(0, ModJson.Int(lo, "price", 0, File));
                     d.loungeRace = ModJson.Int(lo, "systemRace", -1, File);
                 }
@@ -218,6 +224,11 @@ namespace GoF2Remake.Modding
                         parts.Add(new BlueprintPart { item = ii, name = db.Item(ii).name, amount = amount });
                     }
                     if (parts == null) continue;
+                    d.loungeStations.Clear();
+                    foreach (string st in d.loungeStationRefs)
+                        if (ModWorld.TryResolveStation(st, out int ls)) d.loungeStations.Add(ls);
+                        else Warn(d, $"\"lounge\" \"stations\": {st} is no station");
+                    if (d.loungeStationRefs.Count > 0 && d.loungeStations.Count == 0) d.loungeChance = 0f;
                     d.derelictStations.Clear();
                     foreach (string st in d.derelictStationRefs)
                         if (ModWorld.TryResolveStation(st, out int si)) d.derelictStations.Add(si);
@@ -304,6 +315,11 @@ namespace GoF2Remake.Modding
                 if (UnityEngine.Random.value * 100f < d.derelictChance) return d;
             return null;
         }
+
+        /// <summary>The lounge seller may stand in this bar: its "stations" name it, or it names none and the system's race
+        /// fits its "systemRace" (-1: any).</summary>
+        public static bool LoungeAllowedAt(Def d, int station, int systemRace) =>
+            d.loungeStationRefs.Count > 0 ? d.loungeStations.Contains(station) : d.loungeRace < 0 || d.loungeRace == systemRace;
 
         /// <summary>The derelict may lie in this orbit: its "stations" name it, or it names none.</summary>
         public static bool DerelictAllowedAt(Def d, int station) => d.derelictStationRefs.Count == 0 || d.derelictStations.Contains(station);

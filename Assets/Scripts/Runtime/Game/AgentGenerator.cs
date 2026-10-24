@@ -233,7 +233,7 @@ namespace GoF2Remake.Data
             int systemRace = Sys(db, SystemOf(db, station))?.raceId ?? -1;
             foreach (var d in Modding.ModBlueprints.Offerable(b => b.loungeChance > 0f))
             {
-                if (d.loungeRace >= 0 && d.loungeRace != systemRace) continue;
+                if (!Modding.ModBlueprints.LoungeAllowedAt(d, station, systemRace)) continue;
                 if (Rng.NextDouble() * 100.0 >= d.loungeChance) continue;
                 if (agents.Exists(a => a.offer == AgentOffer.SellBlueprint && a.sellBlueprint == d.product)) continue;
                 int race = systemRace >= 0 && systemRace <= 3 ? systemRace : 0;

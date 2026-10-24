@@ -3123,11 +3123,14 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
   available, unlocked (known once available, `UnlockAvailable` at `Shop.EnterStation`), and three sources while available and
   not known (`Offerable`): "lounge" (`AgentGenerator.AddModBlueprintSellers`, a local visitor with offer SellBlueprint, the
-  openers 874 / 875 in `LoungeChat.StoryLine`), "derelict" (`TrafficPlan.Build`: one hackable freighter wreck per visit at
+  openers 874 / 875 in `LoungeChat.StoryLine`; "stations" pins it to those bars like the game's own sellers, chance 100,
+  `LoungeAllowedAt`), "derelict" (`TrafficPlan.Build`: one hackable freighter wreck per visit at
   most, `TrafficPlan.HackableWreck` + `SpawnSpec.modBlueprint`; `Traffic.OnHackWon` leaves a data crate; "stations" limits it
   to those orbits, `RollDerelict(station)` / `DerelictAllowedAt`, the chance then defaulting to 100, a list of unknown ones =
   nowhere; "position" [x, y, z] game units in the orbit, else out in front) and "drops" per race or per ship type (`{ "ship", "chance" }`, `Def.shipDrops`, rolled first: a boss hull's own blueprint) (`NpcShip.OnDied`, a kill by
-  the player: `RollDrop`, a data crate). A data crate is a `Crate` (look 3, the junk container) holding the product item;
+  the player: `RollDrop`, a data crate). A blueprint is obtained once (2026-10-24, the user's rule): a seller standing in a
+  bar since before it was learnt has 858 (`LoungeChat.Start`), a derelict hacked after leaves no crate and no data crate is
+  made while one with it floats (`Crate.HoldsAny`, `NpcShip.OnDied`, `Traffic.OnHackWon`); production stays repeatable. A data crate is a `Crate` (look 3, the junk container) holding the product item;
   `CombatRadar.Capture` learns a mod blueprint's product instead of loading it ("Blueprint found: X"). An item product gets the
   recipe on its `ItemData.blueprint`; a ship product is a hidden "blueprint item" ("<mod>:blueprint:<id>", numbered like a mod
   item in `ModContent.EnsureMapping`, made in `Apply` (`Deed`), its price the ship's after `ApplyShips`; `ModContent.ItemText`

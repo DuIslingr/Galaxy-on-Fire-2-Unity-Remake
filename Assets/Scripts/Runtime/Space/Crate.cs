@@ -24,6 +24,10 @@ namespace GoF2Remake.Flight
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() => All.Clear();
 
+        /// <summary>A crate in the scene holds this item (a mod blueprint's data crate: a blueprint is handed out once, so
+        /// no second crate is made while one still floats).</summary>
+        public static bool HoldsAny(int item) => All.Exists(c => c != null && c.loot.Exists(s => s.item == item && s.amount > 0));
+
         void OnEnable() => All.Add(this);
         void OnDisable() => All.Remove(this);
 
