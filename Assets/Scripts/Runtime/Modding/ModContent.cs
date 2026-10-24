@@ -202,6 +202,7 @@ namespace GoF2Remake.Modding
             "addParts",   // the original's additive layers beside the hull: lights, engine glows (ModShipBuilder)
             "sounds",     // the ship's own engine and boost sounds (ModShipSounds)
             "integrated", // a built-in Khador Drive / cloak (ApplyIntegrated)
+            "camera", "cockpit", "smoke", "explosionScale",   // how the ship is seen (ModShipView)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)
@@ -231,6 +232,7 @@ namespace GoF2Remake.Modding
                     if (!ShipFields.Contains(prop.Name)) mod.Warnings.Add($"{ModJson.Where(prop, ShipsFile)}: unknown field \"{prop.Name}\" (ignored)");
                 foreach (var f in new[] { "race", "armor", "cargo", "price", "priceDefault", "handling", "hangarHeight" }) ModJson.Int(o, f, 0, ShipsFile);
                 ModFlight.CheckShip(o, where, mod, ShipsFile);   // "flightStyle", "flight": per flight style
+                ModShipView.CheckShip(o, where, mod, ShipsFile);   // "camera", "cockpit", "smoke", "explosionScale"
                 d.sounds = GameHooks.ParseShipSounds?.Invoke(o, mod, ShipsFile);
                 if (d.localId != null)
                 {
@@ -772,6 +774,7 @@ namespace GoF2Remake.Modding
                                     turret = ModJson.Int(sl, "turret", s.slots?.turret ?? 0, ShipsFile), equipment = ModJson.Int(sl, "equipment", s.slots?.equipment ?? 0, ShipsFile),
                                 };
                             ModFlight.ApplyShip(s, o, d.where);
+                            ModShipView.ApplyShip(s, o);
                             if (s is CustomShipData cs)
                             {
                                 cs.race = ModJson.Int(o, "race", cs.race, ShipsFile);
@@ -815,6 +818,7 @@ namespace GoF2Remake.Modding
                         var c = ShipData(index, d);
                         if (dflt && c.priceDefault > 0) c.price = c.priceDefault;
                         ModFlight.ApplyShip(c, d.json, d.where);
+                        ModShipView.ApplyShip(c, d.json);
                         db.Ships.Add(c);
                         if (GameModels.Is(c.model, out string shipModel))
                         {

@@ -406,7 +406,8 @@ namespace GoF2Remake.Flight
         /// but at most 1.5 m off that line (a capital hull's 100 m dropped the crosshair 5 deg), four fifths of the way to the
         /// bow (a big hull's nine tenths), but behind the frontmost primary gun (so its muzzle flash and shots start in view)
         /// and never behind the middle of the bow half. From the hull's meshes (no glow layers: PlayerHull.HullBounds), so
-        /// game ships, mods' glTF and kit builds and the debug capital hulls alike.</summary>
+        /// game ships, mods' glTF and kit builds and the debug capital hulls alike. A mod ship's own "cockpit" (ModShipView)
+        /// is taken as it is, only kept behind the frontmost primary gun too.</summary>
         public Vector3 FirstPersonSeat()
         {
             if (target == null) return Vector3.zero;
@@ -415,13 +416,20 @@ namespace GoF2Remake.Flight
             var b = World.PlayerHull.HullBounds(ship, model);
             if (b.size == Vector3.zero) return new Vector3(0f, 1f, 2f);
             bool big = b.extents.z > 150f;   // the debug capital hulls (PlayerHull.Big): no guns, the bow
-            float z = Mathf.Lerp(b.center.z, b.max.z, big ? 0.9f : 0.8f);
+            var own = big || World.PlayerHull.Big ? null : GoF2Remake.Data.Database.Shared.Ship(GoF2Remake.Data.Session.ShipIndex)?.cockpit;
+            float z = own.HasValue ? own.Value.z * target.metersPerUnit : Mathf.Lerp(b.center.z, b.max.z, big ? 0.9f : 0.8f);
             var weapons = big ? null : target.GetComponent<WeaponSystem>();
             if (weapons != null)
             {
                 float gunZ = float.NegativeInfinity;
                 foreach (var g in weapons.Guns) if (!g.isSecondary) gunZ = Mathf.Max(gunZ, g.mountLocal.z);
-                if (gunZ > b.center.z) z = Mathf.Max(Mathf.Lerp(b.center.z, b.max.z, 0.5f), Mathf.Min(z, gunZ - 0.5f));
+                if (own.HasValue) { if (gunZ > float.NegativeInfinity) z = Mathf.Min(z, gunZ - 0.5f); }
+                else if (gunZ > b.center.z) z = Mathf.Max(Mathf.Lerp(b.center.z, b.max.z, 0.5f), Mathf.Min(z, gunZ - 0.5f));
+            }
+            if (own.HasValue)
+            {
+                var seat = Modding.ModShipView.ToLocal(own.Value, target.metersPerUnit);
+                return new Vector3(seat.x, seat.y, z);
             }
             return new Vector3(0f, Mathf.Clamp(b.center.y + 0.2f * b.extents.y, -1.5f, 1.5f), z);
         }

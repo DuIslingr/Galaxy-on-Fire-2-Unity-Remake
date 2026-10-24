@@ -377,13 +377,13 @@ namespace GoF2Remake.World
         /// <summary>The player's model and chase camera for the hull flown: a big hull's model is shifted so the ship turns
         /// around its middle (the battleship's pivot is at its bow), the camera sits just behind the stern and above the
         /// deck, and the far plane reaches past the bow; any other ship gets the original's offsets (TargetFollowCamera:
-        /// (0, 600, -1338) / (0, 600, -650) units) and the level's far plane.</summary>
+        /// (0, 600, -1338) / (0, 600, -650) units, or a mod ship's own "camera", ModShipView) and the level's far plane.</summary>
         public static void FitCamera(Transform root, Transform model, ChaseCamera chase, float levelFarClip)
         {
             var cam = chase != null ? chase.GetComponent<Camera>() : null;
             if (!Big || model == null)
             {
-                if (chase != null) { chase.offset = new Vector3(0f, 600f, -1338f) * M; chase.lookOffset = new Vector3(0f, 600f, -650f) * M; }
+                if (chase != null) Modding.ModShipView.CameraOffsets(Database.Shared.Ship(Session.ShipIndex), M, out chase.offset, out chase.lookOffset);
                 if (cam != null) cam.farClipPlane = levelFarClip;
                 return;
             }

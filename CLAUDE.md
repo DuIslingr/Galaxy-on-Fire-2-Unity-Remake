@@ -2805,6 +2805,16 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   show none: every platform's file picker copies to "picked.tmp", so the Mod Builder's `ModProject.SetAudio` saved every
   picked WAV / MP3 as .ogg and it "couldn't be played" (a player's report, 2026-10-24); `PickAudio` now hands it a copy
   named by its type. Tests `ModAudioTypeTests`.
+- **How a ship is seen** (`ModShipView`, 2026-10-24; GoF3's ship files): ships.json `"camera"` { distance, height,
+  lookHeight, lookAhead } game units (`ShipData.chaseCamera`; `ModShipView.CameraOffsets` in `SpaceLevel`'s camera set-up
+  and `PlayerHull.FitCamera`'s ordinary path, the original's 1338 / 600 / 600 / -650 for a field left out), `"cockpit"`
+  [x, y, z] (`ShipData.cockpit`, mount axes; `ChaseCamera.FirstPersonSeat` takes it, still behind the frontmost primary,
+  not for the debug Big hulls), `"smoke"` up to 4 points (`ShipData.smokePoints`; `ShipSmoke` makes a smoke / fire pair at
+  each, the rate and pool shared, the fire on the point) and `"explosionScale"` 0.25..20 (`NpcShip.FighterExplosionScale`,
+  mirrored by `NetProxy`; the player's death, `PlayerHealth`, and other players' ships, `NetPlayer`). The Mod Builder's
+  ship page, **Camera and damage** (`ModBuilderView.BuildShipView`). The GoF3 builder writes the cockpit and smoke from the
+  hulls' `_cam` / `_damaged_NNN` helpers, the explosion from EffectScale / 1.5 and the camera from the hull's length past
+  1400 units x CameraThirdPerson's distance (field 89702: 7 fighters, 8 gunships). Tests in `ModContentTests`.
 - **Ship and weapon sounds** (`ModShipSounds`): ships.json `"sounds"` (a new ship or an override; `ShipDef.sounds`,
   `ModContent.ShipSounds`) = engine / boostStart / boostLoop / boostStop / charger, each a file, a list (random) or { file(s),
   volume, pitch } with a value or [from, to]; a kit hardpoint rule's `"sound"` { shot, loop, release } (`Rule.sound`,

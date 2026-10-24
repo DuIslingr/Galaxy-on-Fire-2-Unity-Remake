@@ -2865,5 +2865,16 @@
  "filterBilinear": "Bilinéaire",
  "filterAnisotropic": "Anisotrope",
  "filterForced": "Forcé",
- "filterForced16": "Forcé 16×"
+ "filterForced16": "Forcé 16×",
+ "mbShipView": "Caméra et dégâts",
+ "mbOwnCamera": "Sa propre caméra de poursuite",
+ "mbCamDistance": "Distance derrière (unités du jeu ; 1338 par défaut)",
+ "mbCamHeight": "Hauteur (600)",
+ "mbCamLookHeight": "Vise un point à cette hauteur (600)",
+ "mbCamLookAhead": "Ce point devant le vaisseau (-650 : derrière)",
+ "mbOwnCockpit": "Son propre siège de cockpit",
+ "mbSmokePoints": "Points de fumée des dégâts",
+ "mbExplosionScale": "Taille de l'explosion (1 = celle d'un chasseur)",
+ "mbAddSmokePoint": "+ Point de fumée",
+ "mbPointsNote": "Unités du jeu comme les points d'arme : X la gauche du pilote, Y le haut, Z la proue."
 }

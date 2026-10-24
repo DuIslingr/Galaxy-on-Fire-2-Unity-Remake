@@ -627,6 +627,31 @@ scaled over time) plays on a loop wherever the ship is shown, in flight, in the 
 that bend the mesh with bones (an armature) don't play: such a hull is shown in its rest pose. Keep moving parts as
 separate objects animated by themselves, and put the animation you want looped first in the file.
 
+### Camera, cockpit, damage smoke and explosion
+
+How a ship is seen, for a new ship or an original through `override` (each one optional; left out = the game's):
+
+```json
+"camera": { "distance": 2400, "height": 900, "lookHeight": 900, "lookAhead": -1100 },
+"cockpit": [0, 90, 760],
+"smoke": [[39, 68, -64], [-62, 65, 10]],
+"explosionScale": 1.2
+```
+
+- `camera`: the chase camera, in game units: `distance` behind the ship's pivot and `height` above it, aimed at a point
+  `lookHeight` above the pivot and `lookAhead` ahead of it (negative: behind it). The game's are 1338 / 600 / 600 / -650 for
+  every ship, made for hulls of about 1200-1400 units; a bigger hull needs the camera further out or it fills the screen.
+  A field left out keeps the game's.
+- `cockpit`: where the cockpit view (F2, or holding the camera button) sits, a point like a hardpoint's `position_engine`
+  (x the pilot's left, y up, z the nose). Without it the game puts the seat on the bow from the hull's shape. Either way
+  the seat stays behind the frontmost gun, so its shots start in view.
+- `smoke`: up to 4 points where the ship trails smoke and fire once it is below a third of its hull (NPC ships); without
+  them it smokes from its middle. The smoke is shared between the points, so two points don't make twice as much.
+- `explosionScale`: how big the explosion is when the ship dies, as a multiple of a fighter's (1); 0.25 to 20. The NPC
+  ships, the player's ship and other players' ships use it. Freighters and capital ships keep their own.
+
+The Mod Builder has them on a ship's page under **Camera and damage**.
+
 ### Ship sounds
 
 `"sounds"` gives a ship (a new one, or an original through `override`) its own engine and boost sounds instead of the game's:
@@ -786,7 +811,9 @@ thrusters cut from rear parts.
 
 `override`: an original ship's number or another mod's `"mod_id:ship_id"`, with any of `armor`, `cargo`, `price`,
 `priceDefault`, `slots`, `handling`, `name`, `description`, `mounts`, `flightStyle`, `flight` (see
-[Flight styles](#flight-styles)), `sounds` (see [Ship sounds](#ship-sounds)) (and for mod ships `race`, `hangarHeight`).
+[Flight styles](#flight-styles)), `sounds` (see [Ship sounds](#ship-sounds)), `camera`, `cockpit`, `smoke`,
+`explosionScale` (see [Camera, cockpit, damage smoke and explosion](#camera-cockpit-damage-smoke-and-explosion)) (and for
+mod ships `race`, `hangarHeight`).
 
 **More (or fewer) weapons:** `slots` sets how many primaries, secondaries, turrets and equipment the ship takes (give only the
 ones you change), and `mounts`

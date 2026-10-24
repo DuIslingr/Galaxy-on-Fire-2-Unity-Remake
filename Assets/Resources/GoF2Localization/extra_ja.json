@@ -2865,5 +2865,16 @@
  "filterBilinear": "バイリニア",
  "filterAnisotropic": "異方性",
  "filterForced": "強制",
- "filterForced16": "強制 16×"
+ "filterForced16": "強制 16×",
+ "mbShipView": "カメラと損傷",
+ "mbOwnCamera": "専用の追従カメラ",
+ "mbCamDistance": "後方の距離（ゲーム単位。デフォルト 1338）",
+ "mbCamHeight": "高さ（600）",
+ "mbCamLookHeight": "この高さの点を見る（600）",
+ "mbCamLookAhead": "その点の船体前方への距離（-650：後方）",
+ "mbOwnCockpit": "専用のコックピット位置",
+ "mbSmokePoints": "損傷時の煙の位置",
+ "mbExplosionScale": "爆発の大きさ（1 = 戦闘機と同じ）",
+ "mbAddSmokePoint": "+ 煙の位置",
+ "mbPointsNote": "武器ポイントと同じゲーム単位：X はパイロットの左、Y は上、Z は機首。"
 }

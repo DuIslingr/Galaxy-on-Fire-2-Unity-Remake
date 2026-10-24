@@ -376,6 +376,10 @@ namespace GoF2Remake.World
         /// <summary>Game rotation identity: facing game +Z = Unity -Z.</summary>
         static readonly Quaternion GameForward = Quaternion.Euler(0f, 180f, 0f);
 
+        /// <summary>A fighter's explosion size: 1 (Explosion::setScaling's default), or a mod ship's "explosionScale"
+        /// (ModShipView).</summary>
+        public float FighterExplosionScale => db?.Ship(Spec.ship)?.explosionScale ?? 1f;
+
         public void Setup(Traffic owner, Database database, SpawnSpec spec, GameObject prefab, Transform fxRoot)
         {
             traffic = owner;
@@ -452,7 +456,7 @@ namespace GoF2Remake.World
             Target.Damaged += OnDamaged;
             Target.Died += OnDied;
             lastHull = Hp.hull;
-            if (!spec.freighter && spec.fixedObject == null && spec.turretAssembly == null) smoke = new ShipSmoke(transform);
+            if (!spec.freighter && spec.fixedObject == null && spec.turretAssembly == null) smoke = new ShipSmoke(transform, db?.Ship(spec.ship)?.smokePoints);
 
             if (spec.turretAssembly != null) SetupTurret();
             else if (!spec.freighter && spec.fixedObject == null && spec.ship != 51)
@@ -2022,7 +2026,7 @@ namespace GoF2Remake.World
             dyingMs -= dtMs;
             if (dyingMs > 0f) return;
             // PlayerFixedObject::update: setScaling(6), 8 for the Terran battleship (0x37e7) and the pirate outpost (0x37a3).
-            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : 1f);
+            explosion = Explosion.Spawn(transform.position, IsFixed ? Spec.explosionScale : IsFreighter ? (Spec.ship == 14 ? 8f : 6f) : FighterExplosionScale);
             explosionSerial = explosion != null ? explosion.Serial : 0;
             wreckBurn?.SetEmitting(false);   // state 4: enableSystemEmit(false)
             Current = State.Dead;

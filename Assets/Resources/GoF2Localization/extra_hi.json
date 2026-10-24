@@ -2865,5 +2865,16 @@
  "filterBilinear": "बाइलीनियर",
  "filterAnisotropic": "एनिसोट्रॉपिक",
  "filterForced": "फ़ोर्स्ड",
- "filterForced16": "फ़ोर्स्ड 16×"
+ "filterForced16": "फ़ोर्स्ड 16×",
+ "mbShipView": "कैमरा और क्षति",
+ "mbOwnCamera": "अपना पीछा करने वाला कैमरा",
+ "mbCamDistance": "पीछे की दूरी (गेम इकाइयाँ; डिफ़ॉल्ट 1338)",
+ "mbCamHeight": "ऊँचाई (600)",
+ "mbCamLookHeight": "इस ऊँचाई के बिंदु को देखता है (600)",
+ "mbCamLookAhead": "वह बिंदु जहाज़ के आगे (-650: पीछे)",
+ "mbOwnCockpit": "अपनी कॉकपिट सीट",
+ "mbSmokePoints": "क्षति के धुएँ के बिंदु",
+ "mbExplosionScale": "विस्फोट का आकार (1 = एक फ़ाइटर का)",
+ "mbAddSmokePoint": "+ धुएँ का बिंदु",
+ "mbPointsNote": "हथियार बिंदुओं जैसी गेम इकाइयाँ: X पायलट की बाईं ओर, Y ऊपर, Z अग्रभाग।"
 }

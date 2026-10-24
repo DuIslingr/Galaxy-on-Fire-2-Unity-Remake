@@ -27,6 +27,16 @@ namespace GoF2Remake.Data
         /// flies with (-1 = the player's), and its bonuses for both styles / the original / free flight (null = none).</summary>
         [System.NonSerialized] public int flightStyle = -1;
         [System.NonSerialized] public FlightBonus flightBoth, flightOriginal, flightFree;
+
+        /// <summary>Remake mods (Modding.ModShipView, ships.json "camera" / "cockpit" / "smoke" / "explosionScale"; null /
+        /// 1 = the original's for every ship): the chase camera in game units (distance behind the pivot, height, the look
+        /// point's height and how far ahead of the pivot it is: the original's 1338 / 600 / 600 / -650), the cockpit view's
+        /// seat and the damage smoke's points (game units in position_engine's axes, like the mounts) and the explosion's
+        /// size when the ship dies (x the fighters' 1).</summary>
+        [System.NonSerialized] public float[] chaseCamera;
+        [System.NonSerialized] public Vector3? cockpit;
+        [System.NonSerialized] public List<Vector3> smokePoints;
+        [System.NonSerialized] public float explosionScale = 1f;
     }
 
     [System.Serializable] public class StatEntry { public string key; public int value; }

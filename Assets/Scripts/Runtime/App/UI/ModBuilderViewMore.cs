@@ -2,7 +2,8 @@
 // The Mod Builder's less common item and ship fields (part of ModBuilderView; Modding/README.md "Items" and "Ships"): an
 // item's cheapest / dearest systems, Vossk-only, the station that always stocks it, its condition, its attributes by number
 // and its Default Economy prices; a ship's condition, the ordinary dealers and the lounge sellers that sell it, the turret
-// items its NPC ships carry, its Default Economy price and its engine flame. Everything else is in Edit as JSON.
+// items its NPC ships carry, its Default Economy price, its engine flame, and how it is seen: its chase camera, cockpit seat,
+// damage smoke points and explosion size (ModShipView). Everything else is in Edit as JSON.
 
 using System;
 using System.Collections.Generic;
@@ -158,6 +159,80 @@ namespace GoF2Remake.UI
                 }
             }
             Note(ship, T("mbMoreJsonNote", "Per-mesh materials and glows: Edit as JSON (top)."));
+
+            BuildShipView(s);
+        }
+
+        /// <summary>How the ship is seen (ModShipView): the chase camera, the cockpit view's seat, the damage smoke's points
+        /// and the explosion's size. Points in game units like the hardpoints (x the pilot's left, y up, z the nose).</summary>
+        void BuildShipView(ProjectShip s)
+        {
+            Heading(ship, T("mbShipView", "Camera and damage"));
+            var cam = s.Get("camera") as JObject;
+            FlagButton(Row(ship), T("mbOwnCamera", "Its own chase camera"), cam != null, v =>
+            {
+                var d = ModShipView.DefaultCamera;
+                s.Set("camera", v ? new JObject { ["distance"] = d[0], ["height"] = d[1], ["lookHeight"] = d[2], ["lookAhead"] = d[3] } : null);
+                MarkDirty();
+            }, () => BuildShipPage());
+            if (cam != null)
+            {
+                var box = Add(ship, new VisualElement(), "mbv-page-box");
+                string[] keys = { "distance", "height", "lookHeight", "lookAhead" };
+                string[] labels =
+                {
+                    T("mbCamDistance", "Distance behind (game units; 1338 by default)"), T("mbCamHeight", "Height (600)"),
+                    T("mbCamLookHeight", "Looks at a point this high (600)"), T("mbCamLookAhead", "That point ahead of the ship (-650: behind it)"),
+                };
+                for (int k = 0; k < keys.Length; k++)
+                {
+                    string key = keys[k];
+                    Float(box, labels[k], JFloat(cam[key]) ?? ModShipView.DefaultCamera[k], k == 0 ? 50f : -50000f, 50000f,
+                          v => { cam[key] = Math.Round(v); MarkDirty(); });
+                }
+            }
+
+            PointsField(s, "cockpit", T("mbOwnCockpit", "Its own cockpit seat"), single: true);
+            PointsField(s, "smoke", T("mbSmokePoints", "Damage smoke points"), single: false);
+
+            Float(ship, T("mbExplosionScale", "Explosion size (1 = a fighter's)"), JFloat(s.Get("explosionScale")) ?? 1f, ModShipView.MinExplosion, ModShipView.MaxExplosion,
+                  v => { s.Set("explosionScale", Mathf.Approximately(v, 1f) ? null : (JToken)Math.Round(v, 2)); MarkDirty(); });
+        }
+
+        /// <summary>A ships.json point ("cockpit": [x, y, z]) or list of points ("smoke": [[x, y, z], ...]).</summary>
+        void PointsField(ProjectShip s, string key, string label, bool single)
+        {
+            var points = new List<JArray>();
+            if (single) { if (s.Get(key) is JArray one && one.Count == 3) points.Add(one); }
+            else if (s.Get(key) is JArray list) points.AddRange(list.OfType<JArray>().Where(a => a.Count == 3));
+            void Store()
+            {
+                if (single) s.Set(key, points.Count > 0 ? points[0] : null);
+                else s.Set(key, points.Count > 0 ? new JArray(points) : null);
+                MarkDirty();
+            }
+            if (single)
+                FlagButton(Row(ship), label, points.Count > 0, v =>
+                {
+                    points.Clear();
+                    if (v) points.Add(new JArray(0, 0, 0));
+                    Store();
+                }, () => BuildShipPage());
+            else Add(ship, new Label(label), "mbv-inline-label");
+            for (int i = 0; i < points.Count; i++)
+            {
+                int n = i;
+                var prow = Row(ship, "mbv-xyz");
+                for (int k = 0; k < 3; k++)
+                {
+                    int c = k;
+                    Float(prow, "XYZ".Substring(c, 1), JFloat(points[n][c]) ?? 0f, -100000f, 100000f, v => { points[n][c] = Math.Round(v); Store(); });
+                }
+                if (!single) Act(prow, "×", () => { points.RemoveAt(n); Store(); BuildShipPage(); }, "mbv-step");
+            }
+            if (!single && points.Count < ModShipView.MaxSmokePoints)
+                Act(ship, T("mbAddSmokePoint", "+ Smoke point"), () => { points.Add(new JArray(0, 0, 0)); Store(); BuildShipPage(); }, "mbv-add");
+            if (points.Count > 0) Note(ship, T("mbPointsNote", "Game units like the hardpoints: X the pilot's left, Y up, Z the nose."));
         }
     }
 }

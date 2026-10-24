@@ -676,7 +676,7 @@ namespace GoF2Remake.Multiplayer
                 if (jumpedGate != null && (gateResetMs -= Time.deltaTime * 1000f) <= 0f) { SystemJump.ResetGate(jumpedGate); jumpedGate = null; }
                 bool show = SharesOrbit && visible.Value;
                 // Their ship vanished after its death tumble: the explosion (PlayerEgo::explode, PlayerHealth at 3000 ms).
-                if (shown && !show && SharesOrbit && hull.Value <= 0f) Explosion.Spawn(transform.position);
+                if (shown && !show && SharesOrbit && hull.Value <= 0f) Explosion.Spawn(transform.position, Database.Shared.Ship(ShipIndex)?.explosionScale ?? 1f);
                 if (show != shown) SetShown(show);
                 if (InSpace && hull.Value <= 0f) NetAggression.Forget(OwnerClientId);   // destroyed: no longer this player's enemy
                 if (!shown) return;

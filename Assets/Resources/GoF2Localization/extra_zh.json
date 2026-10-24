@@ -2865,5 +2865,16 @@
  "filterBilinear": "双线性",
  "filterAnisotropic": "各向异性",
  "filterForced": "强制",
- "filterForced16": "强制 16×"
+ "filterForced16": "强制 16×",
+ "mbShipView": "摄像机与损伤",
+ "mbOwnCamera": "自己的追尾摄像机",
+ "mbCamDistance": "后方距离（游戏单位；默认 1338）",
+ "mbCamHeight": "高度（600）",
+ "mbCamLookHeight": "看向这个高度的点（600）",
+ "mbCamLookAhead": "该点在飞船前方的距离（-650：在后方）",
+ "mbOwnCockpit": "自己的驾驶舱位置",
+ "mbSmokePoints": "损伤冒烟点",
+ "mbExplosionScale": "爆炸大小（1 = 战斗机的）",
+ "mbAddSmokePoint": "+ 冒烟点",
+ "mbPointsNote": "与武器挂点相同的游戏单位：X 为驾驶员左侧，Y 向上，Z 为舰首。"
 }

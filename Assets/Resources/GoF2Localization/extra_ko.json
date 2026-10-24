@@ -2865,5 +2865,16 @@
  "filterBilinear": "이중선형",
  "filterAnisotropic": "이방성",
  "filterForced": "강제",
- "filterForced16": "강제 16×"
+ "filterForced16": "강제 16×",
+ "mbShipView": "카메라와 손상",
+ "mbOwnCamera": "전용 추적 카메라",
+ "mbCamDistance": "뒤쪽 거리(게임 단위, 기본 1338)",
+ "mbCamHeight": "높이(600)",
+ "mbCamLookHeight": "이 높이의 지점을 바라봄(600)",
+ "mbCamLookAhead": "그 지점의 함선 앞쪽 거리(-650: 뒤쪽)",
+ "mbOwnCockpit": "전용 조종석 위치",
+ "mbSmokePoints": "손상 연기 지점",
+ "mbExplosionScale": "폭발 크기(1 = 전투기)",
+ "mbAddSmokePoint": "+ 연기 지점",
+ "mbPointsNote": "무기 장착점과 같은 게임 단위: X는 조종사의 왼쪽, Y는 위, Z는 함수."
 }

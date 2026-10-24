@@ -2865,5 +2865,16 @@
  "filterBilinear": "Bilineare",
  "filterAnisotropic": "Anisotropico",
  "filterForced": "Forzato",
- "filterForced16": "Forzato 16×"
+ "filterForced16": "Forzato 16×",
+ "mbShipView": "Telecamera e danni",
+ "mbOwnCamera": "Una propria telecamera d'inseguimento",
+ "mbCamDistance": "Distanza dietro (unità di gioco; 1338 di default)",
+ "mbCamHeight": "Altezza (600)",
+ "mbCamLookHeight": "Guarda un punto a questa altezza (600)",
+ "mbCamLookAhead": "Quel punto davanti alla nave (-650: dietro)",
+ "mbOwnCockpit": "Un proprio posto di pilotaggio",
+ "mbSmokePoints": "Punti di fumo dei danni",
+ "mbExplosionScale": "Dimensione dell'esplosione (1 = quella di un caccia)",
+ "mbAddSmokePoint": "+ Punto di fumo",
+ "mbPointsNote": "Unità di gioco come i punti d'arma: X la sinistra del pilota, Y in alto, Z la prua."
 }

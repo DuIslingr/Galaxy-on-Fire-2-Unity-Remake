@@ -955,9 +955,8 @@ namespace GoF2Remake.World
             chase = mainCamera.GetComponent<ChaseCamera>();
             if (chase == null) chase = mainCamera.gameObject.AddComponent<ChaseCamera>();
             chase.target = ctrl;
-            // TargetFollowCamera offsets (game local) -> Unity local (-x, y, z) * 0.05.
-            chase.offset = new Vector3(0f, 600f, -1338f) * M;
-            chase.lookOffset = new Vector3(0f, 600f, -650f) * M;
+            // TargetFollowCamera offsets (game local) -> Unity local (-x, y, z) * 0.05; a mod ship's own "camera" (ModShipView).
+            Modding.ModShipView.CameraOffsets(db.Ship(Session.ShipIndex), M, out chase.offset, out chase.lookOffset);
             // Remake debug: a freighter's or capital ship's hull is far bigger than any ship the camera was made for.
             if (PlayerHull.Big) PlayerHull.FitCamera(root.transform, ctrl.visualModel, chase, farClip);
             PlayerHull.ApplyMass(ctrl, ctrl.visualModel, chase);   // remake debug: a capital ship flies like one (0 for every ordinary ship)

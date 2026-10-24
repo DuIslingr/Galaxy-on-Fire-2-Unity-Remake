@@ -467,7 +467,7 @@ namespace GoF2Remake.Flight
             if (!exploded && deathMs >= 3000f)
             {
                 exploded = true;
-                Explosion.Spawn(transform.position);
+                Explosion.Spawn(transform.position, Database.Shared.Ship(Session.ShipIndex)?.explosionScale ?? 1f);   // a mod ship's own size
                 Haptics.Play(Haptics.Death);   // remake (the frozen camera takes no explosion rumble)
                 // At 3000 ms: the burn stops and record 11 bursts once at the ship.
                 if (burn != null) { burn.SetBurning(false); burn.Burst(); }
