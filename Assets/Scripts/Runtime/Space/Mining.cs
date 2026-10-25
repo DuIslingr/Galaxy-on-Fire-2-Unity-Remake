@@ -497,7 +497,7 @@ namespace GoF2Remake.Flight
                 if (free < 1) Say(Localization.Get(322));
                 else
                 {
-                    if (Game.GotCore)
+                    if (Game.GotCore && core >= 0)
                     {
                         Shop.AddToCargo(core, 1);
                         Session.CoresMined++;
@@ -612,7 +612,7 @@ namespace GoF2Remake.Flight
 
         /// <summary>Tons the beam may still cut into the hold from 't': a class-A rock keeps one free for its core (the minigame
         /// pays the core first; the beam pays it last).</summary>
-        int BeamRoom(Target t) => Shop.FreeCargo(db) - (t.quality >= 7 ? 1 : 0);
+        int BeamRoom(Target t) => Shop.FreeCargo(db) - (t.quality >= 7 && t.CoreItem >= 0 ? 1 : 0);
 
         readonly List<Target> deadExtractions = new List<Target>();
 
@@ -696,7 +696,7 @@ namespace GoF2Remake.Flight
             if (!ex.Depleted) return;
 
             // Every layer cut: a class-A asteroid's core comes last (if the hold has room), then the rock goes.
-            if (ex.GotCore && Shop.FreeCargo(db) >= 1)   // the slot BeamRoom kept free
+            if (ex.GotCore && target.CoreItem >= 0 && Shop.FreeCargo(db) >= 1)   // the slot BeamRoom kept free
             {
                 Launch(target, contact, normal, target.CoreItem, true);
                 Session.CoreTypesMined.Add(target.CoreItem);

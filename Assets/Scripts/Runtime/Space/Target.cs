@@ -136,7 +136,9 @@ namespace GoF2Remake.Flight
 
         /// <summary>PlayerAsteroid::getQualityString: A (7) .. D (4).</summary>
         public string QualityLetter => ((char)('A' + Mathf.Clamp(7 - quality, 0, 4))).ToString();
-        public int CoreItem => oreItem == 217 ? 218 : oreItem + 11;
+        /// <summary>The core a class-A asteroid of this ore gives (ore + 11, Novanium's 218); -1 for an ore without one: a
+        /// mod's ore (remake mods' orbit "ores") is no game ore, and ore + 11 was whatever item came 11 numbers after it.</summary>
+        public int CoreItem => oreItem == 217 ? 218 : oreItem >= 154 && oreItem <= 164 ? oreItem + 11 : -1;
 
         public bool Alive => hitpoints != null ? hitpoints.Alive : hp > 0f;
         public float HullFraction => hitpoints != null ? hitpoints.HullFraction : maxHp > 0f ? hp / maxHp : 0f;
@@ -361,7 +363,7 @@ namespace GoF2Remake.Flight
         /// race rules on the capture.</summary>
         void DropAsteroidCrate()
         {
-            bool classA = quality == 7;
+            bool classA = quality == 7 && CoreItem >= 0;   // (a class-A rock of an ore without a core drops its ore)
             if (UnityEngine.Random.Range(0, 100) > (classA ? 3 : 19)) return;
             var stack = new GoF2Remake.Data.ItemStack(classA ? CoreItem : oreItem, classA ? 1 : UnityEngine.Random.Range(0, 3) + 1);
             Crate.Spawn(transform.position, new[] { stack }, -1, oreItem == 164 ? Crate.LookVoidRock : Crate.LookRock);
