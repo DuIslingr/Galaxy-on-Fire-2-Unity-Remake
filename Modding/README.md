@@ -1396,6 +1396,7 @@ cruises from orbit to orbit:
   station, the Valkyrie, Skavac, the supernova system, Alda) or the Kaamo Club.
 - `systemMinutes`: with `"any"`, how long it stays in a system (default 90; at least `stayMinutes`, at most a day).
 - `exclude`: with `"any"`, systems it never goes to (numbers, `"mod_id:system_id"`).
+- `systems`: with `"any"`, the only systems it goes to (numbers, `"mod_id:system_id"`); none: every system.
 - `engines`: its exhausts, lit while it cruises: mounts like a ship's (`position_engine` in game units from the model's
   centre, its front +Z; `glowSize`, `glowColor`, `fxScale`); `engineColor` [r, g, b] for every one.
 - `engineFx`: an engine effect at those exhausts instead of the glow discs, the same object as a ship's `engineFx` (see
@@ -1660,7 +1661,27 @@ GLB model listed in `interiors.json`:
 ]
 ```
 
-and picked by the station: `"hangar": "kepler_hangar", "bar": "kepler_bar"` in stations.json.
+and picked by the station: `"hangar": "kepler_hangar", "bar": "kepler_bar"` in stations.json. `"bar": "none"`: the station has
+no Space Lounge (its button is gone).
+
+**Docking EVERSPACE 2's way** (`"dock": "es2"` on a hangar): the hangar is the station's own model, the same file as its
+stations.json `model` at the room's `scale` (so the room's metres are the station's), and the player docks in the station's
+orbit: the dock's marker shows in space, inside the dock zone the Dock button lands the ship on the pad, under the dock's
+camera, over 4 s (EVERSPACE 2's own docking timeline, its wobble and camera sway), and the station's menu opens over the
+live orbit (the traffic flies on; no separate hangar scene). Launch takes the ship off from the pad there: up `rise` metres,
+turning toward `takeoff`, then out to it on a boost while the view blends back behind the ship over 3 s. It works on a
+mobile station too (the dock rides along). Its markers, beside `pad` and `camera`:
+
+| Marker | |
+|---|---|
+| `ship`, `ship_ahead` | Where the docked ship's middle sits, and a point ahead of its nose. |
+| `takeoff`, `takeoff_ahead` | Where the take-off ends, and a point ahead of it (the way the ship faces there). |
+| `camera_target` | The point the dock's camera looks at while the ship is down (it follows the ship by the same offset). |
+| `dock_zone` | The middle of the box the ship docks from (`dockZone` its half sizes). Default: the pad. |
+
+Fields: `rise` (metres the take-off climbs first; default 14), `dockZone` `[right, up, forward]` half sizes in metres in the
+dock's own axes (default 196, 84, 196), `dockSound` / `undockSound` (the mod's own sounds by name, from its `sounds/`
+folder, played as the docking / take-off starts). Hangar flights don't apply (`flights` is ignored).
 
 **Markers** can also be listed in `interiors.json` (`"markers": { "pad": [x, y, z], "parked_1": [x, y, z] }`, room metres;
 they win over the model's nodes of that name): the Mod Builder's Hangars & bars kind places them by clicking into the room. A

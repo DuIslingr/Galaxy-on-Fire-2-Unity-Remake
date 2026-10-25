@@ -415,6 +415,8 @@ namespace GoF2Remake.UI
             mapButton.SetEnabled(Story.MapUnlocked);
             missionsButton.SetEnabled(Story.MapUnlocked);   // Missions: locked before campaign 9 like the Map
             loungeButton.SetEnabled(Story.LoungeUnlocked(station));
+            // Remake mods: a station without a Space Lounge ("bar": "none") has no button for it
+            loungeButton.style.display = Modding.ModWorld.NoBar(station) ? DisplayStyle.None : DisplayStyle.Flex;
             if (hints != null) BuildHints(InputMode.Current);   // the key hints follow the enabled buttons
         }
 

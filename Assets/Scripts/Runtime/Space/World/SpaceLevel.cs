@@ -131,7 +131,22 @@ namespace GoF2Remake.World
         public bool LaunchCameraOver => launchCameraMs <= 0f;
         /// <summary>A LevelScript cutscene owns the camera (MGame+0x5f): no HUD, no player control. Also an event graph's
         /// cutscene (Events.EventCutscene, "cutscene start").</summary>
-        public bool Cutscene => (Campaign != null && Campaign.Cutscene) || GoF2Remake.World.SpaceHooks.Cinematic;
+        public bool Cutscene => (Campaign != null && Campaign.Cutscene) || GoF2Remake.World.SpaceHooks.Cinematic || Es2Busy;
+        /// <summary>Remake mods: the station's dock when it docks EVERSPACE 2's way (null: GoF2's docking).</summary>
+        public Es2Dock Es2 { get; private set; }
+        /// <summary>The dock being docked at, docked at or taken off from (the orbit's station's, or a mobile station's).</summary>
+        public Es2Dock ActiveEs2 { get; private set; }
+        bool Es2Busy => ActiveEs2 != null && ActiveEs2.Running;
+        /// <summary>Remake mods: the mobile stations here that dock EVERSPACE 2's way, and the points their landmarks follow.</summary>
+        readonly System.Collections.Generic.Dictionary<MobileStation, Es2Dock> mobileDocks = new System.Collections.Generic.Dictionary<MobileStation, Es2Dock>();
+        readonly System.Collections.Generic.Dictionary<Transform, MobileStation> mobileDockPoints = new System.Collections.Generic.Dictionary<Transform, MobileStation>();
+        Es2Dock MobileDock(MobileStation m) => m != null && mobileDocks.TryGetValue(m, out var d) ? d : null;
+        /// <summary>Remake mods: docked on the station's pad inside this orbit (EVERSPACE 2's way): the Station scene runs on
+        /// top (its menu, the hangar view through this level's camera), the orbit lives on around it.</summary>
+        public bool DockedInOrbit { get; private set; }
+        /// <summary>The level's camera (the station's menu drives it while docked inside the orbit).</summary>
+        public Camera MainCamera => mainCamera;
+        readonly System.Collections.Generic.List<AudioSource> dockPausedAudio = new System.Collections.Generic.List<AudioSource>();
         public Transform Asteroids { get; private set; }
         public Backdrop Backdrop { get; private set; }
         public GameObject Station { get; private set; }
@@ -168,14 +183,16 @@ namespace GoF2Remake.World
                                && (Mining == null || Mining.State == Mining.Phase.Idle);
         /// <summary>The station is there (a level script may hide it: 78's Valkyrie jumping away); nothing docks at a hidden one.</summary>
         bool StationShown => Station == null || Station.activeInHierarchy;
-        bool InDockRange => Player.transform.position.sqrMagnitude < StationDockRange * M * StationDockRange * M;
+        bool InDockRange => Es2 != null ? Es2.InZone(Player.transform.position)   // EVERSPACE 2: the dock's Interact box
+                                         : Player.transform.position.sqrMagnitude < StationDockRange * M * StationDockRange * M;
         /// <summary>Remake mods: a mobile station whose dock range the player is in (having left it once since the level began).</summary>
         MobileStation MobileInRange
         {
             get
             {
                 if (Player == null) return null;
-                foreach (var m in Mobiles) if (m != null && m.LeftRange && m.InRange(Player.transform.position)) return m;
+                foreach (var m in Mobiles)
+                    if (m != null && m.LeftRange && (MobileDock(m) is Es2Dock d ? d.InZone(Player.transform.position) : m.InRange(Player.transform.position))) return m;
                 return null;
             }
         }
@@ -309,6 +326,41 @@ namespace GoF2Remake.World
             Navigation.Setup(db, Layout, backdrop, Player, Mining, chase, Weapons);
             Navigation.StationObject = Station;
             foreach (var m in Mobiles) Navigation.AddMobileStation(m.transform, m.Station, m.Label, m.TechLevel);
+            // Remake mods: a station docked EVERSPACE 2's way: its landmark and the autopilot are its dock; a launch from it
+            // takes off from the pad (Es2Dock).
+            if (arena == null && !prologue && Layout.hasStation) Es2 = Es2Dock.Attach(Station, Layout.stationIndex, Player, chase);
+            if (Es2 != null && Navigation.Targets.Find(x => x.kind == Navigation.Kind.Station && x.transform == null) is Navigation.Target dockTarget)
+                dockTarget.fixedPosition = Es2.DockPoint;
+            foreach (var m in Mobiles)
+            {
+                if (m == null || Es2Dock.Attach(m.gameObject, m.Station, Player, chase) is not Es2Dock md) continue;
+                mobileDocks[m] = md;
+                var point = md.MakeDockPoint();
+                mobileDockPoints[point] = m;
+                if (Navigation.Targets.Find(x => x.transform == m.transform) is Navigation.Target mt) mt.transform = point;
+            }
+            void OnTookOff()
+            {
+                // the take-off's end, like the launch camera's: on to a programmed station (the map's destination)
+                if (Session.ProgrammedStation >= 0 && !Session.InstantJump) Navigation?.ContinueToProgrammedStation();
+            }
+            if (Es2 != null) Es2.TookOff += OnTookOff;
+            foreach (var md in mobileDocks.Values) md.TookOff += OnTookOff;
+            // a launch from a station docked EVERSPACE 2's way (the orbit's, or the mobile station's it was launched from)
+            var launchDock = launchFromMobile >= 0 ? MobileDock(Mobiles.Find(m => m != null && m.Station == launchFromMobile)) : Es2;
+            if (Session.Es2TakeOff)
+            {
+                Session.Es2TakeOff = false;
+                ActiveEs2 = launchDock;
+                launchDock?.BeginTakeOff();
+            }
+            if (Session.Es2StartDocked)
+            {
+                // the station scene was loaded on its own (a save, a story move): docked on the pad, the station on top
+                Session.Es2StartDocked = false;
+                if (launchDock != null) { ActiveEs2 = launchDock; launchDock.HoldDocked(); DockInOrbit(); }
+                else if (Application.CanStreamedLevelBeLoaded(stationScene)) { Leaving = true; Session.Es2NoRedirect = true; SceneManager.LoadScene(stationScene); }
+            }
             Mining.navigation = Navigation;
             SystemJump = Player.gameObject.AddComponent<SystemJump>();
             SystemJump.Setup(db, Navigation, Player, Weapons, chase, Jumpgate);
@@ -552,15 +604,16 @@ namespace GoF2Remake.World
             // MGame::OnUpdate: the wingmen's contract runs down while flying (fast-forward included, not while paused).
             if (Session.Wingmen.Count > 0 && Session.WingmanContractMs > 0f) Session.WingmanContractMs = Mathf.Max(0f, Session.WingmanContractMs - Time.deltaTime * 1000f);
             if (Health == null) return;
-            Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic)
+            Health.invulnerable = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Es2Busy || DockedInOrbit
                                   || (Campaign != null && Campaign.PlayerInvulnerable) || (StorySpace != null && StorySpace.SuccessPending)
                                   || GoF2Remake.World.SpaceHooks.Invulnerable;
-            Collision.off = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic)
+            Collision.off = launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Es2Busy || DockedInOrbit
                             || (Campaign != null && Campaign.CollisionOff);   // PlayerEgo+0x144
             Collision.ignoreGate = Navigation.GoingToGate;
             // Hostiles, or a radio line on screen, block fast-forward (MGame::OnUpdate).
             Navigation.HostilesPresent = (Traffic != null && (Traffic.HostileCount > 0 || Traffic.ChatterVisible != null)) || (Campaign != null && Campaign.Radio != null && Campaign.Radio.Busy);
             if (Extender != null && ExtenderCancelled) Extender.Cancel();
+            if (DockedInOrbit) return;   // docked inside the orbit: no wormhole, no hidden-system leave
             UpdateWormholeRide();
             UpdateHiddenSystem();
         }
@@ -1121,15 +1174,17 @@ namespace GoF2Remake.World
             if (!InDockRange) leftDockRange = true;
             foreach (var m in Mobiles) if (m != null && !m.LeftRange && !m.InRange(Player.transform.position)) m.LeftRange = true;
             // Remake mods: the autopilot to a mobile station docks within its range.
+            if (DockedInOrbit || Es2Busy) return;   // EVERSPACE 2's docking / take-off flies the ship
             if (Navigation != null && Navigation.GoingToMobile is Navigation.Target toMobile && launchCameraMs <= 0f
-                && Mobiles.Find(m => m != null && m.transform == toMobile.transform) is MobileStation mobile && mobile.InRange(Player.transform.position))
+                && (mobileDockPoints.TryGetValue(toMobile.transform, out var viaDock) ? viaDock : Mobiles.Find(m => m != null && m.transform == toMobile.transform)) is MobileStation mobile
+                && (MobileDock(mobile) is Es2Dock zone ? zone.InZone(Player.transform.position) : mobile.InRange(Player.transform.position)))
             {
-                DockAt(mobile);
+                DockMobile(mobile);
                 return;
             }
             // MGame::dockEvent: the autopilot to the station docks within 16000 units or on touching the station (collision
             // is off during the launch).
-            if (Navigation != null && Navigation.GoingToStation && (InDockRange || Collision.TouchingStation) && launchCameraMs <= 0f && Layout.hasStation && StationShown)
+            if (Navigation != null && Navigation.GoingToStation && (InDockRange || (Es2 == null && Collision.TouchingStation)) && launchCameraMs <= 0f && Layout.hasStation && StationShown)
             {
                 if (DockingBlocked) { Navigation.Refuse(); return; }   // 525 "Not possible on a mission."
                 if (!PlayerHull.PlayerShip)   // remake debug: no hangar takes a freighter / capital ship
@@ -1170,7 +1225,17 @@ namespace GoF2Remake.World
             // Remake mods: the player's own docking near a mobile station (and not at the orbit's station) docks there.
             if (flyIn && MobileInRange is MobileStation near && !(Layout.hasStation && StationShown && leftDockRange && InDockRange))
             {
-                DockAt(near);
+                DockMobile(near);
+                return;
+            }
+            // Remake mods: EVERSPACE 2's docking: the ship lands on the dock in this orbit, then the station opens (Es2Dock).
+            if (flyIn && Es2 != null && !Leaving && Layout.hasStation && StationShown && PlayerHull.PlayerShip)
+            {
+                if (Es2Busy || DockedInOrbit) return;
+                if (DockingBlocked) { Navigation?.Refuse(); return; }
+                Navigation?.SetAutopilot(null);
+                ActiveEs2 = Es2;
+                Es2.BeginDocking(DockInOrbit);
                 return;
             }
             DockInto(flyIn);
@@ -1195,6 +1260,74 @@ namespace GoF2Remake.World
             Session.DockedFromSpace = flyIn;
             Weapons?.StoreAmmo();   // MGame::dockEvent saves the ship state to Status
             if (Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);
+        }
+
+        /// <summary>Remake mods: EVERSPACE 2's docking is over (the ship on its pad): the Station scene loads on top of this
+        /// level, which lives on around it (traffic, sky, the station's own model as the hangar); the HUD and the flight
+        /// controls wait, the ship's state goes to Status like a docking's, its sounds pause.</summary>
+        void DockInOrbit()
+        {
+            if (ActiveEs2 == null || !Application.CanStreamedLevelBeLoaded(stationScene)) { DockInto(false); return; }
+            if (ActiveEs2.StationIndex != Layout.stationIndex && Session.StationIndex != ActiveEs2.StationIndex)
+            {
+                // a mobile station's dock (DockAt's): its hangar
+                Session.PreviousStationIndex = Layout.stationIndex;
+                Session.StationIndex = ActiveEs2.StationIndex;
+            }
+            DockedInOrbit = true;
+            SpaceHooks.DockedInOrbit = true;
+            Session.LaunchedFromStation = false;
+            Session.DockedFromSpace = false;
+            Weapons?.StoreAmmo();
+            Health?.StoreToSession();
+            Navigation?.SetAutopilot(null);
+            if (Player.visualModel != null) Player.visualModel.gameObject.SetActive(false);   // the station shows its own
+            dockPausedAudio.Clear();
+            // (the loops: music, engines, ambience; one-shots like the docking's own sound play out)
+            foreach (var a in FindObjectsByType<AudioSource>())
+                if (a.isPlaying && a.loop && a.gameObject.scene == gameObject.scene) { a.Pause(); dockPausedAudio.Add(a); }
+            SceneManager.LoadSceneAsync(stationScene, LoadSceneMode.Additive);
+        }
+
+        void OnDestroy()
+        {
+            if (DockedInOrbit) SpaceHooks.DockedInOrbit = false;   // (a scene loaded over both: a save, the menu)
+        }
+
+        /// <summary>Remake mods: the station's Launch while docked inside the orbit: the station's scene goes, the ship (as the
+        /// station left it: a new hull, equipment, repairs) takes off EVERSPACE 2's way from its pad.</summary>
+        public void UndockFromOrbit()
+        {
+            if (!DockedInOrbit) return;
+            DockedInOrbit = false;
+            SpaceHooks.DockedInOrbit = false;
+            var station = SceneManager.GetSceneByName(stationScene);
+            if (station.IsValid() && station.isLoaded) SceneManager.UnloadSceneAsync(station);
+            RestoreOrbitSky();
+            if (mainCamera != null) mainCamera.gameObject.SetActive(true);
+            foreach (var a in dockPausedAudio) if (a != null) a.UnPause();
+            dockPausedAudio.Clear();
+            SwapPlayerShip(Session.ShipIndex);   // what the station changed: the hull, its build, the equipment, the turrets
+            Health?.ReloadFromSession(db);       // repaired on docking
+            leftDockRange = false;
+            ActiveEs2.BeginTakeOff();
+        }
+
+        /// <summary>Remake mods: the player's docking at a mobile station: EVERSPACE 2's onto its pad when it docks that way,
+        /// else its hangar (DockAt).</summary>
+        void DockMobile(MobileStation mobile)
+        {
+            if (MobileDock(mobile) is not Es2Dock d) { DockAt(mobile); return; }
+            if (Es2Busy || DockedInOrbit || Leaving) return;
+            if (DockingBlocked) { Navigation?.Refuse(); return; }
+            if (!PlayerHull.PlayerShip)
+            {
+                Navigation?.Refuse(string.Format(Localization.Extra("hullNoDock", "The {0} doesn't fit in the hangar."), PlayerHull.Label));
+                return;
+            }
+            Navigation?.SetAutopilot(null);
+            ActiveEs2 = d;
+            d.BeginDocking(DockInOrbit);
         }
 
         /// <summary>Remake mods: docks at a mobile station (its hangar and bar: the Station scene with its index).</summary>

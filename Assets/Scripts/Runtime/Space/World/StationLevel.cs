@@ -179,8 +179,31 @@ namespace GoF2Remake.World
 
         // ---- build -------------------------------------------------------------------------------------------
 
+        /// <summary>Remake mods: docked inside the orbit (EVERSPACE 2's dock, Es2Dock): this scene runs on top of the space level,
+        /// whose station model is the hangar (hangarRoot rides on its hull) and whose camera shows it.</summary>
+        SpaceLevel orbit;
+        bool orbitDocked, redirected;
+        public bool DockedInOrbit => orbitDocked;
+
         void Awake()
         {
+            // Remake mods: a station docked EVERSPACE 2's way is docked at inside its orbit: loaded on its own (a save, a story
+            // move, a station reload), the flight level starts docked on its pad and loads this scene on top.
+            orbit = FindAnyObjectByType<SpaceLevel>();
+            orbitDocked = orbit != null && orbit.DockedInOrbit && orbit.ActiveEs2 != null;
+            bool noRedirect = Session.Es2NoRedirect;
+            Session.Es2NoRedirect = false;
+            if (!orbitDocked && !noRedirect && stationOverride < 0 && !Modding.ModBuilder.Active && !GoF2Remake.Data.NetSession.SessionLost
+                && Modding.ModInteriors.Es2DockOf(Session.StationIndex) != null && Application.CanStreamedLevelBeLoaded(spaceScene))
+            {
+                redirected = true;
+                enabled = false;
+                foreach (var go in gameObject.scene.GetRootGameObjects()) if (go != gameObject) go.SetActive(false);
+                Session.Es2StartDocked = true;
+                Session.LaunchedFromStation = Session.ArrivedByTravel = false;
+                SceneManager.LoadScene(spaceScene);
+                return;
+            }
             Story.ReopenUnshownSuccess();   // #88
             Modding.ModShips.ModelsChanged += OnModShipModels;
             Modding.ModTraffic.Warm();   // remake mods: more kit parts for the NPCs' random builds, loaded while docked
@@ -230,21 +253,32 @@ namespace GoF2Remake.World
             if (Story.AutosaveAllowed(station)) Session.Autosave();
             BarRace = StationTables.BarRace(interior >= 0 ? interior : Layout.raceId);
             if (mainCamera == null) mainCamera = Camera.main;
-            ApplyAntialiasing();
-            SetupDepthOfField();
-            Settings.Changed -= ApplyAntialiasing;
-            Settings.Changed += ApplyAntialiasing;
+            if (orbitDocked)
+            {
+                // the orbit's own camera, sky, backdrop, lights and post-processing show the dock; this scene's step aside
+                if (mainCamera != null) mainCamera.gameObject.SetActive(false);
+                foreach (var v in FindObjectsByType<Volume>(FindObjectsInactive.Include)) if (v.gameObject.scene == gameObject.scene) v.enabled = false;
+                if (keyLight != null) keyLight.enabled = false;
+                mainCamera = orbit.MainCamera;
+            }
+            else
+            {
+                ApplyAntialiasing();
+                SetupDepthOfField();
+                Settings.Changed -= ApplyAntialiasing;
+                Settings.Changed += ApplyAntialiasing;
 
-            OrbitBuilder.SetupSky(Layout);   // the system's sky shows through the openings of both rooms
-            OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
-            // Remake: the orbit's sky layers outside too, as in space: the planet ring sky (stations 120, 126, 130, 132), the
-            // supernova flares (the stronger "nasty" ones from mission 106) and the storms in the supernova system, the asteroid
-            // belt of systems 24-26 (Skavac, Loma, Shima) lit by the system's sun.
-            SkyLayers.Spawn(Layout, mainCamera);
+                OrbitBuilder.SetupSky(Layout);   // the system's sky shows through the openings of both rooms
+                OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
+                // Remake: the orbit's sky layers outside too, as in space: the planet ring sky (stations 120, 126, 130, 132), the
+                // supernova flares (the stronger "nasty" ones from mission 106) and the storms in the supernova system, the asteroid
+                // belt of systems 24-26 (Skavac, Loma, Shima) lit by the system's sun.
+                SkyLayers.Spawn(Layout, mainCamera);
+            }
             BuildHangar();
             BuildBar();
             // Remake: ships now and then flying past outside the bar's windows (not at an evacuated station).
-            if (!Evacuated) gameObject.AddComponent<BarFlybys>().Setup(this, barRoot, barPosB, barRotB, BarRace == 1, RandomParkedShip,
+            if (!Evacuated && !orbitDocked) gameObject.AddComponent<BarFlybys>().Setup(this, barRoot, barPosB, barRotB, BarRace == 1, RandomParkedShip,
                                                        ship => SpawnShip(ship, Vector3.zero, Quaternion.identity, barRoot, "Flyby"));
             Debug.Log($"StationLevel: station {station} {Station?.name} ({Station?.systemName}), hangar {HangarIndex}, " +
                       $"bar {BarRace}, ship {shipIndex}, {VisitorCount} visitors");
@@ -264,7 +298,8 @@ namespace GoF2Remake.World
             SetView(StationView.Hangar, true);
 
             // Remake: docked from space = fly in through the forcefield (not after loading a save, a new game, a reload).
-            bool flyIn = Session.DockedFromSpace && Settings.HangarFlights;
+            // (a station docked EVERSPACE 2's way has its ship on the pad already: World.Es2Dock landed it in its orbit)
+            bool flyIn = Session.DockedFromSpace && Settings.HangarFlights && !Es2Docked;
             Session.DockedFromSpace = false;
             ArrivedFlying = flyIn;
             var lane = Lane;
@@ -290,7 +325,7 @@ namespace GoF2Remake.World
         {
             get
             {
-                if (customLane != null || customHangar == null || !customHangar.hasGate || !customHangar.def.flights) return customLane;
+                if (customLane != null || customHangar == null || !customHangar.hasGate || !customHangar.def.flights || customHangar.es2Dock) return customLane;
                 var outward = customHangar.gateOut - customHangar.gate;
                 outward.y = 0f;
                 if (outward.sqrMagnitude < 1e-4f) return null;
@@ -341,7 +376,8 @@ namespace GoF2Remake.World
             string room = StationTables.HangarRoom[HangarIndex];
             // Level::createScene: PlayerStatic + setRotation(0, pi, 0) = Unity identity. Remake mods: a custom room as it is.
             GameObject roomGo;
-            if (customHangar != null) { roomGo = Instantiate(customHangar.template, Vector3.zero, Quaternion.identity, hangarRoot); roomGo.name = "Room (" + customHangar.def.key + ")"; }
+            if (orbitDocked && Es2Docked) roomGo = null;   // the station in its orbit is the room
+            else if (customHangar != null) { roomGo = Instantiate(customHangar.template, Vector3.zero, Quaternion.identity, hangarRoot); roomGo.name = "Room (" + customHangar.def.key + ")"; }
             else roomGo = Spawn(room, Vector3.zero, OrbitLayout.RotationToUnity(new Vector3(0f, Mathf.PI, 0f)), hangarRoot, "Room");
             HangarRoom = roomGo != null ? roomGo.transform : null;
             // CutScene::process updates every geometry of the scene each frame, so the room's animated layers all run,
@@ -406,6 +442,15 @@ namespace GoF2Remake.World
             }
             SpaceHooks.StationBuilt?.Invoke(this);   // multiplayer: the other players in the hangar (NetHangar)
 
+            // Docked inside the orbit: the hangar rides on the station's hull (room metres in its frame; a mobile station
+            // carries it along), in the space level's scene.
+            if (orbitDocked && Es2Docked)
+            {
+                hangarRoot.SetParent(orbit.ActiveEs2.Hull, false);
+                hangarRoot.localPosition = Vector3.zero;
+                hangarRoot.localRotation = Quaternion.identity;
+                hangarRoot.localScale = Vector3.one / Mathf.Max(0.001f, customHangar.def.scale);
+            }
             // Camera: ModStation::OnInitialize state 0x14 (phone table), rotation order 2 with roll -0.03.
             hangarCamBase = customHangar != null ? Vector3.zero : StationTables.HangarCameraPos[HangarIndex];   // a custom room drifts about its marker
             for (int i = 0; i < 3; i++) { driftSign[i] = Random.Range(0, 20) < 10; NextDriftLeg(i, Base(i)); }
@@ -781,14 +826,16 @@ namespace GoF2Remake.World
             if (go != null && go.GetComponent<Modding.EngineMaterialGlow>() is Modding.EngineMaterialGlow nozzles) nozzles.followEngine = true;
             // Remake: a soft shadow on the floor under every hangar ship (not the bar's flybys); it shows once the ship rests
             // (the "Hangar ship shadows" option: off, the player's own ship only, every ship).
-            if (go != null && hangarRoot != null && parent == hangarRoot) HangarShipShadow.Attach(go, entry.name, true, label == "Player ship");   // at once; a landing flight hides it (ExpectLanding)
+            if (go != null && hangarRoot != null && parent == hangarRoot && !orbitDocked) HangarShipShadow.Attach(go, entry.name, true, label == "Player ship");   // at once; a landing flight hides it (ExpectLanding)
             return go;
         }
 
         GameObject SpawnShip(int index, Vector3 unityPos, Quaternion unityRot, Transform parent, string label, AssemblyData assembly = null)
         {
             var go = SpawnShip(index, Vector3.zero, 0f, parent, label, assembly);
-            if (go != null) go.transform.SetPositionAndRotation(unityPos, unityRot);
+            // (docked inside the orbit the hangar's places are room metres in hangarRoot's frame, on the station's hull)
+            if (go != null && orbitDocked && parent != null && parent == hangarRoot) go.transform.SetLocalPositionAndRotation(unityPos, unityRot);
+            else if (go != null) go.transform.SetPositionAndRotation(unityPos, unityRot);
             return go;
         }
 
@@ -813,6 +860,7 @@ namespace GoF2Remake.World
 
         void OnDestroy()
         {
+            if (orbitDocked && hangarRoot != null) Destroy(hangarRoot.gameObject);   // it rode on the station in the orbit's scene
             Modding.ModShips.ModelsChanged -= OnModShipModels;
             Settings.Changed -= ApplyAntialiasing;
             if (dofProfile != null) Destroy(dofProfile);
@@ -1048,6 +1096,17 @@ namespace GoF2Remake.World
         void ApplyHangarLighting()
         {
             SkyReflection.SetSystem(Layout);   // the hulls' reflection: the station's system's cubemap
+            if (orbitDocked) { if (keyLight != null) keyLight.enabled = false; return; }   // the orbit's own light
+            if (Es2Docked)
+            {
+                // EVERSPACE 2's dock is the station in its orbit: the system's sun and the sky's ambient, as in space (the ship
+                // landed there a moment ago), not a hangar's flat light
+                OrbitBuilder.SetupLights(Layout, keyLight, null, sunIntensityAt2, sunShadows: LightShadows.None);
+                RenderSettings.ambientMode = AmbientMode.Skybox;
+                DynamicGI.UpdateEnvironment();
+                GoF2Remake.World.SpaceHooks.SceneFog(false);
+                return;
+            }
             if (customHangar == null) SkyReflection.SetHangar(HangarIndex);   // Remake: the hangar's own (none in the Valkyrie's)
             if (keyLight != null)
             {
@@ -1123,9 +1182,21 @@ namespace GoF2Remake.World
         /// <summary>Lets the ship keep turning after a drag; slows by x0.9 per 20 ms frame (normalised).</summary>
         public void FlingShip(float gameRadiansPerSecond) => flingVelocity = PlayerFlying ? 0f : gameRadiansPerSecond;
 
+        /// <summary>Remake mods: the hangar is the station's own model docked EVERSPACE 2's way (World.Es2Dock): the ship rests on
+        /// the dock's DockingTransform (its hull's middle on it, facing along it), the camera still on the dock's spring arm.</summary>
+        bool Es2Docked => customHangar != null && customHangar.es2Dock;
+
         void ApplyShipYaw()
         {
             if (playerShip == null || PlayerFlying) return;
+            if (Es2Docked)
+            {
+                // (room metres: hangarRoot's frame, the world's unless docked inside the orbit)
+                var rot = Quaternion.LookRotation(customHangar.shipAhead - customHangar.ship, Vector3.up);
+                var local = ShipLocalBounds(playerShip, false);
+                playerShip.SetLocalPositionAndRotation(customHangar.ship - rot * Vector3.Scale(local.center, playerShip.localScale), rot);
+                return;
+            }
             playerShip.rotation = OrbitLayout.RotationToUnity(new Vector3(0f, shipYaw, 0f));
             // Modified: a hull off its pivot stands centred on the pad and turns about its own middle (CentreOnPad).
             if (padCentre != Vector3.zero) playerShip.position = padPivot - playerShip.TransformVector(padCentre);
@@ -1261,7 +1332,17 @@ namespace GoF2Remake.World
             Session.LastDepartureTime = Time.realtimeSinceStartup;   // Status+0x70, for computerTradeGoods
             Session.ArrivedByTravel = false;
             Session.LaunchedFromStation = true;
+            // Remake mods: EVERSPACE 2's take-off from the dock in the station's orbit instead of the launch camera (Es2Dock)
+            Session.Es2TakeOff = Es2Docked;
+            if (Es2Docked) Session.LaunchedFromStation = false;
             int storyOrbit = Story.LaunchStation;
+            if (orbitDocked && storyOrbit < 0)
+            {
+                // docked inside the orbit: this scene goes, the ship takes off from its pad there
+                Session.Es2TakeOff = false;
+                orbit.UndockFromOrbit();
+                return;
+            }
             if (storyOrbit >= 0)
             {
                 // Index 48: departStation(58) + initStreamOutPosition, arriving in B'akrram's orbit (Taret Orskk flies).
@@ -1269,6 +1350,7 @@ namespace GoF2Remake.World
                 Session.StationIndex = storyOrbit;
                 Session.ArrivedByTravel = true;
                 Session.LaunchedFromStation = false;
+                Session.Es2TakeOff = false;
             }
             if (Application.CanStreamedLevelBeLoaded(spaceScene)) SceneManager.LoadScene(spaceScene);
         }
@@ -1378,8 +1460,9 @@ namespace GoF2Remake.World
                 if (customHangar != null)
                 {
                     // A custom hangar: its "camera" marker, drifting a few metres, looking at "camera_target" (else the pad).
-                    var at = customHangar.camera + OrbitLayout.ToUnity(p);
-                    cam.SetPositionAndRotation(at, Quaternion.LookRotation(customHangar.cameraTarget - at, Vector3.up));
+                    // EVERSPACE 2's dock: the CineCamera stays on its spring arm (no drift).
+                    var at = hangarRoot.TransformPoint(customHangar.camera) + (Es2Docked ? Vector3.zero : OrbitLayout.ToUnity(p));
+                    cam.SetPositionAndRotation(at, Quaternion.LookRotation(hangarRoot.TransformPoint(customHangar.cameraTarget) - at, hangarRoot.up));
                     SetCustomLens(customHangar.def, StationTables.HangarFov, StationTables.HangarNear, StationTables.HangarFar, false);
                 }
                 else

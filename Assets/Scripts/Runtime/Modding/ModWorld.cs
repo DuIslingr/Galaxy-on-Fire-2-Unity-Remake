@@ -258,7 +258,10 @@ namespace GoF2Remake.Modding
 
         /// <summary>A station's custom hangar / bar (stations.json "hangar" / "bar": an interiors.json key; ModInteriors), null: none.</summary>
         public static string HangarKey(int station) => stationHangar.TryGetValue(station, out var k) ? k : null;
-        public static string BarKey(int station) => stationBar.TryGetValue(station, out var k) ? k : null;
+        public static string BarKey(int station) => stationBar.TryGetValue(station, out var k) && k != NoBarKey ? k : null;
+        const string NoBarKey = "none";
+        /// <summary>stations.json "bar": "none": the station has no Space Lounge (its button hidden, Story.LoungeUnlocked false).</summary>
+        public static bool NoBar(int station) => stationBar.TryGetValue(station, out var k) && k == NoBarKey;
         static readonly Dictionary<int, string> planetTextures = new Dictionary<int, string>(), sunTextures = new Dictionary<int, string>(),
                                                 mapTextures = new Dictionary<int, string>();
         static readonly HashSet<int> mapRings = new HashSet<int>();
@@ -726,7 +729,8 @@ namespace GoF2Remake.Modding
                         if (ModJson.Get(o, "mapPlace") is JToken placeToken) mapPlaces[st.index] = ParseMapPlace(placeToken, d.where);
                         // A custom room: "mod_id:interior_id", or this mod's own id.
                         if (ModJson.Str(o, "hangar") is string hk) stationHangar[st.index] = hk.Contains(":") ? hk : mod.Id + ":" + hk;
-                        if (ModJson.Str(o, "bar") is string bk) stationBar[st.index] = bk.Contains(":") ? bk : mod.Id + ":" + bk;
+                        // ("bar": "none": the station has no Space Lounge, NoBar)
+                        if (ModJson.Str(o, "bar") is string bk) stationBar[st.index] = bk.Contains(":") || bk == NoBarKey ? bk : mod.Id + ":" + bk;
                         if (ModJson.Str(o, "model") is string model)
                         {
                             var sm = new StationModel
@@ -785,9 +789,14 @@ namespace GoF2Remake.Modding
                     foreach (var r in m.excludeRefs)
                         if (TryResolveSystem(r, out int xs)) skipSystems.Add(xs);
                         else Report(m.mod, $"{m.where}: \"exclude\" \"{r}\" is no system");
+                    var onlySystems = new HashSet<int>();
+                    foreach (var r in m.systemRefs)
+                        if (TryResolveSystem(r, out int ys)) onlySystems.Add(ys);
+                        else Report(m.mod, $"{m.where}: \"systems\" \"{r}\" is no system");
                     foreach (var sy in db.Systems.OrderBy(x => x.index))
                     {
                         if (skipSystems.Contains(sy.index) || IsMissingSystem(sy.index)) continue;
+                        if (m.systemRefs.Count > 0 && !onlySystems.Contains(sy.index)) continue;
                         var orbits = sy.stations.Where(x => !skip.Contains(x) && !mobiles.ContainsKey(x) && !IsMissingStation(x)).ToList();
                         if (orbits.Count == 0) continue;
                         m.roamSystems.Add((sy.index, orbits));
@@ -846,7 +855,8 @@ namespace GoF2Remake.Modding
         // ---- mobile stations (MobileStations) -----------------------------------------------------------------------
 
         /// <summary>stations.json "mobile": true or { "route": [stations] | "any", "stayMinutes": 15, "systemMinutes": 90,
-        /// "exclude": [systems], "speed": 0.2, "race": "terran", "engines": [mounts], "engineColor": [r, g, b], "engineFx": {...} }:
+        /// "exclude": [systems], "systems": [systems], "speed": 0.2, "race": "terran", "engines": [mounts], "engineColor": [r, g, b],
+        /// "engineFx": {...} }:
         /// a station with no planet that cruises from orbit to orbit (MobileStations).</summary>
         public class MobileSpec
         {
@@ -864,6 +874,8 @@ namespace GoF2Remake.Modding
             public bool roam;
             public float systemMinutes = 90f;
             public readonly List<string> excludeRefs = new List<string>();
+            /// <summary>"systems": roaming ("route": "any") only these systems (none: every system).</summary>
+            public readonly List<string> systemRefs = new List<string>();
             public readonly List<(int system, List<int> orbits)> roamSystems = new List<(int, List<int>)>();
             /// <summary>"engines": its exhausts, mounts like ships.json's (position_engine in game units from its centre,
             /// glowSize, glowColor), lit while it cruises; "engineColor" [r, g, b] for every one.</summary>
@@ -904,6 +916,7 @@ namespace GoF2Remake.Modding
             else m.routeRefs.AddRange(ModJson.Strings(o, "route"));
             m.systemMinutes = Mathf.Clamp(ModJson.Float(o, "systemMinutes", Mathf.Max(90f, m.stayMinutes), file), m.stayMinutes, 24f * 60f);
             m.excludeRefs.AddRange(ModJson.Strings(o, "exclude"));
+            m.systemRefs.AddRange(ModJson.Strings(o, "systems"));
             if (ModJson.Get(o, "engines") is JArray ea)
             {
                 m.engines = new List<WeaponMount>();

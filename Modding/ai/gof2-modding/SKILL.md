@@ -456,7 +456,7 @@ orbit), `"jumpgatePosition"` / `"arrival"`: [x, y, z], `"asteroids": false | { "
 "type": rock | void | ice | magma, "ores": [item | { item, chance }] }`, `"fog": false | { "color", "end" }`, `"sun": [yaw,
 pitch]`, `"planet": { "size", "yaw", "pitch" }`.
 
-A new station's `"mobile": true | { "route": [stations, any systems] | "any", "stayMinutes": 15, "systemMinutes": 90, "exclude": [systems], "speed": 0.2, "race": "terran", "engines": [exhaust mounts], "engineColor": [r, g, b], "engineFx": {ships.json's engineFx, each exhaust by its fxScale} }` makes it a moving
+A new station's `"mobile": true | { "route": [stations, any systems] | "any", "stayMinutes": 15, "systemMinutes": 90, "exclude": [systems], "systems": [the only systems it roams], "speed": 0.2, "race": "terran", "engines": [exhaust mounts], "engineColor": [r, g, b], "engineFx": {ships.json's engineFx, each exhaust by its fxScale} }` makes it a moving
 one: no planet (not one of its system's stations, not on the map, not counted in the 7), it cruises through the orbits of its
 route in turn (default its own system's stations; "any" roams every system, systemMinutes in each, never the story's or the Kaamo Club's orbits; the star map marks where it is; docked, it shows the system of the orbit it is in, its own `race` (default
 its `interior`'s) wherever it is, its name without "Station"), by the real clock (the same for every player), crossing each orbit sideways 6-8 km
@@ -476,7 +476,10 @@ on black, 8192 x 4096 sharp. Stations: techLevel 0-10, planet 0-22 or 24-26, loo
 it borrows, modelSize = largest extent in game units (default 40000), collision box/sphere/none or `volumes` (what NPC fighters steer around; the player and shots use the model's real meshes, `none` turns all off), interior =
 race of hangar and bar, or own rooms `hangar` / `bar` from interiors.json (GLB rooms with marker empties: hangar `pad`,
 `camera` required, `camera_target`, `parked_N`, `gate`, `gate_out`, `light`; bar `camera`, `camera_target`, `visitor_N`
-required). `override` changes originals (name, techLevel, looks, music...).
+required; `"bar": "none"` = no Space Lounge). A hangar with `"dock": "es2"` is the station's own model (same file and scale)
+docked EVERSPACE 2's way in the orbit: markers `ship`, `ship_ahead`, `takeoff`, `takeoff_ahead`, `dock_zone`, fields
+`rise`, `dockZone` [right, up, forward half metres], `dockSound` / `undockSound` (sounds/ names). `override` changes
+originals (name, techLevel, looks, music...).
 
 ## characters.json, voices, music, sounds, textures
 

@@ -362,6 +362,27 @@ namespace GoF2Remake.Flight
             if (Gamma < 1f) { Hp.hull = 0; Target.hp = 0; }   // PlayerEgo::update: the gamma pool empty = death
         }
 
+        /// <summary>Remake mods (docked inside the orbit, World.Es2Dock): the ship state to Status, as docking does.</summary>
+        public void StoreToSession()
+        {
+            if (Target == null || Hp == null || Dead) return;
+            Session.PlayerHull = Hp.hull;
+            Session.PlayerArmor = Hp.armor;
+            Session.PlayerShield = Hp.shield;
+        }
+
+        /// <summary>Remake mods: back from the station docked inside the orbit: the loadout and Status' pools (repaired, a new
+        /// hull or shield), as a launch's new level reads them (Setup).</summary>
+        public void ReloadFromSession(Database db)
+        {
+            RefreshLoadout(db);
+            if (Session.PlayerHull >= 0) Hp.hull = Mathf.Clamp(Session.PlayerHull, 1, Hp.maxHull);
+            if (Session.PlayerArmor >= 0) Hp.armor = Mathf.Clamp(Session.PlayerArmor, 0, Hp.maxArmor);
+            if (Session.PlayerShield >= 0f) Hp.shield = Mathf.Clamp(Session.PlayerShield, 0f, Hp.maxShield);
+            Target.hp = Hp.hull;
+            lastCombined = Hp.Combined;
+        }
+
         void OnDestroy()
         {
             OpaqueTexture.Request(this, false);

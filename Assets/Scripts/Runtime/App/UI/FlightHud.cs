@@ -885,6 +885,15 @@ namespace GoF2Remake.UI
                 builderSpace.Update();
                 return;
             }
+            // Remake mods: docked inside the orbit (EVERSPACE 2's dock): the station's menu runs over the orbit, no HUD
+            bool dockedInOrbit = level != null && level.DockedInOrbit;
+            if (dockedInOrbit != hudHiddenDocked)
+            {
+                hudHiddenDocked = dockedInOrbit;
+                root.style.display = dockedInOrbit ? DisplayStyle.None : DisplayStyle.Flex;
+                if (dockedInOrbit) { touch?.ReleaseAll(); ship?.SetSteer(Vector2.zero); weapons?.SetPrimaryHeld(false); }
+            }
+            if (dockedInOrbit) return;
             missileWarning?.Hide();   // shown again below while missiles fly at the player and the HUD shows
             // The pause menu pauses the voice too: the shared voice source ignores the listener pause (it has to play while
             // a conversation pauses the game), so the radio's line kept talking over the menu. Multiplayer doesn't pause.
@@ -1820,9 +1829,11 @@ namespace GoF2Remake.UI
             if (!focused && Application.isMobilePlatform) OnApplicationPause(true);
         }
 
+        bool hudHiddenDocked;
+
         void OpenPause()
         {
-            if (level == null || pauseMenu.IsOpen || (health != null && health.Dead) || StarMap.IsOpen || storyDialogue.IsOpen) return;
+            if (level == null || level.DockedInOrbit || pauseMenu.IsOpen || (health != null && health.Dead) || StarMap.IsOpen || storyDialogue.IsOpen) return;
             if (nav != null && nav.MenuOpen) CloseAutopilotMenu();
             touch?.ReleaseAll();
             ship?.SetSteer(Vector2.zero);

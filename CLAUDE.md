@@ -3338,6 +3338,35 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   above its own engine helpers (the importer's scene reader took each node's parent from the record before: fixed in
   `ae4_scene`). Tests `ModCapitalShipsTests`. Verified in Play mode (the GoF3 Ships mod's Manticore, 6.3 km, Magnetar):
   found in Dis's orbit cruising nose first, docked into its hangar, launched back beside it.
+- **EVERSPACE 2 docking** (remake, 2026-10-25, the user's request: ES2's stations and the Mobile Homebase dock as ES2 does;
+  `World.Es2Dock`, interiors.json hangar `"dock": "es2"`, `ModInteriors.Es2DockOf`): the hangar room is the station's own
+  model (same GLB, the room's `scale` = the station's), so its markers map into the orbit through the station's `hull`
+  (`W(m) = hull.TransformPoint(m / scale)`). From BP_DockableStation's decompiled blueprint and its timeline curves
+  (`Es2DockCurves`, UE cubic keys): the dock's marker is the station landmark (`DockPoint`, the Interact box's centre); Dock
+  works inside that box (`InZone`, TriggerBoxExtent 7000 x 7000 x 3000 cm, 35 m up) instead of GoF2's range; docking cuts
+  to the dock's CineCamera (spring arm 35 m, pitch -15 yaw 160, 23 deg up a 16:9 screen) looking straight at the ship + its
+  look offset while ShipDocking (5 s) moves it TLerp(start, DockingTransform, TransformAlpha) (landed at 4 s; the ship's
+  bounds centre on it), banking wobble BankingAlpha x 30 x InitialDistanceFactor, the SteadyCam sway (1 deg at 5.19 / 5.88
+  / 6.95 rad/s x factor x GlobalAlpha); take-off (3 s): climb TakeOffHeight turning to the take-off point (Align), then out
+  to TakeOffTransform (Launch, accelerating), banking x 10, the camera eased toward the ship, at 1 s the boost and a 3 s
+  ease-in-out (exp 4) view blend to the chase camera (Es2Dock restores the chase camera's own pose each Update so its
+  state stays its own); `dockSound` / `undockSound` (the mod's ES2 S_SC_Docking / Undocking). **Docked inside the orbit**
+  (the user's choice: no separate space): when the ship lands, `SpaceLevel.DockInOrbit` loads the Station scene
+  additively; the orbit lives on (traffic, sky), the ship held on the pad (`Es2Dock.Docked`, a mobile station carries it),
+  its model hidden, the HUD hidden (`FlightHud`), flight input halted (`SpaceHooks.DockedInOrbit` in
+  `Navigation.InputHalted`), looping sounds paused, invulnerable, the ship state stored (`PlayerHealth.StoreToSession`).
+  StationLevel's orbit mode (`DockedInOrbit`): no room, its camera / volumes / key light off, the space camera driven
+  instead, `hangarRoot` parented under the station's hull (scale 1 / room scale) so every hangar place is room metres
+  (`SpawnShip` local); Launch = `SpaceLevel.UndockFromOrbit` (unload, `SwapPlayerShip` + `ReloadFromSession` for what the
+  station changed, the take-off; a story launch still reloads). The Station scene loaded on its own for such a station (a
+  save, a story move) redirects to Space with `Session.Es2StartDocked` (docked on the pad, then additive);
+  `Session.Es2NoRedirect` when no dock could be found. Mobile stations: a dock each (`mobileDocks`, their landmark the dock
+  point), `ActiveEs2` the one in use. stations.json `"bar": "none"` (`ModWorld.NoBar`): no Space Lounge
+  (`Story.LoungeUnlocked`, the button hidden): ES2's stations, the Homebase, GoF3's Manticore. A roaming mobile station's
+  `"systems"`: only those (the Homebase: ES2's sectors). Tests `Es2DockTests`. Verified in Play mode: docking and take-off
+  at Union Bridge and at the Mobile Homebase (into its hall, out through its open end), the station menu over the live
+  orbit, Launch without a reload, the sounds. Not done: the dock's spotlights, the landing dust, multiplayer (other
+  players' view of a docked ship, NetHangar).
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),
