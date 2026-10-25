@@ -227,6 +227,21 @@ namespace GoF2Remake.Data
         /// <summary>"es2": EVERSPACE 2's engine effects (Modding.Es2EngineVfx: the glow, trails and lights at the exhaust and
         /// booster mounts) without flame materials of its own and without the glow discs (a capital ship's sockets).</summary>
         public string engineStyle;
+        /// <summary>Which of EVERSPACE 2's engine effects an "es2" ship (or one with flames) shows (ships.json "es2Engine";
+        /// null = all; Modding.Es2EngineVfx).</summary>
+        public CustomEs2Engine es2Engine;
+        /// <summary>A mod capital ship that jumps away when its hull is depleted instead of being destroyed (World.CapitalRetreat:
+        /// EVERSPACE 2's Dreadnought), so an encounter with it can come again.</summary>
+        public bool retreat;
+    }
+
+    /// <summary>Remake mods: EVERSPACE 2's per-ship switches of its engine effects (a ship blueprint's SpawnEngineGlow /
+    /// SpawnEngineTrails; EVERSPACE 2's warships and freighters have them off, and EngineVFXEnabled false turns both off):
+    /// 'glow' the camera-facing glow at each socket (an NPC's), 'trails' its trail (an NPC's) and the player's veils.</summary>
+    [System.Serializable] public class CustomEs2Engine
+    {
+        public bool glow = true;
+        public bool trails = true;
     }
 
     /// <summary>Remake mods: one subsystem of a capital ship (ships.json "subsystems"; World.CapitalSubsystems): a target of

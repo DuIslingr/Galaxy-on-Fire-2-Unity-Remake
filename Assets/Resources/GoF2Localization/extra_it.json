@@ -2877,5 +2877,7 @@
  "mbSmokePoints": "Punti di fumo dei danni",
  "mbExplosionScale": "Dimensione dell'esplosione (1 = quella di un caccia)",
  "mbAddSmokePoint": "+ Punto di fumo",
- "mbPointsNote": "Unità di gioco come i punti d'arma: X la sinistra del pilota, Y in alto, Z la prua."
+ "mbPointsNote": "Unità di gioco come i punti d'arma: X la sinistra del pilota, Y in alto, Z la prua.",
+ "capitalRetreats": "{0} sta saltando via!",
+ "mbRepeatMinutes": "Ritorna dopo (minuti di gioco, 0 = una volta)"
 }

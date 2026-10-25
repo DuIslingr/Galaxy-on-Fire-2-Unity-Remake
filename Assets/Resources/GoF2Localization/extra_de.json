@@ -2877,5 +2877,7 @@
  "mbSmokePoints": "Rauchpunkte bei Schaden",
  "mbExplosionScale": "Explosionsgröße (1 = die eines Jägers)",
  "mbAddSmokePoint": "+ Rauchpunkt",
- "mbPointsNote": "Spieleinheiten wie die Waffenpunkte: X die linke Seite des Piloten, Y oben, Z der Bug."
+ "mbPointsNote": "Spieleinheiten wie die Waffenpunkte: X die linke Seite des Piloten, Y oben, Z der Bug.",
+ "capitalRetreats": "{0} springt davon!",
+ "mbRepeatMinutes": "Kommt wieder nach (Spielminuten, 0 = einmal)"
 }

@@ -97,8 +97,18 @@ namespace GoF2Remake.Multiplayer
         /// <summary>Connected to the host (or hosting).</summary>
         public static bool Connected => Active && (manager.IsServer || manager.IsConnectedClient);
         static Database db;
-        /// <summary>The game data, loaded once for the multiplayer code's look-ups (turrets, models).</summary>
-        internal static Database Db => db ??= Database.Load();
+        static int dbMods = -1;
+        /// <summary>The game data, loaded once for the multiplayer code's look-ups (turrets, models), and again whenever the
+        /// mods change (ModManager.Revision): loaded before the mods were on (the main menu), single player's missions and
+        /// events (the event commands look up through it) found no mod ship or item, so a mod's spawns and rewards failed.</summary>
+        internal static Database Db
+        {
+            get
+            {
+                if (db == null || dbMods != Modding.ModManager.Revision) { db = Database.Load(); dbMods = Modding.ModManager.Revision; }
+                return db;
+            }
+        }
 
         /// <summary>The session's mods changed (NetMods): the tables are read again on next use.</summary>
         internal static void ResetDb() => db = null;

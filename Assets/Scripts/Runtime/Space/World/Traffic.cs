@@ -163,6 +163,8 @@ namespace GoF2Remake.World
             // Remake mods: a mod capital ship's subsystems (turrets, shield generators, weak spots, hangars) on its hull.
             if (spec.modCapital && db.ShipSubsystems.TryGetValue(spec.ship, out var subsystems) && subsystems.Count > 0)
                 CapitalSubsystems.Attach(ship, this, db, subsystems);
+            // ... one that jumps away instead of dying (ships.json "retreat": EVERSPACE 2's Dreadnought)
+            if (spec.modCapital && CustomShips.Get(spec.ship)?.retreat == true) CapitalRetreat.Attach(ship, this);
             return ship;
         }
 

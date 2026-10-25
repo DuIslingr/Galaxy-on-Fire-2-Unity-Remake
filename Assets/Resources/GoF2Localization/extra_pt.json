@@ -2877,5 +2877,7 @@
  "mbSmokePoints": "Pontos de fumaça de dano",
  "mbExplosionScale": "Tamanho da explosão (1 = a de um caça)",
  "mbAddSmokePoint": "+ Ponto de fumaça",
- "mbPointsNote": "Unidades do jogo como os pontos de armas: X a esquerda do piloto, Y para cima, Z a proa."
+ "mbPointsNote": "Unidades do jogo como os pontos de armas: X a esquerda do piloto, Y para cima, Z a proa.",
+ "capitalRetreats": "{0} está fugindo com um salto!",
+ "mbRepeatMinutes": "Volta depois de (minutos de jogo, 0 = uma vez)"
 }

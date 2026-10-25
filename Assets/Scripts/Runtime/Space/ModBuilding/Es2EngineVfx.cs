@@ -22,6 +22,8 @@
 //   living 2 s x the socket's scale, 5 m x its scale wide, the colour (x 0.5 but a booster's) with alpha the thrust (a
 //   booster's: the boost) x pow(sat(velocity^ . forward), 32) when dropped: only flying nose first (kind 3). Remake pick:
 //   the live socket is the ribbon's head, so it reaches the engine between drops.
+// A ship's blueprint can switch the glow and the trails off (SpawnEngineGlow / SpawnEngineTrails, or EngineVFXEnabled for
+// both; ships.json "es2Engine"): EVERSPACE 2's warships and freighters have them off, their engines only their nozzles' glow.
 // EVERSPACE 2's centimetres are its metres x the kit's scale here (es2Scale). Nothing of it in the docked station (the
 // flames do the hangar's engines).
 
@@ -64,6 +66,7 @@ namespace GoF2Remake.Modding
         struct Socket { public Vector3 at; public float scale; public bool booster; }
         [SerializeField] Socket[] sockets = new Socket[0];
         [SerializeField] float es2Scale = 1f;
+        [SerializeField] bool glowOn = true, trailsOn = true;
 
         struct Particle { public Vector3 pos, vel; public float age, alpha, u; }
         class Trail
@@ -86,13 +89,15 @@ namespace GoF2Remake.Modding
         readonly List<int> tri = new List<int>();
 
         /// <summary>Adds the effects for a ship template's engine (slotType 3) and booster (slotType 5) sockets (none: nothing).
-        /// 'es2Scale' is Unity metres per EVERSPACE 2 metre (the kit's scale).</summary>
-        public static void Add(GameObject root, IEnumerable<WeaponMount> mounts, float es2Scale)
+        /// 'es2Scale' is Unity metres per EVERSPACE 2 metre (the kit's scale); 'effects' which of them the ship shows (null: all).</summary>
+        public static void Add(GameObject root, IEnumerable<WeaponMount> mounts, float es2Scale, CustomEs2Engine effects = null)
         {
             var list = mounts?.Where(m => m != null && (m.slotType == 3 || m.slotType == 5)).ToList();
             if (list == null || list.Count == 0 || Shader == null) return;
             var c = root.AddComponent<Es2EngineVfx>();
             c.es2Scale = es2Scale > 0f ? es2Scale : 1f;
+            c.glowOn = effects == null || effects.glow;
+            c.trailsOn = effects == null || effects.trails;
             c.sockets = list.Select(m => new Socket { at = WeaponSystem.MountToLocal(m), scale = m.socketScale > 0f ? m.socketScale : 1f, booster = m.slotType == 5 }).ToArray();
         }
 
@@ -162,10 +167,10 @@ namespace GoF2Remake.Modding
             float dt = Time.deltaTime;
             bool pilot = flame.Pilot && !inStation;
             float thrust = inStation ? 0f : Mathf.Max(0f, flame.Thrust.z), boost = inStation ? 0f : flame.Boost;
-            UpdateVeils(pilot, dt, thrust, boost);
+            UpdateVeils(pilot && trailsOn, dt, thrust, boost);
             UpdateLights(pilot, thrust, boost);
-            UpdateGlow(!pilot && !inStation, thrust, boost);
-            UpdateNpcTrails(!pilot && !inStation, dt, thrust, boost);
+            UpdateGlow(!pilot && !inStation && glowOn, thrust, boost);
+            UpdateNpcTrails(!pilot && !inStation && trailsOn, dt, thrust, boost);
         }
 
         // ---- the veil ---------------------------------------------------------------------------------------------------

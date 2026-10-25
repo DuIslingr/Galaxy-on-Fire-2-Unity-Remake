@@ -2877,5 +2877,7 @@
  "mbSmokePoints": "Points de fumée des dégâts",
  "mbExplosionScale": "Taille de l'explosion (1 = celle d'un chasseur)",
  "mbAddSmokePoint": "+ Point de fumée",
- "mbPointsNote": "Unités du jeu comme les points d'arme : X la gauche du pilote, Y le haut, Z la proue."
+ "mbPointsNote": "Unités du jeu comme les points d'arme : X la gauche du pilote, Y le haut, Z la proue.",
+ "capitalRetreats": "{0} s'enfuit en saut !",
+ "mbRepeatMinutes": "Revient après (minutes de jeu, 0 = une fois)"
 }

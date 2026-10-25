@@ -668,7 +668,7 @@ namespace GoF2Remake.Modding
         }
 
         /// <summary>The ship number in a "ship_NNN_mod" assembly name, -1 = not one.</summary>
-        static int ShipOf(string assembly) =>
+        public static int ShipOf(string assembly) =>
             assembly != null && assembly.StartsWith("ship_") && assembly.Length > 8 && int.TryParse(assembly.Substring(5, 3), out int n) ? n : -1;
 
         /// <summary>The template for a mod ship's assembly; while the model isn't built the game's own model of that ship (a

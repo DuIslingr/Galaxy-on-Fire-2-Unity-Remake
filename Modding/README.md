@@ -685,7 +685,14 @@ Parts take the capital ship's side, go when it dies, and a mission's `alive("<na
 `npcTurrets` on a ship's mounts, the game's own capital ship turrets, your own) holds its fire while its barrel points into
 its own ship's hull and turns to another target: a turret on the far side can't shoot you through the ship. Without `subsystems` its
 `npcTurrets` still arm its turret mounts. `"engineStyle": "es2"` gives a capital ship EVERSPACE 2's engine glow and trails at
-its exhaust mounts (`slotType` 3, sized by `socketScale`) without flame meshes of its own.
+its exhaust mounts (`slotType` 3, sized by `socketScale`) without flame meshes of its own; `"es2Engine": { "glow": false,
+"trails": false }` turns either off, as EVERSPACE 2's own warships and freighters have them (their blueprints'
+`SpawnEngineGlow` / `SpawnEngineTrails`). A parked `battleship`'s engines idle (its flames, nozzle glow and glow at 60 % of
+full thrust): another ship's engine effects follow its speed, and a parked one has none. `"retreat": true` makes a capital
+ship jump away instead of being destroyed (EVERSPACE 2's Dreadnought): when its hull runs out it keeps 1 point, can't be harmed,
+holds its fire, its subsystems stop and its hangars' fighters jump out, and after a 4 second charge it jumps away in a Khador
+jump the size of the ship, its parts with it, leaving no wreck and nobody's kill; a mission's `alive("<name>")` drops to 0
+once it is gone. With a mission's `"repeat"` the encounter can come again.
 
 ### Camera, cockpit, damage smoke and explosion
 
@@ -1474,6 +1481,7 @@ game remembers it in its saves, and your content asks for it with `option(...)` 
 | `showTitle` | `true` (default): the name and the mod on a plate at the card's foot; `false` when the art has its own title. |
 | `default` | The switch's position the first time (afterwards the player's last choice). Also what a multiplayer session plays with. |
 | `flightStyle` | `"free"` or `"original"`: while the option is on, the game flies so (see [Flight styles](#flight-styles)). |
+| `setting` | `true`: no card, a switch in **Options > Gameplay** instead, shown only while your mod is on and the player's own for every game (it starts at `default`; Default settings puts it back). `option(...)` reads it the same way. For what a player may want to turn off at any time (the ES2 Ships mod's Dreadnought raids). |
 
 Two cards show at a time; more scroll sideways (drag, wheel, or the arrow keys / D-pad). A game started before your mod was
 installed has every option off.
@@ -1485,7 +1493,7 @@ the event graphs' expression language and is checked when it matters (a shop's s
 
 | Word | |
 |---|---|
-| `option(mod_id:option_id)` | 1 when that new-game option is on in this game. |
+| `option(mod_id:option_id)` | 1 when that new-game option (or gameplay setting) is on in this game. |
 | `won(main)`, `won(valkyrie)`, `won(supernova)` | 1 when that campaign's story is finished in this game. |
 | `systemsvisited` | How many star systems the player has docked in (2 or more: they have left Mido). |
 | `campaign` | The story step (-1 in free play and mod campaigns). |
@@ -1766,7 +1774,13 @@ shows it). It can be written by hand too:
 ```
 
 `kind` is `quest`, `mission` (a bar mission: `offer`, `client`, `stations`, `players` [min, max] as the Start node's) or
-`event` (started by `/event <name>` or another one's Next event step). `variables`: numbers the mission keeps (`setting`: true
+`event` (started by `/event <name>` or another one's Next event step). A `quest` with `"repeat": <minutes>` (the Start node's
+"Comes again after", the builder's "Comes again after (minutes of play)") is an encounter that comes back: done, it isn't
+done for good but starts again that many minutes of playing time later, as soon as its `startsWhen` holds (add a chance to
+it, `random(1, 300) == 1`, for a random moment); `quest(<name>)` reads 2 meanwhile. `randomstation()` picks a station of a
+system on the map for a roaming encounter (not the player's own orbit, an empty or special orbit, a story's orbit, Loma, a
+pirate base's system; -1 when none), kept in a variable; a text shows its name with `{stationname(st)}` and its system's
+with `{systemname(st)}`, and a station field takes the variable (`"station": "{st}"`). `variables`: numbers the mission keeps (`setting`: true
 lets `/event name x=3` change it); a text shows one in braces (`{waves}`). Without `complete` / `fail` a mission completes after
 its last step (`"autoComplete": false` turns that off). Every step takes `who` (whom it is for: `@a` everyone the mission is for,
 the default; `@trigger` the player a When block is about; any selector). The steps:

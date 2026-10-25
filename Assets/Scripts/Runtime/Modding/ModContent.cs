@@ -203,7 +203,7 @@ namespace GoF2Remake.Modding
             "sounds",     // the ship's own engine and boost sounds (ModShipSounds)
             "integrated", // a built-in Khador Drive / cloak (ApplyIntegrated)
             "camera", "cockpit", "smoke", "explosionScale",   // how the ship is seen (ModShipView)
-            "subsystems", "shieldMaterial", "shieldedDamage", "engineStyle", "hullFactor",   // a capital ship's subsystems (World.CapitalSubsystems)
+            "subsystems", "shieldMaterial", "shieldedDamage", "engineStyle", "es2Engine", "hullFactor", "retreat",   // a capital ship's subsystems (World.CapitalSubsystems)
         };
 
         static void ParseShips(ModInfo mod, Parsed p)

@@ -2877,5 +2877,7 @@
  "mbSmokePoints": "Rookpunten bij schade",
  "mbExplosionScale": "Grootte van de explosie (1 = die van een jager)",
  "mbAddSmokePoint": "+ Rookpunt",
- "mbPointsNote": "Speleenheden zoals de wapenpunten: X de linkerkant van de piloot, Y omhoog, Z de neus."
+ "mbPointsNote": "Speleenheden zoals de wapenpunten: X de linkerkant van de piloot, Y omhoog, Z de neus.",
+ "capitalRetreats": "{0} springt weg!",
+ "mbRepeatMinutes": "Komt terug na (speelminuten, 0 = eenmalig)"
 }

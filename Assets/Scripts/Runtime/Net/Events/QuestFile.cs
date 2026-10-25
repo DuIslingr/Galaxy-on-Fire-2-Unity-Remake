@@ -4,7 +4,7 @@
 // any other: a JSON tree of steps instead of nodes, for modders without the Unity Editor. Every step type, its fields and the
 // plain steps' lines are QuestSteps'; this writes the header, the variables, the steps that need more than one line or a
 // block (a conversation, a fight, If / While / Ask / Random ...) and walks the nested lists.
-//   header    title, kind (quest | mission | event), startsWhen (quests), reward, offer / client / stations / players
+//   header    title, kind (quest | mission | event), startsWhen and repeat (quests), reward, offer / client / stations / players
 //             (missions), variables [{ name, value, setting }] (a setting: /event name=value can change it)
 //   steps     [{ "type": ..., fields }], blocks holding their own lists ("then", "else", "steps", answers[].steps,
 //             branches[].steps)
@@ -47,6 +47,7 @@ namespace GoF2Remake.Events
             "enemies", "ships", "time", "missionstation", "toppoints", "players", "inspace", "docked", "dead", "campaign", "credits",
             "rank", "station", "system", "ship", "kills", "systemsvisited", "random", "min", "max", "floor", "count", "alive", "distance",
             "cargo", "has", "visited", "quest", "option", "won", "inorbit", "and", "or", "not", "main", "valkyrie", "supernova",
+            "randomstation", "stationname", "systemname",
         };
 
         public static bool IsName(string s) => !string.IsNullOrEmpty(s) && Regex.IsMatch(s, "^[A-Za-z_][A-Za-z0-9_]*$");
@@ -102,6 +103,8 @@ namespace GoF2Remake.Events
                     string starts = Str(o, "startsWhen").Trim();
                     if (starts.Length > 0) Line("mission starts " + Expr(starts));
                     if (reward > 0) Line("mission reward " + reward);
+                    if (o["repeat"] is JValue rp && (rp.Type == JTokenType.Integer || rp.Type == JTokenType.Float) && (double)rp > 0)
+                        Line("mission repeat " + ((double)rp).ToString(CultureInfo.InvariantCulture));
                 }
                 else if (kind == "mission")
                 {
@@ -581,6 +584,9 @@ namespace GoF2Remake.Events
                             case "title": o["title"] = v; titled = true; break;
                             case "kind": kind = v.ToLowerInvariant() == "quest" ? "quest" : v.ToLowerInvariant() == "mission" ? "mission" : "event"; break;
                             case "starts": o["startsWhen"] = v; break;
+                            case "repeat":
+                                if (double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out double rp)) o["repeat"] = rp;
+                                break;
                             case "reward": if (int.TryParse(v, out int rw)) o["reward"] = rw; else notes.Add("The reward \"" + v + "\" isn't a number: left out."); break;
                             case "offer": o["offer"] = v.Replace("\\n", "\n"); break;
                             case "client": o["client"] = v; break;

@@ -140,11 +140,13 @@ namespace GoF2Remake.Tests
         {
             var quest = new JObject
             {
-                ["format"] = "gof2quest", ["title"] = "Signal", ["kind"] = "quest", ["startsWhen"] = "visited(78)", ["reward"] = 500,
+                ["format"] = "gof2quest", ["title"] = "Signal", ["kind"] = "quest", ["startsWhen"] = "visited(78)", ["reward"] = 500, ["repeat"] = 45,
+                ["variables"] = new JArray(new JObject { ["name"] = "here", ["value"] = 78 }),
                 ["steps"] = new JArray(
                     Step("dialog", ("pages", new JArray(new JObject { ["speaker"] = "Keith", ["text"] = "One # two | three {x}", ["voice"] = "clip_1" }))),
                     Step("radio", ("speaker", "vossk K'ekki"), ("text", "Come.")),
                     Step("objective", ("text", "Go"), ("station", 78)),
+                    Step("objective", ("text", "At {stationname(here)} in {systemname(here)}"), ("station", "{here}")),
                     Step("goto", ("station", 78), ("dock", true)),
                     Step("fight", ("station", 70), ("name", "Raider"), ("ships", new JArray(new JObject { ["ship"] = 2, ["count"] = 3, ["race"] = "pirate" }))),
                     Step("cargo", ("item", 22), ("amount", 5)),
@@ -166,14 +168,14 @@ namespace GoF2Remake.Tests
             var lines = script.Split('\n').Select(l => l.Trim()).ToList();
             foreach (var expected in new[]
             {
-                "mission title Signal", "mission kind quest", "mission starts visited(78)", "mission reward 500",
+                "mission title Signal", "mission kind quest", "mission starts visited(78)", "mission reward 500", "mission repeat 45",
                 "dialog @a Keith : One No. two / three (x) [voice clip_1]",
                 "radio @a vossk K'ekki : Come.",
-                "objective Go", "target 78",
+                "objective Go", "target 78", "objective At {stationname(here)} in {systemname(here)}", "target {here}",
                 "wait until docked(78) > 0",
                 "questorbit 70", "wait until inorbit(70) > 0", "spawn @alive[orbit=70] 2 pirate 3 enemy named Raider", "wait until alive(Raider) == 0", "questorbit 70 off",
                 "wait until cargo(22) >= 5",
-                "reward @a 100 + 46 2", "give @a 22 1", "wait 2", "wait until credits > 5", "checkpoint step11", "music @a battle",
+                "reward @a 100 + 46 2", "give @a 22 1", "wait 2", "wait until credits > 5", "checkpoint step12", "music @a battle",
                 "title @a Hi | there", "waypoint @a 78 0 0 20000", "startquest next_one", "heal @a", "complete 1000",
             })
                 CollectionAssert.Contains(lines, expected);

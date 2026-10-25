@@ -11,7 +11,8 @@
 //   asked for (GetLastInputVector: free flight's keys, FlightModel.ThrustInput; the original flight's throttle and strafe),
 //   eased toward it like EaseEngineVFX: VInterpTo at 16 / s rising and 8 / s falling with BP_Ship_Player's fixed 0.05 s step
 //   per tick (80 % / 40 % of the way a frame, here per 60 fps frame); any other ship (0) its velocity in its own frame over
-//   its top speed (clamped to length 1), at once (BP_ShipBase's update step 0.3 s: VInterpTo's alpha reaches 1);
+//   its top speed (clamped to length 1), at once (BP_ShipBase's update step 0.3 s: VInterpTo's alpha reaches 1); a parked
+//   mod battleship forward at least at its idle drive (EngineDrive.Idle);
 // - the boost, 1 while boosting (bIsBoosting, or the cruise drive: here a boost or a jump), else 0, eased the same; any other
 //   ship's when it flies faster than its top speed;
 // - SteeringOffset, the player's ship's velocity: each flame's tip bends against it, u^2 x -0.008 x min(|v|, 100 m/s) (in
@@ -220,6 +221,7 @@ namespace GoF2Remake.Modding
                 // EngineOpacityControlledBy 0: the velocity in the ship's frame over the top speed without a boost
                 float top = FlightModel.BaseSpeed * 1000f * MetersPerUnit;
                 thrustTarget = Vector3.ClampMagnitude(transform.InverseTransformDirection(Velocity) / top, 1f);
+                if (thrustTarget.z < drive.Idle) thrustTarget.z = drive.Idle;
                 boostTarget = Velocity.magnitude > top * 1.05f ? 1f : 0f;
                 if (!engines) thrustTarget = Vector3.zero;
             }

@@ -17,6 +17,8 @@
 // is Original. No wreck: the hull burns where it is, explodes at its "explosionScale" (else the battleship's x8 / a freighter's
 // x6) and is gone. Not built for the capital ship enhancements (World.CapitalShips: escorts, resupply, fleet battles): those
 // stay the game's own ships.
+// A parked battleship's engines idle at ParkedDrive (EngineDrive.Idle; remake pick): EVERSPACE 2 and the engine effects drive
+// another ship's engines by its speed, so a ship that never moves showed none (the ES2 warships' glows and flames).
 
 using System.Collections.Generic;
 using System.Linq;
@@ -48,6 +50,17 @@ namespace GoF2Remake.Modding
             string k = c?.traffic?.capital;
             return string.Equals(k, Battleship, System.StringComparison.OrdinalIgnoreCase) ? Battleship
                  : string.Equals(k, Freighter, System.StringComparison.OrdinalIgnoreCase) ? Freighter : null;
+        }
+
+        /// <summary>How hard a parked mod battleship's engines run (EngineDrive: 1 = full throttle).</summary>
+        public const float ParkedDrive = 0.6f;
+
+        /// <summary>The idle drive of a model (an NPC's, another game's copy): ParkedDrive for a mod battleship, else 0.</summary>
+        public static float IdleDriveOf(GameObject model)
+        {
+            var asm = model != null ? model.GetComponentInParent<Visuals.AssembledObject>() : null;
+            int ship = asm != null ? ModShips.ShipOf(asm.ModScope) : -1;
+            return ship >= 0 && KindOf(ship) == Battleship ? ParkedDrive : 0f;
         }
 
         /// <summary>TrafficPlan's capital ship special: a mod battleship of 'race' (-1: none). 'replacing' = the game's own

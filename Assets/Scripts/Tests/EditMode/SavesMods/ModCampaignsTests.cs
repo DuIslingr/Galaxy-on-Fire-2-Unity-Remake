@@ -221,6 +221,29 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void ASettingIsAGameplayToggleNotACard()
+        {
+            WriteMod("o3", "t_set", "1.0", "", ("gameoptions.json",
+                "[ { 'id': 'raids', 'name': 'Raids', 'setting': true, 'default': true }, { 'id': 'card', 'name': 'Card' } ]"));
+            ScanAndEnable("t_set");
+            var raids = ModGameOptions.Find("t_set:raids");
+            PlayerPrefs.DeleteKey("modsetting_t_set:raids");
+            try
+            {
+                CollectionAssert.AreEqual(new[] { "t_set:card" }, ModGameOptions.Cards().Select(d => d.Key).ToArray(), "no card for a setting");
+                CollectionAssert.AreEqual(new[] { "t_set:raids" }, ModGameOptions.GameplaySettings().Select(d => d.Key).ToArray());
+                Assert.IsTrue(ModGameOptions.IsOn("t_set:raids"), "its default, whatever the game holds");
+                ModGameOptions.SetSetting(raids, false);
+                Assert.IsFalse(ModGameOptions.IsOn("t_set:raids"), "the player's choice");
+                ModGameOptions.ApplyChoices();
+                Assert.IsFalse(Session.ModGameOptions.Contains("t_set:raids"), "a setting isn't the new game's");
+                ModGameOptions.ResetSettings();
+                Assert.IsTrue(ModGameOptions.IsOn("t_set:raids"), "Default settings: back to its default");
+            }
+            finally { PlayerPrefs.DeleteKey("modsetting_t_set:raids"); PlayerPrefs.DeleteKey("newgame_modopt_t_set:card"); }
+        }
+
+        [Test]
         public void OptionsAreFoundByKeyOrUniqueId()
         {
             OptionsOn();

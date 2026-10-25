@@ -102,6 +102,8 @@ namespace GoF2Remake.Data
         // version 13: the event graph quests and bar missions under way, the quests finished (Session.GraphQuests)
         public List<GraphQuestState> graphQuests;
         public List<string> graphQuestsDone;
+        // (remake, no version of its own: older saves have none) the repeatable quests finished, "name|playing seconds"
+        public List<string> graphQuestRepeats;
         // version 14: a mod's campaign (Session.ModCampaign, Modding.ModCampaigns)
         public string modCampaign;
         // version 15: a hardcore (permadeath) game and the run it belongs to (Session.Hardcore / RunId)
@@ -323,6 +325,7 @@ namespace GoF2Remake.Data
                 storyAgentsAccepted = new List<int>(Session.StoryAgentsAccepted),
                 graphQuests = new List<GraphQuestState>(Session.GraphQuests),
                 graphQuestsDone = new List<string>(Session.GraphQuestsDone),
+                graphQuestRepeats = Session.GraphQuestRepeats.Select(kv => kv.Key + "|" + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList(),
                 modCampaign = Session.ModCampaign ?? "",
                 hardcore = Session.Hardcore,
                 runId = Session.RunId ?? "",
@@ -585,6 +588,13 @@ namespace GoF2Remake.Data
                 Session.StoryAgentsAccepted = new HashSet<int>(s.storyAgentsAccepted ?? new List<int>());
                 Session.GraphQuests = s.graphQuests ?? new List<GraphQuestState>();
                 Session.GraphQuestsDone = new HashSet<string>(s.graphQuestsDone ?? new List<string>());
+                Session.GraphQuestRepeats = new Dictionary<string, float>();
+                foreach (var r in s.graphQuestRepeats ?? new List<string>())
+                {
+                    int bar = r.LastIndexOf('|');
+                    if (bar > 0 && float.TryParse(r.Substring(bar + 1), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float at))
+                        Session.GraphQuestRepeats[r.Substring(0, bar)] = at;
+                }
                 GraphQuestState.RestorePending = Session.GraphQuests.Count > 0;   // they run again from their checkpoints
                 if (s.version < 11)   // older saves: a blueprint seller whose blueprint is owned was bought from
                     foreach (var sa in AgentData.StoryAgents)

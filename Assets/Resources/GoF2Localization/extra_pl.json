@@ -2877,5 +2877,7 @@
  "mbSmokePoints": "Punkty dymu przy uszkodzeniach",
  "mbExplosionScale": "Wielkość eksplozji (1 = myśliwca)",
  "mbAddSmokePoint": "+ Punkt dymu",
- "mbPointsNote": "Jednostki gry jak punkty broni: X lewa strona pilota, Y w górę, Z dziób."
+ "mbPointsNote": "Jednostki gry jak punkty broni: X lewa strona pilota, Y w górę, Z dziób.",
+ "capitalRetreats": "{0} odskakuje!",
+ "mbRepeatMinutes": "Wraca po (minutach gry, 0 = raz)"
 }

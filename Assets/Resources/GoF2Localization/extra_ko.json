@@ -2877,5 +2877,7 @@
  "mbSmokePoints": "손상 연기 지점",
  "mbExplosionScale": "폭발 크기(1 = 전투기)",
  "mbAddSmokePoint": "+ 연기 지점",
- "mbPointsNote": "무기 장착점과 같은 게임 단위: X는 조종사의 왼쪽, Y는 위, Z는 함수."
+ "mbPointsNote": "무기 장착점과 같은 게임 단위: X는 조종사의 왼쪽, Y는 위, Z는 함수.",
+ "capitalRetreats": "{0}이(가) 점프로 이탈합니다!",
+ "mbRepeatMinutes": "다시 등장까지 (플레이 분, 0 = 한 번)"
 }

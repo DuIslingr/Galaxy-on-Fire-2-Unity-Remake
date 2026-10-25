@@ -92,6 +92,9 @@ namespace GoF2Remake.Data
         /// (EventRunner), and the quests finished (by graph name).</summary>
         public static List<GraphQuestState> GraphQuests = new List<GraphQuestState>();
         public static HashSet<string> GraphQuestsDone = new HashSet<string>();
+        /// <summary>Remake: the repeatable quests finished ("mission repeat"), each with the playing time (PlaySeconds) from which
+        /// it may start again (EventRunner.CheckQuestStarts).</summary>
+        public static Dictionary<string, float> GraphQuestRepeats = new Dictionary<string, float>();
         /// <summary>Status+0x18: each touched blueprint's progress (Blueprints); +0x1c products waiting at a station;
         /// +0x1d4 goods produced (completed runs).</summary>
         public static List<BlueprintState> Blueprints = new List<BlueprintState>();
@@ -457,6 +460,7 @@ namespace GoF2Remake.Data
             ModGameOptions = new HashSet<string>();
             ShipBuilds = new Dictionary<string, string>();
             GraphQuestsDone = new HashSet<string>();
+            GraphQuestRepeats = new Dictionary<string, float>();
             GameHooks.ResetLocalEvents?.Invoke();   // single player's graph runs go with the game
             Blueprints = new List<BlueprintState>();
             PendingProducts = new List<PendingProduct>();

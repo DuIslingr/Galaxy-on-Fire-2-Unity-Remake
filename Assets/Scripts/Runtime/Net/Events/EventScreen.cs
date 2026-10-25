@@ -899,7 +899,8 @@ namespace GoF2Remake.Events
                 foreach (var d in keep) dialogs.Enqueue(d);
             }
             var view = UiHooks.LatestDialogue;
-            if (dialogs.Count > 0 && view != null && view.Usable && !view.IsOpen && !World.SpaceHooks.StarMapOpen && VoicesReady(dialogs.Peek().pages))
+            // (also while the star map shows: it draws the conversation over itself, StarMap / DialogueView.HostIn)
+            if (dialogs.Count > 0 && view != null && view.Usable && !view.IsOpen && VoicesReady(dialogs.Peek().pages))
             {
                 var (pages, closed, _) = dialogs.Dequeue();
                 voiceWait = -1f;

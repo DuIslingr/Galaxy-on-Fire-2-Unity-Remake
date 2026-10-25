@@ -33,6 +33,13 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(ModCapitalShips.Freighter, ModCapitalShips.KindOf(hauler), "any case");
             Assert.IsNull(ModCapitalShips.KindOf(fighter));
             Assert.IsNull(ModCapitalShips.KindOf(14), "the game's battleship isn't a mod's");
+            var effects = CustomShips.Get(big).es2Engine;
+            Assert.IsTrue(effects == null || (effects.glow && effects.trails), "no \"es2Engine\": every engine effect");
+            // A parked battleship's engines idle (EngineDrive.Idle by its "ship_NNN_mod" model), a freighter's follow its speed
+            Assert.AreEqual(big, ModShips.ShipOf($"ship_{big:000}_mod"));
+            Assert.AreEqual(hauler, ModShips.ShipOf($"ship_{hauler:000}_mod#body=b"), "a kit build's variant too");
+            Assert.AreEqual(-1, ModShips.ShipOf("station_070_terran"));
+            Assert.Greater(ModCapitalShips.ParkedDrive, 0f);
             var spec = ModCapitalShips.Spawn(big, 0, new Vector3(0, 0, 100000));
             Assert.IsTrue(spec.freighter && spec.stationary && spec.modCapital, "a battleship parks on the freighters' path");
             Assert.AreEqual(NpcTables.Hull(1, 14), spec.hitpoints, "the Terran battleship's hull");
@@ -50,7 +57,7 @@ namespace GoF2Remake.Tests
         {
             string dir = WriteMod("c", "t_sub", "1.0", "", ("ships.json",
                 "[ { 'id': 'fort', 'name': 'Fort', 'race': 8, 'model': 'big.glb', 'traffic': { 'capital': 'battleship', 'weight': 0 }," +
-                "    'shieldMaterial': 'energyfield|', 'shieldedDamage': 0.1, 'hullFactor': 3, 'engineStyle': 'es2'," +
+                "    'shieldMaterial': 'energyfield|', 'shieldedDamage': 0.1, 'hullFactor': 3, 'engineStyle': 'es2', 'es2Engine': { 'glow': false }," +
                 "    'subsystems': [" +
                 "      { 'kind': 'turret', 'name': 'Gun', 'position_engine': [100, 200, 300], 'item': 48, 'stage': 2, 'turretUp': [1, 0, 0] }," +
                 "      { 'kind': 'object', 'name': 'Emitter', 'position_engine': [0, 0, 0], 'shields': true, 'stage': 1, 'hull': 900, 'model': 'gof2:v_station_battlestation_shield' }," +
@@ -76,6 +83,7 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(10000f, subs[3].everyMs); Assert.AreEqual(3, subs[3].perWave); Assert.AreEqual(5, subs[3].maxAlive); Assert.AreEqual(9, subs[3].total);
             var c = CustomShips.Get(fort);
             Assert.AreEqual("energyfield|", c.shieldMaterial); Assert.AreEqual(0.1f, c.shieldedDamage, 1e-5f); Assert.AreEqual("es2", c.engineStyle);
+            Assert.IsFalse(c.es2Engine.glow, "EVERSPACE 2's SpawnEngineGlow off"); Assert.IsTrue(c.es2Engine.trails, "left out: on");
             Assert.AreEqual(Mathf.RoundToInt(NpcTables.Hull(1, 14) * 3f), ModCapitalShips.Spawn(fort, 8, Vector3.zero).hitpoints, "hullFactor");
             Assert.IsEmpty(ModCapitalShips.Candidates(8, ModCapitalShips.Battleship), "weight 0: never in the traffic (the encounter brings it)");
         }

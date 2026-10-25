@@ -3197,14 +3197,52 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   the player within 7.5 km. Hostile pirate (8) / Void (9) capitals (`ModCapitalShips.PickHostile` / `SpawnHostile`): with a
   pirate or Void raid at a third of the traffic chance, 3 km beyond the raiders' point, and in the Void's orbit. `/spawn` of a
   mod capital (`DebugSpawner.SpawnShip`) uses `ModCapitalShips.Spawn` (parked, subsystems) 1-2 hull lengths ahead.
-  `hullFactor` scales a mod capital's hull; `engineStyle: "es2"` runs `Es2EngineVfx` without flame materials (no glow discs);
+  `hullFactor` scales a mod capital's hull; `engineStyle: "es2"` runs `Es2EngineVfx` without flame materials (no glow discs), `es2Engine` { glow, trails }
+  (`CustomEs2Engine`, default on) switches its NPC glow / trails (and the player's veils) off as a blueprint's
+  SpawnEngineGlow / SpawnEngineTrails do (EngineVFXEnabled false = both; the ES2 importer writes it: every ES2 warship and
+  freighter but the Ancient Swarmer has them off, so their engines are their nozzles' glow); a parked mod battleship's engines
+  idle at `ModCapitalShips.ParkedDrive` 0.6 (`EngineDrive.Idle` from its "ship_NNN_mod" model, also on the multiplayer
+  copies; `EngineFlame`'s velocity thrust takes it as its floor): driven by their speed, a parked one's showed nothing;
   CustomShipMaterial `tiling` scales URP Lit's `_BaseMap` (EVERSPACE 2's plating Tiling). Tests in `ModCapitalShipsTests`.
   The ES2 Ships mod's importer (`tools/warships.py`, `weapons.py`, `encounter.py`, `es2mat.py`) builds ES2's ten warships and
   seven freighters from their blueprints (turrets, missile launchers, drone / hangar spawners, the frigate's weak spots), ES2's
   weapons as items on GoF2's DPS ladder with their own colours, sounds and models, the capital turrets on ES2's turret meshes
-  (split by bone, textures embedded), and the Dreadnought (its stage pieces as one hull) with its encounter at Herjaza (101)
-  once the Valkyrie add-on is over: fields / shield generator (stage 1, shields) with the torpedo launchers, sniper and
+  (split by bone, textures embedded), and the Dreadnought (its stage pieces as one hull) with its encounter (the raids,
+  below): fields / shield generator (stage 1, shields) with the torpedo launchers, sniper and
   lightning turrets (stage 2), explosive weak points (stage 3), flak / missile batteries and five hangars throughout.
+  **Retreat** (the user's request, as in ES2: BP_Encounter_Dreadnought_Base's OnHealthDepleted -> StartEnemyJumpOut,
+  BP_Dreadnought's SpawnJumpEffect; ships.json `"retreat": true`, `CustomShipData.retreat`, attached by Traffic.Create to a
+  `modCapital`): `World.CapitalRetreat` takes `Target.SaveFromDeath`: at an empty hull it keeps 1, invulnerable, holds its
+  fire, `CapitalSubsystems.Halt` (parts silent and unharmable, no launches, the hangars' fighters `JumpOut`), "{0} is jumping
+  away!" (Extra `capitalRetreats`) and sound 33; after 4 s `SystemJump.SpawnKhadorFx` ahead of its bow scaled by its size over
+  60 m, sound 32, the ship pushed forward into it (x1.1 a 30 fps frame), gone at 1700 ms (`LeaveWithHost` + `NpcShip.Vanish`,
+  `killedByNpc`: no wreck, crate or kill). The other players only see its copy go (no fx there yet). **Repeatable** story
+  missions: `.gof2mission` `"repeat"` minutes (`mission repeat`, `MissionInfo.repeatMinutes`; the Start node's
+  RepeatMinutes, the builder's `ProjectQuest.Repeat`): `EventRunner.QuestDone` puts it in `Session.GraphQuestRepeats` (name ->
+  `PlaySeconds` it may start again; saved as `graphQuestRepeats` "name|seconds", no version bump) instead of
+  `GraphQuestsDone`; `CheckQuestStarts` starts it again once that time has passed and its condition holds; `quest(name)`
+  reads 2 meanwhile and StartQuest refuses it. Mission tools for roaming encounters: `randomstation()` (`EventRunner.
+  RandomStation`: a station of a visible system, not the player's, 10 / 100-104 / 108, systems 25 / 27 / 32 / 33, a pirate
+  base system, an empty orbit, `PirateEventRules.InStoryline`, a mobile or missing mod station; -1 none) and the text fills
+  `{stationname(x)}` / `{systemname(x)}` (`Fill`, `PlaceName`; `QuestFile.StateWords` keeps them). **Mod gameplay settings**
+  (gameoptions.json `"setting": true`, `ModGameOptions.Def.setting`): no new-game card (`Cards()`), an Options > Gameplay toggle
+  (`OptionsCatalog`, id "mod:<key>", only while the mod is on, `GameplaySettings()`) in PlayerPrefs `modsetting_<key>`
+  (`Setting` / `SetSetting`; reset by Default settings, `ResetSettings`), which `option(...)` reads (`IsOn`). The importer's
+  encounter is now the **Dreadnought raids** (the user's request; its setting `es2_ships:dreadnought_raids`, on by default):
+  at rank 5+, a 1 in 300 chance each second, a random station: Brent Snocom calls (a dialog), the station is the objective's
+  target (map and HUD), a checkpoint keeps it, the quest waits until the player is in that orbit, then two ES2 freighters
+  (the convoy, friendly, held 4-5 km short of it by a `shipaction hold`: in its turrets' reach one died within a minute) and
+  the Dreadnought spawn (a guard: no Dreadnought 30 s on = the run stops, nothing won); driven off it pays 150 000 and 10
+  legendary swarm missiles; it comes again 90 minutes of play later. Brent's lines follow his own in the story ("Keith, this
+  is Brent!", "Dammit", "I transferred ... to your account"). Played in the Editor: the call, the map marker, the spawns,
+  the convoy holding, the retreat, the reward and the cooldown. Fixed on the way: `NetGame.Db` (the event commands'
+  look-ups) was loaded once, in single player before the mods were on, so every mission / event command naming mod content
+  (spawns, rewards) failed; it reloads when `ModManager.Revision` changes. Conversation pages and radio lines are cut at
+  `NetChat.MaxPageLength` 600 (were the chat's 160: a call broke off mid-word), a conversation at `MaxConversation` 4000.
+  A conversation shows over the star map (`DialogueView.HostIn`: its template instance moved into the map's overlay while
+  open, placed full screen, back when it closes or the map does; `StarMap.Update` ticks it and holds its own keys
+  meanwhile; `EventScreen` no longer waits for the map to close): the map's panel sorts above the station's and drew its
+  names over a mission's call.
   ES2's Mobile Homebase is no warship but a mobile station like the GoF3 mod's Manticore (`warships.build_homebase`:
   stations.json, route "any", 30 minutes an orbit, two hours a system), docked into its own hangar and casino
   (`homebase_hangar.py`: ES2's carrier level POI_HomebaseCarrier_001 assembled into one interiors.json room x2.8, its six

@@ -186,7 +186,7 @@ namespace GoF2Remake.Events
 
 
         static readonly string[] Triggers = { "died", "docked", "launched", "joined", "left", "entered", "kill", "cleared", "pvpkill", "respawned", "near", "hacked" };
-        static readonly string[] MissionKeys = { "title", "offer", "client", "reward", "players", "stations", "kind", "starts", "chance", "takers" };
+        static readonly string[] MissionKeys = { "title", "offer", "client", "reward", "players", "stations", "kind", "starts", "chance", "takers", "repeat" };
 
         /// <summary>A bar mission's details: the Start node's Mission settings (the "mission &lt;key&gt; &lt;value&gt;" lines).</summary>
         public sealed class MissionInfo
@@ -203,6 +203,7 @@ namespace GoF2Remake.Events
             // is on it, StartMission refuses a second), one per station (taken out of that bar only), or any number of teams.
             public EventMissionTakers takers;
             public int kind = -1;   // "mission kind": 0 event, 1 bar mission, 2 quest (-1: not given, a bar mission when titled)
+            public float repeatMinutes;   // "mission repeat": a quest that comes again this many minutes of playing time after it was done (0: once)
             public bool builtIn;    // one of the game's own examples (Resources/GoF2Events): multiplayer only
             public bool IsMission => kind == 1 || (kind < 0 && title.Length > 0);
             public bool IsQuest => kind == 2;
@@ -433,7 +434,7 @@ namespace GoF2Remake.Events
         public static string StartQuest(string name, bool quiet = false)
         {
             if (!EventHost.Local) return X("mpEventQuestSingle", "Story missions run in single player only.");
-            if (Session.GraphQuestsDone.Contains(name) || Session.GraphQuests.Exists(q => q.name == name))
+            if (Session.GraphQuestsDone.Contains(name) || Session.GraphQuestRepeats.ContainsKey(name) || Session.GraphQuests.Exists(q => q.name == name))
                 return quiet ? null : string.Format(X("mpEventQuestTaken", "The mission {0} is under way or done."), name);
             string text = Load(name, out string from, out string error);
             if (text == null) return string.Format(X("mpEventMissing", "No event \"{0}\". /event list shows them."), name);
@@ -450,6 +451,35 @@ namespace GoF2Remake.Events
         }
 
         static float questCheck;
+        /// <summary>A quest is done: for good, or (a "mission repeat" quest) until its cooldown in playing time has passed;
+        /// then it starts again when its start condition holds.</summary>
+        static void QuestDone(string name, MissionInfo info)
+        {
+            if (info != null && info.repeatMinutes > 0f) Session.GraphQuestRepeats[name] = Session.PlaySeconds + info.repeatMinutes * 60f;
+            else Session.GraphQuestsDone.Add(name);
+        }
+
+        /// <summary>randomstation(): a station of a system on the map where an encounter may come (a quest's roaming event: the
+        /// ES2 Ships mod's Dreadnought raids): not the player's own orbit, an empty or special orbit (the deep science and
+        /// Valkyrie stations, the Kaamo Club, the dropship orbits, Thynome), Loma, the supernova and Void systems 27 / 32 / 33, a
+        /// pirate base's system, a story's orbit, a mobile or missing mod station. -1 when there is none.</summary>
+        static int RandomStation()
+        {
+            var db = NetGame.Db;
+            var visible = GalaxyMap.Visibility(db);
+            var picks = new List<int>();
+            foreach (var st in db.Stations)
+            {
+                int i = st.index, sys = st.system;
+                if (i < 0 || i == Session.StationIndex || sys < 0 || sys >= visible.Length || !visible[sys]) continue;
+                if (i == 10 || i == 100 || i == 101 || i == 108 || (i >= 102 && i <= 104)) continue;
+                if (sys == 25 || sys == 27 || sys == 32 || sys == 33 || PirateBases.SystemHasBase(db, sys)) continue;
+                if (World.OrbitLayout.IsEmptyOrbit(i, Session.WorldIndex) || PirateEventRules.InStoryline(i)) continue;
+                if (Modding.ModWorld.IsMobile(i) || Modding.ModWorld.IsMissingStation(i)) continue;
+                picks.Add(i);
+            }
+            return picks.Count == 0 ? -1 : picks[UnityEngine.Random.Range(0, picks.Count)];
+        }
 
         /// <summary>LocalEvents, in a game scene: every second each quest graph not done nor under way whose start condition
         /// holds ("mission starts"; none: at once, "never": only by startquest) starts.</summary>
@@ -461,14 +491,19 @@ namespace GoF2Remake.Events
             foreach (var info in QuestGraphs())
             {
                 if (Session.GraphQuestsDone.Contains(info.name) || Session.GraphQuests.Exists(q => q.name == info.name)) continue;
+                bool again = Session.GraphQuestRepeats.TryGetValue(info.name, out float readyAt);
+                if (again && Session.PlaySeconds < readyAt) continue;
                 string when = info.starts.Trim();
                 if (when.Equals("never", StringComparison.OrdinalIgnoreCase)) continue;
+                bool holds = true;
                 if (when.Length > 0)
                 {
                     var probe = new EventRun(info.name, new List<Step>(), info, new HashSet<ulong> { 0 }, -1, LocalPilot.Instance, new Dictionary<string, double>());
-                    try { if (probe.Probe(when) == 0) continue; }
+                    try { holds = probe.Probe(when) != 0; }
                     catch (Exception e) { Debug.LogWarning($"Event: quest {info.name}'s start condition: {e.Message}"); continue; }
                 }
+                if (!holds) continue;
+                if (again) Session.GraphQuestRepeats.Remove(info.name);
                 string why = StartQuest(info.name, true);
                 if (why != null) Debug.LogWarning($"Event: quest {info.name}: {why}");
             }
@@ -776,6 +811,9 @@ namespace GoF2Remake.Events
                         info.kind = v.Equals("quest", StringComparison.OrdinalIgnoreCase) ? 2 : v.Equals("mission", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
                         break;
                     case "starts": info.starts = v; break;
+                    case "repeat":
+                        if (double.TryParse(v, NumberStyles.Float, CultureInfo.InvariantCulture, out double rm)) info.repeatMinutes = Mathf.Max(0f, (float)rm);
+                        break;
                     case "takers":
                         info.takers = v.Equals("station", StringComparison.OrdinalIgnoreCase) ? EventMissionTakers.OnePerStation
                                     : v.Equals("any", StringComparison.OrdinalIgnoreCase) ? EventMissionTakers.Anyone : EventMissionTakers.OneInUniverse;
@@ -1326,7 +1364,7 @@ namespace GoF2Remake.Events
                 if (record != null)
                 {
                     Session.GraphQuests.Remove(record);
-                    if (record.kind == GraphQuestState.KindQuest) Session.GraphQuestsDone.Add(running);
+                    if (record.kind == GraphQuestState.KindQuest) QuestDone(running, info);
                     record = null;
                 }
                 End();
@@ -1731,7 +1769,7 @@ namespace GoF2Remake.Events
                 if (record != null)
                 {
                     Session.GraphQuests.Remove(record);
-                    if (record.kind == GraphQuestState.KindQuest) Session.GraphQuestsDone.Add(running);
+                    if (record.kind == GraphQuestState.KindQuest) QuestDone(running, info);
                     next = new GraphQuestState { name = name, kind = record.kind, title = record.title, station = record.station, offer = record.offer };
                     Session.GraphQuests.Add(next);
                     record = null;
@@ -2029,10 +2067,24 @@ namespace GoF2Remake.Events
                     int close = line.IndexOf('}', open + 1);
                     if (close < 0) throw new Exception(X("mpEventBrace", "a { without its }."));
                     sb.Append(line, i, open - i);
-                    sb.Append(Format(Eval(line.Substring(open + 1, close - open - 1))));
+                    string inner = line.Substring(open + 1, close - open - 1).Trim();
+                    // {stationname(<expression>)} / {systemname(<expression>)}: a station's name / its system's (a station picked
+                    // by randomstation() in a variable), not a number
+                    var named = System.Text.RegularExpressions.Regex.Match(inner, @"^(stationname|systemname)\s*\((.*)\)$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                    if (named.Success) sb.Append(PlaceName((int)Math.Round(Eval(named.Groups[2].Value)), named.Groups[1].Value.ToLowerInvariant() == "systemname"));
+                    else sb.Append(Format(Eval(inner)));
                     i = close + 1;
                 }
                 return sb.ToString();
+            }
+
+            /// <summary>A station's name or its system's ("" for none).</summary>
+            static string PlaceName(int station, bool system)
+            {
+                var db = NetGame.Db;
+                var st = db.Stations.Find(x => x.index == station);
+                if (st == null) return "";
+                return system ? db.Systems.Find(x => x.index == st.system)?.name ?? st.systemName ?? "" : st.name ?? "";
             }
 
             static string Format(double v) =>
@@ -2294,7 +2346,7 @@ namespace GoF2Remake.Events
                 static double GameState(string name, string arg)
                 {
                     if (name == "quest")
-                        return Session.GraphQuestsDone.Contains(arg) ? 2 : Session.GraphQuests.Exists(q => q.name == arg) ? 1 : 0;
+                        return Session.GraphQuestsDone.Contains(arg) || Session.GraphQuestRepeats.ContainsKey(arg) ? 2 : Session.GraphQuests.Exists(q => q.name == arg) ? 1 : 0;
                     // option(<mod id>:<option id>): a mod's new-game option is on in this game (Modding.ModGameOptions).
                     if (name == "option") return Modding.ModGameOptions.IsOn(arg) ? 1 : 0;
                     // won(main | valkyrie | supernova): that campaign's story is finished in this game (or the multiplayer
@@ -2334,6 +2386,7 @@ namespace GoF2Remake.Events
                         case "min" when a.Count == 2: return Math.Min(a[0], a[1]);
                         case "max" when a.Count == 2: return Math.Max(a[0], a[1]);
                         case "floor" when a.Count == 1: return Math.Floor(a[0]);
+                        case "randomstation" when a.Count == 0: return RandomStation();
                     }
                     throw new Exception(string.Format("no function {0} with {1} value(s).", name, a.Count));
                 }

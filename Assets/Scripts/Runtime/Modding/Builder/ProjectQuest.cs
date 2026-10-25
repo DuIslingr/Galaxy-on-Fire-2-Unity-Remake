@@ -62,6 +62,8 @@ namespace GoF2Remake.Modding
         /// <summary>A quest's start condition: "" = at once, "never" = only when another starts it, else an expression.</summary>
         public string StartsWhen { get => S("startsWhen") ?? ""; set => SetS("startsWhen", value); }
         public int Reward { get => N("reward") ?? 0; set => SetN("reward", value <= 0 ? (int?)null : value); }
+        /// <summary>A story mission that comes again: minutes of playing time after it was done (0 = once; "repeat").</summary>
+        public int Repeat { get => N("repeat") ?? 0; set => SetN("repeat", value <= 0 ? (int?)null : value); }
         public string Offer { get => Text("offer"); set => SetText("offer", value); }
         public string Client { get => S("client"); set => SetS("client", value); }
         public string Description { get => Text("description"); set => SetText("description", value); }

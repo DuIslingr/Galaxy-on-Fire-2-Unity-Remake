@@ -11,7 +11,8 @@
 // answered "Its shields hold" now and then) and the renderers whose material is named like "shieldMaterial" (the ship's
 // energy fields) show, hidden once the last generator falls; a "weakspot" part passes its hits on to the hull x that factor
 // and its death takes "bonus" of the hull's maximum; a part of a higher "stage" can't be harmed while one of a lower stage
-// stands (ES2's encounter stages). Parts take the ship's side: hostile when it is, turned when it turns. Only the game running
+// stands (ES2's encounter stages). A retreating ship (CapitalRetreat) halts them: they stop firing and launching, its hangars'
+// fighters jump out, and they leave with it. Parts take the ship's side: hostile when it is, turned when it turns. Only the game running
 // the orbit's NPCs builds them (Traffic.Create); the other players see them as proxies.
 
 using System.Collections.Generic;
@@ -47,7 +48,7 @@ namespace GoF2Remake.World
         List<CapitalSubsystem> specs;
         readonly List<Part> parts = new List<Part>();
         readonly List<Renderer> fields = new List<Renderer>();
-        bool built, shieldsUp, dead;
+        bool built, shieldsUp, dead, halted;
         float sinceWarnMs = ShieldWarnMs;
 
         /// <summary>Any part marked "shields" still stands (the hull takes shieldedDamage).</summary>
@@ -65,7 +66,7 @@ namespace GoF2Remake.World
 
         void Update()
         {
-            if (host == null || dead) return;
+            if (host == null || dead || halted) return;
             if (!built) { built = true; Build(); }
             float dtMs = Time.deltaTime * 1000f;
             sinceWarnMs += dtMs;
@@ -218,6 +219,27 @@ namespace GoF2Remake.World
                 p.launched++;
             }
             traffic.ConnectPlayers();
+        }
+
+        /// <summary>CapitalRetreat: the ship gives up the fight and charges its jump drive. Its parts hold their fire and can't
+        /// be harmed any more, the hangars launch no more, and the fighters they launched jump out (ES2's StartEnemyJumpOut).</summary>
+        public void Halt()
+        {
+            if (halted || dead) return;
+            halted = true;
+            foreach (var p in parts)
+            {
+                if (Standing(p)) { p.ship.shootingEnabled = false; p.ship.Target.invulnerable = true; }
+                foreach (var f in p.flying) if (f != null && !f.Gone && f.Target.Alive) f.JumpOut();
+            }
+        }
+
+        /// <summary>CapitalRetreat: the ship has jumped away, its parts with it (nobody's kills).</summary>
+        public void LeaveWithHost()
+        {
+            dead = true;
+            foreach (var p in parts)
+                if (Standing(p)) { p.ship.Target.killedByNpc = true; p.ship.Vanish(); }
         }
 
         void OnHostDied()

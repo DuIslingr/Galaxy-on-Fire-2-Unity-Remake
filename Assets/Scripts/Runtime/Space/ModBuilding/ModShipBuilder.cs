@@ -140,7 +140,7 @@ namespace GoF2Remake.Modding
             // sized in its metres (the kit's scale).
             float es2Scale = model.transform.localScale.x;
             LateralThrusters.Add(root, glow != null ? glow.transform : null, c.mounts, es2Scale);
-            if (flames) Es2EngineVfx.Add(root, c.mounts, es2Scale);
+            if (flames) Es2EngineVfx.Add(root, c.mounts, es2Scale, c.es2Engine);
             asm.playerVariantParts = parts.ToArray();
             asm.npcVariantParts = npcParts.ToArray();
             asm.conditionalParts = new GameObject[0];

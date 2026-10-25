@@ -222,7 +222,7 @@ namespace GoF2Remake.UI
                 new DragScroll(modOptionCards);   // a drag (mouse or finger) scrolls the cards sideways
             }
             modOptionCards.Clear();
-            var all = Modding.ModGameOptions.All();
+            var all = Modding.ModGameOptions.Cards();
             modOptionCards.parent.style.display = all.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
             panel.EnableInClassList("panel--wide", all.Count > 0);
             // Two cards show at a time; more scroll sideways (a drag, the wheel, or the focus moving onto one).
