@@ -2,8 +2,8 @@
 
 The remake's free flight (`FlightModel.StepFree`, Options > Controls "Free flight (EVERSPACE 2 style)") was first built
 from public descriptions of EVERSPACE 2's controls. This file is how its numbers are tuned against the real game:
-**black-box measurements of recordings**, nothing read from the game's files (its archives are encrypted, and its code
-isn't ours to copy). The tool is `Reference/tools/es2flight/es2measure.py`; the results go in "Results" below and then
+first **black-box measurements of recordings**, then (2026-10-25) the formulas read from the game's own decompiled
+movement code (the last section), with the measurements fitting its constants. The tool is `Reference/tools/es2flight/es2measure.py`; the results go in "Results" below and then
 into the constants at the top of `FlightModel`'s free-flight section.
 
 ## What each measurement sets
@@ -328,3 +328,47 @@ The ship-class check above left the per-ship differences to the remake. Two chan
   Rhino (H 6) 51 deg/s, handling 100 125, a Dace with the Pulsed Plasma Thrust (H 74.5) 335; the original's linear rate spans
   13-161 deg/s (12x), the square root 68-241 (3.5x), now 6.6x. The acceleration ease stays square-root scaled.
 Checked on `FlightModel` alone (2.7 s of boost: 160 / 160 / 266 / 320 / 426 m/s; the turn rates above).
+
+### The decompiled movement (2026-10-25)
+
+The game's own code, read from the player's installation (`ES2-Win64-Shipping.exe` with its shipped PDB, Ghidra; the
+blueprints' Kismet bytecode through CUE4Parse; the private dumps stay outside the repository), replaces the curve fits above
+with the formulas. `UShipMovementComponent::ApplyControlInputToVelocity`, each frame, in the ship's frame:
+
+1. **Target**: the input vector (forward / strafe / up, each clamped to -1..1, the whole clamped to length 1) times the
+   top speed of each axis (`GetTargetVelocityFromInput`: forward, or backward when the input points back; strafe; hover).
+   Backward, strafe and hover are set from the forward top speed (`SetStrafeHoverBackwardFromForwardSpeed`, bound to its
+   changes, so a boost raises them too).
+2. **Turning boost** (with the dampeners on): the velocity is turned toward the target's direction at its own speed by
+   `((1 + cos) / 2)^TurningBoostExp x dt x TurningBoost x |input|` (clamped to 1; cos between the two directions,
+   `TurningBoostExp` 1 for the player). `BP_Ship_Player`'s tick sets `TurningBoost = AccelerationForward / 6000` (cm/s^2)
+   while the dampeners are on, else 0: 2.2 per second for the measured ship.
+3. **Braking** (`Deceleration`; the same tick sets it to `AccelerationForward x 0.25` with the dampeners on, scaled by
+   `1 - 0.9 cos^2` of the input's direction against the velocity's (`InputInheritInertia`), and to 0 with them off): while
+   the speed is above the target's (`IsExceedingMaxSpeed`, x1.01 in the squares), it drops linearly along the velocity, not
+   below the target's speed; above the forward top speed the rate is multiplied by `(speed / top)^1.67`
+   (`DecelerationMaxSpeedExponent`).
+4. **Thrust**: along the target's direction, `|input| x |acceleration per axis . direction|`, times
+   `1 - p^EaseAccelerationExponent` (3 for the player) with p the velocity along the target's direction over the top speed
+   that way (only while `Deceleration > 0`: with the dampeners off the thrust isn't eased). Then the speed is capped to the
+   target's, or to the speed it had when it was already faster (the thrust only steers it there).
+5. **Turning** (each axis): the rate moves toward `input x MaxSpeedRotation` at `AccelerationRotation` (linear), faster
+   above the top rate by `(rate / top)^1.2`.
+
+The boost (`StartBoosting`) multiplies the forward top speed by `BoostFactorMaxSpeed` (at least `MinBoostFactorMaxSpeed`
+1.1), the forward acceleration by `BoostFactorAccelerationForward`, the rotation's by `BoostFactorMaxSpeedRotation` /
+`BoostFactorAccelerationRotation` (1 by default; the player's equipment changes them); it drains `BoostEnergyConsumption`
+per second and refills after `BoostRechargeDelay`. A legendary booster (`MomentumOnBoostStop`, `MomentumBuildup` in the
+blueprint) explains the measured ship's growing boost and its slow run-down with the thrust held.
+
+Fitted to the measurements with these formulas: the forward acceleration is **132 m/s^2** (the gauge's cubic ease and the
+distance readout both within ~1 m/s: 0.7 / 0.9 / 1.1 / 1.3 s -> 76.5 / 86.0 / 91.0 / 93.4 m/s against the read 76 / 86 /
+91 / 94), and a quarter of it is the measured 33 m/s^2 of braking; backward, strafe and up / down 90 m/s^2; the boost's
+forward acceleration x1.63 (215 m/s^2: the gauge's boost points within 3 km/h with 0.15 s of input latency). Not from the
+code: the per-ship values themselves (`InitAttributeAccessFromPlayerGlobals`, the run-time items), so the remake keeps the
+measured ones and scales them by the handling as before.
+
+Applied to the remake (`FlightModel.StepFree`): the per-axis eases and braking replaced by the steps above (the turning
+boost, the braking along the velocity with `InputInheritInertia` and the exponent above the top speed, the thrust along the
+asked direction with its 1 - p^3 ease, the speed cap); with the dampeners off no braking and no ease (before: the speed
+eased back to a soft cap). Tests `FreeFlightTests`.

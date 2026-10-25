@@ -1026,28 +1026,34 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   `GameControls.PadControl` also reads a capture of a pad-only control, e.g. `<DualSenseGamepadHID>/touchpadButton`).
 - **Free flight** (remake, Options > Controls toggle "Free flight (EVERSPACE 2 style)", `Settings.FlightStyle`,
   `FlightStyles`; off by default, and off is the original flight and key layout unchanged; single player and sessions, it only changes how the player's own ship flies): built
-  after EVERSPACE 2 (not from its code): its numbers come from recordings of the game measured by
-  `Reference/tools/es2flight/es2measure.py` and from its asset values (`Reference/research/es2_flight_measurements.md`).
-  `FlightModel.StepFree` (plain C#): thrust / strafe / up-down held instead of a throttle, per axis in the ship's frame
-  (`FreeAxis`): top speeds forward the original's 2 u/ms (100 m/s; EVERSPACE 2's cockpit speed gauge read 343 km/h = 95.3),
-  backward, strafe and up / down x0.5 (the gauge: 172 km/h each); every axis eases out cubically to its top speed in a
-  fixed time, v = V (1 - (1 - t/T)^3) (the game's EaseAccelerationExponent 3), written as a rate of the speed still missing
-  so it continues from any speed: forward T 1750 ms, the others 1270 ms, at handling 100 (sqrt-scaled by the handling,
-  + `AccelMs`). Turning: every axis (roll too) at
+  after EVERSPACE 2: its numbers come from recordings of the game measured by
+  `Reference/tools/es2flight/es2measure.py` and from its asset values, its velocity step (2026-10-25) from the game's
+  decompiled `UShipMovementComponent::ApplyControlInputToVelocity` and `BP_Ship_Player`'s tick
+  (`Reference/research/es2_flight_measurements.md`, "The decompiled movement").
+  `FlightModel.StepFree` (plain C#): thrust / strafe / up-down held instead of a throttle, in the ship's frame: top speeds
+  forward the original's 2 u/ms (100 m/s; EVERSPACE 2's cockpit speed gauge read 343 km/h = 95.3), backward, strafe and
+  up / down x0.5 (the gauge: 172 km/h each; they follow the forward one, so a boost raises them too); the input clamped to
+  length 1, so thrust and strafe together share one top speed in their direction (79 m/s, not 100 and 50 apart); the
+  thrust accelerates along the asked direction at A (1 - p^3) (p the speed that way over the top speed that way,
+  EaseAccelerationExponent 3; forward A = 132 m/s^2, the others 90 m/s^2 over their half top speed: fitted to the gauge
+  and the distance readout within ~1 m/s; at handling 100, sqrt-scaled by the handling, shrunk by `AccelMs`); the speed
+  then capped to what is asked, or to what it was when already faster. Turning: every axis (roll too) at
   EVERSPACE 2's 125 deg/s at handling 100 (scaled by (H / 20)^0.75, `FreeTurnExponent`: a bare Rhino 51; softly capped
   there, only a tenth of the rest counting, `FreeTurnAboveShare`: an Inflict 127 instead of 148, a Dace with the Pulsed
   Plasma Thrust 146 instead of 335, players' feedback 2026-10-16: the nimble ships whipped round; the steering
   sensitivity option x0.6..1.6, 1 at its default, read from `Settings.Sensitivity`: `FlightModel.Sensitivity` is the
   original's ramp setting, a fixed 2.7 under mouse steering, which turned free flight x1.6 too fast; x0.85 boosting, measured), reached by a linear 400 ms ramp (`FreeTurnRampMs`, measured in
   EVERSPACE 2's cockpit view, which follows the ship rigidly); speed doesn't change it. No auto-level (Level out still works). Inertial dampeners (`ShipController.Dampeners`, toggled by
-  `GameControls.Dampeners`, on at start): each axis flies the speed asked for and what isn't asked for brakes away at
-  33 m/s^2 (the gauge, linear on every axis; `FreeDecelMs` 3000: a stop from top speed; the asset says 60, probably
-  scaled by the player's dampener strength setting), which also eases a boost's speed off afterwards; off: the thrust
-  adds to the momentum, above the soft cap (top speed, the boost's while boosting) the speed eases back at that rate. A
+  `GameControls.Dampeners`, on at start): the velocity is turned toward the asked direction (the game's TurningBoost =
+  forward acceleration / 6000 cm/s^2 = 2.3 per second, x (1 + cos) / 2, so a turning ship's velocity follows its nose) and
+  a speed above what is asked brakes along the velocity at a quarter of the forward acceleration (34.6 m/s^2: the
+  measured 33), up to 90 % less while thrusting the way the ship moves (InputInheritInertia, x 1 - 0.9 cos^2) and faster
+  above the top speed by (speed / top)^1.67 (a boost's speed runs down in about a second); off: no braking, no turning
+  boost and no ease, so the ship keeps its momentum and the thrust adds to it up to the top speed, only steering it
+  beyond. A
   held boost on an energy pool: to the booster's original boost speed x 3.2 / 3 (`FreeBoostFactor`: the Me'al's x3 is
   EVERSPACE 2's measured x3.2, the gauge's 1110 of 343 km/h; Linear / Cyclotron x1.6, Synchrotron x2.67, Polytron x4.27;
-  a booster without a boost speed x3.2), eased out cubically over 3.1 s from the
-  top speed (`FreeBoostEaseMs`, over the gap), a full pool lasts the booster's duration (attribute 27; 3.5 s without one: EVERSPACE 2's boost lasted 4.5 s held, so its equipment sets it)
+  a booster without a boost speed x3.2), at x1.63 the forward acceleration (fitted: 215 m/s^2), a full pool lasts the booster's duration (attribute 27; 3.5 s without one: EVERSPACE 2's boost lasted 4.5 s held, so its equipment sets it)
   and refills in its recharge time, restarts from 20 % and only on a fresh press after running empty (`BoostHeld`,
   `BoostRechargePercent` = the pool). The forward
   thrust held is `Throttle` (0 with no key, whatever the momentum) and the forward speed `MoveSpeed`; with no forward
@@ -1055,8 +1061,8 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
   nozzles, the nozzle / throttle glows go dark, `ShipExhaust` stops, `ShipController.UpdateEngineParts` stops drawing the
   model's player engine parts (Renderer.enabled, not the jets), `NetPlayer`'s engine flag), so a ship at rest or coasting
   burns nothing; after the launch / arrival fly-in the ship comes to rest (`ShipController.freeSettle`: braked like the
-  dampeners even with them off, until the player thrusts). With the dampeners off the thrust never pushes past the soft
-  cap (before, the cap's easing was weaker than the thrust and a held key climbed on for good). The sideways part of the
+  dampeners even with them off, until the player thrusts). With the dampeners off the thrust never pushes past the top
+  speed (the game's cap: what is asked, or the speed it already had). The sideways part of the
   move goes to `StrafeSlide`, so the chase camera stays square behind a sliding ship. `ShipController.FreeFlightActive`: the
   option with keyboard / mouse or a controller (touch, tilt and VR keep the original); the autopilot, the launch / arrival
   camera, the turret view, the dodge and computer control (mining, object docking) run the original path and hand back
