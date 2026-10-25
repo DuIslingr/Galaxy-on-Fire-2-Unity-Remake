@@ -2881,5 +2881,6 @@
  "mbAddSmokePoint": "+ 煙の位置",
  "mbPointsNote": "武器ポイントと同じゲーム単位：X はパイロットの左、Y は上、Z は機首。",
  "capitalRetreats": "{0}がジャンプで離脱する！",
- "mbRepeatMinutes": "再登場まで（プレイ時間の分、0 = 1回のみ）"
+ "mbRepeatMinutes": "再登場まで（プレイ時間の分、0 = 1回のみ）",
+ "factionDiplomat": "{0}にはまだ友人がいる。#C払えば、あんたのしたことは水に流して、また中立に扱ってくれるさ。"
 }

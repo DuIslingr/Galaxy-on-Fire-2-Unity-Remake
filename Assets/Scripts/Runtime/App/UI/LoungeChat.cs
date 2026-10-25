@@ -177,7 +177,7 @@ namespace GoF2Remake.Data
                 switch (a.offer)
                 {
                     case AgentOffer.SmallTalk: return false;
-                    case AgentOffer.Diplomat: return Standing.IsEnemy(a.race);
+                    case AgentOffer.Diplomat: return Standing.IsEnemy(a.Side);
                     case AgentOffer.Mission: case AgentOffer.Purchase: return a.HasMission;
                     case AgentOffer.SellMod: return ModForSale(a.sellMod);   // at its cap on this hull: 858
                     case AgentOffer.EventMission: return EventMissions.OfferOf(a) != null;
@@ -307,8 +307,12 @@ namespace GoF2Remake.Data
                     return T((Achievements.GotAllMedals ? 782 : 779) + a.wingmen.Count).Replace("#C", C(a.costs)).Replace("#W", a.wingmen.Count > 0 ? a.wingmen[0] : "");
                 case AgentOffer.Diplomat:
                 {
-                    if (!Standing.IsEnemy(a.race)) return T(883);
-                    a.costs = AgentGenerator.DiplomatCosts(a.race);
+                    if (!Standing.IsEnemy(a.Side)) return T(883);
+                    a.costs = AgentGenerator.DiplomatCosts(a.Side);
+                    // remake mods: a faction's diplomat (ModFactions)
+                    if (a.faction >= 0)
+                        return string.Format(Localization.Extra("factionDiplomat", "I still have friends among the {0}. For #C they will forget what you did and treat you as neutral again."),
+                                             Standing.RaceName(a.faction)).Replace("#C", C(a.costs));
                     int id = a.race switch { 2 => 878, 3 => 880, 0 => 881, _ => 882 };
                     return T(id).Replace("#C", C(a.costs));
                 }
@@ -573,7 +577,7 @@ namespace GoF2Remake.Data
                     break;
                 case AgentOffer.Diplomat:
                     Session.Credits -= a.costs;
-                    Rehabilitate(a.race);
+                    Rehabilitate(a.Side);
                     a.accepted = true;
                     break;
                 case AgentOffer.SellSystem:
@@ -675,6 +679,7 @@ namespace GoF2Remake.Data
         /// <summary>Standing::rehabilitate 0x14289c: the race's axis just inside the neutral band (+-35).</summary>
         static void Rehabilitate(int race)
         {
+            if (Modding.ModFactions.Is(race)) { Modding.ModFactions.SetStanding(race, 0); return; }   // remake mods: a faction back to neutral
             if (race == 0) Session.Standing[0] = -35;
             else if (race == 1) Session.Standing[0] = 35;
             else if (race == 2) Session.Standing[1] = -35;

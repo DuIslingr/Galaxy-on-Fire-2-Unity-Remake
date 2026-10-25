@@ -601,6 +601,14 @@ namespace GoF2Remake.World
 
         int RandomParkedShip()
         {
+            // Remake mods: a system with mods' ships only ("traffic": "mod"): its local factions' ships (ModWorld.Locals, else its
+            // owner), like its orbit's locals; the game's fighters only when they have none.
+            if (Modding.ModWorld.ModTrafficOnly(Layout.systemIndex))
+            {
+                var locals = Modding.ModWorld.Locals(Layout.systemIndex);
+                int side = locals != null ? locals[Random.Range(0, locals.Count)] : Layout.raceId;
+                return Flight.NpcTables.RandomFighter(side);
+            }
             int race = HangarIndex;
             if (Random.value >= 0.7f) race = Random.value < 0.3f ? 8 : Random.Range(0, 4);
             var list = race == 8 ? StationTables.PirateFighters : StationTables.RaceFighters[Mathf.Clamp(race, 0, 3)];

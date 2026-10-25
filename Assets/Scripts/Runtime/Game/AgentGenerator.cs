@@ -67,6 +67,7 @@ namespace GoF2Remake.Data
         /// Midorians pick Terran or Nivelian lists (two independent 50 % picks).</summary>
         public static string RandomName(int race, bool male)
         {
+            race = Standing.Look(race);   // remake mods: a faction's names are its look race's
             string first, last;
             switch (race)
             {
@@ -90,6 +91,7 @@ namespace GoF2Remake.Data
         /// Terran, female Terran 10), parts[1..4] random within the set's counts.</summary>
         public static int[] CreatePortrait(bool male, int race)
         {
+            race = Standing.Look(race);   // remake mods: a faction's faces are its look race's
             int set = race;
             if (race == 3) set = R(100) < 75 ? 2 : 0;
             else if (race == 5) set = 0;
@@ -150,6 +152,7 @@ namespace GoF2Remake.Data
                     agents[i] = new Agent { name = RandomName(race, true), race = race, station = station, offer = AgentOffer.Diplomat,
                                                 portrait = CreatePortrait(true, race), costs = DiplomatCosts(race) };
                 }
+            AddFactionDiplomats(db, station, agents);
 
             // Campaign 23 at station 10, or 1 %: the first mission under 50 000 pays 10x (max 50 000).
             if ((campaign == 23 && station == 10) || R(100) == 1)
@@ -251,8 +254,26 @@ namespace GoF2Remake.Data
             }
         }
 
-        /// <summary>SpaceLounge::startChat, diplomat: int(|standing axis| / 100 * 16000).</summary>
-        public static int DiplomatCosts(int race) => (int)(Math.Abs(Session.Standing[race <= 1 ? 0 : 1]) / 100f * 16000f);
+        /// <summary>SpaceLounge::startChat, diplomat: int(|standing axis| / 100 * 16000) (a mod faction: its own standing).</summary>
+        public static int DiplomatCosts(int race) =>
+            (int)(Math.Abs(Modding.ModFactions.Is(race) ? Modding.ModFactions.Standing(race) : Session.Standing[race <= 1 ? 0 : 1]) / 100f * 16000f);
+
+        /// <summary>Remake mods: in the lounges of a mod faction's system, like the game's diplomats (35 %, replacing the first
+        /// generic visitor), one for each faction of that mod the player is hostile with whose "diplomats" allow it: talking
+        /// to them restores the faction's standing to neutral (LoungeChat). The visitor looks like the faction's look race.</summary>
+        static void AddFactionDiplomats(Database db, int station, List<Agent> agents)
+        {
+            var owner = Modding.ModFactions.Get(Sys(db, SystemOf(db, station))?.raceId ?? -1);
+            if (owner == null || R(100) >= 35) return;
+            foreach (var f in Modding.ModFactions.All)
+            {
+                if (f.mod != owner.mod || !f.diplomats || f.hostile || !Standing.IsEnemy(f.race)) continue;
+                int i = agents.FindIndex(x => !x.IsStory && x.offer != AgentOffer.Diplomat);
+                if (i < 0) return;
+                agents[i] = new Agent { name = RandomName(f.look, true), race = f.look, faction = f.race, station = station, offer = AgentOffer.Diplomat,
+                                        portrait = CreatePortrait(true, f.look), costs = DiplomatCosts(f.race) };
+            }
+        }
 
         static Agent StoryAgent(Database db, StoryAgentData s)
         {
@@ -295,7 +316,7 @@ namespace GoF2Remake.Data
         public static Agent CreateAgent(Database db, int station)
         {
             int campaign = Session.CampaignMission;
-            int race = Sys(db, SystemOf(db, station))?.raceId ?? 0;
+            int race = Standing.Look(Sys(db, SystemOf(db, station))?.raceId ?? 0);   // (a mod faction's system: its look race's visitors)
             if (R(100) < 20) race = R(8);
             int offer;
             do offer = R(7); while ((race == 1 && offer == AgentOffer.Wingmen) || offer == 3 || offer == 4);   // Vossk never offer wingmen

@@ -35,13 +35,15 @@ namespace GoF2Remake.Flight
         /// <summary>Freighter ship index and its race (30 % Nivelian in Terran systems and the other way round).</summary>
         public static (int ship, int race) RandomFreighter(int systemRace)
         {
+            // remake mods: a faction's system: its own freighters (the look race's model when it has no mod freighter)
+            if (Modding.ModFactions.Is(systemRace)) return (Modding.ModFactions.Look(systemRace) == 1 ? 13 : 15, systemRace);
             int race = systemRace;
             if (Random.Range(0, 100) < 30) race = systemRace == 0 ? 2 : systemRace == 2 ? 0 : systemRace;
             if (race < 0 || race > 3) race = 0;
             return (race == 1 ? 13 : 15, race);
         }
 
-        public static string FreighterAssembly(int race) => race switch
+        public static string FreighterAssembly(int race) => Modding.ModFactions.Look(race) switch
         {
             1 => "cargo_004_vossk",
             2 => "cargo_002_nivelian",
@@ -125,12 +127,13 @@ namespace GoF2Remake.Flight
         public static float GunReloadMs => 600f - 2f * StatCampaign;
 
         /// <summary>The item whose projectile / impact an NPC gun of this race shows.</summary>
-        public static int GunItem(int race) => race switch { 0 => 0, 1 => 3, 2 => 7, 3 => 25, 9 => 5, 10 => 229, _ => 19 };
+        public static int GunItem(int race) => Modding.ModFactions.Get(race) is var f && f != null && f.gunItem >= 0 ? f.gunItem   // remake mods: a faction's "gun"
+            : Modding.ModFactions.Look(race) switch { 0 => 0, 1 => 3, 2 => 7, 3 => 25, 9 => 5, 10 => 229, _ => 19 };
 
         /// <summary>DAT_002526c0 shot sound per race, as an index into CombatAssets.shots: 0 Nirai EX1 (52),
         /// 1 Shkoom (55), 2 Nirai Charged (54), 3 Nirai EX2 (53), 4 Laser_Enemy (61), 5 the Void's Laser_Void (62,
         /// Laser_Vossk_V01), 6 the Specters' DarkMatterLaser (2276).</summary>
-        public static int ShotSound(int race) => race switch { 0 => 0, 1 => 1, 2 => 2, 3 => 3, 9 => 5, 10 => 6, _ => 4 };
+        public static int ShotSound(int race) => Modding.ModFactions.Look(race) switch { 0 => 0, 1 => 1, 2 => 2, 3 => 3, 9 => 5, 10 => 6, _ => 4 };
 
         /// <summary>Level::createMission: raider group chance for the (effective) security level.</summary>
         public static int RaiderChance(int security) => security <= 0 ? 90 : security == 1 ? 65 : security == 2 ? 35 : 10;

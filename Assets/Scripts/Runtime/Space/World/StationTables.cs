@@ -14,10 +14,17 @@ namespace GoF2Remake.World
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
     public static class StationTables
     {
-        public static int HangarIndex(int station, int systemRace) =>
-            station == 101 ? 8 : station == 100 ? 7 : systemRace >= 0 && systemRace < 4 ? systemRace : 0;
+        public static int HangarIndex(int station, int systemRace)
+        {
+            systemRace = GoF2Remake.Flight.Standing.Look(systemRace);   // remake mods: a faction's look race
+            return station == 101 ? 8 : station == 100 ? 7 : systemRace >= 0 && systemRace < 4 ? systemRace : 0;
+        }
 
-        public static int BarRace(int systemRace) => systemRace >= 0 && systemRace < 4 ? systemRace : 0;
+        public static int BarRace(int systemRace)
+        {
+            systemRace = GoF2Remake.Flight.Standing.Look(systemRace);
+            return systemRace >= 0 && systemRace < 4 ? systemRace : 0;
+        }
 
         // ---- hangar ------------------------------------------------------------------------------------------
 

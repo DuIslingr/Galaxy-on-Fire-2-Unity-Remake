@@ -2881,5 +2881,6 @@
  "mbAddSmokePoint": "+ Punkt dymu",
  "mbPointsNote": "Jednostki gry jak punkty broni: X lewa strona pilota, Y w górę, Z dziób.",
  "capitalRetreats": "{0} odskakuje!",
- "mbRepeatMinutes": "Wraca po (minutach gry, 0 = raz)"
+ "mbRepeatMinutes": "Wraca po (minutach gry, 0 = raz)",
+ "factionDiplomat": "Wciąż mam przyjaciół wśród {0}. Za #C zapomną, co zrobiłeś, i znów potraktują cię neutralnie."
 }

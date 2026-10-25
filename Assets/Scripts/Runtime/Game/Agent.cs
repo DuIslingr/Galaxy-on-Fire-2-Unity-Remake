@@ -108,6 +108,11 @@ namespace GoF2Remake.Data
         public int sellShip = -1;
         /// <summary>Agent+0x58: wingmen / diplomat price.</summary>
         public int costs;
+        /// <summary>Remake mods: a diplomat's mod faction (ModFactions; -1: a game race's, 'race'). 'race' is then the faction's
+        /// look, which the visitor's face and name follow.</summary>
+        public int faction = -1;
+        /// <summary>The side a diplomat speaks for: its faction, else its race.</summary>
+        public int Side => faction >= 0 ? faction : race;
         /// <summary>Agent+0x08..0x10: the wingman friends' names.</summary>
         public List<string> wingmen = new List<string>();
         public FreelanceMission mission = new FreelanceMission();

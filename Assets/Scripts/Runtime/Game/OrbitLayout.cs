@@ -149,8 +149,10 @@ namespace GoF2Remake.World
 
         static readonly string[] JumpgateByRace = { "jumpgate_terran", "jumpgate_vossk_anim", "jumpgate_nivelian", "jumpgate_midorian" };
 
-        public string JumpgateAssembly => JumpgateByRace[raceId >= 0 && raceId < 4 ? raceId : 0];
-        public int JumpgateRadius => raceId == 1 ? GateRadiusVossk : GateRadius;
+        public string JumpgateAssembly => JumpgateByRace[Look >= 0 && Look < 4 ? Look : 0];
+        public int JumpgateRadius => Look == 1 ? GateRadiusVossk : GateRadius;
+        /// <summary>The race whose tables the orbit uses (a mod faction's look, Standing.Look).</summary>
+        int Look => Flight.Standing.Look(raceId);
 
         static float Angle(int v) => v * 1.52587890625e-05f * 6.2831855f;   // 65536 per turn
 

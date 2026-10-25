@@ -2881,5 +2881,6 @@
  "mbAddSmokePoint": "+ 연기 지점",
  "mbPointsNote": "무기 장착점과 같은 게임 단위: X는 조종사의 왼쪽, Y는 위, Z는 함수.",
  "capitalRetreats": "{0}이(가) 점프로 이탈합니다!",
- "mbRepeatMinutes": "다시 등장까지 (플레이 분, 0 = 한 번)"
+ "mbRepeatMinutes": "다시 등장까지 (플레이 분, 0 = 한 번)",
+ "factionDiplomat": "{0} 쪽에 아직 친구들이 있지. #C만 내면 네가 한 일을 잊고 다시 중립으로 대해 줄 거야."
 }

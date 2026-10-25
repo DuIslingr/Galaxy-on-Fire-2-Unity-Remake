@@ -69,7 +69,7 @@ namespace GoF2Remake.Modding
         public static int PickCapital(int race, bool replacing)
         {
             // (no random draw without a candidate: the game's own traffic rolls stay as they were)
-            float chance = Settings.ModShipTrafficChance;
+            float chance = ChanceFor(race);
             if (chance <= 0f || !Has(race, Battleship) || (replacing && Random.value >= chance)) return -1;
             return PickOf(race, Battleship);
         }
@@ -78,7 +78,7 @@ namespace GoF2Remake.Modding
         /// ships in traffic" chance, -1 = none (no random draw without a candidate).</summary>
         public static int PickHostile(int race, float share)
         {
-            float chance = Settings.ModShipTrafficChance * share;
+            float chance = ChanceFor(race) * share;
             if (chance <= 0f || !Has(race, Battleship) || Random.value >= chance) return -1;
             return PickOf(race, Battleship);
         }
@@ -92,13 +92,16 @@ namespace GoF2Remake.Modding
         }
 
         /// <summary>A mod capital ship of 'kind' may fly for 'race' now (the option not Off).</summary>
-        public static bool Has(int race, string kind) => Settings.ModShipTrafficChance > 0f && Candidates(race, kind).Count > 0;
+        public static bool Has(int race, string kind) => (ModFactions.Is(race) || Settings.ModShipTrafficChance > 0f) && Candidates(race, kind).Count > 0;
+
+        /// <summary>The "Mod ships in traffic" chance, always for a mod faction (the game has no ships of its own for it).</summary>
+        static float ChanceFor(int race) => ModFactions.Is(race) ? 1f : Settings.ModShipTrafficChance;
 
         /// <summary>TrafficPlan's freighter loop: the game's 'fallback' freighter, or now and then a mod freighter of 'race'
         /// (at the "Mod ships in traffic" chance).</summary>
         public static int PickFreighter(int race, int fallback)
         {
-            float chance = Settings.ModShipTrafficChance;
+            float chance = ChanceFor(race);
             if (chance <= 0f || !Has(race, Freighter) || Random.value >= chance) return fallback;
             int ship = PickOf(race, Freighter);
             return ship >= 0 ? ship : fallback;

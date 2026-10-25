@@ -2881,5 +2881,6 @@
  "mbAddSmokePoint": "+ Point de fumée",
  "mbPointsNote": "Unités du jeu comme les points d'arme : X la gauche du pilote, Y le haut, Z la proue.",
  "capitalRetreats": "{0} s'enfuit en saut !",
- "mbRepeatMinutes": "Revient après (minutes de jeu, 0 = une fois)"
+ "mbRepeatMinutes": "Revient après (minutes de jeu, 0 = une fois)",
+ "factionDiplomat": "J'ai encore des amis chez les {0}. Pour #C, ils oublieront ce que tu as fait et te traiteront de nouveau en neutre."
 }

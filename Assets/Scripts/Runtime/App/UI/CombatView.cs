@@ -296,7 +296,9 @@ namespace GoF2Remake.UI
                         string who = string.IsNullOrEmpty(locked.displayName) ? RaceName(locked.race) : locked.displayName;
                         lockOre.text = locked.plateNameOnly && !string.IsNullOrEmpty(locked.displayName) ? locked.displayName : $"{who} {pct}%";
                         plateText = lockOre.text;
-                        plateIcon = !locked.plateNoIcon && (locked.race >= 0 && locked.race <= 3 || locked.race == 8 || locked.race == 9) ? Tex($"race_{locked.race}") : null;
+                        plateIcon = locked.plateNoIcon ? null
+                            : Modding.ModFactions.Is(locked.race) ? Modding.ModFactions.Icon(locked.race) ?? RaceTex(Standing.Look(locked.race))   // remake mods: a faction's emblem
+                            : RaceTex(locked.race);
                     }
                     lockOre.EnableInClassList("lock-ore--wanted", locked.plateRed);
                     lockClass.style.display = plateIcon != null ? DisplayStyle.Flex : DisplayStyle.None;
@@ -332,7 +334,9 @@ namespace GoF2Remake.UI
             if (gone != null) foreach (var k in gone) markers.Remove(k);
         }
 
-        static string RaceName(int race) => race switch
+        Texture2D RaceTex(int race) => race >= 0 && race <= 3 || race == 8 || race == 9 ? Tex($"race_{race}") : null;
+
+        static string RaceName(int race) => Modding.ModFactions.Is(race) ? Modding.ModFactions.Name(race) : race switch   // remake mods: a faction's name
         {
             >= 0 and <= 9 => Localization.Get(406 + race),   // the four races, the minor ones, pirates, the Void
             _ => Localization.Get(416),                     // the Specters: the original's own "???"

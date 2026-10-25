@@ -74,6 +74,10 @@ namespace GoF2Remake.Modding
             public Dictionary<string, string> name, description;
             public bool hasLounge, hasDealer;
             public object sounds;   // "sounds" (ModShipSounds.ShipSounds, GameHooks.ParseShipSounds), null = none
+            /// <summary>Remake mods: "race" naming a faction (ModFactions), and "traffic": { "races" } entries that are
+            /// factions or race words, resolved in ShipData (the factions are numbered once every mod is read).</summary>
+            public string raceRef;
+            public List<string> trafficRaceRefs;
         }
 
         /// <summary>The parsed content of one mod (read when the mods are scanned, so a broken file shows in the browser).</summary>
@@ -83,6 +87,7 @@ namespace GoF2Remake.Modding
             public readonly List<ShipDef> ships = new List<ShipDef>();
             public readonly List<ModBlueprints.Def> blueprints = new List<ModBlueprints.Def>();
             public readonly List<ModWorld.Def> systems = new List<ModWorld.Def>(), stations = new List<ModWorld.Def>();
+            public readonly List<ModFactions.Def> factions = new List<ModFactions.Def>();
             public readonly Dictionary<string, Dictionary<string, string>> text =
                 new Dictionary<string, Dictionary<string, string>>(StringComparer.OrdinalIgnoreCase);   // language -> key -> text
         }
@@ -129,6 +134,7 @@ namespace GoF2Remake.Modding
                 ParseItems(mod, p);
                 ParseShips(mod, p);
                 ModBlueprints.Parse(mod, p.blueprints);
+                ModFactions.Parse(mod, p.factions);
                 ModWorld.Parse(mod, p.systems, p.stations);
                 foreach (var f in mod.Source.FilesIn("text", ".json"))
                 {
@@ -233,7 +239,9 @@ namespace GoF2Remake.Modding
                 CheckAddParts(o, where, mod);
                 foreach (var prop in o.Properties())
                     if (!ShipFields.Contains(prop.Name)) mod.Warnings.Add($"{ModJson.Where(prop, ShipsFile)}: unknown field \"{prop.Name}\" (ignored)");
-                foreach (var f in new[] { "race", "armor", "cargo", "price", "priceDefault", "handling", "hangarHeight" }) ModJson.Int(o, f, 0, ShipsFile);
+                if (ModJson.Get(o, "race") is JToken rt && rt.Type == JTokenType.String) d.raceRef = (string)rt;   // a faction (ModFactions)
+                foreach (var f in new[] { "race", "armor", "cargo", "price", "priceDefault", "handling", "hangarHeight" })
+                    if (f != "race" || d.raceRef == null) ModJson.Int(o, f, 0, ShipsFile);
                 ModFlight.CheckShip(o, where, mod, ShipsFile);   // "flightStyle", "flight": per flight style
                 ModShipView.CheckShip(o, where, mod, ShipsFile);   // "camera", "cockpit", "smoke", "explosionScale"
                 d.sounds = GameHooks.ParseShipSounds?.Invoke(o, mod, ShipsFile);
@@ -261,6 +269,13 @@ namespace GoF2Remake.Modding
                 // The rest as CustomShipData (JsonUtility reads it; the texts and ids are the mod's own; npcTurrets: ApplyShips).
                 var data = (JObject)o.DeepClone();
                 foreach (var k in new[] { "id", "override", "name", "description", "npcTurrets", "build", "sounds", "integrated", "subsystems" }) data.Remove(k);
+                if (d.raceRef != null) data["race"] = -1;
+                if (data["traffic"] is JObject traffic && traffic["races"] is JArray races && races.Any(r => r.Type == JTokenType.String))
+                {
+                    // faction keys and race words: kept aside (ShipData resolves them), the numbers stay
+                    d.trafficRaceRefs = races.Select(r => r.Type == JTokenType.String ? (string)r : ((int)r).ToString()).ToList();
+                    traffic.Remove("races");
+                }
                 try { JsonUtility.FromJson<CustomShipData>(data.ToString()); }
                 catch (Exception e) { throw new ModJsonException($"{where}: {e.Message}"); }
                 d.data = data.ToString();
@@ -432,6 +447,10 @@ namespace GoF2Remake.Modding
         {
             var c = JsonUtility.FromJson<CustomShipData>(d.data);
             c.index = index;
+            // remake mods: a faction as the ship's race or among its traffic's races (ModFactions)
+            if (d.raceRef != null) c.race = ModFactions.TryResolve(d.raceRef, d.mod, out int fr) ? fr : -1;
+            if (d.trafficRaceRefs != null && c.traffic != null)
+                c.traffic.races = d.trafficRaceRefs.Select(r => ModFactions.TryResolve(r, d.mod, out int tr) ? tr : -1).Where(r => r >= 0).ToArray();
             c.assembly = $"ship_{index:000}_mod";
             if (GameModels.Is(c.model, out string gameModel))
             {
@@ -781,7 +800,7 @@ namespace GoF2Remake.Modding
                             ModShipView.ApplyShip(s, o);
                             if (s is CustomShipData cs)
                             {
-                                cs.race = ModJson.Int(o, "race", cs.race, ShipsFile);
+                                cs.race = d.raceRef != null ? (ModFactions.TryResolve(d.raceRef, d.mod, out int ofr) ? ofr : cs.race) : ModJson.Int(o, "race", cs.race, ShipsFile);
                                 cs.hangarHeight = ModJson.Int(o, "hangarHeight", cs.hangarHeight, ShipsFile);
                             }
                             if (ShipText(t, false, out var n)) s.name = n;

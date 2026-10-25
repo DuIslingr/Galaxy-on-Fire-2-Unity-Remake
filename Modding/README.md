@@ -94,6 +94,8 @@ What mods can do so far:
   that decide which of the two the game flies with (see [Flight styles](#flight-styles)).
 - **Add star systems and stations**: on the star map, linked by jumpgates, with their own orbits, shops and bars, their own
   station models (glTF / GLB), planets and suns, and their own hangars and bars to dock in.
+- **Add factions**: sides of their own that own systems, fly ships and raid, each with its own reputation, relations and
+  lounge diplomats.
 - **Add story missions and bar missions**: story chains and side jobs made as event graphs in the Unity Editor, with dialogue,
   voice-over, objectives, map markers, checkpoints that saves keep, rewards and failure.
 - **Add and replace music**: replace any of the game's tracks, or add new ones for your systems, stations and missions.
@@ -583,7 +585,7 @@ A list of entries, like items.json: `"id"` adds a ship, `"override"` changes one
 | Field | |
 |---|---|
 | `id`, `name`, `description` | As for items. |
-| `race` | Who builds it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirate, 9 Void. Prices are 1 % lower in its race's systems. |
+| `race` | Who builds it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirate, 9 Void, or a [faction](#factions) (`"guild"`, `"mod_id:guild"`). Prices are 1 % lower in its race's systems. |
 | `armor`, `cargo`, `handling` | Hull points, hold size (t), handling (the originals use 60 to 160). |
 | `price`, `priceDefault` | The price, and the price in the Default Economy (0 = the same). |
 | `slots` | `primary`, `secondary`, `turret`, `equipment`. A ship may have several turret slots, one per turret mount. |
@@ -606,7 +608,7 @@ styles](#exhaust-styles)), 4 manoeuvring jet (`"direction": [x, y, z]`, the way 
 | `lounge` | Optional. A visitor in the Space Lounges sells it: in systems of `systemRace` (-1 = any), from story step `minCampaign` (in free play from rank `minRank`), `chance` % each time a bar fills with new visitors. |
 | `npcTurrets` | Optional, also in an `override`. Turret items (numbers or `"mod:id"`, e.g. `[ 48, "my_mod:flak" ]`) the **NPC** ships of this type carry on its turret mounts (`slotType` 2), the n-th item on the n-th mount: in space they aim and fire by themselves at whatever that ship is hostile to (your own turret model, missiles and salvos included), and parked in a hangar they show them. Items that are no turret, or more items than mounts, give a warning. The game's own NPC ships carry none; the Bloodstar (45) and the Rhino (51) swap their built-in turret for yours. |
 | `dealer` | Optional. The ordinary ship dealers may stock it: `{ "chance": 2, "systemRace": -1, "minTechLevel": 0 }`, `chance` % (decimals allowed) each time a station's dealer list is made, at stations of `systemRace` systems (-1 = any) with at least that tech level (above 10: the tech level 10 stations). Not the special yards (Kothar, Quineros, Thynome...). |
-| `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void; default its own `race`). Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. `"boss": true` makes it a boss hull instead: it never flies as an ordinary fighter, and the pirate bosses (Pirate outposts and bosses, the Pirate activity board) fly it at the same option's chance, up to 400 m long; give it `npcTurrets` to arm its turret mounts. Their hull, guns and escorts stay the pirate boss's. `"capital": "battleship"` or `"freighter"` makes it a capital ship instead, see [Capital ships and freighters](#capital-ships-and-freighters). |
+| `traffic` | Optional. How NPC fighters fly it: `{ "weight": 1, "races": [8] }`. With the Gameplay option "Mod ships in traffic" (Off / 10 / 25 % (default) / 50 %) that share of the game's NPC fighters (patrols, raiders, pirates, escorts, guards) fly one of the mods' ships of their race instead, picked by `weight` (0 = never); `races` are the races whose fighters fly it (0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, 8 pirates, 9 Void, or [factions](#factions); default its own `race`). A faction's fighters always fly one of the mods' ships, whatever the option. Only ships up to 150 m long, available now (`available`), with their model loaded. Their hull and guns stay those of the fighter they replace. Freighters and capital ships aren't replaced, and a [campaign's](#campaigns) `trafficShips` win. A [customizable ship](#customizable-ships)'s NPCs each fly a random build of it (parts the type may fit, a tier, one of the kit's colour presets or random palette colours, now and then a skin); `"randomBuild": false` keeps them to its default build. The builds use the parts already loaded, and every docking loads a few more in the background, so the variety grows as you play. `"boss": true` makes it a boss hull instead: it never flies as an ordinary fighter, and the pirate bosses (Pirate outposts and bosses, the Pirate activity board) fly it at the same option's chance, up to 400 m long; give it `npcTurrets` to arm its turret mounts. Their hull, guns and escorts stay the pirate boss's. `"capital": "battleship"` or `"freighter"` makes it a capital ship instead, see [Capital ships and freighters](#capital-ships-and-freighters). |
 | `available` | Optional. A [condition](#conditions) that must hold before it is sold anywhere (dealers and lounges), and before NPCs fly it. |
 | `sounds` | Optional. The ship's own engine and boost sounds, see [Ship sounds](#ship-sounds). |
 | `integrated` | Optional, also in an `override`. Equipment built into the hull, like the Kothar ships' Khador Drive (Cronus, Typhon, Nemesis) and the Specter's / Scimitar's cloak: `{ "khadorDrive": true, "cloak": true }`. `khadorDrive`: the ship can make Khador jumps without the drive in a slot (it still needs energy cells). `cloak`: `true` (the U'tool's stats), a cloak item (a number or `"mod:id"`, e.g. `96`) whose stats it has, or `false`; a cloak the player mounts replaces it, and with the Gameplay option "Cloak bay on cloaking ships" it goes into the built-in cloak's bay instead of a slot. `false` takes an original ship's away. `items`: any equipment built in, a list of item numbers, `"mod:id"` keys or `{ "item": ..., "amount": n }` (a secondary weapon's starting ammo, default 10), e.g. `"items": [46, { "item": 36, "amount": 20 }, 54]`. Built-in items work like mounted ones but take no slot, show on the hangar's Ship tab under "Built into the ship", and can't be demounted, sold or stored; they stay with the ship type when the player changes ships. A one-per-ship item the player fits (a shield, armor, a booster, a scanner, a drill, a cloak...) takes the built-in one's place without a slot, and the built-in one is back when it is demounted; built-in weapons and turrets add to the ship's own slots. A built-in launcher's missiles are refilled by buying more; a one-off item that is used up (an emergency system) is back at the next docking. An empty list takes them away. |
@@ -1257,7 +1259,10 @@ New star systems and their stations. Both are lists: `"id"` adds one, `"override
 | Field | |
 |---|---|
 | `id`, `name` | As for items. |
-| `race` | Who owns it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian. It sets the hangars, bars, music, traffic, shops and the jumpgate. |
+| `race` | Who owns it: 0 Terran, 1 Vossk, 2 Nivelian, 3 Midorian, or a [faction](#factions) (`"guild"` or `"mod_id:guild"`). It sets the hangars, bars, music, traffic, shops and the jumpgate (a faction's: those of its `look`). |
+| `traffic` | `"mod"`: only the mods' ships fly here. No game freighters (the mods' freighters of the system's race take their place, or none), no pirate outposts or bosses, and the raiders are the system's `raiders`. Default: the game's traffic. |
+| `locals` | The races or factions whose patrols fly here, e.g. `["guild", "allies"]`. Default: the system's `race`. |
+| `raiders` | The races or factions that raid it, e.g. `["gang"]`. Default: the game's pick (pirates, or the system race's enemy). |
 | `security` | 0 (lawless) to 3 (secure): how many raiders show up. |
 | `visible` | On the star map from the start (default true). A hidden system can't be reached yet. |
 | `available` | A condition (the expressions of [Conditions](#conditions)) for a system that comes and goes: while it holds the system is on the star map, while it doesn't it is hidden, whatever was revealed, with its routes and jumps. A player inside when it disappears is told so and, 4 seconds later, taken to the nearest system on the map. For example `"available": "quest(smuggler_run) == 1"`: only while that story mission or bar mission is under way. |
@@ -1406,6 +1411,38 @@ screen waits for them).
 
 Prices follow the distance on the star map, like the originals. The story stays in the original galaxy: the Void's invasions
 never pick a mod's system.
+
+## Factions
+
+`factions.json` adds factions of the mod's own beside the game's races, for a galaxy whose ships don't fly for the
+Terrans, Vossk, Nivelians or Midorians. A faction can own systems (systems.json `race`), fly ships (ships.json `race` and
+`traffic.races`) and raid (systems.json `raiders`). Each has its own standing with the player, shown on the Status window
+under the game's reputation bars, and its own relations to the other factions and the game's races.
+
+```json
+[
+  { "id": "guild", "name": "Mining Guild", "look": "midorian", "icon": "factions/guild.png", "color": [1, 0.7, 0.2],
+    "standing": 10, "relations": { "gang": "enemy", "allies": "friend" } },
+  { "id": "gang", "name": "The Gang", "look": "pirates", "hostile": true },
+  { "id": "allies", "name": "Allies", "look": "terran", "standing": 80 }
+]
+```
+
+| Field | |
+|---|---|
+| `id`, `name`, `description` | As for items. Other mods name it `"mod_id:id"`. |
+| `look` | The game race whose hangar, bar, lounge visitors, music, NPC guns and jumpgate the faction borrows: `terran`, `vossk`, `nivelian`, `midorian`, `pirates` or `void` (default `terran`). |
+| `icon` | Its emblem, a PNG (square, transparent around it, like the game's race emblems). Default: its look race's. Shown on the station's header, the star map, the lock plate and the Status window. |
+| `color` | `[r, g, b]` (0 to 1). |
+| `standing` | The player's standing at the start of a game, -100 to 100 (default 0). At -71 and below the faction is hostile, at 71 and above a friend, as with the game's races. Killing its ships costs 5 (10 on Extreme). |
+| `hostile` | `true`: always the player's enemy, whatever the standing, and the enemy of every faction and race it doesn't call a friend, like the game's pirates. It isn't listed on the Status window. Killing one of its ships in the system of a faction it is at war with raises that faction's standing by 1. |
+| `relations` | `{ "<faction or race>": "friend" \| "neutral" \| "enemy" }`: who its ships fight. Factions by id or `"mod_id:id"`, the game's races by word (`terran`, `vossk`, `nivelian`, `midorian`, `pirates`, `void`, `specters`). A relation one side leaves out is the other side's; when neither names it the two are enemies if either is `hostile` or one is the game's pirates, Void or Specters, else neutral. |
+| `diplomats` | `false`: no lounge diplomat reconciles it (default `true`, `false` for a hostile faction). |
+| `gun` | An item (a number or `"mod:id"`): the gun look and sound of its NPC fighters. Default: its look race's. |
+
+In the Space Lounges of a faction's system, now and then (the game's 35 %) a diplomat of a faction of the same mod that
+the player is at war with offers to restore it to neutral, for |standing| / 100 x 16 000 credits, like the game's
+diplomats. The standings are saved with the game.
 
 ## Campaigns
 

@@ -3765,6 +3765,21 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
 - Orbit drags (remake, players' request): a vertical drag takes the camera down / up the other way round (a drag up tips the
   ship up) in Inspect ship, Action Freeze (`PhotoMode`, the original's y flip dropped) and the Mod Builder; keys and sticks
   unchanged.
+- **Factions** (remake, 2026-10-25, the user's request for the ES2 galaxy; `Modding.ModFactions`, a mod's `factions.json`):
+  factions are race numbers from `ModFactions.FirstRace` (32), numbered by the registry (`ModRegistry.Kind.Faction`, afresh in
+  a session), with a `look` race (0-3, 8, 9) for every table indexed by race (hangar, bar, visitors, music, NPC guns, freighter
+  model, jumpgate: `Standing.Look`), an emblem (`ModFactions.Icon`), a standing of their own (`Session.FactionStanding`, key ->
+  -100..100, saved as `factionStanding`; hostile at -71, friend at 71; `hostile` = always an enemy) and relations
+  (`ModFactions.Relation`, `Standing.RacesHostile`: unnamed = enemies if either is hostile or the other is pirates / Void /
+  Specters, else neutral). `Standing` handles them everywhere the game races go (Toward / IsEnemy / IsFriend / ApplyKill /
+  ApplyDelict / EnemyRaceOf / RaceName). systems.json `race` may name one, `"traffic": "mod"` (`ModWorld.ModTrafficOnly`: no
+  game freighters, no pirate events), `locals`, `raiders` (`TrafficPlan`); ships.json `race` / `traffic.races` (resolved in
+  `ModContent.ShipData`: JsonUtility can't read strings into ints); a faction's fighters always fly mods' ships
+  (`ModTraffic.Pick` chance 1, `ModCapitalShips.ChanceFor`). Lounge diplomats in a faction's system (`AgentGenerator.
+  AddFactionDiplomats`, `Agent.faction`, `LoungeChat`: restores to 0). The Status window lists the non-hostile factions in
+  the game's reputation look (the race status bar, the emblem with a standing-coloured glow, `StatusWindow.FactionEmblem`).
+  The station header, star map, lock plate and HUD use the faction's name and emblem. Not yet: multiplayer sync of faction
+  standings (each game keeps its own). Tests `ModFactionsTests`.
 - **Mods into the builder** (remake, 2026-10-22, the user's request: a downloaded mod as a project): the projects page's
   Import (`ModBuilderProjects.ToggleImport`: "From a file…" (`ModImport.Pick`, a zip read through `ModImport.Inspect` /
   `ZipSource`) and every installed mod, "has a project" on those whose id a project already has) and the Mod Browser's

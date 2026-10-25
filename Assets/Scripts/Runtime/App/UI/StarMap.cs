@@ -1082,9 +1082,10 @@ namespace GoF2Remake.UI
                 if (faction != null) it.name.text += $" [{faction}]";
                 it.name.text += SquadMark(s.index, -1);   // multiplayer: squadmates here
                 it.name.text += MobileMark(s.index, -1);  // remake mods: a mobile station in this system now
-                bool owned = GalaxyMap.HasOwner(s.index) && s.raceId >= 0 && s.raceId <= 3;
-                // Remake: the owner's emblem in the player's standing colours (allied / neutral / enemy), the old radar icon as fallback.
-                if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(StatusWindow.StandingIcon(s.raceId) ?? Tex($"race_{s.raceId}"));
+                bool owned = GalaxyMap.HasOwner(s.index) && (s.raceId >= 0 && s.raceId <= 3 || Modding.ModFactions.Icon(s.raceId) != null);
+                // Remake: the owner's emblem in the player's standing colours (allied / neutral / enemy), the old radar icon as fallback;
+                // remake mods: a faction's own emblem.
+                if (owned) it.raceIcon.style.backgroundImage = new StyleBackground(Modding.ModFactions.Icon(s.raceId) ?? StatusWindow.StandingIcon(s.raceId) ?? Tex($"race_{s.raceId}"));
                 it.raceIcon.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
                 if (s.index == KaamoClub.SystemIndex && KaamoClub.Owned)
                 {
@@ -1203,9 +1204,9 @@ namespace GoF2Remake.UI
                 if (it.raceIcon != null) it.raceIcon.style.opacity = other ? 64f / 255f : 1f;
                 it.pulse.style.opacity = pulse;
                 var sys = db.Systems.Find(s => s.index == i);
-                bool owned = GalaxyMap.HasOwner(i) && sys.raceId >= 0 && sys.raceId <= 3;
+                bool owned = GalaxyMap.HasOwner(i) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModFactions.Is(sys.raceId));
                 float y = 68.5f + 30f;
-                if (sel && owned) { it.line1.text = T(406 + sys.raceId); it.line1.style.top = y; y += 30f; }
+                if (sel && owned) { it.line1.text = GoF2Remake.Flight.Standing.RaceName(sys.raceId); it.line1.style.top = y; y += 30f; }
                 it.line1.style.display = sel && owned ? DisplayStyle.Flex : DisplayStyle.None;
                 it.line2.style.display = sel ? DisplayStyle.Flex : DisplayStyle.None;
                 if (sel) SetSecurity(it.line2, GalaxyMap.SecurityOf(sys), y);
@@ -1262,14 +1263,19 @@ namespace GoF2Remake.UI
         {
             var sys = db.Systems.Find(s => s.index == system);
             if (sys == null) return;
-            bool owned = GalaxyMap.HasOwner(system) && sys.raceId >= 0 && sys.raceId <= 3;
+            bool owned = GalaxyMap.HasOwner(system) && (sys.raceId >= 0 && sys.raceId <= 3 || Modding.ModFactions.Is(sys.raceId));
             var logo = root.Q("systemLogo");
-            var tex = owned ? Tex($"logo_{sys.raceId}") : null;
+            var tex = !owned ? null : Modding.ModFactions.Is(sys.raceId) ? Modding.ModFactions.Icon(sys.raceId) : Tex($"logo_{sys.raceId}");   // (a faction: its emblem)
             logo.style.display = tex != null ? DisplayStyle.Flex : DisplayStyle.None;
-            if (tex != null) { logo.style.backgroundImage = new StyleBackground(tex); logo.style.width = tex.width; logo.style.height = tex.height; }
+            if (tex != null)
+            {
+                bool faction = Modding.ModFactions.Is(sys.raceId);   // (a faction's emblem at a logo's size, whatever its PNG's)
+                logo.style.backgroundImage = new StyleBackground(tex);
+                logo.style.width = faction ? 120f : tex.width; logo.style.height = faction ? 120f : tex.height;
+            }
             root.Q<Label>("systemName").text = sys.name;
             var race = root.Q<Label>("systemRace");
-            race.text = owned ? T(406 + sys.raceId) : "";
+            race.text = owned ? GoF2Remake.Flight.Standing.RaceName(sys.raceId) : "";
             race.style.display = owned ? DisplayStyle.Flex : DisplayStyle.None;
             SetSecurity(root.Q<Label>("systemSecurity"), GalaxyMap.SecurityOf(sys), 0f);
             root.Q<Label>("systemSecurity").style.top = StyleKeyword.Auto;

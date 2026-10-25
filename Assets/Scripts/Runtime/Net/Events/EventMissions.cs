@@ -312,6 +312,7 @@ namespace GoF2Remake.Events
                 var db = NetGame.Db;
                 var st = db.Stations.Find(s => s.index == station);
                 race = st != null ? db.Systems.Find(s => s.index == st.system)?.raceId ?? 0 : 0;
+                race = Flight.Standing.Look(race);   // (a mod faction's system: its look race's client)
                 if (race < 0 || race > 3) race = 0;
                 male = UnityEngine.Random.value < 0.7f;
                 speaker = "-1" + US + AgentGenerator.RandomName(race, male) + US + string.Join(",", AgentGenerator.CreatePortrait(male, race));

@@ -72,6 +72,7 @@ my_mod/
   campaign.json       a whole new game under Start new game
   exhausts.json       exhaust styles any ship can wear (the hangar's Customize screen)
   systems.json, stations.json, interiors.json   new star systems, stations, hangars and bars
+  factions.json                                factions of the mod's own (owners of systems, NPC sides)
   characters.json     speakers with portraits
   events/*.gof2event  story missions and bar missions as Unity event graphs
   events/*.gof2mission  story missions and bar missions as step lists (by hand or the Mod Builder)
@@ -399,12 +400,30 @@ A whole new game under Start new game, shown as a card next to the three campaig
 (default [30, 0]). `galaxy`/`items`/`ships` `"mod"` limit the game to mods' content. `quest` = an event graph started with
 the game. `"flightStyle": "free" | "original"`: the campaign's games always fly so.
 
+## factions.json
+
+```json
+[ { "id": "guild", "name": "Mining Guild", "look": "midorian", "icon": "factions/guild.png", "color": [1, 0.7, 0.2],
+    "standing": 10, "relations": { "gang": "enemy", "allies": "friend", "pirates": "enemy" } },
+  { "id": "gang", "name": "The Gang", "look": "pirates", "hostile": true } ]
+```
+
+Factions are races of the mod's own (race numbers 32 and up, named `"id"` or `"mod_id:id"` wherever a race goes:
+systems.json `race` / `locals` / `raiders`, ships.json `race` / `traffic.races`). `look` (terran, vossk, nivelian, midorian,
+pirates, void) lends its hangar, bar, visitors, music, NPC guns and jumpgate. Each has its own player standing (-100..100,
+hostile at -71, friend at 71; saved), `hostile: true` = always an enemy (not on the Status window), `relations` decide NPC vs
+NPC fights (unnamed: enemies if either is hostile or one is pirates / Void / Specters, else neutral), `diplomats: false`
+stops the lounge diplomats (in a faction's system, 35 %: restore an enemy faction of the same mod to neutral for
+|standing| / 100 x 16 000). systems.json `"traffic": "mod"` = only mods' ships there (no game freighters, no pirate events),
+`"locals": [...]` the patrols' races, `"raiders": [...]` the raiders'. A faction's fighters always fly mods' ships.
+
 ## systems.json, stations.json
 
 ```json
 [ { "id": "kepler", "name": "Kepler", "race": 0, "security": 2, "visible": true, "position": [8, 27, 83], "sky": 4,
     "gates": [4, 17], "gateStation": "frontier_systems:rho_freeport", "sunTexture": "textures/sun.png", "sunColor": [1, 0.8, 0.55],
-    "skybox": { "nebula": "sky/nebula.png", "stars": 1, "nebulaBrightness": 0.8 }, "spaceMusic": "kepler_space" } ]
+    "skybox": { "nebula": "sky/nebula.png", "stars": 1, "nebulaBrightness": 0.8 }, "spaceMusic": "kepler_space",
+    "traffic": "mod", "locals": ["guild"], "raiders": ["gang"] } ]
 ```
 ```json
 [ { "id": "kepler_prime", "system": "frontier_systems:kepler", "name": "Kepler Prime", "techLevel": 7, "planet": 12,

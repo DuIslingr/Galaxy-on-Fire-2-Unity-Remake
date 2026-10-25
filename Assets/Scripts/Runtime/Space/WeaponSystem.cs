@@ -634,7 +634,7 @@ namespace GoF2Remake.Flight
             npc?.OnPlayerEmp(emp);
             if (!target.hitpoints.DamageEmp(emp)) return;
             if (npc != null) npc.OnPlayerDisabled();
-            else if (target.race >= 0 && target.race <= 3) Standing.ApplyDelict(target.race, 2);
+            else if (target.race >= 0 && target.race <= 3 || Modding.ModFactions.Is(target.race)) Standing.ApplyDelict(target.race, 2);
         }
 
         /// <summary>BombGun / MineGun / ObjectGun: the explosion, the counter, hardcore self-damage.</summary>

@@ -41,6 +41,8 @@ namespace GoF2Remake.Data
         public List<string> systemShown;
         public int jumpgatesUsed, kills, pirateKills;
         public int[] standing;
+        /// <summary>Session.FactionStanding: "mod_id:faction|value" (remake mods' factions; no save version of its own).</summary>
+        public List<string> factionStanding;
         // version 2: the story
         public bool freePlay;
         public StoryMission storyMission;
@@ -354,6 +356,7 @@ namespace GoF2Remake.Data
                 kills = Session.Kills,
                 pirateKills = Session.PirateKills,
                 standing = (int[])Session.Standing.Clone(),
+                factionStanding = Session.FactionStanding.Select(kv => kv.Key + "|" + kv.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToList(),
                 freePlay = Session.FreePlay,
                 storyMission = Session.StoryMission,
                 storyStepStart = Session.StoryStepStart,
@@ -539,6 +542,13 @@ namespace GoF2Remake.Data
             Session.Kills = s.kills;
             Session.PirateKills = s.pirateKills;
             if (s.standing != null && s.standing.Length == 2) Session.Standing = s.standing;
+            Session.FactionStanding = new Dictionary<string, int>(StringComparer.Ordinal);
+            foreach (var e in s.factionStanding ?? new List<string>())
+            {
+                int bar = e.LastIndexOf('|');
+                if (bar > 0 && int.TryParse(e.Substring(bar + 1), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out int v))
+                    Session.FactionStanding[e.Substring(0, bar)] = Mathf.Clamp(v, -100, 100);
+            }
             if (s.version < 2)
             {
                 // Saved before the story existed: free play at index 20.

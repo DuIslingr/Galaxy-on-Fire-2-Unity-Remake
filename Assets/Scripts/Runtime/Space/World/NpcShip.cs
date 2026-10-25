@@ -1892,7 +1892,7 @@ namespace GoF2Remake.World
         {
             if (!alwaysEnemy && Race != Standing.Void && Race != Standing.Specter && Race == traffic.SystemRace)
                 traffic.AlarmAllFriends(Race, false);
-            if (Spec.wantedIndex < 0 && Race >= 0 && Race <= 3) Standing.ApplyDelict(Race, 2);
+            if (Spec.wantedIndex < 0 && (Race >= 0 && Race <= 3 || Modding.ModFactions.Is(Race))) Standing.ApplyDelict(Race, 2);
         }
 
         /// <summary>Hull &lt; 1: the dying state (§5.10) / the freighter wreck (§6).</summary>

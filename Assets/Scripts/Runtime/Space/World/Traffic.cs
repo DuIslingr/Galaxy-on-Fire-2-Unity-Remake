@@ -62,7 +62,8 @@ namespace GoF2Remake.World
             systemIndex = layout.systemIndex;
             this.storyOrbit = storyOrbit;
             var sys = db.Systems.Find(s => s.index == layout.systemIndex);
-            SystemRace = Mathf.Clamp(sys?.raceId ?? 0, 0, 3);
+            // (a mod faction's system keeps its faction: its locals, kills and alarms; the tables use its look, Standing.Look)
+            SystemRace = Modding.ModFactions.Is(sys?.raceId ?? 0) ? sys.raceId : Mathf.Clamp(sys?.raceId ?? 0, 0, 3);
             AttackRace = Standing.EnemyRaceOf(SystemRace);
             Security = sys?.securityLevel ?? 0;
             blackMarket = layout.systemIndex == 25;
@@ -219,7 +220,7 @@ namespace GoF2Remake.World
             {
                 var state = UnityEngine.Random.state;
                 UnityEngine.Random.InitState(5 * names[i].Length);
-                int ship = NpcTables.RandomFighter(race <= 3 ? race : Standing.Pirate);   // races 4-7: the pirate pool
+                int ship = NpcTables.RandomFighter(race <= 3 || Modding.ModFactions.Is(race) ? race : Standing.Pirate);   // races 4-7: the pirate pool
                 UnityEngine.Random.state = state;
                 var pos = player.position + (player.right * right[i] - player.forward * 2000f + Vector3.up * (i == 2 ? 1000f : 0f)) * 0.05f;
                 var spec = new SpawnSpec
@@ -1030,7 +1031,7 @@ namespace GoF2Remake.World
 
         /// <summary>DAT_00252010[race]: the system race's space track (Globals::playMusicAndFadeOutCurrent(1)).</summary>
         public AudioClip RaceSpaceMusic() => Modding.ModWorld.SpaceMusic(StationIndex)   // remake mods: a system's own space music
-            ?? (assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null);
+            ?? (assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[Mathf.Clamp(Standing.Look(SystemRace), 0, 3)] : null);
 
         /// <summary>Radar::draw 0x157c6c: the calm track (no hostile ship). The alien orbit and a Void-attacked station 145,
         /// campaign 1 (the rescue) 143, the Kaamo Club 146, 101 147, the supernova system the mission target's 2241 (before
@@ -1052,7 +1053,7 @@ namespace GoF2Remake.World
                 return target ? (Session.CampaignMission < 0x6a ? sn?.mission102Loop : sn?.mission102Loop2) : sn?.gammaRayMusic;
             }
             if (StationIndex == 10 || StationIndex == 100) return assets.deepScienceMusic;
-            return assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[SystemRace] : null;
+            return assets.spaceMusic != null && assets.spaceMusic.Length == 4 ? assets.spaceMusic[Mathf.Clamp(Standing.Look(SystemRace), 0, 3)] : null;
         }
 
         void UpdateMusic(float dt)

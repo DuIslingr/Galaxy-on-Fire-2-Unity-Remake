@@ -342,6 +342,8 @@ namespace GoF2Remake.UI
 
         Texture2D RaceIcon(int race)
         {
+            if (Modding.ModFactions.Icon(race) is Texture2D fi) return fi;   // remake mods: a faction's emblem
+            race = GoF2Remake.Flight.Standing.Look(race);
             int frame = race >= 0 && race <= 3 ? race : race == 8 ? 8 : 9;
             if (!raceIcons.TryGetValue(frame, out var t)) raceIcons[frame] = t = Tex($"race_{frame}");
             return t;
