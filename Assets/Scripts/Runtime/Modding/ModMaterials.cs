@@ -35,6 +35,10 @@ namespace GoF2Remake.Modding
         static readonly Dictionary<Color32, Texture2D> solids = new Dictionary<Color32, Texture2D>();
         static readonly List<Object> made = new List<Object>();
 
+        /// <summary>The override tag on a material whose emission map is its "damageEmission" mask (DamageEmbers drives only
+        /// those; a material with an emission of its own keeps it, its charring still follows the damage).</summary>
+        public const string DamageEmbersTag = "GoF2DamageEmbers";
+
         static int revision = -1;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -489,7 +493,7 @@ namespace GoF2Remake.Modding
             {
                 // Battle damage embers: dark until DamageEmbers lights them with the hull damage.
                 var dmg = Texture(mod, e.damageEmission, false);
-                if (dmg != null) { m.SetTexture("_EmissionMap", dmg); m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None; }
+                if (dmg != null) { m.SetTexture("_EmissionMap", dmg); m.EnableKeyword("_EMISSION"); m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None; m.SetOverrideTag(DamageEmbersTag, "1"); }
             }
             if (clip && !glass) m.SetFloat("_Cutoff", e.alphaClip);
             m.SetFloat("_Cull", e.doubleSided ? (float)CullMode.Off : (float)CullMode.Back);
