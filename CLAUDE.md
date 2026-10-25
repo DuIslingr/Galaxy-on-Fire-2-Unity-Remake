@@ -3214,8 +3214,8 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   BP_Dreadnought's SpawnJumpEffect; ships.json `"retreat": true`, `CustomShipData.retreat`, attached by Traffic.Create to a
   `modCapital`): `World.CapitalRetreat` takes `Target.SaveFromDeath`: at an empty hull it keeps 1, invulnerable, holds its
   fire, `CapitalSubsystems.Halt` (parts silent and unharmable, no launches, the hangars' fighters `JumpOut`), "{0} is jumping
-  away!" (Extra `capitalRetreats`) and sound 33; after 4 s `SystemJump.SpawnKhadorFx` ahead of its bow scaled by its size over
-  60 m, sound 32, the ship pushed forward into it (x1.1 a 30 fps frame), gone at 1700 ms (`LeaveWithHost` + `NpcShip.Vanish`,
+  away!" (Extra `capitalRetreats`) and sound 33; after 4 s `SystemJump.SpawnKhadorFx` ahead of its bow scaled by its length over
+  120 m (`ModTraffic.HullLength`; by its widest extent the Dreadnought's flash filled the screen white from 2.5 km), sound 32, the ship pushed forward into it (x1.1 a 30 fps frame), gone at 1700 ms (`LeaveWithHost` + `NpcShip.Vanish`,
   `killedByNpc`: no wreck, crate or kill). The other players only see its copy go (no fx there yet). **Repeatable** story
   missions: `.gof2mission` `"repeat"` minutes (`mission repeat`, `MissionInfo.repeatMinutes`; the Start node's
   RepeatMinutes, the builder's `ProjectQuest.Repeat`): `EventRunner.QuestDone` puts it in `Session.GraphQuestRepeats` (name ->

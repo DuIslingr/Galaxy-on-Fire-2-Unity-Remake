@@ -6,8 +6,9 @@
 //   - it is invulnerable and holds its fire, its subsystems too (CapitalSubsystems.Halt: no more launches, the fighters its
 //     hangars launched jump out, ES2's StartEnemyJumpOut);
 //   - its jump drive charges ChargeMs (the Khador Drive's charge sound 33 at it, "<name> is jumping away!");
-//   - the khador_jump fx (SystemJump.SpawnKhadorFx) grows to its size ahead of its bow, sound 32, and the ship pushes forward
-//     into it, gone (NpcShip.Vanish, its parts with it) at the fx's HideMs like the player's ship (SystemJump: 1700 ms).
+//   - the khador_jump fx (SystemJump.SpawnKhadorFx) ahead of its bow, grown by its length over FxMeters (by its widest extent
+//     the Dreadnought's, 4.5 km across its wings, filled the whole screen white from 2.5 km), sound 32, and the ship pushes
+//     forward into it, gone (NpcShip.Vanish, its parts with it) at the fx's HideMs like the player's ship (SystemJump: 1700 ms).
 // Nobody's kill (an event's ships count it as gone; a mission's alive("<name>") falls to 0 once it has jumped): no explosion,
 // wreck or crate. Only the game running the orbit's NPCs runs it; another player sees its copy vanish (no fx there yet).
 
@@ -22,7 +23,7 @@ namespace GoF2Remake.World
     {
         const float ChargeMs = 4000f;
         const float HideMs = 1700f;          // SystemJump: the ship vanishes 1700 ms into the khador_jump fx
-        const float FighterMeters = 60f;     // SystemJump.SpawnKhadorFx's size is a fighter's: grown by the ship's size over this
+        const float FxMeters = 120f;         // SystemJump.SpawnKhadorFx's size suits a ship this long: grown by the length over it
 
         NpcShip host;
         Traffic traffic;
@@ -80,7 +81,7 @@ namespace GoF2Remake.World
 
         void StartJump()
         {
-            float size = Size();
+            float size = Length();
             speed = size * 0.05f;   // metres a second at first
             var assets = StarMapAssets.Load();
             var t = host.transform;
@@ -88,20 +89,14 @@ namespace GoF2Remake.World
             fx = SystemJump.SpawnKhadorFx(assets, at, Quaternion.LookRotation(-t.forward, t.up), out fxLengthMs);
             if (fx != null)
             {
-                fx.transform.localScale *= Mathf.Max(1f, size / FighterMeters);
+                fx.transform.localScale *= Mathf.Max(1f, size / FxMeters);
                 Destroy(fx, fxLengthMs / 1000f + 0.5f);
             }
             if (assets != null) Sfx.PlayAt(assets.khadorDrive, at);
             if (fxLengthMs <= 0f) fxLengthMs = 1f;
         }
 
-        /// <summary>The ship's largest extent in metres (its renderers, not the glow layers).</summary>
-        float Size()
-        {
-            var b = new Bounds(host.transform.position, Vector3.zero);
-            foreach (var r in host.GetComponentsInChildren<MeshRenderer>())
-                if (!r.name.Contains("engine") && !r.name.EndsWith("_add")) b.Encapsulate(r.bounds);
-            return Mathf.Max(FighterMeters, Mathf.Max(b.size.x, Mathf.Max(b.size.y, b.size.z)));
-        }
+        /// <summary>The ship's length along its bow in metres (ModTraffic.HullLength).</summary>
+        float Length() => Mathf.Max(FxMeters, Modding.ModTraffic.HullLength(host.Spec.ship));
     }
 }
