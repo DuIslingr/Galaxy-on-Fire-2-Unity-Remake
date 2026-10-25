@@ -23,7 +23,8 @@ namespace GoF2Remake.World
     {
         const float ChargeMs = 4000f;
         const float HideMs = 1700f;          // SystemJump: the ship vanishes 1700 ms into the khador_jump fx
-        const float FxMeters = 120f;         // SystemJump.SpawnKhadorFx's size suits a ship this long: grown by the length over it
+        const float FxMeters = 70f;          // SystemJump.SpawnKhadorFx's size suits a ship this long: grown by the length over it
+        const float FxAhead = 1f;            // the fx this many ship lengths ahead of its centre
 
         NpcShip host;
         Traffic traffic;
@@ -88,7 +89,7 @@ namespace GoF2Remake.World
             var t = host.transform;
             var model = Model();
             bow = model.forward;
-            var at = t.position + bow * size * 0.6f;
+            var at = t.position + bow * size * FxAhead;
             fx = SystemJump.SpawnKhadorFx(assets, at, Quaternion.LookRotation(bow, model.up), out fxLengthMs);   // turned with the ship, as the player's jump (SystemJump: the ship's rotation)
             if (fx != null)
             {
