@@ -1426,6 +1426,8 @@
  "mpAdmWreck": "{0}にハッキング可能な残骸を出現させます。",
  "mpAdmWreckRace": "残骸はテラン、ヴォスク、ニヴェリアン、ミドリアンの貨物船です。",
  "statShieldDamage": "シールドへのダメージ",
+ "catMissileDefense": "ミサイル防御",
+ "statMissileDefense": "ミサイル迎撃範囲",
  "mapVoidJump": "ヴォイドへジャンプ",
  "photoSettings": "カメラ設定",
  "photoCamera": "カメラ",

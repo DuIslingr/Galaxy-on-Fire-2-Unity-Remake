@@ -1430,6 +1430,8 @@
  "mpAdmWreck": "Creando un pecio hackeable junto a {0}.",
  "mpAdmWreckRace": "Un pecio es un carguero terrano, vossk, niveliano o midoriano.",
  "statShieldDamage": "Daño a los escudos",
+ "catMissileDefense": "Defensa antimisiles",
+ "statMissileDefense": "Derriba misiles a menos de",
  "mapVoidJump": "Saltar al Void",
  "photoSettings": "AJUSTES DE CÁMARA",
  "photoCamera": "Cámara",

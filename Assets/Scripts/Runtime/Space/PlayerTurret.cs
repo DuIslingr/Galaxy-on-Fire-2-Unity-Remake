@@ -42,6 +42,8 @@
 // stand-in gun at the mount, aimed and shown in the turret view like the model's). A kit with a turret model (ModHardpoints)
 // shows that instead of the stand-in: its pivot turns, its gun tilts, the shots and the stream leave from its muzzle
 // (TurretCore.ForItemModel on it).
+// Remake, for mods: with missile defense mounted (equipment with "missileDefense", PointDefense) an auto turret turns to a
+// homing missile flying at the ship within that reach before its ship target, and its shots destroy it.
 
 using System;
 using System.Collections.Generic;
@@ -73,6 +75,10 @@ namespace GoF2Remake.Flight
         /// <summary>The turret's aim (world), for the collector's scope.</summary>
         public Vector3 AimForward => core != null && core.Valid ? core.BarrelForward : transform.forward;
         public bool AutoEnabled { get; private set; } = true;
+        float defenseReachMeters;   // PointDefense: the mounted missile defense's reach, 0 = none
+        bool defending;             // this frame's aim is at a missile ...
+        IncomingMissiles.Missile missile;   // ... this one
+        float missileFlightMs;      // ... its shot's flight time
         public bool InTurretView { get; private set; }
         public int Item { get; private set; } = -1;
         /// <summary>Remake: which slot-2 mount it sits on (0 = the first) and whether its base faces below the ship's horizon
@@ -226,6 +232,7 @@ namespace GoF2Remake.Flight
             MountIndex = mountIndex;
             Hangs = mount.TurretHangs;
             IsAuto = item.Attr(16) == 1;
+            defenseReachMeters = PointDefense.ReachUnits(Database.Shared) * Gun.MetersPerUnit;
             IsCollector = item.categoryId == 35;
             PullSpeed = item.Attr(49);
             CollectRange = item.Attr(51);
@@ -479,11 +486,13 @@ namespace GoF2Remake.Flight
                 if (IsCollector) core.SetAnimating(true);
             }
             else if (!halted && IsAuto && AutoEnabled && GetComponent<Target>() is Target self && self.Alive)
-                fire = AutoAim(dtMs);
+                fire = DefenseAim(dtMs) ?? AutoAim(dtMs);
+            else defending = false;
 
             // Bullets from the gun + R * (0, 0, 300) (48: x +-80 alternating, 181: z -300), TurretCore.Fire.
             if (fire && core.Fire() >= 0)
             {
+                if (defending) PointDefense.Claim(missile, missileFlightMs);   // this shot destroys it when it arrives
                 bool starting = loop != null && (!loop.isPlaying || !loop.loop);
                 if (starting) { loop.volume = (modSound?.loop != null ? modSound.loop.vol0 : 0.7f) * Settings.SfxVolume; loop.Play(); }
                 // A mod sound's shot: every shot, or with a loop once as it starts.
@@ -495,6 +504,21 @@ namespace GoF2Remake.Flight
             // The animations run only while shots are going out (within one reload of the last shot).
             core.SetAnimating(core.RecentlyFired || (IsCollector && InTurretView));
             core.Tick(dtMs, Target.All, gun.missiles ? MissileLock() : null);
+            PointDefense.Tick();
+        }
+
+        /// <summary>Remake (PointDefense): with missile defense mounted, the nearest missile flying at the ship within its
+        /// reach, led by the shot's flight time; aligned = fire. Null when there is none to shoot at (the ship target then).</summary>
+        bool? DefenseAim(float dtMs)
+        {
+            defending = false;
+            if (defenseReachMeters <= 0f || !PointDefense.Pick(GunPosition, defenseReachMeters, out missile)) return null;
+            float shotSpeed = gun.speedUnitsPerMs * Gun.MetersPerUnit;
+            var at = PointDefense.Lead(missile, GunPosition, shotSpeed, out missileFlightMs);
+            bool aligned = core.StepToward(at, dtMs);
+            if (aim.LimitHit || core.Blocked) return null;   // out of its arc or behind its own hull: the ship target
+            defending = true;
+            return aligned;
         }
 
         /// <summary>Remake (mod turrets firing missiles): what they home on: the auto turret's target, else the radar's lock.</summary>

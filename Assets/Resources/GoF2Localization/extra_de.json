@@ -1430,6 +1430,8 @@
  "mpAdmWreck": "Erzeuge ein hackbares Wrack bei {0}.",
  "mpAdmWreckRace": "Ein Wrack ist ein Frachter der Terraner, Vossk, Nivelianer oder Midorianer.",
  "statShieldDamage": "Schaden an Schilden",
+ "catMissileDefense": "Raketenabwehr",
+ "statMissileDefense": "Schießt Raketen ab innerhalb von",
  "mapVoidJump": "Sprung zu den Voids",
  "photoSettings": "KAMERA-EINSTELLUNGEN",
  "photoCamera": "Kamera",

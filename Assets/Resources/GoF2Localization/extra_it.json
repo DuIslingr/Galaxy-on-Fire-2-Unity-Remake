@@ -1430,6 +1430,8 @@
  "mpAdmWreck": "Creazione di un relitto hackerabile presso {0}.",
  "mpAdmWreckRace": "Un relitto è un mercantile terrestre, vossk, niveliano o midoriano.",
  "statShieldDamage": "Danni agli scudi",
+ "catMissileDefense": "Difesa antimissile",
+ "statMissileDefense": "Abbatte i missili entro",
  "mapVoidJump": "Salto nel Void",
  "photoSettings": "IMPOSTAZIONI CAMERA",
  "photoCamera": "Camera",

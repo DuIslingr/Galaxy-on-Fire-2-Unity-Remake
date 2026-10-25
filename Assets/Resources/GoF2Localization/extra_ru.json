@@ -1430,6 +1430,8 @@
  "mpAdmWreck": "Создаю взламываемые обломки у {0}.",
  "mpAdmWreckRace": "Обломки — это грузовой корабль терран, восков, нивелиан или мидориан.",
  "statShieldDamage": "Урон по щитам",
+ "catMissileDefense": "Противоракетная оборона",
+ "statMissileDefense": "Сбивает ракеты в радиусе",
  "mapVoidJump": "К Войдам",
  "photoSettings": "НАСТРОЙКИ КАМЕРЫ",
  "photoCamera": "Камера",

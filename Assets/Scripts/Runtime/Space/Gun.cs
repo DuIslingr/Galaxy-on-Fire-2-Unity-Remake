@@ -100,6 +100,9 @@ namespace GoF2Remake.Flight
 
         /// <summary>Multiplayer: targets this gun's bullets pass straight through (a squadmate of the shooter), null = none.</summary>
         public Func<Target, bool> Ignores;
+        /// <summary>Multiplayer: another game's shot drawn here (NetShotMirror): only a picture of the real one, which
+        /// point defense leaves alone (shooting it down here would leave the real missile flying).</summary>
+        public bool Mirror;
 
         /// <summary>Beams: picks the nearest auto-aim target (on screen, &lt; 60000 units, in the crosshair box), or null.</summary>
         public Func<Target> AutoAim;
@@ -713,6 +716,15 @@ namespace GoF2Remake.Flight
                     * Quaternion.AngleAxis(-stick.y * rateRadPerMs * dtMs * Mathf.Rad2Deg, right);
             b.velocity = rot * fwd * speed;
             b.up = rot * b.up;
+        }
+
+        /// <summary>Remake (PointDefense): bullet 'i' shot down: gone without a hit. Returns where it was.</summary>
+        public Vector3 ShootDown(int i)
+        {
+            ref var b = ref bullets[i];
+            var at = b.position;
+            b.timer = -1e9f;
+            return at;
         }
 
         /// <summary>Every bullet gone without effect (PlayerEgo::killLiberator: the rocket is simply removed).</summary>

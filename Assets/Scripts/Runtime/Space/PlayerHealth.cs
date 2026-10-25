@@ -66,6 +66,7 @@ namespace GoF2Remake.Flight
         // emergency system
         bool hasEmergency;
         float emergencyMs, emergencyLength = 10000f, bubbleScale;
+        int emergencyItem = 185;   // the mounted emergency system (used up when it fires)
         GameObject bubble;
         Material bubbleMaterial;
         // shield injector
@@ -113,7 +114,7 @@ namespace GoF2Remake.Flight
             if (weapons != null) weapons.Owner = Target;
 
             var emergency = Shop.FirstMounted(db, 27);
-            if (emergency != null) { hasEmergency = true; emergencyLength = emergency.Attr(41, 10000); }
+            if (emergency != null) { hasEmergency = true; emergencyItem = emergency.index; emergencyLength = emergency.Attr(41, 10000); }
             Target.SaveFromDeath = TryEmergency;
             EmergencyActive = false;
             var injector = Shop.FirstMounted(db, 43);
@@ -151,7 +152,7 @@ namespace GoF2Remake.Flight
             lastCombined = Hp.Combined;
             var emergency = Shop.FirstMounted(db, 27);
             hasEmergency = emergency != null;
-            if (emergency != null) emergencyLength = emergency.Attr(41, 10000);
+            if (emergency != null) { emergencyItem = emergency.index; emergencyLength = emergency.Attr(41, 10000); }
             var injector = Shop.FirstMounted(db, 43);
             hasInjector = injector != null;
             if (injector != null) injectorCost = injector.Attr(59, 30);
@@ -167,7 +168,10 @@ namespace GoF2Remake.Flight
             Target.hp = 1;
             emergencyMs = emergencyLength;
             EmergencyActive = true;
-            Session.Equipment.RemoveAll(e => e.item == 185);   // used up for good
+            // used up for good (the one mounted: a mod's emergency system based on 185 too, which a check of 185 kept for ever)
+            int used = emergencyItem;
+            int at = Session.Equipment.FindIndex(e => e.item == used);
+            if (at >= 0) Session.Equipment.RemoveAt(at);
             // 1115 Invincibile is a loop: PlayerEgo::update stops it when the shield ends.
             if (assets != null && assets.invincibility != null)
             {

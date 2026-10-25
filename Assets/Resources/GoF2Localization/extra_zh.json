@@ -1342,6 +1342,8 @@
  "mpAdmWreck": "正在{0}附近生成可入侵的残骸。",
  "mpAdmWreckRace": "残骸是人类、沃斯克、尼维利安或米多利安的货船。",
   "statShieldDamage": "对护盾伤害",
+  "catMissileDefense": "导弹防御",
+  "statMissileDefense": "击落导弹范围",
   "mapVoidJump": "跳入Void",
  "photoSettings": "相机设置",
  "photoCamera": "相机",

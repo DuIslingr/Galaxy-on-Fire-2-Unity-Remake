@@ -1426,6 +1426,8 @@
  "mpAdmWreck": "{0} 근처에 해킹 가능한 잔해를 생성합니다.",
  "mpAdmWreckRace": "잔해는 테란, 보스크, 니벨리안, 미도리안 화물선입니다.",
  "statShieldDamage": "실드 피해",
+ "catMissileDefense": "미사일 방어",
+ "statMissileDefense": "미사일 요격 범위",
  "mapVoidJump": "Void로 점프",
  "photoSettings": "카메라 설정",
  "photoCamera": "카메라",

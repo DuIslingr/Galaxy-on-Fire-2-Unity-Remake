@@ -67,7 +67,7 @@ namespace GoF2Remake.Multiplayer
             var data = Database.Shared.Item(item);
             if (mirrors.TryGetValue(item, out var m)) { m.rig.Tint(WeaponTint.For(data, weaponColor?.Invoke())); return m; }   // a changed colour
             if (data == null) return null;
-            var gun = new Gun(data, Vector3.zero, false) { Ignores = ignores };
+            var gun = new Gun(data, Vector3.zero, false) { Ignores = ignores, Mirror = true };
             var fx = WeaponFx.Load(item);
             m = new Mirror { gun = gun, fx = fx, rig = new GunRig(gun, fx, fxRoot, muzzleParent, 2) };
             m.rig.Tint(WeaponTint.For(data, weaponColor?.Invoke()));   // their weapon colour
