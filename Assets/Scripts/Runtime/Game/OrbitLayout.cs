@@ -150,7 +150,10 @@ namespace GoF2Remake.World
         static readonly string[] JumpgateByRace = { "jumpgate_terran", "jumpgate_vossk_anim", "jumpgate_nivelian", "jumpgate_midorian" };
 
         public string JumpgateAssembly => JumpgateByRace[Look >= 0 && Look < 4 ? Look : 0];
-        public int JumpgateRadius => Look == 1 ? GateRadiusVossk : GateRadius;
+        /// <summary>The system's own gate (a mod's systems.json "jumpgate", Modding.ModWorld.GateModelOf), else null: the race's.</summary>
+        public string ModJumpgateAssembly => Modding.ModWorld.GateModelOf(systemIndex)?.Assembly;
+        public int JumpgateRadius => Modding.ModWorld.GateModelOf(systemIndex) is Modding.ModWorld.StationModel g && g.gateRadius > 0f
+            ? Mathf.RoundToInt(g.gateRadius) : Look == 1 ? GateRadiusVossk : GateRadius;
         /// <summary>The race whose tables the orbit uses (a mod faction's look, Standing.Look).</summary>
         int Look => Flight.Standing.Look(raceId);
 

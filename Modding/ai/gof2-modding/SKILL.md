@@ -471,7 +471,8 @@ missions can also `system <system> show | hide | reset` (step `system`, node Sho
 `available`.
 
 Systems: race 0-3, security 0 (lawless) - 3 (secure), map position (originals x 15-94, y 2-96, z 10-90), sky 0-18, gates
-both ways, up to 7 stations each. Skybox images: 2:1 panorama or 6:1 cube strip (right, left, up, down, front, back), light
+both ways, up to 7 stations each; "jumpgate": { model (.glb or "gof2:<model>"), size (largest extent, default 15000), yaw,
+radius (jump reach and collision, default size / 2), materials } = the system's own gate model (no jump flash). Skybox images: 2:1 panorama or 6:1 cube strip (right, left, up, down, front, back), light
 on black, 8192 x 4096 sharp. Stations: techLevel 0-10, planet 0-22 or 24-26, subtitle (short text after its name: map, lore panel, ticker) and description (lore: the star
 map's panel when its planet is picked, and the docked system's station ticker; translations stations.<id>.subtitle /
 .description), looksLike = an original station whose model

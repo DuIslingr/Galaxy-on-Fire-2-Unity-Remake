@@ -22,7 +22,7 @@ namespace GoF2Remake.Modding
     public static class ModStations
     {
         const float M = 0.05f;
-        const string Prefix = "modstation_";
+        const string Prefix = "modstation_", GatePrefix = "modgate_";
 
         static readonly Dictionary<int, GameObject> templates = new Dictionary<int, GameObject>();
         static readonly List<GLTFast.GltfImport> imports = new List<GLTFast.GltfImport>();
@@ -125,7 +125,8 @@ namespace GoF2Remake.Modding
                 if (!string.IsNullOrEmpty(m.detailNormal)) yield return (m.detailNormal, true, true);
             }
             // a mobile station's engine effect (MobileStation)
-            foreach (var f in ModShips.EngineFxTextures(s.mod, ModWorld.MobileOf(s.station)?.engineFx)) yield return (f, true, false);
+            if (s.gateSystem < 0)
+                foreach (var f in ModShips.EngineFxTextures(s.mod, ModWorld.MobileOf(s.station)?.engineFx)) yield return (f, true, false);
         }
 
         static async Task LoadOne(int rev, ModWorld.StationModel s)
@@ -310,11 +311,14 @@ namespace GoF2Remake.Modding
         /// <summary>A "modstation_NNN" assembly's template; null while it isn't built (the caller falls back to looksLike).</summary>
         public static GameObject Template(string assembly)
         {
+            if (assembly != null && assembly.StartsWith(GatePrefix) && int.TryParse(assembly.Substring(GatePrefix.Length), out int system))
+                return templates.TryGetValue(ModWorld.GateKey(system), out var g) ? g : null;
             if (assembly == null || !assembly.StartsWith(Prefix) || !int.TryParse(assembly.Substring(Prefix.Length), out int station)) return null;
             return templates.TryGetValue(station, out var t) ? t : null;
         }
 
-        public static bool IsStationAssembly(string assembly) => assembly != null && assembly.StartsWith(Prefix);
+        /// <summary>A mod station's or a mod system gate's assembly ("modstation_NNN" / "modgate_NNN").</summary>
+        public static bool IsStationAssembly(string assembly) => assembly != null && (assembly.StartsWith(Prefix) || assembly.StartsWith(GatePrefix));
 
         /// <summary>The station's model is built.</summary>
         public static bool Built(int station) => templates.TryGetValue(station, out var t) && t != null;

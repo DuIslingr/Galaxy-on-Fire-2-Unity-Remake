@@ -85,7 +85,7 @@ namespace GoF2Remake.Modding
 
         static readonly HashSet<string> SystemFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "race", "security", "visible", "position", "sky", "gates", "gateStation", "spaceMusic", "stationMusic",
-              "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders" };
+              "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders", "jumpgate" };
         static readonly HashSet<string> StationFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "system", "techLevel", "planet", "looksLike", "music", "model", "modelSize", "modelYaw", "modelCentre",
               "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar", "mobile",
@@ -103,6 +103,8 @@ namespace GoF2Remake.Modding
                 if (ModJson.Has(o, "sunColor") && !(ModJson.Get(o, "sunColor") is JArray c && c.Count == 3))
                     throw new ModJsonException($"{d.where}: \"sunColor\" must be [r, g, b] (0..1)");
                 if (ModJson.Get(o, "skybox") is JToken sb) ParseSkybox(mod, sb, d.where);
+                if (ModJson.Get(o, "jumpgate") is JToken jg && !(jg is JObject jo && ModJson.Str(jo, "model") != null))
+                    throw new ModJsonException($"{d.where}: \"jumpgate\" must be {{ \"model\": \"models/gate.glb\", \"size\": 15000 }}");
                 if (d.localId != null)
                 {
                     if (!(ModJson.Get(o, "position") is JArray p) || p.Count != 3)
@@ -252,8 +254,20 @@ namespace GoF2Remake.Modding
             public bool centre = true;
             public List<CustomShipMaterial> materials = new List<CustomShipMaterial>();
             public List<(bool sphere, Vector3 centre, Vector3 half, float radius)> volumes;   // game units; null = from "collision"
-            public string Assembly => $"modstation_{station:000}";
+            /// <summary>A system's own jumpgate (systems.json "jumpgate"): its system, else -1 (a station's model).</summary>
+            public int gateSystem = -1;
+            /// <summary>The gate's collision and approach radius in game units (0: the race gate's).</summary>
+            public float gateRadius;
+            public string Assembly => gateSystem >= 0 ? $"modgate_{gateSystem:000}" : $"modstation_{station:000}";
         }
+
+        static readonly Dictionary<int, StationModel> gateModels = new Dictionary<int, StationModel>();
+
+        /// <summary>A system's own jumpgate model (systems.json "jumpgate"), null: its race's gate.</summary>
+        public static StationModel GateModelOf(int system) => gateModels.TryGetValue(system, out var m) ? m : null;
+
+        /// <summary>The key a gate's model is kept under beside the stations' (ModStations: below every station number).</summary>
+        public static int GateKey(int system) => -1000 - system;
 
         static readonly Dictionary<int, StationModel> stationModels = new Dictionary<int, StationModel>();
         static readonly Dictionary<int, int> stationInterior = new Dictionary<int, int>();
@@ -274,7 +288,7 @@ namespace GoF2Remake.Modding
         public static StationModel ModelOf(int station) => stationModels.TryGetValue(station, out var m) ? m : null;
 
         /// <summary>Every station with its own model (ModStations loads them).</summary>
-        public static IEnumerable<StationModel> Models() { Database.Load(); return stationModels.Values.ToList(); }
+        public static IEnumerable<StationModel> Models() { Database.Load(); return stationModels.Values.Concat(gateModels.Values).ToList(); }
 
         /// <summary>The race whose hangar and bar a station uses (stations.json "interior"; -1: the system's).</summary>
         public static int InteriorRace(int station) => stationInterior.TryGetValue(station, out int r) ? r : -1;
@@ -633,7 +647,7 @@ namespace GoF2Remake.Modding
             NoteOriginalCounts(db);
             EnsureMapping();
             systemSpaceMusic.Clear(); systemStationMusic.Clear(); stationMusic.Clear(); stationSubtitle.Clear(); stationLore.Clear();
-            stationModels.Clear(); stationInterior.Clear(); planetTextures.Clear(); sunTextures.Clear(); sunColors.Clear(); skyboxes.Clear();
+            stationModels.Clear(); gateModels.Clear(); stationInterior.Clear(); planetTextures.Clear(); sunTextures.Clear(); sunColors.Clear(); skyboxes.Clear();
             mapTextures.Clear(); mapRings.Clear(); orbits.Clear(); mapPlaces.Clear();
             stationHangar.Clear(); stationBar.Clear(); mobiles.Clear();
             modTrafficSystems.Clear(); systemLocals.Clear(); systemRaiders.Clear();
@@ -699,6 +713,21 @@ namespace GoF2Remake.Modding
                         if (ModJson.Str(o, "stationMusic") is string stm) systemStationMusic[s.index] = stm;
                         if (ModJson.Str(o, "sunTexture") is string sun) sunTextures[s.index] = BackdropName(mod, sun);
                         if (ModJson.Get(o, "skybox") is JToken skyToken) skyboxes[s.index] = ParseSkybox(mod, skyToken, d.where);
+                        if (ModJson.Get(o, "jumpgate") is JObject jgo && ModJson.Str(jgo, "model") is string gm)
+                        {
+                            var gate = new StationModel
+                            {
+                                mod = mod, station = GateKey(s.index), gateSystem = s.index, model = gm, label = (s.name ?? d.key) + " jumpgate",
+                                size = GameModels.Is(gm) && !ModJson.Has(jgo, "size") ? 0f : Mathf.Max(1000f, ModJson.Float(jgo, "size", 15000f, d.file)),
+                                yaw = ModJson.Float(jgo, "yaw", 0f, d.file), centre = true, collision = "none",
+                            };
+                            gate.gateRadius = Mathf.Max(0f, ModJson.Float(jgo, "radius", gate.size > 0f ? gate.size * 0.5f : 0f, d.file));
+                            if (ModJson.Get(jgo, "materials") is JArray gmats)
+                                foreach (var m in gmats) gate.materials.Add(JsonUtility.FromJson<CustomShipMaterial>(m.ToString()));
+                            gateModels[s.index] = gate;
+                            if (db.Assemblies.Find(a => a.name == gate.Assembly) == null)
+                                db.Assemblies.Add(new AssemblyData { name = gate.Assembly, pack = ModContent.Pack, category = "level", origin = "mod " + mod.Id });
+                        }
                         if (ModJson.Get(o, "sunColor") is JArray sc && sc.Count == 3)
                             sunColors[s.index] = new Color(Mathf.Clamp01((float)sc[0]), Mathf.Clamp01((float)sc[1]), Mathf.Clamp01((float)sc[2]));
                     }

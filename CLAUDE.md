@@ -2737,6 +2737,11 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   planet behind it, the sun, a ship placed inside pushed out to the box face, Dock offered there, the Nivelian hangar docked.
   A sun PNG with a bright glow out to its edge blows up when the sun swells near the screen centre: the originals fade to black
   well inside the edge (the guide says so).
+  **System jumpgates** (remake, 2026-10-25, for GoF3's systems; systems.json `"jumpgate"`: model, size (default 15000),
+  yaw, radius (default size / 2), materials; `ModWorld.GateModelOf` / `GateKey`): a `StationModel` with `gateSystem`, loaded
+  by `ModStations` with the station models as "modgate_NNN" (category level; `Template`, `IsStationAssembly`);
+  `OrbitLayout.ModJumpgateAssembly` / `JumpgateRadius` and `OrbitBuilder.SpawnJumpgate` (the race's gate while it isn't
+  built). No `_jump_anim_add`, so `SystemJump.PlayGateJump` plays no flash. Tests `ModWorldTests.ASystemsOwnJumpgate`.
   **Star map planets** (remake, 2026-10-23, the user's request): stations.json `"mapTexture"` (an image wrapped round the
   map's sphere; `StarMap.ApplyModPlanet` swaps the planet mesh, whose UVs are one 0.2 x 0.2 cell of the
   galaxymap_planets atlas, for a generated UV sphere of the same radius (`WrappedSphere`, equirectangular) with a copy of

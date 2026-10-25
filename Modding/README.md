@@ -1323,9 +1323,10 @@ New star systems and their stations. Both are lists: `"id"` adds one, `"override
 | `sunTexture` | Its own sun: a PNG like the game's suns (512 x 512, a small bright core and a dim glow fading to black well inside the edge, on black; it is drawn additively). Default: the sun of its `sky`. |
 | `sunColor` | `[r, g, b]` from 0 to 1: the colour and strength of the sunlight on ships and stations. Default: the light of its `sky`. |
 | `skybox` | Its own sky, see [Skies](#skies). Default: the nebula of its `sky` and the game's stars. |
+| `jumpgate` | Its own jumpgate model in its gate orbit: `{ "model": "models/gate.glb", "size": 15000, "yaw": 0, "radius": 7500, "materials": [...] }`. `model` a glTF / GLB in the mod (like a station's) or a game model (`"gof2:jumpgate_vossk_anim"`); `size` its largest extent in game units (default 15000; the game's gates are about 15000, the Vossk one 22500); `yaw` degrees about its up axis (ships fly through it along its front, the model's +Z); `radius` how near a ship must come to jump, and its collision sphere (default half its size); `materials` like [ships.json's](#materials). Default: its race's gate. A gate of your own has no jump flash (the game's gates play one as a ship goes through). |
 | `spaceMusic`, `stationMusic` | A mod's track (see [Music](#music)). |
 
-Changing a system (`"override"`): `name`, `security`, `visible`, `available`, `sky`, `sunTexture`, `sunColor`, `skybox`, the music, and `gates` (added to its routes; links original systems too).
+Changing a system (`"override"`): `name`, `security`, `visible`, `available`, `sky`, `sunTexture`, `sunColor`, `skybox`, `jumpgate`, the music, and `gates` (added to its routes; links original systems too).
 
 Events and missions can also show or hide a system themselves: the `system` step (Show / hide a system), the graph's **Show /
 Hide System** node, or the command `system [players] <system> <show | hide | reset>` (the system by number, name or
