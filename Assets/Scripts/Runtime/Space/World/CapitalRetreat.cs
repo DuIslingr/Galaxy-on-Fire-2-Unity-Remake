@@ -28,6 +28,7 @@ namespace GoF2Remake.World
         NpcShip host;
         Traffic traffic;
         float ms = -1f, speed;
+        Vector3 bow;   // where its bow points (its model's +Z: the NPC's own root faces game +Z, the other way)
         bool jumped;
         GameObject fx;
         float fxLengthMs;
@@ -69,7 +70,7 @@ namespace GoF2Remake.World
             float into = ms - ChargeMs;
             // into the flash, faster and faster
             speed *= Mathf.Pow(1.1f, dtMs / 33.3f);
-            host.transform.position += host.transform.forward * speed * Time.deltaTime;
+            host.transform.position += bow * speed * Time.deltaTime;
             if (into >= HideMs)
             {
                 jumped = true;
@@ -85,8 +86,10 @@ namespace GoF2Remake.World
             speed = size * 0.05f;   // metres a second at first
             var assets = StarMapAssets.Load();
             var t = host.transform;
-            var at = t.position + t.forward * size * 0.6f;
-            fx = SystemJump.SpawnKhadorFx(assets, at, Quaternion.LookRotation(-t.forward, t.up), out fxLengthMs);
+            var model = Model();
+            bow = model.forward;
+            var at = t.position + bow * size * 0.6f;
+            fx = SystemJump.SpawnKhadorFx(assets, at, Quaternion.LookRotation(bow, model.up), out fxLengthMs);   // turned with the ship, as the player's jump (SystemJump: the ship's rotation)
             if (fx != null)
             {
                 fx.transform.localScale *= Mathf.Max(1f, size / FxMeters);
@@ -94,6 +97,14 @@ namespace GoF2Remake.World
             }
             if (assets != null) Sfx.PlayAt(assets.khadorDrive, at);
             if (fxLengthMs <= 0f) fxLengthMs = 1f;
+        }
+
+        /// <summary>The ship's own model (its "ship_NNN_mod" assembly, not one of its parts' models), else the NPC.</summary>
+        Transform Model()
+        {
+            foreach (var a in host.GetComponentsInChildren<Visuals.AssembledObject>(true))
+                if (Modding.ModShips.ShipOf(a.ModScope) == host.Spec.ship) return a.transform;
+            return host.transform;
         }
 
         /// <summary>The ship's length along its bow in metres (ModTraffic.HullLength).</summary>
