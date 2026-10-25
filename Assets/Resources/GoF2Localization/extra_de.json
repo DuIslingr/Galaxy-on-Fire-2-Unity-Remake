@@ -2882,5 +2882,11 @@
  "mbPointsNote": "Spieleinheiten wie die Waffenpunkte: X die linke Seite des Piloten, Y oben, Z der Bug.",
  "capitalRetreats": "{0} springt davon!",
  "mbRepeatMinutes": "Kommt wieder nach (Spielminuten, 0 = einmal)",
- "factionDiplomat": "Ich habe noch Freunde bei den {0}. Für #C vergessen sie, was du getan hast, und behandeln dich wieder neutral."
+ "factionDiplomat": "Ich habe noch Freunde bei den {0}. Für #C vergessen sie, was du getan hast, und behandeln dich wieder neutral.",
+ "kitLivery": "Muster",
+ "kitLiveryNone": "Keins",
+ "kitDecal": "Abziehbild",
+ "kitEngineTrail": "Triebwerksspur",
+ "kitBoosterTrail": "Boosterspur",
+ "kitTrailDefault": "Standard"
 }

@@ -24,8 +24,12 @@
 //   the live socket is the ribbon's head, so it reaches the engine between drops.
 // A ship's blueprint can switch the glow and the trails off (SpawnEngineGlow / SpawnEngineTrails, or EngineVFXEnabled for
 // both; ships.json "es2Engine"): EVERSPACE 2's warships and freighters have them off, their engines only their nozzles' glow.
+// The player's chosen engine trails (the Customize screen's Engine trail / Booster trail, EVERSPACE 2's
+// BP_Ship_Player.UpdateEngineTrails: ThrustParticlesID for the engine sockets, BoostParticlesID for the booster sockets) take
+// the veil's place at their sockets: Es2Trails runs them, GoF2/ModEs2Trail draws them.
 // EVERSPACE 2's centimetres are its metres x the kit's scale here (es2Scale). Nothing of it in the docked station (the
-// flames do the hangar's engines).
+// flames do the hangar's engines) but the player's trails while the Customize screen runs the engines (EVERSPACE 2's
+// HangarMode: the particles keep their birth velocity, the colours x 4, the alphas squared).
 
 using System.Collections.Generic;
 using System.Linq;
@@ -33,6 +37,7 @@ using GoF2Remake.Data;
 using GoF2Remake.Flight;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace GoF2Remake.Modding
 {
@@ -78,7 +83,23 @@ namespace GoF2Remake.Modding
         }
 
         EngineFlame flame;
+        Visuals.EnginePreview preview;
         Trail[] trails;
+        // the player's chosen trails per socket (null: the veil) and the build text they come from
+        Es2Trails[] custom;
+        string customKey;
+        float distance;   // the owner's distance flown, cm (the ribbons' RibbonUVDistance)
+        readonly Dictionary<Es2Trails.Render, MeshFilter> trailParts = new Dictionary<Es2Trails.Render, MeshFilter>();
+        static Shader trailShader;
+        static bool trailShaderLoaded;
+        static Shader TrailShader
+        {
+            get
+            {
+                if (!trailShaderLoaded) { trailShaderLoaded = true; trailShader = Resources.Load<Shader>("GoF2Mods/ModEs2Trail"); }
+                return trailShader;
+            }
+        }
         MeshFilter veil, glow, npcTrail;
         Light[] lights;
         Color engineColour = Color.white, boosterColour = Color.white;
@@ -105,11 +126,12 @@ namespace GoF2Remake.Modding
         {
             inStation = FindAnyObjectByType<World.StationLevel>() != null;
             if (trails != null) foreach (var t in trails) { t.points.Clear(); t.hasLast = false; t.spawnDue = 0f; }
+            if (custom != null) foreach (var c in custom) c?.Clear();
         }
 
         void OnDestroy()
         {
-            foreach (var mf in new[] { veil, glow, npcTrail })
+            foreach (var mf in new[] { veil, glow, npcTrail }.Concat(trailParts.Values))
                 if (mf != null) { Destroy(mf.sharedMesh); Destroy(mf.GetComponent<Renderer>().sharedMaterial); }
         }
 
@@ -166,31 +188,36 @@ namespace GoF2Remake.Modding
             if (flame == null || sockets.Length == 0) return;
             float dt = Time.deltaTime;
             bool pilot = flame.Pilot && !inStation;
-            float thrust = inStation ? 0f : Mathf.Max(0f, flame.Thrust.z), boost = inStation ? 0f : flame.Boost;
-            UpdateVeils(pilot && trailsOn, dt, thrust, boost);
+            // the Customize screen's running engines (EnginePreview): the player's trails in EVERSPACE 2's HangarMode
+            if (inStation && preview == null) preview = GetComponentInParent<Visuals.EnginePreview>();
+            bool hangar = inStation && preview != null && preview.isActiveAndEnabled;
+            float thrust = inStation && !hangar ? 0f : Mathf.Max(0f, flame.Thrust.z), boost = inStation && !hangar ? 0f : flame.Boost;
+            UpdateCustomTrails((pilot || hangar) && trailsOn, hangar, dt, thrust, boost);
+            UpdateVeils((pilot || hangar) && trailsOn, hangar, dt, thrust, boost);
             UpdateLights(pilot, thrust, boost);
             UpdateGlow(!pilot && !inStation && glowOn, thrust, boost);
             UpdateNpcTrails(!pilot && !inStation && trailsOn, dt, thrust, boost);
         }
 
         // ---- the veil ---------------------------------------------------------------------------------------------------
-        void UpdateVeils(bool on, float dt, float thrust, float boost)
+        void UpdateVeils(bool on, bool hangar, float dt, float thrust, float boost)
         {
             BeginMesh();
             float s = es2Scale;
             var ownerVel = transform.InverseTransformDirection(flame.Velocity);
             var inherit = -Vector3.ClampMagnitude(ownerVel, VeilInheritLimit);
-            float ease = 1f - Mathf.Pow(VeilSmoothing, dt * VeilFalloffTime);
+            float ease = hangar ? 0f : 1f - Mathf.Pow(VeilSmoothing, dt * VeilFalloffTime);
             for (int i = 0; i < sockets.Length; i++)
             {
                 var t = trails[i];
-                float opacity = on ? Opacity(i, thrust, boost) : 0f;
+                bool socketOn = on && (custom == null || custom[i] == null);
+                float opacity = socketOn ? Opacity(i, thrust, boost) : 0f;
                 // age, move and drop the particles (local space: the ship's frame)
                 for (int k = t.points.Count - 1; k >= 0; k--)
                 {
                     var p = t.points[k];
                     p.age += dt;
-                    if (p.age >= VeilLife || !on) { t.points.RemoveAt(k); continue; }
+                    if (p.age >= VeilLife || !socketOn) { t.points.RemoveAt(k); continue; }
                     p.vel = Vector3.Lerp(p.vel, inherit, ease);
                     p.pos += p.vel * dt;
                     t.points[k] = p;
@@ -212,7 +239,7 @@ namespace GoF2Remake.Modding
                 if (t.points.Count < 2) continue;
                 // newest first: the ribbon's u runs 0 at the nozzle to 1 at its end, by length
                 t.points.Sort((a, b) => a.age.CompareTo(b.age));
-                var c = ColourOf(i) * VeilColour;
+                var c = ColourOf(i) * VeilColour * (hangar ? 4f : 1f);
                 float total = 0f;
                 for (int k = 1; k < t.points.Count; k++) total += Vector3.Distance(t.points[k].pos, t.points[k - 1].pos);
                 float run = 0f;
@@ -222,12 +249,247 @@ namespace GoF2Remake.Modding
                     var p = t.points[k];
                     if (k > 0) run += Vector3.Distance(p.pos, t.points[k - 1].pos);
                     var tangent = k + 1 < t.points.Count ? t.points[k + 1].pos - p.pos : p.pos - t.points[k - 1].pos;
-                    float a = VeilAlpha * 0.5f * (1f + Mathf.Cos(Mathf.PI * Mathf.Clamp01(p.age / VeilLife))) * opacity;
+                    float a = VeilAlpha * 0.5f * (1f + Mathf.Cos(Mathf.PI * Mathf.Clamp01(p.age / VeilLife))) * opacity * (hangar ? VeilAlpha * opacity : 1f);
                     AddRibbonPoint(p.pos, tangent, total > 0f ? run / total : 0f, VeilHalfWidth * s, new Color(c.r, c.g, c.b, a));
                 }
                 AddRibbonStrip(first, t.points.Count);
             }
             EndMesh(veil);
+        }
+
+        // ---- the player's chosen trails ---------------------------------------------------------------------------------
+        /// <summary>The player's build's trails for each socket (the engine sockets' "trail", the booster sockets'
+        /// "boosttrail"), made again when the build changes (the Customize screen).</summary>
+        void ResolveTrails(bool on)
+        {
+            if (!on) return;
+            int ship = Session.ShipIndex;
+            string key = ModShipKits.BuildKey(ship);
+            string text = key != null && Session.ShipBuilds.TryGetValue(key, out var t) ? t : "";
+            text = ship + "|" + text;
+            if (text == customKey) return;
+            customKey = text;
+            var kit = ModShipKits.CustomizationOf(ship);
+            var build = kit != null ? ModShipKits.PlayerBuild(ship) : null;
+            var engine = kit?.TrailOf(build, false);
+            var booster = kit?.TrailOf(build, true);
+            if (engine == null && booster == null) { custom = null; return; }
+            custom = new Es2Trails[sockets.Length];
+            for (int i = 0; i < sockets.Length; i++)
+            {
+                var tr = sockets[i].booster ? booster : engine;
+                custom[i] = tr != null ? new Es2Trails(tr) : null;
+            }
+            // each render kind's textures from the trail that uses it
+            foreach (var c in custom)
+                if (c != null)
+                    foreach (var e in c.emitters) SetTrailTextures(TrailPart(e.render), c.trail);
+        }
+
+        MeshFilter TrailPart(Es2Trails.Render render)
+        {
+            if (trailParts.TryGetValue(render, out var mf) && mf != null) return mf;
+            var go = new GameObject("es2_trail_" + render);
+            go.transform.SetParent(transform, false);
+            mf = go.AddComponent<MeshFilter>();
+            mf.sharedMesh = new Mesh { name = "es2_trail_" + render + "_add" };
+            mf.sharedMesh.MarkDynamic();
+            var r = go.AddComponent<MeshRenderer>();
+            var mat = new Material(TrailShader) { name = "es2_trail_" + render };
+            mat.SetFloat("_Kind", (int)render);
+            mat.SetFloat("_Gain", ModMaterials.Es2FlameGain / 1000f);
+            mat.SetFloat("_Es2Scale", es2Scale);
+            var urp = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            mat.SetFloat("_SoftParticles", urp != null && urp.supportsCameraDepthTexture ? 1f : 0f);
+            mat.SetTexture("_GradTex", Es2Trails.GradientTexture);
+            mat.SetTexture("_Noise3D", Es2Trails.Noise3D);
+            r.sharedMaterial = mat;
+            r.shadowCastingMode = ShadowCastingMode.Off;
+            r.receiveShadows = false;
+            r.enabled = false;
+            trailParts[render] = mf;
+            return mf;
+        }
+
+        static void SetTrailTextures(MeshFilter mf, ModShipKits.EngineTrail trail)
+        {
+            var mat = mf.GetComponent<Renderer>().sharedMaterial;
+            var mod = trail.mod;
+            if (!string.IsNullOrEmpty(trail.texture)) mat.SetTexture("_MainTex", ModMaterials.Texture(mod, trail.texture, false));
+            if (!string.IsNullOrEmpty(trail.mask)) mat.SetTexture("_MaskTex", ModMaterials.Texture(mod, trail.mask, false));
+            if (!string.IsNullOrEmpty(trail.normal)) mat.SetTexture("_NormalTex", ModMaterials.Texture(mod, trail.normal, true, false, true));
+        }
+
+        readonly List<Vector3> tv = new List<Vector3>(), tn = new List<Vector3>();
+        readonly List<Vector2> tuv = new List<Vector2>(), tsize = new List<Vector2>();
+        readonly List<Vector4> textra = new List<Vector4>(), tdyn = new List<Vector4>();
+        readonly List<Color> tcol = new List<Color>();
+        readonly List<int> ttri = new List<int>();
+        readonly List<(Es2Trails trails, Es2Trails.Emitter e, int socket, int index, float depth)> sorted = new List<(Es2Trails, Es2Trails.Emitter, int, int, float)>();
+
+        // EVERSPACE 2's socket frame (x forward, y right, z up) to the ship's (Unity: x right, y up, z forward)
+        static Vector3 Map(Vector3 v) => new Vector3(v.y, v.z, v.x);
+
+        void UpdateCustomTrails(bool on, bool hangar, float dt, float thrust, float boost)
+        {
+            ResolveTrails(on);
+            float cm = es2Scale / 100f;   // a centimetre of EVERSPACE 2 in the ship's frame
+            var local = transform.InverseTransformDirection(flame.Velocity) / cm;
+            var ownerCm = new Vector3(local.z, local.x, local.y);
+            if (!hangar) distance += flame.Velocity.magnitude / cm * dt;
+            if (custom != null)
+                for (int i = 0; i < sockets.Length; i++)
+                    custom[i]?.Step(dt, on ? Opacity(i, thrust, boost) : 0f, sockets[i].scale, ColourOf(i), ownerCm, distance, hangar, on);
+            var cam = Camera.main;
+            foreach (var kv in trailParts)
+            {
+                var render = kv.Key;
+                BeginTrailMesh();
+                if (custom != null && on)
+                {
+                    if (render == Es2Trails.Render.Smoke && cam != null)
+                    {
+                        // (ViewDepth sort: the farthest first)
+                        sorted.Clear();
+                        var camLocal = transform.InverseTransformPoint(cam.transform.position);
+                        for (int i = 0; i < custom.Length; i++)
+                            if (custom[i] != null)
+                                foreach (var e in custom[i].emitters)
+                                    if (e.render == render)
+                                        for (int k = 0; k < e.particles.Count; k++)
+                                            sorted.Add((custom[i], e, i, k, (sockets[i].at + Map(e.particles[k].pos) * cm - camLocal).sqrMagnitude));
+                        sorted.Sort((a, b) => b.depth.CompareTo(a.depth));
+                        foreach (var x in sorted) AddTrailParticle(x.trails, x.e, x.socket, x.e.particles[x.index], hangar, cm);
+                    }
+                    else
+                        for (int i = 0; i < custom.Length; i++)
+                            if (custom[i] != null)
+                                foreach (var e in custom[i].emitters)
+                                    if (e.render == render) AddEmitter(custom[i], e, i, hangar, cm);
+                }
+                EndTrailMesh(kv.Value);
+            }
+        }
+
+        void AddEmitter(Es2Trails tr, Es2Trails.Emitter e, int socket, bool hangar, float cm)
+        {
+            switch (e.render)
+            {
+                case Es2Trails.Render.DarkTrail:
+                case Es2Trails.Render.FireTrail:
+                case Es2Trails.Render.Lines:
+                case Es2Trails.Render.LightningRibbon:
+                case Es2Trails.Render.Veil:
+                    AddTrailRibbon(tr, e, socket, hangar, cm);
+                    break;
+                default:
+                    foreach (var p in e.particles) AddTrailParticle(tr, e, socket, p, hangar, cm);
+                    break;
+            }
+        }
+
+        void AddTrailParticle(Es2Trails tr, Es2Trails.Emitter e, int socket, in Es2Trails.Particle p, bool hangar, float cm)
+        {
+            var at = sockets[socket].at;
+            var rgb = tr.Colour(e, p, hangar);
+            var c = new Color(rgb.x, rgb.y, rgb.z, tr.Alpha(e, p, hangar));
+            float rel = Mathf.Clamp01(p.age / Mathf.Max(p.life, 1e-5f));
+            var size = tr.Size(e, p);
+            if (e.render == Es2Trails.Render.Shape)
+            {
+                var m = tr.trail.mesh;
+                if (m == null) return;
+                var sc = new Vector3(size.x, size.y, size.y);
+                float cs = Mathf.Cos(p.turn), sn = Mathf.Sin(p.turn);
+                Vector3 Turn(Vector3 v) => new Vector3(v.x, v.y * cs - v.z * sn, v.y * sn + v.z * cs);
+                int b = tv.Count;
+                for (int k = 0; k < m.positions.Length; k++)
+                {
+                    var mp = m.positions[k];
+                    var pos = Turn(new Vector3(mp.x * sc.x, mp.y * sc.y, mp.z * sc.z)) + p.pos;
+                    var mn = m.normals[k];
+                    var nrm = Turn(new Vector3(mn.x / Mathf.Max(sc.x, 1e-4f), mn.y / Mathf.Max(sc.y, 1e-4f), mn.z / Mathf.Max(sc.z, 1e-4f))).normalized;
+                    tv.Add(at + Map(pos) * cm); tn.Add(Map(nrm)); tuv.Add(m.uv[k]); tsize.Add(Vector2.zero);
+                    textra.Add(new Vector4(0f, p.random, rel, 0f)); tdyn.Add(p.dyn); tcol.Add(c);
+                }
+                foreach (int i in m.indices) ttri.Add(b + i);
+                return;
+            }
+            var anchor = p.pos;
+            if (e.render == Es2Trails.Render.Bubbles) anchor += Es2Trails.Orbit(p);
+            var dyn = e.render == Es2Trails.Render.LightningArc ? new Vector4(0f, 0f, Mathf.Clamp01(rel * 4f), 0.01f) : p.dyn;
+            var extra = new Vector4(p.rot * Mathf.Deg2Rad, p.random, rel, 0f);
+            var axis = Map(p.vel.sqrMagnitude > 1e-6f ? p.vel.normalized : Vector3.left);
+            var half = size * 0.5f * cm;
+            int b0 = tv.Count;
+            foreach (var corner in new[] { new Vector2(0, 0), new Vector2(1, 0), new Vector2(1, 1), new Vector2(0, 1) })
+            {
+                tv.Add(at + Map(anchor) * cm); tn.Add(axis); tuv.Add(corner); tsize.Add(half);
+                textra.Add(extra); tdyn.Add(dyn); tcol.Add(c);
+            }
+            ttri.AddRange(new[] { b0, b0 + 1, b0 + 2, b0, b0 + 2, b0 + 3 });
+        }
+
+        void AddTrailRibbon(Es2Trails tr, Es2Trails.Emitter e, int socket, bool hangar, float cm)
+        {
+            var pts = e.particles;
+            if (pts.Count < 2) return;
+            // newest first: U1 runs 0 at the nozzle to 1 at the end, by length (ScaledUsingRibbonSegmentLength)
+            pts.Sort((a, b) => a.age.CompareTo(b.age));
+            var at = sockets[socket].at;
+            float total = 0f;
+            for (int k = 1; k < pts.Count; k++) total += Vector3.Distance(pts[k].pos, pts[k - 1].pos);
+            // U0: TiledOverRibbonLength by the particles' RibbonUVDistance (Dark / Fire trail 800 cm, Lightning 2000 cm), else U1
+            float tiling = e.render == Es2Trails.Render.DarkTrail || e.render == Es2Trails.Render.FireTrail ? 800f
+                         : e.render == Es2Trails.Render.LightningRibbon ? 2000f : 0f;
+            float run = 0f;
+            int first = tv.Count;
+            for (int k = 0; k < pts.Count; k++)
+            {
+                var p = pts[k];
+                if (k > 0) run += Vector3.Distance(p.pos, pts[k - 1].pos);
+                var tangent = k + 1 < pts.Count ? pts[k + 1].pos - p.pos : p.pos - pts[k - 1].pos;
+                var dir = tangent.sqrMagnitude > 1e-10f ? Map(tangent.normalized) : Vector3.back;
+                float u1 = total > 0f ? run / total : 0f;
+                float u0 = tiling > 0f ? p.uvDistance / tiling : u1;
+                var rgb = tr.Colour(e, p, hangar);
+                var c = new Color(rgb.x, rgb.y, rgb.z, tr.Alpha(e, p, hangar));
+                var dyn = e.render == Es2Trails.Render.Veil ? p.dyn : Vector4.zero;
+                float halfWidth = p.size.x * 0.5f * cm;
+                var pos = at + Map(p.pos) * cm;
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    tv.Add(pos); tn.Add(dir); tuv.Add(new Vector2(u0, side < 0 ? 0f : 1f)); tsize.Add(new Vector2(halfWidth, side));
+                    textra.Add(new Vector4(0f, p.random, Mathf.Clamp01(p.age / Mathf.Max(p.life, 1e-5f)), u1)); tdyn.Add(dyn); tcol.Add(c);
+                }
+            }
+            for (int k = 0; k + 1 < pts.Count; k++)
+            {
+                int a = first + k * 2;
+                ttri.AddRange(new[] { a, a + 1, a + 3, a, a + 3, a + 2 });
+            }
+        }
+
+        void BeginTrailMesh() { tv.Clear(); tn.Clear(); tuv.Clear(); tsize.Clear(); textra.Clear(); tdyn.Clear(); tcol.Clear(); ttri.Clear(); }
+
+        void EndTrailMesh(MeshFilter mf)
+        {
+            if (mf == null) return;
+            var r = mf.GetComponent<Renderer>();
+            bool any = ttri.Count > 0;
+            if (r.enabled != any) r.enabled = any;
+            if (!any) return;
+            var m = mf.sharedMesh;
+            m.Clear();
+            if (tv.Count > 65000) m.indexFormat = IndexFormat.UInt32;
+            m.SetVertices(tv); m.SetNormals(tn); m.SetUVs(0, tuv); m.SetUVs(1, tsize); m.SetUVs(2, textra); m.SetUVs(3, tdyn);
+            m.SetColors(tcol); m.SetTriangles(ttri, 0);
+            // (the shader spreads the points into sprites and ribbons: the bounds take in the widest)
+            var bounds = new Bounds(tv[0], Vector3.zero);
+            float reach = 0f;
+            for (int i = 0; i < tv.Count; i++) { bounds.Encapsulate(tv[i]); reach = Mathf.Max(reach, Mathf.Abs(tsize[i].x), Mathf.Abs(tsize[i].y)); }
+            bounds.Expand(reach * 4.4f);
+            m.bounds = bounds;
         }
 
         // ---- the engine lights ------------------------------------------------------------------------------------------

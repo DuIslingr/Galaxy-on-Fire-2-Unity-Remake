@@ -2882,5 +2882,11 @@
  "mbPointsNote": "Speleenheden zoals de wapenpunten: X de linkerkant van de piloot, Y omhoog, Z de neus.",
  "capitalRetreats": "{0} springt weg!",
  "mbRepeatMinutes": "Komt terug na (speelminuten, 0 = eenmalig)",
- "factionDiplomat": "Ik heb nog vrienden bij de {0}. Voor #C vergeten ze wat je gedaan hebt en behandelen ze je weer neutraal."
+ "factionDiplomat": "Ik heb nog vrienden bij de {0}. Voor #C vergeten ze wat je gedaan hebt en behandelen ze je weer neutraal.",
+ "kitLivery": "Patroon",
+ "kitLiveryNone": "Geen",
+ "kitDecal": "Embleem",
+ "kitEngineTrail": "Motorspoor",
+ "kitBoosterTrail": "Boosterspoor",
+ "kitTrailDefault": "Standaard"
 }

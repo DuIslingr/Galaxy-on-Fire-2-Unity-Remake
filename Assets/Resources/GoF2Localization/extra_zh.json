@@ -2882,5 +2882,11 @@
  "mbPointsNote": "与武器挂点相同的游戏单位：X 为驾驶员左侧，Y 向上，Z 为舰首。",
  "capitalRetreats": "{0}正在跃迁逃离！",
  "mbRepeatMinutes": "再次出现间隔（游戏分钟，0 = 仅一次）",
- "factionDiplomat": "我在{0}那边还有朋友。只要#C，他们就会忘记你做过的事，重新以中立态度对待你。"
+ "factionDiplomat": "我在{0}那边还有朋友。只要#C，他们就会忘记你做过的事，重新以中立态度对待你。",
+ "kitLivery": "图案",
+ "kitLiveryNone": "无",
+ "kitDecal": "贴花",
+ "kitEngineTrail": "引擎尾迹",
+ "kitBoosterTrail": "推进器尾迹",
+ "kitTrailDefault": "默认"
 }

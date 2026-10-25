@@ -318,7 +318,20 @@ Skins (optional, in the kit): texture paint jobs, a Skin row in Customize ("Stan
 `"skins": [ { "id" (not "none"), "name", "types": [ship types; none = all], "engineColor": [r, g, b] (optional, every
 exhaust's glow), "materials": [ { "material": "<model material name contains>", "diffuse", "emission", "metallicSmoothness"
 (URP layout: R metallic, A smoothness), "normal" (PNG / JPG paths), "color", "emissionColor" ([r, g, b]), "emissionIntensity" } ] } ]`;
-fields left out keep the model's own, no stats change; a build may carry `"skin": "<id>"`.
+fields left out keep the model's own, no stats change; a build may carry `"skin": "<id>"`. A skin may also carry `"colors"`
+(a preset id or `{ slot: value }`), `"livery"` and `"decal"` (ids below): picked with it.
+Liveries (optional): `"liveries": [ { "id", "name", "texture": "<greyscale mask PNG>", "color": "#RRGGBB", "metallic",
+"smoothness", "opacity", "mirror": [x, y], "scale": [x, y], "offset": [x, y], "tiling", "clipAngle" } ]` (+ `"liveryAxes":
+{ "forward": "x", "right": "z", "up": "y" }`): a mask projected from above onto materials marked `"livery": true` (kit
+`materials`), its middle at the ship's middle, nose to the image's right; a colour slot `"property": "livery"` colours it; a
+Livery row; build `"livery": "<id>"` ("none" = none). Decals: `"decals": [ { "id", "name", "insignia": "<RGBA PNG>", "type":
+"<RGBA PNG>" } ]` on materials marked `"decal": "insignia"` / `"type"` (R colour 1, G colour 2, B border, A coverage; colour
+slots with `"property": "decal1"` / `"decal2"` / `"decal3"`); a Decal row; build `"decal": "<id>"`.
+Engine trails: `"trails": [ { "id", "name", "kind", "icon", "curves": [[...]], "texture", "mask", "normal", "mesh" } ]`,
+EVERSPACE 2's customization trails behind the player's engines (kind default | glitter | smoke | bubbles | sparks | darktrail |
+firetrail | lines | lightning | rings | squares | triangles | veils; their particle systems are built into the game, so a mod only
+picks a kind and gives its curves / textures / mesh: see the guide's "Engine trails"; the ES2 Ships importer writes all of
+them); Engine trail / Booster trail rows; build `"trail"` / `"boostTrail"` (ids).
 Any other ship (an original's "override", or a new ship without "kit") may carry `"skins"` (as above, no "types"; materials by the ship's own material names, e.g. "ship_010_terran_diffuse" for the Phantom's hull) and / or `"weaponColors"` (palette list or true): it then gets the Customize screen with Skin and Weapon colour rows; saved per ship; engineColor works only on kit ships.
 Every kit ship also gets a Weapon colour row (energy weapons and energy-bolt turrets' shots, flashes, impacts; "Original" = their
 own): the game's colour list, or the kit's palette `"weapons"`; a build may carry `"weaponColor": "<palette id or #RRGGBB>"`.

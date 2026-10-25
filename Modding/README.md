@@ -1076,6 +1076,55 @@ Skin row ("Standard" is the model's own look, then the skins the ship's type may
 | `types` | The ship types that may wear it (a ship's `kitType`; none = every type of the kit). |
 | `materials` | Per material whose name contains `material` (the model's own glTF material name, or part of it), the textures that replace its own: `diffuse` (base colour), `emission`, `metallicSmoothness` (URP Lit's layout: R metallic, A smoothness; not glTF's metallic-roughness), `normal`; `color` / `emissionColor` (`[r, g, b]`, 0 to 1) and `emissionIntensity` too. A field left out keeps the model's own; a material no entry names is untouched. PNG or JPG. |
 | `engineColor` | `[r, g, b]`: every exhaust's glow in this skin (otherwise the mounts' own `glowColor` / the ship's `engineGlowColor`). |
+| `colors` | A colour scheme the skin brings along: a preset's id, or `{ "slot": value }` like a preset's `colors`. Picking the skin sets them; the colour rows can change them after. |
+| `livery`, `decal` | A livery's / decal's id (below) the skin brings along. |
+
+**Liveries.** A pattern projected onto the hull from above, like EVERSPACE 2's projection decals: a greyscale mask over the
+ship's length and width, mirrored at the middle, that tints the base colour (keeping the texture's shading) and changes the
+metallic and smoothness where it is white. It shows on the materials marked `"livery": true` (a kit `materials` entry), and
+the Customize screen gets a Livery row ("None", then the liveries the ship's type may wear).
+
+```json
+"liveries": [ { "id": "blossom", "name": "Nebula Blossom", "texture": "liveries/blossom.png", "color": "#FFF5F4",
+                "metallic": 0, "smoothness": 0.4, "opacity": 1, "mirror": [false, false], "scale": [1, 1], "offset": [0, 0],
+                "tiling": false, "clipAngle": 90 } ],
+"liveryAxes": { "forward": "x", "right": "z", "up": "y" }
+```
+
+| Field | |
+|---|---|
+| `texture` | **Required.** The mask (PNG; white = the livery). Its middle is the ship's middle, the nose to the image's right. |
+| `color`, `metallic`, `smoothness` | What the masked area becomes. A colour slot with `"property": "livery"` lets the player pick the colour. |
+| `opacity`, `mirror`, `scale`, `offset`, `tiling` | How strongly it shows; mirrored at the middle per axis; scaled and moved over the ship; repeated outside the image. |
+| `clipAngle` | Faces steeper than this from horizontal get none (90: every face). |
+| `liveryAxes` | The parts' axes (glTF's, signed: `"-x"`): forward, right and up. Default EVERSPACE 2's export. |
+
+**Decals.** Two masks for the parts' decal faces, the insignia and the type lettering (EVERSPACE 2's ship decals): R colour 1,
+G colour 2, B the border colour, A where it shows. They draw on the materials marked `"decal": "insignia"` or `"decal": "type"`;
+their colours are colour slots with `"property": "decal1"`, `"decal2"` and `"decal3"`. The Customize screen gets a Decal row.
+
+```json
+"decals": [ { "id": "ramen_cat", "name": "Ramen Cat", "insignia": "decals/ramen_cat_insignia.png", "type": "decals/ramen_cat_type.png" } ]
+```
+
+**Engine trails.** EVERSPACE 2's customization trails behind the player's own engines and boosters: the Customize screen gets
+an Engine trail and a Booster trail row. The trails are EVERSPACE 2's own particle systems rebuilt in the game, so a kit can
+only pick from them (`kind`) and give their data; the ES2 Ships importer writes all thirteen from your copy of the game.
+
+```json
+"trails": [ { "id": "glitter", "name": "Stardust", "kind": "glitter", "icon": "trails/glitter_icon.png",
+              "curves": [[1, 1.006, 0.95, 0.395, 0]], "texture": "trails/T_Pattern_Barcode_001.png" } ]
+```
+
+| Field | |
+|---|---|
+| `kind` | `default` (the plain veil), `glitter`, `smoke`, `bubbles`, `sparks`, `darktrail`, `firetrail`, `lines`, `lightning`, `rings`, `squares`, `triangles` or `veils`. |
+| `curves` | The system's curve tables over a particle's life (0 to 1), in this order: glitter [alpha]; smoke [size, alpha]; bubbles [colour, size, alpha]; sparks [size, unused]; darktrail, firetrail, lines [alpha]; lightning [ribbon alpha, arc size, arc alpha]; rings [alpha, scale]; squares, triangles [alpha, unused]; veils [first veil alpha, second veil alpha]. A missing curve counts as 1. |
+| `texture`, `mask`, `normal` | The textures the trail's material samples (the masks as sRGB images, `normal` a normal map): glitter and lightning the barcode, smoke its colour (`texture`), puff (`mask`) and sphere normal, bubbles the sphere normal, darktrail and firetrail T_Noise_020, lines T_Noise_012. |
+| `mesh` | The rings / squares / triangles cross section: `positions`, `normals` (3 numbers each), `uv` (2) and `indices`, in EVERSPACE 2's centimetres and axes (x forward, y right, z up). |
+
+A build picks them with `"trail"` and `"boostTrail"` (ids; none = the plain veil). Only the player's own ship shows them; the
+Customize screen shows them on the turntable while its engines run (the booster trail while its row is selected).
 
 **Weapon colour.** Every customizable ship also has a Weapon colour row in the Customize screen: "Original" (the weapons'
 own look) or one colour for all its energy weapons: the lasers and beams, blasters (EMP ones too), thermo guns, and the turrets

@@ -2882,5 +2882,11 @@
  "mbPointsNote": "Unidades do jogo como os pontos de armas: X a esquerda do piloto, Y para cima, Z a proa.",
  "capitalRetreats": "{0} está fugindo com um salto!",
  "mbRepeatMinutes": "Volta depois de (minutos de jogo, 0 = uma vez)",
- "factionDiplomat": "Ainda tenho amigos entre os {0}. Por #C, eles vão esquecer o que você fez e voltar a tratá-lo como neutro."
+ "factionDiplomat": "Ainda tenho amigos entre os {0}. Por #C, eles vão esquecer o que você fez e voltar a tratá-lo como neutro.",
+ "kitLivery": "Padrão de pintura",
+ "kitLiveryNone": "Nenhum",
+ "kitDecal": "Decalque",
+ "kitEngineTrail": "Rastro do motor",
+ "kitBoosterTrail": "Rastro do propulsor",
+ "kitTrailDefault": "Padrão"
 }

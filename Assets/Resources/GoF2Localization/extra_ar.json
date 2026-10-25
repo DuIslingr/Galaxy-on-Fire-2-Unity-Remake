@@ -2882,5 +2882,11 @@
  "mbPointsNote": "وحدات اللعبة مثل نقاط الأسلحة: X يسار الطيار، Y للأعلى، Z المقدمة.",
  "capitalRetreats": "{0} يقفز هاربًا!",
  "mbRepeatMinutes": "يعود بعد (دقائق لعب، 0 = مرة واحدة)",
- "factionDiplomat": "ما زال لي أصدقاء بين {0}. مقابل #C سينسون ما فعلته ويعاملونك كمحايد من جديد."
+ "factionDiplomat": "ما زال لي أصدقاء بين {0}. مقابل #C سينسون ما فعلته ويعاملونك كمحايد من جديد.",
+ "kitLivery": "النقش",
+ "kitLiveryNone": "لا شيء",
+ "kitDecal": "الملصق",
+ "kitEngineTrail": "أثر المحرك",
+ "kitBoosterTrail": "أثر المعزز",
+ "kitTrailDefault": "الافتراضي"
 }

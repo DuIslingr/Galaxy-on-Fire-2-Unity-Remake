@@ -9,7 +9,7 @@
 // "traffic": { "weight": 1, "races": [8] } ("weight": 0 = never; "races" = the races that fly it, default its own). A
 // strong fighter (a capital ship's escort) is one of the dearer half. NPC hulls and guns don't depend on the ship flown
 // (NpcTables), so only the look changes. A customizable (kit) ship's NPCs fly random builds of it (RandomBuild, Traffic.Create:
-// parts, tier, colour scheme, now and then a skin; "traffic": { "randomBuild": false } = its default build), drawn from the
+// parts, tier, colour scheme, now and then a skin, a livery or a decal; "traffic": { "randomBuild": false } = its default build), drawn from the
 // parts already loaded; each docking loads a few more random builds' parts in the background (Warm). A boss hull ("traffic":
 // { "boss": true }, the GoF3 Ships mod's five GoF3 bosses) never flies as a fighter: the pirate bosses fly it instead
 // (PickBoss, at the same chance, up to MaxBossLength long). A capital ship or freighter ("traffic": { "capital": ... })
@@ -158,11 +158,26 @@ namespace GoF2Remake.Modding
                 }
             var skins = kit.SkinsFor(c.kitType);
             b.skin = skins.Count > 0 && Random.value < 0.3f ? skins[Random.Range(0, skins.Count)].id : ModShipKits.Build.NoSkin;
+            var liveries = kit.LiveriesFor(c.kitType);
+            b.livery = liveries.Count > 0 && Random.value < 0.2f ? liveries[Random.Range(0, liveries.Count)].id : ModShipKits.Build.NoSkin;
+            var decals = kit.DecalsFor(c.kitType);
+            b.decal = decals.Count > 0 && Random.value < 0.3f ? decals[Random.Range(0, decals.Count)].id : ModShipKits.Build.NoSkin;
+            if (kit.FindSkin(b.skin) is ModShipKits.Skin picked)
+            {
+                // A skin with colours and a livery (EVERSPACE 2's) wears them, as when the player picks it.
+                foreach (var kv in picked.colors) b.colors[kv.Key] = kv.Value;
+                if (picked.livery != null) b.livery = picked.livery;
+                if (picked.decal != null) b.decal = picked.decal;
+            }
             var n = ModShipKits.Normalize(kit, c.kitType, b, fallback);
             if (!loadedOnly) return n;
             // The tier's extensions or the skin's textures not loaded yet: lower tiers, then without the skin.
             while (n.tier > 0 && !ModShips.BuildLoaded(ship, n)) n.tier--;
-            if (!ModShips.BuildLoaded(ship, n) && n.skin != ModShipKits.Build.NoSkin) { n.skin = ModShipKits.Build.NoSkin; n = ModShipKits.Normalize(kit, c.kitType, n, fallback); }
+            if (!ModShips.BuildLoaded(ship, n) && (n.skin != ModShipKits.Build.NoSkin || n.livery != ModShipKits.Build.NoSkin || n.decal != ModShipKits.Build.NoSkin))
+            {
+                n.skin = n.livery = n.decal = ModShipKits.Build.NoSkin;
+                n = ModShipKits.Normalize(kit, c.kitType, n, fallback);
+            }
             return ModShips.BuildLoaded(ship, n) ? n : fallback;
         }
 

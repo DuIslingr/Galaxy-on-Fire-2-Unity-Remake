@@ -343,6 +343,8 @@ namespace GoF2Remake.Data
         // whenever the engines run (dark on a parked ship, full through the take-off and all flight).
         public float engineIdle;
         public bool boost;         // its emission shows only while boosting (a boost vent; dark otherwise)
+        public bool livery;        // a kit's liveries are projected onto it (EVERSPACE 2's hull and tech details; ModShips.ApplyLivery)
+        public string decal;       // "insignia" / "type": a kit decal's mask goes on it (the parts' decal faces; ModShips.ApplyDecals)
         // A hologram projector (GoF2/ModHologram): additive rings whose emission pattern turns and which bob; UV1 x a ring's
         // spin (-1..1), y its share of the hover; emissionColor x emissionIntensity and emission (the pattern) as usual.
         public bool hologram;

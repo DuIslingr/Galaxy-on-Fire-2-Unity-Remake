@@ -2882,5 +2882,11 @@
  "mbPointsNote": "Unità di gioco come i punti d'arma: X la sinistra del pilota, Y in alto, Z la prua.",
  "capitalRetreats": "{0} sta saltando via!",
  "mbRepeatMinutes": "Ritorna dopo (minuti di gioco, 0 = una volta)",
- "factionDiplomat": "Ho ancora amici tra i {0}. Per #C dimenticheranno quello che hai fatto e ti tratteranno di nuovo da neutrale."
+ "factionDiplomat": "Ho ancora amici tra i {0}. Per #C dimenticheranno quello che hai fatto e ti tratteranno di nuovo da neutrale.",
+ "kitLivery": "Livrea",
+ "kitLiveryNone": "Nessuno",
+ "kitDecal": "Decalcomania",
+ "kitEngineTrail": "Scia del motore",
+ "kitBoosterTrail": "Scia del booster",
+ "kitTrailDefault": "Predefinita"
 }

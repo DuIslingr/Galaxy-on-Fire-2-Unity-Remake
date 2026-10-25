@@ -40,7 +40,7 @@ namespace GoF2Remake.UI
         ModShipKits.Build build;
         int row;
         float holdMs;
-        enum Kind { Part, Tier, Skin, WeaponColor, WeaponModels, Exhaust, ExhaustSize, ExhaustColor, Preset, Color, Strength }
+        enum Kind { Part, Tier, Skin, Livery, Decal, Trail, WeaponColor, WeaponModels, Exhaust, ExhaustSize, ExhaustColor, Preset, Color, Strength }
         readonly List<(Kind kind, string key, Label value, VisualElement line, VisualElement swatch)> rows = new List<(Kind, string, Label, VisualElement, VisualElement)>();
         int presetIndex = -1;
         readonly ScrollView list;
@@ -146,6 +146,13 @@ namespace GoF2Remake.UI
             }
             if (kit.MaxTier > 0) AddRow(Kind.Tier, null, X("kitTier", "Tier"));
             if (kit.SkinsFor(type).Count > 0) AddRow(Kind.Skin, null, X("kitSkin", "Skin"));
+            if (kit.LiveriesFor(type).Count > 0) AddRow(Kind.Livery, null, X("kitLivery", "Livery"));
+            if (kit.DecalsFor(type).Count > 0) AddRow(Kind.Decal, null, X("kitDecal", "Decal"));
+            if (kit.trails.Count > 0)
+            {
+                AddRow(Kind.Trail, "engine", X("kitEngineTrail", "Engine trail"));
+                AddRow(Kind.Trail, "boost", X("kitBoosterTrail", "Booster trail"));
+            }
             if (kit.weaponColorRow) AddRow(Kind.WeaponColor, null, X("kitWeaponColor", "Weapon colour"));
             if (ModHardpoints.Toggles(ship)) AddRow(Kind.WeaponModels, null, X("kitWeaponModels", "Weapon models"));
             if (ModExhausts.For(ship).Count > 0)
@@ -165,7 +172,7 @@ namespace GoF2Remake.UI
         }
 
         /// <summary>The selected row is a boost colour (the exhaust style's second colour of a flame style, or a kit colour
-        /// slot recolouring the boost): StationMenu shows the engines boosting meanwhile.</summary>
+        /// slot recolouring the boost) or the booster trail: StationMenu shows the engines boosting meanwhile.</summary>
         public bool BoostRowSelected
         {
             get
@@ -173,6 +180,7 @@ namespace GoF2Remake.UI
                 if (!IsOpen || row < 0 || row >= rows.Count) return false;
                 var (kind, slot, _, _, _) = rows[row];
                 if (kind == Kind.ExhaustColor) return slot == "2" && ModExhausts.Find(build.exhaust, ship) is ModExhausts.Style s && s.IsFlame;
+                if (kind == Kind.Trail) return slot == "boost";   // the booster trail shows while boosting
                 return kind == Kind.Color && kit.colorSlots.Find(c => c.id == slot) is ModShipKits.ColorSlot cs && cs.targets.Exists(t => t.property == "boost");
             }
         }
@@ -260,6 +268,44 @@ namespace GoF2Remake.UI
                     int at = skins.FindIndex(k => string.Equals(k.id, build.skin, StringComparison.OrdinalIgnoreCase)) + 1;
                     at = (at + dir + n) % n;
                     build.skin = at == 0 ? ModShipKits.Build.NoSkin : skins[at - 1].id;
+                    // A skin with colours and a livery (EVERSPACE 2's skins) brings them along; the rows can change them after.
+                    if (at > 0)
+                    {
+                        foreach (var kv in skins[at - 1].colors) build.colors[kv.Key] = kv.Value;
+                        if (skins[at - 1].livery != null) build.livery = skins[at - 1].livery;
+                        if (skins[at - 1].decal != null) build.decal = skins[at - 1].decal;
+                        presetIndex = MatchingPreset();
+                    }
+                    break;
+                }
+                case Kind.Livery:
+                {
+                    // No livery (index 0), then the type's liveries.
+                    var liveries = kit.LiveriesFor(type);
+                    int n = liveries.Count + 1;
+                    int at = liveries.IndexOf(kit.LiveryOf(build)) + 1;
+                    at = (at + dir + n) % n;
+                    build.livery = at == 0 ? ModShipKits.Build.NoSkin : liveries[at - 1].id;
+                    break;
+                }
+                case Kind.Decal:
+                {
+                    // No decal (index 0), then the type's decals.
+                    var decals = kit.DecalsFor(type);
+                    int n = decals.Count + 1;
+                    int at = decals.IndexOf(kit.DecalOf(build)) + 1;
+                    at = (at + dir + n) % n;
+                    build.decal = at == 0 ? ModShipKits.Build.NoSkin : decals[at - 1].id;
+                    break;
+                }
+                case Kind.Trail:
+                {
+                    // EVERSPACE 2's trails in the kit's order (the Default veil first when the kit doesn't list it).
+                    var choices = TrailChoices();
+                    int n = choices.Count;
+                    int at = (TrailIndex(choices, slot == "boost" ? build.boostTrail : build.trail) + dir + n) % n;
+                    string id = choices[at]?.id;
+                    if (slot == "boost") build.boostTrail = id; else build.trail = id;
                     break;
                 }
                 case Kind.WeaponColor:
@@ -356,6 +402,23 @@ namespace GoF2Remake.UI
             Changed?.Invoke(build.Clone());
         }
 
+        /// <summary>The engine trails to pick from: the kit's, with a null (the Default veil) first unless the kit lists one.</summary>
+        List<ModShipKits.EngineTrail> TrailChoices()
+        {
+            var l = new List<ModShipKits.EngineTrail>(kit.trails);
+            if (!l.Exists(t => t.IsDefault)) l.Insert(0, null);
+            return l;
+        }
+
+        /// <summary>A trail id's place among the choices (none or unknown: the Default's).</summary>
+        static int TrailIndex(List<ModShipKits.EngineTrail> choices, string id)
+        {
+            int at = string.IsNullOrEmpty(id) ? -1 : choices.FindIndex(t => t != null && string.Equals(t.id, id, StringComparison.OrdinalIgnoreCase));
+            if (at >= 0) return at;
+            at = choices.FindIndex(t => t == null || t.IsDefault);
+            return Math.Max(0, at);
+        }
+
         /// <summary>The preset whose colours the build has (-1: none, the colours were picked one by one).</summary>
         int MatchingPreset() => kit.presets.FindIndex(p => p.colors.Count > 0 && p.colors.All(kv =>
             build.colors.TryGetValue(kv.Key, out var v) && string.Equals(v, kv.Value, StringComparison.OrdinalIgnoreCase)));
@@ -376,6 +439,29 @@ namespace GoF2Remake.UI
                         var skin = kit.FindSkin(build.skin);
                         int at = skin == null ? 0 : skins.IndexOf(skin) + 1;
                         value.text = (skin?.Name ?? X("kitSkinStandard", "Standard")) + $"  ({at + 1}/{skins.Count + 1})";
+                        break;
+                    }
+                    case Kind.Livery:
+                    {
+                        var liveries = kit.LiveriesFor(type);
+                        var lv = kit.LiveryOf(build);
+                        int at = lv == null ? 0 : liveries.IndexOf(lv) + 1;
+                        value.text = (lv?.Name ?? X("kitLiveryNone", "None")) + $"  ({at + 1}/{liveries.Count + 1})";
+                        break;
+                    }
+                    case Kind.Decal:
+                    {
+                        var decals = kit.DecalsFor(type);
+                        var dc = kit.DecalOf(build);
+                        int at = dc == null ? 0 : decals.IndexOf(dc) + 1;
+                        value.text = (dc?.Name ?? X("kitLiveryNone", "None")) + $"  ({at + 1}/{decals.Count + 1})";
+                        break;
+                    }
+                    case Kind.Trail:
+                    {
+                        var choices = TrailChoices();
+                        int at = TrailIndex(choices, slot == "boost" ? build.boostTrail : build.trail);
+                        value.text = (choices[at]?.Name ?? X("kitTrailDefault", "Default")) + $"  ({at + 1}/{choices.Count})";
                         break;
                     }
                     case Kind.Part:

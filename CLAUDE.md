@@ -3765,6 +3765,29 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
 - Orbit drags (remake, players' request): a vertical drag takes the camera down / up the other way round (a drag up tips the
   ship up) in Inspect ship, Action Freeze (`PhotoMode`, the original's y flip dropped) and the Mod Builder; keys and sticks
   unchanged.
+- **Liveries, decals and engine trails** (remake, 2026-10-25, the user's request: "include everything the Supporter Pack
+  adds", then "reproduce them accurately"; kit fields `liveries` / `liveryAxes` / `decals` / `trails`, skins' `colors` /
+  `livery` / `decal`, Build `livery` / `decal` / `trail` / `boostTrail`; the guide's "Customizable ships"). **Liveries**:
+  EVERSPACE 2's projection decals (M_ShipModules_Hull_Parent's compiled pixel shader): a mask over the ship's (forward, right)
+  at 1 / (2 x the bounds' largest half extent), mirrored per axis at 0.5, offset and scaled, mask^(1 + 1.2 lum(colour)),
+  none on faces steeper than the clip angle, lerping the base colour (x the map), metallic and smoothness; on materials marked
+  `"livery": true` (`CustomShipMaterial.livery`), `ModShips.ApplyLivery` sets `_Livery*` on copies (`GoF2/Hull`: its own
+  `HullInput.hlsl`, a copy of URP's LitInput with the livery / decal values in UnityPerMaterial, and `GoF2LiveryMask` in
+  `HullForwardPass.hlsl`). **Decals**: M_ShipModules_Decals_Parent: the mask's R x colour 1 + G x colour 2 + B x the border,
+  A coverage, on materials marked `"decal": "insignia" | "type"` (`_DecalParams`, `_DecalColor1..3`; colour slot properties
+  `decal1..3`, `livery`). **Engine trails** (`Modding.Es2Trails` + `GoF2/ModEs2Trail`, driven by `Es2EngineVfx`): EVERSPACE 2's
+  13 customization trails (DT_ShipExhaustParticles; BP_Ship_Player.UpdateEngineTrails: ThrustParticlesID at the engine
+  sockets, BoostParticlesID at the booster sockets) decompiled from their Niagara VM scripts, curves and renderers and their
+  materials' compiled pixel shaders (the ES2 importer's research/engine_trails.md): sprites (Stardust, Raw Combustion lit by
+  the main light and SH, Coolant Leak with UE's texture-based simplex noise, Firestarter velocity-aligned), ribbons (Void
+  Reverb, Thermal Blaze, Residuum, Voltaic Tendrils with UE's texture-based gradient noise and its arc sprites, Ion Veils),
+  mesh particles (Rings of Nerea, Tetragons, Delta Surge), each in the socket's local space in ES2 cm, the particles easing
+  to rest in the world. UE's View.PerlinNoiseGradientTexture / PerlinNoise3DTexture are rebuilt the way FSystemTextures
+  makes them (FRandomStream; `Es2Trails.GradientTexture` / `Noise3D`; the bytes may differ, the noise is the same kind).
+  Every ES2 emissive's x (1 + MPC_GlobalParameters.EmissiveExposureCompensation, 10) is in `_Gain` (Es2FlameGain / 1000).
+  Only the player's ship shows them, and the Customize screen's turntable while its engines run (EVERSPACE 2's HangarMode:
+  no inherited velocity, colours x 4, alphas squared; the booster trail row shows a boost). The soft-particle fades read
+  the camera depth texture where the URP asset has it (`_SoftParticles`). Not checked yet against EVERSPACE 2 side by side.
 - **Factions** (remake, 2026-10-25, the user's request for the ES2 galaxy; `Modding.ModFactions`, a mod's `factions.json`):
   factions are race numbers from `ModFactions.FirstRace` (32), numbered by the registry (`ModRegistry.Kind.Faction`, afresh in
   a session), with a `look` race (0-3, 8, 9) for every table indexed by race (hangar, bar, visitors, music, NPC guns, freighter
