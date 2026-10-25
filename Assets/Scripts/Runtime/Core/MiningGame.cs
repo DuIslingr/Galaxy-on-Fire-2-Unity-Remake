@@ -29,6 +29,8 @@ namespace GoF2Remake.Flight
         };
 
         public const float LayerMs = 6000f;
+        /// <summary>This rock's layer time: LayerMs x the ore's mining time (items.json "miningTime", 100 = the game's).</summary>
+        public readonly float LayerDurationMs;
         public const float EnergyMs = 2500f;
         const float PixelsPerUnit = 10f;   // Layout+0xe4 on the HD retina layout
 
@@ -60,8 +62,11 @@ namespace GoF2Remake.Flight
         float driftTimer;
 
         /// <param name="drill">The first mounted mining laser (attr 32 handling, attr 33 yield).</param>
-        public MiningGame(int quality, int oreItem, int drillHandling, int drillYield, bool tutorial = false)
+        /// <param name="miningTime">The ore's mining time in percent (items.json "miningTime"): the layers take that much
+        /// longer and give the same ore.</param>
+        public MiningGame(int quality, int oreItem, int drillHandling, int drillYield, bool tutorial = false, int miningTime = 100)
         {
+            LayerDurationMs = LayerMs * Mathf.Clamp(miningTime, 10, 1000) / 100f;
             Quality = Mathf.Clamp(quality, 4, 7);
             OreItem = oreItem;
             Yield = drillYield / 100f;
@@ -107,10 +112,10 @@ namespace GoF2Remake.Flight
             }
 
             float old = Ore;
-            Ore += dtMs * OreRate(Layer, Yield) / 1000f;
+            Ore += dtMs * OreRate(Layer, Yield) * (LayerMs / LayerDurationMs) / 1000f;
             if ((int)Ore > (int)old) NewTon?.Invoke();
             LayerTime += dtMs;
-            if (LayerTime > LayerMs)
+            if (LayerTime > LayerDurationMs)
             {
                 LayerTime = 0f;
                 Layer++;

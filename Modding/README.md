@@ -319,6 +319,7 @@ energy cells.
 | `echoRadius` | 129 | The echo's reach in game units (0 = the gun's own `blastRadius`) |
 | `echoExplosion` | 130 | The explosion the echo shows: 0 ship, 8 to 10 scatter (8 the default), 11 shock blast, 13 fireworks; -1 none |
 | `missileDefense` | 131 | Missile defense: with this item mounted, the ship's automatic turrets shoot down the homing missiles flying at it within this reach (game units, 20 per metre), before turning to enemy ships. Any item can carry it; on a seatless cabin (`"base": 91`, `"cabinSize": 0`) it changes nothing else and the shop calls it "Missile defense". Another player's missiles in multiplayer are left alone |
+| `miningTime` | 132 | An ore's mining time in percent of the game's 6 seconds per layer (default 100; 200 = twice as long). The ore a whole asteroid gives stays the same: it comes slower. Counts for the drill's minigame and the mining beam |
 
 Which stats an item uses depends on its category, so copy the stats its base item has (see `items.json` and
 `item_attributes.json` in `Assets/Resources/GoF2Data`). items.json's own stat names (`loadingTimeMs`, `range`,
@@ -1359,6 +1360,8 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | Field | |
 |---|---|
 | `id`, `name` | As for items. Translations: `stations.<id>.name` (systems: `systems.<id>.name`). |
+| `subtitle` | A short description shown after its name: under its planet on the star map, in the map's lore panel and in the station ticker (`"Jump Gate & Trading Station"`). Translations: `stations.<id>.subtitle`. |
+| `description` | Its lore: shown in a panel when its planet is picked in the star map's system view, and up to three stations' lore of the docked system runs in the station ticker. Translations: `stations.<id>.description`. |
 | `system` | **Required.** Its system (a number or `"mod_id:system_id"`). A system holds at most 7 stations. |
 | `techLevel` | 0 to 10: which items its shop sells. |
 | `planet` | The planet it orbits: one of the game's planet textures, 0 to 22 or 24 to 26. |
@@ -1380,7 +1383,7 @@ nebula on black, not on a dark blue. The sky also lights the scene a little (its
 | `music` | A mod's track for its docked music (see [Music](#music)). |
 | `mobile` | A new station that moves: `true` or `{ "route": [stations] \| "any", "stayMinutes": 15, "systemMinutes": 90, "speed": 0.2, "race": "terran", "engines": [mounts] }`. See [Mobile stations](#mobile-stations). |
 
-Changing a station (`"override"`): `name`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
+Changing a station (`"override"`): `name`, `subtitle`, `description`, `techLevel`, and the looks: `model` and its fields, `interior`, `planetTexture`,
 `mapTexture`, `mapRing`, `mapPlace`, `orbit`, `music` (an original station can get a new model too).
 
 ### Mobile stations

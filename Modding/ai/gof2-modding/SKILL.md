@@ -152,7 +152,7 @@ freeTopSpeed 117, freeTurnRate 118, freeStrafeSpeed 119, freeAcceleration 120, f
 x3.5; default the booster's original boost speed x 3.2 / 3). See Flight styles. tractorTargets 122 (a tractor beam based on
 68-70 / 194 pulling 1..8 containers at once: the extra beams take the nearest ones by themselves, no lock, the scanner stays
 free), tractorRange 123 (their reach, units, default 30000), missileDefense 131 (equipment: the ship's auto turrets shoot down homing missiles flying at it within this reach, units; on a seatless cabin, base 91 with cabinSize 0, nothing else changes and the shop calls it "Missile defense"), shieldDamage 124 (a weapon's damage to shields in %, default 100,
-the Disruptor 183 and items based on it 200; only ships with a shield: players, not NPCs). A new item also sounds like its base (a booster's boost sound, a
+the Disruptor 183 and items based on it 200; only ships with a shield: players, not NPCs). miningTime 132 (an ore's mining time in % of 6 s a layer, default 100; the asteroid's total ore stays, it just comes slower; drill and mining beam). A new item also sounds like its base (a booster's boost sound, a
 tractor beam's beam).
 items.json's own names (`loadingTimeMs`, `range`, `projectileSpeed`...) work too. An unknown stat name is an error.
 
@@ -472,7 +472,9 @@ missions can also `system <system> show | hide | reset` (step `system`, node Sho
 
 Systems: race 0-3, security 0 (lawless) - 3 (secure), map position (originals x 15-94, y 2-96, z 10-90), sky 0-18, gates
 both ways, up to 7 stations each. Skybox images: 2:1 panorama or 6:1 cube strip (right, left, up, down, front, back), light
-on black, 8192 x 4096 sharp. Stations: techLevel 0-10, planet 0-22 or 24-26, looksLike = an original station whose model
+on black, 8192 x 4096 sharp. Stations: techLevel 0-10, planet 0-22 or 24-26, subtitle (short text after its name: map, lore panel, ticker) and description (lore: the star
+map's panel when its planet is picked, and the docked system's station ticker; translations stations.<id>.subtitle /
+.description), looksLike = an original station whose model
 it borrows, modelSize = largest extent in game units (default 40000), collision box/sphere/none or `volumes` (what NPC fighters steer around; the player and shots use the model's real meshes, `none` turns all off), interior =
 race of hangar and bar, or own rooms `hangar` / `bar` from interiors.json (GLB rooms with marker empties: hangar `pad`,
 `camera` required, `camera_target`, `parked_N`, `gate`, `gate_out`, `light`; bar `camera`, `camera_target`, `visitor_N`

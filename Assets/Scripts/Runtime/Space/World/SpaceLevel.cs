@@ -1286,8 +1286,15 @@ namespace GoF2Remake.World
             // (the loops: music, engines, ambience; one-shots like the docking's own sound play out)
             foreach (var a in FindObjectsByType<AudioSource>())
                 if (a.isPlaying && a.loop && a.gameObject.scene == gameObject.scene) { a.Pause(); dockPausedAudio.Add(a); }
+            // One EventSystem at a time: the Station scene brings its own (its menu's input), so the Space scene's rests while
+            // docked ("There are 2 event systems in the scene" every frame otherwise). By name: GoF2.Space doesn't reference UGUI.
+            spaceEventSystem = null;
+            foreach (var g in gameObject.scene.GetRootGameObjects())
+                if (g.name == "EventSystem" && g.activeSelf) { spaceEventSystem = g; g.SetActive(false); break; }
             SceneManager.LoadSceneAsync(stationScene, LoadSceneMode.Additive);
         }
+
+        GameObject spaceEventSystem;
 
         void OnDestroy()
         {
@@ -1302,7 +1309,12 @@ namespace GoF2Remake.World
             DockedInOrbit = false;
             SpaceHooks.DockedInOrbit = false;
             var station = SceneManager.GetSceneByName(stationScene);
-            if (station.IsValid() && station.isLoaded) SceneManager.UnloadSceneAsync(station);
+            // the Space scene's EventSystem back once the station's has gone with its scene
+            var es = spaceEventSystem;
+            spaceEventSystem = null;
+            void Restore() { if (es != null) es.SetActive(true); }
+            var unload = station.IsValid() && station.isLoaded ? SceneManager.UnloadSceneAsync(station) : null;
+            if (unload != null) unload.completed += _ => Restore(); else Restore();
             RestoreOrbitSky();
             if (mainCamera != null) mainCamera.gameObject.SetActive(true);
             foreach (var a in dockPausedAudio) if (a != null) a.UnPause();

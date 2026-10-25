@@ -689,6 +689,11 @@ Research: `Reference/research/mining.md` (+ `Reference/tools/mining/mining_table
   beam's hum and the drill's `DrillSound` by layer; haptics as the drill on target. Not counted: Ore Athlete (38: it
   rewards the minigame's perfect runs, which the beam has none of), the multiplayer ore split (each player keeps what their
   own beam cuts).
+- **Mining time** (remake, for mods, 2026-10-25: EVERSPACE 2's DT_Mining_Yield durations; items.json stat `miningTime`, attr
+  132, % of `MiningGame.LayerMs`, 10..1000, default 100): an ore's layers last that much longer
+  (`MiningGame.LayerDurationMs`) at a rate scaled down to match, so a whole asteroid's ore stays the same; the beam's layer
+  time the same (`Mining`). The ES2 importer gives its crystals 200 (ES2's 10 s against 5 s). Test
+  `MiningGameTests.AnOresMiningTimeStretchesTheLayersForTheSameOre`.
 - **Remake-only:** Var Hastra (78) always stocks a drill (IMT Extract 1.3) while there is no campaign; releasing the stick stops the drill's player movement (the original keeps the last input). The mining plant at 103 is a docking target (see "Supernova add-on"). The drill sound (`DrillSound`, event 1's layers by drill_speed = (LAYER_SPEEDS[layer] − 5) / 33 · 3): Slow_1 always, Add_1 from 1 (pitch ×0.896 → ×1 at 2, then ×1.196), Add_2 from 2, a Switch click on entering 0 / 1 / 2, event volume 0.244; off target (`MiningGame::update`: stop(1) + play(3), back on play(1) + stop(3)) event 3 Mining_Drill_Broken is one loop (10 s wave) at 0.245 until the drill is back on target or mining ends; the landing (2) at 0.183. **Ultrascan** (84, attr 30, `Mining.ClassAMarkers`, `Radar::draw` 0x1577de): inside the field's 100 000-unit sphere (the level's field, `OrbitLayout.asteroidCentre`: also the Void's crystal field, which has no autopilot "Asteroid field" entry; the remake took the entry's position and showed no letters there), not docking / mining, every class-A asteroid on screen gets the "A" letter (0x44e frame 0) with its top-left on the asteroid.
 
 ## Station scene
@@ -2739,6 +2744,13 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (`FaceDiscs`, a copy of `ModAssets.fxAlpha`, the sphere's renderers off), else the game's planet; `"mapRing": true` adds
   `AddPlanetRing`'s copy of planet 9's ring (`ModWorld.MapTexture` / `MapRing`; the map image is preloaded with the other
   backdrops). The example's Kepler Prime has both (`textures/kepler_prime_map.png`).
+  **Station lore** (remake, 2026-10-25, the user's request; stations.json `"subtitle"` / `"description"`, new or override,
+  translated as `stations.<id>.subtitle` / `.description`; `ModWorld.Subtitle` / `Description` / `StationsWithLore`): the
+  subtitle under the planet's name on the star map, the description in a panel at the map's left while that planet is
+  picked in the system view (`StarMap.UpdatePlanetLore`, `.planet-lore`), and up to three stations' lore of the docked
+  system in the station ticker in place of the game's two random items (`NewsTicker.Build`). The ES2 importer writes them
+  from ES2's locations.CSV (Windows-1252, "|~"-separated). Tests `ModWorldTests.AStationsSubtitleAndLore`. Verified in
+  Play mode at Union Bridge (the ticker, the map panel).
   **Orbit layouts and map places** (remake, 2026-10-23, the user's request): stations.json `"orbit"` (`ModWorld.OrbitSpec`,
   `OrbitOf`; parsed with the rest, ores resolved in Apply) is applied by `OrbitLayout.ApplyMod` after the seeded layout:
   station (`hasStation` / `stationObject`: dock, `"nodock"`, none), the visible jumpgate (a forced one at the spot
@@ -3278,10 +3290,8 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   look-ups) was loaded once, in single player before the mods were on, so every mission / event command naming mod content
   (spawns, rewards) failed; it reloads when `ModManager.Revision` changes. Conversation pages and radio lines are cut at
   `NetChat.MaxPageLength` 600 (were the chat's 160: a call broke off mid-word), a conversation at `MaxConversation` 4000.
-  A conversation shows over the star map (`DialogueView.HostIn`: its template instance moved into the map's overlay while
-  open, placed full screen, back when it closes or the map does; `StarMap.Update` ticks it and holds its own keys
-  meanwhile; `EventScreen` no longer waits for the map to close): the map's panel sorts above the station's and drew its
-  names over a mission's call.
+  A queued conversation waits for the star map to close (`EventScreen`, `SpaceHooks.StarMapOpen`); showing it over the map
+  (`DialogueView.HostIn`, 2026-10-24) was taken out again on 2026-10-25 at the user's request.
   ES2's Mobile Homebase is no warship but a mobile station like the GoF3 mod's Manticore (`warships.build_homebase`:
   stations.json, route "any", 30 minutes an orbit, two hours a system), docked into its own hangar and casino
   (`homebase_hangar.py`: ES2's carrier level POI_HomebaseCarrier_001 assembled into one interiors.json room x2.8, its six
@@ -3365,7 +3375,9 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (`Story.LoungeUnlocked`, the button hidden): ES2's stations, the Homebase, GoF3's Manticore. A roaming mobile station's
   `"systems"`: only those (the Homebase: ES2's sectors). Tests `Es2DockTests`. Verified in Play mode: docking and take-off
   at Union Bridge and at the Mobile Homebase (into its hall, out through its open end), the station menu over the live
-  orbit, Launch without a reload, the sounds. **Lights and landing dust** (BP_DockableStation's SpotLight_Top / _Fill and
+  orbit, Launch without a reload, the sounds. While docked so the Station scene is loaded beside the Space scene, whose root "EventSystem" is
+  switched off (`SpaceLevel.DockInOrbit`, back on in `UndockFromOrbit`; GoF2.Space can't name UGUI's type): two flooded
+  the console with "There are 2 event systems in the scene". **Lights and landing dust** (BP_DockableStation's SpotLight_Top / _Fill and
   P_Vehicle_LandingDust, from its component defaults and the dust's Cascade emitter): from the docking's start until the
   take-off ends, a white spot 30 ES2 m above the pad pointing down and a cyan (77D2FF) one on a pivot turned with the
   camera (5 m ahead, 20 m right, 5 m below the pad, aimed back at it), cones 45 deg, reach 50 m; UE's legacy falloff

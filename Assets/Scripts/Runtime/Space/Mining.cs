@@ -369,7 +369,8 @@ namespace GoF2Remake.Flight
 
         void StartMinigame()
         {
-            Game = new MiningGame(Target.quality, Target.oreItem, drill.Attr(32), drill.Attr(33), Session.CampaignMission <= 4);
+            Game = new MiningGame(Target.quality, Target.oreItem, drill.Attr(32), drill.Attr(33), Session.CampaignMission <= 4,
+                                  db.Item(Target.oreItem)?.Attr(132, 100) ?? 100);   // the ore's mining time (items.json "miningTime")
             LostGame = false;
             mouseOffset = Vector2.zero;   // MGame::OnUpdate zeroes the mouse deltas while docking: the drill starts centred
             Game.InsideChanged += inside =>
@@ -684,7 +685,8 @@ namespace GoF2Remake.Flight
             beamFx.Aim(contact + fwd * surface * 0.2f, contact, normal, true);
 
             if (!extractions.TryGetValue(target, out var ex))
-                extractions[target] = ex = new MiningBeamExtraction(target.quality, beamYield, beamLayerMs, Session.IsExtreme);
+                extractions[target] = ex = new MiningBeamExtraction(target.quality, beamYield,
+                    beamLayerMs * Mathf.Clamp(db.Item(target.oreItem)?.Attr(132, 100) ?? 100, 10, 1000) / 100f, Session.IsExtreme);   // x the ore's mining time
             int layer = ex.Layer;
             int tons = Mathf.Min(ex.Update(dtMs), room);
             for (int i = 0; i < tons; i++) Launch(target, contact, normal, target.oreItem, false);

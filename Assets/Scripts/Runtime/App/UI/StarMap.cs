@@ -222,7 +222,7 @@ namespace GoF2Remake.UI
         // UI
         PanelRenderer panelRenderer;
         PanelSettings runtimePanel;
-        VisualElement root, touch, labels, systemHeader, keyBox, hints, dialog, mapSafe, sideButtons;
+        VisualElement root, touch, labels, systemHeader, keyBox, hints, dialog, mapSafe, sideButtons, planetLore;
         /// <summary>The screen size and safe area the map's corners were last kept clear for (SafeArea).</summary>
         Rect lastSafeArea;
         int lastLayout = -1;
@@ -301,11 +301,8 @@ namespace GoF2Remake.UI
             InputMode.Changed += ApplyInputMode;
         }
 
-        DialogueView hostedTalk;   // the conversation drawn over the map (Update)
-
         void OnDisable()
         {
-            if (hostedTalk != null) { hostedTalk.HostIn(null); hostedTalk = null; }
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             InputMode.Changed -= ApplyInputMode;
         }
@@ -339,6 +336,20 @@ namespace GoF2Remake.UI
             mapSafe = root.Q("mapSafe");
             lastSafeScreen = default;   // insets applied again on the next frame
             systemHeader = root.Q("systemHeader");
+            // Remake mods: the selected planet's lore (stations.json "description"), under the system block.
+            planetLore = mapSafe.Q(className: "planet-lore");
+            if (planetLore == null)
+            {
+                planetLore = new VisualElement { pickingMode = PickingMode.Ignore };
+                planetLore.AddToClassList("planet-lore");
+                var head = new Label { pickingMode = PickingMode.Ignore };
+                head.AddToClassList("planet-lore-title"); head.AddToClassList("gof-semibold");
+                var body = new Label { pickingMode = PickingMode.Ignore };
+                body.AddToClassList("planet-lore-text");
+                planetLore.Add(head); planetLore.Add(body);
+                mapSafe.Add(planetLore);
+            }
+            planetLore.style.display = DisplayStyle.None;
             keyBox = root.Q("keyBox");
             hints = root.Q("hints");
 
@@ -1232,12 +1243,16 @@ namespace GoF2Remake.UI
                 int tech = db.Stations.Find(s => s.index == planets[k].station)?.techLevel ?? 0;
                 it.line1.style.display = sel && tech > 0 ? DisplayStyle.Flex : DisplayStyle.None;
                 if (sel && tech > 0) { it.line1.text = $"{T(133)}: {tech}"; it.line1.style.top = 68.5f + 30f; }
-                it.line2.style.display = DisplayStyle.None;
+                // Remake mods: what the place is (stations.json "subtitle") under the tech level.
+                string sub = sel ? Modding.ModWorld.Subtitle(planets[k].station) : null;
+                it.line2.style.display = sub != null ? DisplayStyle.Flex : DisplayStyle.None;
+                if (sub != null) { it.line2.text = sub; it.line2.style.color = Color.white; it.line2.style.top = 68.5f + (tech > 0 ? 60f : 30f); }
                 if (sel) it.root.BringToFront();
             }
 
             // System block (system view) and the energy line (with a drive, another system selected).
             bool inSystem = systemView || zoomDir != 0;
+            UpdatePlanetLore(inSystem, systemAlpha);
             systemHeader.style.display = inSystem && zoomSystem >= 0 ? DisplayStyle.Flex : DisplayStyle.None;
             systemHeader.style.opacity = systemAlpha;
             int energySystem = inSystem ? zoomSystem : selected;
@@ -1249,6 +1264,25 @@ namespace GoF2Remake.UI
                 energyLine.EnableInClassList("energy-line--short", cellsInCargo < cells);
             }
             touch.MarkDirtyRepaint();
+        }
+
+        int loreStation = int.MinValue;
+
+        /// <summary>The selected planet's lore panel (stations.json "description"), in the system view only.</summary>
+        void UpdatePlanetLore(bool inSystem, float alpha)
+        {
+            if (planetLore == null) return;
+            int st = inSystem && selectedPlanet >= 0 && selectedPlanet < planets.Count ? planets[selectedPlanet].station : -1;
+            string lore = st >= 0 ? Modding.ModWorld.Description(st) : null;
+            planetLore.style.display = lore != null ? DisplayStyle.Flex : DisplayStyle.None;
+            if (lore == null) { loreStation = int.MinValue; return; }
+            planetLore.style.opacity = alpha;
+            if (st == loreStation) return;
+            loreStation = st;
+            string name = db.Stations.Find(x => x.index == st)?.name ?? "";
+            string sub = Modding.ModWorld.Subtitle(st);
+            planetLore.Q<Label>(className: "planet-lore-title").text = string.IsNullOrEmpty(sub) ? name : $"{name} · {sub}";
+            planetLore.Q<Label>(className: "planet-lore-text").text = lore;
         }
 
         static void SetSecurity(Label l, int level, float top)
@@ -1821,15 +1855,7 @@ namespace GoF2Remake.UI
             float dtMs = Time.unscaledDeltaTime * 1000f;
             float f = dtMs / (1000f / 60f);   // the original's per-frame factors, at 60 fps
             timeMs += dtMs;
-            // A conversation that opens while the map shows (a mission's call: Brent's warning of a raid) is drawn over the map
-            // and takes the keys meanwhile (DialogueView.HostIn); the map's own input waits.
-            var talk = DialogueView.Latest;
-            if (talk != null && talk.IsOpen) { talk.HostIn(root); talk.Tick(dtMs); hostedTalk = talk; }
-            else
-            {
-                if (hostedTalk != null) { hostedTalk.HostIn(null); hostedTalk = null; }
-                if (!revealing) HandleKeys(dtMs);
-            }
+            if (!revealing) HandleKeys(dtMs);
             if (world == null || this == null) return;
             UpdateReveal(dtMs);
             overviewT = Mathf.MoveTowards(overviewT, overview ? 1f : 0f, dtMs / OverviewMs);

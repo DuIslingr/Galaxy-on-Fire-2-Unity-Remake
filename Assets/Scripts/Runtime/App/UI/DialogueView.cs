@@ -316,32 +316,6 @@ namespace GoF2Remake.UI
             if (pulseMs >= PulseMs) { pulseMs = 0f; next.ToggleInClassList("dialogue-button--ready"); }
         }
 
-        VisualElement homeParent;
-        int homeIndex;
-
-        /// <summary>Remake: shows the conversation over another panel ('over': the star map's overlay, whose panel sorts above
-        /// the station's and drew its names and frames over a mission's call), its template instance moved there with its
-        /// own stylesheet and placed over the whole screen; null = back in its own UI.</summary>
-        public void HostIn(VisualElement over)
-        {
-            var holder = root?.parent;   // the Dialogue.uxml instance (its Dialogue.uss on it)
-            if (holder == null) return;
-            if (over != null)
-            {
-                if (holder.parent == over) return;
-                if (homeParent == null) { homeParent = holder.parent; homeIndex = homeParent != null ? homeParent.IndexOf(holder) : -1; }
-                over.Add(holder);
-                holder.style.position = Position.Absolute;
-                holder.style.left = holder.style.right = holder.style.top = holder.style.bottom = 0;
-                holder.BringToFront();
-            }
-            else if (homeParent != null)
-            {
-                if (holder.parent != homeParent) homeParent.Insert(Mathf.Clamp(homeIndex, 0, homeParent.childCount), holder);
-                homeParent = null;
-            }
-        }
-
         /// <summary>Keyboard / controller input and the voice auto-advance; call every frame (unscaled time).</summary>
         public void Tick(float unscaledDtMs)
         {

@@ -32,7 +32,9 @@
 // 0..1 (the sun's light; default from "sky").
 // stations.json: { "id", "system": "mod:id" | number, "name", "techLevel" (0-10), "planet" (its planet texture: 0-22 or
 //   24-26 like the originals), "looksLike": a station number (its model and collision; default the first original
-//   station of the system's race) } or { "override": n | "mod:id", name, techLevel }.
+//   station of the system's race) } or { "override": n | "mod:id", name, techLevel }. Both may have "subtitle" (what the
+//   place is, under its name on the star map) and "description" (its lore: the star map's planet panel, and items of its
+//   system's news ticker), each a string or one per language like "name".
 // A new station may be "mobile": true or { "route", "stayMinutes", "speed", "race" } (MobileStations, MobileSpec): no planet
 //   (not one of any system's stations, not on the star map), it cruises through the orbits of its route's stations in turn
 //   (any systems; default its own system's) and is docked at where it is: its "system" is its home, while each Database.Load
@@ -86,7 +88,8 @@ namespace GoF2Remake.Modding
               "sunTexture", "sunColor", "skybox", "available", "traffic", "locals", "raiders" };
         static readonly HashSet<string> StationFields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
             { "id", "override", "name", "system", "techLevel", "planet", "looksLike", "music", "model", "modelSize", "modelYaw", "modelCentre",
-              "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar", "mobile" };
+              "materials", "collision", "volumes", "interior", "planetTexture", "mapTexture", "mapRing", "mapPlace", "orbit", "hangar", "bar", "mobile",
+              "subtitle", "description" };
 
         /// <summary>ModContent.Parse: a mod's systems.json and stations.json into 'systems' / 'stations'.</summary>
         public static void Parse(ModInfo mod, List<Def> systems, List<Def> stations)
@@ -574,6 +577,7 @@ namespace GoF2Remake.Modding
 
         static readonly Dictionary<int, string> systemSpaceMusic = new Dictionary<int, string>(), systemStationMusic = new Dictionary<int, string>(),
                                                 stationMusic = new Dictionary<int, string>();
+        static readonly Dictionary<int, string> stationSubtitle = new Dictionary<int, string>(), stationLore = new Dictionary<int, string>();
         static readonly HashSet<int> modTrafficSystems = new HashSet<int>();
         static readonly Dictionary<int, List<int>> systemLocals = new Dictionary<int, List<int>>(), systemRaiders = new Dictionary<int, List<int>>();
 
@@ -586,6 +590,23 @@ namespace GoF2Remake.Modding
 
         /// <summary>systems.json "raiders": the races / factions that raid the system (null: the game's rule).</summary>
         public static List<int> Raiders(int system) => systemRaiders.TryGetValue(system, out var l) ? l : null;
+
+        /// <summary>stations.json "subtitle": what the place is ("Satellite Ruins"), under its name on the star map; null without.</summary>
+        public static string Subtitle(int station) => stationSubtitle.TryGetValue(station, out var s) ? s : null;
+
+        /// <summary>stations.json "description": the place's lore, on the star map and in its system's news ticker; null without.</summary>
+        public static string Description(int station) => stationLore.TryGetValue(station, out var s) ? s : null;
+
+        /// <summary>The stations of 'system' with a description (the ticker's lore items).</summary>
+        public static List<int> StationsWithLore(Database db, int system)
+        {
+            var r = new List<int>();
+            if (stationLore.Count == 0) return r;
+            foreach (var kv in stationLore)
+                if (db.Stations.Find(x => x.index == kv.Key) is StationData st && st.system == system) r.Add(kv.Key);
+            r.Sort();
+            return r;
+        }
 
         /// <summary>The calm space music a mod gave the station's system (null: the game's).</summary>
         public static AudioClip SpaceMusic(int station)
@@ -611,7 +632,7 @@ namespace GoF2Remake.Modding
         {
             NoteOriginalCounts(db);
             EnsureMapping();
-            systemSpaceMusic.Clear(); systemStationMusic.Clear(); stationMusic.Clear();
+            systemSpaceMusic.Clear(); systemStationMusic.Clear(); stationMusic.Clear(); stationSubtitle.Clear(); stationLore.Clear();
             stationModels.Clear(); stationInterior.Clear(); planetTextures.Clear(); sunTextures.Clear(); sunColors.Clear(); skyboxes.Clear();
             mapTextures.Clear(); mapRings.Clear(); orbits.Clear(); mapPlaces.Clear();
             stationHangar.Clear(); stationBar.Clear(); mobiles.Clear();
@@ -716,6 +737,8 @@ namespace GoF2Remake.Modding
                             stationLook[index] = look;
                         }
                         if (d.name != null) st.name = Text(d, "stations");
+                        if (TextField(d, "stations", "subtitle") is string sub) stationSubtitle[st.index] = sub;
+                        if (TextField(d, "stations", "description") is string lore) stationLore[st.index] = lore;
                         st.techLevel = Mathf.Clamp(ModJson.Int(o, "techLevel", st.techLevel, d.file), 0, 10);
                         st.textureIndex = ModJson.Int(o, "planet", st.textureIndex, d.file);
                         if (ModJson.Str(o, "music") is string mu) stationMusic[st.index] = mu;
@@ -829,6 +852,20 @@ namespace GoF2Remake.Modding
             for (int i = originalStations; i <= maxStation; i++) if (db.Stations.Find(x => x.index == i) == null) db.Stations.Add(PlaceholderStation(i, "?:" + i));
             db.Systems.Sort((a, c) => a.index.CompareTo(c.index));
             db.Stations.Sort((a, c) => a.index.CompareTo(c.index));
+        }
+
+        /// <summary>stations.json "subtitle" / "description" (a string or one per language, or text/<lang>.json's
+        /// "stations.<id>.subtitle" / ".description"), in the game's language; null without one.</summary>
+        static string TextField(Def d, string kind, string field)
+        {
+            string lang = Localization.Language;
+            var own = ModJson.Text(d.json, field);
+            var text = ModContent.Parse(d.mod).text;
+            string key = $"{kind}.{d.localId ?? d.overrideRef}.{field}";
+            if (own != null && own.TryGetValue(lang, out var s)) return s;
+            if (text.TryGetValue(lang, out var table) && table.TryGetValue(key, out s)) return s;
+            if (own != null && (own.TryGetValue("en", out s) || own.TryGetValue("", out s))) return s;
+            return own?.Values.FirstOrDefault();
         }
 
         static string Text(Def d, string kind)

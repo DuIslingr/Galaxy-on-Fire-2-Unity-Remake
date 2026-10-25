@@ -95,6 +95,10 @@ namespace GoF2Remake.Modding
         public string Ref => IsOverride ? "override:" + OverrideRef : "id:" + LocalId;
 
         public string Name { get => Text("name"); set => SetText("name", value); }
+        /// <summary>What the place is ("Satellite Ruins"), under its name on the star map.</summary>
+        public string Subtitle { get => Text("subtitle"); set => SetText("subtitle", value); }
+        /// <summary>Its lore: the star map's planet panel and its system's news ticker.</summary>
+        public string Description { get => Text("description"); set => SetText("description", value); }
         /// <summary>Its system: a number or a key.</summary>
         public string System { get => R("system"); set => SetR("system", value); }
         public int TechLevel { get => N("techLevel") ?? 5; set => json["techLevel"] = Mathf.Clamp(value, 0, 10); }
