@@ -24,8 +24,11 @@ namespace GoF2Remake.Tests
             float prev = 0f;
             for (float t = 0.1f; t < 4f; t += 0.1f)
             {
+                // (the first key's leave tangent 0.787 x 4 s / 3 puts its control point above 1: UE's curve tops out at
+                // 1.00035 near 3.7 s and settles back, a hair the test allows)
                 float a = Es2DockCurves.Eval(Es2DockCurves.TransformAlpha, t);
-                Assert.Greater(a, prev, "the glide never backs off");
+                Assert.Greater(a, prev - 2e-4f, "the glide never backs off");
+                Assert.Less(a, 1.001f);
                 prev = a;
             }
             Assert.AreEqual(1f, Es2DockCurves.Eval(Es2DockCurves.BankingAlpha, 0.5f), "the wobble at full until 1 s");
@@ -44,7 +47,7 @@ namespace GoF2Remake.Tests
         public void AHangarDocksEs2sWay()
         {
             WriteMod("d", "t_dock", "1.0", "", ("interiors.json",
-                "[ { 'id': 'pad', 'type': 'hangar', 'model': 'pad.glb', 'scale': 2.8, 'dock': 'es2', 'rise': 20, 'dockZone': [100, 50, 100], 'flights': false }, " +
+                "[ { 'id': 'pad', 'type': 'hangar', 'model': 'pad.glb', 'scale': 2.8, 'dock': 'es2', 'rise': 20, 'dockZone': [100, 50, 100], 'flights': false, 'dust': 'textures/dust.png' }, " +
                 "  { 'id': 'plain', 'type': 'hangar', 'model': 'pad.glb' } ]"));
             ScanAndEnable("t_dock");
             var d = ModInteriors.Find("t_dock:pad", true);
@@ -53,9 +56,25 @@ namespace GoF2Remake.Tests
             Assert.AreEqual(20f, d.rise);
             Assert.AreEqual(new UnityEngine.Vector3(100f, 50f, 100f), d.dockZone);
             Assert.IsFalse(d.flights);
+            Assert.AreEqual("textures/dust.png", d.dust);
             var plain = ModInteriors.Find("t_dock:plain", true);
             Assert.IsFalse(plain.es2Dock);
             Assert.AreEqual(14f, plain.rise, "ES2's TakeOffHeight 500 cm x 2.8");
+            Assert.IsNull(plain.dust);
+        }
+
+        [Test]
+        public void TheDockLightsGiveTheShipUEsLegacyFalloff()
+        {
+            // URP: intensity / d^2 x (1 - (d^2 / R^2)^2)^2; UE's legacy: intensity x (1 - d^2 / R^2)^2
+            const float range = 140f;
+            foreach (float d in new[] { 10f, 66f, 120f })
+            {
+                float x = d * d / (range * range);
+                float urp = Es2Dock.Intensity(100f, d, range) / (d * d) * UnityEngine.Mathf.Pow(1f - x * x, 2f);
+                Assert.AreEqual(100f * Es2Dock.LightScale * UnityEngine.Mathf.Pow(1f - x, 2f), urp, 1e-4f, $"at {d}");
+            }
+            Assert.AreEqual(0f, Es2Dock.Intensity(100f, 150f, range), "out of reach");
         }
 
         [Test]

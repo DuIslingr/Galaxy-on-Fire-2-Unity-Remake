@@ -478,7 +478,8 @@ race of hangar and bar, or own rooms `hangar` / `bar` from interiors.json (GLB r
 `camera` required, `camera_target`, `parked_N`, `gate`, `gate_out`, `light`; bar `camera`, `camera_target`, `visitor_N`
 required; `"bar": "none"` = no Space Lounge). A hangar with `"dock": "es2"` is the station's own model (same file and scale)
 docked EVERSPACE 2's way in the orbit: markers `ship`, `ship_ahead`, `takeoff`, `takeoff_ahead`, `dock_zone`, fields
-`rise`, `dockZone` [right, up, forward half metres], `dockSound` / `undockSound` (sounds/ names). `override` changes
+`rise`, `dockZone` [right, up, forward half metres], `dockSound` / `undockSound` (sounds/ names), `dust` (a 6 x 6
+flipbook image, grey = opacity). `override` changes
 originals (name, techLevel, looks, music...).
 
 ## characters.json, voices, music, sounds, textures

@@ -1681,7 +1681,9 @@ mobile station too (the dock rides along). Its markers, beside `pad` and `camera
 
 Fields: `rise` (metres the take-off climbs first; default 14), `dockZone` `[right, up, forward]` half sizes in metres in the
 dock's own axes (default 196, 84, 196), `dockSound` / `undockSound` (the mod's own sounds by name, from its `sounds/`
-folder, played as the docking / take-off starts). Hangar flights don't apply (`flights` is ignored).
+folder, played as the docking / take-off starts), `dust` (an image in the mod: the landing dust's 6 x 6 flipbook, frames
+row by row from the top, its grey the opacity; none without it). The dock lights the docking ship with EVERSPACE 2's
+two spotlights by itself. Hangar flights don't apply (`flights` is ignored).
 
 **Markers** can also be listed in `interiors.json` (`"markers": { "pad": [x, y, z], "parked_1": [x, y, z] }`, room metres;
 they win over the model's nodes of that name): the Mod Builder's Hangars & bars kind places them by clicking into the room. A

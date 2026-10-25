@@ -3365,8 +3365,19 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   (`Story.LoungeUnlocked`, the button hidden): ES2's stations, the Homebase, GoF3's Manticore. A roaming mobile station's
   `"systems"`: only those (the Homebase: ES2's sectors). Tests `Es2DockTests`. Verified in Play mode: docking and take-off
   at Union Bridge and at the Mobile Homebase (into its hall, out through its open end), the station menu over the live
-  orbit, Launch without a reload, the sounds. Not done: the dock's spotlights, the landing dust, multiplayer (other
-  players' view of a docked ship, NetHangar).
+  orbit, Launch without a reload, the sounds. **Lights and landing dust** (BP_DockableStation's SpotLight_Top / _Fill and
+  P_Vehicle_LandingDust, from its component defaults and the dust's Cascade emitter): from the docking's start until the
+  take-off ends, a white spot 30 ES2 m above the pad pointing down and a cyan (77D2FF) one on a pivot turned with the
+  camera (5 m ahead, 20 m right, 5 m below the pad, aimed back at it), cones 45 deg, reach 50 m; UE's legacy falloff
+  (1 - (d / R)^2)^2 isn't URP's inverse square, so each frame their URP intensity is set to give the ship UE's falloff at
+  its distance (`Es2Dock.Intensity`, x `LightScale` 0.005 per unitless UE unit: 100 top, 30 fill; matched by eye at Union
+  Bridge). The dust from the docking's start to 4 s: a trace 50 m down the ship's banked up (the hull colliders, else the
+  dock's plane), Amount 1 - distance / 50 m; 200 x Amount a second, 0.5-1 s, on a 5 m circle in the dock's plane flying
+  out at 3-4 x it a second + the ship's lean across the plane x -50 m/s, rising 10 m/s^2, 5-10 m sprites of a random frame
+  of T_Smoke_001_M's 6 x 6 flipbook blended to the next (its green = opacity), grey 0.2 lit without direction, alpha
+  0 -> 0.1 -> 0 x Amount; drawn by `GoF2/ModEs2Trail` kind 11 (Landing dust); interiors.json `"dust"` names the flipbook
+  (the ES2 importer writes `textures/es2_landing_dust.png`). Seen at Okrot: a faint haze over the pad, as ES2's own
+  values give. Not done: multiplayer (other players' view of a docked ship, NetHangar).
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),

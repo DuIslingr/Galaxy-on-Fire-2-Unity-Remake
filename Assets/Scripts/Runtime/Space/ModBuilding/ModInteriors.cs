@@ -17,7 +17,8 @@
 // "cruise" (metres above the floor the flights cross at), "gateSpan" [low, high] (heights the forcefield can be passed at),
 // "dock": "es2" (EVERSPACE 2's docking, World.Es2Dock: the room is the station's own model, docked from the station's orbit
 // and taken off from it; no hangar flights), "rise" (metres the take-off first climbs; default 14), "dockZone",
-// "dockSound" / "undockSound" (the mod's sounds by name, played as the docking / take-off starts),
+// "dockSound" / "undockSound" (the mod's sounds by name, played as the docking / take-off starts), "dust" (a 6 x 6 flipbook
+// image, its red / grey the opacity: the docking's landing dust, World.Es2Dock; none without it),
 // both: "ambient" [r, g, b], "lightIntensity", "fog" [r, g, b, end metres], "markers": { "pad": [x, y, z], ... } (the
 // markers placed in the Mod Builder, room metres; they win over the model's nodes of the same name) } ]
 // "model" may be one of the game's rooms ("gof2:hangar_terran", "gof2:bar_vossk"): then the markers come from "markers".
@@ -43,7 +44,7 @@ namespace GoF2Remake.Modding
         static readonly HashSet<string> Fields = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "id", "type", "model", "scale", "materials", "fov", "near", "far", "startYaw", "parkedMax", "flights", "cruise", "gateSpan",
-            "ambient", "lightIntensity", "fog", "markers", "dock", "rise", "dockZone", "dockSound", "undockSound",
+            "ambient", "lightIntensity", "fog", "markers", "dock", "rise", "dockZone", "dockSound", "undockSound", "dust",
         };
 
         /// <summary>One interiors.json entry.</summary>
@@ -63,6 +64,9 @@ namespace GoF2Remake.Modding
             public Vector3 dockZone = new Vector3(196f, 84f, 196f);
             /// <summary>"dockSound" / "undockSound": the mod's sounds (ModSounds.Named) the docking and the take-off play.</summary>
             public string dockSound, undockSound;
+            /// <summary>"dust": the landing dust's flipbook (6 x 6 frames, its red / grey channel the opacity; P_Vehicle_LandingDust's
+            /// T_Smoke_001_M), or null for none.</summary>
+            public string dust;
             public Vector2? gateSpan;
             public Color? ambient, fogColor;
             public float fogEnd;
@@ -148,6 +152,7 @@ namespace GoF2Remake.Modding
                     lightIntensity = ModJson.Float(o, "lightIntensity", -1f, File),
                     rise = ModJson.Float(o, "rise", 14f, File),
                     dockSound = ModJson.Str(o, "dockSound"), undockSound = ModJson.Str(o, "undockSound"),
+                    dust = ModJson.Str(o, "dust"),
                 };
                 string dock = ModJson.Str(o, "dock", "");
                 if (!string.IsNullOrEmpty(dock))

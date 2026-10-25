@@ -12,7 +12,10 @@
 //      (M_..._Lightning): ribbons;
 //    8 the Lightning arcs (MI_Particle_Lightning_Arc): sprites growing out of a pivot at their left edge;
 //    9 the cross shapes (M_Vehicle_EngineTrail_CrossShape): the Rings / Squares / Triangles meshes, two sided;
-//   10 the veils (M_Vehicle_EngineTrail_Player_Veil, Ion Veils): a ribbon shaped by its dynamic parameters.
+//   10 the veils (M_Vehicle_EngineTrail_Player_Veil, Ion Veils): a ribbon shaped by its dynamic parameters;
+//   11 the landing dust (P_Vehicle_LandingDust's M_Smoke_NonDirectional_001, World.Es2Dock): a camera-facing sprite, a frame of
+//      T_Smoke_001_M's 6 x 6 flipbook blended into the next (TEXCOORD3.x the frame), its green (the mod's grey image, read as red) the opacity,
+//      the particle colour lit without direction (the translucency lighting: SH + the main light).
 // Every material is alpha blended (BLEND_TranslucentGreyTransmittance) and unlit but Smoke; the emissive is x _Gain (EVERSPACE
 // 2's exposure, its EmissiveExposureCompensation included, against the remake's: ModMaterials.Es2FlameGain / 1000).
 // Geometry (built on the CPU each frame, object space): POSITION the anchor (a sprite's centre or pivot, a ribbon point, a
@@ -129,7 +132,7 @@ Shader "GoF2/ModEs2Trail"
                 float3 toCam = normalize(_WorldSpaceCameraPos - p);
                 float2 c = i.uv * 2 - 1;
                 float3 nrm = toCam, tan = UNITY_MATRIX_V[0].xyz, bit = UNITY_MATRIX_V[1].xyz;
-                if (kind == 0 || kind == 1 || kind == 2 || kind == 8)
+                if (kind == 0 || kind == 1 || kind == 2 || kind == 8 || kind == 11)
                 {
                     // facing the camera (FaceCamera), turned by the sprite's rotation; the arcs' pivot is their left edge
                     float3 up0 = UNITY_MATRIX_V[1].xyz;
@@ -217,6 +220,17 @@ Shader "GoF2/ModEs2Trail"
                     float op = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, uv).r * alpha;
                     op = saturate(op * SceneFadeCm(i.positionCS, i.positionWS, 0.005));
                     return half4(baseC * lit + e * _Gain, op);
+                }
+                if (kind == 11)   // Landing dust
+                {
+                    // the SubUV's linear blend between this frame and the next (row by row from the image's top)
+                    float f0 = floor(i.dyn.x), fb = i.dyn.x - f0, f1 = fmod(f0 + 1, 36);
+                    float2 c0 = float2(fmod(f0, 6), floor(f0 / 6)), c1 = float2(fmod(f1, 6), floor(f1 / 6));
+                    float m0 = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, float2((c0.x + uv.x) / 6, 1 - (c0.y + uv.y) / 6)).r;
+                    float m1 = SAMPLE_TEXTURE2D(_MaskTex, sampler_MaskTex, float2((c1.x + uv.x) / 6, 1 - (c1.y + uv.y) / 6)).r;
+                    Light L = GetMainLight();
+                    float3 lit = SampleSH(V) + L.color * 0.5;
+                    return half4(col * lit, saturate(lerp(m0, m1, fb) * alpha));
                 }
                 if (kind == 2)   // Bubbles
                 {

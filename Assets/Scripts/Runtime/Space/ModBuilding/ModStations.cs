@@ -198,6 +198,7 @@ namespace GoF2Remake.Modding
                     foreach (var (path, linear, normal) in new[] { (m.diffuse, false, false), (m.normal, true, true), (m.metallicSmoothness, true, false), (m.emission, false, false), (m.detailAlbedo, true, false), (m.detailNormal, true, true) })
                         if (!string.IsNullOrEmpty(path)) textures.Add(ModMaterials.PreloadTexture(d.mod, path, linear, normal: normal));
                 }
+                if (!string.IsNullOrEmpty(d.dust)) textures.Add(ModMaterials.PreloadTexture(d.mod, d.dust, true));
                 if (GameModels.Is(d.model, out string gameModel))
                 {
                     // One of the game's rooms ("gof2:hangar_terran"): a copy of its prefab, as the game places it (the bars
