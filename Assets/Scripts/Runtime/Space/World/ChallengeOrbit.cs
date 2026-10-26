@@ -55,8 +55,6 @@ namespace GoF2Remake.World
         readonly List<NpcShip> specters = new List<NpcShip>();
         // Modified: the first wave flies on to the point it heads for at the start, then goes for the player (UpdateFirstWave).
         readonly List<NpcShip> firstWave = new List<NpcShip>();
-        // Modified, testing (the Editor only): each first-wave Specter's point as a magenta ball with a line from the ship.
-        readonly Dictionary<NpcShip, (GameObject ball, LineRenderer line)> waveMarks = new Dictionary<NpcShip, (GameObject, LineRenderer)>();
         readonly ShuttleRoutes shuttles = new ShuttleRoutes();
         AudioSource sfx;
         // Modified: the round's clock ran out: the Khador Drive's jump scene plays, its end asks the question (jumpedOut).
@@ -101,7 +99,6 @@ namespace GoF2Remake.World
                     if (way.sqrMagnitude > 1e-6f) s.transform.rotation = Quaternion.LookRotation(way, Vector3.up);
                     s.SetOrder(go);
                     firstWave.Add(s);
-                    if (Application.isEditor) MarkPoint(s, point, units);
                 }
             }
             // Modified: the burning platform, the carrier and the four Rhinos (Scenery, RhinoStarts) aren't spawned: the
@@ -129,7 +126,6 @@ namespace GoF2Remake.World
         void OnDestroy()
         {
             if (traffic != null) traffic.ShipDied -= OnShipDied;
-            foreach (var m in waveMarks.Values) if (m.ball != null) Destroy(m.ball);
         }
 
         /// <summary>Level::enemyDied(i, byNpc = false): the round's kills (Level+0x24); the score and combo (remake).</summary>
@@ -156,47 +152,12 @@ namespace GoF2Remake.World
             shuttles.Update(dtMs);
             UpdateFirstWave();
             UpdateSlowing(dtMs);
-            if (waveMarks.Count > 0) UpdateMarks();
             UpdateWaves(dtMs);
             if (SupernovaChallenge.TimeUp)
             {
                 End();
                 // Modified: the ship jumps out with the Khador Drive's scene; the results come at its end.
                 if (level.SystemJump != null) { jumping = true; level.SystemJump.PlayKhadorScene(() => jumpedOut = true); }
-            }
-        }
-
-        /// <summary>Modified, testing (the Editor only): a magenta ball at the Specter's point, a line from the ship to it, and the
-        /// point in the Console (game units).</summary>
-        void MarkPoint(NpcShip s, Vector3 point, float units)
-        {
-            var g = ToGame(point);
-            Debug.Log($"ChallengeOrbit: {s.name} -> point ({g.x:0}, {g.y:0}, {g.z:0}), {units:0} units away");
-            var ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            ball.name = "Specter point (" + s.name + ")";
-            Destroy(ball.GetComponent<Collider>());
-            ball.transform.position = point;
-            ball.transform.localScale = Vector3.one * 150f;
-            var mat = new Material(Shader.Find("Universal Render Pipeline/Unlit")) { color = Color.magenta };
-            ball.GetComponent<Renderer>().sharedMaterial = mat;
-            var line = new GameObject("line").AddComponent<LineRenderer>();
-            line.transform.SetParent(ball.transform, false);
-            line.sharedMaterial = mat;
-            line.widthMultiplier = 15f;
-            line.positionCount = 2;
-            waveMarks[s] = (ball, line);
-        }
-
-        void UpdateMarks()
-        {
-            foreach (var kv in waveMarks)
-            {
-                if (kv.Key == null || kv.Value.ball == null) continue;
-                bool on = firstWave.Contains(kv.Key);
-                kv.Value.ball.SetActive(on);
-                if (!on) continue;
-                kv.Value.line.SetPosition(0, kv.Key.transform.position);
-                kv.Value.line.SetPosition(1, kv.Value.ball.transform.position);
             }
         }
 
