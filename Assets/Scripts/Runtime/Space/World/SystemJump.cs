@@ -369,6 +369,25 @@ namespace GoF2Remake.World
             BeginScene(station);
             state = State.KhadorScene;
             if (advanceOnJump) { advanceOnJump = false; if (Story.Index == 78) Story.Advance(db); }
+            StartKhadorFx();
+        }
+
+        /// <summary>Modified: the Khador Drive's jump scene alone, no charge, cells or arrival (the Supernova Challenge's end:
+        /// the ship jumps out as the round's clock runs out); 'done' when the fx has played, the ship gone and the camera
+        /// where the scene left it.</summary>
+        public void PlayKhadorScene(Action done)
+        {
+            if (state != State.None) { done?.Invoke(); return; }
+            sceneDone = done;
+            BeginScene(-1);
+            state = State.KhadorScene;
+            StartKhadorFx();
+        }
+
+        Action sceneDone;
+
+        void StartKhadorFx()
+        {
             var fxPos = ship.transform.position + ship.transform.forward * 3000f * M;
             // MGame::startJumpScene: the fx's setDirection(ship direction, (0, 1, 0)), upright in the world. Remake: in the
             // ship's own frame (sceneFrame), as the camera, so the scene is the same from a ship flying inverted or rolled.
@@ -425,7 +444,19 @@ namespace GoF2Remake.World
                 ship.turnOnly = false;   // remake: the roll stops with the ship gone
                 if (ship.visualModel != null) ship.visualModel.gameObject.SetActive(false);
             }
-            if (animMs >= animLength) Arrive(gateScene);
+            if (animMs >= animLength)
+            {
+                if (sceneDone != null)   // Modified: a scene without a jump (PlayKhadorScene)
+                {
+                    var d = sceneDone;
+                    sceneDone = null;
+                    state = State.None;
+                    ship.turnOnly = false;
+                    d();
+                    return;
+                }
+                Arrive(gateScene);
+            }
         }
 
         /// <summary>Status::departStation(programmedStation), Level::setInitStreamOut, reload in the target orbit.</summary>

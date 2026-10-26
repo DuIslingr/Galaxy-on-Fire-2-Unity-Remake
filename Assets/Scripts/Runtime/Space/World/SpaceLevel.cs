@@ -988,6 +988,11 @@ namespace GoF2Remake.World
             // Level::initParticleSystems: the exhaust particles (remake debug: none on a freighter / capital ship, PlayerHull).
             if (PlayerHull.OwnEngines(db)) ShipExhaust.Attach(root, db, ctrl, Session.ShipIndex);
 
+            // Modified: the Supernova Challenge's round opens with the arrival fly-in, as after a jump into a system, but
+            // close (ChallengeFlyInLocal), gliding to the chase position in 2 s (the original's video, frame by frame);
+            // ChallengeOrbit's MovePlayer places it again around the round's start.
+            challengeFlyIn = SupernovaChallenge.Active && !GoF2Remake.Data.NetSession.Active && GoF2Remake.World.SpaceHooks.Arena == null;
+            if (challengeFlyIn) Session.ArrivedByTravel = true;
             if (Session.LaunchedFromStation || Session.ArrivedByTravel) StartLaunchCamera();
         }
 
@@ -1013,11 +1018,21 @@ namespace GoF2Remake.World
             bool travel = launchTravel;
             float Side() => (Random.value < 0.5f ? -1f : 1f) * (travel ? Random.Range(500, 1000) : Random.Range(500, 2500));
             var local = new Vector3(-Side(), Side(), travel ? 7000f : 9000f) * M;
+            if (challengeFlyIn) local = ChallengeFlyInLocal * M;
             mainCamera.transform.position = Player.transform.TransformPoint(local);
             mainCamera.transform.rotation = Quaternion.LookRotation(Player.transform.position - mainCamera.transform.position, Player.transform.up);
+            if (challengeFlyIn) { challengeFlyStart = mainCamera.transform.position; challengeFlyMs = 0f; }
             PlaceArrivalWormhole();
         }
         bool launchTravel;
+        // Modified: the Supernova Challenge's fly-in: the camera starts 150 m in front of the ship, 40 m to its left and 30 m
+        // above (game units, ship-local -> Unity (-x, y, z)), watches the ship come at it and glides to the chase position
+        // behind it, all in ChallengeFlyInMs (UpdateChallengeFlyIn), then the chase camera goes on from exactly there.
+        bool challengeFlyIn;
+        static readonly Vector3 ChallengeFlyInLocal = new Vector3(-800f, 600f, 3000f);
+        const float ChallengeFlyInMs = 2000f;
+        Vector3 challengeFlyStart, challengeFlyShipLast, challengeFlyVelocity;
+        float challengeFlyMs;
         /// <summary>Level::initStreamOutPosition: this level began with an arrival by travel (planet jump, gate, wormhole).</summary>
         public bool StreamOutArrival => launchTravel;
 
@@ -1031,8 +1046,10 @@ namespace GoF2Remake.World
             Session.ArrivedByTravel = false;
             float Side() => (Random.value < 0.5f ? -1f : 1f) * (travel ? Random.Range(500, 1000) : Random.Range(500, 2500));
             var local = new Vector3(-Side(), Side(), travel ? 7000f : 9000f) * M;   // ship-local game -> Unity (-x, y, z)
+            if (challengeFlyIn) local = ChallengeFlyInLocal * M;
             mainCamera.transform.position = Player.transform.TransformPoint(local);
             mainCamera.transform.rotation = Quaternion.LookRotation(Player.transform.position - mainCamera.transform.position, Player.transform.up);
+            if (challengeFlyIn) { challengeFlyStart = mainCamera.transform.position; challengeFlyMs = 0f; }
             mainCamera.fieldOfView = Aspect.VerticalFov(chase.baseFov, mainCamera.aspect);
             chase.enabled = false;
             launchCameraMs = LaunchCameraMs;
@@ -1114,7 +1131,38 @@ namespace GoF2Remake.World
             launchCameraMs -= Time.deltaTime * 1000f;
             var cam = mainCamera.transform;
             cam.rotation = Quaternion.LookRotation(Player.transform.position - cam.position, Player.transform.up);
+            if (challengeFlyIn) { UpdateChallengeFlyIn(); return; }
             if (launchCameraMs <= 0f) EndLaunchCamera(false);
+        }
+
+        /// <summary>Modified: the Supernova Challenge's fly-in: from where it started (in front of the ship) the camera glides to
+        /// the chase position behind the ship over ChallengeFlyInMs, eased in and out, looking at the ship and turning to the
+        /// chase camera's look point as it arrives; at the end it is exactly the chase camera's pose, so the hand-over has no
+        /// jump (a skip eases in from wherever it is, like the arrival's).</summary>
+        void UpdateChallengeFlyIn()
+        {
+            float dtMs = Time.deltaTime * 1000f;
+            var ship = Player.transform;
+            var cam = mainCamera.transform;
+            // The ship's velocity (m per ms), measured and smoothed: where the chase camera trails it in flight.
+            if (challengeFlyMs <= 0f) { challengeFlyShipLast = ship.position; challengeFlyVelocity = Vector3.zero; }
+            else if (dtMs > 0f)
+            {
+                var v = (ship.position - challengeFlyShipLast) / dtMs;
+                challengeFlyVelocity = Vector3.Lerp(challengeFlyVelocity, v, challengeFlyVelocity == Vector3.zero ? 1f : 0.2f);
+                challengeFlyShipLast = ship.position;
+            }
+            challengeFlyMs += dtMs;
+            float t = Mathf.Clamp01(challengeFlyMs / ChallengeFlyInMs);
+            float w = t * t * t * (t * (t * 6f - 15f) + 10f);   // smootherstep: no jerk at either end
+            // The end: the chase camera's own resting place behind the moving ship (it trails the standard offset by its
+            // follow lag), so the hand-over neither jumps nor drifts back.
+            chase.SteadyPose(challengeFlyVelocity, dtMs, out var endPos, out var endRot);
+            cam.position = Vector3.Lerp(challengeFlyStart, endPos, w);
+            var look = Vector3.Lerp(ship.position, cam.position + endRot * Vector3.forward * (ship.TransformPoint(chase.lookOffset) - endPos).magnitude, w);
+            var dir = look - cam.position;
+            if (dir.sqrMagnitude > 1e-6f) cam.rotation = Quaternion.LookRotation(dir, ship.up);
+            if (t >= 1f) { cam.SetPositionAndRotation(endPos, endRot); EndLaunchCamera(false); }   // the chase goes on from here
         }
 
         /// <summary>The last save (auto-save slot) after a failed mission, or the main menu without one.</summary>

@@ -1533,6 +1533,12 @@ namespace GoF2Remake.World
         /// <summary>The event order it is carrying out (null: its own AI).</summary>
         public NpcOrder Order => order;
 
+        /// <summary>Modified: its own flying speed (u/ms), what an order without a speed of its own flies at.</summary>
+        public float OwnSpeed => baseSpeed;
+
+        /// <summary>Modified: the point of its route it is flying to (game units), null without one.</summary>
+        public Vector3? RouteWaypoint => route?.Waypoint;
+
         /// <summary>Gives the ship an order (null: back to its own AI). Wakes a sleeper, lets a parked ship fly; "hold" is
         /// SetHold, "jump" JumpOut.</summary>
         public void SetOrder(NpcOrder o)
@@ -1638,7 +1644,9 @@ namespace GoF2Remake.World
                     attacking = true;
                     followingWaypoint = false;
                     drift = false;
-                    speed = fly;
+                    // Modified: not while it boosts (UpdateBoost's panic after losing 40 % of its hull, or its 5 % roll):
+                    // set back to the order's speed every frame, the boost never built up and an attacking ship never fled.
+                    if (!boosting) speed = fly;
                     UpdateBoost(dtMs);
                     Steer(dtMs);
                     Avoid(true, dtMs);

@@ -1580,7 +1580,7 @@ namespace GoF2Remake.UI
 
         /// <summary>A ChoiceWindow in flight (MGame+0x90): the pause menu's choice page, the game paused.</summary>
         void OnChoiceRequested(string text, string yes, string no, System.Action onYes, System.Action onNo)
-            => pauseMenu?.Ask(level, text, yes, no, onYes, onNo);
+            => pauseMenu?.Ask(level, text, yes, no, onYes, onNo, traffic != null ? traffic.ChoiceTitle : null);   // Modified: its title
 
         /// <summary>Hud::draw's top readout: the time limit (Junk removal, a campaign level's LevelScript+0), else the cargo
         /// hold, the volatile bar and the mission counters (HudReadout).</summary>

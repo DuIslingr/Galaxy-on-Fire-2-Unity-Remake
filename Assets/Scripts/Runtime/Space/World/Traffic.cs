@@ -470,6 +470,18 @@ namespace GoF2Remake.World
 
         /// <summary>A yes / no question in flight through the HUD's ChoiceWindow (the Loma toll's; TerritoryView's toll).</summary>
         public void Ask(string text, string yes, string no, Action onYes, Action onNo) => ChoiceRequested?.Invoke(text, yes, no, onYes, onNo);
+
+        /// <summary>Modified: a question with a title, its answers side by side (the Supernova Challenge's end, like the
+        /// original's ChoiceWindow 1.2: "Supernova Challenge" over the text, Yes and No in a row). ChoiceTitle is set while
+        /// ChoiceRequested runs.</summary>
+        public void Ask(string title, string text, string yes, string no, Action onYes, Action onNo)
+        {
+            ChoiceTitle = title;
+            try { ChoiceRequested?.Invoke(text, yes, no, onYes, onNo); }
+            finally { ChoiceTitle = null; }
+        }
+
+        public string ChoiceTitle { get; private set; }
         /// <summary>The toll is paid: Loma's pirates are neither hostile nor friendly (PlayerFighter::update).</summary>
         public bool LomaTollPaid => blackMarket && Session.LomaTollPaid;
         /// <summary>The launch / arrival camera runs (SpaceLevel): the wingmen drift meanwhile.</summary>
