@@ -25,22 +25,6 @@ namespace GoF2Remake.Flight
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void ResetStatics() { voices = null; holder = null; }
 
-        /// <summary>Modified: where a sound at 'position' sits left / right of the camera, as a stereo pan (-1..1): the original
-        /// plays these FMOD events in 3D at the ship, so an enemy's guns and explosions are heard from its side; the remake's
-        /// 2D voices were centred. Never fully one-sided (PanAmount), and centred straight ahead, behind or at the camera.</summary>
-        public static float Pan(Vector3 position)
-        {
-            var cam = Camera.main;
-            if (cam == null) return 0f;
-            var local = cam.transform.InverseTransformPoint(position);
-            float len = local.magnitude;
-            if (len < 1f) return 0f;
-            return Mathf.Clamp(local.x / len, -1f, 1f) * PanAmount;
-        }
-
-        /// <summary>How far to one side a sound fully left / right of the camera is panned.</summary>
-        public const float PanAmount = 0.85f;
-
         public static void PlayAt(AudioClip clip, Vector3 position, float volume = 1f)
         {
             if (clip == null) return;
@@ -53,7 +37,6 @@ namespace GoF2Remake.Flight
             src.transform.position = position;
             src.clip = GoF2Remake.Modding.ModSounds.Get(clip);
             src.volume = v;
-            src.panStereo = Pan(position);   // Modified: heard from its side
             src.Play();
         }
 
