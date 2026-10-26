@@ -535,7 +535,7 @@ namespace GoF2Remake.UI
         bool InteriorPointerMove(PointerMoveEvent e)
         {
             if (!viewport.HasPointerCapture(e.pointerId)) return true;
-            if (e.pressedButtons == 0) { viewport.ReleasePointer(e.pointerId); roomDragging = roomPanning = false; return true; }
+            if (!UiPointerButtons.AnyHeld(e)) { viewport.ReleasePointer(e.pointerId); roomDragging = roomPanning = false; return true; }
             var p = ScreenPos();
             var delta = (p - roomLast) * (1080f / Mathf.Max(1, Screen.height));
             roomLast = p;

@@ -15,6 +15,13 @@ namespace GoF2Remake.UI
 {
     public static class UiHover
     {
+        /// <summary>Hover must not interrupt a text edit (including number fields) or an element holding the mouse.</summary>
+        public static bool KeepFocus(VisualElement element) => TextFieldKeys.InTextField(element)
+            || element?.panel?.GetCapturingElement(PointerId.mousePointerId) != null;
+
+        public static bool CanChangeFocus(VisualElement element, int pressedButtons) => pressedButtons == 0
+            && !KeepFocus(element) && !TextFieldKeys.InTextField(element?.focusController?.focusedElement as VisualElement);
+
         /// <summary>What the hover sound is for: a button, a toggle, a slider, a choice, an option's row.</summary>
         public static bool IsHoverable(VisualElement v) =>
             v is Button || v is Toggle || v is Slider || v is ChoiceRow || v.ClassListContains("option-row");

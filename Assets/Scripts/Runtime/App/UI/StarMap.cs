@@ -302,6 +302,7 @@ namespace GoF2Remake.UI
 
         void OnDisable()
         {
+            CancelPointer();
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             InputMode.Changed -= ApplyInputMode;
         }
@@ -397,6 +398,8 @@ namespace GoF2Remake.UI
             touch.RegisterCallback<PointerMoveEvent>(OnPointerMove);
             touch.RegisterCallback<PointerUpEvent>(e => OnPointerUp(e.pointerId, true));
             touch.RegisterCallback<PointerCancelEvent>(e => OnPointerUp(e.pointerId, false));
+            touch.RegisterCallback<PointerCaptureOutEvent>(e => OnPointerUp(e.pointerId, false));
+            touch.RegisterCallback<DetachFromPanelEvent>(_ => CancelPointer());
             touch.generateVisualContent += DrawLines;
             BuildKey();
 
@@ -1641,7 +1644,7 @@ namespace GoF2Remake.UI
 
         void OnPointerDown(PointerDownEvent e)
         {
-            if (pointer >= 0 || InputBlocked) return;
+            if (e.button != 0 || pointer >= 0 || InputBlocked) return;
             var p = (Vector2)e.localPosition;
             if (p.y <= HeaderBottom || p.y >= PanelSize.y - FooterHeight) return;
             pointer = e.pointerId;
@@ -1671,6 +1674,8 @@ namespace GoF2Remake.UI
         void OnPointerMove(PointerMoveEvent e)
         {
             if (e.pointerId != pointer) return;
+            // A release outside the window can be missed. Hovering afterwards must not keep dragging or select a system.
+            if (!UiPointerButtons.PrimaryHeld(e)) { OnPointerUp(e.pointerId, false); return; }
             var p = (Vector2)e.localPosition;
             var d = p - lastPos;
             lastPos = p;
@@ -1703,9 +1708,12 @@ namespace GoF2Remake.UI
 
         void OnPointerUp(int id, bool release)
         {
-            if (id != pointer) return;
-            if (touch.HasPointerCapture(pointer)) touch.ReleasePointer(pointer);
+            if (id < 0 || id != pointer) return;
+            // Clear the state before releasing capture: PointerCaptureOut can arrive synchronously.
             pointer = -1;
+            pinch.Remove(id);
+            if (touch != null && touch.HasPointerCapture(id)) touch.ReleasePointer(id);
+            if (!release) { vel = Vector2.zero; yawVel = pitchVel = 0f; }
             if (draggingSystem >= 0)
             {
                 int moved = draggingSystem;
@@ -1743,6 +1751,19 @@ namespace GoF2Remake.UI
                     else { Play(assets.planetRelease); autoRotate = true; }
                 }
             }
+        }
+
+        void CancelPointer()
+        {
+            OnPointerUp(pointer, false);
+            pinch.Clear();
+            vel = Vector2.zero;
+            yawVel = pitchVel = 0f;
+        }
+
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused) CancelPointer();
         }
 
         /// <summary>The builder's drag: the sun at the pointer on the plane of its depth, the system's map position from it

@@ -31,6 +31,10 @@ round trips).
 
 ## Play mode (`PlayMode/`)
 
+- `MouseDragInputTests`: virtual mouse states sent through the real Input System/EventSystem/UI Toolkit path; holding
+  across multiple frames pans the map and turns the station ship, and a normal release still flings. Also injects an
+  empty UI move button mask while the real mouse remains held, to check `UiPointerButtons`' recovery. Run in a standalone
+  player too when diagnosing build-only input reports; direct handler tests alone do not exercise that path.
 - `SceneSmokeTests` (category `Smoke`): the main menu, a station of every hangar type with its lounge, every station
   window, the star map in every mode, launch / fly / dock back, the auto-save, ~35 orbits.
 - `StoryLevelTests`: `KeyStoryStepsRun` (`Smoke`, 43 steps over the three campaigns, ~5 min) and `EveryStoryStepRuns`

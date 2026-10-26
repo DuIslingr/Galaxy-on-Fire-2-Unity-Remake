@@ -59,7 +59,9 @@ namespace GoF2Remake.UI
             bar.RegisterCallback<PointerDownEvent>(OnDown);
             bar.RegisterCallback<PointerMoveEvent>(OnMove);
             bar.RegisterCallback<PointerUpEvent>(OnUp);
-            bar.RegisterCallback<PointerCaptureOutEvent>(_ => { pointer = -1; thumb.RemoveFromClassList("gof-scroll-bar-thumb--dragging"); });
+            bar.RegisterCallback<PointerCaptureOutEvent>(e => { if (e.pointerId == pointer) EndDrag(); });
+            bar.RegisterCallback<PointerCancelEvent>(e => { if (e.pointerId == pointer) EndDrag(); });
+            bar.RegisterCallback<DetachFromPanelEvent>(_ => EndDrag());
             // The bar follows the view instead of a tick of its own: its size and place only change when the view is laid out,
             // its content grows or shrinks, or it is scrolled. A 60 Hz tick per view read the layout of every scroll view in
             // the document for ever, the flight HUD's included (ScrollBars.Watch is installed on it).
@@ -85,6 +87,7 @@ namespace GoF2Remake.UI
                         && content > viewport + 1f;
             if (!show)
             {
+                EndDrag();
                 bar.style.display = DisplayStyle.None;
                 return;
             }
@@ -108,7 +111,7 @@ namespace GoF2Remake.UI
 
         void OnDown(PointerDownEvent e)
         {
-            if (pointer >= 0) return;
+            if (e.button != 0 || pointer >= 0) return;
             pointer = e.pointerId;
             bar.CapturePointer(pointer);
             thumb.AddToClassList("gof-scroll-bar-thumb--dragging");
@@ -122,6 +125,7 @@ namespace GoF2Remake.UI
         void OnMove(PointerMoveEvent e)
         {
             if (e.pointerId != pointer) return;
+            if (!UiPointerButtons.PrimaryHeld(e)) { EndDrag(); return; }
             ScrollTo(e.localPosition.y);
             e.StopPropagation();
         }
@@ -129,10 +133,16 @@ namespace GoF2Remake.UI
         void OnUp(PointerUpEvent e)
         {
             if (e.pointerId != pointer) return;
-            if (bar.HasPointerCapture(pointer)) bar.ReleasePointer(pointer);
+            EndDrag();
+            e.StopPropagation();
+        }
+
+        void EndDrag()
+        {
+            int id = pointer;
             pointer = -1;
             thumb.RemoveFromClassList("gof-scroll-bar-thumb--dragging");
-            e.StopPropagation();
+            if (id >= 0 && bar.HasPointerCapture(id)) bar.ReleasePointer(id);
         }
 
         /// <summary>Scrolled so the handle's grabbed point is at 'y' on the track.</summary>
