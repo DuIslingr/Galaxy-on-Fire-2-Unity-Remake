@@ -119,7 +119,9 @@ namespace GoF2Remake.EditorTools
             // Read/Write only where runtime code reads the mesh: Valkyrie 80 splits the deep science station's damaged
             // thruster flames per engine (ValkyrieLevels.MakeFlamePieces80, #70), and the hulls get MeshColliders
             // (HullCollision: a player build can't cook a collider from a mesh it can't read).
-            mi.isReadable = assetPath.EndsWith("/v_station_deep_science_damaged_emitters_anim_add.fbx") || IsHullModel(assetPath);
+            // Modified: and the supernova flares' sky sphere, which SkySphereSmoothing subdivides onto the sphere.
+            mi.isReadable = assetPath.EndsWith("/v_station_deep_science_damaged_emitters_anim_add.fbx") || IsHullModel(assetPath)
+                            || (assetPath.Contains("/skyboxes/sn_skybox_") && assetPath.Contains("_flares_"));
         }
 
         /// <summary>A model whose meshes become collision hulls (HullCollision): ships, stations, jumpgates, turrets and the

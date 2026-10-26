@@ -52,13 +52,18 @@ namespace GoF2Remake.World
                 var mat = mission < 106 ? a.flaresMaterial : a.flaresNastyMaterial;
                 float speed = mission > 106 ? 1.5f : 1f;
                 // Their loop is 1000 .. 60000 ms: the UV scroll runs one texture width over it (a seamless wrap); the first
-                // second is a one-off fade from 100 to the steady 50.
+                // second is a one-off fade from 100 to the steady 50 (Modified: 75, the user's pick: the flares'
+                // .gof2mesh.json `extra` keys).
                 // Level::renderBG draws them with the nebula's matrix, R_sky included (in system 27 its +Y points at the
                 // supernova), so the fire streams out of the supernova; only the ring sky and the storms reset to the bare
                 // camera rotation.
                 var skyRotation = OrbitBuilder.SkyRotation(layout);
                 var f1 = Add(a.flares1, mat, FlaresQueue, speed);   // from 1000 ms: their first positive key (the default)
                 var f2 = Add(a.flares2, mat, FlaresQueue + 1, speed);
+                // Modified: their low-poly sphere subdivided onto the sphere (SkySphereSmoothing): no facets in the fire.
+                foreach (var t in new[] { f1, f2 })
+                    if (t != null)
+                        foreach (var mf in t.GetComponentsInChildren<MeshFilter>(true)) mf.sharedMesh = SkySphereSmoothing.Smooth(mf.sharedMesh);
                 if (f1 != null) f1.rotation = skyRotation;
                 if (f2 != null) f2.rotation = skyRotation;
             }
