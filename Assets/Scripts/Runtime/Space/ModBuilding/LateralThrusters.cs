@@ -119,7 +119,7 @@ namespace GoF2Remake.Modding
 
         void OnEnable()
         {
-            inStation = FindAnyObjectByType<World.StationLevel>() != null;
+            inStation = Visuals.EngineDrive.IsStationModel(transform);
         }
 
         void OnDestroy()

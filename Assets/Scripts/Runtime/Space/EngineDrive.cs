@@ -37,6 +37,10 @@ namespace GoF2Remake.Visuals
             Lookup();
         }
 
+        /// <summary>The model belongs to the station's visuals, even when that hangar is parented to an orbiting hull.
+        /// Looking for any loaded StationLevel misclassifies flight ships spawned during additive ES2 undocking.</summary>
+        public static bool IsStationModel(Transform model) => model != null && model.GetComponentInParent<StationModelContext>(true) != null;
+
         void Lookup()
         {
             if (ship == null) ship = transform.GetComponentInParent<ShipController>();

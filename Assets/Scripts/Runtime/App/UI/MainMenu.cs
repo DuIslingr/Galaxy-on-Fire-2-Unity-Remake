@@ -457,7 +457,7 @@ namespace GoF2Remake.UI
                 Back();
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationMoveEvent>(OnNavigate, TrickleDown.TrickleDown);
-            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) pointerDriven = true; }, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse && InputMode.MousePointing) pointerDriven = true; }, TrickleDown.TrickleDown);
             root.RegisterCallback<NavigationSubmitEvent>(e =>
             {
                 // Space typed into a field is a space, not a press of the menu's button.
@@ -476,7 +476,12 @@ namespace GoF2Remake.UI
                 }
             }, TrickleDown.TrickleDown);
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
-            root.RegisterCallback<PointerMoveEvent>(e => { DragScroll.NotePointer(); if (e.pointerType == PointerType.mouse) SetTouchMode(false); }, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(e =>
+            {
+                if (e.pointerType == PointerType.mouse && !InputMode.MousePointing) return;
+                DragScroll.NotePointer();
+                if (e.pointerType == PointerType.mouse) SetTouchMode(false);
+            }, TrickleDown.TrickleDown);
             root.RegisterCallback<WheelEvent>(_ => DragScroll.NotePointer(), TrickleDown.TrickleDown);
             // Keys / controller: the focused row scrolls into view (not for the pointer's own focus: DragScroll.PointerActive).
             root.RegisterCallback<FocusInEvent>(e => { if (e.target is VisualElement v && !DragScroll.PointerActive) EnsureVisible(v); });
@@ -700,10 +705,10 @@ namespace GoF2Remake.UI
         {
             // Mouse only: a finger sliding over the UI must not drag the selection along with it.
             // Only when the mouse moved: a row that slides under a resting cursor as the list scrolls doesn't take the focus.
-            e.RegisterCallback<PointerEnterEvent>(ev => { if (ev.pointerType == PointerType.mouse && InputMode.MouseMovedRecently && e.enabledInHierarchy && e.focusable) e.Focus(); });
+            e.RegisterCallback<PointerEnterEvent>(ev => { if (ev.pointerType == PointerType.mouse && InputMode.MouseMovedRecently && UiHover.CanChangeFocus(e, ev.pressedButtons) && e.enabledInHierarchy && e.focusable) e.Focus(); });
             // Modified: with the mouse in use, marked only while the mouse is over it (it stayed marked after the mouse left,
             // and, already focused, made no sound when the mouse came back).
-            e.RegisterCallback<PointerLeaveEvent>(ev => { if (ev.pointerType == PointerType.mouse && pointerDriven && InputMode.Current != InputKind.Gamepad && e.focusController?.focusedElement == e) e.Blur(); });
+            e.RegisterCallback<PointerLeaveEvent>(ev => { if (ev.pointerType == PointerType.mouse && ev.pressedButtons == 0 && !UiHover.KeepFocus(e) && pointerDriven && InputMode.Current != InputKind.Gamepad && e.focusController?.focusedElement == e) e.Blur(); });
             // Modified: under the mouse only the main column's buttons and the tabs sound (UiHover.MenuTarget); the keys / a
             // controller sound on every move (they clear pointerDriven first: OnNavigate, KeepControllerFocus).
             e.RegisterCallback<FocusInEvent>(_ =>

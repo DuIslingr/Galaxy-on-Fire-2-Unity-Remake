@@ -1688,7 +1688,7 @@ namespace GoF2Remake.UI
         {
             if (KindPointerMove(e)) return;
             if (drag == Drag.None || !viewport.HasPointerCapture(e.pointerId)) return;
-            if (e.pressedButtons == 0) { viewport.ReleasePointer(e.pointerId); EndDrag(); return; }   // released where we didn't hear it
+            if (!UiPointerButtons.AnyHeld(e)) { viewport.ReleasePointer(e.pointerId); EndDrag(); return; }   // released where we didn't hear it
             var p = ScreenPos();
             float scale = 1080f / Mathf.Max(1, Screen.height);
             var delta = (p - last) * scale;

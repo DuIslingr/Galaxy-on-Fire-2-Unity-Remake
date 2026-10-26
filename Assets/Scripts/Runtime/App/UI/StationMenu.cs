@@ -115,6 +115,7 @@ namespace GoF2Remake.UI
 
         void OnDisable()
         {
+            EndDrag(dragPointer, false);
             panelRenderer?.UnregisterUIReloadCallback(OnUIReload);
             InputMode.Changed -= ApplyInputMode;
             Localization.Changed -= RefreshTexts;
@@ -250,14 +251,14 @@ namespace GoF2Remake.UI
             root.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
             // Modified: the main menu's click sound on every button and toggle clicked (those without one had none).
             root.RegisterCallback<ClickEvent>(e => { if (UiHover.ClickSounds(e.target)) Play(buttonRelease); });
-            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse) { SetTouchMode(false); pointerDriven = true; pointerPos = e.position; } }, TrickleDown.TrickleDown);
+            root.RegisterCallback<PointerMoveEvent>(e => { if (e.pointerType == PointerType.mouse && InputMode.MousePointing) { SetTouchMode(false); pointerDriven = true; pointerPos = e.position; } }, TrickleDown.TrickleDown);
             // The mouse takes the selection along to the button it is over (like MainMenu.HookFocusSound): a menu opened with
             // the mouse focused its first entry, and that highlight stayed beside the hovered one.
             root.RegisterCallback<PointerOverEvent>(e =>
             {
                 if (e.pointerType != PointerType.mouse || !InputMode.MouseMovedRecently || !(e.target is VisualElement t)) return;   // not a list scrolling under it
                 var b = t as Button ?? t.GetFirstAncestorOfType<Button>();
-                if (b != null && b.ClassListContains("station-button") && Navigable(b) && b.focusController?.focusedElement != b) b.Focus();
+                if (b != null && UiHover.CanChangeFocus(b, e.pressedButtons) && b.ClassListContains("station-button") && Navigable(b) && b.focusController?.focusedElement != b) b.Focus();
                 // Modified: the hover sound when the mouse comes onto a tab or a side menu button (the main view's); anything
                 // else is silent under the mouse (UiHover.MenuTarget). The keys still sound on every move (FocusIn below).
                 var h = UiHover.MenuTarget(t);
@@ -510,7 +511,7 @@ namespace GoF2Remake.UI
             strip.RegisterCallback<PointerMoveEvent>(e =>
             {
                 if (e.pointerId != tickerPointer) return;
-                if (e.pressedButtons == 0) { EndTickerDrag(strip); return; }
+                if (!UiPointerButtons.PrimaryHeld(e)) { EndTickerDrag(strip); return; }
                 tickerX += e.position.x - tickerLastX;
                 tickerLastX = e.position.x;
                 WrapTicker();
@@ -1791,7 +1792,7 @@ namespace GoF2Remake.UI
         {
             dragZone.RegisterCallback<PointerDownEvent>(e =>
             {
-                if (level == null || dragPointer >= 0) return;
+                if (e.button != 0 || level == null || dragPointer >= 0) return;
                 if (level.View == StationView.Lounge) { level.SkipIntro(); return; }   // OnTouchEnd case 0: jump to B
                 dragPointer = e.pointerId;
                 dragZone.CapturePointer(e.pointerId);
@@ -1803,9 +1804,8 @@ namespace GoF2Remake.UI
             dragZone.RegisterCallback<PointerMoveEvent>(e =>
             {
                 if (e.pointerId != dragPointer) return;
-                // Released where we didn't hear it. Modified: with its fling: a quick flick's last move often comes with the
-                // button already up (the release in the same frame), and ending it without one lost most flings.
-                if (e.pressedButtons == 0) { EndDrag(e.pointerId, true); return; }
+                // Lost release: stop without turning an unrelated hover into a fling (even if another button is held).
+                if (!UiPointerButtons.PrimaryHeld(e)) { EndDrag(e.pointerId, false); return; }
                 float rad = (e.position.x - dragLastX) / UnitsPerRadian;
                 level.RotateShip(rad);
                 dragFrameRadians += rad;
@@ -1816,6 +1816,12 @@ namespace GoF2Remake.UI
             dragZone.RegisterCallback<PointerCancelEvent>(e => EndDrag(e.pointerId, false));
             // The zone hidden mid-drag (the map, a window) loses the capture and never hears the release.
             dragZone.RegisterCallback<PointerCaptureOutEvent>(e => EndDrag(e.pointerId, false));
+            dragZone.RegisterCallback<DetachFromPanelEvent>(_ => EndDrag(dragPointer, false));
+        }
+
+        void OnApplicationFocus(bool focused)
+        {
+            if (!focused) EndDrag(dragPointer, false);
         }
 
         void EndDrag(int pointerId, bool fling)
@@ -1859,7 +1865,7 @@ namespace GoF2Remake.UI
         void OnPointerDown(PointerDownEvent e)
         {
             if (UiHover.SilentPress(e.target)) pressFrame = Time.frameCount;   // Modified: see Play
-            if (e.pointerType == PointerType.mouse) { SetTouchMode(false); pointerDriven = true; return; }
+            if (e.pointerType == PointerType.mouse) { pointerPos = e.position; SetTouchMode(false); pointerDriven = true; return; }
             // Don't focus what the finger presses, except a text field (the chat line, the multiplayer window's codes, amounts
             // and names): it needs the focus for the on-screen keyboard (MainMenu does the same).
             if (TextFieldKeys.InTextField(e.target)) { touchMode = true; root.EnableInClassList("can-hover", false); return; }
@@ -1895,7 +1901,7 @@ namespace GoF2Remake.UI
         {
             if (!pointerDriven || InputMode.Current == InputKind.Gamepad || root?.panel == null) return;
             // Any marked item, not only buttons (the Debug rows: the item grids' amber frame, a toggle); not a text field.
-            if (!(root.focusController?.focusedElement is VisualElement b) || b is TextField || b.GetFirstAncestorOfType<TextField>() != null) return;
+            if (!(root.focusController?.focusedElement is VisualElement b) || UiHover.KeepFocus(b)) return;
             var picked = root.panel.Pick(pointerPos);
             if (picked == null || !(picked == b || b.Contains(picked))) b.Blur();
         }

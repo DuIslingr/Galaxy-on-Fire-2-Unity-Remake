@@ -53,7 +53,7 @@ namespace GoF2Remake.UI
             target.RegisterCallback<PointerCancelEvent>(OnCancel);
             target.RegisterCallback<PointerCaptureOutEvent>(OnCaptureOut);
             target.RegisterCallback<DetachFromPanelEvent>(OnDetach);
-            target.RegisterCallback<WheelEvent>(_ => { lastPointerFrame = Time.frameCount; inertia?.Pause(); }, TrickleDown.TrickleDown);
+            target.RegisterCallback<WheelEvent>(OnWheel, TrickleDown.TrickleDown);
         }
 
         protected override void UnregisterCallbacksFromTarget()
@@ -64,6 +64,9 @@ namespace GoF2Remake.UI
             target.UnregisterCallback<PointerCancelEvent>(OnCancel);
             target.UnregisterCallback<PointerCaptureOutEvent>(OnCaptureOut);
             target.UnregisterCallback<DetachFromPanelEvent>(OnDetach);
+            target.UnregisterCallback<WheelEvent>(OnWheel, TrickleDown.TrickleDown);
+            inertia?.Pause();
+            EndPress();
         }
 
         /// <summary>A horizontal ScrollView (the main menu's mod option cards) scrolls along x, the rest along y.</summary>
@@ -77,9 +80,10 @@ namespace GoF2Remake.UI
         {
             lastPointerFrame = Time.frameCount;
             if (e.pointerType == UnityEngine.UIElements.PointerType.touch || e.button != 0) return;
-            if (OnScroller(e.target as VisualElement)) return;   // the scroll bar drags itself, the right way round
             if (pointerId >= 0 && pointerId != e.pointerId) return;   // another pointer's press is running
             inertia?.Pause();
+            EndPress();   // a fresh press also clears a previous release missed outside the list
+            if (OwnsDrag(e.target as VisualElement)) return;   // text selection, sliders and scroll bars own their gestures
             pointerId = e.pointerId;
             startPos = lastPos = e.position;
             startOffset = Along(scroll.scrollOffset);
@@ -87,19 +91,22 @@ namespace GoF2Remake.UI
             dragging = false;
         }
 
-        /// <summary>'v' is (inside) one of the list's scroll bars.</summary>
-        bool OnScroller(VisualElement v)
+        /// <summary>Controls whose drag must not become a drag of the enclosing list. Buttons/rows can still scroll it.</summary>
+        bool OwnsDrag(VisualElement v)
         {
             for (; v != null && v != scroll; v = v.parent)
-                if (v is Scroller) return true;
+                if (v is Scroller || v is Slider || v is SliderInt || v is TextField
+                    || v.ClassListContains("unity-base-slider") || v.ClassListContains("unity-base-text-field")) return true;
             return false;
         }
+
+        void OnWheel(WheelEvent e) { lastPointerFrame = Time.frameCount; inertia?.Pause(); }
 
         void OnMove(PointerMoveEvent e)
         {
             lastPointerFrame = Time.frameCount;
             if (e.pointerId != pointerId) return;
-            if (e.pressedButtons == 0) { EndPress(); return; }   // released where the list didn't hear it
+            if (!UiPointerButtons.PrimaryHeld(e)) { EndPress(); return; }   // UI move masks can omit a still-held mouse button
             Vector2 p = e.position;
             if (!dragging)
             {
@@ -145,9 +152,10 @@ namespace GoF2Remake.UI
 
         void EndPress()
         {
-            if (pointerId >= 0 && target.HasPointerCapture(pointerId)) target.ReleasePointer(pointerId);
+            int id = pointerId;
             pointerId = -1;
             dragging = false;
+            if (id >= 0 && target.HasPointerCapture(id)) target.ReleasePointer(id);
         }
 
         void StartInertia()

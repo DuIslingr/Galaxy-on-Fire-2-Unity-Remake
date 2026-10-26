@@ -112,7 +112,9 @@ namespace GoF2Remake.UI
             listBar.RegisterCallback<PointerDownEvent>(OnListBarDown);
             listBar.RegisterCallback<PointerMoveEvent>(OnListBarMove);
             listBar.RegisterCallback<PointerUpEvent>(OnListBarUp);
-            listBar.RegisterCallback<PointerCaptureOutEvent>(_ => { listBarPointer = -1; listThumb.RemoveFromClassList("list-bar-thumb--dragging"); });
+            listBar.RegisterCallback<PointerCaptureOutEvent>(e => { if (e.pointerId == listBarPointer) EndListBarDrag(); });
+            listBar.RegisterCallback<PointerCancelEvent>(e => { if (e.pointerId == listBarPointer) EndListBarDrag(); });
+            listBar.RegisterCallback<DetachFromPanelEvent>(_ => EndListBarDrag());
             listBar.schedule.Execute(UpdateListBar).Every(16);
             details = root.Q("hangarDetails");
             detailIcon = root.Q("detailIcon");
@@ -451,7 +453,7 @@ namespace GoF2Remake.UI
 
         void OnListBarDown(PointerDownEvent e)
         {
-            if (listBarPointer >= 0) return;
+            if (e.button != 0 || listBarPointer >= 0) return;
             listBarPointer = e.pointerId;
             listBar.CapturePointer(listBarPointer);
             listThumb.AddToClassList("list-bar-thumb--dragging");
@@ -465,6 +467,7 @@ namespace GoF2Remake.UI
         void OnListBarMove(PointerMoveEvent e)
         {
             if (e.pointerId != listBarPointer) return;
+            if (!UiPointerButtons.PrimaryHeld(e)) { EndListBarDrag(); return; }
             ScrollListTo(e.localPosition.y);
             e.StopPropagation();
         }
@@ -472,10 +475,16 @@ namespace GoF2Remake.UI
         void OnListBarUp(PointerUpEvent e)
         {
             if (e.pointerId != listBarPointer) return;
-            if (listBar.HasPointerCapture(listBarPointer)) listBar.ReleasePointer(listBarPointer);
+            EndListBarDrag();
+            e.StopPropagation();
+        }
+
+        void EndListBarDrag()
+        {
+            int id = listBarPointer;
             listBarPointer = -1;
             listThumb.RemoveFromClassList("list-bar-thumb--dragging");
-            e.StopPropagation();
+            if (id >= 0 && listBar.HasPointerCapture(id)) listBar.ReleasePointer(id);
         }
 
         /// <summary>The list scrolled so the handle's grabbed point is at 'y' on the track.</summary>

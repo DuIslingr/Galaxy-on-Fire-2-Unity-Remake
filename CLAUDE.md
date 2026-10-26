@@ -997,6 +997,17 @@ The FMOD data comes from the FEV's LGCY chunk (`Reference/tools/audio/fev_lgcy.p
 
 ## UI and platforms
 
+- **Mouse drags and focus** (2026-10-26): `UiPointerButtons` combines UI move button flags with the Input System's held
+  mouse buttons. A zero UI button mask alone must not cancel a held mouse drag; preserve event flags too, since the
+  EventSystem delivers movement before release on the release frame (discarding it loses deliberate flings). Include
+  `wasReleasedThisFrame` too when that last move has an empty mask. Only mouse
+  pointer 0 reads `Mouse.current`; touch/pen use their own event state. Shared by the map, station ship/ticker, lists,
+  scrollbars and builder viewports. Primary drags cannot be kept alive by right/middle buttons. Clear IDs before releasing
+  capture; cancel map/turntable drags on capture loss, detach, disable or focus loss. `DragScroll` leaves sliders/text
+  selection their own gestures. `UiHover` preserves edits/captured drags; stationary-pointer events cannot take keyboard
+  navigation back. Tests: `MouseGestureTests` and `MouseDragInputTests` (real Input System/EventSystem/UI Toolkit path,
+  with empty move button masks injected and normal release/fling checks). The build-only physical-mouse trigger was not
+  automatically reproduced; verify it in the affected rebuilt game.
 - **UI Toolkit only** (runtime): shared theme `UI/GoF2Theme.tss`; per-screen UXML/USS; controllers in `Scripts/Runtime/App/UI` (`GoF2Remake.UI`). The theme doesn't include Unity's default runtime theme, so built-in controls are styled in `GoF2Common.uss` and the document root is stretched in code.
 - **UI design document: `docs/UI-DESIGN.md`** (2026-10-22 rework after the published game UI guidelines: XAG, Steam Deck,
   Material / Apple): the tokens, the type scale (every font-size a `var(--text-*)`, 16..64, nothing under the caption;
@@ -3395,6 +3406,12 @@ guide is `Modding/README.md` (keep it in step, and the AI version `Modding/ai/go
   0 -> 0.1 -> 0 x Amount; drawn by `GoF2/ModEs2Trail` kind 11 (Landing dust); interiors.json `"dust"` names the flipbook
   (the ES2 importer writes `textures/es2_landing_dust.png`). Seen at Okrot: a faint haze over the pad, as ES2's own
   values give. Not done: multiplayer (other players' view of a docked ship, NetHangar).
+  **Engine effects after ES2 launch** (2026-10-26): the hangar and lounge visual roots carry `Visuals.StationModelContext`.
+  `EngineDrive.IsStationModel` checks that model's ancestors; EngineFlame, Es2EngineVfx, LateralThrusters, EngineFx and
+  ThrottleGlow use it in OnEnable. Never infer a ship is in the hangar from any loaded StationLevel: ES2 docks load Station
+  additively, and UndockFromOrbit spawns the replacement flight model while Station is still unloading. The old cached
+  flag capped its drive at full throttle and hid its engine/booster trails after launch. A hangar carried under the orbit's
+  station hull retains its context; orbit ships outside it retain flight effects. Tests `EngineStationContextTests`.
 - **Mod blueprints** (`ModBlueprints`, a mod's `blueprints.json`, parsed with the rest in `ModContent.Parse`): a "ship" or
   "item" product, ingredients, requiresShip (a skin: built only while flying that ship, which it rebuilds, the Kaamo upgrades
   kept), autocomplete (true / false / a price: `Blueprints.AutoCompletePrice` / `CanAutocomplete`, the hangar hides the row),

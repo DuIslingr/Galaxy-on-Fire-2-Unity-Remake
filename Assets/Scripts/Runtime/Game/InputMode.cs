@@ -170,7 +170,7 @@ namespace GoF2Remake.UI
         /// <summary>The mouse itself moved in the last moment. A menu that gives the focus to what the pointer enters asks this
         /// first: a list scrolled by the keys or a controller slides its rows under a resting cursor, and they took the focus
         /// (a player's report: scrolling up, the selection jumped back to the row under the cursor at the bottom).</summary>
-        public static bool MouseMovedRecently => Time.unscaledTime - lastMouseMove < 0.15f;
+        public static bool MouseMovedRecently => MousePointing && Time.unscaledTime - lastMouseMove < 0.15f;
 
         /// <summary>The mouse was the last thing used (moved or clicked; a key, a controller or a touch since turns it off).
         /// The menus show hover highlights (.can-hover) only then: a cursor resting over a row kept that row lit while the
@@ -199,6 +199,8 @@ namespace GoF2Remake.UI
         static bool MouseUsed(InputEventPtr e, Mouse mouse)
         {
             if (mouse.delta.ReadValueFromEvent(e, out Vector2 d) && d.sqrMagnitude >= MouseThreshold * MouseThreshold) return true;
+            if (mouse.scroll.ReadValueFromEvent(e, out Vector2 scroll) && scroll != Vector2.zero) return true;
+            if (mouse.middleButton.ReadValueFromEvent(e, out float m) && m > 0.5f) return true;
             if (mouse.leftButton.ReadValueFromEvent(e, out float l) && l > 0.5f) return true;
             return mouse.rightButton.ReadValueFromEvent(e, out float r) && r > 0.5f;
         }

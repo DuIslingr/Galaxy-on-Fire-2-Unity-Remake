@@ -153,7 +153,7 @@ namespace GoF2Remake.UI
         void OnPointerMove(PointerMoveEvent e)
         {
             if (!viewport.HasPointerCapture(e.pointerId)) return;
-            if (e.pressedButtons == 0) { viewport.ReleasePointer(e.pointerId); dragging = panning = false; return; }
+            if (!UiPointerButtons.AnyHeld(e)) { viewport.ReleasePointer(e.pointerId); dragging = panning = false; return; }
             var p = ScreenPos();
             var d = (p - last) * (1080f / Mathf.Max(1, Screen.height));
             last = p;
