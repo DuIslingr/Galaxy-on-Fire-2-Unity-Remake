@@ -137,6 +137,7 @@ namespace GoF2Remake.UI
                 Localization.Load(languageCodes != null && i < languageCodes.Length ? languageCodes[i] : "en", languageTables[i]);
             }
             root = rootElement;
+            root.name = "stationPanel";   // Modified: StationMenu.uss's hint sizes (#stationPanel) reach the windows built in code
             root.style.flexGrow = 1;
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");

@@ -736,3 +736,67 @@
     display: flex;
 }
 
+
+/* Modified: every key hint in the station (the main view's row, the hangar window's, the menus' prompt rows, the "i"
+   windows) at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption), the keys and controller
+   buttons cut down to match. #stationPanel (the panel root, StationMenu.cs): an id outranks the class rules of the other sheets. */
+#stationPanel .hint-label {
+    font-size: var(--text-caption);
+    letter-spacing: 1px;
+}
+
+#stationPanel .hint .keycap {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    margin: 0 1px;
+    font-size: var(--text-caption);
+    border-width: 1px;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+}
+
+#stationPanel .hint .keycap--wide {
+    min-width: 60px;
+}
+
+#stationPanel .hint .pad-face {
+    width: 22px;
+    height: 22px;
+    margin: 0 1px;
+    border-radius: 11px;
+    font-size: var(--text-caption);
+}
+
+#stationPanel .hint .pad-stick {
+    width: 24px;
+    height: 24px;
+    margin: 0 1px;
+    border-radius: 12px;
+    border-width: 2px;
+    font-size: var(--text-caption);
+}
+
+#stationPanel .hint .pad-trigger {
+    min-width: 28px;
+    height: 22px;
+    padding: 0 5px;
+    margin: 0 1px;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+}
+
+#stationPanel .hint .pad-bumper {
+    min-width: 30px;
+    height: 20px;
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: 10px;
+}
+
+#stationPanel .hint .pad-menu {
+    height: 20px;
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: 10px;
+}

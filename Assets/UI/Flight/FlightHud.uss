@@ -588,6 +588,80 @@
     display: flex;
 }
 
+/* Modified: in flight each hint is its keys and its label on one line, on the box's dark background without its border,
+   small: the label at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption), the keys and
+   controller buttons cut down to match. */
+.hints .hint {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 4px;
+    padding: 2px 6px;
+    border-width: 0;
+}
+
+.hints .hint-label {
+    margin: 0 0 0 6px;
+    font-size: var(--text-caption);
+    letter-spacing: 1px;
+    -unity-text-align: middle-left;
+}
+
+.hints .keycap {
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    margin: 0 1px;
+    font-size: var(--text-caption);
+    border-width: 1px;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+}
+
+.hints .keycap--wide {
+    min-width: 60px;
+}
+
+.hints .pad-face {
+    width: 22px;
+    height: 22px;
+    margin: 0 1px;
+    border-radius: 11px;
+    font-size: var(--text-caption);
+}
+
+.hints .pad-stick {
+    width: 24px;
+    height: 24px;
+    margin: 0 1px;
+    border-radius: 12px;
+    border-width: 2px;
+    font-size: var(--text-caption);
+}
+
+.hints .pad-trigger {
+    min-width: 28px;
+    height: 22px;
+    padding: 0 5px;
+    margin: 0 1px;
+    border-top-left-radius: 9px;
+    border-top-right-radius: 9px;
+}
+
+.hints .pad-bumper {
+    min-width: 30px;
+    height: 20px;
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: 10px;
+}
+
+.hints .pad-menu {
+    height: 20px;
+    padding: 0 5px;
+    margin: 0 1px;
+    border-radius: 10px;
+}
+
 /* The PC cursor mode: its buttons are the controls (the bottom left holds the autopilot pill and the boost). */
 .input-keyboard.hud-cursor .hints {
     display: none;

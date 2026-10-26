@@ -311,6 +311,7 @@ namespace GoF2Remake.UI
             {
                 pagePrompts = p == Page.Debug ? MenuKeys.DebugPrompts() : MenuKeys.Bar(MenuKeys.Rows.Select | MenuKeys.Rows.Confirm | MenuKeys.Rows.Back);
                 pagePrompts.AddToClassList("prompt-bar--row");
+                pagePrompts.AddToClassList("prompt-bar--stacked");   // Modified: label under the keys, centred (GoF2InputGlyphs.uss)
                 panel.Add(pagePrompts);
             }
             Highlight();
