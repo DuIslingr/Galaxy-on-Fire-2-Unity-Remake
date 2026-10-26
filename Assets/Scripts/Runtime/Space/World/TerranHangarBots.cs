@@ -3,6 +3,7 @@
 // at a time instead of all looping together: the next is picked at random among the four, never the one that has just
 // flown, after a short pause once the last one's animation has ended. Between flights a bot is hidden (their tracks fly
 // from one side of the hangar to the other, so a bot parked at either end would hang there in mid-air).
+// The Nivelian hangar's three bots (hangar_nivelian_bot_a..c) take turns the same way.
 // Plain C# (StationLevel drives it in the hangar view): Tick says which bot starts.
 
 using System;
