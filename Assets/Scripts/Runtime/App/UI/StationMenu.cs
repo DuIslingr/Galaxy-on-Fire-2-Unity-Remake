@@ -137,6 +137,7 @@ namespace GoF2Remake.UI
                 Localization.Load(languageCodes != null && i < languageCodes.Length ? languageCodes[i] : "en", languageTables[i]);
             }
             root = rootElement;
+            root.name = "stationPanel";   // Modified: StationMenu.uss's hint sizes (#stationPanel) reach the windows built in code
             root.style.flexGrow = 1;
             root.pickingMode = PickingMode.Ignore;
             safeArea = root.Q("safeArea");
@@ -2234,6 +2235,7 @@ namespace GoF2Remake.UI
             if (root.focusController?.focusedElement is VisualElement f) f.Blur();
             inspectTitle.text = GameNames.Ship(Session.ShipIndex).ToUpperInvariant();
             var insp = level.Inspect;
+            inspectTools.Collide = level.RoomMove;   // Modified: the free camera stops at the hangar's walls too
             inspectTools.Begin(Camera.main, level.PlayerShip, () => insp.Centre, insp.Radius, insp.Radius * 6f, insp.FloorY,
                                () => (insp.OrbitPosition, insp.OrbitRotation), true);
             BuildInspectHints(InputMode.Current);

@@ -1162,11 +1162,84 @@ namespace GoF2Remake.World
             var scale = playerShip.lossyScale;
             var world = new Bounds(playerShip.TransformPoint(local.center), Vector3.Scale(local.size, new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z))));
             flingVelocity = 0f;
+            AddRoomColliders();
+            AddShipColliders();
+            Inspect.Blocked = RoomClearance;
             Inspect.Begin(mainCamera.transform.position, world, minRadii);   // its extents' length is the hull's radius
             return true;
         }
 
         public void EndInspect() => Inspect.End();
+
+        /// <summary>Modified: the room's meshes as colliders on layer RoomColliderLayer for Inspect ship's camera (the hangar
+        /// rooms are imported readable for it, AssetImport), once per room; not its additive / animated layers, bots or ships.</summary>
+        void AddRoomColliders()
+        {
+            if (HangarRoom == null || roomCollidersFor == HangarRoom) return;
+            roomCollidersFor = HangarRoom;
+            foreach (var mf in HangarRoom.GetComponentsInChildren<MeshFilter>(true))
+            {
+                var mesh = mf.sharedMesh;
+                string n = mf.gameObject.name;
+                if (mesh == null || !mesh.isReadable || n.Contains("_add") || n.Contains("_anim") || n.Contains("_bot_") || n.Contains("_lights")) continue;
+                if (mf.GetComponent<Collider>() != null) continue;
+                var go = new GameObject("Inspect collider");
+                go.layer = RoomColliderLayer;
+                go.transform.SetParent(mf.transform, false);
+                var mc = go.AddComponent<MeshCollider>();
+                mc.sharedMesh = mesh;
+            }
+        }
+
+        Transform roomCollidersFor;
+        const int RoomColliderLayer = 21;
+
+        /// <summary>Modified: the player's ship as colliders on ShipColliderLayer for Inspect ship's free camera (the ship models
+        /// are imported readable, AssetImport.IsHullModel); not its glow, light or engine layers. Once per ship model.</summary>
+        void AddShipColliders()
+        {
+            if (playerShip == null || shipCollidersFor == playerShip) return;
+            shipCollidersFor = playerShip;
+            foreach (var mf in playerShip.GetComponentsInChildren<MeshFilter>(true))
+            {
+                var mesh = mf.sharedMesh;
+                string n = mf.gameObject.name;
+                if (mesh == null || !mesh.isReadable || n.Contains("_add") || n.Contains("_lights") || n.Contains("_engine") || n.Contains("_glow")) continue;
+                var go = new GameObject("Inspect collider");
+                go.layer = ShipColliderLayer;
+                go.transform.SetParent(mf.transform, false);
+                go.AddComponent<MeshCollider>().sharedMesh = mesh;
+            }
+        }
+
+        Transform shipCollidersFor;
+        const int ShipColliderLayer = 20;
+        const int FreeCameraMask = (1 << RoomColliderLayer) | (1 << ShipColliderLayer);
+
+        /// <summary>Modified: Inspect ship's free camera moving from 'from' to 'to': stopped short of the room's walls (a
+        /// sphere cast along the move; it slides along a wall only by the parts of the move that stay clear).</summary>
+        public Vector3 RoomMove(Vector3 from, Vector3 to)
+        {
+            const float R = 1.5f;
+            var d = to - from;
+            float len = d.magnitude;
+            if (len < 1e-4f) return to;
+            if (!Physics.SphereCast(from, R, d / len, out var hit, len, FreeCameraMask, QueryTriggerInteraction.Ignore)) return to;
+            // Slide: the part of the move along the wall, if that way is clear.
+            var stop = from + d / len * Mathf.Max(hit.distance - 0.05f, 0f);
+            var slide = Vector3.ProjectOnPlane(to - stop, hit.normal);
+            if (slide.sqrMagnitude > 1e-6f && !Physics.SphereCast(stop, R, slide.normalized, out _, slide.magnitude, FreeCameraMask, QueryTriggerInteraction.Ignore))
+                return stop + slide;
+            return stop;
+        }
+
+        /// <summary>Modified: how far from 'from' along 'dir' the camera can go before the room (a sphere cast, 2 m short of it).</summary>
+        float RoomClearance(Vector3 from, Vector3 dir, float max)
+        {
+            const float R = 1.5f;
+            return Physics.SphereCast(from, R, dir, out var hit, max, 1 << RoomColliderLayer, QueryTriggerInteraction.Ignore)
+                ? Mathf.Max(hit.distance - 2f, 0f) : max;
+        }
 
         /// <summary>The meshes' bounds in 'ship''s own space (the shown ones; 'withAdditive' takes the glow layers too).</summary>
         static Bounds ShipLocalBounds(Transform ship, bool withAdditive)

@@ -116,8 +116,15 @@ namespace GoF2Remake.World
         /// <summary>The floor the free camera stays above (m): the hull's lowest point + the orbit's clearance.</summary>
         public float FloorY => floorY + FloorClearance;
         /// <summary>The orbit camera's pose now (where the free camera starts).</summary>
-        public Vector3 OrbitPosition => centre + pan + Direction * distance;
+        public Vector3 OrbitPosition => centre + pan + Direction * (shownDistance > 0f ? shownDistance : distance);   // Modified: where the walls let it be
         public Quaternion OrbitRotation => Quaternion.LookRotation(-Direction, Vector3.up);
+
+        /// <summary>Modified: how far the camera may go from 'from' along 'dir' before the room's walls (at most 'max');
+        /// null = no limit. Set by StationLevel.</summary>
+        public System.Func<Vector3, Vector3, float, float> Blocked;
+        float shownDistance;
+        /// <summary>The near plane's limit while the room's walls count (m), under the casts' 1.5 m sphere.</summary>
+        const float WallNear = 0.5f;
 
         /// <summary>The orbit's pitch now (rad; the floor may have raised it).</summary>
         public float Pitch => pitch;
@@ -144,13 +151,21 @@ namespace GoF2Remake.World
         {
             if (!Shown) return hangarNear;
             var dir = Direction;
-            var pos = free ? freePos : centre + pan + dir * distance;
+            // Modified: the orbit stays inside the room: the camera stops short of a wall between it and the hull (Blocked:
+            // StationLevel's cast against the room's meshes), easing back out once the way is clear.
+            float want = distance;
+            if (!free && Blocked != null) want = Mathf.Min(distance, Mathf.Max(Blocked(centre + pan, dir, distance), radius * 1.05f));
+            shownDistance = shownDistance <= 0f || want < shownDistance ? want : Mathf.Lerp(shownDistance, want, 0.15f);
+            var pos = free ? freePos : centre + pan + dir * shownDistance;
             var rot = (free ? freeRot : Quaternion.LookRotation(-dir, Vector3.up)) * Quaternion.AngleAxis(RollDeg, Vector3.forward);
             float b = Mathf.SmoothStep(0f, 1f, Blend);
             camera.SetPositionAndRotation(Vector3.Lerp(hangarPos, pos, b), Quaternion.Slerp(hangarRot, rot, b));
             // In front of the hull at the closest: the camera's distance from it (the free camera may go anywhere near it).
             float gap = (free ? Vector3.Distance(freePos, centre) : distance) - radius;
             float orbitNear = Mathf.Clamp(gap * 0.5f, free ? 0.05f : 0.1f, hangarNear);
+            // Modified: never past the room's walls either: the camera stops 1.5 m from a wall (StationLevel's casts), and a
+            // near plane set by the hull's distance cut through the wall, showing what's behind it (the user's report).
+            if (Blocked != null) orbitNear = Mathf.Min(orbitNear, WallNear);
             return Mathf.Lerp(hangarNear, orbitNear, b);
         }
     }

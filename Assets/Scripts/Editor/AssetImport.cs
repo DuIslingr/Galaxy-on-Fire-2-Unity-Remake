@@ -121,6 +121,9 @@ namespace GoF2Remake.EditorTools
             // (HullCollision: a player build can't cook a collider from a mesh it can't read).
             // Modified: and the supernova flares' sky sphere, which SkySphereSmoothing subdivides onto the sphere.
             mi.isReadable = assetPath.EndsWith("/v_station_deep_science_damaged_emitters_anim_add.fbx") || IsHullModel(assetPath)
+                            // Modified: the hangar rooms (not their glow layers): Inspect ship's camera stops at their walls
+                            // (StationLevel.AddRoomColliders).
+                            || (assetPath.Replace('\\', '/').Contains("/hangars/") && !assetPath.Contains("_add") && !assetPath.Contains("_anim"))
                             || (assetPath.Contains("/skyboxes/sn_skybox_") && assetPath.Contains("_flares_"));
         }
 
