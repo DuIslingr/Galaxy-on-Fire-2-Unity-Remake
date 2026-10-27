@@ -2865,5 +2865,7 @@
  "filterBilinear": "バイリニア",
  "filterAnisotropic": "異方性",
  "filterForced": "強制",
- "filterForced16": "強制 16×"
+ "filterForced16": "強制 16×",
+ "floatingTouchStick": "タッチスティックが親指に追従",
+ "floatingTouchStickHelp": "スティックの近くに触れると、スティックが親指の下に移動し、動かすまで機体は旋回しません。指を離すと元の位置に戻ります。"
 }

@@ -2865,5 +2865,7 @@
  "filterBilinear": "Dwuliniowe",
  "filterAnisotropic": "Anizotropowe",
  "filterForced": "Wymuszone",
- "filterForced16": "Wymuszone 16×"
+ "filterForced16": "Wymuszone 16×",
+ "floatingTouchStick": "Drążek dotykowy podąża za kciukiem",
+ "floatingTouchStickHelp": "Dotknięcie w pobliżu drążka przesuwa go pod kciuk, więc statek nie skręca, dopóki go nie poruszysz. Po puszczeniu wraca na swoje miejsce."
 }

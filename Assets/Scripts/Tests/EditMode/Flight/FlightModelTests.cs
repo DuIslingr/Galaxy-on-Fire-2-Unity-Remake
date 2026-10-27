@@ -403,7 +403,7 @@ namespace GoF2Remake.Tests
         public void LevelRateFarFromLevel()
         {
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             Assert.AreEqual(0.00035f * 10f * Mathf.Rad2Deg, Mathf.Abs(LevelStep(m, 30f, 10f)), 1e-4f);   // |lean| 0.5 > 0.3
         }
 
@@ -411,7 +411,7 @@ namespace GoF2Remake.Tests
         public void LevelRateNearLevel()
         {
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             Assert.AreEqual(0.00025f * 10f * Mathf.Rad2Deg, Mathf.Abs(LevelStep(m, 10f, 10f)), 1e-4f);   // |lean| 0.17
         }
 
@@ -419,7 +419,7 @@ namespace GoF2Remake.Tests
         public void LevelRateUpsideDown()
         {
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             Assert.AreEqual(0.00075f * 10f * Mathf.Rad2Deg, Mathf.Abs(LevelStep(m, 150f, 10f)), 1e-4f);
         }
 
@@ -427,15 +427,15 @@ namespace GoF2Remake.Tests
         public void LevelStepIsCappedAt60Ms()
         {
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             Assert.AreEqual(0.00035f * 60f * Mathf.Rad2Deg, Mathf.Abs(LevelStep(m, 30f, 100f)), 1e-4f);
         }
 
         [Test]
         public void LevelRollOpposesTheLean()
         {
-            var a = Model(120f); a.AlignToHorizon();
-            var b = Model(120f); b.AlignToHorizon();
+            var a = Model(120f); a.LevelOutNow();
+            var b = Model(120f); b.LevelOutNow();
             float left = LevelStep(a, 30f, 10f), right = LevelStep(b, -30f, 10f);
             Assert.AreNotEqual(0f, left);
             Assert.AreEqual(-left, right, 1e-6f);
@@ -446,7 +446,7 @@ namespace GoF2Remake.Tests
         {
             // the lean changes sides: one step at 0.00035, then 0.0002 until level
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             LevelStep(m, 30f, 10f);
             Assert.AreEqual(0.00035f * 10f * Mathf.Rad2Deg, Mathf.Abs(LevelStep(m, -20f, 10f)), 1e-4f);
             Assert.AreEqual(0.0002f * 10f * Mathf.Rad2Deg, Mathf.Abs(LevelStep(m, -10f, 10f)), 1e-4f);
@@ -457,7 +457,7 @@ namespace GoF2Remake.Tests
         public void LevelEndsWhenLevel()
         {
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             Assert.IsTrue(m.IsLeveling);
             Assert.AreEqual(0f, LevelStep(m, 0.5f, 10f));   // |lean| 0.0087 < 0.015, up.y > 0
             Assert.IsFalse(m.IsLeveling);
@@ -468,7 +468,7 @@ namespace GoF2Remake.Tests
         {
             // #57: a ship exactly upside down has no sideways lean but up.y < 0
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             LevelStep(m, 180f, 10f);
             Assert.IsTrue(m.IsLeveling);
         }
@@ -478,7 +478,8 @@ namespace GoF2Remake.Tests
         {
             Frame(30f, out var up, out var right);
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelPitch = true;
+            m.LevelOutNow();
             m.Step(new Vector2(1f, 0f), 10f, up, right);   // still held from the double tap: keeps leveling
             Assert.IsTrue(m.IsLeveling);
             m.Step(Vector2.zero, 10f, up, right);          // one neutral frame (between a double tap's taps): not armed yet
@@ -493,10 +494,90 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void SteeringWithoutLettingGoEndsLevelOutAfterTheGrace()
+        {
+            Frame(30f, out var up, out var right);
+            var m = Model(120f);
+            m.LevelPitch = true;
+            m.LevelOutNow();
+            for (int i = 0; i < 25; i++) m.Step(new Vector2(1f, 0f), 10f, up, right);   // 250 ms held: the double tap's grace
+            Assert.IsTrue(m.IsLeveling);
+            for (int i = 0; i < 6; i++) m.Step(new Vector2(0.2f, 0f), 10f, up, right);  // a thumb resting off centre
+            Assert.IsTrue(m.IsLeveling);
+            m.Step(new Vector2(0f, 0.5f), 10f, up, right);                              // still steering past 300 ms
+            Assert.IsFalse(m.IsLeveling);
+        }
+
+        [Test]
+        public void SteeringEndsARollOnlyLevelOut()
+        {
+            Frame(30f, out var up, out var right);
+            var m = Model(120f);
+            m.LevelOutNow();
+            for (int i = 0; i < 25; i++) m.Step(new Vector2(1f, 1f), 10f, up, right);   // the grace: still levelling
+            Assert.IsTrue(m.IsLeveling);
+            for (int i = 0; i < 10; i++) m.Step(new Vector2(1f, 1f), 10f, up, right);
+            Assert.IsFalse(m.IsLeveling);
+        }
+
+        [Test]
+        public void ASteepNoseEndsARollOnlyLevelOut()
+        {
+            // nose 80 deg up, rolled 40 deg: rolling about the nose can't make the ship upright, it rolled for good
+            var q = Quaternion.AngleAxis(-80f, Vector3.right) * Quaternion.AngleAxis(40f, Vector3.forward);
+            var m = Model(120f);
+            m.LevelOutNow();
+            Assert.AreEqual(0f, m.Step(Vector2.zero, 10f, q * Vector3.up, q * Vector3.right).rollDeg);
+            Assert.IsFalse(m.IsLeveling);
+        }
+
+        [Test]
+        public void ALevelOutRequestWaitsASecond()
+        {
+            Frame(30f, out var up, out var right);
+            var m = Model(120f);
+            m.AlignToHorizon();
+            for (int i = 0; i < 99; i++) Assert.AreEqual(0f, m.Step(Vector2.zero, 10f, up, right).rollDeg);
+            Assert.IsTrue(m.LevelRequested);
+            Assert.IsFalse(m.IsLeveling);
+            Assert.AreNotEqual(0f, m.Step(Vector2.zero, 10f, up, right).rollDeg);   // 1000 ms: levelling
+            Assert.IsTrue(m.IsLeveling);
+        }
+
+        [Test]
+        public void SteeringDropsALevelOutRequest()
+        {
+            Frame(30f, out var up, out var right);
+            var m = Model(120f);
+            m.AlignToHorizon();
+            for (int i = 0; i < 20; i++) m.Step(new Vector2(0.4f, 0f), 10f, up, right);   // the double tap's second tap
+            Assert.IsTrue(m.LevelRequested, "the tap that made the request keeps it");
+            for (int i = 0; i < 20; i++) m.Step(new Vector2(0.4f, 0f), 10f, up, right);   // held on, steering
+            Assert.IsFalse(m.LevelRequested);
+            for (int i = 0; i < 150; i++) m.Step(Vector2.zero, 10f, up, right);
+            Assert.IsFalse(m.IsLeveling, "dropped until a new request");
+
+            m.AlignToHorizon();
+            m.StopLeveling();                                                            // a manual roll
+            Assert.IsFalse(m.LevelRequested);
+        }
+
+        [Test]
+        public void AThumbRestingOnTheStickKeepsALevelOutRequest()
+        {
+            // the touch stick has no dead zone: a thumb left on it after the double tap reads a few pixels (squared)
+            Frame(30f, out var up, out var right);
+            var m = Model(120f);
+            m.AlignToHorizon();
+            for (int i = 0; i < 100; i++) m.Step(new Vector2(0.02f, -0.01f), 10f, up, right);
+            Assert.IsTrue(m.IsLeveling);
+        }
+
+        [Test]
         public void StopLevelingCancels()
         {
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             m.StopLeveling();
             Assert.IsFalse(m.IsLeveling);
             Assert.AreEqual(0f, LevelStep(m, 30f, 10f));
@@ -515,14 +596,14 @@ namespace GoF2Remake.Tests
             Pitched(0.5f, out var up, out var right);
             var m = Model(120f);
             m.LevelPitch = true;
-            m.AlignToHorizon();
+            m.LevelOutNow();
             var r = m.Step(Vector2.zero, 10f, up, right);
             Assert.AreEqual(0.006f * Mathf.Rad2Deg, r.pitchDeg, 1e-4f);
             Assert.IsTrue(m.IsLeveling);
             Pitched(-0.5f, out up, out right);
             var n = Model(120f);
             n.LevelPitch = true;
-            n.AlignToHorizon();
+            n.LevelOutNow();
             Assert.AreEqual(-0.006f * Mathf.Rad2Deg, n.Step(Vector2.zero, 10f, up, right).pitchDeg, 1e-4f);
         }
 
@@ -533,7 +614,7 @@ namespace GoF2Remake.Tests
             Pitched(0.05f, out var up, out var right);
             var m = Model(120f);
             m.LevelPitch = true;
-            m.AlignToHorizon();
+            m.LevelOutNow();
             float expected = 0.0006f * (0.05f / 0.17f + 0.25f) * 10f;
             Assert.AreEqual(expected * Mathf.Rad2Deg, m.Step(Vector2.zero, 10f, up, right).pitchDeg, 1e-4f);
         }
@@ -544,7 +625,7 @@ namespace GoF2Remake.Tests
             Pitched(0.005f, out var up, out var right);
             var m = Model(120f);
             m.LevelPitch = true;
-            m.AlignToHorizon();
+            m.LevelOutNow();
             Assert.AreEqual(0f, m.Step(Vector2.zero, 10f, up, right).pitchDeg);
             Assert.IsFalse(m.IsLeveling);
         }
@@ -554,7 +635,7 @@ namespace GoF2Remake.Tests
         {
             Pitched(0.5f, out var up, out var right);
             var m = Model(120f);
-            m.AlignToHorizon();
+            m.LevelOutNow();
             Assert.AreEqual(0f, m.Step(Vector2.zero, 10f, up, right).pitchDeg);
             Assert.IsFalse(m.IsLeveling, "the original levels the roll only");
         }
@@ -569,7 +650,7 @@ namespace GoF2Remake.Tests
             Assume.That(Mathf.Abs(right.y), Is.GreaterThan(0.015f));
             var m = Model(120f);
             m.LevelPitch = true;
-            m.AlignToHorizon();
+            m.LevelOutNow();
             var r = m.Step(Vector2.zero, 10f, up, right);
             Assert.AreEqual(0f, r.rollDeg);
             Assert.AreNotEqual(0f, r.pitchDeg);

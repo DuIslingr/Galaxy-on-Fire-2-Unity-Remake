@@ -2865,5 +2865,7 @@
  "filterBilinear": "Bilinear",
  "filterAnisotropic": "Anisotrópica",
  "filterForced": "Forçada",
- "filterForced16": "Forçada 16×"
+ "filterForced16": "Forçada 16×",
+ "floatingTouchStick": "O analógico de toque segue o seu polegar",
+ "floatingTouchStickHelp": "Tocar perto do analógico o coloca sob o seu polegar, então a nave só vira quando você o move. Ele volta ao lugar quando você solta."
 }

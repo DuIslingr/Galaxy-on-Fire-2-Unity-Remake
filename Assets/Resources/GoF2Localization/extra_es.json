@@ -2865,5 +2865,7 @@
  "filterBilinear": "Bilineal",
  "filterAnisotropic": "Anisotrópico",
  "filterForced": "Forzado",
- "filterForced16": "Forzado 16×"
+ "filterForced16": "Forzado 16×",
+ "floatingTouchStick": "El stick táctil sigue a tu pulgar",
+ "floatingTouchStickHelp": "Al tocar cerca del stick, este se coloca bajo tu pulgar, así la nave no gira hasta que lo muevas. Vuelve a su sitio al soltarlo."
 }

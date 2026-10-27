@@ -2865,5 +2865,7 @@
  "filterBilinear": "Bilinear",
  "filterAnisotropic": "Anisotrop",
  "filterForced": "Erzwungen",
- "filterForced16": "Erzwungen 16×"
+ "filterForced16": "Erzwungen 16×",
+ "floatingTouchStick": "Touch-Stick folgt deinem Daumen",
+ "floatingTouchStickHelp": "Eine Berührung nahe dem Stick setzt ihn unter deinen Daumen, sodass das Schiff erst dreht, wenn du ihn bewegst. Beim Loslassen kehrt er an seinen Platz zurück."
 }

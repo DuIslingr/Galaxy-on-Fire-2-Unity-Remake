@@ -2865,5 +2865,7 @@
  "filterBilinear": "双线性",
  "filterAnisotropic": "各向异性",
  "filterForced": "强制",
- "filterForced16": "强制 16×"
+ "filterForced16": "强制 16×",
+ "floatingTouchStick": "触摸摇杆跟随拇指",
+ "floatingTouchStickHelp": "在摇杆附近按下时，摇杆会移到你的拇指下方，飞船在你移动它之前不会转向。松开后摇杆回到原位。"
 }

@@ -2865,5 +2865,7 @@
  "filterBilinear": "Bilineair",
  "filterAnisotropic": "Anisotroop",
  "filterForced": "Geforceerd",
- "filterForced16": "Geforceerd 16×"
+ "filterForced16": "Geforceerd 16×",
+ "floatingTouchStick": "Touchstick volgt je duim",
+ "floatingTouchStickHelp": "Als je bij de stick drukt, schuift hij onder je duim, zodat het schip pas draait als je hem beweegt. Bij loslaten gaat hij terug naar zijn plek."
 }

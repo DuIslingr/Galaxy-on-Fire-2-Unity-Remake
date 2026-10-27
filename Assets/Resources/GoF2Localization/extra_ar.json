@@ -2865,5 +2865,7 @@
  "filterBilinear": "ثنائي الخطية",
  "filterAnisotropic": "متباين الخواص",
  "filterForced": "إجباري",
- "filterForced16": "إجباري 16×"
+ "filterForced16": "إجباري 16×",
+ "floatingTouchStick": "عصا اللمس تتبع إبهامك",
+ "floatingTouchStickHelp": "اللمس قرب العصا ينقلها تحت إبهامك، فلا تستدير السفينة حتى تحرّكها. وتعود إلى مكانها عندما ترفع إصبعك."
 }

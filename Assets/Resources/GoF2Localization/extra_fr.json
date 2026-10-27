@@ -2865,5 +2865,7 @@
  "filterBilinear": "Bilinéaire",
  "filterAnisotropic": "Anisotrope",
  "filterForced": "Forcé",
- "filterForced16": "Forcé 16×"
+ "filterForced16": "Forcé 16×",
+ "floatingTouchStick": "Le stick tactile suit votre pouce",
+ "floatingTouchStickHelp": "Toucher près du stick le place sous votre pouce : le vaisseau ne tourne que lorsque vous le bougez. Il revient à sa place quand vous le relâchez."
 }
