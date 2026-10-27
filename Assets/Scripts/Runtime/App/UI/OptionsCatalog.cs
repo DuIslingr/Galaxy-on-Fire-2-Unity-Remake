@@ -264,7 +264,8 @@ namespace GoF2Remake.UI
                     Settings.Msaa = MsaaSamples[i];
                 },
                 () => Bootstrap.IsTemporal(Bootstrap.ActiveUpscaler)
-                    ? X("msaaByUpscaler", "The upscaler does the anti-aliasing: turn it off to use MSAA") : "");
+                    ? X("msaaByUpscaler", "The upscaler does the anti-aliasing: turn it off to use MSAA")
+                    : X("msaaHelp", "Smooths the jagged edges of models. More samples look smoother and cost more."));
             msaa.enabled = () => !Bootstrap.IsTemporal(Bootstrap.ActiveUpscaler);
             list.Add(msaa);
             // Remake: the textures' mipmap levels skipped on loading (Settings.TextureQuality); less memory on phones.
@@ -670,8 +671,55 @@ namespace GoF2Remake.UI
                         : X("saveFolderHelp", "Also keeps your saves in a folder you choose, for sync tools and other devices."),
                     action = () => SaveFolderPressed?.Invoke(),
                 });
+            foreach (var d in list)
+                if (d.description == null && Help.TryGetValue(d.id, out var help)) d.description = () => X(help.key, help.english);
             return list;
         }
+
+        /// <summary>The descriptions of the rows built without one (their "?" and, with a controller, the line under them):
+        /// option id -> its Localization.Extra key and English text.</summary>
+        static readonly Dictionary<string, (string key, string english)> Help = new Dictionary<string, (string key, string english)>
+        {
+            ["master"] = ("masterVolumeHelp", "The volume of every sound at once."),
+            ["music"] = ("musicVolumeHelp", "The volume of the music."),
+            ["sfx"] = ("sfxVolumeHelp", "The volume of weapons, engines, explosions and menu sounds."),
+            ["voice"] = ("voiceVolumeHelp", "The volume of spoken dialogue and radio calls."),
+            ["voiceLanguage"] = ("voiceLanguageHelp", "The language the characters speak. Only English and German were recorded; As text picks German with German text, else English."),
+            ["muteInBackground"] = ("muteInBackgroundHelp", "Silences the game while its window isn't in front."),
+            ["displayMode"] = ("displayModeHelp", "Borderless: a window filling the screen. Fullscreen: the game takes over the display. Windowed: a window you can move."),
+            ["resolution"] = ("resolutionHelp", "The size of the game's picture. Display's own uses the screen's full resolution."),
+            ["frameRate"] = ("frameRateHelp", "The most frames per second the game draws. V-Sync matches the screen's refresh rate."),
+            ["renderScale"] = ("renderScaleHelp", "How sharp the 3D view renders compared to the screen. Lower runs faster but looks softer."),
+            ["brightness"] = ("brightnessHelp", "Makes the whole picture darker or brighter."),
+            ["bloom"] = ("bloomHelp", "The glow around bright things. Remake: lights and effects glow. Original: the original game's glow on everything bright. Both: the two together."),
+            ["hangarShadows"] = ("hangarShadowsHelp", "Soft shadows under the ships in the hangar."),
+            ["lensFlare"] = ("lensFlareHelp", "Rings and glare across the screen when you look toward the sun."),
+            ["npcPlayerEngines"] = ("npcPlayerEnginesHelp", "Other ships get engine glows and exhaust flames like yours instead of the original's plainer ones."),
+            ["fov"] = ("fovHelp", "How wide the flight camera sees. Wider shows more around your ship."),
+            ["cameraShake"] = ("cameraShakeHelp", "How much the camera shakes from hits, explosions and boosts."),
+            ["showFps"] = ("showFpsHelp", "Shows the frames per second on screen."),
+            ["steering"] = ("steeringHelp", "Steer with the touch stick, or by tilting the device."),
+            ["tiltSensitivity"] = ("tiltSensitivityHelp", "How strongly tilting the device turns the ship."),
+            ["sensitivity"] = ("sensitivityHelp", "How quickly the ship turns when you steer."),
+            ["keyAutofire"] = ("keyAutofireHelp", "Press fire twice quickly and the guns keep firing until you press it again, like the touch fire button."),
+            ["levelPitch"] = ("levelPitchHelp", "Level out also brings the nose to the horizon, not only the wings."),
+            ["invert"] = ("invertYHelp", "Pushing up points the nose down, like a flight stick."),
+            ["invertYaw"] = ("invertXHelp", "Pushing left turns the ship right."),
+            ["invertDrillY"] = ("invertDrillHelp", "Reverses the drill's movement in the mining game."),
+            ["invertDrillX"] = ("invertDrillHelp", "Reverses the drill's movement in the mining game."),
+            ["gyroSteering"] = ("gyroSteeringHelp", "Tilt the controller to steer: forward and back to pitch, sideways like a wheel to turn. Level out re-centres it."),
+            ["gyroSensitivity"] = ("gyroSensitivityHelp", "How strongly tilting the controller turns the ship."),
+            ["mouseSteering"] = ("mouseSteeringHelp", "The mouse steers the ship. Off: the cursor clicks the on-screen buttons. M or the middle mouse button switches it in flight."),
+            ["vrGrabControls"] = ("vrGrabControlsHelp", "Grab the cockpit's stick and throttle with the controllers' grips. Off: the controllers work like a gamepad."),
+            ["deadzone"] = ("deadzoneHelp", "How far a controller stick moves before it counts, so a worn stick doesn't drift."),
+            ["launchCamera"] = ("launchCameraHelp", "A camera watches your ship fly past as you launch or arrive. Off: straight to the chase camera."),
+            ["hangarFlights"] = ("hangarFlightsHelp", "Your ship flies into the hangar when you dock and out when you launch, and other ships come and go."),
+            ["tutorialHints"] = ("tutorialHintsHelp", "Popups that explain the controls and menus the first time you need them."),
+            ["autoAdvance"] = ("autoPlayDialogueHelp", "Conversations turn the page by themselves once a line has been spoken or read. AUTO in a conversation switches it too."),
+            ["animatedDialogue"] = ("animatedDialogueHelp", "Dialogue types in letter by letter, with names and items in colour. Off: each page appears at once."),
+            ["discordPresence"] = ("discordPresenceHelp", "Shows your ship, location and mission on your Discord profile."),
+            ["language"] = ("languageHelp", "The language of every text in the game."),
+        };
 
         /// <summary>510-512 "Low quality:\n- Smoke off\n- Fog off\n- Detail low" as one line: "Smoke off · Fog off · Detail low".</summary>
         static int Nearest(float[] values, float v)
