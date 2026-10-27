@@ -229,6 +229,10 @@ namespace GoF2Remake.World
             if (arena == null) Session.ArriveInOrbit(station);
             // ... and the shops' stack: a station new to it gets its stock here, not only when docking (a player's report).
             if (arena == null) Shop.ArriveInOrbit(db, station);
+            // Modified: MGame::OnInitialize 0x1a76a8 visits the orbit's station in space for the orbits with no docking: Naneroh
+            // (109), Valpatro (110), 132-134, the dropship orbits 102-104 and Luur (111) from step 0x5e (Station::visit); the
+            // remake only marked a station visited on docking, so those systems never got the star map's tick (a player's report).
+            if (arena == null && VisitedInSpace(station)) Session.VisitedStations.Add(station);
             // Status::moveWanted: a real orbit change (not a launch from the docked station, not to / from the Void) moves the
             // Most Wanted criminals one system along their routes.
             if ((Session.ArrivedByTravel || Session.ArrivedBySystemJump) && station != Session.VoidOrbit && Session.PreviousStationIndex != Session.VoidOrbit)
@@ -511,6 +515,12 @@ namespace GoF2Remake.World
         public bool ComingFromVoid { get; private set; }
 
         /// <summary>A cinematic, a jump, the launch camera or the player's death stops the time extender (MGame::OnUpdate 0x1af162).</summary>
+        /// <summary>Modified: MGame::OnInitialize's Station::visit in space (not in the alien orbit): stations 109, 110,
+        /// 132-134 and 102-104 always, 111 from step 0x5e (Session.WorldIndex, so the finished game's world too).</summary>
+        public static bool VisitedInSpace(int station) =>
+            station == 109 || station == 110 || (station >= 132 && station <= 134) || (station >= 102 && station <= 104)
+            || (station == 111 && Session.WorldIndex >= 0x5e);
+
         /// <summary>Docked at an object and not hacking (free look allowed, FreeLookCamera.DockedView).</summary>
         bool DockedLook => Docking != null && Docking.IsDocked && Docking.Hacking == null && !Cutscene;
 
