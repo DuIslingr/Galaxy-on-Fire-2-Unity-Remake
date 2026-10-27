@@ -250,6 +250,8 @@ namespace GoF2Remake.UI
         public void SelectMedal(int medal)
         {
             if (medal < 0 || medal >= medalButtons.Count) return;
+            // Modified: on the Medals tab (the window opens on the Status page: the toast's tap landed there, the medal unseen).
+            if (statusTab != null && MedalsShown && !showMedals) ShowTab(true);
             ShowHint(medal);
             var button = medalButtons[medal];
             button.schedule.Execute(() =>
