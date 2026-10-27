@@ -51,7 +51,12 @@ namespace GoF2Remake.EditorTools
         static string R(string rel) => ImportSettings.Root + "/" + rel;
 
         [MenuItem("GoF2/Build/Assembled Prefabs", priority = 241)]
-        public static void BuildAll()
+        public static void BuildAll() => BuildAll(false);
+
+        /// <summary>Modified: only the assemblies that have no prefab yet (Materials And Prefabs' "Missing Prefabs Only").</summary>
+        public static void BuildMissing() => BuildAll(true);
+
+        static void BuildAll(bool onlyMissing)
         {
             var json = AssetDatabase.LoadAssetAtPath<TextAsset>(R("Resources/GoF2Data/assemblies.json"));
             if (json == null) { Debug.LogError("GoF2: assemblies.json not found"); return; }
@@ -64,6 +69,11 @@ namespace GoF2Remake.EditorTools
                 foreach (var e in table.entries)
                 {
                     if (n++ % 5 == 0 && EditorUtility.DisplayCancelableProgressBar("GoF2", "Assembling " + e.name, (float)n / table.entries.Length)) break;
+                    if (onlyMissing)
+                    {
+                        string pack = string.IsNullOrEmpty(e.pack) ? "main" : e.pack;
+                        if (AssetDatabase.LoadAssetAtPath<GameObject>($"{OutRoot}/{pack}/{e.category}/{e.name}.prefab") != null) continue;
+                    }
                     if (Build(e, problems)) made++;
                 }
             }

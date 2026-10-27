@@ -75,6 +75,7 @@ namespace GoF2Remake.EditorTools
                     T("GoF2/Tools/Capture All Hangar Reflection Cubemaps", "Play mode, docked at any station: builds the Terran, Vossk, Nivelian, Midorian, deep science and battlestation hangars in turn and captures each one's reflection cubemap, then puts the station's own hangar back."),
                     T("GoF2/Build/Materials And Prefabs", "One material per game material and one prefab per game mesh, from resources.json. Everything else is built on these. Slow.", true),
                     T("GoF2/Build/Assembled Prefabs", "Resources/Assembled: one prefab per game object (ships, stations, gates...), from assemblies.json. Run after build_assemblies.py.", true),
+                    T("GoF2/Build/Missing Prefabs Only", "The per-mesh and assembled prefabs that don't exist yet (a model added to resources.json / assemblies.json, e.g. the Terran hangar's bot e); every existing prefab is left as it is. Quick."),
                 },
             },
             new Group

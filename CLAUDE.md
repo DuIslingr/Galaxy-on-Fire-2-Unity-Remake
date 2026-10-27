@@ -108,6 +108,7 @@ Menu items (from `Scripts/Editor`), grouped in submenus; **GoF2 > Tools Overview
 - **GoF2 > Build > Space Skies**: stars (3) and nebula (19, incl. Valkyrie/Supernova) layers as separate cubemaps for the flight levels (2048 px faces, Android 1365: at 1024 the 2048 px sky textures were magnified on a 1080p screen and the stars blurred).
 - **GoF2 > Build > Materials And Prefabs**: one material per game material and one prefab per game mesh, from `resources.json`.
 - **GoF2 > Build > Assembled Prefabs**: one prefab per game object, from `assemblies.json` (see "Assembled prefabs").
+- **GoF2 > Build > Missing Prefabs Only** (`PrefabBuilder.BuildMissing` + `AssemblyBuilder.BuildMissing`): the per-mesh and assembled prefabs that don't exist yet, every existing one left alone (a model added by hand, e.g. the Terran hangar's bot e: remake mesh ids 99004 / 99005 in `resources.json`, assembly `hangar_terran_bot_e`, spawned on the room by `StationLevel.BuildHangar`).
 - **GoF2 > Import > Apply Emissive Glow To Materials**: `_Glow` = 4 on emissive/lights materials, 2.5 on additive ones, 1 elsewhere (skyboxes never bloom; lit alpha-test layers neither, whatever the mesh is called: the wrecked station's `*_alpha_emissive` girders bloomed the red of their cut-away texels). Constants in `PostProcessing.cs`.
 - **GoF2 > Import > Reimport Models Only**
 - **GoF2 > Import > Reapply Import Settings**

@@ -12,7 +12,7 @@
 //     from A to B in 3 s on the first visit, then sways around the room origin (SpaceLounge::update 0x19ef20); lit by
 //     the system's sun (StarSystem::initLight); Terran service bot loops, the Midorian prop replays now and then; remake:
 //     the Vossk bar's two bartender arms the original never shows replay every 20 / 22 s (VosskBarBots).
-//   Modified: the Terran hangar's four service bots fly one at a time, in random order (TerranHangarBots); so do the
+//   Modified: the Terran hangar's five service bots (a to d and the remake's e) fly one at a time, in random order (TerranHangarBots); so do the
 //     Nivelian hangar's three, which the original never shows.
 // Both show the current system's sky behind the room (Level::createSpace builds the StarSystem for these levels).
 // Music per station/race, ambience per screen (Station_Atmo_Mainview / _Lounge).
@@ -356,6 +356,10 @@ namespace GoF2Remake.World
             if (customHangar == null && room == "hangar_nivelian" && roomGo != null)
                 foreach (char c in "abc")
                     Spawn("hangar_nivelian_bot_" + c, roomGo.transform.position, roomGo.transform.rotation, roomGo.transform, "hangar_nivelian_bot_" + c);
+            // Modified: the Terran hangar's fifth bot (hangar_terran_bot_e, its own assembly: a remake model, not in the room's
+            // assembly with a to d), on the room's transform; it takes its turn with the other four (SetupTerranBots).
+            if (customHangar == null && room == "hangar_terran" && roomGo != null)
+                Spawn("hangar_terran_bot_e", roomGo.transform.position, roomGo.transform.rotation, roomGo.transform, "hangar_terran_bot_e");
             // CutScene::process updates every geometry of the scene each frame, so the room's animated layers all run,
             // not only the *_anim meshes (the Terran hangar_terran_add lights run along the side gutters; at frame 0 they
             // sat on the player's pad). The loops skip their one-off first key (every part at the origin for 33 / 50 ms,
@@ -1025,7 +1029,7 @@ namespace GoF2Remake.World
             if ((start & VosskBarBots.Start.SecondArm) != 0) vosskBotB.Restart();
         }
 
-        /// <summary>Modified: the Terran hangar's bots (hangar_terran_bot_a..d_anim + _anim_add) and the Nivelian hangar's
+        /// <summary>Modified: the Terran hangar's bots (hangar_terran_bot_a..e_anim + _anim_add) and the Nivelian hangar's
         /// (hangar_nivelian_bot_a..c) become one-shots, hidden in their first pose until TerranHangarBots picks them.</summary>
         void SetupTerranBots(GameObject roomGo)
         {

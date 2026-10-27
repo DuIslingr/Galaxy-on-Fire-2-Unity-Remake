@@ -1,0 +1,182 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &141039173641016352
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3138514110802652692}
+  - component: {fileID: 2395355839852346338}
+  m_Layer: 0
+  m_Name: hangar_terran_bot_e
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3138514110802652692
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 141039173641016352}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2007170796232006691}
+  - {fileID: 6562647520287894679}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2395355839852346338
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 141039173641016352}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2186884dd228fc543b86769311f44436, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: GoF2.Space::GoF2Remake.Visuals.AssembledObject
+  rootMeshId: 99004
+  origin: 'remake: the Terran hangar''s fifth service bot (remake mesh ids 99004 / 99005); spawned on the room''s transform'
+  lodDistancesGameUnits: []
+  lastVisibleDistanceGameUnits: 0
+  explosionPrefab: {fileID: 0}
+  playerVariantParts: []
+  npcVariantParts: []
+  conditionalParts: []
+  conditions: []
+  spawnRotationEngine: {x: 0, y: 0, z: 0}
+--- !u!1001 &4791196433689254247
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3138514110802652692}
+    m_Modifications:
+    - target: {fileID: 1307550562794958666, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_Name
+      value: hangar_terran_bot_e_anim_add
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+--- !u!4 &6562647520287894679 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1832554809168836080, guid: 9298e0f703b88764f94b2e056469cf33, type: 3}
+  m_PrefabInstance: {fileID: 4791196433689254247}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6305702370603870422
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3138514110802652692}
+    m_Modifications:
+    - target: {fileID: 5121557586254802511, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_Name
+      value: hangar_terran_bot_e_anim
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+--- !u!4 &2007170796232006691 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5501355653599130869, guid: df45c9903bf921947baf9c93744b28a7, type: 3}
+  m_PrefabInstance: {fileID: 6305702370603870422}
+  m_PrefabAsset: {fileID: 0}

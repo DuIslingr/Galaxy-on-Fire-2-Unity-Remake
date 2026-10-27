@@ -1,6 +1,6 @@
 // TerranHangarBots.cs
-// Modified: the Terran hangar's four service bots (hangar_terran_bot_a..d_anim, each with its _anim_add glow layer) fly one
-// at a time instead of all looping together: the next is picked at random among the four, never the one that has just
+// Modified: the Terran hangar's five service bots (hangar_terran_bot_a..d_anim and the remake's e, each with its _anim_add
+// glow layer) fly one at a time instead of all looping together: the next is picked at random among them, never the one that has just
 // flown, after a short pause once the last one's animation has ended. Between flights a bot is hidden (their tracks fly
 // from one side of the hangar to the other, so a bot parked at either end would hang there in mid-air).
 // The Nivelian hangar's three bots (hangar_nivelian_bot_a..c) take turns the same way.
