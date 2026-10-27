@@ -9,9 +9,11 @@
 //   The orbit authority (the first player in an empty orbit, SpaceLevel.NetAuthority: only then is new traffic built) runs
 //   the orbit's NPC traffic and shows it to the
 //     others: one NetProxy per living ship (by its index in Traffic.Ships) and one NetCrate per crate, spawned for it by
-//     the host and owned by this player; despawned when the ship is gone or the crate taken / expired. Leaving the orbit
-//     takes them away: the player still there with the lowest client id takes the orbit over, rebuilding each flying ship
-//     where it was (Traffic.Adopt, same model, race and hull); NetState keeps the old proxies a few seconds for that.
+//     the host and owned by this player; despawned when the ship is gone or the crate taken / expired. The server says who
+//     runs each orbit (NetState.UpdateOrbitRunners, NetPlayer.RunsOrbit): of two players who built its traffic at once one
+//     stands down, and when the runner leaves the server picks the next player there and hands them its flying traffic
+//     ships' proxies (NetState.HandOver); the new runner rebuilds each where it flies (Traffic.Adopt, same model, race and
+//     hull) and drives the same proxy on (NetProxy.Bind), so the others see no change.
 //   A freelance mission's orbit (FreelanceOrbit) is this player's own NPCs whether or not they run the orbit: its ships and
 //     junk are shown to everyone here the same way (never taken over), and they spawn out of the others' view
 //     (OutOfSight).
@@ -476,71 +478,60 @@ namespace GoF2Remake.Multiplayer
             WatchTraffic();
             UpdateHeldAsteroids();
             UpdateGarrison();
-            // Two players arriving at once both found the orbit empty and built its traffic: the higher client id stands
-            // down (its ships go, the other's stay), early in the visit only.
-            if (Authority && Time.timeSinceLevelLoad < 15f && OtherAuthorityFirst()) level.DropNetAuthority();
-            if (!Authority) TryTakeOver();
+            FollowRunner();
             // This player's own NPCs: the orbit's traffic (the authority) or a freelance mission's (anyone).
             bool ownNpcs = Authority || (level.Traffic != null && level.Traffic.Ships.Count > 0) || level.FreelanceOrbit != null;
             if (ownNpcs) UpdateNpcHooks(); else ClearNpcHooks();
             if (!ownNpcs) return;
             if ((scanTimer -= Time.unscaledDeltaTime) > 0f) return;
             scanTimer = ScanSeconds;
+            if (Authority) AdoptHandedOver();
             DropOwnStale(state);
             ScanShips(state);
             ScanJunk(state);
             ScanCrates(state);
         }
 
-        bool OtherAuthorityFirst()
+        /// <summary>The server's word on who runs this orbit (NetPlayer.RunsOrbit): this player takes it over when it is them,
+        /// and stands down when another player is (two built its traffic at once: theirs is shown, this one's goes).</summary>
+        void FollowRunner()
         {
             var me = NetPlayer.Local;
-            if (me == null) return false;
-            foreach (var p in NetPlayer.All)
-                if (p != null && p != me && p.IsSpawned && p.InSpace && p.Station == Station && p.OrbitAuthority && p.OwnerClientId < me.OwnerClientId)
-                    return true;
-            return false;
+            if (me == null || !me.InSpace || me.Station != Station) return;
+            var runner = NetState.RunnerOf(Station);
+            if (runner == null) return;   // the server hasn't seen this player here yet
+            if (Authority && runner != me) level.DropNetAuthority();
+            else if (!Authority && runner == me) level.TakeOverNetAuthority();
         }
 
-        /// <summary>Nobody runs this orbit any more (its authority left): the player here with the lowest id takes over
-        /// the old authority's flying ships.</summary>
-        void TryTakeOver()
+        /// <summary>The traffic ships the server handed this player (their game left the orbit, NetState.HandOver): each
+        /// rebuilt where it flies, with its hull and the players it was after, driving the same proxy on.</summary>
+        void AdoptHandedOver()
         {
-            var me = NetPlayer.Local;
-            if (me == null || !me.InSpace || me.Station != Station || !NetState.IsOrbitAuthority(Station)) return;
-            foreach (var p in NetPlayer.All)
-                if (p != null && p != me && p.IsSpawned && p.InSpace && p.Station == Station && p.OwnerClientId < me.OwnerClientId) return;
-            var proxies = FindObjectsByType<NetProxy>();
-            bool any = false;
-            foreach (var proxy in proxies)
-                if (proxy.IsSpawned && (!proxy.IsOwner || proxy.Orphan) && proxy.Station == Station) { any = true; break; }
-            if (!any && level.Traffic != null && level.Traffic.Ships.Count == 0 && Time.timeSinceLevelLoad < 3f) return;   // wait for them to arrive
-            level.TakeOverNetAuthority();
             if (level.Traffic == null) return;
             bool adopted = false;
-            foreach (var proxy in proxies)
+            foreach (var proxy in FindObjectsByType<NetProxy>())
             {
-                // Only ships whose game is gone from here (not a player still flying them: a siege, a mission of theirs).
-                if (!proxy.IsSpawned || proxy.Station != Station || !proxy.Adoptable || InOrbit(proxy.Creator, Station)) continue;
+                if (!proxy.IsSpawned || !proxy.HandedOver || !proxy.Orphan || proxy.Station != Station || !proxy.HandOverable) continue;
                 var u = proxy.WorldPosition;
                 var ship = level.Traffic.Adopt(proxy.AdoptSpec(new Vector3(u.x, u.y, -u.z) / OrbitLayout.MetersPerUnit), proxy.WorldRotation, proxy.HullFraction);
                 foreach (var id in proxy.Aggressors) ship.aggressors.Add(id);   // still hostile to whom it was
-                proxy.MarkAdopted();
-                NetState.Instance.AdoptedRpc(proxy.NetworkObjectId);   // gone for the others at once (they get this player's)
+                requestedShips.Add(level.Traffic.Ships.IndexOf(ship));   // its proxy is this one (no new spawn)
+                proxy.Bind(ship);
                 adopted = true;
             }
             if (adopted) level.Traffic.ConnectPlayers();   // Level::connectPlayers: the adopted ships' enemy lists
         }
 
         /// <summary>This player's own proxies of this orbit left from an earlier visit (or spawned after their ship went): they
-        /// go. Only this orbit's: the ones left in the orbit just flown out of (a planet / gate / Khador jump) are for the
-        /// players still there to take over (TryTakeOver), else the host's sweep removes them; dropped here at once, every
-        /// ship there vanished before a takeover could start.</summary>
+        /// go. Only this orbit's: the ones left in the orbit just flown out of (a planet / gate / Khador jump) are the server's
+        /// to hand to the players still there (NetState.HandOver), else its sweep removes them; dropped here at once, every
+        /// ship there vanished before it could. Not one handed to this player and not rebuilt yet (AdoptHandedOver).</summary>
         void DropOwnStale(NetState state)
         {
             ulong me = NetGame.LocalId;
             foreach (var proxy in FindObjectsByType<NetProxy>())
-                if (proxy.IsSpawned && proxy.IsOwner && proxy.Creator == me && proxy.Station == Station && proxy.Orphan && !proxy.Adopted)
+                if (proxy.IsSpawned && proxy.IsOwner && proxy.Creator == me && proxy.Station == Station && proxy.Orphan && !proxy.Adopted && !proxy.HandedOver)
                     state.DespawnRpc(proxy.NetworkObjectId);
         }
 

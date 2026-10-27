@@ -1697,18 +1697,25 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   field comes back (not at once, so docking to sell ore and launching again doesn't refill it). **Only
   the first player in an empty orbit builds its traffic** (`NetState.OrbitEmpty`, `SpaceLevel.NetAuthority`), so nobody
   sees ships appear out of nowhere; that player (the orbit authority) shows its ships and crates to the others as NetProxy /
-  NetCrate objects it owns (spawned by the host on request, by index in `Traffic.Ships`). When the authority leaves the
-  orbit (docks, jumps, disconnects: proxies survive their owner, `DontDestroyWithOwner`), the player still there with the
-  lowest client id takes over its flying ships where they are (`Traffic.Adopt`: model, race, group, hull; not fixed
-  objects, turrets or story ships; only ships whose creator has left the orbit, `NetProxy.Creator`), connects them
-  (`Traffic.ConnectPlayers`) and runs the orbit from then on (`SpaceLevel.TakeOverNetAuthority`: relaunches and raider
-  waves, `Traffic.SetPassive`); the old copies go for everyone at once (`NetState.AdoptedRpc`), else NetState sweeps them
-  after 5 s. Two players arriving at the same moment can both find the orbit empty: in the first 15 s the higher client
-  id stands down (`SpaceLevel.DropNetAuthority`: its traffic vanishes, the other's is shown). A player's own proxies of
+  NetCrate objects it owns (spawned by the host on request, by index in `Traffic.Ships`). **The server says who runs each
+  orbit** (2026-10-27, the user's request: no more election among the players; `NetState.UpdateOrbitRunners` every 0.25 s,
+  written into the server-owned `NetPlayer.RunsOrbit`, read with `NetState.RunnerOf`): the runner stays while they fly
+  there; else the next is a player whose game claims it (`NetPlayer.OrbitAuthority`: it built the traffic), the lowest
+  client id first, else the lowest client id there. Each game follows it (`NetOrbit.FollowRunner`): of two that built the
+  traffic at once the one not picked stands down (`SpaceLevel.DropNetAuthority`: its traffic vanishes, the other's is
+  shown; the old 15 s window and lowest-id rule in the games are gone), the one picked takes over
+  (`SpaceLevel.TakeOverNetAuthority`: relaunches and raider waves, `Traffic.SetPassive`). When the runner leaves (docks,
+  jumps, disconnects: proxies survive their owner, `DontDestroyWithOwner`) the server hands its flying traffic ships to
+  the new runner by ownership (`NetState.HandOver`: `NetworkObject.ChangeOwnership`, `NetProxy.MarkHandedOver`; only
+  `NetProxy.HandOverable` ones: not junk, mission, fixed, turret, convoy, Most Wanted ships or wingmen, which the sweep
+  removes after 5 s as before); the new runner rebuilds each where it flies (`NetOrbit.AdoptHandedOver`, `Traffic.Adopt`:
+  model, race, group, hull, aggressors) and drives the same proxy on (`NetProxy.Bind`: its copy there torn down), so the
+  others see no change; the old owner keeps it as a copy (`NetProxy.OnLostOwnership`). The server's checks of an orbit
+  authority (`DefenseReportRpc`, `NetFactions.OnGarrisonKill`) read `RunsOrbit`. A player's own proxies of
   the orbit they are in, left from an earlier visit or spawned after their ship went, are dropped by their owner
-  (`NetOrbit.DropOwnStale`); those of the orbit they just left are not (the user's report 2026-10-27: the leaving
-  authority's next orbit despawned them all at its first scan, before the players still there could take them over, so
-  every ship there vanished; the host's sweep removes them when nobody takes them). The Kaamo siege: one per orbit
+  (`NetOrbit.DropOwnStale`; not those handed to them); those of the orbit they just left are not (the user's report
+  2026-10-27: the leaving authority's next orbit despawned them all at its first scan, before the players still there
+  could take them over, so every ship there vanished). Not tested with two games yet. The Kaamo siege: one per orbit
   (`KaamoSiege.Running`, `NetPlayer.SiegeRun`): another player with the siege to fight gets the follower view (the call,
   docking refused, the win with the runner's, `NetState.SiegeWonRpc`), builds it anew when alone there; two runners at
   once: the higher client id stands down. The other players' hostile ships count for the battle music and block
