@@ -1494,6 +1494,11 @@ namespace GoF2Remake.UI
             if (builder != null) { builder.stationPicked?.Invoke(station); return; }
             if (mode == StarMapMode.Mission && !travel) { ShowDialog(StationName(station), null, null, true); return; }   // view only
             if (station == currentStation) { ShowDialog(T(419), null, null, true); return; }
+            // Modified: StarMap::OnTouchEnd's campaign checks for the target station (the cabins of 91 / 94, step 142's plasma
+            // kit, ...: Story.RequirementRefusal, also the planet jump's): the map let a step start without them (a player's
+            // report: 91 with 5 seats of 10 could never finish).
+            int refusal = Story.RequirementRefusal(db, station);
+            if (refusal >= 0) { ShowDialog(T(refusal), null, null, true); return; }
             bool otherSystem = SystemOf(station) != currentSystem;
             // Remake: the mission map views any system; without a drive a target past the gate neighbours needs a gate route.
             if (travel && !jumpDrive && otherSystem && !GalaxyMap.IsInRoutes(current, SystemOf(station))

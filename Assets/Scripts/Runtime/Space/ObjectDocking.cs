@@ -235,6 +235,10 @@ namespace GoF2Remake.Flight
             // TargetFollowCamera::setLookAtCam(true): the camera stays where it is and keeps the ship in view.
             if (State != Phase.Entering && State != Phase.Docked && State != Phase.Leaving) return;
             if (PlayerTurret.ViewActive(gameObject)) return;   // the turret view's camera (docked: the original allows it)
+            // Modified: nor while a level's cutscene camera holds the view (CutsceneCamera sets scriptCamera): it turned that
+            // camera back to the docked ship every frame (a player's report, step 92: the Specters' entrance showed the ship
+            // at the freighter for seconds instead of them).
+            if (chase != null && chase.scriptCamera) return;
             var cam = Camera.main;
             if (cam != null && chase != null && !chase.enabled)
                 cam.transform.rotation = Quaternion.LookRotation(ship.transform.position - cam.transform.position, Vector3.up);

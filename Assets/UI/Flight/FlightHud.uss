@@ -340,6 +340,15 @@
     color: rgba(216, 236, 247, 0.8);
 }
 
+/* Modified: a friendly docking object's bracket (NavigationView), the friend's green; colour-blind: blue. */
+.nav-bracket--friend {
+    -unity-background-image-tint-color: #3BE86A;
+}
+
+.ui-colorblind .nav-bracket--friend {
+    -unity-background-image-tint-color: #4FB2FF;
+}
+
 /* Multiplayer: a neighbouring station the player's faction holds, an orb on its planet (NavigationView); red while it is
    besieged (declared or running). */
 .nav-faction {

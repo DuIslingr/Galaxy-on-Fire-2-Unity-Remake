@@ -456,6 +456,17 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
+        public void TheValpatroRescueNeedsTenSeats()
+        {
+            AtStep(91);
+            int target = Story.Mission.station;
+            Session.Equipment.Add(new ItemStack(92, 1));   // Medium Cabin: 5 seats
+            Assert.AreEqual(3214, Story.RequirementRefusal(Db, target), "5 seats of 10");
+            Session.Equipment.Add(new ItemStack(92, 1));   // a second one: 10
+            Assert.AreEqual(-1, Story.RequirementRefusal(Db, target));
+        }
+
+        [Test]
         public void GammaShieldIINeededAt105()
         {
             AtStep(105);
