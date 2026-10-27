@@ -2906,5 +2906,6 @@
  "autoPlayDialogueHelp": "Les conversations passent à la page suivante d'elles-mêmes une fois la réplique dite ou lue. AUTO dans une conversation le bascule aussi.",
  "animatedDialogueHelp": "Les dialogues s'écrivent lettre par lettre, noms et objets en couleur. Désactivé : chaque page s'affiche d'un coup.",
  "discordPresenceHelp": "Affiche votre vaisseau, votre position et votre mission sur votre profil Discord.",
- "languageHelp": "La langue de tous les textes du jeu."
+ "languageHelp": "La langue de tous les textes du jeu.",
+ "mpCmdSquadChat": "une ligne à ton escadron, où qu’il soit"
 }

@@ -2906,5 +2906,6 @@
  "autoPlayDialogueHelp": "Las conversaciones pasan de página solas cuando una frase se ha dicho o leído. AUTO en una conversación también lo cambia.",
  "animatedDialogueHelp": "Los diálogos se escriben letra a letra, con nombres y objetos en color. Desactivado: cada página aparece de golpe.",
  "discordPresenceHelp": "Muestra tu nave, tu ubicación y tu misión en tu perfil de Discord.",
- "languageHelp": "El idioma de todos los textos del juego."
+ "languageHelp": "El idioma de todos los textos del juego.",
+ "mpCmdSquadChat": "una línea a tu escuadrón, esté donde esté"
 }

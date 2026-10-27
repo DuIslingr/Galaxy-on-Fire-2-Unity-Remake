@@ -2906,5 +2906,6 @@
  "autoPlayDialogueHelp": "Gesprekken slaan zelf de pagina om zodra een regel is uitgesproken of gelezen. AUTO in een gesprek schakelt het ook.",
  "animatedDialogueHelp": "Dialogen verschijnen letter voor letter, met namen en voorwerpen in kleur. Uit: elke pagina staat er meteen.",
  "discordPresenceHelp": "Toont je schip, locatie en missie op je Discord-profiel.",
- "languageHelp": "De taal van alle tekst in het spel."
+ "languageHelp": "De taal van alle tekst in het spel.",
+ "mpCmdSquadChat": "één regel aan je eskader, waar ze ook zijn"
 }

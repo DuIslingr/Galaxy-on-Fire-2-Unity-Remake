@@ -351,6 +351,22 @@ namespace GoF2Remake.Multiplayer
         [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
         void WhisperedRpc(string other, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveWhisper(other, text, own);
 
+        /// <summary>Server: /s, a line to the sender's squad (the chat's Squad channel), wherever its members are; the
+        /// sender's own copy marked.</summary>
+        internal void SquadChat(NetPlayer from, string text)
+        {
+            text = NetChat.Clean(text);
+            if (!IsServer || from == null || from.SquadId == 0 || text.Length == 0) return;
+            if (NetAdmin.IsMuted(from.OwnerClientId, out string mutedText)) { NoticeTo(from, mutedText); return; }   // /mute
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.IsSpawned && p.SquadId == from.SquadId)
+                    SquadLineRpc(from.TaggedName, text, p == from, RpcTarget.Single(p.OwnerClientId, RpcTargetUse.Temp));
+            Debug.Log($"[Squad {from.SquadId}] {from.TaggedName}: {text}");
+        }
+
+        [Rpc(SendTo.SpecifiedInParams, InvokePermission = RpcInvokePermission.Server)]
+        void SquadLineRpc(string from, string text, bool own, RpcParams rpc = default) => NetChat.ReceiveSquad(from, text, own);
+
         // ---- server commands (NetCommands) -----------------------------------------------------------------
 
         /// <summary>A server command typed in the chat (/kick, /tp, /tphere, /admin, /unadmin): run on the server by the same

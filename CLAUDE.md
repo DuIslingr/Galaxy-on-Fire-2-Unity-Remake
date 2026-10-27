@@ -1704,8 +1704,11 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   (`Traffic.ConnectPlayers`) and runs the orbit from then on (`SpaceLevel.TakeOverNetAuthority`: relaunches and raider
   waves, `Traffic.SetPassive`); the old copies go for everyone at once (`NetState.AdoptedRpc`), else NetState sweeps them
   after 5 s. Two players arriving at the same moment can both find the orbit empty: in the first 15 s the higher client
-  id stands down (`SpaceLevel.DropNetAuthority`: its traffic vanishes, the other's is shown). A player's own proxies left
-  from an earlier visit, or spawned after their ship went, are dropped by their owner. The Kaamo siege: one per orbit
+  id stands down (`SpaceLevel.DropNetAuthority`: its traffic vanishes, the other's is shown). A player's own proxies of
+  the orbit they are in, left from an earlier visit or spawned after their ship went, are dropped by their owner
+  (`NetOrbit.DropOwnStale`); those of the orbit they just left are not (the user's report 2026-10-27: the leaving
+  authority's next orbit despawned them all at its first scan, before the players still there could take them over, so
+  every ship there vanished; the host's sweep removes them when nobody takes them). The Kaamo siege: one per orbit
   (`KaamoSiege.Running`, `NetPlayer.SiegeRun`): another player with the siege to fight gets the follower view (the call,
   docking refused, the win with the runner's, `NetState.SiegeWonRpc`), builds it anew when alone there; two runners at
   once: the higher client id stands down. The other players' hostile ships count for the battle music and block
@@ -1776,9 +1779,11 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
   `ChatView.CanOpenByKey`) (`ChatView` keeps focusing the
   field for a few frames until its row shows; the opening key's letter, which arrives after the focus, is dropped), the
   send key (Enter / keypad Enter, `GameControls.ChatSend`) sends, the channel key (Tab, `GameControls.ChatChannel`)
-  cycles Local / Global and, for a faction's member, Faction (`NetChat.NextChannel` / `SendingNow`: its lines go as the
-  server's `/f`, `NetFactions.Talk` -> `NetState.TellFactionLine` -> `NetChat.ReceiveFaction`, a green "[Faction]" tag; back
-  on Local when the player leaves the faction), Esc closes only the chat (`NetChat.Keys` stays null on the frame the typing
+  cycles Local / Global and, for a squad's member, Squad, for a faction's, Faction (`NetChat.NextChannel` / `SendingNow`:
+  Squad lines go as the server's `/s` (the user's request, 2026-10-27), `NetState.SquadChat` -> `SquadLineRpc` to every
+  member wherever they are -> `NetChat.ReceiveSquad`, a pink "[Squad]" tag; Faction lines as `/f`, `NetFactions.Talk` ->
+  `NetState.TellFactionLine` -> `NetChat.ReceiveFaction`, a green "[Faction]" tag; back on Local when the player leaves the
+  squad / faction), Esc closes only the chat (`NetChat.Keys` stays null on the frame the typing
   ended and the next, `NetChat.JustStopped`: the pause / system menu's Esc read the same press). Sending keeps the chat open for the next line (`ChatView.SendLine`: the field keeps
   the focus, a phone's keyboard comes straight back up), so a conversation needs no reopening; Enter / Done on an empty
   line, Esc / B, the row's × or the Chat tab close it. Phones: the field's own keyboard is off (`hideSoftKeyboard`) and `ChatView` opens

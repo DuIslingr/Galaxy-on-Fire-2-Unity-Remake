@@ -2906,5 +2906,6 @@
  "autoPlayDialogueHelp": "Gespräche blättern von selbst weiter, sobald eine Zeile gesprochen oder gelesen ist. AUTO im Gespräch schaltet es ebenfalls.",
  "animatedDialogueHelp": "Dialoge erscheinen Buchstabe für Buchstabe, Namen und Gegenstände farbig. Aus: Jede Seite steht sofort da.",
  "discordPresenceHelp": "Zeigt dein Schiff, deinen Ort und deine Mission in deinem Discord-Profil.",
- "languageHelp": "Die Sprache aller Texte im Spiel."
+ "languageHelp": "Die Sprache aller Texte im Spiel.",
+ "mpCmdSquadChat": "eine Zeile an deine Staffel, wo sie auch ist"
 }

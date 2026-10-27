@@ -532,12 +532,16 @@ namespace GoF2Remake.Multiplayer
             if (adopted) level.Traffic.ConnectPlayers();   // Level::connectPlayers: the adopted ships' enemy lists
         }
 
-        /// <summary>This player's own proxies left from an earlier visit (or spawned after their ship went): they go.</summary>
+        /// <summary>This player's own proxies of this orbit left from an earlier visit (or spawned after their ship went): they
+        /// go. Only this orbit's: the ones left in the orbit just flown out of (a planet / gate / Khador jump) are for the
+        /// players still there to take over (TryTakeOver), else the host's sweep removes them; dropped here at once, every
+        /// ship there vanished before a takeover could start.</summary>
         void DropOwnStale(NetState state)
         {
             ulong me = NetGame.LocalId;
             foreach (var proxy in FindObjectsByType<NetProxy>())
-                if (proxy.IsSpawned && proxy.IsOwner && proxy.Creator == me && proxy.Orphan && !proxy.Adopted) state.DespawnRpc(proxy.NetworkObjectId);
+                if (proxy.IsSpawned && proxy.IsOwner && proxy.Creator == me && proxy.Station == Station && proxy.Orphan && !proxy.Adopted)
+                    state.DespawnRpc(proxy.NetworkObjectId);
         }
 
         void ScanShips(NetState state)

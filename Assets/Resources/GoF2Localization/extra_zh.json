@@ -2906,5 +2906,6 @@
  "autoPlayDialogueHelp": "台词说完或读完后，对话会自动翻页。对话中的 自动 也能切换。",
  "animatedDialogueHelp": "对话文字逐字出现，人名和物品带颜色。关闭时：每页立即显示。",
  "discordPresenceHelp": "在你的 Discord 资料中显示你的飞船、位置和任务。",
- "languageHelp": "游戏中所有文本的语言。"
+ "languageHelp": "游戏中所有文本的语言。",
+ "mpCmdSquadChat": "给你的小队发一行消息，无论他们在哪里"
 }
