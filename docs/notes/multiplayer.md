@@ -197,7 +197,8 @@ Single player is untouched: every multiplayer path runs only while `NetGame.Acti
 - **Medals** are off in sessions (`Achievements.Check` / `Elite` award nothing, the Status window hides the medal column).
 - **Off while a session runs**: the game pausing (the pause menu and dialogs keep `Time.timeScale` at 1; fast-forward is a cruise mode, see "Navigation";
   the flight controls stop instead while a menu, conversation or map is open, `Navigation.InputHalted`; the pause menu
-  doesn't mute the sound), the Time Extender (the world can't slow for one player), saving and loading (the station's
+  doesn't mute the sound), the Time Extender (the world can't slow for one player; nothing sells or drops it in a
+  session, `Shop.NotInSession`), saving and loading (the station's
   Save / Load entries are hidden, `SaveGame`).
 - Testing: the Editor as host (set `Application.runInBackground = true` during Play, or Play mode stalls unfocused; an
   edited script recompiles and ends the session) and a Windows development build (the Windows build profile, into

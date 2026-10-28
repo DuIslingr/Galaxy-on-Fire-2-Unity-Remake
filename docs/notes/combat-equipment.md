@@ -62,7 +62,9 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   15 s (attr 42) of world ×0.3 (`Time.timeScale`, `Navigation.ApplyTimeScale`) with the player's own updates (flight,
   chase camera, guns, cloak, beams) at ×0.7 (`TimeExtender.PlayerFactor`), sounds pitched down, sound 1120
   TimeShift_Start, 1119 TimeShift_01b at the end; tap again ends it; 30 s cooldown (attr 43), then the icon flashes.
-  Cinematics, jumps and death cancel it.
+  Cinematics, jumps and death cancel it. Not in multiplayer (`TimeExtender.Attach`: the shared world can't slow for one
+  player), where it isn't obtainable either (`Shop.NotInSession`: no shop, loot, crate, armory, bar seller or Purchase
+  mission has it, and one sold into a shared stock is paid for but not put on sale); one a pilot already has stays.
 - **Repair / transfusion beams** (`RepairBeam`, sorts 37 / 41): automatic; every 2.5 s the attr 55 slots take the most
   damaged friendly ships (repair: hull +dt·0.03·attr54/100) or hostile ships (transfusion: −dt·0.01·attr54/100 as player
   damage, the same into the player's shield; both only while the shield isn't full, and only then are hostile ships
