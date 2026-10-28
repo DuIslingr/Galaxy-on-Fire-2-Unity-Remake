@@ -13,6 +13,7 @@ using GoF2Remake.World;
 using GoF2Remake.Visuals;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
 
 namespace GoF2Remake.Tests
@@ -29,6 +30,27 @@ namespace GoF2Remake.Tests
             var level = Find<MenuBackground>();
             Assert.IsNotNull(level, "MenuBackground");
             Assert.IsTrue(Object.FindObjectsByType<NpcShip>().Length > 0 || Find<Traffic>() != null, "the backdrop's traffic");
+        }
+
+        /// <summary>The Splash scene (CLAUDE.md "Startup splash"): both logos over the menu scene loading behind them, the
+        /// menu theme from the start and carried into the menu, then the title.</summary>
+        [UnityTest]
+        public IEnumerator SplashShowsTheLogosThenTheMenu()
+        {
+            float start = Time.realtimeSinceStartup;
+            yield return Load("Splash");
+            Assert.IsTrue(StartupSplash.Running, "the logos run");
+            var music = GameObject.Find("Splash music")?.GetComponent<AudioSource>();
+            Assert.IsTrue(music != null && music.isPlaying, "the menu theme plays with the first logo");
+            yield return WaitFor(() => SceneManager.GetActiveScene().name == "MainMenu", 30f, "the menu scene");
+            Assert.IsTrue(StartupSplash.Running, "the menu came in while a logo was shown");
+            yield return WaitFor(() => !StartupSplash.Running, 30f, "the end of the logos");
+            Assert.GreaterOrEqual(Time.realtimeSinceStartup - start, 5f, "two logos of 3 s each");
+            var menu = Find<MainMenu>();
+            Assert.IsNotNull(menu, "MainMenu");
+            Assert.AreSame(music, menu.musicSource, "the menu took the splash's theme over");
+            Assert.IsTrue(music.isPlaying, "the theme still plays");
+            Assert.AreEqual(1, Object.FindObjectsByType<AudioListener>().Length, "one listener");
         }
 
         /// <summary>One station per hangar (StationTables.HangarIndex): the four races, the deep science station, the Kaamo Club.</summary>

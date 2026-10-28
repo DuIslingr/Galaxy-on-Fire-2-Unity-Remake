@@ -529,7 +529,7 @@ namespace GoF2Remake.World
         {
             if (Modding.ModBuilder.PlayTesting) { Modding.ModBuilder.EndPlayTest(); return; }   // a Mod Builder play test: back to the builder
             if (Session.LoadAutosave() && Application.CanStreamedLevelBeLoaded(stationScene)) SceneManager.LoadScene(stationScene);
-            else SceneManager.LoadScene(0);
+            else SceneManager.LoadScene("MainMenu");   // (build index 0 is the Splash scene)
         }
         /// <summary>MGame::dockEvent: straight to the station module (SetCurrentApplicationModule(5)). 'flyIn': the player
         /// docked (the autopilot, touching the station, the Dock prompt), so the station opens with the remake's hangar

@@ -4,7 +4,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## Layout
 
-- **GoF2 > Scenes > Main Menu Scene**: `Assets/Scenes/MainMenu.unity` (build index 0; Space 1, Station 2).
+- **GoF2 > Scenes > Splash Scene**: `Assets/Scenes/Splash.unity` (build index 0), the startup logos (`StartupSplash`, see
+  "UI and platforms"); turns Unity's own splash screen off. Main Menu Scene makes it too.
+- **GoF2 > Scenes > Main Menu Scene**: `Assets/Scenes/MainMenu.unity` (build index 1; Space 2, Station 3).
 - **GoF2 > Scenes > Space Scene**: `Assets/Scenes/Space.unity`, the flight level (see "Space scene"). Also (re)makes
   `Resources/GoF2Backdrop` and bakes the space skies if missing.
 - **GoF2 > Scenes > Station Scene**: `Assets/Scenes/Station.unity`, the docked station (see "Station scene"). Wires the

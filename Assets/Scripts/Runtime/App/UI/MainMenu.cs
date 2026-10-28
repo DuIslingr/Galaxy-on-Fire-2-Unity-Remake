@@ -1,7 +1,8 @@
 // MainMenu.cs
 // Main menu controller (UI Toolkit). Follows the original flow (MTitle -> ModMainMenu -> MenuTouchWindow(0)):
-//   1. Splash: FISHLABS then (instead of ABYSS ENGINE) "Made with Unity". In players this is Unity's own
-//      splash screen (Player Settings); in the editor the menu shows the FISHLABS logo itself.
+//   1. Splash: FISHLABS then (instead of ABYSS ENGINE) "Made with Unity". These are the Splash scene's (StartupSplash,
+//      build index 0), still on top while this scene starts; when Play mode starts in this scene (the Editor) the menu
+//      shows the same logos itself.
 //   2. Title: the GoF2 logo fades in over the live 3D scene (3.9 s), "press any key" pulses under it.
 //   3. Menu: Resume (only with a save), Start new game -> Select Campaign -> difficulty (Easy / Normal / Hard / Extreme: the PC version's four),
 //      Load game (save slots, slot 0 = Auto-save), Options (Sound & Graphics, Controls, Language), About, Exit.
@@ -44,8 +45,8 @@ namespace GoF2Remake.UI
         /// <summary>The version the update check compares with the newest release (the Editor's only if pretended).</summary>
         string CheckVersion => Application.isEditor ? editorTestVersion : BuildVersion.Text;
 
-        [Header("Editor splash (players use Unity's splash screen with the same logos)")]
-        [Tooltip("MTitle image 7001 (FISHLABS). Each logo: 1 s fade in, 2 s hold, 1 s fade out.")]
+        [Header("Editor splash (when Play mode starts here; players show the Splash scene's same logos)")]
+        [Tooltip("MTitle image 7001 (FISHLABS), then Made with Unity. Each logo: 1 s fade in, 2 s hold, 1 s fade out.")]
         public Texture2D[] editorSplashLogos;
 
         [Header("Audio")]
@@ -438,16 +439,12 @@ namespace GoF2Remake.UI
             // ended loads the menu without closing it), and a finished session's game is gone.
             AudioListener.pause = false;
             GoF2Remake.Multiplayer.NetGame.OnMainMenu();
-            Modding.ModShips.Preload();   // the active mods' ship models, built while the menu shows
-            Modding.ModStations.Preload();   // their station models and planet / sun textures
-            Modding.ModWeapons.Preload();   // their weapons' own fx and sounds
-            Modding.ModSounds.Preload();   // their sound effects
-            Modding.ModTextures.Preload();   // their texture replacements (skins)
-            Modding.ModCharacters.Preload();   // their characters' portraits
-            Modding.ModMusic.Preload();   // and their music (a replaced menu theme swaps in when it has loaded)
+            // The active mods' models, fx, sounds, skins, portraits and music, built while the menu shows (already loading
+            // since the startup splash; again when the mods changed); a replaced menu theme swaps in when it has loaded.
+            Modding.ModLoading.Preload();
             Modding.ModMusic.Changed -= SwapModMusic;
             Modding.ModMusic.Changed += SwapModMusic;
-            // Modified: in a player the theme already plays from Unity's splash screen (SplashMusic): its source becomes the
+            // Modified: the theme already plays from the Splash scene (SplashMusic): its source becomes the
             // menu's music source as it is (no second stream to seek, so no gap or doubling); a mod's theme fades in after it.
             var splashSource = SplashMusic.Take(gameObject.scene);
             bool carried = false;
@@ -508,9 +505,13 @@ namespace GoF2Remake.UI
                 yield break;
             }
             WatchAnyKey();
-            bool splashLogos = showSplash && Application.isEditor && editorSplashLogos != null;
+            // The Splash scene's logos are still over this scene (it came in while one was held): the title after them.
+            while (StartupSplash.Running) yield return null;
+            // The logos only when the Splash scene didn't show them (Play mode started here), once.
+            bool splashLogos = showSplash && !StartupSplash.LogosShown && editorSplashLogos != null;
             if (splashLogos)
             {
+                StartupSplash.LogosShown = true;
                 foreach (var tex in editorSplashLogos)
                 {
                     if (tex == null) continue;

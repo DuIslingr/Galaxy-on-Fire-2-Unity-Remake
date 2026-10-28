@@ -127,7 +127,7 @@ Assets/
   Resources/GoF2StarMap/ StarMapAssets: what the star map can't load by name (overlay UXML, sun materials, Khador fx, sounds)
   Resources/GoF2Combat/ CombatAssets: crates, wrecks, explosion, tractor beams, hit / death sounds, space and battle music
   Resources/GoF2LanguageTables.asset references every text table so any scene loads text on first use (Localization)
-  Scenes/            MainMenu, Space (flight level), Station (docked: hangar + bar)
+  Scenes/            Splash (startup logos, build index 0), MainMenu, Space (flight level), Station (docked: hangar + bar)
   Settings/          URP assets, GoF2_VolumeProfile (bloom)
 Reference/           decompiled original code, binaries and conversion tools (see Reference/README.md)
 Modding/             the modders' guide (README.md) and example mods (Examples/plasma_arsenal); Scripts/Runtime/Modding the loader

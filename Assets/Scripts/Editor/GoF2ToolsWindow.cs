@@ -35,7 +35,8 @@ namespace GoF2Remake.EditorTools
                 about = "Rewrite a scene file from code (anything changed in the scene by hand is lost).",
                 tools = new[]
                 {
-                    T("GoF2/Scenes/Main Menu Scene", "Assets/Scenes/MainMenu.unity (build index 0) and the menu's own assets."),
+                    T("GoF2/Scenes/Splash Scene", "Assets/Scenes/Splash.unity (build index 0): the startup logos, the menu theme from the first logo, the mods and the menu loading behind them. Turns Unity's own splash screen off."),
+                    T("GoF2/Scenes/Main Menu Scene", "Assets/Scenes/MainMenu.unity (build index 1) and the menu's own assets, also the Splash scene."),
                     T("GoF2/Scenes/Space Scene", "Assets/Scenes/Space.unity, the flight level. Also rebuilds the backdrop materials, sky layers, weapon fx, HUD images, star map and combat assets, and bakes the space skies if they're missing."),
                     T("GoF2/Scenes/Station Scene", "Assets/Scenes/Station.unity, the docked station (hangar and bar) with its music, ambience and visitor prefabs. Makes the space skies, item icons and star map assets if missing."),
                     T("GoF2/Scenes/Add Post Processing To Open Scene", "Adds the global bloom Volume (Settings/GoF2_VolumeProfile) to the scene that is open and turns post-processing on for its camera."),

@@ -91,7 +91,7 @@ namespace GoF2Remake.Events
             {
                 if (Modding.ModBuilder.PlayTesting) { Modding.ModBuilder.EndPlayTest(); return; }   // a Mod Builder play test
                 if (Session.LoadAutosave() && Application.CanStreamedLevelBeLoaded("Station")) UnityEngine.SceneManagement.SceneManager.LoadScene("Station");
-                else UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+                else UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
             };
             if (UI.UiHooks.StationDialog == null || !UI.UiHooks.StationDialog(title + "\n\n" + Localization.Get(319), reload, true)) reload();
         }

@@ -4,6 +4,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## UI and platforms
 
+- **Startup splash** (2026-10-28, `StartupSplash` in `Scenes/Splash.unity`, build index 0; Unity's own splash screen is
+  off): FISHLABS, then Made with Unity, one after the other (0.5 s fade in, 2 s held under a slow zoom, 0.5 s fade out;
+  a key or button skips to the next). The menu theme starts with it (`SplashMusic`, see "Sound"), the mods start loading
+  (`ModLoading.Preload`) and `MainMenu` loads behind it. The menu builds its backdrop orbit as it wakes
+  (`MenuBackground.Awake`: 2-6 s without a frame in the Editor), which after the logos was seconds of black: the menu
+  scene now comes in while a logo is held (`allowSceneActivation` once progress is 0.9; the frozen frame shows the logo,
+  the music plays on), the splash object stays over it (DontDestroyOnLoad, panel sorted +50) and `MainMenu.Run` waits for
+  `StartupSplash.Running` before the title. A load started in the first scene's `Awake` ignored allowSceneActivation =
+  false (the menu replaced the splash before its first frame), so it starts one frame in. Straight to the menu for
+  -mpjoin / -mphost and a VR headset. Play mode started in MainMenu (the Editor) shows the same logos in the menu itself
+  (`editorSplashLogos`, once a run: `StartupSplash.LogosShown`). The main menu is loaded by name everywhere
+  (`LoadScene(0)` is the splash now); `StoryStepLabel` tells the game scenes by name.
 - **Small key hints** (#175; review 2026-10-28): the flight's hint row (`FlightHud.uss .hints`), the station's own
   screens (`StationMenu.uss .station-root .hint`: the main view's row, the hangar window, the Missions / Status prompt
   rows) and the star map's footer (`StarMap.uss .map-hints`) show their labels at `--text-caption` and the keys and

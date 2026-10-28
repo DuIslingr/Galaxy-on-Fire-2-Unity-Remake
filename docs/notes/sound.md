@@ -58,9 +58,10 @@ waves, `WeaponFx.Shot` / `ExplosionSound` pick one at random; the sentry deploy 
   voices pan by the sound's side of the camera (camera-space x / distance × `PanAmount` 0.85, never fully one-sided;
   centred ahead, behind and within 1 m), as the original's 3D events are heard from where they are.
 - **Menu theme from the first logo** (#180, `SplashMusic`; MTitle starts 145 Space_NoCombat_Void with the first logo):
-  in a player it starts before Unity's splash screen (`BeforeSplashScreen`; not in the Editor, which draws the logos in
-  the menu, nor in batch mode or on a dedicated server, `DedicatedServer.Enabled`), with the master volume applied there
-  (Bootstrap's comes later) and a listener of its own until the first scene's. `Resources/GoF2Music/MenuTheme` is a
+  the Splash scene starts it as it wakes (`StartupSplash`, see "UI and platforms"; it played from Unity's splash screen
+  before, `BeforeSplashScreen`), also in the Editor when Play mode starts there (from MainMenu the menu starts it itself);
+  not in batch mode or on a dedicated server (`DedicatedServer.Enabled`). A listener of its own until the menu's camera
+  brings one (the splash has none: the drop waits for a scene with a listener). `Resources/GoF2Music/MenuTheme` is a
   `SplashTheme` asset that references `Audio/MUSIC/Space_NoCombat_Void.ogg` (it was a 1 MB copy of it: the clip shipped
   twice). `MainMenu` adopts the playing source as its music source (`SplashMusic.Take` moves it into the menu scene; it
   used to destroy it and seek a second stream to the same point: a gap or a doubling). A mod's menu theme fades in over

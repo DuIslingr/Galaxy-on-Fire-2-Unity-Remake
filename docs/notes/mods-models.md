@@ -238,8 +238,8 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `persistentDataPath/ModCache/Textures/<mod id>/<hash>.tex`, the hash of the file's path, size, change time, linear and the
   kind of compression): a later start reads it back on a worker thread instead of decoding and compressing (five PR ships
   2.3 s -> 1.3 s; the first start writes it, 126 MB for their 65 textures); an uninstalled mod's folder goes on `Scan`.
-  The startup splash shows "Loading mods" with a progress
-  bar and the ship / track in progress until it is done (`MainMenu.WaitForMods`, then the title; not shown when
+  They start loading with the startup logos (`StartupSplash`); the menu's black splash after them shows "Loading mods"
+  with a progress bar and the ship / track in progress until it is done (`MainMenu.WaitForMods`, then the title; not shown when
   the mods that are on bring nothing to load, `ModLoading.HasWork`: no mods or only quests), so does the fade before a
   game scene when the mods changed in the menu (Leave). Measured in the Editor with the five PR ships: 5.3 s with frames of
   100-180 ms before, 0.9-1.9 s after with smooth frames (two of 83 / 164 ms right after the menu scene's load).

@@ -11,6 +11,21 @@ namespace GoF2Remake.Modding
 {
     public static class ModLoading
     {
+        /// <summary>Starts every loader for the mods that are on (the startup splash, the main menu): their ship models,
+        /// station models and planet / sun textures, weapon fx and sounds, sound effects, texture replacements (skins),
+        /// characters' portraits and music. Each loader does nothing when its part of the mods hasn't changed.</summary>
+        public static void Preload()
+        {
+            ModShips.Preload();
+            ModStations.Preload();
+            ModWeapons.Preload();
+            ModSounds.Preload();
+            ModTextures.Preload();
+            ModCharacters.Preload();
+            ModMusic.Preload();
+            _ = Busy;   // and the rest (the ships' own sounds, voices, hangar shadows)
+        }
+
         /// <summary>Something of the mods is still loading.</summary>
         public static bool Busy => !ModShips.Ready || !ModStations.Ready || !ModWeapons.Ready || !ModMusic.Ready || !ModSounds.Ready || !ModShipSounds.Ready || !ModTextures.Ready
                                    || !ModVoices.ReplacementsReady
