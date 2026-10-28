@@ -1155,7 +1155,7 @@ namespace GoF2Remake.Multiplayer
             var s = SiegeAt(station);
             if (s == null || !s.armed || s.garrisonAlive <= 0) return;
             var from = NetSquad.Find(client);
-            if (from == null || !from.OrbitAuthority || !NetGuard.InOrbit(client, station)) return;
+            if (from == null || from.RunsOrbit != station || !NetGuard.InOrbit(client, station)) return;
             float t = Time.realtimeSinceStartup;
             if (t - s.killWindowStart > GarrisonKillWindow) { s.killWindowStart = t; s.killsInWindow = 0; }
             if (++s.killsInWindow > GarrisonKillsPerWindow) return;

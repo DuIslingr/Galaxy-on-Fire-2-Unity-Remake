@@ -64,7 +64,8 @@ namespace GoF2Remake.Tests
             Assert.IsFalse(Settings.OriginalTargetLock, "target lock: Smart");
             Assert.IsTrue(Settings.KeepEnemyLock, "the Smart lock's hold on an enemy: on, as before it was its own option");
             Assert.IsFalse(Settings.KeyAutofire, "double-press autofire: off");
-            Assert.IsTrue(Settings.LevelPitch, "level out levels the nose: on");
+            Assert.IsFalse(Settings.LevelPitch, "level out levels the roll only, like the original");
+            Assert.IsFalse(Settings.FloatingTouchStick, "the touch stick stays in its place");
             Assert.IsFalse(Settings.GyroSteering, "controller gyro: off");
             Assert.IsFalse(Settings.VrGrabControls, "VR grab: off");
             Assert.AreEqual(-1f, Settings.TouchLeftHeight, "-1 = the original's place");

@@ -499,6 +499,7 @@ namespace GoF2Remake.UI
             channel.text = NetChat.ChannelName(c).ToUpperInvariant();
             channel.EnableInClassList("chat-channel--global", c == NetChat.Channel.Global);
             channel.EnableInClassList("chat-channel--faction", c == NetChat.Channel.Faction);
+            channel.EnableInClassList("chat-channel--squad", c == NetChat.Channel.Squad);
         }
 
         void OnAdded(NetChat.Message m)
@@ -600,7 +601,7 @@ namespace GoF2Remake.UI
             UpdateStats(session);
             if (!session || window) { if (open) Suspend(); return; }
             PollKeyboard();
-            if (NetChat.SendingNow != shownChannel) RefreshChannel();   // left the faction: back on Local
+            if (NetChat.SendingNow != shownChannel) RefreshChannel();   // left the squad / faction: back on Local
             HookTextInput();
             bool slash = slashTyped;
             slashTyped = false;

@@ -128,7 +128,15 @@ namespace GoF2Remake.UI
         int stickPointer = -1, firePointer = -1;
         bool fireSwallowed, autofire, boostWasReady;
         float lastFirePress = -10f, lastStickPress = -10f, boostFlashMs, gaugeMs = -1f;
+        /// <summary>Remake: the last stick press was a tap (let go within StickTapSeconds), so a second press makes the
+        /// double tap. The original takes any press within 499 ms of the last (MGame::OnTouchBegin 0x1a8558), so grabbing
+        /// the stick again mid-fight levelled the ship out.</summary>
+        bool stickTapped;
+        const float StickTapSeconds = 0.3f;
         Vector2 stickCentre;
+        /// <summary>The stick's own place (Layout); stickCentre is the touch point while a floating stick is held
+        /// (Settings.FloatingTouchStick).</summary>
+        Vector2 stickHome;
         Frame frame;
 
         static Texture2D Tex(string name) => Resources.Load<Texture2D>("GoF2Hud/" + name);
@@ -317,8 +325,11 @@ namespace GoF2Remake.UI
                 if (stickPointer >= 0) return;
                 stickPointer = e.pointerId;
                 stickArea.CapturePointer(stickPointer);
-                if (Time.unscaledTime - lastStickPress <= 0.499f) LevelOut?.Invoke();
+                if (stickTapped && Time.unscaledTime - lastStickPress <= 0.499f) LevelOut?.Invoke();
+                stickTapped = false;
                 lastStickPress = Time.unscaledTime;
+                // Remake (Settings.FloatingTouchStick): the stick moves under the thumb, the touch point its centre.
+                if (Settings.FloatingTouchStick) PlaceStick(layer.WorldToLocal(e.position));
                 MoveKnob(e.position);
                 e.StopPropagation();
             });
@@ -326,6 +337,7 @@ namespace GoF2Remake.UI
             void Up(int id)
             {
                 if (id != stickPointer) return;
+                stickTapped = Time.unscaledTime - lastStickPress <= StickTapSeconds;
                 if (stickArea.HasPointerCapture(stickPointer)) stickArea.ReleasePointer(stickPointer);
                 ReleaseStick();
             }
@@ -346,7 +358,15 @@ namespace GoF2Remake.UI
         {
             stickPointer = -1;
             Stick = Vector2.zero;
-            Place(knob, stickCentre - new Vector2(90.5f, 90.5f));
+            PlaceStick(stickHome);
+        }
+
+        /// <summary>The stick's base and knob centred on 'centre' (the base image 0x4c1 is 290 x 290, the knob 181 x 181).</summary>
+        void PlaceStick(Vector2 centre)
+        {
+            stickCentre = centre;
+            Place(stickBase, centre - new Vector2(145f, 145f));
+            Place(knob, centre - new Vector2(90.5f, 90.5f));
         }
 
         /// <summary>Touches on no control (MGame::OnTouchBegin with no HUD element, camera 0 / 1): the throttle drag and the
@@ -683,7 +703,8 @@ namespace GoF2Remake.UI
             // Globals::setCoordsSteer: the left group from S.
             PanelHeight = h;
             float S = Height01(Settings.TouchLeftHeight, S0, h - 425f);
-            stickCentre = new Vector2(165f, S + 277f);
+            stickHome = new Vector2(165f, S + 277f);
+            if (stickPointer < 0 || !Settings.FloatingTouchStick) stickCentre = stickHome;
             var boostPos = new Vector2(40f, S + 446f);
             if (boostPos.y > h - 113f)
             {
@@ -705,8 +726,8 @@ namespace GoF2Remake.UI
             SetImage(cluster, left ? clusterLeft : clusterBottom);
             var firePos = bg + new Vector2(200f, 200f);
 
-            Place(stickArea, stickCentre - new Vector2(StickHitX, StickHitY));
-            Place(stickBase, new Vector2(20f, S + 132f));
+            Place(stickArea, stickHome - new Vector2(StickHitX, StickHitY));
+            Place(stickBase, stickCentre - new Vector2(145f, 145f));
             if (stickPointer < 0) Place(knob, stickCentre - new Vector2(90.5f, 90.5f));
             Place(cluster, bg);
             Place(fire, firePos - new Vector2(99f, 99f));
