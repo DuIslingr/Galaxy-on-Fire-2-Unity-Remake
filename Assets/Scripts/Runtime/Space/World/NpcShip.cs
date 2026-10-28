@@ -689,6 +689,12 @@ namespace GoF2Remake.World
         /// <summary>The event order it is carrying out (null: its own AI).</summary>
         public NpcOrder Order => order;
 
+        /// <summary>Modified: its own flying speed (u/ms), what an order without a speed of its own flies at.</summary>
+        public float OwnSpeed => baseSpeed;
+
+        /// <summary>Modified: the point of its route it is flying to (game units), null without one.</summary>
+        public Vector3? RouteWaypoint => route?.Waypoint;
+
         int empByPlayer;
 
         /// <summary>NpcShip.ModelPath of a ship shown as a freighter wreck held at its end (setDeadButSelectable): the prefix

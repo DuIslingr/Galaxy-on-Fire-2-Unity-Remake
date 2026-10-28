@@ -478,6 +478,8 @@ namespace GoF2Remake.World
         /// and getCurrentCampaignMission > 0x59: the orbit's asteroids are all Novanium (Ginoya's other stations keep their
         /// normal ores). The remake reads Session.WorldIndex, so the finished game's world (multiplayer) has it too.</summary>
         public static bool NovaniumOrbit(OrbitLayout layout) =>
-            layout.systemIndex >= 0 && layout.stationIndex == 0x6d && Session.WorldIndex > 0x59;
+            layout.systemIndex >= 0 && (layout.stationIndex == 0x6d && Session.WorldIndex > 0x59
+            // Modified: the Supernova Challenge's round at Luur (111) is ringed with Novanium's magma asteroids too.
+                                        || SupernovaChallenge.Active && layout.stationIndex == 111);
     }
 }

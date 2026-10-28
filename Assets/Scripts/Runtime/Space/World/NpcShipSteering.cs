@@ -235,7 +235,9 @@ namespace GoF2Remake.World
                     attacking = true;
                     followingWaypoint = false;
                     drift = false;
-                    speed = fly;
+                    // Modified: not while it boosts (UpdateBoost's panic after losing 40 % of its hull, or its 5 % roll):
+                    // set back to the order's speed every frame, the boost never built up and an attacking ship never fled.
+                    if (!boosting) speed = fly;
                     UpdateBoost(dtMs);
                     Steer(dtMs);
                     Avoid(true, dtMs);
