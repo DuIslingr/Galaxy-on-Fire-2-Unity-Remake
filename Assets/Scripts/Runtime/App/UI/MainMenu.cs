@@ -433,14 +433,19 @@ namespace GoF2Remake.UI
             Modding.ModMusic.Preload();   // and their music (a replaced menu theme swaps in when it has loaded)
             Modding.ModMusic.Changed -= SwapModMusic;
             Modding.ModMusic.Changed += SwapModMusic;
+            // Modified: in a player the theme already plays from Unity's splash screen (SplashMusic): carried on from there.
+            float splashAt = SplashMusic.Take();
+            bool carried = false;
             if (musicSource != null && menuMusic != null)
             {
                 musicSource.clip = Modding.ModMusic.Replace(menuMusic);
                 musicSource.loop = true;
-                musicSource.volume = 0f;
+                carried = splashAt >= 0f && musicSource.clip == menuMusic && menuMusic.length > 0f;
+                musicSource.volume = carried ? Settings.MusicVolume : 0f;
                 musicSource.Play();      // MTitle starts the menu theme with the first logo
+                if (carried) musicSource.time = splashAt % menuMusic.length;
             }
-            StartCoroutine(FadeMusic(Settings.MusicVolume, 3f));
+            if (!carried) StartCoroutine(FadeMusic(Settings.MusicVolume, 3f));
 
             // The station menu's Start new game (MenuTouchWindow mode 2, 28): straight to the menu with that panel open.
             if (OpenPanelOnStart != null && panels.ContainsKey(OpenPanelOnStart))

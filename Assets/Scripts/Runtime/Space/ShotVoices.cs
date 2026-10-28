@@ -27,7 +27,7 @@ namespace GoF2Remake.Flight
 
         /// <summary>A shot at the listener (the player's own guns); 'volume' already includes the FX volume; 'pitch' the
         /// player's primaries' (a fire-rate weapon mod, WeaponSystem).</summary>
-        public static void Play(AudioClip clip, float volume, float pitch = 1f)
+        public static void Play(AudioClip clip, float volume, float pitch = 1f, float pan = 0f)
         {
             if (clip == null || volume <= 0.001f) return;
             if (host == null)
@@ -56,6 +56,7 @@ namespace GoF2Remake.Flight
             var src = v.sources[pick];
             src.volume = volume;
             src.pitch = pitch;
+            src.panStereo = pan;   // Modified: a shot away from the camera heard from its side (PlayAt)
             src.Stop();
             src.Play();
             v.started[pick] = now;
@@ -67,7 +68,7 @@ namespace GoF2Remake.Flight
             if (clip == null) return;
             var cam = Camera.main;
             float d = cam != null ? Vector3.Distance(cam.transform.position, position) : 0f;
-            Play(clip, volume * Mathf.Clamp01(1f - d / Sfx.AudibleMeters) * Settings.SfxVolume);
+            Play(clip, volume * Mathf.Clamp01(1f - d / Sfx.AudibleMeters) * Settings.SfxVolume, 1f, Sfx.Pan(position));
         }
     }
 }
