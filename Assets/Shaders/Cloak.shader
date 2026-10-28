@@ -1,6 +1,7 @@
 // GoF2/Cloak: the player's cloak (AbyssEngine::BumpShaderCloak, shader type 0xe; combat_equipment.md 1.6). The hull is
-// lit like before, then dissolves by cloak_map.png into the screen behind it, refracted by the normal map with a slow
-// wobble (x + n.x * 100 * sin(rate), y + n.y * 75 * cos(rate) at 1024x768), with a light-blue (0.6, 0.8, 1.0) edge.
+// lit like before, then dissolves by cloak_map.png into the screen behind it, refracted by the normal map (the original:
+// x + n.x * 100 * sin(rate), y + n.y * 75 * cos(rate) at 1024x768; Modified: only the glow
+// moves, see frag), with a light-blue (0.6, 0.8, 1.0) edge.
 // _AnimValue is the fade (0..1 over 2 s): the hull dissolves where the map is below it, the band glowing along the front,
 // blended over the lit hull up to 0.5; 0.5..0.75 blends into pure refraction (a glass silhouette).
 // Drawn by CloakPass after URP's transparents (LightMode GoF2Cloak) from its copy of the frame, _GoF2CloakScene, which
@@ -74,8 +75,19 @@ Shader "GoF2/Cloak"
                 half3 lit = albedo * (main.color * saturate(dot(nWS, main.direction)) + SampleSH(nWS));
 
                 float2 suv = GetNormalizedScreenSpaceUV(i.positionCS);
-                float2 wobble = float2(nTS.x * 100.0 * sin(_CloakRate), nTS.y * 75.0 * cos(_CloakRate)) / float2(1024.0, 768.0);
-                half3 refr = SAMPLE_TEXTURE2D_X(_GoF2CloakScene, sampler_GoF2CloakScene, UnityStereoTransformScreenSpaceTex(saturate(suv + wobble))).rgb;
+                // Modified: the screen behind is bent by the hull's normal map where it is and stays bent; only the glow
+                // seen through the hull (the ship's own lights, engine glow, shots, glare: the bright part of the copy) moves
+                // with the original's wobble (n.x * 100 * sin(u_CloakRate), n.y * 75 * cos(u_CloakRate) at 1024x768). The
+                // original swept the whole refracted picture, so the stars and space behind the ship slid too (the user's
+                // comparison: there only the lights move). The bright part of the still picture is taken out and the
+                // bright part of the moving one put in.
+                float2 bend = float2(nTS.x * 100.0, nTS.y * 75.0) / float2(1024.0, 768.0);
+                float2 sweep = float2(nTS.x * 100.0 * sin(_CloakRate), nTS.y * 75.0 * cos(_CloakRate)) / float2(1024.0, 768.0);
+                half3 still = SAMPLE_TEXTURE2D_X(_GoF2CloakScene, sampler_GoF2CloakScene, UnityStereoTransformScreenSpaceTex(saturate(suv + bend))).rgb;
+                half3 moving = SAMPLE_TEXTURE2D_X(_GoF2CloakScene, sampler_GoF2CloakScene, UnityStereoTransformScreenSpaceTex(saturate(suv + sweep))).rgb;
+                half glowStill = smoothstep(0.3, 0.75, dot(still, half3(0.3, 0.59, 0.11)));
+                half glowMoving = smoothstep(0.3, 0.75, dot(moving, half3(0.3, 0.59, 0.11)));
+                half3 refr = still * (1.0 - glowStill) + moving * glowMoving;
 
                 // BumpShaderCloak's fragment shader as it is (libgof2hdaa.so 0x218183): where the dissolve map is below
                 // u_AnimValue (+0.025) the screen behind shows, plus a light-blue band along the dissolve front
@@ -89,6 +101,35 @@ Shader "GoF2/Cloak"
                                              : lerp(color2, refr, saturate((_AnimValue - 0.5) * 4.0));
                 return half4(col, 1);
             }
+            ENDHLSL
+        }
+
+        // Modified: the hull's depth alone, drawn by CloakPass before the transparents (CloakPass.DepthPass): the cloaked
+        // hull's colour comes after them, so without it the ship's lights and engine glow on its far side (the wing tips'
+        // light strips seen through the wings) drew through the hull and showed through the cloak, which an uncloaked hull
+        // hides.
+        Pass
+        {
+            Tags { "LightMode" = "GoF2CloakDepth" }
+            ZWrite On
+            ColorMask 0
+            Cull Back
+            HLSLPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            struct Attributes { float4 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS : SV_POSITION; UNITY_VERTEX_OUTPUT_STEREO };
+            Varyings vert(Attributes i)
+            {
+                Varyings o;
+                UNITY_SETUP_INSTANCE_ID(i);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
+                o.positionCS = TransformObjectToHClip(i.positionOS.xyz);
+                return o;
+            }
+            half4 frag(Varyings i) : SV_Target { UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i); return 0; }
             ENDHLSL
         }
     }
