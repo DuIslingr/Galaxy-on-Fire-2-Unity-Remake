@@ -14,8 +14,9 @@ namespace GoF2Remake.UI
         const float HoldMs = 1200f, Speed = 40f;   // px per second
         const long TickMs = 33;
 
-        /// <summary>'label' (a child of 'clip') slides inside 'clip' when wider than it.</summary>
-        public static void Attach(VisualElement clip, Label label)
+        /// <summary>'label' (a child of 'clip') slides inside 'clip' when wider than it; when it fits it is centred, or
+        /// (Modified: 'centre' false, a text field's placeholder) at the left.</summary>
+        public static void Attach(VisualElement clip, Label label, bool centre = true)
         {
             clip.style.overflow = Overflow.Hidden;
             label.style.position = Position.Absolute;
@@ -50,7 +51,7 @@ namespace GoF2Remake.UI
                 if (float.IsNaN(clipW) || clipW <= 0f || !Measure()) return;
                 float over = textW + 2f - clipW;
                 sliding = over > 1f;
-                if (!sliding) { label.style.left = (clipW - textW - 2f) * 0.5f; ms = 0f; return; }
+                if (!sliding) { label.style.left = centre ? (clipW - textW - 2f) * 0.5f : 0f; ms = 0f; return; }
                 float travel = over / Speed * 1000f;
                 ms = (ms + TickMs) % (2f * (HoldMs + travel));
                 float t = ms, x;

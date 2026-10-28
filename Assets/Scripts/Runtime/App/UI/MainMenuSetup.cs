@@ -133,22 +133,7 @@ namespace GoF2Remake.UI
             BuildDebugPanel();
             UpdateDebugButton();
             // The mod browser (remake, ModBrowser): built in code next to the other panels.
-            if (root.Q("panelHost") is VisualElement modHost)
-            {
-                modBrowser = new ModBrowser(modHost, Back, HookFocusSound, () => Play(buttonRelease), () => StartCoroutine(RebuildModCache()),
-                                            ShowDialog, ShowNotice);
-                panels["modsPanel"] = modBrowser.Panel;
-                // The Mod Builder's projects (remake, Modding.ModBuilder): opening one starts its hangar behind the fade.
-                modProjects = new ModBuilderProjects(modHost, Back, HookFocusSound, () => Play(buttonRelease), OpenModProject, ShowDialog, ShowNotice);
-                panels[Modding.ModBuilder.ProjectsPanel] = modProjects.Panel;
-                // The Mod Browser's Edit in Mod Builder: the Mod Builder's page, making a project of that mod.
-                modBrowser.EditInBuilder = mod =>
-                {
-                    OpenPanel(Modding.ModBuilder.ProjectsPanel);
-                    modProjects.ImportInstalled(mod);
-                };
-                panels["modsHubPanel"] = BuildModsHub(modHost);
-            }
+            BuildModPanels();
             SetupMultiplayerPanel();
             Bind("easyButton", () => PickDifficulty(Session.DifficultyEasy));
             Bind("normalButton", () => PickDifficulty(Session.DifficultyNormal));
@@ -249,6 +234,31 @@ namespace GoF2Remake.UI
             FocusFirst(mainButtons);
             RefreshUpdateButton();
         }
+
+        /// <summary>The mod browser, the Mod Builder's projects and the Mods hub (remake), built in code. Modified: built
+        /// again when the language changes (RefreshTexts), since their texts are taken as they are built.</summary>
+        void BuildModPanels()
+        {
+            if (!(root.Q("panelHost") is VisualElement modHost)) return;
+            modBrowser?.Panel.RemoveFromHierarchy();
+            modProjects?.Panel.RemoveFromHierarchy();
+            if (panels.TryGetValue("modsHubPanel", out var oldHub)) oldHub.RemoveFromHierarchy();
+            modPanelsLanguage = Settings.Language;
+            modBrowser = new ModBrowser(modHost, Back, HookFocusSound, () => Play(buttonRelease), () => StartCoroutine(RebuildModCache()),
+                                        ShowDialog, ShowNotice);
+            panels["modsPanel"] = modBrowser.Panel;
+            // The Mod Builder's projects (remake, Modding.ModBuilder): opening one starts its hangar behind the fade.
+            modProjects = new ModBuilderProjects(modHost, Back, HookFocusSound, () => Play(buttonRelease), OpenModProject, ShowDialog, ShowNotice);
+            panels[Modding.ModBuilder.ProjectsPanel] = modProjects.Panel;
+            // The Mod Browser's Edit in Mod Builder: the Mod Builder's page, making a project of that mod.
+            modBrowser.EditInBuilder = mod =>
+            {
+                OpenPanel(Modding.ModBuilder.ProjectsPanel);
+                modProjects.ImportInstalled(mod);
+            };
+            panels["modsHubPanel"] = BuildModsHub(modHost);
+        }
+        string modPanelsLanguage;
 
         /// <summary>The Mods button's panel: the Mod Browser (installed mods) and the Mod Builder (your own projects).</summary>
         VisualElement BuildModsHub(VisualElement host)

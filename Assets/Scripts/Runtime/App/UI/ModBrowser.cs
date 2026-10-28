@@ -102,7 +102,8 @@ namespace GoF2Remake.UI
             {
                 var mod = selected != null ? ModManager.Find(selected) : null;
                 if (mod != null) EditInBuilder?.Invoke(mod);
-            });
+            }, "mods-edit");   // Modified: its own class, so its text may wrap (MainMenu.uss)
+            Add(actions, new VisualElement(), "mods-row-break");   // Modified: Delete on its own row, under Turn on / off
             delete = ActionButton(actions, T("modsDelete", "Delete"), AskDelete, "mods-delete");
 
             var footer = Add(Panel, new VisualElement(), "mods-footer");

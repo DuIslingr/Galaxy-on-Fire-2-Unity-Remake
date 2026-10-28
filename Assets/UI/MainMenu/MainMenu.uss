@@ -620,8 +620,32 @@
 
 .mods-actions {
     flex-direction: row;
+    flex-wrap: wrap;   /* Modified: longer translations go on to a second row instead of breaking the words */
     flex-shrink: 0;
     margin-top: var(--space-l);
+}
+
+/* Modified: a button's text never breaks mid-word (Portuguese's "Antes" came out AN / TE / S) */
+.mods-actions > .mods-action {
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-bottom: 8px;
+}
+
+/* Modified: "Edit in Mod Builder" may break over two lines, so the row stays one row */
+.mods-actions > .mods-edit {
+    white-space: normal;
+    max-width: 180px;
+}
+
+/* Modified: ends the action row, so Delete starts the next one under Turn on / off */
+.mods-row-break {
+    width: 100%;
+    height: 0;
+}
+
+.mods-actions > .mods-delete {
+    min-width: 140px;   /* as .mods-toggle */
 }
 
 .mods-action {
@@ -669,7 +693,7 @@
 }
 
 .mods-toggle {
-    min-width: 190px;
+    min-width: 140px;   /* Modified: 190 made it wider than the other buttons and pushed them on to a second row */
     color: #04121c;
     background-color: var(--gof-cyan);
     border-color: var(--gof-cyan);
@@ -692,9 +716,8 @@
     padding-right: 44px;
 }
 
-/* Delete (asks first): at the row's far end, red like Turn off. */
+/* Delete (asks first): red like Turn off. Modified: on its own row under Turn on / off, as wide (.mods-row-break). */
 .mods-delete {
-    margin-left: auto;
     margin-right: 0;
     border-color: rgba(230, 80, 60, 0.6);
 }
@@ -735,6 +758,7 @@
 
 .mods-footer {
     flex-direction: row;
+    flex-wrap: wrap;   /* Modified: the buttons go on to a second row rather than out of the panel */
     align-items: center;
     flex-shrink: 0;
     margin-top: var(--space-l);
@@ -743,6 +767,7 @@
 .mods-note {
     flex-grow: 1;
     flex-shrink: 1;
+    min-width: 200px;   /* Modified: with the footer wrapping, it keeps a readable width */
     margin-right: var(--space-l);
     font-size: var(--text-small);
     color: var(--gof-text-dim);
@@ -767,12 +792,30 @@
 
 .mb-new-name {
     flex-grow: 1;
-    margin: 0 8px 0 0;
+    min-width: 230px;   /* Modified: room for the whole placeholder */
+    margin: 0;
+}
+
+/* Modified: the search field's placeholder, a sliding label over the field's input (ModBuilderProjects, TextMarquee) */
+.mb-placeholder-clip {
+    position: absolute;
+    left: 13px;
+    right: 13px;
+    top: 0;
+    bottom: 0;
+}
+
+.mb-placeholder {
+    font-size: var(--text-small);
+    color: rgba(216, 236, 247, 0.45);
 }
 
 .mb-create {
+    margin-left: 10px;   /* Modified: a gap between the field and the buttons, and between the buttons */
     margin-right: 0;
     flex-shrink: 0;
+    padding: 8px 12px;
+    letter-spacing: 2px;
 }
 
 .mb-field {
