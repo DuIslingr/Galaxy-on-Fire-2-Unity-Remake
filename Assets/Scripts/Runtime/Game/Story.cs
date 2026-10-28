@@ -421,7 +421,9 @@ namespace GoF2Remake.Data
                     if (drills > 0) { Shop.RemoveFromCargo(90, drills); Shop.AddToCargo(86, drills); }
                     Session.Unsaleable.Remove(90);
                     break;
-                case 13: Session.StoryMission.value = Session.FreelanceCompleted + 1; break;
+                // Modified: three freelance missions before the Terran convoy arrives, as players remember the original
+                // (Status::nextCampaignMission case 0xc in this binary sets the count + 1).
+                case 13: Session.StoryMission.value = Session.FreelanceCompleted + StepThirteenMissions; break;
                 case 23: RevealSystem(db, 6); break;                                        // Wolf-Reiser
                 case 24: Session.VoidInvasionSystem = 9; Session.VoidInvasionStation = 48; break;
                 case 25: Session.Unsaleable.Add(131); break;                            // Alien Remains
@@ -659,6 +661,9 @@ namespace GoF2Remake.Data
             if (station == 78 && Session.CampaignMission < 7) return 0;
             return Index == 20 && station == 55 && item == 41 ? 0 : price;
         }
+
+        /// <summary>Modified: the freelance missions step 13 asks for (the original binary: 1).</summary>
+        public const int StepThirteenMissions = 3;
 
         /// <summary>MGame::OnTouchBegin's planet-jump gates for the campaign target (campaign_levels_b.md 3, campaign_levels_c.md
         /// 3.8 / 3.10 / 3.11): the text id of the refusal, -1 = allowed.</summary>

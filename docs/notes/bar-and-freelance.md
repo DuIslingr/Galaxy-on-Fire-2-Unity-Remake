@@ -65,8 +65,9 @@ generator).
   +-25 000, or within +-detectRange (default 50 000) unless the player is cloaked; other ships never wake it (the rival,
   the convoy and wingmen woke them early); a non-hostile one on its target within +-detectRange; fixed objects and
   freighters on any enemy within +-50 000 (`PlayerFixedObject::update`). Courier / Passenger cargo draws pirate escorts;
-  the Informer orbit has its spy (1663). Story step 13 is completed by a freelance mission. EMP weapons now drain NPC
-  EMP.
+  the Informer orbit has its spy (1663). Story step 13 is completed by three freelance missions (remake, #196,
+  `Story.StepThirteenMissions`, as players remember the original; the binary's `nextCampaignMission`: one). EMP
+  weapons now drain NPC EMP.
 - **Stolen goods** (#113): the original marks the agent's station from the start (`Mission::getTargetStation`), and players
   went back there looking for the documents; remake: no marker until the documents are aboard, then the client's station
   (`NavigationView.IsFreelanceTarget`, `Freelance.HasDocuments`), and the target's shop gets no new set while they are

@@ -119,11 +119,12 @@ a space ("20,000个信用分"), all-caps words of item / ship / station / system
   computer speakers share `11_3_3`).
 - **Campaign levels built** (the whole main story): 0 / 1 (above), 4 / 5 (sleeping pirate brought in by index 5's
   script), 7 (pirate trap: route, 3 sleepers at waypoint 2, Gunant always-friend), and in `MainCampaignLevels`
-  (`campaign_levels_a.md` 3.5-3.16): 14 the EMP arrest at Kernstal (first kill → the EMP hit's sound; the line over →
-  the cutscene with the EMP lightning on the ship (#85: the original puts the systems on the player's reference matrix,
+  (`campaign_levels_a.md` 3.5-3.16): 14 the EMP arrest at Kernstal (first kill → the line; the line over → the
+  cutscene with the EMP hit's sound and the EMP lightning on the ship (#85: the original puts the systems on the player's reference matrix,
   which only the cutscene's `updateReferenceMatrix` refreshes, so its chase view shows none; flashScreen(3) is no
   visible flash), turned, cruiser → docked at Alioth, 15), 16 the first Void contact at Alioth (freighters, Brent's
-  Inflicts, the Void ignore the player, flee into the wormhole; a fight plays 136 Space_Combat_Void, `Radar::draw`
+  Inflicts, the Void ignore the player, flee into the wormhole; remake (#196): it closes as the first cutscene ends
+  and the player's ship stops for the second; a fight plays 136 Space_Combat_Void, `Radar::draw`
   0x10), 21 the Hijacker at Kappa (scouts turn hostile, EMP him, killing him fails; launching needs an EMP bomb, 531),
   24 Void samples at Sahi (3 t from crates → the wormhole swallows the player; the Sahi jump needs a scanner and a
   tractor beam, Carla's 532), 25 / 26 the Void orbit and the pursuers back at Sahi, 28 the Dima wormhole, 29 the probe

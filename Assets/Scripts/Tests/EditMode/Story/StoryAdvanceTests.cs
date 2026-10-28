@@ -252,13 +252,15 @@ namespace GoF2Remake.Tests
         }
 
         [Test]
-        public void Step13NeedsOneMoreFreelanceMission()
+        public void Step13NeedsThreeMoreFreelanceMissions()
         {
+            // Modified: three (Story.StepThirteenMissions; the original binary sets the count + 1).
             Session.FreelanceCompleted = 4;
             EnterStep(13);
-            Assert.AreEqual(5, Story.Mission.value, "statusValue = current count + 1");
-            Assert.IsFalse(Story.IsComplete(Db, new StoryContext { docked = true, station = 79 }));
-            Session.FreelanceCompleted = 5;
+            Assert.AreEqual(4 + Story.StepThirteenMissions, Story.Mission.value, "statusValue = current count + 3");
+            Session.FreelanceCompleted = 6;
+            Assert.IsFalse(Story.IsComplete(Db, new StoryContext { docked = true, station = 79 }), "two of three");
+            Session.FreelanceCompleted = 7;
             Assert.IsTrue(Story.IsComplete(Db, new StoryContext { docked = true, station = 79 }));
         }
 
