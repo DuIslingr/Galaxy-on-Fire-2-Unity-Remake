@@ -23,6 +23,7 @@ namespace GoF2Remake.UI
         {
             root = rootElement;
             ScrollBars.Watch(rootElement);   // Modified: the hangar's scrollbar on every scroll view that needs one
+            StickScroll.Watch(rootElement);   // Remake: the right stick scrolls the long texts
             root.style.flexGrow = 1;   // the default theme would stretch the document root; ours is custom
             root.EnableInClassList("can-hover", !touchMode);
             safeArea = root.Q("safeArea");

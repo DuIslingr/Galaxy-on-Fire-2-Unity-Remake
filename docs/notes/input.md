@@ -79,6 +79,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 - **D-pad taps** (`DpadTapNavigation`): UI Toolkit's runtime input samples UI/Navigate once a frame and drops a D-pad
   press released within the frame (the Steam controller's trackpad D-pad); the main and station menus send those taps
   (`wasPressedThisFrame` and already up) to the panel as NavigationMoveEvents.
+- **Right stick scrolls the texts** (remake, #169, `StickScroll`): in the main and station menus the right stick, up and
+  down, scrolls the shown scroll view that overflows and doesn't hold the focus (the lounge's dialogue, the shop's and
+  the item window's descriptions; a focused list scrolls to its focus); of several, the last in the document. Pushed
+  more sideways than up or down it scrolls nothing (the hangar's ship turning); not during Inspect ship (its camera), not
+  in the flight HUD or the star map (steering, the map's turning).
 - **Input modes:** `InputMode` tracks the last input kind (Touch / KeyboardMouse / Gamepad, switching on the first real
   input of another kind, on any platform). The flight HUD (`UI/Flight`, `FlightHud`) shows the touch controls (see
   **Touch controls** below) only for touch, keycap hints for keyboard and controller button hints for a controller, in

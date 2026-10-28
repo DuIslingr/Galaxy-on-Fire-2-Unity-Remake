@@ -136,6 +136,7 @@ namespace GoF2Remake.UI
                 return;
             }
             ScrollBars.Watch(rootElement);   // Modified: the hangar's scrollbar on every scroll view that needs one
+            StickScroll.Watch(rootElement, () => level == null || !level.Inspect.Active);   // the right stick: Inspect ship's camera
             if (!Localization.IsLoaded && languageTables != null && languageTables.Length > 0)
             {
                 int i = languageCodes != null ? System.Array.IndexOf(languageCodes, Settings.Language) : -1;
