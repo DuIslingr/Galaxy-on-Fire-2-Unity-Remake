@@ -3,20 +3,23 @@
 // Data.SupernovaChallenge): Level::createMission's 0xb7 branch 0xbed0a and Level::updateMissionOrbit 0xd4bd4 in Luur's orbit.
 //   [0-7]   8 Specters (createShip(10, 0, 0x2c) at (-55000, 0, -35000) +- 20000 per axis, always enemy, hull 250 (setMaxHitpoints),
 //           no loot, no route: they go for the player)
-//   [8]     the burning "Station Platform" (0x495d, text 3208) at the origin, turned (0, -2.35619, 0)
-//   [9]     a Terran carrier (0x4974) at (-70000, -5000, -35000)
+//   [8]     the original's code: the burning "Station Platform" (0x495d, text 3208) at the origin, turned (0, -2.35619, 0)
+//   [9]     and a Terran carrier (0x4974) at (-70000, -5000, -35000)
 //           both radar-hidden (KIPlayer+0x70), race 10 (the Specters leave them alone), 9 999 999 hull: scenery
-//   [10-13] 4 unarmed Rhinos (race 0, ship 0x33) shuttling carrier -> (30000, 1000, 40000) -> platform (Route(..., 9), like 102)
+//   [10-13] and 4 unarmed Rhinos (race 0, ship 0x33) shuttling carrier -> (30000, 1000, 40000) -> platform (Route(..., 9))
+//           The remake leaves [8-13] out (below).
 // Every 7500 ms each Specter whose explosion is over comes back at full hull 50 000-80 000 units from the player on x and z,
 // 10 000-20 000 above or below (updateMissionOrbit). The player starts at (-30000, 5000, -100000) (0xbf102). The round ends
 // after 181 000 ms; the original's success page then restarts it (MGame::OnTouchEnd). Remake: the end asks "Play again?" (300)
 // with the score, the kills and the highscore (294 / 295 / 296; the original's dead ChoiceWindow 1.2 had that shape), also
 // after the player's death; the Specters fire their ordinary guns (assignGuns' damage 1 then the Specters' x0.7 made 0 in the
 // Android build: harmless). Remake pick: the player faces the Specters' spawn point (the original's heading wasn't traced).
-// Modified (the user's comparison with the original's video): no platform, carrier or Rhinos (the original's round shows
-// none of them: the Specters and the player alone at Luur), and the round opens with the
-// arrival fly-in (SpaceLevel's launch camera, close: 150 m ahead, over once the ship passes it; fire or any key skips). The first wave flies
-// fast (FirstLegMs) to the point it heads for, then attacks the player at its own speed.
+// Modified (#179, the user's comparison with the original's video): no platform, carrier or Rhinos (the original's round
+// shows none of them: the Specters and the player alone at Luur, ringed with Novanium's magma asteroids,
+// OrbitLayout.ChallengeNovaniumOrbit), and the round opens with the arrival fly-in (SpaceLevel's launch camera, close: 150 m
+// ahead, over once the ship passes it; fire or any key skips). The first wave flies fast (FirstLegMs) to one point
+// (FirstWavePoint), then attacks the player, easing down to its own speed (FirstWaveSlowMs); a Specter that comes back
+// (Revive) has no order left and goes for the player as before.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
@@ -37,25 +40,21 @@ namespace GoF2Remake.World
         // Modified: after the point the first wave eases from its fast run down to its own speed over this long.
         const float FirstWaveSlowMs = 2000f;
         readonly Dictionary<NpcShip, (NpcOrder order, float from, float ms)> slowing = new Dictionary<NpcShip, (NpcOrder, float, float)>();
+        readonly List<NpcShip> slowingKeys = new List<NpcShip>(), slowingDone = new List<NpcShip>();   // UpdateSlowing's, reused
+        // The speed of each first-wave Specter's run to its point (UpdateFirstWave carries it into the attack).
+        readonly Dictionary<NpcShip, float> lastRunSpeed = new Dictionary<NpcShip, float>();
         const float EndDelayMs = 1500f;    // remake: the question after the time-out (the original's successCheck ran every ~5 s)
         const float DeathDelayMs = 7000f;  // the game over's "Tap to ..." moment (FlightHud)
         const float SoundVolume = 0.42658f;   // the SV_Mode events' volume (supernova_challenge.md 6.3)
 
         static readonly Vector3 SpecterPoint = new Vector3(-55000, 0, -35000);
-        static readonly Vector3 CarrierPoint = new Vector3(-70000, -5000, -35000);
         static readonly Vector3 PlayerStart = new Vector3(-30000, 5000, -100000);
-        static readonly Vector3 ShuttlePoint = new Vector3(30000, 1000, 40000);
-        static readonly Vector3[] RhinoStarts =
-        {
-            new Vector3(20000, -3000, -50000), new Vector3(10000, -7000, -30000), new Vector3(25000, 0, -36000), new Vector3(12000, 6000, -45000),
-        };
 
         SpaceLevel level;
         Traffic traffic;
         readonly List<NpcShip> specters = new List<NpcShip>();
         // Modified: the first wave flies on to the point it heads for at the start, then goes for the player (UpdateFirstWave).
         readonly List<NpcShip> firstWave = new List<NpcShip>();
-        readonly ShuttleRoutes shuttles = new ShuttleRoutes();
         AudioSource sfx;
         // Modified: the round's clock ran out: the Khador Drive's jump scene plays, its end asks the question (jumpedOut).
         bool jumping, jumpedOut;
@@ -101,26 +100,13 @@ namespace GoF2Remake.World
                     firstWave.Add(s);
                 }
             }
-            // Modified: the burning platform, the carrier and the four Rhinos (Scenery, RhinoStarts) aren't spawned: the
-            // original's round has none of them (the user's comparison with its video).
+            // Modified: the burning platform, the carrier and the four Rhinos aren't spawned: the original's round has none of
+            // them (the user's comparison with its video).
             traffic.ConnectPlayers();
             traffic.ShipDied += OnShipDied;
             var start = ToUnity(PlayerStart);
             level.MovePlayer(start, Quaternion.LookRotation((ToUnity(SpecterPoint) - start).normalized, Vector3.up));
-            Debug.Log($"ChallengeOrbit: round {SupernovaChallenge.Round}, {specters.Count} Specters, {shuttles.All.Count} Rhinos");
-        }
-
-        /// <summary>Level::createStaticObject with the challenge's settings: never moving, 9 999 999 hull, race 10, off the radar
-        /// (+0x70 = 1: no marker, lock or docking), its collision volume.</summary>
-        NpcShip Scenery(string assembly, Vector3 at, Vector3 rotation, int nameText, int collision)
-        {
-            var s = traffic.SpawnShip(new SpawnSpec
-            {
-                group = NpcGroup.Special, race = Standing.Specter, ship = -1, position = at, fixedObject = assembly, rotation = rotation,
-                nameText = nameText, alwaysFriend = true, hitpoints = 9999999, noLoot = true, stationary = true, hitRadius = 6000f, collisionId = collision,
-            });
-            if (s != null) s.Target.untargetable = true;
-            return s;
+            Debug.Log($"ChallengeOrbit: round {SupernovaChallenge.Round}, {specters.Count} Specters");
         }
 
         void OnDestroy()
@@ -149,7 +135,6 @@ namespace GoF2Remake.World
             if (dtMs <= 0f) return;
             SupernovaChallenge.Tick(dtMs);
             PlaySound(SupernovaChallenge.TakeSound());
-            shuttles.Update(dtMs);
             UpdateFirstWave();
             UpdateSlowing(dtMs);
             UpdateWaves(dtMs);
@@ -168,28 +153,29 @@ namespace GoF2Remake.World
             for (int i = firstWave.Count - 1; i >= 0; i--)
             {
                 var s = firstWave[i];
-                if (s == null || s.Gone || s.Current != NpcShip.State.Fly) { firstWave.RemoveAt(i); continue; }
+                if (s == null || s.Gone || s.Current != NpcShip.State.Fly) { firstWave.RemoveAt(i); if ((object)s != null) lastRunSpeed.Remove(s); continue; }
                 if (s.Order != null && s.Order.kind == NpcOrder.Kind.Move) { lastRunSpeed[s] = s.Order.speed; continue; }
                 firstWave.RemoveAt(i);
-                if (player == null) continue;
                 // Carrying the run's speed into the attack and easing it down to its own (UpdateSlowing).
                 float from = lastRunSpeed.TryGetValue(s, out var v) ? v : -1f;
+                lastRunSpeed.Remove(s);
+                if (player == null) continue;
                 var attack = new NpcOrder { kind = NpcOrder.Kind.Attack, target = player, speed = from };
                 s.SetOrder(attack);
                 if (from > s.OwnSpeed) slowing[s] = (attack, from, 0f);
             }
         }
 
-        readonly Dictionary<NpcShip, float> lastRunSpeed = new Dictionary<NpcShip, float>();
-
         /// <summary>Modified: a first-wave Specter past its point slows from its run's speed to its own over FirstWaveSlowMs
         /// (smoothstep), so it reaches the player with some of that momentum; then its attack flies at its own speed.</summary>
         void UpdateSlowing(float dtMs)
         {
             if (slowing.Count == 0) return;
-            var done = new List<NpcShip>();
-            var keys = new List<NpcShip>(slowing.Keys);
-            foreach (var s in keys)
+            var done = slowingDone;
+            done.Clear();
+            slowingKeys.Clear();
+            slowingKeys.AddRange(slowing.Keys);
+            foreach (var s in slowingKeys)
             {
                 var (order, from, ms) = slowing[s];
                 if (s == null || s.Gone || s.Order != order) { done.Add(s); continue; }

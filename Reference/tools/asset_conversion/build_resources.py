@@ -27,6 +27,10 @@ for r in R:
     elif r['kind']=='type3':
         tid=int.from_bytes(bytes.fromhex(r['raw'][:4]),'little')
         images.append(dict(id=r['id'],texture=tex.get(tid),textureId=tid))
+# Remake: models the original has no resource id for (assemblies/build_assemblies.py MODEL_OVERRIDE): the Terran hangar's fifth bot
+REMAKE=[(99004,'Models/main/hangars/hangar_terran_bot_e_anim.fbx',"remake: the Terran hangar's fifth service bot (no original resource id)",24070),
+        (99005,'Models/main/hangars/hangar_terran_bot_e_anim_add.fbx',"remake: the Terran hangar's fifth service bot's glow layer (no original resource id)",20078)]
+for i,up,src,mat in REMAKE: meshes.append(dict(id=i,model=up,source=src,materialId=mat))
 out=dict(note='Recovered by emulating BuildResourceList() from libgof2hdaa.so. IDs are the game\'s own resource IDs.',
          meshes=meshes,materials=list(mats.values()),textures=[dict(id=k,path=v) for k,v in tex.items()],images2D=images)
 json.dump(out,open(U+'/Resources/GoF2Data/resources.json','w'),indent=1)

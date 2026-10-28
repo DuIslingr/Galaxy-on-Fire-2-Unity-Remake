@@ -54,6 +54,18 @@ waves, `WeaponFx.Shot` / `ExplosionSound` pick one at random; the sentry deploy 
   the first primary gun makes the sound, also the player's own: a mixed loadout sounds slot 1, as the original; the
   Sound tab's "Every weapon's own shot sound" sounds the first gun of each primary item, mirrors too). Real voices 64
   (AudioManager).
+- **Stereo pan** (#180, `Sfx.Pan`; the rule in `Sfx.PanLocal`, tested by `SfxPanTests`): `Sfx.PlayAt` and the shot
+  voices pan by the sound's side of the camera (camera-space x / distance × `PanAmount` 0.85, never fully one-sided;
+  centred ahead, behind and within 1 m), as the original's 3D events are heard from where they are.
+- **Menu theme from the first logo** (#180, `SplashMusic`; MTitle starts 145 Space_NoCombat_Void with the first logo):
+  in a player it starts before Unity's splash screen (`BeforeSplashScreen`; not in the Editor, which draws the logos in
+  the menu, nor in batch mode or on a dedicated server, `DedicatedServer.Enabled`), with the master volume applied there
+  (Bootstrap's comes later) and a listener of its own until the first scene's. `Resources/GoF2Music/MenuTheme` is a
+  `SplashTheme` asset that references `Audio/MUSIC/Space_NoCombat_Void.ogg` (it was a 1 MB copy of it: the clip shipped
+  twice). `MainMenu` adopts the playing source as its music source (`SplashMusic.Take` moves it into the menu scene; it
+  used to destroy it and seek a second stream to the same point: a gap or a doubling). A mod's menu theme fades in over
+  it (`MainMenu.SwapMusic`: 1 s out, 1.5 s in; it cut in hard), also when it finishes loading later; the newest
+  `FadeMusic` wins (leaving the menu stops a swap).
 - The rescue (index 1) plays the system race's space track (index 0's state 16 sets `Globals::switch_to_target_setting`:
   `playMusicAndFadeOutCurrent(1)`, Mido 137); 141 Space_Battle_Medium is the time jump's arrival only.
 - Not yet: the generic event volumes of the older SFX; the loop waves' seams (many SFX loops end some samples past their

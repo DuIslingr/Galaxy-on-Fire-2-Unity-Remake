@@ -22,6 +22,28 @@ Shader "GoF2/Cloak"
         ZWrite On
         Cull Back
 
+        // Both passes share the textures and one UnityPerMaterial layout (the SRP Batcher needs it the same in every pass).
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
+        TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
+        TEXTURE2D(_CloakMap); SAMPLER(sampler_CloakMap);
+        CBUFFER_START(UnityPerMaterial)
+            float4 _BaseMap_ST;
+            float _AnimValue, _CloakRate;
+        CBUFFER_END
+
+        // How much of the lit hull is left in the colour pass's blend at this texel (d: the dissolve map): up to 0.5 the
+        // hull where d - 0.025 >= _AnimValue stays, the dissolved rest fades from it over 0..0.25; from 0.5 to 0.75 what
+        // was left goes too.
+        half CloakHullLeft(float d)
+        {
+            bool solid = d - 0.025 >= _AnimValue;
+            return _AnimValue < 0.5 ? (solid ? 1.0 : 1.0 - saturate(_AnimValue * 4.0))
+                                    : (solid ? 1.0 - saturate((_AnimValue - 0.5) * 4.0) : 0.0);
+        }
+        ENDHLSL
+
         Pass
         {
             Tags { "LightMode" = "GoF2Cloak" }
@@ -29,17 +51,8 @@ Shader "GoF2/Cloak"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             TEXTURE2D_X(_GoF2CloakScene); SAMPLER(sampler_GoF2CloakScene);
-
-            TEXTURE2D(_BaseMap); SAMPLER(sampler_BaseMap);
-            TEXTURE2D(_BumpMap); SAMPLER(sampler_BumpMap);
-            TEXTURE2D(_CloakMap); SAMPLER(sampler_CloakMap);
-            CBUFFER_START(UnityPerMaterial)
-                float4 _BaseMap_ST;
-                float _AnimValue, _CloakRate;
-            CBUFFER_END
 
             struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float4 tangentOS : TANGENT; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings
@@ -104,10 +117,13 @@ Shader "GoF2/Cloak"
             ENDHLSL
         }
 
-        // Modified: the hull's depth alone, drawn by CloakPass before the transparents (CloakPass.DepthPass): the cloaked
-        // hull's colour comes after them, so without it the ship's lights and engine glow on its far side (the wing tips'
-        // light strips seen through the wings) drew through the hull and showed through the cloak, which an uncloaked hull
-        // hides.
+        // Modified: the hull's depth, drawn by CloakPass before the transparents (CloakPass.DepthPass), only where the hull
+        // is still mostly there (CloakHullLeft >= 0.5): the cloaked hull's colour comes after them, so without it the
+        // ship's lights and engine glow on its far side (the wing tips' light strips seen through the wings) drew through
+        // the hull and showed through the cloak, which an uncloaked hull hides. Where the hull has dissolved, and on a
+        // fully cloaked ship (_AnimValue >= 0.75, pure refraction), no depth: the shots, explosions, smoke and engine
+        // flames behind it are drawn and refracted as the original's (no depth before its last-drawn hull); a depth
+        // silhouette there cut a hole in them that gave the ship away.
         Pass
         {
             Tags { "LightMode" = "GoF2CloakDepth" }
@@ -118,18 +134,23 @@ Shader "GoF2/Cloak"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile_instancing
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            struct Attributes { float4 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
-            struct Varyings { float4 positionCS : SV_POSITION; UNITY_VERTEX_OUTPUT_STEREO };
+            struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; UNITY_VERTEX_OUTPUT_STEREO };
             Varyings vert(Attributes i)
             {
                 Varyings o;
                 UNITY_SETUP_INSTANCE_ID(i);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
                 o.positionCS = TransformObjectToHClip(i.positionOS.xyz);
+                o.uv = i.uv;
                 return o;
             }
-            half4 frag(Varyings i) : SV_Target { UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i); return 0; }
+            half4 frag(Varyings i) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
+                clip(CloakHullLeft(SAMPLE_TEXTURE2D(_CloakMap, sampler_CloakMap, i.uv).r) - 0.5);
+                return 0;
+            }
             ENDHLSL
         }
     }

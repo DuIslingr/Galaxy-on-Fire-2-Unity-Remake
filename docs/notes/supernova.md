@@ -10,7 +10,10 @@ against the FEV's LGCY data, see "Sound").
 
 - **Story rules** (`Story`): step side effects 89-144 (items given / taken, systems 27-31 revealed, counters reset); empty
   missions at 45 / 84 / 128 / 130 / 162; a pending blueprint product completes 143's purchase; `RequirementRefusal` (the planet
-  jump / launch checks: cabins 3214, 105 gamma shield II 3217, 135 3213, 139 a Vossk ship + signature 3215, 142 3216 / 3218).
+  jump's, the launch's and, since #186, the star map's checks, `StarMap.Confirm` as `StarMap::OnTouchEnd`: cabins 3214, 91
+  seats for all ten survivors and 94 any cabin, 105 gamma shield II 3217, 135 3213, 139 the Vol Noor (0x2a passes as it is)
+  or another Vossk ship with the signature 190 3215, 142 3216 / 3218). The star map also has `OnTouchEnd`'s step 24 check
+  (scanner and tractor beam, else 532; the planet jump's is `StorySpace.RefusePlanetJump`).
   `StorySpace`: the after-success teleports (95, 96 / 127, 100, 110, 120, 126, 134, 144, 155, 161, 162), Carla's chapter calls,
   125's decoy scan. `StationMenu`: the 116 bars (90 / 91 / 92 / 94) and the 148 brokers (55 / 66 / 9).
 - **Levels** (`SupernovaLevels`, run by `CampaignLevel` after the main / Valkyrie levels; the header lists every level and the
@@ -129,12 +132,19 @@ against the FEV's LGCY data, see "Sound").
   `SupernovaChallenge.Start` = `MenuTouchWindow::startSupernovaChallenge`: `Session.ResetNewGame`, campaign index 0x98 (no
   step side effects: an empty story mission), Normal and the Android economy (remake: one highscore table), ship 46 Blue
   Fyre with 231 / 230 / 231, 73, 54, 59, 83, 206, 75, 76 and Patala x5 (x10 on a restart), 220 kills (rank 9), Luur (111),
-  the hints marked shown; straight into `Space` (no launch camera). The orbit (`createMission`'s 0xb7 branch): 8 Specters
-  (hull 250, always enemy, no loot) at (-55000, 0, -35000) +- 20000, the burning platform (3208) and a Terran carrier as
-  race-10, untargetable scenery, 4 unarmed Rhinos shuttling carrier -> (30000, 1000, 40000) -> platform on their pads
-  (`ShuttleRoutes`, the 94 / 102 shuttle code moved out of `SupernovaLevels`); every 7500 ms each Specter whose explosion is
-  over comes back 50 000-80 000 units from the player (`updateMissionOrbit`); the player starts at (-30000, 5000, -100000)
-  facing the Specters' point (remake pick); `SpaceLevel` keeps it passive (no traffic or wingmen), refuses jumps and the
+  the hints marked shown; straight into `Space`. The orbit (`createMission`'s 0xb7 branch): 8 Specters (hull 250, always
+  enemy, no loot) at (-55000, 0, -35000) +- 20000; the original's code also makes the burning platform (3208) and a Terran
+  carrier as race-10 scenery and 4 unarmed Rhinos shuttling between them, which the remake leaves out since #179 (the
+  user's comparison with the original's video: the Specters and the player alone at Luur, ringed with Novanium's magma
+  asteroids, `OrbitLayout.ChallengeNovaniumOrbit`, kept apart from `NovaniumOrbit` = `Status::inSupernovaOrbit`, 0x6d
+  only). The round opens with the arrival fly-in (`SpaceLevel`'s launch camera, close: 150 m ahead, over once the ship
+  passes it; fire or any key skips). The first wave flies to one point (`FirstWavePoint`, reached within 300 m) in about
+  5 s (`FirstLegMs`, a Move order at the run's speed), then attacks the player, easing from the run's speed to its own over
+  2 s (`UpdateSlowing`); `NpcShip.Revive` clears the order, so a Specter killed on its run comes back without it. Every
+  7500 ms each Specter whose explosion is over comes back 50 000-80 000 units from the player (`updateMissionOrbit`); the
+  player starts at (-30000, 5000, -100000) facing the Specters' point (remake pick); time up plays the Khador Drive's jump
+  scene (`SystemJump.PlayKhadorScene`) before the results; `SpaceLevel` keeps it passive (no traffic or wingmen),
+  refuses jumps and the
   gate; music 2242 (`Traffic.CalmClip`, then the Specter battle tracks); gamma 1/s x 0.4 with the Gamma Shield II. The round
   is 181 000 ms (the HUD timer, `HudReadout`). Not in the challenge: the autopilot menu, its touch button and hint
   (`Navigation.CanOpenMenu`, `NavigationView`, `FlightHud`), the pause menu's Missions / Cargo hold, saving (`SaveGame.Save` /
@@ -151,9 +161,10 @@ against the FEV's LGCY data, see "Sound").
   Play again?" (296 / 176 / 294 / 295 / 300); Yes restarts (`Start(true)`), No goes to the main menu. Highscore and best
   kills in PlayerPrefs `challenge_highscore` / `_kills`. Remake pick: the Specters fire their ordinary guns (rank 9, x0.7):
   `assignGuns` forces 0xb7's NPC damage to 1 and the Specters' x0.7 truncates it to 0, a harmless round. Tests
-  `SupernovaChallengeTests`. Verified in Play mode: the menu entry and dialog, the orbit (8 Specters, 4 Rhinos and their
-  fighter turrets, the scenery), music, the HUD's score / combo / bonus, the time-out's question with a new highscore, Yes
-  (round 2, Patala x10), a death's question, No to the menu with the highscore shown. Not played through by hand.
+  `SupernovaChallengeTests`. Verified in Play mode (before #179's changes): the menu entry and dialog, the orbit (8
+  Specters, then also 4 Rhinos and the scenery), music, the HUD's score / combo / bonus, the time-out's question with a
+  new highscore, Yes (round 2, Patala x10), a death's question, No to the menu with the highscore shown. Not played through
+  by hand.
 - Object docking approach: reached within PlayerEgo+0x1d8 = 0x578 (1400) units; remake: a ship circling the point (its turning
   circle ~2500 units across) starts the ease-in after 4 s within 4000 units.
 - Sky layers: looping animations skip their one-off first keys (`PartAnimation.loopStartMs`: flares 1000 ms, storms 33 ms);

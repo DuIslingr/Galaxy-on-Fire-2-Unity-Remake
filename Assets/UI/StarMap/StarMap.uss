@@ -156,6 +156,13 @@
     display: flex;
 }
 
+/* Modified: on a phone as tall as the station's Menu button there (GoF2Common.uss ".layout-phone .station-menu-button":
+   touch targets of at least 64 units); without it the map's title sat higher than the station's name. With a controller
+   both stay hidden (the station shows no Menu button then), so the two bars match there too. */
+.layout-phone .map-header-spacer {
+    min-height: 64px;
+}
+
 .map-title {
     font-size: var(--text-title);
     letter-spacing: 6px;
@@ -436,7 +443,8 @@
 }
 
 /* Modified: the footer's hints at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption), the
-   keys and controller buttons cut down to match, as the station's (StationMenu.uss #stationPanel). */
+   keys and controller buttons cut down to match (the --glyph-sm-* tokens, GoF2Common.uss: they grow with "Text size"
+   like the caption), as the station's (StationMenu.uss .station-root). */
 .map-hints .hint .hint-label {
     font-size: var(--text-caption);
     letter-spacing: 1px;
@@ -444,8 +452,8 @@
 }
 
 .map-hints .hint .keycap {
-    min-width: 22px;
-    height: 22px;
+    min-width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
     padding: 0 5px;
     margin: 0 1px;
     font-size: var(--text-caption);
@@ -459,25 +467,25 @@
 }
 
 .map-hints .hint .pad-face {
-    width: 22px;
-    height: 22px;
+    width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
     margin: 0 1px;
-    border-radius: 11px;
+    border-radius: var(--glyph-sm-key-r);
     font-size: var(--text-caption);
 }
 
 .map-hints .hint .pad-stick {
-    width: 24px;
-    height: 24px;
+    width: var(--glyph-sm-stick);
+    height: var(--glyph-sm-stick);
     margin: 0 1px;
-    border-radius: 12px;
+    border-radius: var(--glyph-sm-stick-r);
     border-width: 2px;
     font-size: var(--text-caption);
 }
 
 .map-hints .hint .pad-trigger {
     min-width: 28px;
-    height: 22px;
+    height: var(--glyph-sm-key);
     padding: 0 5px;
     margin: 0 1px;
     border-top-left-radius: 9px;
@@ -486,15 +494,15 @@
 
 .map-hints .hint .pad-bumper {
     min-width: 30px;
-    height: 20px;
+    height: var(--glyph-sm-bumper);
     padding: 0 5px;
     margin: 0 1px;
-    border-radius: 10px;
+    border-radius: var(--glyph-sm-bumper-r);
 }
 
 .map-hints .hint .pad-menu {
-    height: 20px;
+    height: var(--glyph-sm-bumper);
     padding: 0 5px;
     margin: 0 1px;
-    border-radius: 10px;
+    border-radius: var(--glyph-sm-bumper-r);
 }

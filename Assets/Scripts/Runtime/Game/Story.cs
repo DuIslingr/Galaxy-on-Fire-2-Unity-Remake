@@ -907,10 +907,13 @@ namespace GoF2Remake.Data
                 case 94: return Freelance.MaxPassengers(db) < 1 ? 3214 : -1;                    // passenger cabins
                 case 105: return Session.Equipment.Exists(e => e.item == 206) ? -1 : 3217;      // Gamma Shield II
                 case 135: return Shop.FirstMounted(db, 19) != null ? -1 : 3213;                 // a mining drill
-                case 139:   // Vol Noor (42) or a Vossk ship, with the Vossk Signature (190)
+                case 139:   // the Vol Noor (42), or a Vossk ship with the Vossk Signature (190)
                 {
+                    // Modified (review of #186): MGame::OnTouchBegin and StarMap::OnTouchEnd let ship 0x2a through without the
+                    // signature (0xbe is asked only of the other Vossk ships, DAT_0025454c = race 1); it was asked of it too.
                     int ship = Session.ShipIndex;
-                    bool vossk = ship == 42 || (ship < Shop.ShipRace.Length && Shop.ShipRace[ship] == 1);
+                    if (ship == 42) return -1;
+                    bool vossk = ship >= 0 && ship < Shop.ShipRace.Length && Shop.ShipRace[ship] == 1;
                     return vossk && Session.Equipment.Exists(e => e.item == 190) ? -1 : 3215;
                 }
                 case 142:   // a spectral filter, a plasma collector and 15 ionizing missiles; 1 t free cargo

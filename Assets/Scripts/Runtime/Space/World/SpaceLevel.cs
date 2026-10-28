@@ -591,7 +591,6 @@ namespace GoF2Remake.World
         /// <summary>Level::comingFromAlienWorld for this level (the session flag is cleared once the level is built).</summary>
         public bool ComingFromVoid { get; private set; }
 
-        /// <summary>A cinematic, a jump, the launch camera or the player's death stops the time extender (MGame::OnUpdate 0x1af162).</summary>
         /// <summary>Modified: MGame::OnInitialize's Station::visit in space (not in the alien orbit): stations 109, 110,
         /// 132-134 and 102-104 always, 111 from step 0x5e (Session.WorldIndex, so the finished game's world too).</summary>
         public static bool VisitedInSpace(int station) =>
@@ -601,6 +600,7 @@ namespace GoF2Remake.World
         /// <summary>Docked at an object and not hacking (free look allowed, FreeLookCamera.DockedView).</summary>
         bool DockedLook => Docking != null && Docking.IsDocked && Docking.Hacking == null && !Cutscene;
 
+        /// <summary>A cinematic, a jump, the launch camera or the player's death stops the time extender (MGame::OnUpdate 0x1af162).</summary>
         bool ExtenderBlocked => launchCameraMs > 0f || Navigation.Jumping || (SystemJump != null && SystemJump.Cinematic) || Cutscene
                                 || Health == null || Health.Dead;
 

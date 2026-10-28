@@ -35,6 +35,12 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
     logged "BokehDepthOfField ... has been stripped" and showed no blur.
 - **Space Lounge:**
   - 3-4 generic visitors (the race and gender rules of `Generator::createAgent`) on random slots, as camera-facing billboards with a glow and a floor shadow.
+    Remake (#174, `StationLevel.UpdateBillboards`): upright (turned about the vertical only; the original's look-at with
+    the camera's up tipped them with the camera's pitch and sway), the glow 100 units behind the figure's drawn centre
+    (the quads aren't centred on their pivots, and the Terran bars turn the figure round), the shadow under that centre.
+    The centres and the height are taken at spawn from the meshes' own bounds (`VisitorMeshBounds`), not
+    `Renderer.bounds`: a multiplayer event's visitor (`AddVisitor`, by RPC) can come while the bar is hidden, and an
+    inactive renderer's bounds are empty (its glow and shadow sat off the figure, its glow material wasn't set).
   - Camera: a 3 s intro on the first visit (a tap skips it), then a slow sway. Remake: while the player talks to a
     visitor (`LoungePanel.OpenChat` -> `StationLevel.FocusVisitor`) the view turns sideways only (the room camera's
     pitch and roll kept: tilted down to them it looked odd) so they stand beside the chat window, in the middle of the
@@ -45,6 +51,13 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
     view at the click keeps to the right: the window goes to the bottom left (`.chat-window--left`,
     `LoungePanel.chatOnLeft`) and `ChatFrameX` frames the visitor in the middle of the room right of it (the user's
     request, 2026-10-18; it was always the window on the right).
+  - Visitor list (#175, remake; review 2026-10-28): a drawer at the right edge (`LoungePanel.SetDrawer`, Lounge.uss
+    `.lounge-list--closed`), closed until its arrow tab is clicked: open, it covered the bar's right side. A row taking
+    the focus by keys or a controller opens it (any focus while not `InputMode.MousePointing` or touch: the station's
+    first focus, `LoungePanel.FocusFirst`, and the arrows); a `NavigationMoveEvent` on the list never arrives
+    (`StationMenu.OnNavigate`, trickle-down on the root, stops every one), so keyboard players walked hidden rows and
+    Enter opened chats they couldn't see. Closed, the rows' first 40 units stay beside the tab at opacity 0: their
+    picking is off then, and a row keeping the focus (closed with the mouse) gives it up.
   - Lighting: the system's sun, with skybox ambient.
   - Anti-aliasing (remake, `StationLevel.ApplyAntialiasing`, both rooms): URP's TAA on the station camera, SMAA when a temporal
     upscaler (DLSS / FSR 2+ / STP) is active or MSAA is on; the thin glossy parts (the Nivelian bar stools, the Midorian
@@ -62,6 +75,11 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
     within 4 s; `StationLevel.UpdateVosskBots` holds them in their first pose the first time the bar shows (until then the
     models sit at the room's origin). Tests `VosskBarBotsTests`; checked in Play mode at V'ikka (all three playing, the
     swap, the rest poses).
+  - Remake: the Vossk bar remade (2026-10-25, Blender with the AEM plugin): `bar_vossk`, `bar_vossk_anim_add` and the
+    three arms replaced in place (same .meta GUIDs). `bar_vossk_alpha` is gone: its geometry is part of
+    `bar_vossk_anim_add` now (the per-mesh prefab gives the new parts the layer's material; it had no resource id and
+    was never shown). The arms are keyed heading first, so `StationLevel.BuildBar` sets `PartAnimation.headingFirst` on
+    them, like the Terran hangar's bots (see "Hangar service bots").
   - Remake (`BarFlybys`): every 6-20 s a ship (30 % a small formation) flies past outside the windows. Once per visit, from the
     camera's rest pose, two tiny renders against different background colours find the see-through pixels and one with
     `Hidden/GoF2/BarDistance` the room's nearest surfaces; a path is flown only if no point of it is ever in front of the
@@ -127,6 +145,24 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
   hangar view drops it (`HangarInspect.Reset`); a take-off ends it. The rooms are only modelled where the original
   camera looks, so some angles see past them. Action Freeze's photo tools work here too (the free camera and the Camera
   settings panel, see "UI and platforms"); the free camera's reach shows more of the rooms' unmodelled sides.
+  - Camera collision (#190): the hangar rooms are imported readable (`AssetImport`: under `/hangars/`, not `_add` /
+    `_anim`; `ModelOrientationPostprocessor.GetVersion` 2 reimports the models of a Library made before) and get
+    MeshColliders when Inspect begins (`StationLevel.AddRoomColliders`: child objects on layer 25, not the additive /
+    animated layers or the bots; made again when the room changed or any is gone; an unreadable mesh is logged once),
+    the player's ship too (`AddShipColliders`, layer 20, not its glow, lights or engines). Layer 25, not 21: the Mod
+    Builder's interiors view puts MeshColliders of its own on the room's meshes (`ModBuilderViewInteriors.RoomLayer` 21)
+    and destroys them when it ends, and `AddRoomColliders` skipped the meshes that had one, so the room was left
+    without walls (the Mod Builder also orbits with `BeginInspect(0.55f)`). The casts (`StationLevel.CameraCast`) use a
+    0.4 m sphere: a sphere cast skips a collider it starts in and each room is one MeshCollider, so the 1.5 m sphere,
+    starting in contact (the free camera's floor is the hull's lowest point + 1.5 m; a small ship's centre over its
+    pad), skipped every wall; where the sphere starts touching, a ray along the move stands in too, stopped 0.4 m short.
+    The orbit stops 0.5 m short of the sphere's contact (0.9 m from the wall; `HangarInspect.Blocked` ->
+    `RoomClearance`): in at once, out at once where nothing held it (the zoom eases by itself), out from a wall eased
+    by the time passed (~0.3 s; it was a per-frame 0.15 lerp: frame-rate bound, lagging every zoom-out); the free
+    camera's moves stop at the walls and the hull and slide along them (`FreeCamera.Collide` -> `RoomMove`); the near
+    plane stays under 0.25 m meanwhile (its corners within the 0.4 m sphere), or it cut through the wall it touched.
+    The Mod Builder MCP's captures wait for `HangarInspect.Settled` (the blend, the zoom and the ease out done;
+    `ModBuilderViewAi.CameraSettled`).
 - The turret (`CutScene::checkForTurret`): the item's `hangar_turret_item_N` assembly on the turntable ship's slot-2
   mount, turned (0, pi, 0) except the plasma collectors, still; rebuilt when the turret item changes
   (`StationLevel.RefreshTurret`). Remake (`TurretCore.Display`, `StationLevel.AddNpcTurrets`): the NPC ships parked and
@@ -226,9 +262,24 @@ slots, ship heights, fighters per race, music) are in `StationTables`.
 - The room's animations all run (`CutScene::process` updates every geometry, not only the `_anim` meshes), skipping
   their one-off first key like every animation (`PartAnimation.loopStartMs`, see "Known open items"; played, the key
   flashed the Nivelian bar and the Midorian bar for a frame on every wrap, parked the Terran gutter lights on the
-  player's pad and made the loops jump; the Vossk bar's streaks start at 500 ms); rotations swing back and forth
+  player's pad and made the loops jump; the remade Vossk bar's streaks are keyed at 33 / 533 ms: `loopStartMs` 33, the
+  first key (the original's started at 500 ms)); rotations swing back and forth
   (`pingPongRotation`: the Vossk ring lights' 57 deg sweep stays clear of the portal) and the `_anim` layers fade by
   their `extra` channel (the Vossk portal light).
+- **Hangar service bots** (remake; the original never shows them: `CutScene+0x38` is never filled): the Terran hangar's
+  five (`hangar_terran_bot_a..d_anim` from the beta, re-animated with the remodel, and the remake's bot e; each with its
+  `_anim_add` glow layer) and the Nivelian hangar's three (`hangar_nivelian_bot_a..c`, re-exported with corrected tracks
+  2026-10-26, their own assemblies spawned on the room's transform by `StationLevel.BuildHangar`) fly one at a time
+  (`TerranHangarBots`, plain C#, `StationLevel.SetupTerranBots` / `UpdateTerranBots`): the first within 1.5 s of the
+  hangar showing, then 0.5-1.5 s after the last one's animation has ended, picked at random but never the one that has
+  just flown; a bot is hidden between flights (their tracks cross the hangar, so a parked one would hang in mid-air). The
+  Terran bots are keyed heading first (`PartAnimation.headingFirst`, set in `BuildHangar`: bot_c's arms and body pitch
+  down as it flies off, where the release files' order rolled them over). Bot e (2026-10-27) is a remake model:
+  `Models/main/hangars/hangar_terran_bot_e_anim(_add).fbx` under the remake-only mesh ids 99004 / 99005 (spliced into
+  `resources.json`, materials 24070 / 20078; `build_assemblies.py` MODEL_OVERRIDE and the `hangar_terran_bot_e` rule in
+  `rules/assemblies_scenes.json`), its own assembly `hangar_terran_bot_e` (not in the room's, with a to d), spawned on
+  the room's transform by `BuildHangar`; its prefabs were made by **GoF2 > Build > Missing Prefabs Only**. Tests
+  `TerranHangarBotsTests`.
 - The Kaamo Club parks its stored hulls: see "Kaamo Club".
 - **Midorian hangar, contributed remodel** (remake, 2026-10; sources `Reference/contrib/immersive_hangars`, Blender OBJs):
   the room made whole (walls, ceiling, tanks and light strips where the original's hangar was open to space, a third row of

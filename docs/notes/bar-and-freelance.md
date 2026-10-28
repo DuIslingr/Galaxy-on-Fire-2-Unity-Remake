@@ -82,13 +82,31 @@ generator).
   per-ingredient progress, production station (first investment; 212), 200 $ per unit shipping from another station
   (288; volatile 204 / 209 refused, 289), 210 / 223 need gate routes (528), Autocomplete `int(qty*maxPrice*1.25)` (210:
   2 000 000 + the rest's value), a finished run to the hold (211) or waiting at the production station (210, collected
-  on docking, 213; remake, a player's report: the row picked while an ingredient's units commit is looked up again in
-  the rebuilt list, `HangarWindow.Select`: a finished run left the old Autocomplete row selected on the Shop tab, and A
-  autocompleted 'blueprint -1' for 0 $ into an '#item-1' in the hold). Unlocks: lounge sellers, campaign steps 34 / 58 /
-  72 / 104 / 141 with pre-invested ingredients. Remake (a player's suggestion): a run finished or autocompleted at its
-  production station whose product has a free slot (`Hangar.OffersMountAfterBuild`: no swap, no commodity, not a
-  secondary that joined its mounted stack) asks 211 + "Mount it now?" (`HangarWindow.Finish`); Yes mounts it (208) and
-  shows the Ship tab, No leaves it in the hold.
+  on docking, 213; remake, a player's report: a finished run left the old Autocomplete row selected on the Shop tab,
+  and A autocompleted 'blueprint -1' for 0 $ into an '#item-1' in the hold; selecting no longer commits, below).
+  Unlocks: lounge sellers, campaign steps 34 / 58 / 72 / 104 / 141 with pre-invested ingredients. Remake (a player's
+  suggestion): a run finished or autocompleted at its production station whose product has a free slot
+  (`Hangar.OffersMountAfterBuild`: no swap, no commodity, not a secondary that joined its mounted stack) asks 211 +
+  "Mount it now?" (`HangarWindow.Finish`); Yes mounts it (208) and shows the Ship tab, No leaves it in the hold.
+  - **Making blueprints** (PR #166, a contributor's rework, fixed 2026-10-28): at the production station (or the first
+    unit, after 212) ADD puts the units in at once; at another station they wait with a FREIGHT badge (`bpFreight`)
+    and are shipped (288) on FREIGHT, Complete, a tab switch, Back or closing the hangar (`ReadyToClose` asks as the
+    original's readyToClose did). A refusal (289, too little money) or No puts them back in the hold, so the next tab
+    switch doesn't ask again. A full blueprint waits for Complete (`bpComplete`); the view stays on the blueprint for
+    another run (it went to the Shop tab / the blueprint list). 211 / 210 stay the original's dialogs.
+  - The actions under the ingredients: 185 Shop (186 at the owned club: that tab, the recipe's goods with a cyan edge
+    and their recipe amount `bpRecipeAmount`), Autocomplete (195) and Complete. Each is a row of its own
+    (`RowKind.ShopLink` / `Autocomplete` / `Complete`): up / down reach it, Enter / A does it, a click selects and does
+    it (the PR's click-only labels left controller players unable to finish a run). X / the left arrow is TAKE; the
+    hint row says TAKE / ADD in the ingredients view (`HangarWindow.EditingBlueprint`).
+  - **TAKE** (`Blueprints.Withdraw`, remake only: BluePrint has addItem and complete, nothing that removes): staged
+    units first, then at the production station only the player's own (`BlueprintState.playerUnits`, counted by
+    `Invest(..., byPlayer: true)`), never the story's pre-invested goods (the owner's decision: thousands of plasma at
+    112, 50 Void Crystals, 10 Hypanium, 5 Microchips could otherwise be taken out and sold). moneySpent goes down by
+    what those units added (`playerSpent`), not today's price, so it can't reach 0 while goods are still in; all taken
+    out, the blueprint is unstarted again (station -1). Saved with the game; a save from before has 0 per slot. The
+    200 $ shipping is not refunded. Produce / ResetAtStation clear the share (`BlueprintWithdrawTests`,
+    `BlueprintSaveTests`).
 - **Wingmen** (`Wingmen`, `Traffic.SpawnWingmen`, `NpcShip` wingman mode): spawned next to the player in every orbit
   (model seeded by the name length, 600 hull, unarmed in a Challenge), formation slots, attack the first hostile ship;
   the flight menu's Wingmen entry (306) gives the commands 307-311 (fire at will, attack my target, secure next

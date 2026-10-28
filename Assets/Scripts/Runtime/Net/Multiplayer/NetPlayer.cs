@@ -735,9 +735,11 @@ namespace GoF2Remake.Multiplayer
                 hookedJump = jump;
                 if (jump != null) { jump.JumpFxStarted += OnJumpFx; jump.ChargeStarted += OnCharge; }
             }
-            // Where the local player is: the scene they are in.
-            Place now = level != null ? Place.Space : dock != null ? (dock.PlayerDeparting ? Place.Departing : Place.Hangar) : Place.None;
-            int at = level != null && level.Layout != null ? level.NetOrbitId : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
+            // Where the local player is: the scene they are in. Modified (review of #168): docked EVERSPACE 2's way the flight
+            // level stays loaded under the station (SpaceLevel.DockedInOrbit): docked at that station, not in space.
+            bool docked = level != null && level.DockedInOrbit;
+            Place now = docked ? Place.Hangar : level != null ? Place.Space : dock != null ? (dock.PlayerDeparting ? Place.Departing : Place.Hangar) : Place.None;
+            int at = docked ? Session.StationIndex : level != null && level.Layout != null ? level.NetOrbitId : dock != null && dock.Layout != null ? dock.Layout.stationIndex : -1;
             if (place.Value != (byte)now) place.Value = (byte)now;
             if (station.Value != at) station.Value = at;
             bool runs = level != null && level.NetAuthority;

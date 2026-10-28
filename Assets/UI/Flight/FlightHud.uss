@@ -599,7 +599,8 @@
 
 /* Modified: in flight each hint is its keys and its label on one line, on the box's dark background without its border,
    small: the label at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption), the keys and
-   controller buttons cut down to match. */
+   controller buttons cut down to match (the --glyph-sm-* tokens, GoF2Common.uss: they grow with "Text size" like the
+   caption; fixed px clipped the text at ui-text-200). */
 .hints .hint {
     flex-direction: row;
     align-items: center;
@@ -616,8 +617,8 @@
 }
 
 .hints .keycap {
-    min-width: 22px;
-    height: 22px;
+    min-width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
     padding: 0 5px;
     margin: 0 1px;
     font-size: var(--text-caption);
@@ -631,25 +632,25 @@
 }
 
 .hints .pad-face {
-    width: 22px;
-    height: 22px;
+    width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
     margin: 0 1px;
-    border-radius: 11px;
+    border-radius: var(--glyph-sm-key-r);
     font-size: var(--text-caption);
 }
 
 .hints .pad-stick {
-    width: 24px;
-    height: 24px;
+    width: var(--glyph-sm-stick);
+    height: var(--glyph-sm-stick);
     margin: 0 1px;
-    border-radius: 12px;
+    border-radius: var(--glyph-sm-stick-r);
     border-width: 2px;
     font-size: var(--text-caption);
 }
 
 .hints .pad-trigger {
     min-width: 28px;
-    height: 22px;
+    height: var(--glyph-sm-key);
     padding: 0 5px;
     margin: 0 1px;
     border-top-left-radius: 9px;
@@ -658,17 +659,17 @@
 
 .hints .pad-bumper {
     min-width: 30px;
-    height: 20px;
+    height: var(--glyph-sm-bumper);
     padding: 0 5px;
     margin: 0 1px;
-    border-radius: 10px;
+    border-radius: var(--glyph-sm-bumper-r);
 }
 
 .hints .pad-menu {
-    height: 20px;
+    height: var(--glyph-sm-bumper);
     padding: 0 5px;
     margin: 0 1px;
-    border-radius: 10px;
+    border-radius: var(--glyph-sm-bumper-r);
 }
 
 /* The PC cursor mode: its buttons are the controls (the bottom left holds the autopilot pill and the boost). */

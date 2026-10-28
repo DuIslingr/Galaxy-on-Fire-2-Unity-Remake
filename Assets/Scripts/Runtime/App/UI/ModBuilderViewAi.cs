@@ -171,8 +171,9 @@ namespace GoF2Remake.UI
             return null;
         }
 
+        // Modified: Settled, not only the blend: the zoom and the ease back out from a hangar wall done too (HangarInspect).
         internal override bool CameraSettled =>
-            !reloading && !reloadPending && (!(InHangar && ShipKind(kind)) || boundTransform != null && (!level.Inspect.Active || level.Inspect.Blend >= 1f));
+            !reloading && !reloadPending && (!(InHangar && ShipKind(kind)) || boundTransform != null && (!level.Inspect.Active || level.Inspect.Settled));
 
         protected override IEnumerable<VisualElement> CleanViewHides()
         {

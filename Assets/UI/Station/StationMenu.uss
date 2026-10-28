@@ -737,17 +737,20 @@
 }
 
 
-/* Modified: every key hint in the station (the main view's row, the hangar window's, the menus' prompt rows, the "i"
-   windows) at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption), the keys and controller
-   buttons cut down to match. #stationPanel (the panel root, StationMenu.cs): an id outranks the class rules of the other sheets. */
-#stationPanel .hint-label {
+/* Modified: every key hint in the station's own screens (the main view's row, the hangar window's, the Missions /
+   Status windows' prompt rows) at the story step label's size (StoryStepLabel: UiLayout.Type(12) = --text-caption),
+   the keys and controller buttons cut down to match (the --glyph-sm-* tokens: they grow with Options > Accessibility
+   "Text size" like the caption). Scoped to .station-root (StationMenu.uxml), three classes deep so the shared sheets'
+   two-class variants (.prompt-bar, .hints-popup) lose here; the windows built on the panel root outside it (the "i"
+   windows, the Mod Builder) keep their own. Was #stationPanel: an id beat every variant, the Mod Builder's too. */
+.station-root .hint .hint-label {
     font-size: var(--text-caption);
     letter-spacing: 1px;
 }
 
-#stationPanel .hint .keycap {
-    min-width: 22px;
-    height: 22px;
+.station-root .hint .keycap {
+    min-width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
     padding: 0 5px;
     margin: 0 1px;
     font-size: var(--text-caption);
@@ -756,47 +759,47 @@
     border-radius: 4px;
 }
 
-#stationPanel .hint .keycap--wide {
+.station-root .hint .keycap--wide {
     min-width: 60px;
 }
 
-#stationPanel .hint .pad-face {
-    width: 22px;
-    height: 22px;
+.station-root .hint .pad-face {
+    width: var(--glyph-sm-key);
+    height: var(--glyph-sm-key);
     margin: 0 1px;
-    border-radius: 11px;
+    border-radius: var(--glyph-sm-key-r);
     font-size: var(--text-caption);
 }
 
-#stationPanel .hint .pad-stick {
-    width: 24px;
-    height: 24px;
+.station-root .hint .pad-stick {
+    width: var(--glyph-sm-stick);
+    height: var(--glyph-sm-stick);
     margin: 0 1px;
-    border-radius: 12px;
+    border-radius: var(--glyph-sm-stick-r);
     border-width: 2px;
     font-size: var(--text-caption);
 }
 
-#stationPanel .hint .pad-trigger {
+.station-root .hint .pad-trigger {
     min-width: 28px;
-    height: 22px;
+    height: var(--glyph-sm-key);
     padding: 0 5px;
     margin: 0 1px;
     border-top-left-radius: 9px;
     border-top-right-radius: 9px;
 }
 
-#stationPanel .hint .pad-bumper {
+.station-root .hint .pad-bumper {
     min-width: 30px;
-    height: 20px;
+    height: var(--glyph-sm-bumper);
     padding: 0 5px;
     margin: 0 1px;
-    border-radius: 10px;
+    border-radius: var(--glyph-sm-bumper-r);
 }
 
-#stationPanel .hint .pad-menu {
-    height: 20px;
+.station-root .hint .pad-menu {
+    height: var(--glyph-sm-bumper);
     padding: 0 5px;
     margin: 0 1px;
-    border-radius: 10px;
+    border-radius: var(--glyph-sm-bumper-r);
 }

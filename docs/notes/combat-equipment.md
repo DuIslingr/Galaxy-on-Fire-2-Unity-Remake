@@ -34,7 +34,12 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   the lit hull up to 0.5 and into pure refraction by 0.75, so the pattern shows through most of each 2 s fade; #47: it
   ran at twice the speed; drawn by `CloakPass` after URP's transparents from a copy of the frame, like the original's
   refraction FBO (`Engine::CopyFBO` after every alpha / additive material), so the hull refracts the ship's own lights
-  and glare, smeared by the wobble: the crawling coloured patches of a cloaked ship), the lights keep glowing and
+  and glare, smeared by the wobble: the crawling coloured patches of a cloaked ship; Modified, #185: the picture behind
+  stays bent in place by the normal map and only its bright part, the glow, wobbles, where the original's sweep slid
+  the stars too; the hull's depth goes in before the transparents, `CloakPass.DepthPass`, but only where the hull
+  hasn't dissolved yet, clipped by the dissolve map against `_AnimValue` like the colour: the ship's own lights behind
+  the solid hull stay hidden, and a fully cloaked ship writes none, so the shots, explosions, smoke and flames behind it
+  still show through it instead of a hole in its shape), the lights keep glowing and
   animating (the original's white at alpha max(50, ...) leaves its additive layers at full brightness; #47: the remake
   hid them), the NPC Specters' engine glow hides from 25 % (`CloakGlow`, `NpcCloak`; the code hides the ship group's
   last child), the players' ships keep theirs (`CloakGlow.KeepEngine`, #85: the reporter's screenshots of the original
@@ -69,8 +74,10 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   ship within the reach (`IncomingMissiles`, which now carries each missile's gun and bullet index), led by the turret
   shot's flight time (`PointDefense.Lead`), and fire when aligned; each shot claims one missile (`Claim`: several
   turrets spread over a salvo) and destroys it when the shot arrives (`Tick` -> `Gun.ShootDown`, the rocket impact's
-  burst `ShipBurn.ManualBurst`). Another game's mirrored missile (`Gun.Mirror`, set by `NetShotMirror`) is left alone:
-  its real copy flies on in the shooter's game. An item with it is listed as "Missile defense" (`ItemInfo.Category`,
+  burst `ShipBurn.ManualBurst`); a claim keeps the missile's `Bullet.age`, so a new missile in the same bullet slot is
+  neither skipped nor shot down by it, and the claims go with the scene (`SceneManager.sceneUnloaded`; review of #168:
+  they kept the last level's guns and could burst there). Another game's mirrored missile (`Gun.Mirror`, set by
+  `NetShotMirror`) is left alone: its real copy flies on in the shooter's game. An item with it is listed as "Missile defense" (`ItemInfo.Category`,
   Extra `catMissileDefense`) with its reach (`statMissileDefense`); the ES2 Ships mod's Missile Defense System is one on
   a seatless cabin (base 91, cabinSize 0: stackable, no other effect). Tests `PointDefenseTests`. Verified in Play mode
   (a Teneta with the Berger AGT and the ES2 item, a hostile Vossk battleship 700 m off): 12 missiles of its salvos shot

@@ -195,7 +195,7 @@ namespace GoF2Remake.World
         /// <summary>Remake mods: docked inside the orbit (EVERSPACE 2's dock, Es2Dock): this scene runs on top of the space level,
         /// whose station model is the hangar (hangarRoot rides on its hull) and whose camera shows it.</summary>
         SpaceLevel orbit;
-        bool orbitDocked, redirected;
+        bool orbitDocked;
         public bool DockedInOrbit => orbitDocked;
 
         void Awake()
@@ -209,7 +209,6 @@ namespace GoF2Remake.World
             if (!orbitDocked && !noRedirect && stationOverride < 0 && !Modding.ModBuilder.Active && !GoF2Remake.Data.NetSession.SessionLost
                 && Modding.ModInteriors.Es2DockOf(Session.StationIndex) != null && Application.CanStreamedLevelBeLoaded(spaceScene))
             {
-                redirected = true;
                 enabled = false;
                 foreach (var go in gameObject.scene.GetRootGameObjects()) if (go != gameObject) go.SetActive(false);
                 Session.Es2StartDocked = true;
@@ -779,30 +778,18 @@ namespace GoF2Remake.World
                 var v = new Visitor { feet = feet, agent = agent };
                 v.body = Instantiate(prefab, feet, Quaternion.identity, barRoot).transform;
                 v.body.name = $"Visitor {i} ({prefab.name})";
-                var bounds = new Bounds(feet, Vector3.zero);
-                foreach (var r in v.body.GetComponentsInChildren<Renderer>()) bounds.Encapsulate(r.bounds);
-                v.height = Mathf.Max((bounds.max.y - feet.y) * 0.55f, 60f * M);   // the billboard quad is about twice the figure
-                // The drawn centre from the renderers alone (the bounds above also hold the feet point).
-                bool drawn = false;
-                var bb = new Bounds(feet, Vector3.zero);
-                foreach (var r in v.body.GetComponentsInChildren<Renderer>())
-                {
-                    if (!drawn) { bb = r.bounds; drawn = true; } else bb.Encapsulate(r.bounds);
-                }
-                v.bodyCentre = v.body.InverseTransformPoint(bb.center);
+                // Modified: the sizes from the meshes (VisitorMeshBounds), not Renderer.bounds.
+                float top = VisitorMeshBounds(v.body, Matrix4x4.identity, out var wb) ? Mathf.Max(wb.max.y, feet.y) : feet.y;
+                v.height = Mathf.Max((top - feet.y) * 0.55f, 60f * M);   // the billboard quad is about twice the figure
+                // The drawn centre in the figure's own space (not the feet point).
+                v.bodyCentre = VisitorMeshBounds(v.body, v.body.worldToLocalMatrix, out var bb) ? bb.center : Vector3.zero;
                 if (visitorGlow != null)
                 {
                     v.glow = Instantiate(visitorGlow, feet, Quaternion.identity, barRoot).transform;
                     v.glow.name = $"Visitor {i} glow";
                     var mat = glowMaterials != null && BarRace < glowMaterials.Length ? glowMaterials[BarRace] : null;
-                    if (mat != null) foreach (var r in v.glow.GetComponentsInChildren<Renderer>()) r.sharedMaterial = mat;
-                    bool any = false;
-                    var gb = new Bounds(feet, Vector3.zero);
-                    foreach (var r in v.glow.GetComponentsInChildren<Renderer>())
-                    {
-                        if (!any) { gb = r.bounds; any = true; } else gb.Encapsulate(r.bounds);
-                    }
-                    v.glowCentre = any ? v.glow.InverseTransformPoint(gb.center) : Vector3.zero;
+                    if (mat != null) foreach (var r in v.glow.GetComponentsInChildren<Renderer>(true)) r.sharedMaterial = mat;
+                    v.glowCentre = VisitorMeshBounds(v.glow, v.glow.worldToLocalMatrix, out var gb) ? gb.center : Vector3.zero;
                 }
                 if (visitorShadow != null)
                 {
@@ -812,6 +799,28 @@ namespace GoF2Remake.World
                 visitors.Add(v);
             }
             return true;
+        }
+
+        /// <summary>Modified: the box of the meshes under 'root' in the space 'toSpace' maps the world into (false: no mesh),
+        /// from the meshes' own bounds. Renderer.bounds is empty on an inactive renderer, and a multiplayer event's visitor
+        /// (AddVisitor, by RPC) can arrive while the bar is hidden (barRoot inactive): its glow and shadow sat at the wrong
+        /// place, its renderers weren't even found (GetComponentsInChildren skipped them).</summary>
+        static bool VisitorMeshBounds(Transform root, Matrix4x4 toSpace, out Bounds b)
+        {
+            bool any = false;
+            b = new Bounds();
+            foreach (var mf in root.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (mf.sharedMesh == null || !mf.gameObject.activeSelf || !mf.TryGetComponent<Renderer>(out var r) || !r.enabled) continue;
+                var lb = mf.sharedMesh.bounds;
+                var m = toSpace * mf.transform.localToWorldMatrix;
+                for (int i = 0; i < 8; i++)
+                {
+                    var p = m.MultiplyPoint3x4(lb.center + Vector3.Scale(lb.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1)));
+                    if (!any) { b = new Bounds(p, Vector3.zero); any = true; } else b.Encapsulate(p);
+                }
+            }
+            return any;
         }
 
         GameObject VisitorPrefab(StationTables.Visitor v) => v switch
@@ -1348,27 +1357,47 @@ namespace GoF2Remake.World
         public void EndInspect() => Inspect.End();
 
         /// <summary>Modified: the room's meshes as colliders on layer RoomColliderLayer for Inspect ship's camera (the hangar
-        /// rooms are imported readable for it, AssetImport), once per room; not its additive / animated layers, bots or ships.</summary>
+        /// rooms are imported readable for it, AssetImport), once per room; not its additive / animated layers, bots or ships.
+        /// Always its own colliders on child objects, on a layer of their own: the Mod Builder's interiors view puts
+        /// MeshColliders on the same meshes (its RoomLayer 21) and destroys them when it ends, so skipping a mesh that had one
+        /// left the room without walls; made again when any of them is gone.</summary>
         void AddRoomColliders()
         {
-            if (HangarRoom == null || roomCollidersFor == HangarRoom) return;
+            if (HangarRoom == null) return;
+            if (roomCollidersFor == HangarRoom && roomColliders.Count > 0 && roomColliders.TrueForAll(c => c != null)) return;
+            foreach (var c in roomColliders) if (c != null) Destroy(c.gameObject);
+            roomColliders.Clear();
             roomCollidersFor = HangarRoom;
+            int unreadable = 0;
             foreach (var mf in HangarRoom.GetComponentsInChildren<MeshFilter>(true))
             {
                 var mesh = mf.sharedMesh;
                 string n = mf.gameObject.name;
-                if (mesh == null || !mesh.isReadable || n.Contains("_add") || n.Contains("_anim") || n.Contains("_bot_") || n.Contains("_lights")) continue;
-                if (mf.GetComponent<Collider>() != null) continue;
+                if (mesh == null || n.Contains("_add") || n.Contains("_anim") || n.Contains("_bot_") || n.Contains("_lights")) continue;
+                if (!mesh.isReadable) { unreadable++; continue; }
                 var go = new GameObject("Inspect collider");
                 go.layer = RoomColliderLayer;
                 go.transform.SetParent(mf.transform, false);
                 var mc = go.AddComponent<MeshCollider>();
                 mc.sharedMesh = mesh;
+                roomColliders.Add(mc);
+            }
+            // A Library imported before the hangars were made readable (ModelOrientationPostprocessor's version 2) has them
+            // unreadable: the camera then goes through the walls. Said once.
+            if (unreadable > 0 && !loggedUnreadableRoom)
+            {
+                loggedUnreadableRoom = true;
+                Debug.LogWarning($"Inspect ship: {unreadable} mesh(es) of {HangarRoom.name} aren't readable, so the camera won't stop at them " +
+                                 "(reimport Models/main/hangars: GoF2 > Import > Reimport Models Only).");
             }
         }
 
         Transform roomCollidersFor;
-        const int RoomColliderLayer = 21;
+        readonly List<MeshCollider> roomColliders = new List<MeshCollider>();
+        bool loggedUnreadableRoom;
+        /// <summary>Not ModBuilderViewInteriors.RoomLayer (21): its colliders come and go with that view (and cover the glow
+        /// layers too).</summary>
+        const int RoomColliderLayer = 25;
 
         /// <summary>Modified: the player's ship as colliders on ShipColliderLayer for Inspect ship's free camera (the ship models
         /// are imported readable, AssetImport.IsHullModel); not its glow, light or engine layers. Once per ship model.</summary>
@@ -1392,29 +1421,58 @@ namespace GoF2Remake.World
         const int ShipColliderLayer = 20;
         const int FreeCameraMask = (1 << RoomColliderLayer) | (1 << ShipColliderLayer);
 
-        /// <summary>Modified: Inspect ship's free camera moving from 'from' to 'to': stopped short of the room's walls (a
-        /// sphere cast along the move; it slides along a wall only by the parts of the move that stay clear).</summary>
+        /// <summary>Modified: the camera's sphere for the casts below (m). It was 1.5 m: a sphere cast skips a collider it starts
+        /// in, and each room is one MeshCollider, so a sphere starting in contact (the free camera on its floor, the hull's
+        /// lowest point + 1.5 m; the orbit's centre over a small ship's pad) skipped every wall. HangarInspect's near plane
+        /// (WallNear) stays under it.</summary>
+        const float CameraRadius = 0.4f;
+
+        /// <summary>Modified: how far a sphere of CameraRadius goes from 'from' along 'dir' (at most 'max') before 'mask''s
+        /// colliders, and the surface's normal there. Where the sphere starts touching one (it would skip it), a ray along the
+        /// move stands in too, stopped CameraRadius short.</summary>
+        static float CameraCast(Vector3 from, Vector3 dir, float max, int mask, out Vector3 normal)
+        {
+            normal = -dir;
+            float free = max;
+            if (Physics.SphereCast(from, CameraRadius, dir, out var hit, max, mask, QueryTriggerInteraction.Ignore))
+            {
+                free = hit.distance;
+                normal = hit.normal;
+            }
+            if (Physics.CheckSphere(from, CameraRadius, mask, QueryTriggerInteraction.Ignore)
+                && Physics.Raycast(from, dir, out var ray, max + CameraRadius, mask, QueryTriggerInteraction.Ignore)
+                && ray.distance - CameraRadius < free)
+            {
+                free = Mathf.Max(ray.distance - CameraRadius, 0f);
+                normal = ray.normal;
+            }
+            return free;
+        }
+
+        /// <summary>Modified: Inspect ship's free camera moving from 'from' to 'to': stopped short of the room's walls and the
+        /// hull (CameraCast along the move; it slides along a wall only by the parts of the move that stay clear).</summary>
         public Vector3 RoomMove(Vector3 from, Vector3 to)
         {
-            const float R = 1.5f;
             var d = to - from;
             float len = d.magnitude;
             if (len < 1e-4f) return to;
-            if (!Physics.SphereCast(from, R, d / len, out var hit, len, FreeCameraMask, QueryTriggerInteraction.Ignore)) return to;
+            float free = CameraCast(from, d / len, len, FreeCameraMask, out var normal);
+            if (free >= len) return to;
             // Slide: the part of the move along the wall, if that way is clear.
-            var stop = from + d / len * Mathf.Max(hit.distance - 0.05f, 0f);
-            var slide = Vector3.ProjectOnPlane(to - stop, hit.normal);
-            if (slide.sqrMagnitude > 1e-6f && !Physics.SphereCast(stop, R, slide.normalized, out _, slide.magnitude, FreeCameraMask, QueryTriggerInteraction.Ignore))
+            var stop = from + d / len * Mathf.Max(free - 0.05f, 0f);
+            var slide = Vector3.ProjectOnPlane(to - stop, normal);
+            float slideLen = slide.magnitude;
+            if (slideLen > 1e-3f && CameraCast(stop, slide / slideLen, slideLen, FreeCameraMask, out _) >= slideLen)
                 return stop + slide;
             return stop;
         }
 
-        /// <summary>Modified: how far from 'from' along 'dir' the camera can go before the room (a sphere cast, 2 m short of it).</summary>
+        /// <summary>Modified: how far from 'from' along 'dir' the orbit camera can go before the room: CameraCast, 0.5 m short
+        /// of the sphere's contact, so the camera stops 0.9 m from the wall.</summary>
         float RoomClearance(Vector3 from, Vector3 dir, float max)
         {
-            const float R = 1.5f;
-            return Physics.SphereCast(from, R, dir, out var hit, max, 1 << RoomColliderLayer, QueryTriggerInteraction.Ignore)
-                ? Mathf.Max(hit.distance - 2f, 0f) : max;
+            float free = CameraCast(from, dir, max, 1 << RoomColliderLayer, out _);
+            return free >= max ? max : Mathf.Max(free - 0.5f, 0f);
         }
 
         /// <summary>The meshes' bounds in 'ship''s own space (the shown ones; 'withAdditive' takes the glow layers too).</summary>
@@ -1813,7 +1871,8 @@ namespace GoF2Remake.World
         }
 
         /// <summary>SpaceLounge::updateScreenPositions: visitors and glows face the camera (MatrixGetLookAt, local +Z toward
-        /// the camera, with the camera's up); the glow sits 100 units behind; Terran bars turn visitors a further 180 deg.</summary>
+        /// the camera); the glow sits 100 units behind; Terran bars turn visitors a further 180 deg. Modified: upright (turned
+        /// about the vertical only, not with the camera's up), the glow centred behind the figure, the shadow under it.</summary>
         void UpdateBillboards()
         {
             // VR: they face the head (the headset's camera), upright.

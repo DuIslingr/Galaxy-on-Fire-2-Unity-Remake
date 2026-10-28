@@ -7,10 +7,14 @@
 // claimed by one shot only, so several turrets spread over a salvo. The missiles are the ones IncomingMissiles reports:
 // those homing on the local player that still hold their lock. Multiplayer: another game's missile drawn here (Gun.Mirror)
 // is left alone: its real copy flies in the shooter's game, which applies its hit.
+// Modified (review of #168): a claim holds the missile's age when it was made, so a new missile fired from the same bullet
+// slot before the claim ran out is a missile of its own (neither skipped by Pick nor shot down by the old claim); the claims
+// go with the scene (SceneManager.sceneUnloaded), so no burst from a level left behind comes up in the next one.
 
 using System.Collections.Generic;
 using GoF2Remake.Data;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace GoF2Remake.Flight
 {
@@ -21,7 +25,8 @@ namespace GoF2Remake.Flight
         public const int Attribute = 131;
 
         static readonly List<IncomingMissiles.Missile> incoming = new List<IncomingMissiles.Missile>();
-        static readonly Dictionary<(Gun, int), float> claimed = new Dictionary<(Gun, int), float>();   // -> when it dies (Time.time)
+        // -> when it dies (Time.time) and the missile's age when claimed (Gun.Bullet.age: a younger one is a new missile)
+        static readonly Dictionary<(Gun, int), (float dueAt, float age)> claimed = new Dictionary<(Gun, int), (float, float)>();
         static readonly List<(Gun, int)> due = new List<(Gun, int)>();
         static int collectedFrame = -1, tickedFrame = -1;
 
@@ -29,7 +34,26 @@ namespace GoF2Remake.Flight
         public static System.Action<Vector3> Exploded = at => ShipBurn.ManualBurst(at, 1.5f, 2000f, 3000f, 500f);
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        public static void ResetStatics() { incoming.Clear(); claimed.Clear(); collectedFrame = tickedFrame = -1; }
+        public static void ResetStatics()
+        {
+            Clear();
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+        }
+
+        static void OnSceneUnloaded(Scene _) => Clear();
+
+        /// <summary>No missiles, no claims (a level left: its guns are gone).</summary>
+        public static void Clear() { incoming.Clear(); claimed.Clear(); due.Clear(); collectedFrame = tickedFrame = -1; }
+
+        /// <summary>A claim on 'key' that is still on the missile it was made for (not a newer one in its bullet slot).</summary>
+        static bool Claimed((Gun gun, int index) key)
+        {
+            if (!claimed.TryGetValue(key, out var c)) return false;
+            if (key.gun.bullets[key.index].age >= c.age) return true;
+            claimed.Remove(key);   // the claimed one is gone, its slot fired again
+            return false;
+        }
 
         /// <summary>The reach of the mounted equipment's missile defense in game units (the longest), 0 = none.</summary>
         public static float ReachUnits(Database db)
@@ -53,7 +77,7 @@ namespace GoF2Remake.Flight
             bool found = false;
             foreach (var m in incoming)
             {
-                if (m.gun == null || m.gun.Mirror || claimed.ContainsKey((m.gun, m.index)) || !m.gun.IsActive(m.index)) continue;
+                if (m.gun == null || m.gun.Mirror || !m.gun.IsActive(m.index) || Claimed((m.gun, m.index))) continue;
                 float d = (m.position - from).sqrMagnitude;
                 if (d > best) continue;
                 best = d; missile = m; found = true;
@@ -73,7 +97,7 @@ namespace GoF2Remake.Flight
         /// <summary>A shot is on its way to 'm': it is destroyed 'flightMs' from now.</summary>
         public static void Claim(IncomingMissiles.Missile m, float flightMs)
         {
-            if (m.gun != null) claimed[(m.gun, m.index)] = Time.time + flightMs / 1000f;
+            if (m.gun != null) claimed[(m.gun, m.index)] = (Time.time + flightMs / 1000f, m.gun.bullets[m.index].age);
         }
 
         /// <summary>The claimed missiles whose shot has arrived go (once a frame, whichever turret calls first).</summary>
@@ -82,12 +106,13 @@ namespace GoF2Remake.Flight
             if (tickedFrame == Time.frameCount || claimed.Count == 0) return;
             tickedFrame = Time.frameCount;
             due.Clear();
-            foreach (var kv in claimed) if (Time.time >= kv.Value) due.Add(kv.Key);
+            foreach (var kv in claimed) if (Time.time >= kv.Value.dueAt) due.Add(kv.Key);
             foreach (var key in due)
             {
+                bool same = Claimed(key);   // (false: a newer missile flies in its slot)
                 claimed.Remove(key);
                 var (gun, i) = key;
-                if (!gun.IsActive(i)) continue;   // it hit, ran out or was shaken off meanwhile
+                if (!same || !gun.IsActive(i)) continue;   // it hit, ran out or was shaken off meanwhile
                 var at = gun.ShootDown(i);
                 Exploded?.Invoke(at);
             }

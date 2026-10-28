@@ -74,7 +74,9 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   and crossed cone cards (`coneProfile` / `coneFade` / `coneFlow` with `ModEngineFlow.shader`), a ribbon helix with a
   lightning texture and wavering ribbon streams, with per-part colours and the importer's tuning (`RACE_TRAIL`,
   `NOZZLE_FLARE`, `nozzle_tinted`...); old files' card fields are ignored. In git history before that date if ever
-  needed.
+  needed. An engineFx still giving `glow` / `cone` / `spiral` / `trail` (a ship's, an exhaust style's) gets a mod warning
+  naming the replacement (`ModContent.CheckEngineFx`: `meshes`, `trailParticles`; review of #168); a mod station's
+  `engineFx` (`ModWorld.ParseMobile`, no mod to warn) isn't checked.
 - **GoF3's engines as GoF3 draws them** (2026-10-24, the user's request: "decompile the GoF3 binary and use it";
   libgofm.so of the Android APK, Ghidra headless without auto analysis, `~/GOF2UnityRemakeMods/gof3_re`: the full
   analysis ran out of Java heap; the library is Thumb and Ghidra loads it at 0x10000). GoF3's resource ids

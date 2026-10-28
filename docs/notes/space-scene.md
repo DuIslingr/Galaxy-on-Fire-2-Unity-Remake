@@ -74,11 +74,16 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   game +x as its up and its size (also at Tadram 113 / Naneroh 109, whose sun slot 6 lies 0.02 deg off game x: a float
   "parallel" test gave them the camera's up, so it rolled with the view; `Backdrop.SupernovaSunRotation`), and a
   sn_sun_011 glow of 0.3 × the sun + the swell rolls with the camera and makes the streak; `StarSystem::render` with
-  +0xc); planets mirrored so their lit rim faces the sun. Mission 0 (the prologue and the main menu's backdrop after
-  `Status::resetGame`) halves the orbit planet unless a texture size rule replaces it; no camera zoom on the orbit
-  planet in the planet ring orbits and the alien orbit; the alien orbit has its sun straight ahead and `planet_void_big`
-  at yaw 5.2347 (60 deg to the right), unseeded size; K'ontrr (system 20) swaps 58's and 62's planet textures like the
-  original (textures by the stations' file order, roles by the system's list).
+  +0xc). Modified (#187): the streak (lifted by `_CoreGlow` like the sun) adds over the sun's disc per channel at most
+  what the sun leaves below white (`GoF2/Backdrop` `_SunInStreak`, applied before the lift: the original adds in gamma
+  space into 8 bits, where the white middle saturates; in linear HDR a line brighter than the sun ran through it); in
+  the supernova system only against the glow quad (the sun under it has its own texture and a world-fixed roll the
+  uv mapping can't follow, so the streak can still pass its white there); no swell or streak in the station
+  (`Backdrop.NoSwell`). Planets mirrored so their lit rim faces the sun. Mission 0 (the prologue and the main menu's
+  backdrop after `Status::resetGame`) halves the orbit planet unless a texture size rule replaces it; no camera zoom
+  on the orbit planet in the planet ring orbits and the alien orbit; the alien orbit has its sun straight ahead and
+  `planet_void_big` at yaw 5.2347 (60 deg to the right), unseeded size; K'ontrr (system 20) swaps 58's and 62's planet
+  textures like the original (textures by the stations' file order, roles by the system's list).
 - **No URP shadows** in space or the hangar (`OrbitBuilder.SetupLights`' sunShadows, `StationLevel.ApplyHangarLighting`;
   the Space Lounge keeps its room's): within URP's 50 m shadow distance the player's hull shaded itself as a photo
   camera came close (a player's report, 2026-10-17); the original draws none, the hangar has `HangarShipShadow`.
@@ -132,7 +137,13 @@ Research: `Reference/research/space_level_setup.md`, `space_backdrop.md` (+ `spa
   turned by the nebula's sun-aligned R_sky so the fire streams out of the supernova, the nasty texture from 106, ×1.5
   speed above 106), storms (mission ≥ 90 in system 27 or nebula 16 / 18, a new random rotation each loop), asteroid belt
   (systems 24-26, lit by LIGHT0, clamped to LDR). The storm / flare parts use `PartAnimation.applyMaterialChannels`:
-  `extra` = opacity (`_Fade`), `v5_0` = UV scroll (`_UVOffset`, 100 = one texture width, assumed).
+  `extra` = opacity (`_Fade`), `v5_0` = UV scroll (`_UVOffset`, 100 = one texture width, assumed). Modified (the user's
+  picks): the flares fade from 100 to a steady 75 instead of the sidecars' 50 (`SkyLayers.FlaresFade` on a copy of the
+  sidecar before `PartAnimation` reads it; the converter's `.gof2mesh.json` stays as written), and their low-poly UV
+  sphere (12 rings x 24 segments) is subdivided onto the sphere at load (`SkySphereSmoothing`, 3 levels, midpoints
+  shared per edge; u and colour on a spline through the rings' values, v from the angle around, the seam kept): no
+  facets, and the scroll's speed changes smoothly between rings instead of jumping at every row. Its meshes need
+  Read/Write (`AssetImport`). Tests `SkySphereSmoothingTests`.
 - **Wormhole** (`Wormhole`, landmark 3, `PlayerWormHole::update` / `PlayerEgo::calcCollision`, decoded this time, not in
   the research files): exists until the game is won; visible when coming out of the Void, at the station the Void attack
   (`Session.VoidInvasionStation`) or in the alien orbit, index < 43; random spot (rand(80000) − 40000, rand(40000) −

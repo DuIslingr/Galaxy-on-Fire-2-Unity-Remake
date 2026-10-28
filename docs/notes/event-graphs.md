@@ -104,7 +104,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `Steer` / `Avoid` (Dock skips the landmark avoidance), `drift` cleared; a group spreads (`Spread`: 900 to the side, 600 back
   per rank); Follow aims 3000 units ahead along the leader's heading and closes the gap by speed (boost beyond 6000);
   remake: slower while facing away from the goal (x0.35..1 by alignment, not under 0.6 u/ms) so the original's fixed turn
-  rate (a circle of speed / 0.00073 units) stays tight; escorts run `UpdateTargeting` and fight first. Exits by order
+  rate (a circle of speed / 0.00073 units) stays tight; escorts run `UpdateTargeting` and fight first. An Attack order
+  sets the order's speed each frame only while the ship isn't boosting (`if (!boosting) speed = fly;`, #179, for every
+  graph): before, the boost never built up, so an attacking ship never fled at 40 % hull loss nor took its 5 % boost roll.
+  `NpcShip.Revive` clears the order (review of #179): a revived ship is back on its own AI. Exits by order
   (`JumpOut`, `LeaveQuietly`) set `Target.killedByNpc`, so no event credits a kill; `Traffic.UpdateOrbit` /
   `UpdateAlienAttackers` / the jumpers never revive a ship with an `eventTag`. Expressions `alive(name)` and
   `distance(name, x, y, z)` (`EventRunner.ShipState`) read `EventHost.Ship.name` / `position` (game units; NetProxy's label

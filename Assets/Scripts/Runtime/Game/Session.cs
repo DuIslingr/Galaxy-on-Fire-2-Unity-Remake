@@ -535,6 +535,7 @@ namespace GoF2Remake.Data
             DockedFromSpace = false;
             Es2TakeOff = false;
             Es2StartDocked = false;
+            Es2NoRedirect = false;
             ArrivedByLoad = false;
             ArrivedBySystemJump = false;
             SystemVisible = null;

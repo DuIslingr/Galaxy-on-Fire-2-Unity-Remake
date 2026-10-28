@@ -4,6 +4,18 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
 
 ## UI and platforms
 
+- **Small key hints** (#175; review 2026-10-28): the flight's hint row (`FlightHud.uss .hints`), the station's own
+  screens (`StationMenu.uss .station-root .hint`: the main view's row, the hangar window, the Missions / Status prompt
+  rows) and the star map's footer (`StarMap.uss .map-hints`) show their labels at `--text-caption` and the keys and
+  controller buttons on the `--glyph-sm-*` tokens (GoF2Common.uss: 22 units keycaps and face buttons at 100 %, scaled
+  like the caption by each `ui-text-N`, 44 at 200 %; fixed px clipped the 32 px caption at "Text size" 200 %). The
+  station's rules are three classes deep under `.station-root`, not under the panel root's id `#stationPanel`: an id beat
+  every class variant, and the windows built on the panel root outside it (the "i" windows, the Mod Builder) keep the
+  shared sheets' sizes.
+- **Layout settle** (`UiLayout`, #175): a screen configured within 1.2 s of a scene load is checked 0.3 s and 1.2 s in;
+  when its panel is drawn at another size than `Configure` asked for (the Editor's Play mode kept the last session's
+  scale), `UiLayout.Revision` changes and every screen lays out again. It changed at both points after every scene load
+  before, and each time the station refilled its news ticker from the start (`StationMenu.UpdateLayout`).
 - **Mouse drags and focus** (2026-10-26): `UiPointerButtons` combines UI move button flags with the Input System's held
   mouse buttons. A zero UI button mask alone must not cancel a held mouse drag; preserve event flags too, since the
   EventSystem delivers movement before release on the release frame (discarding it loses deliberate flings). Include
@@ -14,7 +26,10 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   `UiHover` preserves edits/captured drags; stationary-pointer events cannot take keyboard navigation back. Tests:
   `MouseGestureTests` and `MouseDragInputTests` (real Input System/EventSystem/UI Toolkit path, with empty move button
   masks injected and normal release/fling checks). The build-only physical-mouse trigger was not automatically
-  reproduced; verify it in the affected rebuilt game.
+  reproduced; verify it in the affected rebuilt game. `MouseDragInputTests` (Play mode, input to the Game view with the
+  focus ignored) switches the real mouse / pen / touch screen off for each test (`InputSystem.DisableDevice`): pressing
+  the physical mouse took `Mouse.current`. Not `InputTestFixture`: it replaces the input runtime under the loaded
+  scene. The edit-mode `MouseGestureTests` run synchronously: no input update between their injected state and the read.
 - **UI Toolkit only** (runtime): shared theme `UI/GoF2Theme.tss`; per-screen UXML/USS; controllers in
   `Scripts/Runtime/App/UI` (`GoF2Remake.UI`). The theme doesn't include Unity's default runtime theme, so built-in
   controls are styled in `GoF2Common.uss` and the document root is stretched in code.

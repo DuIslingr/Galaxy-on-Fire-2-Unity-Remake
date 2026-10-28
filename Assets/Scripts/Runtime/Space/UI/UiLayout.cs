@@ -53,32 +53,54 @@ namespace GoF2Remake.UI
         public static int Revision => Settings.UiScalePercent * 1000 + Settings.UiWidth * 100 + Mathf.RoundToInt(Settings.UiMarginPercent * 10f)
                                       + (TvDetected ? 7 : 0) + DebugDevice() * 13 + Settings.UiTextScalePercent * 100000
                                       + (Settings.HighContrast ? 1 : 0) * 30000000 + (Settings.ReduceMotion ? 1 : 0) * 60000000
-                                      + (Settings.ColorblindMarkers ? 1 : 0) * 120000000 + UiFont.Revision + Settle;
+                                      + (Settings.ColorblindMarkers ? 1 : 0) * 120000000 + UiFont.Revision + settle * 7919;
 
-        /// <summary>Modified: changes twice after a scene loads (0.3 s and 1.2 s in, real time), so every screen lays out
-        /// once more then. The first layout of a run came too early (in the Editor's Play mode the panel kept its old scale
-        /// until the screen size or an option changed: going full screen or picking the font again fixed it).</summary>
-        static int Settle
+        /// <summary>Modified: the first layout of a run could come too early (in the Editor's Play mode the panel kept its old
+        /// scale until the screen size or an option changed: going full screen or picking the font again fixed it). A panel
+        /// configured in the first 1.2 s after a scene loads is checked 0.3 s and 1.2 s in (real time, ScheduleSettleCheck): drawn at
+        /// another size than Configure asked for, this changes, so every screen lays out once more. Was a change at both
+        /// points every time: each one also refilled the station's news ticker (StationMenu.UpdateLayout), from the start.</summary>
+        static int settle;
+
+        static float sceneStart;
+
+        static readonly float[] SettleChecks = { 0.3f, 1.2f };
+
+        /// <summary>Configure's settle check (see settle) on 'root', whose panel should be 'expected' units large.</summary>
+        static void ScheduleSettleCheck(VisualElement root, Vector2 expected)
         {
-            get
+            int scene = sceneLoads;
+            float t = Time.realtimeSinceStartup - sceneStart;
+            foreach (float at in SettleChecks)
             {
-                float t = Time.realtimeSinceStartup - sceneStart;
-                return t < 0.3f ? 0 : t < 1.2f ? 7919 : 15838;
+                if (at <= t) continue;
+                root.schedule.Execute(() =>
+                {
+                    if (scene != sceneLoads) return;   // another scene since: its own checks
+                    var size = root.panel?.visualTree.layout.size ?? Vector2.zero;
+                    if (root.panel == null) return;
+                    // Expand mode's rounding (the reference resolution is whole units) stays well under 2 units.
+                    if (!(Mathf.Abs(size.x - expected.x) < 2f && Mathf.Abs(size.y - expected.y) < 2f)) settle++;
+                }).ExecuteLater((long)((at - t) * 1000f) + 1);
             }
         }
 
-        static float sceneStart;
+        static int sceneLoads;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void HookSceneLoads()
         {
             sceneStart = Time.realtimeSinceStartup;
+            settle = 0;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded -= OnSceneLoaded;
             UnityEngine.SceneManagement.SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode) =>
+        static void OnSceneLoaded(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+        {
             sceneStart = Time.realtimeSinceStartup;
+            sceneLoads++;
+        }
 
         /// <summary>Options > Accessibility "Text size" as a factor (1..2): the root's ui-text-N class (GoF2Common.uss) for the
         /// style sheets, Type for code.</summary>
@@ -184,6 +206,9 @@ namespace GoF2Remake.UI
                 root.EnableInClassList("ui-reduce-motion", Settings.ReduceMotion);
                 root.EnableInClassList("ui-colorblind", Settings.ColorblindMarkers);
                 UiFont.Apply(root);   // Options > Accessibility "Interface font"
+                // Modified: soon after a scene loads, checked again once it has been drawn (settle).
+                if (settings != null && Time.realtimeSinceStartup - sceneStart < SettleChecks[SettleChecks.Length - 1])
+                    ScheduleSettleCheck(root, r.panel);
             }
             return r;
         }

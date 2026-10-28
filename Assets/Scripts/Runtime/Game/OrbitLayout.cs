@@ -474,7 +474,8 @@ namespace GoF2Remake.World
             var sorted = list.Select((e, i) => (e, i)).OrderByDescending(x => x.e.p).ThenBy(x => x.i).Select(x => x.e).ToList();
             for (int k = 0; k < sorted.Count; k++) if (sorted[k].p > 0) sorted[k] = (sorted[k].item, sorted[k].p - 2 * k);
             // The supernova orbit after step 0x59: every pair's ore becomes Novanium (0xd9), the chances stay.
-            if (NovaniumOrbit(layout)) for (int k = 0; k < sorted.Count; k++) sorted[k] = (Novanium, sorted[k].p);
+            // Modified: the Supernova Challenge's orbit too (ChallengeNovaniumOrbit).
+            if (NovaniumOrbit(layout) || ChallengeNovaniumOrbit(layout)) for (int k = 0; k < sorted.Count; k++) sorted[k] = (Novanium, sorted[k].p);
             return sorted;
         }
 
@@ -484,8 +485,12 @@ namespace GoF2Remake.World
         /// and getCurrentCampaignMission > 0x59: the orbit's asteroids are all Novanium (Ginoya's other stations keep their
         /// normal ores). The remake reads Session.WorldIndex, so the finished game's world (multiplayer) has it too.</summary>
         public static bool NovaniumOrbit(OrbitLayout layout) =>
-            layout.systemIndex >= 0 && (layout.stationIndex == 0x6d && Session.WorldIndex > 0x59
-            // Modified: the Supernova Challenge's round at Luur (111) is ringed with Novanium's magma asteroids too.
-                                        || SupernovaChallenge.Active && layout.stationIndex == 111);
+            layout.systemIndex >= 0 && layout.stationIndex == 0x6d && Session.WorldIndex > 0x59;
+
+        /// <summary>Modified (#179, the user's comparison with the original's video): the Supernova Challenge's round at Luur
+        /// (111) is ringed with Novanium's magma asteroids too. Kept apart from NovaniumOrbit, which is the original's
+        /// Status::inSupernovaOrbit (0x6d only).</summary>
+        public static bool ChallengeNovaniumOrbit(OrbitLayout layout) =>
+            layout.systemIndex >= 0 && layout.stationIndex == 111 && SupernovaChallenge.Active;
     }
 }

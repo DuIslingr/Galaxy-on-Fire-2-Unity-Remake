@@ -85,6 +85,8 @@ Outputs are in this scratchpad folder:
 4. **Unused meshes.** No code creates:
    - `hangar_terran_bot_a..d_anim(+_add)` or `hangar_nivelian_bot_a..c`. `CutScene+0x38` is never filled; `process` would animate them with a 20% chance every 3 s.
    - The `bar_vossk_bot_*` and `bar_vossk_alpha` FBX files. They also have no resource ids.
+   - Remake: `hangar_terran_bot_e_anim(+_add)` is not from the original at all (a remake model); the rule
+     `hangar_terran_bot_e` assembles it under the remake-only ids 99004 / 99005 (`build_assemblies.py` MODEL_OVERRIDE).
    - `map_sun_*`, `sn_map_sun_011`, and `main/map_planet_020..022`. Ids 18200..18202 point to the `v_map_planet` versions instead.
 5. **Battlestation hangar index.** `CutScene::process` uses index 10 for station 101, while `createScene` uses 8. It only affects the process branch, which then updates nothing extra.
 6. **Camera table.** Its meaning (hangar vs. bar, camera vs. look-at) isn't verified.

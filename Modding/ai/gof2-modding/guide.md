@@ -838,7 +838,8 @@ it; without one it is round.
 ```
 
 (Before 2026-10-24 `engineFx` drew an imitation from PNGs: `glow`, `cone`, `trail`, `spiral` and their sizes and colours.
-Those fields are gone and ignored now.)
+Those fields are gone: a ship or exhaust style still giving one draws without it, and the mod's warnings name what
+replaced it: `meshes` for `glow`, `cone` and `spiral`, `trailParticles` for `trail`.)
 
 #### Galaxy on Fire 3's engines as the game draws them (`meshes`)
 

@@ -28,10 +28,19 @@ runtime by `Open()`), the flight side in `SystemJump` (on the player ship).
     falloff: `Resources/GoF2StarMap/MapPlanet.shader`, ambient 0.2 + diffuse toward the global `_StarMapSunPos`; the
     remake had a directional light that lit every planet from one side), drag turns it (pitch +-45 deg), tap selects a
     planet (104), release turns it to the front (105), a second tap confirms: 419 on the current station, 579 / 582 /
-    581 on energy cells with a drive, else "Destination: X / Travel to this station?" (574 + 421).
+    581 on energy cells with a drive, else "Destination: X / Travel to this station?" (574 + 421). Before those,
+    `StarMap::OnTouchEnd`'s campaign checks on the step's target: `Story.RequirementRefusal` (Supernova notes "Story
+    rules") and step 24's scanner + tractor beam (532; #186).
   - Overlay: rings, names (selected orange), race and security lines, "Tech level", visited tick
-    (`Session.VisitedStations`, set on docking), gate icon, "you are here" pulse, system block with the race logo,
+    (`Session.VisitedStations`, set on docking, and in space for the orbits without docking: `SpaceLevel.VisitedInSpace`,
+    MGame::OnInitialize's Station::visit for 109, 110, 132-134, 102-104 and 111 from step 0x5e; #188), gate icon, "you
+    are here" pulse, system block with the race logo,
     "Energy cells needed: N / M" (578), Key legend (400).
+  - Header (#175, remake): as tall as the station's top bar through an invisible copy of its Menu button
+    (`StarMap.uss .map-header-spacer`, added by `StarMap`), so the title sits at the station name's height whatever the
+    interface font; shown where the station shows Menu (touch, keys and mouse; with a controller neither shows), and
+    on phones at the Menu button's 64-unit touch height (`.layout-phone .map-header-spacer`). The footer's key hints are
+    the small ones (UI "Small key hints").
   - Input: touch / mouse drag and tap; keyboard arrows select, WASD move / turn, Enter zoom in / confirm, K key, Esc
     back; controller D-pad, left stick, A, Y key, B back.
 - **Station Map button** (177; keyboard M, controller Y; refused with an overloaded hold, 204): station mode (jump mode

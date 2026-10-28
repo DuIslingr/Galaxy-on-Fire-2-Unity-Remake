@@ -239,6 +239,7 @@ namespace GoF2Remake.Modding
                 if (ModJson.Get(o, "subsystems") is JToken ss && !(ss is JArray))
                     throw new ModJsonException($"{where}: \"subsystems\" must be a list [ {{ \"kind\": \"turret\", \"position_engine\": [x, y, z], \"item\": 48 }} ]");
                 CheckAddParts(o, where, mod);
+                CheckEngineFx(ModJson.Get(o, "engineFx"), where, mod);
                 foreach (var prop in o.Properties())
                     if (!ShipFields.Contains(prop.Name)) mod.Warnings.Add($"{ModJson.Where(prop, ShipsFile)}: unknown field \"{prop.Name}\" (ignored)");
                 if (ModJson.Get(o, "race") is JToken rt && rt.Type == JTokenType.String) d.raceRef = (string)rt;   // a mod race (ModRaces)
@@ -283,6 +284,22 @@ namespace GoF2Remake.Modding
                 d.data = data.ToString();
                 p.ships.Add(d);
             }
+        }
+
+        /// <summary>The engineFx fields of before 2026-10-24 (the imitation drawn from PNGs) and what replaced each.</summary>
+        static readonly (string field, string instead)[] RetiredEngineFx =
+        {
+            ("glow", "meshes"), ("cone", "meshes"), ("spiral", "meshes"), ("trail", "trailParticles"),
+        };
+
+        /// <summary>Remake: an "engineFx" (a ship's, an exhaust style's) still giving the imitation's fields, which are ignored
+        /// now: a warning naming what replaced each (Modding/README.md "Engine effect").</summary>
+        public static void CheckEngineFx(JToken engineFx, string where, ModInfo mod)
+        {
+            if (!(engineFx is JObject fx) || mod == null) return;
+            foreach (var (field, instead) in RetiredEngineFx)
+                if (ModJson.Has(fx, field))
+                    mod.Warnings.Add($"{where}: \"engineFx\": \"{field}\" is no longer read (ignored): Galaxy on Fire 3's engines use \"{instead}\" now");
         }
 
         /// <summary>ships.json "addParts": a list of { model, role, texture } (CustomAddPart). A wrong shape or role is an error,

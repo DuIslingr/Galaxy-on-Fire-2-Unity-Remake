@@ -14,11 +14,14 @@
 //   Blueprints tab (272, HangarList::initBlueprintTab 0x143208; blueprints_mods.md 1.5): 273 "Available blueprints" with
 //             the unlocked ones (progress "N%  (station)", highlighted while the hold carries a missing ingredient) and
 //             274 "Products finished" waiting elsewhere. Edit (283) opens the ingredients (tab 4): the right arrow moves
-//             one unit from the hold into the blueprint (held arrows repeat), invested goods can't be taken back; the
-//             first unit asks 212 "Start production at this station?" (528 for 210 / 223 without gate routes); leaving
-//             the ingredient commits it, at another station than the production station for 200 $ per unit (288;
-//             volatile goods 289); Autocomplete (hard-coded English) for int(qty * maxPrice * 1.25) (195). A finished
-//             run goes to the hold here (211) or waits at the production station (210).
+//             one unit from the hold into the blueprint (held arrows repeat); the first unit asks 212 "Start production
+//             at this station?" (528 for 210 / 223 without gate routes); at another station than the production station
+//             the units wait (FREIGHT) and go in for 200 $ per unit (288; volatile goods 289) on FREIGHT, Complete or
+//             leaving the view; Autocomplete (hard-coded English) for int(qty * maxPrice * 1.25) (195). A finished run
+//             goes to the hold here (211) or waits at the production station (210).
+//             Remake (PR #166): at the production station a unit goes in at once and the left arrow (TAKE) takes the
+//             player's own units back (Blueprints.Withdraw, never the story's); a full blueprint waits for Complete; the
+//             actions under the list (Shop, Autocomplete, Complete) are rows (up / down, Enter / A).
 //   Kaamo Club (Reference/research/kaamo_club.md 6, HangarWindow+0x11d = the owned club): the Shop tab becomes 186
 //             "Store": the storage (left) and the hold (right), no prices, free transfers (unsaleable goods refused, 323),
 //             mounted items aren't listed (demount first); the stored hulls under 173 "Ships" with their sell value and the
@@ -40,7 +43,7 @@ namespace GoF2Remake.UI
     public class HangarWindow
     {
         public enum Tab { Ship, Shop, Blueprints }
-        enum RowKind { Header, ShopItem, ShopShip, OwnShip, Slot, CargoItem, Blueprint, Pending, Ingredient, Autocomplete, StoredShip }
+        enum RowKind { Header, ShopItem, ShopShip, OwnShip, Slot, CargoItem, Blueprint, Pending, Ingredient, Autocomplete, StoredShip, ShopLink, Complete }
 
         class Row
         {
@@ -68,13 +71,16 @@ namespace GoF2Remake.UI
         int editing = -1;
         /// <summary>Item+0x3c blueprintAmount: units moved from the hold but not committed yet, per ingredient.</summary>
         readonly Dictionary<int, int> pendingUnits = new Dictionary<int, int>();
+        /// <summary>212 "Start production at this station?" answered Yes for this blueprint view.</summary>
         bool startConfirmed;
-        // GOF2_MANUFACTURING_PATCH_V1 — UI-only, never serialized.
+        /// <summary>Remake: the Shop tab opened from a blueprint's Shop action marks the recipe's goods with their total
+        /// amounts (item -> units); until the tab is left.</summary>
         readonly Dictionary<int, int> shopBlueprintMaterials = new Dictionary<int, int>();
         bool shopBlueprintHighlight;
-        VisualElement productionActions;
-        Label productionComplete, productionShop, productionAutocomplete;
-        readonly Label greenPaletteProbe = new Label();
+        /// <summary>Remake: the ingredients view's Autocomplete and Complete buttons (rows of their own, AddProductionActions).</summary>
+        Label productionComplete, productionAutocomplete;
+        /// <summary>Remake: the key hints were last built for the ingredients view (TAKE / ADD).</summary>
+        bool hintsForIngredients;
         readonly List<Row> rows = new List<Row>();
         Hangar hangar;
         Row selected;
@@ -180,12 +186,7 @@ namespace GoF2Remake.UI
             hangarClose.parent.Insert(hangarClose.parent.IndexOf(hangarClose), help);
             actionButton.clicked += Action;
             if (actionButton2 != null) actionButton2.clicked += SecondaryAction;
-            greenPaletteProbe.AddToClassList("row-badge");
-            greenPaletteProbe.AddToClassList("row-badge--stock");
-            greenPaletteProbe.style.visibility = Visibility.Hidden;
-            greenPaletteProbe.style.position = Position.Absolute;
-            window.Add(greenPaletteProbe);
-            // The existing trade arrows are repurposed for TAKE / ADD inside a blueprint.
+            // Remake: inside a blueprint the trade arrows are TAKE / ADD.
             HookArrow(sellButton, -1);
             HookArrow(buyButton, 1);
             sellFill = HeldTrade.AddFill(sellButton);   // remake: a held arrow fills toward the whole stack (HeldTrade)
@@ -382,11 +383,11 @@ namespace GoF2Remake.UI
         /// <summary>HangarWindow::readyToClose: an uncommitted shipment to another station asks first.</summary>
         public bool ReadyToClose()
         {
-            if (HasPending) Revert();
-            return true;
+            if (!HasPending) return true;
+            Commit(() => menu.CloseHangar());   // 288 Yes ships them, No takes them back to the hold; then it closes
+            return false;
         }
 
-        /// <summary>Back inside the window: the ingredient list returns to the blueprint list (after committing).</summary>
         /// <summary>HangarWindow::OnTouchEnd case 0: the selected row's details in the full-screen window, sound 97.</summary>
         public void OpenInfo()
         {
@@ -399,6 +400,7 @@ namespace GoF2Remake.UI
             menu.PlayClip(Flight.CombatAudio.Load()?.buttonInfo);
         }
 
+        /// <summary>Back inside the window: the ingredient list returns to the blueprint list (after committing).</summary>
         public bool Back()
         {
             if (editing < 0) return false;
@@ -648,64 +650,63 @@ namespace GoF2Remake.UI
                 }
             }
             foreach (var r in rows) r.element.EnableInClassList("list-row--selected", r == selected);
-            if (shopBlueprintHighlight) list.schedule.Execute(RefreshBlueprintRowTints).ExecuteLater(1);
             list.schedule.Execute(() => { list.scrollOffset = new Vector2(0f, scroll); ScrollToSelected(); });
             ShowDetails();
             UpdateFooter();
+            // Remake: the key hints say TAKE / ADD in the ingredients view (StationMenu.BuildHints asks EditingBlueprint).
+            if (hintsForIngredients != EditingBlueprint)
+            {
+                hintsForIngredients = EditingBlueprint;
+                menu.RefreshCredits();   // rebuilds the hints
+            }
         }
 
+        /// <summary>Remake: the ingredients view is shown (its trade arrows are TAKE / ADD).</summary>
+        public bool EditingBlueprint => IsOpen && editing >= 0;
+
+        /// <summary>Remake (PR #166): the ingredients view's actions, centred under the list in place of the Autocomplete row:
+        /// 185 Shop / 186 Store (that tab with the recipe's goods marked), Autocomplete (195, a mod's blueprint may have none) and
+        /// Complete. Each is a row of its own, so up / down reach them and Enter / A does them like any row's action; a click /
+        /// tap selects it and does it.</summary>
         void AddProductionActions()
         {
-            productionActions = new VisualElement();
-            productionActions.style.flexDirection = FlexDirection.Row;
-            productionActions.style.justifyContent = Justify.Center;
-            productionActions.style.flexWrap = Wrap.Wrap;
-            productionActions.style.marginTop = 10;
-            productionActions.style.marginBottom = 10;
-            productionShop = MakeProductionButton("SHOP", () =>
-            {
-                if (editing < 0) return;
-                menu.PlayRelease();
-                GoToShopItem(-1);
-            });
-            productionShop.AddToClassList("manufacturing-shop");
-            productionActions.Add(productionShop);
-            productionAutocomplete = null;
-            if (Blueprints.CanAutocomplete(editing))
-            {
-                productionAutocomplete = MakeProductionButton("", AskAutocomplete);
-                productionAutocomplete.AddToClassList("manufacturing-autocomplete");
-                productionActions.Add(productionAutocomplete);
-            }
-            productionComplete = MakeProductionButton("COMPLETE", () =>
-            {
-                if (editing < 0 || HasPending || !Blueprints.IsCompleted(Blueprints.State(level.Database, editing))) return;
-                menu.PlayRelease();
-                Finish();
-            });
-            productionComplete.AddToClassList("manufacturing-complete");
-            productionActions.Add(productionComplete);
-            list.Add(productionActions);
+            var actions = new VisualElement { pickingMode = PickingMode.Ignore };
+            actions.AddToClassList("manufacturing-actions");
+            list.Add(actions);
+            AddProductionRow(actions, RowKind.ShopLink, Localization.Get(hangar.Storage ? 186 : 185).ToUpperInvariant(), "manufacturing-shop");   // the tab's name
+            productionAutocomplete = Blueprints.CanAutocomplete(editing)
+                ? AddProductionRow(actions, RowKind.Autocomplete, "", "manufacturing-autocomplete") : null;
+            productionComplete = AddProductionRow(actions, RowKind.Complete, Localization.Extra("bpComplete", "Complete").ToUpperInvariant(),
+                                                  "manufacturing-complete");
             RefreshProductionActions();
         }
-        Label MakeProductionButton(string title, Action action)
+
+        Label AddProductionRow(VisualElement parent, RowKind kind, string title, string cls)
         {
+            var row = new Row { kind = kind, item = editing };
             var button = new Label(title) { pickingMode = PickingMode.Position };
             button.AddToClassList("detail-action");
             button.AddToClassList("gof-semibold");
-            button.style.marginLeft = 5;
-            button.style.marginRight = 5;
-            button.style.marginBottom = 3;
-            button.RegisterCallback<ClickEvent>(e => { e.StopPropagation(); action(); });
+            button.AddToClassList("manufacturing-action");
+            button.AddToClassList(cls);
+            button.RegisterCallback<ClickEvent>(e =>
+            {
+                e.StopPropagation();
+                Select(row, true);
+                if (selected == row) Action();
+            });
+            row.element = button;
+            parent.Add(button);
+            rows.Add(row);
             return button;
         }
+
         void RefreshProductionActions()
         {
             if (productionComplete == null || editing < 0) return;
-            bool ready = !HasPending && Blueprints.IsCompleted(Blueprints.State(level.Database, editing));
+            bool ready = CanComplete();
             productionComplete.EnableInClassList("detail-action--disabled", !ready);
             productionComplete.pickingMode = ready ? PickingMode.Position : PickingMode.Ignore;
-            // Manufacturing actions use their own theme classes rather than sampling styles before layout.
             if (productionAutocomplete != null)
             {
                 int price = Blueprints.AutoCompletePrice(level.Database, editing);
@@ -714,23 +715,35 @@ namespace GoF2Remake.UI
                 productionAutocomplete.EnableInClassList("row-autocomplete--expensive", price > Session.Credits);
             }
         }
+
+        /// <summary>Remake: every ingredient is in, counting the units waiting to be shipped (they go in first, 288).</summary>
+        bool CanComplete()
+        {
+            if (editing < 0) return false;
+            var db = level.Database;
+            var parts = db.Item(editing)?.blueprint;
+            if (parts == null) return false;
+            var st = Blueprints.State(db, editing);
+            for (int k = 0; k < parts.Count; k++)
+                if (st.remaining[k] - Pending(parts[k].item) > 0) return false;
+            return true;
+        }
+
+        /// <summary>Remake: Complete: the staged units shipped (288) and the run produced (Finish).</summary>
+        void Complete()
+        {
+            if (!CanComplete()) return;
+            menu.PlayRelease();
+            Commit(() =>
+            {
+                if (editing >= 0 && Blueprints.IsCompleted(Blueprints.State(level.Database, editing))) Finish();
+            });
+        }
+
         void ClearBlueprintShopHighlight()
         {
             shopBlueprintHighlight = false;
             shopBlueprintMaterials.Clear();
-        }
-        void TintBlueprintRow(VisualElement element)
-        {
-            if (!shopBlueprintHighlight || !element.ClassListContains("list-row--blueprint-material")) return;
-            Color green = greenPaletteProbe.resolvedStyle.color;
-            // GOF2_MANUFACTURING_V12_VISUAL: leave background to USS so hover and selection
-            // work naturally. Inline styles overrode the remake's normal row interaction states.
-            element.style.borderLeftColor = green;
-            element.style.borderLeftWidth = 3f;
-        }
-        void RefreshBlueprintRowTints()
-        {
-            foreach (var row in rows) if (row.element != null) TintBlueprintRow(row.element);
         }
         /// <summary>The first selectable row from 'index' on, else the last one before it (null: none, or index &lt; 0).</summary>
         Row NearestSelectable(int index)
@@ -768,11 +781,9 @@ namespace GoF2Remake.UI
             var db = level.Database;
             var e = new VisualElement();
             e.AddToClassList("list-row");
+            // Remake: the shop opened from a blueprint's Shop action: the recipe's goods with a cyan edge (USS).
             if (row.kind == RowKind.ShopItem && shopBlueprintHighlight && shopBlueprintMaterials.ContainsKey(row.item))
-            {
                 e.AddToClassList("list-row--blueprint-material");
-                e.RegisterCallback<AttachToPanelEvent>(_ => e.schedule.Execute(() => TintBlueprintRow(e)).ExecuteLater(1));
-            }
             // Remake: the Ship tab's hold items in the plain grey (were outlined and indented).
             if (row.kind == RowKind.Slot && row.equipment >= 0) e.AddToClassList("list-row--mounted");   // remake: tinted, a cyan edge
             var icon = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -923,19 +934,13 @@ namespace GoF2Remake.UI
                     bpValue.AddToClassList("row-bp-amount-value");
                     bpValue.AddToClassList("gof-semibold");
                     bpAmount.Add(bpLabel);
+                    // Remake: units staged for another production station; a click / tap ships them now (288). Without a
+                    // pointer they go on Complete or on leaving the view.
                     if (Pending(row.item) > 0)
                     {
-                        var freight = new Label("FREIGHT") { pickingMode = PickingMode.Position };
-                        freight.AddToClassList("row-badge");
-                        freight.AddToClassList("gof-semibold");
-                        freight.style.marginRight = 6;
+                        var freight = Badge(Localization.Extra("bpFreight", "Freight").ToUpperInvariant(), "row-badge--freight");
+                        freight.pickingMode = PickingMode.Position;
                         freight.RegisterCallback<ClickEvent>(ev => { ev.StopPropagation(); menu.PlayRelease(); Commit(null); });
-                        freight.RegisterCallback<AttachToPanelEvent>(_ =>
-                        {
-                            var orange = buyButton.resolvedStyle.backgroundColor;
-                            freight.style.backgroundColor = orange;
-                            freight.style.color = Color.white;
-                        });
                         bpAmount.Add(freight);
                     }
                     bpAmount.Add(bpValue);
@@ -957,35 +962,7 @@ namespace GoF2Remake.UI
                     }
                     break;
                 }
-                case RowKind.Autocomplete:
-                    name.text = Localization.Extra("bpAutocomplete", "Autocomplete");   // a hard-coded English label in the original
-                    subText.text = ItemInfo.ItemName(row.item);
-                    price.text = ItemInfo.Credits(Blueprints.AutoCompletePrice(db, row.item));
-                    price.EnableInClassList("row-price--expensive", Blueprints.AutoCompletePrice(db, row.item) > Session.Credits);
-                    break;
-            }
-            // Remake: Autocomplete as the game's button, centred in the list: its name, the price on a second line (no item
-            // name, no "|"). A click selects it and asks (195) like the details' button.
-            if (row.kind == RowKind.Autocomplete)
-            {
-                e.AddToClassList("list-row--autocomplete");
-                var button = new Label($"{name.text.ToUpperInvariant()}\n{price.text}") { pickingMode = PickingMode.Position };
-                button.AddToClassList("detail-action");
-                button.AddToClassList("gof-semibold");
-                button.AddToClassList("row-autocomplete");
-                button.EnableInClassList("row-autocomplete--expensive", price.ClassListContains("row-price--expensive"));
-                button.RegisterCallback<ClickEvent>(ev =>
-                {
-                    ev.StopPropagation();
-                    Select(row, true);
-                    if (selected == row) Action();
-                });
-                e.Add(button);
-                e.RegisterCallback<ClickEvent>(_ => Select(row, true));
-                row.element = e;
-                list.Add(e);
-                rows.Add(row);
-                return;
+                // Autocomplete (the original's hard-coded English label): a button under the list, AddProductionActions.
             }
             if (tex != null) icon.style.backgroundImage = new StyleBackground(tex);
             // Remake: the station's and the hold's amounts at the row's edges for what can be traded (shop items, the Ship
@@ -1032,15 +1009,15 @@ namespace GoF2Remake.UI
             e.Add(texts);
             if (amounts && row.kind != RowKind.Ingredient)
             {
-                // Keep the normal cargo value anchored to the right. During blueprint-shop mode,
-                // show the FULL recipe amount to its left, irrespective of progress or cargo owned.
+                // Remake: the shop opened from a blueprint's Shop action: the recipe's whole amount of the good left of
+                // the hold's (whatever is invested or in the hold already).
                 var shipQuantity = Amount(hangar.CargoOf(row.item), "row-qty--ship");
                 if (row.kind == RowKind.ShopItem && shopBlueprintHighlight
                     && shopBlueprintMaterials.TryGetValue(row.item, out int required))
                 {
                     var quantities = new VisualElement { pickingMode = PickingMode.Ignore };
                     quantities.AddToClassList("row-qty-group");
-                    var recipeQuantity = new Label($"({required}t)") { pickingMode = PickingMode.Ignore };
+                    var recipeQuantity = new Label(string.Format(Localization.Extra("bpRecipeAmount", "({0}t)"), required)) { pickingMode = PickingMode.Ignore };
                     recipeQuantity.AddToClassList("row-qty--blueprint-required");
                     recipeQuantity.AddToClassList("gof-semibold");
                     quantities.Add(recipeQuantity);
@@ -1079,16 +1056,13 @@ namespace GoF2Remake.UI
         void Select(Row row, bool sound)
         {
             if (row == null || !row.Selectable || row == selected) return;
-            // Leaving an ingredient commits it, which rebuilds the list (or finishes the run and leaves the ingredients
-            // view): the same row of the new list, if it is still there. Remake (a player's report): the old row object was selected, so
-            // after the last ingredient a stale Autocomplete row stayed selected on the Shop tab and A asked to autocomplete
-            // blueprint -1 for 0 $, which put item -1 into the hold.
-            // Pending remote ingredients remain on the recipe until FREIGHT is explicitly pressed.
+            // Remake (PR #166): moving between ingredients no longer commits them (it rebuilt the list under the selection, a
+            // player's report: a stale Autocomplete row stayed selected and A autocompleted blueprint -1 for 0 $); units
+            // staged for another production station wait for FREIGHT, Complete or leaving the view.
             if (sound) menu.PlayPush();
             ReleaseArrow();
             selected = row;
             foreach (var r in rows) r.element.EnableInClassList("list-row--selected", r == selected);
-            if (shopBlueprintHighlight) RefreshBlueprintRowTints();
             if (AutoEquip()) return;   // rebuilt
             ScrollToSelected();
             ShowDetails();
@@ -1289,7 +1263,9 @@ namespace GoF2Remake.UI
                     ShowAction(T(283).ToUpperInvariant(), true);   // Edit
                     break;
                 case RowKind.Autocomplete:
-                    // Remake: no second button here: the list's Autocomplete is the button (Enter / A still do it).
+                case RowKind.ShopLink:
+                case RowKind.Complete:
+                    // Remake: the product's details, no second button: the list's button is the action (Enter / A do it).
                     break;
                 case RowKind.Ingredient:
                 {
@@ -1301,16 +1277,16 @@ namespace GoF2Remake.UI
                     tradeBox.RemoveFromClassList("trade-box--hidden");
                     tradeStockLabel.text = T(183).ToUpperInvariant();
                     tradeCargoLabel.text = T(271).ToUpperInvariant();
-                    // Keep the shop's exact native sequence and spacing:
-                    // ship quantity, TAKE arrow, flexible centre, ADD arrow, blueprint quantity.
+                    // Remake (PR #166): laid out like the shop: the hold, TAKE, ADD, the blueprint. TAKE gives back units
+                    // waiting to be shipped, or at the production station the player's own (Blueprints.Withdrawable: never
+                    // the story's pre-invested goods).
                     tradeBox.AddToClassList("trade-box--ingredient");
                     sellLabel.text = "‹ " + Localization.Extra("shopTake", "TAKE").ToUpperInvariant();
                     buyLabel.text = Localization.Extra("bpAdd", "ADD").ToUpperInvariant() + " ›";
                     tradeStock.text = $"{cargo} t";
                     tradeCargo.text = $"{invested} / {total} t";
                     tradePrice.text = "";
-                    sellButton.EnableInClassList("trade-arrow--disabled",
-                        (Pending(item) <= 0 && (st.station != StationIndex || Blueprints.Invested(db, st, selected.type) <= 0)) || hangar.Load >= hangar.MaxLoad);
+                    sellButton.EnableInClassList("trade-arrow--disabled", TakeableUnits() <= 0 || hangar.Load >= hangar.MaxLoad);
                     buyButton.EnableInClassList("trade-arrow--disabled", cargo <= 0 || invested >= total);
                     break;
                 }
@@ -1318,45 +1294,56 @@ namespace GoF2Remake.UI
             detailScroll.scrollOffset = Vector2.zero;
         }
 
+        /// <summary>Remake: the selected ingredient's units TAKE can give back: those waiting to be shipped, and at the
+        /// production station the player's own invested ones (Blueprints.Withdrawable).</summary>
+        int TakeableUnits()
+        {
+            if (selected == null || selected.kind != RowKind.Ingredient || editing < 0) return 0;
+            var db = level.Database;
+            var st = Blueprints.State(db, editing);
+            return Pending(selected.item) + (st.station == StationIndex ? Blueprints.Withdrawable(db, st, selected.type) : 0);
+        }
+
+        /// <summary>Remake (PR #166, the original has no way back): units of the selected ingredient back into the hold, the
+        /// staged ones first, then the player's own invested ones (Blueprints.Withdraw).</summary>
         bool TakeIngredient(int units)
         {
             if (selected == null || selected.kind != RowKind.Ingredient || units <= 0) { ReleaseArrow(); return false; }
             var db = level.Database;
-            var st = Blueprints.State(db, editing);
             int free = Mathf.Max(0, hangar.MaxLoad - hangar.Load);
-            int availablePending = Pending(selected.item);
-            int availableCommitted = st.station == StationIndex ? Blueprints.Invested(db, st, selected.type) : 0;
-            int n = Mathf.Min(units, Mathf.Min(free, availablePending + availableCommitted));
+            int staged = Pending(selected.item);
+            int n = Mathf.Min(units, Mathf.Min(free, TakeableUnits()));
             if (n <= 0) { ReleaseArrow(); return false; }
-            // Remote materials are still staged locally, not invested in the blueprint.
-            // Return these to the ship first. Only the production station can withdraw committed goods.
-            int local = Mathf.Min(n, availablePending);
+            int local = Mathf.Min(n, staged);
             if (local > 0)
             {
-                int left = availablePending - local;
-                if (left == 0) pendingUnits.Remove(selected.item);
-                else pendingUnits[selected.item] = left;
+                if (staged == local) pendingUnits.Remove(selected.item);
+                else pendingUnits[selected.item] = staged - local;
                 Shop.AddToCargo(selected.item, local);
             }
-            int committed = n - local;
-            if (committed > 0)
+            int invested = n - local;
+            if (invested > 0)
             {
-                if (!Blueprints.Withdraw(db, editing, selected.type, committed, StationIndex))
+                if (!Blueprints.Withdraw(db, editing, selected.type, invested, StationIndex))
                 {
-                    Rebuild();
                     ReleaseArrow();
+                    Rebuild();
                     return local > 0;
                 }
-                Shop.AddToCargo(selected.item, committed);
+                Shop.AddToCargo(selected.item, invested);
             }
             Rebuild();
             return true;
         }
+
         int Pending(int ingredient) => pendingUnits.TryGetValue(ingredient, out int n) ? n : 0;
         bool HasPending { get { foreach (var kv in pendingUnits) if (kv.Value > 0) return true; return false; } }
         int StationIndex => level.Station != null ? level.Station.index : Session.StationIndex;
 
-        /// <summary>Item::transactionBlueprint: one unit from the hold into the blueprint (not committed yet).</summary>
+        /// <summary>Item::transactionBlueprint: units from the hold into the blueprint. The first unit of an unstarted
+        /// blueprint asks 212 "Start production at this station?" (528 for 210 / 223 without gate routes). Remake (PR #166):
+        /// at the production station (or starting it here) they go in at once, as the player's own (Blueprints.Withdraw may
+        /// give them back); at another station they wait to be shipped (Commit, 288).</summary>
         bool AddIngredient(int units)
         {
             var db = level.Database;
@@ -1365,9 +1352,17 @@ namespace GoF2Remake.UI
             string refusal = Modding.ModBlueprints.RequiresShipRefusal(editing);
             if (refusal != null) { ReleaseArrow(); menu.ShowToast(refusal); return false; }
             var st = Blueprints.State(db, editing);
-            if (Blueprints.IsEmpty(st) && !HasPending && !Blueprints.CanStartIn(db, editing, StationIndex))
-            { ReleaseArrow(); menu.ShowToast(Localization.Get(528)); return false; }
-            bool startingHere = Blueprints.IsEmpty(st) && st.station < 0 && !HasPending;
+            if (Blueprints.IsEmpty(st) && !startConfirmed && !HasPending)
+            {
+                ReleaseArrow();
+                if (!Blueprints.CanStartIn(db, editing, StationIndex)) { menu.ShowToast(Localization.Get(528)); return false; }
+                menu.ShowDialog(Localization.Get(212), () =>   // Start production here?
+                {
+                    startConfirmed = true;
+                    if (IsOpen && selected != null && selected.kind == RowKind.Ingredient) Trade(1);
+                });
+                return false;
+            }
             int moved = 0;
             for (int n = 0; n < units; n++)
             {
@@ -1375,23 +1370,20 @@ namespace GoF2Remake.UI
                 if (left <= 0 || hangar.CargoOf(item) <= 0) break;
                 Shop.RemoveFromCargo(item, 1);
                 if (st.station < 0 || st.station == StationIndex)
-                    Blueprints.Invest(db, editing, item, 1, StationIndex);
+                    Blueprints.Invest(db, editing, item, 1, StationIndex, true);
                 else
                     pendingUnits[item] = Pending(item) + 1;
                 moved++;
             }
             if (moved == 0) { ReleaseArrow(); return false; }
-            if (startingHere && st.station == StationIndex)
-            {
-                string location = db.Stations.Find(s => s.index == StationIndex)?.name ?? "";
-                menu.ShowToast($"{ItemInfo.ItemName(editing)} started at {location}");
-            }
             Rebuild();
             return true;
         }
 
         /// <summary>setSellMode(false): the pending units go into the blueprint; at another station than the production
-        /// station for 200 $ per unit (288), volatile goods never (289); a completed run is produced.</summary>
+        /// station for 200 $ per unit (288), volatile goods never (289). A refusal (289, too little money) or No takes them
+        /// back to the hold, so the next tab switch or Back doesn't ask again. Remake (PR #166): a full blueprint waits for
+        /// Complete.</summary>
         void Commit(System.Action after)
         {
             var db = level.Database;
@@ -1407,6 +1399,7 @@ namespace GoF2Remake.UI
             bool elsewhere = !Blueprints.IsEmpty(st) && st.station >= 0 && st.station != StationIndex;
             if (elsewhere && volatileGoods)
             {
+                Revert();
                 menu.ShowDialog(Localization.Get(289), null, true);
                 return;
             }
@@ -1420,6 +1413,7 @@ namespace GoF2Remake.UI
                     {
                         if (cost > Session.Credits)
                         {
+                            Revert();
                             menu.ShowToast(Localization.Get(203).Replace("#C", ItemInfo.Credits(cost - Session.Credits)));
                             return;
                         }
@@ -1429,8 +1423,7 @@ namespace GoF2Remake.UI
                     },
                     () =>
                     {
-                        // No means cancel the freight, refund every pending item and continue navigation.
-                        Revert();
+                        Revert();   // No: the staged units back to the hold, and on (the tab, Back, closing)
                         after?.Invoke();
                     });
                 return;
@@ -1443,10 +1436,10 @@ namespace GoF2Remake.UI
         {
             var db = level.Database;
             foreach (var kv in pendingUnits)
-                if (kv.Value > 0) Blueprints.Invest(db, editing, kv.Key, kv.Value, StationIndex);
+                if (kv.Value > 0) Blueprints.Invest(db, editing, kv.Key, kv.Value, StationIndex, true);
             pendingUnits.Clear();
             startConfirmed = false;
-            Rebuild();  // Manufacturing still requires an explicit COMPLETE click.
+            Rebuild();
         }
 
         void Revert()
@@ -1457,7 +1450,10 @@ namespace GoF2Remake.UI
             Rebuild();
         }
 
-        /// <summary>A completed run: 211 to the hold (then the Shop tab) or 210 waiting at the production station.</summary>
+        /// <summary>A completed run: 211 to the hold or 210 waiting at the production station. Remake (PR #166): the view stays
+        /// on the blueprint for another run (it went to the Shop tab / the blueprint list). Remake (a player's suggestion): a
+        /// run made at its production station whose product has a free slot (Hangar.OffersMountAfterBuild) asks 211 +
+        /// "Mount it now?"; Yes mounts it (208) and shows the Ship tab, No leaves it in the hold.</summary>
         void Finish()
         {
             var db = level.Database;
@@ -1477,15 +1473,24 @@ namespace GoF2Remake.UI
                 SetTab(Tab.Ship);
                 return;
             }
-            if (here)
-                menu.ShowToast(Localization.Get(211).Replace("#N", name));
-            else
+            Rebuild();
+            if (!here)
             {
                 string where = db.Stations.Find(s => s.index == station)?.name ?? "";
-                menu.ShowToast(Localization.Get(210).Replace("#N", name).Replace("#S", where));
+                menu.ShowDialog(Localization.Get(210).Replace("#N", name).Replace("#S", where), null, true);
+                return;
             }
-            // For cargo products, retain the blueprint view and reset ingredient controls for another batch.
-            Rebuild();
+            string done = Localization.Get(211).Replace("#N", name);
+            if (hangar.OffersMountAfterBuild(product))
+                menu.ShowChoice(done + "\n\n" + Localization.Extra("blueprintMountAsk", "Mount it now?"),
+                                Localization.Get(134), Localization.Get(135), () =>
+                {
+                    if (!hangar.Mount(product)) return;
+                    menu.PlayClip(menu.shopMount);
+                    menu.ShowToast(Localization.Get(208).Replace("#N", name));
+                    SetTab(Tab.Ship);
+                }, null);
+            else menu.ShowDialog(done, null, true);
         }
 
         /// <summary>Autocomplete (button 23): 195 "Autocomplete blueprint for #C?"; an empty blueprint takes this station.</summary>
@@ -1620,7 +1625,10 @@ namespace GoF2Remake.UI
         {
             if (selected != null && selected.kind == RowKind.Ingredient)
             {
-                return direction > 0 ? AddIngredient(units) : TakeIngredient(units);
+                // ADD sounds like selling (to the station, 0x64), TAKE like buying (to the ship, 0x65).
+                bool moved = direction > 0 ? AddIngredient(units) : TakeIngredient(units);
+                if (moved && sound) menu.PlayClip(direction > 0 ? menu.shopSell : menu.shopBuy);
+                return moved;
             }
             if (selected == null || selected.kind != RowKind.ShopItem) return false;
             bool changed = false;
@@ -1675,6 +1683,14 @@ namespace GoF2Remake.UI
                     break;
                 case RowKind.Autocomplete:
                     AskAutocomplete();
+                    break;
+                case RowKind.ShopLink:
+                    // Remake: the Shop tab with the recipe's goods marked (GoToShopItem).
+                    menu.PlayRelease();
+                    GoToShopItem(-1);
+                    break;
+                case RowKind.Complete:
+                    Complete();
                     break;
                 case RowKind.Slot when selected.equipment >= 0:
                 {
@@ -1786,7 +1802,8 @@ namespace GoF2Remake.UI
         /// <summary>The second row button (X / controller X): Sell a stored hull (330 -> 334).</summary>
         public void SecondaryAction()
         {
-            if (selected != null && selected.kind == RowKind.ShopItem) { Trade(-1); return; }   // remake: X / the left arrow
+            // Remake: X / the left arrow (an ingredient's TAKE).
+            if (selected != null && (selected.kind == RowKind.ShopItem || selected.kind == RowKind.Ingredient)) { Trade(-1); return; }
             if (selected == null || selected.kind != RowKind.StoredShip) return;
             int index = selected.equipment;
             menu.PlayRelease();
@@ -1855,9 +1872,7 @@ namespace GoF2Remake.UI
                 if (!holdBatch) { hangar.BeginBatch(); holdBatch = true; }
             }
             else if (selected != null && selected.kind == RowKind.Ingredient)
-                holdTotal = direction > 0 ? hangar.CargoOf(selected.item)
-                          : Pending(selected.item) + (Blueprints.State(level.Database, editing).station == StationIndex
-                              ? Blueprints.Invested(level.Database, Blueprints.State(level.Database, editing), selected.type) : 0);
+                holdTotal = direction > 0 ? hangar.CargoOf(selected.item) : TakeableUnits();
             // A shop row's unit sounds through HeldTrade's pitched voice (the repeats rise from here); the fill waits for the hold.
             if (selected != null && (selected.kind == RowKind.ShopItem || selected.kind == RowKind.Ingredient))
             {

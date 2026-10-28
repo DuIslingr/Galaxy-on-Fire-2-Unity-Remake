@@ -16,6 +16,7 @@ namespace GoF2Remake.Tests
     public class MouseDragInputTests : PlayModeTest
     {
         Mouse mouse;
+        readonly List<InputDevice> switchedOff = new List<InputDevice>();   // the real pointers, off during a test
         InputSettings.BackgroundBehavior background;
         InputSettings.EditorInputBehaviorInPlayMode editorInput;
 
@@ -27,11 +28,22 @@ namespace GoF2Remake.Tests
             InputSystem.settings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
             InputSystem.settings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
             mouse = InputSystem.AddDevice<Mouse>();
+            // The real mouse, pen and touch screen are switched off meanwhile: these frames go to the Game view with the
+            // window's focus ignored, so pressing the physical mouse during a run took Mouse.current and broke the test.
+            // (Not InputTestFixture: it swaps the whole input runtime out under the scene these tests load; this keeps the
+            // path as the game runs it.)
+            switchedOff.Clear();
+            foreach (var d in InputSystem.devices)
+                if (d != mouse && d.enabled && d is Pointer) { InputSystem.DisableDevice(d); switchedOff.Add(d); }
+            mouse.MakeCurrent();
         }
 
         [TearDown]
         public void RestoreInput()
         {
+            foreach (var d in switchedOff)
+                if (d.added) InputSystem.EnableDevice(d);
+            switchedOff.Clear();
             InputSystem.RemoveDevice(mouse);
             InputSystem.settings.backgroundBehavior = background;
             InputSystem.settings.editorInputBehaviorInPlayMode = editorInput;

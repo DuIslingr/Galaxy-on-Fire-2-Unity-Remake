@@ -170,7 +170,10 @@ namespace GoF2Remake.EditorTools
     /// </summary>
     public class ModelOrientationPostprocessor : AssetPostprocessor
     {
-        public override uint GetVersion() => 1;
+        // Modified: 2 = the hangar rooms imported readable (ImportPostprocessor.OnPreprocessModel, Inspect ship's room colliders):
+        // a Library imported before kept them unreadable, and StationLevel.AddRoomColliders skipped every one. Bumping this
+        // reimports the models only (the texture importer's version is ImportPostprocessor's).
+        public override uint GetVersion() => 2;
 
         void OnPostprocessModel(GameObject root)
         {

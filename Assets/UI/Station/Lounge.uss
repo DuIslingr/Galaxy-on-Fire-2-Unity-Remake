@@ -66,7 +66,7 @@
     right: 40px;
     top: 228px;   /* under the credits and the cargo below them (.station-funds) */
     /* Modified: a drawer (LoungePanel.SetDrawer): the arrow tab, then the rows; closed, it slides right by the rows' width
-       and only the tab stays on screen. */
+       and only the tab stays on screen (the rows' first 40 px beside it, faded out: SetDrawer turns their picking off). */
     flex-direction: row;
     align-items: flex-start;
     translate: 0 0;

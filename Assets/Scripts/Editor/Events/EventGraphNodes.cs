@@ -95,8 +95,8 @@ namespace GoF2Remake.EditorTools
                 "every second in a game (an expression: \"campaign >= 20\", \"visited(Kepler Prime)\", \"quest(first_contact) == 2\", " +
                 "\"credits > 50000\"). Empty: at once; \"never\": only by another graph's Start Mission.").Delayed().Build();
             context.AddOption<float>(RepeatMinutes).WithDisplayName("Comes again after (minutes)").WithTooltip("A story mission that " +
-                "comes again (an encounter): this many minutes of playing time after it was done, once Starts when has been false (the " +
-                "player left) and holds again. 0: once.").Delayed().Build();
+                "comes again (an encounter): this many minutes of playing time after it was done, as soon as Starts when holds then " +
+                "(add a chance to it, random(1, 300) == 1, for a random moment). 0: once.").Delayed().Build();
             context.AddOption<string>(MissionTitle).WithDisplayName("Mission title").WithTooltip("Set it to offer this event as a bar " +
                 "mission: a visitor in the multiplayer Space Lounge offers it, and it runs for the squad that takes it (its selectors, " +
                 "counts, triggers and scoreboard cover only them). Empty: only /event starts it, for everyone.").Delayed().Build();

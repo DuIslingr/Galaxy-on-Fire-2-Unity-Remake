@@ -390,8 +390,22 @@ namespace GoF2Remake.UI
             if (this == null || musicSource == null || menuMusic == null || musicSource.clip != menuMusic) return;
             var mod = Modding.ModMusic.Replace(menuMusic);
             if (mod == menuMusic) return;
+            if (musicSource.isPlaying && musicSource.volume > 0.05f) { StartCoroutine(SwapMusic(mod)); return; }
             musicSource.clip = mod;
             musicSource.Play();
+        }
+
+        /// <summary>Modified: the playing theme fades out and 'clip' fades in (a mod's menu theme after the original played
+        /// through the splash: it cut in hard). Given up when another fade takes over meanwhile (leaving the menu).</summary>
+        IEnumerator SwapMusic(AudioClip clip)
+        {
+            int mine = musicFadeGeneration + 1;   // the fade below takes this number when it starts
+            yield return FadeMusic(0f, 1f);
+            if (musicFadeGeneration != mine || musicSource == null || screen == MenuState.Leaving) yield break;
+            if (musicSource.clip != menuMusic) yield break;   // already swapped (SwapModMusic and Run both asked)
+            musicSource.clip = clip;
+            musicSource.Play();
+            yield return FadeMusic(Settings.MusicVolume, 1.5f);
         }
 
         ModLoadingView splashLoading, leaveLoading;
@@ -433,17 +447,30 @@ namespace GoF2Remake.UI
             Modding.ModMusic.Preload();   // and their music (a replaced menu theme swaps in when it has loaded)
             Modding.ModMusic.Changed -= SwapModMusic;
             Modding.ModMusic.Changed += SwapModMusic;
-            // Modified: in a player the theme already plays from Unity's splash screen (SplashMusic): carried on from there.
-            float splashAt = SplashMusic.Take();
+            // Modified: in a player the theme already plays from Unity's splash screen (SplashMusic): its source becomes the
+            // menu's music source as it is (no second stream to seek, so no gap or doubling); a mod's theme fades in after it.
+            var splashSource = SplashMusic.Take(gameObject.scene);
             bool carried = false;
-            if (musicSource != null && menuMusic != null)
+            if (musicSource != null && menuMusic != null && splashSource != null && splashSource.clip == menuMusic)
             {
-                musicSource.clip = Modding.ModMusic.Replace(menuMusic);
-                musicSource.loop = true;
-                carried = splashAt >= 0f && musicSource.clip == menuMusic && menuMusic.length > 0f;
-                musicSource.volume = carried ? Settings.MusicVolume : 0f;
-                musicSource.Play();      // MTitle starts the menu theme with the first logo
-                if (carried) musicSource.time = splashAt % menuMusic.length;
+                splashSource.outputAudioMixerGroup = musicSource.outputAudioMixerGroup;
+                splashSource.ignoreListenerPause = musicSource.ignoreListenerPause;
+                Destroy(musicSource);
+                musicSource = splashSource;
+                carried = true;
+                var mod = Modding.ModMusic.Replace(menuMusic);
+                if (mod != menuMusic) StartCoroutine(SwapMusic(mod));
+            }
+            else
+            {
+                if (splashSource != null) Destroy(splashSource.gameObject);
+                if (musicSource != null && menuMusic != null)
+                {
+                    musicSource.clip = Modding.ModMusic.Replace(menuMusic);
+                    musicSource.loop = true;
+                    musicSource.volume = 0f;
+                    musicSource.Play();      // MTitle starts the menu theme with the first logo
+                }
             }
             if (!carried) StartCoroutine(FadeMusic(Settings.MusicVolume, 3f));
 
@@ -879,17 +906,21 @@ namespace GoF2Remake.UI
         // ---- audio -----------------------------------------------------------------------------
 
         bool fadingMusic;
+        int musicFadeGeneration;   // Modified: the newest fade wins (SwapMusic's fade-out against leaving's)
 
         IEnumerator FadeMusic(float target, float seconds)
         {
             if (musicSource == null) yield break;
+            int generation = ++musicFadeGeneration;
             fadingMusic = true;
             float start = musicSource.volume;
             for (float t = 0f; t < seconds; t += Time.unscaledDeltaTime)
             {
+                if (generation != musicFadeGeneration || musicSource == null) yield break;
                 musicSource.volume = Mathf.Lerp(start, target, t / seconds);
                 yield return null;
             }
+            if (generation != musicFadeGeneration || musicSource == null) yield break;
             musicSource.volume = target;
             fadingMusic = false;
         }

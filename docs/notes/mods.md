@@ -316,6 +316,10 @@ how-to `Modding/ai/README.md`), the examples `Modding/Examples/plasma_arsenal` (
   past the turret's own meshes; built in every collision mode but Original), else its collision volumes
   (`Obstacle.RayInto`: entering another volume, or heading inward through the face of the one it starts in); blocked =
   no shot, `TurretCore.Blocked`, and the owner drops that target like an unreachable one (`TurretTargeting.LimitHit`).
+  Review of #168: `Blocked` is worked out when asked (once a frame, again after `StepToward`), the owners asking it only
+  once aligned; it used to be set only by a ready `Fire`, which `PlayerTurret` / `NpcMountedTurrets` stopped calling once
+  it was set, so an auto turret blocked once never fired again. `RayHits` asks the hull's own colliders
+  (`Collider.Raycast`), not the shared 64-hit buffer that other hulls could fill. Test `TurretOwnHullTests`.
   Shots pass their own side's hulls, so a turret on a capital ship's far side hit the player straight through it.
   Checked in Play mode: 141 shots of a hostile Dreadnought's turrets with the player under it, none through the hull.
   Test `ModCapitalShipsTests.ATurretDoesntFireIntoItsOwnHullsVolumes`.

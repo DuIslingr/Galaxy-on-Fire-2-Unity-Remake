@@ -16,8 +16,8 @@ namespace GoF2Remake.World
         Vector3 centre;
         float range, floorY;
 
-        /// <summary>Modified: where a move from the first point toward the second may end (the hangar's walls: StationLevel's
-        /// cast against the room); null = anywhere.</summary>
+        /// <summary>Modified: where a move from the first point toward the second may end (the hangar's walls and the ship's
+        /// hull: StationLevel.RoomMove, a 0.4 m sphere cast); null = anywhere.</summary>
         public System.Func<Vector3, Vector3, Vector3> Collide;
 
         public Vector3 Position { get; private set; }

@@ -5,7 +5,8 @@
 // triangles showed as facets, and as the fire scrolls along u (PartAnimation's v5_0) its speed changed from one ring to the
 // next, so the texture bent at every row of triangles. A smoother copy: every triangle split into four, Levels times, each
 // new vertex pushed out onto the sphere, its u and colour from a smooth curve (Catmull-Rom) through the rings' own values at
-// its angle from the pole, its v from its angle around the pole (both read from the mesh itself), so the scroll runs evenly.
+// its angle from the pole, its v from its angle around the pole (both read from the mesh itself), so the scroll's speed
+// changes smoothly from ring to ring instead of jumping at every row (the rings' uneven u steps stay).
 // A mesh that isn't such a sphere gets plain halfway values. Midpoints are shared per edge (no cracks); the original mesh is
 // left alone; one copy per mesh for the run. Needs a readable mesh (AssetImport makes these two Read/Write).
 
@@ -22,7 +23,7 @@ namespace GoF2Remake.World
         static readonly Dictionary<Mesh, Mesh> made = new Dictionary<Mesh, Mesh>();
 
         /// <summary>The u / colour per ring (by the angle from the pole, degrees) and how v follows the angle around it.</summary>
-        sealed class Mapping
+        internal sealed class Mapping
         {
             public readonly List<float> polar = new List<float>(), u = new List<float>();
             public readonly List<Color> colour = new List<Color>();
@@ -38,6 +39,15 @@ namespace GoF2Remake.World
             if (mesh == null) return null;
             if (made.TryGetValue(mesh, out var done) && done != null) return done;
             if (!mesh.isReadable) { Debug.LogWarning($"SkySphereSmoothing: {mesh.name} isn't readable (reimport it)"); return mesh; }
+            var copy = Subdivide(mesh, Levels);
+            copy.UploadMeshData(true);
+            made[mesh] = copy;
+            return copy;
+        }
+
+        /// <summary>The smoother copy, still readable (Smooth uploads it; the tests read it). 'mesh' must be readable.</summary>
+        internal static Mesh Subdivide(Mesh mesh, int levels)
+        {
             var verts = new List<Vector3>(mesh.vertices);
             var uvs = new List<Vector2>(mesh.uv);
             var cols = new List<Color>(mesh.colors);
@@ -45,7 +55,7 @@ namespace GoF2Remake.World
             var map = hasUv ? Fit(verts, uvs, hasCol ? cols : null) : null;
             var subs = new List<int[]>();
             for (int s = 0; s < mesh.subMeshCount; s++) subs.Add(mesh.GetTriangles(s));
-            for (int level = 0; level < Levels; level++)
+            for (int level = 0; level < levels; level++)
             {
                 var mid = new Dictionary<long, int>();
                 int Mid(int a, int b)
@@ -99,8 +109,6 @@ namespace GoF2Remake.World
             for (int s = 0; s < subs.Count; s++) copy.SetTriangles(subs[s], s, false);
             copy.RecalculateBounds();
             copy.RecalculateNormals();
-            copy.UploadMeshData(true);
-            made[mesh] = copy;
             return copy;
         }
 
@@ -114,7 +122,7 @@ namespace GoF2Remake.World
 
         /// <summary>The rings' u and colour by their angle from the pole, and v's line around it, read from the original
         /// vertices; null when the mesh isn't a UV sphere about Y (a ring's u differs, or v doesn't follow the angle).</summary>
-        static Mapping Fit(List<Vector3> verts, List<Vector2> uvs, List<Color> cols)
+        internal static Mapping Fit(List<Vector3> verts, List<Vector2> uvs, List<Color> cols)
         {
             var rings = new SortedDictionary<int, (float polar, float u, Color c, int n)>();
             float bestSpread = float.MaxValue;

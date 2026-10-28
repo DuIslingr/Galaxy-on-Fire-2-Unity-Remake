@@ -507,6 +507,10 @@ namespace GoF2Remake.World
             jumpMs = 0f;
             attacking = false;
             targetIdx = -1;
+            // Modified (review of #179): back to its own AI: an order of its last life (the Supernova Challenge's first-wave run
+            // to its point at run speed, an event's) doesn't carry over.
+            order = null;
+            orderMs = 0f;
             route = (Spec.route ?? Route.DefaultPatrol(Spec.race)).Clone();
             // PlayerFighter::revive 0xf3de0: a revived Void ship or Specter carries nothing (the Void's remains come at death).
             loot = Spec.noLoot || Race == Standing.Void || Race == Standing.Specter ? new List<ItemStack>() : RollLoot();
@@ -702,9 +706,6 @@ namespace GoF2Remake.World
 
         /// <summary>Modified: its own flying speed (u/ms), what an order without a speed of its own flies at.</summary>
         public float OwnSpeed => baseSpeed;
-
-        /// <summary>Modified: the point of its route it is flying to (game units), null without one.</summary>
-        public Vector3? RouteWaypoint => route?.Waypoint;
 
         int empByPlayer;
 

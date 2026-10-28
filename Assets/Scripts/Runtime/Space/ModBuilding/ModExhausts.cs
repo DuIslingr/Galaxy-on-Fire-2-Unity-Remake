@@ -179,6 +179,7 @@ namespace GoF2Remake.Modding
                 if (!ids.Add(s.localId)) throw new ModJsonException($"{where}: the id \"{s.localId}\" is used twice");
                 if (ModJson.Get(o, "engineFx") is JToken ft)
                 {
+                    ModContent.CheckEngineFx(ft, where, mod);   // the old imitation's fields: a warning
                     try { s.fx = JsonUtility.FromJson<CustomEngineFx>(ft.ToString()); }
                     catch (Exception e) { throw new ModJsonException($"{where}: \"engineFx\": {e.Message}"); }
                     if (s.fx == null || !s.fx.Any) throw new ModJsonException($"{where}: \"engineFx\" names no engine (\"meshes\" or \"trailParticles\")");

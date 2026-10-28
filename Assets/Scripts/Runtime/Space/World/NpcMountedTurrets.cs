@@ -92,7 +92,7 @@ namespace GoF2Remake.World
                         bool aligned = core.StepToward(TurretTargeting.LeadPoint(target), dtMs);
                         if (core.Aim.LimitHit) t.picking.LimitHit(dtMs);
                         else if (aligned && core.Fire() >= 0) Sfx.PlayAt(t.shot, core.GunPosition, 0.6f);
-                        else if (core.Blocked) t.picking.LimitHit(dtMs);   // its own hull in the way: another target
+                        else if (aligned && core.Blocked) t.picking.LimitHit(dtMs);   // its own hull in the way: another target
                     }
                 }
                 core.SetAnimating(core.RecentlyFired);

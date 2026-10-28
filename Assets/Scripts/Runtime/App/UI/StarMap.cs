@@ -1584,6 +1584,10 @@ namespace GoF2Remake.UI
             // report: 91 with 5 seats of 10 could never finish).
             int refusal = Story.RequirementRefusal(db, station);
             if (refusal >= 0) { ShowDialog(T(refusal), null, null, true); return; }
+            // Modified (review of #186): StarMap::OnTouchEnd's step 0x18 check: the target needs a scanner (sort 0xd) and a
+            // tractor beam (0x11), else 532 (only the planet jump had it, StorySpace.RefusePlanetJump).
+            if (!Session.FreePlay && Story.Index == 24 && Story.Mission != null && station == Story.Mission.station
+                && (Shop.FirstMounted(db, 13) == null || Shop.FirstMounted(db, 17) == null)) { ShowDialog(T(532), null, null, true); return; }
             bool otherSystem = SystemOf(station) != currentSystem;
             // Remake: the mission map views any system; without a drive a target past the gate neighbours needs a gate route.
             if (travel && !jumpDrive && otherSystem && !GalaxyMap.IsInRoutes(current, SystemOf(station))

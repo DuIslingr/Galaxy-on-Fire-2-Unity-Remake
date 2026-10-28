@@ -39,6 +39,14 @@
     --glyph-bumper-r: 15px;
     --glyph-menu: 30px;
     --glyph-menu-r: 15px;
+    /* Modified: the small hints (the flight's, the station's, the star map's footer: their labels at --text-caption), the
+       same steps: keycaps and face buttons, sticks, bumpers and the menu buttons (FlightHud / StationMenu / StarMap.uss). */
+    --glyph-sm-key: 22px;
+    --glyph-sm-key-r: 11px;
+    --glyph-sm-stick: 24px;
+    --glyph-sm-stick-r: 12px;
+    --glyph-sm-bumper: 20px;
+    --glyph-sm-bumper-r: 10px;
 
     /* Spacing steps (docs/UI-DESIGN.md "Spacing"); USS has no calc(), so they are for new rules to pick from. */
     --space-xs: 4px;
@@ -1910,6 +1918,12 @@
     --glyph-bumper-r: 17px;
     --glyph-menu: 34px;
     --glyph-menu-r: 17px;
+    --glyph-sm-key: 25px;
+    --glyph-sm-key-r: 12px;
+    --glyph-sm-stick: 27px;
+    --glyph-sm-stick-r: 13px;
+    --glyph-sm-bumper: 23px;
+    --glyph-sm-bumper-r: 11px;
     --text-caption: 18px;
     --text-small: 21px;
     --text-body: 23px;
@@ -1931,6 +1945,12 @@
     --glyph-bumper-r: 20px;
     --glyph-menu: 39px;
     --glyph-menu-r: 20px;
+    --glyph-sm-key: 29px;
+    --glyph-sm-key-r: 14px;
+    --glyph-sm-stick: 32px;
+    --glyph-sm-stick-r: 16px;
+    --glyph-sm-bumper: 26px;
+    --glyph-sm-bumper-r: 13px;
     --text-caption: 21px;
     --text-small: 23px;
     --text-body: 26px;
@@ -1952,6 +1972,12 @@
     --glyph-bumper-r: 22px;
     --glyph-menu: 45px;
     --glyph-menu-r: 22px;
+    --glyph-sm-key: 33px;
+    --glyph-sm-key-r: 16px;
+    --glyph-sm-stick: 36px;
+    --glyph-sm-stick-r: 18px;
+    --glyph-sm-bumper: 30px;
+    --glyph-sm-bumper-r: 15px;
     --text-caption: 24px;
     --text-small: 27px;
     --text-body: 30px;
@@ -1973,6 +1999,12 @@
     --glyph-bumper-r: 26px;
     --glyph-menu: 52px;
     --glyph-menu-r: 26px;
+    --glyph-sm-key: 38px;
+    --glyph-sm-key-r: 19px;
+    --glyph-sm-stick: 42px;
+    --glyph-sm-stick-r: 21px;
+    --glyph-sm-bumper: 35px;
+    --glyph-sm-bumper-r: 17px;
     --text-caption: 28px;
     --text-small: 32px;
     --text-body: 35px;
@@ -1994,6 +2026,12 @@
     --glyph-bumper-r: 30px;
     --glyph-menu: 60px;
     --glyph-menu-r: 30px;
+    --glyph-sm-key: 44px;
+    --glyph-sm-key-r: 22px;
+    --glyph-sm-stick: 48px;
+    --glyph-sm-stick-r: 24px;
+    --glyph-sm-bumper: 40px;
+    --glyph-sm-bumper-r: 20px;
     --text-caption: 32px;
     --text-small: 36px;
     --text-body: 40px;

@@ -247,7 +247,11 @@ namespace GoF2Remake.Flight
         // ---- running ----------------------------------------------------------------------------------------------
 
         /// <summary>One aiming step toward 'world' (TurretAim.Step); true when aligned.</summary>
-        public bool StepToward(Vector3 world, float dtMs) => Aim.Step(world, dtMs);
+        public bool StepToward(Vector3 world, float dtMs)
+        {
+            blockedStale = true;   // the barrel turned: Blocked looks again
+            return Aim.Step(world, dtMs);
+        }
 
         /// <summary>Where a shot with gun-frame offset 'off' (units) starts (world).</summary>
         public Vector3 ShotOrigin(Vector3 off)
@@ -268,21 +272,35 @@ namespace GoF2Remake.Flight
         public Transform Host
         {
             get => host;
-            set { host = value; hostBody = null; hostObstacle = null; hostLooked = false; }
+            set { host = value; hostBody = null; hostObstacle = null; hostLooked = false; blockedStale = true; }
         }
         Transform host;
         HullBody hostBody;
         Obstacle hostObstacle;
         bool hostLooked;
 
-        /// <summary>The last Fire found its barrel pointing into its own ship (the owners drop such a target like an
-        /// unreachable one).</summary>
-        public bool Blocked { get; private set; }
+        /// <summary>The barrel points into its own ship (the owners drop such a target like an unreachable one; Fire holds
+        /// its shot). Modified (review of #168): worked out when asked, once a frame and again after an aiming step; it was
+        /// only set by a Fire, which the owners stopped calling once it was set, so a turret blocked once stayed silent.</summary>
+        public bool Blocked
+        {
+            get
+            {
+                if (blockedFrame != Time.frameCount || blockedStale)
+                {
+                    blocked = IntoOwnHull();
+                    blockedFrame = Time.frameCount;
+                    blockedStale = false;
+                }
+                return blocked;
+            }
+        }
+        bool blocked, blockedStale = true;
+        int blockedFrame = -1;
 
         bool IntoOwnHull()
         {
-            Blocked = false;
-            if (host == null) return false;
+            if (host == null || GunNode == null) return false;
             if (!hostLooked || hostBody == null && hostObstacle == null)
             {
                 hostLooked = true;
@@ -291,11 +309,8 @@ namespace GoF2Remake.Flight
             }
             var from = GunNode.position;
             var dir = BarrelForward;
-            if (hostBody != null && hostBody.Active)
-                Blocked = HullCollision.RayHits(from, dir, 30000f, hostBody, Root);
-            else if (hostObstacle != null)
-                Blocked = hostObstacle.RayInto(from, dir);
-            return Blocked;
+            if (hostBody != null && hostBody.Active) return HullCollision.RayHits(from, dir, 30000f, hostBody, Root);
+            return hostObstacle != null && hostObstacle.RayInto(from, dir);
         }
 
         /// <summary>Fires along the barrel when the gun is ready: the bullet's index, else -1. Starts the animations' clock.
@@ -305,7 +320,7 @@ namespace GoF2Remake.Flight
             if (Gun == null || GunNode == null) return -1;
             // Remake (LineOfFire): no shot into its own ship's hull (a turret on a capital ship's far side shot the player
             // straight through it: shots pass their own side's hulls).
-            if (Gun.Ready && IntoOwnHull()) return -1;
+            if (Gun.Ready && Blocked) return -1;
             var off = shotOffsetUnits;
             if (alternateSides) { off.x = alternate ? -80f : 80f; alternate = !alternate; }
             int b = Gun.TryFire(ShotOrigin(off), Quaternion.LookRotation(BarrelForward, BarrelUp), false);

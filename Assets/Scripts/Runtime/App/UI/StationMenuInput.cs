@@ -331,8 +331,11 @@ namespace GoF2Remake.UI
             if (HangarOpen)
             {
                 bool store = hangarWindow != null && hangarWindow.StorageMode;   // the Kaamo Club's storage
-                string select = T("hudSelect", "SELECT"), trade = store ? $"{T("shopStore", "STORE")} / {T("shopTake", "TAKE")}"
-                                                                        : $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";   // ingredients: ADD
+                // Remake: a blueprint's ingredients take back / add (HangarWindow.EditingBlueprint rebuilds the hints).
+                bool ingredients = hangarWindow != null && hangarWindow.EditingBlueprint;
+                string select = T("hudSelect", "SELECT"), trade = ingredients ? $"{T("shopTake", "TAKE")} / {T("bpAdd", "ADD")}"
+                                                                : store ? $"{T("shopStore", "STORE")} / {T("shopTake", "TAKE")}"
+                                                                        : $"{T("shopSell", "SELL")} / {T("shopBuy", "BUY")}";
                 string tabs = $"{Localization.Get(183)} / {Localization.Get(store ? 186 : 185)} / {Localization.Get(272)}".ToUpperInvariant(), confirm = T("hudConfirm", "CONFIRM");
                 string sellShip = T("kaamoSellShip", "SELL SHIP");
                 string info = Localization.Get(390).ToUpperInvariant();   // the details window's "Info" (ItemInfoWindow)

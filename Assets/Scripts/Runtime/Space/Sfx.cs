@@ -32,7 +32,12 @@ namespace GoF2Remake.Flight
         {
             var cam = Camera.main;
             if (cam == null) return 0f;
-            var local = cam.transform.InverseTransformPoint(position);
+            return PanLocal(cam.transform.InverseTransformPoint(position));
+        }
+
+        /// <summary>Pan's rule for a point in the camera's own space (x right, z ahead; metres).</summary>
+        public static float PanLocal(Vector3 local)
+        {
             float len = local.magnitude;
             if (len < 1f) return 0f;
             return Mathf.Clamp(local.x / len, -1f, 1f) * PanAmount;

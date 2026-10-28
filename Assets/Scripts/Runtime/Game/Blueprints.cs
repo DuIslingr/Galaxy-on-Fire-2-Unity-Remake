@@ -16,6 +16,9 @@
 //                    Plasma and 209 K'mirkk Toad Mutagen can't be shipped (289); 210 / 223 can't be started in a system
 //                    without gate routes (528)
 //   UnlockFromStory  the campaign's unlocks with their pre-invested ingredients (steps 34, 58, 72, 104, 141)
+//   Withdraw         remake (the original has no way back): at the production station the player takes back what he put in
+//                    himself (playerUnits, never the story's pre-invested goods), moneySpent going down by what those units
+//                    added to it (playerSpent), not by today's price
 
 using System;
 using System.Collections.Generic;
@@ -29,6 +32,9 @@ namespace GoF2Remake.Data
         public int item;
         public List<int> remaining = new List<int>();
         public int moneySpent, timesProduced, station = -1;
+        /// <summary>Remake (Blueprints.Withdraw): per ingredient, the units the player put in himself (the story's pre-invested
+        /// goods are not counted) and what they added to moneySpent. A save from before them has neither: 0 for every slot.</summary>
+        public List<int> playerUnits = new List<int>(), playerSpent = new List<int>();
     }
 
     [Serializable]
@@ -63,6 +69,7 @@ namespace GoF2Remake.Data
             s = new BlueprintState { item = product };
             var it = db.Item(product);
             if (it != null) foreach (var part in it.blueprint) s.remaining.Add(part.amount);
+            Fit(db, s);   // remake: the player's share, 0 per slot
             Session.Blueprints.Add(s);
             return s;
         }
@@ -74,9 +81,30 @@ namespace GoF2Remake.Data
         public static void Fit(Database db, BlueprintState s)
         {
             var parts = db.Item(s.item)?.blueprint;
-            if (parts == null || s.remaining.Count == parts.Count) return;
-            while (s.remaining.Count > parts.Count) s.remaining.RemoveAt(s.remaining.Count - 1);
-            for (int k = s.remaining.Count; k < parts.Count; k++) s.remaining.Add(parts[k].amount);
+            if (parts == null) return;
+            if (s.remaining.Count != parts.Count)
+            {
+                while (s.remaining.Count > parts.Count) s.remaining.RemoveAt(s.remaining.Count - 1);
+                for (int k = s.remaining.Count; k < parts.Count; k++) s.remaining.Add(parts[k].amount);
+            }
+            // Remake: the player's own share (a save from before it: 0 per slot).
+            s.playerUnits ??= new List<int>();
+            s.playerSpent ??= new List<int>();
+            FitZeros(s.playerUnits, parts.Count);
+            FitZeros(s.playerSpent, parts.Count);
+        }
+
+        static void FitZeros(List<int> values, int count)
+        {
+            while (values.Count > count) values.RemoveAt(values.Count - 1);
+            while (values.Count < count) values.Add(0);
+        }
+
+        /// <summary>BluePrint::reset's remake part: nothing of the player's left in it.</summary>
+        static void ResetPlayerShare(BlueprintState s)
+        {
+            for (int k = 0; k < (s.playerUnits?.Count ?? 0); k++) s.playerUnits[k] = 0;
+            for (int k = 0; k < (s.playerSpent?.Count ?? 0); k++) s.playerSpent[k] = 0;
         }
 
         public static bool IsEmpty(BlueprintState s) => s.moneySpent == 0;
@@ -132,41 +160,60 @@ namespace GoF2Remake.Data
                 if (it != null) foreach (var part in it.blueprint) s.remaining.Add(part.amount);
                 s.moneySpent = 0;
                 s.station = -1;
+                ResetPlayerShare(s);
             }
         }
 
-        /// <summary>BluePrint::addItem(item, n, station).</summary>
-        public static void Invest(Database db, int product, int ingredient, int units, int station)
+        /// <summary>BluePrint::addItem(item, n, station). Remake: 'byPlayer' counts the units as the player's own (the hangar's
+        /// ADD), which Withdraw may give back; the story's pre-investments (UnlockFromStory) are not.</summary>
+        public static void Invest(Database db, int product, int ingredient, int units, int station, bool byPlayer = false)
         {
             if (units <= 0) return;
             var s = State(db, product);
             var it = db.Item(product);
             int slot = it.blueprint.FindIndex(p => p.item == ingredient);
             if (slot < 0) return;
+            int value = Mathf.Max(1, AgentGenerator.SinglePrice(db.Item(ingredient))) * units;
             s.remaining[slot] -= units;
-            s.moneySpent += Mathf.Max(1, AgentGenerator.SinglePrice(db.Item(ingredient))) * units;
+            s.moneySpent += value;
             if (station >= 0 && s.station < 0) s.station = station;
+            if (!byPlayer) return;
+            s.playerUnits[slot] += units;
+            s.playerSpent[slot] += value;
         }
 
-        /// <summary>Manufacturing patch: withdraw committed ingredients only at their production station.</summary>
+        /// <summary>Remake: the units of 'slot' the player may take back: his own, while still invested.</summary>
+        public static int Withdrawable(Database db, BlueprintState s, int slot)
+        {
+            Fit(db, s);
+            if (slot < 0 || slot >= s.playerUnits.Count) return 0;
+            return Mathf.Max(0, Mathf.Min(s.playerUnits[slot], Invested(db, s, slot)));
+        }
+
+        /// <summary>Remake (the original has no way back): 'units' of the player's own goods in 'slot' out of the blueprint,
+        /// only at its production station. moneySpent goes down by what those units added to it (their share of
+        /// playerSpent, the last unit taking the rest), so the story's pre-invested goods keep the blueprint started.</summary>
         public static bool Withdraw(Database db, int product, int slot, int units, int station)
         {
             if (units <= 0) return false;
             var s = State(db, product);
             var it = db.Item(product);
             if (it?.blueprint == null || s.station != station || slot < 0 || slot >= it.blueprint.Count) return false;
-            int invested = Invested(db, s, slot);
-            if (invested < units) return false;
+            if (Withdrawable(db, s, slot) < units) return false;
+            int refund = units == s.playerUnits[slot] ? s.playerSpent[slot]
+                       : (int)((long)s.playerSpent[slot] * units / s.playerUnits[slot]);
             s.remaining[slot] += units;
-            int price = Mathf.Max(1, AgentGenerator.SinglePrice(db.Item(it.blueprint[slot].item)));
-            s.moneySpent = Mathf.Max(0, s.moneySpent - price * units);
-            if (s.remaining.TrueForAll((r) => r >= 0) && IsEmptyOfIngredients(db, s))
+            s.playerUnits[slot] -= units;
+            s.playerSpent[slot] -= refund;
+            s.moneySpent = Mathf.Max(0, s.moneySpent - refund);
+            if (IsEmptyOfIngredients(db, s))
             {
-                s.moneySpent = 0;
+                s.moneySpent = 0;   // nothing invested any more: unstarted, the next unit may start it at another station
                 s.station = -1;
             }
             return true;
         }
+
         static bool IsEmptyOfIngredients(Database db, BlueprintState state)
         {
             var parts = db.Item(state.item)?.blueprint;
@@ -228,6 +275,7 @@ namespace GoF2Remake.Data
             for (int k = 0; k < it.blueprint.Count; k++) s.remaining[k] = it.blueprint[k].amount;
             s.moneySpent = 0;
             s.station = -1;
+            ResetPlayerShare(s);
             return here;
         }
 

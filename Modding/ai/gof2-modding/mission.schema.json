@@ -38,7 +38,7 @@
     "repeat": {
       "type": "number",
       "minimum": 0,
-      "description": "a story mission that comes again: this many minutes of playing time after it was done, once its startsWhen has been false (the player left) and holds again (0 / left out: once)"
+      "description": "a story mission that comes again: this many minutes of playing time after it was done, as soon as its startsWhen holds then (add a chance to it, random(1, 300) == 1, for a random moment; 0 / left out: once)"
     },
     "offer": {
       "$ref": "#/$defs/text",
