@@ -275,7 +275,9 @@ namespace GoF2Remake.World
                 Settings.Changed += ApplyAntialiasing;
 
                 OrbitBuilder.SetupSky(Layout);   // the system's sky shows through the openings of both rooms
-                OrbitBuilder.SpawnBackdrop(Layout, mainCamera);
+                // Modified: no swell or streak in the station: the hangar camera facing the sun through an opening blew it up
+                // like a sun at the crosshair in space (the user's request; Backdrop.NoSwell).
+                OrbitBuilder.SpawnBackdrop(Layout, mainCamera).NoSwell = true;
                 // Remake: the orbit's sky layers outside too, as in space: the planet ring sky (stations 120, 126, 130, 132), the
                 // supernova flares (the stronger "nasty" ones from mission 106) and the storms in the supernova system, the asteroid
                 // belt of systems 24-26 (Skavac, Loma, Shima) lit by the system's sun.
