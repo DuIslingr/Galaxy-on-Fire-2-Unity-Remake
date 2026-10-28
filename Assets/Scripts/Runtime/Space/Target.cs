@@ -70,6 +70,12 @@ namespace GoF2Remake.Flight
         [NonSerialized] public Action<float, Vector3, bool, float> RemoteDamage;
         /// <summary>Multiplayer: EMP (points) passed on to the game that owns the ship (NetProxy, NetPlayer).</summary>
         [NonSerialized] public Action<int> RemoteEmp;
+        /// <summary>Multiplayer: a repair beam's hull points passed on to the game that owns the ship (NetProxy, NetPlayer);
+        /// null = it can't be repaired from here.</summary>
+        [NonSerialized] public Action<int> RemoteHeal;
+        /// <summary>Multiplayer: another game's ship's real maximum hull (its 'hp' / 'maxHp' is the hull fraction x 100), for
+        /// the repair / transfusion beams' pick of the most damaged ship; -1 = unknown.</summary>
+        [NonSerialized] public float netMaxHull = -1f;
         /// <summary>Multiplayer (NetProxy): another game's EMP-disabled NPC with cargo: its first cargo entry (item -1 = none),
         /// which this player's tractor beam may steal (CombatRadar); RemoteSteal(item, amount) takes it off the owner's ship.</summary>
         [NonSerialized] public int netStealItem = -1, netStealAmount;

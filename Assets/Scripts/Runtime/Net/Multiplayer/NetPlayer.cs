@@ -41,7 +41,7 @@ using GoF2Remake.Events;
 namespace GoF2Remake.Multiplayer
 {
     [Unity.Scripting.LifecycleManagement.NoAutoStaticsCleanup]
-    public sealed class NetPlayer : NetworkBehaviour, IPilot, World.IOrbitPeer
+    public sealed partial class NetPlayer : NetworkBehaviour, IPilot, World.IOrbitPeer
     {
         public enum Place : byte { None = 0, Space = 1, Hangar = 2, Departing = 3 }
 
@@ -340,6 +340,7 @@ namespace GoF2Remake.Multiplayer
             // relayed by this orbit's authority isn't.
             target.RemoteDamage = (amount, hitVector, byNpc, shieldFactor) => { if (!byNpc) NetAggression.Hit(OwnerClientId, amount); HitUpRpc(amount, hitVector, byNpc, shieldFactor); };
             target.RemoteEmp = emp => { NetAggression.Hit(OwnerClientId, emp); EmpUpRpc(emp); };
+            target.RemoteHeal = points => HealUpRpc(points);   // a squadmate's repair beam (NetPlayerEquipment)
             ApplyName();
             pilot.OnValueChanged += (_, _) => ApplyName();
             factionTag.OnValueChanged += (_, _) => ApplyName();
@@ -386,6 +387,7 @@ namespace GoF2Remake.Multiplayer
             cloakLook?.Dispose();
             sparks?.Clear();
             ownSparks?.Clear();
+            ClearEquipment();
         }
 
         GameObject turretModel, weaponModels;
@@ -694,6 +696,7 @@ namespace GoF2Remake.Multiplayer
                 if (shown && !show && SharesOrbit && hull.Value <= 0f) Explosion.Spawn(transform.position, Database.Shared.Ship(ShipIndex)?.explosionScale ?? 1f);
                 if (show != shown) SetShown(show);
                 if (InSpace && hull.Value <= 0f) NetAggression.Forget(OwnerClientId);   // destroyed: no longer this player's enemy
+                ApplyEquipment(shown);   // the emergency bubble, the sentry copies (NetPlayerEquipment)
                 if (!shown) return;
                 smoothing.Apply(transform, rotation.Value);
                 ApplyLook(Time.deltaTime * 1000f);
@@ -713,6 +716,7 @@ namespace GoF2Remake.Multiplayer
                 return;
             }
             NetProfileClient.Tick();   // the server profile's periodic upload
+            WriteEquipment();   // max hull, emergency clock, sentries (NetPlayerEquipment)
             if (tollStation.Value != NetFactionsClient.TollStation) tollStation.Value = NetFactionsClient.TollStation;
             NetDistress.Tick(this);
             if (distress.Value != NetDistress.Active) distress.Value = NetDistress.Active;

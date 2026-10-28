@@ -57,7 +57,9 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   scroll; the scene it shows clamped to LDR (#45: the HDR sun core smeared over it bloomed the screen white); grows /
   shrinks over 5 %), sound 1115 looped until it ends; the item is used up (the one mounted,
   `PlayerHealth.emergencyItem`: a mod's emergency system based on 185 too, which the removal of 185 alone left mounted
-  for good). Kills meanwhile count for medal 43 (`Session.GraveRiserKills`).
+  for good). Kills meanwhile count for medal 43 (`Session.GraveRiserKills`). The bubble is `Flight.EmergencyBubble`;
+  multiplayer: the others see it on the ship too, with the loop at the ship (`NetPlayerEquipment`: the owner's clock as its
+  end in server time and its length), and their copy takes no hits meanwhile (`Target.invulnerable`).
 - **Time extender** (184): the fast-forward slot shows its clock outside the autopilot (touch), or X / left stick press:
   15 s (attr 42) of world ×0.3 (`Time.timeScale`, `Navigation.ApplyTimeScale`) with the player's own updates (flight,
   chase camera, guns, cloak, beams) at ×0.7 (`TimeExtender.PlayerFactor`), sounds pitched down, sound 1120
@@ -69,7 +71,13 @@ Research: `Reference/research/combat_equipment.md`. All equipment is looked up b
   damaged friendly ships (repair: hull +dt·0.03·attr54/100) or hostile ships (transfusion: −dt·0.01·attr54/100 as player
   damage, the same into the player's shield; both only while the shield isn't full, and only then are hostile ships
   picked: a full shield leaves the beams idle, which players took for switching on and off at random) within attr 53;
-  beam meshes 19092 / 19093, loop sounds.
+  beam meshes 19092 / 19093, loop sounds. Multiplayer: the other games' ships here (`Target.NetShips`) are picked too,
+  after the game's own (they only saw those, so in an orbit another player ran they did nothing): a hostile one (an NPC
+  another game runs; a player where players may fight) drained through its owner (`Target.RemoteDamage`, the player's
+  hit), a friendly one (a squadmate, a friendly NPC another game runs) healed through its owner (`Target.RemoteHeal`:
+  `NetProxy.HealUpRpc` / `NetPlayer.HealUpRpc`, the server checks the orbit, a squadmate for a player, the amount and the
+  rate), whole points every 250 ms; their real max hull (`Target.netMaxHull`) keeps the most-damaged pick right. The beam
+  is drawn only in the beam owner's game.
 - **Missile defense** (remake, for mods: EVERSPACE 2's Missile Defense System, the user's idea; `Flight.PointDefense`,
   items.json stat `missileDefense`, attr 131, a reach in game units, on any mounted item, `PointDefense.ReachUnits`):
   the ship's auto turrets (`PlayerTurret.DefenseAim`, before `AutoAim`) turn to the nearest homing missile flying at the

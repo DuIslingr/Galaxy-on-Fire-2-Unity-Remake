@@ -273,6 +273,7 @@ namespace GoF2Remake.Multiplayer
             target.RemoteDamage = (amount, hitVector, byNpc, _) => DamageUpRpc(amount, hitVector, byNpc);   // NPCs have no shield
             target.RemoteEmp = emp => EmpUpRpc(emp);
             target.RemoteSteal = (item, amount) => StealUpRpc(item, amount);
+            target.RemoteHeal = points => HealUpRpc(points);   // another player's repair beam (RepairBeam)
             // Space junk is lockable after the ships and a far dot, like the owner's own junk (Target.RadarObjects).
             if (IsJunk) { Target.RadarObjects.Add(target); target.plateNameOnly = target.plateNoIcon = true; }
             else Target.NetShips.Add(target);
@@ -459,6 +460,27 @@ namespace GoF2Remake.Multiplayer
             if (ship != null) ship.StealFrom(item, amount);
         }
 
+        /// <summary>Remake: another player's repair beam healed this ship 'points' of hull (RepairBeam: a ship friendly to
+        /// them; before, the beams only saw the ships of the player's own game), through the server like a hit: only from
+        /// that orbit, a sane amount, at its rate.</summary>
+        [Rpc(SendTo.Server)]
+        void HealUpRpc(int points, RpcParams rpc = default)
+        {
+            ulong healer = rpc.Receive.SenderClientId;
+            if (healer == OwnerClientId || !NetRateLimit.Allow(healer, NetRateLimit.Kind.Hit)) return;
+            if (!NetGuard.Damage(points)) { NetRateLimit.Reject(healer, $"a repair of {points}"); return; }
+            if (NetGuard.InOrbit(healer, station.Value)) HealRpc(points);
+        }
+
+        /// <summary>The checked repair: the owner's ship gets the hull back (Player::heal: hull only, up to its maximum).</summary>
+        [Rpc(SendTo.Owner, InvokePermission = RpcInvokePermission.Server)]
+        void HealRpc(int points)
+        {
+            if (ship == null || ship.Gone || ship.Hp == null || ship.Target == null || !ship.Target.Alive || ship.Current != NpcShip.State.Fly) return;
+            ship.Hp.hull = Mathf.Min(ship.Hp.maxHull, ship.Hp.hull + points);
+            ship.Target.hp = ship.Hp.hull;
+        }
+
         bool credited;   // the server: this ship's kill credit went out (one per proxy: a relaunched ship gets a new one)
 
         /// <summary>The ship's game says 'shooter' destroyed it: the server passes the credit on once, and only to a player who
@@ -628,6 +650,7 @@ namespace GoF2Remake.Multiplayer
             }
             // Dying / dead (a tumble, a wreck, destroyed junk): not alive here either, so shots pass it like on the owner's.
             target.hp = life.Value == Flying ? Mathf.Max(0.001f, hull.Value) * target.maxHp : 0f;
+            target.netMaxHull = specHull.Value;   // the repair / transfusion beams' pick (RepairBeam)
             target.radius = radius.Value;
             if (boxesFor != hitVolume.Value)
             {

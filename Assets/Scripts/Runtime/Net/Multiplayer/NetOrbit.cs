@@ -160,6 +160,10 @@ namespace GoF2Remake.Multiplayer
             foreach (var w in FindObjectsByType<NetProxy>())
                 if (w.IsSpawned && w.IsWingman && w.Station == Station && w.LocalTarget != null && w.LocalTarget.Alive && w.LocalTarget.enabled && !w.IsOwner)
                     remotePlayers.Add(w.LocalTarget);
+            // Their deployed sentries (copies here, NetPlayerEquipment): attacked like their players (a KIPlayer of the level,
+            // Level::createSentryGuns), in the line of fire too; the hits go to the owner's sentry.
+            foreach (var p in NetPlayer.All)
+                if (p != null && p.SharesOrbit) p.SentriesTo(remotePlayers);
             NpcShip.RemotePlayers = remotePlayers;
             NpcShip.HostileToRemote = HostileToRemote;
             NpcShip.HostileToLocalBySquad = HostileToLocalBySquad;
@@ -180,6 +184,9 @@ namespace GoF2Remake.Multiplayer
         /// squad turned on, or one hostile to the local player (this orbit's authority) while they are in its squad.</summary>
         static bool HostileToRemote(NpcShip ship, Target t)
         {
+            // Another player's sentry: hostile when the ship is hostile to that player.
+            var sentryOwner = NetPlayer.SentryOwner(t);
+            if (sentryOwner != null) return sentryOwner.LocalTarget != null && HostileToRemote(ship, sentryOwner.LocalTarget);
             var p = t != null ? t.GetComponent<NetPlayer>() : null;
             if (p == null)
             {

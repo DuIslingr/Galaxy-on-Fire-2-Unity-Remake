@@ -51,6 +51,9 @@ namespace GoF2Remake.Flight
         public event Action<string> Message;
         /// <summary>The emergency system's bubble is up (PlayerEgo::emergencySystemActive).</summary>
         public static bool EmergencyActive { get; private set; }
+        /// <summary>Multiplayer (NetPlayer): the emergency bubble's time left and its whole length (ms); 0 left = none.</summary>
+        public float EmergencyLeftMs => EmergencyActive ? Mathf.Max(0f, emergencyMs) : 0f;
+        public float EmergencyLengthMs => emergencyLength;
         /// <summary>The supernova radiation pool (0..100), -1 = none in this orbit.</summary>
         public float Gamma { get; private set; } = -1f;
 
@@ -65,10 +68,9 @@ namespace GoF2Remake.Flight
         float lastCombined, deathMs;
         // emergency system
         bool hasEmergency;
-        float emergencyMs, emergencyLength = 10000f, bubbleScale;
+        float emergencyMs, emergencyLength = 10000f;
         int emergencyItem = 185;   // the mounted emergency system (used up when it fires)
-        GameObject bubble;
-        Material bubbleMaterial;
+        EmergencyBubble bubble;
         // shield injector
         bool hasInjector, injecting;
         int injectorCost = 30;
@@ -180,25 +182,10 @@ namespace GoF2Remake.Flight
                 invincibleLoop.volume = Settings.SfxVolume;
                 invincibleLoop.Play();
             }
-            if (assets != null && assets.shieldBubble != null)
-            {
-                bubble = Instantiate(assets.shieldBubble, ship.visualModel != null ? ship.visualModel : transform, false);
-                GunRig.StripForFx(bubble);
-                // Material 27150 draws with SimpleRefractionShader: an invisible sphere bending the screen behind its rim.
-                if (assets.shieldBubbleShader != null)
-                    foreach (var br in bubble.GetComponentsInChildren<Renderer>())
-                    {
-                        var src = br.sharedMaterial;
-                        bubbleMaterial = new Material(assets.shieldBubbleShader);
-                        if (src != null && src.HasProperty("_BaseMap")) bubbleMaterial.SetTexture("_NoiseMap", src.GetTexture("_BaseMap"));
-                        br.sharedMaterial = bubbleMaterial;
-                    }
-                GoF2Remake.Visuals.CloakPass.Request(this, true);   // the bubble refracts CloakPass's copy of the frame
-                var r = ship.visualModel != null ? ship.visualModel.GetComponentInChildren<Renderer>() : null;
-                float radiusUnits = r != null ? r.bounds.extents.magnitude / M : 1500f;
-                bubbleScale = radiusUnits / 500f + 0.1f;
-                bubble.transform.localScale = Vector3.zero;
-            }
+            // Material 27150 draws with SimpleRefractionShader: an invisible sphere bending the screen behind its rim.
+            bubble?.Hide();
+            bubble = EmergencyBubble.Show(assets, ship.visualModel != null ? ship.visualModel : transform,
+                                          ship.visualModel != null ? ship.visualModel.GetComponentInChildren<Renderer>() : null);
             return true;
         }
 
@@ -207,13 +194,7 @@ namespace GoF2Remake.Flight
             if (emergencyMs <= 0f) return;
             emergencyMs -= dtMs;
             Hp.vulnerable = false;
-            if (bubble != null)
-            {
-                float t = emergencyMs, d = emergencyLength, edge = 0.05f * d;
-                float f = t > d - edge ? (d - t) / edge : t < edge ? t / edge : 1f;
-                bubble.transform.localScale = Vector3.one * bubbleScale * Mathf.Clamp01(f);
-            }
-            if (bubbleMaterial != null) bubbleMaterial.SetFloat("_Anim", (emergencyLength - emergencyMs) * 0.001f);   // mesh+0x24 += dt * 0.001 (the original shader never uses it)
+            bubble?.Update(Mathf.Max(0f, emergencyMs), emergencyLength);
             if (emergencyMs <= 0f) EndEmergency();
         }
 
@@ -223,9 +204,8 @@ namespace GoF2Remake.Flight
         {
             EmergencyActive = false;
             if (invincibleLoop != null) invincibleLoop.Stop();
-            if (bubble != null) Destroy(bubble);
-            if (bubbleMaterial != null) Destroy(bubbleMaterial);
-            GoF2Remake.Visuals.CloakPass.Request(this, false);
+            bubble?.Hide();
+            bubble = null;
         }
 
         // ---- shield injector (PlayerEgo::update 0xa8f4e) ------------------------------------------------------
@@ -387,6 +367,7 @@ namespace GoF2Remake.Flight
         {
             OpaqueTexture.Request(this, false);
             EmergencyActive = false;
+            bubble?.Hide();   // (its CloakPass request stayed when the ship went inside the bubble's time: docking, a jump)
             // Docking / jumping saves the ship state to Status (MGame::dockEvent, departStation).
             if (Target != null && Hp != null && !Dead)
             {

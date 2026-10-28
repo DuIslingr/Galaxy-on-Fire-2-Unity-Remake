@@ -61,7 +61,10 @@ is generated from it by `Reference/tools/weapons/build_weapon_fx.py`; **GoF2 > B
   which turns the whole object, was right; every turret's gun-to-base offset now matches between the two); auto turrets
   (180-182) aim and fire at hostiles, the others by the turret view (T / D-pad up, touch button), Y / D-pad down toggles
   auto fire; animations only while firing. **Sentry guns** (`SentryGun`, 211-213): up to 3 deployed as secondaries, 100
-  HP, 3 s invulnerable, hostile NPCs attack them.
+  HP, 3 s invulnerable, hostile NPCs attack them. Multiplayer (`NetPlayerEquipment`): the others in the orbit see them
+  (model, aim, hull, explosion; a marker and a lock with the player's relation) and the NPCs another game runs attack
+  them like their player (`NetOrbit`: among the other players' targets, `NetPlayer.SentryOwner`); hits on a copy go to
+  the owner's sentry (`SentryHitUpRpc`, checked like a hit on the ship; a player's only where players may fight).
 - **Turret view inversion** (#103): the flight's invert options apply to the manual turret view too (`PlayerTurret`), as they
   already did to the steered Liberator (`WeaponSystem`).
 - **One turret for everyone** (remake, `TurretCore` + `TurretTargeting`, plain C#; edit-mode `TurretCoreTests`,

@@ -68,6 +68,11 @@ Notes moved from `CLAUDE.md` (its index lists every notes file). Code comments c
   and show the impact, but deal no damage (no handler on their Hit): the shooter's own game applies the hits. Their pools
   live in the scene: after a scene change the mirrors start over (`NetShotMirror.Refresh`). Deployed sentry guns' shots
   are mirrored too; a beam's auto-aim never picks a squadmate.
+- **Equipment** (`NetPlayerEquipment`, part of `NetPlayer`): the sentry guns as copies in the others' games (a list every
+  0.2 s: id, item, position, aim, hull, destroyed), attacked by the NPCs any game runs, their hits sent to the owner's
+  sentry; the emergency system's bubble on the others' copy (invulnerable meanwhile); the max hull (`Target.netMaxHull`)
+  and a squadmate's repair beam healing the ship (`HealUpRpc`; NPC copies: `NetProxy.HealUpRpc`). The repair and
+  transfusion beams pick the other games' ships too (`RepairBeam`).
 - **Crates** (`NetCrate`): the authority's crates are real `Crate`s for the others in that orbit (`remote`: no drift or
   expiry of their own; the race's model, the same loot), so their radar, markers and tractor work. One player gets it:
   the host keeps the claim (the first beam to start pulling, `Crate.PullStarted`), the others' copies are
